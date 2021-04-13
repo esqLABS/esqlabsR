@@ -2,6 +2,10 @@
 Utilities functions for modeling and simulation workflows within esqLABS
 
 ## Required packages
+- rClr >0.9
+  - https://github.com/Open-Systems-Pharmacology/rClr/releases/tag/v0.8.3_Linux or esqLABS internal
+- ospsuite-r >10
+  - https://github.com/Open-Systems-Pharmacology/OSPSuite-R or esqLABS internal
 - R6 (CRAN)
 - openxlsx (CRAN)
 - tools (CRAN)
