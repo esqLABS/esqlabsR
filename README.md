@@ -20,3 +20,7 @@ rClr_0.9 (esqlabs GmbH\Software - Documents\R packages\esqLABS standard library\
 - devtools (CRAN)
 - knitr (CRAN)
 - styler (CARN)
+
+## Contributing
+- Follow the OSPS-R [coding standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md)
+- Some additional useful information can be found [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's)
