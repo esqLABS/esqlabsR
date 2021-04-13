@@ -1,0 +1,180 @@
+---
+title: "Data handling"
+output: rmarkdown::html_vignette
+#output: pdf_document
+vignette: >
+  %\VignetteIndexEntry{Data handling}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r, echo = FALSE, results = "hide", message = F}
+library(esqlabsR)
+```
+
+This package provides methods for convenient handling of x-y values data (e.g., time-concentration profiles) and organizing these data as objects of the class `XYData`. These objects can be used for direct access to the data, creating figures such as time-values profiles or predicted-vs-observed plots, or calculating residuals between observed and simulated data. Data for creation of an `XYData` object can come from a simulation, an excel file (e.g. observed data), or from array created in R.
+
+## `XYData` overview
+
+An `XYData` object describes the following properties of data:
+
+ - x values
+ - y values
+ - Error of y values
+ - Dimension of x and y values
+ - Units the values are stored in (e.g., minutes or hours for the dimension Time).
+
+An object of `XYData` can be created from scratch using pre-defined x- and y- (and, optionally, y-error) values. Each object of `XYData` must have a label which serves as a name for the particular data set.
+
+```{r createXYData}
+  xVals <- c(0,1,2,3)
+  yVals <- c(4,5,6,7)
+  yError <- c(0.1, 0, 0.1, 1)
+  
+  # Create new object of type XYData
+  xyData <- XYData$new(xVals, yVals, yError = yError, label = "My XY Data")
+print(xyData)
+```
+Following fields are available:
+
+* Access to the x, y, and y-error values of the object:
+
+```{r accessValues}
+xyData$xValues
+xyData$yValues
+xyData$yError
+```
+
+* Return the maximal and minimal values of x and y. For y values, the error (if specified) is added (substracted for `yMin`) to/from the basal values!
+```{r xyMinMax}
+xyData$xMax
+xyData$xMin
+xyData$yMax #Maximal value of 7 plus the error 1
+xyData$yMin #Minimal value of 4 minus the error 0.1
+```
+* x and y values have a **Dimension** and a **Unit**. The list of supported dimensions is provided in the enum `Dimension`. By default, x values have the dimension `Time` and the unit `Minute`.
+```{r xyDimensions}
+xyData$xDimension
+xyData$xUnit
+xyData$yDimension
+xyData$yUnit
+#List of all supported dimensions
+length(Dimensions)
+Dimensions[[1]]
+```
+Setting the dimension will set the unit to the default unit of the dimension (even if the dimension did not actually change). For the list of default units, please refer to [OSPS manual](https://docs.open-systems-pharmacology.org/appendix/appendix). The unit of the y error values is automatically set to the base unit of the dimension when changing dimensions.
+
+```{r setDimension}
+xyData$yDimension
+xyData$yUnit
+xyData$yErrorUnit
+#Change the dimension of y values
+xyData$yDimension <- Dimensions$`Concentration (molar)`
+xyData$yUnit
+xyData$yErrorUnit
+```
+Be aware that changing the unit of y values will not automatically change the unit of the error - so it is possible to have the y values in "nmol/l" and the error in "µmol/l".
+
+`XYData` also inherits several properties from the class `Plotable` which are described in the section [Figure creation](figure-creation.html).
+
+## `XYData` as a `Plotable` object
+The class `XYData` inherits properties from the class `Plotable` that are being used when creating figures with `XYData` (see also [Figure creation](figure-creation.html)). Among other properties, the class `Plotable` provides properties for transformation of x- and y-values. The properties `xOffset` and `yOffset` are added to x- and y-values, respectively, when processing (e.g., creating a figure) `XYData`. The properties `xFactor` and `yFactor` allow to scale the values by multiplying them by a certain factor. Keep in mind that the output of `XYData$xValues` and `XYData$yValues` is not affected by setting the offset and the factor, so it is always possible to access the untransformed values. In contrast, values of the fields `xMax`, `xMin`, `yMax`, and `yMin` are transformed before output.
+
+```{r xyOffset}
+  xVals <- c(0,1,2,3)
+  yVals <- c(4,5,6,7)
+  yError <- c(0.1, 0, 0.1, 1)
+
+  xyData <- XYData$new(xVals, yVals, yError = yError, label = "My XY Data")
+  xyData$xValues
+  xyData$yValues
+  
+  xyData$xMax
+xyData$xMin
+xyData$yMax #Maximal value of 7 plus the error 1
+xyData$yMin #Minimal value of 4 minus the error 0.1
+
+#Offset x values by -1 and y values by 2
+xyData$xOffset <- -1
+xyData$yOffset <- 2
+
+#xValues and yValues are unaffected
+  xyData$xValues
+  xyData$yValues
+  
+    xyData$xMax #Maximal value of 3 plus offset -1
+xyData$xMin #Minimal value of 0 plus offset -1
+xyData$yMax #Maximal value of 7 plus the error 1 plus offset 2
+xyData$yMin #Minimal value of 4 minus the error 0.1 plus offset 2
+
+#Set y factor to 0.5
+xyData$yFactor <- 0.5
+
+xyData$yMax #Maximal value of 7 plus the error 1 plus offset 2 multiplied by 0.5
+xyData$yMin #Minimal value of 4 minus the error 0.1 plus offset 2 multiplied by 0.5
+
+```
+
+
+## Loading data from excel as `OSPSTimeValues`
+
+A special extension of `XYData` is `OSPSTimeValues`, a class designed for time-values data used in modeling and simulation activities with the OSPS. In addition to information stored by the `XYData` class, following meta data fields are available.
+
+
+  - StudyId
+  - PatientId
+  - Organ
+  - Compartment
+  - Species
+  - Gender
+  - Molecule
+  - MW (molecular weight in case the data describes concentrations or amounts of a chemical molecule)
+  - GroupId
+
+If the data set describes amounts or concentrations of a chemical compound, the field `$MW` should be set to the molecular weight (in g/mol) of the molecule
+to enable conversion between dimensions, as often used for data plotting.
+
+Usually, `OSPSTimeValues` objects are created from an excel file by calling the method `readOSPSTimeValues`. The excel file must have the structure as defined in the Work Instruction "Modeling & Simulation Data Structure". Additionally, for each `Molecule` imported, a sheet in the "IN VIVO/IN VITRO COMPOUND PROPERTIES" file (see the Work Instruction) must be present to retrieve the molecular weight of the imported molecule.
+
+The method `readOSPSTimeValues` reads the contents of the excel file and generates a list of `OSPSTimeValues` objects according to the groupings of the data. The data are generally grouped by the sheets of the excel file and the specified columns.
+
+To read the data using `readOSPSTimeValues`, an object of the class `DataConfiguration` must be created and passed to the method. `DataConfiguration` is a structure containing following information:
+
+  - `dataFolder`: Path to the folder where the excel files are located
+  - `dataFile`: Name of the excel file with time-values data. Must be located in `dataFolder`.
+  - `compoundPropertiesFile`: Name of the excel file with compound properties. Must be located in `dataFolder`.
+  - `dataSheets`: Name of the data sheet(s) with time-values data within the excel file. Multiple sheets can be processed.
+  - `columnsToSplitBy`: A list containing the names of the columns by which the data will be split into separate data sets.
+  - `XValuesColumn`: Index of the column that contains the x values.
+  - `YValuesColumn`: Index of the column that contains the y values.
+  - `YErrorColumn`: Index of the column that contains the error values of the y values.
+
+The values of `columnsToSplitBy`, `XValuesColumn`, `YValuesColumn`, and `YErrorColumn` are set to default values but can be changed by the user.
+
+```{r DataConfiguration}
+dataConf <- DataConfiguration$new(dataFolder = file.path(getwd(), "..", "tests", "data"),
+                                    dataFile = "CompiledDataSet.xlsx",
+                                    compoundPropertiesFile = "Compound_Properties.xlsx",
+                                    dataSheets = c("TestSheet_1"))
+print(dataConf)
+
+dataConf$columnsToSplitBy
+```
+
+Reading the file produces two data sets, as there are two different values for `IndividualId` contained in the data sheet. The method automatically recognizes and sets the dimensions and units of y and y values.
+
+```{r readOSPSTimeValues}
+observedData <- readOSPSTimeValues(dataConfiguration = dataConf)
+names(observedData)
+
+observedData[[1]]
+
+```
+Note that the `dataType` field is automatically set to "Observed".

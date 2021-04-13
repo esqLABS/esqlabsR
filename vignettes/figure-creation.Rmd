@@ -1,0 +1,32 @@
+---
+title: "Creating figures"
+output: rmarkdown::html_vignette
+#output: pdf_document
+vignette: >
+  %\VignetteIndexEntry{Creating figures}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r, echo = FALSE, results = "hide", message = F}
+library(esqlabsR)
+```
+
+This package offers a workflow for creating standardized figures for time-values data, such as time-concentration profiles, goodness-of-fit plots, etc. The integral part of these workflows are the objects of the class `DataMapping`. A `DataMapping` organizes the objects of the class `XYData` (see [Data handling](data-handling.html) for more information) into groups and maps simulation results to observed data.
+
+## `DataMapping` overview
+The first step in organizing the data in a `DataMapping` object and creating figures is the creation of an empty `DataMapping` object.
+
+```{r createDataMapping}
+dataMapping <- DataMapping$new()
+print(dataMapping)
+```
+
+In the next step, the mapping is populated with xy-values series that can be organized into groups.

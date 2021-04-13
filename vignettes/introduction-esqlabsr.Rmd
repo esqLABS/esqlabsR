@@ -1,0 +1,53 @@
+---
+title: "Introduction to esqlabsR"
+output: rmarkdown::html_vignette
+#output: pdf_document
+vignette: >
+  %\VignetteIndexEntry{Introduction to esqlabsR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The **esqlabsR** R-package is designed to facilitate and standardize modeling and simulation (M&S) activities performed in the R environment. The main focus of the package lies on providing standard workflows for running simulations with the [Open Systems Pharmacology](http://www.open-systems-pharmacology.org/) Software (OSPS) R package (ospsuite-r) and creating standardized figures.
+
+## General information
+This package builds up on the functionality of the ospsuite-r package. It is strongly recommended to get familiar with the [R-Introduction](https://docs.open-systems-pharmacology.org/working-with-r/r-introduction) section of the OSPS manual.
+
+In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the PK-Sim examples folder of the OSPS installation.
+
+The documentation is divided into three parts covering the following aspects:
+
+* [Facilitating M&S](modeling-simulation.html)
+* [Data handling](data-handling.html)
+* [Figure creation](figure-creation.html)
+* [Helper methods](helper-methods.html)
+
+## Object-oriented approach
+The **esqlabsR** package utilizes the concept of object oriented (OO) programming based on the [R6 system](https://adv-r.hadley.nz/r6.html). While the philisophy of the package is to offer a functional programming workflow more common for the R users, it is important to understand some basic concepts of the OO programming. Many of the functions implemented in **esqlabsR** return an *instance* (or an *object*) of a *class*. These objects can be used as inputs for another methods. Additionally, each object offers a set of properties (which can be another objects) and methods, accessible by the `$` sign:
+
+```r
+object1 <- ClassName$new()
+aProperty <- object1$property1
+resultOfAFunction <- object1$multiply(1,2)
+```
+
+Important information about the object can be printed out by calling `print(object)`.
+
+The most important classes are:
+
+  : `DataMapping`
+    : Organizes objects of type `XYData`, describing their groupings and used for creating figures. See [Creating figures](figure-creation.html) for more information.
+  : `Plotable`
+  : `XYData`, inherits `Plotable`
+    : Organizes any kind of x-y-values data. See [Data handling](data-handling.html) for more information.
+  : `OSPSTimeValues`, inherits `XYData`
+    : Sub-type of `XYData` with additional meta-data provided in the default OSPS data format
+  : `DataConfiguration`
+    : Structure containing information for observed data import. See [Data handling](data-handling.html) for more information.
