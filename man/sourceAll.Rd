@@ -13,9 +13,6 @@ sourceAll(folderPath, recursive = FALSE)
 otherwise only the files located directly in the directory are considered.
 Default is FALSE.}
 }
-\value{
-
-}
 \description{
 Source all .R files located in a specific folder
 }

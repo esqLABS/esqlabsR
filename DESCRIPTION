@@ -1,7 +1,7 @@
 Package: esqlabsR
 Type: Package
 Title: esqLABS utilities package
-Version: 1.4.5
+Version: 1.4.6.9001
 Author: esqLABS GmbH
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects within esqLABS.

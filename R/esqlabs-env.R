@@ -34,9 +34,6 @@ esqlabsEnv$YValuesColumn <- 11
 # Column index for y error values in observed data files
 esqlabsEnv$YErrorColumn <- 12
 
-# NetTask "DimensionTask" cached for performance benefits. Created the first time it is requested.
-esqlabsEnv$DimensionTask <- NULL
-
 #' Get the value of a global esqlabsR setting.
 #'
 #' @param settingName String name of the setting

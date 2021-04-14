@@ -22,8 +22,9 @@ length as 'parameterPaths'}
 \item{simulation}{Simulation used to retrieve parameter instances from given paths.}
 
 \item{condition}{A function that receives a \code{Parmeter} as an argument
-and returns \code{TRUE} of \code{FALSE}
-#' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
+and returns \code{TRUE} of \code{FALSE}}
+
+\item{units}{A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
 are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.}
 }
 \description{

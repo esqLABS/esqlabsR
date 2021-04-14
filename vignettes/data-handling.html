@@ -209,9 +209,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>xyData<span class="sc">$</span>yUnit</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;&quot;</span></span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#List of all supported dimensions</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(Dimensions)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(ospDimensions)</span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 90</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>Dimensions[[<span class="dv">1</span>]]</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>ospDimensions[[<span class="dv">1</span>]]</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Abundance per mass protein&quot;</span></span></code></pre></div>
 <p>Setting the dimension will set the unit to the default unit of the dimension (even if the dimension did not actually change). For the list of default units, please refer to <a href="https://docs.open-systems-pharmacology.org/appendix/appendix">OSPS manual</a>. The unit of the y error values is automatically set to the base unit of the dimension when changing dimensions.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>xyData<span class="sc">$</span>yDimension</span>
@@ -221,7 +221,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>xyData<span class="sc">$</span>yErrorUnit</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;&quot;</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#Change the dimension of y values</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>xyData<span class="sc">$</span>yDimension <span class="ot">&lt;-</span> Dimensions<span class="sc">$</span><span class="st">`</span><span class="at">Concentration (molar)</span><span class="st">`</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>xyData<span class="sc">$</span>yDimension <span class="ot">&lt;-</span> ospDimensions<span class="sc">$</span><span class="st">`</span><span class="at">Concentration (molar)</span><span class="st">`</span></span>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>xyData<span class="sc">$</span>yUnit</span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;µmol/l&quot;</span></span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>xyData<span class="sc">$</span>yErrorUnit</span>

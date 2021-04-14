@@ -9,10 +9,8 @@
 #' @param individualCharacteristics \code{IndividualCharacteristics} describing an individual. Optional
 #' @param additionalParams A named list with lists 'paths', 'values', and 'units'. Optional
 #' @param simulateSteadyState Logical. If \code{TRUE}, the model is simulated for \code{steadyStateTime} minutes after applying parameter values defined in
-#' \code{individualCharacteristics} and code{additionalParams}, and the end results of the simulation are applied as initial conditions for alle molecules.
+#' \code{individualCharacteristics} and code{additionalParams}, and the end results of the simulation are applied as initial conditions for all molecules.
 #' State variable parameters are ignored in this version!
-#'
-#' @return
 #' @export
 #'
 #' @examples

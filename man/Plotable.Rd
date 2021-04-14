@@ -5,7 +5,7 @@
 \alias{Plotable}
 \title{Plotable}
 \description{
-An object holding ploting information
+An object holding plotting information
 }
 \seealso{
 col2hsv

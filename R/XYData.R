@@ -90,57 +90,66 @@ XYData <- R6::R6Class(
         private$.dataType <- value
       }
     },
-    #' @field xDimension Dimension of x values. See enum \code{Dimensions} for the list of supported dimensions.
+    #' @field xDimension Dimension of x values. See enum \code{ospDimensions} for the list of supported dimensions.
     xDimension = function(value) {
       if (missing(value)) {
-        private$.XDim
+        private$.xDimension
       } else {
         validateDimension(value)
-        private$.XDim <- value
-        private$.XUnit <- getBaseUnit(value)
+        private$.xDimension <- value
+        private$.xUnit <- getBaseUnit(value)
       }
     },
     #' @field xUnit Unit of x values
     xUnit = function(value) {
       if (missing(value)) {
-        private$.XUnit
+        private$.xUnit
       } else {
         validateUnit(value, self$xDimension)
-        private$.XUnit <- value
+        private$.xUnit <- value
       }
     },
-    #' @field yDimension Dimension of y values. See enum \code{Dimensions} for the list of supported dimensions.
+    #' @field yDimension Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.
     yDimension = function(value) {
       if (missing(value)) {
-        private$.YDim
+        private$.yDimension
       } else {
         validateDimension(value)
-        private$.YDim <- value
-        private$.YUnit <- getBaseUnit(value)
-        private$.YErrorUnit <- getBaseUnit(value)
+        private$.yDimension <- value
+        private$.yUnit <- getBaseUnit(value)
+        private$.yErrorUnit <- getBaseUnit(value)
       }
     },
     #' @field yUnit Unit of y values
     yUnit = function(value) {
       if (missing(value)) {
-        private$.YUnit
+        private$.yUnit
       } else {
         validateUnit(value, self$yDimension)
-        private$.YUnit <- value
+        private$.yUnit <- value
       }
     },
     #' @field yErrorUnit Unit of y error values
     yErrorUnit = function(value) {
       if (missing(value)) {
-        private$.YErrorUnit
+        private$.yErrorUnit
       } else {
         # Dimensionless is always supported as it represents the geometric error.
         if (value == "") {
-          private$.YErrorUnit <- value
+          private$.yErrorUnit <- value
         } else {
           validateUnit(value, self$yDimension)
-          private$.YErrorUnit <- value
+          private$.yErrorUnit <- value
         }
+      }
+    },
+    #' @field MW Molecular weight in g/mol. Required for conversion between molar and mass dimensions. Can be \code{NULL} (default)
+    MW = function(value) {
+      if (missing(value)) {
+        private$.MW
+      } else {
+        validateIsNumeric(value)
+        private$.MW <- value
       }
     }
   ),
@@ -149,11 +158,12 @@ XYData <- R6::R6Class(
     .yVals = NULL,
     .yError = NULL,
     .dataType = NULL,
-    .XDim = NULL,
-    .XUnit = NULL,
-    .YDim = NULL,
-    .YUnit = NULL,
-    .YErrorUnit = NULL
+    .xDimension = NULL,
+    .xUnit = NULL,
+    .yDimension = NULL,
+    .yUnit = NULL,
+    .yErrorUnit = NULL,
+    .MW = NULL
   ),
   public = list(
     #' @param xVals An array of numeric x values.
@@ -161,7 +171,7 @@ XYData <- R6::R6Class(
     #' @param yError An array of numeric values of the arithmetic error. Optional
     #' @param label A string that is used as a label (e.g. in the legend) for the data set
     #' @description
-    #' Initialize a new instance of the class. xVals, yVals, and yError (can be omitted) must be of the same length
+    #' Initialize a new instance of the class. xVals, yVals, and yError (optional) must be of the same length
     #' @return A new `XYData` object.
     initialize = function(xVals, yVals, label, yError = NULL) {
       validateIsNumeric(c(xVals, yVals))
@@ -175,12 +185,12 @@ XYData <- R6::R6Class(
         validateIsSameLength(yVals, yError)
         # Replace all NAs with 0
         yError[is.na(yError)] <- 0
-        private$.yError <- yError
+        self$yError <- yError
       }
       private$.dataType <- XYDataTypes$Unspecified
 
-      self$xDimension <- Dimensions$Time
-      self$yDimension <- Dimensions$Dimensionless
+      self$xDimension <- ospDimensions$Time
+      self$yDimension <- ospDimensions$Dimensionless
     },
 
     #' @description
@@ -193,118 +203,79 @@ XYData <- R6::R6Class(
     },
 
     #' @description
-    #' Numerical factor for converting the x-values to a specific unit of a specific dimension
-    #'
-    #' @param dimension Target dimension
-    #' @param unit Target unit
-    #'
-    #'
-    #' @return xFactor multiplied by the factor for conversion from dimensions multiplied by the factors for the conversion between units.
-    xUnitDimensionFactor = function(dimension, unit) {
-      getUnitConversionFactor(self$xUnit, getBaseUnit(self$xDimension), self$xDimension) * dimensionsConversionFactor(self$xDimension, dimension) * getUnitConversionFactor(getBaseUnit(dimension), unit, dimension)
-    },
-
-    #' @description
-    #' Numerical factor for converting the y-values to a specific unit of a specific dimension
-    #'
-    #' @param dimension Target dimension
-    #' @param unit Target unit
-    #' @param mw Double value of the molecular weight of the molecule. Used
-    #' for conversion between molar and mass concentrations. Can be \code{NULL}
-    #' for other dimensions (default)
-    #'
-    #' @return yFactor multiplied by the factor for conversion from dimensions multiplied by the factors for the conversion between units.
-    yUnitDimensionFactor = function(dimension, unit, mw = NULL) {
-      getUnitConversionFactor(self$yUnit, getBaseUnit(self$yDimension), self$yDimension) * dimensionsConversionFactor(self$yDimension, dimension, mw) * getUnitConversionFactor(getBaseUnit(dimension), unit, dimension)
-    },
-
-    #' @description
-    #' Numerical factor for converting the y error values to a specific unit of a specific dimension
-    #'
-    #' @param dimension Target dimension
-    #' @param unit Target unit
-    #' @param mw Double value of the molecular weight of the molecule. Used
-    #' for conversion between molar and mass concentrations. Can be \code{NULL}
-    #' for other dimensions (default)
-    #'
-    #' @return yFactor multiplied by the factor for conversion from dimensions multiplied by the factors for the conversion between units.
-    yErrorUnitDimensionFactor = function(dimension, unit, mw = NULL) {
-      getUnitConversionFactor(self$yErrorUnit, getBaseUnit(self$yDimension), self$yDimension) * dimensionsConversionFactor(self$yDimension, dimension, mw) * getUnitConversionFactor(getBaseUnit(dimension), unit, dimension)
-    },
-
-    #' @description
     #' x values with all conversions applied.
     #'
-    #' @param dimension Target dimension. If \code{NULL} (default), the no conversion between dimensions is applied.
-    #' @param unit Target unit. If \code{NULL} (default), the no conversion between units is applied. If one of \code{dimension}
-    #' or \code{unit} is specified, the other must be, too.
+    #' @param unit Target unit. If \code{NULL} (default), no conversion between units is applied.
     #'
-    #' @return Raw xValues plus xOffset multiplied by xFactor and converted to a specified unit/dimension.
-    #' It is assumed that raw xValues are in the xDimension and xUnit.
-    xValuesProcessed = function(dimension = NULL, unit = NULL) {
-      unitDimensionFactor <- 1
-      if ((is.null(dimension) || is.null(unit)) && !(is.null(dimension) && is.null(unit))) {
-        stop(messages$errorOneArgumentNullButNotBoth("dimension", "unit"))
-      }
+    #' @return Raw xValues plus xOffset multiplied by xFactor and converted to a specified unit.
+    #' It is assumed that raw xValues are in \code{xUnit}.
+    xValuesProcessed = function(unit = NULL) {
+      # Add offset and multiply by the factor. The values are in the unit of XYData
+      valuesProcessed <- (private$.xVals + self$xOffset) * self$xFactor
 
-      # Calculate the unit and dimension conversion factor
-      if (!is.null(dimension)) {
-        unitDimensionFactor <- self$xUnitDimensionFactor(dimension, unit)
+      # If a unit is passed and is different from the current unit, convert to unit
+      if (!is.null(unit) && unit != private$.xUnit) {
+        return(toUnit(
+          quantityOrDimension = private$.xDimension,
+          values = valuesProcessed,
+          targetUnit = unit,
+          sourceUnit = private$.xUnit
+        ))
       }
-      # Add offset, multiply by the factor, and then convert to unit/dimension
-      return((private$.xVals + self$xOffset) * self$xFactor * unitDimensionFactor)
+      # Otherwise return without conversion to unit
+      return(valuesProcessed)
     },
 
     #' @description
     #' y values with all conversions applied.
     #'
-    #' @param dimension Target dimension. If \code{NULL} (default), the no conversion between dimensions is applied.
-    #' @param unit Target unit. If \code{NULL} (default), the no conversion between units is applied. If one of \code{dimension}
-    #' or \code{unit} is specified, the other must be, too.
-    #' @param mw Double value of the molecular weight of the molecule. Used
-    #' for conversion between molar and mass concentrations. Can be \code{NULL}
-    #' for other dimensions (default).
+    #' @param unit Target unit. If \code{NULL} (default), no conversion between units is applied.
     #'
-    #' @return Raw yValues plus yOffset multiplied by yFactor and converted to a specified unit/dimension.
-    #' It is assumed that raw yValues are in the yDimension and yUnit.
-    yValuesProcessed = function(dimension = NULL, unit = NULL, mw = NULL) {
-      unitDimensionFactor <- 1
-      if ((is.null(dimension) || is.null(unit)) && !(is.null(dimension) && is.null(unit))) {
-        stop(messages$errorOneArgumentNullButNotBoth("dimension", "unit"))
-      }
+    #' @return Raw yValues plus yOffset multiplied by yFactor and converted to a specified unit.
+    #' It is assumed that raw yValues are in \code{yUnit}.
+    yValuesProcessed = function(unit = NULL) {
+      # Add offset and multiply by the factor. The values are in the unit of XYData
+      valuesProcessed <- (private$.yVals + self$yOffset) * self$yFactor
 
-      # Calculate the unit and dimension conversion factor
-      if (!is.null(dimension)) {
-        unitDimensionFactor <- self$yUnitDimensionFactor(dimension, unit, mw)
+      # If a unit is passed and is different from the current unit, convert to unit
+      if (!is.null(unit) && unit != private$.yUnit) {
+        return(toUnit(
+          quantityOrDimension = private$.yDimension,
+          values = valuesProcessed,
+          targetUnit = unit,
+          sourceUnit = private$.yUnit,
+          molWeight = private$.MW,
+          molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+        ))
       }
-      # Add offset, multiply by the factor, and then convert to unit/dimension
-      return((private$.yVals + self$yOffset) * self$yFactor * unitDimensionFactor)
+      # Otherwise return without conversion to unit
+      return(valuesProcessed)
     },
 
     #' @description
     #' y error values with all conversions applied.
     #'
-    #' @param dimension Target dimension. If \code{NULL} (default), the no conversion between dimensions is applied.
-    #' @param unit Target unit. If \code{NULL} (default), the no conversion between units is applied. If one of \code{dimension}
-    #' or \code{unit} is specified, the other must be, too.
-    #' @param mw Double value of the molecular weight of the molecule. Used
-    #' for conversion between molar and mass concentrations. Can be \code{NULL}
-    #' for other dimensions (default).
+    #' @param unit Target unit. If \code{NULL} (default), the no conversion between units is applied.
     #'
-    #' @return Raw yError plus yOffset multiplied by yFactor and converted to a specified unit/dimension.
-    #' It is assumed that raw yError are in the yDimension and yErrorUnit.
-    yErrorProcessed = function(dimension = NULL, unit = NULL, mw = NULL) {
-      unitDimensionFactor <- 1
-      if ((is.null(dimension) || is.null(unit)) && !(is.null(dimension) && is.null(unit))) {
-        stop(messages$errorOneArgumentNullButNotBoth("dimension", "unit"))
-      }
+    #' @return Raw yError plus yOffset multiplied by yFactor and converted to a specified unit.
+    #' It is assumed that raw yError are in \code{yUnit}.
+    yErrorProcessed = function(unit = NULL) {
+      # Add offset and multiply by the factor. The values are in the unit of XYData
+      valuesProcessed <- (private$.yError + self$yOffset) * self$yFactor
 
-      # Calculate the unit and dimension conversion factor
-      if (!is.null(dimension)) {
-        unitDimensionFactor <- self$yErrorUnitDimensionFactor(dimension, unit, mw)
+      # If a unit is passed and is different from the current unit, convert to unit
+      if (!is.null(unit) && unit != private$.yUnit) {
+        return(toUnit(
+          quantityOrDimension = private$.yDimension,
+          values = valuesProcessed,
+          targetUnit = unit,
+          sourceUnit = private$.yUnit,
+          molWeight = private$.MW,
+          molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+        ))
       }
-      # Add offset, multiply by the factor, and then convert to unit/dimension
-      return((private$.yError + self$yOffset) * self$yFactor * unitDimensionFactor)
+      # Otherwise return without conversion to unit
+      return(valuesProcessed)
     },
 
     #' @description Print the object to the console
@@ -314,11 +285,11 @@ XYData <- R6::R6Class(
       private$printLine("Data type", c(private$.dataType))
       # private$printLine("X values", c(private$.xVals))
       # private$printLine("Y values", c(private$.yVals))
-      private$printLine("X dimension", c(private$.XDim))
-      private$printLine("X unit", c(private$.XUnit))
-      private$printLine("Y dimension", c(private$.YDim))
-      private$printLine("Y unit", c(private$.YUnit))
-      private$printLine("Y error unit", c(private$.YErrorUnit))
+      private$printLine("X dimension", c(private$.xDimension))
+      private$printLine("X unit", c(private$.xUnit))
+      private$printLine("Y dimension", c(private$.yDimension))
+      private$printLine("Y unit", c(private$.yUnit))
+      private$printLine("Y error unit", c(private$.yErrorUnit))
       invisible(self)
     }
   )

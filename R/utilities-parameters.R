@@ -69,7 +69,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @param checkFormulaValues If TRUE, values of explicit formulas are always compared. Otherwise, the values
 #' are only compared if the formulas are overridden (isFixedValue == TRUE). FALSE by default.
 #'
-#' @return
+#' @return \code{TRUE} if parameters are considered equal, \code{FALSE} otherwise
 #' @export
 isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE) {
   validateIsOfType(c(parameter1, parameter2), "Parameter")
@@ -154,7 +154,7 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' length as 'parameterPaths'
 #' @param condition A function that receives a \code{Parmeter} as an argument
 #' and returns \code{TRUE} of \code{FALSE}
-#' #' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
+#' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
 #' are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #'
