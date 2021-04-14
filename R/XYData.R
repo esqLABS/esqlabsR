@@ -6,7 +6,6 @@
 XYData <- R6::R6Class(
   "XYData",
   inherit = Plotable,
-  cloneable = FALSE,
   active = list(
     #' @field xValues An array of x-values. For time series, the values must be in minutes.
     xValues = function(value) {

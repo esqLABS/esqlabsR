@@ -6,7 +6,6 @@
 OSPSTimeValues <- R6::R6Class(
   "OSPSTimeValues",
   inherit = XYData,
-  cloneable = FALSE,
   active = list(),
   private = list(),
   public = list(
