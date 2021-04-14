@@ -217,7 +217,7 @@ dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr,
 \if{html}{\out{<a id="method-addOSPSTimeValues"></a>}}
 \if{latex}{\out{\hypertarget{method-addOSPSTimeValues}{}}}
 \subsection{Method \code{addOSPSTimeValues()}}{
-Add \code{OSPSTimeValues} object(s).
+Add \code{OSPSTimeValues} object(s). The objects are cloned at adding.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMapping$addOSPSTimeValues(OSPSTimeValues, groups = NULL)}\if{html}{\out{</div>}}
 }

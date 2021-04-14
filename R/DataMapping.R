@@ -417,7 +417,7 @@ DataMapping <- R6::R6Class(
     },
 
 
-    #' @description Add \code{OSPSTimeValues} object(s).
+    #' @description Add \code{OSPSTimeValues} object(s). The objects are cloned at adding.
     #'
     #' @param OSPSTimeValues Object or a list of objects of the type \code{OSPSTimeValues}
     #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{OSPSTimeValues}
@@ -437,7 +437,9 @@ DataMapping <- R6::R6Class(
           newGroupName <- NA
         }
         label <- OSPSTimeValues[[idx]]$label
-        private$.xySeries <- mapPut(keys = label, values = c(OSPSTimeValues[[idx]]), map = private$.xySeries, overwrite = TRUE)
+        #clone the object and add it
+        timeValuesClone <- OSPSTimeValues[[idx]]$clone()
+        private$.xySeries <- mapPut(keys = label, values = c(timeValuesClone), map = private$.xySeries, overwrite = TRUE)
         # If an entry with the given label already exists in the DataMapping (i.e., it will be overwritten),
         # check if the group has changed. In no, do nothing. If yes, remove the label
         # from the old group and add to the new.

@@ -36,6 +36,7 @@ A set of x and y value pairs with the properties as defined in the esqLABS "Time
 \itemize{
 \item \href{#method-new}{\code{OSPSTimeValues$new()}}
 \item \href{#method-print}{\code{OSPSTimeValues$print()}}
+\item \href{#method-clone}{\code{OSPSTimeValues$clone()}}
 }
 }
 \if{html}{
@@ -87,6 +88,23 @@ Print the object to the console
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{...}}{Rest arguments.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-clone}{}}}
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{OSPSTimeValues$clone(deep = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
 }
 \if{html}{\out{</div>}}
 }

@@ -759,6 +759,56 @@ test_that("It can set a configuration", {
   expect_equal(dataMapping$xySeries[["my series3"]]$yOffset, 3)
 })
 
+test_that("Setting a does not affect initial xy-data objects configuration", {
+  dataMapping <- DataMapping$new()
+  xVals <- c(1, 2, 3, 4)
+  yVals <- c(5, 6, 7, 8)
+
+  xyData <- XYData$new(xVals = xVals, yVals = yVals, label = "my series1")
+
+  dataMapping$addOSPSTimeValues (
+    OSPSTimeValues = xyData
+  )
+
+  configuration <- DataMappingConfiguration$new()
+  configuration$setColors(labels = c("my series1"), colors = c("red"))
+  configuration$setLineTypes(labels = c("my series1"), lineTypes = c("b"))
+  configuration$setXFactors(labels = c("my series1"), xFactors = c(2))
+  configuration$setYFactors(labels = c("my series1"), yFactors = c(3))
+  configuration$setXOffsets(labels = c("my series1"), xOffsets = c(3))
+  configuration$setYOffsets(labels = c("my series1"), yOffsets = c(3))
+
+  dataMapping$setConfiguration(dataMappingConfiguration = configuration)
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$color, "red")
+  expect_equal(dataMapping$xySeries[["my series1"]]$type, "b")
+  expect_equal(dataMapping$xySeries[["my series1"]]$xFactor, 2)
+  expect_equal(dataMapping$xySeries[["my series1"]]$yFactor, 3)
+  expect_equal(dataMapping$xySeries[["my series1"]]$xOffset, 3)
+  expect_equal(dataMapping$xySeries[["my series1"]]$yOffset, 3)
+
+  expect_equal(xyData$color, NULL)
+  expect_equal(xyData$type, "p")
+  expect_equal(xyData$xFactor, 1)
+  expect_equal(xyData$yFactor, 1)
+  expect_equal(xyData$xOffset, 0)
+  expect_equal(xyData$yOffset, 0)
+
+  xyData$color <- "green"
+  xyData$type <- "l"
+  xyData$xFactor <- 10
+  xyData$yFactor <- 10
+  xyData$xOffset <- 10
+  xyData$yOffset <- 10
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$color, "red")
+  expect_equal(dataMapping$xySeries[["my series1"]]$type, "b")
+  expect_equal(dataMapping$xySeries[["my series1"]]$xFactor, 2)
+  expect_equal(dataMapping$xySeries[["my series1"]]$yFactor, 3)
+  expect_equal(dataMapping$xySeries[["my series1"]]$xOffset, 3)
+  expect_equal(dataMapping$xySeries[["my series1"]]$yOffset, 3)
+})
+
 context("xLim")
 
 test_that("X limit of a empty mapping is c(0, 0)", {
