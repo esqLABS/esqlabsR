@@ -35,10 +35,20 @@ DataMapping <- R6::R6Class(
             return(c(0, 0))
           }
           xMax <- max(sapply(self$xySeries, function(x) {
-            x$xMax * x$xUnitDimensionFactor(self$xDimension, self$xUnit)
+            toUnit(
+              quantityOrDimension = self$xDimension,
+              values = x$xMax,
+              targetUnit = self$xUnit,
+              sourceUnit = x$xUnit
+            )
           }))
           xMin <- min(sapply(self$xySeries, function(x) {
-            x$xMin * x$xUnitDimensionFactor(self$xDimension, self$xUnit)
+            toUnit(
+              quantityOrDimension = self$xDimension,
+              values = x$xMin,
+              targetUnit = self$xUnit,
+              sourceUnit = x$xUnit
+            )
           }))
           return(c(xMin, xMax))
         }
@@ -60,15 +70,36 @@ DataMapping <- R6::R6Class(
             return(c(0, 0))
           }
           yMax <- max(sapply(self$xySeries, function(x) {
-            x$yMax * x$yUnitDimensionFactor(self$yDimension, self$yUnit)
+            toUnit(
+              quantityOrDimension = self$yDimension,
+              values = x$yMax,
+              targetUnit = self$yUnit,
+              sourceUnit = x$yUnit,
+              molWeight = x$MW,
+              molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+            )
           }))
           # If logarithmic scaling of the y axis is selected, the minimal value should be greater than zero
           yMin <- min(sapply(self$xySeries, function(x) {
             if (isCharInString("y", self$log)) {
-              x$yMinPositive() * x$yUnitDimensionFactor(self$yDimension, self$yUnit)
+              toUnit(
+                quantityOrDimension = self$yDimension,
+                values = x$yMinPositive(),
+                targetUnit = self$yUnit,
+                sourceUnit = x$yUnit,
+                molWeight = x$MW,
+                molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+              )
             }
             else {
-              x$yMin * x$yUnitDimensionFactor(self$yDimension, self$yUnit)
+              toUnit(
+                quantityOrDimension = self$yDimension,
+                values = x$yMin,
+                targetUnit = self$yUnit,
+                sourceUnit = x$yUnit,
+                molWeight = x$MW,
+                molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+              )
             }
           }))
           return(c(yMin, yMax))
@@ -103,7 +134,7 @@ DataMapping <- R6::R6Class(
       }
     },
 
-    #' @field xDimension Dimension of x values. See enum \code{Dimensions} for the list of supported dimensions.
+    #' @field xDimension Dimension of x values. See enum \code{ospDimensions} for the list of supported dimensions.
     #' If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
     #' If no \code{XYSeries} are present, the dimension is \code{NULL}
     #' When changing the dimension, the unit is automatically set to the base unit of the dimension.
@@ -123,7 +154,7 @@ DataMapping <- R6::R6Class(
       }
     },
 
-    #' @field yDimension Dimension of y values. See enum \code{Dimensions} for the list of supported dimensions.
+    #' @field yDimension Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.
     #' If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
     #' If no \code{XYSeries} are present, the dimension is \code{NULL}
     #'     #' When changing the dimension, the unit is automatically set to the base unit of the dimension.
@@ -386,7 +417,7 @@ DataMapping <- R6::R6Class(
     },
 
 
-    #' @description Add \code{OSPSTimeValues} object(s).
+    #' @description Add \code{OSPSTimeValues} object(s). The objects are cloned at adding.
     #'
     #' @param OSPSTimeValues Object or a list of objects of the type \code{OSPSTimeValues}
     #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{OSPSTimeValues}
@@ -406,7 +437,9 @@ DataMapping <- R6::R6Class(
           newGroupName <- NA
         }
         label <- OSPSTimeValues[[idx]]$label
-        private$.xySeries <- mapPut(keys = label, values = c(OSPSTimeValues[[idx]]), map = private$.xySeries, overwrite = TRUE)
+        #clone the object and add it
+        timeValuesClone <- OSPSTimeValues[[idx]]$clone()
+        private$.xySeries <- mapPut(keys = label, values = c(timeValuesClone), map = private$.xySeries, overwrite = TRUE)
         # If an entry with the given label already exists in the DataMapping (i.e., it will be overwritten),
         # check if the group has changed. In no, do nothing. If yes, remove the label
         # from the old group and add to the new.

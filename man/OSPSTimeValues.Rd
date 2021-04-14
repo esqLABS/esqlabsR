@@ -27,8 +27,6 @@ A set of x and y value pairs with the properties as defined in the esqLABS "Time
 
 \item{\code{Molecule}}{Measured molecule}
 
-\item{\code{MW}}{Molecular weight of the measured molecule in g/mol}
-
 \item{\code{GroupId}}{Id of the group}
 }
 \if{html}{\out{</div>}}
@@ -36,114 +34,20 @@ A set of x and y value pairs with the properties as defined in the esqLABS "Time
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-yUnitDimensionFactor}{\code{OSPSTimeValues$yUnitDimensionFactor()}}
-\item \href{#method-yErrorUnitDimensionFactor}{\code{OSPSTimeValues$yErrorUnitDimensionFactor()}}
-\item \href{#method-yValuesProcessed}{\code{OSPSTimeValues$yValuesProcessed()}}
-\item \href{#method-yErrorProcessed}{\code{OSPSTimeValues$yErrorProcessed()}}
 \item \href{#method-new}{\code{OSPSTimeValues$new()}}
 \item \href{#method-print}{\code{OSPSTimeValues$print()}}
+\item \href{#method-clone}{\code{OSPSTimeValues$clone()}}
 }
 }
 \if{html}{
 \out{<details open ><summary>Inherited methods</summary>}
 \itemize{
-\item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="xUnitDimensionFactor">}\href{../../esqlabsR/html/XYData.html#method-xUnitDimensionFactor}{\code{esqlabsR::XYData$xUnitDimensionFactor()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="xValuesProcessed">}\href{../../esqlabsR/html/XYData.html#method-xValuesProcessed}{\code{esqlabsR::XYData$xValuesProcessed()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="yErrorProcessed">}\href{../../esqlabsR/html/XYData.html#method-yErrorProcessed}{\code{esqlabsR::XYData$yErrorProcessed()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="yMinPositive">}\href{../../esqlabsR/html/XYData.html#method-yMinPositive}{\code{esqlabsR::XYData$yMinPositive()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="yValuesProcessed">}\href{../../esqlabsR/html/XYData.html#method-yValuesProcessed}{\code{esqlabsR::XYData$yValuesProcessed()}}\out{</span>}
 }
 \out{</details>}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-yUnitDimensionFactor"></a>}}
-\if{latex}{\out{\hypertarget{method-yUnitDimensionFactor}{}}}
-\subsection{Method \code{yUnitDimensionFactor()}}{
-Numerical factor for converting the y-values to a specific unit of a specific dimension
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{OSPSTimeValues$yUnitDimensionFactor(dimension, unit, ...)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dimension}}{Target dimension}
-
-\item{\code{unit}}{Target unit}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-yFactor multiplied by the factor for conversion from dimensions multiplied by the factors for the conversion between units.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-yErrorUnitDimensionFactor"></a>}}
-\if{latex}{\out{\hypertarget{method-yErrorUnitDimensionFactor}{}}}
-\subsection{Method \code{yErrorUnitDimensionFactor()}}{
-Numerical factor for converting the y error values to a specific unit of a specific dimension
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{OSPSTimeValues$yErrorUnitDimensionFactor(dimension, unit, ...)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dimension}}{Target dimension}
-
-\item{\code{unit}}{Target unit}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-yFactor multiplied by the factor for conversion from dimensions multiplied by the factors for the conversion between units.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-yValuesProcessed"></a>}}
-\if{latex}{\out{\hypertarget{method-yValuesProcessed}{}}}
-\subsection{Method \code{yValuesProcessed()}}{
-y values with all conversions applied.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{OSPSTimeValues$yValuesProcessed(dimension = NULL, unit = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dimension}}{Target dimension. If \code{NULL} (default), the no conversion between dimensions is applied.}
-
-\item{\code{unit}}{Target unit. If \code{NULL} (default), the no conversion between units is applied. If one of \code{dimension}
-or code{unit} is specified, the other must be, too.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Raw yValues plus yOffset multiplied by yFactor and converted to a specified unit/dimension.
-It is assumed that raw yValues are in the yDimension and yUnit.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-yErrorProcessed"></a>}}
-\if{latex}{\out{\hypertarget{method-yErrorProcessed}{}}}
-\subsection{Method \code{yErrorProcessed()}}{
-y error values with all conversions applied.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{OSPSTimeValues$yErrorProcessed(dimension = NULL, unit = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dimension}}{Target dimension. If \code{NULL} (default), the no conversion between dimensions is applied.}
-
-\item{\code{unit}}{Target unit. If \code{NULL} (default), the no conversion between units is applied. If one of \code{dimension}
-or code{unit} is specified, the other must be, too.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Raw yError plus yOffset multiplied by yFactor and converted to a specified unit/dimension.
-It is assumed that raw yError are in the yDimension and yErrorUnit.
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-new"></a>}}
@@ -184,6 +88,23 @@ Print the object to the console
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{...}}{Rest arguments.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-clone}{}}}
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{OSPSTimeValues$clone(deep = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
 }
 \if{html}{\out{</div>}}
 }

@@ -33,15 +33,15 @@ xyData$xUnit
 xyData$yDimension
 xyData$yUnit
 #List of all supported dimensions
-length(Dimensions)
-Dimensions[[1]]
+length(ospDimensions)
+ospDimensions[[1]]
 
 ## ----setDimension-------------------------------------------------------------
 xyData$yDimension
 xyData$yUnit
 xyData$yErrorUnit
 #Change the dimension of y values
-xyData$yDimension <- Dimensions$`Concentration (molar)`
+xyData$yDimension <- ospDimensions$`Concentration (molar)`
 xyData$yUnit
 xyData$yErrorUnit
 

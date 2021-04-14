@@ -15,7 +15,7 @@ Printable <- R6::R6Class(
       }
 
       entries <- c(entries, "\n")
-      cat(entries, sep = "")
+      cat(entries, sep = " ")
 
       invisible(self)
     },

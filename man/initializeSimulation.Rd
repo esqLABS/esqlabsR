@@ -21,15 +21,12 @@ initializeSimulation(
 \item{additionalParams}{A named list with lists 'paths', 'values', and 'units'. Optional}
 
 \item{simulateSteadyState}{Logical. If \code{TRUE}, the model is simulated for \code{steadyStateTime} minutes after applying parameter values defined in
-\code{individualCharacteristics} and code{additionalParams}, and the end results of the simulation are applied as initial conditions for alle molecules.
+\code{individualCharacteristics} and code{additionalParams}, and the end results of the simulation are applied as initial conditions for all molecules.
 State variable parameters are ignored in this version!}
 
 \item{steadyStateTime}{Simulation time (minutes). Must be long enough for system to reach a steady-state. 1000 by default}
 
 \item{ignoreIfFormula}{If "TRUE", species and parameters with initial values defined by a formula are not included. Default is "TRUE".}
-}
-\value{
-
 }
 \description{
 Helper method that combines a set of common steps perfored before running a simulation.

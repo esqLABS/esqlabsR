@@ -4,8 +4,6 @@
 #' \code{createIndividualCharacterstics} for more information
 #' @param outputXLSPath Path to the Excel file the parameter set will be written to
 #' @seealso createIndividualCharacteristics crateIndividual
-#'
-#' @return
 #' @export
 #'
 #' @examples

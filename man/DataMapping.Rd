@@ -55,12 +55,12 @@ that will be plotted. Keys are the labels of the \code{xySeries} objects}
 
 \item{\code{yLab}}{label of the y-axis.}
 
-\item{\code{xDimension}}{Dimension of x values. See enum \code{Dimensions} for the list of supported dimensions.
+\item{\code{xDimension}}{Dimension of x values. See enum \code{ospDimensions} for the list of supported dimensions.
 If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
 If no \code{XYSeries} are present, the dimension is \code{NULL}
 When changing the dimension, the unit is automatically set to the base unit of the dimension.}
 
-\item{\code{yDimension}}{Dimension of y values. See enum \code{Dimensions} for the list of supported dimensions.
+\item{\code{yDimension}}{Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.
 If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
 If no \code{XYSeries} are present, the dimension is \code{NULL}
     #' When changing the dimension, the unit is automatically set to the base unit of the dimension.}
@@ -217,7 +217,7 @@ dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr,
 \if{html}{\out{<a id="method-addOSPSTimeValues"></a>}}
 \if{latex}{\out{\hypertarget{method-addOSPSTimeValues}{}}}
 \subsection{Method \code{addOSPSTimeValues()}}{
-Add \code{OSPSTimeValues} object(s).
+Add \code{OSPSTimeValues} object(s). The objects are cloned at adding.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMapping$addOSPSTimeValues(OSPSTimeValues, groups = NULL)}\if{html}{\out{</div>}}
 }

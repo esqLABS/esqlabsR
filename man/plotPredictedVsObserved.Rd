@@ -12,6 +12,8 @@ plot is to be drawn. For each group within the \code{dataMapping}, simulated
 and observed values are compared.}
 
 \item{foldDistance}{Numerical value for the fold-distance lines to be drawn. Default is 2.}
+
+\item{...}{Any parameter that can be interpreted by the default \code{\link{plot}} function}
 }
 \description{
 Plot a predicted-versus-observed goodness of fit plot

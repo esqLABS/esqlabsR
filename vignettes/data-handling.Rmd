@@ -66,8 +66,8 @@ xyData$xUnit
 xyData$yDimension
 xyData$yUnit
 #List of all supported dimensions
-length(Dimensions)
-Dimensions[[1]]
+length(ospDimensions)
+ospDimensions[[1]]
 ```
 Setting the dimension will set the unit to the default unit of the dimension (even if the dimension did not actually change). For the list of default units, please refer to [OSPS manual](https://docs.open-systems-pharmacology.org/appendix/appendix). The unit of the y error values is automatically set to the base unit of the dimension when changing dimensions.
 
@@ -76,7 +76,7 @@ xyData$yDimension
 xyData$yUnit
 xyData$yErrorUnit
 #Change the dimension of y values
-xyData$yDimension <- Dimensions$`Concentration (molar)`
+xyData$yDimension <- ospDimensions$`Concentration (molar)`
 xyData$yUnit
 xyData$yErrorUnit
 ```

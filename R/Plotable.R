@@ -1,6 +1,6 @@
 #' @title Plotable
 #' @docType class
-#' @description An object holding ploting information
+#' @description An object holding plotting information
 #' @format NULL
 Plotable <- R6::R6Class(
   "Plotable",

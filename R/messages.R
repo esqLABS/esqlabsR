@@ -33,10 +33,6 @@ messages <- list(
     The file should consist of columns'PopulationName', 'Species','Population','NrIndiv', '% female',
     'Weight_min', 'Weight_max', 'Height_min', 'Height_max','Age_min', 'Age_max', 'BMI_min', 'BMI_max'. ", optionalMessage)
   },
-  errorWrongPopulationname = function(filePath, populationName, optinalMessage = NULL) {
-    paste0("Loading population characteristics from XLS file  '", filePath, "' failed,
-    cannot find population with the name '", populationName, "'! ", optionalMessage)
-  },
   errorWrongAdditionalParams = function(optionalMessage = NULL) {
     paste0("Wrong argument 'additionalParams'! Must be a list containing lists 'paths', 'values', and 'units' ", optionalMessage)
   },
@@ -51,18 +47,6 @@ messages <- list(
   },
   erroFileNotFound = function(filePath, optionalMessage = NULL) {
     paste0("File '", filePath, "' could not be found!")
-  },
-  errorDimensionNotSupported = function(dimension, optionalMessage = NULL) {
-    paste0("Dimension '", dimension, "' is not supported! See enum Dimensions for the list of supported dimensions.")
-  },
-  errorUnitNotSupported = function(unit, dimension, optionalMessage = NULL) {
-    paste0("Unit '", unit, "' is not supported by the dimension '", dimension, "'!")
-  },
-  errorCannotConvertDimensions = function(dimension1, dimension2, optionalMessage = NULL) {
-    paste0("Cannot convert dimension '", dimension1, "' to dimension '", dimension2, "'", optionalMessage)
-  },
-  errorCannotConvertDimensionsNoMW = function(dimension1, dimension2, optionalMessage = NULL) {
-    paste0("Cannot convert dimension '", dimension1, "' to dimension '", dimension2, "' without a valid molecular weight!", optionalMessage)
   },
   errorEsqlabsRSettingNotFound = function(settingName) {
     paste0("No global setting with the name '", settingName, "' exists. Available global settings are:\n", paste0(names(esqlabsEnv), collapse = ", "))
@@ -84,7 +68,7 @@ messages <- list(
     paste0("All keys of a map must be unique, but they are not! ", optionalMessage)
   },
   errorValuesAreNotPositive = function(values, optionalMessage = NULL) {
-    paste("All values must be positive or 0, but they are not! Values are: ", unlist(values), "optionalMessage")
+    paste("All values must be positive or 0, but they are not! Values are: ", paste(as.character(values), collapse = ", "), optionalMessage)
   },
   errorWrongLength = function(object, length, optionalMessage = NULL) {
     paste("Object `", object, "` must be of length ", length, " but it is not!")
