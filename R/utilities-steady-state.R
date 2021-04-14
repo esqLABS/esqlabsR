@@ -114,8 +114,6 @@ getSteadyState <- function(quantities = NULL, simulation, steadyStateTime, ignor
 #' @inheritParams getSteadyState
 #' @param resultsXLSPath Path to the xls-file where the results will be written to. If the file does not exist, a new one is created
 #' If no path is provided, the file will be created in the same directory where the model file is located
-#'
-#' @return
 #' @export
 exportSteadyStateToXLS <- function(simulation, quantities = NULL, resultsXLSPath = "", steadyStateTime = 1000, ignoreIfFormula = TRUE,
                                    stopIfNotFound = TRUE, lowerThreshold = 1e-15) {

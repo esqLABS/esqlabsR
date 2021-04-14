@@ -34,9 +34,6 @@ to ignore such errors. Check the outputs for empty values when using this option
 \item{lowerThreshold}{Numerical value. Any steady-state values below this value are considered as numerical noise and replaced by 0. If \code{lowerThreshold} is \code{NULL},
 no cut-off is applied. Default value is 1e-15.}
 }
-\value{
-
-}
 \description{
 Write an Excel-file with the steady-state
 }

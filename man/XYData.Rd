@@ -29,15 +29,17 @@ A set of x and y value pairs
 
 \item{\code{dataType}}{Type of the data. See enum \code{XYDataTypes} for the list of supported types.}
 
-\item{\code{xDimension}}{Dimension of x values. See enum \code{Dimensions} for the list of supported dimensions.}
+\item{\code{xDimension}}{Dimension of x values. See enum \code{ospDimensions} for the list of supported dimensions.}
 
 \item{\code{xUnit}}{Unit of x values}
 
-\item{\code{yDimension}}{Dimension of y values. See enum \code{Dimensions} for the list of supported dimensions.}
+\item{\code{yDimension}}{Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.}
 
 \item{\code{yUnit}}{Unit of y values}
 
 \item{\code{yErrorUnit}}{Unit of y error values}
+
+\item{\code{MW}}{Molecular weight in g/mol. Required for conversion between molar and mass dimensions. Can be \code{NULL} (default)}
 }
 \if{html}{\out{</div>}}
 }
@@ -46,9 +48,6 @@ A set of x and y value pairs
 \itemize{
 \item \href{#method-new}{\code{XYData$new()}}
 \item \href{#method-yMinPositive}{\code{XYData$yMinPositive()}}
-\item \href{#method-xUnitDimensionFactor}{\code{XYData$xUnitDimensionFactor()}}
-\item \href{#method-yUnitDimensionFactor}{\code{XYData$yUnitDimensionFactor()}}
-\item \href{#method-yErrorUnitDimensionFactor}{\code{XYData$yErrorUnitDimensionFactor()}}
 \item \href{#method-xValuesProcessed}{\code{XYData$xValuesProcessed()}}
 \item \href{#method-yValuesProcessed}{\code{XYData$yValuesProcessed()}}
 \item \href{#method-yErrorProcessed}{\code{XYData$yErrorProcessed()}}
@@ -65,7 +64,7 @@ A set of x and y value pairs
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize a new instance of the class. xVals, yVals, and yError (can be omitted) must be of the same length
+Initialize a new instance of the class. xVals, yVals, and yError (optional) must be of the same length
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{XYData$new(xVals, yVals, label, yError = NULL)}\if{html}{\out{</div>}}
 }
@@ -102,101 +101,24 @@ If no such value exists, returns Inf.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-xUnitDimensionFactor"></a>}}
-\if{latex}{\out{\hypertarget{method-xUnitDimensionFactor}{}}}
-\subsection{Method \code{xUnitDimensionFactor()}}{
-Numerical factor for converting the x-values to a specific unit of a specific dimension
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{XYData$xUnitDimensionFactor(dimension, unit)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dimension}}{Target dimension}
-
-\item{\code{unit}}{Target unit}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-xFactor multiplied by the factor for conversion from dimensions multiplied by the factors for the conversion between units.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-yUnitDimensionFactor"></a>}}
-\if{latex}{\out{\hypertarget{method-yUnitDimensionFactor}{}}}
-\subsection{Method \code{yUnitDimensionFactor()}}{
-Numerical factor for converting the y-values to a specific unit of a specific dimension
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{XYData$yUnitDimensionFactor(dimension, unit, mw = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dimension}}{Target dimension}
-
-\item{\code{unit}}{Target unit}
-
-\item{\code{mw}}{Double value of the molecular weight of the molecule. Used
-for conversion between molar and mass concentrations. Can be \code{NULL}
-for other dimensions (default)}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-yFactor multiplied by the factor for conversion from dimensions multiplied by the factors for the conversion between units.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-yErrorUnitDimensionFactor"></a>}}
-\if{latex}{\out{\hypertarget{method-yErrorUnitDimensionFactor}{}}}
-\subsection{Method \code{yErrorUnitDimensionFactor()}}{
-Numerical factor for converting the y error values to a specific unit of a specific dimension
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{XYData$yErrorUnitDimensionFactor(dimension, unit, mw = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{dimension}}{Target dimension}
-
-\item{\code{unit}}{Target unit}
-
-\item{\code{mw}}{Double value of the molecular weight of the molecule. Used
-for conversion between molar and mass concentrations. Can be \code{NULL}
-for other dimensions (default)}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-yFactor multiplied by the factor for conversion from dimensions multiplied by the factors for the conversion between units.
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-xValuesProcessed"></a>}}
 \if{latex}{\out{\hypertarget{method-xValuesProcessed}{}}}
 \subsection{Method \code{xValuesProcessed()}}{
 x values with all conversions applied.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{XYData$xValuesProcessed(dimension = NULL, unit = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{XYData$xValuesProcessed(unit = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{dimension}}{Target dimension. If \code{NULL} (default), the no conversion between dimensions is applied.}
-
-\item{\code{unit}}{Target unit. If \code{NULL} (default), the no conversion between units is applied. If one of \code{dimension}
-or \code{unit} is specified, the other must be, too.}
+\item{\code{unit}}{Target unit. If \code{NULL} (default), no conversion between units is applied.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Raw xValues plus xOffset multiplied by xFactor and converted to a specified unit/dimension.
-It is assumed that raw xValues are in the xDimension and xUnit.
+Raw xValues plus xOffset multiplied by xFactor and converted to a specified unit.
+It is assumed that raw xValues are in \code{xUnit}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -205,26 +127,19 @@ It is assumed that raw xValues are in the xDimension and xUnit.
 \subsection{Method \code{yValuesProcessed()}}{
 y values with all conversions applied.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{XYData$yValuesProcessed(dimension = NULL, unit = NULL, mw = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{XYData$yValuesProcessed(unit = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{dimension}}{Target dimension. If \code{NULL} (default), the no conversion between dimensions is applied.}
-
-\item{\code{unit}}{Target unit. If \code{NULL} (default), the no conversion between units is applied. If one of \code{dimension}
-or \code{unit} is specified, the other must be, too.}
-
-\item{\code{mw}}{Double value of the molecular weight of the molecule. Used
-for conversion between molar and mass concentrations. Can be \code{NULL}
-for other dimensions (default).}
+\item{\code{unit}}{Target unit. If \code{NULL} (default), no conversion between units is applied.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Raw yValues plus yOffset multiplied by yFactor and converted to a specified unit/dimension.
-It is assumed that raw yValues are in the yDimension and yUnit.
+Raw yValues plus yOffset multiplied by yFactor and converted to a specified unit.
+It is assumed that raw yValues are in \code{yUnit}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -233,26 +148,19 @@ It is assumed that raw yValues are in the yDimension and yUnit.
 \subsection{Method \code{yErrorProcessed()}}{
 y error values with all conversions applied.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{XYData$yErrorProcessed(dimension = NULL, unit = NULL, mw = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{XYData$yErrorProcessed(unit = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{dimension}}{Target dimension. If \code{NULL} (default), the no conversion between dimensions is applied.}
-
-\item{\code{unit}}{Target unit. If \code{NULL} (default), the no conversion between units is applied. If one of \code{dimension}
-or \code{unit} is specified, the other must be, too.}
-
-\item{\code{mw}}{Double value of the molecular weight of the molecule. Used
-for conversion between molar and mass concentrations. Can be \code{NULL}
-for other dimensions (default).}
+\item{\code{unit}}{Target unit. If \code{NULL} (default), the no conversion between units is applied.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Raw yError plus yOffset multiplied by yFactor and converted to a specified unit/dimension.
-It is assumed that raw yError are in the yDimension and yErrorUnit.
+Raw yError plus yOffset multiplied by yFactor and converted to a specified unit.
+It is assumed that raw yError are in \code{yUnit}.
 }
 }
 \if{html}{\out{<hr>}}

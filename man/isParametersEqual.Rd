@@ -26,7 +26,7 @@ isParametersEqual(parameter1, parameter2, checkFormulaValues = FALSE)
 are only compared if the formulas are overridden (isFixedValue == TRUE). FALSE by default.}
 }
 \value{
-
+\code{TRUE} if parameters are considered equal, \code{FALSE} otherwise
 }
 \description{
 Check if two parameters are equal is respect to certain properties. The parameters are not equal if:

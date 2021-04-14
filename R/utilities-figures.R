@@ -144,7 +144,7 @@ col2hsv <- function(color) {
 #' @param length Numerical value specifying the width of the error bars. Optional. Default is 0.1.
 #' @param axis Dimension to which the error bars are added.
 #' If "y" (default), vertical error bars are drawn. If "x", horizontal error bars are drawn
-#' #' @param ... Graphical parameters (see \code{\link{par}})
+#' @param ... Graphical parameters (see \code{\link{par}})
 plotErrorBars <- function(x, y, upper, lower = upper, length = par()$cin[[1]] / 2, axis = "y", ...) {
   validateIsNumeric(c(x, y))
   validateIsSameLength(x, y, upper, lower)

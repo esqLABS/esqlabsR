@@ -12,9 +12,6 @@ writeIndividualToXLS(individualCharacteristics, outputXLSPath)
 
 \item{outputXLSPath}{Path to the Excel file the parameter set will be written to}
 }
-\value{
-
-}
 \description{
 Create a parameter set describing an individual and write it to the Excel file
 }

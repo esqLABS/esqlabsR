@@ -6,9 +6,7 @@
 \usage{
 plotXYDataAggregated(
   xySeries,
-  xDimension = NULL,
   xUnit = NULL,
-  yDimension = NULL,
   yUnit = NULL,
   quantiles = c(0.05, 0.5, 0.95),
   ...
@@ -17,13 +15,9 @@ plotXYDataAggregated(
 \arguments{
 \item{xySeries}{An \code{XYData} object to be plotted}
 
-\item{xDimension}{Target dimension of x-axis.}
+\item{xUnit}{Target unit of x-axis.}
 
-\item{xUnit}{Target unit of x-axis. If one of \code{xDimension} or \code{xUnit} is specified, the other must be, too.}
-
-\item{yDimension}{Target dimension of y-axis.}
-
-\item{yUnit}{Target unit of y-axis. If one of \code{yDimension} or \code{yUnit} is specified, the other must be, too.}
+\item{yUnit}{Target unit of y-axis.}
 
 \item{quantiles}{A numerical vector with quantile values. Default is
 \code{c(0.05, 0.5, 0.95)}}

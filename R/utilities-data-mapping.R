@@ -48,17 +48,14 @@ plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
 #' @description Draw XYData on top of an existing plot using the \code{points} method.
 #'
 #' @param xySeries An \code{XYData} object to be plotted
-#' @param xDimension Target dimension of x-axis.
-#' @param xUnit Target unit of x-axis. If one of \code{xDimension} or \code{xUnit} is specified, the other must be, too.
-#' @param yDimension Target dimension of y-axis.
-#' @param yUnit Target unit of y-axis. If one of \code{yDimension} or \code{yUnit} is specified, the other must be, too.
+#' @param xUnit Target unit of x-axis.
+#' @param yUnit Target unit of y-axis.
+#' If \code{TRUE},
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
-#'
-#' @return
-plotXYData <- function(xySeries, xDimension = NULL, xUnit = NULL, yDimension = NULL, yUnit = NULL, aggregated = FALSE, ...) {
+plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
   validateIsOfType(xySeries, "XYData")
-  points(xySeries$xValuesProcessed(xDimension, xUnit),
-    xySeries$yValuesProcessed(yDimension, yUnit),
+  points(xySeries$xValuesProcessed(xUnit),
+    xySeries$yValuesProcessed(yUnit),
     type = xySeries$type,
     lty = xySeries$lty,
     pch = xySeries$pch,
@@ -66,9 +63,9 @@ plotXYData <- function(xySeries, xDimension = NULL, xUnit = NULL, yDimension = N
     ...
   )
   if (!is.null(xySeries$yError)) {
-    plotErrorBars(xySeries$xValuesProcessed(xDimension, xUnit),
-      xySeries$yValuesProcessed(yDimension, yUnit),
-      xySeries$yErrorProcessed(yDimension, yUnit),
+    plotErrorBars(xySeries$xValuesProcessed(xUnit),
+      xySeries$yValuesProcessed(yUnit),
+      xySeries$yErrorProcessed(yUnit),
       col = xySeries$color,
       ...
     )
@@ -81,19 +78,17 @@ plotXYData <- function(xySeries, xDimension = NULL, xUnit = NULL, yDimension = N
 #'
 #' @param xySeries An \code{XYData} object to be plotted
 #' @inheritParams getQuantilesYData
-#' @param xDimension Target dimension of x-axis.
-#' @param xUnit Target unit of x-axis. If one of \code{xDimension} or \code{xUnit} is specified, the other must be, too.
-#' @param yDimension Target dimension of y-axis.
-#' @param yUnit Target unit of y-axis. If one of \code{yDimension} or \code{yUnit} is specified, the other must be, too.
+#' @param xUnit Target unit of x-axis.
+#' @param yUnit Target unit of y-axis.
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
 #' @export
-plotXYDataAggregated <- function(xySeries, xDimension = NULL, xUnit = NULL, yDimension = NULL, yUnit = NULL,
+plotXYDataAggregated <- function(xySeries, xUnit = NULL, yUnit = NULL,
                                  quantiles = c(0.05, 0.5, 0.95), ...) {
   validateIsOfType(xySeries, "XYData")
   # Get the quantiles for data - lower/mid/upper
   aggregatedData <- getQuantilesYData(
-    xValues = xySeries$xValuesProcessed(xDimension, xUnit),
-    yValues = xySeries$yValuesProcessed(yDimension, yUnit),
+    xValues = xySeries$xValuesProcessed(xUnit),
+    yValues = xySeries$yValuesProcessed(yUnit),
     quantiles = quantiles
   )
 
@@ -128,8 +123,6 @@ plotIndividualProfile <- function(dataMapping, ...) {
 #'
 #' @param dataMapping A \code{DataMapping} object with \code{XYData}
 #' @param ... Any parameter that can be interpreted by the default \code{\link{boxplot}} function
-#'
-#' @return
 #' @export
 plotBoxPlot <- function(dataMapping, ...) {
   validateIsOfType(dataMapping, "DataMapping")
@@ -262,16 +255,16 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
       if (xySeriesEntry$dataType == XYDataTypes$Simulated && aggregated) {
         plotXYDataAggregated(
           xySeriesEntry,
-          dataMapping$xDimension, dataMapping$xUnit,
-          dataMapping$yDimension, dataMapping$yUnit,
+          dataMapping$xUnit,
+          dataMapping$yUnit,
           quantiles = dataMapping$populationQuantiles,
           ...
         )
       } else {
         plotXYData(
           xySeriesEntry,
-          dataMapping$xDimension, dataMapping$xUnit,
-          dataMapping$yDimension, dataMapping$yUnit,
+          dataMapping$xUnit,
+          dataMapping$yUnit,
           ...
         )
       }
@@ -324,16 +317,16 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
     if (xySeriesEntry$dataType == XYDataTypes$Simulated && aggregated) {
       plotXYDataAggregated(
         xySeriesEntry,
-        dataMapping$xDimension, dataMapping$xUnit,
-        dataMapping$yDimension, dataMapping$yUnit,
+        dataMapping$xUnit,
+        dataMapping$yUnit,
         quantiles = dataMapping$populationQuantiles,
         ...
       )
     } else {
       plotXYData(
         xySeriesEntry,
-        dataMapping$xDimension, dataMapping$xUnit,
-        dataMapping$yDimension, dataMapping$yUnit,
+        dataMapping$xUnit,
+        dataMapping$yUnit,
         ...
       )
     }
@@ -373,6 +366,7 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 #' plot is to be drawn. For each group within the \code{dataMapping}, simulated
 #' and observed values are compared.
 #' @param foldDistance Numerical value for the fold-distance lines to be drawn. Default is 2.
+#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
 #' @details Observed data points are drawn on the x, simulated values on the y axis.
 #' @export
 plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
@@ -433,14 +427,14 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
         next
       }
       # Collapse all observed data
-      dataPointsX <- c(dataPointsX, xySeries$xValuesProcessed(dataMapping$xDimension, dataMapping$xUnit))
-      dataPointsY <- c(dataPointsY, xySeries$yValuesProcessed(dataMapping$yDimension, dataMapping$yUnit))
+      dataPointsX <- c(dataPointsX, xySeries$xValuesProcessed(dataMapping$xUnit))
+      dataPointsY <- c(dataPointsY, xySeries$yValuesProcessed(dataMapping$yUnit))
     }
     # Plot the simulated-observed pairs
     for (simulatedResult in simulatedResults) {
       # Apply scaling to simulated results
-      simulatedPointsX <- simulatedResult$xValuesProcessed(dataMapping$xDimension, dataMapping$xUnit)
-      simulatedPointsY <- simulatedResult$yValuesProcessed(dataMapping$yDimension, dataMapping$yUnit)
+      simulatedPointsX <- simulatedResult$xValuesProcessed(dataMapping$xUnit)
+      simulatedPointsY <- simulatedResult$yValuesProcessed(dataMapping$yUnit)
       # Iterate through each observed data point and find the simulated value
       # with the closest x-value.
       for (i in seq_along(dataPointsX)) {
@@ -498,14 +492,14 @@ calculateRMSE <- function(dataMappingList) {
           next
         }
         # Collapse all observed data
-        dataPointsX <- c(dataPointsX, xySeries$xValuesProcessed(dataMapping$xDimension, dataMapping$xUnit))
-        dataPointsY <- c(dataPointsY, xySeries$yValuesProcessed(dataMapping$yDimension, dataMapping$yUnit))
+        dataPointsX <- c(dataPointsX, xySeries$xValuesProcessed(dataMapping$xUnit))
+        dataPointsY <- c(dataPointsY, xySeries$yValuesProcessed(dataMapping$yUnit))
       }
       # Calculate the distance between each point of the observed data to each simulated result
       for (simulatedResult in simulatedResults) {
         # Apply scaling to simulated results
-        simulatedPointsX <- simulatedResult$xValuesProcessed(dataMapping$xDimension, dataMapping$xUnit)
-        simulatedPointsY <- simulatedResult$yValuesProcessed(dataMapping$yDimension, dataMapping$yUnit)
+        simulatedPointsX <- simulatedResult$xValuesProcessed(dataMapping$xUnit)
+        simulatedPointsY <- simulatedResult$yValuesProcessed(dataMapping$yUnit)
         for (i in seq_along(dataPointsX)) {
           idx <- getIndexClosestToValue(dataPointsX[[i]], (simulatedPointsX))
           # In case of population simulation, idx may have more than one entry

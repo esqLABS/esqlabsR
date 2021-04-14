@@ -877,7 +877,7 @@ test_that("It returns correct yLim in lin scale when unit of DataMapping is diff
     labels = c("my series1", "my series2", "my series3")
   )
 
-  dataMapping$yDimension <- Dimensions$Fraction
+  dataMapping$yDimension <- ospDimensions$Fraction
   dataMapping$yUnit <- "%"
 
   expect_equal(dataMapping$yLim, c(-1.1, 10.1) * 100)
@@ -985,15 +985,15 @@ test_that("xDimension is set to the dimension of the first added XYData", {
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Time)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Time))
+  expect_equal(dataMapping$xDimension, ospDimensions$Time)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
   # Dimension of the first data set is different from the dimension of the second data set
   dataMapping <- DataMapping$new()
   xyData1$xDimension <- ospDimensions$Fraction
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Fraction)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Fraction))
+  expect_equal(dataMapping$xDimension, ospDimensions$Fraction)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Fraction))
 })
 
 test_that("It can change xDimension", {
@@ -1003,12 +1003,12 @@ test_that("It can change xDimension", {
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Time)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Time))
+  expect_equal(dataMapping$xDimension, ospDimensions$Time)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
   dataMapping$xDimension <- ospDimensions$`Abundance per mass protein`
-  expect_equal(dataMapping$xDimension, Dimensions$`Abundance per mass protein`)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$`Abundance per mass protein`))
+  expect_equal(dataMapping$xDimension, ospDimensions$`Abundance per mass protein`)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$`Abundance per mass protein`))
 })
 
 test_that("It can change xUnit", {
@@ -1018,8 +1018,8 @@ test_that("It can change xUnit", {
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Time)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Time))
+  expect_equal(dataMapping$xDimension, ospDimensions$Time)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
   dataMapping$xUnit <- ospUnits$Time$`day(s)`
   expect_equal(dataMapping$xUnit, ospUnits$Time$`day(s)`)
@@ -1032,10 +1032,10 @@ test_that("It throws an error if attempting to set a wrong xUnit", {
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Time)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Time))
+  expect_equal(dataMapping$xDimension, ospDimensions$Time)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
-  expect_error(dataMapping$xUnit <- ospUnits$Dimensionless[[1]], messages$errorUnitNotSupported(ospUnits$Dimensionless[[1]], Dimensions$Time))
+  expect_error(dataMapping$xUnit <- ospUnits$Dimensionless[[1]], ospsuite:::messages$errorUnitNotSupported(ospUnits$Dimensionless[[1]], ospDimensions$Time))
 })
 
 context("yDimension yUnit")
@@ -1053,15 +1053,15 @@ test_that("yDimension is set to the dimension of the first added XYData", {
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$yDimension, Dimensions$Dimensionless)
-  expect_equal(dataMapping$yUnit, getBaseUnit(Dimensions$Dimensionless))
+  expect_equal(dataMapping$yDimension, ospDimensions$Dimensionless)
+  expect_equal(dataMapping$yUnit, getBaseUnit(ospDimensions$Dimensionless))
 
   # Dimension of the first data set is different from the dimension of the second data set
   dataMapping <- DataMapping$new()
   xyData1$yDimension <- ospDimensions$`Concentration (mass)`
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$yDimension, Dimensions$`Concentration (mass)`)
-  expect_equal(dataMapping$yUnit, getBaseUnit(Dimensions$`Concentration (mass)`))
+  expect_equal(dataMapping$yDimension, ospDimensions$`Concentration (mass)`)
+  expect_equal(dataMapping$yUnit, getBaseUnit(ospDimensions$`Concentration (mass)`))
 })
 
 test_that("It can change yDimension", {
@@ -1072,8 +1072,8 @@ test_that("It can change yDimension", {
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
   dataMapping$yDimension <- ospDimensions$`Abundance per mass protein`
-  expect_equal(dataMapping$yDimension, Dimensions$`Abundance per mass protein`)
-  expect_equal(dataMapping$yUnit, getBaseUnit(Dimensions$`Abundance per mass protein`))
+  expect_equal(dataMapping$yDimension, ospDimensions$`Abundance per mass protein`)
+  expect_equal(dataMapping$yUnit, getBaseUnit(ospDimensions$`Abundance per mass protein`))
 })
 
 test_that("It can change yUnit", {
@@ -1094,5 +1094,5 @@ test_that("It throws an error if attempting to set a wrong yUnit", {
   xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_error(dataMapping$yUnit <- ospUnits$Amount$mol, messages$errorUnitNotSupported(ospUnits$Amount$mol, Dimensions$Dimensionless))
+  expect_error(dataMapping$yUnit <- ospUnits$Amount$mol, ospsuite:::messages$errorUnitNotSupported(ospUnits$Amount$mol, ospDimensions$Dimensionless))
 })
