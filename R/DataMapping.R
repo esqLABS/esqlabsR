@@ -257,7 +257,7 @@ DataMapping <- R6::R6Class(
   ),
   private = list(
     .xySeries = NULL,
-    # Map linking each xySeries to a group. Used for removal af xySeries
+    # Map linking each xySeries to a group. Used for removal of xySeries
     .xySeriesGroupMap = NULL,
     .xLim = NULL,
     .yLim = NULL,
@@ -490,11 +490,19 @@ DataMapping <- R6::R6Class(
       invisible(self)
     },
 
+    #' @description Return group mapping of labels.
+    #' @details  Returns a named list with keys being labels of xySeries and values group names. If value is \code{NA}, no group is defined for this label.
+    #' @return  A named list with keys being labels of xySeries and values group names.
+    #' @export
+    getXYSeriesGroupMap = function() {
+      return(private$.xySeriesGroupMap)
+    },
+
     #' @description Set the X-factors of x-y values by labels.
-    #' @details If the data set with a label is not present in the mapping, the label is ignored
+    #' @details If the data set with a label is not present in the mapping, the label is ignored.
     #'
     #' @param labels A list of labels of \code{XYData}.
-    #' @param xFactors Numeric values that will be multiplied by the x-values during plotting
+    #' @param xFactors Numeric values that will be multiplied by the x-values during plotting.
     setXFactors = function(labels, xFactors) {
       validateIsString(labels, nullAllowed = TRUE)
       validateIsNumeric(xFactors, nullAllowed = TRUE)
@@ -562,8 +570,8 @@ DataMapping <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Set the line type(s) of the data to be plotted
-    #' @details If the data set with a label is not present in the mapping, the label is ignored.
+    #' @description Set the type(s) of the data to be plotted, e.g. line, points, etc.
+    #' @details If no data set for the provided label is present in the mapping, the corresponding value is ignored.
     #' No check is performed whether a valid type is provided.
     #'
     #' @param labels A list of label of \code{XYData}
@@ -575,6 +583,24 @@ DataMapping <- R6::R6Class(
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
         xySeries$type <- types[[idx]]
+      }
+
+      invisible(self)
+    },
+
+    #' @description Set the line type(s) property of the data to be plotted, e.g. solid, dashed, etc.
+    #' @details If no data set for the provided label is present in the mapping, the corresponding value is ignored.
+    #' No check is performed whether a valid type is provided.
+    #'
+    #' @param labels A list of label of \code{XYData}
+    #' @param lineTypes Values that will be set as line type(s).
+    setLineTypes = function(labels, lineTypes) {
+      validateIsString(labels, nullAllowed = TRUE)
+      validateIsSameLength(labels, lineTypes)
+
+      for (idx in seq_along(labels)) {
+        xySeries <- self$xySeries[[labels[[idx]]]]
+        xySeries$lty <- lineTypes[[idx]]
       }
 
       invisible(self)

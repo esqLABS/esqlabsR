@@ -632,6 +632,64 @@ test_that("It can change the type of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series3"]]$type, "o")
 })
 
+context("setLineTypes")
+
+test_that("It can change the type of one xy-series", {
+  dataMapping <- DataMapping$new()
+  xVals <- c(1, 2, 3, 4)
+  yVals <- c(5, 6, 7, 8)
+
+  dataMapping$addXYSeries(
+    xValsList = xVals,
+    yValsList = yVals,
+    labels = "my series1"
+  )
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
+  dataMapping$setLineTypes(labels = "my series1", lineTypes = 2)
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, 2)
+})
+
+test_that("If the label is not present in the mapping, nothing happens", {
+  dataMapping <- DataMapping$new()
+  xVals <- c(1, 2, 3, 4)
+  yVals <- c(5, 6, 7, 8)
+
+  dataMapping$addXYSeries(
+    xValsList = xVals,
+    yValsList = yVals,
+    labels = "my series1"
+  )
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
+  dataMapping$setLineTypes(labels = "my series2", lineTypes = 2)
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
+})
+
+test_that("It can change the type of multiple xy-series", {
+  dataMapping <- DataMapping$new()
+  xVals <- list(c(1, 2, 3, 4), c(1, 2, 3, 4), c(2, 3, 4, 5))
+  yVals <- list(c(5, 6, 7, 8), c(5, 6, 7, 8), c(6, 7, 8, 9))
+
+  dataMapping$addXYSeries(
+    xValsList = xVals,
+    yValsList = yVals,
+    labels = list(
+      "my series1",
+      "my series2",
+      "my series3"
+    )
+  )
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
+  expect_equal(dataMapping$xySeries[["my series2"]]$lty, NULL)
+  expect_equal(dataMapping$xySeries[["my series3"]]$lty, NULL)
+  dataMapping$setLineTypes(labels = list("my series1", "my series2", "my series4", "my series3"), lineTypes = c(1, 2, 4, 3))
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, 1)
+  expect_equal(dataMapping$xySeries[["my series2"]]$lty, 2)
+  expect_equal(dataMapping$xySeries[["my series3"]]$lty, 3)
+})
+
 context("setColors")
 
 test_that("It can change the color of one xy-series", {
