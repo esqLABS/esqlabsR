@@ -632,7 +632,8 @@ test_that("It can change the type of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series3"]]$type, "o")
 })
 
-context("setLineTypes")
+#### setLinetypes ####
+context("setLinetypes")
 
 test_that("It can change the type of one xy-series", {
   dataMapping <- DataMapping$new()
@@ -646,7 +647,7 @@ test_that("It can change the type of one xy-series", {
   )
 
   expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
-  dataMapping$setLineTypes(labels = "my series1", lineTypes = 2)
+  dataMapping$setLinetypes(labels = "my series1", linetypes = 2)
   expect_equal(dataMapping$xySeries[["my series1"]]$lty, 2)
 })
 
@@ -662,7 +663,7 @@ test_that("If the label is not present in the mapping, nothing happens", {
   )
 
   expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
-  dataMapping$setLineTypes(labels = "my series2", lineTypes = 2)
+  dataMapping$setLinetypes(labels = "my series2", linetypes = 2)
   expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
 })
 
@@ -684,7 +685,7 @@ test_that("It can change the type of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
   expect_equal(dataMapping$xySeries[["my series2"]]$lty, NULL)
   expect_equal(dataMapping$xySeries[["my series3"]]$lty, NULL)
-  dataMapping$setLineTypes(labels = list("my series1", "my series2", "my series4", "my series3"), lineTypes = c(1, 2, 4, 3))
+  dataMapping$setLinetypes(labels = list("my series1", "my series2", "my series4", "my series3"), linetypes = c(1, 2, 4, 3))
   expect_equal(dataMapping$xySeries[["my series1"]]$lty, 1)
   expect_equal(dataMapping$xySeries[["my series2"]]$lty, 2)
   expect_equal(dataMapping$xySeries[["my series3"]]$lty, 3)

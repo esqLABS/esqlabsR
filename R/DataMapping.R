@@ -588,19 +588,20 @@ DataMapping <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Set the line type(s) property of the data to be plotted, e.g. solid, dashed, etc.
+    #' @description Set the line type(s) property of the data to be plotted. Line types as accepted by the base \code{plot} lty argument.
     #' @details If no data set for the provided label is present in the mapping, the corresponding value is ignored.
-    #' No check is performed whether a valid type is provided.
+    #' No check is performed whether a valid type is provided.Line types as accepted by the base \code{plot} lty argument.
+    #' Line types can be provided either as numeric or as character vectors (e.g. "dashed").
     #'
     #' @param labels A list of label of \code{XYData}
     #' @param lineTypes Values that will be set as line type(s).
-    setLineTypes = function(labels, lineTypes) {
+    setLinetypes = function(labels, linetypes) {
       validateIsString(labels, nullAllowed = TRUE)
-      validateIsSameLength(labels, lineTypes)
+      validateIsSameLength(labels, linetypes)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
-        xySeries$lty <- lineTypes[[idx]]
+        xySeries$lty <- linetypes[[idx]]
       }
 
       invisible(self)
