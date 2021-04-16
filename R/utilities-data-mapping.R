@@ -407,8 +407,10 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
   # Draw the identity line
   points(dataMapping$yLim, dataMapping$yLim, type = "l")
   # Plot the fold deviation lines.
-  points(dataMapping$yLim, dataMapping$yLim * 1 / foldDistance, type = "l", lty = 2)
-  points(dataMapping$yLim, dataMapping$yLim * foldDistance, type = "l", lty = 2)
+  for (f in foldDistance) {
+    points(dataMapping$yLim, dataMapping$yLim * 1 / f, type = "l", lty = 2)
+    points(dataMapping$yLim, dataMapping$yLim * f, type = "l", lty = 2)
+  }
 
   graphicsParIdx <- 1
   for (groupingIdx in seq_along(dataMapping$groupings)) {

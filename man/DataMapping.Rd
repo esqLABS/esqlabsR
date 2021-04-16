@@ -95,11 +95,13 @@ Supported plot types are listed in the enum \code{PlotTypes}. Default is "Indivi
 \item \href{#method-addXYSeries}{\code{DataMapping$addXYSeries()}}
 \item \href{#method-addOSPSTimeValues}{\code{DataMapping$addOSPSTimeValues()}}
 \item \href{#method-removeXYSeries}{\code{DataMapping$removeXYSeries()}}
+\item \href{#method-getXYSeriesGroupMap}{\code{DataMapping$getXYSeriesGroupMap()}}
 \item \href{#method-setXFactors}{\code{DataMapping$setXFactors()}}
 \item \href{#method-setYFactors}{\code{DataMapping$setYFactors()}}
 \item \href{#method-setXOffsets}{\code{DataMapping$setXOffsets()}}
 \item \href{#method-setYOffsets}{\code{DataMapping$setYOffsets()}}
 \item \href{#method-setTypes}{\code{DataMapping$setTypes()}}
+\item \href{#method-setLineTypes}{\code{DataMapping$setLineTypes()}}
 \item \href{#method-setColors}{\code{DataMapping$setColors()}}
 \item \href{#method-setConfiguration}{\code{DataMapping$setConfiguration()}}
 \item \href{#method-plot}{\code{DataMapping$plot()}}
@@ -251,6 +253,23 @@ Remove the observed data with given label from the DataMapping.
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-getXYSeriesGroupMap"></a>}}
+\if{latex}{\out{\hypertarget{method-getXYSeriesGroupMap}{}}}
+\subsection{Method \code{getXYSeriesGroupMap()}}{
+Return group mapping of labels.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$getXYSeriesGroupMap()}\if{html}{\out{</div>}}
+}
+
+\subsection{Details}{
+Returns a named list with keys being labels of xySeries and values group names. If value is \code{NA}, no group is defined for this label.
+}
+
+\subsection{Returns}{
+A named list with keys being labels of xySeries and values group names.
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-setXFactors"></a>}}
 \if{latex}{\out{\hypertarget{method-setXFactors}{}}}
 \subsection{Method \code{setXFactors()}}{
@@ -264,12 +283,12 @@ Set the X-factors of x-y values by labels.
 \describe{
 \item{\code{labels}}{A list of labels of \code{XYData}.}
 
-\item{\code{xFactors}}{Numeric values that will be multiplied by the x-values during plotting}
+\item{\code{xFactors}}{Numeric values that will be multiplied by the x-values during plotting.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-If the data set with a label is not present in the mapping, the label is ignored
+If the data set with a label is not present in the mapping, the label is ignored.
 }
 
 }
@@ -346,7 +365,7 @@ If the data set with a label is not present in the mapping, the label is ignored
 \if{html}{\out{<a id="method-setTypes"></a>}}
 \if{latex}{\out{\hypertarget{method-setTypes}{}}}
 \subsection{Method \code{setTypes()}}{
-Set the line type(s) of the data to be plotted
+Set the type(s) of the data to be plotted, e.g. line, points, etc.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMapping$setTypes(labels, types)}\if{html}{\out{</div>}}
 }
@@ -361,7 +380,31 @@ Set the line type(s) of the data to be plotted
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-If the data set with a label is not present in the mapping, the label is ignored.
+If no data set for the provided label is present in the mapping, the corresponding value is ignored.
+No check is performed whether a valid type is provided.
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-setLineTypes"></a>}}
+\if{latex}{\out{\hypertarget{method-setLineTypes}{}}}
+\subsection{Method \code{setLineTypes()}}{
+Set the line type(s) property of the data to be plotted, e.g. solid, dashed, etc.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$setLineTypes(labels, lineTypes)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{labels}}{A list of label of \code{XYData}}
+
+\item{\code{lineTypes}}{Values that will be set as line type(s).}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+If no data set for the provided label is present in the mapping, the corresponding value is ignored.
 No check is performed whether a valid type is provided.
 }
 
