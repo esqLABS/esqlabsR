@@ -47,10 +47,51 @@ test_that("It removes one entry from a list of primitives", {
 
 context("getIndexClosestToValue")
 
-test_that("It returns the lowest value within the threshold", {
+test_that("It returns the lowest value without a threshold", {
   array <- c(-1, 0, 1, 2, 3)
   value <- 0.9
 
+  expect_equal(getIndexClosestToValue(value = value, array = array), 3)
+})
 
-  expect_equal(removeFromList(entry, listArg = myList), list("a", "c"))
+test_that("It returns multiple indeces for multiple lowest values without a threshold", {
+  array <- c(-1, 0, 1, 2, 3)
+  value <- -0.5
+
+  expect_equal(getIndexClosestToValue(value = value, array = array), c(1, 2))
+})
+
+test_that("It returns the lowest value with an absolute threshold", {
+  array <- c(-1, 0, 1, 2, 3)
+  value <- 0.9
+
+  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0.1), 3)
+})
+
+test_that("It returns multiple indeces for multiple lowest values with an absolute", {
+  array <- c(-1, 0, 1, 2, 3)
+  value <- -0.5
+
+  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0.6), c(1, 2))
+})
+
+test_that("It returns NULL if the distance is higher than the absolute threshold", {
+  array <- c(-1, 0, 1, 2, 3)
+  value <- -0.5
+
+  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0.4), NULL)
+})
+
+test_that("It returns multiple indeces for multiple lowest values with a relative threshold", {
+  array <- c(-1, 0, 1, 2, 3)
+  value <- -0.5
+
+  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 2), c(1, 2))
+})
+
+test_that("It returns NULL if the distance is higher than the absolute threshold", {
+  array <- c(-1, 0, 1, 2, 3)
+  value <- -0.5
+
+  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 0.9), NULL)
 })
