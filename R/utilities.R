@@ -40,7 +40,7 @@ getIndexClosestToValue <- function(value, array,  thresholdAbs = NULL, threshold
   idx <- which(distances == min(distances) & distances <= thresholdAbs)
 
   if (length(idx) == 0){
-    warning(messages$errorValueWithinThresholdNotExistend(value, thresholdAbs))
+    warning(messages$warningValueWithinThresholdNotExistend(value, thresholdAbs))
     return(NULL)
   }
 
