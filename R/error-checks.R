@@ -43,6 +43,7 @@ isOfType <- function(object, type, nullAllowed = FALSE) {
 #' @param type String representation of the type that should be checked for
 #' @param nullAllowed Boolean flag if \code{NULL} is accepted for the \code{object}. If \code{TRUE},
 #' \code{NULL} is always valid, otherwise the error is thrown. Default is \code{FALSE}
+#' @export
 validateIsOfType <- function(object, type, nullAllowed = FALSE) {
   if (isOfType(object, type, nullAllowed)) {
     return()
@@ -60,6 +61,7 @@ validateIsOfType <- function(object, type, nullAllowed = FALSE) {
 #' @param value \code{value} to search for in the \code{enum}
 #' @param nullAllowed If TRUE, \code{value} can be \code{NULL} and the test always passes.
 #' If \code{FALSE} (default), NULL is not accepted and the test fails.
+#' @export
 validateEnumValue <- function(value, enum, nullAllowed = FALSE) {
   if (is.null(value)) {
     if (nullAllowed) {
