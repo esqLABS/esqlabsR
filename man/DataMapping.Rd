@@ -101,7 +101,7 @@ Supported plot types are listed in the enum \code{PlotTypes}. Default is "Indivi
 \item \href{#method-setXOffsets}{\code{DataMapping$setXOffsets()}}
 \item \href{#method-setYOffsets}{\code{DataMapping$setYOffsets()}}
 \item \href{#method-setTypes}{\code{DataMapping$setTypes()}}
-\item \href{#method-setLineTypes}{\code{DataMapping$setLineTypes()}}
+\item \href{#method-setLinetypes}{\code{DataMapping$setLinetypes()}}
 \item \href{#method-setColors}{\code{DataMapping$setColors()}}
 \item \href{#method-setConfiguration}{\code{DataMapping$setConfiguration()}}
 \item \href{#method-plot}{\code{DataMapping$plot()}}
@@ -386,12 +386,12 @@ No check is performed whether a valid type is provided.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setLineTypes"></a>}}
-\if{latex}{\out{\hypertarget{method-setLineTypes}{}}}
-\subsection{Method \code{setLineTypes()}}{
-Set the line type(s) property of the data to be plotted, e.g. solid, dashed, etc.
+\if{html}{\out{<a id="method-setLinetypes"></a>}}
+\if{latex}{\out{\hypertarget{method-setLinetypes}{}}}
+\subsection{Method \code{setLinetypes()}}{
+Set the line type(s) property of the data to be plotted. Line types as accepted by the base \code{plot} lty argument.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{DataMapping$setLineTypes(labels, lineTypes)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$setLinetypes(labels, linetypes)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -405,7 +405,8 @@ Set the line type(s) property of the data to be plotted, e.g. solid, dashed, etc
 }
 \subsection{Details}{
 If no data set for the provided label is present in the mapping, the corresponding value is ignored.
-No check is performed whether a valid type is provided.
+No check is performed whether a valid type is provided.Line types as accepted by the base \code{plot} lty argument.
+Line types can be provided either as numeric or as character vectors (e.g. "dashed").
 }
 
 }
