@@ -17,10 +17,16 @@
 #'
 #' @param value Numerical value
 #' @param array Numerical array
+#' @param threshold A fraction by which the closest value may differ from \code{value} to be accepted.
+#' If the fold difference is greater than threshold, the \code{value} is considered no to be present in
+#' \code{array} and \code{NULL} is returned. Default is 0.1, meaning that the the closest value in the \code{array}
+#' may differ by maximal 10% from \code{value}. \code{threshold} of 2 accepts 200% difference. \code{threshold} of 0
+#' implies exact matching
 #'
-#' @return Index of a value within the array which is closest to \code{value}
+#' @return Index of a value within the array which is closest to \code{value} and the difference is within the defined \code{threshold}. If multiple
+#' entries of \code{array} have the same difference which is minimal, a vector of indices is returned. If no value is within the defined \code{threshold}, \code{NULL} is returned.
 #' @export
-getIndexClosestToValue <- function(value, array) {
+getIndexClosestToValue <- function(value, array, threshold = 0.1) {
   validateIsNumeric(c(value, array))
   idx <- which(abs(array - value) == min(abs(array - value)))
 

@@ -44,3 +44,13 @@ test_that("It removes one entry from a list of primitives", {
 
   expect_equal(removeFromList(entry, listArg = myList), list(1, 3))
 })
+
+context("getIndexClosestToValue")
+
+test_that("It returns the lowest value within the threshold", {
+  array <- c(-1, 0, 1, 2, 3)
+  value <- 0.9
+
+
+  expect_equal(removeFromList(entry, listArg = myList), list("a", "c"))
+})
