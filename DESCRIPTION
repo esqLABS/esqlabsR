@@ -24,6 +24,7 @@ VignetteBuilder: knitr
 License:
   Proprietary
 RoxygenNote: 7.1.1
+Roxygen: { library(ospsuite) ; list() }
 Collate: 
     'DataConfiguration.R'
     'DataMapping.R'

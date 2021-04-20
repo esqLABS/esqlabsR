@@ -4,10 +4,13 @@
 \alias{calculateRMSE}
 \title{Calculate the root mean square error for groupings in \code{dataMapping}s}
 \usage{
-calculateRMSE(dataMappingList)
+calculateRMSE(dataMappingList, timeDiffThreshold = 10)
 }
 \arguments{
 \item{dataMappingList}{A \code{DataMapping} or a list of \code{DataMapping} objects.}
+
+\item{timeDiffThreshold}{Allowed difference between observed and simulated time values in minutes. Default is 10.
+If for a certain observed point no simulated time point exists within the defined threshold, the value is not considered.}
 }
 \value{
 Total error for all groups across all provided data mappings.

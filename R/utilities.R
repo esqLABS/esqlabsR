@@ -22,11 +22,11 @@
 #'
 #' @return Index of a value within the array which is closest to \code{value} and the difference is within the defined threshold. If multiple entries of \code{array} have the same difference which is minimal, a vector of indices is returned. If no value is within the defined threshold, \code{NULL} is returned.
 #' @export
-getIndexClosestToValue <- function(value, array,  thresholdAbs = NULL, thresholdRel = NULL) {
-  #If no absolute threshold is set, calculate if from relative threshold
-  if (is.null(thresholdAbs)){
-    #If no relative threshold is set also, no threshold is applied
-    if (!is.null(thresholdRel)){
+getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdRel = NULL) {
+  # If no absolute threshold is set, calculate if from relative threshold
+  if (is.null(thresholdAbs)) {
+    # If no relative threshold is set also, no threshold is applied
+    if (!is.null(thresholdRel)) {
       thresholdAbs <- abs(value * thresholdRel)
     } else {
       thresholdAbs <- Inf
@@ -35,12 +35,12 @@ getIndexClosestToValue <- function(value, array,  thresholdAbs = NULL, threshold
 
   validateIsNumeric(c(value, array))
 
-  #Calculate distances
+  # Calculate distances
   distances <- abs(array - value)
   idx <- which(distances == min(distances) & distances <= thresholdAbs)
 
-  if (length(idx) == 0){
-    warning(messages$warningValueWithinThresholdNotExistend(value, thresholdAbs))
+  if (length(idx) == 0) {
+    warning(messages$warningValueWithinThresholdNotExisting(value, thresholdAbs))
     return(NULL)
   }
 

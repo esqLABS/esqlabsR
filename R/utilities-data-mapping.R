@@ -387,8 +387,8 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
   ltyArr <- 1:nrOfEntries
   graphicsParIdx <- 1
 
-  #Convert timeDiffThreshold to xUnit of the dataMapping
-  if (!is.null(timeDiffThreshold)){
+  # Convert timeDiffThreshold to xUnit of the dataMapping
+  if (!is.null(timeDiffThreshold)) {
     timeDiffThreshold <- toUnit(quantityOrDimension = "Time", values = timeDiffThreshold, sourceUnit = "min", targetUnit = dataMapping$xUnit)
   }
 
@@ -486,14 +486,15 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
 #' the root of the sum of the squared residuals between each simulated result and observed data.
 #'
 #' @return Total error for all groups across all provided data mappings.
+#' @import ospsuite
 #' @export
 calculateRMSE <- function(dataMappingList, timeDiffThreshold = 10) {
   dataMappingList <- enforceIsList(dataMappingList)
 
   error <- 0
   for (dataMapping in dataMappingList) {
-    #Convert timeDiffThreshold to xUnit of the dataMapping
-    if (!is.null(timeDiffThreshold)){
+    # Convert timeDiffThreshold to xUnit of the dataMapping
+    if (!is.null(timeDiffThreshold)) {
       timeDiffThreshold <- toUnit(quantityOrDimension = "Time", values = timeDiffThreshold, sourceUnit = "min", targetUnit = dataMapping$xUnit)
     }
 

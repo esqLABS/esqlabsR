@@ -73,7 +73,7 @@ messages <- list(
   errorWrongLength = function(object, length, optionalMessage = NULL) {
     paste("Object `", object, "` must be of length ", length, " but it is not!")
   },
-  warningValueWithinThresholdNotExistend = function(value, threshold, optionalMessage = NULL) {
+  warningValueWithinThresholdNotExisting = function(value, threshold, optionalMessage = NULL) {
     paste("value `", value, "` not found in the array within the absolute threshold of  ", threshold, optionalMessage)
   }
 )
