@@ -192,8 +192,8 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
   # Create an empty plot
   plot(NULL, NULL,
-    xlim = dataMapping$xLim + abs(dataMapping$xLim) * c(-0.1, 0.1),
-    ylim = dataMapping$yLim + abs(dataMapping$yLim) * c(-0.1, 0.1),
+    xlim = dataMapping$xLim,
+    ylim = dataMapping$yLim,
     xlab = dataMapping$xLab,
     ylab = dataMapping$yLab,
     log = dataMapping$log,
