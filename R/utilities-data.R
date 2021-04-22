@@ -54,7 +54,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
       yErrorUnit <- gsub(pattern = ".", replacement = " ", strsplit(yErrorName, "\\.?\\[")[[1]][[2]], fixed = TRUE)
       yErrorUnit <- gsub(pattern = "]", replacement = "", yErrorUnit, fixed = TRUE)
 
-      timeValues <- OSPSTimeValues$new(xVals, stringToNum(yVals), label = paste(sheet, groupName, sep = "."), yError = stringToNum(yErrorVals))
+      timeValues <- OSPSTimeValues$new(stringToNum(xVals), stringToNum(yVals), label = paste(sheet, groupName, sep = "."), yError = stringToNum(yErrorVals))
       timeValues$xDimension <- xDim
       timeValues$xUnit <- xUnit
       timeValues$yDimension <- yDim

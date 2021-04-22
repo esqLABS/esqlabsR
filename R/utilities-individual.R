@@ -51,7 +51,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #'
 #' @param individualCharacteristics \code{IndividualCharacteristics} describing an individual. Optional
 #' @param simulation \code{Simulation} loaded form the PKML file
-
+#' @import ospsuite
 #' @export
 #'
 #' @examples

@@ -825,7 +825,7 @@ test_that("Setting a does not affect initial xy-data objects configuration", {
 
   xyData <- XYData$new(xVals = xVals, yVals = yVals, label = "my series1")
 
-  dataMapping$addOSPSTimeValues (
+  dataMapping$addOSPSTimeValues(
     OSPSTimeValues = xyData
   )
 
