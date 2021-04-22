@@ -1,5 +1,7 @@
+library(shinyjs)
+
 ui <- fluidPage(
-  shinyjs::useShinyjs(),
+  useShinyjs(),
   splitLayout(
 
     wellPanel(
@@ -14,6 +16,12 @@ ui <- fluidPage(
         plotOutput("plot"),
         actionButton("addSnapshot", "Add Snapshot"),
         actionButton("removeSnapshots", "Remove Snapshots"),
+        hr(),
+        p(strong("Axis limits")),
+        splitLayout(numericInput("xLower", value = 0, label = "x min", step = 0.1),
+                    numericInput("xUpper", value = 100, label = "x max", step = 0.1)),
+        splitLayout(numericInput("yLower", value = 0, label = "y min", step = 0.1),
+                    numericInput("yUpper", value = 100, label = "y max", step = 0.1)),
         hr(),
         p(strong("Add single points to plot")),
         splitLayout(numericInput("xvalue", value = 0, label = "x", step = 0.01),
