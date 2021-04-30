@@ -33,6 +33,10 @@ messages <- list(
     The file should consist of columns'PopulationName', 'Species','Population','NrIndiv', '% female',
     'Weight_min', 'Weight_max', 'Height_min', 'Height_max','Age_min', 'Age_max', 'BMI_min', 'BMI_max'. ", optionalMessage)
   },
+  errorWrongIndividualCharacteristicsXLSStructure = function(filePath, columnNames, optionalMessage = NULL) {
+    paste0("Loading individual characteristics from XLS failed, the file '", filePath, "' has wrong structure!
+    The file should consist of columns ", columnNames, optionalMessage)
+  },
   errorWrongAdditionalParams = function(optionalMessage = NULL) {
     paste0("Wrong argument 'additionalParams'! Must be a list containing lists 'paths', 'values', and 'units' ", optionalMessage)
   },
@@ -75,5 +79,12 @@ messages <- list(
   },
   warningValueWithinThresholdNotExisting = function(value, threshold, optionalMessage = NULL) {
     paste("value `", value, "` not found in the array within the absolute threshold of  ", threshold, optionalMessage)
-  }
+  },
+
+  errorWrongPopulationName = function(populationName){
+    paste0("Population name ", populationName, " is not specified in the population file!")
+  },
+  errorWrongIndividualId = function(individualId){
+    paste0("Individual with id ", individualId, " is not specified in the individual characteristics file!")
+           }
 )

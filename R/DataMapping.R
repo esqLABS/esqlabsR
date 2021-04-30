@@ -51,7 +51,9 @@ DataMapping <- R6::R6Class(
             )
           }))
           # Extend limits by 10%
-          return(c(xMin, xMax) + abs(c(xMin, xMax) * c(-0.1, 0.1)))
+          return(c(xMin, xMax) + abs(c(xMin, xMax)) * c(-0.1, 0.1))
+          # My cat wrote this, I leave it here out of respect
+          #'\code{runSimulationBatchesConcurrently}ß C.\JKFD. PO.#]}*#J#......................JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJöL
         }
         else {
           private$.xLim
@@ -104,7 +106,7 @@ DataMapping <- R6::R6Class(
             }
           }))
           # Extend limits by 10%
-          return(c(yMin, yMax) + abs(c(yMin, yMax) * c(-0.1, 0.1)))
+          return(c(yMin, yMax) + abs(c(yMin, yMax)) * c(-0.1, 0.1))
         }
         else {
           private$.yLim

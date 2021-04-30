@@ -311,7 +311,7 @@ test_that("It can remove XYData that is not in a group", {
   expect_equal(dataMapping$xySeriesCount, 1)
   expect_equal(length(dataMapping$groupings), 0)
 
-  dataMapping$removeXYSeries(label = "Sim output")
+  expect_warning(dataMapping$removeXYSeries(label = "Sim output"))
   expect_equal(dataMapping$xySeriesCount, 1)
   expect_equal(length(dataMapping$groupings), 0)
 
@@ -888,7 +888,7 @@ test_that("It returns correct xLim when unit of DataMapping is the same as unit 
     labels = c("my series1", "my series2", "my series3")
   )
 
-  expect_equal(dataMapping$xLim, c(-1, 4))
+  expect_equal(dataMapping$xLim, c(-1.1, 4.4))
 })
 
 test_that("It returns correct xLim when unit of DataMapping is different from unit of xyData", {
@@ -906,7 +906,7 @@ test_that("It returns correct xLim when unit of DataMapping is different from un
 
   dataMapping$xUnit <- "h"
 
-  expect_equal(dataMapping$xLim, c(-1, 4) / 60)
+  expect_equal(dataMapping$xLim, c(-1.1, 4.4) / 60)
 })
 
 test_that("It can set xLim", {
@@ -970,7 +970,7 @@ test_that("It returns correct yLim in lin scale when unit of DataMapping is the 
     labels = c("my series1", "my series2", "my series3")
   )
 
-  expect_equal(dataMapping$yLim, c(-1.1, 10.1))
+  expect_equal(dataMapping$yLim, c(-1.1, 10.1)*1.1)
 })
 
 test_that("It returns correct yLim in lin scale when unit of DataMapping is different from unit of xyData", {
@@ -989,7 +989,7 @@ test_that("It returns correct yLim in lin scale when unit of DataMapping is diff
   dataMapping$yDimension <- ospDimensions$Fraction
   dataMapping$yUnit <- "%"
 
-  expect_equal(dataMapping$yLim, c(-1.1, 10.1) * 100)
+  expect_equal(dataMapping$yLim, c(-1.1, 10.1) * 100 * 1.1)
 })
 
 test_that("It returns correct yLim in log scale when unit of DataMapping is the same as unit of xyData", {
@@ -1006,7 +1006,7 @@ test_that("It returns correct yLim in log scale when unit of DataMapping is the 
   )
 
   dataMapping$log <- "y"
-  expect_equal(dataMapping$yLim, c(1.9, 10.1))
+  expect_equal(dataMapping$yLim, c(1.71, 11.11))
 
   # If the lowest positive value becomes negative when error is subtracted
   yErr <- list(c(0.1, 0.1, 0.1, 0.2), c(0.1), c(0.1, 2.1, 0.1))
@@ -1020,7 +1020,7 @@ test_that("It returns correct yLim in log scale when unit of DataMapping is the 
   )
 
   dataMapping$log <- "y"
-  expect_equal(dataMapping$yLim, c(4.9, 10.1))
+  expect_equal(dataMapping$yLim, c(4.41, 11.11))
 
   # No positive values - do not know what should happen
   # xVals <- list(c(1, 2, 3, 4))

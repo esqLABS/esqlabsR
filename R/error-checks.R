@@ -102,6 +102,11 @@ validateIsString <- function(object, nullAllowed = FALSE) {
 #' @inheritParams validateIsOfType
 #' @export
 validateIsNumeric <- function(object, nullAllowed = FALSE) {
+  # Only NA values. It is numeric
+  if (all(is.na(object))) {
+    return()
+  }
+
   validateIsOfType(object, c("numeric", "integer"), nullAllowed)
 }
 
