@@ -1,5 +1,3 @@
-# dependencies: ospsuite and shinyjs
-
 ui <- fluidPage(
   useShinyjs(),
   titlePanel("Unit Converter"),
