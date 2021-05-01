@@ -116,6 +116,24 @@ figureAddLabel <- function(label, location = "topleft",
   text(labels = label[1], x = this.x, y = this.y, xpd = T)
 }
 
+#' Add legend to a plot
+#'
+#' @inheritParams legend
+.figureAddLegend <- function(x, legend, col, pch, lty, ...) {
+  # Legend does not ignore ellipsis arguments that are not supported, so they must be removed from the arguments list
+  supportedArgs <- names(formals(graphics::legend))
+  args <- list(...)
+  args <- args[which(names(args) %in% supportedArgs)]
+  args$x <- x
+  args$legend <- legend
+  args$col <- col
+  args$pch <- pch
+  args$lty <- lty
+
+  # Using do.call use arguments combined from ellipsis
+  do.call(graphics::legend, args)
+}
+
 #' Returns the HSV values for a given R color name
 #'
 #' @param color vector of any of the three kinds of R color specifications, i.e.,
@@ -225,7 +243,7 @@ closeOutputDevice <- function(plotConfiguration) {
 #' @param type String value of argument \code{type} passed to function \code{plot()}
 #'
 #' @return TRUE if \code{type} contains "p" or is "b", FALSE otherwise
-isPoint <- function(type) {
+.isPoint <- function(type) {
   isCharInString("p", type) || (type == "b")
 }
 
@@ -234,6 +252,6 @@ isPoint <- function(type) {
 #' @param type String value of argument \code{type} passed to function \code{plot()}
 #'
 #' @return TRUE if \code{type} contains "l" or is "b", FALSE otherwise
-isLine <- function(type) {
+.isLine <- function(type) {
   isCharInString("l", type) || (type == "b")
 }
