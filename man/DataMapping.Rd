@@ -399,7 +399,7 @@ Set the line type(s) property of the data to be plotted. Line types as accepted 
 \describe{
 \item{\code{labels}}{A list of label of \code{XYData}}
 
-\item{\code{lineTypes}}{Values that will be set as line type(s).}
+\item{\code{linetypes}}{Values that will be set as line type(s).}
 }
 \if{html}{\out{</div>}}
 }

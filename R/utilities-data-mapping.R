@@ -188,8 +188,8 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
   # Create an empty plot
   plot(NULL, NULL,
-    xlim = dataMapping$xLim + abs(dataMapping$xLim) * c(-0.1, 0.1),
-    ylim = dataMapping$yLim + abs(dataMapping$yLim) * c(-0.1, 0.1),
+    xlim = dataMapping$xLim,
+    ylim = dataMapping$yLim,
     xlab = dataMapping$xLab,
     ylab = dataMapping$yLab,
     log = dataMapping$log,
@@ -357,10 +357,13 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 #' plot is to be drawn. For each group within the \code{dataMapping}, simulated
 #' and observed values are compared.
 #' @param foldDistance Numerical value for the fold-distance lines to be drawn. Default is 2.
+#' @param timeDiffThreshold Allowed difference between observed and simulated time values in minutes. Default is 10.
+#' If for a certain observed point no simulated time point exists within the defined threshold, the value is not considered.
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#'
 #' @details Observed data points are drawn on the x, simulated values on the y axis.
 #' @export
-plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
+plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThreshold = 10, ...) {
   validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- c()
   legendColors <- c()
@@ -374,6 +377,11 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
   pchArr <- 1:dataMapping$xySeriesCount
   ltyArr <- 1:nrOfEntries
   graphicsParIdx <- 1
+
+  # Convert timeDiffThreshold to xUnit of the dataMapping
+  if (!is.null(timeDiffThreshold)) {
+    timeDiffThreshold <- toUnit(quantityOrDimension = "Time", values = timeDiffThreshold, sourceUnit = "min", targetUnit = dataMapping$xUnit)
+  }
 
   # If logarithmic scaling of y-axis has been selected and manually provided y-lim
   # is non-positive, use the automatically calculated values
@@ -431,7 +439,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
       # Iterate through each observed data point and find the simulated value
       # with the closest x-value.
       for (i in seq_along(dataPointsX)) {
-        idx <- getIndexClosestToValue(dataPointsX[[i]], (simulatedPointsX))
+        idx <- getIndexClosestToValue(dataPointsX[[i]], (simulatedPointsX), thresholdAbs = timeDiffThreshold)
         # In case of population simulation, idx may have more than one entry
         for (pointIdx in idx) {
           points(dataPointsY[[i]], simulatedPointsY[[pointIdx]],
@@ -457,17 +465,25 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
 #'
 #'
 #' @param dataMappingList A \code{DataMapping} or a list of \code{DataMapping} objects.
+#' @param timeDiffThreshold Allowed difference between observed and simulated time values in minutes. Default is 10.
+#' If for a certain observed point no simulated time point exists within the defined threshold, the value is not considered.
 #'
 #' @details The error is calculated for each group separately and added up. For each group, the error is defined as
 #' the root of the sum of the squared residuals between each simulated result and observed data.
 #'
 #' @return Total error for all groups across all provided data mappings.
+#' @import ospsuite
 #' @export
-calculateRMSE <- function(dataMappingList) {
+calculateRMSE <- function(dataMappingList, timeDiffThreshold = 10) {
   dataMappingList <- enforceIsList(dataMappingList)
 
   error <- 0
   for (dataMapping in dataMappingList) {
+    # Convert timeDiffThreshold to xUnit of the dataMapping
+    if (!is.null(timeDiffThreshold)) {
+      timeDiffThreshold <- toUnit(quantityOrDimension = "Time", values = timeDiffThreshold, sourceUnit = "min", targetUnit = dataMapping$xUnit)
+    }
+
     for (grouping in dataMapping$groupings) {
       dataPointsX <- c()
       dataPointsY <- c()
@@ -489,7 +505,7 @@ calculateRMSE <- function(dataMappingList) {
         simulatedPointsX <- simulatedResult$xValuesProcessed(dataMapping$xUnit)
         simulatedPointsY <- simulatedResult$yValuesProcessed(dataMapping$yUnit)
         for (i in seq_along(dataPointsX)) {
-          idx <- getIndexClosestToValue(dataPointsX[[i]], (simulatedPointsX))
+          idx <- getIndexClosestToValue(dataPointsX[[i]], (simulatedPointsX), timeDiffThreshold)
           # In case of population simulation, idx may have more than one entry
           for (pointIdx in idx) {
             error <- error + (simulatedPointsY[[pointIdx]] - dataPointsY[[i]])^2

@@ -50,7 +50,8 @@ DataMapping <- R6::R6Class(
               sourceUnit = x$xUnit
             )
           }))
-          return(c(xMin, xMax))
+          # Extend limits by 10%
+          return(c(xMin, xMax) + abs(c(xMin, xMax) * c(-0.1, 0.1)))
         }
         else {
           private$.xLim
@@ -102,7 +103,8 @@ DataMapping <- R6::R6Class(
               )
             }
           }))
-          return(c(yMin, yMax))
+          # Extend limits by 10%
+          return(c(yMin, yMax) + abs(c(yMin, yMax) * c(-0.1, 0.1)))
         }
         else {
           private$.yLim

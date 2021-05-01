@@ -226,6 +226,7 @@ openOuptutDevice <- function(plotConfiguration, width, height) {
 #' Close output device
 #'
 #' @param plotConfiguration An object of type \code{PlotConfiguration}
+#' @import ospsuite
 #'
 #' @details If the output of the plot is directed to a file, close the device.
 closeOutputDevice <- function(plotConfiguration) {

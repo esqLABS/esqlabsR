@@ -13,16 +13,36 @@
   }
 }
 
-#' Get the index of the value in an array that is closest to given one.
-#'
+#' Find value in an array
+#' @description Find the index of the value in an array that is closest to given one. By default, no restriction is applied how big the absolute numerical distance between \code{value} and a value in the \code{array} may be. A limit can be set by the parameters \code{thresholdAbs} or \code{thresholdRel}. If no value within the \code{array} has the distance to \code{value} that is equal to or less than the threshold, the \code{value} is considered not present in the \code{array} and \code{NULL} is returned.
 #' @param value Numerical value
 #' @param array Numerical array
+#' @param thresholdAbs Absolute numerical distance by which the closest value in \code{array} may differ from \code{value} to be accepted. If both \code{thresholdAbs} and \code{thresholdRel} are \code{NULL} (default), no threshold is applied. If \code{thresholdAbs} is set, \code{thresholdRel} is ignored. If 0, only exact match between \code{value} and \code{array} is accepted.
+#' @param thresholdRel A fraction by which the closest value may differ from \code{value} to be accepted. WARNING: setting a relative threshold will result in only exact matches if \code{value} is 0!
 #'
-#' @return Index of a value within the array which is closest to \code{value}
+#' @return Index of a value within the array which is closest to \code{value} and the difference is within the defined threshold. If multiple entries of \code{array} have the same difference which is minimal, a vector of indices is returned. If no value is within the defined threshold, \code{NULL} is returned.
 #' @export
-getIndexClosestToValue <- function(value, array) {
+getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdRel = NULL) {
+  # If no absolute threshold is set, calculate if from relative threshold
+  if (is.null(thresholdAbs)) {
+    # If no relative threshold is set also, no threshold is applied
+    if (!is.null(thresholdRel)) {
+      thresholdAbs <- abs(value * thresholdRel)
+    } else {
+      thresholdAbs <- Inf
+    }
+  }
+
   validateIsNumeric(c(value, array))
-  idx <- which(abs(array - value) == min(abs(array - value)))
+
+  # Calculate distances
+  distances <- abs(array - value)
+  idx <- which(distances == min(distances) & distances <= thresholdAbs)
+
+  if (length(idx) == 0) {
+    warning(messages$warningValueWithinThresholdNotExisting(value, thresholdAbs))
+    return(NULL)
+  }
 
   return(idx)
 }
