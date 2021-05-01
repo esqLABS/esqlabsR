@@ -119,7 +119,7 @@ figureAddLabel <- function(label, location = "topleft",
 #' Add legend to a plot
 #'
 #' @inheritParams legend
-.figureAddLegend <- function(x, legend, col, pch, lty, ...){
+.figureAddLegend <- function(x, legend, col, pch, lty, ...) {
   # Legend does not ignore ellipsis arguments that are not supported, so they must be removed from the arguments list
   supportedArgs <- names(formals(graphics::legend))
   args <- list(...)

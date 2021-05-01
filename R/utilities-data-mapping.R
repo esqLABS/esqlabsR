@@ -234,11 +234,11 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
       legendConfiguration$color <- xySeriesEntry$color
       # If symbols are plotted for the data set, set its pch for the legend
-      if (.isPoint(xySeriesEntry$type)){
+      if (.isPoint(xySeriesEntry$type)) {
         legendConfiguration$pch <- xySeriesEntry$pch
       }
       # If line is plotted for the data set, set its lty for the legend
-      if (.isLine(xySeriesEntry$type)){
+      if (.isLine(xySeriesEntry$type)) {
         legendConfiguration$lty <- xySeriesEntry$lty
       }
 
@@ -303,11 +303,11 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
     legendConfiguration <- list("legendEntry" = xySeriesName, "color" = xySeriesEntry$color, "pch" = NA, "lty" = 0)
     # If symbols are plotted for the data set, set its pch for the legend
-    if (.isPoint(xySeriesEntry$type)){
+    if (.isPoint(xySeriesEntry$type)) {
       legendConfiguration$pch <- xySeriesEntry$pch
     }
     # If line is plotted for the data set, set its lty for the legend
-    if (.isLine(xySeriesEntry$type)){
+    if (.isLine(xySeriesEntry$type)) {
       legendConfiguration$lty <- xySeriesEntry$lty
     }
 

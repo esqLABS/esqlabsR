@@ -437,7 +437,7 @@ DataMapping <- R6::R6Class(
           newGroupName <- NA
         }
         label <- OSPSTimeValues[[idx]]$label
-        #clone the object and add it
+        # clone the object and add it
         timeValuesClone <- OSPSTimeValues[[idx]]$clone()
         private$.xySeries <- mapPut(keys = label, values = c(timeValuesClone), map = private$.xySeries, overwrite = TRUE)
         # If an entry with the given label already exists in the DataMapping (i.e., it will be overwritten),
