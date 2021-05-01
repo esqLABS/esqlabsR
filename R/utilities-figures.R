@@ -146,7 +146,7 @@ figureAddLabel <- function(label, location = "topleft",
 #' @examples
 #' col2hsv("yellow")
 col2hsv <- function(color) {
-  validateIsString(color)
+  ospsuite:::validateIsString(color)
   rgb <- col2rgb(color)
   return(rgb2hsv(rgb))
 }
@@ -164,8 +164,8 @@ col2hsv <- function(color) {
 #' If "y" (default), vertical error bars are drawn. If "x", horizontal error bars are drawn
 #' @param ... Graphical parameters (see \code{\link{par}})
 plotErrorBars <- function(x, y, upper, lower = upper, length = par()$cin[[1]] / 2, axis = "y", ...) {
-  validateIsNumeric(c(x, y))
-  validateIsSameLength(x, y, upper, lower)
+  ospsuite:::validateIsNumeric(c(x, y))
+  ospsuite:::validateIsSameLength(x, y, upper, lower)
   if (axis == "y") {
     arrows(x, y + upper, x, y - lower, angle = 90, code = 3, length = length, ...)
   }

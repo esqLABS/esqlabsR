@@ -1,4 +1,3 @@
-
 #' Create a map data structure.
 #'
 #' @param keys List of keys
@@ -7,7 +6,7 @@
 #' @return the Map created
 #' @export
 map <- function(keys, values) {
-  validateIsSameLength(keys, values)
+  ospsuite:::validateIsSameLength(keys, values)
   # Check if all keys are unique
   if (length(keys) != length(unique(keys))) {
     stop(messages$errorMapKeysNotUnique(keys))
@@ -37,9 +36,10 @@ mapGetKey <- function(map, value) {
 #' @details Consider using mymap[[key]] instead.
 #'
 #' @return Value that is assigned to \code{key}. If the key is not present, an error is thrown.
+#' @import ospsuite
 #' @export
 mapGetValue <- function(map, key) {
-  enumGetValue(map, key)
+  ospsuite::enumGetValue(map, key)
 }
 
 #' Add new key-value pairs to a map.
@@ -53,13 +53,14 @@ mapGetValue <- function(map, key) {
 #'
 #' @return Map with added key-value pair.
 #' @export
+#' @import ospsuite
 #'
 #' @examples
 #' myMap <- map("a", "b")
 #' myMap <- mapPut("c", "d", myMap)
 #' myMap <- mapPut(c("c", "d", "g"), list(12, 2, "a"), myMap, overwrite = TRUE)
 mapPut <- function(keys, values, map, overwrite = FALSE) {
-  enumPut(keys, values, map, overwrite)
+  ospsuite::enumPut(keys, values, map, overwrite)
 }
 
 #' Add a new key-value pairs to a map, where the value is a list.
@@ -88,9 +89,10 @@ mapPutList <- function(key, values, map, overwrite = FALSE) {
 #' WARNING: the original object is not modified!
 #'
 #' @return Map without the removed entries
+#' @import ospsuite
 #' @export
 mapRemove <- function(keys, map) {
-  enumRemove(keys, map)
+  ospsuite::enumRemove(keys, map)
 }
 
 #' Check if a map has a certain key.
@@ -99,9 +101,10 @@ mapRemove <- function(keys, map) {
 #' @param map Map where to look for the key
 #'
 #' @return TRUE if a key-value pair for \code{key} exists, FALSE otherwise
+#' @import ospsuite
 #' @export
 mapHasKey <- function(key, map) {
-  enumHasKey(key, map)
+  ospsuite::enumHasKey(key, map)
 }
 
 #' Return the keys of a map
@@ -109,9 +112,10 @@ mapHasKey <- function(key, map) {
 #' @param map \code{map} containing the keys
 #'
 #' @return List of key names
+#' @import ospsuite
 #' @export
 mapKeys <- function(map) {
-  enumKeys(map)
+  ospsuite::enumKeys(map)
 }
 
 #' Return the values stored in a map
@@ -119,7 +123,8 @@ mapKeys <- function(map) {
 #' @param map \code{map} containing the values
 #'
 #' @return List of values stored in the \code{map}
+#' @import ospsuite
 #' @export
 mapValues <- function(map) {
-  enumValues(map)
+  ospsuite::enumValues(map)
 }

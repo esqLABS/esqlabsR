@@ -8,7 +8,7 @@
 #' @return A (nested) list of \code{OSPSTimeValues} objects
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
-  validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
+  ospsuite:::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
   filePath <- file.path(dataConfiguration$dataFolder, dataConfiguration$dataFile)
   validateFileExists(filePath)
 

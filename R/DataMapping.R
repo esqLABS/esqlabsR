@@ -57,7 +57,7 @@ DataMapping <- R6::R6Class(
           private$.xLim
         }
       } else {
-        validateIsNumeric(value, nullAllowed = TRUE)
+        ospsuite:::validateIsNumeric(value, nullAllowed = TRUE)
         validateLength(value, 2)
         private$.xLim <- value
       }
@@ -110,7 +110,7 @@ DataMapping <- R6::R6Class(
           private$.yLim
         }
       } else {
-        validateIsNumeric(value, nullAllowed = TRUE)
+        ospsuite:::validateIsNumeric(value, nullAllowed = TRUE)
         validateLength(value, 2)
         private$.yLim <- value
       }
@@ -121,7 +121,7 @@ DataMapping <- R6::R6Class(
       if (missing(value)) {
         private$.xLab
       } else {
-        validateIsString(value)
+        ospsuite:::validateIsString(value)
         private$.xLab <- value
       }
     },
@@ -131,7 +131,7 @@ DataMapping <- R6::R6Class(
       if (missing(value)) {
         private$.yLab
       } else {
-        validateIsString(value)
+        ospsuite:::validateIsString(value)
         private$.yLab <- value
       }
     },
@@ -240,7 +240,7 @@ DataMapping <- R6::R6Class(
       if (missing(value)) {
         private$.plotType
       } else {
-        validateEnumValue(enum = PlotTypes, value = value)
+        ospsuite:::validateEnumValue(enum = PlotTypes, value = value)
         private$.plotType <- value
       }
     },
@@ -251,7 +251,7 @@ DataMapping <- R6::R6Class(
       if (missing(value)) {
         private$.populationQuantiles
       } else {
-        validateIsNumeric(value)
+        ospsuite:::validateIsNumeric(value)
         validateLength(value, 3)
         private$.populationQuantiles <- value
       }
@@ -329,8 +329,8 @@ DataMapping <- R6::R6Class(
     #' @description
     #' Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by default.
     addModelOutputs = function(paths, labels, outputValues, simulation, groups = NULL, removeNA = TRUE) {
-      validateIsString(c(paths, labels))
-      validateIsSameLength(paths, labels)
+      ospsuite:::validateIsString(c(paths, labels))
+      ospsuite:::validateIsSameLength(paths, labels)
 
       for (idx in seq_along(paths)) {
         yValues <- outputValues$data[[paths[[idx]]]]
@@ -397,18 +397,18 @@ DataMapping <- R6::R6Class(
     #' groups <- list("Group1", NULL, "Group1")
     #' dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
     addXYSeries = function(xValsList, yValsList, labels, yErrorList = NULL, groups = NULL) {
-      validateIsString(labels)
+      ospsuite:::validateIsString(labels)
       xValsList <- enforceIsList(xValsList)
       yValsList <- enforceIsList(yValsList)
       if (!is.null(yErrorList)) {
         yErrorList <- enforceIsList(yErrorList)
-        validateIsSameLength(xValsList, yErrorList)
+        ospsuite:::validateIsSameLength(xValsList, yErrorList)
       }
       if (!is.null(groups)) {
-        validateIsString(groups, nullAllowed = TRUE)
-        validateIsSameLength(xValsList, groups)
+        ospsuite:::validateIsString(groups, nullAllowed = TRUE)
+        ospsuite:::validateIsSameLength(xValsList, groups)
       }
-      validateIsSameLength(xValsList, yValsList, labels)
+      ospsuite:::validateIsSameLength(xValsList, yValsList, labels)
 
       for (idx in seq_along(labels)) {
         xyData <- XYData$new(xVals = xValsList[[idx]], yVals = yValsList[[idx]], yError = yErrorList[[idx]], label = labels[[idx]])
@@ -426,11 +426,11 @@ DataMapping <- R6::R6Class(
     #' output is not assigned to any group
     #' @export
     addOSPSTimeValues = function(OSPSTimeValues, groups = NULL) {
-      validateIsOfType(OSPSTimeValues, "XYData")
+      ospsuite:::validateIsOfType(OSPSTimeValues, "XYData")
       OSPSTimeValues <- enforceIsList(OSPSTimeValues)
       if (!is.null(groups)) {
         groups <- c(groups)
-        validateIsSameLength(OSPSTimeValues, groups)
+        ospsuite:::validateIsSameLength(OSPSTimeValues, groups)
       }
       for (idx in seq_along(OSPSTimeValues)) {
         newGroupName <- groups[[idx]]
@@ -506,9 +506,9 @@ DataMapping <- R6::R6Class(
     #' @param labels A list of labels of \code{XYData}.
     #' @param xFactors Numeric values that will be multiplied by the x-values during plotting.
     setXFactors = function(labels, xFactors) {
-      validateIsString(labels, nullAllowed = TRUE)
-      validateIsNumeric(xFactors, nullAllowed = TRUE)
-      validateIsSameLength(labels, xFactors)
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsNumeric(xFactors, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, xFactors)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -524,9 +524,9 @@ DataMapping <- R6::R6Class(
     #' @param labels A list of label of \code{XYData}
     #' @param yFactors Numeric values that will be multiplied by the y-values during plotting
     setYFactors = function(labels, yFactors) {
-      validateIsString(labels, nullAllowed = TRUE)
-      validateIsNumeric(yFactors, nullAllowed = TRUE)
-      validateIsSameLength(labels, yFactors)
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsNumeric(yFactors, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, yFactors)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -542,9 +542,9 @@ DataMapping <- R6::R6Class(
     #' @param labels A list of label of \code{XYData}
     #' @param xOffsets Numeric values that will be added to the x-values during plotting
     setXOffsets = function(labels, xOffsets) {
-      validateIsString(labels, nullAllowed = TRUE)
-      validateIsNumeric(xOffsets, nullAllowed = TRUE)
-      validateIsSameLength(labels, xOffsets)
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsNumeric(xOffsets, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, xOffsets)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -560,9 +560,9 @@ DataMapping <- R6::R6Class(
     #' @param labels A list of label of \code{XYData}
     #' @param yOffsets Numeric values that will be added to the y-values during plotting
     setYOffsets = function(labels, yOffsets) {
-      validateIsString(labels, nullAllowed = TRUE)
-      validateIsNumeric(yOffsets, nullAllowed = TRUE)
-      validateIsSameLength(labels, yOffsets)
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsNumeric(yOffsets, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, yOffsets)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -579,8 +579,8 @@ DataMapping <- R6::R6Class(
     #' @param labels A list of label of \code{XYData}
     #' @param types Plot types as accepted by the base \code{plot} method
     setTypes = function(labels, types) {
-      validateIsString(c(labels, types), nullAllowed = TRUE)
-      validateIsSameLength(labels, types)
+      ospsuite:::validateIsString(c(labels, types), nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, types)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -598,8 +598,8 @@ DataMapping <- R6::R6Class(
     #' @param labels A list of label of \code{XYData}
     #' @param linetypes Values that will be set as line type(s).
     setLinetypes = function(labels, linetypes) {
-      validateIsString(labels, nullAllowed = TRUE)
-      validateIsSameLength(labels, linetypes)
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, linetypes)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -616,12 +616,12 @@ DataMapping <- R6::R6Class(
     #' @param colors String names of colors of the data as accepted by the base \code{plot} method
     #' If the value is \code{NULL}, the color is automatically selected when plotting the data.
     setColors = function(labels, colors) {
-      validateIsString(c(labels), nullAllowed = TRUE)
+      ospsuite:::validateIsString(c(labels), nullAllowed = TRUE)
       # If the color is a single NULL, put it into a list
       if (is.null(colors)) {
         colors <- list(NULL)
       }
-      validateIsSameLength(labels, colors)
+      ospsuite:::validateIsSameLength(labels, colors)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]

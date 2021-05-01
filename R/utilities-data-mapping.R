@@ -53,7 +53,7 @@ plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
 #' If \code{TRUE},
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
 plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
-  validateIsOfType(xySeries, "XYData")
+  ospsuite:::validateIsOfType(xySeries, "XYData")
   points(xySeries$xValuesProcessed(xUnit),
     xySeries$yValuesProcessed(yUnit),
     type = xySeries$type,
@@ -84,7 +84,7 @@ plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
 #' @export
 plotXYDataAggregated <- function(xySeries, xUnit = NULL, yUnit = NULL,
                                  quantiles = c(0.05, 0.5, 0.95), ...) {
-  validateIsOfType(xySeries, "XYData")
+  ospsuite:::validateIsOfType(xySeries, "XYData")
   # Get the quantiles for data - lower/mid/upper
   aggregatedData <- getQuantilesYData(
     xValues = xySeries$xValuesProcessed(xUnit),
@@ -125,7 +125,7 @@ plotIndividualProfile <- function(dataMapping, ...) {
 #' @param ... Any parameter that can be interpreted by the default \code{\link{boxplot}} function
 #' @export
 plotBoxPlot <- function(dataMapping, ...) {
-  validateIsOfType(dataMapping, "DataMapping")
+  ospsuite:::validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- vector(mode = "character", length = length(dataMapping$xySeries))
 
   allData <- vector(mode = "list", length = length(dataMapping$xySeries))
@@ -165,7 +165,7 @@ plotPopulationQuantiles <- function(dataMapping, ...) {
 #' mid-percentile and lower/upper percentile bands around.
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
 plotTimeValues <- function(dataMapping, aggregated, ...) {
-  validateIsOfType(dataMapping, "DataMapping")
+  ospsuite:::validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- c()
   legendColors <- c()
   legendLty <- c()
@@ -364,7 +364,7 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 #' @details Observed data points are drawn on the x, simulated values on the y axis.
 #' @export
 plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThreshold = 10, ...) {
-  validateIsOfType(dataMapping, "DataMapping")
+  ospsuite:::validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- c()
   legendColors <- c()
   legendPch <- c()
