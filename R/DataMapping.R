@@ -594,7 +594,7 @@ DataMapping <- R6::R6Class(
     #' Line types can be provided either as numeric or as character vectors (e.g. "dashed").
     #'
     #' @param labels A list of label of \code{XYData}
-    #' @param lineTypes Values that will be set as line type(s).
+    #' @param linetypes Values that will be set as line type(s).
     setLinetypes = function(labels, linetypes) {
       validateIsString(labels, nullAllowed = TRUE)
       validateIsSameLength(labels, linetypes)

@@ -95,6 +95,26 @@ outputValues <- getOutputValues(simulationResults = simResults,
     list("Stevens_2012_placebo solid total sim",
          "Stevens_2012_placebo solid distal sim",
          "Stevens_2012_placebo solid proximal sim"
+    )
+  )
+  
+  dataMapping$plot()
+```
+
+Add simulation results to the mapping, assigning to the correct groups. Simulation results are now
+have same colors as observed data of the same group. As the labels of the assigned data sets are equal as the ones 
+assigned in the previous steps, the previous sets are overwritten.
+
+```{r addSimResultsToMappingAndGrouping}
+  dataMapping$addModelOutputs(
+    paths = list("Organism|Lumen|Stomach|Metformin|Gastric retention",
+                 "Organism|Lumen|Stomach|Metformin|Gastric retention distal", 
+                 "Organism|Lumen|Stomach|Metformin|Gastric retention proximal"), 
+    outputValues = outputValues,
+    simulation = sim,
+    list("Stevens_2012_placebo solid total sim",
+         "Stevens_2012_placebo solid distal sim",
+         "Stevens_2012_placebo solid proximal sim"
     ),
     groups =     list("Stevens 2012 solid total",
                       "Stevens 2012 solid distal",
