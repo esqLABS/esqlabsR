@@ -116,6 +116,24 @@ figureAddLabel <- function(label, location = "topleft",
   text(labels = label[1], x = this.x, y = this.y, xpd = T)
 }
 
+#' Add legend to a plot
+#'
+#' @inheritParams graphics::legend
+.figureAddLegend <- function(x, legend, col, pch, lty, ...) {
+  # Legend does not ignore ellipsis arguments that are not supported, so they must be removed from the arguments list
+  supportedArgs <- names(formals(graphics::legend))
+  args <- list(...)
+  args <- args[which(names(args) %in% supportedArgs)]
+  args$x <- x
+  args$legend <- legend
+  args$col <- col
+  args$pch <- pch
+  args$lty <- lty
+
+  # Using do.call use arguments combined from ellipsis
+  do.call(graphics::legend, args)
+}
+
 #' Returns the HSV values for a given R color name
 #'
 #' @param color vector of any of the three kinds of R color specifications, i.e.,
@@ -124,17 +142,19 @@ figureAddLabel <- function(label, location = "topleft",
 #'
 #' @return A matrix with a column for each color. The three rows of the matrix indicate hue, saturation and value and are named "h", "s", and "v" accordingly.
 #' @export
+#' @import ospsuite
 #'
 #' @examples
 #' col2hsv("yellow")
 col2hsv <- function(color) {
-  validateIsString(color)
+  ospsuite:::validateIsString(color)
   rgb <- col2rgb(color)
   return(rgb2hsv(rgb))
 }
 
 #' A function to add error bars on the chart.
 #' @description Taken from \url{https://www.r-graph-gallery.com/4-barplot-with-error-bar.html}
+#' @import ospsuite
 #'
 #' @param x Numerical array of x-values
 #' @param y Numerical array of y-values
@@ -146,8 +166,8 @@ col2hsv <- function(color) {
 #' If "y" (default), vertical error bars are drawn. If "x", horizontal error bars are drawn
 #' @param ... Graphical parameters (see \code{\link{par}})
 plotErrorBars <- function(x, y, upper, lower = upper, length = par()$cin[[1]] / 2, axis = "y", ...) {
-  validateIsNumeric(c(x, y))
-  validateIsSameLength(x, y, upper, lower)
+  ospsuite:::validateIsNumeric(c(x, y))
+  ospsuite:::validateIsSameLength(x, y, upper, lower)
   if (axis == "y") {
     arrows(x, y + upper, x, y - lower, angle = 90, code = 3, length = length, ...)
   }
@@ -225,7 +245,7 @@ closeOutputDevice <- function(plotConfiguration) {
 #' @param type String value of argument \code{type} passed to function \code{plot()}
 #'
 #' @return TRUE if \code{type} contains "p" or is "b", FALSE otherwise
-isPoint <- function(type) {
+.isPoint <- function(type) {
   isCharInString("p", type) || (type == "b")
 }
 
@@ -234,6 +254,6 @@ isPoint <- function(type) {
 #' @param type String value of argument \code{type} passed to function \code{plot()}
 #'
 #' @return TRUE if \code{type} contains "l" or is "b", FALSE otherwise
-isLine <- function(type) {
+.isLine <- function(type) {
   isCharInString("l", type) || (type == "b")
 }

@@ -888,7 +888,7 @@ test_that("It returns correct xLim when unit of DataMapping is the same as unit 
     labels = c("my series1", "my series2", "my series3")
   )
 
-  expect_equal(dataMapping$xLim, c(-1.1, 4.4))
+  expect_equal(dataMapping$xLim, c(-1, 4) * 1.1)
 })
 
 test_that("It returns correct xLim when unit of DataMapping is different from unit of xyData", {
@@ -906,7 +906,7 @@ test_that("It returns correct xLim when unit of DataMapping is different from un
 
   dataMapping$xUnit <- "h"
 
-  expect_equal(dataMapping$xLim, c(-1.1, 4.4) / 60)
+  expect_equal(dataMapping$xLim, c(-1, 4) / 60 * 1.1)
 })
 
 test_that("It can set xLim", {

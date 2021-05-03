@@ -17,8 +17,8 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
     "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit"
   )
 
-  validateIsString(c(XLSpath, populationName))
-  validateIsString(sheet, nullAllowed = TRUE)
+  ospsuite:::validateIsString(c(XLSpath, populationName))
+  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
 
   if (is.null(sheet)) {
     sheet <- 1
@@ -75,11 +75,11 @@ GenderInt <- enum(list(
 #' A list of supported distributions is defined in \code{Distributions}. Default is "Normal".
 #' @export
 extendPopulationByUserDefinedParams <- function(population, parameterPaths, meanValues, sdValues, distributions = Distributions$Normal) {
-  validateIsOfType(population, "Population")
-  validateIsString(parameterPaths)
-  validateIsNumeric(meanValues, sdValues)
+  ospsuite:::validateIsOfType(population, "Population")
+  ospsuite:::validateIsString(parameterPaths)
+  ospsuite:::validateIsNumeric(meanValues, sdValues)
   distributions <- distributions %||% rep(Distributions$Normal, length(parameterPaths))
-  validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
+  ospsuite:::validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
 
 
   # Iterate through all parameters and sample a parameter values vector
@@ -114,9 +114,9 @@ extendPopulationByUserDefinedParams <- function(population, parameterPaths, mean
 #' @import openxlsx
 #' @export
 extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
-  validateIsOfType(population, "Population")
-  validateIsString(XLSpath)
-  validateIsString(sheet, nullAllowed = TRUE)
+  ospsuite:::validateIsOfType(population, "Population")
+  ospsuite:::validateIsString(XLSpath)
+  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
   if (is.null(sheet)) {
     sheet <- 1
   }

@@ -18,7 +18,8 @@ xVals <- list(c(1, 2, 3, 4), c(1, 2, 3, 4), c(2, 3, 4, 5))
 yVals <- list(c(5, 6, 7, 8), c(5, 6, 7, 8), c(6, 7, 8, 9))
 yErr <- list(c(0.1, 0.1, 0.1, 0.2), NULL, c(0.2, 0.3, 0.1, 0.2))
 groups <- list("Group1", NULL, "Group1")
-dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
+dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
+yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
 }
 \section{Super class}{
 \code{\link[esqlabsR:Printable]{esqlabsR::Printable}} -> \code{DataMapping}
@@ -208,7 +209,8 @@ xVals <- list(c(1, 2, 3, 4), c(1, 2, 3, 4), c(2, 3, 4, 5))
 yVals <- list(c(5, 6, 7, 8), c(5, 6, 7, 8), c(6, 7, 8, 9))
 yErr <- list(c(0.1, 0.1, 0.1, 0.2), NULL, c(0.2, 0.3, 0.1, 0.2))
 groups <- list("Group1", NULL, "Group1")
-dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
+dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
+yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
 }
 \if{html}{\out{</div>}}
 
