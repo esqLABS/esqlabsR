@@ -10,7 +10,7 @@ Distributed formulas have different values (not checking for distribution)
 Explicit formulas: If formula string are not equal, OR one of the parameter values is fixed (formula is overridden),
 OR both parameter values are fixed and differ,
 OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
-Table formulas: If the number of points differ, OR any of the points differn,
+Table formulas: If the number of points differ, OR any of the points differ,
 OR one of the parameter values is fixed (formula is overridden),
 OR both parameter values are fixed and differ
 #'}
@@ -37,7 +37,7 @@ Distributed formulas have different values (not checking for distribution)
 Explicit formulas: If formula string are not equal, OR one of the parameter values is fixed (formula is overridden),
 OR both parameter values are fixed and differ,
 OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
-Table formulas: If the number of points differ, OR any of the points differn,
+Table formulas: If the number of points differ, OR any of the points differ,
 OR one of the parameter values is fixed (formula is overridden),
 OR both parameter values are fixed and differ
 #'

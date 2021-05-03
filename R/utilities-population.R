@@ -31,7 +31,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   # Find the row with the given population name
   rowIdx <- which(data$PopulationName == populationName)
   if (length(rowIdx) == 0) {
-    stop(messages$errorWrongPopulationname())
+    stop(messages$errorWrongPopulationName(populationName))
   }
 
   # Parse the information about population.

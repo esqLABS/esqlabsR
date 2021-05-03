@@ -45,6 +45,53 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   openxlsx::write.xlsx(output, file = outputXLSPath, colNames = TRUE)
 }
 
+#' Read individual characteristics from file
+#'
+#' @details Read individual characteristics from an excel sheet
+#' and create an \code{IndividualCharacteristics}-object. The excel sheet must have
+#' the colums `IndividualId`, `Species`, `Population`, `Gender`, `Weight [kg]`,
+#' `Height [cm]`, `Age [year(s)]`, and `BMI`.
+
+#' @param XLSpath Full path to the excel file
+#' @param individualId (String) Id of the individual as stored in the `IndividualId` column.
+#' @param sheet Name of the sheet. If \code{NULL} (default), the first sheet of the
+#' file is used.
+#'
+#' @return An `IndividualCharacteristics` object
+#' @export
+readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = NULL) {
+  validateIsString(XLSpath, individualId)
+
+  # If no sheet has been specified, read from the first sheet
+  if (is.null(sheet)) {
+    sheet <- c(1)
+  }
+
+  columnNames <- c(
+    "IndividualId", "Species", "Population", "Gender", "Weight.[kg]",
+    "Height.[cm]", "Age.[year(s)]"
+  )
+
+  data <- openxlsx::read.xlsx(xlsxFile = XLSpath, sheet = sheet, check.names = FALSE)
+  if (!all(names(data) == columnNames)) {
+    stop(messages$errorWrongIndividualCharacteristicsXLSStructure(XLSpath, columnNames))
+  }
+  # Find the row with the given individual id
+  rowIdx <- which(data$IndividualId == individualId)
+  if (length(rowIdx) == 0) {
+    stop(messages$errorWrongIndividualId(individualId))
+  }
+
+  # Create the IndividualCharacteristics object
+  individualCharacteristics <- createIndividualCharacteristics(
+    species = data$Species, population = data$Population, gender = data$Gender, weight = data$`Weight.[kg]`,
+    height = data$`Height.[cm]`,
+    age = data$`Age.[year(s)]`
+  )
+
+  return(individualCharacteristics)
+}
+
 #' Apply an individual to the simulation.
 #' For human species, only parameters that do not override formulas are applied.
 #' For other species, all parameters returned by \code{createIndividual} are applied.
