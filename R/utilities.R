@@ -33,7 +33,7 @@ getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdR
     }
   }
 
-  validateIsNumeric(c(value, array))
+  ospsuite:::validateIsNumeric(c(value, array))
 
   # Calculate distances
   distances <- abs(array - value)
@@ -81,8 +81,8 @@ geosd <- function(x, na.rm = FALSE) {
 #' @return A list with \code{xValues} and aggregated \code{yValues}
 #' @export
 getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) {
-  validateIsNumeric(c(xValues, yValues, quantiles))
-  validateIsSameLength(xValues, yValues)
+  ospsuite:::validateIsNumeric(c(xValues, yValues, quantiles))
+  ospsuite:::validateIsSameLength(xValues, yValues)
   output <- list()
   # Aggregate time values
   for (quantile in quantiles) {
@@ -102,8 +102,8 @@ getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) 
 #'
 #' @return The root container that is the parent of the entity.
 getSimulationContainer <- function(entity) {
-  validateIsOfType(entity, "Entity")
-  if (isOfType(entity, "Container")) {
+  ospsuite:::validateIsOfType(entity, "Entity")
+  if (ospsuite:::isOfType(entity, "Container")) {
     if (entity$containerType == "Simulation") {
       return(entity)
     }
@@ -111,38 +111,15 @@ getSimulationContainer <- function(entity) {
   return(getSimulationContainer(entity$parentContainer))
 }
 
-#' Returns an instance of the specified .NET Task
-#'
-#' @param taskName The name of the task to retrieve (without the Get)
-#'
-#' @return An instance of the Task
-#'
-#' @details
-#' simulationLoader <- getNetTask("SimulationLoader")
-getNetTask <- function(taskName) {
-  rClr::clrCallStatic("OSPSuite.R.Api", paste0("Get", taskName))
-}
-
-#' Return an instance of the .NET Task "DimensionTask".
-#'
-#' @return An instance of the Task
-getDimensionTask <- function() {
-  dimTask <- esqlabsEnv$DimensionTask
-  if (is.null(dimTask)) {
-    dimTask <- getNetTask("DimensionTask")
-    esqlabsEnv$DimensionTask <- dimTask
-  }
-  return(dimTask)
-}
-
 #' Get hash code of the .NET object
 #'
 #' @param netWrapper Any object from the ospsuite-R that inhertis from DotNetWrapper
+#' @import rClr
 #'
 #' @return Value of the .NET-method "GetHashCode"
 getNetHashCode <- function(netWrapper) {
-  validateIsOfType(netWrapper, "DotNetWrapper")
-  rClr::clrCall(netWrapper$ref, "GetHashCode")
+  ospsuite:::validateIsOfType(netWrapper, "DotNetWrapper")
+  rClr::clrGet(netWrapper$ref, "HashCode")
 }
 
 #' Escape a string for possible regular expression match
@@ -179,7 +156,6 @@ removeFromList <- function(entry, listArg) {
   listArg[idx] <- NULL
   return(listArg)
 }
-
 
 #' Compare values including NA
 #'

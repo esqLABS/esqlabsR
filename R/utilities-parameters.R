@@ -13,8 +13,8 @@
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   columnNames <- c("Container.Path", "Parameter.Name", "Value", "Units")
 
-  validateIsString(paramsXLSpath)
-  validateIsString(sheets, nullAllowed = TRUE)
+  ospsuite:::validateIsString(paramsXLSpath)
+  ospsuite:::validateIsString(sheets, nullAllowed = TRUE)
 
   if (is.null(sheets)) {
     sheets <- c(1)
@@ -72,7 +72,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @return \code{TRUE} if parameters are considered equal, \code{FALSE} otherwise
 #' @export
 isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE) {
-  validateIsOfType(c(parameter1, parameter2), "Parameter")
+  ospsuite:::validateIsOfType(c(parameter1, parameter2), "Parameter")
 
   # Check for the path
   if (parameter1$path != parameter2$path) {
@@ -174,9 +174,9 @@ isTableFormulasEqual <- function(formula1, formula2) {
 setParameterValuesByPathWithCondition <- function(parameterPaths, values, simulation, condition = function(p) {
                                                     TRUE
                                                   }, units = NULL) {
-  validateIsString(c(parameterPaths, units))
-  validateIsNumeric(values)
-  validateIsOfType(simulation, "Simulation")
+  ospsuite:::validateIsString(c(parameterPaths, units))
+  ospsuite:::validateIsNumeric(values)
+  ospsuite:::validateIsOfType(simulation, "Simulation")
 
   for (i in seq_along(parameterPaths)) {
     param <- getParameter(parameterPaths[[i]], simulation)
@@ -197,9 +197,9 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, values, simula
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #' @export
 setParameterValuesByPathWithUnit <- function(parameterPaths, values, simulation, units = NULL) {
-  validateIsString(c(parameterPaths, units))
-  validateIsNumeric(values)
-  validateIsOfType(simulation, "Simulation")
+  ospsuite:::validateIsString(c(parameterPaths, units))
+  ospsuite:::validateIsNumeric(values)
+  ospsuite:::validateIsOfType(simulation, "Simulation")
 
   for (i in seq_along(parameterPaths)) {
     param <- getParameter(parameterPaths[[i]], simulation)

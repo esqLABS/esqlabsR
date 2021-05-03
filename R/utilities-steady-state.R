@@ -8,7 +8,7 @@
 #' @return A list of objects of type \code{Quantity}
 #' @export
 getAllStateVariables <- function(simulation, ignoreIfFormula = TRUE) {
-  validateIsOfType(simulation, type = "Simulation")
+  ospsuite:::validateIsOfType(simulation, type = "Simulation")
 
   quantities <- getAllMoleculesMatching("Organism|**", container = simulation)
   # Get all state variable parameters
@@ -47,8 +47,8 @@ getAllStateVariables <- function(simulation, ignoreIfFormula = TRUE) {
 #' @return A list containing \code{quantities} and their \code{values} at the end of the simulation.
 #' @export
 getSteadyState <- function(quantities = NULL, simulation, steadyStateTime, ignoreIfFormula = TRUE, stopIfNotFound = TRUE, lowerThreshold = 1e-15) {
-  validateIsOfType(simulation, type = "Simulation")
-  validateIsOfType(object = quantities, type = "Quantity", nullAllowed = TRUE)
+  ospsuite:::validateIsOfType(simulation, type = "Simulation")
+  ospsuite:::validateIsOfType(object = quantities, type = "Quantity", nullAllowed = TRUE)
 
   if (steadyStateTime <= 0) {
     stop("steadyStateTime must be > 0!")
@@ -117,7 +117,7 @@ getSteadyState <- function(quantities = NULL, simulation, steadyStateTime, ignor
 #' @export
 exportSteadyStateToXLS <- function(simulation, quantities = NULL, resultsXLSPath = "", steadyStateTime = 1000, ignoreIfFormula = TRUE,
                                    stopIfNotFound = TRUE, lowerThreshold = 1e-15) {
-  validateIsOfType(simulation, type = "Simulation")
+  ospsuite:::validateIsOfType(simulation, type = "Simulation")
   # If no explicit path to the results-file is provided, store the results file in the same folder as the model file.
   if (resultsXLSPath == "") {
     simulationPath <- tools::file_path_sans_ext(simulation$sourceFile)
@@ -158,7 +158,7 @@ exportSteadyStateToXLS <- function(simulation, quantities = NULL, resultsXLSPath
     quantity <- initialValues$quantities[[i]]
     value <- initialValues$values[[i]]
 
-    if (isOfType(quantity, "Molecule")) {
+    if (ospsuite:::isOfType(quantity, "Molecule")) {
       moleculeValue <- append(moleculeValue, value)
       moleculeContainerPath <- append(moleculeContainerPath, quantity$parentContainer$path)
       moleculeName <- append(moleculeName, quantity$name)

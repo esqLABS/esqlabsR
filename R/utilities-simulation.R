@@ -26,9 +26,9 @@
 #' }
 initializeSimulation <- function(simulation, individualCharacteristics = NULL, additionalParams = NULL, simulateSteadyState = FALSE, steadyStateTime = 1000,
                                  ignoreIfFormula = TRUE) {
-  validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
-  validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
-  validateIsLogical(simulateSteadyState)
+  ospsuite:::validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
+  ospsuite:::validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
+  ospsuite:::validateIsLogical(simulateSteadyState)
 
   # Apply parameters of the individual
   if (!is.null(individualCharacteristics)) {
