@@ -6,6 +6,7 @@
 #' \code{DataConfiguration$columnsToSplitBy}. The output structure is a nested list with levels corresponding to the groupings.
 #'
 #' @return A (nested) list of \code{OSPSTimeValues} objects
+#' @import ospsuite
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
   ospsuite:::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))

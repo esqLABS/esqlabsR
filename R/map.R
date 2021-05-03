@@ -2,6 +2,7 @@
 #'
 #' @param keys List of keys
 #' @param values List of values
+#' @import ospsuite
 #'
 #' @return the Map created
 #' @export

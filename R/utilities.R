@@ -114,6 +114,7 @@ getSimulationContainer <- function(entity) {
 #' Get hash code of the .NET object
 #'
 #' @param netWrapper Any object from the ospsuite-R that inhertis from DotNetWrapper
+#' @import rClr
 #'
 #' @return Value of the .NET-method "GetHashCode"
 getNetHashCode <- function(netWrapper) {

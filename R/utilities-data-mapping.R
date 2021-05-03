@@ -52,6 +52,7 @@ plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
 #' @param yUnit Target unit of y-axis.
 #' If \code{TRUE},
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @import ospsuite
 plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
   ospsuite:::validateIsOfType(xySeries, "XYData")
   points(xySeries$xValuesProcessed(xUnit),
@@ -81,6 +82,7 @@ plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
 #' @param xUnit Target unit of x-axis.
 #' @param yUnit Target unit of y-axis.
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @import ospsuite
 #' @export
 plotXYDataAggregated <- function(xySeries, xUnit = NULL, yUnit = NULL,
                                  quantiles = c(0.05, 0.5, 0.95), ...) {
@@ -123,6 +125,7 @@ plotIndividualProfile <- function(dataMapping, ...) {
 #'
 #' @param dataMapping A \code{DataMapping} object with \code{XYData}
 #' @param ... Any parameter that can be interpreted by the default \code{\link{boxplot}} function
+#' @import ospsuite
 #' @export
 plotBoxPlot <- function(dataMapping, ...) {
   ospsuite:::validateIsOfType(dataMapping, "DataMapping")
@@ -159,6 +162,7 @@ plotPopulationQuantiles <- function(dataMapping, ...) {
 #' Plot time-values profile
 #' @description Create a 2D-plot of the x-y data sets stored in \code{dataMapping}
 #'
+#' @import ospsuite
 #' @param dataMapping A \code{DataMapping} object with \code{XYData}
 #' @param aggregated Boolean. If \code{FALSE}, simulation data containing multiple individuals (population simulation)
 #' are plottet separately for each individual. If \code{TRUE}, population simulation results are plotted as
@@ -362,6 +366,7 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
 #'
 #' @details Observed data points are drawn on the x, simulated values on the y axis.
+#' @import ospsuite
 #' @export
 plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThreshold = 10, ...) {
   ospsuite:::validateIsOfType(dataMapping, "DataMapping")

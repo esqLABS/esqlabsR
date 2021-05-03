@@ -118,7 +118,7 @@ figureAddLabel <- function(label, location = "topleft",
 
 #' Add legend to a plot
 #'
-#' @inheritParams legend
+#' @inheritParams graphics::legend
 .figureAddLegend <- function(x, legend, col, pch, lty, ...) {
   # Legend does not ignore ellipsis arguments that are not supported, so they must be removed from the arguments list
   supportedArgs <- names(formals(graphics::legend))
@@ -142,6 +142,7 @@ figureAddLabel <- function(label, location = "topleft",
 #'
 #' @return A matrix with a column for each color. The three rows of the matrix indicate hue, saturation and value and are named "h", "s", and "v" accordingly.
 #' @export
+#' @import ospsuite
 #'
 #' @examples
 #' col2hsv("yellow")
@@ -153,6 +154,7 @@ col2hsv <- function(color) {
 
 #' A function to add error bars on the chart.
 #' @description Taken from \url{https://www.r-graph-gallery.com/4-barplot-with-error-bar.html}
+#' @import ospsuite
 #'
 #' @param x Numerical array of x-values
 #' @param y Numerical array of y-values

@@ -2,6 +2,7 @@
 #'
 #' @param enum The enum where the key-value pair is stored
 #' @param value The value that is mapped to the key
+#' @import ospsuite
 #'
 #' @return Key under which the value is stored. If the value is not in the enum, \code{NULL} is returned
 #' @export

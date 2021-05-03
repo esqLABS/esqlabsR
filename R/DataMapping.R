@@ -2,6 +2,7 @@
 #' @docType class
 #' @description Mapping of model outputs to observed data
 #' @export
+#' @import ospsuite
 #' @format NULL
 DataMapping <- R6::R6Class(
   "DataMapping",
@@ -51,7 +52,7 @@ DataMapping <- R6::R6Class(
             )
           }))
           # Extend limits by 10%
-          return(c(xMin, xMax) + abs(c(xMin, xMax) * c(-0.1, 0.1)))
+          return(c(xMin, xMax) + abs(c(xMin, xMax)) * c(-0.1, 0.1))
         }
         else {
           private$.xLim
@@ -104,7 +105,7 @@ DataMapping <- R6::R6Class(
             }
           }))
           # Extend limits by 10%
-          return(c(yMin, yMax) + abs(c(yMin, yMax) * c(-0.1, 0.1)))
+          return(c(yMin, yMax) + abs(c(yMin, yMax)) * c(-0.1, 0.1))
         }
         else {
           private$.yLim
@@ -395,7 +396,8 @@ DataMapping <- R6::R6Class(
     #' yVals <- list(c(5, 6, 7, 8), c(5, 6, 7, 8), c(6, 7, 8, 9))
     #' yErr <- list(c(0.1, 0.1, 0.1, 0.2), NULL, c(0.2, 0.3, 0.1, 0.2))
     #' groups <- list("Group1", NULL, "Group1")
-    #' dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
+    #' dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
+    #' yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
     addXYSeries = function(xValsList, yValsList, labels, yErrorList = NULL, groups = NULL) {
       ospsuite:::validateIsString(labels)
       xValsList <- enforceIsList(xValsList)
