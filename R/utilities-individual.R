@@ -59,16 +59,18 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #'
 #' @return An `IndividualCharacteristics` object
 #' @export
-readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = NULL){
+readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = NULL) {
   validateIsString(XLSpath, individualId)
 
-  #If no sheet has been specified, read from the first sheet
+  # If no sheet has been specified, read from the first sheet
   if (is.null(sheet)) {
     sheet <- c(1)
   }
 
-  columnNames <- c("IndividualId", "Species", "Population", "Gender", "Weight.[kg]",
-                   "Height.[cm]", "Age.[year(s)]")
+  columnNames <- c(
+    "IndividualId", "Species", "Population", "Gender", "Weight.[kg]",
+    "Height.[cm]", "Age.[year(s)]"
+  )
 
   data <- openxlsx::read.xlsx(xlsxFile = XLSpath, sheet = sheet, check.names = FALSE)
   if (!all(names(data) == columnNames)) {
@@ -80,10 +82,12 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = 
     stop(messages$errorWrongIndividualId(individualId))
   }
 
-  #Create the IndividualCharacteristics object
-  individualCharacteristics <- createIndividualCharacteristics(species = data$Species, population = data$Population, gender = data$Gender, weight = data$`Weight.[kg]`,
-                                                               height = data$`Height.[cm]`,
-                                                               age = data$`Age.[year(s)]`)
+  # Create the IndividualCharacteristics object
+  individualCharacteristics <- createIndividualCharacteristics(
+    species = data$Species, population = data$Population, gender = data$Gender, weight = data$`Weight.[kg]`,
+    height = data$`Height.[cm]`,
+    age = data$`Age.[year(s)]`
+  )
 
   return(individualCharacteristics)
 }

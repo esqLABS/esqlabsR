@@ -970,7 +970,7 @@ test_that("It returns correct yLim in lin scale when unit of DataMapping is the 
     labels = c("my series1", "my series2", "my series3")
   )
 
-  expect_equal(dataMapping$yLim, c(-1.1, 10.1)*1.1)
+  expect_equal(dataMapping$yLim, c(-1.1, 10.1) * 1.1)
 })
 
 test_that("It returns correct yLim in lin scale when unit of DataMapping is different from unit of xyData", {

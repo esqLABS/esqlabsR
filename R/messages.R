@@ -80,11 +80,10 @@ messages <- list(
   warningValueWithinThresholdNotExisting = function(value, threshold, optionalMessage = NULL) {
     paste("value `", value, "` not found in the array within the absolute threshold of  ", threshold, optionalMessage)
   },
-
-  errorWrongPopulationName = function(populationName){
+  errorWrongPopulationName = function(populationName) {
     paste0("Population name ", populationName, " is not specified in the population file!")
   },
-  errorWrongIndividualId = function(individualId){
+  errorWrongIndividualId = function(individualId) {
     paste0("Individual with id ", individualId, " is not specified in the individual characteristics file!")
-           }
+  }
 )
