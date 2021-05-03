@@ -95,22 +95,6 @@ getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) 
   return(output)
 }
 
-
-#' Get the simulation container of the entity
-#'
-#' @param entity Object of type \code{Entity}
-#'
-#' @return The root container that is the parent of the entity.
-getSimulationContainer <- function(entity) {
-  ospsuite:::validateIsOfType(entity, "Entity")
-  if (ospsuite:::isOfType(entity, "Container")) {
-    if (entity$containerType == "Simulation") {
-      return(entity)
-    }
-  }
-  return(getSimulationContainer(entity$parentContainer))
-}
-
 #' Get hash code of the .NET object
 #'
 #' @param netWrapper Any object from the ospsuite-R that inhertis from DotNetWrapper

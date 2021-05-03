@@ -1,7 +1,5 @@
 .getPackageVersion <- function() {
   version <- getNamespaceVersion("esqlabsR")
-  # first <- head(unlist(gregexpr(pattern = "\\.", version)), 1)
-  # return(unname(substr(version, 1, first - 1)))
   return(version)
 }
 
