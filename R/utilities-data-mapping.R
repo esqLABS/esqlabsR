@@ -145,7 +145,7 @@ plotBoxPlot <- function(dataMapping, ...) {
 
   # Draw a legend, if specified
   if (dataMapping$addLegend) {
-    .figureAddLegend(x = dataMapping$legendPosition, legend = legendEntries, col = NULL, pch = NULL, lty = rep(1, length(legendEntries)), ...)
+    .figureAddLegend(x = dataMapping$legendPosition, legend = legendEntries, col = NULL, pch = NULL, lty = rep(0, length(legendEntries)), ...)
   }
 }
 
