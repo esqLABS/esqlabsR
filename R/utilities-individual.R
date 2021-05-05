@@ -16,7 +16,6 @@
 #' writeIndividualToXLS(humanIndividualCharacteristics, pathToExcelFile)
 #' }
 writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
-  ospsuite:::validateIsOfType(individualCharacteristics, "IndividualCharacteristics")
   ospsuite:::validateIsString(outputXLSPath)
 
   individual <- createIndividual(individualCharacteristics)
@@ -60,7 +59,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' @return An `IndividualCharacteristics` object
 #' @export
 readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = NULL) {
-  validateIsString(XLSpath, individualId)
+  ospsuite:::validateIsString(XLSpath, individualId)
 
   # If no sheet has been specified, read from the first sheet
   if (is.null(sheet)) {
@@ -112,9 +111,6 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = 
 #' applyIndividualParameters(humanIndividualCharacteristics, simulation)
 #' }
 applyIndividualParameters <- function(individualCharacteristics, simulation) {
-  ospsuite:::validateIsOfType(individualCharacteristics, "IndividualCharacteristics")
-  ospsuite:::validateIsOfType(simulation, "Simulation")
-
   individual <- createIndividual(individualCharacteristics)
   allParamPaths <- c(individual$distributedParameters$paths, individual$derivedParameters$paths)
   allParamValues <- c(individual$distributedParameters$values, individual$derivedParameters$values)
