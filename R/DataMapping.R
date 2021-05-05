@@ -61,7 +61,9 @@ DataMapping <- R6::R6Class(
         }
       } else {
         ospsuite:::validateIsNumeric(value, nullAllowed = TRUE)
-        validateLength(value, 2)
+        if (!is.null(value)){
+          validateLength(value, 2)
+        }
         private$.xLim <- value
       }
     },
@@ -114,7 +116,9 @@ DataMapping <- R6::R6Class(
         }
       } else {
         ospsuite:::validateIsNumeric(value, nullAllowed = TRUE)
-        validateLength(value, 2)
+        if (!is.null(value)){
+          validateLength(value, 2)
+        }
         private$.yLim <- value
       }
     },
