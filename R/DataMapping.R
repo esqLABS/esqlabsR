@@ -332,7 +332,8 @@ DataMapping <- R6::R6Class(
     #' @description
     #' Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by default.
     addModelOutputs = function(paths, labels, outputValues, simulation, groups = NULL, removeNA = TRUE) {
-      ospsuite:::validateIsString(c(paths, labels))
+      #Paths are checked for correct type in ospsuite
+      ospsuite:::validateIsString(labels)
       ospsuite:::validateIsSameLength(paths, labels)
 
       for (idx in seq_along(paths)) {
@@ -401,12 +402,11 @@ DataMapping <- R6::R6Class(
     #' dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
     #' yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
     addXYSeries = function(xValsList, yValsList, labels, yErrorList = NULL, groups = NULL) {
-      ospsuite:::validateIsString(labels)
+      #Label is validated for string in Plotable
       xValsList <- enforceIsList(xValsList)
       yValsList <- enforceIsList(yValsList)
       if (!is.null(yErrorList)) {
         yErrorList <- enforceIsList(yErrorList)
-        ospsuite:::validateIsSameLength(xValsList, yErrorList)
       }
       if (!is.null(groups)) {
         ospsuite:::validateIsString(groups, nullAllowed = TRUE)

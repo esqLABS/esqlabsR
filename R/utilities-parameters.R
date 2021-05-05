@@ -174,10 +174,6 @@ isTableFormulasEqual <- function(formula1, formula2) {
 setParameterValuesByPathWithCondition <- function(parameterPaths, values, simulation, condition = function(p) {
                                                     TRUE
                                                   }, units = NULL) {
-  ospsuite:::validateIsString(c(parameterPaths, units))
-  ospsuite:::validateIsNumeric(values)
-  ospsuite:::validateIsOfType(simulation, "Simulation")
-
   for (i in seq_along(parameterPaths)) {
     param <- getParameter(parameterPaths[[i]], simulation)
     if (condition(param)) {
@@ -197,15 +193,12 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, values, simula
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #' @export
 setParameterValuesByPathWithUnit <- function(parameterPaths, values, simulation, units = NULL) {
-  ospsuite:::validateIsString(c(parameterPaths, units))
-  ospsuite:::validateIsNumeric(values)
-  ospsuite:::validateIsOfType(simulation, "Simulation")
-
+  ospsuite:::validateIsString(units)
   for (i in seq_along(parameterPaths)) {
     param <- getParameter(parameterPaths[[i]], simulation)
     valueInBaseUnit <- values[[i]]
     if (!is.null(units)) {
-      valueInBaseUnit <- toBaseUnit(quantity = param, values = valueInBaseUnit, unit = units[[i]])
+      valueInBaseUnit <- toBaseUnit(quantityOrDimension = param, values = valueInBaseUnit, unit = units[[i]])
     }
   }
   setParameterValues(parameters = param, values = valueInBaseUnit)
