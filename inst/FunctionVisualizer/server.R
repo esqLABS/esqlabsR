@@ -34,7 +34,7 @@ server <- function(input, output, session){
     isolate({
       v$equation <- input$equation
       v$varnames <- setdiff(unlist(strsplit(gsub("[[:blank:]]", "", input$equation),
-                                          "[[:punct:]]+")), mathexpressions)
+                                            "[[:punct:]]+")), mathexpressions)
 
       v$mins <- paste0("min", v$varnames)
       v$maxs <- paste0("max", v$varnames)
@@ -42,10 +42,10 @@ server <- function(input, output, session){
 
       variable_list <- lapply(1:length(v$varnames), function(i) {
         splitLayout(cellWidths = c("10%", "70%", "10%", "10%"),
-          numericInput(v$mins[i], "min", 0),
-          sliderInput(v$varnames[i], v$varnames[i], 0, 100, 1),
-          numericInput(v$maxs[i], "max", 100),
-          numericInput(v$current[i], "current", 1)
+                    numericInput(v$mins[i], "min", 0),
+                    sliderInput(v$varnames[i], v$varnames[i], 0, 100, 1),
+                    numericInput(v$maxs[i], "max", 100),
+                    numericInput(v$current[i], "current", 1)
         )
       })
 
@@ -65,8 +65,8 @@ server <- function(input, output, session){
   # update slider min when corresponding value in numeric input field is changed
   observer_min <- observe({
     lapply(1:length(v$mins), function(i){
-        newval <- input[[v$mins[i]]]
-        isolate(updateSliderInput(session, v$varnames[i], min = newval))
+      newval <- input[[v$mins[i]]]
+      isolate(updateSliderInput(session, v$varnames[i], min = newval))
     })
   })
 
@@ -78,7 +78,7 @@ server <- function(input, output, session){
       isolate({
         updateSliderInput(session, v$varnames[i], max = newval, step = stepsize)
         updateNumericInput(session, paste0("current", v$varnames[i]), step = stepsize)
-        })
+      })
     })
   })
 
@@ -99,27 +99,27 @@ server <- function(input, output, session){
   })
 
   output$plot <- renderPlot({
-    if (is.null(input$argument)) return()
+    if (is.null(input$argument) || !(input$argument %in% v$varnames)) return()
 
     arg <- input$argument
-
     x_min <- input[[paste0("min", arg)]]
     x_max <- input[[paste0("max", arg)]]
     stepsize <- as.numeric(paste0('1e', floor(log10(x_max-x_min))-2))
 
     x_values <- seq(x_min, x_max, stepsize)
-
-    eq <- paste0(gsub("([[:punct:]])", " \\1 ", v$equation), " ")               # insert space before and after punctuation
+    # insert space before and after punctuation
+    eq <- paste0(gsub("([[:punct:]])", " \\1 ", v$equation), " ")
 
     colname <<- ""
 
     for (i in v$varnames){
-        if (i!=arg){
-          eq <- gsub(paste0(i, " "), input[[i]], eq)                            # match variable+space so variable names are not matched in function names, e.g. x in exp
-          colname <<- paste(colname, i, "=", input[[i]])
-        } else {
-          eq <- gsub(paste0(i, " "), "x_values", eq)
-        }
+      if (i != arg){
+        # match variable+space so variable names are not matched in function names, e.g. x in exp
+        eq <- gsub(paste0(i, " "), input[[i]], eq)
+        colname <<- paste(colname, i, "=", input[[i]])
+      } else {
+        eq <- gsub(paste0(i, " "), "x_values", eq)
+      }
     }
 
     y_values <- eval(parse(text=eq))
@@ -130,7 +130,9 @@ server <- function(input, output, session){
       if(sum(is.finite(y_values)) == 0){
         plot.new()
       } else {
-        plot(x_values, y_values, xlab = arg, ylab = v$equation, type = 'l')
+        plot(x_values, y_values, xlab = arg, ylab = v$equation, type = 'l',
+             xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
+             ylim = c(max(min(y_values), input$yLower), min(max(y_values), input$yUpper)))
         if(!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 1)
       }
     } else {
@@ -149,9 +151,13 @@ server <- function(input, output, session){
 
       if(ncol(plotdata)==2){
         matplot(plotdata[,1], plotdata[,-1], type = 'l', xlab = arg, ylab = v$equation,
-                col = 1, lty = 1) # c(c(2:ncol(plotdata)), 1))
+                col = 1, lty = 1,
+                xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
+                ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper)))
       } else {
-        matplot(NA, xlim = c(x_min, x_max), ylim = c(y_min, y_max),
+        matplot(NA,
+                xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
+                ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper)),
                 xlab = arg, ylab = v$equation)
 
         mapply(function(y,color){
@@ -163,7 +169,7 @@ server <- function(input, output, session){
       if(!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 1)
 
       legend("topleft", legend = colnames(plotdata)[colnames(plotdata)!="x_values"],
-              col = c(rainbow(ncol(plotdata)-2),1), lty = 1)# c(c(2:ncol(plotdata)), 1))
+             col = c(rainbow(ncol(plotdata)-2),1), lty = 1)
     }
 
   })
