@@ -107,15 +107,15 @@ server <- function(input, output, session){
     stepsize <- as.numeric(paste0('1e', floor(log10(x_max-x_min))-2))
 
     x_values <- seq(x_min, x_max, stepsize)
-
-    eq <- paste0(gsub("([[:punct:]])", " \\1 ", v$equation), " ")               # insert space before and after punctuation
+    # insert space before and after punctuation
+    eq <- paste0(gsub("([[:punct:]])", " \\1 ", v$equation), " ")
 
     colname <<- ""
 
     for (i in v$varnames){
-      # problem when changing equations: arg not updated yet
       if (i != arg){
-        eq <- gsub(paste0(i, " "), input[[i]], eq)                            # match variable+space so variable names are not matched in function names, e.g. x in exp
+        # match variable+space so variable names are not matched in function names, e.g. x in exp
+        eq <- gsub(paste0(i, " "), input[[i]], eq)
         colname <<- paste(colname, i, "=", input[[i]])
       } else {
         eq <- gsub(paste0(i, " "), "x_values", eq)
@@ -153,7 +153,7 @@ server <- function(input, output, session){
         matplot(plotdata[,1], plotdata[,-1], type = 'l', xlab = arg, ylab = v$equation,
                 col = 1, lty = 1,
                 xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
-                ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper))) # c(c(2:ncol(plotdata)), 1))
+                ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper)))
       } else {
         matplot(NA,
                 xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
@@ -169,7 +169,7 @@ server <- function(input, output, session){
       if(!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 1)
 
       legend("topleft", legend = colnames(plotdata)[colnames(plotdata)!="x_values"],
-             col = c(rainbow(ncol(plotdata)-2),1), lty = 1)# c(c(2:ncol(plotdata)), 1))
+             col = c(rainbow(ncol(plotdata)-2),1), lty = 1)
     }
 
   })

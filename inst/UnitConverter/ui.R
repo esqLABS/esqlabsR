@@ -1,8 +1,6 @@
 ui <- fluidPage(
-  useShinyjs(),
+  shinyjs::useShinyjs(),
   titlePanel("Unit Converter"),
   selectInput("dimension", "Dimension", choices = ospsuite::ospDimensions),
   uiOutput("units")
 )
-
-
