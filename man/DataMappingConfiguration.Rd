@@ -37,6 +37,7 @@ values are values recognized by the \code{col} argument of the \code{\link{plot}
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-new}{\code{DataMappingConfiguration$new()}}
+\item \href{#method-finalize}{\code{DataMappingConfiguration$finalize()}}
 \item \href{#method-setXFactors}{\code{DataMappingConfiguration$setXFactors()}}
 \item \href{#method-setYFactors}{\code{DataMappingConfiguration$setYFactors()}}
 \item \href{#method-setXOffsets}{\code{DataMappingConfiguration$setXOffsets()}}
@@ -64,6 +65,16 @@ Initialize a new instance of the class
 \subsection{Returns}{
 A new `DataMappingConfiguration` object.
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-finalize"></a>}}
+\if{latex}{\out{\hypertarget{method-finalize}{}}}
+\subsection{Method \code{finalize()}}{
+Clean up upon object removal
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$finalize()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-setXFactors"></a>}}

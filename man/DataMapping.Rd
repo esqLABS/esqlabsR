@@ -43,8 +43,8 @@ a legend will be added for each group and each XYSeries that is not in any group
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{xySeries}}{\code{map} with the \code{XYData}
-that will be plotted. Keys are the labels of the \code{xySeries} objects}
+\item{\code{xySeries}}{Named list with the \code{XYData}
+that will be plotted. Names are the labels of the \code{xySeries} objects}
 
 \item{\code{xySeriesCount}}{number of \code{XYData} objects to be plotted}
 
@@ -92,6 +92,7 @@ Supported plot types are listed in the enum \code{PlotTypes}. Default is "Indivi
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-new}{\code{DataMapping$new()}}
+\item \href{#method-finalize}{\code{DataMapping$finalize()}}
 \item \href{#method-addModelOutputs}{\code{DataMapping$addModelOutputs()}}
 \item \href{#method-addXYSeries}{\code{DataMapping$addXYSeries()}}
 \item \href{#method-addOSPSTimeValues}{\code{DataMapping$addOSPSTimeValues()}}
@@ -127,6 +128,16 @@ Initialize a new instance of the class
 \subsection{Returns}{
 A new `DataMapping` object.
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-finalize"></a>}}
+\if{latex}{\out{\hypertarget{method-finalize}{}}}
+\subsection{Method \code{finalize()}}{
+Clean up upon object removal
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$finalize()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-addModelOutputs"></a>}}
