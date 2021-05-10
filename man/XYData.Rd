@@ -8,7 +8,7 @@
 A set of x and y value pairs
 }
 \section{Super classes}{
-\code{\link[esqlabsR:Printable]{esqlabsR::Printable}} -> \code{\link[esqlabsR:Plotable]{esqlabsR::Plotable}} -> \code{XYData}
+\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{\link[esqlabsR:Plotable]{esqlabsR::Plotable}} -> \code{XYData}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

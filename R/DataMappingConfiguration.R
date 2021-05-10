@@ -5,7 +5,7 @@
 #' @format NULL
 DataMappingConfiguration <- R6::R6Class(
   "DataMappingConfiguration",
-  inherit = Printable,
+  inherit = ospsuite:::Printable,
   cloneable = FALSE,
   active = list(
     #' @field xFactors A named list listing numerical values that x-values are multiplied by. Keys are names of data sets,

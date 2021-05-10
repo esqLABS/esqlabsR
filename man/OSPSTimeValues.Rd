@@ -8,7 +8,7 @@
 A set of x and y value pairs with the properties as defined in the esqLABS "Time-Values Data"
 }
 \section{Super classes}{
-\code{\link[esqlabsR:Printable]{esqlabsR::Printable}} -> \code{\link[esqlabsR:Plotable]{esqlabsR::Plotable}} -> \code{\link[esqlabsR:XYData]{esqlabsR::XYData}} -> \code{OSPSTimeValues}
+\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{\link[esqlabsR:Plotable]{esqlabsR::Plotable}} -> \code{\link[esqlabsR:XYData]{esqlabsR::XYData}} -> \code{OSPSTimeValues}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

@@ -6,7 +6,7 @@
 #' @format NULL
 DataMapping <- R6::R6Class(
   "DataMapping",
-  inherit = Printable,
+  inherit = ospsuite:::Printable,
   cloneable = FALSE,
   active = list(
     #' @field xySeries \code{map} with the \code{XYData}

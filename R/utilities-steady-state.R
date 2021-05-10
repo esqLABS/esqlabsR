@@ -6,13 +6,14 @@
 #' state variables.
 #'
 #' @return A list of objects of type \code{Quantity}
+#' @import ospsuite
 #' @export
 getAllStateVariables <- function(simulation, ignoreIfFormula = TRUE) {
   ospsuite:::validateIsOfType(simulation, type = "Simulation")
 
-  quantities <- getAllMoleculesMatching("Organism|**", container = simulation)
+  quantities <- ospsuite::getAllMoleculesMatching("Organism|**", container = simulation)
   # Get all state variable parameters
-  allParams <- getAllParametersMatching("**", container = simulation)
+  allParams <- ospsuite::getAllParametersMatching("**", container = simulation)
   rhsParams <- list()
 
   rhsParams <- lapply(allParams, function(param) {
@@ -45,6 +46,7 @@ getAllStateVariables <- function(simulation, ignoreIfFormula = TRUE) {
 #' no cut-off is applied. Default value is 1e-15.
 #'
 #' @return A list containing \code{quantities} and their \code{values} at the end of the simulation.
+#' @import ospsuite
 #' @export
 getSteadyState <- function(quantities = NULL, simulation, steadyStateTime, ignoreIfFormula = TRUE, stopIfNotFound = TRUE, lowerThreshold = 1e-15) {
   ospsuite:::validateIsOfType(simulation, type = "Simulation")
@@ -58,15 +60,15 @@ getSteadyState <- function(quantities = NULL, simulation, steadyStateTime, ignor
   oldOutputIntervals <- simulation$outputSchema$intervals
   oldTimePoints <- simulation$outputSchema$timePoints
   # Set simulation time to the steady-state value.
-  setOutputInterval(simulation = simulation, startTime = 0, endTime = steadyStateTime, resolution = 1 / steadyStateTime)
+  ospsuite::setOutputInterval(simulation = simulation, startTime = 0, endTime = steadyStateTime, resolution = 1 / steadyStateTime)
   # If no quantities are explicitly specified, simulate all outputs.
   if (is.null(quantities)) {
     quantities <- getAllStateVariables(simulation, ignoreIfFormula)
   }
-  addOutputs(quantities, simulation)
+  ospsuite::addOutputs(quantities, simulation)
 
-  simulationResults <- runSimulation(simulation)
-  allOutputs <- getOutputValues(simulationResults, quantitiesOrPaths = quantities, stopIfNotFound = stopIfNotFound)
+  simulationResults <- ospsuite::runSimulation(simulation)
+  allOutputs <- ospsuite::getOutputValues(simulationResults, quantitiesOrPaths = quantities, stopIfNotFound = stopIfNotFound)
 
   endValues <- lapply(quantities, function(quantity) {
     if (ignoreIfFormula && quantity$isFormula) {
@@ -92,7 +94,7 @@ getSteadyState <- function(quantities = NULL, simulation, steadyStateTime, ignor
   # reset the output intervals
   simulation$outputSchema$clear()
   for (outputInterval in oldOutputIntervals) {
-    addOutputInterval(
+    ospsuite::addOutputInterval(
       simulation = simulation, startTime = outputInterval$startTime$value,
       endTime = outputInterval$endTime$value,
       resolution = outputInterval$resolution$value
