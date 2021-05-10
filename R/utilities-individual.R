@@ -52,13 +52,16 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' `Height [cm]`, `Age [year(s)]`, and `BMI`.
 
 #' @param XLSpath Full path to the excel file
+#'
 #' @param individualId (String) Id of the individual as stored in the `IndividualId` column.
 #' @param sheet Name of the sheet. If \code{NULL} (default), the first sheet of the
 #' file is used.
+#' @param nullIfNotFound Boolean. If \code{TRUE} (default), \code{NULL} is returned if
+#' no entry with the give \code{individualId} exists. Otherwise, an error is thrown.
 #'
 #' @return An `IndividualCharacteristics` object
 #' @export
-readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = NULL) {
+readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = NULL, nullIfNotFound = TRUE) {
   ospsuite:::validateIsString(XLSpath, individualId)
 
   # If no sheet has been specified, read from the first sheet
@@ -78,6 +81,9 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = 
   # Find the row with the given individual id
   rowIdx <- which(data$IndividualId == individualId)
   if (length(rowIdx) == 0) {
+    if (nullIfNotFound){
+      return(NULL)
+    }
     stop(messages$errorWrongIndividualId(individualId))
   }
 

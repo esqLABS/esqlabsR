@@ -4,7 +4,12 @@
 \alias{readIndividualCharacteristicsFromXLS}
 \title{Read individual characteristics from file}
 \usage{
-readIndividualCharacteristicsFromXLS(XLSpath, individualId, sheet = NULL)
+readIndividualCharacteristicsFromXLS(
+  XLSpath,
+  individualId,
+  sheet = NULL,
+  nullIfNotFound = TRUE
+)
 }
 \arguments{
 \item{XLSpath}{Full path to the excel file}
@@ -13,6 +18,9 @@ readIndividualCharacteristicsFromXLS(XLSpath, individualId, sheet = NULL)
 
 \item{sheet}{Name of the sheet. If \code{NULL} (default), the first sheet of the
 file is used.}
+
+\item{nullIfNotFound}{Boolean. If \code{TRUE} (default), \code{NULL} is returned if
+no entry with the give \code{individualId} exists. Otherwise, an error is thrown.}
 }
 \value{
 An `IndividualCharacteristics` object
