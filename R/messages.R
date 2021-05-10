@@ -36,9 +36,6 @@ messages$errorOneArgumentNullButNotBoth <- function(name1, name2, optionalMessag
   paste0("Either both arugments ", name1, ", ", name2, " must be NULL or no, but
            only one argument is NULL.", optionalMessage)
 }
-messages$errorMapKeysNotUnique <- function(keys, optionalMessage = NULL) {
-  paste0("All keys of a map must be unique, but they are not! ", optionalMessage)
-}
 messages$errorValuesAreNotPositive <- function(values, optionalMessage = NULL) {
   paste("All values must be positive or 0, but they are not! Values are: ", paste(as.character(values), collapse = ", "), optionalMessage)
 }

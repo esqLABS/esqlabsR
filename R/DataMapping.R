@@ -2,18 +2,18 @@
 #' @docType class
 #' @description Mapping of model outputs to observed data
 #' @export
-#' @import ospsuite
+#' @import ospsuite hash
 #' @format NULL
 DataMapping <- R6::R6Class(
   "DataMapping",
   inherit = ospsuite:::Printable,
   cloneable = FALSE,
   active = list(
-    #' @field xySeries \code{map} with the \code{XYData}
-    #' that will be plotted. Keys are the labels of the \code{xySeries} objects
+    #' @field xySeries Named list with the \code{XYData}
+    #' that will be plotted. Names are the labels of the \code{xySeries} objects
     xySeries = function(value) {
       if (missing(value)) {
-        private$.xySeries
+        as.list(private$.xySeries)
       } else {
         stop(messages$errorPropertyReadOnly("xySeries"))
       }
@@ -223,7 +223,7 @@ DataMapping <- R6::R6Class(
     #' and used together in the legend.
     groupings = function(value) {
       if (missing(value)) {
-        private$.groupings
+        as.list(private$.groupings)
       } else {
         stop(messages$errorPropertyReadOnly("groupings", optionalMessage = "Data sets are assigned to groupings when adding via `addModelOutputs'
                                             or 'addXYSeries'."))
@@ -290,10 +290,6 @@ DataMapping <- R6::R6Class(
       }
       else {
         private$.groupings[[group]] <- unlist(removeFromList(label, private$.groupings[[group]]))
-        # If no entries are left in the group, remove the group
-        if (length(private$.groupings[[group]]) == 0) {
-          private$.groupings <- mapRemove(group, private$.groupings)
-        }
       }
     }
   ),
@@ -302,10 +298,17 @@ DataMapping <- R6::R6Class(
     #' Initialize a new instance of the class
     #' @return A new `DataMapping` object.
     initialize = function() {
-      private$.xySeries <- list()
-      private$.xySeriesGroupMap <- list()
-      private$.groupings <- list()
+      private$.xySeries <- hash::hash()
+      private$.xySeriesGroupMap <- hash::hash()
+      private$.groupings <- hash::hash()
       private$.emptyGrouping <- list()
+    },
+    #' @description
+    #' Clean up upon object removal
+    finalize = function(){
+      hash::clear(private$.groupings)
+      hash::clear(private$.xySeries)
+      hash::clear(private$.xySeriesGroupMap)
     },
 
     #' @field log String defining which axis will be plotted in logarithmic scaling.
@@ -449,11 +452,12 @@ DataMapping <- R6::R6Class(
         label <- OSPSTimeValues[[idx]]$label
         # clone the object and add it
         timeValuesClone <- OSPSTimeValues[[idx]]$clone()
-        private$.xySeries <- mapPut(keys = label, values = c(timeValuesClone), map = private$.xySeries, overwrite = TRUE)
+
+        private$.xySeries[[label]] <- timeValuesClone
         # If an entry with the given label already exists in the DataMapping (i.e., it will be overwritten),
         # check if the group has changed. In no, do nothing. If yes, remove the label
         # from the old group and add to the new.
-        if (mapHasKey(label, private$.xySeriesGroupMap)) {
+        if (hash::has.key(key = label, hash = private$.xySeriesGroupMap)) {
           if (compareWithNA(private$.xySeriesGroupMap[[label]], newGroupName)) {
             next
           }
@@ -465,19 +469,19 @@ DataMapping <- R6::R6Class(
         # Now assign the entry to the new group
         # If no group is specified, add the entry to the empty grouping
         if (is.na(newGroupName)) {
-          private$.xySeriesGroupMap <- mapPut(keys = label, values = newGroupName, map = private$.xySeriesGroupMap, overwrite = TRUE)
+          private$.xySeriesGroupMap[[label]] <- newGroupName
           private$.emptyGrouping <- append(private$.emptyGrouping, label)
           next
         }
         # If a group with the given name already exists, put the entry into it
-        if (mapHasKey(newGroupName, private$.groupings)) {
+        if (hash::has.key(key = newGroupName, hash = private$.groupings)) {
           private$.groupings[[newGroupName]] <- append(private$.groupings[[newGroupName]], label)
-          private$.xySeriesGroupMap <- mapPut(keys = label, values = newGroupName, map = private$.xySeriesGroupMap, overwrite = TRUE)
+          private$.xySeriesGroupMap[[label]] <- newGroupName
           next
         }
         # Create a new group and put the entry into
-        private$.groupings <- mapPut(newGroupName, label, map = private$.groupings)
-        private$.xySeriesGroupMap <- mapPut(keys = label, values = newGroupName, map = private$.xySeriesGroupMap, overwrite = TRUE)
+        private$.groupings[[newGroupName]] <- label
+        private$.xySeriesGroupMap[[label]] <- newGroupName
       }
     },
 
@@ -486,17 +490,17 @@ DataMapping <- R6::R6Class(
     #' Remove the observed data with given label from the DataMapping.
     removeXYSeries = function(label) {
       # If no entry with the given label exists, show a warning and do nothing.
-      if (!mapHasKey(label, private$.xySeries)) {
+      if (!hash::has.key(key = label, hash = private$.xySeries)) {
         warning(messages$warningLabelNotInDataMapping(label))
         return(invisible(self))
       }
-      private$.xySeries <- mapRemove(keys = label, map = private$.xySeries)
+      hash::del(x = label, hash = private$.xySeries)
 
       private$.removeLabelFromGroup(
         label = label,
         group = private$.xySeriesGroupMap[[label]]
       )
-      private$.xySeriesGroupMap[[label]] <- NULL
+      hash::del(x = label, hash = private$.xySeriesGroupMap)
       invisible(self)
     },
 
@@ -505,7 +509,7 @@ DataMapping <- R6::R6Class(
     #' @return  A named list with keys being labels of xySeries and values group names.
     #' @export
     getXYSeriesGroupMap = function() {
-      return(private$.xySeriesGroupMap)
+      return(as.list(private$.xySeriesGroupMap))
     },
 
     #' @description Set the X-factors of x-y values by labels.
@@ -673,7 +677,7 @@ DataMapping <- R6::R6Class(
       private$printClass()
       private$printLine("Plot type", self$plotType)
       private$printLine("Population quantiles", self$populationQuantiles)
-      private$printLine("labels", mapKeys(private$.xySeries))
+      private$printLine("labels", hash::keys(private$.xySeries))
       private$printLine("X limits", self$xLim)
       private$printLine("Y limits", self$yLim)
       private$printLine("X label", self$xLab)

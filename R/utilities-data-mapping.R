@@ -168,6 +168,7 @@ plotPopulationQuantiles <- function(dataMapping, ...) {
 #' are plottet separately for each individual. If \code{TRUE}, population simulation results are plotted as
 #' mid-percentile and lower/upper percentile bands around.
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @import hash
 plotTimeValues <- function(dataMapping, aggregated, ...) {
   ospsuite:::validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- c()
@@ -177,7 +178,7 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
   # Count the number of groups plus the number of data sets that are not assigned to any group.
   # Based on this number, the colors and other graphics argument values will be defined
-  nrOfEntries <- length(mapKeys(dataMapping$groupings)) + length(dataMapping$ungroupedSeries)
+  nrOfEntries <- length(dataMapping$groupings) + length(dataMapping$ungroupedSeries)
   # Generate default values in case specific values for color etc are not set
   colors <- esqLABS_colors(nrOfColors = nrOfEntries)
   pchArr <- 1:dataMapping$xySeriesCount
@@ -211,7 +212,7 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
   pchParIdx <- 0
   for (i in seq_along(dataMapping$groupings)) {
-    legendConfiguration <- list("legendEntry" = mapKeys(dataMapping$groupings)[[i]], "color" = NULL, "pch" = NA, "lty" = 0)
+    legendConfiguration <- list("legendEntry" = names(dataMapping$groupings)[[i]], "color" = NULL, "pch" = NA, "lty" = 0)
     # Plot every entry within the group with the same graphical parameters except for pch
     for (j in seq_along(dataMapping$groupings[[i]])) {
       pchParIdx <- pchParIdx + 1
@@ -376,7 +377,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
 
   # Count the number of groups plus the number of data sets that are not assigned to any group.
   # Based on this number, the colors and other graphics argument values will be defined
-  nrOfEntries <- length(mapKeys(dataMapping$groupings)) + length(dataMapping$ungroupedSeries)
+  nrOfEntries <- length(dataMapping$groupings) + length(dataMapping$ungroupedSeries)
   # Generate default values in case specific values for color etc are not set
   colors <- esqLABS_colors(nrOfColors = nrOfEntries)
   pchArr <- 1:dataMapping$xySeriesCount
@@ -454,7 +455,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
         }
       }
     }
-    legendEntries <- c(legendEntries, mapKeys(map = dataMapping$groupings)[[groupingIdx]])
+    legendEntries <- c(legendEntries, names(dataMapping$groupings)[[groupingIdx]])
     legendColors <- c(legendColors, colors[[graphicsParIdx]])
     legendPch <- c(legendPch, pchArr[[graphicsParIdx]])
     graphicsParIdx <- graphicsParIdx + 1
