@@ -5,7 +5,7 @@
 #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
 #' @export
 plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
-  dataMappingList <- enforceIsList(dataMappingList)
+  dataMappingList <- ospsuite:::toList(dataMappingList)
 
   nrOfCols <- plotConfiguration$nrOfCols
   # If no number of columns provided, calculate the number needed from
@@ -481,7 +481,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
 #' @import ospsuite
 #' @export
 calculateRMSE <- function(dataMappingList, timeDiffThreshold = 10) {
-  dataMappingList <- enforceIsList(dataMappingList)
+  dataMappingList <- ospsuite:::toList(dataMappingList)
 
   error <- 0
   for (dataMapping in dataMappingList) {

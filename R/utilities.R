@@ -169,15 +169,3 @@ compareWithNA <- function(v1, v2) {
 isCharInString <- function(char, string) {
   any(unlist(strsplit(string, ""), use.names = FALSE) == char)
 }
-
-#' Make sure the object is a list
-#'
-#' @param object To be converted to a list
-#'
-#' @return If \code{is.list(object) == TRUE}, returns the \code{object}, otherwise \code{list(object)}
-enforceIsList <- function(object) {
-  if (is.list(object)) {
-    return(object)
-  }
-  return(list(object))
-}

@@ -410,10 +410,10 @@ DataMapping <- R6::R6Class(
     #' yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
     addXYSeries = function(xValsList, yValsList, labels, yErrorList = NULL, groups = NULL) {
       #Label is validated for string in Plotable
-      xValsList <- enforceIsList(xValsList)
-      yValsList <- enforceIsList(yValsList)
+      xValsList <- ospsuite:::toList(xValsList)
+      yValsList <- ospsuite:::toList(yValsList)
       if (!is.null(yErrorList)) {
-        yErrorList <- enforceIsList(yErrorList)
+        yErrorList <- ospsuite:::toList(yErrorList)
       }
       if (!is.null(groups)) {
         ospsuite:::validateIsString(groups, nullAllowed = TRUE)
@@ -438,7 +438,7 @@ DataMapping <- R6::R6Class(
     #' @export
     addOSPSTimeValues = function(OSPSTimeValues, groups = NULL) {
       ospsuite:::validateIsOfType(OSPSTimeValues, "XYData")
-      OSPSTimeValues <- enforceIsList(OSPSTimeValues)
+      OSPSTimeValues <- ospsuite:::toList(OSPSTimeValues)
       if (!is.null(groups)) {
         groups <- c(groups)
         ospsuite:::validateIsSameLength(OSPSTimeValues, groups)
