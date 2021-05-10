@@ -60,6 +60,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' no entry with the give \code{individualId} exists. Otherwise, an error is thrown.
 #'
 #' @return An `IndividualCharacteristics` object
+#' @import ospsuite
 #' @export
 readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = NULL, nullIfNotFound = TRUE) {
   ospsuite:::validateIsString(XLSpath, individualId)
@@ -88,10 +89,10 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = 
   }
 
   # Create the IndividualCharacteristics object
-  individualCharacteristics <- createIndividualCharacteristics(
-    species = data$Species, population = data$Population, gender = data$Gender, weight = data$`Weight.[kg]`,
-    height = data$`Height.[cm]`,
-    age = data$`Age.[year(s)]`
+  individualCharacteristics <- ospsuite::createIndividualCharacteristics(
+    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = data$`Weight.[kg]`[[rowIdx]],
+    height = data$`Height.[cm]`[[rowIdx]],
+    age = data$`Age.[year(s)]`[[rowIdx]]
   )
 
   return(individualCharacteristics)
