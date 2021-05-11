@@ -170,14 +170,15 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' }
 #' setParameterValuesByPath(c("Organism|Liver|Volume", "Organism|Volume"), c(2, 3), sim, condition)
 #' }
+#' @import ospsuite
 #' @export
 setParameterValuesByPathWithCondition <- function(parameterPaths, values, simulation, condition = function(p) {
                                                     TRUE
                                                   }, units = NULL) {
   for (i in seq_along(parameterPaths)) {
-    param <- getParameter(parameterPaths[[i]], simulation)
+    param <- ospsuite::getParameter(parameterPaths[[i]], simulation)
     if (condition(param)) {
-      setParameterValuesByPathWithUnit(parameterPaths = parameterPaths[[i]], values = values[[i]], simulation = simulation, units = units)
+      setParameterValuesByPathWithUnit(parameterPaths = parameterPaths[[i]], values = values[[i]], simulation = simulation, units = units[[i]])
     }
   }
 }
@@ -192,14 +193,15 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, values, simula
 #' are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #' @export
+#' @import ospsuite
 setParameterValuesByPathWithUnit <- function(parameterPaths, values, simulation, units = NULL) {
-  ospsuite:::validateIsString(units)
+  ospsuite:::validateIsString(units, nullAllowed = TRUE)
   for (i in seq_along(parameterPaths)) {
-    param <- getParameter(parameterPaths[[i]], simulation)
+    param <- ospsuite::getParameter(parameterPaths[[i]], simulation)
     valueInBaseUnit <- values[[i]]
     if (!is.null(units)) {
-      valueInBaseUnit <- toBaseUnit(quantityOrDimension = param, values = valueInBaseUnit, unit = units[[i]])
+      valueInBaseUnit <- ospsuite::toBaseUnit(quantityOrDimension = param, values = valueInBaseUnit, unit = units[[i]])
     }
   }
-  setParameterValues(parameters = param, values = valueInBaseUnit)
+  ospsuite::setParameterValues(parameters = param, values = valueInBaseUnit)
 }

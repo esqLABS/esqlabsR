@@ -118,7 +118,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = 
 #' applyIndividualParameters(humanIndividualCharacteristics, simulation)
 #' }
 applyIndividualParameters <- function(individualCharacteristics, simulation) {
-  individual <- createIndividual(individualCharacteristics)
+  individual <- ospsuite::createIndividual(individualCharacteristics)
   allParamPaths <- c(individual$distributedParameters$paths, individual$derivedParameters$paths)
   allParamValues <- c(individual$distributedParameters$values, individual$derivedParameters$values)
 
@@ -126,7 +126,7 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     TRUE
   }
   # For human species, only set parameters that do not override a formula
-  if (individualCharacteristics$species == Species$Human) {
+  if (individualCharacteristics$species == ospsuite::Species$Human) {
     condition <- function(p) {
       !p$isFormula
     }
