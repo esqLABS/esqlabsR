@@ -1,0 +1,25 @@
+on: push
+
+jobs:
+  CICD:
+    runs-on: ubuntu-20.04
+    defaults:
+      run:
+        shell: Rscript {0}
+    container:
+      # update muggle here and in Dockerfile
+      image: subugoe/muggle-buildtime-onbuild:0.1.1-20210308
+    env:
+      MUGGLE_PKG_NAME: ${{ github.event.repository.name }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache R Packages
+        uses: actions/cache@v2
+        with:
+          # only cache the user library
+          path: |
+            .github/library
+          key: ${{ job.container.image }}-${{ hashFiles('DESCRIPTION') }}
+      - name: Test R
+        run: 1+1
