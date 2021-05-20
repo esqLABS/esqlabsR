@@ -10,7 +10,6 @@ Utilities functions for modeling and simulation workflows within esqLABS
 - readr (CRAN)
 - openxlsx (CRAN)
 - hash (CRAN)
-- parallel (CRAN)
 - shiny (CRAN)
 - shinyjs (CRAN)
 
