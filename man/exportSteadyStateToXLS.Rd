@@ -15,23 +15,20 @@ exportSteadyStateToXLS(
 )
 }
 \arguments{
-\item{simulation}{Simulation object}
-
-\item{quantities}{List of quantities (molecules and/or parameters) for which the steady-state is to be simulated. If \code{NULL} (default),
-all molecules and state variable parameters are considered.}
+\item{simulation}{\code{Simulation} object}
 
 \item{resultsXLSPath}{Path to the xls-file where the results will be written to. If the file does not exist, a new one is created
 If no path is provided, the file will be created in the same directory where the model file is located}
 
 \item{steadyStateTime}{Simulation time (minutes). Must be long enough for system to reach a steady-state. 1000 by default}
 
-\item{ignoreIfFormula}{If "TRUE", species and parameters with initial values defined by a formula are not included. Default is "TRUE".}
+\item{ignoreIfFormula}{If \code{TRUE} (default), species and parameters with initial values defined by a formula are not included.}
 
 \item{stopIfNotFound}{Boolean. If \code{TRUE} (default), an error is thrown when results for certain species were not generated.
 This may happen when due to numerical problems some values cannot be calculated, though the whole simulation converges. Setting this argument to \code{FALSE} allows
 to ignore such errors. Check the outputs for empty values when using this option.}
 
-\item{lowerThreshold}{Numerical value. Any steady-state values below this value are considered as numerical noise and replaced by 0. If \code{lowerThreshold} is \code{NULL},
+\item{lowerThreshold}{Numerical value (in µmol). Any steady-state values below this value are considered as numerical noise and replaced by 0. If \code{lowerThreshold} is \code{NULL},
 no cut-off is applied. Default value is 1e-15.}
 }
 \description{

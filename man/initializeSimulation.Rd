@@ -26,7 +26,7 @@ State variable parameters are ignored in this version!}
 
 \item{steadyStateTime}{Simulation time (minutes). Must be long enough for system to reach a steady-state. 1000 by default}
 
-\item{ignoreIfFormula}{If "TRUE", species and parameters with initial values defined by a formula are not included. Default is "TRUE".}
+\item{ignoreIfFormula}{If \code{TRUE} (default), species and parameters with initial values defined by a formula are not included.}
 }
 \description{
 Helper method that combines a set of common steps perfored before running a simulation.
