@@ -1,7 +1,7 @@
 Package: esqlabsR
 Type: Package
 Title: esqLABS utilities package
-Version: 1.4.6.9014
+Version: 1.4.6.9016
 Author: esqLABS GmbH
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects within esqLABS.
@@ -26,30 +26,3 @@ VignetteBuilder: knitr
 License:
   Proprietary
 RoxygenNote: 7.1.1
-Collate: 
-    'DataConfiguration.R'
-    'DataMapping.R'
-    'DataMappingConfiguration.R'
-    'OSPSTimeValues.R'
-    'PlotConfiguration.R'
-    'Plotable.R'
-    'enum.R'
-    'XYData.R'
-    'error-checks.R'
-    'esqlabs-env.R'
-    'messages.R'
-    'shiny-app-launcher.R'
-    'utilities-data-mapping.R'
-    'utilities-data.R'
-    'utilities-dimensions.R'
-    'utilities-figures.R'
-    'utilities-file.R'
-    'utilities-individual.R'
-    'utilities-parallel.R'
-    'utilities-parameters.R'
-    'utilities-population.R'
-    'utilities-simulation.R'
-    'utilities-steady-state.R'
-    'utilities-transfer-functions.R'
-    'utilities.R'
-    'zzz.R'
