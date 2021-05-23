@@ -196,7 +196,6 @@ DataMapping <- R6::R6Class(
         }
         return(getBaseUnit(self$xDimension))
       } else {
-        validateUnit(value, dimension = self$xDimension)
         private$.xUnit <- value
       }
     },
@@ -215,7 +214,6 @@ DataMapping <- R6::R6Class(
         return(getBaseUnit(self$yDimension))
       } else {
         validateUnit(value, dimension = self$yDimension)
-        private$.yUnit <- value
       }
     },
 

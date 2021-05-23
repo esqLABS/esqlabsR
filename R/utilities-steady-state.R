@@ -60,7 +60,7 @@ getSteadyState <- function(quantitiesPaths = NULL, simulation, steadyStateTime, 
   # Get the end values of all outputs
   endValues <- lapply(quantitiesPaths, function(path) {
     # Check if the quantity is defined by an explicit formula
-    isFormulaExplicit <- rClr::clrCall(task, "IsExplicitFormulaFromPath", simulation$ref, enc2utf8(path))
+    isFormulaExplicit <- rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
 
     if (ignoreIfFormula && isFormulaExplicit) {
       return(NULL)
