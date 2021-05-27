@@ -10,26 +10,29 @@ initializeSimulation(
   additionalParams = NULL,
   simulateSteadyState = FALSE,
   steadyStateTime = 1000,
-  ignoreIfFormula = TRUE
+  ignoreIfFormula = TRUE,
+  stopIfParameterNotFound = TRUE
 )
 }
 \arguments{
-\item{simulation}{\code{Simulation} loaded form the PKML file}
+\item{simulation}{\code{Simulation} loaded from a PKML file}
 
 \item{individualCharacteristics}{\code{IndividualCharacteristics} describing an individual. Optional}
 
 \item{additionalParams}{A named list with lists 'paths', 'values', and 'units'. Optional}
 
 \item{simulateSteadyState}{Logical. If \code{TRUE}, the model is simulated for \code{steadyStateTime} minutes after applying parameter values defined in
-\code{individualCharacteristics} and code{additionalParams}, and the end results of the simulation are applied as initial conditions for all molecules.
-State variable parameters are ignored in this version!}
+\code{individualCharacteristics} and code{additionalParams}, and the end results of the simulation are applied as initial conditions for all molecules. Default is \code{FALSE}}
 
-\item{steadyStateTime}{Simulation time (minutes). Must be long enough for system to reach a steady-state. 1000 by default}
+\item{steadyStateTime}{Simulation time (minutes) for the steady-state simulation. Must be long enough for system to reach a steady-state. 1000 by default.}
 
-\item{ignoreIfFormula}{If \code{TRUE} (default), species and parameters with initial values defined by a formula are not included.}
+\item{ignoreIfFormula}{If \code{TRUE} (default), species and parameters with initial values defined by a formula are not included in the steady-state simulation}
+
+\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), an error is thrown
+if any of the \code{additionalParams} does not exist. If \code{FALSE}, non-existent parameters are  ignored.}
 }
 \description{
-Helper method that combines a set of common steps perfored before running a simulation.
+Helper method that combines a set of common steps performed before running a simulation.
 This method applies individual parameters data set and additional user-defined parameters to the simulation and runs the simulation to
 its steady-state and applies the steady-state as new initial conditions.
 }
