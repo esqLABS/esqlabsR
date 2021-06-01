@@ -60,7 +60,7 @@ initializeSimulation <- function(simulation, individualCharacteristics = NULL, a
   }
 
   if (simulateSteadyState) {
-    initialValues <- getSteadyState(simulation = simulation, steadyStateTime = steadyStateTime, ignoreIfFormula = ignoreIfFormula)
+    initialValues <- getSteadyState(simulations = simulation, steadyStateTime = steadyStateTime, ignoreIfFormula = ignoreIfFormula)[[simulation$id]]
     ospsuite::setQuantityValuesByPath(quantityPaths = initialValues$paths,
                                       values = initialValues$values,
                                       simulation = simulation)

@@ -15,8 +15,6 @@ exportSteadyStateToXLS(
 )
 }
 \arguments{
-\item{simulation}{\code{Simulation} object}
-
 \item{resultsXLSPath}{Path to the xls-file where the results will be written to. If the file does not exist, a new one is created
 If no path is provided, the file will be created in the same directory where the model file is located}
 
