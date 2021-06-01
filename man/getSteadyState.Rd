@@ -6,7 +6,7 @@
 \usage{
 getSteadyState(
   quantitiesPaths = NULL,
-  simulation,
+  simulations,
   steadyStateTime,
   ignoreIfFormula = TRUE,
   stopIfNotFound = TRUE,
@@ -14,9 +14,9 @@ getSteadyState(
 )
 }
 \arguments{
-\item{quantitiesPaths}{List of quantity paths (molecules and/or parameters) for which the steady-state is to be simulated. If \code{NULL} (default), all molecules and state variable parameters are considered.}
+\item{quantitiesPaths}{List of quantity paths (molecules and/or parameters) for which the steady-state is to be simulated. If \code{NULL} (default), all molecules and state variable parameters are considered. The same list is applied for all simulations.}
 
-\item{simulation}{\code{Simulation} object}
+\item{simulations}{\code{Simulation} object or a list of \code{Simulation} objects}
 
 \item{steadyStateTime}{Simulation time (minutes). Must be long enough for system to reach a steady-state. 1000 by default}
 
@@ -30,7 +30,7 @@ to ignore such errors. Check the outputs for empty values when using this option
 no cut-off is applied. Default value is 1e-15.}
 }
 \value{
-A list containing \code{paths} and their \code{values} at the end of the simulation.
+A named list, where the names are the IDs of the simulations and the entries are lists containing \code{paths} and their \code{values} at the end of the simulation.
 }
 \description{
 Get the steady-state values of species and state variable parameters.
