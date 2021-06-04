@@ -2,14 +2,14 @@ context("readIndividualCharacteristicsFromXLS")
 
 test_that("It returns NULL if the specified individual Id cannot be found in
           the file and nullIfNotFound is TRUE", {
-            XLSpath <- "../data/IndividualPhysiology.xlsx"
-            individualId <- "notPresent"
+  XLSpath <- "../data/IndividualPhysiology.xlsx"
+  individualId <- "notPresent"
 
-            expect_null(readIndividualCharacteristicsFromXLS(
-              XLSpath = XLSpath,
-              individualId = individualId
-            ))
-          })
+  expect_null(readIndividualCharacteristicsFromXLS(
+    XLSpath = XLSpath,
+    individualId = individualId
+  ))
+})
 
 test_that("It throws an error if the specified individual Id cannot be found in
           the file and nullIfNotFound is FALSE", {

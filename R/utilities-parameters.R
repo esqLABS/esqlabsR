@@ -25,9 +25,9 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   units <- c()
 
   for (sheet in sheets) {
-    data <- read.xlsx(xlsxFile = paramsXLSpath, sheet = sheet)
+    data <- openxlsx::read.xlsx(xlsxFile = paramsXLSpath, sheet = sheet)
 
-    if (!all(names(data) == columnNames)) {
+    if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
     }
     for (i in seq_along(data[["Container.Path"]])) {

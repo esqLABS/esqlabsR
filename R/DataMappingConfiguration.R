@@ -86,7 +86,7 @@ DataMappingConfiguration <- R6::R6Class(
     },
     #' @description
     #' Clean up upon object removal
-    finalize = function(){
+    finalize = function() {
       hash::clear(private$.xFactors)
       hash::clear(private$.yFactors)
       hash::clear(private$.xOffsets)

@@ -43,11 +43,11 @@ messages$errorWrongLength <- function(object, length, optionalMessage = NULL) {
   paste("Object `", object, "` must be of length ", length, " but it is not!")
 }
 messages$errorWrongPopulationName <- function(populationName) {
-    paste0("Population name ", populationName, " is not specified in the population file!")
-  }
+  paste0("Population name ", populationName, " is not specified in the population file!")
+}
 messages$errorWrongIndividualId <- function(individualId) {
-    paste0("Individual with id ", individualId, " is not specified in the individual characteristics file!")
-  }
+  paste0("Individual with id ", individualId, " is not specified in the individual characteristics file!")
+}
 messages$warningValueWithinThresholdNotExisting <- function(value, threshold, optionalMessage = NULL) {
   paste("value `", value, "` not found in the array within the absolute threshold of  ", threshold, optionalMessage)
 }

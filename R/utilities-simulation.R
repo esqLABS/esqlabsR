@@ -45,7 +45,7 @@ initializeSimulation <- function(simulation, individualCharacteristics = NULL, a
     }
     for (i in seq_along(additionalParams$paths)) {
       param <- ospsuite::getParameter(additionalParams$paths[[i]], container = simulation, stopIfNotFound = stopIfParameterNotFound)
-      if (!is.null(param)){
+      if (!is.null(param)) {
         warning(messages$warningParameterNotFound(additionalParams$paths[[i]]))
         unit <- additionalParams$units[[i]]
         if (!is.na(unit)) {
@@ -61,9 +61,11 @@ initializeSimulation <- function(simulation, individualCharacteristics = NULL, a
 
   if (simulateSteadyState) {
     initialValues <- getSteadyState(simulations = simulation, steadyStateTime = steadyStateTime, ignoreIfFormula = ignoreIfFormula)[[simulation$id]]
-    ospsuite::setQuantityValuesByPath(quantityPaths = initialValues$paths,
-                                      values = initialValues$values,
-                                      simulation = simulation)
+    ospsuite::setQuantityValuesByPath(
+      quantityPaths = initialValues$paths,
+      values = initialValues$values,
+      simulation = simulation
+    )
   }
 }
 

@@ -1,20 +1,3 @@
-#' Get paths of all state variable quantities of the simulation
-#'
-#' @param simulation \code{Simulation} object
-#' @details List of paths of all molecules in all compartments and all parameters that are
-#' state variables.
-#'
-#' @return A list of paths
-#' @import ospsuite
-#' @export
-getAllStateVariablesPaths <- function(simulation) {
-  ospsuite:::validateIsOfType(simulation, type = "Simulation")
-  allMoleculesPaths <- ospsuite:::getAllEntityPathsIn(container = simulation, entityType = ospsuite:::Molecule)
-  allStateVariableParamsPaths <- ospsuite:::getAllEntityPathsIn(container = simulation, entityType = ospsuite:::Parameter, method = "AllStateVariableParameterPathsIn")
-  allQantitiesPaths <- append(allMoleculesPaths, allStateVariableParamsPaths)
-  return(allQantitiesPaths)
-}
-
 #' Get the steady-state values of species and state variable parameters.
 #'
 #' @details The steady-state is considered to be the last value of the simulation with sufficiently
@@ -42,14 +25,14 @@ getSteadyState <- function(quantitiesPaths = NULL, simulations, steadyStateTime,
     stop(messages$steadyStateTimeNotPositive(steadyStateTime))
   }
 
-  #First prepare all simulations by setting their outputs and time intervals
-  #Create hash maps for the output intervals, time points, and output selections of the simulations in their initial state.
+  # First prepare all simulations by setting their outputs and time intervals
+  # Create hash maps for the output intervals, time points, and output selections of the simulations in their initial state.
   oldOutputIntervals <- hash::hash()
   oldTimePoints <- hash::hash()
   oldOutputSelections <- hash::hash()
-  #If no quantities have been specified, the quantities paths may be different for each simulation and must be stored separately
+  # If no quantities have been specified, the quantities paths may be different for each simulation and must be stored separately
   quantitiesPathsMap <- hash::hash()
-  for (simulation in simulations){
+  for (simulation in simulations) {
     simId <- simulation$id
     # Have to reset both the output intervals and the time points!
     oldOutputIntervals[[simId]] <- simulation$outputSchema$intervals
@@ -59,7 +42,7 @@ getSteadyState <- function(quantitiesPaths = NULL, simulations, steadyStateTime,
     ospsuite::setOutputInterval(simulation = simulation, startTime = 0, endTime = steadyStateTime, resolution = 1 / steadyStateTime)
     # If no quantities are explicitly specified, simulate all outputs.
     if (is.null(quantitiesPaths)) {
-      quantitiesPathsMap[[simId]] <- getAllStateVariablesPaths(simulation)
+      quantitiesPathsMap[[simId]] <- ospsuite::getAllStateVariablesPaths(simulation)
     }
     else {
       quantitiesPathsMap[[simId]] <- quantitiesPaths
@@ -67,14 +50,14 @@ getSteadyState <- function(quantitiesPaths = NULL, simulations, steadyStateTime,
     ospsuite::addOutputs(quantitiesOrPaths = quantitiesPathsMap[[simId]], simulation = simulation)
   }
 
-  #Run simulations concurrently
+  # Run simulations concurrently
   simulationResults <- ospsuite::runSimulationsConcurrently(simulations = simulations)
   # Container task is required for checking the "isFormula" property
   task <- ospsuite:::getContainerTask()
 
-  #Iterate through simulations and get their outputs
+  # Iterate through simulations and get their outputs
   outputMap <- hash::hash()
-  for (simulation in simulations){
+  for (simulation in simulations) {
     simId <- simulation$id
 
     allOutputs <- ospsuite::getOutputValues(simulationResults[[simId]], quantitiesOrPaths = quantitiesPathsMap[[simId]], stopIfNotFound = stopIfNotFound, addMetaData = FALSE)
@@ -120,24 +103,24 @@ getSteadyState <- function(quantitiesPaths = NULL, simulations, steadyStateTime,
     for (outputSelection in oldOutputSelections[[simId]]) {
       ospsuite::addOutputs(quantitiesOrPaths = outputSelection$path, simulation = simulation)
     }
-
     outputMap[[simId]] <- list(paths = quantitiesPathsMap[[simId]][indices], values = endValues[indices])
   }
-
   return(outputMap)
 }
 
-
-#' Write an Excel-file with the steady-state
+#' Export steady-state to excel
 #'
-#' @details Simulates a given model to its steady-state and creates an Excel-file with the end values of molecules amounts in all containers
-#' and parameter values that have a right-hand-side (state variable parameters).
-#'
+#' @details Simulates a given model to its steady-state and creates an
+#' Excel-file with the end values of molecules amounts in all containers and
+#' parameter values that have a right-hand-side (state variable parameters).
+#' @param simulation \code{Simulation} object
+#' @param quantitiesPaths List of quantity paths (molecules and/or parameters) for which the steady-state is to be simulated. If \code{NULL} (default), all molecules and state variable parameters are considered.
+#' @param resultsXLSPath Path to the xls-file where the results will be written to.
+#' If the file does not exist, a new file is created. If no path is provided,
+#' the file will be created in the same directory where the model file is located.
 #' @inheritParams getSteadyState
-#' @param resultsXLSPath Path to the xls-file where the results will be written to. If the file does not exist, a new one is created
-#' If no path is provided, the file will be created in the same directory where the model file is located
 #' @export
-exportSteadyStateToXLS <- function(simulation, quantities = NULL, resultsXLSPath = "", steadyStateTime = 1000, ignoreIfFormula = TRUE,
+exportSteadyStateToXLS <- function(simulation, quantitiesPaths = NULL, resultsXLSPath = "", steadyStateTime = 1000, ignoreIfFormula = TRUE,
                                    stopIfNotFound = TRUE, lowerThreshold = 1e-15) {
   ospsuite:::validateIsOfType(simulation, type = "Simulation")
   # If no explicit path to the results-file is provided, store the results file in the same folder as the model file.
@@ -154,11 +137,11 @@ exportSteadyStateToXLS <- function(simulation, quantities = NULL, resultsXLSPath
   }
 
   initialValues <- getSteadyState(
-    simulations = simulation, steadyStateTime = steadyStateTime, ignoreIfFormula = ignoreIfFormula, stopIfNotFound = stopIfNotFound,
+    simulations = simulation, quantitiesPaths = quantitiesPaths, steadyStateTime = steadyStateTime, ignoreIfFormula = ignoreIfFormula, stopIfNotFound = stopIfNotFound,
     lowerThreshold = lowerThreshold
   )[[simulation$id]]
 
-  nrOfEntries <- length(initialValues$quantities)
+  nrOfEntries <- length(initialValues$paths)
 
   # For each simulated species, the output contains the path, species name, the "isPresetn"-flag, the value, the unit, the scale divisor value, and the "negative values allowed"-flag.
   moleculeContainerPath <- c()
@@ -177,7 +160,8 @@ exportSteadyStateToXLS <- function(simulation, quantities = NULL, resultsXLSPath
 
   # Iterate through all quantities
   for (i in 1:nrOfEntries) {
-    quantity <- initialValues$quantities[[i]]
+    quantity <- ospsuite::getQuantity(path = initialValues$paths[[i]],
+                                      container = simulation)
     value <- initialValues$values[[i]]
 
     if (ospsuite:::isOfType(quantity, "Molecule")) {
