@@ -1134,19 +1134,6 @@ test_that("It can change xUnit", {
   expect_equal(dataMapping$xUnit, ospUnits$Time$`day(s)`)
 })
 
-test_that("It throws an error if attempting to set a wrong xUnit", {
-  dataMapping <- DataMapping$new()
-
-  xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
-  xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
-
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, ospDimensions$Time)
-  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
-
-  expect_error(dataMapping$xUnit <- ospUnits$Dimensionless[[1]], ospsuite:::messages$errorUnitNotSupported(ospUnits$Dimensionless[[1]], ospDimensions$Time))
-})
-
 context("yDimension yUnit")
 
 test_that("Dimension and unit of an empty DataMapping are NULL", {
@@ -1195,13 +1182,4 @@ test_that("It can change yUnit", {
   dataMapping$yDimension <- ospDimensions$`Abundance per mass protein`
   dataMapping$yUnit <- ospUnits$`Abundance per mass protein`$`nmol/mg mic. protein`
   expect_equal(dataMapping$yUnit, ospUnits$`Abundance per mass protein`$`nmol/mg mic. protein`)
-})
-
-test_that("It throws an error if attempting to set a wrong yUnit", {
-  dataMapping <- DataMapping$new()
-
-  xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
-  xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_error(dataMapping$yUnit <- ospUnits$Amount$mol, ospsuite:::messages$errorUnitNotSupported(ospUnits$Amount$mol, ospDimensions$Dimensionless))
 })

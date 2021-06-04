@@ -61,7 +61,7 @@ DataMapping <- R6::R6Class(
         }
       } else {
         ospsuite:::validateIsNumeric(value, nullAllowed = TRUE)
-        if (!is.null(value)){
+        if (!is.null(value)) {
           validateLength(value, 2)
         }
         private$.xLim <- value
@@ -116,7 +116,7 @@ DataMapping <- R6::R6Class(
         }
       } else {
         ospsuite:::validateIsNumeric(value, nullAllowed = TRUE)
-        if (!is.null(value)){
+        if (!is.null(value)) {
           validateLength(value, 2)
         }
         private$.yLim <- value
@@ -303,7 +303,7 @@ DataMapping <- R6::R6Class(
     },
     #' @description
     #' Clean up upon object removal
-    finalize = function(){
+    finalize = function() {
       hash::clear(private$.groupings)
       hash::clear(private$.xySeries)
       hash::clear(private$.xySeriesGroupMap)
@@ -337,7 +337,7 @@ DataMapping <- R6::R6Class(
     #' @description
     #' Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by default.
     addModelOutputs = function(paths, labels, outputValues, simulation, groups = NULL, removeNA = TRUE) {
-      #Paths are checked for correct type in ospsuite
+      # Paths are checked for correct type in ospsuite
       ospsuite:::validateIsString(labels)
       ospsuite:::validateIsSameLength(paths, labels)
 
@@ -407,7 +407,7 @@ DataMapping <- R6::R6Class(
     #' dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
     #' yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
     addXYSeries = function(xValsList, yValsList, labels, yErrorList = NULL, groups = NULL) {
-      #Label is validated for string in Plotable
+      # Label is validated for string in Plotable
       xValsList <- ospsuite:::toList(xValsList)
       yValsList <- ospsuite:::toList(yValsList)
       if (!is.null(yErrorList)) {

@@ -82,7 +82,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = 
   # Find the row with the given individual id
   rowIdx <- which(data$IndividualId == individualId)
   if (length(rowIdx) == 0) {
-    if (nullIfNotFound){
+    if (nullIfNotFound) {
       return(NULL)
     }
     stop(messages$errorWrongIndividualId(individualId))
