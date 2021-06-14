@@ -268,7 +268,7 @@ XYData <- R6::R6Class(
           quantityOrDimension = private$.yDimension,
           values = valuesProcessed,
           targetUnit = unit,
-          sourceUnit = private$.yUnit,
+          sourceUnit = private$.yErrorUnit,
           molWeight = private$.MW,
           molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
         ))
