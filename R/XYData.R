@@ -263,7 +263,7 @@ XYData <- R6::R6Class(
       valuesProcessed <- (private$.yError + self$yOffset) * self$yFactor
 
       # If a unit is passed and is different from the current unit, convert to unit
-      if (!is.null(unit) && unit != private$.yUnit) {
+      if (!is.null(unit) && unit != private$.yErrorUnit) {
         return(toUnit(
           quantityOrDimension = private$.yDimension,
           values = valuesProcessed,
