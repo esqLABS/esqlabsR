@@ -67,7 +67,7 @@ XYData <- R6::R6Class(
     #' @field yMax Maximal value (plus error, if specified) of y values plus yOffset multiplied by the scaling factor
     yMax = function(value) {
       if (missing(value)) {
-        max(private$.yVals + self$yOffset + (private$.yError %||% 0)) * self$yFactor
+        max(private$.yVals + self$yOffset + (self$yErrorProcessed(self$yUnit) %||% 0)) * self$yFactor
       } else {
         stop(messages$errorPropertyReadOnly("yMax"))
       }
@@ -75,7 +75,8 @@ XYData <- R6::R6Class(
     #' @field yMin Minimal value (minus error, if specified) of y values plus yOffset multiplied by the scaling factor
     yMin = function(value) {
       if (missing(value)) {
-        min(private$.yVals + self$yOffset - (private$.yError %||% 0)) * self$yFactor
+        # As the error can be specified in another unit, it has to bo converted to the unit of y values first
+        min(private$.yVals + self$yOffset - (self$yErrorProcessed(self$yUnit) %||% 0)) * self$yFactor
       } else {
         stop(messages$errorPropertyReadOnly("yMin"))
       }
@@ -257,8 +258,12 @@ XYData <- R6::R6Class(
     #' @param unit Target unit. If \code{NULL} (default), the no conversion between units is applied.
     #'
     #' @return Raw yError plus yOffset multiplied by yFactor and converted to a specified unit.
-    #' It is assumed that raw yError are in \code{yUnit}.
+    #' It is assumed that raw yError are in \code{yUnit}. If no error is specified, \code{NULL} is returned.
     yErrorProcessed = function(unit = NULL) {
+      if (is.null(private$.yError)) {
+        return(NULL)
+      }
+
       # Add offset and multiply by the factor. The values are in the unit of XYData
       valuesProcessed <- (private$.yError + self$yOffset) * self$yFactor
 

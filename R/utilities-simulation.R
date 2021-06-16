@@ -45,17 +45,18 @@ initializeSimulation <- function(simulation, individualCharacteristics = NULL, a
     }
     for (i in seq_along(additionalParams$paths)) {
       param <- ospsuite::getParameter(additionalParams$paths[[i]], container = simulation, stopIfNotFound = stopIfParameterNotFound)
-      if (!is.null(param)) {
+      if (is.null(param)) {
         warning(messages$warningParameterNotFound(additionalParams$paths[[i]]))
-        unit <- additionalParams$units[[i]]
-        if (!is.na(unit)) {
-          value <- ospsuite::toBaseUnit(quantityOrDimension = param, values = additionalParams$values[[i]], unit = unit)
-        }
-        else {
-          value <- additionalParams$values[[i]]
-        }
-        ospsuite::setParameterValues(param, value)
+        next
       }
+      unit <- additionalParams$units[[i]]
+      if (!is.na(unit)) {
+        value <- ospsuite::toBaseUnit(quantityOrDimension = param, values = additionalParams$values[[i]], unit = unit)
+      }
+      else {
+        value <- additionalParams$values[[i]]
+      }
+      ospsuite::setParameterValues(param, value)
     }
   }
 

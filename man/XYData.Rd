@@ -161,7 +161,7 @@ y error values with all conversions applied.
 }
 \subsection{Returns}{
 Raw yError plus yOffset multiplied by yFactor and converted to a specified unit.
-It is assumed that raw yError are in \code{yUnit}.
+It is assumed that raw yError are in \code{yUnit}. If no error is specified, \code{NULL} is returned.
 }
 }
 \if{html}{\out{<hr>}}
