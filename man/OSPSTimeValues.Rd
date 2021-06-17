@@ -47,6 +47,8 @@ A set of x and y value pairs with the properties as defined in the esqLABS "Time
 \if{html}{
 \out{<details open ><summary>Inherited methods</summary>}
 \itemize{
+\item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="getAllMetaData">}\href{../../esqlabsR/html/XYData.html#method-getAllMetaData}{\code{esqlabsR::XYData$getAllMetaData()}}\out{</span>}
+\item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="setMetaData">}\href{../../esqlabsR/html/XYData.html#method-setMetaData}{\code{esqlabsR::XYData$setMetaData()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="xUnitDimensionFactor">}\href{../../esqlabsR/html/XYData.html#method-xUnitDimensionFactor}{\code{esqlabsR::XYData$xUnitDimensionFactor()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="xValuesProcessed">}\href{../../esqlabsR/html/XYData.html#method-xValuesProcessed}{\code{esqlabsR::XYData$xValuesProcessed()}}\out{</span>}
 \item \out{<span class="pkg-link" data-pkg="esqlabsR" data-topic="XYData" data-id="yMinPositive">}\href{../../esqlabsR/html/XYData.html#method-yMinPositive}{\code{esqlabsR::XYData$yMinPositive()}}\out{</span>}

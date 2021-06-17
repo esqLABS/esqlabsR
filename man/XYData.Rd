@@ -52,6 +52,8 @@ A set of x and y value pairs
 \item \href{#method-xValuesProcessed}{\code{XYData$xValuesProcessed()}}
 \item \href{#method-yValuesProcessed}{\code{XYData$yValuesProcessed()}}
 \item \href{#method-yErrorProcessed}{\code{XYData$yErrorProcessed()}}
+\item \href{#method-getAllMetaData}{\code{XYData$getAllMetaData()}}
+\item \href{#method-setMetaData}{\code{XYData$setMetaData()}}
 \item \href{#method-print}{\code{XYData$print()}}
 }
 }
@@ -253,6 +255,39 @@ for other dimensions (default).}
 \subsection{Returns}{
 Raw yError plus yOffset multiplied by yFactor and converted to a specified unit/dimension.
 It is assumed that raw yError are in the yDimension and yErrorUnit.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-getAllMetaData"></a>}}
+\if{latex}{\out{\hypertarget{method-getAllMetaData}{}}}
+\subsection{Method \code{getAllMetaData()}}{
+Meta data list of \code{XYData} object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{XYData$getAllMetaData()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+.metaData of \code{XYData} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-setMetaData"></a>}}
+\if{latex}{\out{\hypertarget{method-setMetaData}{}}}
+\subsection{Method \code{setMetaData()}}{
+Adds a new entry to meta data list of \code{XYData} object or changes its value if name is already present in meta data.
+If \code{value} is NULL, entry with corresponding name is deleted from meta data
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{XYData$setMetaData(name = NULL, value = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Name of new meta data list entry}
+
+\item{\code{value}}{Value of new meta data list entry}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}

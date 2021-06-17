@@ -317,3 +317,24 @@ test_that("getXXXProcessed errors", {
     messages$errorUnitNotSupported("µmol/l", "Concentration (mass)")
   ))
 })
+
+test_that("It sets and gets meta data", {
+  xVals <- c(0, 1, 2, 3)
+  yVals <- c(4, 5, 6, 7)
+  yError <- c(0.1, 0, 0.1, 1)
+  xyData <- XYData$new(xVals, yVals, yError = yError, label = "My XY Data")
+
+  expect_equal(xyData$getAllMetaData(), list())
+
+  expect_error(xyData$setMetaData(value = "test"), regexp = escapeForRegex("Parameter 'name' can not be NULL"))
+  expect_error(xyData$setMetaData(name = c("test1", "test2"), value = 1), regexp = escapeForRegex("Can only set a single meta data entry at once"))
+  expect_error(xyData$setMetaData(name = "test1", value = c(1, 2)), regexp = escapeForRegex("Can only set a single meta data entry at once"))
+
+  xyData$setMetaData(name = "City", value = "Munich")
+  print(xyData$getAllMetaData())
+  expect_equal(xyData$getAllMetaData(), list(City = "Munich"))
+  xyData$setMetaData(name = "State", value = "Bavaria")
+  expect_equal(xyData$getAllMetaData(), list(City = "Munich", State = "Bavaria"))
+  xyData$setMetaData(name = "City")
+  expect_equal(xyData$getAllMetaData(), list(State = "Bavaria"))
+})

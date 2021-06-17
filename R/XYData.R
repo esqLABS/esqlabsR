@@ -153,7 +153,8 @@ XYData <- R6::R6Class(
     .XUnit = NULL,
     .YDim = NULL,
     .YUnit = NULL,
-    .YErrorUnit = NULL
+    .YErrorUnit = NULL,
+    .metaData = list()
   ),
   public = list(
     #' @param xVals An array of numeric x values.
@@ -305,6 +306,32 @@ XYData <- R6::R6Class(
       }
       # Add offset, multiply by the factor, and then convert to unit/dimension
       return((private$.yError + self$yOffset) * self$yFactor * unitDimensionFactor)
+    },
+
+    #' @description
+    #' Meta data list of \code{XYData} object
+    #' @return
+    #' .metaData of \code{XYData} object
+    getAllMetaData = function() {
+      return(private$.metaData)
+    },
+
+    #' @description
+    #' Adds a new entry to meta data list of \code{XYData} object or changes its value if name is already present in meta data.
+    #' If \code{value} is NULL, entry with corresponding name is deleted from meta data
+    #'
+    #' @param name Name of new meta data list entry
+    #' @param value Value of new meta data list entry
+    setMetaData = function(name = NULL, value = NULL) {
+      if (is.null(name)) {
+        stop("Parameter 'name' can not be NULL")
+      }
+
+      if (length(name) != 1 || length(value) > 1) {
+        stop("Can only set a single meta data entry at once")
+      }
+
+      private$.metaData[[name]] <- value
     },
 
     #' @description Print the object to the console
