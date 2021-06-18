@@ -224,6 +224,7 @@ test_that("Correct XXXProcessed", {
     c((yVals - 2) * 1.3 * 1e6 * 100, (yError - 2) * 1.3 * 1e-3 * 100)
   )
 })
+
 test_that("It gets meta data", {
   xVals <- c(0, 1, 2, 3)
   yVals <- c(4, 5, 6, 7)
