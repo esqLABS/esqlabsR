@@ -8,7 +8,7 @@
 An object storing configuration of for observed data import
 }
 \section{Super class}{
-\code{\link[esqlabsR:Printable]{esqlabsR::Printable}} -> \code{DataConfiguration}
+\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{DataConfiguration}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

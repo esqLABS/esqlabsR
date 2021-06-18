@@ -11,9 +11,6 @@ plotBoxPlot(dataMapping, ...)
 
 \item{...}{Any parameter that can be interpreted by the default \code{\link{boxplot}} function}
 }
-\value{
-
-}
 \description{
 Create a box-plot of data
 }

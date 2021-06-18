@@ -1,18 +1,19 @@
 #' Load a simulation and apply a set of parameters.
 #'
-#' @description Helper method that combines a set of common steps perfored before running a simulation.
+#' @description Helper method that combines a set of common steps performed before running a simulation.
 #' This method applies individual parameters data set and additional user-defined parameters to the simulation and runs the simulation to
 #' its steady-state and applies the steady-state as new initial conditions.
 #'
-#' @inheritParams getSteadyState
-#' @param simulation \code{Simulation} loaded form the PKML file
+#' @param simulation \code{Simulation} loaded from a PKML file
 #' @param individualCharacteristics \code{IndividualCharacteristics} describing an individual. Optional
 #' @param additionalParams A named list with lists 'paths', 'values', and 'units'. Optional
 #' @param simulateSteadyState Logical. If \code{TRUE}, the model is simulated for \code{steadyStateTime} minutes after applying parameter values defined in
-#' \code{individualCharacteristics} and code{additionalParams}, and the end results of the simulation are applied as initial conditions for alle molecules.
-#' State variable parameters are ignored in this version!
-#'
-#' @return
+#' \code{individualCharacteristics} and code{additionalParams}, and the end results of the simulation are applied as initial conditions for all molecules. Default is \code{FALSE}
+#' @param steadyStateTime Simulation time (minutes) for the steady-state simulation. Must be long enough for system to reach a steady-state. 1000 by default.
+#' @param ignoreIfFormula If \code{TRUE} (default), species and parameters with initial values defined by a formula are not included in the steady-state simulation
+#' @param stopIfParameterNotFound Logical. If \code{TRUE} (default), an error is thrown
+#' if any of the \code{additionalParams} does not exist. If \code{FALSE}, non-existent parameters are  ignored.
+#' @import ospsuite
 #' @export
 #'
 #' @examples
@@ -27,10 +28,10 @@
 #' simulationResults <- runSimulation(simulation = simulation)
 #' }
 initializeSimulation <- function(simulation, individualCharacteristics = NULL, additionalParams = NULL, simulateSteadyState = FALSE, steadyStateTime = 1000,
-                                 ignoreIfFormula = TRUE) {
-  validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
-  validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
-  validateIsLogical(simulateSteadyState)
+                                 ignoreIfFormula = TRUE, stopIfParameterNotFound = TRUE) {
+  ospsuite:::validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
+  ospsuite:::validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
+  ospsuite:::validateIsLogical(simulateSteadyState)
 
   # Apply parameters of the individual
   if (!is.null(individualCharacteristics)) {
@@ -43,24 +44,29 @@ initializeSimulation <- function(simulation, individualCharacteristics = NULL, a
       stop(messages$errorWrongAdditionalParams)
     }
     for (i in seq_along(additionalParams$paths)) {
-      param <- getParameter(additionalParams$paths[[i]], container = simulation)
+      param <- ospsuite::getParameter(additionalParams$paths[[i]], container = simulation, stopIfNotFound = stopIfParameterNotFound)
+      if (is.null(param)) {
+        warning(messages$warningParameterNotFound(additionalParams$paths[[i]]))
+        next
+      }
       unit <- additionalParams$units[[i]]
       if (!is.na(unit)) {
-        value <- toBaseUnit(quantity = param, values = additionalParams$values[[i]], unit = unit)
+        value <- ospsuite::toBaseUnit(quantityOrDimension = param, values = additionalParams$values[[i]], unit = unit)
       }
       else {
         value <- additionalParams$values[[i]]
       }
-      setParameterValues(param, value)
+      ospsuite::setParameterValues(param, value)
     }
   }
 
   if (simulateSteadyState) {
-    initialValues <- getSteadyState(simulation = simulation, steadyStateTime = steadyStateTime, ignoreIfFormula = ignoreIfFormula)
-    for (i in seq_along(initialValues$quantities)) {
-      quantity <- initialValues$quantities[[i]]
-      quantity$value <- initialValues$values[[i]]
-    }
+    initialValues <- getSteadyState(simulations = simulation, steadyStateTime = steadyStateTime, ignoreIfFormula = ignoreIfFormula)[[simulation$id]]
+    ospsuite::setQuantityValuesByPath(
+      quantityPaths = initialValues$paths,
+      values = initialValues$values,
+      simulation = simulation
+    )
   }
 }
 

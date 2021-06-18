@@ -311,7 +311,7 @@ test_that("It can remove XYData that is not in a group", {
   expect_equal(dataMapping$xySeriesCount, 1)
   expect_equal(length(dataMapping$groupings), 0)
 
-  dataMapping$removeXYSeries(label = "Sim output")
+  expect_warning(dataMapping$removeXYSeries(label = "Sim output"))
   expect_equal(dataMapping$xySeriesCount, 1)
   expect_equal(length(dataMapping$groupings), 0)
 
@@ -632,6 +632,65 @@ test_that("It can change the type of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series3"]]$type, "o")
 })
 
+#### setLinetypes ####
+context("setLinetypes")
+
+test_that("It can change the type of one xy-series", {
+  dataMapping <- DataMapping$new()
+  xVals <- c(1, 2, 3, 4)
+  yVals <- c(5, 6, 7, 8)
+
+  dataMapping$addXYSeries(
+    xValsList = xVals,
+    yValsList = yVals,
+    labels = "my series1"
+  )
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
+  dataMapping$setLinetypes(labels = "my series1", linetypes = 2)
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, 2)
+})
+
+test_that("If the label is not present in the mapping, nothing happens", {
+  dataMapping <- DataMapping$new()
+  xVals <- c(1, 2, 3, 4)
+  yVals <- c(5, 6, 7, 8)
+
+  dataMapping$addXYSeries(
+    xValsList = xVals,
+    yValsList = yVals,
+    labels = "my series1"
+  )
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
+  dataMapping$setLinetypes(labels = "my series2", linetypes = 2)
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
+})
+
+test_that("It can change the type of multiple xy-series", {
+  dataMapping <- DataMapping$new()
+  xVals <- list(c(1, 2, 3, 4), c(1, 2, 3, 4), c(2, 3, 4, 5))
+  yVals <- list(c(5, 6, 7, 8), c(5, 6, 7, 8), c(6, 7, 8, 9))
+
+  dataMapping$addXYSeries(
+    xValsList = xVals,
+    yValsList = yVals,
+    labels = list(
+      "my series1",
+      "my series2",
+      "my series3"
+    )
+  )
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, NULL)
+  expect_equal(dataMapping$xySeries[["my series2"]]$lty, NULL)
+  expect_equal(dataMapping$xySeries[["my series3"]]$lty, NULL)
+  dataMapping$setLinetypes(labels = list("my series1", "my series2", "my series4", "my series3"), linetypes = c(1, 2, 4, 3))
+  expect_equal(dataMapping$xySeries[["my series1"]]$lty, 1)
+  expect_equal(dataMapping$xySeries[["my series2"]]$lty, 2)
+  expect_equal(dataMapping$xySeries[["my series3"]]$lty, 3)
+})
+
 context("setColors")
 
 test_that("It can change the color of one xy-series", {
@@ -759,6 +818,56 @@ test_that("It can set a configuration", {
   expect_equal(dataMapping$xySeries[["my series3"]]$yOffset, 3)
 })
 
+test_that("Setting a does not affect initial xy-data objects configuration", {
+  dataMapping <- DataMapping$new()
+  xVals <- c(1, 2, 3, 4)
+  yVals <- c(5, 6, 7, 8)
+
+  xyData <- XYData$new(xVals = xVals, yVals = yVals, label = "my series1")
+
+  dataMapping$addOSPSTimeValues(
+    OSPSTimeValues = xyData
+  )
+
+  configuration <- DataMappingConfiguration$new()
+  configuration$setColors(labels = c("my series1"), colors = c("red"))
+  configuration$setLineTypes(labels = c("my series1"), lineTypes = c("b"))
+  configuration$setXFactors(labels = c("my series1"), xFactors = c(2))
+  configuration$setYFactors(labels = c("my series1"), yFactors = c(3))
+  configuration$setXOffsets(labels = c("my series1"), xOffsets = c(3))
+  configuration$setYOffsets(labels = c("my series1"), yOffsets = c(3))
+
+  dataMapping$setConfiguration(dataMappingConfiguration = configuration)
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$color, "red")
+  expect_equal(dataMapping$xySeries[["my series1"]]$type, "b")
+  expect_equal(dataMapping$xySeries[["my series1"]]$xFactor, 2)
+  expect_equal(dataMapping$xySeries[["my series1"]]$yFactor, 3)
+  expect_equal(dataMapping$xySeries[["my series1"]]$xOffset, 3)
+  expect_equal(dataMapping$xySeries[["my series1"]]$yOffset, 3)
+
+  expect_equal(xyData$color, NULL)
+  expect_equal(xyData$type, "p")
+  expect_equal(xyData$xFactor, 1)
+  expect_equal(xyData$yFactor, 1)
+  expect_equal(xyData$xOffset, 0)
+  expect_equal(xyData$yOffset, 0)
+
+  xyData$color <- "green"
+  xyData$type <- "l"
+  xyData$xFactor <- 10
+  xyData$yFactor <- 10
+  xyData$xOffset <- 10
+  xyData$yOffset <- 10
+
+  expect_equal(dataMapping$xySeries[["my series1"]]$color, "red")
+  expect_equal(dataMapping$xySeries[["my series1"]]$type, "b")
+  expect_equal(dataMapping$xySeries[["my series1"]]$xFactor, 2)
+  expect_equal(dataMapping$xySeries[["my series1"]]$yFactor, 3)
+  expect_equal(dataMapping$xySeries[["my series1"]]$xOffset, 3)
+  expect_equal(dataMapping$xySeries[["my series1"]]$yOffset, 3)
+})
+
 context("xLim")
 
 test_that("X limit of a empty mapping is c(0, 0)", {
@@ -779,7 +888,7 @@ test_that("It returns correct xLim when unit of DataMapping is the same as unit 
     labels = c("my series1", "my series2", "my series3")
   )
 
-  expect_equal(dataMapping$xLim, c(-1, 4))
+  expect_equal(dataMapping$xLim, c(-1, 4) * 1.1)
 })
 
 test_that("It returns correct xLim when unit of DataMapping is different from unit of xyData", {
@@ -797,7 +906,7 @@ test_that("It returns correct xLim when unit of DataMapping is different from un
 
   dataMapping$xUnit <- "h"
 
-  expect_equal(dataMapping$xLim, c(-1, 4) / 60)
+  expect_equal(dataMapping$xLim, c(-1, 4) / 60 * 1.1)
 })
 
 test_that("It can set xLim", {
@@ -861,7 +970,7 @@ test_that("It returns correct yLim in lin scale when unit of DataMapping is the 
     labels = c("my series1", "my series2", "my series3")
   )
 
-  expect_equal(dataMapping$yLim, c(-1.1, 10.1))
+  expect_equal(dataMapping$yLim, c(-1.1, 10.1) * 1.1)
 })
 
 test_that("It returns correct yLim in lin scale when unit of DataMapping is different from unit of xyData", {
@@ -877,10 +986,10 @@ test_that("It returns correct yLim in lin scale when unit of DataMapping is diff
     labels = c("my series1", "my series2", "my series3")
   )
 
-  dataMapping$yDimension <- Dimensions$Fraction
+  dataMapping$yDimension <- ospDimensions$Fraction
   dataMapping$yUnit <- "%"
 
-  expect_equal(dataMapping$yLim, c(-1.1, 10.1) * 100)
+  expect_equal(dataMapping$yLim, c(-1.1, 10.1) * 100 * 1.1)
 })
 
 test_that("It returns correct yLim in log scale when unit of DataMapping is the same as unit of xyData", {
@@ -897,7 +1006,7 @@ test_that("It returns correct yLim in log scale when unit of DataMapping is the 
   )
 
   dataMapping$log <- "y"
-  expect_equal(dataMapping$yLim, c(1.9, 10.1))
+  expect_equal(dataMapping$yLim, c(1.71, 11.11))
 
   # If the lowest positive value becomes negative when error is subtracted
   yErr <- list(c(0.1, 0.1, 0.1, 0.2), c(0.1), c(0.1, 2.1, 0.1))
@@ -911,7 +1020,7 @@ test_that("It returns correct yLim in log scale when unit of DataMapping is the 
   )
 
   dataMapping$log <- "y"
-  expect_equal(dataMapping$yLim, c(4.9, 10.1))
+  expect_equal(dataMapping$yLim, c(4.41, 11.11))
 
   # No positive values - do not know what should happen
   # xVals <- list(c(1, 2, 3, 4))
@@ -985,15 +1094,15 @@ test_that("xDimension is set to the dimension of the first added XYData", {
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Time)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Time))
+  expect_equal(dataMapping$xDimension, ospDimensions$Time)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
   # Dimension of the first data set is different from the dimension of the second data set
   dataMapping <- DataMapping$new()
   xyData1$xDimension <- ospDimensions$Fraction
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Fraction)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Fraction))
+  expect_equal(dataMapping$xDimension, ospDimensions$Fraction)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Fraction))
 })
 
 test_that("It can change xDimension", {
@@ -1003,12 +1112,12 @@ test_that("It can change xDimension", {
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Time)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Time))
+  expect_equal(dataMapping$xDimension, ospDimensions$Time)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
   dataMapping$xDimension <- ospDimensions$`Abundance per mass protein`
-  expect_equal(dataMapping$xDimension, Dimensions$`Abundance per mass protein`)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$`Abundance per mass protein`))
+  expect_equal(dataMapping$xDimension, ospDimensions$`Abundance per mass protein`)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$`Abundance per mass protein`))
 })
 
 test_that("It can change xUnit", {
@@ -1018,24 +1127,11 @@ test_that("It can change xUnit", {
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Time)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Time))
+  expect_equal(dataMapping$xDimension, ospDimensions$Time)
+  expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
   dataMapping$xUnit <- ospUnits$Time$`day(s)`
   expect_equal(dataMapping$xUnit, ospUnits$Time$`day(s)`)
-})
-
-test_that("It throws an error if attempting to set a wrong xUnit", {
-  dataMapping <- DataMapping$new()
-
-  xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
-  xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
-
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$xDimension, Dimensions$Time)
-  expect_equal(dataMapping$xUnit, getBaseUnit(Dimensions$Time))
-
-  expect_error(dataMapping$xUnit <- ospUnits$Dimensionless[[1]], messages$errorUnitNotSupported(ospUnits$Dimensionless[[1]], Dimensions$Time))
 })
 
 context("yDimension yUnit")
@@ -1053,15 +1149,15 @@ test_that("yDimension is set to the dimension of the first added XYData", {
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$yDimension, Dimensions$Dimensionless)
-  expect_equal(dataMapping$yUnit, getBaseUnit(Dimensions$Dimensionless))
+  expect_equal(dataMapping$yDimension, ospDimensions$Dimensionless)
+  expect_equal(dataMapping$yUnit, getBaseUnit(ospDimensions$Dimensionless))
 
   # Dimension of the first data set is different from the dimension of the second data set
   dataMapping <- DataMapping$new()
   xyData1$yDimension <- ospDimensions$`Concentration (mass)`
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_equal(dataMapping$yDimension, Dimensions$`Concentration (mass)`)
-  expect_equal(dataMapping$yUnit, getBaseUnit(Dimensions$`Concentration (mass)`))
+  expect_equal(dataMapping$yDimension, ospDimensions$`Concentration (mass)`)
+  expect_equal(dataMapping$yUnit, getBaseUnit(ospDimensions$`Concentration (mass)`))
 })
 
 test_that("It can change yDimension", {
@@ -1072,8 +1168,8 @@ test_that("It can change yDimension", {
 
   dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
   dataMapping$yDimension <- ospDimensions$`Abundance per mass protein`
-  expect_equal(dataMapping$yDimension, Dimensions$`Abundance per mass protein`)
-  expect_equal(dataMapping$yUnit, getBaseUnit(Dimensions$`Abundance per mass protein`))
+  expect_equal(dataMapping$yDimension, ospDimensions$`Abundance per mass protein`)
+  expect_equal(dataMapping$yUnit, getBaseUnit(ospDimensions$`Abundance per mass protein`))
 })
 
 test_that("It can change yUnit", {
@@ -1086,13 +1182,4 @@ test_that("It can change yUnit", {
   dataMapping$yDimension <- ospDimensions$`Abundance per mass protein`
   dataMapping$yUnit <- ospUnits$`Abundance per mass protein`$`nmol/mg mic. protein`
   expect_equal(dataMapping$yUnit, ospUnits$`Abundance per mass protein`$`nmol/mg mic. protein`)
-})
-
-test_that("It throws an error if attempting to set a wrong yUnit", {
-  dataMapping <- DataMapping$new()
-
-  xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
-  xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
-  expect_error(dataMapping$yUnit <- ospUnits$Amount$mol, messages$errorUnitNotSupported(ospUnits$Amount$mol, Dimensions$Dimensionless))
 })

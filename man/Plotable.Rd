@@ -5,13 +5,13 @@
 \alias{Plotable}
 \title{Plotable}
 \description{
-An object holding ploting information
+An object holding plotting information
 }
 \seealso{
 col2hsv
 }
 \section{Super class}{
-\code{\link[esqlabsR:Printable]{esqlabsR::Printable}} -> \code{Plotable}
+\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{Plotable}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

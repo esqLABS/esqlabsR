@@ -2,17 +2,18 @@
 #' @docType class
 #' @description Mapping of model outputs to observed data
 #' @export
+#' @import ospsuite hash
 #' @format NULL
 DataMapping <- R6::R6Class(
   "DataMapping",
-  inherit = Printable,
+  inherit = ospsuite:::Printable,
   cloneable = FALSE,
   active = list(
-    #' @field xySeries \code{map} with the \code{XYData}
-    #' that will be plotted. Keys are the labels of the \code{xySeries} objects
+    #' @field xySeries Named list with the \code{XYData}
+    #' that will be plotted. Names are the labels of the \code{xySeries} objects
     xySeries = function(value) {
       if (missing(value)) {
-        private$.xySeries
+        as.list(private$.xySeries)
       } else {
         stop(messages$errorPropertyReadOnly("xySeries"))
       }
@@ -35,19 +36,34 @@ DataMapping <- R6::R6Class(
             return(c(0, 0))
           }
           xMax <- max(sapply(self$xySeries, function(x) {
-            x$xMax * x$xUnitDimensionFactor(self$xDimension, self$xUnit)
+            toUnit(
+              quantityOrDimension = self$xDimension,
+              values = x$xMax,
+              targetUnit = self$xUnit,
+              sourceUnit = x$xUnit
+            )
           }))
           xMin <- min(sapply(self$xySeries, function(x) {
-            x$xMin * x$xUnitDimensionFactor(self$xDimension, self$xUnit)
+            toUnit(
+              quantityOrDimension = self$xDimension,
+              values = x$xMin,
+              targetUnit = self$xUnit,
+              sourceUnit = x$xUnit
+            )
           }))
-          return(c(xMin, xMax))
+          # Extend limits by 10%
+          return(c(xMin, xMax) + abs(c(xMin, xMax)) * c(-0.1, 0.1))
+          # My cat wrote this, I leave it here out of respect
+          # \code{runSimulationBatchesConcurrently}ß C.\JKFD. PO.#]}*#J#......................JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJöL
         }
         else {
           private$.xLim
         }
       } else {
-        validateIsNumeric(value, nullAllowed = TRUE)
-        validateLength(value, 2)
+        ospsuite:::validateIsNumeric(value, nullAllowed = TRUE)
+        if (!is.null(value)) {
+          validateLength(value, 2)
+        }
         private$.xLim <- value
       }
     },
@@ -60,25 +76,49 @@ DataMapping <- R6::R6Class(
             return(c(0, 0))
           }
           yMax <- max(sapply(self$xySeries, function(x) {
-            x$yMax * x$yUnitDimensionFactor(self$yDimension, self$yUnit)
+            toUnit(
+              quantityOrDimension = self$yDimension,
+              values = x$yMax,
+              targetUnit = self$yUnit,
+              sourceUnit = x$yUnit,
+              molWeight = x$MW,
+              molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+            )
           }))
           # If logarithmic scaling of the y axis is selected, the minimal value should be greater than zero
           yMin <- min(sapply(self$xySeries, function(x) {
             if (isCharInString("y", self$log)) {
-              x$yMinPositive() * x$yUnitDimensionFactor(self$yDimension, self$yUnit)
+              toUnit(
+                quantityOrDimension = self$yDimension,
+                values = x$yMinPositive(),
+                targetUnit = self$yUnit,
+                sourceUnit = x$yUnit,
+                molWeight = x$MW,
+                molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+              )
             }
             else {
-              x$yMin * x$yUnitDimensionFactor(self$yDimension, self$yUnit)
+              toUnit(
+                quantityOrDimension = self$yDimension,
+                values = x$yMin,
+                targetUnit = self$yUnit,
+                sourceUnit = x$yUnit,
+                molWeight = x$MW,
+                molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+              )
             }
           }))
-          return(c(yMin, yMax))
+          # Extend limits by 10%
+          return(c(yMin, yMax) + abs(c(yMin, yMax)) * c(-0.1, 0.1))
         }
         else {
           private$.yLim
         }
       } else {
-        validateIsNumeric(value, nullAllowed = TRUE)
-        validateLength(value, 2)
+        ospsuite:::validateIsNumeric(value, nullAllowed = TRUE)
+        if (!is.null(value)) {
+          validateLength(value, 2)
+        }
         private$.yLim <- value
       }
     },
@@ -88,7 +128,7 @@ DataMapping <- R6::R6Class(
       if (missing(value)) {
         private$.xLab
       } else {
-        validateIsString(value)
+        ospsuite:::validateIsString(value)
         private$.xLab <- value
       }
     },
@@ -98,12 +138,12 @@ DataMapping <- R6::R6Class(
       if (missing(value)) {
         private$.yLab
       } else {
-        validateIsString(value)
+        ospsuite:::validateIsString(value)
         private$.yLab <- value
       }
     },
 
-    #' @field xDimension Dimension of x values. See enum \code{Dimensions} for the list of supported dimensions.
+    #' @field xDimension Dimension of x values. See enum \code{ospDimensions} for the list of supported dimensions.
     #' If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
     #' If no \code{XYSeries} are present, the dimension is \code{NULL}
     #' When changing the dimension, the unit is automatically set to the base unit of the dimension.
@@ -123,7 +163,7 @@ DataMapping <- R6::R6Class(
       }
     },
 
-    #' @field yDimension Dimension of y values. See enum \code{Dimensions} for the list of supported dimensions.
+    #' @field yDimension Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.
     #' If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
     #' If no \code{XYSeries} are present, the dimension is \code{NULL}
     #'     #' When changing the dimension, the unit is automatically set to the base unit of the dimension.
@@ -156,7 +196,6 @@ DataMapping <- R6::R6Class(
         }
         return(getBaseUnit(self$xDimension))
       } else {
-        validateUnit(value, dimension = self$xDimension)
         private$.xUnit <- value
       }
     },
@@ -174,7 +213,6 @@ DataMapping <- R6::R6Class(
         }
         return(getBaseUnit(self$yDimension))
       } else {
-        validateUnit(value, dimension = self$yDimension)
         private$.yUnit <- value
       }
     },
@@ -183,7 +221,7 @@ DataMapping <- R6::R6Class(
     #' and used together in the legend.
     groupings = function(value) {
       if (missing(value)) {
-        private$.groupings
+        as.list(private$.groupings)
       } else {
         stop(messages$errorPropertyReadOnly("groupings", optionalMessage = "Data sets are assigned to groupings when adding via `addModelOutputs'
                                             or 'addXYSeries'."))
@@ -207,7 +245,7 @@ DataMapping <- R6::R6Class(
       if (missing(value)) {
         private$.plotType
       } else {
-        validateEnumValue(enum = PlotTypes, value = value)
+        ospsuite:::validateEnumValue(enum = PlotTypes, value = value)
         private$.plotType <- value
       }
     },
@@ -218,7 +256,7 @@ DataMapping <- R6::R6Class(
       if (missing(value)) {
         private$.populationQuantiles
       } else {
-        validateIsNumeric(value)
+        ospsuite:::validateIsNumeric(value)
         validateLength(value, 3)
         private$.populationQuantiles <- value
       }
@@ -226,7 +264,7 @@ DataMapping <- R6::R6Class(
   ),
   private = list(
     .xySeries = NULL,
-    # Map linking each xySeries to a group. Used for removal af xySeries
+    # Map linking each xySeries to a group. Used for removal of xySeries
     .xySeriesGroupMap = NULL,
     .xLim = NULL,
     .yLim = NULL,
@@ -250,10 +288,6 @@ DataMapping <- R6::R6Class(
       }
       else {
         private$.groupings[[group]] <- unlist(removeFromList(label, private$.groupings[[group]]))
-        # If no entries are left in the group, remove the group
-        if (length(private$.groupings[[group]]) == 0) {
-          private$.groupings <- mapRemove(group, private$.groupings)
-        }
       }
     }
   ),
@@ -262,10 +296,17 @@ DataMapping <- R6::R6Class(
     #' Initialize a new instance of the class
     #' @return A new `DataMapping` object.
     initialize = function() {
-      private$.xySeries <- list()
-      private$.xySeriesGroupMap <- list()
-      private$.groupings <- list()
+      private$.xySeries <- hash::hash()
+      private$.xySeriesGroupMap <- hash::hash()
+      private$.groupings <- hash::hash()
       private$.emptyGrouping <- list()
+    },
+    #' @description
+    #' Clean up upon object removal
+    finalize = function() {
+      hash::clear(private$.groupings)
+      hash::clear(private$.xySeries)
+      hash::clear(private$.xySeriesGroupMap)
     },
 
     #' @field log String defining which axis will be plotted in logarithmic scaling.
@@ -296,8 +337,9 @@ DataMapping <- R6::R6Class(
     #' @description
     #' Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by default.
     addModelOutputs = function(paths, labels, outputValues, simulation, groups = NULL, removeNA = TRUE) {
-      validateIsString(c(paths, labels))
-      validateIsSameLength(paths, labels)
+      # Paths are checked for correct type in ospsuite
+      ospsuite:::validateIsString(labels)
+      ospsuite:::validateIsSameLength(paths, labels)
 
       for (idx in seq_along(paths)) {
         yValues <- outputValues$data[[paths[[idx]]]]
@@ -362,20 +404,20 @@ DataMapping <- R6::R6Class(
     #' yVals <- list(c(5, 6, 7, 8), c(5, 6, 7, 8), c(6, 7, 8, 9))
     #' yErr <- list(c(0.1, 0.1, 0.1, 0.2), NULL, c(0.2, 0.3, 0.1, 0.2))
     #' groups <- list("Group1", NULL, "Group1")
-    #' dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
+    #' dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
+    #' yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
     addXYSeries = function(xValsList, yValsList, labels, yErrorList = NULL, groups = NULL) {
-      validateIsString(labels)
-      xValsList <- enforceIsList(xValsList)
-      yValsList <- enforceIsList(yValsList)
+      # Label is validated for string in Plotable
+      xValsList <- ospsuite:::toList(xValsList)
+      yValsList <- ospsuite:::toList(yValsList)
       if (!is.null(yErrorList)) {
-        yErrorList <- enforceIsList(yErrorList)
-        validateIsSameLength(xValsList, yErrorList)
+        yErrorList <- ospsuite:::toList(yErrorList)
       }
       if (!is.null(groups)) {
-        validateIsString(groups, nullAllowed = TRUE)
-        validateIsSameLength(xValsList, groups)
+        ospsuite:::validateIsString(groups, nullAllowed = TRUE)
+        ospsuite:::validateIsSameLength(xValsList, groups)
       }
-      validateIsSameLength(xValsList, yValsList, labels)
+      ospsuite:::validateIsSameLength(xValsList, yValsList, labels)
 
       for (idx in seq_along(labels)) {
         xyData <- XYData$new(xVals = xValsList[[idx]], yVals = yValsList[[idx]], yError = yErrorList[[idx]], label = labels[[idx]])
@@ -386,18 +428,18 @@ DataMapping <- R6::R6Class(
     },
 
 
-    #' @description Add \code{OSPSTimeValues} object(s).
+    #' @description Add \code{OSPSTimeValues} object(s). The objects are cloned at adding.
     #'
     #' @param OSPSTimeValues Object or a list of objects of the type \code{OSPSTimeValues}
     #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{OSPSTimeValues}
     #' output is not assigned to any group
     #' @export
     addOSPSTimeValues = function(OSPSTimeValues, groups = NULL) {
-      validateIsOfType(OSPSTimeValues, "XYData")
-      OSPSTimeValues <- enforceIsList(OSPSTimeValues)
+      ospsuite:::validateIsOfType(OSPSTimeValues, "XYData")
+      OSPSTimeValues <- ospsuite:::toList(OSPSTimeValues)
       if (!is.null(groups)) {
         groups <- c(groups)
-        validateIsSameLength(OSPSTimeValues, groups)
+        ospsuite:::validateIsSameLength(OSPSTimeValues, groups)
       }
       for (idx in seq_along(OSPSTimeValues)) {
         newGroupName <- groups[[idx]]
@@ -406,11 +448,14 @@ DataMapping <- R6::R6Class(
           newGroupName <- NA
         }
         label <- OSPSTimeValues[[idx]]$label
-        private$.xySeries <- mapPut(keys = label, values = c(OSPSTimeValues[[idx]]), map = private$.xySeries, overwrite = TRUE)
+        # clone the object and add it
+        timeValuesClone <- OSPSTimeValues[[idx]]$clone()
+
+        private$.xySeries[[label]] <- timeValuesClone
         # If an entry with the given label already exists in the DataMapping (i.e., it will be overwritten),
         # check if the group has changed. In no, do nothing. If yes, remove the label
         # from the old group and add to the new.
-        if (mapHasKey(label, private$.xySeriesGroupMap)) {
+        if (hash::has.key(key = label, hash = private$.xySeriesGroupMap)) {
           if (compareWithNA(private$.xySeriesGroupMap[[label]], newGroupName)) {
             next
           }
@@ -422,19 +467,19 @@ DataMapping <- R6::R6Class(
         # Now assign the entry to the new group
         # If no group is specified, add the entry to the empty grouping
         if (is.na(newGroupName)) {
-          private$.xySeriesGroupMap <- mapPut(keys = label, values = newGroupName, map = private$.xySeriesGroupMap, overwrite = TRUE)
+          private$.xySeriesGroupMap[[label]] <- newGroupName
           private$.emptyGrouping <- append(private$.emptyGrouping, label)
           next
         }
         # If a group with the given name already exists, put the entry into it
-        if (mapHasKey(newGroupName, private$.groupings)) {
+        if (hash::has.key(key = newGroupName, hash = private$.groupings)) {
           private$.groupings[[newGroupName]] <- append(private$.groupings[[newGroupName]], label)
-          private$.xySeriesGroupMap <- mapPut(keys = label, values = newGroupName, map = private$.xySeriesGroupMap, overwrite = TRUE)
+          private$.xySeriesGroupMap[[label]] <- newGroupName
           next
         }
         # Create a new group and put the entry into
-        private$.groupings <- mapPut(newGroupName, label, map = private$.groupings)
-        private$.xySeriesGroupMap <- mapPut(keys = label, values = newGroupName, map = private$.xySeriesGroupMap, overwrite = TRUE)
+        private$.groupings[[newGroupName]] <- label
+        private$.xySeriesGroupMap[[label]] <- newGroupName
       }
     },
 
@@ -443,29 +488,37 @@ DataMapping <- R6::R6Class(
     #' Remove the observed data with given label from the DataMapping.
     removeXYSeries = function(label) {
       # If no entry with the given label exists, show a warning and do nothing.
-      if (!mapHasKey(label, private$.xySeries)) {
+      if (!hash::has.key(key = label, hash = private$.xySeries)) {
         warning(messages$warningLabelNotInDataMapping(label))
         return(invisible(self))
       }
-      private$.xySeries <- mapRemove(keys = label, map = private$.xySeries)
+      hash::del(x = label, hash = private$.xySeries)
 
       private$.removeLabelFromGroup(
         label = label,
         group = private$.xySeriesGroupMap[[label]]
       )
-      private$.xySeriesGroupMap[[label]] <- NULL
+      hash::del(x = label, hash = private$.xySeriesGroupMap)
       invisible(self)
     },
 
+    #' @description Return group mapping of labels.
+    #' @details  Returns a named list with keys being labels of xySeries and values group names. If value is \code{NA}, no group is defined for this label.
+    #' @return  A named list with keys being labels of xySeries and values group names.
+    #' @export
+    getXYSeriesGroupMap = function() {
+      return(as.list(private$.xySeriesGroupMap))
+    },
+
     #' @description Set the X-factors of x-y values by labels.
-    #' @details If the data set with a label is not present in the mapping, the label is ignored
+    #' @details If the data set with a label is not present in the mapping, the label is ignored.
     #'
     #' @param labels A list of labels of \code{XYData}.
-    #' @param xFactors Numeric values that will be multiplied by the x-values during plotting
+    #' @param xFactors Numeric values that will be multiplied by the x-values during plotting.
     setXFactors = function(labels, xFactors) {
-      validateIsString(labels, nullAllowed = TRUE)
-      validateIsNumeric(xFactors, nullAllowed = TRUE)
-      validateIsSameLength(labels, xFactors)
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsNumeric(xFactors, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, xFactors)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -481,9 +534,9 @@ DataMapping <- R6::R6Class(
     #' @param labels A list of label of \code{XYData}
     #' @param yFactors Numeric values that will be multiplied by the y-values during plotting
     setYFactors = function(labels, yFactors) {
-      validateIsString(labels, nullAllowed = TRUE)
-      validateIsNumeric(yFactors, nullAllowed = TRUE)
-      validateIsSameLength(labels, yFactors)
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsNumeric(yFactors, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, yFactors)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -499,9 +552,9 @@ DataMapping <- R6::R6Class(
     #' @param labels A list of label of \code{XYData}
     #' @param xOffsets Numeric values that will be added to the x-values during plotting
     setXOffsets = function(labels, xOffsets) {
-      validateIsString(labels, nullAllowed = TRUE)
-      validateIsNumeric(xOffsets, nullAllowed = TRUE)
-      validateIsSameLength(labels, xOffsets)
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsNumeric(xOffsets, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, xOffsets)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -517,9 +570,9 @@ DataMapping <- R6::R6Class(
     #' @param labels A list of label of \code{XYData}
     #' @param yOffsets Numeric values that will be added to the y-values during plotting
     setYOffsets = function(labels, yOffsets) {
-      validateIsString(labels, nullAllowed = TRUE)
-      validateIsNumeric(yOffsets, nullAllowed = TRUE)
-      validateIsSameLength(labels, yOffsets)
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsNumeric(yOffsets, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, yOffsets)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -529,19 +582,38 @@ DataMapping <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Set the line type(s) of the data to be plotted
-    #' @details If the data set with a label is not present in the mapping, the label is ignored.
+    #' @description Set the type(s) of the data to be plotted, e.g. line, points, etc.
+    #' @details If no data set for the provided label is present in the mapping, the corresponding value is ignored.
     #' No check is performed whether a valid type is provided.
     #'
     #' @param labels A list of label of \code{XYData}
     #' @param types Plot types as accepted by the base \code{plot} method
     setTypes = function(labels, types) {
-      validateIsString(c(labels, types), nullAllowed = TRUE)
-      validateIsSameLength(labels, types)
+      ospsuite:::validateIsString(c(labels, types), nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, types)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
         xySeries$type <- types[[idx]]
+      }
+
+      invisible(self)
+    },
+
+    #' @description Set the line type(s) property of the data to be plotted. Line types as accepted by the base \code{plot} lty argument.
+    #' @details If no data set for the provided label is present in the mapping, the corresponding value is ignored.
+    #' No check is performed whether a valid type is provided.Line types as accepted by the base \code{plot} lty argument.
+    #' Line types can be provided either as numeric or as character vectors (e.g. "dashed").
+    #'
+    #' @param labels A list of label of \code{XYData}
+    #' @param linetypes Values that will be set as line type(s).
+    setLinetypes = function(labels, linetypes) {
+      ospsuite:::validateIsString(labels, nullAllowed = TRUE)
+      ospsuite:::validateIsSameLength(labels, linetypes)
+
+      for (idx in seq_along(labels)) {
+        xySeries <- self$xySeries[[labels[[idx]]]]
+        xySeries$lty <- linetypes[[idx]]
       }
 
       invisible(self)
@@ -554,12 +626,12 @@ DataMapping <- R6::R6Class(
     #' @param colors String names of colors of the data as accepted by the base \code{plot} method
     #' If the value is \code{NULL}, the color is automatically selected when plotting the data.
     setColors = function(labels, colors) {
-      validateIsString(c(labels), nullAllowed = TRUE)
+      ospsuite:::validateIsString(c(labels), nullAllowed = TRUE)
       # If the color is a single NULL, put it into a list
       if (is.null(colors)) {
         colors <- list(NULL)
       }
-      validateIsSameLength(labels, colors)
+      ospsuite:::validateIsSameLength(labels, colors)
 
       for (idx in seq_along(labels)) {
         xySeries <- self$xySeries[[labels[[idx]]]]
@@ -603,7 +675,7 @@ DataMapping <- R6::R6Class(
       private$printClass()
       private$printLine("Plot type", self$plotType)
       private$printLine("Population quantiles", self$populationQuantiles)
-      private$printLine("labels", mapKeys(private$.xySeries))
+      private$printLine("labels", hash::keys(private$.xySeries))
       private$printLine("X limits", self$xLim)
       private$printLine("Y limits", self$yLim)
       private$printLine("X label", self$xLab)

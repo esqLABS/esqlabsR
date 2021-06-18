@@ -17,8 +17,8 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
     "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit"
   )
 
-  validateIsString(c(XLSpath, populationName))
-  validateIsString(sheet, nullAllowed = TRUE)
+  ospsuite:::validateIsString(c(XLSpath, populationName))
+  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
 
   if (is.null(sheet)) {
     sheet <- 1
@@ -31,7 +31,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   # Find the row with the given population name
   rowIdx <- which(data$PopulationName == populationName)
   if (length(rowIdx) == 0) {
-    stop(messages$errorWrongPopulationname())
+    stop(messages$errorWrongPopulationName(populationName))
   }
 
   # Parse the information about population.
@@ -75,11 +75,11 @@ GenderInt <- enum(list(
 #' A list of supported distributions is defined in \code{Distributions}. Default is "Normal".
 #' @export
 extendPopulationByUserDefinedParams <- function(population, parameterPaths, meanValues, sdValues, distributions = Distributions$Normal) {
-  validateIsOfType(population, "Population")
-  validateIsString(parameterPaths)
-  validateIsNumeric(meanValues, sdValues)
+  ospsuite:::validateIsOfType(population, "Population")
+  ospsuite:::validateIsString(parameterPaths)
+  ospsuite:::validateIsNumeric(meanValues, sdValues)
   distributions <- distributions %||% rep(Distributions$Normal, length(parameterPaths))
-  validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
+  ospsuite:::validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
 
 
   # Iterate through all parameters and sample a parameter values vector
@@ -107,16 +107,16 @@ extendPopulationByUserDefinedParams <- function(population, parameterPaths, mean
 #' @param XLSpath Path to the excel file that stores the information of parameters. The file must have the
 #' columns "Container.Path", "Parameter.Name", "Mean", "SD", "Units", and "Distribution". Mean and SD values
 #'  must be in the base units of the parameters.
-#' #' @param sheet Name or the index of the sheet in the excel file.
+#' @param sheet Name or the index of the sheet in the excel file.
 #' If \code{NULL}, the first sheet in the file is used.
 #' @details The method reads the information from the specified excel sheet(s) and
 #' calls \code{extendPopulationByUserDefinedParams}
 #' @import openxlsx
 #' @export
 extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
-  validateIsOfType(population, "Population")
-  validateIsString(XLSpath)
-  validateIsString(sheet, nullAllowed = TRUE)
+  ospsuite:::validateIsOfType(population, "Population")
+  ospsuite:::validateIsString(XLSpath)
+  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
   if (is.null(sheet)) {
     sheet <- 1
   }

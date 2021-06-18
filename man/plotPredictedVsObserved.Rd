@@ -4,7 +4,12 @@
 \alias{plotPredictedVsObserved}
 \title{Plot a predicted-versus-observed goodness of fit plot}
 \usage{
-plotPredictedVsObserved(dataMapping, foldDistance = 2, ...)
+plotPredictedVsObserved(
+  dataMapping,
+  foldDistance = 2,
+  timeDiffThreshold = 10,
+  ...
+)
 }
 \arguments{
 \item{dataMapping}{THe \code{DataMapping} object for which the goodness-of-fit
@@ -12,6 +17,11 @@ plot is to be drawn. For each group within the \code{dataMapping}, simulated
 and observed values are compared.}
 
 \item{foldDistance}{Numerical value for the fold-distance lines to be drawn. Default is 2.}
+
+\item{timeDiffThreshold}{Allowed difference between observed and simulated time values in minutes. Default is 10.
+If for a certain observed point no simulated time point exists within the defined threshold, the value is not considered.}
+
+\item{...}{Any parameter that can be interpreted by the default \code{\link{plot}} function}
 }
 \description{
 Plot a predicted-versus-observed goodness of fit plot

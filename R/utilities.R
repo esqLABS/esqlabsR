@@ -1,11 +1,11 @@
 #' Convenience function to avoid testing for null. It returns the first object if it is not null otherwise the second object
-#'
+#' @name OR
 #' @param lhs Object that will be returned if not NULL
 #' @param rhs Object that will be returned if \code{lhs} is NULL. It maybe well be NULL
 #'
 #' @return The first parameter if it is not NULL otherwise the second parameter
 #' @export
-`%||%` <- function(lhs, rhs) {
+"%||%" <- function(lhs, rhs) {
   if (!is.null(lhs)) {
     lhs
   } else {
@@ -13,16 +13,36 @@
   }
 }
 
-#' Get the index of the value in an array that is closest to given one.
-#'
+#' Find value in an array
+#' @description Find the index of the value in an array that is closest to given one. By default, no restriction is applied how big the absolute numerical distance between \code{value} and a value in the \code{array} may be. A limit can be set by the parameters \code{thresholdAbs} or \code{thresholdRel}. If no value within the \code{array} has the distance to \code{value} that is equal to or less than the threshold, the \code{value} is considered not present in the \code{array} and \code{NULL} is returned.
 #' @param value Numerical value
 #' @param array Numerical array
+#' @param thresholdAbs Absolute numerical distance by which the closest value in \code{array} may differ from \code{value} to be accepted. If both \code{thresholdAbs} and \code{thresholdRel} are \code{NULL} (default), no threshold is applied. If \code{thresholdAbs} is set, \code{thresholdRel} is ignored. If 0, only exact match between \code{value} and \code{array} is accepted.
+#' @param thresholdRel A fraction by which the closest value may differ from \code{value} to be accepted. WARNING: setting a relative threshold will result in only exact matches if \code{value} is 0!
 #'
-#' @return Index of a value within the array which is closest to \code{value}
+#' @return Index of a value within the array which is closest to \code{value} and the difference is within the defined threshold. If multiple entries of \code{array} have the same difference which is minimal, a vector of indices is returned. If no value is within the defined threshold, \code{NULL} is returned.
 #' @export
-getIndexClosestToValue <- function(value, array) {
-  validateIsNumeric(c(value, array))
-  idx <- which(abs(array - value) == min(abs(array - value)))
+getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdRel = NULL) {
+  # If no absolute threshold is set, calculate if from relative threshold
+  if (is.null(thresholdAbs)) {
+    # If no relative threshold is set also, no threshold is applied
+    if (!is.null(thresholdRel)) {
+      thresholdAbs <- abs(value * thresholdRel)
+    } else {
+      thresholdAbs <- Inf
+    }
+  }
+
+  ospsuite:::validateIsNumeric(c(value, array))
+
+  # Calculate distances
+  distances <- abs(array - value)
+  idx <- which(distances == min(distances) & distances <= thresholdAbs)
+
+  if (length(idx) == 0) {
+    warning(messages$warningValueWithinThresholdNotExisting(value, thresholdAbs))
+    return(NULL)
+  }
 
   return(idx)
 }
@@ -61,8 +81,8 @@ geosd <- function(x, na.rm = FALSE) {
 #' @return A list with \code{xValues} and aggregated \code{yValues}
 #' @export
 getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) {
-  validateIsNumeric(c(xValues, yValues, quantiles))
-  validateIsSameLength(xValues, yValues)
+  ospsuite:::validateIsNumeric(c(xValues, yValues, quantiles))
+  ospsuite:::validateIsSameLength(xValues, yValues)
   output <- list()
   # Aggregate time values
   for (quantile in quantiles) {
@@ -75,54 +95,15 @@ getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) 
   return(output)
 }
 
-
-#' Get the simulation container of the entity
-#'
-#' @param entity Object of type \code{Entity}
-#'
-#' @return The root container that is the parent of the entity.
-getSimulationContainer <- function(entity) {
-  validateIsOfType(entity, "Entity")
-  if (isOfType(entity, "Container")) {
-    if (entity$containerType == "Simulation") {
-      return(entity)
-    }
-  }
-  return(getSimulationContainer(entity$parentContainer))
-}
-
-#' Returns an instance of the specified .NET Task
-#'
-#' @param taskName The name of the task to retrieve (without the Get)
-#'
-#' @return An instance of the Task
-#'
-#' @details
-#' simulationLoader <- getNetTask("SimulationLoader")
-getNetTask <- function(taskName) {
-  rClr::clrCallStatic("OSPSuite.R.Api", paste0("Get", taskName))
-}
-
-#' Return an instance of the .NET Task "DimensionTask".
-#'
-#' @return An instance of the Task
-getDimensionTask <- function() {
-  dimTask <- esqlabsEnv$DimensionTask
-  if (is.null(dimTask)) {
-    dimTask <- getNetTask("DimensionTask")
-    esqlabsEnv$DimensionTask <- dimTask
-  }
-  return(dimTask)
-}
-
 #' Get hash code of the .NET object
 #'
 #' @param netWrapper Any object from the ospsuite-R that inhertis from DotNetWrapper
+#' @import rClr
 #'
 #' @return Value of the .NET-method "GetHashCode"
 getNetHashCode <- function(netWrapper) {
-  validateIsOfType(netWrapper, "DotNetWrapper")
-  rClr::clrCall(netWrapper$ref, "GetHashCode")
+  ospsuite:::validateIsOfType(netWrapper, "DotNetWrapper")
+  rClr::clrGet(netWrapper$ref, "HashCode")
 }
 
 #' Escape a string for possible regular expression match
@@ -160,7 +141,6 @@ removeFromList <- function(entry, listArg) {
   return(listArg)
 }
 
-
 #' Compare values including NA
 #'
 #' @param v1 Value or a list of values to compare. May include NA.
@@ -188,16 +168,4 @@ compareWithNA <- function(v1, v2) {
 #' isCharInString("a", "bsdalk")
 isCharInString <- function(char, string) {
   any(unlist(strsplit(string, ""), use.names = FALSE) == char)
-}
-
-#' Make sure the object is a list
-#'
-#' @param object To be converted to a list
-#'
-#' @return If \code{is.list(object) == TRUE}, returns the \code{object}, otherwise \code{list(object)}
-enforceIsList <- function(object) {
-  if (is.list(object)) {
-    return(object)
-  }
-  return(list(object))
 }

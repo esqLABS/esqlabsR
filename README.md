@@ -3,21 +3,24 @@ Utilities functions for modeling and simulation workflows within esqLABS
 
 ## Required packages
 - rClr >0.9
-  - https://github.com/Open-Systems-Pharmacology/rClr/releases/tag/v0.8.3_Linux or esqLABS internal
+  - https://github.com/Open-Systems-Pharmacology/rClr/releases/ or esqLABS internal
 - ospsuite-r >10
   - https://github.com/Open-Systems-Pharmacology/OSPSuite-R or esqLABS internal
 - R6 (CRAN)
+- readr (CRAN)
 - openxlsx (CRAN)
-- tools (CRAN)
-- parallel (CRAN)
+- hash (CRAN)
 - shiny (CRAN)
 - shinyjs (CRAN)
 
-### For building from source
+### For building from source and developing
 - Rtools (https://cran.r-project.org/bin/windows/Rtools/)
   - After installation, add the folder to your $PATH: In start menu, type in "PATH", select "Change path environment for user", and add the path to Rtools folder.
-rClr_0.9 (esqlabs GmbH\Software - Documents\R packages\esqLABS standard library\R4.x) 
+- roxygen2 (CRAN)
 - devtools (CRAN)
+- rmarkdown (CRAN)
+- testthat (CRAN)
+- pander (CRAN)
 - knitr (CRAN)
 - styler (CARN)
 

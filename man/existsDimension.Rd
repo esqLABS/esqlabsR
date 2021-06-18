@@ -13,5 +13,5 @@ existsDimension(dimension)
 Dimension existence
 }
 \details{
-Check if the provided dimension is supported.
+Deprecated, use ospsuite::ospDimensions instead. Check if the provided dimension is supported.
 }

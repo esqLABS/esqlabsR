@@ -1,7 +1,5 @@
 .getPackageVersion <- function() {
   version <- getNamespaceVersion("esqlabsR")
-  # first <- head(unlist(gregexpr(pattern = "\\.", version)), 1)
-  # return(unname(substr(version, 1, first - 1)))
   return(version)
 }
 
@@ -33,9 +31,6 @@ esqlabsEnv$XValuesColumn <- 10
 esqlabsEnv$YValuesColumn <- 11
 # Column index for y error values in observed data files
 esqlabsEnv$YErrorColumn <- 12
-
-# NetTask "DimensionTask" cached for performance benefits. Created the first time it is requested.
-esqlabsEnv$DimensionTask <- NULL
 
 #' Get the value of a global esqlabsR setting.
 #'

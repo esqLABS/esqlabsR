@@ -6,9 +6,10 @@
 #' \code{DataConfiguration$columnsToSplitBy}. The output structure is a nested list with levels corresponding to the groupings.
 #'
 #' @return A (nested) list of \code{OSPSTimeValues} objects
+#' @import ospsuite
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
-  validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
+  ospsuite:::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
   filePath <- file.path(dataConfiguration$dataFolder, dataConfiguration$dataFile)
   validateFileExists(filePath)
 
@@ -54,7 +55,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
       yErrorUnit <- gsub(pattern = ".", replacement = " ", strsplit(yErrorName, "\\.?\\[")[[1]][[2]], fixed = TRUE)
       yErrorUnit <- gsub(pattern = "]", replacement = "", yErrorUnit, fixed = TRUE)
 
-      timeValues <- OSPSTimeValues$new(xVals, stringToNum(yVals), label = paste(sheet, groupName, sep = "."), yError = stringToNum(yErrorVals))
+      timeValues <- OSPSTimeValues$new(stringToNum(xVals), stringToNum(yVals), label = paste(sheet, groupName, sep = "."), yError = stringToNum(yErrorVals))
       timeValues$xDimension <- xDim
       timeValues$xUnit <- xUnit
       timeValues$yDimension <- yDim

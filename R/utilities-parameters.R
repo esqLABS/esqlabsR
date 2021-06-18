@@ -13,8 +13,8 @@
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   columnNames <- c("Container.Path", "Parameter.Name", "Value", "Units")
 
-  validateIsString(paramsXLSpath)
-  validateIsString(sheets, nullAllowed = TRUE)
+  ospsuite:::validateIsString(paramsXLSpath)
+  ospsuite:::validateIsString(sheets, nullAllowed = TRUE)
 
   if (is.null(sheets)) {
     sheets <- c(1)
@@ -25,9 +25,9 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   units <- c()
 
   for (sheet in sheets) {
-    data <- read.xlsx(xlsxFile = paramsXLSpath, sheet = sheet)
+    data <- openxlsx::read.xlsx(xlsxFile = paramsXLSpath, sheet = sheet)
 
-    if (!all(names(data) == columnNames)) {
+    if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
     }
     for (i in seq_along(data[["Container.Path"]])) {
@@ -60,7 +60,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' Explicit formulas: If formula string are not equal, OR one of the parameter values is fixed (formula is overridden),
 #' OR both parameter values are fixed and differ,
 #' OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
-#' Table formulas: If the number of points differ, OR any of the points differn,
+#' Table formulas: If the number of points differ, OR any of the points differ,
 #' OR one of the parameter values is fixed (formula is overridden),
 #' OR both parameter values are fixed and differ
 #' #'
@@ -69,10 +69,10 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @param checkFormulaValues If TRUE, values of explicit formulas are always compared. Otherwise, the values
 #' are only compared if the formulas are overridden (isFixedValue == TRUE). FALSE by default.
 #'
-#' @return
+#' @return \code{TRUE} if parameters are considered equal, \code{FALSE} otherwise
 #' @export
 isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE) {
-  validateIsOfType(c(parameter1, parameter2), "Parameter")
+  ospsuite:::validateIsOfType(c(parameter1, parameter2), "Parameter")
 
   # Check for the path
   if (parameter1$path != parameter2$path) {
@@ -154,7 +154,7 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' length as 'parameterPaths'
 #' @param condition A function that receives a \code{Parmeter} as an argument
 #' and returns \code{TRUE} of \code{FALSE}
-#' #' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
+#' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
 #' are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #'
@@ -170,18 +170,15 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' }
 #' setParameterValuesByPath(c("Organism|Liver|Volume", "Organism|Volume"), c(2, 3), sim, condition)
 #' }
+#' @import ospsuite
 #' @export
 setParameterValuesByPathWithCondition <- function(parameterPaths, values, simulation, condition = function(p) {
                                                     TRUE
                                                   }, units = NULL) {
-  validateIsString(c(parameterPaths, units))
-  validateIsNumeric(values)
-  validateIsOfType(simulation, "Simulation")
-
   for (i in seq_along(parameterPaths)) {
-    param <- getParameter(parameterPaths[[i]], simulation)
+    param <- ospsuite::getParameter(parameterPaths[[i]], simulation)
     if (condition(param)) {
-      setParameterValuesByPathWithUnit(parameterPaths = parameterPaths[[i]], values = values[[i]], simulation = simulation, units = units)
+      setParameterValuesByPathWithUnit(parameterPaths = parameterPaths[[i]], values = values[[i]], simulation = simulation, units = units[[i]])
     }
   }
 }
@@ -196,17 +193,15 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, values, simula
 #' are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #' @export
+#' @import ospsuite
 setParameterValuesByPathWithUnit <- function(parameterPaths, values, simulation, units = NULL) {
-  validateIsString(c(parameterPaths, units))
-  validateIsNumeric(values)
-  validateIsOfType(simulation, "Simulation")
-
+  ospsuite:::validateIsString(units, nullAllowed = TRUE)
   for (i in seq_along(parameterPaths)) {
-    param <- getParameter(parameterPaths[[i]], simulation)
+    param <- ospsuite::getParameter(parameterPaths[[i]], simulation)
     valueInBaseUnit <- values[[i]]
     if (!is.null(units)) {
-      valueInBaseUnit <- toBaseUnit(quantity = param, values = valueInBaseUnit, unit = units[[i]])
+      valueInBaseUnit <- ospsuite::toBaseUnit(quantityOrDimension = param, values = valueInBaseUnit, unit = units[[i]])
     }
   }
-  setParameterValues(parameters = param, values = valueInBaseUnit)
+  ospsuite::setParameterValues(parameters = param, values = valueInBaseUnit)
 }
