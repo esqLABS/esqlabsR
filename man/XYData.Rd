@@ -162,7 +162,7 @@ y error values with all conversions applied.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Raw yError plus yOffset multiplied by yFactor and converted to a specified unit.
+Raw yError multiplied by yFactor and converted to a specified unit.
 It is assumed that raw yError are in \code{yUnit}. If no error is specified, \code{NULL} is returned.
 }
 }

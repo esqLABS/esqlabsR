@@ -196,14 +196,14 @@ test_that("Correct XXXProcessed", {
   xyData$yOffset <- -2
   expect_equal(
     c(xyData$xValuesProcessed(), xyData$yValuesProcessed(), xyData$yErrorProcessed()),
-    c(xVals + 1, yVals - 2, yError - 2)
+    c(xVals + 1, yVals - 2, yError)
   )
 
   xyData$xFactor <- 0.2
   xyData$yFactor <- 1.3
   expect_equal(
     c(xyData$xValuesProcessed(), xyData$yValuesProcessed(), xyData$yErrorProcessed()),
-    c((xVals + 1) * 0.2, (yVals - 2) * 1.3, (yError - 2) * 1.3)
+    c((xVals + 1) * 0.2, (yVals - 2) * 1.3, yError * 1.3)
   )
 
   # Unit change
@@ -212,7 +212,7 @@ test_that("Correct XXXProcessed", {
       xyData$xValuesProcessed(unit = "h"), xyData$yValuesProcessed(unit = "pmol/l"),
       xyData$yErrorProcessed(unit = "mmol/l")
     ),
-    c((xVals + 1) * 0.2 / 60, (yVals - 2) * 1.3 * 1e6, (yError - 2) * 1.3 * 1e-3)
+    c((xVals + 1) * 0.2 / 60, (yVals - 2) * 1.3 * 1e6, yError * 1.3 * 1e-3)
   )
 
   # Dimension change
