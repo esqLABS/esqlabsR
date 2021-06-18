@@ -318,7 +318,7 @@ XYData <- R6::R6Class(
 
     #' @description
     #' Adds a new entry to meta data list of \code{XYData} object or changes its value if name is already present in meta data.
-    #' If only parameter \code{name} is provided or if \code{value} is set to NULL, entry with corresponding name is deleted from meta data.
+    #' If only \code{name} is provided or if \code{value} is set to NULL, entry with corresponding name is deleted from meta data.
     #'
     #' @param name Name of new meta data list entry
     #' @param value Value of new meta data list entry
