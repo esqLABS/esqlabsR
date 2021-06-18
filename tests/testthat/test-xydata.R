@@ -224,3 +224,30 @@ test_that("Correct XXXProcessed", {
     c((yVals - 2) * 1.3 * 1e6 * 100, (yError - 2) * 1.3 * 1e-3 * 100)
   )
 })
+
+test_that("It gets meta data", {
+  xVals <- c(0, 1, 2, 3)
+  yVals <- c(4, 5, 6, 7)
+  yError <- c(0.1, 0, 0.1, 1)
+  xyData <- XYData$new(xVals, yVals, yError = yError, label = "My XY Data")
+
+  expect_equal(xyData$getAllMetaData(), list())
+
+  xyData$setMetaData(name = "City", value = "Munich")
+  expect_equal(xyData$getAllMetaData(), list(City = "Munich"))
+  xyData$setMetaData(name = "State", value = "Bavaria")
+  expect_equal(xyData$getAllMetaData(), list(City = "Munich", State = "Bavaria"))
+  xyData$setMetaData(name = "City")
+  expect_equal(xyData$getAllMetaData(), list(State = "Bavaria"))
+  xyData$setMetaData(name = "pi", value = c(3, 1, 4))
+  expect_equal(xyData$getAllMetaData(), list(State = "Bavaria", pi = c(3, 1, 4)))
+})
+
+test_that("Get Multiple Meta Data Entries error", {
+  xVals <- c(0, 1, 2, 3)
+  yVals <- c(4, 5, 6, 7)
+  yError <- c(0.1, 0, 0.1, 1)
+  xyData <- XYData$new(xVals, yVals, yError = yError, label = "My XY Data")
+
+  expect_error(xyData$setMetaData(name = c("test1", "test2"), value = 1), regexp = escapeForRegex(messages$errorMultipleMetaDataEntries()))
+})

@@ -51,6 +51,8 @@ A set of x and y value pairs
 \item \href{#method-xValuesProcessed}{\code{XYData$xValuesProcessed()}}
 \item \href{#method-yValuesProcessed}{\code{XYData$yValuesProcessed()}}
 \item \href{#method-yErrorProcessed}{\code{XYData$yErrorProcessed()}}
+\item \href{#method-getAllMetaData}{\code{XYData$getAllMetaData()}}
+\item \href{#method-setMetaData}{\code{XYData$setMetaData()}}
 \item \href{#method-print}{\code{XYData$print()}}
 \item \href{#method-clone}{\code{XYData$clone()}}
 }
@@ -162,6 +164,39 @@ y error values with all conversions applied.
 \subsection{Returns}{
 Raw yError multiplied by yFactor and converted to a specified unit.
 It is assumed that raw yError are in \code{yUnit}. If no error is specified, \code{NULL} is returned.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-getAllMetaData"></a>}}
+\if{latex}{\out{\hypertarget{method-getAllMetaData}{}}}
+\subsection{Method \code{getAllMetaData()}}{
+Meta data list of \code{XYData} object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{XYData$getAllMetaData()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named list holding the metadata of this \code{XYData}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-setMetaData"></a>}}
+\if{latex}{\out{\hypertarget{method-setMetaData}{}}}
+\subsection{Method \code{setMetaData()}}{
+Adds a new entry to meta data list of \code{XYData} object or changes its value if name is already present in meta data.
+If only \code{name} is provided or if \code{value} is set to NULL, entry with corresponding name is deleted from meta data.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{XYData$setMetaData(name, value = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Name of new meta data list entry}
+
+\item{\code{value}}{Value of new meta data list entry}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
