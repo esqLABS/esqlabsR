@@ -88,5 +88,8 @@ messages <- list(
   },
   errorWrongLength = function(object, length, optionalMessage = NULL) {
     paste("Object `", object, "` must be of length ", length, " but it is not!")
+  },
+  errorMultipleMetaDataEntries = function(optionalMessage = NULL) {
+    paste("Can only set a single meta data entry at once", optionalMessage)
   }
 )

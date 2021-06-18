@@ -267,7 +267,7 @@ Meta data list of \code{XYData} object
 }
 
 \subsection{Returns}{
-.metaData of \code{XYData} object
+A named list holding the metadata of this \code{XYData}
 }
 }
 \if{html}{\out{<hr>}}
@@ -275,9 +275,9 @@ Meta data list of \code{XYData} object
 \if{latex}{\out{\hypertarget{method-setMetaData}{}}}
 \subsection{Method \code{setMetaData()}}{
 Adds a new entry to meta data list of \code{XYData} object or changes its value if name is already present in meta data.
-If \code{value} is NULL, entry with corresponding name is deleted from meta data
+If only parameter \code{name} is provided or if \code{value} is set to NULL, entry with corresponding name is deleted from meta data.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{XYData$setMetaData(name = NULL, value = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{XYData$setMetaData(name, value = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
