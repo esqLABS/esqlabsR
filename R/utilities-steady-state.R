@@ -160,10 +160,17 @@ exportSteadyStateToXLS <- function(simulation, quantitiesPaths = NULL, resultsXL
 
   # Iterate through all quantities
   for (i in 1:nrOfEntries) {
-    quantity <- ospsuite::getQuantity(
+    quantity <- ospsuite::getMolecule(
       path = initialValues$paths[[i]],
-      container = simulation
-    )
+      container = simulation,
+      stopIfNotFound = FALSE
+    ) %||%
+      ospsuite::getParameter(
+        path = initialValues$paths[[i]],
+        container = simulation,
+        stopIfNotFound = FALSE
+      )
+
     value <- initialValues$values[[i]]
 
     if (ospsuite:::isOfType(quantity, "Molecule")) {

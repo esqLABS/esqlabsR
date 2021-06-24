@@ -9,7 +9,7 @@ startFunctionVisualizer <- function() {
 #' Start unit converter
 #' @details Starts a shiny app for computing unit conversions.
 #' @export
-startFunctionVisualizer <- function() {
+startUnitConverter <- function() {
   appDir <- system.file("UnitConverter", package = "esqlabsR")
   shiny::runApp(appDir, display.mode = "normal")
 }
