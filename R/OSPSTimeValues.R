@@ -1,10 +1,10 @@
-#' @title OSPSTimeValues
+#' @title XYData
 #' @docType class
 #' @description A set of x and y value pairs with the properties as defined in the esqLABS "Time-Values Data"
 #' @export
 #' @format NULL
 OSPSTimeValues <- R6::R6Class(
-  "OSPSTimeValues",
+  "XYData",
   inherit = XYData,
   active = list(),
   private = list(),
@@ -17,7 +17,7 @@ OSPSTimeValues <- R6::R6Class(
     #'
     #' @description
     #' Initialize a new instance of the class. xVals, yVals, and yError (can be omitted) must be of the same length
-    #' @return A new `OSPSTimeValues` object.
+    #' @return A new `XYData` object.
     initialize = function(xVals, yVals, label, yError = NULL) {
       super$initialize(xVals, yVals, label, yError)
     },

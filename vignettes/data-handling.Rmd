@@ -123,9 +123,9 @@ xyData$yMin #Minimal value of 4 minus the error 0.1 plus offset 2 multiplied by 
 ```
 
 
-## Loading data from excel as `OSPSTimeValues`
+## Loading data from excel as `XYData`
 
-A special extension of `XYData` is `OSPSTimeValues`, a class designed for time-values data used in modeling and simulation activities with the OSPS. In addition to information stored by the `XYData` class, following meta data fields are available.
+A special extension of `XYData` is `XYData`, a class designed for time-values data used in modeling and simulation activities with the OSPS. In addition to information stored by the `XYData` class, following meta data fields are available.
 
 
   - StudyId
@@ -141,9 +141,9 @@ A special extension of `XYData` is `OSPSTimeValues`, a class designed for time-v
 If the data set describes amounts or concentrations of a chemical compound, the field `$MW` should be set to the molecular weight (in g/mol) of the molecule
 to enable conversion between dimensions, as often used for data plotting.
 
-Usually, `OSPSTimeValues` objects are created from an excel file by calling the method `readOSPSTimeValues`. The excel file must have the structure as defined in the Work Instruction "Modeling & Simulation Data Structure". Additionally, for each `Molecule` imported, a sheet in the "IN VIVO/IN VITRO COMPOUND PROPERTIES" file (see the Work Instruction) must be present to retrieve the molecular weight of the imported molecule.
+Usually, `XYData` objects are created from an excel file by calling the method `readOSPSTimeValues`. The excel file must have the structure as defined in the Work Instruction "Modeling & Simulation Data Structure". Additionally, for each `Molecule` imported, a sheet in the "IN VIVO/IN VITRO COMPOUND PROPERTIES" file (see the Work Instruction) must be present to retrieve the molecular weight of the imported molecule.
 
-The method `readOSPSTimeValues` reads the contents of the excel file and generates a list of `OSPSTimeValues` objects according to the groupings of the data. The data are generally grouped by the sheets of the excel file and the specified columns.
+The method `readOSPSTimeValues` reads the contents of the excel file and generates a list of `XYData` objects according to the groupings of the data. The data are generally grouped by the sheets of the excel file and the specified columns.
 
 To read the data using `readOSPSTimeValues`, an object of the class `DataConfiguration` must be created and passed to the method. `DataConfiguration` is a structure containing following information:
 

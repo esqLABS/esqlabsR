@@ -47,7 +47,7 @@ The most important classes are:
   : `Plotable`
   : `XYData`, inherits `Plotable`
     : Organizes any kind of x-y-values data. See [Data handling](data-handling.html) for more information.
-  : `OSPSTimeValues`, inherits `XYData`
+  : `XYData`, inherits `XYData`
     : Sub-type of `XYData` with additional meta-data provided in the default OSPS data format
   : `DataConfiguration`
     : Structure containing information for observed data import. See [Data handling](data-handling.html) for more information.

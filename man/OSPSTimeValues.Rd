@@ -3,12 +3,12 @@
 \docType{class}
 \name{OSPSTimeValues}
 \alias{OSPSTimeValues}
-\title{OSPSTimeValues}
+\title{XYData}
 \description{
 A set of x and y value pairs with the properties as defined in the esqLABS "Time-Values Data"
 }
 \section{Super classes}{
-\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{\link[esqlabsR:Plotable]{esqlabsR::Plotable}} -> \code{\link[esqlabsR:XYData]{esqlabsR::XYData}} -> \code{OSPSTimeValues}
+\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{\link[esqlabsR:Plotable]{esqlabsR::Plotable}} -> \code{\link[esqlabsR:XYData]{esqlabsR::XYData}} -> \code{XYData}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -74,7 +74,7 @@ Initialize a new instance of the class. xVals, yVals, and yError (can be omitted
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A new `OSPSTimeValues` object.
+A new `XYData` object.
 }
 }
 \if{html}{\out{<hr>}}

@@ -1,11 +1,11 @@
 #' Read time-values data from excel file
 #'
 #' @param dataConfiguration An object of \code{DataConfiguration}
-#' @details The methods reads time-values data from the properly defined excel sheet and creates \code{OSPSTimeValues} objects
+#' @details The methods reads time-values data from the properly defined excel sheet and creates \code{XYData} objects
 #' according to the groupings. Each sheet in \code{DataConfiguration$sheets} is split according to columns listed in
 #' \code{DataConfiguration$columnsToSplitBy}. The output structure is a nested list with levels corresponding to the groupings.
 #'
-#' @return A (nested) list of \code{OSPSTimeValues} objects
+#' @return A (nested) list of \code{XYData} objects
 #' @import ospsuite
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
@@ -27,7 +27,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
     }
     data <- split(data, allFactors, drop = TRUE)
 
-    # Create an OSPSTimeValues object for each group
+    # Create an XYData object for each group
     for (groupIdx in seq_along(data)) {
       group <- data[[groupIdx]]
       groupName <- names(data)[[groupIdx]]
@@ -55,31 +55,31 @@ readOSPSTimeValues <- function(dataConfiguration) {
       yErrorUnit <- gsub(pattern = ".", replacement = " ", strsplit(yErrorName, "\\.?\\[")[[1]][[2]], fixed = TRUE)
       yErrorUnit <- gsub(pattern = "]", replacement = "", yErrorUnit, fixed = TRUE)
 
-      timeValues <- OSPSTimeValues$new(stringToNum(xVals), stringToNum(yVals), label = paste(sheet, groupName, sep = "."), yError = stringToNum(yErrorVals))
+      timeValues <- XYData$new(stringToNum(xVals), stringToNum(yVals), label = paste(sheet, groupName, sep = "."), yError = stringToNum(yErrorVals))
       timeValues$xDimension <- xDim
       timeValues$xUnit <- xUnit
       timeValues$yDimension <- yDim
       timeValues$yUnit <- yUnit
       timeValues$yErrorUnit <- yErrorUnit
-      timeValues$StudyId <- group$Study.Id[[1]]
-      timeValues$PatientId <- group$PatientId[[1]]
-      timeValues$Organ <- group$Organ[[1]]
-      timeValues$Compartment <- group$Compartment[[1]]
-      timeValues$Species <- group$Species[[1]]
-      timeValues$Gender <- group$Gender[[1]]
-      timeValues$Molecule <- group$Molecule[[1]]
+      timeValues$setMetaData(name = "StudyId", value = group$Study.Id[[1]])
+      timeValues$setMetaData(name = "PatientId", value = group$PatientId[[1]])
+      timeValues$setMetaData(name = "Organ", value = group$Organ[[1]])
+      timeValues$setMetaData(name = "Compartment", value = group$Compartment[[1]])
+      timeValues$setMetaData(name = "Species", value = group$Species[[1]])
+      timeValues$setMetaData(name = "Gender", value = group$Gender[[1]])
+      timeValues$setMetaData(name = "Molecule", value = group$Molecule[[1]])
 
       # If a molecule is specified, retrieve its molecular weight
-      if (!is.na(timeValues$Molecule)) {
-        compoundProperties <- openxlsx::read.xlsx(xlsxFile = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$Molecule)
+      if (!is.null(timeValues$getAllMetaData()$Molecule)) {
+        compoundProperties <- openxlsx::read.xlsx(xlsxFile = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule)
         mwIdx <- which(compoundProperties$`Parameter,.[AdditionalParameter]` == "MW")
         mw <- compoundProperties$`Value.[1,1]`[[mwIdx]]
         unit <- compoundProperties$`Unit.[1,1]`[[mwIdx]]
         timeValues$MW <- as.numeric(mw)
       }
 
-      timeValues$GroupId <- group$GroupId[[1]]
-      timeValues$dataType <- XYDataTypes$Observed
+      timeValues$setMetaData(name = "GroupId", value = group$GroupId[[1]])
+      timeValues$setMetaData(name = "dataType", value = XYDataTypes$Observed)
 
       # Some ugly piece of code to create a tree-like structure.
       # Don't even want to comment

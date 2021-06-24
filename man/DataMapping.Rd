@@ -95,7 +95,7 @@ Supported plot types are listed in the enum \code{PlotTypes}. Default is "Indivi
 \item \href{#method-finalize}{\code{DataMapping$finalize()}}
 \item \href{#method-addModelOutputs}{\code{DataMapping$addModelOutputs()}}
 \item \href{#method-addXYSeries}{\code{DataMapping$addXYSeries()}}
-\item \href{#method-addOSPSTimeValues}{\code{DataMapping$addOSPSTimeValues()}}
+\item \href{#method-addXYData}{\code{DataMapping$addXYData()}}
 \item \href{#method-removeXYSeries}{\code{DataMapping$removeXYSeries()}}
 \item \href{#method-getXYSeriesGroupMap}{\code{DataMapping$getXYSeriesGroupMap()}}
 \item \href{#method-setXFactors}{\code{DataMapping$setXFactors()}}
@@ -229,20 +229,20 @@ yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), grou
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-addOSPSTimeValues"></a>}}
-\if{latex}{\out{\hypertarget{method-addOSPSTimeValues}{}}}
-\subsection{Method \code{addOSPSTimeValues()}}{
-Add \code{OSPSTimeValues} object(s). The objects are cloned at adding.
+\if{html}{\out{<a id="method-addXYData"></a>}}
+\if{latex}{\out{\hypertarget{method-addXYData}{}}}
+\subsection{Method \code{addXYData()}}{
+Add \code{XYData} object(s). The objects are cloned at adding.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{DataMapping$addOSPSTimeValues(OSPSTimeValues, groups = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$addXYData(XYData, groups = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{OSPSTimeValues}}{Object or a list of objects of the type \code{OSPSTimeValues}}
+\item{\code{XYData}}{Object or a list of objects of the type \code{XYData}}
 
-\item{\code{groups}}{A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{OSPSTimeValues}
+\item{\code{groups}}{A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{XYData}
 output is not assigned to any group}
 }
 \if{html}{\out{</div>}}
