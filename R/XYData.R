@@ -163,7 +163,8 @@ XYData <- R6::R6Class(
     .yDimension = NULL,
     .yUnit = NULL,
     .yErrorUnit = NULL,
-    .MW = NULL
+    .MW = NULL,
+    .metaData = list()
   ),
   public = list(
     #' @param xVals An array of numeric x values.
@@ -280,6 +281,28 @@ XYData <- R6::R6Class(
       }
       # Otherwise return without conversion to unit
       return(valuesProcessed)
+    },
+
+    #' @description
+    #' Meta data list of \code{XYData} object
+    #' @return
+    #' A named list holding the metadata of this \code{XYData}
+    getAllMetaData = function() {
+      return(private$.metaData)
+    },
+
+    #' @description
+    #' Adds a new entry to meta data list of \code{XYData} object or changes its value if name is already present in meta data.
+    #' If only \code{name} is provided or if \code{value} is set to NULL, entry with corresponding name is deleted from meta data.
+    #'
+    #' @param name Name of new meta data list entry
+    #' @param value Value of new meta data list entry
+    setMetaData = function(name, value = NULL) {
+      if (length(name) != 1) {
+        stop(messages$errorMultipleMetaDataEntries())
+      }
+
+      private$.metaData[[name]] <- value
     },
 
     #' @description Print the object to the console

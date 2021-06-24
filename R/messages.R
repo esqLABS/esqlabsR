@@ -54,3 +54,7 @@ messages$warningValueWithinThresholdNotExisting <- function(value, threshold, op
 messages$warningParameterNotFound <- function(parameterPath, optionalMessage = NULL) {
   paste("Parameter with path `", parameterPath, "` does not exist in the simulation! ", optionalMessage)
 }
+
+messages$errorMultipleMetaDataEntries = function(optionalMessage = NULL) {
+    paste("Can only set a single meta data entry at once", optionalMessage)
+  }
