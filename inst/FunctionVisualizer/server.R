@@ -142,7 +142,7 @@ server <- function(input, output, session){
         colnames(newdata) <- c(colname, "x_values")
         plotdata <- merge(v$snapshots, newdata, by="x_values", all=TRUE)
       }
-      plotdata <- filter(plotdata, x_values <= x_max, x_values >= x_min)
+      plotdata <- dplyr::filter(plotdata, x_values <= x_max, x_values >= x_min)
 
       ys <- unlist(plotdata[,-1])
       ys <- ys[is.finite(ys)]

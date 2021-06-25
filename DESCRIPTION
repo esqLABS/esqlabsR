@@ -1,7 +1,7 @@
 Package: esqlabsR
 Type: Package
 Title: esqLABS utilities package
-Version: 1.5.0.9000
+Version: 1.5.0.9001
 Author: esqLABS GmbH
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects within esqLABS.
@@ -16,7 +16,8 @@ Imports:
     parallel,
     shiny,
     shinyjs,
-    hash
+    hash,
+    dplyr
 Suggests: 
     knitr,
     rmarkdown,
