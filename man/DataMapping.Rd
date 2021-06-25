@@ -148,7 +148,7 @@ Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by defa
 \if{html}{\out{<div class="r">}}\preformatted{DataMapping$addModelOutputs(
   paths,
   labels,
-  outputValues,
+  simulationResults,
   simulation,
   groups = NULL,
   removeNA = TRUE
@@ -163,7 +163,7 @@ Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by defa
 \item{\code{labels}}{A string or a list of strings that are used as a label (e.g. in the legend) for the output(s).
 If \code{NULL} (default), the path of the output is used as a label.}
 
-\item{\code{outputValues}}{Simulated results as returned by \code{getOutputValues}}
+\item{\code{simulationResults}}{Simulated results as returned by \code{runSimulation}}
 
 \item{\code{simulation}}{\code{Simulation}-object that generated the outputs. Used for retrieving molecular weights of the
 simulated species.}

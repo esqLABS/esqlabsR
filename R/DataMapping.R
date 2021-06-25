@@ -325,7 +325,7 @@ DataMapping <- R6::R6Class(
     legendPosition = "topright",
 
     #' @param paths A string or a list of strings representing the path(s) to the output(s) in the model.
-    #' @param outputValues Simulated results as returned by \code{getOutputValues}
+    #' @param simulationResults Simulated results as returned by \code{runSimulation}
     #' @param simulation \code{Simulation}-object that generated the outputs. Used for retrieving molecular weights of the
     #' simulated species.
     #' @param labels A string or a list of strings that are used as a label (e.g. in the legend) for the output(s).
@@ -336,15 +336,18 @@ DataMapping <- R6::R6Class(
     #' @param removeNA If TRUE (default), NA values will be removed from the simulated results. NA values can be the result of observer not being calculated at a certain time point.
     #' @description
     #' Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by default.
-    addModelOutputs = function(paths, labels, outputValues, simulation, groups = NULL, removeNA = TRUE) {
+    addModelOutputs = function(paths, labels, simulationResults, simulation, groups = NULL, removeNA = TRUE) {
       # Paths are checked for correct type in ospsuite
       ospsuite:::validateIsString(labels)
       ospsuite:::validateIsSameLength(paths, labels)
+      outputValues <- getOutputValues(simulationResults = simulationResults,
+                                      quantitiesOrPaths = paths,
+                                      stopIfNotFound = FALSE)
 
       for (idx in seq_along(paths)) {
         yValues <- outputValues$data[[paths[[idx]]]]
         # If NULL is returned, the output with the given path could not be found
-        if (is.null(yValues)) {
+        if (all(is.na(yValues))) {
           stop(messages$errorOutputPathNotFound(paths[[idx]]))
         }
 
