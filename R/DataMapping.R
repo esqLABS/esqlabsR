@@ -357,9 +357,9 @@ DataMapping <- R6::R6Class(
         }
         # If no label is specified, use output path as label
         label <- labels[[idx]] %||% paths[[idx]]
-        timeValues <- OSPSTimeValues$new(xValues, yValues, label = label)
+        timeValues <- XYData$new(xValues, yValues, label = label)
 
-        self$addOSPSTimeValues(
+        self$addXYData(
           timeValues,
           groups = groups[[idx]]
         )
@@ -422,34 +422,34 @@ DataMapping <- R6::R6Class(
       for (idx in seq_along(labels)) {
         xyData <- XYData$new(xVals = xValsList[[idx]], yVals = yValsList[[idx]], yError = yErrorList[[idx]], label = labels[[idx]])
         group <- groups[[idx]]
-        self$addOSPSTimeValues(xyData, group)
+        self$addXYData(xyData, group)
       }
       invisible(self)
     },
 
 
-    #' @description Add \code{OSPSTimeValues} object(s). The objects are cloned at adding.
+    #' @description Add \code{XYData} object(s). The objects are cloned at adding.
     #'
-    #' @param OSPSTimeValues Object or a list of objects of the type \code{OSPSTimeValues}
-    #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{OSPSTimeValues}
+    #' @param XYData Object or a list of objects of the type \code{XYData}
+    #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{XYData}
     #' output is not assigned to any group
     #' @export
-    addOSPSTimeValues = function(OSPSTimeValues, groups = NULL) {
-      ospsuite:::validateIsOfType(OSPSTimeValues, "XYData")
-      OSPSTimeValues <- ospsuite:::toList(OSPSTimeValues)
+    addXYData = function(XYData, groups = NULL) {
+      ospsuite:::validateIsOfType(XYData, "XYData")
+      XYData <- ospsuite:::toList(XYData)
       if (!is.null(groups)) {
         groups <- c(groups)
-        ospsuite:::validateIsSameLength(OSPSTimeValues, groups)
+        ospsuite:::validateIsSameLength(XYData, groups)
       }
-      for (idx in seq_along(OSPSTimeValues)) {
+      for (idx in seq_along(XYData)) {
         newGroupName <- groups[[idx]]
         # NULL is converted to NA as NULL cannot be put into a list.
         if (is.null(newGroupName)) {
           newGroupName <- NA
         }
-        label <- OSPSTimeValues[[idx]]$label
+        label <- XYData[[idx]]$label
         # clone the object and add it
-        timeValuesClone <- OSPSTimeValues[[idx]]$clone()
+        timeValuesClone <- XYData[[idx]]$clone()
 
         private$.xySeries[[label]] <- timeValuesClone
         # If an entry with the given label already exists in the DataMapping (i.e., it will be overwritten),

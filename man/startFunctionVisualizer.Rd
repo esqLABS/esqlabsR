@@ -5,16 +5,10 @@
 \title{Start function visualizer}
 \usage{
 startFunctionVisualizer()
-
-startFunctionVisualizer()
 }
 \description{
 Start function visualizer
-
-Start unit converter
 }
 \details{
 Starts a shiny app for visualizing of function values.
-
-Starts a shiny app for computing unit conversions.
 }

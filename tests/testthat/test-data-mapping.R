@@ -195,7 +195,7 @@ test_that("It can change the grouping of a data set", {
 test_that("It can add one observed data without a group", {
   obsData <- observedData$TestSheet_1$Male$Ind1$iv$Dapagliflozin$PeripheralVenousBlood$Plasma
   dataMapping <- DataMapping$new()
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = obsData)
+  dataMapping$addXYData(XYData = obsData)
   capture.output(print(dataMapping))
   expect_equal(dataMapping$xySeries[[1]]$label, "TestSheet_1.Male.Ind1.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
   expect_equal(dataMapping$groupings, list())
@@ -205,7 +205,7 @@ test_that("It can add one observed data without a group", {
 test_that("It can add one observed data with a group", {
   obsData <- observedData$TestSheet_1$Male$Ind1$iv$Dapagliflozin$PeripheralVenousBlood$Plasma
   dataMapping <- DataMapping$new()
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = obsData, groups = "Group1")
+  dataMapping$addXYData(XYData = obsData, groups = "Group1")
   capture.output(print(dataMapping))
   expect_equal(dataMapping$xySeries[[1]]$label, "TestSheet_1.Male.Ind1.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
   expect_equal(dataMapping$groupings[["Group1"]], "TestSheet_1.Male.Ind1.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
@@ -218,7 +218,7 @@ test_that("It can add multiple observed data without a group", {
     observedData$TestSheet_1$Female$Ind2$iv$Dapagliflozin$PeripheralVenousBlood$Plasma
   )
   dataMapping <- DataMapping$new()
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = obsData)
+  dataMapping$addXYData(XYData = obsData)
   capture.output(print(dataMapping))
   expect_equal(dataMapping$xySeries[[1]]$label, "TestSheet_1.Male.Ind1.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
   expect_equal(dataMapping$xySeries[[2]]$label, "TestSheet_1.Female.Ind2.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
@@ -232,7 +232,7 @@ test_that("It can add multiple observed data with a group", {
     observedData$TestSheet_1$Female$Ind2$iv$Dapagliflozin$PeripheralVenousBlood$Plasma
   )
   dataMapping <- DataMapping$new()
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = obsData, groups = list(NULL, "Group1"))
+  dataMapping$addXYData(XYData = obsData, groups = list(NULL, "Group1"))
   capture.output(print(dataMapping))
   expect_equal(dataMapping$xySeries[[1]]$label, "TestSheet_1.Male.Ind1.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
   expect_equal(dataMapping$xySeries[[2]]$label, "TestSheet_1.Female.Ind2.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
@@ -246,7 +246,7 @@ test_that("It can remove xySeries", {
     observedData$TestSheet_1$Female$Ind2$iv$Dapagliflozin$PeripheralVenousBlood$Plasma
   )
   dataMapping <- DataMapping$new()
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = obsData, groups = list(NULL, "Group1"))
+  dataMapping$addXYData(XYData = obsData, groups = list(NULL, "Group1"))
   dataMapping$removeXYSeries("TestSheet_1.Male.Ind1.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
   expect_equal(dataMapping$xySeries[[1]]$label, "TestSheet_1.Female.Ind2.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
   expect_equal(dataMapping$groupings[[1]], "TestSheet_1.Female.Ind2.iv.Dapagliflozin.PeripheralVenousBlood.Plasma")
@@ -825,8 +825,8 @@ test_that("Setting a does not affect initial xy-data objects configuration", {
 
   xyData <- XYData$new(xVals = xVals, yVals = yVals, label = "my series1")
 
-  dataMapping$addOSPSTimeValues(
-    OSPSTimeValues = xyData
+  dataMapping$addXYData(
+    XYData = xyData
   )
 
   configuration <- DataMappingConfiguration$new()
@@ -1093,14 +1093,14 @@ test_that("xDimension is set to the dimension of the first added XYData", {
   xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
+  dataMapping$addXYData(XYData = c(xyData1, xyData2))
   expect_equal(dataMapping$xDimension, ospDimensions$Time)
   expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
   # Dimension of the first data set is different from the dimension of the second data set
   dataMapping <- DataMapping$new()
   xyData1$xDimension <- ospDimensions$Fraction
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
+  dataMapping$addXYData(XYData = c(xyData1, xyData2))
   expect_equal(dataMapping$xDimension, ospDimensions$Fraction)
   expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Fraction))
 })
@@ -1111,7 +1111,7 @@ test_that("It can change xDimension", {
   xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
+  dataMapping$addXYData(XYData = c(xyData1, xyData2))
   expect_equal(dataMapping$xDimension, ospDimensions$Time)
   expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
@@ -1126,7 +1126,7 @@ test_that("It can change xUnit", {
   xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
+  dataMapping$addXYData(XYData = c(xyData1, xyData2))
   expect_equal(dataMapping$xDimension, ospDimensions$Time)
   expect_equal(dataMapping$xUnit, getBaseUnit(ospDimensions$Time))
 
@@ -1148,14 +1148,14 @@ test_that("yDimension is set to the dimension of the first added XYData", {
   xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
+  dataMapping$addXYData(XYData = c(xyData1, xyData2))
   expect_equal(dataMapping$yDimension, ospDimensions$Dimensionless)
   expect_equal(dataMapping$yUnit, getBaseUnit(ospDimensions$Dimensionless))
 
   # Dimension of the first data set is different from the dimension of the second data set
   dataMapping <- DataMapping$new()
   xyData1$yDimension <- ospDimensions$`Concentration (mass)`
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
+  dataMapping$addXYData(XYData = c(xyData1, xyData2))
   expect_equal(dataMapping$yDimension, ospDimensions$`Concentration (mass)`)
   expect_equal(dataMapping$yUnit, getBaseUnit(ospDimensions$`Concentration (mass)`))
 })
@@ -1166,7 +1166,7 @@ test_that("It can change yDimension", {
   xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
+  dataMapping$addXYData(XYData = c(xyData1, xyData2))
   dataMapping$yDimension <- ospDimensions$`Abundance per mass protein`
   expect_equal(dataMapping$yDimension, ospDimensions$`Abundance per mass protein`)
   expect_equal(dataMapping$yUnit, getBaseUnit(ospDimensions$`Abundance per mass protein`))
@@ -1178,7 +1178,7 @@ test_that("It can change yUnit", {
   xyData1 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData1")
   xyData2 <- XYData$new(xVals = c(1, 2, 3), yVals = c(1, 2, 3), label = "xyData2")
 
-  dataMapping$addOSPSTimeValues(OSPSTimeValues = c(xyData1, xyData2))
+  dataMapping$addXYData(XYData = c(xyData1, xyData2))
   dataMapping$yDimension <- ospDimensions$`Abundance per mass protein`
   dataMapping$yUnit <- ospUnits$`Abundance per mass protein`$`nmol/mg mic. protein`
   expect_equal(dataMapping$yUnit, ospUnits$`Abundance per mass protein`$`nmol/mg mic. protein`)
