@@ -1,4 +1,4 @@
-server <- function(input, output, session){
+server <- function(input, output, session) {
   colname <- ""
 
   # add more functions
@@ -6,12 +6,14 @@ server <- function(input, output, session){
   mathexpressions <- c("exp", "log", "sin", "sqrt", "floor", "ceiling", "pi")
   currentArg <- NULL
 
-  v <- reactiveValues(update = TRUE, varnames = NULL, equation = NULL,
-                      mins = NULL, maxs = NULL, current = NULL, x = NULL,
-                      y = NULL, snapshots = NULL, points_x = NULL, points_y = NULL)
+  v <- reactiveValues(
+    update = TRUE, varnames = NULL, equation = NULL,
+    mins = NULL, maxs = NULL, current = NULL, x = NULL,
+    y = NULL, snapshots = NULL, points_x = NULL, points_y = NULL
+  )
 
   observeEvent(input$updatevars, {
-    if(!is.null(input$argument)){
+    if (!is.null(input$argument)) {
       currentArg <<- input$argument
     }
     v$update <- input$updatevars
@@ -29,33 +31,49 @@ server <- function(input, output, session){
 
   # dynamically add slider and numeric inputs (min/max/current) for variables in equation
   output$variables <- renderUI({
-    if (!v$update) return()
+    if (!v$update) {
+      return()
+    }
 
     isolate({
       v$equation <- input$equation
-      v$varnames <- setdiff(unlist(strsplit(gsub("[[:blank:]]", "", input$equation),
-                                            "[[:punct:]]+")), mathexpressions)
+      # variable names: remove all blanks from equation (gsub),
+      # split equation string at all arithmetic operators (strsplit),
+      # remove numeric values as they are not variables (grep)
+      v$varnames <- setdiff(
+        grep("[^[:digit:]*.?[:digit:]+]",
+          unlist(strsplit(
+            gsub("[[:blank:]]", "", input$equation),
+            "[-+*/(){}]|(%%)|(%/%)"
+          )),
+          value = TRUE
+        ),
+        mathexpressions
+      )
 
       v$mins <- paste0("min", v$varnames)
       v$maxs <- paste0("max", v$varnames)
       v$current <- paste0("current", v$varnames)
 
       variable_list <- lapply(1:length(v$varnames), function(i) {
-        splitLayout(cellWidths = c("10%", "70%", "10%", "10%"),
-                    numericInput(v$mins[i], "min", 0),
-                    sliderInput(v$varnames[i], v$varnames[i], 0, 100, 1),
-                    numericInput(v$maxs[i], "max", 100),
-                    numericInput(v$current[i], "current", 1)
+        splitLayout(
+          cellWidths = c("10%", "70%", "10%", "10%"),
+          numericInput(v$mins[i], "min", 0),
+          sliderInput(v$varnames[i], v$varnames[i], 0, 100, 1),
+          numericInput(v$maxs[i], "max", 100),
+          numericInput(v$current[i], "current", 1)
         )
       })
 
-      if (!is.null(currentArg) && currentArg %in% v$varnames){
+      if (!is.null(currentArg) && currentArg %in% v$varnames) {
         variable_list <- list(variable_list, radioButtons("argument", "Argument",
-                                                          choices = v$varnames,
-                                                          selected = currentArg))
+          choices = v$varnames,
+          selected = currentArg
+        ))
       } else {
         variable_list <- list(variable_list, radioButtons("argument", "Argument",
-                                                          choices = v$varnames))
+          choices = v$varnames
+        ))
       }
 
       do.call(tagList, variable_list)
@@ -64,7 +82,7 @@ server <- function(input, output, session){
 
   # update slider min when corresponding value in numeric input field is changed
   observer_min <- observe({
-    lapply(1:length(v$mins), function(i){
+    lapply(1:length(v$mins), function(i) {
       newval <- input[[v$mins[i]]]
       isolate(updateSliderInput(session, v$varnames[i], min = newval))
     })
@@ -72,9 +90,9 @@ server <- function(input, output, session){
 
   # update slider max when corresponding value in numeric input field is changed
   observer_max <- observe({
-    lapply(1:length(v$maxs), function(i){
+    lapply(1:length(v$maxs), function(i) {
       newval <- input[[v$maxs[i]]]
-      stepsize <- as.numeric(paste0('1e', floor(log10(newval-input[[v$mins[i]]]))-2))
+      stepsize <- as.numeric(paste0("1e", floor(log10(newval - input[[v$mins[i]]])) - 2))
       isolate({
         updateSliderInput(session, v$varnames[i], max = newval, step = stepsize)
         updateNumericInput(session, paste0("current", v$varnames[i]), step = stepsize)
@@ -84,7 +102,7 @@ server <- function(input, output, session){
 
   # update current slider position when corresponding value in numeric input field is changed
   observer_current <- observe({
-    lapply(1:length(v$current), function(i){
+    lapply(1:length(v$current), function(i) {
       newval <- input[[v$current[i]]]
       isolate(updateSliderInput(session, v$varnames[i], value = newval))
     })
@@ -92,28 +110,30 @@ server <- function(input, output, session){
 
   # update numeric input field 'current' when corresponding slider is used
   observer_slider <- observe({
-    lapply(1:length(v$current), function(i){
+    lapply(1:length(v$current), function(i) {
       newval <- input[[v$varnames[i]]]
       isolate(updateNumericInput(session, v$current[i], value = newval))
     })
   })
 
   output$plot <- renderPlot({
-    if (is.null(input$argument) || !(input$argument %in% v$varnames)) return()
+    if (is.null(input$argument) || !(input$argument %in% v$varnames)) {
+      return()
+    }
 
     arg <- input$argument
     x_min <- input[[paste0("min", arg)]]
     x_max <- input[[paste0("max", arg)]]
-    stepsize <- as.numeric(paste0('1e', floor(log10(x_max-x_min))-2))
+    stepsize <- as.numeric(paste0("1e", floor(log10(x_max - x_min)) - 2))
 
     x_values <- seq(x_min, x_max, stepsize)
-    # insert space before and after punctuation
-    eq <- paste0(gsub("([[:punct:]])", " \\1 ", v$equation), " ")
+    # insert space before and after arithmetic operators
+    eq <- paste0(gsub("([-+*/(){}]|(%%)|(%/%))", " \\1 ", v$equation), " ")
 
     colname <<- ""
 
-    for (i in v$varnames){
-      if (i != arg){
+    for (i in v$varnames) {
+      if (i != arg) {
         # match variable+space so variable names are not matched in function names, e.g. x in exp
         eq <- gsub(paste0(i, " "), input[[i]], eq)
         colname <<- paste(colname, i, "=", input[[i]])
@@ -122,56 +142,63 @@ server <- function(input, output, session){
       }
     }
 
-    y_values <- eval(parse(text=eq))
+    y_values <- eval(parse(text = eq))
     v$x <- x_values
     v$y <- y_values
 
-    if (is.null(v$snapshots)){
-      if(sum(is.finite(y_values)) == 0){
+    if (is.null(v$snapshots)) {
+      if (sum(is.finite(y_values)) == 0) {
         plot.new()
       } else {
-        plot(x_values, y_values, xlab = arg, ylab = v$equation, type = 'l',
-             xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
-             ylim = c(max(min(y_values), input$yLower), min(max(y_values), input$yUpper)))
-        if(!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 1)
+        plot(x_values, y_values,
+          xlab = arg, ylab = v$equation, type = "l",
+          xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
+          ylim = c(max(min(y_values), input$yLower), min(max(y_values), input$yUpper))
+        )
+        if (!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 1)
       }
     } else {
       plotdata <- v$snapshots
-      if (!(colname %in% colnames(plotdata))){
+      if (!(colname %in% colnames(plotdata))) {
         newdata <- data.frame(v$y, v$x)
         colnames(newdata) <- c(colname, "x_values")
-        plotdata <- merge(v$snapshots, newdata, by="x_values", all=TRUE)
+        plotdata <- merge(v$snapshots, newdata, by = "x_values", all = TRUE)
       }
-      plotdata <- filter(plotdata, x_values <= x_max, x_values >= x_min)
+      plotdata <- subset(plotdata, x_values <= x_max)
+      plotdata <- subset(plotdata, x_values >= x_min)
 
-      ys <- unlist(plotdata[,-1])
+      ys <- unlist(plotdata[, -1])
       ys <- ys[is.finite(ys)]
       y_min <- min(ys)
       y_max <- max(ys)
 
-      if(ncol(plotdata)==2){
-        matplot(plotdata[,1], plotdata[,-1], type = 'l', xlab = arg, ylab = v$equation,
-                col = 1, lty = 1,
-                xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
-                ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper)))
+      if (ncol(plotdata) == 2) {
+        matplot(plotdata[, 1], plotdata[, -1],
+          type = "l", xlab = arg, ylab = v$equation,
+          col = 1, lty = 1,
+          xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
+          ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper))
+        )
       } else {
         matplot(NA,
-                xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
-                ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper)),
-                xlab = arg, ylab = v$equation)
+          xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
+          ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper)),
+          xlab = arg, ylab = v$equation
+        )
 
-        mapply(function(y,color){
-          dat <- na.omit(cbind(plotdata[,1],y))
-          matlines(dat[,1],dat[,2],col=color)
-        },plotdata[,-1], c(rainbow(ncol(plotdata)-2),1))
+        mapply(function(y, color) {
+          dat <- na.omit(cbind(plotdata[, 1], y))
+          matlines(dat[, 1], dat[, 2], col = color)
+        }, plotdata[, -1], c(rainbow(ncol(plotdata) - 2), 1))
       }
 
-      if(!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 1)
+      if (!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 1)
 
-      legend("topleft", legend = colnames(plotdata)[colnames(plotdata)!="x_values"],
-             col = c(rainbow(ncol(plotdata)-2),1), lty = 1)
+      legend("topleft",
+        legend = colnames(plotdata)[colnames(plotdata) != "x_values"],
+        col = c(rainbow(ncol(plotdata) - 2), 1), lty = 1
+      )
     }
-
   })
 
   # observer for "Add Snapshot" button - current values are added as column to
@@ -180,10 +207,10 @@ server <- function(input, output, session){
     isolate({
       newdata <- data.frame(v$x, v$y)
       colnames(newdata) <- c("x_values", colname)
-      if (is.null(v$snapshots)){
+      if (is.null(v$snapshots)) {
         v$snapshots <- newdata
-      } else if (!(colname %in% names(v$snapshots))){
-        v$snapshots <- merge(v$snapshots, newdata, by="x_values", all=TRUE)
+      } else if (!(colname %in% names(v$snapshots))) {
+        v$snapshots <- merge(v$snapshots, newdata, by = "x_values", all = TRUE)
       }
     })
   })
@@ -200,12 +227,14 @@ server <- function(input, output, session){
 
   # disable slider for argument, enable all others
   observer_argument <- observe({
-    if (is.null(input$argument)) return()
+    if (is.null(input$argument)) {
+      return()
+    }
     arg <- input$argument
 
-    lapply(1:length(v$varnames), function(i){
+    lapply(1:length(v$varnames), function(i) {
       variable <- v$varnames[i]
-      if (variable != arg){
+      if (variable != arg) {
         shinyjs::enable(variable)
         shinyjs::enable(paste0("min", variable))
         shinyjs::enable(paste0("max", variable))
@@ -218,5 +247,4 @@ server <- function(input, output, session){
     shinyjs::enable(paste0("max", arg))
     shinyjs::disable(paste0("current", arg))
   })
-
 }
