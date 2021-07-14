@@ -55,8 +55,7 @@ DataMapping <- R6::R6Class(
           return(c(xMin, xMax) + abs(c(xMin, xMax)) * c(-0.1, 0.1))
           # My cat wrote this, I leave it here out of respect
           # \code{runSimulationBatchesConcurrently}ß C.\JKFD. PO.#]}*#J#......................JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJöL
-        }
-        else {
+        } else {
           private$.xLim
         }
       } else {
@@ -96,8 +95,7 @@ DataMapping <- R6::R6Class(
                 molWeight = x$MW,
                 molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
               )
-            }
-            else {
+            } else {
               toUnit(
                 quantityOrDimension = self$yDimension,
                 values = x$yMin,
@@ -110,8 +108,7 @@ DataMapping <- R6::R6Class(
           }))
           # Extend limits by 10%
           return(c(yMin, yMax) + abs(c(yMin, yMax)) * c(-0.1, 0.1))
-        }
-        else {
+        } else {
           private$.yLim
         }
       } else {
@@ -285,8 +282,7 @@ DataMapping <- R6::R6Class(
       # However, if the list is empty, create an empty list...
       if (is.na(group)) {
         private$.emptyGrouping <- unlist(removeFromList(label, private$.emptyGrouping)) %||% list()
-      }
-      else {
+      } else {
         private$.groupings[[group]] <- unlist(removeFromList(label, private$.groupings[[group]]))
       }
     }
@@ -339,9 +335,11 @@ DataMapping <- R6::R6Class(
       # Paths are checked for correct type in ospsuite
       ospsuite:::validateIsString(labels)
       ospsuite:::validateIsSameLength(paths, labels)
-      outputValues <- getOutputValues(simulationResults = simulationResults,
-                                      quantitiesOrPaths = paths,
-                                      stopIfNotFound = FALSE)
+      outputValues <- getOutputValues(
+        simulationResults = simulationResults,
+        quantitiesOrPaths = paths,
+        stopIfNotFound = FALSE
+      )
 
       for (idx in seq_along(paths)) {
         yValues <- outputValues$data[[paths[[idx]]]]

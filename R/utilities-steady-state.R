@@ -43,8 +43,7 @@ getSteadyState <- function(quantitiesPaths = NULL, simulations, steadyStateTime,
     # If no quantities are explicitly specified, simulate all outputs.
     if (is.null(quantitiesPaths)) {
       quantitiesPathsMap[[simId]] <- ospsuite::getAllStateVariablesPaths(simulation)
-    }
-    else {
+    } else {
       quantitiesPathsMap[[simId]] <- quantitiesPaths
     }
     ospsuite::addOutputs(quantitiesOrPaths = quantitiesPathsMap[[simId]], simulation = simulation)
