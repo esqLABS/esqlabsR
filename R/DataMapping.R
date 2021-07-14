@@ -324,10 +324,9 @@ DataMapping <- R6::R6Class(
     #' @field legendPosition Position of the legend in the plot. Default value is "topright". See \code{\link{legend}} for more information.
     legendPosition = "topright",
 
+    #' @description Add simulated results to the data mapping
     #' @param paths A string or a list of strings representing the path(s) to the output(s) in the model.
     #' @param simulationResults Simulated results as returned by \code{runSimulation}
-    #' @param simulation \code{Simulation}-object that generated the outputs. Used for retrieving molecular weights of the
-    #' simulated species.
     #' @param labels A string or a list of strings that are used as a label (e.g. in the legend) for the output(s).
     #' If \code{NULL} (default), the path of the output is used as a label.
     #' @param groups A string or a list of strings assigning the outputs to a group. All outputs may be assigned to one group, or to
@@ -336,7 +335,7 @@ DataMapping <- R6::R6Class(
     #' @param removeNA If TRUE (default), NA values will be removed from the simulated results. NA values can be the result of observer not being calculated at a certain time point.
     #' @description
     #' Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by default.
-    addModelOutputs = function(paths, labels, simulationResults, simulation, groups = NULL, removeNA = TRUE) {
+    addModelOutputs = function(paths, labels, simulationResults, groups = NULL, removeNA = TRUE) {
       # Paths are checked for correct type in ospsuite
       ospsuite:::validateIsString(labels)
       ospsuite:::validateIsSameLength(paths, labels)
@@ -372,12 +371,12 @@ DataMapping <- R6::R6Class(
         xySeries$yDimension <- outputValues$metaData[[paths[[idx]]]]$dimension
         xySeries$yUnit <- outputValues$metaData[[paths[[idx]]]]$unit
         # get molecular weight
-        entity <- getQuantity(path = paths[[idx]], container = simulation)
+        entity <- getQuantity(path = paths[[idx]], container = simulationResults$simulation)
         mw <- NULL
         if (entity$quantityType == "Drug") {
-          mw <- getParameter(path = paste(entity$name, "Molecular weight", sep = "|"), container = simulation, stopIfNotFound = F)
+          mw <- getParameter(path = paste(entity$name, "Molecular weight", sep = "|"), container = simulationResults$simulation, stopIfNotFound = F)
         } else if (entity$parentContainer$containerType == "Molecule") {
-          mw <- getParameter(path = paste(entity$parentContainer$name, "Molecular weight", sep = "|"), container = simulation, stopIfNotFound = F)
+          mw <- getParameter(path = paste(entity$parentContainer$name, "Molecular weight", sep = "|"), container = simulationResults$simulation, stopIfNotFound = F)
         }
         if (!is.null(mw)) {
           xySeries$MW <- toDisplayUnit(quantity = mw, values = mw$value)
