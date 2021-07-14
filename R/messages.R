@@ -55,6 +55,6 @@ messages$warningParameterNotFound <- function(parameterPath, optionalMessage = N
   paste("Parameter with path `", parameterPath, "` does not exist in the simulation! ", optionalMessage)
 }
 
-messages$errorMultipleMetaDataEntries = function(optionalMessage = NULL) {
-    paste("Can only set a single meta data entry at once", optionalMessage)
-  }
+messages$errorMultipleMetaDataEntries <- function(optionalMessage = NULL) {
+  paste("Can only set a single meta data entry at once", optionalMessage)
+}

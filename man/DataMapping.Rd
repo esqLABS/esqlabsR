@@ -143,13 +143,15 @@ Clean up upon object removal
 \if{html}{\out{<a id="method-addModelOutputs"></a>}}
 \if{latex}{\out{\hypertarget{method-addModelOutputs}{}}}
 \subsection{Method \code{addModelOutputs()}}{
+Add simulated results to the data mapping
+
+
 Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by default.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMapping$addModelOutputs(
   paths,
   labels,
-  outputValues,
-  simulation,
+  simulationResults,
   groups = NULL,
   removeNA = TRUE
 )}\if{html}{\out{</div>}}
@@ -163,10 +165,7 @@ Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by defa
 \item{\code{labels}}{A string or a list of strings that are used as a label (e.g. in the legend) for the output(s).
 If \code{NULL} (default), the path of the output is used as a label.}
 
-\item{\code{outputValues}}{Simulated results as returned by \code{getOutputValues}}
-
-\item{\code{simulation}}{\code{Simulation}-object that generated the outputs. Used for retrieving molecular weights of the
-simulated species.}
+\item{\code{simulationResults}}{Simulated results as returned by \code{runSimulation}}
 
 \item{\code{groups}}{A string or a list of strings assigning the outputs to a group. All outputs may be assigned to one group, or to
 different groups, while each output can be assigned to not more than one group. If an entry within the list is NULL, the corresponding
