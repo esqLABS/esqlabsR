@@ -253,16 +253,16 @@ test_that("It can add the same XYData to different groups", {
   outputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
   dataMapping <- DataMapping$new()
   # No group
-  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim)
-  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim)
+  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults)
+  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults)
 
   # Specified group
   dataMapping$addModelOutputs(
-    paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim,
+    paths = outputPath, labels = "Sim output", simulationResults = simResults,
     groups = "myGroup"
   )
   dataMapping$addModelOutputs(
-    paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim,
+    paths = outputPath, labels = "Sim output", simulationResults = simResults,
     groups = "myGroup"
   )
 
@@ -273,7 +273,7 @@ test_that("It can add the same XYData to different groups", {
 test_that("It throws an error when trying to add a non-existant simulation result", {
   outputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood"
   dataMapping <- DataMapping$new()
-  expect_error(dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim),
+  expect_error(dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults),
     regexp = escapeForRegex(messages$errorOutputPathNotFound(outputPath))
   )
 })
@@ -281,7 +281,7 @@ test_that("It throws an error when trying to add a non-existant simulation resul
 test_that("It prints a warning when trying remove XYData that has not been added", {
   outputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
   dataMapping <- DataMapping$new()
-  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim)
+  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults)
 
   expect_warning(dataMapping$removeXYSeries("foo"),
     regexp = escapeForRegex(messages$warningLabelNotInDataMapping("foo"))
@@ -295,7 +295,7 @@ test_that("It can remove XYData that is not in a group", {
   expect_equal(dataMapping$xySeriesCount, 0)
   expect_equal(length(dataMapping$groupings), 0)
 
-  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim)
+  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults)
   expect_equal(dataMapping$xySeriesCount, 1)
   expect_equal(length(dataMapping$groupings), 0)
 
@@ -303,7 +303,7 @@ test_that("It can remove XYData that is not in a group", {
   expect_equal(dataMapping$xySeriesCount, 0)
   expect_equal(length(dataMapping$groupings), 0)
 
-  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output2", simulationResults = simResults, simulation = sim)
+  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output2", simulationResults = simResults)
   expect_equal(dataMapping$xySeriesCount, 1)
   expect_equal(length(dataMapping$groupings), 0)
 
@@ -311,12 +311,12 @@ test_that("It can remove XYData that is not in a group", {
   expect_equal(dataMapping$xySeriesCount, 1)
   expect_equal(length(dataMapping$groupings), 0)
 
-  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim)
+  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults)
   expect_equal(dataMapping$xySeriesCount, 2)
   expect_equal(length(dataMapping$groupings), 0)
 
   dataMapping$addModelOutputs(
-    paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim,
+    paths = outputPath, labels = "Sim output", simulationResults = simResults,
     groups = "myGroup"
   )
   expect_equal(dataMapping$xySeriesCount, 2)
@@ -326,12 +326,12 @@ test_that("It can remove XYData that is not in a group", {
   expect_equal(dataMapping$xySeriesCount, 1)
   expect_equal(length(dataMapping$groupings), 0)
 
-  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim)
+  dataMapping$addModelOutputs(paths = outputPath, labels = "Sim output", simulationResults = simResults)
   expect_equal(dataMapping$xySeriesCount, 2)
   expect_equal(length(dataMapping$groupings), 0)
 
   dataMapping$addModelOutputs(
-    paths = outputPath, labels = "Sim output", simulationResults = simResults, simulation = sim,
+    paths = outputPath, labels = "Sim output", simulationResults = simResults,
     groups = "myGroup"
   )
   expect_equal(dataMapping$xySeriesCount, 2)
