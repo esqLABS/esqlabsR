@@ -12,6 +12,7 @@ Utilities functions for modeling and simulation workflows within esqLABS
 - hash (CRAN)
 - shiny (CRAN)
 - shinyjs (CRAN)
+- dplyr (CRAN)
 
 ### For building from source and developing
 - Rtools (https://cran.r-project.org/bin/windows/Rtools/)
