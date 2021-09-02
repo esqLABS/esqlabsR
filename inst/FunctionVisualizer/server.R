@@ -9,12 +9,16 @@ server <- function(input, output, session) {
   v <- reactiveValues(
     update = TRUE, varnames = NULL, equation = NULL,
     mins = NULL, maxs = NULL, current = NULL, x = NULL,
-    y = NULL, snapshots = NULL, points_x = NULL, points_y = NULL
+    y = NULL, snapshots = NULL, points_x = NULL, points_y = NULL,
+    observedData = data.frame()
   )
 
   observeEvent(input$updatevars, {
     if (!is.null(input$argument)) {
       currentArg <<- input$argument
+    }
+    if (v$equation != input$equation) {
+      colnames(v$snapshots) <- c("x_values", paste(v$equation, "with", colnames(v$snapshots)[-1]))
     }
     v$update <- input$updatevars
   })
@@ -51,10 +55,13 @@ server <- function(input, output, session) {
         mathexpressions
       )
 
+      # safe IDs of dynamically added UI elements
       v$mins <- paste0("min", v$varnames)
       v$maxs <- paste0("max", v$varnames)
       v$current <- paste0("current", v$varnames)
 
+      # create min, max, current - numeric inputs for each variable in the equation
+      # plus slider input
       variable_list <- lapply(1:length(v$varnames), function(i) {
         splitLayout(
           cellWidths = c("10%", "70%", "10%", "10%"),
@@ -122,12 +129,14 @@ server <- function(input, output, session) {
     }
 
     arg <- input$argument
+    shinyjs::disable(arg)
+    shinyjs::disable(paste0("current", arg))
     x_min <- input[[paste0("min", arg)]]
     x_max <- input[[paste0("max", arg)]]
     stepsize <- as.numeric(paste0("1e", floor(log10(x_max - x_min)) - 2))
 
     x_values <- seq(x_min, x_max, stepsize)
-    # insert space before and after arithmetic operators
+    # insert space before and after arithmetic operators in equation string
     eq <- paste0(gsub("([-+*/(){}]|(%%)|(%/%))", " \\1 ", v$equation), " ")
 
     colname <<- ""
@@ -142,12 +151,15 @@ server <- function(input, output, session) {
       }
     }
 
+    # compute y values
     y_values <- eval(parse(text = eq))
     v$x <- x_values
     v$y <- y_values
 
+    # no snapshots yet: plot only current x_values and y_values
     if (is.null(v$snapshots)) {
       if (sum(is.finite(y_values)) == 0) {
+        # empty plot e.g. because there is a division by 0 in the equation
         plot.new()
       } else {
         plot(x_values, y_values,
@@ -155,15 +167,29 @@ server <- function(input, output, session) {
           xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
           ylim = c(max(min(y_values), input$yLower), min(max(y_values), input$yUpper))
         )
-        if (!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 1)
+      }
+
+      # plot data uploaded from file
+      if (nrow(v$observedData) != 0) {
+        matpoints(v$observedData[, 1], v$observedData[, -1],
+          pch = 1,
+          col = rev(rainbow(ncol(v$observedData) - 1))
+        )
+        legend("topleft",
+          legend = colnames(v$observedData)[-1],
+          col = rev(rainbow(ncol(v$observedData) - 1)),
+          pch = 1
+        )
       }
     } else {
+      # one or more snapshots have already been safed: add current values to plot
       plotdata <- v$snapshots
       if (!(colname %in% colnames(plotdata))) {
         newdata <- data.frame(v$y, v$x)
         colnames(newdata) <- c(colname, "x_values")
         plotdata <- merge(v$snapshots, newdata, by = "x_values", all = TRUE)
       }
+
       plotdata <- subset(plotdata, x_values <= x_max)
       plotdata <- subset(plotdata, x_values >= x_min)
 
@@ -171,6 +197,8 @@ server <- function(input, output, session) {
       ys <- ys[is.finite(ys)]
       y_min <- min(ys)
       y_max <- max(ys)
+      lenObsData <- max(ncol(v$observedData) - 1, 0)
+      color <- rainbow(max(ncol(plotdata) - 2, lenObsData))
 
       if (ncol(plotdata) == 2) {
         matplot(plotdata[, 1], plotdata[, -1],
@@ -189,16 +217,23 @@ server <- function(input, output, session) {
         mapply(function(y, color) {
           dat <- na.omit(cbind(plotdata[, 1], y))
           matlines(dat[, 1], dat[, 2], col = color)
-        }, plotdata[, -1], c(rainbow(ncol(plotdata) - 2), 1))
+        }, plotdata[, -1], c(color[0:(ncol(plotdata) - 2)], 1))
       }
 
-      if (!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 1)
+      if (nrow(v$observedData) != 0) {
+        matpoints(v$observedData[, 1], v$observedData[, -1], pch = 1, col = color)
+      }
 
       legend("topleft",
-        legend = colnames(plotdata)[colnames(plotdata) != "x_values"],
-        col = c(rainbow(ncol(plotdata) - 2), 1), lty = 1
+        legend = c(colnames(v$observedData)[-1], colnames(plotdata)[-1]),
+        col = c(color[0:lenObsData], color[0:(ncol(plotdata) - 2)], 1),
+        lty = c(rep(NA, max(ncol(v$observedData) - 1, 0)), rep(1, ncol(plotdata))),
+        pch = c(rep(1, max(ncol(v$observedData) - 1, 0)), rep(NA, ncol(plotdata)))
       )
     }
+
+    # add single points to plot
+    if (!is.null(v$points_x)) matpoints(v$points_x, v$points_y, pch = 3)
   })
 
   # observer for "Add Snapshot" button - current values are added as column to
@@ -246,5 +281,60 @@ server <- function(input, output, session) {
     shinyjs::enable(paste0("min", arg))
     shinyjs::enable(paste0("max", arg))
     shinyjs::disable(paste0("current", arg))
+  })
+
+  # file input popup
+  observeEvent(input$chooseFile, {
+    file <- input$chooseFile
+    if (grepl("(.xlsx$)|(.xls$)", file$name)) {
+      content <- readxl::read_excel(file$datapath)
+      showModal(modalDialog(
+        tags$h4("Please choose columns for the x and y axis"),
+        selectInput("fileX", "x axis", choices = names(content)),
+        selectInput("fileY", "y axis", choices = names(content)),
+        textInput("fileLabel", "Legend label", placeholder = "optional - legend label in plot"),
+        output$table <- renderTable(head(content)),
+        footer = tagList(
+          actionButton("submit", "Submit"),
+          modalButton("cancel")
+        )
+      ))
+    } else {
+      showModal(modalDialog(
+        tags$h4("Please choose a xls/xlsx file"),
+        footer = modalButton("OK")
+      ))
+    }
+  })
+
+  # handle input from popup, add to plot
+  observeEvent(input$submit, {
+    removeModal()
+    file <- input$chooseFile
+    content <- readxl::read_excel(file$datapath)
+    content <- content[, c(input$fileX, input$fileY)]
+    if (input$fileLabel == "") {
+      names(content) <- c("x_values", paste(input$fileY, file$name))
+    } else {
+      names(content) <- c("x_values", input$fileLabel)
+    }
+
+    if (nrow(v$observedData) == 0) {
+      v$observedData <- content
+    } else {
+      v$observedData <- merge(v$observedData, content, by = "x_values", all = TRUE)
+    }
+  })
+
+  observeEvent(input$removeLatestObsData, {
+    if (ncol(v$observedData) > 2) {
+      v$observedData <- v$observedData[1:(ncol(v$observedData) - 1)]
+    } else {
+      v$observedData <- data.frame()
+    }
+  })
+
+  observeEvent(input$removeObsData, {
+    v$observedData <- data.frame()
   })
 }

@@ -1,5 +1,6 @@
 ui <- fluidPage(
   shinyjs::useShinyjs(),
+  tags$style(type = "text/css", ".modal-dialog {overflow: auto; width: auto; background:white;}"),
   splitLayout(
     wellPanel(
       wellPanel(
@@ -32,7 +33,12 @@ ui <- fluidPage(
         numericInput("yvalue", value = 0, label = "y", step = 0.01)
       ),
       actionButton("addPoint", "Add Point"),
-      actionButton("removePoints", "Remove All Points")
+      actionButton("removePoints", "Remove All Points"),
+      hr(),
+      p(strong("Add data from .xlsx file")),
+      fileInput("chooseFile", label = NULL, accept = ".xlsx"),
+      actionButton("removeLastObsData", "Remove last added data"),
+      actionButton("removeObsData", "Remove all uploaded data")
     )
   )
 )

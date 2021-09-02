@@ -16,7 +16,8 @@ Imports:
     parallel,
     shiny,
     shinyjs,
-    hash
+    hash,
+    readxl
 Suggests: 
     knitr,
     rmarkdown,
