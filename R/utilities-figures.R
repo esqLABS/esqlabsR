@@ -184,11 +184,11 @@ GraphicsDevices <- enum(list("PNG"))
 #' Possible entries for the `plotType` field of a `DataMapping` object
 #'
 #' @details "IndividualProfile" - simulated results are plotted as time-values series with points
-#' connected by lines, with each individual results potted separaterly
+#' connected by lines, with each individual results potted separately
 #' "PopulationQuantiles" - simulated results for a population are aggregated as
 #' median, 95th an 5th percentiles, with median plotted as a line an upper/lower percentiles
 #' plotted as shaded areas
-#' "PredictedVsObserved" -  predicted-versus-obsereved goodness of fit plot
+#' "PredictedVsObserved" -  predicted-versus-observed goodness of fit plot
 #' @export
 PlotTypes <- enum(list(
   "IndividualProfile",
@@ -200,7 +200,7 @@ PlotTypes <- enum(list(
 #' Open an output device.
 #'
 #' @param plotConfiguration An object of type `PlotConfiguration`
-#' @param width Width of the ouput figure
+#' @param width Width of the output figure
 #' @param height Height of the output figure
 #'
 #' @details If the output of the plot is directed to a file, open the connection.
