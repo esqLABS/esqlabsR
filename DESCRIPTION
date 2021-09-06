@@ -6,7 +6,6 @@ Author: esqLABS GmbH
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects within esqLABS.
 Encoding: UTF-8
-LazyData: true
 Depends:
     ospsuite (>= 10.0)
 Imports:
