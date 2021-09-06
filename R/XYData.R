@@ -81,7 +81,7 @@ XYData <- R6::R6Class(
         stop(messages$errorPropertyReadOnly("yMin"))
       }
     },
-    #' @field dataType Type of the data. See enum \code{XYDataTypes} for the list of supported types.
+    #' @field dataType Type of the data. See enum `XYDataTypes` for the list of supported types.
     dataType = function(value) {
       if (missing(value)) {
         private$.dataType
@@ -90,7 +90,7 @@ XYData <- R6::R6Class(
         private$.dataType <- value
       }
     },
-    #' @field xDimension Dimension of x values. See enum \code{ospDimensions} for the list of supported dimensions.
+    #' @field xDimension Dimension of x values. See enum `ospDimensions` for the list of supported dimensions.
     xDimension = function(value) {
       if (missing(value)) {
         private$.xDimension
@@ -109,7 +109,7 @@ XYData <- R6::R6Class(
         private$.xUnit <- value
       }
     },
-    #' @field yDimension Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.
+    #' @field yDimension Dimension of y values. See enum `ospDimensions` for the list of supported dimensions.
     yDimension = function(value) {
       if (missing(value)) {
         private$.yDimension
@@ -143,7 +143,7 @@ XYData <- R6::R6Class(
         }
       }
     },
-    #' @field MW Molecular weight in g/mol. Required for conversion between molar and mass dimensions. Can be \code{NULL} (default)
+    #' @field MW Molecular weight in g/mol. Required for conversion between molar and mass dimensions. Can be `NULL` (default)
     MW = function(value) {
       if (missing(value)) {
         private$.MW
@@ -206,10 +206,10 @@ XYData <- R6::R6Class(
     #' @description
     #' x values with all conversions applied.
     #'
-    #' @param unit Target unit. If \code{NULL} (default), no conversion between units is applied.
+    #' @param unit Target unit. If `NULL` (default), no conversion between units is applied.
     #'
     #' @return Raw xValues plus xOffset multiplied by xFactor and converted to a specified unit.
-    #' It is assumed that raw xValues are in \code{xUnit}.
+    #' It is assumed that raw xValues are in `xUnit`.
     xValuesProcessed = function(unit = NULL) {
       # Add offset and multiply by the factor. The values are in the unit of XYData
       valuesProcessed <- (private$.xVals + self$xOffset) * self$xFactor
@@ -230,10 +230,10 @@ XYData <- R6::R6Class(
     #' @description
     #' y values with all conversions applied.
     #'
-    #' @param unit Target unit. If \code{NULL} (default), no conversion between units is applied.
+    #' @param unit Target unit. If `NULL` (default), no conversion between units is applied.
     #'
     #' @return Raw yValues plus yOffset multiplied by yFactor and converted to a specified unit.
-    #' It is assumed that raw yValues are in \code{yUnit}.
+    #' It is assumed that raw yValues are in `yUnit`.
     yValuesProcessed = function(unit = NULL) {
       # Add offset and multiply by the factor. The values are in the unit of XYData
       valuesProcessed <- (private$.yVals + self$yOffset) * self$yFactor
@@ -256,10 +256,10 @@ XYData <- R6::R6Class(
     #' @description
     #' y error values with all conversions applied.
     #'
-    #' @param unit Target unit. If \code{NULL} (default), the no conversion between units is applied.
+    #' @param unit Target unit. If `NULL` (default), the no conversion between units is applied.
     #'
     #' @return Raw yError multiplied by yFactor and converted to a specified unit.
-    #' It is assumed that raw yError are in \code{yUnit}. If no error is specified, \code{NULL} is returned.
+    #' It is assumed that raw yError are in `yUnit`. If no error is specified, `NULL` is returned.
     yErrorProcessed = function(unit = NULL) {
       if (is.null(private$.yError)) {
         return(NULL)
@@ -284,16 +284,16 @@ XYData <- R6::R6Class(
     },
 
     #' @description
-    #' Meta data list of \code{XYData} object
+    #' Meta data list of `XYData` object
     #' @return
-    #' A named list holding the metadata of this \code{XYData}
+    #' A named list holding the metadata of this `XYData`
     getAllMetaData = function() {
       return(private$.metaData)
     },
 
     #' @description
-    #' Adds a new entry to meta data list of \code{XYData} object or changes its value if name is already present in meta data.
-    #' If only \code{name} is provided or if \code{value} is set to NULL, entry with corresponding name is deleted from meta data.
+    #' Adds a new entry to meta data list of `XYData` object or changes its value if name is already present in meta data.
+    #' If only `name` is provided or if `value` is set to NULL, entry with corresponding name is deleted from meta data.
     #'
     #' @param name Name of new meta data list entry
     #' @param value Value of new meta data list entry
@@ -322,6 +322,6 @@ XYData <- R6::R6Class(
   )
 )
 
-#' Possible entries for the \code{dataType} field of a \code{XYData} object
+#' Possible entries for the `dataType` field of a `XYData` object
 #' @export
 XYDataTypes <- enum(list("Simulated", "Observed", "Unspecified"))

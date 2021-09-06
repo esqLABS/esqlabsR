@@ -69,7 +69,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @param checkFormulaValues If TRUE, values of explicit formulas are always compared. Otherwise, the values
 #' are only compared if the formulas are overridden (isFixedValue == TRUE). FALSE by default.
 #'
-#' @return \code{TRUE} if parameters are considered equal, \code{FALSE} otherwise
+#' @return `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
 isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE) {
   ospsuite:::validateIsOfType(c(parameter1, parameter2), "Parameter")
@@ -146,16 +146,16 @@ isTableFormulasEqual <- function(formula1, formula2) {
   }
 }
 
-#' Set the values of parameters in the simulation by path, if the \code{condition} is true.
+#' Set the values of parameters in the simulation by path, if the `condition` is true.
 #'
 #' @param parameterPaths A single or a list of parameter path
 #' @param values A numeric value that should be assigned to the parameters or a vector
 #' of numeric values, if the value of more than one parameter should be changed. Must have the same
 #' length as 'parameterPaths'
-#' @param condition A function that receives a \code{Parmeter} as an argument
-#' and returns \code{TRUE} of \code{FALSE}
-#' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
-#' are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.
+#' @param condition A function that receives a `Parmeter` as an argument
+#' and returns `TRUE` of `FALSE`
+#' @param units A string or a list of strings defining the units of the `values`. If `NULL` (default), values
+#' are assumed to be in base units. If not `NULL`, must have the same length as 'parameterPaths'.
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #'
 #' @examples
@@ -189,8 +189,8 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, values, simula
 #' @param values A numeric value that should be assigned to the parameters or a vector
 #' of numeric values, if the value of more than one parameter should be changed. Must have the same
 #' length as 'parameterPaths'.
-#' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
-#' are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.
+#' @param units A string or a list of strings defining the units of the `values`. If `NULL` (default), values
+#' are assumed to be in base units. If not `NULL`, must have the same length as 'parameterPaths'.
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #' @export
 #' @import ospsuite

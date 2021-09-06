@@ -67,7 +67,7 @@ Initialize a new instance of the class
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A new `DataConfiguration` object.
+A new \code{DataConfiguration} object.
 }
 }
 \if{html}{\out{<hr>}}

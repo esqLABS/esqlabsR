@@ -61,7 +61,7 @@ Initialize a new instance of the class
 }
 
 \subsection{Returns}{
-A new `PlotConfiguration` object.
+A new \code{PlotConfiguration} object.
 }
 }
 \if{html}{\out{<hr>}}

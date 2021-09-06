@@ -10,7 +10,7 @@ pathFromClipboard(path = "clipboard")
 \item{path}{Path that will be converted. If "clipboard" (default), path is queried from clipboard.}
 }
 \value{
-String representation of a file path with `/` as separator
+String representation of a file path with \code{/} as separator
 }
 \description{
 Converts the windows-like path (using \) from the clipboard to the form readable by R (using /)

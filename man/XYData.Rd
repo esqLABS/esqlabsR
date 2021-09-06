@@ -86,7 +86,7 @@ Initialize a new instance of the class. xVals, yVals, and yError (optional) must
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A new `XYData` object.
+A new \code{XYData} object.
 }
 }
 \if{html}{\out{<hr>}}

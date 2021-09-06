@@ -36,7 +36,7 @@ Possible values are "" (empty string, both axis in linear scaling, default),
 \item{\code{addLegend}}{Boolean defining if the legend should be added to the plot. If TRUE,
 a legend will be added for each group and each XYSeries that is not in any group}
 
-\item{\code{legendPosition}}{Position of the legend in the plot. Default value is "topright". See \code{\link{legend}} for more information.}
+\item{\code{legendPosition}}{Position of the legend in the plot. Default value is "topright". See \code{\link[=legend]{legend()}} for more information.}
 }
 \if{html}{\out{</div>}}
 }
@@ -64,7 +64,7 @@ When changing the dimension, the unit is automatically set to the base unit of t
 \item{\code{yDimension}}{Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.
 If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
 If no \code{XYSeries} are present, the dimension is \code{NULL}
-    #' When changing the dimension, the unit is automatically set to the base unit of the dimension.}
+#' When changing the dimension, the unit is automatically set to the base unit of the dimension.}
 
 \item{\code{xUnit}}{Unit of x values.
 If no unit is specified, the default unit of the dimension is used.
@@ -126,7 +126,7 @@ Initialize a new instance of the class
 }
 
 \subsection{Returns}{
-A new `DataMapping` object.
+A new \code{DataMapping} object.
 }
 }
 \if{html}{\out{<hr>}}
@@ -481,7 +481,7 @@ Plot the data stored in this \code{DataMapping}.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{Any parameter that can be interpreted by the default \code{\link{plot}} function}
+\item{\code{...}}{Any parameter that can be interpreted by the default \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }

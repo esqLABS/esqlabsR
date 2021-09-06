@@ -93,7 +93,7 @@ esqLABS_colors <- function(nrOfColors) {
   return(palette)
 }
 
-#' Add a label to a figure. Taken from \url{https://waterprogramming.wordpress.com/2015/12/02/easy-labels-for-multi-panel-plots-in-r/}
+#' Add a label to a figure. Taken from <https://waterprogramming.wordpress.com/2015/12/02/easy-labels-for-multi-panel-plots-in-r/>
 #'
 #' @param label Label that is to be drawn
 #' @param location Location of the label. Allowed entries are 'topleft', 'topcenter', 'topright',
@@ -154,18 +154,18 @@ col2hsv <- function(color) {
 }
 
 #' A function to add error bars on the chart.
-#' @description Taken from \url{https://www.r-graph-gallery.com/4-barplot-with-error-bar.html}
+#' @description Taken from <https://www.r-graph-gallery.com/4-barplot-with-error-bar.html>
 #' @import ospsuite
 #'
 #' @param x Numerical array of x-values
 #' @param y Numerical array of y-values
 #' @param upper Numerical array of upper y-error values
 #' @param lower Numerical array of lower y-error values. Optional.
-#' If not specified, same values as for \code{upper} are used
+#' If not specified, same values as for `upper` are used
 #' @param length Numerical value specifying the width of the error bars. Optional. Default is 0.1.
 #' @param axis Dimension to which the error bars are added.
 #' If "y" (default), vertical error bars are drawn. If "x", horizontal error bars are drawn
-#' @param ... Graphical parameters (see \code{\link{par}})
+#' @param ... Graphical parameters (see [par()])
 plotErrorBars <- function(x, y, upper, lower = upper, length = par()$cin[[1]] / 2, axis = "y", ...) {
   ospsuite:::validateIsNumeric(c(x, y))
   ospsuite:::validateIsSameLength(x, y, upper, lower)
@@ -177,11 +177,11 @@ plotErrorBars <- function(x, y, upper, lower = upper, length = par()$cin[[1]] / 
   }
 }
 
-#' Possible entries for the \code{outputDevice} field of a \code{PlotConfiguration} object
+#' Possible entries for the `outputDevice` field of a `PlotConfiguration` object
 #' @export
 GraphicsDevices <- enum(list("PNG"))
 
-#' Possible entries for the \code{plotType} field of a \code{DataMapping} object
+#' Possible entries for the `plotType` field of a `DataMapping` object
 #'
 #' @details "IndividualProfile" - simulated results are plotted as time-values series with points
 #' connected by lines, with each individual results potted separaterly
@@ -199,13 +199,13 @@ PlotTypes <- enum(list(
 
 #' Open an output device.
 #'
-#' @param plotConfiguration An object of type \code{PlotConfiguration}
+#' @param plotConfiguration An object of type `PlotConfiguration`
 #' @param width Width of the ouput figure
 #' @param height Height of the output figure
 #'
 #' @details If the output of the plot is directed to a file, open the connection.
-#' A list of supported outputs is provided in \code{GraphicsDevices}-enum.
-#' If the provided output defined in PlotConfiguration$outputDevice is not supported or the value is \code{NULL},
+#' A list of supported outputs is provided in `GraphicsDevices`-enum.
+#' If the provided output defined in PlotConfiguration$outputDevice is not supported or the value is `NULL`,
 #' output is directed to the default plot frame.
 openOuptutDevice <- function(plotConfiguration, width, height) {
   if (is.null(plotConfiguration$outputDevice)) {
@@ -228,7 +228,7 @@ openOuptutDevice <- function(plotConfiguration, width, height) {
 
 #' Close output device
 #'
-#' @param plotConfiguration An object of type \code{PlotConfiguration}
+#' @param plotConfiguration An object of type `PlotConfiguration`
 #' @import ospsuite
 #'
 #' @details If the output of the plot is directed to a file, close the device.
@@ -243,18 +243,18 @@ closeOutputDevice <- function(plotConfiguration) {
 
 #' Does the plot type contain points?
 #'
-#' @param type String value of argument \code{type} passed to function \code{plot()}
+#' @param type String value of argument `type` passed to function `plot()`
 #'
-#' @return TRUE if \code{type} contains "p" or is "b", FALSE otherwise
+#' @return TRUE if `type` contains "p" or is "b", FALSE otherwise
 .isPoint <- function(type) {
   isCharInString("p", type) || (type == "b")
 }
 
 #' Does the plot type contain line?
 #'
-#' @param type String value of argument \code{type} passed to function \code{plot()}
+#' @param type String value of argument `type` passed to function `plot()`
 #'
-#' @return TRUE if \code{type} contains "l" or is "b", FALSE otherwise
+#' @return TRUE if `type` contains "l" or is "b", FALSE otherwise
 .isLine <- function(type) {
   isCharInString("l", type) || (type == "b")
 }

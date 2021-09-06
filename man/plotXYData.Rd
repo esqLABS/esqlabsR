@@ -14,7 +14,7 @@ plotXYData(xySeries, xUnit = NULL, yUnit = NULL, ...)
 \item{yUnit}{Target unit of y-axis.
 If \code{TRUE},}
 
-\item{...}{Any parameter that can be interpreted by the default \code{\link{plot}} function}
+\item{...}{Any parameter that can be interpreted by the default \code{\link[=plot]{plot()}} function}
 }
 \description{
 Draw XYData on top of an existing plot using the \code{points} method.

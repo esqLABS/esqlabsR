@@ -9,8 +9,8 @@ DataMapping <- R6::R6Class(
   inherit = ospsuite:::Printable,
   cloneable = FALSE,
   active = list(
-    #' @field xySeries Named list with the \code{XYData}
-    #' that will be plotted. Names are the labels of the \code{xySeries} objects
+    #' @field xySeries Named list with the `XYData`
+    #' that will be plotted. Names are the labels of the `xySeries` objects
     xySeries = function(value) {
       if (missing(value)) {
         as.list(private$.xySeries)
@@ -19,7 +19,7 @@ DataMapping <- R6::R6Class(
       }
     },
 
-    #' @field xySeriesCount number of \code{XYData} objects to be plotted
+    #' @field xySeriesCount number of `XYData` objects to be plotted
     xySeriesCount = function(value) {
       if (missing(value)) {
         length(private$.xySeries)
@@ -140,9 +140,9 @@ DataMapping <- R6::R6Class(
       }
     },
 
-    #' @field xDimension Dimension of x values. See enum \code{ospDimensions} for the list of supported dimensions.
-    #' If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
-    #' If no \code{XYSeries} are present, the dimension is \code{NULL}
+    #' @field xDimension Dimension of x values. See enum `ospDimensions` for the list of supported dimensions.
+    #' If no dimension is specified, the dimension of the first added `XYSeries` is used.
+    #' If no `XYSeries` are present, the dimension is `NULL`
     #' When changing the dimension, the unit is automatically set to the base unit of the dimension.
     xDimension = function(value) {
       if (missing(value)) {
@@ -160,9 +160,9 @@ DataMapping <- R6::R6Class(
       }
     },
 
-    #' @field yDimension Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.
-    #' If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
-    #' If no \code{XYSeries} are present, the dimension is \code{NULL}
+    #' @field yDimension Dimension of y values. See enum `ospDimensions` for the list of supported dimensions.
+    #' If no dimension is specified, the dimension of the first added `XYSeries` is used.
+    #' If no `XYSeries` are present, the dimension is `NULL`
     #'     #' When changing the dimension, the unit is automatically set to the base unit of the dimension.
     yDimension = function(value) {
       if (missing(value)) {
@@ -182,7 +182,7 @@ DataMapping <- R6::R6Class(
 
     #' @field xUnit Unit of x values.
     #' If no unit is specified, the default unit of the dimension is used.
-    #' If no dimension is specified, the unit is \code{NULL}
+    #' If no dimension is specified, the unit is `NULL`
     xUnit = function(value) {
       if (missing(value)) {
         if (!is.null(private$.xUnit)) {
@@ -199,7 +199,7 @@ DataMapping <- R6::R6Class(
 
     #' @field yUnit Unit of y values.
     #' If no unit is specified, the default unit of the dimension is used.
-    #' If no dimension is specified, the unit is \code{NULL}
+    #' If no dimension is specified, the unit is `NULL`
     yUnit = function(value) {
       if (missing(value)) {
         if (!is.null(private$.yUnit)) {
@@ -225,8 +225,8 @@ DataMapping <- R6::R6Class(
       }
     },
 
-    #' @field ungroupedSeries A list of \code{XYData} that do not belong to any group.
-    #' \code{NULL} if empty.
+    #' @field ungroupedSeries A list of `XYData` that do not belong to any group.
+    #' `NULL` if empty.
     ungroupedSeries = function(value) {
       if (missing(value)) {
         private$.emptyGrouping
@@ -236,8 +236,8 @@ DataMapping <- R6::R6Class(
       }
     },
 
-    #' @field plotType A string defining what kind of plot is generated when the \code{plot()} method of the object is called.
-    #' Supported plot types are listed in the enum \code{PlotTypes}. Default is "IndividualProfile"
+    #' @field plotType A string defining what kind of plot is generated when the `plot()` method of the object is called.
+    #' Supported plot types are listed in the enum `PlotTypes`. Default is "IndividualProfile"
     plotType = function(value) {
       if (missing(value)) {
         private$.plotType
@@ -247,8 +247,8 @@ DataMapping <- R6::R6Class(
       }
     },
 
-    #' @field populationQuantiles A numerical vector with three quantile values used if \code{plotType = "PopulationQuantiles"}. Default is
-    #' \code{c(0.05, 0.5, 0.95)}
+    #' @field populationQuantiles A numerical vector with three quantile values used if `plotType = "PopulationQuantiles"`. Default is
+    #' `c(0.05, 0.5, 0.95)`
     populationQuantiles = function(value) {
       if (missing(value)) {
         private$.populationQuantiles
@@ -317,20 +317,20 @@ DataMapping <- R6::R6Class(
     #' a legend will be added for each group and each XYSeries that is not in any group
     addLegend = TRUE,
 
-    #' @field legendPosition Position of the legend in the plot. Default value is "topright". See \code{\link{legend}} for more information.
+    #' @field legendPosition Position of the legend in the plot. Default value is "topright". See [legend()] for more information.
     legendPosition = "topright",
 
     #' @description Add simulated results to the data mapping
     #' @param paths A string or a list of strings representing the path(s) to the output(s) in the model.
-    #' @param simulationResults Simulated results as returned by \code{runSimulation}
+    #' @param simulationResults Simulated results as returned by `runSimulation`
     #' @param labels A string or a list of strings that are used as a label (e.g. in the legend) for the output(s).
-    #' If \code{NULL} (default), the path of the output is used as a label.
+    #' If `NULL` (default), the path of the output is used as a label.
     #' @param groups A string or a list of strings assigning the outputs to a group. All outputs may be assigned to one group, or to
     #' different groups, while each output can be assigned to not more than one group. If an entry within the list is NULL, the corresponding
     #' output is not assigned to any group
     #' @param removeNA If TRUE (default), NA values will be removed from the simulated results. NA values can be the result of observer not being calculated at a certain time point.
     #' @description
-    #' Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by default.
+    #' Add new `ModelOutput` to be plotted. Line type is set to "l" (line) by default.
     addModelOutputs = function(paths, labels, simulationResults, groups = NULL, removeNA = TRUE) {
       # Paths are checked for correct type in ospsuite
       ospsuite:::validateIsString(labels)
@@ -384,17 +384,17 @@ DataMapping <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description  Add \code{XYData} object(s).
+    #' @description  Add `XYData` object(s).
     #'
     #' @param xValsList A single array or a list of arrays of x-values. For time series, the values must be in minutes.
     #' @param yValsList A single array or a list of arrays of y-values.
-    #' @param yErrorList A single array or a list of arrays of y-error values. If \code{NULL} (default), no errors are
-    #' assigned. If not \code{NULL}, the list must have the same number of entries (numerical arrays) as \code{yValsList}. If an entry of the list is \code{NULL}, the respective data set has no error.
-    #' @param labels A string or a list of strings that are used as unique label for the output(s). Must be of same length as \code{xValsList}.
-    #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{xValsList}
+    #' @param yErrorList A single array or a list of arrays of y-error values. If `NULL` (default), no errors are
+    #' assigned. If not `NULL`, the list must have the same number of entries (numerical arrays) as `yValsList`. If an entry of the list is `NULL`, the respective data set has no error.
+    #' @param labels A string or a list of strings that are used as unique label for the output(s). Must be of same length as `xValsList`.
+    #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is `NULL`, the corresponding data set is not assigned to any group. If `NULL` (default), all data sets are not assigned to any group. If provided, `groups` must have the same length as `xValsList`
     #'
     #' @details
-    #' Add new series of x-y values to be plotted. If an \code{XYData} with the same label already exists,
+    #' Add new series of x-y values to be plotted. If an `XYData` with the same label already exists,
     #' it will be overwritten
     #' @export
     #'
@@ -428,10 +428,10 @@ DataMapping <- R6::R6Class(
     },
 
 
-    #' @description Add \code{XYData} object(s). The objects are cloned at adding.
+    #' @description Add `XYData` object(s). The objects are cloned at adding.
     #'
-    #' @param XYData Object or a list of objects of the type \code{XYData}
-    #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{XYData}
+    #' @param XYData Object or a list of objects of the type `XYData`
+    #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is `NULL`, the corresponding data set is not assigned to any group. If `NULL` (default), all data sets are not assigned to any group. If provided, `groups` must have the same length as `XYData`
     #' output is not assigned to any group
     #' @export
     addXYData = function(XYData, groups = NULL) {
@@ -503,7 +503,7 @@ DataMapping <- R6::R6Class(
     },
 
     #' @description Return group mapping of labels.
-    #' @details  Returns a named list with keys being labels of xySeries and values group names. If value is \code{NA}, no group is defined for this label.
+    #' @details  Returns a named list with keys being labels of xySeries and values group names. If value is `NA`, no group is defined for this label.
     #' @return  A named list with keys being labels of xySeries and values group names.
     #' @export
     getXYSeriesGroupMap = function() {
@@ -513,7 +513,7 @@ DataMapping <- R6::R6Class(
     #' @description Set the X-factors of x-y values by labels.
     #' @details If the data set with a label is not present in the mapping, the label is ignored.
     #'
-    #' @param labels A list of labels of \code{XYData}.
+    #' @param labels A list of labels of `XYData`.
     #' @param xFactors Numeric values that will be multiplied by the x-values during plotting.
     setXFactors = function(labels, xFactors) {
       ospsuite:::validateIsString(labels, nullAllowed = TRUE)
@@ -531,7 +531,7 @@ DataMapping <- R6::R6Class(
     #' @description Set the y-factors of x-y values by labels.
     #' @details If the data set with a label is not present in the mapping, the label is ignored
     #'
-    #' @param labels A list of label of \code{XYData}
+    #' @param labels A list of label of `XYData`
     #' @param yFactors Numeric values that will be multiplied by the y-values during plotting
     setYFactors = function(labels, yFactors) {
       ospsuite:::validateIsString(labels, nullAllowed = TRUE)
@@ -549,7 +549,7 @@ DataMapping <- R6::R6Class(
     #' @description Set the X-offset of x-y values by labels.
     #' @details If the data set with a label is not present in the mapping, the label is ignored
     #'
-    #' @param labels A list of label of \code{XYData}
+    #' @param labels A list of label of `XYData`
     #' @param xOffsets Numeric values that will be added to the x-values during plotting
     setXOffsets = function(labels, xOffsets) {
       ospsuite:::validateIsString(labels, nullAllowed = TRUE)
@@ -567,7 +567,7 @@ DataMapping <- R6::R6Class(
     #' @description Set the Y-offset of x-y values by labels.
     #' @details If the data set with a label is not present in the mapping, the label is ignored
     #'
-    #' @param labels A list of label of \code{XYData}
+    #' @param labels A list of label of `XYData`
     #' @param yOffsets Numeric values that will be added to the y-values during plotting
     setYOffsets = function(labels, yOffsets) {
       ospsuite:::validateIsString(labels, nullAllowed = TRUE)
@@ -586,8 +586,8 @@ DataMapping <- R6::R6Class(
     #' @details If no data set for the provided label is present in the mapping, the corresponding value is ignored.
     #' No check is performed whether a valid type is provided.
     #'
-    #' @param labels A list of label of \code{XYData}
-    #' @param types Plot types as accepted by the base \code{plot} method
+    #' @param labels A list of label of `XYData`
+    #' @param types Plot types as accepted by the base `plot` method
     setTypes = function(labels, types) {
       ospsuite:::validateIsString(c(labels, types), nullAllowed = TRUE)
       ospsuite:::validateIsSameLength(labels, types)
@@ -600,12 +600,12 @@ DataMapping <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Set the line type(s) property of the data to be plotted. Line types as accepted by the base \code{plot} lty argument.
+    #' @description Set the line type(s) property of the data to be plotted. Line types as accepted by the base `plot` lty argument.
     #' @details If no data set for the provided label is present in the mapping, the corresponding value is ignored.
-    #' No check is performed whether a valid type is provided.Line types as accepted by the base \code{plot} lty argument.
+    #' No check is performed whether a valid type is provided.Line types as accepted by the base `plot` lty argument.
     #' Line types can be provided either as numeric or as character vectors (e.g. "dashed").
     #'
-    #' @param labels A list of label of \code{XYData}
+    #' @param labels A list of label of `XYData`
     #' @param linetypes Values that will be set as line type(s).
     setLinetypes = function(labels, linetypes) {
       ospsuite:::validateIsString(labels, nullAllowed = TRUE)
@@ -622,9 +622,9 @@ DataMapping <- R6::R6Class(
     #' @description Set the colors of the data to be plotted
     #' @details If the data set with a label is not present in the mapping, the label is ignored
     #'
-    #' @param labels A list of label of \code{XYData}
-    #' @param colors String names of colors of the data as accepted by the base \code{plot} method
-    #' If the value is \code{NULL}, the color is automatically selected when plotting the data.
+    #' @param labels A list of label of `XYData`
+    #' @param colors String names of colors of the data as accepted by the base `plot` method
+    #' If the value is `NULL`, the color is automatically selected when plotting the data.
     setColors = function(labels, colors) {
       ospsuite:::validateIsString(c(labels), nullAllowed = TRUE)
       # If the color is a single NULL, put it into a list
@@ -641,12 +641,12 @@ DataMapping <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Apply settings stored in a \code{DataMappingConfiguration}
+    #' @description Apply settings stored in a `DataMappingConfiguration`
     #' @details If the data set with a label is not present in the mapping, the label is ignored
-    #' Equivalent to calling \code{setXFactors}, \code{setYFactors}, \code{setXOffsets},
-    #' \code{setYOffsets}, \code{setTypes}, and \code{setColors}.
+    #' Equivalent to calling `setXFactors`, `setYFactors`, `setXOffsets`,
+    #' `setYOffsets`, `setTypes`, and `setColors`.
     #'
-    #' @param dataMappingConfiguration An object of type \code{DataMappingConfiguration}
+    #' @param dataMappingConfiguration An object of type `DataMappingConfiguration`
     setConfiguration = function(dataMappingConfiguration) {
       self$setXFactors(names(dataMappingConfiguration$xFactors), dataMappingConfiguration$xFactors)
       self$setYFactors(names(dataMappingConfiguration$yFactors), dataMappingConfiguration$yFactors)
@@ -658,8 +658,8 @@ DataMapping <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Plot the data stored in this \code{DataMapping}.
-    #' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+    #' @description Plot the data stored in this `DataMapping`.
+    #' @param ... Any parameter that can be interpreted by the default [plot()] function
     plot = function(...) {
       # Get the function by its name
       fun <- get(x = paste0("plot", self$plotType))

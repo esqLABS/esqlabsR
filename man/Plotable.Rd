@@ -68,7 +68,7 @@ Initialize a new instance of the class
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A new `Plotable` object.
+A new \code{Plotable} object.
 }
 }
 \if{html}{\out{<hr>}}

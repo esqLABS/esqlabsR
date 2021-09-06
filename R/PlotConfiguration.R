@@ -17,7 +17,7 @@ PlotConfiguration <- R6::R6Class(
 
     },
     #' @field outputDevice Output target of the plot. If NULL (default), the figure is created in the default "plot"
-    #' output. Other values indicate output into a file. A list of supported outputs is provided in \code{GraphicsDevices}-enum.
+    #' output. Other values indicate output into a file. A list of supported outputs is provided in `GraphicsDevices`-enum.
     outputDevice = NULL,
     #' @field outputName A string used as the name of the .png file and as the title of the plot
     outputName = "",
@@ -37,7 +37,7 @@ PlotConfiguration <- R6::R6Class(
     res = 600,
     #' @field pointsize Size of the plotted text. Default is 8.
     pointsize = 8,
-    #' @field addTitle Boolean flag if the title should be added. If TRUE, \code{outputName} is added a title.
+    #' @field addTitle Boolean flag if the title should be added. If TRUE, `outputName` is added a title.
     addTitle = TRUE,
 
     #' @description

@@ -36,5 +36,5 @@ A list containing the outputs of the function \code{fun} iterated over the value
 Parallelize the execution of a function over a list of arguments values
 }
 \seealso{
-{\code{\link{parLapply}}}
+{\code{\link[=parLapply]{parLapply()}}}
 }
