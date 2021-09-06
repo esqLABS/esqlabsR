@@ -52,7 +52,8 @@ xyData$yValues
 xyData$yError
 ```
 
-* Return the maximal and minimal values of x and y. For y values, the error (if specified) is added (substracted for `yMin`) to/from the basal values!
+* Return the maximal and minimal values of x and y. For y values, the error (if specified) is added (subtracted for `yMin`) to/from the basal values!
+
 ```{r xyMinMax}
 xyData$xMax
 xyData$xMin

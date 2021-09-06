@@ -9,7 +9,7 @@ openOuptutDevice(plotConfiguration, width, height)
 \arguments{
 \item{plotConfiguration}{An object of type \code{PlotConfiguration}}
 
-\item{width}{Width of the ouput figure}
+\item{width}{Width of the output figure}
 
 \item{height}{Height of the output figure}
 }

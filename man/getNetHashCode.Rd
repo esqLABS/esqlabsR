@@ -7,7 +7,7 @@
 getNetHashCode(netWrapper)
 }
 \arguments{
-\item{netWrapper}{Any object from the ospsuite-R that inhertis from DotNetWrapper}
+\item{netWrapper}{Any object from the ospsuite-R that inherits from DotNetWrapper}
 }
 \value{
 Value of the .NET-method "GetHashCode"
