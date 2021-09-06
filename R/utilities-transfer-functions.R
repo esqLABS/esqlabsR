@@ -15,7 +15,7 @@ hillFunction <- function(x, Vmax, Km, alpha = 1) {
 #'
 #' @param x Value of the effector
 #' @param x_0 Basal value of the effector
-#' @param alpha Steepness of the funtion. Default is 1.
+#' @param alpha Steepness of the function. Default is 1.
 #'
 #' @return (x / x_0)^alpha
 #' @export
@@ -27,7 +27,7 @@ foldChangeFunction <- function(x, x_0, alpha = 1) {
 #'
 #' @param x Value of the effector
 #' @param amplitude Numeric, amplitude of the sine function
-#' @param period Numerci, aplitude of the sine function
+#' @param period Numeric, amplitude of the sine function
 #' @param xOffset Offset of the function on the x-axis
 #' @param yOffset Offset of the function on the y-axis
 #'

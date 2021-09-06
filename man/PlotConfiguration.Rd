@@ -26,7 +26,7 @@ using the value esqlabsEnv$widthPerPlotMapping}
 \item{\code{height}}{Height of the resulting plot in cm. If NULL (default), the height is automatically calculated
 using the value esqlabsEnv$heightPerPlotMapping}
 
-\item{\code{nrOfCols}}{Number of colums in a multi-pannel plot. If NULL (default), the number is calculated automatically
+\item{\code{nrOfCols}}{Number of colums in a multi-panel plot. If NULL (default), the number is calculated automatically
 to fit all panels while trying to keep the number of columns and rows equal. If nrOfCols is specified, the number of rows
 calculated to fit all the panels.}
 

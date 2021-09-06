@@ -15,10 +15,10 @@ Possible entries for the \code{plotType} field of a \code{DataMapping} object
 }
 \details{
 "IndividualProfile" - simulated results are plotted as time-values series with points
-connected by lines, with each individual results potted separaterly
+connected by lines, with each individual results potted separately
 "PopulationQuantiles" - simulated results for a population are aggregated as
 median, 95th an 5th percentiles, with median plotted as a line an upper/lower percentiles
 plotted as shaded areas
-"PredictedVsObserved" -  predicted-versus-obsereved goodness of fit plot
+"PredictedVsObserved" -  predicted-versus-observed goodness of fit plot
 }
 \keyword{datasets}
