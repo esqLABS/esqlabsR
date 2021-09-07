@@ -26,10 +26,10 @@ values are numerical values}
 values are numerical values}
 
 \item{\code{lineTypes}}{A named list listing line types that will be used to plot a certain data set. Keys are names of data sets,
-values are numerical values recognized by the \code{lty} argument of the \code{\link{plot}} function}
+values are numerical values recognized by the \code{lty} argument of the \code{\link[=plot]{plot()}} function}
 
 \item{\code{colors}}{A named list listing color values that will be used to plot a certain data set. Keys are names of data sets,
-values are values recognized by the \code{col} argument of the \code{\link{plot}} function}
+values are values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }
@@ -63,7 +63,7 @@ Initialize a new instance of the class
 }
 
 \subsection{Returns}{
-A new `DataMappingConfiguration` object.
+A new \code{DataMappingConfiguration} object.
 }
 }
 \if{html}{\out{<hr>}}
@@ -170,7 +170,7 @@ Set the colors that will be used to plot a certain data set.
 \describe{
 \item{\code{labels}}{A string or a list of strings representing the names of the data sets}
 
-\item{\code{colors}}{Values representing a color recognized by the \code{col} argument of the \code{\link{plot}} function}
+\item{\code{colors}}{Values representing a color recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }
@@ -189,7 +189,7 @@ Set the line types that will be used to plot a certain data set.
 \describe{
 \item{\code{labels}}{A string or a list of strings representing the names of the data sets}
 
-\item{\code{lineTypes}}{Values recognized by the \code{col} argument of the \code{\link{plot}} function}
+\item{\code{lineTypes}}{Values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }

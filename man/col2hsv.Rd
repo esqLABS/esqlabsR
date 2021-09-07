@@ -9,7 +9,7 @@ col2hsv(color)
 \arguments{
 \item{color}{vector of any of the three kinds of R color specifications, i.e.,
 either a color name (as listed by colors()),
-a hexadecimal string of the form "#rrggbb" or "#rrggbbaa" (see rgb), or a positive integer i meaning palette()[i]}
+a hexadecimal string of the form "#rrggbb" or "#rrggbbaa" (see rgb), or a positive integer i meaning palette()\link{i}}
 }
 \value{
 A matrix with a column for each color. The three rows of the matrix indicate hue, saturation and value and are named "h", "s", and "v" accordingly.

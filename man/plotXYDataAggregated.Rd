@@ -22,7 +22,7 @@ plotXYDataAggregated(
 \item{quantiles}{A numerical vector with quantile values. Default is
 \code{c(0.05, 0.5, 0.95)}}
 
-\item{...}{Any parameter that can be interpreted by the default \code{\link{plot}} function}
+\item{...}{Any parameter that can be interpreted by the default \code{\link[=plot]{plot()}} function}
 }
 \description{
 Draw XYData on top of an existing plot using the \code{points} method.

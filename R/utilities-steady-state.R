@@ -4,16 +4,16 @@
 #' long simulation time, i.e., where the rates of the processes do not (significantly) change.
 #'
 #' @param steadyStateTime Simulation time (minutes). Must be long enough for system to reach a steady-state. 1000 by default
-#' @param quantitiesPaths List of quantity paths (molecules and/or parameters) for which the steady-state is to be simulated. If \code{NULL} (default), all molecules and state variable parameters are considered. The same list is applied for all simulations.
-#' @param simulations \code{Simulation} object or a list of \code{Simulation} objects
-#' @param ignoreIfFormula If \code{TRUE} (default), species and parameters with initial values defined by a formula are not included.
-#' @param stopIfNotFound Boolean. If \code{TRUE} (default), an error is thrown when results for certain species were not generated.
-#' This may happen when due to numerical problems some values cannot be calculated, though the whole simulation converges. Setting this argument to \code{FALSE} allows
+#' @param quantitiesPaths List of quantity paths (molecules and/or parameters) for which the steady-state is to be simulated. If `NULL` (default), all molecules and state variable parameters are considered. The same list is applied for all simulations.
+#' @param simulations `Simulation` object or a list of `Simulation` objects
+#' @param ignoreIfFormula If `TRUE` (default), species and parameters with initial values defined by a formula are not included.
+#' @param stopIfNotFound Boolean. If `TRUE` (default), an error is thrown when results for certain species were not generated.
+#' This may happen when due to numerical problems some values cannot be calculated, though the whole simulation converges. Setting this argument to `FALSE` allows
 #' to ignore such errors. Check the outputs for empty values when using this option.
-#' @param lowerThreshold Numerical value (in µmol). Any steady-state values below this value are considered as numerical noise and replaced by 0. If \code{lowerThreshold} is \code{NULL},
+#' @param lowerThreshold Numerical value (in µmol). Any steady-state values below this value are considered as numerical noise and replaced by 0. If `lowerThreshold` is `NULL`,
 #' no cut-off is applied. Default value is 1e-15.
 #'
-#' @return A named list, where the names are the IDs of the simulations and the entries are lists containing \code{paths} and their \code{values} at the end of the simulation.
+#' @return A named list, where the names are the IDs of the simulations and the entries are lists containing `paths` and their `values` at the end of the simulation.
 #' @import ospsuite rClr hash
 #' @export
 getSteadyState <- function(quantitiesPaths = NULL, simulations, steadyStateTime, ignoreIfFormula = TRUE, stopIfNotFound = TRUE, lowerThreshold = 1e-15) {
@@ -112,8 +112,8 @@ getSteadyState <- function(quantitiesPaths = NULL, simulations, steadyStateTime,
 #' @details Simulates a given model to its steady-state and creates an
 #' Excel-file with the end values of molecules amounts in all containers and
 #' parameter values that have a right-hand-side (state variable parameters).
-#' @param simulation \code{Simulation} object
-#' @param quantitiesPaths List of quantity paths (molecules and/or parameters) for which the steady-state is to be simulated. If \code{NULL} (default), all molecules and state variable parameters are considered.
+#' @param simulation `Simulation` object
+#' @param quantitiesPaths List of quantity paths (molecules and/or parameters) for which the steady-state is to be simulated. If `NULL` (default), all molecules and state variable parameters are considered.
 #' @param resultsXLSPath Path to the xls-file where the results will be written to.
 #' If the file does not exist, a new file is created. If no path is provided,
 #' the file will be created in the same directory where the model file is located.
