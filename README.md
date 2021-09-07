@@ -21,7 +21,6 @@ Utilities functions for modeling and simulation workflows within esqLABS
 - devtools (CRAN)
 - rmarkdown (CRAN)
 - testthat (CRAN)
-- pander (CRAN)
 - knitr (CRAN)
 - styler (CARN)
 
