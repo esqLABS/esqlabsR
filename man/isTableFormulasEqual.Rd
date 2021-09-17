@@ -2,9 +2,7 @@
 % Please edit documentation in R/utilities-parameters.R
 \name{isTableFormulasEqual}
 \alias{isTableFormulasEqual}
-\title{Check if two table formulas are equal.
-Table formulas are equal if the number of points is equal and all x-y value pairs
-are equal between the two formulas}
+\title{Check if two table formulas are equal.}
 \usage{
 isTableFormulasEqual(formula1, formula2)
 }
@@ -17,7 +15,6 @@ isTableFormulasEqual(formula1, formula2)
 TRUE if the table formulas are equal, FALSE otherwise
 }
 \description{
-Check if two table formulas are equal.
-Table formulas are equal if the number of points is equal and all x-y value pairs
-are equal between the two formulas
+Table formulas are equal if the number of points is equal and all x-y value
+pairs are equal between the two formulas
 }

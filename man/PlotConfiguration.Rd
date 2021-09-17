@@ -23,18 +23,21 @@ output. Other values indicate output into a file. A list of supported outputs is
 \item{\code{width}}{Width of the resulting plot in cm. If NULL (default), the width is automatically calculated
 using the value esqlabsEnv$widthPerPlotMapping}
 
-\item{\code{height}}{Height of the resulting plot in cm. If NULL (default), the height is automatically calculated
+\item{\code{height}}{Height of the resulting plot in cm. If \code{NULL} (default), the
+height is automatically calculated
 using the value esqlabsEnv$heightPerPlotMapping}
 
-\item{\code{nrOfCols}}{Number of colums in a multi-panel plot. If NULL (default), the number is calculated automatically
-to fit all panels while trying to keep the number of columns and rows equal. If nrOfCols is specified, the number of rows
-calculated to fit all the panels.}
+\item{\code{nrOfCols}}{Number of column in a multi-panel plot. If \code{NULL}
+(default), the number is calculated automatically to fit all panels
+while trying to keep the number of columns and rows equal. If \code{nrOfCols}
+is specified, the number of rows calculated to fit all the panels.}
 
 \item{\code{res}}{Resolution of the .png output in dpi. Default is 600.}
 
 \item{\code{pointsize}}{Size of the plotted text. Default is 8.}
 
-\item{\code{addTitle}}{Boolean flag if the title should be added. If TRUE, \code{outputName} is added a title.}
+\item{\code{addTitle}}{Boolean flag if the title should be added. If TRUE,
+\code{outputName} is added a title.}
 }
 \if{html}{\out{</div>}}
 }

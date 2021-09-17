@@ -11,3 +11,4 @@ library(esqlabsR)
 getEsqlabsRSetting("maxNumberOfCores")
 
 getEsqlabsRSetting("Setting that does not exist")
+

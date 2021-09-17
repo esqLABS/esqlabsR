@@ -7,7 +7,8 @@ validateFileExists <- function(filePath) {
   }
 }
 
-#' Check if the provided object is of a certain length. If not, stop with an error.
+#' Check if the provided object is of a certain length. If not, stop with an
+#' error.
 #'
 #' @param object Object which length will be checked
 #' @param length Expected length

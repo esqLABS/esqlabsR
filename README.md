@@ -22,7 +22,7 @@ Utilities functions for modeling and simulation workflows within esqLABS
 - rmarkdown (CRAN)
 - testthat (CRAN)
 - knitr (CRAN)
-- styler (CARN)
+- styler (CRAN)
 
 ## Contributing
 - Follow the OSPS-R [coding standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md)
