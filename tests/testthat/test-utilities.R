@@ -1,4 +1,4 @@
-context("removeFromList")
+##  context("removeFromList")
 
 test_that("It returns NULL if NULL is provided for a list", {
   myList <- c()
@@ -45,7 +45,7 @@ test_that("It removes one entry from a list of primitives", {
   expect_equal(removeFromList(entry, listArg = myList), list(1, 3))
 })
 
-context("getIndexClosestToValue")
+## context("getIndexClosestToValue")
 
 test_that("It returns the lowest value without a threshold", {
   array <- c(-1, 0, 1, 2, 3)

@@ -1,4 +1,4 @@
-context("utilities-figures")
+## context("utilities-figures")
 
 test_that("Correct usage of .isPoint", {
   expect_equal(.isPoint(""), FALSE)

@@ -10,7 +10,7 @@ plotTimeValues(dataMapping, aggregated, ...)
 \item{dataMapping}{A \code{DataMapping} object with \code{XYData}}
 
 \item{aggregated}{Boolean. If \code{FALSE}, simulation data containing multiple
-individuals (population simulation) are plottet separately for each
+individuals (population simulation) are plotted separately for each
 individual. If \code{TRUE}, population simulation results are plotted as
 mid-percentile and lower/upper percentile bands around.}
 

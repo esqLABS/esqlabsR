@@ -7,6 +7,8 @@ Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects
     within 'esqLABS' organization.
 License:Proprietary
+URL: https://github.com/esqLABS/esqlabsR
+BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
     ospsuite (>= 10.0)
 Imports:
@@ -22,10 +24,12 @@ Suggests:
     knitr,
     rmarkdown,
     spelling,
-    testthat (>= 2.1.0)
+    testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
+Config/testthat/edition: 3
+Config/testthat/parallel: true

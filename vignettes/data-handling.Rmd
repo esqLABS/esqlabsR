@@ -42,6 +42,7 @@ An object of `XYData` can be created from scratch using pre-defined x- and y- (a
   xyData <- XYData$new(xVals, yVals, yError = yError, label = "My XY Data")
 print(xyData)
 ```
+
 Following fields are available:
 
 * Access to the x, y, and y-error values of the object:
@@ -60,7 +61,9 @@ xyData$xMin
 xyData$yMax #Maximal value of 7 plus the error 1
 xyData$yMin #Minimal value of 4 minus the error 0.1
 ```
+
 * x and y values have a **Dimension** and a **Unit**. The list of supported dimensions is provided in the enum `Dimension`. By default, x values have the dimension `Time` and the unit `Minute`.
+
 ```{r xyDimensions}
 xyData$xDimension
 xyData$xUnit
@@ -70,6 +73,7 @@ xyData$yUnit
 length(ospDimensions)
 ospDimensions[[1]]
 ```
+
 Setting the dimension will set the unit to the default unit of the dimension (even if the dimension did not actually change). For the list of default units, please refer to [OSPS manual](https://docs.open-systems-pharmacology.org/appendix/appendix). The unit of the y error values is automatically set to the base unit of the dimension when changing dimensions.
 
 ```{r setDimension}
@@ -81,11 +85,13 @@ xyData$yDimension <- ospDimensions$`Concentration (molar)`
 xyData$yUnit
 xyData$yErrorUnit
 ```
+
 Be aware that changing the unit of y values will not automatically change the unit of the error - so it is possible to have the y values in "nmol/l" and the error in "µmol/l".
 
 `XYData` also inherits several properties from the class `Plotable` which are described in the section [Figure creation](figure-creation.html).
 
 ## `XYData` as a `Plotable` object
+
 The class `XYData` inherits properties from the class `Plotable` that are being used when creating figures with `XYData` (see also [Figure creation](figure-creation.html)). Among other properties, the class `Plotable` provides properties for transformation of x- and y-values. The properties `xOffset` and `yOffset` are added to x- and y-values, respectively, when processing (e.g., creating a figure) `XYData`. The properties `xFactor` and `yFactor` allow to scale the values by multiplying them by a certain factor. Keep in mind that the output of `XYData$xValues` and `XYData$yValues` is not affected by setting the offset and the factor, so it is always possible to access the untransformed values. In contrast, values of the fields `xMax`, `xMin`, `yMax`, and `yMin` are transformed before output.
 
 ```{r xyOffset}
