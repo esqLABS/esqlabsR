@@ -1,0 +1,11 @@
+pandoc: 2.14.2
+pkgdown: 1.6.1
+pkgdown_sha: ~
+articles:
+  data-handling: data-handling.html
+  example-workflow: example-workflow.html
+  helper-methods: helper-methods.html
+  introduction-esqlabsr: introduction-esqlabsr.html
+  modeling-simulation: modeling-simulation.html
+last_built: 2021-09-20T12:21Z
+
