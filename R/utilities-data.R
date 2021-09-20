@@ -1,9 +1,11 @@
 #' Read time-values data from excel file
 #'
 #' @param dataConfiguration An object of `DataConfiguration`
-#' @details The methods reads time-values data from the properly defined excel sheet and creates `XYData` objects
-#' according to the groupings. Each sheet in `DataConfiguration$sheets` is split according to columns listed in
-#' `DataConfiguration$columnsToSplitBy`. The output structure is a nested list with levels corresponding to the groupings.
+#' @details The methods reads time-values data from the properly defined excel
+#'   sheet and creates `XYData` objects according to the groupings. Each sheet
+#'   in `DataConfiguration$sheets` is split according to columns listed in
+#'   `DataConfiguration$columnsToSplitBy`. The output structure is a nested list
+#'   with levels corresponding to the groupings.
 #'
 #' @return A (nested) list of `XYData` objects
 #' @import ospsuite

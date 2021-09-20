@@ -16,7 +16,9 @@ A (nested) list of \code{XYData} objects
 Read time-values data from excel file
 }
 \details{
-The methods reads time-values data from the properly defined excel sheet and creates \code{XYData} objects
-according to the groupings. Each sheet in \code{DataConfiguration$sheets} is split according to columns listed in
-\code{DataConfiguration$columnsToSplitBy}. The output structure is a nested list with levels corresponding to the groupings.
+The methods reads time-values data from the properly defined excel
+sheet and creates \code{XYData} objects according to the groupings. Each sheet
+in \code{DataConfiguration$sheets} is split according to columns listed in
+\code{DataConfiguration$columnsToSplitBy}. The output structure is a nested list
+with levels corresponding to the groupings.
 }

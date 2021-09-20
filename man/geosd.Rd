@@ -9,7 +9,8 @@ geosd(x, na.rm = FALSE)
 \arguments{
 \item{x}{Numeric array}
 
-\item{na.rm}{A logical value indicating whether \code{NA} values should be stripped before the computation proceeds.}
+\item{na.rm}{A logical value indicating whether \code{NA} values should be
+stripped before the computation proceeds.}
 }
 \value{
 Geometric standard deviation of \code{x}

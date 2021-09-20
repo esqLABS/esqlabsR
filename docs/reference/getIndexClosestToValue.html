@@ -40,7 +40,13 @@
 
 
 <meta property="og:title" content="Find value in an array — getIndexClosestToValue" />
-<meta property="og:description" content="Find the index of the value in an array that is closest to given one. By default, no restriction is applied how big the absolute numerical distance between value and a value in the array may be. A limit can be set by the parameters thresholdAbs or thresholdRel. If no value within the array has the distance to value that is equal to or less than the threshold, the value is considered not present in the array and NULL is returned." />
+<meta property="og:description" content="Find the index of the value in an array that is closest to given
+one. By default, no restriction is applied how big the absolute numerical
+distance between value and a value in the array may be. A limit can be
+set by the parameters thresholdAbs or thresholdRel. If no value within
+the array has the distance to value that is equal to or less than the
+threshold, the value is considered not present in the array and NULL
+is returned." />
 
 
 
@@ -141,7 +147,13 @@
     </div>
 
     <div class="ref-description">
-    <p>Find the index of the value in an array that is closest to given one. By default, no restriction is applied how big the absolute numerical distance between <code>value</code> and a value in the <code>array</code> may be. A limit can be set by the parameters <code>thresholdAbs</code> or <code>thresholdRel</code>. If no value within the <code>array</code> has the distance to <code>value</code> that is equal to or less than the threshold, the <code>value</code> is considered not present in the <code>array</code> and <code>NULL</code> is returned.</p>
+    <p>Find the index of the value in an array that is closest to given
+one. By default, no restriction is applied how big the absolute numerical
+distance between <code>value</code> and a value in the <code>array</code> may be. A limit can be
+set by the parameters <code>thresholdAbs</code> or <code>thresholdRel</code>. If no value within
+the <code>array</code> has the distance to <code>value</code> that is equal to or less than the
+threshold, the <code>value</code> is considered not present in the <code>array</code> and <code>NULL</code>
+is returned.</p>
     </div>
 
     <pre class="usage"><span class='fu'>getIndexClosestToValue</span><span class='op'>(</span><span class='va'>value</span>, <span class='va'>array</span>, thresholdAbs <span class='op'>=</span> <span class='cn'>NULL</span>, thresholdRel <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
@@ -159,17 +171,26 @@
     </tr>
     <tr>
       <th>thresholdAbs</th>
-      <td><p>Absolute numerical distance by which the closest value in <code>array</code> may differ from <code>value</code> to be accepted. If both <code>thresholdAbs</code> and <code>thresholdRel</code> are <code>NULL</code> (default), no threshold is applied. If <code>thresholdAbs</code> is set, <code>thresholdRel</code> is ignored. If 0, only exact match between <code>value</code> and <code>array</code> is accepted.</p></td>
+      <td><p>Absolute numerical distance by which the closest value in
+<code>array</code> may differ from <code>value</code> to be accepted. If both <code>thresholdAbs</code> and
+<code>thresholdRel</code> are <code>NULL</code> (default), no threshold is applied. If
+<code>thresholdAbs</code> is set, <code>thresholdRel</code> is ignored. If 0, only exact match
+between <code>value</code> and <code>array</code> is accepted.</p></td>
     </tr>
     <tr>
       <th>thresholdRel</th>
-      <td><p>A fraction by which the closest value may differ from <code>value</code> to be accepted. WARNING: setting a relative threshold will result in only exact matches if <code>value</code> is 0!</p></td>
+      <td><p>A fraction by which the closest value may differ from
+<code>value</code> to be accepted. <strong>WARNING</strong>: setting a relative threshold will result
+in only exact matches if <code>value</code> is 0!</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Index of a value within the array which is closest to <code>value</code> and the difference is within the defined threshold. If multiple entries of <code>array</code> have the same difference which is minimal, a vector of indices is returned. If no value is within the defined threshold, <code>NULL</code> is returned.</p>
+    <p>Index of a value within the array which is closest to <code>value</code> and the
+difference is within the defined threshold. If multiple entries of <code>array</code>
+have the same difference which is minimal, a vector of indices is returned.
+If no value is within the defined threshold, <code>NULL</code> is returned.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
