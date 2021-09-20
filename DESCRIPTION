@@ -6,7 +6,7 @@ Author: esqLABS GmbH
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects
     within 'esqLABS' organization.
-License:Proprietary
+License: Proprietary
 URL: https://github.com/esqLABS/esqlabsR
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
