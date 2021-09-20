@@ -44,3 +44,5 @@ references.bib
 ^old/.
 ^\cache$
 ^codemeta\.json$
+^scripts$
+^rakefile\.rb$

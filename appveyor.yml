@@ -19,7 +19,11 @@ environment:
   NOT_CRAN: true
   KEEP_VIGNETTES: true
   R_ARCH: x64
-  R_VERSION: "4.0.5"
+  matrix:
+  - R_VERSION: devel
+    GCC_PATH: mingw_64
+  - R_VERSION: release
+  - R_VERSION: oldrel
 
 before_build:
   - nuget sources add -name utility -source https://ci.appveyor.com/nuget/ospsuite-utility

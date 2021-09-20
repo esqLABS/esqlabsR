@@ -1,12 +1,12 @@
 Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
-Version: 1.5.1.9002
+Version: 2.0.0
 Author: esqLABS GmbH
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects
     within 'esqLABS' organization.
-License:Proprietary
+License: Proprietary
 URL: https://github.com/esqLABS/esqlabsR
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
@@ -32,4 +32,3 @@ Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Config/testthat/edition: 3
-Config/testthat/parallel: true
