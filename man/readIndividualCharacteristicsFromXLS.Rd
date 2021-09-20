@@ -14,7 +14,8 @@ readIndividualCharacteristicsFromXLS(
 \arguments{
 \item{XLSpath}{Full path to the excel file}
 
-\item{individualId}{(String) Id of the individual as stored in the \code{IndividualId} column.}
+\item{individualId}{(String) Id of the individual as stored in the
+\code{IndividualId} column.}
 
 \item{sheet}{Name of the sheet. If \code{NULL} (default), the first sheet of the
 file is used.}
@@ -31,6 +32,6 @@ Read individual characteristics from file
 \details{
 Read individual characteristics from an excel sheet
 and create an \code{IndividualCharacteristics}-object. The excel sheet must have
-the colums \code{IndividualId}, \code{Species}, \code{Population}, \code{Gender}, \code{Weight [kg]},
+the column \code{IndividualId}, \code{Species}, \code{Population}, \code{Gender}, \code{Weight [kg]},
 \code{Height [cm]}, \code{Age [year(s)]}, and \code{BMI}.
 }

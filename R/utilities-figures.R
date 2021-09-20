@@ -1,10 +1,14 @@
-#' Returns the list of colors extrapolated between the esqLABS colors blue, red, and green.
-#' For nrOfColors == 1, the esqLABS-blue is returned
-#' For nrOfColors == 2, the esqLABS-blue and green are returned
-#' For nrOfColors == 3, the esqLABS-blue, red, and green are returned
-#' For nrOfColors > 3 1, the three esqLABS colors are fixed, and the remaining colors are extrapolated
-#' from blue to red to green. If nrOfColors is uneven, the blue-to-red section becomes one color more
-#' than the red-to-green section.
+#' esqLABS color palette
+#'
+#' Returns the list of colors extrapolated between the esqLABS colors blue, red,
+#' and green.
+#'
+#' For `nrOfColors` == 1, the esqLABS-blue is returned
+#' For `nrOfColors` == 2, the esqLABS-blue and green are returned
+#' For `nrOfColors` == 3, the esqLABS-blue, red, and green are returned
+#' For `nrOfColors` > 3, the three esqLABS colors are fixed, and the remaining
+#' colors are extrapolated from blue to red to green. If `nrOfColors` is uneven,
+#' the blue-to-red section becomes one color more than the red-to-green section.
 #' In this implementation, blue-to-green is not considered.
 #'
 #' @param nrOfColors Positive integer defining the number of colors to be generated.
@@ -96,8 +100,8 @@ esqLABS_colors <- function(nrOfColors) {
 #' Add a label to a figure. Taken from <https://waterprogramming.wordpress.com/2015/12/02/easy-labels-for-multi-panel-plots-in-r/>
 #'
 #' @param label Label that is to be drawn
-#' @param location Location of the label. Allowed entries are 'topleft', 'topcenter', 'topright',
-#' 'bottomleft', 'bottomright', 'bottomcenter'
+#' @param location Location of the label. Allowed entries are 'topleft',
+#'   'topcenter', 'topright', 'bottomleft', 'bottomright', 'bottomcenter'
 #' @param offset Coordinates of the offset of the label
 figureAddLabel <- function(label, location = "topleft",
                            offset = c(0, 0)) {
@@ -137,11 +141,14 @@ figureAddLabel <- function(label, location = "topleft",
 
 #' Returns the HSV values for a given R color name
 #'
-#' @param color vector of any of the three kinds of R color specifications, i.e.,
-#' either a color name (as listed by colors()),
-#' a hexadecimal string of the form "#rrggbb" or "#rrggbbaa" (see rgb), or a positive integer i meaning palette()[i]
+#' @param color vector of any of the three kinds of R color specifications,
+#'   i.e., either a color name (as listed by colors()), a hexadecimal string of
+#'   the form "#rrggbb" or "#rrggbbaa" (see rgb), or a positive integer `i`
+#'   meaning `palette()[i]`.
 #'
-#' @return A matrix with a column for each color. The three rows of the matrix indicate hue, saturation and value and are named "h", "s", and "v" accordingly.
+#' @return A matrix with a column for each color. The three rows of the matrix
+#'   indicate hue, saturation and value and are named "h", "s", and "v"
+#'   accordingly.
 #' @export
 #' @import ospsuite
 #'
@@ -162,11 +169,18 @@ col2hsv <- function(color) {
 #' @param upper Numerical array of upper y-error values
 #' @param lower Numerical array of lower y-error values. Optional.
 #' If not specified, same values as for `upper` are used
-#' @param length Numerical value specifying the width of the error bars. Optional. Default is 0.1.
-#' @param axis Dimension to which the error bars are added.
-#' If "y" (default), vertical error bars are drawn. If "x", horizontal error bars are drawn
+#' @param length Numerical value specifying the width of the error bars.
+#'   Optional. Default is 0.1.
+#' @param axis Dimension to which the error bars are added. If "y" (default),
+#'   vertical error bars are drawn. If "x", horizontal error bars are drawn
 #' @param ... Graphical parameters (see [par()])
-plotErrorBars <- function(x, y, upper, lower = upper, length = par()$cin[[1]] / 2, axis = "y", ...) {
+plotErrorBars <- function(x,
+                          y,
+                          upper,
+                          lower = upper,
+                          length = par()$cin[[1]] / 2,
+                          axis = "y",
+                          ...) {
   ospsuite:::validateIsNumeric(c(x, y))
   ospsuite:::validateIsSameLength(x, y, upper, lower)
   if (axis == "y") {
@@ -183,12 +197,12 @@ GraphicsDevices <- enum(list("PNG"))
 
 #' Possible entries for the `plotType` field of a `DataMapping` object
 #'
-#' @details "IndividualProfile" - simulated results are plotted as time-values series with points
-#' connected by lines, with each individual results potted separately
-#' "PopulationQuantiles" - simulated results for a population are aggregated as
-#' median, 95th an 5th percentiles, with median plotted as a line an upper/lower percentiles
-#' plotted as shaded areas
-#' "PredictedVsObserved" -  predicted-versus-observed goodness of fit plot
+#' @details "IndividualProfile" - simulated results are plotted as time-values
+#'   series with points connected by lines, with each individual results potted
+#'   separately "PopulationQuantiles" - simulated results for a population are
+#'   aggregated as median, 95th an 5th percentiles, with median plotted as a
+#'   line an upper/lower percentiles plotted as shaded areas
+#'   "PredictedVsObserved" -  predicted-versus-observed goodness of fit plot
 #' @export
 PlotTypes <- enum(list(
   "IndividualProfile",
@@ -203,10 +217,11 @@ PlotTypes <- enum(list(
 #' @param width Width of the output figure
 #' @param height Height of the output figure
 #'
-#' @details If the output of the plot is directed to a file, open the connection.
-#' A list of supported outputs is provided in `GraphicsDevices`-enum.
-#' If the provided output defined in PlotConfiguration$outputDevice is not supported or the value is `NULL`,
-#' output is directed to the default plot frame.
+#' @details If the output of the plot is directed to a file, open the
+#'   connection. A list of supported outputs is provided in
+#'   `GraphicsDevices`-enum. If the provided output defined in
+#'   PlotConfiguration$outputDevice is not supported or the value is `NULL`,
+#'   output is directed to the default plot frame.
 openOuptutDevice <- function(plotConfiguration, width, height) {
   if (is.null(plotConfiguration$outputDevice)) {
     return()

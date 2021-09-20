@@ -1,6 +1,8 @@
 ---
 title: "Modeling and simulation workflows"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    toc: true
 #output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Modeling and simulation workflows}
@@ -15,8 +17,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r, echo = FALSE, results = "hide", message = F}
+```{r, echo = FALSE, results = "hide", message = FALSE}
 library(esqlabsR)
 ```
 
-The package provides a set of functions designed to streamline processes that frequently occur in M&S projects.
+## Introduction
+
+The package provides a set of functions designed to streamline processes that frequently occur in Modeling and simulation (M&S) workflows projects.

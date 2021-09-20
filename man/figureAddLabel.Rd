@@ -9,8 +9,8 @@ figureAddLabel(label, location = "topleft", offset = c(0, 0))
 \arguments{
 \item{label}{Label that is to be drawn}
 
-\item{location}{Location of the label. Allowed entries are 'topleft', 'topcenter', 'topright',
-'bottomleft', 'bottomright', 'bottomcenter'}
+\item{location}{Location of the label. Allowed entries are 'topleft',
+'topcenter', 'topright', 'bottomleft', 'bottomright', 'bottomcenter'}
 
 \item{offset}{Coordinates of the offset of the label}
 }

@@ -7,8 +7,8 @@
 sampleRandomValue(distribution, mean, sd, n)
 }
 \arguments{
-\item{distribution}{The type of the distribution the random variable is to be sampled from. See \code{Distributions} for the list of supported
-entries.}
+\item{distribution}{The type of the distribution the random variable is to be
+sampled from. See \code{Distributions} for the list of supported entries.}
 
 \item{mean}{Mean value of the random variable}
 

@@ -14,13 +14,30 @@
 }
 
 #' Find value in an array
-#' @description Find the index of the value in an array that is closest to given one. By default, no restriction is applied how big the absolute numerical distance between `value` and a value in the `array` may be. A limit can be set by the parameters `thresholdAbs` or `thresholdRel`. If no value within the `array` has the distance to `value` that is equal to or less than the threshold, the `value` is considered not present in the `array` and `NULL` is returned.
+#'
+#' @description Find the index of the value in an array that is closest to given
+#'   one. By default, no restriction is applied how big the absolute numerical
+#'   distance between `value` and a value in the `array` may be. A limit can be
+#'   set by the parameters `thresholdAbs` or `thresholdRel`. If no value within
+#'   the `array` has the distance to `value` that is equal to or less than the
+#'   threshold, the `value` is considered not present in the `array` and `NULL`
+#'   is returned.
+#'
 #' @param value Numerical value
 #' @param array Numerical array
-#' @param thresholdAbs Absolute numerical distance by which the closest value in `array` may differ from `value` to be accepted. If both `thresholdAbs` and `thresholdRel` are `NULL` (default), no threshold is applied. If `thresholdAbs` is set, `thresholdRel` is ignored. If 0, only exact match between `value` and `array` is accepted.
-#' @param thresholdRel A fraction by which the closest value may differ from `value` to be accepted. WARNING: setting a relative threshold will result in only exact matches if `value` is 0!
+#' @param thresholdAbs Absolute numerical distance by which the closest value in
+#'   `array` may differ from `value` to be accepted. If both `thresholdAbs` and
+#'   `thresholdRel` are `NULL` (default), no threshold is applied. If
+#'   `thresholdAbs` is set, `thresholdRel` is ignored. If 0, only exact match
+#'   between `value` and `array` is accepted.
+#' @param thresholdRel A fraction by which the closest value may differ from
+#'   `value` to be accepted. **WARNING**: setting a relative threshold will result
+#'   in only exact matches if `value` is 0!
 #'
-#' @return Index of a value within the array which is closest to `value` and the difference is within the defined threshold. If multiple entries of `array` have the same difference which is minimal, a vector of indices is returned. If no value is within the defined threshold, `NULL` is returned.
+#' @return Index of a value within the array which is closest to `value` and the
+#'   difference is within the defined threshold. If multiple entries of `array`
+#'   have the same difference which is minimal, a vector of indices is returned.
+#'   If no value is within the defined threshold, `NULL` is returned.
 #' @export
 getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdRel = NULL) {
   # If no absolute threshold is set, calculate if from relative threshold
@@ -50,9 +67,11 @@ getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdR
 #' Calculate geometric mean of a numeric vector.
 #'
 #' @param x Numeric array
-#' @param na.rm A logical value indicating whether `NA` values should be stripped before the computation proceeds.
-#' @param trim the fraction (0 to 0.5) of observations to be trimmed from each end of `x` before the mean is computed.
-#' Values of trim outside that range are taken as the nearest endpoint.
+#' @param na.rm A logical value indicating whether `NA` values should be
+#'   stripped before the computation proceeds.
+#' @param trim the fraction (0 to 0.5) of observations to be trimmed from each
+#'   end of `x` before the mean is computed. Values of trim outside that range
+#'   are taken as the nearest endpoint.
 #'
 #' @return Geometric mean of`x`
 #' @export
@@ -63,7 +82,8 @@ geomean <- function(x, na.rm = FALSE, trim = 0) {
 #' Calculate geometric standard deviation of a numeric vector
 #'
 #' @param x Numeric array
-#' @param na.rm A logical value indicating whether `NA` values should be stripped before the computation proceeds.
+#' @param na.rm A logical value indicating whether `NA` values should be
+#'   stripped before the computation proceeds.
 #'
 #' @return Geometric standard deviation of `x`
 #' @export
@@ -120,9 +140,10 @@ escapeForRegex <- function(string) {
 #'
 #' @param entry The entry to be removed
 #' @param listArg The list from which the entry will be removed
-#' @description Removes all occurrences of the entry from the list. If the entry is not in the list
-#' nothing is removed.
-#' @return The list without the entry. If the input is a vector, it is converted to a list.
+#' @description Removes all occurrences of the entry from the list. If the entry
+#'   is not in the list nothing is removed.
+#' @return The list without the entry. If the input is a vector, it is converted
+#'   to a list.
 #' @export
 #'
 #' @examples

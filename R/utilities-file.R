@@ -20,9 +20,11 @@ sourceAll <- function(folderPath, recursive = FALSE) {
 
 #' pathFromClipboard
 #'
-#' Converts the windows-like path (using \) from the clipboard to the form readable by R (using /)
+#' Converts the windows-like path (using `\`) from the clipboard to the form
+#' readable by R (using` /`).
 #'
-#' @param path Path that will be converted. If "clipboard" (default), path is queried from clipboard.
+#' @param path Path that will be converted. If "clipboard" (default), path is
+#'   queried from clipboard.
 #'
 #' @return String representation of a file path with `/` as separator
 #' @export

@@ -4,7 +4,8 @@
 #' @param value The value that is mapped to the key
 #' @import ospsuite
 #'
-#' @return Key under which the value is stored. If the value is not in the enum, `NULL` is returned
+#' @return Key under which the value is stored. If the value is not in the enum,
+#'   `NULL` is returned
 #' @export
 enumGetKey <- function(enum, value) {
   ospsuite::getEnumKey(enum, value)
@@ -15,9 +16,9 @@ enumGetKey <- function(enum, value) {
 #' @param key Key to be added
 #' @param values Values to be added
 #' @param enum enum the key-value pairs should be added to.
-#' WARNING: the original object is not modified!
-#' @param overwrite if TRUE and a `key` exists,
-#' it will be overwritten with the new value. Otherwise, an error is thrown. Default is FALSE.
+#' **WARNING**: the original object is not modified!
+#' @param overwrite if TRUE and a `key` exists, it will be overwritten with the
+#'   new value. Otherwise, an error is thrown. Default is `FALSE`.
 #'
 #' @return Enum with added key-value pair.
 #' @export

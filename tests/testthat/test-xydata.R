@@ -1,4 +1,4 @@
-context("XYData")
+## context("XYData")
 
 test_that("It can create an XYData without Y error", {
   xVals <- c(0, 1, 2, 3)

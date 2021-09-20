@@ -2,7 +2,8 @@
 % Please edit documentation in R/error-checks.R
 \name{validateLength}
 \alias{validateLength}
-\title{Check if the provided object is of a certain length. If not, stop with an error.}
+\title{Check if the provided object is of a certain length. If not, stop with an
+error.}
 \usage{
 validateLength(object, length)
 }
@@ -12,5 +13,6 @@ validateLength(object, length)
 \item{length}{Expected length}
 }
 \description{
-Check if the provided object is of a certain length. If not, stop with an error.
+Check if the provided object is of a certain length. If not, stop with an
+error.
 }

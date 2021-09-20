@@ -1,28 +1,34 @@
-Package: esqlabsR
 Type: Package
+Package: esqlabsR
 Title: esqLABS utilities package
-Version: 1.5.1.9002
+Version: 2.0.0
 Author: esqLABS GmbH
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
-Description: Utilities functions for modeling and simulation projects within esqLABS.
-Encoding: UTF-8
+Description: Utilities functions for modeling and simulation projects
+    within 'esqLABS' organization.
+License: Proprietary
+URL: https://github.com/esqLABS/esqlabsR
+BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
     ospsuite (>= 10.0)
 Imports:
-    rClr,
-    tools,
+    hash,
     openxlsx,
     parallel,
+    rClr,
+    readxl,
     shiny,
     shinyjs,
-    hash,
-    readxl
+    tools
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 2.1.0)
-VignetteBuilder: knitr
-License:
-  Proprietary
-RoxygenNote: 7.1.1
+    spelling,
+    testthat (>= 3.0.0)
+VignetteBuilder: 
+    knitr
+Encoding: UTF-8
+Language: en-US
 Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Config/testthat/edition: 3

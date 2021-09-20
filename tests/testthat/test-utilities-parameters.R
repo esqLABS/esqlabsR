@@ -1,4 +1,4 @@
-context("readParametersFromXLS-data")
+##  context("readParametersFromXLS-data")
 dataFolder <- getTestDataFilePath("")
 
 test_that("It can read a properly defined file", {

@@ -3,11 +3,13 @@
 #' 'Value', and 'Units'
 #'
 #' @param paramsXLSpath Path to the excel file
-#' @param sheets Names of the excel sheets containing the information about the parameters. Multiple sheets
-#' can be processed. If no sheets are provided, the first one in the Excel file is used.
+#' @param sheets Names of the excel sheets containing the information about the
+#'   parameters. Multiple sheets can be processed. If no sheets are provided,
+#'   the first one in the Excel file is used.
 #'
-#' @return A list containing lists 'paths' with the full paths to the parameters, 'values' the values of the parameters,
-#' and 'units' with the units the values are ín.
+#' @return A list containing lists 'paths' with the full paths to the
+#'   parameters, 'values' the values of the parameters, and 'units' with the
+#'   units the values are in.
 #' @import openxlsx
 #' @export
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
@@ -66,8 +68,9 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' #'
 #' @param parameter1 First parameter to compare
 #' @param parameter2 Second parameter to compare
-#' @param checkFormulaValues If TRUE, values of explicit formulas are always compared. Otherwise, the values
-#' are only compared if the formulas are overridden (isFixedValue == TRUE). FALSE by default.
+#' @param checkFormulaValues If TRUE, values of explicit formulas are always
+#'   compared. Otherwise, the values are only compared if the formulas are
+#'   overridden (isFixedValue == TRUE). FALSE by default.
 #'
 #' @return `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
@@ -122,8 +125,9 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
 }
 
 #' Check if two table formulas are equal.
-#' Table formulas are equal if the number of points is equal and all x-y value pairs
-#' are equal between the two formulas
+#'
+#' Table formulas are equal if the number of points is equal and all x-y value
+#' pairs are equal between the two formulas
 #'
 #' @param formula1 First formula to compare
 #' @param formula2 Second formula to compare
