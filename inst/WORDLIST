@@ -1,5 +1,4 @@
 Aciclovir
-CARN
 DataConfiguration
 DataMapping
 DataMappingConfiguration
@@ -13,7 +12,6 @@ MoBi
 NA's
 OO
 OSPS
-Optinal
 PKML
 Parallelize
 PatientId
@@ -35,7 +33,6 @@ bottomleft
 bottomright
 checkFormulaValues
 cloneable
-colums
 crateIndividual
 createIndividualCharacteristics
 devtools
@@ -43,7 +40,6 @@ dplyr
 effector
 enum
 esqlabsEnv
-getEsqlabsRSetting
 heightPerPlotMapping
 hsv
 http
@@ -55,10 +51,8 @@ isParametersEqual
 isTable
 knitr
 lty
-maxNumberOfCores
 mol
 nmol
-nrOfCols
 openxlsx
 ospDimensions
 ospsuite
@@ -66,7 +60,6 @@ outputDevice
 parameterPaths
 pathFromClipboard
 pkml
-plottet
 png
 pre
 rClr
