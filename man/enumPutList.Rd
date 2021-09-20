@@ -12,10 +12,10 @@ enumPutList(key, values, enum, overwrite = FALSE)
 \item{values}{Values to be added}
 
 \item{enum}{enum the key-value pairs should be added to.
-WARNING: the original object is not modified!}
+\strong{WARNING}: the original object is not modified!}
 
-\item{overwrite}{if TRUE and a \code{key} exists,
-it will be overwritten with the new value. Otherwise, an error is thrown. Default is FALSE.}
+\item{overwrite}{if TRUE and a \code{key} exists, it will be overwritten with the
+new value. Otherwise, an error is thrown. Default is \code{FALSE}.}
 }
 \value{
 Enum with added key-value pair.

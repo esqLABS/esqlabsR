@@ -145,7 +145,14 @@ plotBoxPlot <- function(dataMapping, ...) {
 
   # Draw a legend, if specified
   if (dataMapping$addLegend) {
-    .figureAddLegend(x = dataMapping$legendPosition, legend = legendEntries, col = NULL, pch = NULL, lty = rep(0, length(legendEntries)), ...)
+    .figureAddLegend(
+      x = dataMapping$legendPosition,
+      legend = legendEntries,
+      col = NULL,
+      pch = NULL,
+      lty = rep(0, length(legendEntries)),
+      ...
+    )
   }
 }
 
@@ -164,9 +171,10 @@ plotPopulationQuantiles <- function(dataMapping, ...) {
 #'
 #' @import ospsuite
 #' @param dataMapping A `DataMapping` object with `XYData`
-#' @param aggregated Boolean. If `FALSE`, simulation data containing multiple individuals (population simulation)
-#' are plottet separately for each individual. If `TRUE`, population simulation results are plotted as
-#' mid-percentile and lower/upper percentile bands around.
+#' @param aggregated Boolean. If `FALSE`, simulation data containing multiple
+#'   individuals (population simulation) are plotted separately for each
+#'   individual. If `TRUE`, population simulation results are plotted as
+#'   mid-percentile and lower/upper percentile bands around.
 #' @param ... Any parameter that can be interpreted by the default [plot()] function
 #' @import hash
 plotTimeValues <- function(dataMapping, aggregated, ...) {
@@ -352,7 +360,14 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
   # Draw a legend, if specified
   if (dataMapping$addLegend && (length(legendEntries) > 0)) {
-    .figureAddLegend(x = dataMapping$legendPosition, legend = legendEntries, col = legendColors, pch = legendPch, lty = legendLty, ...)
+    .figureAddLegend(
+      x = dataMapping$legendPosition,
+      legend = legendEntries,
+      col = legendColors,
+      pch = legendPch,
+      lty = legendLty,
+      ...
+    )
   }
 }
 
@@ -361,9 +376,12 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 #' @param dataMapping THe `DataMapping` object for which the goodness-of-fit
 #' plot is to be drawn. For each group within the `dataMapping`, simulated
 #' and observed values are compared.
-#' @param foldDistance Numerical value for the fold-distance lines to be drawn. Default is 2.
-#' @param timeDiffThreshold Allowed difference between observed and simulated time values in minutes. Default is 10.
-#' If for a certain observed point no simulated time point exists within the defined threshold, the value is not considered.
+#' @param foldDistance Numerical value for the fold-distance lines to be drawn.
+#'   Default is 2.
+#' @param timeDiffThreshold Allowed difference between observed and simulated
+#'   time values in minutes. Default is 10. If for a certain observed point no
+#'   simulated time point exists within the defined threshold, the value is not
+#'   considered.
 #' @param ... Any parameter that can be interpreted by the default [plot()] function
 #'
 #' @details Observed data points are drawn on the x, simulated values on the y axis.
@@ -463,7 +481,14 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
 
   # Draw a legend, if specified
   if (dataMapping$addLegend) {
-    .figureAddLegend(x = dataMapping$legendPosition, legend = legendEntries, col = legendColors, pch = legendPch, lty = NULL, ...)
+    .figureAddLegend(
+      x = dataMapping$legendPosition,
+      legend = legendEntries,
+      col = legendColors,
+      pch = legendPch,
+      lty = NULL,
+      ...
+    )
   }
 }
 
@@ -471,11 +496,14 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
 #'
 #'
 #' @param dataMappingList A `DataMapping` or a list of `DataMapping` objects.
-#' @param timeDiffThreshold Allowed difference between observed and simulated time values in minutes. Default is 10.
-#' If for a certain observed point no simulated time point exists within the defined threshold, the value is not considered.
+#' @param timeDiffThreshold Allowed difference between observed and simulated
+#'   time values in minutes. Default is 10. If for a certain observed point no
+#'   simulated time point exists within the defined threshold, the value is not
+#'   considered.
 #'
-#' @details The error is calculated for each group separately and added up. For each group, the error is defined as
-#' the root of the sum of the squared residuals between each simulated result and observed data.
+#' @details The error is calculated for each group separately and added up. For
+#'   each group, the error is defined as the root of the sum of the squared
+#'   residuals between each simulated result and observed data.
 #'
 #' @return Total error for all groups across all provided data mappings.
 #' @import ospsuite
@@ -487,7 +515,12 @@ calculateRMSE <- function(dataMappingList, timeDiffThreshold = 10) {
   for (dataMapping in dataMappingList) {
     # Convert timeDiffThreshold to xUnit of the dataMapping
     if (!is.null(timeDiffThreshold)) {
-      timeDiffThreshold <- toUnit(quantityOrDimension = "Time", values = timeDiffThreshold, sourceUnit = "min", targetUnit = dataMapping$xUnit)
+      timeDiffThreshold <- toUnit(
+        quantityOrDimension = "Time",
+        values = timeDiffThreshold,
+        sourceUnit = "min",
+        targetUnit = dataMapping$xUnit
+      )
     }
 
     for (grouping in dataMapping$groupings) {

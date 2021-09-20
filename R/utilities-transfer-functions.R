@@ -1,9 +1,10 @@
-#' Hill equation, transforming a value of an effector (e.g., concentration) to a staurable function value.
+#' Hill equation, transforming a value of an effector (e.g. concentration) to a
+#' saturable function value.
 #'
-#' @param x Value of the effector
-#' @param Vmax Maximal value of the function
-#' @param Km Value of the effector at which the value of the function is half-maximal
-#' @param alpha Hill coefficient defining the steepness of the function. Default is 1.
+#' @param x Value of the effector.
+#' @param Vmax Maximal value of the function.
+#' @param Km Value of the effector at which the value of the function is half-maximal.
+#' @param alpha Hill coefficient defining the steepness of the function. Default is `1`.
 #'
 #' @return Vmax * x^alpha / (x^alpha + Km^alpha)
 #' @export
@@ -13,9 +14,9 @@ hillFunction <- function(x, Vmax, Km, alpha = 1) {
 
 #' Function returning the fold difference between x and x_0
 #'
-#' @param x Value of the effector
-#' @param x_0 Basal value of the effector
-#' @param alpha Steepness of the function. Default is 1.
+#' @param x Value of the effector.
+#' @param x_0 Basal value of the effector.
+#' @param alpha Steepness of the function. Default is `1`.
 #'
 #' @return (x / x_0)^alpha
 #' @export

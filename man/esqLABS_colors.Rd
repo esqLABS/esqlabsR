@@ -2,14 +2,7 @@
 % Please edit documentation in R/utilities-figures.R
 \name{esqLABS_colors}
 \alias{esqLABS_colors}
-\title{Returns the list of colors extrapolated between the esqLABS colors blue, red, and green.
-For nrOfColors == 1, the esqLABS-blue is returned
-For nrOfColors == 2, the esqLABS-blue and green are returned
-For nrOfColors == 3, the esqLABS-blue, red, and green are returned
-For nrOfColors > 3 1, the three esqLABS colors are fixed, and the remaining colors are extrapolated
-from blue to red to green. If nrOfColors is uneven, the blue-to-red section becomes one color more
-than the red-to-green section.
-In this implementation, blue-to-green is not considered.}
+\title{esqLABS color palette}
 \usage{
 esqLABS_colors(nrOfColors)
 }
@@ -20,12 +13,15 @@ esqLABS_colors(nrOfColors)
 A list of colors as HEX values.
 }
 \description{
-Returns the list of colors extrapolated between the esqLABS colors blue, red, and green.
-For nrOfColors == 1, the esqLABS-blue is returned
-For nrOfColors == 2, the esqLABS-blue and green are returned
-For nrOfColors == 3, the esqLABS-blue, red, and green are returned
-For nrOfColors > 3 1, the three esqLABS colors are fixed, and the remaining colors are extrapolated
-from blue to red to green. If nrOfColors is uneven, the blue-to-red section becomes one color more
-than the red-to-green section.
+Returns the list of colors extrapolated between the esqLABS colors blue, red,
+and green.
+}
+\details{
+For \code{nrOfColors} == 1, the esqLABS-blue is returned
+For \code{nrOfColors} == 2, the esqLABS-blue and green are returned
+For \code{nrOfColors} == 3, the esqLABS-blue, red, and green are returned
+For \code{nrOfColors} > 3, the three esqLABS colors are fixed, and the remaining
+colors are extrapolated from blue to red to green. If \code{nrOfColors} is uneven,
+the blue-to-red section becomes one color more than the red-to-green section.
 In this implementation, blue-to-green is not considered.
 }

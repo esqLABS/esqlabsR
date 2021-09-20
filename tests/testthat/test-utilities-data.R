@@ -1,4 +1,4 @@
-context("utilities-data")
+## context("utilities-data")
 
 test_that("It can read a properly defined file", {
   dataConf <- DataConfiguration$new(
@@ -12,7 +12,7 @@ test_that("It can read a properly defined file", {
   expect_equal(length(observedData[[1]]), 2)
 })
 
-context("stringToInt")
+## context("stringToInt")
 
 test_that("It converts a single positive number", {
   string <- "21"

@@ -1,4 +1,4 @@
-context("DataMapping")
+## context("DataMapping")
 
 sim <- loadTestSimulation("Aciclovir")
 outputPaths <- c("Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)")
@@ -338,7 +338,7 @@ test_that("It can remove XYData that is not in a group", {
   expect_equal(length(dataMapping$groupings), 1)
 })
 
-context("setXFactors")
+## context("setXFactors")
 
 test_that("It can change the x-factor of one xy-series", {
   dataMapping <- DataMapping$new()
@@ -396,7 +396,7 @@ test_that("It can change the x-factor of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series3"]]$xFactor, 5)
 })
 
-context("setYFactors")
+## context("setYFactors")
 
 test_that("It can change the y-factor of one xy-series", {
   dataMapping <- DataMapping$new()
@@ -454,7 +454,7 @@ test_that("It can change the y-factor of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series3"]]$yFactor, 5)
 })
 
-context("setXOffsets")
+## context("setXOffsets")
 
 test_that("It can change the x-offset of one xy-series", {
   dataMapping <- DataMapping$new()
@@ -512,7 +512,7 @@ test_that("It can change the x-offset of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series3"]]$xOffset, 5)
 })
 
-context("setYOffsets")
+## context("setYOffsets")
 
 test_that("It can change the y-offset of one xy-series", {
   dataMapping <- DataMapping$new()
@@ -570,7 +570,7 @@ test_that("It can change the y-offset of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series3"]]$yOffset, 5)
 })
 
-context("setTypes")
+## context("setTypes")
 
 test_that("It can change the type of one xy-series", {
   dataMapping <- DataMapping$new()
@@ -629,7 +629,7 @@ test_that("It can change the type of multiple xy-series", {
 })
 
 #### setLinetypes ####
-context("setLinetypes")
+## context("setLinetypes")
 
 test_that("It can change the type of one xy-series", {
   dataMapping <- DataMapping$new()
@@ -687,7 +687,7 @@ test_that("It can change the type of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series3"]]$lty, 3)
 })
 
-context("setColors")
+## context("setColors")
 
 test_that("It can change the color of one xy-series", {
   dataMapping <- DataMapping$new()
@@ -762,7 +762,7 @@ test_that("It can change the color of multiple xy-series", {
   expect_equal(dataMapping$xySeries[["my series3"]]$color, "blue")
 })
 
-context("setConfiguration")
+## context("setConfiguration")
 
 test_that("It can set a configuration", {
   dataMapping <- DataMapping$new()
@@ -864,7 +864,7 @@ test_that("Setting a does not affect initial xy-data objects configuration", {
   expect_equal(dataMapping$xySeries[["my series1"]]$yOffset, 3)
 })
 
-context("xLim")
+## context("xLim")
 
 test_that("X limit of a empty mapping is c(0, 0)", {
   dataMapping <- DataMapping$new()
@@ -946,7 +946,7 @@ test_that("xLim is not changed by adding new data if set manually", {
   expect_equal(dataMapping$xLim, c(2, 39))
 })
 
-context("yLim")
+## context("yLim")
 
 test_that("Y limit of a empty mapping is c(0, 0)", {
   dataMapping <- DataMapping$new()
@@ -1075,7 +1075,7 @@ test_that("yLim is not changed by adding new data if set manually", {
   expect_equal(dataMapping$yLim, c(2, 39))
 })
 
-context("xDimension xUnit")
+## context("xDimension xUnit")
 
 test_that("Dimension and unit of an empty DataMapping are NULL", {
   dataMapping <- DataMapping$new()
@@ -1130,7 +1130,7 @@ test_that("It can change xUnit", {
   expect_equal(dataMapping$xUnit, ospUnits$Time$`day(s)`)
 })
 
-context("yDimension yUnit")
+## context("yDimension yUnit")
 
 test_that("Dimension and unit of an empty DataMapping are NULL", {
   dataMapping <- DataMapping$new()

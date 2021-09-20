@@ -1,10 +1,11 @@
 #' Create a parameter set describing an individual and write it to the Excel file
 #'
-#' @param individualCharacteristics An `IndividualCharacteristics` object describing the individual. See
-#' `createIndividualCharacterstics` for more information
+#' @param individualCharacteristics An `IndividualCharacteristics` object
+#'   describing the individual. See `createIndividualCharacterstics` for more
+#'   information.
 #' @param outputXLSPath Path to the Excel file the parameter set will be written to
+#'
 #' @seealso createIndividualCharacteristics crateIndividual
-#' @export
 #'
 #' @examples
 #' \dontrun{
@@ -15,6 +16,8 @@
 #' )
 #' writeIndividualToXLS(humanIndividualCharacteristics, pathToExcelFile)
 #' }
+#'
+#' @export
 writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   ospsuite:::validateIsString(outputXLSPath)
 
@@ -48,21 +51,25 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #'
 #' @details Read individual characteristics from an excel sheet
 #' and create an `IndividualCharacteristics`-object. The excel sheet must have
-#' the colums `IndividualId`, `Species`, `Population`, `Gender`, `Weight [kg]`,
+#' the column `IndividualId`, `Species`, `Population`, `Gender`, `Weight [kg]`,
 #' `Height [cm]`, `Age [year(s)]`, and `BMI`.
 
 #' @param XLSpath Full path to the excel file
 #'
-#' @param individualId (String) Id of the individual as stored in the `IndividualId` column.
+#' @param individualId (String) Id of the individual as stored in the
+#'   `IndividualId` column.
 #' @param sheet Name of the sheet. If `NULL` (default), the first sheet of the
-#' file is used.
+#'   file is used.
 #' @param nullIfNotFound Boolean. If `TRUE` (default), `NULL` is returned if
 #' no entry with the give `individualId` exists. Otherwise, an error is thrown.
 #'
 #' @return An `IndividualCharacteristics` object
 #' @import ospsuite
 #' @export
-readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = NULL, nullIfNotFound = TRUE) {
+readIndividualCharacteristicsFromXLS <- function(XLSpath,
+                                                 individualId,
+                                                 sheet = NULL,
+                                                 nullIfNotFound = TRUE) {
   ospsuite:::validateIsString(XLSpath, individualId)
 
   # If no sheet has been specified, read from the first sheet
