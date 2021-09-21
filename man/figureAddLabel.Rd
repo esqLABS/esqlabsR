@@ -17,3 +17,4 @@ figureAddLabel(label, location = "topleft", offset = c(0, 0))
 \description{
 Add a label to a figure. Taken from \url{https://waterprogramming.wordpress.com/2015/12/02/easy-labels-for-multi-panel-plots-in-r/}
 }
+\keyword{internal}

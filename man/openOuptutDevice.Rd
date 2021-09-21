@@ -23,3 +23,4 @@ connection. A list of supported outputs is provided in
 PlotConfiguration$outputDevice is not supported or the value is \code{NULL},
 output is directed to the default plot frame.
 }
+\keyword{internal}

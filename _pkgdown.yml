@@ -1,0 +1,74 @@
+url: https://esqlabs.github.io/esqlabsR/
+
+
+reference:
+
+  - title: R6 Classes
+    desc:  Important objects for modeling and simulation and plotting workflows.
+    contents:
+      - matches("^Data")
+      - matches("^XY")
+      - matches("^Plot")
+
+  - title: Helper functions for data import, wrangling, and export
+    #desc:
+    contents:
+      - matches("^read")
+      - matches("^extend")
+      - matches("^set")
+      - matches("^write")
+      - matches("^export")
+
+  - title: Helper functions for modeling and simulation
+    #desc:
+    contents:
+      - matches("^compare")
+      - matches("^calculate")
+      - contains("Simulation")
+      - contains("Function")
+      - contains("Quantiles")
+      - matches("^geo")
+      - sampleRandomValue
+      - applyIndividualParameters
+      - Distributions
+
+  - title: Helper functions for plotting
+    #desc:
+    contents:
+      - matches("^plot")
+      - contains("color")
+      - GraphicsDevices
+
+  - title: Input validation
+    #desc:
+    contents:
+      - matches("^valid")
+      - matches("^is")
+      - stringToNum
+      - GenderInt
+
+  - title: Shiny applications
+    #desc:
+    contents:
+      - matches("^start")
+
+  - title: Miscllaneous
+    #desc:
+    contents:
+      - matches("^enum")
+      - matches("^get")
+      - escapeForRegex
+      - executeInParallel
+      - OR
+      - pathFromClipboard
+      - removeFromList
+      - sourceAll
+
+
+# articles:
+#
+#   - title:
+#     navbar:
+#     desc:
+#     contents:
+#     - web_only/ggbetweenstats

@@ -31,3 +31,4 @@
 \description{
 Add legend to a plot
 }
+\keyword{internal}

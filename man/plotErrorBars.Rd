@@ -35,3 +35,4 @@ vertical error bars are drawn. If "x", horizontal error bars are drawn}
 \description{
 Taken from \url{https://www.r-graph-gallery.com/4-barplot-with-error-bar.html}
 }
+\keyword{internal}

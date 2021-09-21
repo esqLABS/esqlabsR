@@ -103,6 +103,7 @@ esqLABS_colors <- function(nrOfColors) {
 #' @param location Location of the label. Allowed entries are 'topleft',
 #'   'topcenter', 'topright', 'bottomleft', 'bottomright', 'bottomcenter'
 #' @param offset Coordinates of the offset of the label
+#' @keywords internal
 figureAddLabel <- function(label, location = "topleft",
                            offset = c(0, 0)) {
   coords <- switch(location,
@@ -124,6 +125,7 @@ figureAddLabel <- function(label, location = "topleft",
 #'
 #' @inheritParams graphics::legend
 #' @param ... Additional arguments to be passed to `graphics::legend`.
+#' @keywords internal
 .figureAddLegend <- function(x, legend, col, pch, lty, ...) {
   # Legend does not ignore ellipsis arguments that are not supported, so they must be removed from the arguments list
   supportedArgs <- names(formals(graphics::legend))
@@ -154,6 +156,7 @@ figureAddLabel <- function(label, location = "topleft",
 #'
 #' @examples
 #' col2hsv("yellow")
+#' @keywords internal
 col2hsv <- function(color) {
   ospsuite:::validateIsString(color)
   rgb <- col2rgb(color)
@@ -174,6 +177,8 @@ col2hsv <- function(color) {
 #' @param axis Dimension to which the error bars are added. If "y" (default),
 #'   vertical error bars are drawn. If "x", horizontal error bars are drawn
 #' @param ... Graphical parameters (see [par()])
+#'
+#' @keywords internal
 plotErrorBars <- function(x,
                           y,
                           upper,
@@ -222,6 +227,8 @@ PlotTypes <- enum(list(
 #'   `GraphicsDevices`-enum. If the provided output defined in
 #'   PlotConfiguration$outputDevice is not supported or the value is `NULL`,
 #'   output is directed to the default plot frame.
+#'
+#' @keywords internal
 openOuptutDevice <- function(plotConfiguration, width, height) {
   if (is.null(plotConfiguration$outputDevice)) {
     return()
@@ -247,6 +254,7 @@ openOuptutDevice <- function(plotConfiguration, width, height) {
 #' @import ospsuite
 #'
 #' @details If the output of the plot is directed to a file, close the device.
+#' @keywords internal
 closeOutputDevice <- function(plotConfiguration) {
   if (is.null(plotConfiguration$outputDevice)) {
     return()
@@ -261,6 +269,8 @@ closeOutputDevice <- function(plotConfiguration) {
 #' @param type String value of argument `type` passed to function `plot()`
 #'
 #' @return TRUE if `type` contains "p" or is "b", FALSE otherwise
+#'
+#' @keywords internal
 .isPoint <- function(type) {
   isCharInString("p", type) || (type == "b")
 }
@@ -270,6 +280,8 @@ closeOutputDevice <- function(plotConfiguration) {
 #' @param type String value of argument `type` passed to function `plot()`
 #'
 #' @return TRUE if `type` contains "l" or is "b", FALSE otherwise
+#'
+#' @keywords internal
 .isLine <- function(type) {
   isCharInString("l", type) || (type == "b")
 }

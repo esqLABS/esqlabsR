@@ -15,3 +15,4 @@ TRUE if \code{type} contains "p" or is "b", FALSE otherwise
 \description{
 Does the plot type contain points?
 }
+\keyword{internal}
