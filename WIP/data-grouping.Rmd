@@ -3,6 +3,7 @@ title: "Data grouping"
 output: 
   rmarkdown::html_vignette:
     toc: true
+    eval: FALSE
 #output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Data grouping}
