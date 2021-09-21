@@ -7,8 +7,9 @@ reference:
     desc:  Important objects for modeling and simulation and plotting workflows.
     contents:
       - matches("^Data")
-      - matches("^XY")
-      - matches("^Plot")
+      - XYData
+      - Plotable
+      - PlotConfiguration
 
   - title: Helper functions for data import, wrangling, and export
     #desc:
@@ -46,6 +47,7 @@ reference:
       - matches("^is")
       - stringToNum
       - GenderInt
+      - contains("Types")
 
   - title: Shiny applications
     #desc:
