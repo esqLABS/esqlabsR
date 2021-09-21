@@ -1,10 +1,25 @@
 ---
-title: "Plot_concept"
-output: html_document
+title: "Data grouping"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+#output: pdf_document
+vignette: >
+  %\VignetteIndexEntry{Data grouping}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{r, echo = FALSE, results = "hide", message = FALSE}
+library(esqlabsR)
 ```
 
 ## An example of the anticipated workflow:

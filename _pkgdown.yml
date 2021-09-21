@@ -59,7 +59,6 @@ reference:
     contents:
       - matches("^enum")
       - matches("^get")
-      - escapeForRegex
       - executeInParallel
       - OR
       - pathFromClipboard

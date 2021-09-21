@@ -195,7 +195,7 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
   # If logarithmic scaling of y-axis has been selected and manually provided y-lim
   # is non-positive, use the automatically calculated values
-  if (isCharInString("y", dataMapping$log) && !all(dataMapping$yLim > 0)) {
+  if (grepl("y", dataMapping$log) && !all(dataMapping$yLim > 0)) {
     dataMapping$yLim <- NULL
   }
 
@@ -409,7 +409,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
 
   # If logarithmic scaling of y-axis has been selected and manually provided y-lim
   # is non-positive, use the automatically calculated values
-  if (isCharInString("y", dataMapping$log) && !all(dataMapping$yLim > 0)) {
+  if (grepl("y", dataMapping$log) && !all(dataMapping$yLim > 0)) {
     dataMapping$yLim <- NULL
   }
 
@@ -419,7 +419,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
     ylim = dataMapping$yLim + abs(dataMapping$yLim) * c(-0.1, 0.1),
     xlab = "Observed values",
     ylab = "Simulated values",
-    log = if (isCharInString("y", dataMapping$log)) {
+    log = if (grepl("y", dataMapping$log)) {
       "xy"
     } else {
       ""

@@ -86,7 +86,7 @@ DataMapping <- R6::R6Class(
           }))
           # If logarithmic scaling of the y axis is selected, the minimal value should be greater than zero
           yMin <- min(sapply(self$xySeries, function(x) {
-            if (isCharInString("y", self$log)) {
+            if (grepl("y", self$log)) {
               toUnit(
                 quantityOrDimension = self$yDimension,
                 values = x$yMinPositive(),
