@@ -13,33 +13,43 @@ A set of x and y value pairs
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{xValues}}{An array of x-values. For time series, the values must be in minutes.}
+\item{\code{xValues}}{An array of x-values. For time series, the values must be
+in minutes.}
 
 \item{\code{yValues}}{An array of y-values.}
 
-\item{\code{yError}}{An array of arithmetic error of the y-values. Only positive values are allowed}
+\item{\code{yError}}{An array of arithmetic error of the y-values. Only positive
+values are allowed}
 
-\item{\code{xMax}}{Maximal value of x values plus xOffset multiplied by the scaling factor}
+\item{\code{xMax}}{Maximal value of x values plus xOffset multiplied by the
+scaling factor}
 
-\item{\code{xMin}}{Minimal value of x values plus xOffset multiplied by the scaling factor}
+\item{\code{xMin}}{Minimal value of x values plus xOffset multiplied by the
+scaling factor}
 
-\item{\code{yMax}}{Maximal value (plus error, if specified) of y values plus yOffset multiplied by the scaling factor}
+\item{\code{yMax}}{Maximal value (plus error, if specified) of y values plus
+yOffset multiplied by the scaling factor}
 
-\item{\code{yMin}}{Minimal value (minus error, if specified) of y values plus yOffset multiplied by the scaling factor}
+\item{\code{yMin}}{Minimal value (minus error, if specified) of y values plus
+yOffset multiplied by the scaling factor}
 
-\item{\code{dataType}}{Type of the data. See enum \code{XYDataTypes} for the list of supported types.}
+\item{\code{dataType}}{Type of the data. See enum \code{XYDataTypes} for the list of
+supported types.}
 
-\item{\code{xDimension}}{Dimension of x values. See enum \code{ospDimensions} for the list of supported dimensions.}
+\item{\code{xDimension}}{Dimension of x values. See enum \code{ospDimensions} for the
+list of supported dimensions.}
 
 \item{\code{xUnit}}{Unit of x values}
 
-\item{\code{yDimension}}{Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.}
+\item{\code{yDimension}}{Dimension of y values. See enum \code{ospDimensions} for the
+list of supported dimensions.}
 
 \item{\code{yUnit}}{Unit of y values}
 
 \item{\code{yErrorUnit}}{Unit of y error values}
 
-\item{\code{MW}}{Molecular weight in g/mol. Required for conversion between molar and mass dimensions. Can be \code{NULL} (default)}
+\item{\code{MW}}{Molecular weight in g/mol. Required for conversion between
+molar and mass dimensions. Can be \code{NULL} (default)}
 }
 \if{html}{\out{</div>}}
 }
@@ -67,7 +77,8 @@ A set of x and y value pairs
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize a new instance of the class. xVals, yVals, and yError (optional) must be of the same length
+Initialize a new instance of the class. xVals, yVals, and
+yError (optional) must be of the same length
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{XYData$new(xVals, yVals, label, yError = NULL)}\if{html}{\out{</div>}}
 }
@@ -86,7 +97,7 @@ Initialize a new instance of the class. xVals, yVals, and yError (optional) must
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A new `XYData` object.
+A new \code{XYData} object.
 }
 }
 \if{html}{\out{<hr>}}
@@ -99,8 +110,9 @@ Returns the minimal value (minus error, if specified) of the y series that is no
 }
 
 \subsection{Returns}{
-The minimal non-negative value of the y series minus error, if specified, plus yOffset multiplied by the scaling factor
-If no such value exists, returns Inf.
+The minimal non-negative value of the y series minus error, if
+specified, plus yOffset multiplied by the scaling factor If no such
+value exists, returns Inf.
 }
 }
 \if{html}{\out{<hr>}}
@@ -115,13 +127,14 @@ x values with all conversions applied.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{unit}}{Target unit. If \code{NULL} (default), no conversion between units is applied.}
+\item{\code{unit}}{Target unit. If \code{NULL} (default), no conversion between units
+is applied.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Raw xValues plus xOffset multiplied by xFactor and converted to a specified unit.
-It is assumed that raw xValues are in \code{xUnit}.
+Raw xValues plus xOffset multiplied by xFactor and converted to a
+specified unit. It is assumed that raw xValues are in \code{xUnit}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -136,12 +149,14 @@ y values with all conversions applied.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{unit}}{Target unit. If \code{NULL} (default), no conversion between units is applied.}
+\item{\code{unit}}{Target unit. If \code{NULL} (default), no conversion between units
+is applied.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Raw yValues plus yOffset multiplied by yFactor and converted to a specified unit.
+Raw yValues plus yOffset multiplied by yFactor and converted to a
+specified unit.
 It is assumed that raw yValues are in \code{yUnit}.
 }
 }
@@ -157,13 +172,15 @@ y error values with all conversions applied.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{unit}}{Target unit. If \code{NULL} (default), the no conversion between units is applied.}
+\item{\code{unit}}{Target unit. If \code{NULL} (default), the no conversion between
+units is applied.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Raw yError multiplied by yFactor and converted to a specified unit.
-It is assumed that raw yError are in \code{yUnit}. If no error is specified, \code{NULL} is returned.
+Raw yError multiplied by yFactor and converted to a specified
+unit. It is assumed that raw yError are in \code{yUnit}. If no error is
+specified, \code{NULL} is returned.
 }
 }
 \if{html}{\out{<hr>}}
@@ -183,8 +200,10 @@ A named list holding the metadata of this \code{XYData}
 \if{html}{\out{<a id="method-setMetaData"></a>}}
 \if{latex}{\out{\hypertarget{method-setMetaData}{}}}
 \subsection{Method \code{setMetaData()}}{
-Adds a new entry to meta data list of \code{XYData} object or changes its value if name is already present in meta data.
-If only \code{name} is provided or if \code{value} is set to NULL, entry with corresponding name is deleted from meta data.
+Adds a new entry to meta data list of \code{XYData} object or changes its
+value if name is already present in meta data. If only \code{name} is provided
+or if \code{value} is set to NULL, entry with corresponding name is deleted
+from meta data.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{XYData$setMetaData(name, value = NULL)}\if{html}{\out{</div>}}
 }

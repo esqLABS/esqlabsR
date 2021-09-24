@@ -46,7 +46,7 @@ DataMappingConfiguration <- R6::R6Class(
       }
     },
     #' @field lineTypes A named list listing line types that will be used to plot a certain data set. Keys are names of data sets,
-    #' values are numerical values recognized by the \code{lty} argument of the \code{\link{plot}} function
+    #' values are numerical values recognized by the `lty` argument of the [plot()] function
     lineTypes = function(value) {
       if (missing(value)) {
         as.list(private$.lineTypes)
@@ -55,7 +55,7 @@ DataMappingConfiguration <- R6::R6Class(
       }
     },
     #' @field colors A named list listing color values that will be used to plot a certain data set. Keys are names of data sets,
-    #' values are values recognized by the \code{col} argument of the \code{\link{plot}} function
+    #' values are values recognized by the `col` argument of the [plot()] function
     colors = function(value) {
       if (missing(value)) {
         as.list(private$.colors)
@@ -129,14 +129,14 @@ DataMappingConfiguration <- R6::R6Class(
     },
     #' @description Set the colors that will be used to plot a certain data set.
     #' @param labels A string or a list of strings representing the names of the data sets
-    #' @param colors Values representing a color recognized by the \code{col} argument of the \code{\link{plot}} function
+    #' @param colors Values representing a color recognized by the `col` argument of the [plot()] function
     setColors = function(labels, colors) {
       ospsuite:::validateIsSameLength(labels, colors)
       private$.colors[labels] <- colors
     },
     #' @description Set the line types that will be used to plot a certain data set.
     #' @param labels A string or a list of strings representing the names of the data sets
-    #' @param lineTypes Values recognized by the \code{col} argument of the \code{\link{plot}} function
+    #' @param lineTypes Values recognized by the `col` argument of the [plot()] function
     setLineTypes = function(labels, lineTypes) {
       ospsuite:::validateIsSameLength(labels, lineTypes)
       private$.lineTypes[labels] <- lineTypes

@@ -1,0 +1,346 @@
+---
+title: "Data grouping"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    eval: FALSE
+#output: pdf_document
+vignette: >
+  %\VignetteIndexEntry{Data grouping}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{r, echo = FALSE, results = "hide", message = FALSE}
+library(esqlabsR)
+```
+
+## An example of the anticipated workflow:
+
+1)  Load a simulation that has been created in PK-Sim (or MoBi)
+
+```{r}
+library(ospsuite)
+
+sim <- loadSimulation(file.path(getwd(), "..", "tests", "data", "Stevens_2012_placebo_indiv_results.pkml"))
+```
+
+2)  Run the simulation and create the results. For this example, we are loading the previously generated results from a .scv file to save the time
+
+```{r}
+# simResults <- runSimulation(sim)
+simResults <- importResultsFromCSV(simulation = sim, filePaths = file.path(getwd(), "..", "tests", "data", "Stevens_2012_placebo_indiv_results.csv"))
+```
+
+3)  Load observed data from an excel file. For this, we will use the importer configuration created in MoBi.
+
+```{r}
+configPath <- file.path(getwd(), "..", "tests", "data", "ImporterConfiguration.xml")
+excelPath <- file.path(getwd(), "..", "tests", "data", "CompiledDataSet.xlsx")
+# Load the configuration
+importerConfiguration <- DataImporterConfiguration$new(configPath)
+#Import the data as `DataSet`-objects
+dataSets <- loadDataSetsFromExcel(xlsFilePath = excelPath, importerConfiguration = importerConfiguration)
+```
+
+**!!!Pseudo code from here on!!!**
+
+We now have multiple data sets - observed data loaded from excel and simulated data from the simulation. Now I would like to analyze these data in different ways - visually by creating different types of figures and numerically by e.g. calculating the residuals between simulated results and observed data. It is common to analyze and group multiple data sets together. Setting up such a grouping is quite annoying and therefore I would prefer to do it only once and then apply such a group for different analysis techniques (e.g. different plot types). A class `DataGrouping` should offer methods for adding simulation outputs or `DataSet` objects (those can be loaded from excel, PKML, or created from scratch) and assigning them to groups. Every added data (simulation result or `DataSet`) must have a unique label (or name, or ID, or whatever). If no label is specified, the default label will be the full path of the output in case of simulation result, or the `name`-property of the `DataSet` object. Being able to specify the label is especially important when comparing results of different simulations that would have identical names (as their paths would be identical).
+
+1)  Adding simulation results. In this example, I want to add three simulation outputs defined by the paths. I will also define the groups they belong to:
+
+```{r eval = FALSE}
+myGrouping <- DataGrouping$new()
+myGrouping$addSimulationOutputs(simulationResults = simResults, paths = list("Organism|Lumen|Stomach|Metformin|Gastric retention",
+                 "Organism|Lumen|Stomach|Metformin|Gastric retention distal", 
+                 "Organism|Lumen|Stomach|Metformin|Gastric retention proximal"),
+                 groups = list("Total",
+                               "Distal",
+                               "Proximal")
+)
+```
+
+Internally, the results are stored as `DataSet` objects and can be accessed as a named list:
+
+```{r eval = FALSE}
+names(myGrouping$dataSets)
+[1] "Organism|Lumen|Stomach|Metformin|Gastric retention proximal" "Organism|Lumen|Stomach|Metformin|Gastric retention"         
+[3] "Organism|Lumen|Stomach|Metformin|Gastric retention distal"  
+```
+
+If I want to add the same outputs from another simulation run, I need to specify the labels, otherwise the old simulation results will be overwritten (as they have identical paths)
+
+```{r eval = FALSE}
+myGrouping$addSimulationOutputs(simulationResults = simResults2, paths = list("Organism|Lumen|Stomach|Metformin|Gastric retention",
+                 "Organism|Lumen|Stomach|Metformin|Gastric retention distal", 
+                 "Organism|Lumen|Stomach|Metformin|Gastric retention proximal"),
+                 labels = list("Total sim2",
+                               "Distal sim2",
+                               "Proximal sim2"),
+                 groups = list("Total",
+                               "Distal",
+                               "Proximal")
+)
+```
+
+(for the following examples, let's assume we never did this and `myGrouping` still has only three data sets from the first simulation.)
+
+2)  Adding observed data. I will now add three data sets and assign them to the corresponding groups.
+
+```{r eval = FALSE}
+myGrouping$addDataSets(dataSets = list(dataSets$Stevens_2012_placebo.Placebo_total,
+                                       dataSets$Stevens_2012_placebo.Placebo_proximal,
+                                       dataSets$Stevens_2012_placebo.Placebo_distal),
+                 groups = list("Total",
+                               "Proximal",
+                               "Distal")
+)
+```
+
+The `DataGrouping` now holds six data sets
+
+```{r eval = FALSE}
+names(myGrouping$dataSets)
+[1] "Organism|Lumen|Stomach|Metformin|Gastric retention proximal" "Organism|Lumen|Stomach|Metformin|Gastric retention"         
+[3] "Organism|Lumen|Stomach|Metformin|Gastric retention distal"  "Stevens_2012_placebo.Placebo_total"
+[5] "Stevens_2012_placebo.Placebo_proximal" "Stevens_2012_placebo.Placebo_distal"
+```
+
+And the data sets are organized in three groups
+
+```{r eval = FALSE}
+myGrouping$groups
+
+$Proximal
+[1] "Organism|Lumen|Stomach|Metformin|Gastric retention proximal" "Stevens_2012_placebo.Placebo_proximal"  
+
+$Distal
+[1] "Organism|Lumen|Stomach|Metformin|Gastric retention distal" "Stevens_2012_placebo.Placebo_distal"  
+
+$Total
+[1] "Organism|Lumen|Stomach|Metformin|Gastric retention" "Stevens_2012_placebo.Placebo_total"  
+```
+
+So far, we had to perform exactly two steps - adding simulation results and adding observed data to the `DataGrouping`. This should be sufficient to create some standard figures!
+
+`plotIndividualProfile(myGroupings)`
+
+![](Figures/individualProfile.png)
+
+-- All data sets within one group are presented with the same color. Simulation results are presented as lines, observed data (by default, `DataSet` imported via `$addDataSets()`) as symbols. In case multiple observed data belong to the same grouping, each data set will be presented with distinct symbols.
+
+-- Default axis captions are "Dimension [unit]". Default axis scaling is "linear".
+
+Every data set of a `DataGrouping` can be *scaled* and *shifted*. All values stored in a data set are multiplied by the defined *scaling factor* , while the *offset* is added to all the values (note: the offset has the same unit as the values of the `DataSet`!). Use cases are (but not limited to):
+
+-   The observed data contains negative time values as t = 0 is time of drug administration. In our simulation, the administration is simulated at t = 30, so we would like to shift the data by 30 minutes:
+
+```{r eval = FALSE}
+# The default offset is 0. The method returns a named list of all data and the corresponding offset values
+myGrouping$getXOffsets()
+```
+
+```
+Stevens_2012_placebo.Placebo_distal Organism|Lumen|Stomach|Metformin|Gastric retention proximal 
+                                                          0                                                           0 
+         Organism|Lumen|Stomach|Metformin|Gastric retention                       Stevens_2012_placebo.Placebo_proximal 
+                                                          0                                                           0 
+  Organism|Lumen|Stomach|Metformin|Gastric retention distal                          Stevens_2012_placebo.Placebo_total 
+                                                          0                                                           0
+```
+
+```{r eval = FALSE}
+myGrouping$setXOffsets(labels = list("Stevens_2012_placebo.Placebo_total", "Stevens_2012_placebo.Placebo_distal", "Stevens_2012_placebo.Placebo_proximal"),
+                       values = list(30, 30, 30))
+```
+
+-   The observed data is given as baseline-subtracted values. We now want to subtract the baseline from simulation results
+
+```{r eval = FALSE}
+# The default offset is 0. The method returns a named list of all data and the corresponding offset values
+myGrouping$getYOffsets()
+```
+
+```
+Stevens_2012_placebo.Placebo_distal Organism|Lumen|Stomach|Metformin|Gastric retention proximal 
+                                                          0                                                           0 
+         Organism|Lumen|Stomach|Metformin|Gastric retention                       Stevens_2012_placebo.Placebo_proximal 
+                                                          0                                                           0 
+  Organism|Lumen|Stomach|Metformin|Gastric retention distal                          Stevens_2012_placebo.Placebo_total 
+                                                          0                                                           0
+```
+
+```{r eval = FALSE}
+myGrouping$setYOffsets(labels = list("Organism|Lumen|Stomach|Metformin|Gastric retention proximal", "Organism|Lumen|Stomach|Metformin|Gastric retention distal", "Organism|Lumen|Stomach|Metformin|Gastric retention"),
+                       values = list(-1e-3, -1e-3, -6e-4))
+```
+
+-   The observed data are given as percentage of maximal signal. We want to scale simulation results to the maximal simulated value
+
+```{r eval = FALSE}
+#Get the maximal value
+maxVal <- max(dataSets$Stevens_2012_placebo.Placebo_total$xValues)
+#Set scaling to 1/maxVal
+myGrouping$setYScaleFactors(labels = dataSets$Stevens_2012_placebo.Placebo_total$name, values = 1/maxVal)
+```
+
+Let's reset all the scaling and shifting
+
+```{r eval = FALSE}
+dataNames <- names(myGrouping$dataSets)
+myGrouping$setXOffsets(labels = dataNames, values = rep(0, length(dataNames)))
+myGrouping$setYOffsets(labels = dataNames, values = rep(0, length(dataNames)))
+myGrouping$setXScaleFactors(labels = dataNames, values = rep(0, length(dataNames)))
+myGrouping$setYScaleFactors(labels = dataNames, values = rep(0, length(dataNames)))
+```
+
+We can use the same `DataGrouping` to create other types of plots - here a "predicted-vs-observed" plot
+
+-   `plotPredictedVsObserved(myGroupings)`
+
+![](Figures/PredictedVsObserved.png)
+
+Or a box-plot (let us not debate on whether a box plot of this kind makes any sense. And, obviously, the different units are not 
+unified in this example.)
+
+-   `plotBoxPlot(myGroupings)`
+
+![](Figures/BoxPlot.png)
+
+`DataGrouping` should not only support the results of an individual simulation (i.e., one values vector is generated per output), but also
+accept population simulation results. In case of a population simulation, multiple results vectors are generated for one output (e.g., "Organism|Lumen|Stomach|Metformin|Gastric retention").
+
+```{r eval = FALSE}
+# Importing results of a popualtion simulation
+popSimResults <- importResultsFromCSV(simulation = sim, filePaths = file.path(getwd(), "..", "tests", "data", "Stevens_2012_placebo_pop_results.csv"))
+
+#Creating a new `DataGrouping` for the population results
+populationGrouping <- DataGrouping$new()
+#Adding simulation results - as for individual results
+populationGrouping$addSimulationOutputs(simulationResults = simResults, paths = list("Organism|Lumen|Stomach|Metformin|Gastric retention",
+                 "Organism|Lumen|Stomach|Metformin|Gastric retention distal", 
+                 "Organism|Lumen|Stomach|Metformin|Gastric retention proximal"),
+                 groups = list("Total",
+                               "Distal",
+                               "Proximal")
+)
+
+#Adding the same observed data as for individual grouping
+populationGrouping$addDataSets(dataSets = list(dataSets$Stevens_2012_placebo.Placebo_total,
+                                       dataSets$Stevens_2012_placebo.Placebo_proximal,
+                                       dataSets$Stevens_2012_placebo.Placebo_distal),
+                 groups = list("Total",
+                               "Proximal",
+                               "Distal")
+)
+```
+
+Such a `DataGrouping` could be used with the previously described `plot...` functions. However, instead of using the `plotIndividualProfile()`
+function with one line per individual, the simulated data should be presented as a median line and pre-defined quantile ranges. The corresponding function
+would be `plotPopulationQuantiles()`
+
+```
+popProfile <- plotPopulationQuantiles(populationGrouping)
+```
+
+![](Figures/populationProfile.png)
+
+
+## Customizing the figures
+Every `plot...` function (silently) returns the ggplot-object in case the user want to 
+further modify it. More control over the appearance of the figures can be provided with *configuration*  objects
+that are optionally passed to the `plot...` function. As the different types of figures may require some specific settings,
+different configuration classes could be implemented specific for the figure type. We could also think of allowing creation
+of a certain type of the configuration based on another configuration, so the user does not have to e.g. set user-defined colors every time he creates a configuration...
+
+### The commom properties of all configurations would be:
+  - Axis labels
+  - Axis scaling (lin/log)
+  - Color, line type, symbol type for each data set (if not defined, colors/line types/symbol types are automatically selected)
+  - Units of x and y axis
+  - Axis limits
+  
+### Configuration for `plotIndividualProfile`
+  - 
+  
+### Configuration for `plotPopulationQuantiles`
+  - A triplet of numerical values for (lower range quantile, line, upper range quantile) with defaults (0.05, 0.5, 0.95) (corresponding to a plot with median and 5th-95th median)
+  
+### Configuration for `plotPredictedVsObserved`
+  - foldDistance - umerical values for the fold-distance lines to be drawn. Default is 2, multiple fold-distance lines can be specified
+  - timeDiffThreshold Allowed difference between observed and simulated time values in minutes. Default is 10 minutes.
+  If for a certain observed point no simulated time point exists within the defined threshold, the value is not considered. Can be discussed if this can be solved differently.
+  
+As an example, we want to plot the individual results in hours for the x axis and % for the y axis. Additionally, we want the y-axis be scaled logarithmic. 
+We will also save the output of the function into a variable so it can be re-used (see next section "Multi-pannel figures and output to files").
+
+```{r eval = FALSE}
+#Create a configuration
+indivProfileConfiguration <- PlotIndividualProfileConfiguration$new()
+#Change axis units
+indivProfileConfiguration$xUnit <- ospUnits$Time$h
+indivProfileConfiguration$yUnit <- ospUnits$Fraction$`%`
+#Change scaling of y-axis
+indivProfileConfiguration$log <- "y"
+
+#Create the figure
+indivProfile <- plotIndividualProfile(myGroupings, configuration = indivProfileConfiguration)
+```
+
+![](Figures/individualProfile_adjusted.png)
+
+We want also to plot the data in a predicted-vs-observed plot with an additional fold-distance range (2-fold is default).
+We will create the configuration from the existing `indivProfileConfiguration` so we do not have to repeat setting the units and scaling.
+
+```{r eval = FALSE}
+#Create a configuration
+pvoConfiguration <- PlotPredictedVsObservedConfiguration$new(indivProfileConfiguration)
+#Set the fold distance
+pvoConfiguration$foldDistance <- c(2, 3)
+
+#Create the figure
+plotPredictedVsObserved(myGroupings, configuration = pvoConfiguration)
+```
+
+![](Figures/PredictedVsObserved_adjusted.png)
+  
+## Multi-pannel figures and output to files
+So far, we have been generating single figures with the output to the default output device (usually the "Plot"-tab of RStudio). A common workflow is 
+to combine multiple figures to a multi-pannel figure and to plot to files like PNG or PDF. This can be performed with the `plotMultiPannel()`-function and the corresponding
+configuration (as for the other plot function, the configuration is optionally). The configuration could define the following properties:
+
+  - Title of the figure
+  - Output device - `NULL` for the default device (usually the "Plot"-tab of RStudio), or PNG or PDF
+  - Output path in case output device is PNG/PDF
+  - width/height/resolution
+  - nrOfColumns
+  
+Creating a multi-pannel figure from the plot-objects would look like this:
+
+```{r eval = FALSE}
+plotMultiPanel(c(indivProfile, popProfile, predVsObs))
+```
+
+![](Figures/multiPannel.png)
+
+And if we want to add a title and save it as png:
+
+```{r eval = FALSE}
+config <- MultiPannelConfiguration()$new()
+config$title <- "Figures combined"
+config$outputDevice <- "PNG"
+config$nrOfCols <- 3
+config$outputPath <- "c:/figure.png"
+
+plotMultiPanel(c(indivProfile, popProfile, predVsObs), configuration = config)
+```
+
+![](Figures/multiPannel_adjusted.png)

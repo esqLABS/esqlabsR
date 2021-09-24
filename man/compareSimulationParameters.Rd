@@ -2,12 +2,7 @@
 % Please edit documentation in R/utilities-simulation.R
 \name{compareSimulationParameters}
 \alias{compareSimulationParameters}
-\title{Compare all parameters of two simulations
-The method compares all parameters of the two simulations and return a named list with
-lists \code{In1NotIn2} (paths of parameters present in \code{simulation1} but not in \code{simulation2}),
-\code{In2NotIn1} (paths of parameters present in \code{simulation2} but not in \code{simulation1}),
-and \code{Different} a list of paths of parameters that differ between \code{simulation1} and \code{simulation1}.
-Two parameters are considered different if their formulas or values differ (@seealso{isParametersEqual})}
+\title{Compare all parameters of two simulations}
 \usage{
 compareSimulationParameters(simulation1, simulation2)
 }
@@ -17,17 +12,20 @@ compareSimulationParameters(simulation1, simulation2)
 \item{simulation2}{Second \code{Simulation} to compare}
 }
 \value{
-Named list with entries \code{In1NotIn2}, \code{In2NotIn1}, and \code{Different}, holding the paths that
-are present in the first but not in the second simulation, present in the second but not in the first simulation, and present in
-both simulations but with different formulas and/or values, respectively.
+Named list with entries \code{In1NotIn2}, \code{In2NotIn1}, and \code{Different},
+holding the paths that are present in the first but not in the second
+simulation, present in the second but not in the first simulation, and
+present in both simulations but with different formulas and/or values,
+respectively.
 }
 \description{
-Compare all parameters of two simulations
-The method compares all parameters of the two simulations and return a named list with
-lists \code{In1NotIn2} (paths of parameters present in \code{simulation1} but not in \code{simulation2}),
-\code{In2NotIn1} (paths of parameters present in \code{simulation2} but not in \code{simulation1}),
-and \code{Different} a list of paths of parameters that differ between \code{simulation1} and \code{simulation1}.
-Two parameters are considered different if their formulas or values differ (@seealso{isParametersEqual})
+The method compares all parameters
+of the two simulations and return a named list with lists \code{In1NotIn2} (paths
+of parameters present in \code{simulation1} but not in \code{simulation2}), \code{In2NotIn1}
+(paths of parameters present in \code{simulation2} but not in \code{simulation1}), and
+\code{Different} a list of paths of parameters that differ between \code{simulation1}
+and \code{simulation1}.
+Two parameters are considered different if their formulas or values differ
 }
 \examples{
 \dontrun{
@@ -35,4 +33,7 @@ humanSim <- loadSimulation(file.path(modelFolder, "DefaultHuman.pkml"))
 ratSim <- loadSimulation(file.path(modelFolder, "DefaultRat.pkml"))
 diffParams <- compareSimulationParameters(humanSim, ratSim)
 }
+}
+\seealso{
+isParametersEqual
 }

@@ -1,4 +1,4 @@
-context("readIndividualCharacteristicsFromXLS")
+## context("readIndividualCharacteristicsFromXLS")
 
 test_that("It returns NULL if the specified individual Id cannot be found in
           the file and nullIfNotFound is TRUE", {

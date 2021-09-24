@@ -3,11 +3,13 @@
 #' 'Value', and 'Units'
 #'
 #' @param paramsXLSpath Path to the excel file
-#' @param sheets Names of the excel sheets containing the information about the parameters. Multiple sheets
-#' can be processed. If no sheets are provided, the first one in the Excel file is used.
+#' @param sheets Names of the excel sheets containing the information about the
+#'   parameters. Multiple sheets can be processed. If no sheets are provided,
+#'   the first one in the Excel file is used.
 #'
-#' @return A list containing lists 'paths' with the full paths to the parameters, 'values' the values of the parameters,
-#' and 'units' with the units the values are ín.
+#' @return A list containing lists 'paths' with the full paths to the
+#'   parameters, 'values' the values of the parameters, and 'units' with the
+#'   units the values are in.
 #' @import openxlsx
 #' @export
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
@@ -66,10 +68,11 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' #'
 #' @param parameter1 First parameter to compare
 #' @param parameter2 Second parameter to compare
-#' @param checkFormulaValues If TRUE, values of explicit formulas are always compared. Otherwise, the values
-#' are only compared if the formulas are overridden (isFixedValue == TRUE). FALSE by default.
+#' @param checkFormulaValues If TRUE, values of explicit formulas are always
+#'   compared. Otherwise, the values are only compared if the formulas are
+#'   overridden (isFixedValue == TRUE). FALSE by default.
 #'
-#' @return \code{TRUE} if parameters are considered equal, \code{FALSE} otherwise
+#' @return `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
 isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE) {
   ospsuite:::validateIsOfType(c(parameter1, parameter2), "Parameter")
@@ -122,8 +125,9 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
 }
 
 #' Check if two table formulas are equal.
-#' Table formulas are equal if the number of points is equal and all x-y value pairs
-#' are equal between the two formulas
+#'
+#' Table formulas are equal if the number of points is equal and all x-y value
+#' pairs are equal between the two formulas
 #'
 #' @param formula1 First formula to compare
 #' @param formula2 Second formula to compare
@@ -146,16 +150,16 @@ isTableFormulasEqual <- function(formula1, formula2) {
   }
 }
 
-#' Set the values of parameters in the simulation by path, if the \code{condition} is true.
+#' Set the values of parameters in the simulation by path, if the `condition` is true.
 #'
 #' @param parameterPaths A single or a list of parameter path
 #' @param values A numeric value that should be assigned to the parameters or a vector
 #' of numeric values, if the value of more than one parameter should be changed. Must have the same
 #' length as 'parameterPaths'
-#' @param condition A function that receives a \code{Parmeter} as an argument
-#' and returns \code{TRUE} of \code{FALSE}
-#' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
-#' are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.
+#' @param condition A function that receives a `Parmeter` as an argument
+#' and returns `TRUE` of `FALSE`
+#' @param units A string or a list of strings defining the units of the `values`. If `NULL` (default), values
+#' are assumed to be in base units. If not `NULL`, must have the same length as 'parameterPaths'.
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #'
 #' @examples
@@ -189,8 +193,8 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, values, simula
 #' @param values A numeric value that should be assigned to the parameters or a vector
 #' of numeric values, if the value of more than one parameter should be changed. Must have the same
 #' length as 'parameterPaths'.
-#' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
-#' are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.
+#' @param units A string or a list of strings defining the units of the `values`. If `NULL` (default), values
+#' are assumed to be in base units. If not `NULL`, must have the same length as 'parameterPaths'.
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #' @export
 #' @import ospsuite

@@ -17,7 +17,7 @@ PlotConfiguration <- R6::R6Class(
 
     },
     #' @field outputDevice Output target of the plot. If NULL (default), the figure is created in the default "plot"
-    #' output. Other values indicate output into a file. A list of supported outputs is provided in \code{GraphicsDevices}-enum.
+    #' output. Other values indicate output into a file. A list of supported outputs is provided in `GraphicsDevices`-enum.
     outputDevice = NULL,
     #' @field outputName A string used as the name of the .png file and as the title of the plot
     outputName = "",
@@ -26,18 +26,21 @@ PlotConfiguration <- R6::R6Class(
     #' @field width Width of the resulting plot in cm. If NULL (default), the width is automatically calculated
     #' using the value esqlabsEnv$widthPerPlotMapping
     width = NULL,
-    #' @field height Height of the resulting plot in cm. If NULL (default), the height is automatically calculated
+    #' @field height Height of the resulting plot in cm. If `NULL` (default), the
+    #'   height is automatically calculated
     #' using the value esqlabsEnv$heightPerPlotMapping
     height = NULL,
-    #' @field nrOfCols Number of colums in a multi-pannel plot. If NULL (default), the number is calculated automatically
-    #' to fit all panels while trying to keep the number of columns and rows equal. If nrOfCols is specified, the number of rows
-    #' calculated to fit all the panels.
+    #' @field nrOfCols Number of column in a multi-panel plot. If `NULL`
+    #'   (default), the number is calculated automatically to fit all panels
+    #'   while trying to keep the number of columns and rows equal. If `nrOfCols`
+    #'   is specified, the number of rows calculated to fit all the panels.
     nrOfCols = NULL,
     #' @field res Resolution of the .png output in dpi. Default is 600.
     res = 600,
     #' @field pointsize Size of the plotted text. Default is 8.
     pointsize = 8,
-    #' @field addTitle Boolean flag if the title should be added. If TRUE, \code{outputName} is added a title.
+    #' @field addTitle Boolean flag if the title should be added. If TRUE,
+    #'   `outputName` is added a title.
     addTitle = TRUE,
 
     #' @description

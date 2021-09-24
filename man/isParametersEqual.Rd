@@ -22,8 +22,9 @@ isParametersEqual(parameter1, parameter2, checkFormulaValues = FALSE)
 
 \item{parameter2}{Second parameter to compare}
 
-\item{checkFormulaValues}{If TRUE, values of explicit formulas are always compared. Otherwise, the values
-are only compared if the formulas are overridden (isFixedValue == TRUE). FALSE by default.}
+\item{checkFormulaValues}{If TRUE, values of explicit formulas are always
+compared. Otherwise, the values are only compared if the formulas are
+overridden (isFixedValue == TRUE). FALSE by default.}
 }
 \value{
 \code{TRUE} if parameters are considered equal, \code{FALSE} otherwise

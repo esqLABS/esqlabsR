@@ -25,7 +25,10 @@
 
 \item{lty}{the line types and widths for lines appearing in the
     legend.  One of these two \emph{must} be specified for line drawing.}
+
+\item{...}{Additional arguments to be passed to \code{graphics::legend}.}
 }
 \description{
 Add legend to a plot
 }
+\keyword{internal}

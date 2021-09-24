@@ -15,3 +15,4 @@ TRUE if \code{type} contains "l" or is "b", FALSE otherwise
 \description{
 Does the plot type contain line?
 }
+\keyword{internal}

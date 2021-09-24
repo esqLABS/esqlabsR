@@ -11,7 +11,7 @@ sineFunction(x, amplitude, period, xOffset, yOffset)
 
 \item{amplitude}{Numeric, amplitude of the sine function}
 
-\item{period}{Numerci, aplitude of the sine function}
+\item{period}{Numeric, amplitude of the sine function}
 
 \item{xOffset}{Offset of the function on the x-axis}
 

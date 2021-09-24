@@ -19,13 +19,15 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
+## Introduction
+
 This section given an overview on various helper utilities methods implemented in the package.
 
   : `getEsqlabsRSetting(settingName)`
     : `esqlabsR` uses a set of default settings that can be accessed with `getEsqlabsRSetting(settingName)`
     
-    ```{r getEsqlabsRSetting, error=TRUE}
+```{r getEsqlabsRSetting, error=TRUE}
 getEsqlabsRSetting("maxNumberOfCores")
 
-    getEsqlabsRSetting("Setting that does not exist")
+getEsqlabsRSetting("Setting that does not exist")
 ```

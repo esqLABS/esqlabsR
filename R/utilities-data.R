@@ -1,11 +1,13 @@
 #' Read time-values data from excel file
 #'
-#' @param dataConfiguration An object of \code{DataConfiguration}
-#' @details The methods reads time-values data from the properly defined excel sheet and creates \code{XYData} objects
-#' according to the groupings. Each sheet in \code{DataConfiguration$sheets} is split according to columns listed in
-#' \code{DataConfiguration$columnsToSplitBy}. The output structure is a nested list with levels corresponding to the groupings.
+#' @param dataConfiguration An object of `DataConfiguration`
+#' @details The methods reads time-values data from the properly defined excel
+#'   sheet and creates `XYData` objects according to the groupings. Each sheet
+#'   in `DataConfiguration$sheets` is split according to columns listed in
+#'   `DataConfiguration$columnsToSplitBy`. The output structure is a nested list
+#'   with levels corresponding to the groupings.
 #'
-#' @return A (nested) list of \code{XYData} objects
+#' @return A (nested) list of `XYData` objects
 #' @import ospsuite
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
@@ -99,7 +101,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
 #' Convert string to numeric
 #'
 #' @param string A string or a list of strings to be converted to numeric values
-#' @details Tries to convert each string to a numeric with \code{as.numeric}
+#' @details Tries to convert each string to a numeric with `as.numeric`
 #' If any conversion fails and returns an NA, the value is tested for being a LLOQ-value,
 #' i.e., of a form "<2". If this is a case, the value is substituted by 0.
 #' In any other case where the string cannot be converted to a numeric, an NA is returned.

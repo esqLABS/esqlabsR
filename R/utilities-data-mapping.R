@@ -1,8 +1,8 @@
-#' Plot multiple \code{PlotMapping} in one plot.
+#' Plot multiple `PlotMapping` in one plot.
 #'
-#' @param dataMappingList A single or a list of \code{PlotMapping} objects
-#' @param plotConfiguration An object of type \code{PlotConfiguration}
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param dataMappingList A single or a list of `PlotMapping` objects
+#' @param plotConfiguration An object of type `PlotConfiguration`
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 #' @export
 plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
   dataMappingList <- ospsuite:::toList(dataMappingList)
@@ -45,13 +45,13 @@ plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
 
 #' Plot XYData
 #'
-#' @description Draw XYData on top of an existing plot using the \code{points} method.
+#' @description Draw XYData on top of an existing plot using the `points` method.
 #'
-#' @param xySeries An \code{XYData} object to be plotted
+#' @param xySeries An `XYData` object to be plotted
 #' @param xUnit Target unit of x-axis.
 #' @param yUnit Target unit of y-axis.
-#' If \code{TRUE},
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' If `TRUE`,
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 #' @import ospsuite
 plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
   ospsuite:::validateIsOfType(xySeries, "XYData")
@@ -75,13 +75,13 @@ plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
 
 #' Plot XYData quantiles
 #'
-#' @description Draw XYData on top of an existing plot using the \code{points} method.
+#' @description Draw XYData on top of an existing plot using the `points` method.
 #'
-#' @param xySeries An \code{XYData} object to be plotted
+#' @param xySeries An `XYData` object to be plotted
 #' @inheritParams getQuantilesYData
 #' @param xUnit Target unit of x-axis.
 #' @param yUnit Target unit of y-axis.
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 #' @import ospsuite
 #' @export
 plotXYDataAggregated <- function(xySeries, xUnit = NULL, yUnit = NULL,
@@ -113,18 +113,18 @@ plotXYDataAggregated <- function(xySeries, xUnit = NULL, yUnit = NULL,
 }
 
 #' Plot individual time-values profile
-#' @description Create a 2D-plot of the x-y data sets stored in \code{dataMapping}
+#' @description Create a 2D-plot of the x-y data sets stored in `dataMapping`
 #'
-#' @param dataMapping A \code{DataMapping} object with \code{XYData}
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param dataMapping A `DataMapping` object with `XYData`
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 plotIndividualProfile <- function(dataMapping, ...) {
   plotTimeValues(dataMapping, aggregated = FALSE, ...)
 }
 
 #' Create a box-plot of data
 #'
-#' @param dataMapping A \code{DataMapping} object with \code{XYData}
-#' @param ... Any parameter that can be interpreted by the default \code{\link{boxplot}} function
+#' @param dataMapping A `DataMapping` object with `XYData`
+#' @param ... Any parameter that can be interpreted by the default [boxplot()] function
 #' @import ospsuite
 #' @export
 plotBoxPlot <- function(dataMapping, ...) {
@@ -145,29 +145,37 @@ plotBoxPlot <- function(dataMapping, ...) {
 
   # Draw a legend, if specified
   if (dataMapping$addLegend) {
-    .figureAddLegend(x = dataMapping$legendPosition, legend = legendEntries, col = NULL, pch = NULL, lty = rep(0, length(legendEntries)), ...)
+    .figureAddLegend(
+      x = dataMapping$legendPosition,
+      legend = legendEntries,
+      col = NULL,
+      pch = NULL,
+      lty = rep(0, length(legendEntries)),
+      ...
+    )
   }
 }
 
 #' Plot individual time-values profile
-#' @description Create a 2D-plot of the x-y data sets stored in \code{dataMapping}.
+#' @description Create a 2D-plot of the x-y data sets stored in `dataMapping`.
 #' Population simulation results are plotted as quantiles
 #'
-#' @param dataMapping A \code{DataMapping} object with \code{XYData}
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param dataMapping A `DataMapping` object with `XYData`
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 plotPopulationQuantiles <- function(dataMapping, ...) {
   plotTimeValues(dataMapping, aggregated = TRUE, ...)
 }
 
 #' Plot time-values profile
-#' @description Create a 2D-plot of the x-y data sets stored in \code{dataMapping}
+#' @description Create a 2D-plot of the x-y data sets stored in `dataMapping`
 #'
 #' @import ospsuite
-#' @param dataMapping A \code{DataMapping} object with \code{XYData}
-#' @param aggregated Boolean. If \code{FALSE}, simulation data containing multiple individuals (population simulation)
-#' are plottet separately for each individual. If \code{TRUE}, population simulation results are plotted as
-#' mid-percentile and lower/upper percentile bands around.
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param dataMapping A `DataMapping` object with `XYData`
+#' @param aggregated Boolean. If `FALSE`, simulation data containing multiple
+#'   individuals (population simulation) are plotted separately for each
+#'   individual. If `TRUE`, population simulation results are plotted as
+#'   mid-percentile and lower/upper percentile bands around.
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 #' @import hash
 plotTimeValues <- function(dataMapping, aggregated, ...) {
   ospsuite:::validateIsOfType(dataMapping, "DataMapping")
@@ -181,13 +189,13 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
   nrOfEntries <- length(dataMapping$groupings) + length(dataMapping$ungroupedSeries)
   # Generate default values in case specific values for color etc are not set
   colors <- esqLABS_colors(nrOfColors = nrOfEntries)
-  pchArr <- 1:dataMapping$xySeriesCount
+  pchArr <- rep(0:24, times = (dataMapping$xySeriesCount%/%26 + 1))
   ltyArr <- 1:nrOfEntries
   graphicsParIdx <- 1
 
   # If logarithmic scaling of y-axis has been selected and manually provided y-lim
   # is non-positive, use the automatically calculated values
-  if (isCharInString("y", dataMapping$log) && !all(dataMapping$yLim > 0)) {
+  if (grepl("y", dataMapping$log) && !all(dataMapping$yLim > 0)) {
     dataMapping$yLim <- NULL
   }
 
@@ -352,19 +360,29 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
   # Draw a legend, if specified
   if (dataMapping$addLegend && (length(legendEntries) > 0)) {
-    .figureAddLegend(x = dataMapping$legendPosition, legend = legendEntries, col = legendColors, pch = legendPch, lty = legendLty, ...)
+    .figureAddLegend(
+      x = dataMapping$legendPosition,
+      legend = legendEntries,
+      col = legendColors,
+      pch = legendPch,
+      lty = legendLty,
+      ...
+    )
   }
 }
 
 #' Plot a predicted-versus-observed goodness of fit plot
 #'
-#' @param dataMapping THe \code{DataMapping} object for which the goodness-of-fit
-#' plot is to be drawn. For each group within the \code{dataMapping}, simulated
+#' @param dataMapping THe `DataMapping` object for which the goodness-of-fit
+#' plot is to be drawn. For each group within the `dataMapping`, simulated
 #' and observed values are compared.
-#' @param foldDistance Numerical value for the fold-distance lines to be drawn. Default is 2.
-#' @param timeDiffThreshold Allowed difference between observed and simulated time values in minutes. Default is 10.
-#' If for a certain observed point no simulated time point exists within the defined threshold, the value is not considered.
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param foldDistance Numerical value for the fold-distance lines to be drawn.
+#'   Default is 2.
+#' @param timeDiffThreshold Allowed difference between observed and simulated
+#'   time values in minutes. Default is 10. If for a certain observed point no
+#'   simulated time point exists within the defined threshold, the value is not
+#'   considered.
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 #'
 #' @details Observed data points are drawn on the x, simulated values on the y axis.
 #' @import ospsuite
@@ -391,7 +409,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
 
   # If logarithmic scaling of y-axis has been selected and manually provided y-lim
   # is non-positive, use the automatically calculated values
-  if (isCharInString("y", dataMapping$log) && !all(dataMapping$yLim > 0)) {
+  if (grepl("y", dataMapping$log) && !all(dataMapping$yLim > 0)) {
     dataMapping$yLim <- NULL
   }
 
@@ -401,7 +419,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
     ylim = dataMapping$yLim + abs(dataMapping$yLim) * c(-0.1, 0.1),
     xlab = "Observed values",
     ylab = "Simulated values",
-    log = if (isCharInString("y", dataMapping$log)) {
+    log = if (grepl("y", dataMapping$log)) {
       "xy"
     } else {
       ""
@@ -463,19 +481,29 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
 
   # Draw a legend, if specified
   if (dataMapping$addLegend) {
-    .figureAddLegend(x = dataMapping$legendPosition, legend = legendEntries, col = legendColors, pch = legendPch, lty = NULL, ...)
+    .figureAddLegend(
+      x = dataMapping$legendPosition,
+      legend = legendEntries,
+      col = legendColors,
+      pch = legendPch,
+      lty = NULL,
+      ...
+    )
   }
 }
 
-#' Calculate the root mean square error for groupings in \code{dataMapping}s
+#' Calculate the root mean square error for groupings in `dataMapping`s
 #'
 #'
-#' @param dataMappingList A \code{DataMapping} or a list of \code{DataMapping} objects.
-#' @param timeDiffThreshold Allowed difference between observed and simulated time values in minutes. Default is 10.
-#' If for a certain observed point no simulated time point exists within the defined threshold, the value is not considered.
+#' @param dataMappingList A `DataMapping` or a list of `DataMapping` objects.
+#' @param timeDiffThreshold Allowed difference between observed and simulated
+#'   time values in minutes. Default is 10. If for a certain observed point no
+#'   simulated time point exists within the defined threshold, the value is not
+#'   considered.
 #'
-#' @details The error is calculated for each group separately and added up. For each group, the error is defined as
-#' the root of the sum of the squared residuals between each simulated result and observed data.
+#' @details The error is calculated for each group separately and added up. For
+#'   each group, the error is defined as the root of the sum of the squared
+#'   residuals between each simulated result and observed data.
 #'
 #' @return Total error for all groups across all provided data mappings.
 #' @import ospsuite
@@ -487,7 +515,12 @@ calculateRMSE <- function(dataMappingList, timeDiffThreshold = 10) {
   for (dataMapping in dataMappingList) {
     # Convert timeDiffThreshold to xUnit of the dataMapping
     if (!is.null(timeDiffThreshold)) {
-      timeDiffThreshold <- toUnit(quantityOrDimension = "Time", values = timeDiffThreshold, sourceUnit = "min", targetUnit = dataMapping$xUnit)
+      timeDiffThreshold <- toUnit(
+        quantityOrDimension = "Time",
+        values = timeDiffThreshold,
+        sourceUnit = "min",
+        targetUnit = dataMapping$xUnit
+      )
     }
 
     for (grouping in dataMapping$groupings) {

@@ -1,10 +1,11 @@
 #' Create a parameter set describing an individual and write it to the Excel file
 #'
-#' @param individualCharacteristics An \code{IndividualCharacteristics} object describing the individual. See
-#' \code{createIndividualCharacterstics} for more information
+#' @param individualCharacteristics An `IndividualCharacteristics` object
+#'   describing the individual. See `createIndividualCharacterstics` for more
+#'   information.
 #' @param outputXLSPath Path to the Excel file the parameter set will be written to
+#'
 #' @seealso createIndividualCharacteristics crateIndividual
-#' @export
 #'
 #' @examples
 #' \dontrun{
@@ -15,6 +16,8 @@
 #' )
 #' writeIndividualToXLS(humanIndividualCharacteristics, pathToExcelFile)
 #' }
+#'
+#' @export
 writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   ospsuite:::validateIsString(outputXLSPath)
 
@@ -47,22 +50,26 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' Read individual characteristics from file
 #'
 #' @details Read individual characteristics from an excel sheet
-#' and create an \code{IndividualCharacteristics}-object. The excel sheet must have
-#' the colums `IndividualId`, `Species`, `Population`, `Gender`, `Weight [kg]`,
+#' and create an `IndividualCharacteristics`-object. The excel sheet must have
+#' the column `IndividualId`, `Species`, `Population`, `Gender`, `Weight [kg]`,
 #' `Height [cm]`, `Age [year(s)]`, and `BMI`.
 
 #' @param XLSpath Full path to the excel file
 #'
-#' @param individualId (String) Id of the individual as stored in the `IndividualId` column.
-#' @param sheet Name of the sheet. If \code{NULL} (default), the first sheet of the
-#' file is used.
-#' @param nullIfNotFound Boolean. If \code{TRUE} (default), \code{NULL} is returned if
-#' no entry with the give \code{individualId} exists. Otherwise, an error is thrown.
+#' @param individualId (String) Id of the individual as stored in the
+#'   `IndividualId` column.
+#' @param sheet Name of the sheet. If `NULL` (default), the first sheet of the
+#'   file is used.
+#' @param nullIfNotFound Boolean. If `TRUE` (default), `NULL` is returned if
+#' no entry with the give `individualId` exists. Otherwise, an error is thrown.
 #'
 #' @return An `IndividualCharacteristics` object
 #' @import ospsuite
 #' @export
-readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = NULL, nullIfNotFound = TRUE) {
+readIndividualCharacteristicsFromXLS <- function(XLSpath,
+                                                 individualId,
+                                                 sheet = NULL,
+                                                 nullIfNotFound = TRUE) {
   ospsuite:::validateIsString(XLSpath, individualId)
 
   # If no sheet has been specified, read from the first sheet
@@ -100,10 +107,10 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, individualId, sheet = 
 
 #' Apply an individual to the simulation.
 #' For human species, only parameters that do not override formulas are applied.
-#' For other species, all parameters returned by \code{createIndividual} are applied.
+#' For other species, all parameters returned by `createIndividual` are applied.
 #'
-#' @param individualCharacteristics \code{IndividualCharacteristics} describing an individual. Optional
-#' @param simulation \code{Simulation} loaded form the PKML file
+#' @param individualCharacteristics `IndividualCharacteristics` describing an individual. Optional
+#' @param simulation `Simulation` loaded form the PKML file
 #' @import ospsuite
 #' @export
 #'

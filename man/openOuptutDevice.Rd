@@ -9,7 +9,7 @@ openOuptutDevice(plotConfiguration, width, height)
 \arguments{
 \item{plotConfiguration}{An object of type \code{PlotConfiguration}}
 
-\item{width}{Width of the ouput figure}
+\item{width}{Width of the output figure}
 
 \item{height}{Height of the output figure}
 }
@@ -17,8 +17,10 @@ openOuptutDevice(plotConfiguration, width, height)
 Open an output device.
 }
 \details{
-If the output of the plot is directed to a file, open the connection.
-A list of supported outputs is provided in \code{GraphicsDevices}-enum.
-If the provided output defined in PlotConfiguration$outputDevice is not supported or the value is \code{NULL},
+If the output of the plot is directed to a file, open the
+connection. A list of supported outputs is provided in
+\code{GraphicsDevices}-enum. If the provided output defined in
+PlotConfiguration$outputDevice is not supported or the value is \code{NULL},
 output is directed to the default plot frame.
 }
+\keyword{internal}

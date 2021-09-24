@@ -43,10 +43,10 @@ Plotable <- R6::R6Class(
     #' @field type "p" for points, "l" for line, or "pl" for both
     type = "p",
 
-    #' @field pch Either an integer specifying a symbol or a single character to be used as the default in plotting points. See \code{par} for more information.
+    #' @field pch Either an integer specifying a symbol or a single character to be used as the default in plotting points. See `par` for more information.
     pch = NULL,
 
-    #' @field lty The line type. See \code{par} for more information.
+    #' @field lty The line type. See `par` for more information.
     lty = NULL,
 
     #' @description
