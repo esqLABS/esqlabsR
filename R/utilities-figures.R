@@ -272,7 +272,7 @@ closeOutputDevice <- function(plotConfiguration) {
 #'
 #' @keywords internal
 .isPoint <- function(type) {
-  grepl("p", type) || (type == "b")
+  isCharInString("p", type) || (type == "b")
 }
 
 #' Does the plot type contain line?
@@ -283,5 +283,5 @@ closeOutputDevice <- function(plotConfiguration) {
 #'
 #' @keywords internal
 .isLine <- function(type) {
-  grepl("l", type) || (type == "b")
+  isCharInString("l", type) || (type == "b")
 }
