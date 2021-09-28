@@ -168,3 +168,17 @@ compareWithNA <- function(v1, v2) {
   same[is.na(same)] <- FALSE
   return(same)
 }
+
+#' Is a character part of string?
+#'
+#' @param char Character to find in the string
+#' @param string String that should contain the character
+#'
+#' @return TRUE if the \code{character} is a substring if \code{string}, FALSE otherwise
+#' @export
+#'
+#' @examples
+#' isCharInString("a", "bsdalk")
+isCharInString <- function(char, string) {
+  any(unlist(strsplit(string, ""), use.names = FALSE) == char)
+}
