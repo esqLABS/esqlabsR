@@ -18,8 +18,8 @@ environment:
   KEEP_VIGNETTES: true
   R_ARCH: x64
   matrix:
-  - R_VERSION: devel
-    GCC_PATH: mingw_64
+  # - R_VERSION: devel
+  #   GCC_PATH: mingw_64
   - R_VERSION: release
   - R_VERSION: oldrel
 
@@ -62,12 +62,6 @@ artifacts:
 
   - path: '*.Rcheck\**\*.Rout'
     name: Logs
-
-  - path: "ospsuite_*_ubuntu18.tar.gz"
-    name: Ubuntu18
-
-  - path: "ospsuite_*_centOS7.tar.gz"
-    name: CentOS7
 
   - path: '\*_*.zip'
     name: Win
