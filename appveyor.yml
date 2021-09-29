@@ -2,7 +2,6 @@ image: Visual Studio 2019
 
 # Download script file from GitHub
 init:
-  - ps: Update-AppveyorBuild -Version "$($env:ospsuite_version).$($env:appveyor_build_version)"
   - ps: |
       $ErrorActionPreference = "Stop"
       Invoke-WebRequest http://raw.github.com/krlmlr/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
