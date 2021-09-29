@@ -1,5 +1,4 @@
 test_that("Check key-value mappings work", {
-  library(esqlabsR)
   library(ospsuite)
 
   myEnum <- enum(c(a = "b"))
