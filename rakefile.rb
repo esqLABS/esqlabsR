@@ -1,3 +1,6 @@
+require 'open-uri'
+require 'openssl'
+
 require_relative 'scripts/utils'
 require_relative 'scripts/R'
 require_relative 'scripts/colorize'
