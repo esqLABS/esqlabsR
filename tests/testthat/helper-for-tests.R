@@ -20,14 +20,3 @@ executeWithTestFile <- function(actionWithFile) {
   actionWithFile(newFile)
   file.remove(newFile)
 }
-
-
-#' Escape a string for possible regular expression match
-#'
-#' @param string String to be escaped
-#'
-#' @return string with prefix "\\Q" and suffix "\\E" appended.
-#' The resulting string will not be recognized as a regular expression pattern.
-escapeForRegex <- function(string) {
-  paste0("\\Q", string, "\\E")
-}

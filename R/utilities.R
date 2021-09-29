@@ -140,7 +140,6 @@ getNetHashCode <- function(netWrapper) {
 #' myList <- list("one", "two", "one", "three")
 #' myList <- removeFromList("one", myList)
 #' print(myList)
-#'
 #' @export
 removeFromList <- function(entry, listArg) {
   if (is.null(listArg)) {
@@ -181,4 +180,17 @@ compareWithNA <- function(v1, v2) {
 #' isCharInString("a", "bsdalk")
 isCharInString <- function(char, string) {
   any(unlist(strsplit(string, ""), use.names = FALSE) == char)
+}
+
+
+#' Escape a string for possible regular expression match
+#'
+#' @param string String to be escaped
+#'
+#' @return string with prefix "\\Q" and suffix "\\E" appended.
+#' The resulting string will not be recognized as a regular expression pattern.
+#'
+#' @export
+escapeForRegex <- function(string) {
+  paste0("\\Q", string, "\\E")
 }

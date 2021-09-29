@@ -189,7 +189,7 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
   nrOfEntries <- length(dataMapping$groupings) + length(dataMapping$ungroupedSeries)
   # Generate default values in case specific values for color etc are not set
   colors <- esqLABS_colors(nrOfColors = nrOfEntries)
-  pchArr <- rep(0:24, times = (dataMapping$xySeriesCount%/%26 + 1))
+  pchArr <- rep(0:24, times = (dataMapping$xySeriesCount %/% 26 + 1))
   ltyArr <- 1:nrOfEntries
   graphicsParIdx <- 1
 

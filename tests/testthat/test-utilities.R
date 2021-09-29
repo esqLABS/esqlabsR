@@ -134,3 +134,9 @@ test_that("It finds a 0 with relative threshold", {
 
   expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 10), 2)
 })
+
+
+test_that("It finds a 0 with relative threshold", {
+  expect_true(isCharInString("a", c("bsdalk", "g")))
+  expect_false(isCharInString("a", "g"))
+})

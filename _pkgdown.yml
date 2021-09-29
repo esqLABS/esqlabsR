@@ -49,6 +49,7 @@ reference:
       - stringToNum
       - GenderInt
       - contains("Types")
+      - escapeForRegex
 
   - title: Shiny applications
     #desc:
