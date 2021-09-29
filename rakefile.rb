@@ -48,6 +48,15 @@ def unzip_package(package_full_path)
   end 
   artifact_name
 end
+
+def unzip(package_full_path)
+  unzip_dir = File.dirname(package_full_path)
+  command_line = %W[e #{package_full_path} -o#{unzip_dir}]
+  Utils.run_cmd('7z', command_line)
+  unzip_dir
+end
+
+
 def solution_dir
   File.dirname(__FILE__)
 end
