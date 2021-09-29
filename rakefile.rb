@@ -52,3 +52,7 @@ end
 def description_file
   File.join(solution_dir,'DESCRIPTION')
 end 
+
+def temp_dir
+  "C:/temp"
+end
