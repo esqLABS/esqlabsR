@@ -23,4 +23,3 @@ Returns the HSV values for a given R color name
 \examples{
 col2hsv("yellow")
 }
-\keyword{internal}

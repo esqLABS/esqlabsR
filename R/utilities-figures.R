@@ -156,7 +156,7 @@ figureAddLabel <- function(label, location = "topleft",
 #'
 #' @examples
 #' col2hsv("yellow")
-#' @keywords internal
+#' @export
 col2hsv <- function(color) {
   ospsuite:::validateIsString(color)
   rgb <- col2rgb(color)

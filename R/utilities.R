@@ -174,7 +174,7 @@ compareWithNA <- function(v1, v2) {
 #' @param char Character to find in the string
 #' @param string String that should contain the character
 #'
-#' @return TRUE if the \code{character} is a substring if \code{string}, FALSE otherwise
+#' @return TRUE if the `character` is a substring if `string`, FALSE otherwise
 #' @export
 #'
 #' @examples

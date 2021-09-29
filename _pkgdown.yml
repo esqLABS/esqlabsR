@@ -37,6 +37,7 @@ reference:
     #desc:
     contents:
       - matches("^plot")
+      - matches("^col")
       - contains("color")
       - GraphicsDevices
 
