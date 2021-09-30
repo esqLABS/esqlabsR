@@ -21,7 +21,7 @@ environment:
   # - R_VERSION: devel
   #   GCC_PATH: mingw_64
   - R_VERSION: release
-  - R_VERSION: oldrel
+  # - R_VERSION: oldrel
 
 version: "$(app_version).{build}"
 
