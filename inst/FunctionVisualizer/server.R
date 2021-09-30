@@ -164,8 +164,12 @@ server <- function(input, output, session) {
       } else {
         plot(x_values, y_values,
           xlab = arg, ylab = v$equation, type = "l",
-          xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
-          ylim = c(max(min(y_values), input$yLower), min(max(y_values), input$yUpper))
+          # xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
+          # ylim = c(max(min(y_values), input$yLower), min(max(y_values), input$yUpper))
+          # xlim = c(min(x_min, input$xLower), max(x_max, input$xUpper)),
+          # ylim = c(min(min(y_values), input$yLower), max(max(y_values), input$yUpper))
+          xlim = c(input$xLower, input$xUpper),
+          ylim = c(input$yLower, input$yUpper)
         )
       }
 
@@ -204,13 +208,23 @@ server <- function(input, output, session) {
         matplot(plotdata[, 1], plotdata[, -1],
           type = "l", xlab = arg, ylab = v$equation,
           col = 1, lty = 1,
-          xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
-          ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper))
+          # xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
+          # ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper))
+          # version 2
+          # xlim = c(min(x_min, input$xLower), max(x_max, input$xUpper)),
+          # ylim = c(min(y_min, input$yLower), max(y_max, input$yUpper))
+          # version 3 - use only bounds from input fields
+          xlim = c(input$xLower, input$xUpper),
+          ylim = c(input$yLower, input$yUpper)
         )
       } else {
         matplot(NA,
-          xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
-          ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper)),
+          # xlim = c(max(x_min, input$xLower), min(x_max, input$xUpper)),
+          # ylim = c(max(y_min, input$yLower), min(y_max, input$yUpper)),
+          # xlim = c(min(x_min, input$xLower), max(x_max, input$xUpper)),
+          # ylim = c(min(y_min, input$yLower), max(y_max, input$yUpper)),
+          xlim = c(input$xLower, input$xUpper),
+          ylim = c(input$yLower, input$yUpper),
           xlab = arg, ylab = v$equation
         )
 
