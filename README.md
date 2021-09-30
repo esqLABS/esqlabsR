@@ -4,7 +4,7 @@ Utilities functions for modeling and simulation workflows within *esqLABS*.
 
 <!-- badges: start -->
 
-  [![AppVeyor build status](https://ci.appveyor.com/project/IndrajeetPatil/esqlabsr/branch/develop?branch=develop&svg=true)](https://ci.appveyor.com/project/IndrajeetPatil/esqlabsr/branch/develop)
+  [![AppVeyor build status](https://ci.appveyor.com/project/IndrajeetPatil/esqlabsr?branch=develop&svg=true)](https://ci.appveyor.com/project/IndrajeetPatil/esqlabsr/branch/develop)
 <!-- badges: end -->
 
 ## Required packages
