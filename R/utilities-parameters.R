@@ -10,10 +10,9 @@
 #' @return A list containing lists 'paths' with the full paths to the
 #'   parameters, 'values' the values of the parameters, and 'units' with the
 #'   units the values are in.
-#' @import openxlsx
 #' @export
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
-  columnNames <- c("Container.Path", "Parameter.Name", "Value", "Units")
+  columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
 
   ospsuite:::validateIsString(paramsXLSpath)
   ospsuite:::validateIsString(sheets, nullAllowed = TRUE)
@@ -27,13 +26,13 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   units <- c()
 
   for (sheet in sheets) {
-    data <- openxlsx::read.xlsx(xlsxFile = paramsXLSpath, sheet = sheet)
+    data <- readxl::read_excel(path = paramsXLSpath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
     }
-    for (i in seq_along(data[["Container.Path"]])) {
-      path <- paste(data[["Container.Path"]][[i]], data[["Parameter.Name"]][[i]], sep = "|")
+    for (i in seq_along(data[["Container Path"]])) {
+      path <- paste(data[["Container Path"]][[i]], data[["Parameter Name"]][[i]], sep = "|")
       value <- data[["Value"]][[i]]
       unit <- data[["Units"]][[i]]
 

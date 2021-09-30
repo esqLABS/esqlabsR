@@ -13,13 +13,13 @@ Depends:
     ospsuite (>= 10.0)
 Imports:
     hash,
-    openxlsx,
     parallel,
     rClr,
-    readxl,
     shiny,
     shinyjs,
-    tools
+    tools,
+    readxl,
+    writexl
 Suggests: 
     knitr,
     rmarkdown,

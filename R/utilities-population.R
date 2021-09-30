@@ -9,7 +9,7 @@
 #'
 #' @return A `PopulationCharacteristics` object based on the information
 #' in the excel file.
-#' @import openxlsx
+#' @import readxl
 #' @export
 readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) {
   columnNames <- c(
@@ -23,7 +23,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   if (is.null(sheet)) {
     sheet <- 1
   }
-  data <- read.xlsx(xlsxFile = XLSpath, sheet = sheet)
+  data <- readxl::read_excel(path = XLSpath, sheet = sheet)
 
   if (!(all(length(names(data)) == length(columnNames)) && all(names(data) == columnNames))) {
     stop(messages$errorWrongPopCharXLSStructure)
@@ -122,7 +122,7 @@ extendPopulationByUserDefinedParams <- function(population,
 #' @details The method reads the information from the specified excel sheet(s)
 #'   and calls `extendPopulationByUserDefinedParams`
 #'
-#' @import openxlsx
+#' @import readxl
 #' @export
 extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
   ospsuite:::validateIsOfType(population, "Population")
@@ -137,7 +137,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
     "SD", "Distribution"
   )
 
-  data <- read.xlsx(xlsxFile = XLSpath, sheet = sheet)
+  data <- readxl::read_excel(path = XLSpath, sheet = sheet)
   if (!(all(length(names(data)) == length(columnNames)) &&
     all(names(data) == columnNames))) {
     stop(messages$errorWrongPopCharXLSStructure)

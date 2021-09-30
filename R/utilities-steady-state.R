@@ -240,5 +240,5 @@ exportSteadyStateToXLS <- function(simulation,
     colnames(parameterInitVals) <- c("Container Path", "Parameter Name", "Value", "Units")
   }
   # Write the results into an excel file.
-  openxlsx::write.xlsx(list("Molecules" = speciesInitVals, "Parameters" = parameterInitVals), resultsXLSPath, colNames = T)
+  writexl::write_xlsx(list("Molecules" = speciesInitVals, "Parameters" = parameterInitVals), path = resultsXLSPath, colNames = TRUE)
 }

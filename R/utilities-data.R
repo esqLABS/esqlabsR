@@ -17,7 +17,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
 
   observedData <- list()
   for (sheet in dataConfiguration$dataSheets) {
-    data <- openxlsx::read.xlsx(xlsxFile = filePath, sheet = sheet)
+    data <- readxl::read_excel(path = filePath, sheet = sheet)
     allFactors <- list()
     groupings <- c()
     # Split the data by a column only if it contains non-NA values
@@ -43,18 +43,18 @@ readOSPSTimeValues <- function(dataConfiguration) {
       yErrorName <- colnames(group)[[dataConfiguration$YErrorColumn]]
 
 
-      # Get name of the dimension before the unit. Replace '.' by spaces
-      xDim <- gsub(pattern = ".", replacement = " ", strsplit(xName, "\\.?\\[")[[1]][[1]], fixed = TRUE)
+      # Get name of the dimension before the unit
+      xDim <- strsplit(xName, "\\ ?\\[")[[1]][[1]]
       # The unit is the second entry
-      xUnit <- gsub(pattern = ".", replacement = " ", strsplit(xName, "\\.?\\[")[[1]][[2]], fixed = TRUE)
+      xUnit <- strsplit(xName, "\\ ?\\[")[[1]][[2]]
       # Remove the trailing ']'
       xUnit <- gsub(pattern = "]", replacement = "", xUnit, fixed = TRUE)
 
-      yDim <- gsub(pattern = ".", replacement = " ", strsplit(yName, "\\.?\\[")[[1]][[1]], fixed = TRUE)
-      yUnit <- gsub(pattern = ".", replacement = " ", strsplit(yName, "\\.?\\[")[[1]][[2]], fixed = TRUE)
+      yDim <- strsplit(yName, "\\ ?\\[")[[1]][[1]]
+      yUnit <- strsplit(yName, "\\ ?\\[")[[1]][[2]]
       yUnit <- gsub(pattern = "]", replacement = "", yUnit, fixed = TRUE)
 
-      yErrorUnit <- gsub(pattern = ".", replacement = " ", strsplit(yErrorName, "\\.?\\[")[[1]][[2]], fixed = TRUE)
+      yErrorUnit <- strsplit(yErrorName, "\\ ?\\[")[[1]][[2]]
       yErrorUnit <- gsub(pattern = "]", replacement = "", yErrorUnit, fixed = TRUE)
 
       timeValues <- XYData$new(stringToNum(xVals), stringToNum(yVals), label = paste(sheet, groupName, sep = "."), yError = stringToNum(yErrorVals))
@@ -73,7 +73,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
 
       # If a molecule is specified, retrieve its molecular weight
       if (!is.null(timeValues$getAllMetaData()$Molecule)) {
-        compoundProperties <- openxlsx::read.xlsx(xlsxFile = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule)
+        compoundProperties <- readxl::read_excel(path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule)
         mwIdx <- which(compoundProperties$`Parameter,.[AdditionalParameter]` == "MW")
         mw <- compoundProperties$`Value.[1,1]`[[mwIdx]]
         unit <- compoundProperties$`Unit.[1,1]`[[mwIdx]]
