@@ -44,7 +44,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   output <- data.frame(unlist(containerPaths, use.names = FALSE), unlist(paramNames, use.names = FALSE), unlist(as.numeric(values), use.names = FALSE), unlist(units, use.names = FALSE))
   colnames(output) <- columnNames
 
-  openxlsx::write.xlsx(output, file = outputXLSPath, colNames = TRUE)
+  writexl::write_xlsx(output, path = outputXLSPath, colNames = TRUE)
 }
 
 #' Read individual characteristics from file
@@ -78,11 +78,11 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
   }
 
   columnNames <- c(
-    "IndividualId", "Species", "Population", "Gender", "Weight.[kg]",
-    "Height.[cm]", "Age.[year(s)]"
+    "IndividualId", "Species", "Population", "Gender", "Weight [kg]",
+    "Height [cm]", "Age [year(s)]"
   )
 
-  data <- openxlsx::read.xlsx(xlsxFile = XLSpath, sheet = sheet, check.names = FALSE)
+  data <- readxl::read_excel(path = XLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
   if (!all(names(data) == columnNames)) {
     stop(messages$errorWrongIndividualCharacteristicsXLSStructure(XLSpath, columnNames))
   }
@@ -97,9 +97,9 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
 
   # Create the IndividualCharacteristics object
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
-    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = data$`Weight.[kg]`[[rowIdx]],
-    height = data$`Height.[cm]`[[rowIdx]],
-    age = data$`Age.[year(s)]`[[rowIdx]]
+    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = data$`Weight [kg]`[[rowIdx]],
+    height = data$`Height [cm]`[[rowIdx]],
+    age = data$`Age [year(s)]`[[rowIdx]]
   )
 
   return(individualCharacteristics)

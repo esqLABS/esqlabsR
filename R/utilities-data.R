@@ -17,7 +17,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
 
   observedData <- list()
   for (sheet in dataConfiguration$dataSheets) {
-    data <- openxlsx::read.xlsx(xlsxFile = filePath, sheet = sheet)
+    data <- readxl::read_excel(path = filePath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
     allFactors <- list()
     groupings <- c()
     # Split the data by a column only if it contains non-NA values
@@ -43,18 +43,18 @@ readOSPSTimeValues <- function(dataConfiguration) {
       yErrorName <- colnames(group)[[dataConfiguration$YErrorColumn]]
 
 
-      # Get name of the dimension before the unit. Replace '.' by spaces
-      xDim <- gsub(pattern = ".", replacement = " ", strsplit(xName, "\\.?\\[")[[1]][[1]], fixed = TRUE)
+      # Get name of the dimension before the unit
+      xDim <- strsplit(xName, "\\ ?\\[")[[1]][[1]]
       # The unit is the second entry
-      xUnit <- gsub(pattern = ".", replacement = " ", strsplit(xName, "\\.?\\[")[[1]][[2]], fixed = TRUE)
+      xUnit <- strsplit(xName, "\\ ?\\[")[[1]][[2]]
       # Remove the trailing ']'
       xUnit <- gsub(pattern = "]", replacement = "", xUnit, fixed = TRUE)
 
-      yDim <- gsub(pattern = ".", replacement = " ", strsplit(yName, "\\.?\\[")[[1]][[1]], fixed = TRUE)
-      yUnit <- gsub(pattern = ".", replacement = " ", strsplit(yName, "\\.?\\[")[[1]][[2]], fixed = TRUE)
+      yDim <- strsplit(yName, "\\ ?\\[")[[1]][[1]]
+      yUnit <- strsplit(yName, "\\ ?\\[")[[1]][[2]]
       yUnit <- gsub(pattern = "]", replacement = "", yUnit, fixed = TRUE)
 
-      yErrorUnit <- gsub(pattern = ".", replacement = " ", strsplit(yErrorName, "\\.?\\[")[[1]][[2]], fixed = TRUE)
+      yErrorUnit <- strsplit(yErrorName, "\\ ?\\[")[[1]][[2]]
       yErrorUnit <- gsub(pattern = "]", replacement = "", yErrorUnit, fixed = TRUE)
 
       timeValues <- XYData$new(stringToNum(xVals), stringToNum(yVals), label = paste(sheet, groupName, sep = "."), yError = stringToNum(yErrorVals))
@@ -63,8 +63,8 @@ readOSPSTimeValues <- function(dataConfiguration) {
       timeValues$yDimension <- yDim
       timeValues$yUnit <- yUnit
       timeValues$yErrorUnit <- yErrorUnit
-      timeValues$setMetaData(name = "StudyId", value = group$Study.Id[[1]])
-      timeValues$setMetaData(name = "PatientId", value = group$PatientId[[1]])
+      timeValues$setMetaData(name = "StudyId", value = group$`Study Id`[[1]])
+      timeValues$setMetaData(name = "PatientId", value = group$`Study Id`[[1]])
       timeValues$setMetaData(name = "Organ", value = group$Organ[[1]])
       timeValues$setMetaData(name = "Compartment", value = group$Compartment[[1]])
       timeValues$setMetaData(name = "Species", value = group$Species[[1]])
@@ -74,14 +74,15 @@ readOSPSTimeValues <- function(dataConfiguration) {
       # If a molecule is specified, retrieve its molecular weight
       moleculeName <- timeValues$getAllMetaData()$Molecule
       if (!is.null(moleculeName) && !is.na(moleculeName)) {
-        compoundProperties <- openxlsx::read.xlsx(xlsxFile = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = moleculeName)
-        mwIdx <- which(compoundProperties$`Parameter,.[AdditionalParameter]` == "MW")
-        mw <- compoundProperties$`Value.[1,1]`[[mwIdx]]
-        unit <- compoundProperties$`Unit.[1,1]`[[mwIdx]]
+        compoundProperties <- readxl::read_excel(path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule,
+                                                 .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+        mwIdx <- which(compoundProperties$`Parameter, [AdditionalParameter]` == "MW")
+        mw <- compoundProperties$`Value [1,1]`[[mwIdx]]
+        unit <- compoundProperties$`Unit [1,1]`[[mwIdx]]
         timeValues$MW <- as.numeric(mw)
       }
 
-      timeValues$setMetaData(name = "GroupId", value = group$GroupId[[1]])
+      timeValues$setMetaData(name = "GroupId", value = group$`Group Id`[[1]])
       timeValues$setMetaData(name = "dataType", value = XYDataTypes$Observed)
 
       # Some ugly piece of code to create a tree-like structure.

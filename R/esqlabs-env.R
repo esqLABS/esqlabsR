@@ -23,7 +23,7 @@ esqlabsEnv$heightPerPlotMapping <- 8
 esqlabsEnv$maxNumberOfCores <- parallel::detectCores() - 1
 
 # Column names to split observed data by
-esqlabsEnv$columnsToSplitDataBy <- c("Group.Id", "Gender", "Patient.Id", "Dose", "Route", "Molecule", "Organ", "Compartment")
+esqlabsEnv$columnsToSplitDataBy <- c("Group Id", "Gender", "Patient Id", "Dose", "Route", "Molecule", "Organ", "Compartment")
 
 # Column index for x values in observed data files
 esqlabsEnv$XValuesColumn <- 10
