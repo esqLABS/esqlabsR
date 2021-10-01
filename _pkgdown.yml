@@ -37,6 +37,7 @@ reference:
     #desc:
     contents:
       - matches("^plot")
+      - matches("^col")
       - contains("color")
       - GraphicsDevices
 
@@ -48,6 +49,7 @@ reference:
       - stringToNum
       - GenderInt
       - contains("Types")
+      - escapeForRegex
 
   - title: Shiny applications
     #desc:

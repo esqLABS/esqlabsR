@@ -2,6 +2,11 @@
 
 Utilities functions for modeling and simulation workflows within *esqLABS*.
 
+<!-- badges: start -->
+
+  [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/esqlabs/esqlabsr?branch=develop&svg=true)](https://ci.appveyor.com/project/IndrajeetPatil/esqlabsr/branch/develop)
+<!-- badges: end -->
+
 ## Required packages
 
 - rClr >0.9

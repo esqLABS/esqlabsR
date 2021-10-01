@@ -66,7 +66,7 @@ getSteadyState <- function(quantitiesPaths = NULL,
   }
 
   # Run simulations concurrently
-  simulationResults <- ospsuite::runSimulationsConcurrently(simulations = simulations)
+  simulationResults <- ospsuite::runSimulations(simulations = simulations)
   # Container task is required for checking the "isFormula" property
   task <- ospsuite:::getContainerTask()
 
@@ -76,11 +76,11 @@ getSteadyState <- function(quantitiesPaths = NULL,
     simId <- simulation$id
 
     allOutputs <- ospsuite::getOutputValues(
-        simulationResults[[simId]],
-        quantitiesOrPaths = quantitiesPathsMap[[simId]],
-        stopIfNotFound = stopIfNotFound,
-        addMetaData = FALSE
-      )
+      simulationResults[[simId]],
+      quantitiesOrPaths = quantitiesPathsMap[[simId]],
+      stopIfNotFound = stopIfNotFound,
+      addMetaData = FALSE
+    )
 
 
     # Get the end values of all outputs

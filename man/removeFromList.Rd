@@ -23,5 +23,4 @@ is not in the list nothing is removed.
 myList <- list("one", "two", "one", "three")
 myList <- removeFromList("one", myList)
 print(myList)
-
 }
