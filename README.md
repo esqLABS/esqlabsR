@@ -4,7 +4,7 @@ Utilities functions for modeling and simulation workflows within *esqLABS*.
 
 <!-- badges: start -->
 
-  [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/esqlabs/esqlabsr?branch=develop&svg=true)](https://ci.appveyor.com/project/esqlabs/esqlabsr/branch/develop)
+  [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/esqlabs/esqlabsr?branch=develop&svg=true)](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/branch/develop)
   [![codecov](https://codecov.io/gh/esqlabs/esqlabsr/branch/develop/graph/badge.svg)](https://codecov.io/gh/esqlabs/esqlabsr)
   
 <!-- badges: end -->
