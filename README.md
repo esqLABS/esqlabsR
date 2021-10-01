@@ -15,7 +15,8 @@ Utilities functions for modeling and simulation workflows within *esqLABS*.
   - https://github.com/Open-Systems-Pharmacology/OSPSuite-R or esqLABS internal
 - R6 (CRAN)
 - readr (CRAN)
-- openxlsx (CRAN)
+- readxl (CRAN)
+- writexl (CRAN)
 - hash (CRAN)
 - shiny (CRAN)
 - shinyjs (CRAN)
@@ -38,5 +39,5 @@ Utilities functions for modeling and simulation workflows within *esqLABS*.
 - Some additional useful information can be found [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's)
 
 ## Code of Conduct
-  
+
   Please note that the esqlabsR project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.

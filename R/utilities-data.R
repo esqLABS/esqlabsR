@@ -17,7 +17,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
 
   observedData <- list()
   for (sheet in dataConfiguration$dataSheets) {
-    data <- readxl::read_excel(path = filePath, sheet = sheet)
+    data <- readxl::read_excel(path = filePath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
     allFactors <- list()
     groupings <- c()
     # Split the data by a column only if it contains non-NA values
@@ -63,8 +63,8 @@ readOSPSTimeValues <- function(dataConfiguration) {
       timeValues$yDimension <- yDim
       timeValues$yUnit <- yUnit
       timeValues$yErrorUnit <- yErrorUnit
-      timeValues$setMetaData(name = "StudyId", value = group$Study.Id[[1]])
-      timeValues$setMetaData(name = "PatientId", value = group$PatientId[[1]])
+      timeValues$setMetaData(name = "StudyId", value = group$`Study Id`[[1]])
+      timeValues$setMetaData(name = "PatientId", value = group$`Study Id`[[1]])
       timeValues$setMetaData(name = "Organ", value = group$Organ[[1]])
       timeValues$setMetaData(name = "Compartment", value = group$Compartment[[1]])
       timeValues$setMetaData(name = "Species", value = group$Species[[1]])
@@ -74,14 +74,15 @@ readOSPSTimeValues <- function(dataConfiguration) {
       # If a molecule is specified, retrieve its molecular weight
       moleculeName <- timeValues$getAllMetaData()$Molecule
       if (!is.null(moleculeName) && !is.na(moleculeName)) {
-        compoundProperties <- readxl::read_excel(path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule)
-        mwIdx <- which(compoundProperties$`Parameter,.[AdditionalParameter]` == "MW")
-        mw <- compoundProperties$`Value.[1,1]`[[mwIdx]]
-        unit <- compoundProperties$`Unit.[1,1]`[[mwIdx]]
+        compoundProperties <- readxl::read_excel(path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule,
+                                                 .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+        mwIdx <- which(compoundProperties$`Parameter, [AdditionalParameter]` == "MW")
+        mw <- compoundProperties$`Value [1,1]`[[mwIdx]]
+        unit <- compoundProperties$`Unit [1,1]`[[mwIdx]]
         timeValues$MW <- as.numeric(mw)
-      }  
+      }
 
-      timeValues$setMetaData(name = "GroupId", value = group$GroupId[[1]])
+      timeValues$setMetaData(name = "GroupId", value = group$`Group Id`[[1]])
       timeValues$setMetaData(name = "dataType", value = XYDataTypes$Observed)
 
       # Some ugly piece of code to create a tree-like structure.

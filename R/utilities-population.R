@@ -23,7 +23,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   if (is.null(sheet)) {
     sheet <- 1
   }
-  data <- readxl::read_excel(path = XLSpath, sheet = sheet)
+  data <- readxl::read_excel(path = XLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
 
   if (!(all(length(names(data)) == length(columnNames)) && all(names(data) == columnNames))) {
     stop(messages$errorWrongPopCharXLSStructure)
@@ -137,7 +137,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
     "SD", "Distribution"
   )
 
-  data <- readxl::read_excel(path = XLSpath, sheet = sheet)
+  data <- readxl::read_excel(path = XLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
   if (!(all(length(names(data)) == length(columnNames)) &&
     all(names(data) == columnNames))) {
     stop(messages$errorWrongPopCharXLSStructure)
