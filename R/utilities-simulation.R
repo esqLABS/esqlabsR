@@ -68,7 +68,7 @@ initializeSimulation <- function(simulation,
       }
       unit <- additionalParams$units[[i]]
       value <- additionalParams$values[[i]]
-      if (!is.na(unit)) {
+      if (is.na(unit)) {
         unit <- NULL
       }
       ospsuite::setParameterValues(parameters = param, values = value, units = unit)
