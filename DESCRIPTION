@@ -19,7 +19,8 @@ Imports:
     shinyjs,
     tools,
     readxl,
-    writexl
+    writexl,
+    vctrs
 Suggests: 
     knitr,
     rmarkdown,
