@@ -53,6 +53,7 @@ plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
 #' If `TRUE`,
 #' @param ... Any parameter that can be interpreted by the default [plot()] function
 #' @import ospsuite
+#' @keywords internal
 plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
   ospsuite:::validateIsOfType(xySeries, "XYData")
   points(xySeries$xValuesProcessed(xUnit),
@@ -177,6 +178,7 @@ plotPopulationQuantiles <- function(dataMapping, ...) {
 #'   mid-percentile and lower/upper percentile bands around.
 #' @param ... Any parameter that can be interpreted by the default [plot()] function
 #' @import hash
+#' @keywords internal
 plotTimeValues <- function(dataMapping, aggregated, ...) {
   ospsuite:::validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- c()

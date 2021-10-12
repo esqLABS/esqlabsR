@@ -19,3 +19,4 @@ If \code{TRUE},}
 \description{
 Draw XYData on top of an existing plot using the \code{points} method.
 }
+\keyword{internal}

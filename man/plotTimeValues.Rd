@@ -19,3 +19,4 @@ mid-percentile and lower/upper percentile bands around.}
 \description{
 Create a 2D-plot of the x-y data sets stored in \code{dataMapping}
 }
+\keyword{internal}
