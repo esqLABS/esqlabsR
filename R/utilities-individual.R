@@ -134,8 +134,9 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
   }
   # For human species, only set parameters that do not override a formula
   if (individualCharacteristics$species == ospsuite::Species$Human) {
-    condition <- function(p) {
-      !p$isFormula
+    condition <- function(path) {
+      task <- ospsuite:::getContainerTask()
+      !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
     }
   }
 

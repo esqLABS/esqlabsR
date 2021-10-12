@@ -8,7 +8,7 @@
 #'   with levels corresponding to the groupings.
 #'
 #' @return A (nested) list of `XYData` objects
-#' @import ospsuite
+#' @import ospsuite vctrs
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
   ospsuite:::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
@@ -78,8 +78,10 @@ readOSPSTimeValues <- function(dataConfiguration) {
       # If a molecule is specified, retrieve its molecular weight
       moleculeName <- timeValues$getAllMetaData()$Molecule
       if (!is.null(moleculeName) && !is.na(moleculeName)) {
-        compoundProperties <- readxl::read_excel(path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule,
-                                                 .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+        compoundProperties <- readxl::read_excel(
+          path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule,
+          .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE)
+        )
         mwIdx <- which(compoundProperties$`Parameter, [AdditionalParameter]` == "MW")
         mw <- compoundProperties$`Value [1,1]`[[mwIdx]]
         unit <- compoundProperties$`Unit [1,1]`[[mwIdx]]
