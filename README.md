@@ -9,6 +9,11 @@ Utilities functions for modeling and simulation workflows within *esqLABS*.
   
 <!-- badges: end -->
 
+## Installation
+
+The latest version of the package comes as a binary `*.zip` and can be downloaded from here (the `.zip` folder under `Artifacts` panel):
+<https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts>
+
 ## Required packages
 
 - rClr >0.9

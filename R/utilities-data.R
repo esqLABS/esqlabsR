@@ -17,7 +17,11 @@ readOSPSTimeValues <- function(dataConfiguration) {
 
   observedData <- list()
   for (sheet in dataConfiguration$dataSheets) {
-    data <- readxl::read_excel(path = filePath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+    data <- readxl::read_excel(
+        path = filePath,
+        sheet = sheet,
+        .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE)
+      )
     allFactors <- list()
     groupings <- c()
     # Split the data by a column only if it contains non-NA values
