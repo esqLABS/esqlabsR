@@ -17,7 +17,7 @@ messages$errorCouldNotCompareParameters <- function(parameter1, parameter2, opti
 messages$errorEnumPutListMultipleKeys <- function() {
   paste0("Trying to put multiple keys, but only one key is allowed!")
 }
-messages$erroFileNotFound <- function(filePath, optionalMessage = NULL) {
+messages$errorFileNotFound <- function(filePath, optionalMessage = NULL) {
   paste0("File '", filePath, "' could not be found!")
 }
 messages$errorEsqlabsRSettingNotFound <- function(settingName) {
@@ -54,7 +54,12 @@ messages$warningValueWithinThresholdNotExisting <- function(value, threshold, op
 messages$warningParameterNotFound <- function(parameterPath, optionalMessage = NULL) {
   paste("Parameter with path `", parameterPath, "` does not exist in the simulation! ", optionalMessage)
 }
-
 messages$errorMultipleMetaDataEntries <- function(optionalMessage = NULL) {
   paste("Can only set a single meta data entry at once", optionalMessage)
+}
+messages$errorColumnNamesNotInFile <- function(filePath, missingCols) {
+  paste("The provided file", filePath, "does not contain the required column(s)", paste(missingCols, collapse = ", "))
+}
+messages$errorNoFileContents <- function(filePath) {
+  paste("The provided sheet from the file", filePath, "does not contain any data.")
 }

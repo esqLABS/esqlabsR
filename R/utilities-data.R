@@ -17,7 +17,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
 
   observedData <- list()
   for (sheet in dataConfiguration$dataSheets) {
-    data <- readxl::read_excel(path = filePath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+    data <- readExcel(path = filePath, sheet = sheet)
     allFactors <- list()
     groupings <- c()
     # Split the data by a column only if it contains non-NA values
@@ -74,8 +74,9 @@ readOSPSTimeValues <- function(dataConfiguration) {
       # If a molecule is specified, retrieve its molecular weight
       moleculeName <- timeValues$getAllMetaData()$Molecule
       if (!is.null(moleculeName) && !is.na(moleculeName)) {
-        compoundProperties <- readxl::read_excel(path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule,
-                                                 .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+        compoundProperties <- readExcel(
+          path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule
+        )
         mwIdx <- which(compoundProperties$`Parameter, [AdditionalParameter]` == "MW")
         mw <- compoundProperties$`Value [1,1]`[[mwIdx]]
         unit <- compoundProperties$`Unit [1,1]`[[mwIdx]]
@@ -127,4 +128,79 @@ stringToNum <- function(string) {
     }
   }
   return(numVals)
+}
+
+#' Calculate mean and standard deviation for each data set of an excel sheet
+#'
+#' @param filePath full path of a xls/xlsx file containing at least the columns `Patient Id`,
+#' `Fraction [%]` and `Error [%]`
+#' @param sheet Name or number of the sheet. If `NULL` (default), the first sheet of the
+#'   file is used.
+#' @param saveToOriginalFile should the calculated means be written to the original file?
+#' @details Computes mean and standard deviation of `Fraction [%]` of each subset of data
+#' given by all combinations of values for the other columns.
+#' Results are written to a new file in the original folder per default, if the results shall
+#' be appended to the original file and sheet, the parameter `saveToOriginalFile` has to be
+#' set to TRUE. Note that this may take significantly longer as every sheet from the original
+#' file has to be read in first.
+#'
+#' @export
+calculateMeans <- function(filePath, sheet = NULL, saveToOriginalFile = FALSE) {
+  validateFileExists(filePath)
+
+  if (saveToOriginalFile) {
+    if (is.null(sheet)) sheet <- readxl::excel_sheets(filePath)[1]
+    # if the results shall be appended to the original file, all sheets have to be read in first
+    # because there is no option to modify files with the writexl package
+    fileContent <- sapply(readxl::excel_sheets(filePath), readExcel,
+      path = filePath, USE.NAMES = TRUE, simplify = FALSE
+    )
+    data <- fileContent[[sheet]]
+  } else {
+    data <- readExcel(path = filePath, sheet = sheet)
+  }
+
+  requiredCols <- c("Patient Id", "Fraction [%]", "Error [%]")
+
+  if (!all(requiredCols %in% names(data))) {
+    stop(messages$errorColumnNamesNotInFile(filePath, setdiff(requiredCols, names(data))))
+  }
+  if (nrow(data) == 0) {
+    stop(messages$errorNoFileContents(filePath))
+  }
+
+  dataSets <- data[, !names(data) %in% requiredCols]
+
+  if (ncol(dataSets) == 0) {
+    dataSets <- data.frame(
+      "Patient Id" = "mean",
+      "Fraction [%]" = mean(data$`Fraction [%]`),
+      "Error [%]" = sd(data$`Fraction [%]`),
+      check.names = FALSE
+    )
+  } else {
+    # dataframe with all combinations of column values
+    dataSets <- dataSets[!duplicated(dataSets), ]
+    means <- c()
+    sds <- c()
+    for (i in 1:nrow(dataSets)) {
+      # filter data for combination of column values
+      dataFiltered <- merge(data, dataSets[i, ])
+      # compute mean and standard deviation for filtered data
+      means <- c(means, mean(dataFiltered$`Fraction [%]`))
+      sds <- c(sd(dataFiltered$`Fraction [%]`))
+    }
+
+    dataSets$`Fraction [%]` <- means
+    dataSets$`Error [%]` <- sds
+    dataSets$`Patient Id` <- rep("mean", nrow(dataSets))
+  }
+
+  if (saveToOriginalFile) {
+    data <- rbind(data, dataSets)
+    fileContent[[sheet]] <- data
+    writexl::write_xlsx(fileContent, path = filePath)
+  } else {
+    writexl::write_xlsx(dataSets, path = paste0(tools::file_path_sans_ext(filePath), "_mean.xlsx"))
+  }
 }

@@ -82,7 +82,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
     "Height [cm]", "Age [year(s)]"
   )
 
-  data <- readxl::read_excel(path = XLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+  data <- readExcel(path = XLSpath, sheet = sheet)
   if (!all(names(data) == columnNames)) {
     stop(messages$errorWrongIndividualCharacteristicsXLSStructure(XLSpath, columnNames))
   }

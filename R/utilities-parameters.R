@@ -26,7 +26,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   units <- c()
 
   for (sheet in sheets) {
-    data <- readxl::read_excel(path = paramsXLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+    data <- readExcel(path = paramsXLSpath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))

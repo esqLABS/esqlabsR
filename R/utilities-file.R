@@ -39,3 +39,14 @@ pathFromClipboard <- function(path = "clipboard") {
   writeClipboard(x)
   return(x)
 }
+
+#' Read XLSX files with suppressed warnings
+#'
+#' @param path Full path of an XLS/XLSX file
+#' @param sheet Name or number of the sheet. If `NULL` (default), the first sheet of the
+#'   file is used.
+#'
+#' @return A tibble with the contents of the excel sheet
+readExcel <- function(path, sheet = NULL) {
+  return(readxl::read_excel(path, sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE)))
+}
