@@ -8,7 +8,7 @@
 #'   with levels corresponding to the groupings.
 #'
 #' @return A (nested) list of `XYData` objects
-#' @import ospsuite
+#' @import ospsuite vctrs
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
   ospsuite:::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))

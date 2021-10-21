@@ -73,7 +73,7 @@ is not in the list nothing is removed." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">esqlabsR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.3</span>
       </span>
     </div>
 
@@ -95,9 +95,6 @@ is not in the list nothing is removed." />
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-    <li>
-      <a href="../articles/data-grouping.html">Data grouping</a>
-    </li>
     <li>
       <a href="../articles/data-handling.html">Data handling</a>
     </li>
@@ -170,16 +167,16 @@ is not in the list nothing is removed.</p>
 to a list.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>myList</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='st'>"one"</span>, <span class='st'>"two"</span>, <span class='st'>"one"</span>, <span class='st'>"three"</span><span class='op'>)</span>
-<span class='va'>myList</span> <span class='op'>&lt;-</span> <span class='fu'>removeFromList</span><span class='op'>(</span><span class='st'>"one"</span>, <span class='va'>myList</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>myList</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; [[1]]
-#&gt; [1] "two"
-#&gt; 
-#&gt; [[2]]
-#&gt; [1] "three"
-#&gt; </div><div class='input'>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='va'>myList</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='st'>"one"</span>, <span class='st'>"two"</span>, <span class='st'>"one"</span>, <span class='st'>"three"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>myList</span> <span class='op'>&lt;-</span> <span class='fu'>removeFromList</span><span class='op'>(</span><span class='st'>"one"</span>, <span class='va'>myList</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>myList</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [[1]]</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] "two"</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [[2]]</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] "three"</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

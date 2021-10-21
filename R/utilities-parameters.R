@@ -155,7 +155,7 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' @param values A numeric value that should be assigned to the parameters or a vector
 #' of numeric values, if the value of more than one parameter should be changed. Must have the same
 #' length as 'parameterPaths'
-#' @param condition A function that receives a `Parmeter` as an argument
+#' @param condition A function that receives a parameter path as an argument
 #' and returns `TRUE` of `FALSE`
 #' @param units A string or a list of strings defining the units of the `values`. If `NULL` (default), values
 #' are assumed to be in base units. If not `NULL`, must have the same length as 'parameterPaths'.
@@ -166,45 +166,21 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #'
 #' simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
 #' sim <- loadSimulation(simPath)
-#' setParameterValuesByPath("Organism|Liver|Volume", 1, sim)
-#'
-#' condition <- function(p) {
-#'   !p$isFormula
+#' condition <- function(path) {
+#'   task <- ospsuite:::getContainerTask()
+#'   !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
 #' }
-#' setParameterValuesByPath(c("Organism|Liver|Volume", "Organism|Volume"), c(2, 3), sim, condition)
+#' setParameterValuesByPathWithCondition(c("Organism|Liver|Volume", "Organism|Volume"), c(2, 3), sim, condition)
 #' }
 #' @import ospsuite
 #' @export
-setParameterValuesByPathWithCondition <- function(parameterPaths, values, simulation, condition = function(p) {
+setParameterValuesByPathWithCondition <- function(parameterPaths, values, simulation, condition = function(path) {
                                                     TRUE
                                                   }, units = NULL) {
   for (i in seq_along(parameterPaths)) {
-    param <- ospsuite::getParameter(parameterPaths[[i]], simulation)
-    if (condition(param)) {
-      setParameterValuesByPathWithUnit(parameterPaths = parameterPaths[[i]], values = values[[i]], simulation = simulation, units = units[[i]])
+    path <- parameterPaths[[i]]
+    if (condition(path)) {
+      ospsuite::setParameterValuesByPath(parameterPaths = parameterPaths[[i]], values = values[[i]], simulation = simulation, units = units[[i]])
     }
   }
-}
-
-#' Set the values of parameters in the simulation by path with is specified unit.
-#'
-#' @param parameterPaths A single or a list of parameter path
-#' @param values A numeric value that should be assigned to the parameters or a vector
-#' of numeric values, if the value of more than one parameter should be changed. Must have the same
-#' length as 'parameterPaths'.
-#' @param units A string or a list of strings defining the units of the `values`. If `NULL` (default), values
-#' are assumed to be in base units. If not `NULL`, must have the same length as 'parameterPaths'.
-#' @param simulation Simulation used to retrieve parameter instances from given paths.
-#' @export
-#' @import ospsuite
-setParameterValuesByPathWithUnit <- function(parameterPaths, values, simulation, units = NULL) {
-  ospsuite:::validateIsString(units, nullAllowed = TRUE)
-  for (i in seq_along(parameterPaths)) {
-    param <- ospsuite::getParameter(parameterPaths[[i]], simulation)
-    valueInBaseUnit <- values[[i]]
-    if (!is.null(units)) {
-      valueInBaseUnit <- ospsuite::toBaseUnit(quantityOrDimension = param, values = valueInBaseUnit, unit = units[[i]])
-    }
-  }
-  ospsuite::setParameterValues(parameters = param, values = valueInBaseUnit)
 }

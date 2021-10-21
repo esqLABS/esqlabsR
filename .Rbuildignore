@@ -45,4 +45,5 @@ references.bib
 ^\cache$
 ^codemeta\.json$
 ^scripts$
+.tgitconfig
 ^rakefile\.rb$
