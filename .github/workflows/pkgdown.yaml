@@ -21,8 +21,6 @@ jobs:
       - name: Query dependencies
         run: |
           install.packages('remotes')
-          install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.1-R3/R3_rClr_0.9.1_Ubuntu18.tar.gz')
-          install.packages('https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v10.0.72/ospsuite_10.0.72_ubuntu18.tar.gz')
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
@@ -33,6 +31,14 @@ jobs:
           path: ${{ env.R_LIBS_USER }}
           key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
           restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
+
+      - name: Install dependencies
+        run: |
+          remotes::install_deps(dependencies = TRUE)
+          install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.1-R3/R3_rClr_0.9.1_Ubuntu18.tar.gz')
+          install.packages('https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v10.0.72/ospsuite_10.0.72_ubuntu18.tar.gz')
+          install.packages("pkgdown")
+        shell: Rscript {0}
 
       - name: Install package
         run: R CMD INSTALL .
