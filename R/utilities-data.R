@@ -136,17 +136,24 @@ stringToNum <- function(string) {
 #' `Fraction [%]` and `Error [%]`
 #' @param sheet Name or number of the sheet. If `NULL` (default), the first sheet of the
 #'   file is used.
+#' @param columnNames vector of length 3, containing names of the columns corresponding
+#' to `Time`, `Measurement` and `Error`, only necessary if they are named differently
+#' in the file e.g. `Time [min]` instead of `Time`
+#' @param nonGroupingCols these columns are not used for grouping data into data sets for which
+#' calculations are done.
 #' @param saveToOriginalFile should the calculated means be written to the original file?
-#' @details Computes mean and standard deviation of `Fraction [%]` of each subset of data
-#' given by all combinations of values for the other columns.
+#' @details Computes mean and standard deviation of `Measurement` of each subset of data
+#' given by all combinations of values for the other columns (except for `nonGroupingCols`)
 #' Results are written to a new file in the original folder per default, if the results shall
-#' be appended to the original file and sheet, the parameter `saveToOriginalFile` has to be
+#' be appended to the original file and sheet, the argument `saveToOriginalFile` has to be
 #' set to TRUE. Note that this may take significantly longer as every sheet from the original
 #' file has to be read in first.
 #'
 #' @export
-calculateMeans <- function(filePath, sheet = NULL, saveToOriginalFile = FALSE) {
+calculateMeans <- function(filePath, sheet = NULL, columnNames = c("Time", "Measurement", "Error"),
+                           nonGroupingCols = c("Study Id", "Subject Id"), saveToOriginalFile = FALSE) {
   validateFileExists(filePath)
+  validateLength(columnNames, 3)
 
   if (saveToOriginalFile) {
     if (is.null(sheet)) sheet <- readxl::excel_sheets(filePath)[1]
@@ -160,41 +167,37 @@ calculateMeans <- function(filePath, sheet = NULL, saveToOriginalFile = FALSE) {
     data <- readExcel(path = filePath, sheet = sheet)
   }
 
-  requiredCols <- c("Patient Id", "Fraction [%]", "Error [%]")
-
-  if (!all(requiredCols %in% names(data))) {
-    stop(messages$errorColumnNamesNotInFile(filePath, setdiff(requiredCols, names(data))))
+  if (!all(columnNames %in% names(data))) {
+    stop(messages$errorColumnNamesNotInFile(filePath, setdiff(columnNames, names(data))))
   }
   if (nrow(data) == 0) {
     stop(messages$errorNoFileContents(filePath))
   }
 
-  dataSets <- data[, !names(data) %in% requiredCols]
+  dataSets <- data[, !names(data) %in% c(columnNames[-1], nonGroupingCols)]
 
   if (ncol(dataSets) == 0) {
-    dataSets <- data.frame(
-      "Patient Id" = "mean",
-      "Fraction [%]" = mean(data$`Fraction [%]`),
-      "Error [%]" = sd(data$`Fraction [%]`),
-      check.names = FALSE
-    )
-  } else {
-    # dataframe with all combinations of column values
-    dataSets <- dataSets[!duplicated(dataSets), ]
-    means <- c()
-    sds <- c()
-    for (i in 1:nrow(dataSets)) {
-      # filter data for combination of column values
-      dataFiltered <- merge(data, dataSets[i, ])
-      # compute mean and standard deviation for filtered data
-      means <- c(means, mean(dataFiltered$`Fraction [%]`))
-      sds <- c(sd(dataFiltered$`Fraction [%]`))
-    }
-
-    dataSets$`Fraction [%]` <- means
-    dataSets$`Error [%]` <- sds
-    dataSets$`Patient Id` <- rep("mean", nrow(dataSets))
+    stop(messages$errorNoGroupingColumns())
   }
+
+  # dataframe with all combinations of column values
+  dataSets <- dataSets[!duplicated(dataSets), ]
+  means <- c()
+  sds <- c()
+  for (i in 1:nrow(dataSets)) {
+    # filter data for combination of column values
+    dataFiltered <- merge(data, dataSets[i, ])
+    # compute mean and standard deviation for filtered data
+    means <- c(means, mean(dataFiltered[[columnNames[2]]]))
+    sds <- c(sds, sd(dataFiltered[[columnNames[2]]]))
+  }
+
+  # column 'Measurement'
+  dataSets[[columnNames[2]]] <- means
+  # column 'Error'
+  dataSets[[columnNames[3]]] <- sds
+  dataSets[setdiff(names(data), names(dataSets))] <- NA
+  dataSets <- dataSets[names(data)]
 
   if (saveToOriginalFile) {
     data <- rbind(data, dataSets)

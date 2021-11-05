@@ -61,5 +61,8 @@ messages$errorColumnNamesNotInFile <- function(filePath, missingCols) {
   paste("The provided file", filePath, "does not contain the required column(s)", paste(missingCols, collapse = ", "))
 }
 messages$errorNoFileContents <- function(filePath) {
-  paste("The provided sheet from the file", filePath, "does not contain any data.")
+  paste("The provided sheet from file", filePath, "does not contain any data.")
+}
+messages$errorNoGroupingColumns <- function() {
+  paste0("No columns chosen for grouping")
 }

@@ -41,22 +41,23 @@ test_that("It converts a non numerics LLOQ to zero to NA", {
 
 ## context("calculateMeans")
 
-test_that("It can save the results to a new file", {
+test_that("It can calculate means and save the results to a new file", {
   path <- getTestDataFilePath("CompiledDataSet.xlsx")
   sheet <- "Test_MeanData"
-  calculateMeans(path, sheet)
+  calculateMeans(path, sheet, columnNames = c("Time [h]", "Fraction [%]", "Error [%]"))
   newPath <- getTestDataFilePath("CompiledDataSet_mean.xlsx")
   expect_true(file.exists(newPath))
 
   meanData <- readExcel(newPath)
-  expect_setequal(
-    names(meanData),
-    c(
-      "Study Id", "Patient Id", "Organ", "Compartment", "Species",
-      "Gender", "Dose [unit]", "Molecule", "MW", "Time [h]",
-      "Fraction [%]", "Error [%]", "Route", "Group Id"
-    )
-  )
+  originalData <- readExcel(path, sheet)
+  expect_setequal(names(meanData), names(originalData))
+  file.remove(newPath)
+
+  calculateMeans(path, sheet, columnNames = c("Time [h]", "Fraction [%]", "Error [%]"),
+                 nonGroupingCols = c("Study Id", "Patient Id", "Dose [unit]", "Time [h]"))
+  meanData <- readExcel(newPath)
+  expect_equal(meanData$`Fraction [%]`, mean(originalData$`Fraction [%]`))
+  expect_equal(meanData$`Error [%]`, sd(originalData$`Fraction [%]`))
   file.remove(newPath)
 })
 
@@ -70,7 +71,7 @@ test_that("It throws an error when the sheet is empty (except for column names)"
   path <- getTestDataFilePath("CompiledDataSet.xlsx")
   sheet <- "WrongSheet"
   expect_error(
-    calculateMeans(path, sheet),
-    paste("The provided sheet from the file", path, "does not contain any data.")
+    calculateMeans(path, sheet, columnNames = c("Time [min]", "Fraction [%]", "Error [%]")),
+    paste("The provided sheet from file", path, "does not contain any data.")
   )
 })
