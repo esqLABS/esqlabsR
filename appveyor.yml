@@ -12,11 +12,11 @@ install:
   - git submodule update --init --recursive
 
 environment:
+  app_version: "2.0"
   USE_RTOOLS: true
-  NOT_CRAN: true
-  KEEP_VIGNETTES: true
   R_ARCH: x64
-  R_VERSION: "4.0.5"
+  KEEP_VIGNETTES: true
+  NOT_CRAN: true
 
 version: "$(app_version).{build}"
 
