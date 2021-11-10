@@ -40,7 +40,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   # Starting to iterate by 2 as the first entry is "PopulationName" and
   # is not an argument
   for (i in 2:length(data[rowIdx, ])) {
-    value <- data[rowIdx, i]
+    value <- data[[rowIdx, i]]
     if (is.na(value)) {
       next
     }
