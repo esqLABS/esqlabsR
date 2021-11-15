@@ -9,8 +9,8 @@ server <- function(input, output, session) {
 
     if (dimension %in% c("Concentration (mass)", "Concentration (molar)")) {
       units <- c(
-        ospsuite::ospUnits[["Concentration (mass)"]],
-        ospsuite::ospUnits[["Concentration (molar)"]]
+        ospsuite::ospUnits[["Concentration [mass]"]],
+        ospsuite::ospUnits[["Concentration [molar]"]]
       )
       currentMolWeight <<- 1
     } else if (dimension %in% c("Amount", "Mass")) {
@@ -20,7 +20,7 @@ server <- function(input, output, session) {
       )
       currentMolWeight <<- 1
     } else {
-      units <- ospsuite::ospUnits[[dimension]]
+      units <- ospsuite::ospUnits[[gsub("(\\()(.*)(\\))", "[\\2]", dimension)]]
       currentMolWeight <<- NULL
     }
 
@@ -44,7 +44,7 @@ server <- function(input, output, session) {
             if (dimension %in% c("Concentration (mass)", "Concentration (molar)", "Amount", "Mass")) {
               numericInput("molweight", "Molecular weight in g/mol", value = currentMolWeight)
             } else {
-              shinyjs::disabled(numericInput("molweight", "Molecular weight in g/mol", value = NULL))
+              shinyjs::disabled(numericInput("molweight", "Molecular weight in g/mol", value = 1))
             }
           )
         )
@@ -55,7 +55,7 @@ server <- function(input, output, session) {
   })
 
   observer_left <- observe({
-    if (is.null(input$value1) || is.na(input$value1)) {
+    if (is.null(input$value1) || is.na(input$value1) || !is.numeric(input$molweight)) {
       return()
     }
 
@@ -63,7 +63,7 @@ server <- function(input, output, session) {
     currentUnit1 <<- input$unit1
     currentUnit2 <<- input$unit2
 
-    converted <- toUnit(dimension, input$value1,
+    converted <- ospsuite::toUnit(dimension, input$value1,
       targetUnit = currentUnit2,
       sourceUnit = currentUnit1, molWeight = currentMolWeight,
       molWeightUnit = "g/mol"
@@ -76,7 +76,7 @@ server <- function(input, output, session) {
       return()
     }
 
-    converted <- toUnit(dimension, input$value2,
+    converted <- ospsuite::toUnit(dimension, input$value2,
       targetUnit = currentUnit1,
       sourceUnit = currentUnit2, molWeight = currentMolWeight,
       molWeightUnit = "g/mol"
