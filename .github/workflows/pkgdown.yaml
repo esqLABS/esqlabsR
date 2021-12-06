@@ -8,7 +8,7 @@ name: pkgdown
 
 jobs:
   pkgdown:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -35,8 +35,8 @@ jobs:
       - name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)
-          install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.1/rClr_0.9.1.zip')
-          install.packages('https://ci.appveyor.com/api/buildjobs/xp221iu0dabsdyl5/artifacts/ospsuite_11.0.6.zip')
+          install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.1/R4_rClr_0.9.1_Ubuntu18.tar.gz')
+          install.packages('https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v10.0.72/ospsuite_10.0.72_ubuntu18.tar.gz')
           remotes::install_dev("pkgdown")
         shell: Rscript {0}
 
