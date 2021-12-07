@@ -37,6 +37,9 @@ jobs:
           remotes::install_deps(dependencies = TRUE)
           install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.1/R4_rClr_0.9.1_Ubuntu18.tar.gz')
           install.packages('https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v10.0.72/ospsuite_10.0.72_ubuntu18.tar.gz')
+          install.packages('https://cran.r-project.org/src/contrib/httr_1.4.2.tar.gz')
+          install.packages('https://cran.r-project.org/src/contrib/ragg_1.2.1.tar.gz')
+          install.packages('https://cran.r-project.org/src/contrib/textshaping_0.3.6.tar.gz')
           remotes::install_dev("pkgdown")
         shell: Rscript {0}
 
