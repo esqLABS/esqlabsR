@@ -44,10 +44,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.1/R4_rClr_0.9.1_Ubuntu18.tar.gz')
-          install.packages('https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v10.0.72/ospsuite_10.0.72_ubuntu18.tar.gz')
           remotes::install_deps(dependencies = TRUE)
           remotes::install_dev("pkgdown")
+          install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.1/R4_rClr_0.9.1_Ubuntu18.tar.gz')
+          install.packages('https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v10.0.72/ospsuite_10.0.72_ubuntu18.tar.gz')
         shell: Rscript {0}
 
       - name: Install package
