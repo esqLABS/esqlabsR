@@ -40,6 +40,7 @@ jobs:
           install.packages('https://cran.r-project.org/src/contrib/httr_1.4.2.tar.gz')
           install.packages('https://cran.r-project.org/src/contrib/ragg_1.2.1.tar.gz')
           install.packages('https://cran.r-project.org/src/contrib/textshaping_0.3.6.tar.gz')
+          install.packages('https://cran.r-project.org/src/contrib/curl_4.3.2.tar.gz')
           remotes::install_dev("pkgdown")
         shell: Rscript {0}
 
