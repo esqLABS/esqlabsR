@@ -17,10 +17,12 @@ jobs:
       - uses: r-lib/actions/setup-r@master
 
       - name: Install system dependencies
+        if: runner.os == 'Linux'
         run: |
-          libcurl4-openssl-dev
-          libharfbuzz-dev
-          libfribidi-dev
+          while read -r cmd
+          do
+            eval sudo $cmd
+          done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
 
       - uses: r-lib/actions/setup-pandoc@master
 
