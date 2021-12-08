@@ -30,12 +30,12 @@ def install_pksim(branch)
 end
 
 def download_file(project_name, file_name, uri)
-  download_dir = File.join(temp_dir, project_name) 
+  download_dir = File.join(temp_dir, project_name)
   FileUtils.mkdir_p download_dir
   file = File.join(download_dir, file_name)
   puts "Downloading #{file_name} from #{uri} under #{file}".light_blue
   open(file, 'wb') do |fo|
-    fo.print open(uri,:read_timeout => nil).read
+    fo.print URI.open(uri,:read_timeout => nil).read
   end
   file
 end
@@ -45,7 +45,7 @@ def unzip_package(package_full_path)
   artifact_name = ''
   Dir.glob(File.join(unzip_dir, '*.msi')) do |x|
     artifact_name = x
-  end 
+  end
   artifact_name
 end
 
@@ -63,7 +63,7 @@ end
 
 def description_file
   File.join(solution_dir,'DESCRIPTION')
-end 
+end
 
 def temp_dir
   "C:/temp"
