@@ -3,7 +3,6 @@
 #' @description Mapping of model outputs to observed data
 #' @export
 #' @import ospsuite hash
-#' @importFrom ospsuite.utils "%||%"
 #' @format NULL
 DataMapping <- R6::R6Class(
   "DataMapping",
