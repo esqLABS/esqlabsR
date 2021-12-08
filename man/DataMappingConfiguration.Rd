@@ -8,7 +8,7 @@
 An object storing configuration of a data mapping
 }
 \section{Super class}{
-\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{DataMappingConfiguration}
+\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{DataMappingConfiguration}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

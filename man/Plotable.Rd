@@ -11,7 +11,7 @@ An object holding plotting information
 col2hsv
 }
 \section{Super class}{
-\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{Plotable}
+\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{Plotable}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

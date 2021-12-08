@@ -33,9 +33,9 @@ getSteadyState <- function(quantitiesPaths = NULL,
                            ignoreIfFormula = TRUE,
                            stopIfNotFound = TRUE,
                            lowerThreshold = 1e-15) {
-  ospsuite:::validateIsOfType(simulations, type = "Simulation")
-  ospsuite:::validateIsString(object = quantitiesPaths, nullAllowed = TRUE)
-  simulations <- ospsuite:::toList(simulations)
+  ospsuite.utils::validateIsOfType(simulations, type = "Simulation")
+  ospsuite.utils::validateIsString(object = quantitiesPaths, nullAllowed = TRUE)
+  simulations <- ospsuite.utils::toList(simulations)
 
   if (steadyStateTime <= 0) {
     stop(messages$steadyStateTimeNotPositive(steadyStateTime))
@@ -153,7 +153,7 @@ exportSteadyStateToXLS <- function(simulation,
                                    ignoreIfFormula = TRUE,
                                    stopIfNotFound = TRUE,
                                    lowerThreshold = 1e-15) {
-  ospsuite:::validateIsOfType(simulation, type = "Simulation")
+  ospsuite.utils::validateIsOfType(simulation, type = "Simulation")
   # If no explicit path to the results-file is provided, store the results file in the same folder as the model file.
   if (resultsXLSPath == "") {
     simulationPath <- tools::file_path_sans_ext(simulation$sourceFile)
@@ -210,7 +210,7 @@ exportSteadyStateToXLS <- function(simulation,
 
     value <- initialValues$values[[i]]
 
-    if (ospsuite:::isOfType(quantity, "Molecule")) {
+    if (ospsuite.utils::isOfType(quantity, "Molecule")) {
       moleculeValue <- append(moleculeValue, value)
       moleculeContainerPath <- append(moleculeContainerPath, quantity$parentContainer$path)
       moleculeName <- append(moleculeName, quantity$name)

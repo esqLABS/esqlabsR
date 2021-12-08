@@ -22,7 +22,7 @@ dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
 yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
 }
 \section{Super class}{
-\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{DataMapping}
+\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{DataMapping}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

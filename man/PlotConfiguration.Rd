@@ -8,7 +8,7 @@
 An object storing configuration of a plot
 }
 \section{Super class}{
-\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{PlotConfiguration}
+\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{PlotConfiguration}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

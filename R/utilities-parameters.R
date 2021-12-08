@@ -14,8 +14,8 @@
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
 
-  ospsuite:::validateIsString(paramsXLSpath)
-  ospsuite:::validateIsString(sheets, nullAllowed = TRUE)
+  ospsuite.utils::validateIsString(paramsXLSpath)
+  ospsuite.utils::validateIsString(sheets, nullAllowed = TRUE)
 
   if (is.null(sheets)) {
     sheets <- c(1)
@@ -74,7 +74,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @return `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
 isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE) {
-  ospsuite:::validateIsOfType(c(parameter1, parameter2), "Parameter")
+  ospsuite.utils::validateIsOfType(c(parameter1, parameter2), "Parameter")
 
   # Check for the path
   if (parameter1$path != parameter2$path) {

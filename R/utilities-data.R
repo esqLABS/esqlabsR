@@ -11,7 +11,7 @@
 #' @import ospsuite vctrs
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
-  ospsuite:::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
+  ospsuite.utils::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
   filePath <- file.path(dataConfiguration$dataFolder, dataConfiguration$dataFile)
   validateFileExists(filePath)
 
