@@ -74,9 +74,12 @@ getSteadyState <- function(quantitiesPaths = NULL,
   outputMap <- hash::hash()
   for (simulation in simulations) {
     simId <- simulation$id
+    #Have to distinguish between a list of simulation results for multiple simulations,
+    #or a single simulation results
+    simResults <- simulationResults[[simId]] %||% simulationResults
 
     allOutputs <- ospsuite::getOutputValues(
-      simulationResults[[simId]],
+      simResults,
       quantitiesOrPaths = quantitiesPathsMap[[simId]],
       stopIfNotFound = stopIfNotFound,
       addMetaData = FALSE

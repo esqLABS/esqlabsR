@@ -1,5 +1,7 @@
 url: https://esqlabs.github.io/esqlabsR/
 
+template:
+  bootstrap: 5
 
 reference:
 
@@ -67,11 +69,3 @@ reference:
       - removeFromList
       - sourceAll
 
-
-# articles:
-#
-#   - title:
-#     navbar:
-#     desc:
-#     contents:
-#     - web_only/ggbetweenstats
