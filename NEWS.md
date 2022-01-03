@@ -1,6 +1,8 @@
 # esqlabsR 2.0.0
 
-BREAKING CHANGES
+MAJOR CHANGES
+
+- The package gains a new dependency: [`{ospsuite.utils}`](https://www.open-systems-pharmacology.org/OSPSuite.RUtils/).
 
 # esqlabsR 1.0.0
 
