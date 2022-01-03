@@ -1,12 +1,11 @@
 #' Create a parameter set describing an individual and write it to the Excel file
 #'
-#' @param individualCharacteristics An \code{IndividualCharacteristics} object describing the individual. See
-#' \code{createIndividualCharacterstics} for more information
+#' @param individualCharacteristics An `IndividualCharacteristics` object
+#'   describing the individual. See `createIndividualCharacterstics` for more
+#'   information.
 #' @param outputXLSPath Path to the Excel file the parameter set will be written to
-#' @seealso createIndividualCharacteristics crateIndividual
 #'
-#' @return
-#' @export
+#' @seealso createIndividualCharacteristics crateIndividual
 #'
 #' @examples
 #' \dontrun{
@@ -17,9 +16,10 @@
 #' )
 #' writeIndividualToXLS(humanIndividualCharacteristics, pathToExcelFile)
 #' }
+#'
+#' @export
 writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
-  validateIsOfType(individualCharacteristics, "IndividualCharacteristics")
-  validateIsString(outputXLSPath)
+  ospsuite:::validateIsString(outputXLSPath)
 
   individual <- createIndividual(individualCharacteristics)
 
@@ -44,16 +44,74 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   output <- data.frame(unlist(containerPaths, use.names = FALSE), unlist(paramNames, use.names = FALSE), unlist(as.numeric(values), use.names = FALSE), unlist(units, use.names = FALSE))
   colnames(output) <- columnNames
 
-  openxlsx::write.xlsx(output, file = outputXLSPath, colNames = TRUE)
+  writexl::write_xlsx(output, path = outputXLSPath, colNames = TRUE)
+}
+
+#' Read individual characteristics from file
+#'
+#' @details Read individual characteristics from an excel sheet
+#' and create an `IndividualCharacteristics`-object. The excel sheet must have
+#' the column `IndividualId`, `Species`, `Population`, `Gender`, `Weight [kg]`,
+#' `Height [cm]`, `Age [year(s)]`, and `BMI`.
+
+#' @param XLSpath Full path to the excel file
+#'
+#' @param individualId (String) Id of the individual as stored in the
+#'   `IndividualId` column.
+#' @param sheet Name of the sheet. If `NULL` (default), the first sheet of the
+#'   file is used.
+#' @param nullIfNotFound Boolean. If `TRUE` (default), `NULL` is returned if
+#' no entry with the give `individualId` exists. Otherwise, an error is thrown.
+#'
+#' @return An `IndividualCharacteristics` object
+#' @import ospsuite
+#' @export
+readIndividualCharacteristicsFromXLS <- function(XLSpath,
+                                                 individualId,
+                                                 sheet = NULL,
+                                                 nullIfNotFound = TRUE) {
+  ospsuite:::validateIsString(XLSpath, individualId)
+
+  # If no sheet has been specified, read from the first sheet
+  if (is.null(sheet)) {
+    sheet <- c(1)
+  }
+
+  columnNames <- c(
+    "IndividualId", "Species", "Population", "Gender", "Weight [kg]",
+    "Height [cm]", "Age [year(s)]"
+  )
+
+  data <- readxl::read_excel(path = XLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+  if (!all(names(data) == columnNames)) {
+    stop(messages$errorWrongIndividualCharacteristicsXLSStructure(XLSpath, columnNames))
+  }
+  # Find the row with the given individual id
+  rowIdx <- which(data$IndividualId == individualId)
+  if (length(rowIdx) == 0) {
+    if (nullIfNotFound) {
+      return(NULL)
+    }
+    stop(messages$errorWrongIndividualId(individualId))
+  }
+
+  # Create the IndividualCharacteristics object
+  individualCharacteristics <- ospsuite::createIndividualCharacteristics(
+    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = data$`Weight [kg]`[[rowIdx]],
+    height = data$`Height [cm]`[[rowIdx]],
+    age = data$`Age [year(s)]`[[rowIdx]]
+  )
+
+  return(individualCharacteristics)
 }
 
 #' Apply an individual to the simulation.
 #' For human species, only parameters that do not override formulas are applied.
-#' For other species, all parameters returned by \code{createIndividual} are applied.
+#' For other species, all parameters returned by `createIndividual` are applied.
 #'
-#' @param individualCharacteristics \code{IndividualCharacteristics} describing an individual. Optional
-#' @param simulation \code{Simulation} loaded form the PKML file
-
+#' @param individualCharacteristics `IndividualCharacteristics` describing an individual. Optional
+#' @param simulation `Simulation` loaded form the PKML file
+#' @import ospsuite
 #' @export
 #'
 #' @examples
@@ -67,10 +125,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' applyIndividualParameters(humanIndividualCharacteristics, simulation)
 #' }
 applyIndividualParameters <- function(individualCharacteristics, simulation) {
-  validateIsOfType(individualCharacteristics, "IndividualCharacteristics")
-  validateIsOfType(simulation, "Simulation")
-
-  individual <- createIndividual(individualCharacteristics)
+  individual <- ospsuite::createIndividual(individualCharacteristics)
   allParamPaths <- c(individual$distributedParameters$paths, individual$derivedParameters$paths)
   allParamValues <- c(individual$distributedParameters$values, individual$derivedParameters$values)
 
@@ -78,9 +133,10 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     TRUE
   }
   # For human species, only set parameters that do not override a formula
-  if (individualCharacteristics$species == Species$Human) {
-    condition <- function(p) {
-      !p$isFormula
+  if (individualCharacteristics$species == ospsuite::Species$Human) {
+    condition <- function(path) {
+      task <- ospsuite:::getContainerTask()
+      !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
     }
   }
 

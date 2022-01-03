@@ -8,7 +8,7 @@ setParameterValuesByPathWithCondition(
   parameterPaths,
   values,
   simulation,
-  condition = function(p) {     TRUE },
+  condition = function(path) {     TRUE },
   units = NULL
 )
 }
@@ -21,9 +21,10 @@ length as 'parameterPaths'}
 
 \item{simulation}{Simulation used to retrieve parameter instances from given paths.}
 
-\item{condition}{A function that receives a \code{Parmeter} as an argument
-and returns \code{TRUE} of \code{FALSE}
-#' @param units A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
+\item{condition}{A function that receives a parameter path as an argument
+and returns \code{TRUE} of \code{FALSE}}
+
+\item{units}{A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
 are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.}
 }
 \description{
@@ -34,11 +35,10 @@ Set the values of parameters in the simulation by path, if the \code{condition} 
 
 simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
 sim <- loadSimulation(simPath)
-setParameterValuesByPath("Organism|Liver|Volume", 1, sim)
-
-condition <- function(p) {
-  !p$isFormula
+condition <- function(path) {
+  task <- ospsuite:::getContainerTask()
+  !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
 }
-setParameterValuesByPath(c("Organism|Liver|Volume", "Organism|Volume"), c(2, 3), sim, condition)
+setParameterValuesByPathWithCondition(c("Organism|Liver|Volume", "Organism|Volume"), c(2, 3), sim, condition)
 }
 }

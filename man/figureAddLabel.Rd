@@ -9,11 +9,12 @@ figureAddLabel(label, location = "topleft", offset = c(0, 0))
 \arguments{
 \item{label}{Label that is to be drawn}
 
-\item{location}{Location of the label. Allowed entries are 'topleft', 'topcenter', 'topright',
-'bottomleft', 'bottomright', 'bottomcenter'}
+\item{location}{Location of the label. Allowed entries are 'topleft',
+'topcenter', 'topright', 'bottomleft', 'bottomright', 'bottomcenter'}
 
 \item{offset}{Coordinates of the offset of the label}
 }
 \description{
 Add a label to a figure. Taken from \url{https://waterprogramming.wordpress.com/2015/12/02/easy-labels-for-multi-panel-plots-in-r/}
 }
+\keyword{internal}

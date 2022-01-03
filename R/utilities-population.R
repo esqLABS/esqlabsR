@@ -1,15 +1,15 @@
 #' Read an excel file containing information about population and create a
-#' \code{PopulationCharacteristics} object
+#' `PopulationCharacteristics` object
 #'
 #' @param XLSpath Path to the excel file
 #' @param populationName Name of the population, as defined in the "PopulationName"
 #' column
 #' @param sheet Name or the index of the sheet in the excel file.
-#' If \code{NULL}, the first sheet in the file is used.
+#' If `NULL`, the first sheet in the file is used.
 #'
-#' @return A \code{PopulationCharacteristics} object based on the information
+#' @return A `PopulationCharacteristics` object based on the information
 #' in the excel file.
-#' @import openxlsx
+#' @import readxl
 #' @export
 readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) {
   columnNames <- c(
@@ -17,13 +17,13 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
     "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit"
   )
 
-  validateIsString(c(XLSpath, populationName))
-  validateIsString(sheet, nullAllowed = TRUE)
+  ospsuite:::validateIsString(c(XLSpath, populationName))
+  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
 
   if (is.null(sheet)) {
     sheet <- 1
   }
-  data <- read.xlsx(xlsxFile = XLSpath, sheet = sheet)
+  data <- readxl::read_excel(path = XLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
 
   if (!(all(length(names(data)) == length(columnNames)) && all(names(data) == columnNames))) {
     stop(messages$errorWrongPopCharXLSStructure)
@@ -31,7 +31,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   # Find the row with the given population name
   rowIdx <- which(data$PopulationName == populationName)
   if (length(rowIdx) == 0) {
-    stop(messages$errorWrongPopulationname())
+    stop(messages$errorWrongPopulationName(populationName))
   }
 
   # Parse the information about population.
@@ -40,7 +40,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   # Starting to iterate by 2 as the first entry is "PopulationName" and
   # is not an argument
   for (i in 2:length(data[rowIdx, ])) {
-    value <- data[rowIdx, i]
+    value <- data[[rowIdx, i]]
     if (is.na(value)) {
       next
     }
@@ -65,21 +65,29 @@ GenderInt <- enum(list(
 
 #' Add user defined variability on parameters to a population.
 #'
-#' @param population Object of type \code{Population}
+#' @param population Object of type `Population`
 #' @param parameterPaths Vector of parameter path for which the variability is to be added.
-#' @param meanValues Vector of mean values of the parameters. Must have the same length as \code{parameterPaths}. The type of mean (arithmetic, geometric)
-#' depends on the selected \code{distribution}. The values must be in the base units of the parameters.
-#' @param sdValues Vector of standard deviation values of the parameters. Must have the same length as \code{parameterPaths}. The type of standard deviation
-#' depends on the selected \code{distribution}
-#' @param distributions Type of distribution from which the random values will be sampled. Must have the same length as \code{parameterPaths}.
-#' A list of supported distributions is defined in \code{Distributions}. Default is "Normal".
+#' @param meanValues Vector of mean values of the parameters. Must have the same
+#'   length as `parameterPaths`. The type of mean (arithmetic, geometric)
+#'   depends on the selected `distribution`. The values must be in the base
+#'   units of the parameters.
+#' @param sdValues Vector of standard deviation values of the parameters. Must
+#'   have the same length as `parameterPaths`. The type of standard deviation
+#'   depends on the selected `distribution`.
+#' @param distributions Type of distribution from which the random values will
+#'   be sampled. Must have the same length as `parameterPaths`.
+#' A list of supported distributions is defined in `Distributions`. Default is `"Normal"`.
 #' @export
-extendPopulationByUserDefinedParams <- function(population, parameterPaths, meanValues, sdValues, distributions = Distributions$Normal) {
-  validateIsOfType(population, "Population")
-  validateIsString(parameterPaths)
-  validateIsNumeric(meanValues, sdValues)
+extendPopulationByUserDefinedParams <- function(population,
+                                                parameterPaths,
+                                                meanValues,
+                                                sdValues,
+                                                distributions = Distributions$Normal) {
+  ospsuite:::validateIsOfType(population, "Population")
+  ospsuite:::validateIsString(parameterPaths)
+  ospsuite:::validateIsNumeric(meanValues, sdValues)
   distributions <- distributions %||% rep(Distributions$Normal, length(parameterPaths))
-  validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
+  ospsuite:::validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
 
 
   # Iterate through all parameters and sample a parameter values vector
@@ -103,20 +111,23 @@ extendPopulationByUserDefinedParams <- function(population, parameterPaths, mean
 
 #' Add user defined variability on parameters to a population from an excel file.
 #'
-#' @param population Object of type \code{Population}
-#' @param XLSpath Path to the excel file that stores the information of parameters. The file must have the
-#' columns "Container.Path", "Parameter.Name", "Mean", "SD", "Units", and "Distribution". Mean and SD values
-#'  must be in the base units of the parameters.
-#' #' @param sheet Name or the index of the sheet in the excel file.
-#' If \code{NULL}, the first sheet in the file is used.
-#' @details The method reads the information from the specified excel sheet(s) and
-#' calls \code{extendPopulationByUserDefinedParams}
-#' @import openxlsx
+#' @param population Object of type `Population`
+#' @param XLSpath Path to the excel file that stores the information of
+#'   parameters. The file must have the columns "Container.Path",
+#'   "Parameter.Name", "Mean", "SD", "Units", and "Distribution". Mean and SD
+#'   values must be in the base units of the parameters.
+#' @param sheet Name or the index of the sheet in the excel file.
+#' If `NULL`, the first sheet in the file is used.
+#'
+#' @details The method reads the information from the specified excel sheet(s)
+#'   and calls `extendPopulationByUserDefinedParams`
+#'
+#' @import readxl
 #' @export
 extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
-  validateIsOfType(population, "Population")
-  validateIsString(XLSpath)
-  validateIsString(sheet, nullAllowed = TRUE)
+  ospsuite:::validateIsOfType(population, "Population")
+  ospsuite:::validateIsString(XLSpath)
+  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
   if (is.null(sheet)) {
     sheet <- 1
   }
@@ -126,7 +137,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
     "SD", "Distribution"
   )
 
-  data <- read.xlsx(xlsxFile = XLSpath, sheet = sheet)
+  data <- readxl::read_excel(path = XLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
   if (!(all(length(names(data)) == length(columnNames)) &&
     all(names(data) == columnNames))) {
     stop(messages$errorWrongPopCharXLSStructure)
@@ -161,8 +172,8 @@ Distributions <- enum(list(
 
 #' Sample a random value from a distribution
 #'
-#' @param distribution The type of the distribution the random variable is to be sampled from. See \code{Distributions} for the list of supported
-#' entries.
+#' @param distribution The type of the distribution the random variable is to be
+#'   sampled from. See `Distributions` for the list of supported entries.
 #' @param mean Mean value of the random variable
 #' @param sd Standard deviation of the random variable
 #' @param n Size of the sample

@@ -7,11 +7,11 @@
 foldChangeFunction(x, x_0, alpha = 1)
 }
 \arguments{
-\item{x}{Value of the effector}
+\item{x}{Value of the effector.}
 
-\item{x_0}{Basal value of the effector}
+\item{x_0}{Basal value of the effector.}
 
-\item{alpha}{Steepness of the funtion. Default is 1.}
+\item{alpha}{Steepness of the function. Default is \code{1}.}
 }
 \value{
 (x / x_0)^alpha

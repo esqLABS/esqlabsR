@@ -1,11 +1,11 @@
 #' Convenience function to avoid testing for null. It returns the first object if it is not null otherwise the second object
-#'
+#' @name OR
 #' @param lhs Object that will be returned if not NULL
-#' @param rhs Object that will be returned if \code{lhs} is NULL. It maybe well be NULL
+#' @param rhs Object that will be returned if `lhs` is NULL. It maybe well be NULL
 #'
 #' @return The first parameter if it is not NULL otherwise the second parameter
 #' @export
-`%||%` <- function(lhs, rhs) {
+"%||%" <- function(lhs, rhs) {
   if (!is.null(lhs)) {
     lhs
   } else {
@@ -13,16 +13,53 @@
   }
 }
 
-#' Get the index of the value in an array that is closest to given one.
+#' Find value in an array
+#'
+#' @description Find the index of the value in an array that is closest to given
+#'   one. By default, no restriction is applied how big the absolute numerical
+#'   distance between `value` and a value in the `array` may be. A limit can be
+#'   set by the parameters `thresholdAbs` or `thresholdRel`. If no value within
+#'   the `array` has the distance to `value` that is equal to or less than the
+#'   threshold, the `value` is considered not present in the `array` and `NULL`
+#'   is returned.
 #'
 #' @param value Numerical value
 #' @param array Numerical array
+#' @param thresholdAbs Absolute numerical distance by which the closest value in
+#'   `array` may differ from `value` to be accepted. If both `thresholdAbs` and
+#'   `thresholdRel` are `NULL` (default), no threshold is applied. If
+#'   `thresholdAbs` is set, `thresholdRel` is ignored. If 0, only exact match
+#'   between `value` and `array` is accepted.
+#' @param thresholdRel A fraction by which the closest value may differ from
+#'   `value` to be accepted. **WARNING**: setting a relative threshold will result
+#'   in only exact matches if `value` is 0!
 #'
-#' @return Index of a value within the array which is closest to \code{value}
+#' @return Index of a value within the array which is closest to `value` and the
+#'   difference is within the defined threshold. If multiple entries of `array`
+#'   have the same difference which is minimal, a vector of indices is returned.
+#'   If no value is within the defined threshold, `NULL` is returned.
 #' @export
-getIndexClosestToValue <- function(value, array) {
-  validateIsNumeric(c(value, array))
-  idx <- which(abs(array - value) == min(abs(array - value)))
+getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdRel = NULL) {
+  # If no absolute threshold is set, calculate if from relative threshold
+  if (is.null(thresholdAbs)) {
+    # If no relative threshold is set also, no threshold is applied
+    if (!is.null(thresholdRel)) {
+      thresholdAbs <- abs(value * thresholdRel)
+    } else {
+      thresholdAbs <- Inf
+    }
+  }
+
+  ospsuite:::validateIsNumeric(c(value, array))
+
+  # Calculate distances
+  distances <- abs(array - value)
+  idx <- which(distances == min(distances) & distances <= thresholdAbs)
+
+  if (length(idx) == 0) {
+    warning(messages$warningValueWithinThresholdNotExisting(value, thresholdAbs))
+    return(NULL)
+  }
 
   return(idx)
 }
@@ -30,11 +67,13 @@ getIndexClosestToValue <- function(value, array) {
 #' Calculate geometric mean of a numeric vector.
 #'
 #' @param x Numeric array
-#' @param na.rm A logical value indicating whether \code{NA} values should be stripped before the computation proceeds.
-#' @param trim the fraction (0 to 0.5) of observations to be trimmed from each end of \code{x} before the mean is computed.
-#' Values of trim outside that range are taken as the nearest endpoint.
+#' @param na.rm A logical value indicating whether `NA` values should be
+#'   stripped before the computation proceeds.
+#' @param trim the fraction (0 to 0.5) of observations to be trimmed from each
+#'   end of `x` before the mean is computed. Values of trim outside that range
+#'   are taken as the nearest endpoint.
 #'
-#' @return Geometric mean of\code{x}
+#' @return Geometric mean of`x`
 #' @export
 geomean <- function(x, na.rm = FALSE, trim = 0) {
   exp(mean(log(x), na.rm = na.rm, trim = trim))
@@ -43,9 +82,10 @@ geomean <- function(x, na.rm = FALSE, trim = 0) {
 #' Calculate geometric standard deviation of a numeric vector
 #'
 #' @param x Numeric array
-#' @param na.rm A logical value indicating whether \code{NA} values should be stripped before the computation proceeds.
+#' @param na.rm A logical value indicating whether `NA` values should be
+#'   stripped before the computation proceeds.
 #'
-#' @return Geometric standard deviation of \code{x}
+#' @return Geometric standard deviation of `x`
 #' @export
 geosd <- function(x, na.rm = FALSE) {
   exp(sd(log(x), na.rm = na.rm))
@@ -54,15 +94,15 @@ geosd <- function(x, na.rm = FALSE) {
 #' Calculate quantiles for given xy-vectors
 #'
 #' @param quantiles A numerical vector with quantile values. Default is
-#' \code{c(0.05, 0.5, 0.95)}
+#' `c(0.05, 0.5, 0.95)`
 #' @param xValues X values, by which y values are grouped
 #' @param yValues Values for which the quantiles are calculated
 #'
-#' @return A list with \code{xValues} and aggregated \code{yValues}
+#' @return A list with `xValues` and aggregated `yValues`
 #' @export
 getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) {
-  validateIsNumeric(c(xValues, yValues, quantiles))
-  validateIsSameLength(xValues, yValues)
+  ospsuite:::validateIsNumeric(c(xValues, yValues, quantiles))
+  ospsuite:::validateIsSameLength(xValues, yValues)
   output <- list()
   # Aggregate time values
   for (quantile in quantiles) {
@@ -75,79 +115,32 @@ getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) 
   return(output)
 }
 
-
-#' Get the simulation container of the entity
-#'
-#' @param entity Object of type \code{Entity}
-#'
-#' @return The root container that is the parent of the entity.
-getSimulationContainer <- function(entity) {
-  validateIsOfType(entity, "Entity")
-  if (isOfType(entity, "Container")) {
-    if (entity$containerType == "Simulation") {
-      return(entity)
-    }
-  }
-  return(getSimulationContainer(entity$parentContainer))
-}
-
-#' Returns an instance of the specified .NET Task
-#'
-#' @param taskName The name of the task to retrieve (without the Get)
-#'
-#' @return An instance of the Task
-#'
-#' @details
-#' simulationLoader <- getNetTask("SimulationLoader")
-getNetTask <- function(taskName) {
-  rClr::clrCallStatic("OSPSuite.R.Api", paste0("Get", taskName))
-}
-
-#' Return an instance of the .NET Task "DimensionTask".
-#'
-#' @return An instance of the Task
-getDimensionTask <- function() {
-  dimTask <- esqlabsEnv$DimensionTask
-  if (is.null(dimTask)) {
-    dimTask <- getNetTask("DimensionTask")
-    esqlabsEnv$DimensionTask <- dimTask
-  }
-  return(dimTask)
-}
-
 #' Get hash code of the .NET object
 #'
-#' @param netWrapper Any object from the ospsuite-R that inhertis from DotNetWrapper
+#' @param netWrapper Any object from the ospsuite-R that inherits from DotNetWrapper
+#' @import rClr
 #'
 #' @return Value of the .NET-method "GetHashCode"
 getNetHashCode <- function(netWrapper) {
-  validateIsOfType(netWrapper, "DotNetWrapper")
-  rClr::clrCall(netWrapper$ref, "GetHashCode")
+  ospsuite:::validateIsOfType(netWrapper, "DotNetWrapper")
+  rClr::clrGet(netWrapper$ref, "HashCode")
 }
 
-#' Escape a string for possible regular expression match
-#'
-#' @param string String to be escaped
-#'
-#' @return string with prefix "\\Q" and suffix "\\E" appended.
-#' The resulting string will not be recognized as a regular expression pattern.
-escapeForRegex <- function(string) {
-  paste0("\\Q", string, "\\E")
-}
 
 #' Remove an entry from a list
 #'
 #' @param entry The entry to be removed
 #' @param listArg The list from which the entry will be removed
-#' @description Removes all occurrences of the entry from the list. If the entry is not in the list
-#' nothing is removed.
-#' @return The list without the entry. If the input is a vector, it is converted to a list.
-#' @export
+#' @description Removes all occurrences of the entry from the list. If the entry
+#'   is not in the list nothing is removed.
+#' @return The list without the entry. If the input is a vector, it is converted
+#'   to a list.
 #'
 #' @examples
 #' myList <- list("one", "two", "one", "three")
 #' myList <- removeFromList("one", myList)
 #' print(myList)
+#' @export
 removeFromList <- function(entry, listArg) {
   if (is.null(listArg)) {
     return(NULL)
@@ -159,7 +152,6 @@ removeFromList <- function(entry, listArg) {
   listArg[idx] <- NULL
   return(listArg)
 }
-
 
 #' Compare values including NA
 #'
@@ -181,7 +173,7 @@ compareWithNA <- function(v1, v2) {
 #' @param char Character to find in the string
 #' @param string String that should contain the character
 #'
-#' @return TRUE if the \code{character} is a substring if \code{string}, FALSE otherwise
+#' @return TRUE if the `character` is a substring if `string`, FALSE otherwise
 #' @export
 #'
 #' @examples
@@ -190,14 +182,15 @@ isCharInString <- function(char, string) {
   any(unlist(strsplit(string, ""), use.names = FALSE) == char)
 }
 
-#' Make sure the object is a list
+
+#' Escape a string for possible regular expression match
 #'
-#' @param object To be converted to a list
+#' @param string String to be escaped
 #'
-#' @return If \code{is.list(object) == TRUE}, returns the \code{object}, otherwise \code{list(object)}
-enforceIsList <- function(object) {
-  if (is.list(object)) {
-    return(object)
-  }
-  return(list(object))
+#' @return string with prefix "\\Q" and suffix "\\E" appended.
+#' The resulting string will not be recognized as a regular expression pattern.
+#'
+#' @export
+escapeForRegex <- function(string) {
+  paste0("\\Q", string, "\\E")
 }

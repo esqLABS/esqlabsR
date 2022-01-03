@@ -7,13 +7,11 @@
 writeIndividualToXLS(individualCharacteristics, outputXLSPath)
 }
 \arguments{
-\item{individualCharacteristics}{An \code{IndividualCharacteristics} object describing the individual. See
-\code{createIndividualCharacterstics} for more information}
+\item{individualCharacteristics}{An \code{IndividualCharacteristics} object
+describing the individual. See \code{createIndividualCharacterstics} for more
+information.}
 
 \item{outputXLSPath}{Path to the Excel file the parameter set will be written to}
-}
-\value{
-
 }
 \description{
 Create a parameter set describing an individual and write it to the Excel file
@@ -27,6 +25,7 @@ humanIndividualCharacteristics <- createIndividualCharacteristics(
 )
 writeIndividualToXLS(humanIndividualCharacteristics, pathToExcelFile)
 }
+
 }
 \seealso{
 createIndividualCharacteristics crateIndividual

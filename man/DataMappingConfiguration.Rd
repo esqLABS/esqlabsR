@@ -8,7 +8,7 @@
 An object storing configuration of a data mapping
 }
 \section{Super class}{
-\code{\link[esqlabsR:Printable]{esqlabsR::Printable}} -> \code{DataMappingConfiguration}
+\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{DataMappingConfiguration}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -26,10 +26,10 @@ values are numerical values}
 values are numerical values}
 
 \item{\code{lineTypes}}{A named list listing line types that will be used to plot a certain data set. Keys are names of data sets,
-values are numerical values recognized by the \code{lty} argument of the \code{\link{plot}} function}
+values are numerical values recognized by the \code{lty} argument of the \code{\link[=plot]{plot()}} function}
 
 \item{\code{colors}}{A named list listing color values that will be used to plot a certain data set. Keys are names of data sets,
-values are values recognized by the \code{col} argument of the \code{\link{plot}} function}
+values are values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }
@@ -37,6 +37,7 @@ values are values recognized by the \code{col} argument of the \code{\link{plot}
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-new}{\code{DataMappingConfiguration$new()}}
+\item \href{#method-finalize}{\code{DataMappingConfiguration$finalize()}}
 \item \href{#method-setXFactors}{\code{DataMappingConfiguration$setXFactors()}}
 \item \href{#method-setYFactors}{\code{DataMappingConfiguration$setYFactors()}}
 \item \href{#method-setXOffsets}{\code{DataMappingConfiguration$setXOffsets()}}
@@ -62,8 +63,18 @@ Initialize a new instance of the class
 }
 
 \subsection{Returns}{
-A new `DataMappingConfiguration` object.
+A new \code{DataMappingConfiguration} object.
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-finalize"></a>}}
+\if{latex}{\out{\hypertarget{method-finalize}{}}}
+\subsection{Method \code{finalize()}}{
+Clean up upon object removal
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$finalize()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-setXFactors"></a>}}
@@ -159,7 +170,7 @@ Set the colors that will be used to plot a certain data set.
 \describe{
 \item{\code{labels}}{A string or a list of strings representing the names of the data sets}
 
-\item{\code{colors}}{Values representing a color recognized by the \code{col} argument of the \code{\link{plot}} function}
+\item{\code{colors}}{Values representing a color recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }
@@ -178,7 +189,7 @@ Set the line types that will be used to plot a certain data set.
 \describe{
 \item{\code{labels}}{A string or a list of strings representing the names of the data sets}
 
-\item{\code{lineTypes}}{Values recognized by the \code{col} argument of the \code{\link{plot}} function}
+\item{\code{lineTypes}}{Values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }

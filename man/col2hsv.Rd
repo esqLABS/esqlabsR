@@ -7,12 +7,15 @@
 col2hsv(color)
 }
 \arguments{
-\item{color}{vector of any of the three kinds of R color specifications, i.e.,
-either a color name (as listed by colors()),
-a hexadecimal string of the form "#rrggbb" or "#rrggbbaa" (see rgb), or a positive integer i meaning palette()[i]}
+\item{color}{vector of any of the three kinds of R color specifications,
+i.e., either a color name (as listed by colors()), a hexadecimal string of
+the form "#rrggbb" or "#rrggbbaa" (see rgb), or a positive integer \code{i}
+meaning \code{palette()[i]}.}
 }
 \value{
-A matrix with a column for each color. The three rows of the matrix indicate hue, saturation and value and are named "h", "s", and "v" accordingly.
+A matrix with a column for each color. The three rows of the matrix
+indicate hue, saturation and value and are named "h", "s", and "v"
+accordingly.
 }
 \description{
 Returns the HSV values for a given R color name

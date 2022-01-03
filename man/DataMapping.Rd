@@ -18,10 +18,11 @@ xVals <- list(c(1, 2, 3, 4), c(1, 2, 3, 4), c(2, 3, 4, 5))
 yVals <- list(c(5, 6, 7, 8), c(5, 6, 7, 8), c(6, 7, 8, 9))
 yErr <- list(c(0.1, 0.1, 0.1, 0.2), NULL, c(0.2, 0.3, 0.1, 0.2))
 groups <- list("Group1", NULL, "Group1")
-dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
+dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
+yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
 }
 \section{Super class}{
-\code{\link[esqlabsR:Printable]{esqlabsR::Printable}} -> \code{DataMapping}
+\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{DataMapping}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -35,15 +36,15 @@ Possible values are "" (empty string, both axis in linear scaling, default),
 \item{\code{addLegend}}{Boolean defining if the legend should be added to the plot. If TRUE,
 a legend will be added for each group and each XYSeries that is not in any group}
 
-\item{\code{legendPosition}}{Position of the legend in the plot. Default value is "topright". See \code{\link{legend}} for more information.}
+\item{\code{legendPosition}}{Position of the legend in the plot. Default value is "topright". See \code{\link[=legend]{legend()}} for more information.}
 }
 \if{html}{\out{</div>}}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{xySeries}}{\code{map} with the \code{XYData}
-that will be plotted. Keys are the labels of the \code{xySeries} objects}
+\item{\code{xySeries}}{Named list with the \code{XYData}
+that will be plotted. Names are the labels of the \code{xySeries} objects}
 
 \item{\code{xySeriesCount}}{number of \code{XYData} objects to be plotted}
 
@@ -55,15 +56,15 @@ that will be plotted. Keys are the labels of the \code{xySeries} objects}
 
 \item{\code{yLab}}{label of the y-axis.}
 
-\item{\code{xDimension}}{Dimension of x values. See enum \code{Dimensions} for the list of supported dimensions.
+\item{\code{xDimension}}{Dimension of x values. See enum \code{ospDimensions} for the list of supported dimensions.
 If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
 If no \code{XYSeries} are present, the dimension is \code{NULL}
 When changing the dimension, the unit is automatically set to the base unit of the dimension.}
 
-\item{\code{yDimension}}{Dimension of y values. See enum \code{Dimensions} for the list of supported dimensions.
+\item{\code{yDimension}}{Dimension of y values. See enum \code{ospDimensions} for the list of supported dimensions.
 If no dimension is specified, the dimension of the first added \code{XYSeries} is used.
 If no \code{XYSeries} are present, the dimension is \code{NULL}
-    #' When changing the dimension, the unit is automatically set to the base unit of the dimension.}
+#' When changing the dimension, the unit is automatically set to the base unit of the dimension.}
 
 \item{\code{xUnit}}{Unit of x values.
 If no unit is specified, the default unit of the dimension is used.
@@ -91,15 +92,18 @@ Supported plot types are listed in the enum \code{PlotTypes}. Default is "Indivi
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-new}{\code{DataMapping$new()}}
+\item \href{#method-finalize}{\code{DataMapping$finalize()}}
 \item \href{#method-addModelOutputs}{\code{DataMapping$addModelOutputs()}}
 \item \href{#method-addXYSeries}{\code{DataMapping$addXYSeries()}}
-\item \href{#method-addOSPSTimeValues}{\code{DataMapping$addOSPSTimeValues()}}
+\item \href{#method-addXYData}{\code{DataMapping$addXYData()}}
 \item \href{#method-removeXYSeries}{\code{DataMapping$removeXYSeries()}}
+\item \href{#method-getXYSeriesGroupMap}{\code{DataMapping$getXYSeriesGroupMap()}}
 \item \href{#method-setXFactors}{\code{DataMapping$setXFactors()}}
 \item \href{#method-setYFactors}{\code{DataMapping$setYFactors()}}
 \item \href{#method-setXOffsets}{\code{DataMapping$setXOffsets()}}
 \item \href{#method-setYOffsets}{\code{DataMapping$setYOffsets()}}
 \item \href{#method-setTypes}{\code{DataMapping$setTypes()}}
+\item \href{#method-setLinetypes}{\code{DataMapping$setLinetypes()}}
 \item \href{#method-setColors}{\code{DataMapping$setColors()}}
 \item \href{#method-setConfiguration}{\code{DataMapping$setConfiguration()}}
 \item \href{#method-plot}{\code{DataMapping$plot()}}
@@ -122,20 +126,32 @@ Initialize a new instance of the class
 }
 
 \subsection{Returns}{
-A new `DataMapping` object.
+A new \code{DataMapping} object.
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-finalize"></a>}}
+\if{latex}{\out{\hypertarget{method-finalize}{}}}
+\subsection{Method \code{finalize()}}{
+Clean up upon object removal
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$finalize()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-addModelOutputs"></a>}}
 \if{latex}{\out{\hypertarget{method-addModelOutputs}{}}}
 \subsection{Method \code{addModelOutputs()}}{
+Add simulated results to the data mapping
+
+
 Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by default.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMapping$addModelOutputs(
   paths,
   labels,
-  outputValues,
-  simulation,
+  simulationResults,
   groups = NULL,
   removeNA = TRUE
 )}\if{html}{\out{</div>}}
@@ -149,10 +165,7 @@ Add new \code{ModelOutput} to be plotted. Line type is set to "l" (line) by defa
 \item{\code{labels}}{A string or a list of strings that are used as a label (e.g. in the legend) for the output(s).
 If \code{NULL} (default), the path of the output is used as a label.}
 
-\item{\code{outputValues}}{Simulated results as returned by \code{getOutputValues}}
-
-\item{\code{simulation}}{\code{Simulation}-object that generated the outputs. Used for retrieving molecular weights of the
-simulated species.}
+\item{\code{simulationResults}}{Simulated results as returned by \code{runSimulation}}
 
 \item{\code{groups}}{A string or a list of strings assigning the outputs to a group. All outputs may be assigned to one group, or to
 different groups, while each output can be assigned to not more than one group. If an entry within the list is NULL, the corresponding
@@ -206,7 +219,8 @@ xVals <- list(c(1, 2, 3, 4), c(1, 2, 3, 4), c(2, 3, 4, 5))
 yVals <- list(c(5, 6, 7, 8), c(5, 6, 7, 8), c(6, 7, 8, 9))
 yErr <- list(c(0.1, 0.1, 0.1, 0.2), NULL, c(0.2, 0.3, 0.1, 0.2))
 groups <- list("Group1", NULL, "Group1")
-dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
+dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
+yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
 }
 \if{html}{\out{</div>}}
 
@@ -214,20 +228,20 @@ dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals, yErrorList = yErr,
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-addOSPSTimeValues"></a>}}
-\if{latex}{\out{\hypertarget{method-addOSPSTimeValues}{}}}
-\subsection{Method \code{addOSPSTimeValues()}}{
-Add \code{OSPSTimeValues} object(s).
+\if{html}{\out{<a id="method-addXYData"></a>}}
+\if{latex}{\out{\hypertarget{method-addXYData}{}}}
+\subsection{Method \code{addXYData()}}{
+Add \code{XYData} object(s). The objects are cloned at adding.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{DataMapping$addOSPSTimeValues(OSPSTimeValues, groups = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$addXYData(XYData, groups = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{OSPSTimeValues}}{Object or a list of objects of the type \code{OSPSTimeValues}}
+\item{\code{XYData}}{Object or a list of objects of the type \code{XYData}}
 
-\item{\code{groups}}{A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{OSPSTimeValues}
+\item{\code{groups}}{A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{XYData}
 output is not assigned to any group}
 }
 \if{html}{\out{</div>}}
@@ -251,6 +265,23 @@ Remove the observed data with given label from the DataMapping.
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-getXYSeriesGroupMap"></a>}}
+\if{latex}{\out{\hypertarget{method-getXYSeriesGroupMap}{}}}
+\subsection{Method \code{getXYSeriesGroupMap()}}{
+Return group mapping of labels.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$getXYSeriesGroupMap()}\if{html}{\out{</div>}}
+}
+
+\subsection{Details}{
+Returns a named list with keys being labels of xySeries and values group names. If value is \code{NA}, no group is defined for this label.
+}
+
+\subsection{Returns}{
+A named list with keys being labels of xySeries and values group names.
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-setXFactors"></a>}}
 \if{latex}{\out{\hypertarget{method-setXFactors}{}}}
 \subsection{Method \code{setXFactors()}}{
@@ -264,12 +295,12 @@ Set the X-factors of x-y values by labels.
 \describe{
 \item{\code{labels}}{A list of labels of \code{XYData}.}
 
-\item{\code{xFactors}}{Numeric values that will be multiplied by the x-values during plotting}
+\item{\code{xFactors}}{Numeric values that will be multiplied by the x-values during plotting.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-If the data set with a label is not present in the mapping, the label is ignored
+If the data set with a label is not present in the mapping, the label is ignored.
 }
 
 }
@@ -346,7 +377,7 @@ If the data set with a label is not present in the mapping, the label is ignored
 \if{html}{\out{<a id="method-setTypes"></a>}}
 \if{latex}{\out{\hypertarget{method-setTypes}{}}}
 \subsection{Method \code{setTypes()}}{
-Set the line type(s) of the data to be plotted
+Set the type(s) of the data to be plotted, e.g. line, points, etc.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMapping$setTypes(labels, types)}\if{html}{\out{</div>}}
 }
@@ -361,8 +392,33 @@ Set the line type(s) of the data to be plotted
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-If the data set with a label is not present in the mapping, the label is ignored.
+If no data set for the provided label is present in the mapping, the corresponding value is ignored.
 No check is performed whether a valid type is provided.
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-setLinetypes"></a>}}
+\if{latex}{\out{\hypertarget{method-setLinetypes}{}}}
+\subsection{Method \code{setLinetypes()}}{
+Set the line type(s) property of the data to be plotted. Line types as accepted by the base \code{plot} lty argument.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$setLinetypes(labels, linetypes)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{labels}}{A list of label of \code{XYData}}
+
+\item{\code{linetypes}}{Values that will be set as line type(s).}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+If no data set for the provided label is present in the mapping, the corresponding value is ignored.
+No check is performed whether a valid type is provided.Line types as accepted by the base \code{plot} lty argument.
+Line types can be provided either as numeric or as character vectors (e.g. "dashed").
 }
 
 }
@@ -425,7 +481,7 @@ Plot the data stored in this \code{DataMapping}.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{Any parameter that can be interpreted by the default \code{\link{plot}} function}
+\item{\code{...}}{Any parameter that can be interpreted by the default \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }

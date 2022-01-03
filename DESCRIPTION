@@ -1,55 +1,35 @@
-Package: esqlabsR
 Type: Package
+Package: esqlabsR
 Title: esqLABS utilities package
-Version: 1.4.5
+Version: 1.2.3
 Author: esqLABS GmbH
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
-Description: Utilities functions for modeling and simulation projects within esqLABS.
-Encoding: UTF-8
-LazyData: true
+Description: Utilities functions for modeling and simulation projects
+    within 'esqLABS' organization.
+License: GPL-2
+URL: https://github.com/esqLABS/esqlabsR
+BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
     ospsuite (>= 10.0)
 Imports:
-    tools,
-    openxlsx,
+    hash,
     parallel,
+    rClr,
+    readxl,
     shiny,
-    shinyjs
+    shinyjs,
+    tools,
+    vctrs,
+    writexl
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 2.1.0),
-    pander
-VignetteBuilder: knitr
-License:
-  Proprietary
-RoxygenNote: 7.1.1
-Collate: 
-    'DataConfiguration.R'
-    'DataMapping.R'
-    'DataMappingConfiguration.R'
-    'OSPSTimeValues.R'
-    'PlotConfiguration.R'
-    'Plotable.R'
-    'Printable.R'
-    'enum.R'
-    'XYData.R'
-    'error-checks.R'
-    'esqlabs-env.R'
-    'map.R'
-    'messages.R'
-    'shiny-app-launcher.R'
-    'utilities-data-mapping.R'
-    'utilities-data.R'
-    'utilities-dimensions.R'
-    'utilities-figures.R'
-    'utilities-file.R'
-    'utilities-individual.R'
-    'utilities-parallel.R'
-    'utilities-parameters.R'
-    'utilities-population.R'
-    'utilities-simulation.R'
-    'utilities-steady-state.R'
-    'utilities-transfer-functions.R'
-    'utilities.R'
-    'zzz.R'
+    spelling,
+    testthat (>= 3.0.0)
+VignetteBuilder: 
+    knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-US
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2

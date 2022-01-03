@@ -4,8 +4,6 @@
 #' @param recursive If TRUE, the contents of the sub-folders are also sourced,
 #' otherwise only the files located directly in the directory are considered.
 #' Default is FALSE.
-#'
-#' @return
 #' @export
 sourceAll <- function(folderPath, recursive = FALSE) {
   filesPaths <- list.files(folderPath, recursive = recursive)
@@ -22,11 +20,13 @@ sourceAll <- function(folderPath, recursive = FALSE) {
 
 #' pathFromClipboard
 #'
-#' Converts the windows-like path (using \) from the clipboard to the form readable by R (using /)
+#' Converts the windows-like path (using `\`) from the clipboard to the form
+#' readable by R (using` /`).
 #'
-#' @param path
+#' @param path Path that will be converted. If "clipboard" (default), path is
+#'   queried from clipboard.
 #'
-#' @return
+#' @return String representation of a file path with `/` as separator
 #' @export
 pathFromClipboard <- function(path = "clipboard") {
   y <- if (path == "clipboard") {

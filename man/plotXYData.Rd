@@ -4,32 +4,19 @@
 \alias{plotXYData}
 \title{Plot XYData}
 \usage{
-plotXYData(
-  xySeries,
-  xDimension = NULL,
-  xUnit = NULL,
-  yDimension = NULL,
-  yUnit = NULL,
-  aggregated = FALSE,
-  ...
-)
+plotXYData(xySeries, xUnit = NULL, yUnit = NULL, ...)
 }
 \arguments{
 \item{xySeries}{An \code{XYData} object to be plotted}
 
-\item{xDimension}{Target dimension of x-axis.}
+\item{xUnit}{Target unit of x-axis.}
 
-\item{xUnit}{Target unit of x-axis. If one of \code{xDimension} or \code{xUnit} is specified, the other must be, too.}
+\item{yUnit}{Target unit of y-axis.
+If \code{TRUE},}
 
-\item{yDimension}{Target dimension of y-axis.}
-
-\item{yUnit}{Target unit of y-axis. If one of \code{yDimension} or \code{yUnit} is specified, the other must be, too.}
-
-\item{...}{Any parameter that can be interpreted by the default \code{\link{plot}} function}
-}
-\value{
-
+\item{...}{Any parameter that can be interpreted by the default \code{\link[=plot]{plot()}} function}
 }
 \description{
 Draw XYData on top of an existing plot using the \code{points} method.
 }
+\keyword{internal}

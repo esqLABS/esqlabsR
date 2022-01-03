@@ -12,7 +12,8 @@ enumGetKey(enum, value)
 \item{value}{The value that is mapped to the key}
 }
 \value{
-Key under which the value is stored. If the value is not in the enum, \code{NULL} is returned
+Key under which the value is stored. If the value is not in the enum,
+\code{NULL} is returned
 }
 \description{
 Get the key mapped to the given value in an \code{enum}

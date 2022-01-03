@@ -2,18 +2,37 @@
 % Please edit documentation in R/utilities.R
 \name{getIndexClosestToValue}
 \alias{getIndexClosestToValue}
-\title{Get the index of the value in an array that is closest to given one.}
+\title{Find value in an array}
 \usage{
-getIndexClosestToValue(value, array)
+getIndexClosestToValue(value, array, thresholdAbs = NULL, thresholdRel = NULL)
 }
 \arguments{
 \item{value}{Numerical value}
 
 \item{array}{Numerical array}
+
+\item{thresholdAbs}{Absolute numerical distance by which the closest value in
+\code{array} may differ from \code{value} to be accepted. If both \code{thresholdAbs} and
+\code{thresholdRel} are \code{NULL} (default), no threshold is applied. If
+\code{thresholdAbs} is set, \code{thresholdRel} is ignored. If 0, only exact match
+between \code{value} and \code{array} is accepted.}
+
+\item{thresholdRel}{A fraction by which the closest value may differ from
+\code{value} to be accepted. \strong{WARNING}: setting a relative threshold will result
+in only exact matches if \code{value} is 0!}
 }
 \value{
-Index of a value within the array which is closest to \code{value}
+Index of a value within the array which is closest to \code{value} and the
+difference is within the defined threshold. If multiple entries of \code{array}
+have the same difference which is minimal, a vector of indices is returned.
+If no value is within the defined threshold, \code{NULL} is returned.
 }
 \description{
-Get the index of the value in an array that is closest to given one.
+Find the index of the value in an array that is closest to given
+one. By default, no restriction is applied how big the absolute numerical
+distance between \code{value} and a value in the \code{array} may be. A limit can be
+set by the parameters \code{thresholdAbs} or \code{thresholdRel}. If no value within
+the \code{array} has the distance to \code{value} that is equal to or less than the
+threshold, the \code{value} is considered not present in the \code{array} and \code{NULL}
+is returned.
 }

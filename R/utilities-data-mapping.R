@@ -1,11 +1,11 @@
-#' Plot multiple \code{PlotMapping} in one plot.
+#' Plot multiple `PlotMapping` in one plot.
 #'
-#' @param dataMappingList A single or a list of \code{PlotMapping} objects
-#' @param plotConfiguration An object of type \code{PlotConfiguration}
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param dataMappingList A single or a list of `PlotMapping` objects
+#' @param plotConfiguration An object of type `PlotConfiguration`
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 #' @export
 plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
-  dataMappingList <- enforceIsList(dataMappingList)
+  dataMappingList <- ospsuite:::toList(dataMappingList)
 
   nrOfCols <- plotConfiguration$nrOfCols
   # If no number of columns provided, calculate the number needed from
@@ -45,20 +45,19 @@ plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
 
 #' Plot XYData
 #'
-#' @description Draw XYData on top of an existing plot using the \code{points} method.
+#' @description Draw XYData on top of an existing plot using the `points` method.
 #'
-#' @param xySeries An \code{XYData} object to be plotted
-#' @param xDimension Target dimension of x-axis.
-#' @param xUnit Target unit of x-axis. If one of \code{xDimension} or \code{xUnit} is specified, the other must be, too.
-#' @param yDimension Target dimension of y-axis.
-#' @param yUnit Target unit of y-axis. If one of \code{yDimension} or \code{yUnit} is specified, the other must be, too.
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
-#'
-#' @return
-plotXYData <- function(xySeries, xDimension = NULL, xUnit = NULL, yDimension = NULL, yUnit = NULL, aggregated = FALSE, ...) {
-  validateIsOfType(xySeries, "XYData")
-  points(xySeries$xValuesProcessed(xDimension, xUnit),
-    xySeries$yValuesProcessed(yDimension, yUnit),
+#' @param xySeries An `XYData` object to be plotted
+#' @param xUnit Target unit of x-axis.
+#' @param yUnit Target unit of y-axis.
+#' If `TRUE`,
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
+#' @import ospsuite
+#' @keywords internal
+plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
+  ospsuite:::validateIsOfType(xySeries, "XYData")
+  points(xySeries$xValuesProcessed(xUnit),
+    xySeries$yValuesProcessed(yUnit),
     type = xySeries$type,
     lty = xySeries$lty,
     pch = xySeries$pch,
@@ -66,9 +65,9 @@ plotXYData <- function(xySeries, xDimension = NULL, xUnit = NULL, yDimension = N
     ...
   )
   if (!is.null(xySeries$yError)) {
-    plotErrorBars(xySeries$xValuesProcessed(xDimension, xUnit),
-      xySeries$yValuesProcessed(yDimension, yUnit),
-      xySeries$yErrorProcessed(yDimension, yUnit),
+    plotErrorBars(xySeries$xValuesProcessed(xUnit),
+      xySeries$yValuesProcessed(yUnit),
+      xySeries$yErrorProcessed(yUnit),
       col = xySeries$color,
       ...
     )
@@ -77,23 +76,22 @@ plotXYData <- function(xySeries, xDimension = NULL, xUnit = NULL, yDimension = N
 
 #' Plot XYData quantiles
 #'
-#' @description Draw XYData on top of an existing plot using the \code{points} method.
+#' @description Draw XYData on top of an existing plot using the `points` method.
 #'
-#' @param xySeries An \code{XYData} object to be plotted
+#' @param xySeries An `XYData` object to be plotted
 #' @inheritParams getQuantilesYData
-#' @param xDimension Target dimension of x-axis.
-#' @param xUnit Target unit of x-axis. If one of \code{xDimension} or \code{xUnit} is specified, the other must be, too.
-#' @param yDimension Target dimension of y-axis.
-#' @param yUnit Target unit of y-axis. If one of \code{yDimension} or \code{yUnit} is specified, the other must be, too.
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param xUnit Target unit of x-axis.
+#' @param yUnit Target unit of y-axis.
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
+#' @import ospsuite
 #' @export
-plotXYDataAggregated <- function(xySeries, xDimension = NULL, xUnit = NULL, yDimension = NULL, yUnit = NULL,
+plotXYDataAggregated <- function(xySeries, xUnit = NULL, yUnit = NULL,
                                  quantiles = c(0.05, 0.5, 0.95), ...) {
-  validateIsOfType(xySeries, "XYData")
+  ospsuite:::validateIsOfType(xySeries, "XYData")
   # Get the quantiles for data - lower/mid/upper
   aggregatedData <- getQuantilesYData(
-    xValues = xySeries$xValuesProcessed(xDimension, xUnit),
-    yValues = xySeries$yValuesProcessed(yDimension, yUnit),
+    xValues = xySeries$xValuesProcessed(xUnit),
+    yValues = xySeries$yValuesProcessed(yUnit),
     quantiles = quantiles
   )
 
@@ -116,23 +114,22 @@ plotXYDataAggregated <- function(xySeries, xDimension = NULL, xUnit = NULL, yDim
 }
 
 #' Plot individual time-values profile
-#' @description Create a 2D-plot of the x-y data sets stored in \code{dataMapping}
+#' @description Create a 2D-plot of the x-y data sets stored in `dataMapping`
 #'
-#' @param dataMapping A \code{DataMapping} object with \code{XYData}
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param dataMapping A `DataMapping` object with `XYData`
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 plotIndividualProfile <- function(dataMapping, ...) {
   plotTimeValues(dataMapping, aggregated = FALSE, ...)
 }
 
 #' Create a box-plot of data
 #'
-#' @param dataMapping A \code{DataMapping} object with \code{XYData}
-#' @param ... Any parameter that can be interpreted by the default \code{\link{boxplot}} function
-#'
-#' @return
+#' @param dataMapping A `DataMapping` object with `XYData`
+#' @param ... Any parameter that can be interpreted by the default [boxplot()] function
+#' @import ospsuite
 #' @export
 plotBoxPlot <- function(dataMapping, ...) {
-  validateIsOfType(dataMapping, "DataMapping")
+  ospsuite:::validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- vector(mode = "character", length = length(dataMapping$xySeries))
 
   allData <- vector(mode = "list", length = length(dataMapping$xySeries))
@@ -149,34 +146,41 @@ plotBoxPlot <- function(dataMapping, ...) {
 
   # Draw a legend, if specified
   if (dataMapping$addLegend) {
-    legend(dataMapping$legendPosition,
+    .figureAddLegend(
+      x = dataMapping$legendPosition,
       legend = legendEntries,
-      lty = rep(1, length(legendEntries)),
+      col = NULL,
+      pch = NULL,
+      lty = rep(0, length(legendEntries)),
       ...
     )
   }
 }
 
 #' Plot individual time-values profile
-#' @description Create a 2D-plot of the x-y data sets stored in \code{dataMapping}.
+#' @description Create a 2D-plot of the x-y data sets stored in `dataMapping`.
 #' Population simulation results are plotted as quantiles
 #'
-#' @param dataMapping A \code{DataMapping} object with \code{XYData}
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @param dataMapping A `DataMapping` object with `XYData`
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
 plotPopulationQuantiles <- function(dataMapping, ...) {
   plotTimeValues(dataMapping, aggregated = TRUE, ...)
 }
 
 #' Plot time-values profile
-#' @description Create a 2D-plot of the x-y data sets stored in \code{dataMapping}
+#' @description Create a 2D-plot of the x-y data sets stored in `dataMapping`
 #'
-#' @param dataMapping A \code{DataMapping} object with \code{XYData}
-#' @param aggregated Boolean. If \code{FALSE}, simulation data containing multiple individuals (population simulation)
-#' are plottet separately for each individual. If \code{TRUE}, population simulation results are plotted as
-#' mid-percentile and lower/upper percentile bands around.
-#' @param ... Any parameter that can be interpreted by the default \code{\link{plot}} function
+#' @import ospsuite
+#' @param dataMapping A `DataMapping` object with `XYData`
+#' @param aggregated Boolean. If `FALSE`, simulation data containing multiple
+#'   individuals (population simulation) are plotted separately for each
+#'   individual. If `TRUE`, population simulation results are plotted as
+#'   mid-percentile and lower/upper percentile bands around.
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
+#' @import hash
+#' @keywords internal
 plotTimeValues <- function(dataMapping, aggregated, ...) {
-  validateIsOfType(dataMapping, "DataMapping")
+  ospsuite:::validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- c()
   legendColors <- c()
   legendLty <- c()
@@ -184,10 +188,10 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
   # Count the number of groups plus the number of data sets that are not assigned to any group.
   # Based on this number, the colors and other graphics argument values will be defined
-  nrOfEntries <- length(mapKeys(dataMapping$groupings)) + length(dataMapping$ungroupedSeries)
+  nrOfEntries <- length(dataMapping$groupings) + length(dataMapping$ungroupedSeries)
   # Generate default values in case specific values for color etc are not set
   colors <- esqLABS_colors(nrOfColors = nrOfEntries)
-  pchArr <- 1:dataMapping$xySeriesCount
+  pchArr <- rep(0:24, times = (dataMapping$xySeriesCount %/% 26 + 1))
   ltyArr <- 1:nrOfEntries
   graphicsParIdx <- 1
 
@@ -199,8 +203,8 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 
   # Create an empty plot
   plot(NULL, NULL,
-    xlim = dataMapping$xLim + abs(dataMapping$xLim) * c(-0.1, 0.1),
-    ylim = dataMapping$yLim + abs(dataMapping$yLim) * c(-0.1, 0.1),
+    xlim = dataMapping$xLim,
+    ylim = dataMapping$yLim,
     xlab = dataMapping$xLab,
     ylab = dataMapping$yLab,
     log = dataMapping$log,
@@ -209,27 +213,16 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
   )
 
   # Add the current data set to the legend.
-  updateLegend <- function(legendEntry) {
-    legendEntries <<- c(legendEntries, legendEntry)
-    legendColors <<- c(legendColors, colors[[graphicsParIdx]])
-    if (isPch) {
-      legendPch <<- c(legendPch, pchArr[[pchParIdx]])
-    }
-    else {
-      legendPch <<- c(legendPch, NA)
-    }
-    if (isLty) {
-      legendLty <<- c(legendLty, ltyArr[[graphicsParIdx]])
-    }
-    else {
-      legendLty <<- c(legendLty, 0)
-    }
+  updateLegend <- function(legendConfiguration) {
+    legendEntries <<- c(legendEntries, legendConfiguration$legendEntry)
+    legendColors <<- c(legendColors, legendConfiguration$color)
+    legendPch <<- c(legendPch, legendConfiguration$pch)
+    legendLty <<- c(legendLty, legendConfiguration$lty)
   }
 
   pchParIdx <- 0
   for (i in seq_along(dataMapping$groupings)) {
-    isPch <- FALSE
-    isLty <- FALSE
+    legendConfiguration <- list("legendEntry" = names(dataMapping$groupings)[[i]], "color" = NULL, "pch" = NA, "lty" = 0)
     # Plot every entry within the group with the same graphical parameters except for pch
     for (j in seq_along(dataMapping$groupings[[i]])) {
       pchParIdx <- pchParIdx + 1
@@ -254,28 +247,36 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
         resetColor <- TRUE
       }
 
-      isPch <- isPoint(xySeriesEntry$type)
-      isLty <- isLine(xySeriesEntry$type)
+      legendConfiguration$color <- xySeriesEntry$color
+      # If symbols are plotted for the data set, set its pch for the legend
+      if (.isPoint(xySeriesEntry$type)) {
+        legendConfiguration$pch <- xySeriesEntry$pch
+      }
+      # If line is plotted for the data set, set its lty for the legend
+      if (.isLine(xySeriesEntry$type)) {
+        legendConfiguration$lty <- xySeriesEntry$lty
+      }
 
       # If XYSeriesEntry is simulation data, choose whether to plot individual values
       # or aggregated data
       if (xySeriesEntry$dataType == XYDataTypes$Simulated && aggregated) {
         plotXYDataAggregated(
           xySeriesEntry,
-          dataMapping$xDimension, dataMapping$xUnit,
-          dataMapping$yDimension, dataMapping$yUnit,
+          dataMapping$xUnit,
+          dataMapping$yUnit,
           quantiles = dataMapping$populationQuantiles,
           ...
         )
       } else {
         plotXYData(
           xySeriesEntry,
-          dataMapping$xDimension, dataMapping$xUnit,
-          dataMapping$yDimension, dataMapping$yUnit,
+          dataMapping$xUnit,
+          dataMapping$yUnit,
           ...
         )
       }
 
+      # Reset the entry's graphics parameters
       if (resetPch) {
         xySeriesEntry$pch <- NULL
       }
@@ -286,17 +287,16 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
         xySeriesEntry$color <- NULL
       }
     }
-    updateLegend(mapKeys(dataMapping$groupings)[[i]])
+    updateLegend(legendConfiguration)
     graphicsParIdx <- graphicsParIdx + 1
   }
-  # pchParIdx == 0 is when no groupings exist
+  # pchParIdx == 0 is when no grouping exists
   if (pchParIdx == 0) {
     pchParIdx <- 1
   }
   # Process XYData that are in no grouping
   for (xySeriesName in dataMapping$ungroupedSeries) {
     xySeriesEntry <- dataMapping$xySeries[[xySeriesName]]
-
     # We have to track if any of the graphic parameters for the XYData
     # were NULL, so these are reset to NULL after plotting the XYData
     resetPch <- FALSE
@@ -316,27 +316,35 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
       resetColor <- TRUE
     }
 
-    isPch <- isPoint(xySeriesEntry$type)
-    isLty <- isLine(xySeriesEntry$type)
+    legendConfiguration <- list("legendEntry" = xySeriesName, "color" = xySeriesEntry$color, "pch" = NA, "lty" = 0)
+    # If symbols are plotted for the data set, set its pch for the legend
+    if (.isPoint(xySeriesEntry$type)) {
+      legendConfiguration$pch <- xySeriesEntry$pch
+    }
+    # If line is plotted for the data set, set its lty for the legend
+    if (.isLine(xySeriesEntry$type)) {
+      legendConfiguration$lty <- xySeriesEntry$lty
+    }
 
     # If XYSeriesEntry is simulation data, choose whether to plot individual values
     # or aggregated data
     if (xySeriesEntry$dataType == XYDataTypes$Simulated && aggregated) {
       plotXYDataAggregated(
         xySeriesEntry,
-        dataMapping$xDimension, dataMapping$xUnit,
-        dataMapping$yDimension, dataMapping$yUnit,
+        dataMapping$xUnit,
+        dataMapping$yUnit,
         quantiles = dataMapping$populationQuantiles,
         ...
       )
     } else {
       plotXYData(
         xySeriesEntry,
-        dataMapping$xDimension, dataMapping$xUnit,
-        dataMapping$yDimension, dataMapping$yUnit,
+        dataMapping$xUnit,
+        dataMapping$yUnit,
         ...
       )
     }
+    updateLegend(legendConfiguration)
 
     if (resetPch) {
       xySeriesEntry$pch <- NULL
@@ -348,47 +356,58 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
       xySeriesEntry$color <- NULL
     }
 
-    isPch <- isPoint(xySeriesEntry$type)
-    isLty <- isLine(xySeriesEntry$type)
-    updateLegend(xySeriesName)
-
     graphicsParIdx <- graphicsParIdx + 1
     pchParIdx <- graphicsParIdx
   }
 
   # Draw a legend, if specified
   if (dataMapping$addLegend && (length(legendEntries) > 0)) {
-    legend(dataMapping$legendPosition,
+    .figureAddLegend(
+      x = dataMapping$legendPosition,
       legend = legendEntries,
       col = legendColors,
+      pch = legendPch,
       lty = legendLty,
-      pch = legendPch
+      ...
     )
   }
 }
 
 #' Plot a predicted-versus-observed goodness of fit plot
 #'
-#' @param dataMapping THe \code{DataMapping} object for which the goodness-of-fit
-#' plot is to be drawn. For each group within the \code{dataMapping}, simulated
+#' @param dataMapping THe `DataMapping` object for which the goodness-of-fit
+#' plot is to be drawn. For each group within the `dataMapping`, simulated
 #' and observed values are compared.
-#' @param foldDistance Numerical value for the fold-distance lines to be drawn. Default is 2.
+#' @param foldDistance Numerical value for the fold-distance lines to be drawn.
+#'   Default is 2.
+#' @param timeDiffThreshold Allowed difference between observed and simulated
+#'   time values in minutes. Default is 10. If for a certain observed point no
+#'   simulated time point exists within the defined threshold, the value is not
+#'   considered.
+#' @param ... Any parameter that can be interpreted by the default [plot()] function
+#'
 #' @details Observed data points are drawn on the x, simulated values on the y axis.
+#' @import ospsuite
 #' @export
-plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
-  validateIsOfType(dataMapping, "DataMapping")
+plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThreshold = 10, ...) {
+  ospsuite:::validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- c()
   legendColors <- c()
   legendPch <- c()
 
   # Count the number of groups plus the number of data sets that are not assigned to any group.
   # Based on this number, the colors and other graphics argument values will be defined
-  nrOfEntries <- length(mapKeys(dataMapping$groupings)) + length(dataMapping$ungroupedSeries)
+  nrOfEntries <- length(dataMapping$groupings) + length(dataMapping$ungroupedSeries)
   # Generate default values in case specific values for color etc are not set
   colors <- esqLABS_colors(nrOfColors = nrOfEntries)
   pchArr <- 1:dataMapping$xySeriesCount
   ltyArr <- 1:nrOfEntries
   graphicsParIdx <- 1
+
+  # Convert timeDiffThreshold to xUnit of the dataMapping
+  if (!is.null(timeDiffThreshold)) {
+    timeDiffThreshold <- toUnit(quantityOrDimension = "Time", values = timeDiffThreshold, sourceUnit = "min", targetUnit = dataMapping$xUnit)
+  }
 
   # If logarithmic scaling of y-axis has been selected and manually provided y-lim
   # is non-positive, use the automatically calculated values
@@ -413,8 +432,10 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
   # Draw the identity line
   points(dataMapping$yLim, dataMapping$yLim, type = "l")
   # Plot the fold deviation lines.
-  points(dataMapping$yLim, dataMapping$yLim * 1 / foldDistance, type = "l", lty = 2)
-  points(dataMapping$yLim, dataMapping$yLim * foldDistance, type = "l", lty = 2)
+  for (f in foldDistance) {
+    points(dataMapping$yLim, dataMapping$yLim * 1 / f, type = "l", lty = 2)
+    points(dataMapping$yLim, dataMapping$yLim * f, type = "l", lty = 2)
+  }
 
   graphicsParIdx <- 1
   for (groupingIdx in seq_along(dataMapping$groupings)) {
@@ -433,18 +454,18 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
         next
       }
       # Collapse all observed data
-      dataPointsX <- c(dataPointsX, xySeries$xValuesProcessed(dataMapping$xDimension, dataMapping$xUnit))
-      dataPointsY <- c(dataPointsY, xySeries$yValuesProcessed(dataMapping$yDimension, dataMapping$yUnit))
+      dataPointsX <- c(dataPointsX, xySeries$xValuesProcessed(dataMapping$xUnit))
+      dataPointsY <- c(dataPointsY, xySeries$yValuesProcessed(dataMapping$yUnit))
     }
     # Plot the simulated-observed pairs
     for (simulatedResult in simulatedResults) {
       # Apply scaling to simulated results
-      simulatedPointsX <- simulatedResult$xValuesProcessed(dataMapping$xDimension, dataMapping$xUnit)
-      simulatedPointsY <- simulatedResult$yValuesProcessed(dataMapping$yDimension, dataMapping$yUnit)
+      simulatedPointsX <- simulatedResult$xValuesProcessed(dataMapping$xUnit)
+      simulatedPointsY <- simulatedResult$yValuesProcessed(dataMapping$yUnit)
       # Iterate through each observed data point and find the simulated value
       # with the closest x-value.
       for (i in seq_along(dataPointsX)) {
-        idx <- getIndexClosestToValue(dataPointsX[[i]], (simulatedPointsX))
+        idx <- getIndexClosestToValue(dataPointsX[[i]], (simulatedPointsX), thresholdAbs = timeDiffThreshold)
         # In case of population simulation, idx may have more than one entry
         for (pointIdx in idx) {
           points(dataPointsY[[i]], simulatedPointsY[[pointIdx]],
@@ -454,7 +475,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
         }
       }
     }
-    legendEntries <- c(legendEntries, mapKeys(map = dataMapping$groupings)[[groupingIdx]])
+    legendEntries <- c(legendEntries, names(dataMapping$groupings)[[groupingIdx]])
     legendColors <- c(legendColors, colors[[graphicsParIdx]])
     legendPch <- c(legendPch, pchArr[[graphicsParIdx]])
     graphicsParIdx <- graphicsParIdx + 1
@@ -462,30 +483,48 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, ...) {
 
   # Draw a legend, if specified
   if (dataMapping$addLegend) {
-    legend(dataMapping$legendPosition,
+    .figureAddLegend(
+      x = dataMapping$legendPosition,
       legend = legendEntries,
       col = legendColors,
       pch = legendPch,
+      lty = NULL,
       ...
     )
   }
 }
 
-#' Calculate the root mean square error for groupings in \code{dataMapping}s
+#' Calculate the root mean square error for groupings in `dataMapping`s
 #'
 #'
-#' @param dataMappingList A \code{DataMapping} or a list of \code{DataMapping} objects.
+#' @param dataMappingList A `DataMapping` or a list of `DataMapping` objects.
+#' @param timeDiffThreshold Allowed difference between observed and simulated
+#'   time values in minutes. Default is 10. If for a certain observed point no
+#'   simulated time point exists within the defined threshold, the value is not
+#'   considered.
 #'
-#' @details The error is calculated for each group separately and added up. For each group, the error is defined as
-#' the root of the sum of the squared residuals between each simulated result and observed data.
+#' @details The error is calculated for each group separately and added up. For
+#'   each group, the error is defined as the root of the sum of the squared
+#'   residuals between each simulated result and observed data.
 #'
 #' @return Total error for all groups across all provided data mappings.
+#' @import ospsuite
 #' @export
-calculateRMSE <- function(dataMappingList) {
-  dataMappingList <- enforceIsList(dataMappingList)
+calculateRMSE <- function(dataMappingList, timeDiffThreshold = 10) {
+  dataMappingList <- ospsuite:::toList(dataMappingList)
 
   error <- 0
   for (dataMapping in dataMappingList) {
+    # Convert timeDiffThreshold to xUnit of the dataMapping
+    if (!is.null(timeDiffThreshold)) {
+      timeDiffThreshold <- toUnit(
+        quantityOrDimension = "Time",
+        values = timeDiffThreshold,
+        sourceUnit = "min",
+        targetUnit = dataMapping$xUnit
+      )
+    }
+
     for (grouping in dataMapping$groupings) {
       dataPointsX <- c()
       dataPointsY <- c()
@@ -498,16 +537,16 @@ calculateRMSE <- function(dataMappingList) {
           next
         }
         # Collapse all observed data
-        dataPointsX <- c(dataPointsX, xySeries$xValuesProcessed(dataMapping$xDimension, dataMapping$xUnit))
-        dataPointsY <- c(dataPointsY, xySeries$yValuesProcessed(dataMapping$yDimension, dataMapping$yUnit))
+        dataPointsX <- c(dataPointsX, xySeries$xValuesProcessed(dataMapping$xUnit))
+        dataPointsY <- c(dataPointsY, xySeries$yValuesProcessed(dataMapping$yUnit))
       }
       # Calculate the distance between each point of the observed data to each simulated result
       for (simulatedResult in simulatedResults) {
         # Apply scaling to simulated results
-        simulatedPointsX <- simulatedResult$xValuesProcessed(dataMapping$xDimension, dataMapping$xUnit)
-        simulatedPointsY <- simulatedResult$yValuesProcessed(dataMapping$yDimension, dataMapping$yUnit)
+        simulatedPointsX <- simulatedResult$xValuesProcessed(dataMapping$xUnit)
+        simulatedPointsY <- simulatedResult$yValuesProcessed(dataMapping$yUnit)
         for (i in seq_along(dataPointsX)) {
-          idx <- getIndexClosestToValue(dataPointsX[[i]], (simulatedPointsX))
+          idx <- getIndexClosestToValue(dataPointsX[[i]], (simulatedPointsX), timeDiffThreshold)
           # In case of population simulation, idx may have more than one entry
           for (pointIdx in idx) {
             error <- error + (simulatedPointsY[[pointIdx]] - dataPointsY[[i]])^2

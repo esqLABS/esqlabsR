@@ -1,7 +1,5 @@
 .getPackageVersion <- function() {
   version <- getNamespaceVersion("esqlabsR")
-  # first <- head(unlist(gregexpr(pattern = "\\.", version)), 1)
-  # return(unname(substr(version, 1, first - 1)))
   return(version)
 }
 
@@ -25,7 +23,7 @@ esqlabsEnv$heightPerPlotMapping <- 8
 esqlabsEnv$maxNumberOfCores <- parallel::detectCores() - 1
 
 # Column names to split observed data by
-esqlabsEnv$columnsToSplitDataBy <- c("Group.Id", "Gender", "Patient.Id", "Dose", "Route", "Molecule", "Organ", "Compartment")
+esqlabsEnv$columnsToSplitDataBy <- c("Group Id", "Gender", "Patient Id", "Dose", "Route", "Molecule", "Organ", "Compartment")
 
 # Column index for x values in observed data files
 esqlabsEnv$XValuesColumn <- 10
@@ -34,14 +32,12 @@ esqlabsEnv$YValuesColumn <- 11
 # Column index for y error values in observed data files
 esqlabsEnv$YErrorColumn <- 12
 
-# NetTask "DimensionTask" cached for performance benefits. Created the first time it is requested.
-esqlabsEnv$DimensionTask <- NULL
-
 #' Get the value of a global esqlabsR setting.
 #'
 #' @param settingName String name of the setting
 #'
-#' @return Value of the setting stored in esqlabsEnv. If the setting does not exist, an error is thrown.
+#' @return Value of the setting stored in esqlabsEnv. If the setting does not
+#'   exist, an error is thrown.
 #' @export
 #'
 #' @examples

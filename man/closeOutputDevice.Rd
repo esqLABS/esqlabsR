@@ -15,3 +15,4 @@ Close output device
 \details{
 If the output of the plot is directed to a file, close the device.
 }
+\keyword{internal}

@@ -2,11 +2,11 @@
 % Please edit documentation in R/utilities-steady-state.R
 \name{exportSteadyStateToXLS}
 \alias{exportSteadyStateToXLS}
-\title{Write an Excel-file with the steady-state}
+\title{Export steady-state to excel}
 \usage{
 exportSteadyStateToXLS(
   simulation,
-  quantities = NULL,
+  quantitiesPaths = NULL,
   resultsXLSPath = "",
   steadyStateTime = 1000,
   ignoreIfFormula = TRUE,
@@ -15,32 +15,38 @@ exportSteadyStateToXLS(
 )
 }
 \arguments{
-\item{simulation}{Simulation object}
+\item{simulation}{\code{Simulation} object}
 
-\item{quantities}{List of quantities (molecules and/or parameters) for which the steady-state is to be simulated. If \code{NULL} (default),
-all molecules and state variable parameters are considered.}
+\item{quantitiesPaths}{List of quantity paths (molecules and/or parameters)
+for which the steady-state is to be simulated. If \code{NULL} (default), all
+molecules and state variable parameters are considered.}
 
-\item{resultsXLSPath}{Path to the xls-file where the results will be written to. If the file does not exist, a new one is created
-If no path is provided, the file will be created in the same directory where the model file is located}
+\item{resultsXLSPath}{Path to the xls-file where the results will be written
+to. If the file does not exist, a new file is created. If no path is
+provided, the file will be created in the same directory where the model
+file is located.}
 
-\item{steadyStateTime}{Simulation time (minutes). Must be long enough for system to reach a steady-state. 1000 by default}
+\item{steadyStateTime}{Simulation time (minutes). Must be long enough for
+system to reach a steady-state. 1000 by default}
 
-\item{ignoreIfFormula}{If "TRUE", species and parameters with initial values defined by a formula are not included. Default is "TRUE".}
+\item{ignoreIfFormula}{If \code{TRUE} (default), species and parameters with
+initial values defined by a formula are not included.}
 
-\item{stopIfNotFound}{Boolean. If \code{TRUE} (default), an error is thrown when results for certain species were not generated.
-This may happen when due to numerical problems some values cannot be calculated, though the whole simulation converges. Setting this argument to \code{FALSE} allows
-to ignore such errors. Check the outputs for empty values when using this option.}
+\item{stopIfNotFound}{Boolean. If \code{TRUE} (default), an error is thrown when
+results for certain species were not generated. This may happen when due to
+numerical problems some values cannot be calculated, though the whole
+simulation converges. Setting this argument to \code{FALSE} allows to ignore
+such errors. Check the outputs for empty values when using this option.}
 
-\item{lowerThreshold}{Numerical value. Any steady-state values below this value are considered as numerical noise and replaced by 0. If \code{lowerThreshold} is \code{NULL},
-no cut-off is applied. Default value is 1e-15.}
-}
-\value{
-
+\item{lowerThreshold}{Numerical value (in µmol). Any steady-state values
+below this value are considered as numerical noise and replaced by 0. If
+\code{lowerThreshold} is \code{NULL}, no cut-off is applied. Default value is 1e-15.}
 }
 \description{
-Write an Excel-file with the steady-state
+Export steady-state to excel
 }
 \details{
-Simulates a given model to its steady-state and creates an Excel-file with the end values of molecules amounts in all containers
-and parameter values that have a right-hand-side (state variable parameters).
+Simulates a given model to its steady-state and creates an
+Excel-file with the end values of molecules amounts in all containers and
+parameter values that have a right-hand-side (state variable parameters).
 }

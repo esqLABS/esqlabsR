@@ -11,12 +11,14 @@ readParametersFromXLS(paramsXLSpath, sheets = NULL)
 \arguments{
 \item{paramsXLSpath}{Path to the excel file}
 
-\item{sheets}{Names of the excel sheets containing the information about the parameters. Multiple sheets
-can be processed. If no sheets are provided, the first one in the Excel file is used.}
+\item{sheets}{Names of the excel sheets containing the information about the
+parameters. Multiple sheets can be processed. If no sheets are provided,
+the first one in the Excel file is used.}
 }
 \value{
-A list containing lists 'paths' with the full paths to the parameters, 'values' the values of the parameters,
-and 'units' with the units the values are ín.
+A list containing lists 'paths' with the full paths to the
+parameters, 'values' the values of the parameters, and 'units' with the
+units the values are in.
 }
 \description{
 Read parameter values from a structured Excel file.

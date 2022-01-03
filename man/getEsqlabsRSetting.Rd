@@ -10,7 +10,8 @@ getEsqlabsRSetting(settingName)
 \item{settingName}{String name of the setting}
 }
 \value{
-Value of the setting stored in esqlabsEnv. If the setting does not exist, an error is thrown.
+Value of the setting stored in esqlabsEnv. If the setting does not
+exist, an error is thrown.
 }
 \description{
 Get the value of a global esqlabsR setting.

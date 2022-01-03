@@ -9,10 +9,7 @@ plotBoxPlot(dataMapping, ...)
 \arguments{
 \item{dataMapping}{A \code{DataMapping} object with \code{XYData}}
 
-\item{...}{Any parameter that can be interpreted by the default \code{\link{boxplot}} function}
-}
-\value{
-
+\item{...}{Any parameter that can be interpreted by the default \code{\link[=boxplot]{boxplot()}} function}
 }
 \description{
 Create a box-plot of data

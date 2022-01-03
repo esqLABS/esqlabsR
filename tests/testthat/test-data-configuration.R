@@ -1,4 +1,4 @@
-context("DataConfiguration")
+## context("DataConfiguration")
 
 test_that("It can create a instance of DataConfiguration", {
   dataConf <- DataConfiguration$new(
