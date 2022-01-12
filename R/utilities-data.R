@@ -11,17 +11,17 @@
 #' @import ospsuite vctrs
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
-  ospsuite:::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
+  ospsuite.utils::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
   filePath <- file.path(dataConfiguration$dataFolder, dataConfiguration$dataFile)
   validateFileExists(filePath)
 
   observedData <- list()
   for (sheet in dataConfiguration$dataSheets) {
     data <- readxl::read_excel(
-        path = filePath,
-        sheet = sheet,
-        .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE)
-      )
+      path = filePath,
+      sheet = sheet,
+      .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE)
+    )
     allFactors <- list()
     groupings <- c()
     # Split the data by a column only if it contains non-NA values

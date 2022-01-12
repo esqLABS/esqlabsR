@@ -5,7 +5,7 @@
 #' @format NULL
 Plotable <- R6::R6Class(
   "Plotable",
-  inherit = ospsuite:::Printable,
+  inherit = ospsuite.utils::Printable,
   cloneable = FALSE,
   active = list(),
   private = list(),
@@ -15,7 +15,7 @@ Plotable <- R6::R6Class(
     #' @param label A string that is used as a label (e.g. in the legend) for the data set
     #' @return A new `Plotable` object.
     initialize = function(label) {
-      ospsuite:::validateIsString(label)
+      ospsuite.utils::validateIsString(label)
 
       self$label <- label
     },

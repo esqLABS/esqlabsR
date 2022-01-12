@@ -158,7 +158,7 @@ figureAddLabel <- function(label, location = "topleft",
 #' col2hsv("yellow")
 #' @export
 col2hsv <- function(color) {
-  ospsuite:::validateIsString(color)
+  ospsuite.utils::validateIsString(color)
   rgb <- col2rgb(color)
   return(rgb2hsv(rgb))
 }
@@ -186,8 +186,8 @@ plotErrorBars <- function(x,
                           length = par()$cin[[1]] / 2,
                           axis = "y",
                           ...) {
-  ospsuite:::validateIsNumeric(c(x, y))
-  ospsuite:::validateIsSameLength(x, y, upper, lower)
+  ospsuite.utils::validateIsNumeric(c(x, y))
+  ospsuite.utils::validateIsSameLength(x, y, upper, lower)
   if (axis == "y") {
     arrows(x, y + upper, x, y - lower, angle = 90, code = 3, length = length, ...)
   }

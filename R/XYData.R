@@ -13,8 +13,8 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.xVals
       } else {
-        ospsuite:::validateIsNumeric(value)
-        ospsuite:::validateIsSameLength(value, private$.yVals)
+        ospsuite.utils::validateIsNumeric(value)
+        ospsuite.utils::validateIsSameLength(value, private$.yVals)
         private$.xVals <- value
       }
     },
@@ -24,8 +24,8 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.yVals
       } else {
-        ospsuite:::validateIsNumeric(value)
-        ospsuite:::validateIsSameLength(value, private$.xVals)
+        ospsuite.utils::validateIsNumeric(value)
+        ospsuite.utils::validateIsSameLength(value, private$.xVals)
         private$.yVals <- value
       }
     },
@@ -36,9 +36,9 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.yError
       } else {
-        ospsuite:::validateIsNumeric(value, nullAllowed = TRUE)
+        ospsuite.utils::validateIsNumeric(value, nullAllowed = TRUE)
         if (!is.null(value)) {
-          ospsuite:::validateIsSameLength(private$.yVals, value)
+          ospsuite.utils::validateIsSameLength(private$.yVals, value)
           # Replace all NAs with 0
           value[is.na(value)] <- 0
           # Check if all values are positive
@@ -97,7 +97,7 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.dataType
       } else {
-        ospsuite:::validateEnumValue(enum = XYDataTypes, value)
+        ospsuite.utils::validateEnumValue(enum = XYDataTypes, value)
         private$.dataType <- value
       }
     },
@@ -168,7 +168,7 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.MW
       } else {
-        ospsuite:::validateIsNumeric(value)
+        ospsuite.utils::validateIsNumeric(value)
         private$.MW <- value
       }
     }
@@ -195,15 +195,15 @@ XYData <- R6::R6Class(
     #' yError (optional) must be of the same length
     #' @return A new `XYData` object.
     initialize = function(xVals, yVals, label, yError = NULL) {
-      ospsuite:::validateIsNumeric(c(xVals, yVals))
-      ospsuite:::validateIsNumeric(yError, nullAllowed = TRUE)
-      ospsuite:::validateIsSameLength(xVals, yVals)
+      ospsuite.utils::validateIsNumeric(c(xVals, yVals))
+      ospsuite.utils::validateIsNumeric(yError, nullAllowed = TRUE)
+      ospsuite.utils::validateIsSameLength(xVals, yVals)
 
       super$initialize(label)
       private$.xVals <- xVals
       private$.yVals <- yVals
       if (!is.null(yError)) {
-        ospsuite:::validateIsSameLength(yVals, yError)
+        ospsuite.utils::validateIsSameLength(yVals, yError)
         # Replace all NAs with 0
         yError[is.na(yError)] <- 0
         self$yError <- yError
