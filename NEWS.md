@@ -1,6 +1,6 @@
 # esqlabsR 2.0.0
 
-BREAKING CHANGES
+- Maintenance and bug fixes.
 
 # esqlabsR 1.0.0
 
