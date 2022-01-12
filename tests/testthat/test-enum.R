@@ -1,7 +1,7 @@
 test_that("Check key-value mappings work", {
   library(ospsuite)
 
-  myEnum <- ospsuite.utils::enum(c(a = "b"))
+  myEnum <- enum(c(a = "b"))
 
   expect_equal(
     enumPutList("c", "d", myEnum),

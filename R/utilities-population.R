@@ -17,8 +17,8 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
     "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit"
   )
 
-  ospsuite.utils::validateIsString(c(XLSpath, populationName))
-  ospsuite.utils::validateIsString(sheet, nullAllowed = TRUE)
+  validateIsString(c(XLSpath, populationName))
+  validateIsString(sheet, nullAllowed = TRUE)
 
   if (is.null(sheet)) {
     sheet <- 1
@@ -57,7 +57,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
 #' Possible gender entries as integer values
 #'
 #' @export
-GenderInt <- ospsuite.utils::enum(list(
+GenderInt <- enum(list(
   MALE = 1,
   FEMALE = 2,
   UNKNOWN = 3
@@ -83,11 +83,11 @@ extendPopulationByUserDefinedParams <- function(population,
                                                 meanValues,
                                                 sdValues,
                                                 distributions = Distributions$Normal) {
-  ospsuite.utils::validateIsOfType(population, "Population")
-  ospsuite.utils::validateIsString(parameterPaths)
-  ospsuite.utils::validateIsNumeric(meanValues, sdValues)
+  validateIsOfType(population, "Population")
+  validateIsString(parameterPaths)
+  validateIsNumeric(meanValues, sdValues)
   distributions <- distributions %||% rep(Distributions$Normal, length(parameterPaths))
-  ospsuite.utils::validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
+  validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
 
 
   # Iterate through all parameters and sample a parameter values vector
@@ -125,9 +125,9 @@ extendPopulationByUserDefinedParams <- function(population,
 #' @import readxl
 #' @export
 extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
-  ospsuite.utils::validateIsOfType(population, "Population")
-  ospsuite.utils::validateIsString(XLSpath)
-  ospsuite.utils::validateIsString(sheet, nullAllowed = TRUE)
+  validateIsOfType(population, "Population")
+  validateIsString(XLSpath)
+  validateIsString(sheet, nullAllowed = TRUE)
   if (is.null(sheet)) {
     sheet <- 1
   }
@@ -165,7 +165,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
 
 #' Supported distributions for sampling
 #' @export
-Distributions <- ospsuite.utils::enum(list(
+Distributions <- enum(list(
   "Normal",
   "LogNormal"
 ))

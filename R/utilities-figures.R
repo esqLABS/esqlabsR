@@ -158,7 +158,7 @@ figureAddLabel <- function(label, location = "topleft",
 #' col2hsv("yellow")
 #' @export
 col2hsv <- function(color) {
-  ospsuite.utils::validateIsString(color)
+  validateIsString(color)
   rgb <- col2rgb(color)
   return(rgb2hsv(rgb))
 }
@@ -186,8 +186,8 @@ plotErrorBars <- function(x,
                           length = par()$cin[[1]] / 2,
                           axis = "y",
                           ...) {
-  ospsuite.utils::validateIsNumeric(c(x, y))
-  ospsuite.utils::validateIsSameLength(x, y, upper, lower)
+  validateIsNumeric(c(x, y))
+  validateIsSameLength(x, y, upper, lower)
   if (axis == "y") {
     arrows(x, y + upper, x, y - lower, angle = 90, code = 3, length = length, ...)
   }
@@ -198,7 +198,7 @@ plotErrorBars <- function(x,
 
 #' Possible entries for the `outputDevice` field of a `PlotConfiguration` object
 #' @export
-GraphicsDevices <- ospsuite.utils::enum(list("PNG"))
+GraphicsDevices <- enum(list("PNG"))
 
 #' Possible entries for the `plotType` field of a `DataMapping` object
 #'
@@ -209,7 +209,7 @@ GraphicsDevices <- ospsuite.utils::enum(list("PNG"))
 #'   line an upper/lower percentiles plotted as shaded areas
 #'   "PredictedVsObserved" -  predicted-versus-observed goodness of fit plot
 #' @export
-PlotTypes <- ospsuite.utils::enum(list(
+PlotTypes <- enum(list(
   "IndividualProfile",
   "PopulationQuantiles",
   "PredictedVsObserved",

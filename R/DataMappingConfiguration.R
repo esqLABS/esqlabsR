@@ -6,7 +6,7 @@
 #' @format NULL
 DataMappingConfiguration <- R6::R6Class(
   "DataMappingConfiguration",
-  inherit = ospsuite.utils::Printable,
+  inherit = Printable,
   cloneable = FALSE,
   active = list(
     #' @field xFactors A named list listing numerical values that x-values are
@@ -109,7 +109,7 @@ DataMappingConfiguration <- R6::R6Class(
     #'   representing the x-factors. Both lists must be of same length and store
     #'   the entries in the same order.
     setXFactors = function(labels, xFactors) {
-      ospsuite.utils::validateIsSameLength(labels, xFactors)
+      validateIsSameLength(labels, xFactors)
       private$.xFactors[labels] <- xFactors
     },
     #' @description Set the values of y-factors. A y-factor will be multiplied
@@ -120,7 +120,7 @@ DataMappingConfiguration <- R6::R6Class(
     #'   representing the y-factors. Both lists must be of same length
     #' and store the entries in the same order.
     setYFactors = function(labels, yFactors) {
-      ospsuite.utils::validateIsSameLength(labels, yFactors)
+      validateIsSameLength(labels, yFactors)
       private$.yFactors[labels] <- yFactors
     },
     #' @description Set the values of x-offsets. An x-offset will be added to
@@ -131,7 +131,7 @@ DataMappingConfiguration <- R6::R6Class(
     #'   representing the x-offsets. Both lists must be of same length and store
     #'   the entries in the same order.
     setXOffsets = function(labels, xOffsets) {
-      ospsuite.utils::validateIsSameLength(labels, xOffsets)
+      validateIsSameLength(labels, xOffsets)
       private$.xOffsets[labels] <- xOffsets
     },
     #' @description Set the values of y-offsets. A y-offset will be added to the
@@ -142,7 +142,7 @@ DataMappingConfiguration <- R6::R6Class(
     #'   representing the y-offsets. Both lists must be of same length and store
     #'   the entries in the same order.
     setYOffsets = function(labels, yOffsets) {
-      ospsuite.utils::validateIsSameLength(labels, yOffsets)
+      validateIsSameLength(labels, yOffsets)
       private$.yOffsets[labels] <- yOffsets
     },
     #' @description Set the colors that will be used to plot a certain data set.
@@ -151,7 +151,7 @@ DataMappingConfiguration <- R6::R6Class(
     #' @param colors Values representing a color recognized by the `col`
     #'   argument of the [plot()] function
     setColors = function(labels, colors) {
-      ospsuite.utils::validateIsSameLength(labels, colors)
+      validateIsSameLength(labels, colors)
       private$.colors[labels] <- colors
     },
     #' @description Set the line types that will be used to plot a certain data set.
@@ -160,7 +160,7 @@ DataMappingConfiguration <- R6::R6Class(
     #' @param lineTypes Values recognized by the `col` argument of the [plot()]
     #'   function
     setLineTypes = function(labels, lineTypes) {
-      ospsuite.utils::validateIsSameLength(labels, lineTypes)
+      validateIsSameLength(labels, lineTypes)
       private$.lineTypes[labels] <- lineTypes
     },
 

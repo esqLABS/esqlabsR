@@ -5,7 +5,7 @@
 #' @format NULL
 DataConfiguration <- R6::R6Class(
   "DataConfiguration",
-  inherit = ospsuite.utils::Printable,
+  inherit = Printable,
   cloneable = FALSE,
   active = list(),
   private = list(),
