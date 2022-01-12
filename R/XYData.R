@@ -351,4 +351,4 @@ XYData <- R6::R6Class(
 
 #' Possible entries for the `dataType` field of a `XYData` object
 #' @export
-XYDataTypes <- enum(list("Simulated", "Observed", "Unspecified"))
+XYDataTypes <- ospsuite.utils::enum(list("Simulated", "Observed", "Unspecified"))

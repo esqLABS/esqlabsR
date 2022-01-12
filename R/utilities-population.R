@@ -57,7 +57,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
 #' Possible gender entries as integer values
 #'
 #' @export
-GenderInt <- enum(list(
+GenderInt <- ospsuite.utils::enum(list(
   MALE = 1,
   FEMALE = 2,
   UNKNOWN = 3
@@ -165,7 +165,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
 
 #' Supported distributions for sampling
 #' @export
-Distributions <- enum(list(
+Distributions <- ospsuite.utils::enum(list(
   "Normal",
   "LogNormal"
 ))

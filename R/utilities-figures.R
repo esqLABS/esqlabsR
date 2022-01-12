@@ -198,7 +198,7 @@ plotErrorBars <- function(x,
 
 #' Possible entries for the `outputDevice` field of a `PlotConfiguration` object
 #' @export
-GraphicsDevices <- enum(list("PNG"))
+GraphicsDevices <- ospsuite.utils::enum(list("PNG"))
 
 #' Possible entries for the `plotType` field of a `DataMapping` object
 #'
@@ -209,7 +209,7 @@ GraphicsDevices <- enum(list("PNG"))
 #'   line an upper/lower percentiles plotted as shaded areas
 #'   "PredictedVsObserved" -  predicted-versus-observed goodness of fit plot
 #' @export
-PlotTypes <- enum(list(
+PlotTypes <- ospsuite.utils::enum(list(
   "IndividualProfile",
   "PopulationQuantiles",
   "PredictedVsObserved",
