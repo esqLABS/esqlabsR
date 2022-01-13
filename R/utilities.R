@@ -35,7 +35,7 @@ getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdR
     }
   }
 
-  ospsuite.utils::validateIsNumeric(c(value, array))
+  validateIsNumeric(c(value, array))
 
   # Calculate distances
   distances <- abs(array - value)
@@ -86,8 +86,8 @@ geosd <- function(x, na.rm = FALSE) {
 #' @return A list with `xValues` and aggregated `yValues`
 #' @export
 getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) {
-  ospsuite.utils::validateIsNumeric(c(xValues, yValues, quantiles))
-  ospsuite.utils::validateIsSameLength(xValues, yValues)
+  validateIsNumeric(c(xValues, yValues, quantiles))
+  validateIsSameLength(xValues, yValues)
   output <- list()
   # Aggregate time values
   for (quantile in quantiles) {
@@ -107,7 +107,7 @@ getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) 
 #'
 #' @return Value of the .NET-method "GetHashCode"
 getNetHashCode <- function(netWrapper) {
-  ospsuite.utils::validateIsOfType(netWrapper, "DotNetWrapper")
+  validateIsOfType(netWrapper, "DotNetWrapper")
   rClr::clrGet(netWrapper$ref, "HashCode")
 }
 

@@ -28,7 +28,7 @@ executeInParallel <- function(fun,
                               outputNames = NULL,
                               nrOfCores = esqlabsEnv$maxNumberOfCores) {
   if (!is.null(outputNames)) {
-    ospsuite.utils::validateIsSameLength(firstArguments, outputNames)
+    validateIsSameLength(firstArguments, outputNames)
   }
   cl <- makeCluster(nrOfCores)
   # Load necessary packages and export the environments

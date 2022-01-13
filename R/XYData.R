@@ -1,6 +1,9 @@
 #' @title XYData
 #' @docType class
 #' @description A set of x and y value pairs
+#'
+#' @import ospsuite.utils
+#'
 #' @export
 #' @format NULL
 XYData <- R6::R6Class(
@@ -13,8 +16,8 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.xVals
       } else {
-        ospsuite.utils::validateIsNumeric(value)
-        ospsuite.utils::validateIsSameLength(value, private$.yVals)
+        validateIsNumeric(value)
+        validateIsSameLength(value, private$.yVals)
         private$.xVals <- value
       }
     },
@@ -24,8 +27,8 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.yVals
       } else {
-        ospsuite.utils::validateIsNumeric(value)
-        ospsuite.utils::validateIsSameLength(value, private$.xVals)
+        validateIsNumeric(value)
+        validateIsSameLength(value, private$.xVals)
         private$.yVals <- value
       }
     },
@@ -36,9 +39,9 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.yError
       } else {
-        ospsuite.utils::validateIsNumeric(value, nullAllowed = TRUE)
+        validateIsNumeric(value, nullAllowed = TRUE)
         if (!is.null(value)) {
-          ospsuite.utils::validateIsSameLength(private$.yVals, value)
+          validateIsSameLength(private$.yVals, value)
           # Replace all NAs with 0
           value[is.na(value)] <- 0
           # Check if all values are positive
@@ -97,7 +100,7 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.dataType
       } else {
-        ospsuite.utils::validateEnumValue(enum = XYDataTypes, value)
+        validateEnumValue(enum = XYDataTypes, value)
         private$.dataType <- value
       }
     },
@@ -168,7 +171,7 @@ XYData <- R6::R6Class(
       if (missing(value)) {
         private$.MW
       } else {
-        ospsuite.utils::validateIsNumeric(value)
+        validateIsNumeric(value)
         private$.MW <- value
       }
     }
@@ -195,15 +198,15 @@ XYData <- R6::R6Class(
     #' yError (optional) must be of the same length
     #' @return A new `XYData` object.
     initialize = function(xVals, yVals, label, yError = NULL) {
-      ospsuite.utils::validateIsNumeric(c(xVals, yVals))
-      ospsuite.utils::validateIsNumeric(yError, nullAllowed = TRUE)
-      ospsuite.utils::validateIsSameLength(xVals, yVals)
+      validateIsNumeric(c(xVals, yVals))
+      validateIsNumeric(yError, nullAllowed = TRUE)
+      validateIsSameLength(xVals, yVals)
 
       super$initialize(label)
       private$.xVals <- xVals
       private$.yVals <- yVals
       if (!is.null(yError)) {
-        ospsuite.utils::validateIsSameLength(yVals, yError)
+        validateIsSameLength(yVals, yError)
         # Replace all NAs with 0
         yError[is.na(yError)] <- 0
         self$yError <- yError
