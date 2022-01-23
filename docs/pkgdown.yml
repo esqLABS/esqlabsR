@@ -1,5 +1,5 @@
-pandoc: 2.16.2
-pkgdown: 2.0.1
+pandoc: '2.17'
+pkgdown: 2.0.2
 pkgdown_sha: ~
 articles:
   data-handling: data-handling.html
@@ -7,7 +7,7 @@ articles:
   helper-methods: helper-methods.html
   introduction-esqlabsr: introduction-esqlabsr.html
   modeling-simulation: modeling-simulation.html
-last_built: 2021-12-06T10:01Z
+last_built: 2022-01-23T07:08Z
 urls:
   reference: https://esqlabs.github.io/esqlabsR/reference
   article: https://esqlabs.github.io/esqlabsR/articles
