@@ -25,7 +25,6 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    spelling,
     testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr

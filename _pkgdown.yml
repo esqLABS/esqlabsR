@@ -64,7 +64,6 @@ reference:
       - matches("^enum")
       - matches("^get")
       - executeInParallel
-      - OR
       - pathFromClipboard
       - removeFromList
       - sourceAll
