@@ -2,40 +2,24 @@
 % Please edit documentation in R/utilities-data.R
 \name{calculateMeans}
 \alias{calculateMeans}
-\title{Calculate mean and standard deviation for each data set of an excel sheet}
+\title{Calculate mean and standard deviation for the yValues of the given \code{DataSet} objects}
 \usage{
-calculateMeans(
-  filePath,
-  sheet = NULL,
-  columnNames = c("Time", "Measurement", "Error"),
-  nonGroupingCols = c("Study Id", "Subject Id"),
-  saveToOriginalFile = FALSE
-)
+calculateMeans(dataSets)
 }
 \arguments{
-\item{filePath}{full path of a xls/xlsx file containing at least the columns \verb{Patient Id},
-\verb{Fraction [\%]} and \verb{Error [\%]}}
-
-\item{sheet}{Name or number of the sheet. If \code{NULL} (default), the first sheet of the
-file is used.}
-
-\item{columnNames}{vector of length 3, containing names of the columns corresponding
-to \code{Time}, \code{Measurement} and \code{Error}, only necessary if they are named differently
-in the file e.g. \code{Time [min]} instead of \code{Time}}
-
-\item{nonGroupingCols}{these columns are not used for grouping data into data sets for which
-calculations are done.}
-
-\item{saveToOriginalFile}{should the calculated means be written to the original file?}
+\item{dataSets}{list of \code{DataSet} objects}
+}
+\value{
+A \code{DataSet} object with yValues set to the mean of the original data sets'
+yValues per xValue, yErrorValues set to their standard deviation, plus all meta data
+that are equal in all data sets.
 }
 \description{
-Calculate mean and standard deviation for each data set of an excel sheet
+Calculate mean and standard deviation for the yValues of the given \code{DataSet} objects
 }
 \details{
-Computes mean and standard deviation of \code{Measurement} of each subset of data
-given by all combinations of values for the other columns (except for \code{nonGroupingCols})
-Results are written to a new file in the original folder per default, if the results shall
-be appended to the original file and sheet, the argument \code{saveToOriginalFile} has to be
-set to TRUE. Note that this may take significantly longer as every sheet from the original
-file has to be read in first.
+Calculates mean and standard deviation of the yValues of the given \code{DataSet}
+objects per xValue. Note that data points with LLOQ are not used. If xUnit or yUnit
+are not the same in all data sets, the unit of the first data set is used, values are
+converted accordingly.
 }

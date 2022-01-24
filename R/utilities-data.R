@@ -11,7 +11,7 @@
 #' @import ospsuite vctrs
 #' @export
 readOSPSTimeValues <- function(dataConfiguration) {
-  ospsuite:::validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
+  validateIsString(c(dataConfiguration$dataFolder, dataConfiguration$dataFile, dataConfiguration$sheets))
   filePath <- file.path(dataConfiguration$dataFolder, dataConfiguration$dataFile)
   validateFileExists(filePath)
 
@@ -130,80 +130,77 @@ stringToNum <- function(string) {
   return(numVals)
 }
 
-#' Calculate mean and standard deviation for each data set of an excel sheet
+#' Calculate mean and standard deviation for the yValues of the given `DataSet` objects
 #'
-#' @param filePath full path of a xls/xlsx file containing at least the columns `Patient Id`,
-#' `Fraction [%]` and `Error [%]`
-#' @param sheet Name or number of the sheet. If `NULL` (default), the first sheet of the
-#'   file is used.
-#' @param columnNames vector of length 3, containing names of the columns corresponding
-#' to `Time`, `Measurement` and `Error`, only necessary if they are named differently
-#' in the file e.g. `Time [min]` instead of `Time`
-#' @param nonGroupingCols these columns are not used for grouping data into data sets for which
-#' calculations are done.
-#' @param saveToOriginalFile should the calculated means be written to the original file?
-#' @details Computes mean and standard deviation of `Measurement` of each subset of data
-#' given by all combinations of values for the other columns (except for `nonGroupingCols`)
-#' Results are written to a new file in the original folder per default, if the results shall
-#' be appended to the original file and sheet, the argument `saveToOriginalFile` has to be
-#' set to TRUE. Note that this may take significantly longer as every sheet from the original
-#' file has to be read in first.
-#'
+#' @param dataSets list of `DataSet` objects
+#' @details Calculates mean and standard deviation of the yValues of the given `DataSet`
+#' objects per xValue. Note that data points with LLOQ are not used. If xUnit or yUnit
+#' are not the same in all data sets, the unit of the first data set is used, values are
+#' converted accordingly.
+#' @return A `DataSet` object with yValues set to the mean of the original data sets'
+#' yValues per xValue, yErrorValues set to their standard deviation, plus all meta data
+#' that are equal in all data sets.
 #' @export
-calculateMeans <- function(filePath, sheet = NULL, columnNames = c("Time", "Measurement", "Error"),
-                           nonGroupingCols = c("Study Id", "Subject Id"), saveToOriginalFile = FALSE) {
-  validateFileExists(filePath)
-  validateLength(columnNames, 3)
+calculateMeans <- function(dataSets) {
+  df <- ospsuite::dataSetToDataFrame(dataSets)
+  meanDataSet <- ospsuite::DataSet$new()
 
-  if (saveToOriginalFile) {
-    if (is.null(sheet)) sheet <- readxl::excel_sheets(filePath)[1]
-    # if the results shall be appended to the original file, all sheets have to be read in first
-    # because there is no option to modify files with the writexl package
-    fileContent <- sapply(readxl::excel_sheets(filePath), readExcel,
-      path = filePath, USE.NAMES = TRUE, simplify = FALSE
-    )
-    data <- fileContent[[sheet]]
-  } else {
-    data <- readExcel(path = filePath, sheet = sheet)
+  # check if all xDimensions are the same
+  xDimension <- unique(df$xDimension)
+  if (length(xDimension) > 1) {
+    stop(messages$errorDimensionsDoNotMatch("xDimension"))
   }
+  meanDataSet$xDimension <- xDimension
 
-  if (!all(columnNames %in% names(data))) {
-    stop(messages$errorColumnNamesNotInFile(filePath, setdiff(columnNames, names(data))))
+  # check if all yDimensions are the same
+  yDimension <- unique(df$yDimension)
+  if (length(yDimension) > 1) {
+    stop(messages$errorDimensionsDoNotMatch("yDimension"))
   }
-  if (nrow(data) == 0) {
-    stop(messages$errorNoFileContents(filePath))
+  meanDataSet$yDimension <- yDimension
+
+  # remove data points with lloq
+  df <- df[is.na(df$lloq),]
+
+  # check if xUnits match, if not: convert to all values to xUnit of first data set
+  xUnit <- unique(df$xUnit)
+  if (length(xUnit) > 1) {
+    xUnit <- xUnit[1]
+    df$xValues <- mapply(function(x, y) {
+      ospsuite::toUnit(xDimension,targetUnit=xUnit, values = x, sourceUnit= y)
+    },
+    df$xValues, df$xUnit)
   }
+  meanDataSet$xUnit <- xUnit
 
-  dataSets <- data[, !names(data) %in% c(columnNames[-1], nonGroupingCols)]
-
-  if (ncol(dataSets) == 0) {
-    stop(messages$errorNoGroupingColumns())
+  # check if yUnits match, if not: convert all values to yUnit of first data set
+  yUnit <- unique(df$yUnit)
+  if (length(yUnit) > 1) {
+    yUnit <- yUnit[1]
+    df$yValues <- mapply(function(x, y) {
+        ospsuite::toUnit(yDimension,targetUnit=yUnit, values = x, sourceUnit= y)
+      },
+      df$yValues, df$yUnit)
   }
+  meanDataSet$yUnit <- yUnit
 
-  # dataframe with all combinations of column values
-  dataSets <- dataSets[!duplicated(dataSets), ]
-  means <- c()
-  sds <- c()
-  for (i in 1:nrow(dataSets)) {
-    # filter data for combination of column values
-    dataFiltered <- merge(data, dataSets[i, ])
-    # compute mean and standard deviation for filtered data
-    means <- c(means, mean(dataFiltered[[columnNames[2]]]))
-    sds <- c(sds, sd(dataFiltered[[columnNames[2]]]))
+  yMeans <- tapply(df[,"yValues"], df[,"xValues"], mean)
+  yError <- tapply(df[,"yValues"], df[,"xValues"], sd)
+
+  meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
+
+  # add all meta that are equal in every data set
+  # we are getting the meta data names by their position in the data frame returned by
+  # ospsuite::dataSetToDataFrame() - this will have to be adapted if the number of default
+  # columns changes there
+  metaDataNames <- names(df)[-(1:12)]
+  for (name in metaDataNames) {
+    value <- unique(df[name])
+    if (length(value) == 1) {
+      meanDataSet$addMetaData(name = name, value = value)
+    }
   }
+  meanDataSet$addMetaData(name = "Subject ID", value = "mean")
 
-  # column 'Measurement'
-  dataSets[[columnNames[2]]] <- means
-  # column 'Error'
-  dataSets[[columnNames[3]]] <- sds
-  dataSets[setdiff(names(data), names(dataSets))] <- NA
-  dataSets <- dataSets[names(data)]
-
-  if (saveToOriginalFile) {
-    data <- rbind(data, dataSets)
-    fileContent[[sheet]] <- data
-    writexl::write_xlsx(fileContent, path = filePath)
-  } else {
-    writexl::write_xlsx(dataSets, path = paste0(tools::file_path_sans_ext(filePath), "_mean.xlsx"))
-  }
+  return(meanDataSet)
 }
