@@ -142,8 +142,8 @@ stringToNum <- function(string) {
 #' that are equal in all data sets.
 #' @export
 calculateMeans <- function(dataSets) {
-  df <- ospsuite::dataSetToDataFrame(dataSets)
-  meanDataSet <- ospsuite::DataSet$new()
+  df <- dataSetToDataFrame(dataSets)
+  meanDataSet <- DataSet$new()
 
   # check if all xDimensions are the same
   xDimension <- unique(df$xDimension)
@@ -167,7 +167,7 @@ calculateMeans <- function(dataSets) {
   if (length(xUnit) > 1) {
     xUnit <- xUnit[1]
     df$xValues <- mapply(function(x, y) {
-      ospsuite::toUnit(xDimension,targetUnit=xUnit, values = x, sourceUnit= y)
+      toUnit(xDimension,targetUnit=xUnit, values = x, sourceUnit= y)
     },
     df$xValues, df$xUnit)
   }
@@ -178,7 +178,7 @@ calculateMeans <- function(dataSets) {
   if (length(yUnit) > 1) {
     yUnit <- yUnit[1]
     df$yValues <- mapply(function(x, y) {
-        ospsuite::toUnit(yDimension,targetUnit=yUnit, values = x, sourceUnit= y)
+        toUnit(yDimension,targetUnit=yUnit, values = x, sourceUnit= y)
       },
       df$yValues, df$yUnit)
   }
@@ -188,6 +188,7 @@ calculateMeans <- function(dataSets) {
   yError <- tapply(df[,"yValues"], df[,"xValues"], sd)
 
   meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
+  meanDataSet$yErrorType <- DataErrorType$ArithmeticStdDev
 
   # add all meta that are equal in every data set
   # we are getting the meta data names by their position in the data frame returned by
@@ -195,12 +196,13 @@ calculateMeans <- function(dataSets) {
   # columns changes there
   metaDataNames <- names(df)[-(1:12)]
   for (name in metaDataNames) {
-    value <- unique(df[name])
+    value <- unique(df[[name]])
     if (length(value) == 1) {
       meanDataSet$addMetaData(name = name, value = value)
     }
   }
   meanDataSet$addMetaData(name = "Subject ID", value = "mean")
+  meanDataSet$name <- "Mean"
 
   return(meanDataSet)
 }

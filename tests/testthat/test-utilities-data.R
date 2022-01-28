@@ -84,7 +84,7 @@ test_that("Only meta data entries that are equal in all inital data sets are set
   dataSet2$addMetaData(name = "meta2", value = "c")
   dataSet1$addMetaData(name = "meta3", value = "d")
   meanDataSet <- calculateMeans(list(dataSet1, dataSet2))
-  expect_equal(meanDataSet$metaData, list(meta1="a"))
+  expect_equal(meanDataSet$metaData, list(meta1="a", `Subject ID` = "mean"))
 })
 
 test_that("It sets the yErrorValues to the arithmetic standard deviation", {
