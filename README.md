@@ -16,9 +16,9 @@ The latest version of the package comes as a binary `*.zip` and can be downloade
 
 ## Required packages
 
-- rClr >0.9
+- rClr >0.9.1
   - https://github.com/Open-Systems-Pharmacology/rClr/releases/ or esqLABS internal
-- ospsuite-r >10
+- ospsuite-r > 10.0
   - https://github.com/Open-Systems-Pharmacology/OSPSuite-R or esqLABS internal
 - R6 (CRAN)
 - readr (CRAN)
@@ -27,7 +27,7 @@ The latest version of the package comes as a binary `*.zip` and can be downloade
 - hash (CRAN)
 - shiny (CRAN)
 - shinyjs (CRAN)
-- dplyr (CRAN)
+- vctrs (CRAN)
 
 ### For building from source and developing
 
