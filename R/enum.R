@@ -24,7 +24,7 @@ enumGetKey <- function(enum, value) {
 #' @export
 #'
 #' @examples
-#' myEnum <- enum(c(a = "b"))
+#' myEnum <- ospsuite.utils::enum(c(a = "b"))
 #' myEnum <- enumPut("c", "d", myEnum)
 #' myEnum <- enumPut(c("c", "d", "g"), list(12, 2, "a"), myEnum, overwrite = TRUE)
 enumPutList <- function(key, values, enum, overwrite = FALSE) {
