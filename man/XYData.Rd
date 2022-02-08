@@ -104,7 +104,8 @@ A new \code{XYData} object.
 \if{html}{\out{<a id="method-yMinPositive"></a>}}
 \if{latex}{\out{\hypertarget{method-yMinPositive}{}}}
 \subsection{Method \code{yMinPositive()}}{
-Returns the minimal value (minus error, if specified) of the y series that is not negative or null
+Returns the minimal value (minus error, if specified) of the
+y series that is not negative or null
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{XYData$yMinPositive()}\if{html}{\out{</div>}}
 }

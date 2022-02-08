@@ -217,7 +217,8 @@ XYData <- R6::R6Class(
       self$yDimension <- ospDimensions$Dimensionless
     },
 
-    #' @description Returns the minimal value (minus error, if specified) of the y series that is not negative or null
+    #' @description Returns the minimal value (minus error, if specified) of the
+    #'   y series that is not negative or null
     #' @return The minimal non-negative value of the y series minus error, if
     #'   specified, plus yOffset multiplied by the scaling factor If no such
     #'   value exists, returns Inf.
