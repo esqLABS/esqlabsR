@@ -24,6 +24,7 @@ Enum with added key-value pair.
 Add a new key-value pairs to an enum, where the value is a list.
 }
 \examples{
+library(ospsuite.utils)
 myEnum <- enum(c(a = "b"))
 myEnum <- enumPut("c", "d", myEnum)
 myEnum <- enumPut(c("c", "d", "g"), list(12, 2, "a"), myEnum, overwrite = TRUE)

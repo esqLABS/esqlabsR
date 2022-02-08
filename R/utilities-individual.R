@@ -19,7 +19,7 @@
 #'
 #' @export
 writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
-  ospsuite:::validateIsString(outputXLSPath)
+  validateIsString(outputXLSPath)
 
   individual <- createIndividual(individualCharacteristics)
 
@@ -70,7 +70,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
                                                  individualId,
                                                  sheet = NULL,
                                                  nullIfNotFound = TRUE) {
-  ospsuite:::validateIsString(XLSpath, individualId)
+  validateIsString(XLSpath, individualId)
 
   # If no sheet has been specified, read from the first sheet
   if (is.null(sheet)) {

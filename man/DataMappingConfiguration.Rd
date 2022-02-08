@@ -8,28 +8,34 @@
 An object storing configuration of a data mapping
 }
 \section{Super class}{
-\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{DataMappingConfiguration}
+\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{DataMappingConfiguration}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{xFactors}}{A named list listing numerical values that x-values are multiplied by. Keys are names of data sets,
-values are numerical factors.}
+\item{\code{xFactors}}{A named list listing numerical values that x-values are
+multiplied by. Keys are names of data sets, values are numerical
+factors.}
 
 \item{\code{yFactors}}{A named list listing numerical values that y-values are multiplied by. Keys are names of data sets,
 values are numerical factors.}
 
-\item{\code{xOffsets}}{A named list listing numerical values that will be added to the x-values. Keys are names of data sets,
-values are numerical values}
+\item{\code{xOffsets}}{A named list listing numerical values that will be added
+to the x-values. Keys are names of data sets, values are numerical
+values}
 
-\item{\code{yOffsets}}{A named list listing numerical values that will be added to the y-values. Keys are names of data sets,
-values are numerical values}
+\item{\code{yOffsets}}{A named list listing numerical values that will be added
+to the y-values. Keys are names of data sets, values are numerical
+values}
 
-\item{\code{lineTypes}}{A named list listing line types that will be used to plot a certain data set. Keys are names of data sets,
-values are numerical values recognized by the \code{lty} argument of the \code{\link[=plot]{plot()}} function}
+\item{\code{lineTypes}}{A named list listing line types that will be used to
+plot a certain data set. Keys are names of data sets, values are
+numerical values recognized by the \code{lty} argument of the \code{\link[=plot]{plot()}}
+function}
 
-\item{\code{colors}}{A named list listing color values that will be used to plot a certain data set. Keys are names of data sets,
-values are values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
+\item{\code{colors}}{A named list listing color values that will be used to plot
+a certain data set. Keys are names of data sets, values are values
+recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }
@@ -80,7 +86,8 @@ Clean up upon object removal
 \if{html}{\out{<a id="method-setXFactors"></a>}}
 \if{latex}{\out{\hypertarget{method-setXFactors}{}}}
 \subsection{Method \code{setXFactors()}}{
-Set the values of x-factors. An x-factor will be multiplied by the x-values of the data set.
+Set the values of x-factors. An x-factor will be multiplied
+by the x-values of the data set.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$setXFactors(labels, xFactors)}\if{html}{\out{</div>}}
 }
@@ -88,10 +95,12 @@ Set the values of x-factors. An x-factor will be multiplied by the x-values of t
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{xFactors}}{A numerical value or a list of numerical values representing the x-factors. Both lists must be of same length
-and store the entries in the same order.}
+\item{\code{xFactors}}{A numerical value or a list of numerical values
+representing the x-factors. Both lists must be of same length and store
+the entries in the same order.}
 }
 \if{html}{\out{</div>}}
 }
@@ -100,7 +109,8 @@ and store the entries in the same order.}
 \if{html}{\out{<a id="method-setYFactors"></a>}}
 \if{latex}{\out{\hypertarget{method-setYFactors}{}}}
 \subsection{Method \code{setYFactors()}}{
-Set the values of y-factors. A y-factor will be multiplied by the y-values of the data set.
+Set the values of y-factors. A y-factor will be multiplied
+by the y-values of the data set.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$setYFactors(labels, yFactors)}\if{html}{\out{</div>}}
 }
@@ -108,9 +118,11 @@ Set the values of y-factors. A y-factor will be multiplied by the y-values of th
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{yFactors}}{A numerical value or a list of numerical values representing the y-factors. Both lists must be of same length
+\item{\code{yFactors}}{A numerical value or a list of numerical values
+representing the y-factors. Both lists must be of same length
 and store the entries in the same order.}
 }
 \if{html}{\out{</div>}}
@@ -120,7 +132,8 @@ and store the entries in the same order.}
 \if{html}{\out{<a id="method-setXOffsets"></a>}}
 \if{latex}{\out{\hypertarget{method-setXOffsets}{}}}
 \subsection{Method \code{setXOffsets()}}{
-Set the values of x-offsets. An x-offset will be added to the the x-values of the data set.
+Set the values of x-offsets. An x-offset will be added to
+the the x-values of the data set.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$setXOffsets(labels, xOffsets)}\if{html}{\out{</div>}}
 }
@@ -128,10 +141,12 @@ Set the values of x-offsets. An x-offset will be added to the the x-values of th
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{xOffsets}}{A numerical value or a list of numerical values representing the x-offsets. Both lists must be of same length
-and store the entries in the same order.}
+\item{\code{xOffsets}}{A numerical value or a list of numerical values
+representing the x-offsets. Both lists must be of same length and store
+the entries in the same order.}
 }
 \if{html}{\out{</div>}}
 }
@@ -140,7 +155,8 @@ and store the entries in the same order.}
 \if{html}{\out{<a id="method-setYOffsets"></a>}}
 \if{latex}{\out{\hypertarget{method-setYOffsets}{}}}
 \subsection{Method \code{setYOffsets()}}{
-Set the values of y-offsets. A y-offset will be added to the the y-values of the data set.
+Set the values of y-offsets. A y-offset will be added to the
+the y-values of the data set.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$setYOffsets(labels, yOffsets)}\if{html}{\out{</div>}}
 }
@@ -148,10 +164,12 @@ Set the values of y-offsets. A y-offset will be added to the the y-values of the
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{yOffsets}}{A numerical value or a list of numerical values representing the y-offsets. Both lists must be of same length
-and store the entries in the same order.}
+\item{\code{yOffsets}}{A numerical value or a list of numerical values
+representing the y-offsets. Both lists must be of same length and store
+the entries in the same order.}
 }
 \if{html}{\out{</div>}}
 }
@@ -168,9 +186,11 @@ Set the colors that will be used to plot a certain data set.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{colors}}{Values representing a color recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
+\item{\code{colors}}{Values representing a color recognized by the \code{col}
+argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }
@@ -187,9 +207,11 @@ Set the line types that will be used to plot a certain data set.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{lineTypes}}{Values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
+\item{\code{lineTypes}}{Values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}}
+function}
 }
 \if{html}{\out{</div>}}
 }

@@ -1,18 +1,3 @@
-#' Convenience function to avoid testing for null. It returns the first object if it is not null otherwise the second object
-#' @name OR
-#' @param lhs Object that will be returned if not NULL
-#' @param rhs Object that will be returned if `lhs` is NULL. It maybe well be NULL
-#'
-#' @return The first parameter if it is not NULL otherwise the second parameter
-#' @export
-"%||%" <- function(lhs, rhs) {
-  if (!is.null(lhs)) {
-    lhs
-  } else {
-    rhs
-  }
-}
-
 #' Find value in an array
 #'
 #' @description Find the index of the value in an array that is closest to given
@@ -50,7 +35,7 @@ getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdR
     }
   }
 
-  ospsuite:::validateIsNumeric(c(value, array))
+  validateIsNumeric(c(value, array))
 
   # Calculate distances
   distances <- abs(array - value)
@@ -101,8 +86,8 @@ geosd <- function(x, na.rm = FALSE) {
 #' @return A list with `xValues` and aggregated `yValues`
 #' @export
 getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) {
-  ospsuite:::validateIsNumeric(c(xValues, yValues, quantiles))
-  ospsuite:::validateIsSameLength(xValues, yValues)
+  validateIsNumeric(c(xValues, yValues, quantiles))
+  validateIsSameLength(xValues, yValues)
   output <- list()
   # Aggregate time values
   for (quantile in quantiles) {
@@ -122,7 +107,7 @@ getQuantilesYData <- function(xValues, yValues, quantiles = c(0.05, 0.5, 0.95)) 
 #'
 #' @return Value of the .NET-method "GetHashCode"
 getNetHashCode <- function(netWrapper) {
-  ospsuite:::validateIsOfType(netWrapper, "DotNetWrapper")
+  validateIsOfType(netWrapper, "DotNetWrapper")
   rClr::clrGet(netWrapper$ref, "HashCode")
 }
 

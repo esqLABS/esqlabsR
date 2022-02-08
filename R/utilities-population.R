@@ -17,8 +17,8 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
     "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit"
   )
 
-  ospsuite:::validateIsString(c(XLSpath, populationName))
-  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
+  validateIsString(c(XLSpath, populationName))
+  validateIsString(sheet, nullAllowed = TRUE)
 
   if (is.null(sheet)) {
     sheet <- 1
@@ -83,11 +83,11 @@ extendPopulationByUserDefinedParams <- function(population,
                                                 meanValues,
                                                 sdValues,
                                                 distributions = Distributions$Normal) {
-  ospsuite:::validateIsOfType(population, "Population")
-  ospsuite:::validateIsString(parameterPaths)
-  ospsuite:::validateIsNumeric(meanValues, sdValues)
+  validateIsOfType(population, "Population")
+  validateIsString(parameterPaths)
+  validateIsNumeric(meanValues, sdValues)
   distributions <- distributions %||% rep(Distributions$Normal, length(parameterPaths))
-  ospsuite:::validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
+  validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
 
 
   # Iterate through all parameters and sample a parameter values vector
@@ -125,9 +125,9 @@ extendPopulationByUserDefinedParams <- function(population,
 #' @import readxl
 #' @export
 extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
-  ospsuite:::validateIsOfType(population, "Population")
-  ospsuite:::validateIsString(XLSpath)
-  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
+  validateIsOfType(population, "Population")
+  validateIsString(XLSpath)
+  validateIsString(sheet, nullAllowed = TRUE)
   if (is.null(sheet)) {
     sheet <- 1
   }

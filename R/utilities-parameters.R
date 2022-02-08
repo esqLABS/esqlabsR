@@ -14,8 +14,8 @@
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
 
-  ospsuite:::validateIsString(paramsXLSpath)
-  ospsuite:::validateIsString(sheets, nullAllowed = TRUE)
+  validateIsString(paramsXLSpath)
+  validateIsString(sheets, nullAllowed = TRUE)
 
   if (is.null(sheets)) {
     sheets <- c(1)
@@ -74,7 +74,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @return `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
 isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE) {
-  ospsuite:::validateIsOfType(c(parameter1, parameter2), "Parameter")
+  validateIsOfType(c(parameter1, parameter2), "Parameter")
 
   # Check for the path
   if (parameter1$path != parameter2$path) {
@@ -170,17 +170,31 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #'   task <- ospsuite:::getContainerTask()
 #'   !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
 #' }
-#' setParameterValuesByPathWithCondition(c("Organism|Liver|Volume", "Organism|Volume"), c(2, 3), sim, condition)
+#' setParameterValuesByPathWithCondition(
+#'   c("Organism|Liver|Volume", "Organism|Volume"),
+#'   c(2, 3),
+#'   sim,
+#'   condition
+#' )
 #' }
 #' @import ospsuite
 #' @export
-setParameterValuesByPathWithCondition <- function(parameterPaths, values, simulation, condition = function(path) {
+setParameterValuesByPathWithCondition <- function(parameterPaths,
+                                                  values,
+                                                  simulation,
+                                                  condition = function(path) {
                                                     TRUE
-                                                  }, units = NULL) {
+                                                  },
+                                                  units = NULL) {
   for (i in seq_along(parameterPaths)) {
     path <- parameterPaths[[i]]
     if (condition(path)) {
-      ospsuite::setParameterValuesByPath(parameterPaths = parameterPaths[[i]], values = values[[i]], simulation = simulation, units = units[[i]])
+      ospsuite::setParameterValuesByPath(
+        parameterPaths = parameterPaths[[i]],
+        values = values[[i]],
+        simulation = simulation,
+        units = units[[i]]
+      )
     }
   }
 }
