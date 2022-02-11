@@ -20,10 +20,10 @@ Save a list of plots
 \examples{
 
 # first check out examples for `sensivitityTimeProfiles()` and
-`sensitivitySpiderPlot()`
+# `sensitivitySpiderPlot()`
 
 # if you wanted to save those lists of plots, you can do using the current
-function like following:
+# function like following:
 
 # savePlotList(ls_profile_plots, plot.type = "Profile_", height = 6, width = 12)
 # savePlotList(ls_spider_plots, plot.type = "Spider_", height = 6, width = 12)
