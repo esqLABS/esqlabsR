@@ -59,8 +59,8 @@ sensitivityCalculation <- function(simulation,
   )
 
   # extract individual dataframes for time series and PK analysis
-  tsData <- purrr::map_dfr(batchResults, ~ pluck(.x, "tsData"))
-  pkData <- purrr::map_dfr(batchResults, ~ pluck(.x, "pkData"))
+  tsData <- purrr::map_dfr(batchResults, ~ purrr::pluck(.x, "tsData"))
+  pkData <- purrr::map_dfr(batchResults, ~ purrr::pluck(.x, "pkData"))
 
   # save data in the respective sheets in a spreadsheet
   # one sheet per output path
