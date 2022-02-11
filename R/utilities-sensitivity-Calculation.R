@@ -1,0 +1,208 @@
+#' @title Percent change in PK parameters
+#'
+#' @description Compute %change in PK parameters and their sensitivity
+#'
+#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
+#'   columns renamed to follow `UpperCamel` case
+#'
+#' @keywords internal
+#' @noRd
+.computePercentChange <- function(data) {
+  # baseline simulation value with a scaling of 1, i.e. no scaling
+  baseValue <- data %>%
+    dplyr::filter(ParameterFactor == 1.0) %>%
+    dplyr::pull(PKParameterValue)
+
+  # baseline parameter value with a scaling of 1, i.e. no scaling
+  # NOT to be confused with `PKParameterValue`
+  ParameterBaseValue <- data %>%
+    dplyr::filter(ParameterFactor == 1.0) %>%
+    dplyr::pull(ParameterValue)
+
+  # add columns with %change and sensitivity
+  # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
+  data %>%
+    dplyr::mutate(
+      PercentChangePK = ((PKParameterValue - baseValue) / baseValue) * 100,
+      SensitivityPKParameter =
+        # delta PK / PK
+        ((PKParameterValue - baseValue) / baseValue) *
+        # p / delta p
+        (ParameterValue / (ParameterValue - ParameterBaseValue))
+    )
+}
+
+#' @title Validate variation range
+#'
+#' @description
+#'
+#' Checks that the values entered to vary parameter:
+#' - are all numeric
+#' - are all unique
+#' - include base scaling (i.e. a scaling of 1.0)
+#'
+#' @inheritParams sensitivityCalculation
+#'
+#' @keywords internal
+#' @noRd
+.validateVariationRange <- function(variationRange) {
+  # only numbers allowed
+  ospsuite.utils::validateIsNumeric(variationRange)
+
+  # extract only unique values
+  variationRange <- unique(variationRange)
+
+  # if there is no scaling factor of 1.0 (corresponding to no scaling), add it
+  if (!any(dplyr::near(1.0, variationRange))) {
+    variationRange <- c(1.0, variationRange)
+  }
+
+  # return sorted vector of scaling values
+  sort(variationRange)
+}
+
+#' @title Add columns with details about parameter paths
+#'
+#' @description
+#'
+#' Adds columns with additional details about parameter paths:
+#' - name,
+#' - reference values
+#' - scaled values
+#'
+#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` or by
+#'  `simulationResultsToDataFrame()`.
+#'  @inheritParams .extractSimBatchResults
+#'
+#' @note Note that the function will work only with a single parameter path.
+#'
+#' @keywords internal
+#' @noRd
+.addParameterColumns <- function(data, parameterPath) {
+  data %>%
+    dplyr::mutate(
+      Parameter = purrr::pluck(parameterPath, "name"),
+      ParameterPath = purrr::pluck(parameterPath, "path"),
+      ParameterValue = purrr::pluck(parameterPath, "value"),
+      ParameterFactor = as.numeric(ParameterFactor)
+    ) %>%
+    dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
+}
+
+#' @title Run batch simulations and extract results in a dataframe
+#'
+#' @param parameterPaths A single path of the parameter to be varied.
+#' @inheritParams sensitivityCalculation
+#'
+#' @note Note that the function will work only with a single parameter path.
+#'
+#' @keywords internal
+#' @noRd
+.extractSimBatchResults <- function(simulation,
+                                    parameterPath,
+                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
+                                    pkParameters = NULL) {
+  # check provided variation range using custom function
+  variationRange <- .validateVariationRange(variationRange)
+
+  # create simulation batch for efficient calculations
+  simBatch <- createSimulationBatch(simulation, parametersOrPaths = parameterPath)
+
+  # for each parameter, set the value to `referenceValue * scaleFactor`
+  # and run simulations with these parameter values
+  purrr::walk(
+    .x = c(purrr::pluck(parameterPath, "value") * variationRange),
+    .f = ~ simBatch$addRunValues(.x)
+  )
+
+  # use `unlist()` because we only have one `simBatch` here
+  simResultsBatch <- unlist(runSimulationBatches(simBatch))
+
+  # extract time series data
+  tsData <- purrr::map_dfr(
+    .x  = purrr::set_names(simResultsBatch, variationRange),
+    .f  = ~ simulationResultsToDataFrame(.x, quantitiesOrPaths = outputPaths),
+    .id = "ParameterFactor"
+  ) %>%
+    dplyr::rename(
+      Concentration = simulationValues,
+      OutputPath = paths
+    ) %>%
+    .addParameterColumns(parameterPath) %>%
+    dplyr::select(
+      dplyr::starts_with("Parameter"),
+      Time, Concentration,
+      dplyr::everything()
+    ) %>%
+    dplyr::arrange(ParameterPath, ParameterFactor)
+
+  # extract PK parameters data
+  pkData <- purrr::map_dfr(
+    .x  = purrr::set_names(simResultsBatch, variationRange),
+    .f  = ~ pkAnalysesAsDataFrame(calculatePKAnalyses(.x)),
+    .id = "ParameterFactor"
+  ) %>%
+    dplyr::rename(
+      OutputPath = QuantityPath,
+      PKParameter = Parameter,
+      PKParameterValue = Value
+    ) %>%
+    .addParameterColumns(parameterPath) %>%
+    dplyr::group_by(ParameterPath, PKParameter) %>%
+    dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
+    ungroup() %>%
+    dplyr::select(
+      dplyr::starts_with("Parameter"),
+      dplyr::starts_with("PK"),
+      Unit, PercentChangePK,
+      dplyr::everything()
+    ) %>%
+    dplyr::arrange(Parameter, PKParameter, ParameterFactor)
+
+  if (!is.null(pkParameters)) {
+    pkData <- dplyr::filter(pkData, PKParameter %in% pkParameters)
+  }
+
+  list("tsData" = tsData, "pkData" = pkData)
+}
+
+#' @noRd
+
+.convertToWide <- function(data) {
+  data %>%
+    tidyr::pivot_wider(
+      names_from = PKParameter,
+      values_from = c(PKParameterValue, Unit, PercentChangePK, SensitivityPKParameter),
+      names_glue = "{PKParameter}_{.value}"
+    ) %>%
+    # columns that should not be included in the excel sheets
+    dplyr::select(-Parameter, -rowid) %>%
+    dplyr::rename_all(~ stringr::str_remove(.x, "_PKParameterValue")) %>%
+    # all metrics for each parameter should live together
+    dplyr::select(
+      dplyr::matches("Output|^Parameter"),
+      dplyr::matches("Unknown"),
+      dplyr::matches("C_max"),
+      dplyr::matches("C_max_norm"),
+      dplyr::matches("C_min"),
+      dplyr::matches("C_min_norm"),
+      dplyr::matches("t_max"),
+      dplyr::matches("t_min"),
+      dplyr::matches("C_trough"),
+      dplyr::matches("C_trough_norm"),
+      dplyr::matches("AUC_tEnd"),
+      dplyr::matches("AUC_tEnd_norm"),
+      dplyr::matches("AUCM_tEnd"),
+      dplyr::matches("AUC_inf"),
+      dplyr::matches("AUC_inf_norm"),
+      dplyr::matches("AUC_tEnd_inf"),
+      dplyr::matches("AUC_tEnd_inf_norm"),
+      dplyr::matches("CL"),
+      dplyr::matches("MRT"),
+      dplyr::matches("FractionAucEndToInf"),
+      dplyr::matches("Thalf"),
+      dplyr::matches("Vss"),
+      dplyr::matches("Vd"),
+      dplyr::matches("Tthreshold")
+    )
+}

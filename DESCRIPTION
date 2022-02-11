@@ -10,14 +10,19 @@ License: GPL-2
 URL: https://github.com/esqLABS/esqlabsR
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
-    ospsuite (>= 10.0)
+    ospsuite (>= 11.0)
 Imports:
+    colorspace,
+    dplyr,
+    ggplot2,
     hash,
     ospsuite.utils,
+    purrr,
     rClr,
     readxl,
     shiny,
     shinyjs,
+    tidyr,
     tools,
     vctrs,
     writexl
