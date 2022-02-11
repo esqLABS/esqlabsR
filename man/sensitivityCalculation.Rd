@@ -30,7 +30,7 @@ parameters. If not specified, the following vector will be used: c(0.1,
 sensitivities should be calculated. For a full set of available PK
 parameters, run \code{names(ospsuite::StandardpkParameter)}. By default, only
 the following parameters will be considered: \code{"C_max"}, \code{"t_max"},
-\code{"AUC_inf"}.}
+\code{"AUC_inf"}. If \code{NULL}, all available PK-parameters will be calculated.}
 }
 \description{
 Carry out and visualize sensitivity analysis (with OSPSuite)
@@ -41,7 +41,9 @@ Carry out and visualize sensitivity analysis (with OSPSuite)
 }
 }
 \examples{
+
 library(ospsuite)
+library(dplyr)
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 simulation <- loadSimulation(simPath)

@@ -17,7 +17,9 @@ plotted on a log scale (Default: \code{TRUE}).}
 Create a Concentration-time profile plot
 }
 \examples{
+
 library(ospsuite)
+library(dplyr)
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 simulation <- loadSimulation(simPath)
@@ -27,7 +29,6 @@ parameterPaths <- c(
   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
-
 
 # extract the results into a list of dataframes
 ls_results <- sensitivityCalculation(

@@ -14,14 +14,16 @@
 #'   sensitivities should be calculated. For a full set of available PK
 #'   parameters, run `names(ospsuite::StandardpkParameter)`. By default, only
 #'   the following parameters will be considered: `"C_max"`, `"t_max"`,
-#'   `"AUC_inf"`.
+#'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated.
 #'
 #' @note
 #'
 #' - PK parameter `"t_max"` in some contexts may not show any variation.
 #'
 #' @examples
+#'
 #' library(ospsuite)
+#' library(dplyr)
 #'
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 #' simulation <- loadSimulation(simPath)

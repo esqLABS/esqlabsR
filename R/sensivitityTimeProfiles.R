@@ -10,7 +10,9 @@
 #' @import dplyr
 #'
 #' @examples
+#'
 #' library(ospsuite)
+#' library(dplyr)
 #'
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 #' simulation <- loadSimulation(simPath)
@@ -20,7 +22,6 @@
 #'   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
 #'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 #' )
-#'
 #'
 #' # extract the results into a list of dataframes
 #' ls_results <- sensitivityCalculation(
