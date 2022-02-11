@@ -7,6 +7,7 @@
 #'   plotted on a log scale (Default: `TRUE`).
 #'
 #' @import ggplot2
+#' @import dplyr
 #'
 #' @examples
 #' library(ospsuite)
