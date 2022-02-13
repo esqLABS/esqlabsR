@@ -57,6 +57,12 @@ messages$warningParameterNotFound <- function(parameterPath, optionalMessage = N
 messages$errorMultipleMetaDataEntries <- function(optionalMessage = NULL) {
   paste("Can only set a single meta data entry at once", optionalMessage)
 }
-messages$errorDimensionsDoNotMatch <- function(dimension) {
-  paste(dimension, "does not match in all data sets.")
+messages$errorInvalidTreatLLOQ <- function() {
+  paste("Invalid value for parameter 'treatLLOQ', supported values are `LLOQ/2`, `LLOQ`, `ZERO` and `ignore`")
+}
+messages$errorInvalidMeanMethod <- function() {
+  paste("Invalid value for parameter 'method', supported values are `arithmetic` or `geometric`")
+}
+messages$errorOutputMolWeightNeeded <- function() {
+  paste("`outputMolWeight` can not be NULL when data sets have different molWeights")
 }

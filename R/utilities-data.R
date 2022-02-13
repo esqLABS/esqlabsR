@@ -130,65 +130,123 @@ stringToNum <- function(string) {
   return(numVals)
 }
 
+
 #' Calculate mean and standard deviation for the yValues of the given `DataSet` objects
 #'
 #' @param dataSets list of `DataSet` objects
+#' @param method method for calculating the mean and standard deviation - either
+#'  `arithmetic` (default) or `geometric`
+#' @param treatLLOQ how to treat data points below LLOQ if LLOQ is given - `LLOQ/2` (default):
+#'  use as given, `LLOQ`: set value to LLOQ value, `ZERO`: set value to 0, `ignore`:
+#'  do not use data points for mean calculation
+#' @param outputXunit xUnit of output data set, if `NULL` xUnit of the first data set
+#'  will be used
+#' @param outputYunit yUnit of output data set, if `NULL` yUnit of the first data set
+#'  will be used
+#' @param outputMolWeight molWeight of output data set in `g/mol` - obligatory when initial
+#'  data sets have differing molWeight values
 #' @details Calculates mean and standard deviation of the yValues of the given `DataSet`
-#' objects per xValue. Note that data points with LLOQ are not used. If xUnit or yUnit
-#' are not the same in all data sets, the unit of the first data set is used, values are
-#' converted accordingly.
-#' @return A `DataSet` object with yValues set to the mean of the original data sets'
-#' yValues per xValue, yErrorValues set to their standard deviation, plus all meta data
-#' that are equal in all data sets.
+#'  objects per xValue. The meta data of the returned `DataSet` consists of all meta
+#'  data that are equal in all initial data sets. Its LLOQ is the mean LLOQ value of all
+#'  data sets which have an LLOQ set, e.g. if dataSet1 has LLOQ 1, dataSet2 has LLOQ 3
+#'  and dataSet3 has no LLOQ, then 2 is used for the returned `DataSet`
+#' @return A single `DataSet` object
 #' @export
-calculateMeans <- function(dataSets) {
-  df <- dataSetToDataFrame(dataSets)
-  meanDataSet <- DataSet$new()
+calculateMeans <- function(dataSets, method = "arithmetic", treatLLOQ = TreatLLOQ$`LLOQ/2`,
+                           outputXunit = NULL, outputYunit = NULL, outputMolWeight = NULL) {
+  df <- ospsuite::dataSetToDataFrame(dataSets)
+  meanDataSet <- ospsuite::DataSet$new()
+  meanDataSet$name <- "Mean"
 
-  # check if all xDimensions are the same
-  xDimension <- unique(df$xDimension)
-  if (length(xDimension) > 1) {
-    stop(messages$errorDimensionsDoNotMatch("xDimension"))
+  molWeights <- unique(df$molWeight)
+  if (!is.null(outputMolWeight)) {
+    meanDataSet$molWeight <- outputMolWeight
+  } else if (length(molWeights) > 1) {
+    # error when outputMolWeight is NULL, but molWeights of data sets differ
+    stop(messages$errorOutputMolWeightNeeded())
+  } else if (!is.na(molWeights)) {
+    # outputMolWeight is NULL, but all molWeights are equal and not NULL --> take this value
+    meanDataSet$molWeight <- molWeights
   }
-  meanDataSet$xDimension <- xDimension
 
-  # check if all yDimensions are the same
-  yDimension <- unique(df$yDimension)
-  if (length(yDimension) > 1) {
-    stop(messages$errorDimensionsDoNotMatch("yDimension"))
+  # set units and dimensions to those of first data set if not specified otherwise
+  # outputXunit and outputYunit
+  if (is.null(outputXunit)) {
+    meanDataSet$xDimension <- df$xDimension[1]
+    meanDataSet$xUnit <- df$xUnit[1]
+  } else {
+    meanDataSet$xDimension <- ospsuite::getDimensionForUnit(outputXunit)
+    meanDataSet$xUnit <- outputXunit
   }
-  meanDataSet$yDimension <- yDimension
 
-  # remove data points with lloq
-  df <- df[is.na(df$lloq),]
+  if (is.null(outputYunit)) {
+    meanDataSet$yDimension <- df$yDimension[1]
+    meanDataSet$yUnit <- df$yUnit[1]
+  } else {
+    meanDataSet$yDimension <- ospsuite::getDimensionForUnit(outputYunit)
+    meanDataSet$yUnit <- outputYunit
+  }
 
-  # check if xUnits match, if not: convert to all values to xUnit of first data set
-  xUnit <- unique(df$xUnit)
-  if (length(xUnit) > 1) {
-    xUnit <- xUnit[1]
-    df$xValues <- mapply(function(x, y) {
-      toUnit(xDimension,targetUnit=xUnit, values = x, sourceUnit= y)
+  # adjust yValues as specified by treatLLOQ argument
+  ind <- !is.na(df$lloq) & df$yValues < df$lloq
+  switch(treatLLOQ,
+    # nothing to do for LLOQ/2
+    "LLOQ/2" = return,
+    # set all data points with lloq that are smaller than it to value of lloq
+    LLOQ = df[ind, "yValues"] <- df[ind, "lloq"],
+    # set all data points with lloq to 0
+    ZERO = df[ind, "yValues"] <- 0,
+    # remove data points with lloq
+    ignore = df <- df[!ind, ],
+    stop(messages$errorInvalidTreatLLOQ())
+  )
+
+  # meanDataSet$LLOQ = arithmetic mean lloq of all data sets with lloq
+  lloqMean <- suppressWarnings(mean(unlist(sapply(c(dataSets), function(x) {
+    x$LLOQ
+  })), na.rm = TRUE))
+  if (!is.na(lloqMean)) {
+    meanDataSet$LLOQ <- lloqMean
+  }
+
+  # convert xValues to same unit
+  df$xValues <- mapply(
+    function(vals, unit, mw) {
+      ospsuite::toUnit(
+        quantityOrDimension = meanDataSet$xDimension, targetUnit = meanDataSet$xUnit,
+        values = vals, sourceUnit = unit, molWeight = mw, molWeightUnit = "g/mol"
+      )
     },
-    df$xValues, df$xUnit)
-  }
-  meanDataSet$xUnit <- xUnit
+    df$xValues, df$xUnit, df$molWeight
+  )
 
-  # check if yUnits match, if not: convert all values to yUnit of first data set
-  yUnit <- unique(df$yUnit)
-  if (length(yUnit) > 1) {
-    yUnit <- yUnit[1]
-    df$yValues <- mapply(function(x, y) {
-        toUnit(yDimension,targetUnit=yUnit, values = x, sourceUnit= y)
-      },
-      df$yValues, df$yUnit)
-  }
-  meanDataSet$yUnit <- yUnit
+  # convert yValues to same unit
+  df$yValues <- mapply(
+    function(vals, unit, mw) {
+      ospsuite::toUnit(
+        quantityOrDimension = meanDataSet$yDimension, targetUnit = meanDataSet$yUnit,
+        values = vals, sourceUnit = unit, molWeight = mw, molWeightUnit = "g/mol"
+      )
+    },
+    df$yValues, df$yUnit, df$molWeight
+  )
 
-  yMeans <- tapply(df[,"yValues"], df[,"xValues"], mean)
-  yError <- tapply(df[,"yValues"], df[,"xValues"], sd)
-
-  meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
-  meanDataSet$yErrorType <- DataErrorType$ArithmeticStdDev
+  # calculate means and standard deviations according to chosen method
+  switch(method,
+    arithmetic = {
+      yMeans <- tapply(df[, "yValues"], df[, "xValues"], mean)
+      yError <- tapply(df[, "yValues"], df[, "xValues"], sd)
+      meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
+      meanDataSet$yErrorType <- ospsuite::DataErrorType$ArithmeticStdDev
+    },
+    geometric = {
+      yMeans <- tapply(df[, "yValues"], df[, "xValues"], geomean)
+      yError <- tapply(df[, "yValues"], df[, "xValues"], geosd)
+      meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
+      meanDataSet$yErrorType <- ospsuite::DataErrorType$GeometricStdDev
+    },
+    stop(messages$errorInvalidMeanMethod())
+  )
 
   # add all meta that are equal in every data set
   # we are getting the meta data names by their position in the data frame returned by
@@ -202,7 +260,10 @@ calculateMeans <- function(dataSets) {
     }
   }
   meanDataSet$addMetaData(name = "Subject ID", value = "mean")
-  meanDataSet$name <- "Mean"
 
   return(meanDataSet)
 }
+
+#' Possible entries for the `treatLLOQ` argument of `calculateMeans`
+#' @export
+TreatLLOQ <- ospsuite::enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))

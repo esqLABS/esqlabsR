@@ -4,22 +4,44 @@
 \alias{calculateMeans}
 \title{Calculate mean and standard deviation for the yValues of the given \code{DataSet} objects}
 \usage{
-calculateMeans(dataSets)
+calculateMeans(
+  dataSets,
+  method = "arithmetic",
+  treatLLOQ = TreatLLOQ$`LLOQ/2`,
+  outputXunit = NULL,
+  outputYunit = NULL,
+  outputMolWeight = NULL
+)
 }
 \arguments{
 \item{dataSets}{list of \code{DataSet} objects}
+
+\item{method}{method for calculating the mean and standard deviation - either
+\code{arithmetic} (default) or \code{geometric}}
+
+\item{treatLLOQ}{how to treat data points below LLOQ if LLOQ is given - \code{LLOQ/2} (default):
+use as given, \code{LLOQ}: set value to LLOQ value, \code{ZERO}: set value to 0, \code{ignore}:
+do not use data points for mean calculation}
+
+\item{outputXunit}{xUnit of output data set, if \code{NULL} xUnit of the first data set
+will be used}
+
+\item{outputYunit}{yUnit of output data set, if \code{NULL} yUnit of the first data set
+will be used}
+
+\item{outputMolWeight}{molWeight of output data set in \code{g/mol} - obligatory when initial
+data sets have differing molWeight values}
 }
 \value{
-A \code{DataSet} object with yValues set to the mean of the original data sets'
-yValues per xValue, yErrorValues set to their standard deviation, plus all meta data
-that are equal in all data sets.
+A single \code{DataSet} object
 }
 \description{
 Calculate mean and standard deviation for the yValues of the given \code{DataSet} objects
 }
 \details{
 Calculates mean and standard deviation of the yValues of the given \code{DataSet}
-objects per xValue. Note that data points with LLOQ are not used. If xUnit or yUnit
-are not the same in all data sets, the unit of the first data set is used, values are
-converted accordingly.
+objects per xValue. The meta data of the returned \code{DataSet} consists of all meta
+data that are equal in all initial data sets. Its LLOQ is the mean LLOQ value of all
+data sets which have an LLOQ set, e.g. if dataSet1 has LLOQ 1, dataSet2 has LLOQ 3
+and dataSet3 has no LLOQ, then 2 is used for the returned \code{DataSet}
 }
