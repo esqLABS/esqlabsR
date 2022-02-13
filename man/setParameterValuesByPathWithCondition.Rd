@@ -39,6 +39,11 @@ condition <- function(path) {
   task <- ospsuite:::getContainerTask()
   !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
 }
-setParameterValuesByPathWithCondition(c("Organism|Liver|Volume", "Organism|Volume"), c(2, 3), sim, condition)
+setParameterValuesByPathWithCondition(
+  c("Organism|Liver|Volume", "Organism|Volume"),
+  c(2, 3),
+  sim,
+  condition
+)
 }
 }
