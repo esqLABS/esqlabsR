@@ -3,8 +3,7 @@
 #'
 #' @param data The `pkData` dataframe in a list of dataframes returned by
 #'   `sensitivityCalculation()`.
-#' @param logConcentration A logical indicating if the concentration should be
-#'   plotted on a log scale (Default: `TRUE`).
+#' @inheritParams sensitivitySpiderPlot
 #'
 #' @import ggplot2
 #' @import dplyr
@@ -36,13 +35,13 @@
 #' # generate profile plot for each output path
 #' ls_profile_plots <- purrr::map(
 #'   .x = tsData %>% split(.$OutputPath),
-#'   .f = ~ sensivitityTimeProfiles(.x, logConcentration = TRUE)
+#'   .f = ~ sensivitityTimeProfiles(.x, yAxisLog = TRUE)
 #' )
 #'
 #' @seealso savePlotList
 #' @export
 
-sensivitityTimeProfiles <- function(data, logConcentration = TRUE) {
+sensivitityTimeProfiles <- function(data, xAxisLog = FALSE, yAxisLog = TRUE) {
   plot <- ggplot() +
     geom_line(
       data = dplyr::filter(data, ParameterFactor != 1.0),
@@ -57,16 +56,20 @@ sensivitityTimeProfiles <- function(data, logConcentration = TRUE) {
       aes(Time, Concentration),
       color = "black"
     ) +
-    facet_wrap(~ParameterPath) +
-    theme_bw(base_size = 14) +
+    facet_wrap(~ParameterPath, labeller = label_wrap_gen(width = 15)) +
+    theme_bw(base_size = 10) +
     labs(
-      x = paste0(unique(tsData$TimeDimension), " [", unique(tsData$TimeUnit), "]"),
-      y = paste0("Concentration [", unique(tsData$unit), "]"),
+      x = paste0(unique(data$TimeDimension), " [", unique(data$TimeUnit), "]"),
+      y = paste0(unique(data$Dimension), " [", unique(data$Unit), "]"),
       title = unique(data$OutputPath),
       color = "Parameter factor"
     )
 
-  if (logConcentration) {
+  if (xAxisLog) {
+    plot <- plot + scale_x_log10()
+  }
+
+  if (yAxisLog) {
     plot <- plot +
       scale_y_log10(
         breaks = scales::trans_breaks("log10", function(x) 10^x),

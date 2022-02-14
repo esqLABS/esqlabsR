@@ -9,7 +9,9 @@ sensitivityCalculation(
   outputPaths,
   parameterPaths,
   variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
-  pkParameters = c("C_max", "t_max", "AUC_inf")
+  pkParameters = c("C_max", "t_max", "AUC_inf"),
+  pkDataFilePath = NULL,
+  timeSeriesDataFilePath = NULL
 )
 }
 \arguments{
@@ -28,9 +30,13 @@ parameters. If not specified, the following vector will be used: c(0.1,
 
 \item{pkParameters}{A vector of names of PK parameters for which the
 sensitivities should be calculated. For a full set of available PK
-parameters, run \code{names(ospsuite::StandardpkParameter)}. By default, only
+parameters, run \code{names(ospsuite::StandardPKParameter)}. By default, only
 the following parameters will be considered: \code{"C_max"}, \code{"t_max"},
 \code{"AUC_inf"}. If \code{NULL}, all available PK-parameters will be calculated.}
+
+\item{pkDataFilePath, timeSeriesDataFilePath}{Paths to spreadsheets in which
+PK-parameter and time series data should be saved. Default is \code{NULL},
+meaning the data will not be saved to a spreadsheet.}
 }
 \description{
 Carry out and visualize sensitivity analysis (with OSPSuite)

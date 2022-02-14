@@ -4,11 +4,13 @@
 \alias{sensitivitySpiderPlot}
 \title{Spider plot for PK parameters}
 \usage{
-sensitivitySpiderPlot(data)
+sensitivitySpiderPlot(data, xAxisLog = TRUE, yAxisLog = FALSE)
 }
 \arguments{
 \item{data}{The \code{pkData} dataframe in a list of dataframes returned by
 \code{sensitivityCalculation()}.}
+
+\item{xAxisLog, yAxisLog}{Logical that decides whether to}
 }
 \description{
 Spider plot for PK parameters

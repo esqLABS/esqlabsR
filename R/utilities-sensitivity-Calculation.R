@@ -3,7 +3,7 @@
 #' @description Compute %change in PK parameters and their sensitivity
 #'
 #' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
-#'   columns renamed to follow `UpperCamel` case
+#'   columns renamed to follow `UpperCamel` case.
 #'
 #' @keywords internal
 #' @noRd
@@ -126,13 +126,16 @@
   ) %>%
     dplyr::rename(
       Concentration = simulationValues,
-      OutputPath = paths
+      OutputPath = paths,
+      Dimension = dimension,
+      Unit = unit
     ) %>%
     .addParameterColumns(parameterPath) %>%
     dplyr::select(
       dplyr::starts_with("Parameter"),
       Time, Concentration,
-      dplyr::everything()
+      dplyr::everything(),
+      -IndividualId
     ) %>%
     dplyr::arrange(ParameterPath, ParameterFactor)
 
@@ -155,7 +158,8 @@
       dplyr::starts_with("Parameter"),
       dplyr::starts_with("PK"),
       Unit, PercentChangePK,
-      dplyr::everything()
+      dplyr::everything(),
+      -IndividualId
     ) %>%
     dplyr::arrange(Parameter, PKParameter, ParameterFactor)
 
@@ -176,8 +180,9 @@
       names_glue = "{PKParameter}_{.value}"
     ) %>%
     # columns that should not be included in the excel sheets
-    dplyr::select(-Parameter, -rowid) %>%
+    dplyr::select(-c("Parameter", ".rowid")) %>%
     dplyr::rename_all(~ stringr::str_remove(.x, "_PKParameterValue")) %>%
+    dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$")) %>%
     # all metrics for each parameter should live together
     dplyr::select(
       dplyr::matches("Output|^Parameter"),
@@ -205,4 +210,13 @@
       dplyr::matches("Vd"),
       dplyr::matches("Tthreshold")
     )
+}
+
+#' @noRd
+
+.addRowid <- function(data) {
+  data %>%
+    tidyr::nest(data = -OutputPath) %>%
+    dplyr::mutate(.rowid = paste0("OutputPath", seq(1:nrow(.)))) %>%
+    tidyr::unnest(cols = c(data))
 }

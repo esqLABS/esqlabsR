@@ -4,14 +4,15 @@
 \alias{sensivitityTimeProfiles}
 \title{Create a Concentration-time profile plot}
 \usage{
-sensivitityTimeProfiles(data, logConcentration = TRUE)
+sensivitityTimeProfiles(data, xAxisLog = FALSE, yAxisLog = TRUE)
 }
 \arguments{
 \item{data}{The \code{pkData} dataframe in a list of dataframes returned by
 \code{sensitivityCalculation()}.}
 
-\item{logConcentration}{A logical indicating if the concentration should be
-plotted on a log scale (Default: \code{TRUE}).}
+\item{xAxisLog}{Logical that decides whether to}
+
+\item{yAxisLog}{Logical that decides whether to}
 }
 \description{
 Create a Concentration-time profile plot
@@ -43,7 +44,7 @@ tsData <- ls_results$tsData
 # generate profile plot for each output path
 ls_profile_plots <- purrr::map(
   .x = tsData \%>\% split(.$OutputPath),
-  .f = ~ sensivitityTimeProfiles(.x, logConcentration = TRUE)
+  .f = ~ sensivitityTimeProfiles(.x, yAxisLog = TRUE)
 )
 
 }

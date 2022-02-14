@@ -12,9 +12,12 @@
 #'   0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5,  6, 7, 8, 9, 10).
 #' @param pkParameters A vector of names of PK parameters for which the
 #'   sensitivities should be calculated. For a full set of available PK
-#'   parameters, run `names(ospsuite::StandardpkParameter)`. By default, only
+#'   parameters, run `names(ospsuite::StandardPKParameter)`. By default, only
 #'   the following parameters will be considered: `"C_max"`, `"t_max"`,
 #'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated.
+#' @param pkDataFilePath,timeSeriesDataFilePath Paths to spreadsheets in which
+#'   PK-parameter and time series data should be saved. Default is `NULL`,
+#'   meaning the data will not be saved to a spreadsheet.
 #'
 #' @note
 #'
@@ -46,7 +49,12 @@ sensitivityCalculation <- function(simulation,
                                    outputPaths,
                                    parameterPaths,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
-                                   pkParameters = c("C_max", "t_max", "AUC_inf")) {
+                                   pkParameters = c("C_max", "t_max", "AUC_inf"),
+                                   pkDataFilePath = NULL,
+                                   timeSeriesDataFilePath = NULL) {
+  # fail fast if specified PK parameters are not part of standard enum
+  validateIsIncluded(pkParameters, names(ospsuite::StandardPKParameter))
+
   # set outputs to the provided path
   clearOutputs(simulation)
   addOutputs(outputPaths, simulation)
@@ -64,24 +72,33 @@ sensitivityCalculation <- function(simulation,
   tsData <- purrr::map_dfr(batchResults, ~ purrr::pluck(.x, "tsData"))
   pkData <- purrr::map_dfr(batchResults, ~ purrr::pluck(.x, "pkData"))
 
-  # save data in the respective sheets in a spreadsheet
-  # one sheet per output path
-  pkData <- pkData %>%
-    tidyr::nest(data = -OutputPath) %>%
-    dplyr::mutate(rowid = paste0("OutputPath", seq(1:nrow(.)))) %>%
-    tidyr::unnest(cols = c(data))
-
-  # convert tidy data to wide format and add them to a list
-  pkData_wide_list <- purrr::map(
-    .x = split(pkData, pkData$rowid),
-    .f = ~ .convertToWide(.x)
-  )
+  # add a new `.rowid` column with unique name for each output path
+  pkData <- .addRowid(pkData)
+  tsData <- .addRowid(tsData)
 
   # write each wide dataframe in a list to a separate sheet in Excel
-  writexl::write_xlsx(pkData_wide_list, "PKdata.xlsx")
+  if (!is.null(pkDataFilePath)) {
+    # convert tidy data to wide format and add them to a list
+    pkData_wide_list <- purrr::map(
+      .x = pkData %>% split(.$.rowid),
+      .f = ~ .convertToWide(.x)
+    )
+
+    writexl::write_xlsx(pkData_wide_list, pkDataFilePath)
+  }
+
+  if (!is.null(timeSeriesDataFilePath)) {
+    # same for time series data but it doesn't need to be converted to wide
+    ts_data_list <- tsData %>%
+      split(.$.rowid) %>%
+      purrr::map(~ dplyr::select(.x, -c("Parameter", ".rowid")))
+
+    writexl::write_xlsx(ts_data_list, timeSeriesDataFilePath)
+  }
 
   # remove the unneeded column
-  pkData <- dplyr::select(pkData, -rowid)
+  pkData <- dplyr::select(pkData, -c(".rowid"))
+  tsData <- dplyr::select(tsData, -c(".rowid"))
 
   # return the data in a list
   return(list("tsData" = tsData, "pkData" = pkData))

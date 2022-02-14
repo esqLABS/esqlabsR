@@ -3,6 +3,7 @@
 #'
 #' @param data The `pkData` dataframe in a list of dataframes returned by
 #'   `sensitivityCalculation()`.
+#' @param xAxisLog,yAxisLog Logical that decides whether to
 #'
 #' @import ggplot2
 #'
@@ -40,13 +41,13 @@
 #'
 #' @export
 
-sensitivitySpiderPlot <- function(data) {
+sensitivitySpiderPlot <- function(data, xAxisLog = TRUE, yAxisLog = FALSE) {
   data <- dplyr::mutate(data,
     ParameterFactor = ParameterFactor * 100,
     PercentChangePK = PercentChangePK + 100
   )
 
-  ggplot(
+  plot <- ggplot(
     data,
     aes(x = ParameterFactor, y = PercentChangePK, group = ParameterPath)
   ) +
@@ -55,12 +56,23 @@ sensitivitySpiderPlot <- function(data) {
       size = 1.2,
       alpha = 0.8
     ) +
-    geom_point(size = 2, shape = 21) +
-    scale_x_log10() +
-    scale_y_continuous(
-      breaks = seq(0, max(data$PercentChangePK) + 100, 100),
-      labels = as.character(seq(0, max(data$PercentChangePK) + 100, 100))
-    ) +
+    geom_point(size = 2, shape = 21)
+
+  if (xAxisLog) {
+    plot <- plot + scale_x_log10()
+  }
+
+  if (yAxisLog) {
+    plot <- plot + scale_y_log10()
+  } else {
+    plot <- plot +
+      scale_y_continuous(
+        breaks = seq(0, max(data$PercentChangePK) + 100, 100),
+        labels = as.character(seq(0, max(data$PercentChangePK) + 100, 100))
+      )
+  }
+
+  plot <- plot +
     geom_hline(
       yintercept = 100,
       linetype = "dotted",
@@ -81,11 +93,13 @@ sensitivitySpiderPlot <- function(data) {
       group = "Parameter",
       color = "Parameter"
     ) +
-    theme_bw(base_size = 14) +
+    theme_bw(base_size = 10) +
     theme(
       legend.position = "bottom",
       panel.grid.minor = element_blank()
     ) +
     guides(col = guide_legend(nrow = 3)) +
     scale_color_brewer(palette = "Dark2")
+
+  plot
 }
