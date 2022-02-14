@@ -1,16 +1,3 @@
-#' Get the key mapped to the given value in an `enum`
-#'
-#' @param enum The enum where the key-value pair is stored
-#' @param value The value that is mapped to the key
-#' @import ospsuite
-#'
-#' @return Key under which the value is stored. If the value is not in the enum,
-#'   `NULL` is returned
-#' @export
-enumGetKey <- function(enum, value) {
-  ospsuite::getEnumKey(enum, value)
-}
-
 #' Add a new key-value pairs to an enum, where the value is a list.
 #'
 #' @param key Key to be added
