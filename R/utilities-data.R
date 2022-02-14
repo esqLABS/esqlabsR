@@ -152,11 +152,10 @@ stringToNum <- function(string) {
 #'  and dataSet3 has no LLOQ, then 2 is used for the returned `DataSet`
 #' @return A single `DataSet` object
 #' @export
-calculateMeans <- function(dataSets, method = "arithmetic", treatLLOQ = TreatLLOQ$`LLOQ/2`,
-                           outputXunit = NULL, outputYunit = NULL, outputMolWeight = NULL) {
+calculateMeanDataSet <- function(dataSets, method = "arithmetic", treatLLOQ = TreatLLOQ$`LLOQ/2`,
+                                 outputXunit = NULL, outputYunit = NULL, outputMolWeight = NULL) {
   df <- ospsuite::dataSetToDataFrame(dataSets)
-  meanDataSet <- ospsuite::DataSet$new()
-  meanDataSet$name <- "Mean"
+  meanDataSet <- ospsuite::DataSet$new(name = "Mean")
 
   molWeights <- unique(df$molWeight)
   if (!is.null(outputMolWeight)) {
@@ -211,13 +210,13 @@ calculateMeans <- function(dataSets, method = "arithmetic", treatLLOQ = TreatLLO
 
   # convert xValues to same unit
   df$xValues <- mapply(
-    function(vals, unit, mw) {
+    function(vals, unit) {
       ospsuite::toUnit(
         quantityOrDimension = meanDataSet$xDimension, targetUnit = meanDataSet$xUnit,
-        values = vals, sourceUnit = unit, molWeight = mw, molWeightUnit = "g/mol"
+        values = vals, sourceUnit = unit
       )
     },
-    df$xValues, df$xUnit, df$molWeight
+    df$xValues, df$xUnit
   )
 
   # convert yValues to same unit
@@ -249,16 +248,18 @@ calculateMeans <- function(dataSets, method = "arithmetic", treatLLOQ = TreatLLO
   )
 
   # add all meta that are equal in every data set
-  # we are getting the meta data names by their position in the data frame returned by
-  # ospsuite::dataSetToDataFrame() - this will have to be adapted if the number of default
-  # columns changes there
-  metaDataNames <- names(df)[-(1:12)]
+  metaDataNames <- Reduce(intersect, lapply(c(dataSets), function(x) {
+    names(x$metaData)
+  }))
   for (name in metaDataNames) {
-    value <- unique(df[[name]])
-    if (length(value) == 1) {
+    value <- Reduce(intersect, sapply(c(dataSets), function(x) {
+      x$metaData[[name]]
+    }, simplify = FALSE))
+    if (length(value) != 0) {
       meanDataSet$addMetaData(name = name, value = value)
     }
   }
+
   meanDataSet$addMetaData(name = "Subject ID", value = "mean")
 
   return(meanDataSet)
