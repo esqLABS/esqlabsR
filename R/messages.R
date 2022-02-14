@@ -58,7 +58,7 @@ messages$errorMultipleMetaDataEntries <- function(optionalMessage = NULL) {
   paste("Can only set a single meta data entry at once", optionalMessage)
 }
 messages$errorInvalidTreatLLOQ <- function() {
-  paste("Invalid value for parameter 'treatLLOQ', supported values are `LLOQ/2`, `LLOQ`, `ZERO` and `ignore`")
+  paste("Invalid value for argument 'treatLLOQ', supported values are `LLOQ/2`, `LLOQ`, `ZERO` and `ignore`")
 }
 messages$errorInvalidMeanMethod <- function() {
   paste("Invalid value for argument 'method', supported values are `arithmetic` or `geometric`")
