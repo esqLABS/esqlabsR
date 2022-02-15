@@ -22,7 +22,6 @@
 #' @examples
 #'
 #' library(ospsuite)
-#' library(dplyr)
 #'
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 #' simulation <- loadSimulation(simPath)
@@ -41,9 +40,9 @@
 #' )
 #'
 #' # print plots
-#' sensivitityTimeProfiles(ls_results$pkData)
+#' sensitivitySpiderPlot(ls_results$pkData)
 #'
-#' # print and save sensitivity spider plot
+#' # print and save plots
 #' if (FALSE) {
 #'   sensitivitySpiderPlot(
 #'     ls_results$pkData,

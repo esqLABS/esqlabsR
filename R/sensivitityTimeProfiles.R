@@ -1,7 +1,7 @@
 #' @name sensivitityTimeProfiles
 #' @title Create a Concentration-time profile plot
 #'
-#' @param data The `pkData` dataframe in a list of dataframes returned by
+#' @param data The `tsData` dataframe in a list of dataframes returned by
 #'   `sensitivityCalculation()`.
 #' @inheritParams sensitivitySpiderPlot
 #'
@@ -11,7 +11,6 @@
 #' @examples
 #'
 #' library(ospsuite)
-#' library(dplyr)
 #'
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 #' simulation <- loadSimulation(simPath)
@@ -32,7 +31,7 @@
 #' # print plots
 #' sensivitityTimeProfiles(ls_results$tsData)
 #'
-#' # print and save sensitivity spider plot
+#' # print and save plots
 #' if (FALSE) {
 #'   sensivitityTimeProfiles(
 #'     ls_results$tsData,

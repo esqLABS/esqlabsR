@@ -16,7 +16,7 @@ sensivitityTimeProfiles(
 )
 }
 \arguments{
-\item{data}{The \code{pkData} dataframe in a list of dataframes returned by
+\item{data}{The \code{tsData} dataframe in a list of dataframes returned by
 \code{sensitivityCalculation()}.}
 
 \item{xAxisLog}{Logical that decides whether to display the axis on
@@ -47,7 +47,6 @@ Create a Concentration-time profile plot
 \examples{
 
 library(ospsuite)
-library(dplyr)
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 simulation <- loadSimulation(simPath)
@@ -68,7 +67,7 @@ ls_results <- sensitivityCalculation(
 # print plots
 sensivitityTimeProfiles(ls_results$tsData)
 
-# print and save sensitivity spider plot
+# print and save plots
 if (FALSE) {
   sensivitityTimeProfiles(
     ls_results$tsData,

@@ -26,7 +26,6 @@
 #' @examples
 #'
 #' library(ospsuite)
-#' library(dplyr)
 #'
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 #' simulation <- loadSimulation(simPath)

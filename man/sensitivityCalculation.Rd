@@ -49,7 +49,6 @@ Carry out and visualize sensitivity analysis (with OSPSuite)
 \examples{
 
 library(ospsuite)
-library(dplyr)
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 simulation <- loadSimulation(simPath)
