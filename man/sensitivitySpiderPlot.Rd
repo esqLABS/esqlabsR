@@ -2,18 +2,50 @@
 % Please edit documentation in R/sensitivitySpiderPlot.R
 \name{sensitivitySpiderPlot}
 \alias{sensitivitySpiderPlot}
-\title{Spider plot for PK parameters}
+\title{Sensitivity spider plot for PK parameters}
 \usage{
-sensitivitySpiderPlot(data, xAxisLog = TRUE, yAxisLog = FALSE)
+sensitivitySpiderPlot(
+  data,
+  xAxisLog = TRUE,
+  yAxisLog = FALSE,
+  savePlots = FALSE,
+  width = NA,
+  height = NA,
+  units = c("in", "cm", "mm", "px"),
+  dpi = 300
+)
 }
 \arguments{
 \item{data}{The \code{pkData} dataframe in a list of dataframes returned by
 \code{sensitivityCalculation()}.}
 
-\item{xAxisLog, yAxisLog}{Logical that decides whether to}
+\item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
+logarithmic scale.}
+
+\item{savePlots}{Logical that decides whether you wish to save created
+plot(s). They are not saved by default. Note that if there are multiple
+output paths in your model, there will be multiple plots that will be saved.}
+
+\item{width}{Plot size in \code{units} ("in", "cm", "mm", or "px").
+If not supplied, uses the size of current graphics device.}
+
+\item{height}{Plot size in \code{units} ("in", "cm", "mm", or "px").
+If not supplied, uses the size of current graphics device.}
+
+\item{units}{Plot size in \code{units} ("in", "cm", "mm", or "px").
+If not supplied, uses the size of current graphics device.}
+
+\item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),
+"print" (300), or "screen" (72). Applies only to raster output types.}
+}
+\value{
+A list of dataframes with time-series and PK parameters data.
+
+This function also prints Concentration-time profile plots and Sensitivity
+spider plots.
 }
 \description{
-Spider plot for PK parameters
+Sensitivity spider plot for PK parameters
 }
 \examples{
 
@@ -36,16 +68,18 @@ ls_results <- sensitivityCalculation(
   parameterPaths = parameterPaths
 )
 
-# PK parameters data
-pkData <- ls_results$pkData
+# print plots
+sensivitityTimeProfiles(ls_results$pkData)
 
-# generate profile plot for a given output path
-ls_spider_plots <- purrr::map(
-  .x = pkData \%>\% split(.$OutputPath),
-  .f = ~ sensitivitySpiderPlot(.x)
-)
-
+# print and save sensitivity spider plot
+if (FALSE) {
+  sensitivitySpiderPlot(
+    ls_results$pkData,
+    savePlots = TRUE,
+    units = "in",
+    height = 6,
+    width = 12
+  )
 }
-\seealso{
-savePlotList
+
 }

@@ -29,19 +29,58 @@
 #'   parameterPaths = parameterPaths
 #' )
 #'
-#' # time-series data
-#' tsData <- ls_results$tsData
+#' # print plots
+#' sensivitityTimeProfiles(ls_results$tsData)
 #'
-#' # generate profile plot for each output path
-#' ls_profile_plots <- purrr::map(
-#'   .x = tsData %>% split(.$OutputPath),
-#'   .f = ~ sensivitityTimeProfiles(.x, yAxisLog = TRUE)
-#' )
+#' # print and save sensitivity spider plot
+#' if (FALSE) {
+#'   sensivitityTimeProfiles(
+#'     ls_results$tsData,
+#'     savePlots = TRUE,
+#'     units = "in",
+#'     height = 6,
+#'     width = 12
+#'   )
+#' }
 #'
-#' @seealso savePlotList
 #' @export
 
-sensivitityTimeProfiles <- function(data, xAxisLog = FALSE, yAxisLog = TRUE) {
+sensivitityTimeProfiles <- function(data,
+                                    xAxisLog = FALSE,
+                                    yAxisLog = TRUE,
+                                    savePlots = FALSE,
+                                    width = NA,
+                                    height = NA,
+                                    units = c("in", "cm", "mm", "px"),
+                                    dpi = 300) {
+  ls_profile_plots <- purrr::map(
+    .x = data %>% split(.$OutputPath),
+    .f = ~ .createTimeProfiles(
+      .x,
+      xAxisLog = xAxisLog,
+      yAxisLog = yAxisLog
+    )
+  )
+
+  # print plots
+  purrr::walk(ls_profile_plots, plot)
+
+  if (savePlots) {
+    .savePlotList(
+      ls_profile_plots,
+      plot.type = "Profile_",
+      height = height,
+      width = width,
+      units = units,
+      dpi = dpi
+    )
+  }
+}
+
+
+#' @noRd
+
+.createTimeProfiles <- function(data, xAxisLog = FALSE, yAxisLog = TRUE) {
   plot <- ggplot() +
     geom_line(
       data = dplyr::filter(data, ParameterFactor != 1.0),

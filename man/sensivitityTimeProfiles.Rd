@@ -4,15 +4,42 @@
 \alias{sensivitityTimeProfiles}
 \title{Create a Concentration-time profile plot}
 \usage{
-sensivitityTimeProfiles(data, xAxisLog = FALSE, yAxisLog = TRUE)
+sensivitityTimeProfiles(
+  data,
+  xAxisLog = FALSE,
+  yAxisLog = TRUE,
+  savePlots = FALSE,
+  width = NA,
+  height = NA,
+  units = c("in", "cm", "mm", "px"),
+  dpi = 300
+)
 }
 \arguments{
 \item{data}{The \code{pkData} dataframe in a list of dataframes returned by
 \code{sensitivityCalculation()}.}
 
-\item{xAxisLog}{Logical that decides whether to}
+\item{xAxisLog}{Logical that decides whether to display the axis on
+logarithmic scale.}
 
-\item{yAxisLog}{Logical that decides whether to}
+\item{yAxisLog}{Logical that decides whether to display the axis on
+logarithmic scale.}
+
+\item{savePlots}{Logical that decides whether you wish to save created
+plot(s). They are not saved by default. Note that if there are multiple
+output paths in your model, there will be multiple plots that will be saved.}
+
+\item{width}{Plot size in \code{units} ("in", "cm", "mm", or "px").
+If not supplied, uses the size of current graphics device.}
+
+\item{height}{Plot size in \code{units} ("in", "cm", "mm", or "px").
+If not supplied, uses the size of current graphics device.}
+
+\item{units}{Plot size in \code{units} ("in", "cm", "mm", or "px").
+If not supplied, uses the size of current graphics device.}
+
+\item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),
+"print" (300), or "screen" (72). Applies only to raster output types.}
 }
 \description{
 Create a Concentration-time profile plot
@@ -38,16 +65,18 @@ ls_results <- sensitivityCalculation(
   parameterPaths = parameterPaths
 )
 
-# time-series data
-tsData <- ls_results$tsData
+# print plots
+sensivitityTimeProfiles(ls_results$tsData)
 
-# generate profile plot for each output path
-ls_profile_plots <- purrr::map(
-  .x = tsData \%>\% split(.$OutputPath),
-  .f = ~ sensivitityTimeProfiles(.x, yAxisLog = TRUE)
-)
-
+# print and save sensitivity spider plot
+if (FALSE) {
+  sensivitityTimeProfiles(
+    ls_results$tsData,
+    savePlots = TRUE,
+    units = "in",
+    height = 6,
+    width = 12
+  )
 }
-\seealso{
-savePlotList
+
 }

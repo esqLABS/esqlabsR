@@ -220,3 +220,42 @@
     dplyr::mutate(.rowid = paste0("OutputPath", seq(1:nrow(.)))) %>%
     tidyr::unnest(cols = c(data))
 }
+
+
+#' @name savePlotList
+#' @title Save a list of plots
+#'
+#' @param plotlist A list of plots (ideally form `sensivitityTimeProfiles()` or
+#'   `sensitivitySpiderPlot()`).
+#' @param plot.type A string specifying the prefix for plot filename.
+#' @inheritParams sensitivitySpiderPlot
+#'
+#' @seealso sensivitityTimeProfiles, sensitivitySpiderPlot
+#'
+#' @examples
+#'
+#' # first check out examples for `sensivitityTimeProfiles()` and
+#' # `sensitivitySpiderPlot()`
+#'
+#' @keywords internal
+#' @noRd
+
+.savePlotList <- function(plotlist,
+                          plot.type,
+                          width = NA,
+                          height = NA,
+                          units = c("in", "cm", "mm", "px"),
+                          dpi = 300) {
+  purrr::walk2(
+    .x = plotlist,
+    .y = seq(1:length(plotlist)),
+    .f = ~ ggsave(
+      paste0(plot.type, "OutputPath", .y, ".png"),
+      plot = .x,
+      height = height,
+      width = width,
+      units = units,
+      dpi = dpi
+    )
+  )
+}

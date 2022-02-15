@@ -3,10 +3,10 @@
 NEW FUNCTIONS
 
 - To carry out and visualize sensitivity analysis:
+
 * `sensitivityCalculation()`
 * `sensitivitySpiderPlot()`
 * `sensivitityTimeProfiles()`
-* `savePlotList()`
 
 BREAKING CHANGES
 
@@ -15,7 +15,6 @@ BREAKING CHANGES
 # esqlabsR 2.0.0
 
 - Maintenance and bug fixes.
-
 
 # esqlabsR 1.0.0
 

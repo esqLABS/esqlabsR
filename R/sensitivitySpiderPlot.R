@@ -1,11 +1,23 @@
 #' @name sensitivitySpiderPlot
-#' @title Spider plot for PK parameters
+#' @title Sensitivity spider plot for PK parameters
 #'
 #' @param data The `pkData` dataframe in a list of dataframes returned by
 #'   `sensitivityCalculation()`.
-#' @param xAxisLog,yAxisLog Logical that decides whether to
+#' @param xAxisLog,yAxisLog Logical that decides whether to display the axis on
+#'   logarithmic scale.
+#' @param savePlots Logical that decides whether you wish to save created
+#'   plot(s). They are not saved by default. Note that if there are multiple
+#'   output paths in your model, there will be multiple plots that will be saved.
+#' @inheritParams ggplot2::ggsave
 #'
 #' @import ggplot2
+#'
+#' @return
+#'
+#' A list of dataframes with time-series and PK parameters data.
+#'
+#' This function also prints Concentration-time profile plots and Sensitivity
+#' spider plots.
 #'
 #' @examples
 #'
@@ -28,20 +40,57 @@
 #'   parameterPaths = parameterPaths
 #' )
 #'
-#' # PK parameters data
-#' pkData <- ls_results$pkData
+#' # print plots
+#' sensivitityTimeProfiles(ls_results$pkData)
 #'
-#' # generate profile plot for a given output path
-#' ls_spider_plots <- purrr::map(
-#'   .x = pkData %>% split(.$OutputPath),
-#'   .f = ~ sensitivitySpiderPlot(.x)
-#' )
-#'
-#' @seealso savePlotList
+#' # print and save sensitivity spider plot
+#' if (FALSE) {
+#'   sensitivitySpiderPlot(
+#'     ls_results$pkData,
+#'     savePlots = TRUE,
+#'     units = "in",
+#'     height = 6,
+#'     width = 12
+#'   )
+#' }
 #'
 #' @export
 
-sensitivitySpiderPlot <- function(data, xAxisLog = TRUE, yAxisLog = FALSE) {
+sensitivitySpiderPlot <- function(data,
+                                  xAxisLog = TRUE,
+                                  yAxisLog = FALSE,
+                                  savePlots = FALSE,
+                                  width = NA,
+                                  height = NA,
+                                  units = c("in", "cm", "mm", "px"),
+                                  dpi = 300) {
+  ls_spider_plots <- purrr::map(
+    .x = data %>% split(.$OutputPath),
+    .f = ~ .createSpiderPlot(
+      .x,
+      xAxisLog = xAxisLog,
+      yAxisLog = yAxisLog
+    )
+  )
+
+  # print plots
+  purrr::walk(ls_spider_plots, plot)
+
+  if (savePlots) {
+    .savePlotList(
+      ls_spider_plots,
+      plot.type = "Spider_",
+      height = height,
+      width = width,
+      units = units,
+      dpi = dpi
+    )
+  }
+}
+
+#' @noRd
+
+.createSpiderPlot <- function(data, xAxisLog = TRUE, yAxisLog = FALSE) {
   data <- dplyr::mutate(data,
     ParameterFactor = ParameterFactor * 100,
     PercentChangePK = PercentChangePK + 100
