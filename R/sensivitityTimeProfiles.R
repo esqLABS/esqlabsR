@@ -1,4 +1,4 @@
-#' @name sensivitityTimeProfiles
+#' @name sensitivityTimeProfiles
 #' @title Create a Concentration-time profile plot
 #'
 #' @param data The `tsData` dataframe in a list of dataframes returned by
@@ -29,11 +29,11 @@
 #' )
 #'
 #' # print plots
-#' sensivitityTimeProfiles(ls_results$tsData)
+#' sensitivityTimeProfiles(ls_results$tsData)
 #'
 #' # print and save plots
 #' if (FALSE) {
-#'   sensivitityTimeProfiles(
+#'   sensitivityTimeProfiles(
 #'     ls_results$tsData,
 #'     savePlots = TRUE,
 #'     units = "in",
@@ -44,7 +44,7 @@
 #'
 #' @export
 
-sensivitityTimeProfiles <- function(data,
+sensitivityTimeProfiles <- function(data,
                                     xAxisLog = FALSE,
                                     yAxisLog = TRUE,
                                     savePlots = FALSE,

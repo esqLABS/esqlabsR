@@ -90,7 +90,7 @@ sensitivityCalculation <- function(simulation,
     # same for time series data but it doesn't need to be converted to wide
     ts_data_list <- tsData %>%
       split(.$.rowid) %>%
-      purrr::map(~ dplyr::select(.x, -c("Parameter", ".rowid")))
+      purrr::map(~ dplyr::select(.x, -c(".rowid")))
 
     writexl::write_xlsx(ts_data_list, timeSeriesDataFilePath)
   }

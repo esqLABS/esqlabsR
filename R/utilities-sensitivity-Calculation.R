@@ -135,7 +135,7 @@
       dplyr::starts_with("Parameter"),
       Time, Concentration,
       dplyr::everything(),
-      -IndividualId
+      -c("IndividualId", "Parameter")
     ) %>%
     dplyr::arrange(ParameterPath, ParameterFactor)
 
@@ -159,9 +159,9 @@
       dplyr::starts_with("PK"),
       Unit, PercentChangePK,
       dplyr::everything(),
-      -IndividualId
+      -c("IndividualId", "Parameter")
     ) %>%
-    dplyr::arrange(Parameter, PKParameter, ParameterFactor)
+    dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 
   if (!is.null(pkParameters)) {
     pkData <- dplyr::filter(pkData, PKParameter %in% pkParameters)
@@ -225,16 +225,16 @@
 #' @name savePlotList
 #' @title Save a list of plots
 #'
-#' @param plotlist A list of plots (ideally form `sensivitityTimeProfiles()` or
+#' @param plotlist A list of plots (ideally form `sensitivityTimeProfiles()` or
 #'   `sensitivitySpiderPlot()`).
 #' @param plot.type A string specifying the prefix for plot filename.
 #' @inheritParams sensitivitySpiderPlot
 #'
-#' @seealso sensivitityTimeProfiles, sensitivitySpiderPlot
+#' @seealso sensitivityTimeProfiles, sensitivitySpiderPlot
 #'
 #' @examples
 #'
-#' # first check out examples for `sensivitityTimeProfiles()` and
+#' # first check out examples for `sensitivityTimeProfiles()` and
 #' # `sensitivitySpiderPlot()`
 #'
 #' @keywords internal
