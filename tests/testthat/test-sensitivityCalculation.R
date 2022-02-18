@@ -1,4 +1,15 @@
 test_that("Check sensitivityCalculation dataframes and plots are as expected", {
+  library(dplyr)
+
+  # save old options
+  old <- options()
+
+  options(
+    tibble.width = Inf,
+    pillar.min_title_chars = Inf,
+    pillar.sigfig = 4,
+    scipen = 999
+  )
 
   # the dataframes and plots are checked in the same test to reduce test time
   # otherwise time-consuming simulations will need to be run each time
@@ -16,55 +27,52 @@ test_that("Check sensitivityCalculation dataframes and plots are as expected", {
   results <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
-    parameterPaths = parameterPaths
+    parameterPaths = parameterPaths,
+    variationRange = c(0.1, 2, 20)
   )
 
-  expect_equal(
-    names(results$tsData),
-    c(
-      "OutputPath", "ParameterFactor", "ParameterPath", "ParameterValue",
-      "Time", "Concentration", "Unit", "Dimension", "TimeUnit", "TimeDimension",
-      "molWeight"
+  # base scaling should be present
+  expect_equal(unique(results$tsData$ParameterFactor), c(0.1, 1, 2, 20))
+  expect_equal(unique(results$pkData$ParameterFactor), c(0.1, 1, 2, 20))
+
+  # checking time series data ------------------
+
+  summarizer <- function(data, path) {
+    data <- dplyr::filter(data, ParameterPath %in% path)
+
+    list(
+      "charColumnSummary" = select(data, where(is.character)) %>%
+        purrr::map_dfr(unique),
+      "numericColumnSummary" = select(data, where(is.numeric)) %>%
+        purrr::map_df(summary, .id = "column")
     )
-  )
+  }
 
   set.seed(123)
-  expect_snapshot(str(results$tsData))
+  df1_ts <- summarizer(results$tsData, parameterPaths[1])
+  expect_snapshot(df1_ts)
 
   set.seed(123)
-  expect_snapshot(summary(results$tsData))
-
-  expect_equal(
-    names(results$pkData),
-    c(
-      "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue",
-      "PKParameter", "PKParameterValue", "Unit", "PercentChangePK",
-      "SensitivityPKParameter"
-    )
-  )
+  df2_ts <- summarizer(results$tsData, parameterPaths[2])
+  expect_snapshot(df2_ts)
 
   set.seed(123)
-  expect_snapshot(str(results$pkData))
+  df3_ts <- summarizer(results$tsData, parameterPaths[3])
+  expect_snapshot(df3_ts)
+
+  # checking PK parameters data ------------------
 
   set.seed(123)
-  expect_snapshot(summary(results$pkData))
+  df1_pk <- summarizer(results$pkData, parameterPaths[1])
+  expect_snapshot(df1_pk)
 
-  expect_equal(
-    unique(results$tsData$OutputPath),
-    unique(results$pkData$OutputPath)
-  )
+  set.seed(123)
+  df2_pk <- summarizer(results$pkData, parameterPaths[2])
+  expect_snapshot(df2_pk)
 
-  expect_equal(
-    unique(results$tsData$OutputPath),
-    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-  )
-
-  expect_equal(
-    unique(results$tsData$ParameterPath),
-    unique(results$pkData$ParameterPath)
-  )
-
-  expect_snapshot(unique(results$tsData$ParameterPath))
+  set.seed(123)
+  df3_pk <- summarizer(results$pkData, parameterPaths[3])
+  expect_snapshot(df3_pk)
 
   # plotting fails with incorrect input objects
 
@@ -87,9 +95,12 @@ test_that("Check sensitivityCalculation dataframes and plots are as expected", {
     fig = suppressWarnings(sensitivityTimeProfiles(results))
   )
 
-  set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "sensitivitySpiderPlot works as expected",
-    fig = sensitivitySpiderPlot(results)
-  )
+  # set.seed(123)
+  # vdiffr::expect_doppelganger(
+  #   title = "sensitivitySpiderPlot works as expected",
+  #   fig = sensitivitySpiderPlot(results)
+  # )
+
+  # restore old options
+  options(old)
 })
