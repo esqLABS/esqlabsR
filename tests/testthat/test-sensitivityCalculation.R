@@ -13,48 +13,83 @@ test_that("Check sensitivityCalculation dataframes and plots are as expected", {
   )
 
   set.seed(123)
-  df_list <- sensitivityCalculation(
+  results <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
     parameterPaths = parameterPaths
   )
 
   expect_equal(
-    names(df_list$tsData),
-    c("OutputPath", "ParameterFactor", "ParameterPath", "ParameterValue",
+    names(results$tsData),
+    c(
+      "OutputPath", "ParameterFactor", "ParameterPath", "ParameterValue",
       "Time", "Concentration", "Unit", "Dimension", "TimeUnit", "TimeDimension",
-      "molWeight")
+      "molWeight"
+    )
   )
 
   set.seed(123)
-  expect_snapshot(str(df_list$tsData))
+  expect_snapshot(str(results$tsData))
 
   set.seed(123)
-  expect_snapshot(summary(df_list$tsData))
+  expect_snapshot(summary(results$tsData))
 
   expect_equal(
-    names(df_list$pkData),
-    c("OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue",
+    names(results$pkData),
+    c(
+      "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue",
       "PKParameter", "PKParameterValue", "Unit", "PercentChangePK",
-      "SensitivityPKParameter")
+      "SensitivityPKParameter"
+    )
   )
 
   set.seed(123)
-  expect_snapshot(str(df_list$pkData))
+  expect_snapshot(str(results$pkData))
 
   set.seed(123)
-  expect_snapshot(summary(df_list$pkData))
+  expect_snapshot(summary(results$pkData))
 
-  # TODO: turn on after plots are finalized
-  # set.seed(123)
-  # vdiffr::expect_doppelganger(
-  #   title = "sensitivityTimeProfiles works as expected",
-  #   fig = sensitivityTimeProfiles(df_list$tsData)
-  # )
-  #
-  # set.seed(123)
-  # vdiffr::expect_doppelganger(
-  #   title = "sensitivitySpiderPlot works as expected",
-  #   fig = sensitivitySpiderPlot(df_list$pkData)
-  # )
+  expect_equal(
+    unique(results$tsData$OutputPath),
+    unique(results$pkData$OutputPath)
+  )
+
+  expect_equal(
+    unique(results$tsData$OutputPath),
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  )
+
+  expect_equal(
+    unique(results$tsData$ParameterPath),
+    unique(results$pkData$ParameterPath)
+  )
+
+  expect_snapshot(unique(results$tsData$ParameterPath))
+
+  # plotting fails with incorrect input objects
+
+  expect_error(
+    sensitivityTimeProfiles("x"),
+    "argument 'sensitivityAnalysis' is of type 'character', but expected 'SensitivityAnalysis'"
+  )
+
+  expect_error(
+    sensitivitySpiderPlot("x"),
+    "argument 'sensitivityAnalysis' is of type 'character', but expected 'SensitivityAnalysis'"
+  )
+
+
+  # visual regression tests -------------
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivityTimeProfiles works as expected",
+    fig = suppressWarnings(sensitivityTimeProfiles(results))
+  )
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivitySpiderPlot works as expected",
+    fig = sensitivitySpiderPlot(results)
+  )
 })

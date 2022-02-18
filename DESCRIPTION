@@ -16,7 +16,7 @@ Imports:
     dplyr,
     ggplot2,
     hash,
-    ospsuite.utils,
+    ospsuite.utils (>= 1.2.0),
     purrr,
     rClr,
     readxl,

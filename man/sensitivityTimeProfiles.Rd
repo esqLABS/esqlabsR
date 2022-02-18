@@ -5,7 +5,7 @@
 \title{Create a Concentration-time profile plot}
 \usage{
 sensitivityTimeProfiles(
-  data,
+  sensitivityAnalysis,
   xAxisLog = FALSE,
   yAxisLog = TRUE,
   savePlots = FALSE,
@@ -16,8 +16,8 @@ sensitivityTimeProfiles(
 )
 }
 \arguments{
-\item{data}{The \code{tsData} dataframe in a list of dataframes returned by
-\code{sensitivityCalculation()}.}
+\item{sensitivityAnalysis}{The \code{SensitivityAnalysis} object returned by
+\code{esqlabsR::sensitivityCalculation()}.}
 
 \item{xAxisLog}{Logical that decides whether to display the axis on
 logarithmic scale.}
@@ -40,6 +40,9 @@ If not supplied, uses the size of current graphics device.}
 
 \item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
+
+\item{data}{The \code{tsData} dataframe in a list of dataframes returned by
+\code{sensitivityCalculation()}.}
 }
 \description{
 Create a Concentration-time profile plot
@@ -58,19 +61,19 @@ parameterPaths <- c(
 )
 
 # extract the results into a list of dataframes
-ls_results <- sensitivityCalculation(
+results <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths
 )
 
 # print plots
-sensitivityTimeProfiles(ls_results$tsData)
+sensitivityTimeProfiles(results)
 
 # print and save plots
 if (FALSE) {
   sensitivityTimeProfiles(
-    ls_results$tsData,
+    results,
     savePlots = TRUE,
     units = "in",
     height = 6,

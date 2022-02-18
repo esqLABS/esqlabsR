@@ -51,7 +51,7 @@ sensitivityCalculation <- function(simulation,
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
                                    pkDataFilePath = NULL,
                                    timeSeriesDataFilePath = NULL) {
-  # fail fast if specified PK parameters are not part of standard enum
+  # fail fast if specified PK parameters are not part of standard `enum`
   validateIsIncluded(pkParameters, names(ospsuite::StandardPKParameter))
 
   # set outputs to the provided path
@@ -64,12 +64,22 @@ sensitivityCalculation <- function(simulation,
   # extract dataframes with results
   batchResults <- purrr::map(
     .x = parameterPaths,
-    .f = ~ .extractSimBatchResults(simulation, .x, variationRange, pkParameters)
+    .f = ~ .extractSimBatchResults(
+      simulation,
+      parameterPath = .x,
+      outputPaths = outputPaths,
+      variationRange = variationRange
+    )
   )
 
   # extract individual dataframes for time series and PK analysis
   tsData <- purrr::map_dfr(batchResults, ~ purrr::pluck(.x, "tsData"))
   pkData <- purrr::map_dfr(batchResults, ~ purrr::pluck(.x, "pkData"))
+
+  # filter out unneeded PK parameters
+  if (!is.null(pkParameters)) {
+    pkData <- dplyr::filter(pkData, PKParameter %in% pkParameters)
+  }
 
   # add a new `.rowid` column with unique name for each output path
   pkData <- .addRowid(pkData)
@@ -99,6 +109,13 @@ sensitivityCalculation <- function(simulation,
   pkData <- dplyr::select(pkData, -c(".rowid"))
   tsData <- dplyr::select(tsData, -c(".rowid"))
 
+  # final list with needed dataframes
+  results <- list("tsData" = tsData, "pkData" = pkData)
+
+  # add additional attribute, which will be helpful for plotting methods to
+  # recognize this object
+  class(results) <- c("SensitivityAnalysis", class(results))
+
   # return the data in a list
-  return(list("tsData" = tsData, "pkData" = pkData))
+  return(results)
 }

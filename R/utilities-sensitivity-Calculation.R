@@ -100,8 +100,8 @@
 #' @noRd
 .extractSimBatchResults <- function(simulation,
                                     parameterPath,
-                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
-                                    pkParameters = NULL) {
+                                    outputPaths = NULL,
+                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1))) {
   # check provided variation range using custom function
   variationRange <- .validateVariationRange(variationRange)
 
@@ -162,10 +162,6 @@
       -c("IndividualId", "Parameter")
     ) %>%
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
-
-  if (!is.null(pkParameters)) {
-    pkData <- dplyr::filter(pkData, PKParameter %in% pkParameters)
-  }
 
   list("tsData" = tsData, "pkData" = pkData)
 }

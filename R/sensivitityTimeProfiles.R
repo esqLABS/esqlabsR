@@ -22,19 +22,19 @@
 #' )
 #'
 #' # extract the results into a list of dataframes
-#' ls_results <- sensitivityCalculation(
+#' results <- sensitivityCalculation(
 #'   simulation = simulation,
 #'   outputPaths = outputPaths,
 #'   parameterPaths = parameterPaths
 #' )
 #'
 #' # print plots
-#' sensitivityTimeProfiles(ls_results$tsData)
+#' sensitivityTimeProfiles(results)
 #'
 #' # print and save plots
 #' if (FALSE) {
 #'   sensitivityTimeProfiles(
-#'     ls_results$tsData,
+#'     results,
 #'     savePlots = TRUE,
 #'     units = "in",
 #'     height = 6,
@@ -44,7 +44,7 @@
 #'
 #' @export
 
-sensitivityTimeProfiles <- function(data,
+sensitivityTimeProfiles <- function(sensitivityAnalysis,
                                     xAxisLog = FALSE,
                                     yAxisLog = TRUE,
                                     savePlots = FALSE,
@@ -52,6 +52,13 @@ sensitivityTimeProfiles <- function(data,
                                     height = NA,
                                     units = c("in", "cm", "mm", "px"),
                                     dpi = 300) {
+  # fail early if the object is of wrong type
+  validateIsOfType(sensitivityAnalysis, "SensitivityAnalysis")
+
+  # extrat the needed dataframe from the object
+  data <- sensitivityAnalysis$tsData
+
+  # create plot for each output path
   ls_profile_plots <- purrr::map(
     .x = data %>% split(.$OutputPath),
     .f = ~ .createTimeProfiles(

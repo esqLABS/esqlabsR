@@ -5,7 +5,7 @@
 \title{Sensitivity spider plot for PK parameters}
 \usage{
 sensitivitySpiderPlot(
-  data,
+  sensitivityAnalysis,
   xAxisLog = TRUE,
   yAxisLog = FALSE,
   savePlots = FALSE,
@@ -16,8 +16,8 @@ sensitivitySpiderPlot(
 )
 }
 \arguments{
-\item{data}{The \code{pkData} dataframe in a list of dataframes returned by
-\code{sensitivityCalculation()}.}
+\item{sensitivityAnalysis}{The \code{SensitivityAnalysis} object returned by
+\code{esqlabsR::sensitivityCalculation()}.}
 
 \item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
 logarithmic scale.}
@@ -61,19 +61,19 @@ parameterPaths <- c(
 )
 
 # extract the results into a list of dataframes
-ls_results <- sensitivityCalculation(
+results <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths
 )
 
 # print plots
-sensitivitySpiderPlot(ls_results$pkData)
+sensitivitySpiderPlot(results)
 
 # print and save plots
 if (FALSE) {
   sensitivitySpiderPlot(
-    ls_results$pkData,
+    results,
     savePlots = TRUE,
     units = "in",
     height = 6,
