@@ -90,17 +90,21 @@ are assumed to be in base units. If not <code>NULL</code>, must have the same le
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co"># \dontrun{</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
 <span class="r-in"></span>
 <span class="r-in"><span class="va">simPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"simple.pkml"</span>, package <span class="op">=</span> <span class="st">"ospsuite"</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu">loadSimulation</span><span class="op">(</span><span class="va">simPath</span><span class="op">)</span></span>
+<span class="r-in"><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ospsuite/man/loadSimulation.html" class="external-link">loadSimulation</a></span><span class="op">(</span><span class="va">simPath</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">condition</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">path</span><span class="op">)</span> <span class="op">{</span></span>
 <span class="r-in">  <span class="va">task</span> <span class="op">&lt;-</span> <span class="fu">ospsuite</span><span class="fu">:::</span><span class="fu">getContainerTask</span><span class="op">(</span><span class="op">)</span></span>
 <span class="r-in">  <span class="op">!</span><span class="fu">rClr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rClr/man/clrCall.html" class="external-link">clrCall</a></span><span class="op">(</span><span class="va">task</span>, <span class="st">"IsExplicitFormulaByPath"</span>, <span class="va">simulation</span><span class="op">$</span><span class="va">ref</span>, <span class="fu"><a href="https://rdrr.io/r/base/Encoding.html" class="external-link">enc2utf8</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">}</span></span>
-<span class="r-in"><span class="fu">setParameterValuesByPathWithCondition</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Organism|Liver|Volume"</span>, <span class="st">"Organism|Volume"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, <span class="va">sim</span>, <span class="va">condition</span><span class="op">)</span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref,     enc2utf8(path)):</span> object 'simulation' not found</span>
-<span class="r-in"><span class="co"># }</span></span>
+<span class="r-in"><span class="fu">setParameterValuesByPathWithCondition</span><span class="op">(</span></span>
+<span class="r-in">  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Organism|Liver|Volume"</span>, <span class="st">"Organism|Volume"</span><span class="op">)</span>,</span>
+<span class="r-in">  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span class="r-in">  <span class="va">sim</span>,</span>
+<span class="r-in">  <span class="va">condition</span></span>
+<span class="r-in"><span class="op">)</span></span>
+<span class="r-in"><span class="op">}</span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

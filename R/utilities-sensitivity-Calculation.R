@@ -25,10 +25,10 @@
     dplyr::mutate(
       PercentChangePK = ((PKParameterValue - baseValue) / baseValue) * 100,
       SensitivityPKParameter =
-        # delta PK / PK
+      # delta PK / PK
         ((PKParameterValue - baseValue) / baseValue) *
-        # p / delta p
-        (ParameterValue / (ParameterValue - ParameterBaseValue))
+          # p / delta p
+          (ParameterValue / (ParameterValue - ParameterBaseValue))
     )
 }
 
@@ -118,9 +118,24 @@
   # use `unlist()` because we only have one `simBatch` here
   simResultsBatch <- unlist(runSimulationBatches(simBatch))
 
+  # use names for parameter factor
+  simResultsBatch <- purrr::set_names(simResultsBatch, variationRange)
+
   # extract time series data
-  tsData <- purrr::map_dfr(
-    .x  = purrr::set_names(simResultsBatch, variationRange),
+  tsData <- .extractTimeSeriesData(simResultsBatch, outputPaths, parameterPath)
+
+  # extract PK parameters data
+  pkData <- .extractPKData(simResultsBatch, parameterPath)
+
+  list("tsData" = tsData, "pkData" = pkData)
+}
+
+#' @keywords internal
+#' @noRd
+
+.extractTimeSeriesData <- function(simResultsBatch, outputPaths, parameterPath) {
+  purrr::map_dfr(
+    .x  = simResultsBatch,
     .f  = ~ simulationResultsToDataFrame(.x, quantitiesOrPaths = outputPaths),
     .id = "ParameterFactor"
   ) %>%
@@ -138,10 +153,14 @@
       -c("IndividualId", "Parameter")
     ) %>%
     dplyr::arrange(ParameterPath, ParameterFactor)
+}
 
-  # extract PK parameters data
-  pkData <- purrr::map_dfr(
-    .x  = purrr::set_names(simResultsBatch, variationRange),
+#' @keywords internal
+#' @noRd
+
+.extractPKData <- function(simResultsBatch, parameterPath) {
+  purrr::map_dfr(
+    .x  = simResultsBatch,
     .f  = ~ pkAnalysesAsDataFrame(calculatePKAnalyses(.x)),
     .id = "ParameterFactor"
   ) %>%
@@ -162,12 +181,10 @@
       -c("IndividualId", "Parameter")
     ) %>%
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
-
-  list("tsData" = tsData, "pkData" = pkData)
 }
 
+#' @keywords internal
 #' @noRd
-
 .convertToWide <- function(data) {
   data %>%
     tidyr::pivot_wider(
@@ -208,8 +225,8 @@
     )
 }
 
+#' @keywords internal
 #' @noRd
-
 .addRowid <- function(data) {
   data %>%
     tidyr::nest(data = -OutputPath) %>%
@@ -235,7 +252,6 @@
 #'
 #' @keywords internal
 #' @noRd
-
 .savePlotList <- function(plotlist,
                           plot.type,
                           width = NA,

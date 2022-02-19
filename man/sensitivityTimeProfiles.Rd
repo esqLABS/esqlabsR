@@ -40,9 +40,6 @@ If not supplied, uses the size of current graphics device.}
 
 \item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
-
-\item{data}{The \code{tsData} dataframe in a list of dataframes returned by
-\code{sensitivityCalculation()}.}
 }
 \description{
 Create a Concentration-time profile plot

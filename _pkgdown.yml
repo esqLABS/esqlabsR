@@ -13,6 +13,11 @@ reference:
       - Plotable
       - PlotConfiguration
 
+  - title: Sensitivity analysis
+    #desc:
+    contents:
+      - starts_with("sensitivity")
+
   - title: Helper functions for data import, wrangling, and export
     #desc:
     contents:

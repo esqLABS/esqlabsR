@@ -1,8 +1,6 @@
 #' @name sensitivityTimeProfiles
 #' @title Create a Concentration-time profile plot
 #'
-#' @param data The `tsData` dataframe in a list of dataframes returned by
-#'   `sensitivityCalculation()`.
 #' @inheritParams sensitivitySpiderPlot
 #'
 #' @import ggplot2
