@@ -54,7 +54,11 @@ sensitivityTimeProfiles <- function(sensitivityAnalysis,
   validateIsOfType(sensitivityAnalysis, "SensitivityAnalysis")
 
   # extrat the needed dataframe from the object
-  data <- sensitivityAnalysis$tsData
+  data <- .simResultsToTimeSeriesDataFrame(
+    sensitivityAnalysis$SimulationResults,
+    sensitivityAnalysis$outputPaths,
+    sensitivityAnalysis$parameterPaths
+  )
 
   # create plot for each output path
   ls_profile_plots <- purrr::map(

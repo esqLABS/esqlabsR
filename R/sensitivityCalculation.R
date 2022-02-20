@@ -4,7 +4,7 @@
 #' @param simulation An object of type `Simulation`.
 #' @param outputPaths Path (or a vector of paths) to the output(s) for which the
 #'   sensitivity will be analyzed.
-#' @param parameterPaths Path (a single or a vector) of the parameter(s) to be
+#' @param parameterPaths A single or a vector of the parameter path(s) to be
 #'   varied.
 #' @param variationRange Optional numeric vector defining the scaling of the
 #'   parameters. The same variation range should be applied to all specified
@@ -15,8 +15,8 @@
 #'   parameters, run `names(ospsuite::StandardPKParameter)`. By default, only
 #'   the following parameters will be considered: `"C_max"`, `"t_max"`,
 #'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated.
-#' @param pkDataFilePath,timeSeriesDataFilePath Paths to spreadsheets in which
-#'   PK-parameter and time series data should be saved. Default is `NULL`,
+#' @param pkDataFilePath Path to spreadsheets in which
+#'   PK-parameter data should be saved. Default is `NULL`,
 #'   meaning the data will not be saved to a spreadsheet.
 #'
 #' @note
@@ -58,6 +58,9 @@ sensitivityCalculation <- function(simulation,
   clearOutputs(simulation)
   addOutputs(outputPaths, simulation)
 
+  # save raw names of paths to create named list
+  parameterPathNames <- parameterPaths
+
   # create simulation batch for efficient calculations
   parameterPaths <- getAllParametersMatching(parameterPaths, simulation)
 
@@ -67,14 +70,15 @@ sensitivityCalculation <- function(simulation,
     .f = ~ .extractSimBatchResults(
       simulation,
       parameterPath = .x,
-      outputPaths = outputPaths,
       variationRange = variationRange
     )
   )
 
-  # extract individual dataframes for time series and PK analysis
-  tsData <- purrr::map_dfr(batchResults, ~ purrr::pluck(.x, "tsData"))
-  pkData <- purrr::map_dfr(batchResults, ~ purrr::pluck(.x, "pkData"))
+  # name list with name of each parameter path
+  batchResults <- purrr::set_names(batchResults, parameterPathNames)
+
+  # extract dataframe PK parameters
+  pkData <- .simResultsToPKDataFrame(batchResults, parameterPaths)
 
   # filter out unneeded PK parameters
   if (!is.null(pkParameters)) {
@@ -83,7 +87,6 @@ sensitivityCalculation <- function(simulation,
 
   # add a new `.rowid` column with unique name for each output path
   pkData <- .addRowid(pkData)
-  tsData <- .addRowid(tsData)
 
   # write each wide dataframe in a list to a separate sheet in Excel
   if (!is.null(pkDataFilePath)) {
@@ -96,21 +99,16 @@ sensitivityCalculation <- function(simulation,
     writexl::write_xlsx(pkData_wide_list, pkDataFilePath)
   }
 
-  if (!is.null(timeSeriesDataFilePath)) {
-    # same for time series data but it doesn't need to be converted to wide
-    ts_data_list <- tsData %>%
-      split(.$.rowid) %>%
-      purrr::map(~ dplyr::select(.x, -c(".rowid")))
-
-    writexl::write_xlsx(ts_data_list, timeSeriesDataFilePath)
-  }
-
   # remove the unneeded column
   pkData <- dplyr::select(pkData, -c(".rowid"))
-  tsData <- dplyr::select(tsData, -c(".rowid"))
 
-  # final list with needed dataframes
-  results <- list("tsData" = tsData, "pkData" = pkData)
+  # final list with needed objects and dataframes for plotting functions
+  results <- list(
+    "SimulationResults" = batchResults,
+    "outputPaths" = outputPaths,
+    "parameterPaths" = parameterPaths,
+    "pkData" = pkData
+  )
 
   # add additional attribute, which will be helpful for plotting methods to
   # recognize this object

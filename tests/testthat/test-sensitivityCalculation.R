@@ -31,8 +31,15 @@ test_that("Check sensitivityCalculation dataframes and plots are as expected", {
     variationRange = c(0.1, 2, 20)
   )
 
+  # also extract and add time series data for testing
+  results$tsData <- esqlabsR:::.simResultsToTimeSeriesDataFrame(
+    results$SimulationResults,
+    results$outputPaths,
+    results$parameterPaths
+  )
+
   # base scaling should be present
-  expect_equal(unique(results$tsData$ParameterFactor), c(0.1, 1, 2, 20))
+  # expect_equal(unique(results$tsData$ParameterFactor), c(0.1, 1, 2, 20))
   expect_equal(unique(results$pkData$ParameterFactor), c(0.1, 1, 2, 20))
 
   # checking time series data ------------------

@@ -100,7 +100,6 @@
 #' @noRd
 .extractSimBatchResults <- function(simulation,
                                     parameterPath,
-                                    outputPaths = NULL,
                                     variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1))) {
   # check provided variation range using custom function
   variationRange <- .validateVariationRange(variationRange)
@@ -121,13 +120,18 @@
   # use names for parameter factor
   simResultsBatch <- purrr::set_names(simResultsBatch, variationRange)
 
-  # extract time series data
-  tsData <- .extractTimeSeriesData(simResultsBatch, outputPaths, parameterPath)
+  simResultsBatch
+}
 
-  # extract PK parameters data
-  pkData <- .extractPKData(simResultsBatch, parameterPath)
+#' @keywords internal
+#' @noRd
 
-  list("tsData" = tsData, "pkData" = pkData)
+.simResultsToTimeSeriesDataFrame <- function(simResultsBatch, outputPaths, parameterPaths) {
+  purrr::map2_dfr(
+    .x = simResultsBatch,
+    .y = parameterPaths,
+    .f = ~ .extractTimeSeriesData(.x, .y, outputPaths = outputPaths)
+  )
 }
 
 #' @keywords internal
@@ -153,6 +157,17 @@
       -c("IndividualId", "Parameter")
     ) %>%
     dplyr::arrange(ParameterPath, ParameterFactor)
+}
+
+#' @keywords internal
+#' @noRd
+
+.simResultsToPKDataFrame <- function(simResultsBatch, parameterPaths) {
+  purrr::map2_dfr(
+    .x = simResultsBatch,
+    .y = parameterPaths,
+    .f = ~ .extractPKData(.x, .y)
+  )
 }
 
 #' @keywords internal
