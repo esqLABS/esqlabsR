@@ -176,7 +176,7 @@
 .extractPKData <- function(simResultsBatch, parameterPath) {
   purrr::map_dfr(
     .x  = simResultsBatch,
-    .f  = ~ pkAnalysesAsDataFrame(calculatePKAnalyses(.x)),
+    .f  = ~ pkAnalysesToDataFrame(calculatePKAnalyses(.x)),
     .id = "ParameterFactor"
   ) %>%
     dplyr::rename(
