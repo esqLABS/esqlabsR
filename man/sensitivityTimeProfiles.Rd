@@ -8,6 +8,7 @@ sensitivityTimeProfiles(
   sensitivityAnalysis,
   xAxisLog = FALSE,
   yAxisLog = TRUE,
+  palette = NULL,
   savePlots = FALSE,
   width = NA,
   height = NA,
@@ -24,6 +25,8 @@ logarithmic scale.}
 
 \item{yAxisLog}{Logical that decides whether to display the axis on
 logarithmic scale.}
+
+\item{palette}{The name of the palette to be used. Run \code{hcl_palettes(type = "qualitative")} for available options.}
 
 \item{savePlots}{Logical that decides whether you wish to save created
 plot(s). They are not saved by default. Note that if there are multiple

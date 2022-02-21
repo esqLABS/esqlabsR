@@ -20,7 +20,7 @@ sensitivityCalculation(
 \item{outputPaths}{Path (or a vector of paths) to the output(s) for which the
 sensitivity will be analyzed.}
 
-\item{parameterPaths}{Path (a single or a vector) of the parameter(s) to be
+\item{parameterPaths}{A single or a vector of the parameter path(s) to be
 varied.}
 
 \item{variationRange}{Optional numeric vector defining the scaling of the
@@ -34,8 +34,8 @@ parameters, run \code{names(ospsuite::StandardPKParameter)}. By default, only
 the following parameters will be considered: \code{"C_max"}, \code{"t_max"},
 \code{"AUC_inf"}. If \code{NULL}, all available PK-parameters will be calculated.}
 
-\item{pkDataFilePath, timeSeriesDataFilePath}{Paths to spreadsheets in which
-PK-parameter and time series data should be saved. Default is \code{NULL},
+\item{pkDataFilePath}{Path to spreadsheets in which
+PK-parameter data should be saved. Default is \code{NULL},
 meaning the data will not be saved to a spreadsheet.}
 }
 \description{

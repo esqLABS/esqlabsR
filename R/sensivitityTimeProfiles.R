@@ -2,9 +2,11 @@
 #' @title Create a Concentration-time profile plot
 #'
 #' @inheritParams sensitivitySpiderPlot
+#' @inheritParams colorspace::scale_color_continuous_qualitative
 #'
 #' @import ggplot2
 #' @import dplyr
+#' @import colorspace
 #'
 #' @examples
 #'
@@ -45,6 +47,7 @@
 sensitivityTimeProfiles <- function(sensitivityAnalysis,
                                     xAxisLog = FALSE,
                                     yAxisLog = TRUE,
+                                    palette = NULL,
                                     savePlots = FALSE,
                                     width = NA,
                                     height = NA,
@@ -66,7 +69,8 @@ sensitivityTimeProfiles <- function(sensitivityAnalysis,
     .f = ~ .createTimeProfiles(
       .x,
       xAxisLog = xAxisLog,
-      yAxisLog = yAxisLog
+      yAxisLog = yAxisLog,
+      palette = palette
     )
   )
 
@@ -88,7 +92,7 @@ sensitivityTimeProfiles <- function(sensitivityAnalysis,
 
 #' @noRd
 
-.createTimeProfiles <- function(data, xAxisLog = FALSE, yAxisLog = TRUE) {
+.createTimeProfiles <- function(data, xAxisLog = FALSE, yAxisLog = TRUE, palette = NULL) {
   plot <- ggplot() +
     geom_line(
       data = dplyr::filter(data, ParameterFactor != 1.0),
@@ -96,6 +100,7 @@ sensitivityTimeProfiles <- function(sensitivityAnalysis,
       alpha = 0.5
     ) +
     colorspace::scale_color_continuous_qualitative(
+      palette = palette,
       breaks = c(min(data$ParameterFactor), max(data$ParameterFactor))
     ) +
     geom_line(
