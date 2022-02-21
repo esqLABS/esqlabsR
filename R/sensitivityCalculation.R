@@ -49,8 +49,7 @@ sensitivityCalculation <- function(simulation,
                                    parameterPaths,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
-                                   pkDataFilePath = NULL,
-                                   timeSeriesDataFilePath = NULL) {
+                                   pkDataFilePath = NULL) {
   # fail fast if specified PK parameters are not part of standard `enum`
   validateIsIncluded(pkParameters, names(ospsuite::StandardPKParameter))
 
