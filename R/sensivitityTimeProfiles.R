@@ -74,9 +74,6 @@ sensitivityTimeProfiles <- function(sensitivityAnalysis,
     )
   )
 
-  # print plots
-  purrr::walk(ls_profile_plots, plot)
-
   if (savePlots) {
     .savePlotList(
       ls_profile_plots,
@@ -87,6 +84,9 @@ sensitivityTimeProfiles <- function(sensitivityAnalysis,
       dpi = dpi
     )
   }
+
+  # return plots
+  ls_profile_plots
 }
 
 

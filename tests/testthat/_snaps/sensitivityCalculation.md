@@ -1,4 +1,4 @@
-# Check sensitivityCalculation dataframes and plots are as expected
+# sensitivityCalculation dataframes are as expected
 
     Code
       df1_ts
@@ -219,5 +219,59 @@
       3 2352.71627808 4726.3550 NA     
       4    0.00000000   16.0517 NA     
       5   -0.00223053    0.0000  3     
+      
+
+# sensitivityTimeProfiles plots are as expected
+
+    Code
+      pb$plot$labels
+    Output
+      $x
+      [1] "Time [min]"
+      
+      $y
+      [1] "Concentration (molar) [µmol/l]"
+      
+      $colour
+      [1] "Parameter factor"
+      
+      $title
+      [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+      
+      $group
+      [1] "ParameterFactor"
+      
+      $alt
+      [1] ""
+      
+
+# sensitivitySpiderPlot plots are as expected
+
+    Code
+      pb$plot$labels
+    Output
+      $x
+      [1] "Input parameter value [% of reference]"
+      
+      $y
+      [1] "PK-parameter value [% of reference]"
+      
+      $group
+      [1] "Parameter"
+      
+      $colour
+      [1] "Parameter"
+      
+      $title
+      [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+      
+      $yintercept
+      [1] "yintercept"
+      
+      $xintercept
+      [1] "xintercept"
+      
+      $alt
+      [1] ""
       
 

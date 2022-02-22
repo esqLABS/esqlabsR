@@ -79,9 +79,6 @@ sensitivitySpiderPlot <- function(sensitivityAnalysis,
     )
   )
 
-  # print plots
-  purrr::walk(ls_spider_plots, plot)
-
   if (savePlots) {
     .savePlotList(
       ls_spider_plots,
@@ -92,6 +89,9 @@ sensitivitySpiderPlot <- function(sensitivityAnalysis,
       dpi = dpi
     )
   }
+
+  # return plots
+  ls_spider_plots
 }
 
 #' @noRd
