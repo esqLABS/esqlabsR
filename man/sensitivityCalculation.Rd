@@ -23,31 +23,25 @@ sensitivity will be analyzed.}
 varied.}
 
 \item{variationRange}{Optional numeric vector defining the scaling of the
-parameters. The same variation range should be applied to all specified
+parameters. The same variation range is applied to all specified
 parameters. If not specified, the following vector will be used: c(0.1,
 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5,  6, 7, 8, 9, 10).}
 
 \item{pkParameters}{A vector of names of PK parameters for which the
-sensitivities should be calculated. For a full set of available PK
+sensitivities will be calculated. For a full set of available PK
 parameters, run \code{names(ospsuite::StandardPKParameter)}. By default, only
 the following parameters will be considered: \code{"C_max"}, \code{"t_max"},
 \code{"AUC_inf"}. If \code{NULL}, all available PK-parameters will be calculated.}
 
-\item{pkDataFilePath}{Path to spreadsheets in which
-PK-parameter data should be saved. Default is \code{NULL},
-meaning the data will not be saved to a spreadsheet.}
+\item{pkDataFilePath}{Path to excel file in which
+PK-parameter data should be saved. If a file already exists, it will be
+overwritten. Default is \code{NULL}, meaning the data will not be saved to a
+spreadsheet.}
 }
 \description{
 Carry out and visualize sensitivity analysis (with OSPSuite)
 }
-\note{
-\itemize{
-\item PK parameter \code{"t_max"} in some contexts may not show any variation.
-}
-}
 \examples{
-
-library(ospsuite)
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 simulation <- loadSimulation(simPath)

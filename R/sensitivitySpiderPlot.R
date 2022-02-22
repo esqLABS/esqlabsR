@@ -1,7 +1,7 @@
 #' @name sensitivitySpiderPlot
 #' @title Sensitivity spider plot for PK parameters
 #'
-#' @param sensitivityAnalysis The `SensitivityAnalysis` object returned by
+#' @param sensitivityCalculation The `SensitivityCalculation` object returned by
 #'   `esqlabsR::sensitivityCalculation()`.
 #' @param xAxisLog,yAxisLog Logical that decides whether to display the axis on
 #'   logarithmic scale.
@@ -55,7 +55,7 @@
 #'
 #' @export
 
-sensitivitySpiderPlot <- function(sensitivityAnalysis,
+sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   xAxisLog = TRUE,
                                   yAxisLog = FALSE,
                                   savePlots = FALSE,
@@ -64,10 +64,10 @@ sensitivitySpiderPlot <- function(sensitivityAnalysis,
                                   units = c("in", "cm", "mm", "px"),
                                   dpi = 300) {
   # fail early if the object is of wrong type
-  validateIsOfType(sensitivityAnalysis, "SensitivityAnalysis")
+  validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
 
   # extrat the needed dataframe from the object
-  data <- sensitivityAnalysis$pkData
+  data <- sensitivityCalculation$pkData
 
   # create plot for each output path
   ls_spider_plots <- purrr::map(

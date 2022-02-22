@@ -97,7 +97,7 @@ sensitivityCalculation <- function(simulation,
 
   # final list with needed objects and dataframes for plotting functions
   results <- list(
-    "SimulationResults" = batchResults,
+    "simulationResults" = batchResults,
     "outputPaths" = outputPaths,
     "parameterPaths" = parameterPaths,
     "pkData" = pkData
@@ -105,7 +105,7 @@ sensitivityCalculation <- function(simulation,
 
   # add additional attribute, which will be helpful for plotting methods to
   # recognize this object
-  class(results) <- c("SensitivityAnalysis", class(results))
+  class(results) <- c("SensitivityCalculation", class(results))
 
   # return the data in a list
   return(results)

@@ -5,7 +5,7 @@
 \title{Create a Concentration-time profile plot}
 \usage{
 sensitivityTimeProfiles(
-  sensitivityAnalysis,
+  sensitivityCalculation,
   xAxisLog = FALSE,
   yAxisLog = TRUE,
   palette = NULL,
@@ -17,7 +17,7 @@ sensitivityTimeProfiles(
 )
 }
 \arguments{
-\item{sensitivityAnalysis}{The \code{SensitivityAnalysis} object returned by
+\item{sensitivityCalculation}{The \code{SensitivityCalculation} object returned by
 \code{esqlabsR::sensitivityCalculation()}.}
 
 \item{xAxisLog}{Logical that decides whether to display the axis on

@@ -44,7 +44,7 @@ test_that("sensitivityCalculation dataframes are as expected", {
 
   # also extract and add time series data for testing
   results$tsData <- esqlabsR:::.simResultsToTimeSeriesDataFrame(
-    results$SimulationResults,
+    results$simulationResults,
     results$outputPaths,
     results$parameterPaths
   )
@@ -84,12 +84,12 @@ test_that("sensitivityCalculation dataframes are as expected", {
 test_that("sensitivityCalculation plots fail with incorrect input objects", {
   expect_error(
     sensitivityTimeProfiles("x"),
-    "argument 'sensitivityAnalysis' is of type 'character', but expected 'SensitivityAnalysis'"
+    "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
   )
 
   expect_error(
     sensitivitySpiderPlot("x"),
-    "argument 'sensitivityAnalysis' is of type 'character', but expected 'SensitivityAnalysis'"
+    "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
   )
 })
 

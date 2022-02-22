@@ -44,7 +44,7 @@
 #'
 #' @export
 
-sensitivityTimeProfiles <- function(sensitivityAnalysis,
+sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     xAxisLog = FALSE,
                                     yAxisLog = TRUE,
                                     palette = NULL,
@@ -54,13 +54,13 @@ sensitivityTimeProfiles <- function(sensitivityAnalysis,
                                     units = c("in", "cm", "mm", "px"),
                                     dpi = 300) {
   # fail early if the object is of wrong type
-  validateIsOfType(sensitivityAnalysis, "SensitivityAnalysis")
+  validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
 
-  # extrat the needed dataframe from the object
+  # extract the needed dataframe from the object
   data <- .simResultsToTimeSeriesDataFrame(
-    sensitivityAnalysis$SimulationResults,
-    sensitivityAnalysis$outputPaths,
-    sensitivityAnalysis$parameterPaths
+    sensitivityCalculation$simulationResults,
+    sensitivityCalculation$outputPaths,
+    sensitivityCalculation$parameterPaths
   )
 
   # create plot for each output path

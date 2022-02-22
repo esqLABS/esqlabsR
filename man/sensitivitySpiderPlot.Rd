@@ -5,7 +5,7 @@
 \title{Sensitivity spider plot for PK parameters}
 \usage{
 sensitivitySpiderPlot(
-  sensitivityAnalysis,
+  sensitivityCalculation,
   xAxisLog = TRUE,
   yAxisLog = FALSE,
   savePlots = FALSE,
@@ -16,7 +16,7 @@ sensitivitySpiderPlot(
 )
 }
 \arguments{
-\item{sensitivityAnalysis}{The \code{SensitivityAnalysis} object returned by
+\item{sensitivityCalculation}{The \code{SensitivityCalculation} object returned by
 \code{esqlabsR::sensitivityCalculation()}.}
 
 \item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
