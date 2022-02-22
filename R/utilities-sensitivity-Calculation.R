@@ -81,7 +81,6 @@
 .addParameterColumns <- function(data, parameter) {
   data %>%
     dplyr::mutate(
-      Parameter = purrr::pluck(parameter, "name"),
       ParameterPath = purrr::pluck(parameter, "path"),
       ParameterValue = purrr::pluck(parameter, "value"),
       ParameterFactor = as.numeric(ParameterFactor)
@@ -154,7 +153,7 @@
       dplyr::starts_with("Parameter"),
       Time, Concentration,
       dplyr::everything(),
-      -c("IndividualId", "Parameter")
+      -c("IndividualId")
     ) %>%
     dplyr::arrange(ParameterPath, ParameterFactor)
 }
@@ -193,7 +192,7 @@
       dplyr::starts_with("PK"),
       Unit, PercentChangePK,
       dplyr::everything(),
-      -c("IndividualId", "Parameter")
+      -c("IndividualId")
     ) %>%
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 }

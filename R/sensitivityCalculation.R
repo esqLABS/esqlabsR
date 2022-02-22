@@ -65,7 +65,7 @@ sensitivityCalculation <- function(simulation,
   )
 
   # name list with name of each parameter path
-  batchResults <- purrr::set_names(batchResults, parameterPaths)
+  names(batchResults) <- parameterPaths
 
   # extract dataframe for PK parameters
   pkData <- .simResultsToPKDataFrame(batchResults, parameters)
