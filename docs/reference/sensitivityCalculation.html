@@ -67,8 +67,7 @@
   <span class="va">parameterPaths</span>,
   variationRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">1</span>, by <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">10</span>, by <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,
   pkParameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"C_max"</span>, <span class="st">"t_max"</span>, <span class="st">"AUC_inf"</span><span class="op">)</span>,
-  pkDataFilePath <span class="op">=</span> <span class="cn">NULL</span>,
-  timeSeriesDataFilePath <span class="op">=</span> <span class="cn">NULL</span>
+  pkDataFilePath <span class="op">=</span> <span class="cn">NULL</span>
 <span class="op">)</span></code></pre></div>
     </div>
 
@@ -80,37 +79,31 @@
 <dd><p>Path (or a vector of paths) to the output(s) for which the
 sensitivity will be analyzed.</p></dd>
 <dt>parameterPaths</dt>
-<dd><p>Path (a single or a vector) of the parameter(s) to be
+<dd><p>A single or a vector of the parameter path(s) to be
 varied.</p></dd>
 <dt>variationRange</dt>
 <dd><p>Optional numeric vector defining the scaling of the
-parameters. The same variation range should be applied to all specified
+parameters. The same variation range is applied to all specified
 parameters. If not specified, the following vector will be used: c(0.1,
 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5,  6, 7, 8, 9, 10).</p></dd>
 <dt>pkParameters</dt>
 <dd><p>A vector of names of PK parameters for which the
-sensitivities should be calculated. For a full set of available PK
+sensitivities will be calculated. For a full set of available PK
 parameters, run <code>names(ospsuite::StandardPKParameter)</code>. By default, only
 the following parameters will be considered: <code>"C_max"</code>, <code>"t_max"</code>,
 <code>"AUC_inf"</code>. If <code>NULL</code>, all available PK-parameters will be calculated.</p></dd>
-<dt>pkDataFilePath, timeSeriesDataFilePath</dt>
-<dd><p>Paths to spreadsheets in which
-PK-parameter and time series data should be saved. Default is <code>NULL</code>,
-meaning the data will not be saved to a spreadsheet.</p></dd>
+<dt>pkDataFilePath</dt>
+<dd><p>Path to excel file in which
+PK-parameter data should be saved. If a file already exists, it will be
+overwritten. Default is <code>NULL</code>, meaning the data will not be saved to a
+spreadsheet.</p></dd>
 </dl></div>
-    <div class="section level2">
-    <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>
-    
-<ul><li><p>PK parameter <code>"t_max"</code> in some contexts may not show any variation.</p></li>
-</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"></span>
-<span class="r-in"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a></span><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="va">simPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Aciclovir.pkml"</span>, package <span class="op">=</span> <span class="st">"esqlabsR"</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ospsuite/man/loadSimulation.html" class="external-link">loadSimulation</a></span><span class="op">(</span><span class="va">simPath</span><span class="op">)</span></span>
+<span class="r-in"><span class="va">simPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Aciclovir.pkml"</span>, package <span class="op">=</span> <span class="st">"ospsuite"</span><span class="op">)</span></span>
+<span class="r-in"><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="fu">loadSimulation</span><span class="op">(</span><span class="va">simPath</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
 <span class="r-in"><span class="va">parameterPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span class="r-in">  <span class="st">"Aciclovir|Lipophilicity"</span>,</span>
@@ -124,42 +117,287 @@ meaning the data will not be saved to a spreadsheet.</p></dd>
 <span class="r-in">  outputPaths <span class="op">=</span> <span class="va">outputPaths</span>,</span>
 <span class="r-in">  parameterPaths <span class="op">=</span> <span class="va">parameterPaths</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $tsData</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 27,987 x 11</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    OutputPath   ParameterFactor ParameterPath ParameterValue  Time Concentration</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Organism|Pe~             0.1 Neighborhood~            0.1     0          0   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Organism|Pe~             0.1 Neighborhood~            0.1     1          3.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Organism|Pe~             0.1 Neighborhood~            0.1     2          9.14</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Organism|Pe~             0.1 Neighborhood~            0.1     3         15.1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Organism|Pe~             0.1 Neighborhood~            0.1     4         20.9 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Organism|Pe~             0.1 Neighborhood~            0.1     5         26.5 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Organism|Pe~             0.1 Neighborhood~            0.1     6         31.8 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Organism|Pe~             0.1 Neighborhood~            0.1     7         36.9 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Organism|Pe~             0.1 Neighborhood~            0.1     8         41.7 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Organism|Pe~             0.1 Neighborhood~            0.1     9         46.2 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ... with 27,977 more rows, and 5 more variables: Unit &lt;chr&gt;, Dimension &lt;chr&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   TimeUnit &lt;chr&gt;, TimeDimension &lt;chr&gt;, molWeight &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`0.1`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`0.2`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`0.3`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`0.4`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`0.5`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`0.6`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`0.7`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`0.8`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`0.9`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`1`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`2`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`3`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`4`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`5`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`6`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`7`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`8`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`9`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Aciclovir|Lipophilicity`$`10`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`0.1`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`0.2`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`0.3`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`0.4`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`0.5`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`0.6`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`0.7`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`0.8`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`0.9`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`1`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`2`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`3`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`4`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`5`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`6`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`7`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`8`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`9`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`10`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`0.1`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`0.2`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`0.3`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`0.4`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`0.5`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`0.6`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`0.7`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`0.8`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`0.9`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`1`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`2`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`3`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`4`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`5`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`6`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`7`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`8`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`9`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction`$`10`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $outputPaths</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $parameterPaths</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $parameterPaths[[1]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Parameter: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Path: Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Value: 0.00025 [kg] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    isConstant: TRUE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    isStateVariable: FALSE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $parameterPaths[[2]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Parameter: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Path: Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Value: 1.00 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    isConstant: TRUE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    isStateVariable: FALSE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $parameterPaths[[3]]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Parameter: </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Path: Aciclovir|Lipophilicity </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Value: -0.097 [Log Units] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    isConstant: TRUE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    isStateVariable: FALSE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $pkData</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 171 x 9</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    OutputPath           ParameterPath ParameterFactor ParameterValue PKParameter</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Organism|Peripheral~ Neighborhood~             0.1            0.1 AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Organism|Peripheral~ Neighborhood~             0.2            0.2 AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Organism|Peripheral~ Neighborhood~             0.3            0.3 AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Organism|Peripheral~ Neighborhood~             0.4            0.4 AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Organism|Peripheral~ Neighborhood~             0.5            0.5 AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Organism|Peripheral~ Neighborhood~             0.6            0.6 AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Organism|Peripheral~ Neighborhood~             0.7            0.7 AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Organism|Peripheral~ Neighborhood~             0.8            0.8 AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Organism|Peripheral~ Neighborhood~             0.9            0.9 AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Organism|Peripheral~ Neighborhood~             1              1   AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Organism|Peripheral~ Applications~             0.1       0.000<span style="text-decoration: underline;">025</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Organism|Peripheral~ Applications~             0.2       0.000<span style="text-decoration: underline;">05</span>  AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Organism|Peripheral~ Applications~             0.3       0.000<span style="text-decoration: underline;">075</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Organism|Peripheral~ Applications~             0.4       0.000<span style="text-decoration: underline;">1</span>   AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Organism|Peripheral~ Applications~             0.5       0.000<span style="text-decoration: underline;">125</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Organism|Peripheral~ Applications~             0.6       0.000<span style="text-decoration: underline;">15</span>  AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Organism|Peripheral~ Applications~             0.7       0.000<span style="text-decoration: underline;">175</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Organism|Peripheral~ Applications~             0.8       0.000<span style="text-decoration: underline;">2</span>   AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Organism|Peripheral~ Applications~             0.9       0.000<span style="text-decoration: underline;">225</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Organism|Peripheral~ Applications~             1         0.000<span style="text-decoration: underline;">25</span>  AUC_inf    </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ... with 161 more rows, and 4 more variables: PKParameterValue &lt;dbl&gt;,</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   Unit &lt;chr&gt;, PercentChangePK &lt;dbl&gt;, SensitivityPKParameter &lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "SensitivityAnalysis" "list"               </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "SensitivityCalculation" "list"                  </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
