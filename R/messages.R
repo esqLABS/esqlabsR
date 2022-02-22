@@ -1,4 +1,4 @@
-messages <- ospsuite:::messages
+messages <- ospsuite.utils::messages
 messages$errorWrongParamsXLSStructure <- function(filePath, optionalMessage = NULL) {
   paste0("Loading parameter values from XLS failed, the file '", filePath, "' has wrong structure!
     The file should consist of columns 'Container Path', 'Parameter Name', 'Value', and 'Units'. ", optionalMessage)
