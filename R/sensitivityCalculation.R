@@ -7,25 +7,20 @@
 #' @param parameterPaths A single or a vector of the parameter path(s) to be
 #'   varied.
 #' @param variationRange Optional numeric vector defining the scaling of the
-#'   parameters. The same variation range should be applied to all specified
+#'   parameters. The same variation range is applied to all specified
 #'   parameters. If not specified, the following vector will be used: c(0.1,
 #'   0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5,  6, 7, 8, 9, 10).
 #' @param pkParameters A vector of names of PK parameters for which the
-#'   sensitivities should be calculated. For a full set of available PK
+#'   sensitivities will be calculated. For a full set of available PK
 #'   parameters, run `names(ospsuite::StandardPKParameter)`. By default, only
 #'   the following parameters will be considered: `"C_max"`, `"t_max"`,
 #'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated.
-#' @param pkDataFilePath Path to spreadsheets in which
-#'   PK-parameter data should be saved. Default is `NULL`,
-#'   meaning the data will not be saved to a spreadsheet.
-#'
-#' @note
-#'
-#' - PK parameter `"t_max"` in some contexts may not show any variation.
+#' @param pkDataFilePath Path to excel file in which
+#'   PK-parameter data should be saved. If a file already exists, it will be
+#'   overwritten. Default is `NULL`, meaning the data will not be saved to a
+#'   spreadsheet.
 #'
 #' @examples
-#'
-#' library(ospsuite)
 #'
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
 #' simulation <- loadSimulation(simPath)
@@ -43,7 +38,6 @@
 #'   parameterPaths = parameterPaths
 #' )
 #' @export
-
 sensitivityCalculation <- function(simulation,
                                    outputPaths,
                                    parameterPaths,
