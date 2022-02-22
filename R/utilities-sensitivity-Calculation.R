@@ -124,7 +124,6 @@
 
 #' @keywords internal
 #' @noRd
-
 .simResultsToTimeSeriesDataFrame <- function(simResultsBatch, outputPaths, parameters) {
   purrr::map2_dfr(
     .x = simResultsBatch,
@@ -135,7 +134,6 @@
 
 #' @keywords internal
 #' @noRd
-
 .extractTimeSeriesData <- function(simResultsBatch, outputPaths, parameter) {
   purrr::map_dfr(
     .x  = simResultsBatch,
@@ -160,7 +158,6 @@
 
 #' @keywords internal
 #' @noRd
-
 .simResultsToPKDataFrame <- function(simResultsBatch, parameters) {
   purrr::map2_dfr(
     .x = simResultsBatch,
@@ -171,7 +168,6 @@
 
 #' @keywords internal
 #' @noRd
-
 .extractPKData <- function(simResultsBatch, parameter) {
   purrr::map_dfr(
     .x  = simResultsBatch,

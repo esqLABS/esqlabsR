@@ -52,7 +52,6 @@
 #' }
 #'
 #' @export
-
 sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   xAxisLog = TRUE,
                                   yAxisLog = FALSE,

@@ -41,7 +41,6 @@
 #' }
 #'
 #' @export
-
 sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     xAxisLog = FALSE,
                                     yAxisLog = TRUE,
