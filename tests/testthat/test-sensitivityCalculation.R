@@ -95,36 +95,60 @@ test_that("sensitivityCalculation plots fail with incorrect input objects", {
 
 test_that("sensitivityTimeProfiles plots are as expected", {
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "sensitivityTimeProfiles works as expected",
-    fig = suppressWarnings(sensitivityTimeProfiles(results))
-  )
-
   # make sure a plot is returned
   p <- suppressWarnings(sensitivityTimeProfiles(results))
-  pb <- ggplot_build(p$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`)
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivityTimeProfiles works as expected",
+    fig = p
+  )
+
+  pb <- suppressWarnings(ggplot_build(p$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`))
 
   expect_snapshot(pb$plot$labels)
 })
 
+test_that("sensitivityTimeProfiles saves plot file", {
+  path <- "Profile_OutputPath1.png"
+
+  p <- suppressWarnings(sensitivityTimeProfiles(results, savePlots = TRUE))
+
+  expect_true(file.exists(path))
+
+  on.exit(unlink(path))
+})
+
 test_that("sensitivitySpiderPlot plots are as expected", {
+  # make sure a plot is returned
+  set.seed(123)
+  p <- sensitivitySpiderPlot(results)
+
   # for some reason, even if the plot looks the same, the SVG is slightly
   # different each time this is run, so testing using snapshots instead
   #
   # set.seed(123)
   # vdiffr::expect_doppelganger(
   #   title = "sensitivitySpiderPlot works as expected",
-  #   fig = sensitivitySpiderPlot(results)
+  #   fig = p
   # )
 
-  # make sure a plot is returned
-  p <- sensitivitySpiderPlot(results)
   pb <- ggplot_build(p$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`)
 
   # non-reproducible geom data
   # expect_snapshot(pb$data)
 
   expect_snapshot(pb$plot$labels)
+})
+
+test_that("sensitivitySpiderPlot saves plot file", {
+  path <- "Spider_OutputPath1.png"
+
+  p <- sensitivitySpiderPlot(results, savePlots = TRUE)
+
+  expect_true(file.exists(path))
+
+  on.exit(unlink(path))
 })
 
 # restore old options
