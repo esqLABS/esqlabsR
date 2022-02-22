@@ -51,27 +51,24 @@ sensitivityCalculation <- function(simulation,
   clearOutputs(simulation)
   addOutputs(outputPaths, simulation)
 
-  # save raw names of paths to create named list
-  parameterPathNames <- parameterPaths
-
   # create simulation batch for efficient calculations
-  parameterPaths <- getAllParametersMatching(parameterPaths, simulation)
+  parameters <- getAllParametersMatching(parameterPaths, simulation)
 
-  # extract dataframes with results
+  # extract a list with results
   batchResults <- purrr::map(
-    .x = parameterPaths,
+    .x = parameters,
     .f = ~ .extractSimBatchResults(
       simulation,
-      parameterPath = .x,
+      parameter = .x,
       variationRange = variationRange
     )
   )
 
   # name list with name of each parameter path
-  batchResults <- purrr::set_names(batchResults, parameterPathNames)
+  batchResults <- purrr::set_names(batchResults, parameterPaths)
 
-  # extract dataframe PK parameters
-  pkData <- .simResultsToPKDataFrame(batchResults, parameterPaths)
+  # extract dataframe for PK parameters
+  pkData <- .simResultsToPKDataFrame(batchResults, parameters)
 
   # filter out unneeded PK parameters
   if (!is.null(pkParameters)) {
@@ -99,7 +96,7 @@ sensitivityCalculation <- function(simulation,
   results <- list(
     "simulationResults" = batchResults,
     "outputPaths" = outputPaths,
-    "parameterPaths" = parameterPaths,
+    "parameters" = parameters,
     "pkData" = pkData
   )
 

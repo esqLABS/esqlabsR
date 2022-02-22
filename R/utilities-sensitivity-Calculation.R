@@ -78,12 +78,12 @@
 #'
 #' @keywords internal
 #' @noRd
-.addParameterColumns <- function(data, parameterPath) {
+.addParameterColumns <- function(data, parameter) {
   data %>%
     dplyr::mutate(
-      Parameter = purrr::pluck(parameterPath, "name"),
-      ParameterPath = purrr::pluck(parameterPath, "path"),
-      ParameterValue = purrr::pluck(parameterPath, "value"),
+      Parameter = purrr::pluck(parameter, "name"),
+      ParameterPath = purrr::pluck(parameter, "path"),
+      ParameterValue = purrr::pluck(parameter, "value"),
       ParameterFactor = as.numeric(ParameterFactor)
     ) %>%
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
@@ -91,7 +91,7 @@
 
 #' @title Run batch simulations and extract results in a dataframe
 #'
-#' @param parameterPaths A single path of the parameter to be varied.
+#' @param parameter A single path of the parameter to be varied.
 #' @inheritParams sensitivityCalculation
 #'
 #' @note Note that the function will work only with a single parameter path.
@@ -99,18 +99,18 @@
 #' @keywords internal
 #' @noRd
 .extractSimBatchResults <- function(simulation,
-                                    parameterPath,
+                                    parameter,
                                     variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1))) {
   # check provided variation range using custom function
   variationRange <- .validateVariationRange(variationRange)
 
   # create simulation batch for efficient calculations
-  simBatch <- createSimulationBatch(simulation, parametersOrPaths = parameterPath)
+  simBatch <- createSimulationBatch(simulation, parametersOrPaths = parameter)
 
   # for each parameter, set the value to `referenceValue * scaleFactor`
   # and run simulations with these parameter values
   purrr::walk(
-    .x = c(purrr::pluck(parameterPath, "value") * variationRange),
+    .x = c(purrr::pluck(parameter, "value") * variationRange),
     .f = ~ simBatch$addRunValues(.x)
   )
 
@@ -126,10 +126,10 @@
 #' @keywords internal
 #' @noRd
 
-.simResultsToTimeSeriesDataFrame <- function(simResultsBatch, outputPaths, parameterPaths) {
+.simResultsToTimeSeriesDataFrame <- function(simResultsBatch, outputPaths, parameters) {
   purrr::map2_dfr(
     .x = simResultsBatch,
-    .y = parameterPaths,
+    .y = parameters,
     .f = ~ .extractTimeSeriesData(.x, .y, outputPaths = outputPaths)
   )
 }
@@ -137,7 +137,7 @@
 #' @keywords internal
 #' @noRd
 
-.extractTimeSeriesData <- function(simResultsBatch, outputPaths, parameterPath) {
+.extractTimeSeriesData <- function(simResultsBatch, outputPaths, parameter) {
   purrr::map_dfr(
     .x  = simResultsBatch,
     .f  = ~ simulationResultsToDataFrame(.x, quantitiesOrPaths = outputPaths),
@@ -149,7 +149,7 @@
       Dimension = dimension,
       Unit = unit
     ) %>%
-    .addParameterColumns(parameterPath) %>%
+    .addParameterColumns(parameter) %>%
     dplyr::select(
       dplyr::starts_with("Parameter"),
       Time, Concentration,
@@ -162,10 +162,10 @@
 #' @keywords internal
 #' @noRd
 
-.simResultsToPKDataFrame <- function(simResultsBatch, parameterPaths) {
+.simResultsToPKDataFrame <- function(simResultsBatch, parameters) {
   purrr::map2_dfr(
     .x = simResultsBatch,
-    .y = parameterPaths,
+    .y = parameters,
     .f = ~ .extractPKData(.x, .y)
   )
 }
@@ -173,7 +173,7 @@
 #' @keywords internal
 #' @noRd
 
-.extractPKData <- function(simResultsBatch, parameterPath) {
+.extractPKData <- function(simResultsBatch, parameter) {
   purrr::map_dfr(
     .x  = simResultsBatch,
     .f  = ~ pkAnalysesToDataFrame(calculatePKAnalyses(.x)),
@@ -184,7 +184,7 @@
       PKParameter = Parameter,
       PKParameterValue = Value
     ) %>%
-    .addParameterColumns(parameterPath) %>%
+    .addParameterColumns(parameter) %>%
     dplyr::group_by(ParameterPath, PKParameter) %>%
     dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
     ungroup() %>%
@@ -208,7 +208,7 @@
       names_glue = "{PKParameter}_{.value}"
     ) %>%
     # columns that should not be included in the excel sheets
-    dplyr::select(-c("Parameter", ".rowid")) %>%
+    dplyr::select(-c(".rowid")) %>%
     dplyr::rename_all(~ stringr::str_remove(.x, "_PKParameterValue")) %>%
     dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$")) %>%
     # all metrics for each parameter should live together

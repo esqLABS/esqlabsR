@@ -58,7 +58,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   data <- .simResultsToTimeSeriesDataFrame(
     sensitivityCalculation$simulationResults,
     sensitivityCalculation$outputPaths,
-    sensitivityCalculation$parameterPaths
+    sensitivityCalculation$parameters
   )
 
   # create plot for each output path

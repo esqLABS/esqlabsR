@@ -26,6 +26,23 @@ results <- sensitivityCalculation(
   variationRange = c(0.1, 2, 20)
 )
 
+test_that("sensitivityCalculation saves PK data to xlsx file", {
+  path <- "mydata.xlsx"
+
+  set.seed(123)
+  results <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = c(0.1, 2, 20),
+    pkDataFilePath = path
+  )
+
+  expect_true(file.exists(path))
+
+  on.exit(unlink(path))
+})
+
 
 test_that("sensitivityCalculation dataframes are as expected", {
   library(dplyr)
@@ -46,7 +63,7 @@ test_that("sensitivityCalculation dataframes are as expected", {
   results$tsData <- esqlabsR:::.simResultsToTimeSeriesDataFrame(
     results$simulationResults,
     results$outputPaths,
-    results$parameterPaths
+    results$parameters
   )
 
   # base scaling should be present
