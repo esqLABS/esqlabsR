@@ -22,7 +22,7 @@
 #'
 #' @examples
 #'
-#' simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
+#' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 #' simulation <- loadSimulation(simPath)
 #' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 #' parameterPaths <- c(

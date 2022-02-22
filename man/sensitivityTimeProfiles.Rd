@@ -2,7 +2,7 @@
 % Please edit documentation in R/sensivitityTimeProfiles.R
 \name{sensitivityTimeProfiles}
 \alias{sensitivityTimeProfiles}
-\title{Create a Concentration-time profile plot}
+\title{Create a concentration-time profile plot}
 \usage{
 sensitivityTimeProfiles(
   sensitivityCalculation,
@@ -45,13 +45,11 @@ If not supplied, uses the size of current graphics device.}
 "print" (300), or "screen" (72). Applies only to raster output types.}
 }
 \description{
-Create a Concentration-time profile plot
+Create a concentration-time profile plot
 }
 \examples{
 
-library(ospsuite)
-
-simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
+simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(

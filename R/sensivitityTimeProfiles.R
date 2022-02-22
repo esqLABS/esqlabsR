@@ -1,5 +1,5 @@
 #' @name sensitivityTimeProfiles
-#' @title Create a Concentration-time profile plot
+#' @title Create a concentration-time profile plot
 #'
 #' @inheritParams sensitivitySpiderPlot
 #' @inheritParams colorspace::scale_color_continuous_qualitative
@@ -10,9 +10,7 @@
 #'
 #' @examples
 #'
-#' library(ospsuite)
-#'
-#' simPath <- system.file("extdata", "Aciclovir.pkml", package = "esqlabsR")
+#' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 #' simulation <- loadSimulation(simPath)
 #' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 #' parameterPaths <- c(
