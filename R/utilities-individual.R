@@ -70,7 +70,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
                                                  individualId,
                                                  sheet = NULL,
                                                  nullIfNotFound = TRUE) {
-  validateIsString(XLSpath, individualId)
+  validateIsString(list(XLSpath, individualId))
 
   # If no sheet has been specified, read from the first sheet
   if (is.null(sheet)) {
