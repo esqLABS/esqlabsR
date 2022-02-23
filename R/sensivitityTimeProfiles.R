@@ -87,8 +87,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 }
 
 
+#' @keywords internal
 #' @noRd
-
 .createTimeProfiles <- function(data, xAxisLog = FALSE, yAxisLog = TRUE, palette = NULL) {
   plot <- ggplot() +
     geom_line(

@@ -91,8 +91,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   ls_spider_plots
 }
 
+#' @keywords internal
 #' @noRd
-
 .createSpiderPlot <- function(data, xAxisLog = TRUE, yAxisLog = FALSE) {
   data <- dplyr::mutate(data,
     ParameterFactor = ParameterFactor * 100,
