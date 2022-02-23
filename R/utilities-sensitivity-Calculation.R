@@ -122,6 +122,11 @@
   simResultsBatch
 }
 
+#' Extract time-series dataframe from a list of `SimulationResults` objects
+#'
+#' @param simResultsBatch A **list** of `SimulationResults` R6 objects.
+#' @param parameters A **list** of `Parameter` R6 objects.
+#'
 #' @keywords internal
 #' @noRd
 .simResultsToTimeSeriesDataFrame <- function(simResultsBatch, outputPaths, parameters) {
@@ -132,11 +137,31 @@
   )
 }
 
+#' Extract PK parameters dataframe from a list of `SimulationResults` objects
+#'
+#' @inheritParams .simResultsToTimeSeriesDataFrame
+#'
 #' @keywords internal
 #' @noRd
-.extractTimeSeriesData <- function(simResultsBatch, outputPaths, parameter) {
+.simResultsToPKDataFrame <- function(simResultsBatch, parameters) {
+  purrr::map2_dfr(
+    .x = simResultsBatch,
+    .y = parameters,
+    .f = ~ .extractPKData(.x, .y)
+  )
+}
+
+#' Extract time-series dataframe from `SimulationResults` object
+#'
+#' @param simResults A **single** instance of `SimulationResults` R6 object.
+#' @param parameter A **single** instance of `Parameter` R6 object.
+#' @inheritParams sensitivityCalculation
+#'
+#' @keywords internal
+#' @noRd
+.extractTimeSeriesData <- function(simResults, outputPaths, parameter) {
   purrr::map_dfr(
-    .x  = simResultsBatch,
+    .x  = simResults,
     .f  = ~ simulationResultsToDataFrame(.x, quantitiesOrPaths = outputPaths),
     .id = "ParameterFactor"
   ) %>%
@@ -156,21 +181,15 @@
     dplyr::arrange(ParameterPath, ParameterFactor)
 }
 
+#' Extract PK parameters dataframe from `Parameter` object
+#'
+#' @inheritParams .extractTimeSeriesData
+#'
 #' @keywords internal
 #' @noRd
-.simResultsToPKDataFrame <- function(simResultsBatch, parameters) {
-  purrr::map2_dfr(
-    .x = simResultsBatch,
-    .y = parameters,
-    .f = ~ .extractPKData(.x, .y)
-  )
-}
-
-#' @keywords internal
-#' @noRd
-.extractPKData <- function(simResultsBatch, parameter) {
+.extractPKData <- function(simResults, parameter) {
   purrr::map_dfr(
-    .x  = simResultsBatch,
+    .x  = simResults,
     .f  = ~ pkAnalysesToDataFrame(calculatePKAnalyses(.x)),
     .id = "ParameterFactor"
   ) %>%

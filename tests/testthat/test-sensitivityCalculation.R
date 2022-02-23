@@ -61,7 +61,7 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
 
 
 test_that("sensitivityCalculation dataframes are as expected", {
-  library(dplyr)
+  library(dplyr, warn.conflicts = FALSE)
 
   # custom function to extract summary data
   summarizer <- function(data, path) {
