@@ -114,24 +114,24 @@
   )
 
   # use `unlist()` because we only have one `simBatch` here
-  simResultsBatch <- unlist(runSimulationBatches(simBatch))
+  simulationResultsBatch <- unlist(runSimulationBatches(simBatch))
 
   # use names for parameter factor
-  simResultsBatch <- purrr::set_names(simResultsBatch, variationRange)
+  simulationResultsBatch <- purrr::set_names(simulationResultsBatch, variationRange)
 
-  simResultsBatch
+  simulationResultsBatch
 }
 
 #' Extract time-series dataframe from a list of `SimulationResults` objects
 #'
-#' @param simResultsBatch A **list** of `SimulationResults` R6 objects.
+#' @param simulationResultsBatch A **list** of `SimulationResults` R6 objects.
 #' @param parameters A **list** of `Parameter` R6 objects.
 #'
 #' @keywords internal
 #' @noRd
-.simResultsToTimeSeriesDataFrame <- function(simResultsBatch, outputPaths, parameters) {
+.simulationResultsToTimeSeriesDataFrame <- function(simulationResultsBatch, outputPaths, parameters) {
   purrr::map2_dfr(
-    .x = simResultsBatch,
+    .x = simulationResultsBatch,
     .y = parameters,
     .f = ~ .extractTimeSeriesData(.x, .y, outputPaths = outputPaths)
   )
@@ -139,13 +139,13 @@
 
 #' Extract PK parameters dataframe from a list of `SimulationResults` objects
 #'
-#' @inheritParams .simResultsToTimeSeriesDataFrame
+#' @inheritParams .simulationResultsToTimeSeriesDataFrame
 #'
 #' @keywords internal
 #' @noRd
-.simResultsToPKDataFrame <- function(simResultsBatch, parameters) {
+.simulationResultsToPKDataFrame <- function(simulationResultsBatch, parameters) {
   purrr::map2_dfr(
-    .x = simResultsBatch,
+    .x = simulationResultsBatch,
     .y = parameters,
     .f = ~ .extractPKData(.x, .y)
   )
@@ -159,9 +159,9 @@
 #'
 #' @keywords internal
 #' @noRd
-.extractTimeSeriesData <- function(simResults, outputPaths, parameter) {
+.extractTimeSeriesData <- function(simulationResults, outputPaths, parameter) {
   purrr::map_dfr(
-    .x  = simResults,
+    .x  = simulationResults,
     .f  = ~ simulationResultsToDataFrame(.x, quantitiesOrPaths = outputPaths),
     .id = "ParameterFactor"
   ) %>%
@@ -187,9 +187,9 @@
 #'
 #' @keywords internal
 #' @noRd
-.extractPKData <- function(simResults, parameter) {
+.extractPKData <- function(simulationResults, parameter) {
   purrr::map_dfr(
-    .x  = simResults,
+    .x  = simulationResults,
     .f  = ~ pkAnalysesToDataFrame(calculatePKAnalyses(.x)),
     .id = "ParameterFactor"
   ) %>%

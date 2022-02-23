@@ -76,7 +76,7 @@ test_that("sensitivityCalculation dataframes are as expected", {
   }
 
   # also extract and add time series data for testing
-  results$tsData <- esqlabsR:::.simResultsToTimeSeriesDataFrame(
+  results$tsData <- esqlabsR:::.simulationResultsToTimeSeriesDataFrame(
     results$simulationResults,
     results$outputPaths,
     results$parameters

@@ -55,7 +55,7 @@ sensitivityCalculation <- function(simulation,
   parameters <- getAllParametersMatching(parameterPaths, simulation)
 
   # extract a list with results
-  batchResults <- purrr::map(
+  simulationResultsBatch <- purrr::map(
     .x = parameters,
     .f = ~ .extractSimBatchResults(
       simulation,
@@ -65,10 +65,10 @@ sensitivityCalculation <- function(simulation,
   )
 
   # name list with name of each parameter path
-  names(batchResults) <- parameterPaths
+  names(simulationResultsBatch) <- parameterPaths
 
   # extract dataframe for PK parameters
-  pkData <- .simResultsToPKDataFrame(batchResults, parameters)
+  pkData <- .simulationResultsToPKDataFrame(simulationResultsBatch, parameters)
 
   # filter out unneeded PK parameters
   if (!is.null(pkParameters)) {
@@ -100,7 +100,7 @@ sensitivityCalculation <- function(simulation,
 
   # final list with needed objects and dataframes for plotting functions
   results <- list(
-    "simulationResults" = batchResults,
+    "simulationResults" = simulationResultsBatch,
     "outputPaths" = outputPaths,
     "parameters" = parameters,
     "pkData" = pkData

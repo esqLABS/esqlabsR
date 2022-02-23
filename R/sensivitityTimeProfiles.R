@@ -54,7 +54,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
 
   # extract the needed dataframe from the object
-  data <- .simResultsToTimeSeriesDataFrame(
+  data <- .simulationResultsToTimeSeriesDataFrame(
     sensitivityCalculation$simulationResults,
     sensitivityCalculation$outputPaths,
     sensitivityCalculation$parameters
