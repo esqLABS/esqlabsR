@@ -54,10 +54,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
 
   # extract the needed dataframe from the object
-  data <- .simulationResultsToTimeSeriesDataFrame(
-    sensitivityCalculation$simulationResults,
-    sensitivityCalculation$outputPaths,
-    sensitivityCalculation$parameters
+  data <- .simulationResultsBatchToTimeSeriesDataFrame(
+    simulationResultsBatch = sensitivityCalculation$simulationResults,
+    parameters             = sensitivityCalculation$parameters,
+    outputPaths            = sensitivityCalculation$outputPaths
   )
 
   # create plot for each output path

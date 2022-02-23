@@ -57,7 +57,7 @@ sensitivityCalculation <- function(simulation,
   # extract a list with results
   simulationResultsBatch <- purrr::map(
     .x = parameters,
-    .f = ~ .extractSimBatchResults(
+    .f = ~ .extractSimulationResultsBatch(
       simulation,
       parameter = .x,
       variationRange = variationRange
@@ -68,7 +68,7 @@ sensitivityCalculation <- function(simulation,
   names(simulationResultsBatch) <- parameterPaths
 
   # extract dataframe for PK parameters
-  pkData <- .simulationResultsToPKDataFrame(simulationResultsBatch, parameters)
+  pkData <- .simulationResultsBatchToPKDataFrame(simulationResultsBatch, parameters)
 
   # filter out unneeded PK parameters
   if (!is.null(pkParameters)) {

@@ -72,7 +72,7 @@
 #'
 #' @param data A dataframe returned by `pkAnalysesAsDataFrame()` or by
 #'  `simulationResultsToDataFrame()`.
-#'  @inheritParams .extractSimBatchResults
+#'  @inheritParams .extractSimulationResultsBatch
 #'
 #' @note Note that the function will work only with a single parameter path.
 #'
@@ -97,27 +97,27 @@
 #'
 #' @keywords internal
 #' @noRd
-.extractSimBatchResults <- function(simulation,
-                                    parameter,
-                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1))) {
+.extractSimulationResultsBatch <- function(simulation,
+                                           parameter,
+                                           variationRange) {
   # check provided variation range using custom function
   variationRange <- .validateVariationRange(variationRange)
 
   # create simulation batch for efficient calculations
-  simBatch <- createSimulationBatch(simulation, parametersOrPaths = parameter)
+  simulationBatch <- createSimulationBatch(simulation, parametersOrPaths = parameter)
 
   # for each parameter, set the value to `referenceValue * scaleFactor`
   # and run simulations with these parameter values
   purrr::walk(
     .x = c(purrr::pluck(parameter, "value") * variationRange),
-    .f = ~ simBatch$addRunValues(.x)
+    .f = ~ simulationBatch$addRunValues(.x)
   )
 
-  # use `unlist()` because we only have one `simBatch` here
-  simulationResultsBatch <- unlist(runSimulationBatches(simBatch))
+  # use `unlist()` because we only have one `simulationBatch` here
+  simulationResultsBatch <- unlist(runSimulationBatches(simulationBatch))
 
   # use names for parameter factor
-  simulationResultsBatch <- purrr::set_names(simulationResultsBatch, variationRange)
+  names(simulationResultsBatch) <- variationRange
 
   simulationResultsBatch
 }
@@ -129,25 +129,28 @@
 #'
 #' @keywords internal
 #' @noRd
-.simulationResultsToTimeSeriesDataFrame <- function(simulationResultsBatch, outputPaths, parameters) {
+.simulationResultsBatchToTimeSeriesDataFrame <- function(simulationResultsBatch,
+                                                         parameters,
+                                                         outputPaths) {
   purrr::map2_dfr(
     .x = simulationResultsBatch,
     .y = parameters,
-    .f = ~ .extractTimeSeriesData(.x, .y, outputPaths = outputPaths)
+    .f = ~ .simulationResultsToTimeSeriesDataFrame(.x, .y, outputPaths = outputPaths)
   )
 }
 
 #' Extract PK parameters dataframe from a list of `SimulationResults` objects
 #'
-#' @inheritParams .simulationResultsToTimeSeriesDataFrame
+#' @inheritParams .simulationResultsBatchToTimeSeriesDataFrame
 #'
 #' @keywords internal
 #' @noRd
-.simulationResultsToPKDataFrame <- function(simulationResultsBatch, parameters) {
+.simulationResultsBatchToPKDataFrame <- function(simulationResultsBatch,
+                                                 parameters) {
   purrr::map2_dfr(
     .x = simulationResultsBatch,
     .y = parameters,
-    .f = ~ .extractPKData(.x, .y)
+    .f = ~ .simulationResultsToPKDataFrame(.x, .y)
   )
 }
 
@@ -159,7 +162,9 @@
 #'
 #' @keywords internal
 #' @noRd
-.extractTimeSeriesData <- function(simulationResults, outputPaths, parameter) {
+.simulationResultsToTimeSeriesDataFrame <- function(simulationResults,
+                                                    parameter,
+                                                    outputPaths) {
   purrr::map_dfr(
     .x  = simulationResults,
     .f  = ~ simulationResultsToDataFrame(.x, quantitiesOrPaths = outputPaths),
@@ -183,11 +188,11 @@
 
 #' Extract PK parameters dataframe from `Parameter` object
 #'
-#' @inheritParams .extractTimeSeriesData
+#' @inheritParams .simulationResultsToTimeSeriesDataFrame
 #'
 #' @keywords internal
 #' @noRd
-.extractPKData <- function(simulationResults, parameter) {
+.simulationResultsToPKDataFrame <- function(simulationResults, parameter) {
   purrr::map_dfr(
     .x  = simulationResults,
     .f  = ~ pkAnalysesToDataFrame(calculatePKAnalyses(.x)),
@@ -201,7 +206,7 @@
     .addParameterColumns(parameter) %>%
     dplyr::group_by(ParameterPath, PKParameter) %>%
     dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
-    ungroup() %>%
+    dplyr::ungroup() %>%
     dplyr::select(
       dplyr::starts_with("Parameter"),
       dplyr::starts_with("PK"),

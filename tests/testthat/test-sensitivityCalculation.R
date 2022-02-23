@@ -76,10 +76,10 @@ test_that("sensitivityCalculation dataframes are as expected", {
   }
 
   # also extract and add time series data for testing
-  results$tsData <- esqlabsR:::.simulationResultsToTimeSeriesDataFrame(
-    results$simulationResults,
-    results$outputPaths,
-    results$parameters
+  results$tsData <- esqlabsR:::.simulationResultsBatchToTimeSeriesDataFrame(
+    simulationResultsBatch = results$simulationResults,
+    parameters             = results$parameters,
+    outputPaths            = results$outputPaths
   )
 
   # base scaling should be present
