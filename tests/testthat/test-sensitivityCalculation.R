@@ -43,6 +43,22 @@ test_that("sensitivityCalculation saves PK data to xlsx file", {
   on.exit(unlink(path))
 })
 
+test_that("sensitivityCalculation errors if file extension is incorrect", {
+  path <- "mydata.csv"
+
+  set.seed(123)
+  expect_error(
+    sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = c(0.1, 2, 20),
+    pkDataFilePath = path
+  ),
+  "Only file path with `.xlsx` extension is allowed."
+  )
+})
+
 
 test_that("sensitivityCalculation dataframes are as expected", {
   library(dplyr)

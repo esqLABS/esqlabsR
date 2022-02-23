@@ -80,12 +80,18 @@ sensitivityCalculation <- function(simulation,
 
   # write each wide dataframe in a list to a separate sheet in Excel
   if (!is.null(pkDataFilePath)) {
-    # convert tidy data to wide format and add them to a list
+    # only `xlsx` format allowed
+    if (!isFileExtension(pkDataFilePath, "xlsx")) {
+      stop("Only file path with `.xlsx` extension is allowed.")
+    }
+
+    # convert tidy data to wide format for each output path
     pkData_wide_list <- purrr::map(
       .x = pkData %>% split(.$.rowid),
       .f = ~ .convertToWide(.x)
     )
 
+    # write to a spreadsheet with one sheet per output path
     writexl::write_xlsx(pkData_wide_list, pkDataFilePath)
   }
 
