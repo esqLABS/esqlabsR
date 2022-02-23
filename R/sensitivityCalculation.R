@@ -58,8 +58,8 @@ sensitivityCalculation <- function(simulation,
   simulationResultsBatch <- purrr::map(
     .x = parameters,
     .f = ~ .extractSimulationResultsBatch(
-      simulation,
-      parameter = .x,
+      simulation     = simulation,
+      parameter      = .x,
       variationRange = variationRange
     )
   )
@@ -68,7 +68,7 @@ sensitivityCalculation <- function(simulation,
   names(simulationResultsBatch) <- parameterPaths
 
   # extract dataframe for PK parameters
-  pkData <- .simulationResultsBatchToPKDataFrame(simulationResultsBatch, parameters)
+  pkData <- .simulationResultsBatchToPKDataFrame(simulationResultsBatch, parameterPaths)
 
   # filter out unneeded PK parameters
   if (!is.null(pkParameters)) {
@@ -101,9 +101,9 @@ sensitivityCalculation <- function(simulation,
   # final list with needed objects and dataframes for plotting functions
   results <- list(
     "simulationResults" = simulationResultsBatch,
-    "outputPaths" = outputPaths,
-    "parameters" = parameters,
-    "pkData" = pkData
+    "outputPaths"       = outputPaths,
+    "parameterPaths"    = parameterPaths,
+    "pkData"            = pkData
   )
 
   # add additional attribute, which will be helpful for plotting methods to

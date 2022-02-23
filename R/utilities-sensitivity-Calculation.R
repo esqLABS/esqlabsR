@@ -81,8 +81,8 @@
 .addParameterColumns <- function(data, parameter) {
   data %>%
     dplyr::mutate(
-      ParameterPath = purrr::pluck(parameter, "path"),
-      ParameterValue = purrr::pluck(parameter, "value"),
+      ParameterPath   = purrr::pluck(parameter, "path"),
+      ParameterValue  = purrr::pluck(parameter, "value"),
       ParameterFactor = as.numeric(ParameterFactor)
     ) %>%
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
@@ -125,13 +125,18 @@
 #' Extract time-series dataframe from a list of `SimulationResults` objects
 #'
 #' @param simulationResultsBatch A **list** of `SimulationResults` R6 objects.
-#' @param parameters A **list** of `Parameter` R6 objects.
+#' @inheritParams sensitivityCalculation
 #'
 #' @keywords internal
 #' @noRd
 .simulationResultsBatchToTimeSeriesDataFrame <- function(simulationResultsBatch,
-                                                         parameters,
+                                                         parameterPaths,
                                                          outputPaths) {
+  parameters <- getAllParametersMatching(
+    parameterPaths,
+    purrr::pluck(simulationResultsBatch, 1L, 1L, "simulation")
+  )
+
   purrr::map2_dfr(
     .x = simulationResultsBatch,
     .y = parameters,
@@ -146,7 +151,12 @@
 #' @keywords internal
 #' @noRd
 .simulationResultsBatchToPKDataFrame <- function(simulationResultsBatch,
-                                                 parameters) {
+                                                 parameterPaths) {
+  parameters <- getAllParametersMatching(
+    parameterPaths,
+    purrr::pluck(simulationResultsBatch, 1L, 1L, "simulation")
+  )
+
   purrr::map2_dfr(
     .x = simulationResultsBatch,
     .y = parameters,
@@ -172,9 +182,9 @@
   ) %>%
     dplyr::rename(
       Concentration = simulationValues,
-      OutputPath = paths,
-      Dimension = dimension,
-      Unit = unit
+      OutputPath    = paths,
+      Dimension     = dimension,
+      Unit          = unit
     ) %>%
     .addParameterColumns(parameter) %>%
     dplyr::select(
@@ -199,8 +209,8 @@
     .id = "ParameterFactor"
   ) %>%
     dplyr::rename(
-      OutputPath = QuantityPath,
-      PKParameter = Parameter,
+      OutputPath       = QuantityPath,
+      PKParameter      = Parameter,
       PKParameterValue = Value
     ) %>%
     .addParameterColumns(parameter) %>%
@@ -222,9 +232,9 @@
 .convertToWide <- function(data) {
   data %>%
     tidyr::pivot_wider(
-      names_from = PKParameter,
+      names_from  = PKParameter,
       values_from = c(PKParameterValue, Unit, PercentChangePK, SensitivityPKParameter),
-      names_glue = "{PKParameter}_{.value}"
+      names_glue  = "{PKParameter}_{.value}"
     ) %>%
     # columns that should not be included in the excel sheets
     dplyr::select(-c(".rowid")) %>%
@@ -296,7 +306,7 @@
     .x = plotlist,
     .y = seq(1:length(plotlist)),
     .f = ~ ggsave(
-      paste0(plot.type, "OutputPath", .y, ".png"),
+      filename = paste0(plot.type, "OutputPath", .y, ".png"),
       plot = .x,
       height = height,
       width = width,

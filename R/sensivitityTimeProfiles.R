@@ -56,7 +56,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # extract the needed dataframe from the object
   data <- .simulationResultsBatchToTimeSeriesDataFrame(
     simulationResultsBatch = sensitivityCalculation$simulationResults,
-    parameters             = sensitivityCalculation$parameters,
+    parameterPaths         = sensitivityCalculation$parameterPaths,
     outputPaths            = sensitivityCalculation$outputPaths
   )
 

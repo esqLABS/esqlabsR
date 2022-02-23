@@ -49,13 +49,13 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
   set.seed(123)
   expect_error(
     sensitivityCalculation(
-    simulation = simulation,
-    outputPaths = outputPaths,
-    parameterPaths = parameterPaths,
-    variationRange = c(0.1, 2, 20),
-    pkDataFilePath = path
-  ),
-  "Only file path with `.xlsx` extension is allowed."
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      pkDataFilePath = path
+    ),
+    "Only file path with `.xlsx` extension is allowed."
   )
 })
 
@@ -78,7 +78,7 @@ test_that("sensitivityCalculation dataframes are as expected", {
   # also extract and add time series data for testing
   results$tsData <- esqlabsR:::.simulationResultsBatchToTimeSeriesDataFrame(
     simulationResultsBatch = results$simulationResults,
-    parameters             = results$parameters,
+    parameterPaths         = results$parameterPaths,
     outputPaths            = results$outputPaths
   )
 
