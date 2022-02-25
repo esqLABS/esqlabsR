@@ -28,10 +28,11 @@ parameters. If not specified, the following vector will be used: c(0.1,
 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5,  6, 7, 8, 9, 10).}
 
 \item{pkParameters}{A vector of names of PK parameters for which the
-sensitivities will be calculated. For a full set of available PK
+sensitivities will be calculated. For a full set of available standard PK
 parameters, run \code{names(ospsuite::StandardPKParameter)}. By default, only
 the following parameters will be considered: \code{"C_max"}, \code{"t_max"},
-\code{"AUC_inf"}. If \code{NULL}, all available PK-parameters will be calculated.}
+\code{"AUC_inf"}. If \code{NULL}, all available PK-parameters will be calculated. You
+can also specify custom PK parameters.}
 
 \item{pkDataFilePath}{Path to excel file in which
 PK-parameter data should be saved. If a file already exists, it will be

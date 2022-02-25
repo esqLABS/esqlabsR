@@ -1,3 +1,64 @@
+#' @title Validate variation range
+#'
+#' @description
+#'
+#' Checks that the values entered to vary parameter:
+#' - are all numeric
+#' - are all unique
+#' - include base scaling (i.e. a scaling of 1.0)
+#'
+#' @inheritParams sensitivityCalculation
+#'
+#' @keywords internal
+#' @noRd
+.validateVariationRange <- function(variationRange) {
+  # only numbers allowed
+  validateIsNumeric(variationRange)
+
+  # extract only unique values
+  variationRange <- unique(variationRange)
+
+  # if there is no scaling factor of 1.0 (corresponding to no scaling), add it
+  if (!any(dplyr::near(1.0, variationRange))) {
+    variationRange <- c(1.0, variationRange)
+  }
+
+  # return sorted vector of scaling values
+  sort(variationRange)
+}
+
+#' Validate vector arguments of character type
+#'
+#' @examples
+#' x <- c("a", "b", "a")
+#' validateCharVectors(x)
+#'
+#' @keywords internal
+#' @noRd
+.validateCharVectors <- function(argVector) {
+  argName <- deparse(substitute(argVector))
+
+  if (!isOfType(argVector, "character", nullAllowed = TRUE)) {
+    stop(
+      paste0("Only values of `character` type are allowed in `", argName, "` argument."),
+      call. = FALSE
+    )
+  }
+
+  if (!hasOnlyDistinctValues(argVector)) {
+    stop(
+      paste0("Only distinct values are allowed in `", argName, "` argument."),
+      call. = FALSE
+    )
+  }
+
+  if (any(nchar(argVector) == 0L)) {
+    stop(paste0("Values in `", argName, "` argument can't be an empty string."),
+      call. = FALSE
+    )
+  }
+}
+
 #' @title Percent change in PK parameters
 #'
 #' @description Compute %change in PK parameters and their sensitivity
@@ -30,35 +91,6 @@
           # p / delta p
           (ParameterValue / (ParameterValue - ParameterBaseValue))
     )
-}
-
-#' @title Validate variation range
-#'
-#' @description
-#'
-#' Checks that the values entered to vary parameter:
-#' - are all numeric
-#' - are all unique
-#' - include base scaling (i.e. a scaling of 1.0)
-#'
-#' @inheritParams sensitivityCalculation
-#'
-#' @keywords internal
-#' @noRd
-.validateVariationRange <- function(variationRange) {
-  # only numbers allowed
-  ospsuite.utils::validateIsNumeric(variationRange)
-
-  # extract only unique values
-  variationRange <- unique(variationRange)
-
-  # if there is no scaling factor of 1.0 (corresponding to no scaling), add it
-  if (!any(dplyr::near(1.0, variationRange))) {
-    variationRange <- c(1.0, variationRange)
-  }
-
-  # return sorted vector of scaling values
-  sort(variationRange)
 }
 
 #' @title Add columns with details about parameter paths
@@ -100,9 +132,6 @@
 .extractSimulationResultsBatch <- function(simulation,
                                            parameter,
                                            variationRange) {
-  # check provided variation range using custom function
-  variationRange <- .validateVariationRange(variationRange)
-
   # create simulation batch for efficient calculations
   simulationBatch <- createSimulationBatch(simulation, parametersOrPaths = parameter)
 

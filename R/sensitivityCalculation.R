@@ -11,10 +11,11 @@
 #'   parameters. If not specified, the following vector will be used: c(0.1,
 #'   0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5,  6, 7, 8, 9, 10).
 #' @param pkParameters A vector of names of PK parameters for which the
-#'   sensitivities will be calculated. For a full set of available PK
+#'   sensitivities will be calculated. For a full set of available standard PK
 #'   parameters, run `names(ospsuite::StandardPKParameter)`. By default, only
 #'   the following parameters will be considered: `"C_max"`, `"t_max"`,
-#'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated.
+#'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated. You
+#'   can also specify custom PK parameters.
 #' @param pkDataFilePath Path to excel file in which
 #'   PK-parameter data should be saved. If a file already exists, it will be
 #'   overwritten. Default is `NULL`, meaning the data will not be saved to a
@@ -44,24 +45,14 @@ sensitivityCalculation <- function(simulation,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
                                    pkDataFilePath = NULL) {
-  # validate output paths
-  validateIsCharacter(outputPaths)
-  if (any(nchar(outputPaths) == 0L)) {
-    stop("Path name in `outputPaths` can't be an empty string.")
-  }
+  # validate vector arguments of character type
+  .validateCharVectors(outputPaths)
+  .validateCharVectors(parameterPaths)
+  .validateCharVectors(pkParameters)
 
-  # validate parameter paths
-  validateIsCharacter(parameterPaths)
-  if (any(nchar(parameterPaths) == 0L)) {
-    stop("Path name in `parameterPaths` can't be an empty string.")
-  }
-
-  # validate PK parameters
-  validateIsCharacter(pkParameters)
-  if (any(nchar(pkParameters) == 0L)) {
-    stop("PK parameter name in `pkParameters` can't be an empty string.")
-  }
-  validateIsIncluded(pkParameters, names(ospsuite::StandardPKParameter))
+  # check provided variation range using custom function
+  # this also makes sure that there is always `1.0` present in this vector
+  variationRange <- .validateVariationRange(variationRange)
 
   # set outputs to the provided path
   clearOutputs(simulation)

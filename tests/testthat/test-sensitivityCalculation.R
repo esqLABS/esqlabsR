@@ -26,6 +26,8 @@ results <- sensitivityCalculation(
   variationRange = c(0.1, 2, 20)
 )
 
+# validate `outputPaths` ------------------------
+
 test_that("sensitivityCalculation fails early with incorrect `outputPaths` arguments", {
   expect_error(
     sensitivityCalculation(
@@ -33,7 +35,7 @@ test_that("sensitivityCalculation fails early with incorrect `outputPaths` argum
       outputPaths = c(1, 2, 3),
       parameterPaths = parameterPath
     ),
-    "argument 'outputPaths' is of type 'numeric', but expected 'character'"
+    "Only values of `character` type are allowed in `outputPaths` argument."
   )
 
   expect_error(
@@ -42,7 +44,7 @@ test_that("sensitivityCalculation fails early with incorrect `outputPaths` argum
       outputPaths = "",
       parameterPaths = parameterPath
     ),
-    "Path name in `outputPaths` can't be an empty string."
+    "Values in `outputPaths` argument can't be an empty string."
   )
 
   expect_error(
@@ -51,9 +53,20 @@ test_that("sensitivityCalculation fails early with incorrect `outputPaths` argum
       outputPaths = c("", "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"),
       parameterPaths = parameterPath
     ),
-    "Path name in `outputPaths` can't be an empty string."
+    "Values in `outputPaths` argument can't be an empty string."
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = rep("Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)", 2),
+      parameterPaths = parameterPath
+    ),
+    "Only distinct values are allowed in `outputPaths` argument."
   )
 })
+
+# validate `parameterPaths` ------------------------
 
 test_that("sensitivityCalculation fails early with incorrect `parameterPaths` arguments", {
   expect_error(
@@ -62,7 +75,7 @@ test_that("sensitivityCalculation fails early with incorrect `parameterPaths` ar
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = c(1, 2, 3)
     ),
-    "argument 'parameterPaths' is of type 'numeric', but expected 'character'"
+    "Only values of `character` type are allowed in `parameterPaths` argument."
   )
 
 
@@ -72,7 +85,7 @@ test_that("sensitivityCalculation fails early with incorrect `parameterPaths` ar
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = ""
     ),
-    "Path name in `parameterPaths` can't be an empty string."
+    "Values in `parameterPaths` argument can't be an empty string."
   )
 
   expect_error(
@@ -85,9 +98,20 @@ test_that("sensitivityCalculation fails early with incorrect `parameterPaths` ar
         "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
       )
     ),
-    "Path name in `parameterPaths` can't be an empty string."
+    "Values in `parameterPaths` argument can't be an empty string."
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      parameterPaths = c(parameterPaths, parameterPaths[1])
+    ),
+    "Only distinct values are allowed in `parameterPaths` argument."
   )
 })
+
+# validate `pkParameters` ------------------------
 
 test_that("sensitivityCalculation fails early with incorrect `pkParameters` arguments", {
   expect_error(
@@ -97,7 +121,7 @@ test_that("sensitivityCalculation fails early with incorrect `pkParameters` argu
       outputPaths = outputPaths,
       parameterPaths = parameterPaths
     ),
-    "argument 'pkParameters' is of type 'numeric', but expected 'character'"
+    "Only values of `character` type are allowed in `pkParameters` argument."
   )
 
   expect_error(
@@ -107,7 +131,7 @@ test_that("sensitivityCalculation fails early with incorrect `pkParameters` argu
       outputPaths = outputPaths,
       parameterPaths = parameterPaths
     ),
-    "PK parameter name in `pkParameters` can't be an empty string."
+    "Values in `pkParameters` argument can't be an empty string."
   )
 
   expect_error(
@@ -117,19 +141,21 @@ test_that("sensitivityCalculation fails early with incorrect `pkParameters` argu
       outputPaths = outputPaths,
       parameterPaths = parameterPaths
     ),
-    "PK parameter name in `pkParameters` can't be an empty string."
+    "Values in `pkParameters` argument can't be an empty string."
   )
 
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
-      pkParameters = "xyz",
-      outputPaths = outputPaths,
+      pkParameters = c("C_max", "C_max"),
+      outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = parameterPaths
     ),
-    "Values 'xyz' are not in included in parent values"
+    "Only distinct values are allowed in `pkParameters` argument."
   )
 })
+
+# validate `variationRange` ------------------------
 
 test_that("sensitivityCalculation fails early with incorrect `variationRange` arguments", {
   expect_error(
@@ -139,7 +165,7 @@ test_that("sensitivityCalculation fails early with incorrect `variationRange` ar
       parameterPaths = parameterPaths,
       variationRange = c("x", "y", "z")
     ),
-    "argument 'object' is of type 'character', but expected 'numeric, or integer'!"
+    "argument 'variationRange' is of type 'character', but expected 'numeric, or integer'!"
   )
 })
 
