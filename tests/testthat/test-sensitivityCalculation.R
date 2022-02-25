@@ -26,6 +26,20 @@ results <- sensitivityCalculation(
   variationRange = c(0.1, 2, 20)
 )
 
+library(dplyr, warn.conflicts = FALSE)
+
+# custom function to extract summary data
+summarizer <- function(data, path) {
+  data <- dplyr::filter(data, ParameterPath %in% path)
+
+  list(
+    "charColumnSummary" = select(data, where(is.character)) %>%
+      purrr::map_dfr(unique),
+    "numericColumnSummary" = select(data, where(is.numeric)) %>%
+      purrr::map_df(summary, .id = "column")
+  )
+}
+
 # validate `outputPaths` ------------------------
 
 test_that("sensitivityCalculation fails early with incorrect `outputPaths` arguments", {
@@ -202,47 +216,22 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
   )
 })
 
+# checking PK data ------------------
 
-test_that("sensitivityCalculation dataframes are as expected", {
-  library(dplyr, warn.conflicts = FALSE)
-
-  # custom function to extract summary data
-  summarizer <- function(data, path) {
-    data <- dplyr::filter(data, ParameterPath %in% path)
-
-    list(
-      "charColumnSummary" = select(data, where(is.character)) %>%
-        purrr::map_dfr(unique),
-      "numericColumnSummary" = select(data, where(is.numeric)) %>%
-        purrr::map_df(summary, .id = "column")
+test_that("sensitivityCalculation PK parameters datafram column names and order as expected", {
+  expect_equal(
+    names(results$pkData),
+    c(
+      "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue",
+      "PKParameter", "PKParameterValue", "Unit", "PercentChangePK",
+      "SensitivityPKParameter"
     )
-  }
-
-  # also extract and add time series data for testing
-  results$tsData <- esqlabsR:::.simulationResultsBatchToTimeSeriesDataFrame(
-    simulationResultsBatch = results$simulationResults,
-    parameterPaths         = results$parameterPaths,
-    outputPaths            = results$outputPaths
   )
+})
 
+test_that("sensitivityCalculation PK parameters dataframe is as expected", {
   # base scaling should be present
   expect_equal(unique(results$pkData$ParameterFactor), c(0.1, 1, 2, 20))
-
-  # checking time series data ------------------
-
-  set.seed(123)
-  df1_ts <- summarizer(results$tsData, parameterPaths[1])
-  expect_snapshot(df1_ts)
-
-  set.seed(123)
-  df2_ts <- summarizer(results$tsData, parameterPaths[2])
-  expect_snapshot(df2_ts)
-
-  set.seed(123)
-  df3_ts <- summarizer(results$tsData, parameterPaths[3])
-  expect_snapshot(df3_ts)
-
-  # checking PK parameters data ------------------
 
   set.seed(123)
   df1_pk <- summarizer(results$pkData, parameterPaths[1])
@@ -257,6 +246,29 @@ test_that("sensitivityCalculation dataframes are as expected", {
   expect_snapshot(df3_pk)
 })
 
+test_that("sensitivityCalculation time series dataframe is as expected", {
+  # also extract and add time series data for testing
+  results$tsData <- esqlabsR:::.simulationResultsBatchToTimeSeriesDataFrame(
+    simulationResultsBatch = results$simulationResults,
+    parameterPaths = results$parameterPaths,
+    outputPaths = results$outputPaths
+  )
+
+  set.seed(123)
+  df1_ts <- summarizer(results$tsData, parameterPaths[1])
+  expect_snapshot(df1_ts)
+
+  set.seed(123)
+  df2_ts <- summarizer(results$tsData, parameterPaths[2])
+  expect_snapshot(df2_ts)
+
+  set.seed(123)
+  df3_ts <- summarizer(results$tsData, parameterPaths[3])
+  expect_snapshot(df3_ts)
+})
+
+# validating plotting arguments -------------------------
+
 test_that("sensitivityCalculation plots fail with incorrect input objects", {
   expect_error(
     sensitivityTimeProfiles("x"),
@@ -268,6 +280,8 @@ test_that("sensitivityCalculation plots fail with incorrect input objects", {
     "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
   )
 })
+
+# checking plots ---------------------------------------
 
 test_that("sensitivityTimeProfiles plots are as expected", {
   set.seed(123)

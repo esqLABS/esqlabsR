@@ -1,109 +1,4 @@
-# sensitivityCalculation dataframes are as expected
-
-    Code
-      df1_ts
-    Output
-      $charColumnSummary
-      # A tibble: 1 x 6
-        ParameterPath          
-        <chr>                  
-      1 Aciclovir|Lipophilicity
-        OutputPath                                                               
-        <chr>                                                                    
-      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-        Unit   Dimension             TimeUnit TimeDimension
-        <chr>  <chr>                 <chr>    <chr>        
-      1 µmol/l Concentration (molar) min      Time         
-      
-      $numericColumnSummary
-      # A tibble: 5 x 7
-        column          Min.    `1st Qu.`   Median      Mean       `3rd Qu.`  
-        <chr>           <table> <table>     <table>     <table>    <table>    
-      1 ParameterFactor   0.10    0.7750000   1.5000000   5.775000    6.500000
-      2 ParameterValue   -1.94   -0.6305000  -0.1455000  -0.560175   -0.075175
-      3 Time              0.00  336.0000000 705.0000000 705.488798 1074.000000
-      4 Concentration     0.00    0.1159193   0.4692815   3.482360    2.797140
-      5 molWeight       225.21  225.2100000 225.2100000 225.210000  225.210000
-        Max.      
-        <table>   
-      1   20.00000
-      2   -0.00970
-      3 1440.00000
-      4   69.15068
-      5  225.21000
-      
-
----
-
-    Code
-      df2_ts
-    Output
-      $charColumnSummary
-      # A tibble: 1 x 6
-        ParameterPath                                                    
-        <chr>                                                            
-      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
-        OutputPath                                                               
-        <chr>                                                                    
-      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-        Unit   Dimension             TimeUnit TimeDimension
-        <chr>  <chr>                 <chr>    <chr>        
-      1 µmol/l Concentration (molar) min      Time         
-      
-      $numericColumnSummary
-      # A tibble: 5 x 7
-        column          Min.       `1st Qu.`    Median      Mean         `3rd Qu.`  
-        <chr>           <table>    <table>      <table>     <table>      <table>    
-      1 ParameterFactor   0.100000   0.77500000   1.5000000   5.77500000    6.500000
-      2 ParameterValue    0.000025   0.00019375   0.0003750   0.00144375    0.001625
-      3 Time              0.000000 336.00000000 705.0000000 705.48879837 1074.000000
-      4 Concentration     0.000000   0.13811989   0.9816535  19.74123948    6.778747
-      5 molWeight       225.210000 225.21000000 225.2100000 225.21000000  225.210000
-        Max.    
-        <table> 
-      1   20.000
-      2    0.005
-      3 1440.000
-      4 1005.055
-      5  225.210
-      
-
----
-
-    Code
-      df3_ts
-    Output
-      $charColumnSummary
-      # A tibble: 1 x 6
-        ParameterPath                                                                 
-        <chr>                                                                         
-      1 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fr~
-        OutputPath                                                               
-        <chr>                                                                    
-      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-        Unit   Dimension             TimeUnit TimeDimension
-        <chr>  <chr>                 <chr>    <chr>        
-      1 µmol/l Concentration (molar) min      Time         
-      
-      $numericColumnSummary
-      # A tibble: 5 x 7
-        column          Min.    `1st Qu.`    Median     Mean       `3rd Qu.`  
-        <chr>           <table> <table>      <table>    <table>    <table>    
-      1 ParameterFactor   0.10    0.77500000   1.500000   5.775000    6.500000
-      2 ParameterValue    0.10    0.77500000   1.500000   5.775000    6.500000
-      3 Time              0.00  336.00000000 705.000000 705.488798 1074.000000
-      4 Concentration     0.00    0.08300163   0.450944   3.065299    2.758069
-      5 molWeight       225.21  225.21000000 225.210000 225.210000  225.210000
-        Max.      
-        <table>   
-      1   20.00000
-      2   20.00000
-      3 1440.00000
-      4   51.26153
-      5  225.21000
-      
-
----
+# sensitivityCalculation PK parameters dataframe is as expected
 
     Code
       df1_pk
@@ -219,6 +114,111 @@
       3 2352.71627808 4726.3550 NA     
       4    0.00000000   16.0517 NA     
       5   -0.00223053    0.0000  3     
+      
+
+# sensitivityCalculation time series dataframe is as expected
+
+    Code
+      df1_ts
+    Output
+      $charColumnSummary
+      # A tibble: 1 x 6
+        ParameterPath          
+        <chr>                  
+      1 Aciclovir|Lipophilicity
+        OutputPath                                                               
+        <chr>                                                                    
+      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+        Unit   Dimension             TimeUnit TimeDimension
+        <chr>  <chr>                 <chr>    <chr>        
+      1 µmol/l Concentration (molar) min      Time         
+      
+      $numericColumnSummary
+      # A tibble: 5 x 7
+        column          Min.    `1st Qu.`   Median      Mean       `3rd Qu.`  
+        <chr>           <table> <table>     <table>     <table>    <table>    
+      1 ParameterFactor   0.10    0.7750000   1.5000000   5.775000    6.500000
+      2 ParameterValue   -1.94   -0.6305000  -0.1455000  -0.560175   -0.075175
+      3 Time              0.00  336.0000000 705.0000000 705.488798 1074.000000
+      4 Concentration     0.00    0.1159193   0.4692815   3.482360    2.797140
+      5 molWeight       225.21  225.2100000 225.2100000 225.210000  225.210000
+        Max.      
+        <table>   
+      1   20.00000
+      2   -0.00970
+      3 1440.00000
+      4   69.15068
+      5  225.21000
+      
+
+---
+
+    Code
+      df2_ts
+    Output
+      $charColumnSummary
+      # A tibble: 1 x 6
+        ParameterPath                                                    
+        <chr>                                                            
+      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
+        OutputPath                                                               
+        <chr>                                                                    
+      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+        Unit   Dimension             TimeUnit TimeDimension
+        <chr>  <chr>                 <chr>    <chr>        
+      1 µmol/l Concentration (molar) min      Time         
+      
+      $numericColumnSummary
+      # A tibble: 5 x 7
+        column          Min.       `1st Qu.`    Median      Mean         `3rd Qu.`  
+        <chr>           <table>    <table>      <table>     <table>      <table>    
+      1 ParameterFactor   0.100000   0.77500000   1.5000000   5.77500000    6.500000
+      2 ParameterValue    0.000025   0.00019375   0.0003750   0.00144375    0.001625
+      3 Time              0.000000 336.00000000 705.0000000 705.48879837 1074.000000
+      4 Concentration     0.000000   0.13811989   0.9816535  19.74123948    6.778747
+      5 molWeight       225.210000 225.21000000 225.2100000 225.21000000  225.210000
+        Max.    
+        <table> 
+      1   20.000
+      2    0.005
+      3 1440.000
+      4 1005.055
+      5  225.210
+      
+
+---
+
+    Code
+      df3_ts
+    Output
+      $charColumnSummary
+      # A tibble: 1 x 6
+        ParameterPath                                                                 
+        <chr>                                                                         
+      1 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fr~
+        OutputPath                                                               
+        <chr>                                                                    
+      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+        Unit   Dimension             TimeUnit TimeDimension
+        <chr>  <chr>                 <chr>    <chr>        
+      1 µmol/l Concentration (molar) min      Time         
+      
+      $numericColumnSummary
+      # A tibble: 5 x 7
+        column          Min.    `1st Qu.`    Median     Mean       `3rd Qu.`  
+        <chr>           <table> <table>      <table>    <table>    <table>    
+      1 ParameterFactor   0.10    0.77500000   1.500000   5.775000    6.500000
+      2 ParameterValue    0.10    0.77500000   1.500000   5.775000    6.500000
+      3 Time              0.00  336.00000000 705.000000 705.488798 1074.000000
+      4 Concentration     0.00    0.08300163   0.450944   3.065299    2.758069
+      5 molWeight       225.21  225.21000000 225.210000 225.210000  225.210000
+        Max.      
+        <table>   
+      1   20.00000
+      2   20.00000
+      3 1440.00000
+      4   51.26153
+      5  225.21000
       
 
 # sensitivityTimeProfiles plots are as expected
