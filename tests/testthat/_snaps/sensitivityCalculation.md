@@ -1,4 +1,4 @@
-# sensitivityCalculation PK parameters dataframe is as expected
+# sensitivityCalculation PK parameters tidy dataframe is as expected
 
     Code
       df1_pk

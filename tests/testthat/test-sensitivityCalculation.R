@@ -230,9 +230,9 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
   )
 })
 
-# checking PK data ------------------
+# checking PK tidy data ------------------
 
-test_that("sensitivityCalculation PK parameters datafram column names and order as expected", {
+test_that("sensitivityCalculation PK parameters tidy datafram column names and order as expected", {
   expect_equal(
     names(results$pkData),
     c(
@@ -243,7 +243,7 @@ test_that("sensitivityCalculation PK parameters datafram column names and order 
   )
 })
 
-test_that("sensitivityCalculation PK parameters dataframe is as expected", {
+test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", {
   # base scaling should be present
   expect_equal(unique(results$pkData$ParameterFactor), c(0.1, 1, 2, 20))
 
@@ -258,6 +258,48 @@ test_that("sensitivityCalculation PK parameters dataframe is as expected", {
   set.seed(123)
   df3_pk <- summarizer(results$pkData, parameterPaths[3])
   expect_snapshot(df3_pk)
+})
+
+# checking PK wide data ------------------
+
+set.seed(123)
+results2 <- sensitivityCalculation(
+  simulation = simulation,
+  outputPaths = outputPaths,
+  parameterPaths = parameterPaths,
+  variationRange = c(0.1, 2, 20),
+  pkParameters = NULL
+)
+
+pkDataWide <- results2$pkData %>%
+  esqlabsR:::.addRowid() %>%
+  esqlabsR:::.convertToWide()
+
+test_that("sensitivityCalculation PK parameters datafram dimensions are as expected", {
+  expect_equal(dim(pkDataWide), c(12L, 56L))
+})
+
+test_that("sensitivityCalculation PK parameters wide datafram column names and order as expected", {
+  expect_equal(
+    names(pkDataWide),
+    c(
+      "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue",
+      "C_max", "C_max_norm", "C_max_Unit", "C_max_norm_Unit", "C_max_PercentChange",
+      "C_max_norm_PercentChange", "C_max_Sensitivity", "C_max_norm_Sensitivity",
+      "t_max", "t_max_Unit", "t_max_PercentChange", "t_max_Sensitivity",
+      "AUC_tEnd", "AUC_tEnd_norm", "AUC_tEnd_Unit", "AUC_tEnd_norm_Unit",
+      "AUC_tEnd_PercentChange", "AUC_tEnd_norm_PercentChange", "AUC_tEnd_Sensitivity",
+      "AUC_tEnd_norm_Sensitivity", "AUC_inf", "AUC_inf_norm", "AUC_inf_Unit",
+      "AUC_inf_norm_Unit", "AUC_inf_PercentChange", "AUC_inf_norm_PercentChange",
+      "AUC_inf_Sensitivity", "AUC_inf_norm_Sensitivity", "CL", "FractionAucLastToInf",
+      "CL_Unit", "FractionAucLastToInf_Unit", "CL_PercentChange", "FractionAucLastToInf_PercentChange",
+      "CL_Sensitivity", "FractionAucLastToInf_Sensitivity", "MRT",
+      "MRT_Unit", "MRT_PercentChange", "MRT_Sensitivity", "Thalf",
+      "Thalf_Unit", "Thalf_PercentChange", "Thalf_Sensitivity", "Vss",
+      "Vss_Unit", "Vss_PercentChange", "Vss_Sensitivity", "Vd", "Vd_Unit",
+      "Vd_PercentChange", "Vd_Sensitivity"
+    )
+  )
 })
 
 test_that("sensitivityCalculation time series dataframe is as expected", {
