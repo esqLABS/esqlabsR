@@ -11,7 +11,6 @@ sensitivitySpiderPlot(
   savePlots = FALSE,
   width = NA,
   height = NA,
-  units = c("in", "cm", "mm", "px"),
   dpi = 300
 )
 }
@@ -26,14 +25,8 @@ logarithmic scale.}
 plot(s). They are not saved by default. Note that if there are multiple
 output paths in your model, there will be multiple plots that will be saved.}
 
-\item{width}{Plot size in \code{units} ("in", "cm", "mm", or "px").
-If not supplied, uses the size of current graphics device.}
-
-\item{height}{Plot size in \code{units} ("in", "cm", "mm", or "px").
-If not supplied, uses the size of current graphics device.}
-
-\item{units}{Plot size in \code{units} ("in", "cm", "mm", or "px").
-If not supplied, uses the size of current graphics device.}
+\item{width, height}{Plot size in inches. If not supplied, uses the size of
+current graphics device.}
 
 \item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
@@ -73,7 +66,6 @@ if (FALSE) {
   sensitivitySpiderPlot(
     results,
     savePlots = TRUE,
-    units = "in",
     height = 6,
     width = 12
   )

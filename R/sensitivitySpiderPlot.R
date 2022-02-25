@@ -8,6 +8,8 @@
 #' @param savePlots Logical that decides whether you wish to save created
 #'   plot(s). They are not saved by default. Note that if there are multiple
 #'   output paths in your model, there will be multiple plots that will be saved.
+#' @param width,height Plot size in inches. If not supplied, uses the size of
+#'   current graphics device.
 #' @inheritParams ggplot2::ggsave
 #'
 #' @import ggplot2
@@ -45,7 +47,6 @@
 #'   sensitivitySpiderPlot(
 #'     results,
 #'     savePlots = TRUE,
-#'     units = "in",
 #'     height = 6,
 #'     width = 12
 #'   )
@@ -58,7 +59,6 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   savePlots = FALSE,
                                   width = NA,
                                   height = NA,
-                                  units = c("in", "cm", "mm", "px"),
                                   dpi = 300) {
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -82,7 +82,6 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       plot.type = "Spider_",
       height = height,
       width = width,
-      units = units,
       dpi = dpi
     )
   }

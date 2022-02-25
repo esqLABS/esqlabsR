@@ -329,7 +329,6 @@
                           plot.type,
                           width = NA,
                           height = NA,
-                          units = c("in", "cm", "mm", "px"),
                           dpi = 300) {
   purrr::walk2(
     .x = plotlist,
@@ -339,7 +338,6 @@
       plot = .x,
       height = height,
       width = width,
-      units = units,
       dpi = dpi
     )
   )

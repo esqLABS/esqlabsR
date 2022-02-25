@@ -34,7 +34,6 @@
 #'   sensitivityTimeProfiles(
 #'     results,
 #'     savePlots = TRUE,
-#'     units = "in",
 #'     height = 6,
 #'     width = 12
 #'   )
@@ -77,7 +76,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       plot.type = "Profile_",
       height = height,
       width = width,
-      units = units,
       dpi = dpi
     )
   }
