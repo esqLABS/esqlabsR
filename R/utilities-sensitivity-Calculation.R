@@ -272,29 +272,7 @@
     # all metrics for each parameter should live together
     dplyr::select(
       dplyr::matches("Output|^Parameter"),
-      dplyr::matches("Unknown"),
-      dplyr::matches("C_max"),
-      dplyr::matches("C_max_norm"),
-      dplyr::matches("C_min"),
-      dplyr::matches("C_min_norm"),
-      dplyr::matches("t_max"),
-      dplyr::matches("t_min"),
-      dplyr::matches("C_trough"),
-      dplyr::matches("C_trough_norm"),
-      dplyr::matches("AUC_tEnd"),
-      dplyr::matches("AUC_tEnd_norm"),
-      dplyr::matches("AUCM_tEnd"),
-      dplyr::matches("AUC_inf"),
-      dplyr::matches("AUC_inf_norm"),
-      dplyr::matches("AUC_tEnd_inf"),
-      dplyr::matches("AUC_tEnd_inf_norm"),
-      dplyr::matches("CL"),
-      dplyr::matches("MRT"),
-      dplyr::matches("FractionAucEndToInf"),
-      dplyr::matches("Thalf"),
-      dplyr::matches("Vss"),
-      dplyr::matches("Vd"),
-      dplyr::matches("Tthreshold")
+      dplyr::matches(names(ospsuite::StandardPKParameter))
     )
 }
 
