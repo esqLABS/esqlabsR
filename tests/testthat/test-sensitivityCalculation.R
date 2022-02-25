@@ -167,6 +167,20 @@ test_that("sensitivityCalculation fails early with incorrect `pkParameters` argu
     ),
     "Only distinct values are allowed in `pkParameters` argument."
   )
+
+  expect_output(
+    sensitivityCalculation(
+      simulation = simulation,
+      pkParameters = c("C_max", "abc", "xyz"),
+      outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      parameterPaths = parameterPaths
+    ),
+    cat(
+      "Following non-standard PK parameters will not be calculated:",
+      c("abc", "xyz"),
+      sep = "\n"
+    )
+  )
 })
 
 # validate `variationRange` ------------------------
