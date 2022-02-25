@@ -44,7 +44,23 @@ sensitivityCalculation <- function(simulation,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
                                    pkDataFilePath = NULL) {
-  # fail fast if specified PK parameters are not part of standard `enum`
+  # validate output paths
+  validateIsCharacter(outputPaths)
+  if (any(nchar(outputPaths) == 0L)) {
+    stop("Path name in `outputPaths` can't be an empty string.")
+  }
+
+  # validate parameter paths
+  validateIsCharacter(parameterPaths)
+  if (any(nchar(parameterPaths) == 0L)) {
+    stop("Path name in `parameterPaths` can't be an empty string.")
+  }
+
+  # validate PK parameters
+  validateIsCharacter(pkParameters)
+  if (any(nchar(pkParameters) == 0L)) {
+    stop("PK parameter name in `pkParameters` can't be an empty string.")
+  }
   validateIsIncluded(pkParameters, names(ospsuite::StandardPKParameter))
 
   # set outputs to the provided path

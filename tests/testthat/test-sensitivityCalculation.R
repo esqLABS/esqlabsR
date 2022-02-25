@@ -26,6 +26,123 @@ results <- sensitivityCalculation(
   variationRange = c(0.1, 2, 20)
 )
 
+test_that("sensitivityCalculation fails early with incorrect `outputPaths` arguments", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = c(1, 2, 3),
+      parameterPaths = parameterPath
+    ),
+    "argument 'outputPaths' is of type 'numeric', but expected 'character'"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = "",
+      parameterPaths = parameterPath
+    ),
+    "Path name in `outputPaths` can't be an empty string."
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = c("", "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"),
+      parameterPaths = parameterPath
+    ),
+    "Path name in `outputPaths` can't be an empty string."
+  )
+})
+
+test_that("sensitivityCalculation fails early with incorrect `parameterPaths` arguments", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      parameterPaths = c(1, 2, 3)
+    ),
+    "argument 'parameterPaths' is of type 'numeric', but expected 'character'"
+  )
+
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      parameterPaths = ""
+    ),
+    "Path name in `parameterPaths` can't be an empty string."
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      parameterPaths = c(
+        "Aciclovir|Lipophilicity",
+        "",
+        "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+      )
+    ),
+    "Path name in `parameterPaths` can't be an empty string."
+  )
+})
+
+test_that("sensitivityCalculation fails early with incorrect `pkParameters` arguments", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      pkParameters = c(1, 2, 3),
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths
+    ),
+    "argument 'pkParameters' is of type 'numeric', but expected 'character'"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      pkParameters = "",
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths
+    ),
+    "PK parameter name in `pkParameters` can't be an empty string."
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      pkParameters = c("", "C_max"),
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths
+    ),
+    "PK parameter name in `pkParameters` can't be an empty string."
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      pkParameters = "xyz",
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths
+    ),
+    "Values 'xyz' are not in included in parent values"
+  )
+})
+
+test_that("sensitivityCalculation fails early with incorrect `variationRange` arguments", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c("x", "y", "z")
+    ),
+    "argument 'object' is of type 'character', but expected 'numeric, or integer'!"
+  )
+})
+
 test_that("sensitivityCalculation saves PK data to xlsx file", {
   path <- "mydata.xlsx"
 
