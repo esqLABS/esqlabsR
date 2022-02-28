@@ -24,14 +24,14 @@
       2 ParameterValue         -1.9400000 -0.6305000 -0.145500000   -0.56017500
       3 PKParameterValue        0.1833333  0.1833333 50.964733124 1382.72673700
       4 PercentChangePK        -2.6805738  0.0000000  0.000000000    3.31332295
-      5 SensitivityPKParameter  0.0000000  0.0000000  0.002978415    0.05397513
+      5 SensitivityPKParameter  0.0000000  0.0000000  0.003060453    0.04174034
         `3rd Qu.`     Max.         `NA's` 
         <table>       <table>      <table>
       1    6.50000000   20.0000000 NA     
       2   -0.07517500   -0.0097000 NA     
       3 4059.14495850 4154.5849609 NA     
       4    0.82553192   37.6058569 NA     
-      5    0.02118283    0.3958511  3     
+      5    0.02076496    0.2876703  3     
       
 
 ---
@@ -59,20 +59,20 @@
       
       $numericColumnSummary
       # A tibble: 5 x 8
-        column                 Min.        `1st Qu.`  Median     Mean         
-        <chr>                  <table>     <table>    <table>    <table>      
-      1 ParameterFactor          0.1000000 0.77500000  1.5000000    5.77500000
-      2 ParameterValue           0.0000250 0.00019375  0.0003750    0.00144375
-      3 PKParameterValue         0.1833333 0.18333333 75.3790874 7936.60715705
-      4 PercentChangePK        -90.0001121 0.00000000  0.0000000  318.33333830
-      5 SensitivityPKParameter   0.0000000 0.00000000  0.1000001    4.91111136
-        `3rd Qu.`   Max.      `NA's` 
-        <table>     <table>   <table>
-      1    6.500000    20.000 NA     
-      2    0.001625     0.005 NA     
-      3 1771.948044 81452.570 NA     
-      4  100.000008  1900.000 NA     
-      5    2.000001    20.000  3     
+        column                 Min.        `1st Qu.`  Median    Mean         
+        <chr>                  <table>     <table>    <table>   <table>      
+      1 ParameterFactor          0.1000000 0.77500000  1.500000    5.77500000
+      2 ParameterValue           0.0000250 0.00019375  0.000375    0.00144375
+      3 PKParameterValue         0.1833333 0.18333333 75.379087 7936.60715705
+      4 PercentChangePK        -90.0001121 0.00000000  0.000000  318.33333830
+      5 SensitivityPKParameter   0.0000000 0.00000000  1.000000    0.66666806
+        `3rd Qu.`   Max.         `NA's` 
+        <table>     <table>      <table>
+      1    6.500000    20.000000 NA     
+      2    0.001625     0.005000 NA     
+      3 1771.948044 81452.570312 NA     
+      4  100.000008  1900.000213 NA     
+      5    1.000000     1.000012  3     
       
 
 ---
@@ -106,14 +106,14 @@
       2 ParameterValue           0.1000000  0.7750000  1.50000000    5.7750000
       3 PKParameterValue         0.1666667  0.1833333 49.78161049 1210.6411784
       4 PercentChangePK        -52.4017643 -9.7478727  0.00000000   -5.9047718
-      5 SensitivityPKParameter  -0.5515975 -0.1455794 -0.03749922   -0.1205346
-        `3rd Qu.`     Max.      `NA's` 
-        <table>       <table>   <table>
-      1    6.50000000   20.0000 NA     
-      2    6.50000000   20.0000 NA     
-      3 2352.71627808 4726.3550 NA     
-      4    0.00000000   16.0517 NA     
-      5   -0.00223053    0.0000  3     
+      5 SensitivityPKParameter  -1.1588613 -0.1689445 -0.03821575   -0.1949252
+        `3rd Qu.`      Max.      `NA's` 
+        <table>        <table>   <table>
+      1    6.500000000   20.0000 NA     
+      2    6.500000000   20.0000 NA     
+      3 2352.716278076 4726.3550 NA     
+      4    0.000000000   16.0517 NA     
+      5   -0.002186634    0.0000  3     
       
 
 # sensitivityCalculation time series dataframe is as expected

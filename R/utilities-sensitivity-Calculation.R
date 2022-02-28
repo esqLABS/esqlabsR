@@ -144,25 +144,21 @@
 #' @keywords internal
 #' @noRd
 .computePercentChange <- function(data) {
-  # baseline simulation value with a scaling of 1, i.e. no scaling
-  baseValue <- data %>%
-    dplyr::filter(ParameterFactor == 1.0) %>%
-    dplyr::pull(PKParameterValue)
+  # baseline values with a scaling of 1, i.e. no scaling
+  baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
 
-  # baseline parameter value with a scaling of 1, i.e. no scaling
-  # NOT to be confused with `PKParameterValue`
-  ParameterBaseValue <- data %>%
-    dplyr::filter(ParameterFactor == 1.0) %>%
-    dplyr::pull(ParameterValue)
+  # baseline values for parameters of interest
+  ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
+  PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
 
   # add columns with %change and sensitivity
   # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
   data %>%
     dplyr::mutate(
-      PercentChangePK = ((PKParameterValue - baseValue) / baseValue) * 100,
+      PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
       SensitivityPKParameter =
       # delta PK / PK
-        ((PKParameterValue - baseValue) / baseValue) *
+        ((PKParameterValue - PKParameterBaseValue) / PKParameterValue) *
           # p / delta p
           (ParameterValue / (ParameterValue - ParameterBaseValue))
     )
@@ -225,6 +221,7 @@
 #' @description
 #'
 #' Checks that the values entered to vary parameter:
+#'
 #' - are all numeric
 #' - are all unique
 #' - include base scaling (i.e. a scaling of 1.0)
@@ -249,11 +246,30 @@
   sort(variationRange)
 }
 
-#' Validate vector arguments of character type
+#' Validate vector arguments of `character` type
+#'
+#' @param argVector A vector of `character` type.
+#'
+#' @description
+#'
+#' If the parameter in your function accepts vectors of `character` type, this
+#' can help you validate the following aspects:
+#'
+#' - the elements are indeed of `character` type
+#' - none of the entries are duplicated
+#' - there are no empty strings (`""`)
+#'
+#' @return Error if validation is unsuccessful; otherwise, `NULL`.
 #'
 #' @examples
+#'
 #' x <- c("a", "b", "a")
-#' validateCharVectors(x)
+#' # this will produce error
+#' # validateCharVectors(x)
+#'
+#' # this will return `NULL`
+#' y <- c("a", "b", "c")
+#' validateCharVectors(y)
 #'
 #' @keywords internal
 #' @noRd
