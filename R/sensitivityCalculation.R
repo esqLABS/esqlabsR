@@ -95,9 +95,6 @@ sensitivityCalculation <- function(simulation,
     pkData <- dplyr::filter(pkData, PKParameter %in% pkParameters)
   }
 
-  # add a new `.rowid` column with unique name for each output path
-  pkData <- .addRowid(pkData)
-
   # write each wide dataframe in a list to a separate sheet in Excel
   if (!is.null(pkDataFilePath)) {
     # only `xlsx` format allowed
@@ -107,16 +104,15 @@ sensitivityCalculation <- function(simulation,
 
     # convert tidy data to wide format for each output path
     pkData_wide_list <- purrr::map(
-      .x = pkData %>% split(.$.rowid),
+      .x = pkData %>% split(.$OutputPath),
       .f = ~ .convertToWide(.x)
     )
+
+    names(pkData_wide_list) <- paste0("OutputPath", seq(1:length(unique(pkData$OutputPath))))
 
     # write to a spreadsheet with one sheet per output path
     writexl::write_xlsx(pkData_wide_list, pkDataFilePath)
   }
-
-  # remove the unneeded column
-  pkData <- dplyr::select(pkData, -c(".rowid"))
 
   # final list with needed objects and dataframes for plotting functions
   results <- list(

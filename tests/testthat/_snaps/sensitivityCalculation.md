@@ -123,15 +123,12 @@
     Output
       $charColumnSummary
       # A tibble: 1 x 6
-        ParameterPath          
-        <chr>                  
-      1 Aciclovir|Lipophilicity
         OutputPath                                                               
         <chr>                                                                    
       1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-        Unit   Dimension             TimeUnit TimeDimension
-        <chr>  <chr>                 <chr>    <chr>        
-      1 µmol/l Concentration (molar) min      Time         
+        ParameterPath           Unit   Dimension             TimeUnit TimeDimension
+        <chr>                   <chr>  <chr>                 <chr>    <chr>        
+      1 Aciclovir|Lipophilicity µmol/l Concentration (molar) min      Time         
       
       $numericColumnSummary
       # A tibble: 5 x 7
@@ -158,15 +155,15 @@
     Output
       $charColumnSummary
       # A tibble: 1 x 6
-        ParameterPath                                                    
-        <chr>                                                            
-      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
         OutputPath                                                               
         <chr>                                                                    
       1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-        Unit   Dimension             TimeUnit TimeDimension
-        <chr>  <chr>                 <chr>    <chr>        
-      1 µmol/l Concentration (molar) min      Time         
+        ParameterPath                                                     Unit  
+        <chr>                                                             <chr> 
+      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose µmol/l
+        Dimension             TimeUnit TimeDimension
+        <chr>                 <chr>    <chr>        
+      1 Concentration (molar) min      Time         
       
       $numericColumnSummary
       # A tibble: 5 x 7
@@ -193,12 +190,12 @@
     Output
       $charColumnSummary
       # A tibble: 1 x 6
-        ParameterPath                                                                 
-        <chr>                                                                         
-      1 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fr~
         OutputPath                                                               
         <chr>                                                                    
       1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+        ParameterPath                                                                 
+        <chr>                                                                         
+      1 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fr~
         Unit   Dimension             TimeUnit TimeDimension
         <chr>  <chr>                 <chr>    <chr>        
       1 µmol/l Concentration (molar) min      Time         

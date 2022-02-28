@@ -217,6 +217,7 @@
     ) %>%
     .addParameterColumns(parameter) %>%
     dplyr::select(
+      "OutputPath",
       dplyr::starts_with("Parameter"),
       Time, Concentration,
       dplyr::everything(),
@@ -247,6 +248,7 @@
     dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
     dplyr::ungroup() %>%
     dplyr::select(
+      "OutputPath",
       dplyr::starts_with("Parameter"),
       dplyr::starts_with("PK"),
       Unit, PercentChangePK,
@@ -265,8 +267,6 @@
       values_from = c(PKParameterValue, Unit, PercentChangePK, SensitivityPKParameter),
       names_glue  = "{PKParameter}_{.value}"
     ) %>%
-    # columns that should not be included in the excel sheets
-    dplyr::select(-c(".rowid")) %>%
     dplyr::rename_all(~ stringr::str_remove(.x, "_PKParameterValue")) %>%
     dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$")) %>%
     # all metrics for each parameter should live together
@@ -275,16 +275,6 @@
       dplyr::matches(names(ospsuite::StandardPKParameter))
     )
 }
-
-#' @keywords internal
-#' @noRd
-.addRowid <- function(data) {
-  data %>%
-    tidyr::nest(data = -OutputPath) %>%
-    dplyr::mutate(.rowid = paste0("OutputPath", seq(1:nrow(.)))) %>%
-    tidyr::unnest(cols = c(data))
-}
-
 
 #' @name savePlotList
 #' @title Save a list of plots
