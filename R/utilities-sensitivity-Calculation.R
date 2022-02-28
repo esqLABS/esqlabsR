@@ -52,21 +52,6 @@
   )
 }
 
-#' Extract PK parameters dataframe from a list of `SimulationResults` objects
-#'
-#' @inheritParams .simulationResultsBatchToTimeSeriesDataFrame
-#'
-#' @keywords internal
-#' @noRd
-.simulationResultsBatchToPKDataFrame <- function(simulationResultsBatch,
-                                                 parameterPaths) {
-  purrr::map2_dfr(
-    .x = simulationResultsBatch,
-    .y = parameterPaths,
-    .f = ~ .simulationResultsToPKDataFrame(.x, .y)
-  )
-}
-
 #' Extract time-series dataframe from `SimulationResults` object
 #'
 #' @param simResults A **single** instance of `SimulationResults` R6 object.
@@ -98,6 +83,21 @@
       -c("IndividualId")
     ) %>%
     dplyr::arrange(ParameterPath, ParameterFactor)
+}
+
+#' Extract PK parameters dataframe from a list of `SimulationResults` objects
+#'
+#' @inheritParams .simulationResultsBatchToTimeSeriesDataFrame
+#'
+#' @keywords internal
+#' @noRd
+.simulationResultsBatchToPKDataFrame <- function(simulationResultsBatch,
+                                                 parameterPaths) {
+  purrr::map2_dfr(
+    .x = simulationResultsBatch,
+    .y = parameterPaths,
+    .f = ~ .simulationResultsToPKDataFrame(.x, .y)
+  )
 }
 
 #' Extract PK parameters dataframe from `Parameter` object
@@ -205,8 +205,7 @@
       values_from = c(PKParameterValue, Unit, PercentChangePK, SensitivityPKParameter),
       names_glue  = "{PKParameter}_{.value}"
     ) %>%
-    dplyr::rename_all(~ stringr::str_remove(.x, "_PKParameterValue")) %>%
-    dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$")) %>%
+    dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")) %>%
     # all metrics for each parameter should live together
     dplyr::select(
       dplyr::matches("Output|^Parameter"),

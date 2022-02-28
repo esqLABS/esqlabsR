@@ -22,6 +22,7 @@ Imports:
     readxl,
     shiny,
     shinyjs,
+    tidyr,
     tools,
     vctrs,
     writexl

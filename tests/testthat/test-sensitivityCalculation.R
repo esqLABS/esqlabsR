@@ -17,13 +17,14 @@ parameterPaths <- c(
   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
+variationRange <- c(0.1, 2, 20) # 1.0 is deliberately left out for testing
 
 set.seed(123)
 results <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths,
-  variationRange = c(0.1, 2, 20)
+  variationRange = variationRange
 )
 
 library(dplyr, warn.conflicts = FALSE)
@@ -227,6 +228,27 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
       pkDataFilePath = path
     ),
     "Only file path with `.xlsx` extension is allowed."
+  )
+})
+
+# checking `SensitivityCalculation`  object ------------------
+
+test_that("sensitivityCalculation returns the correct object", {
+  expect_s3_class(results, "SensitivityCalculation")
+
+  expect_equal(
+    length(results$simulationResults),
+    length(parameterPaths)
+  )
+
+  expect_equal(
+    length(results$simulationResults[[1]]),
+    length(variationRange) + 1L
+  )
+
+  expect_equal(
+    length(results$parameterPaths),
+    length(parameterPaths)
   )
 })
 
