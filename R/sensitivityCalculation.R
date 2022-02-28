@@ -55,28 +55,14 @@ sensitivityCalculation <- function(simulation,
   .validateCharVectors(parameterPaths)
   .validateCharVectors(pkParameters)
 
+  # check for non-standard PK parameters
+  .validatePKParameters(pkParameters)
+
   # check provided variation range using custom function
   # this also makes sure that there is always `1.0` present in this vector
   variationRange <- .validateVariationRange(variationRange)
 
-  # inform user if any non-standard PK parameters have been specified
-  if (!is.null(pkParameters) && !isIncluded(pkParameters, names(ospsuite::StandardPKParameter))) {
-    nsPKNames <- pkParameters[!pkParameters %in% names(ospsuite::StandardPKParameter)]
-
-    message(
-      cat(
-        "Following non-standard PK parameters will not be calculated:",
-        nsPKNames,
-        sep = "\n"
-      )
-    )
-  }
-
   # creating `SimulationResults` batch ------------------------
-
-  # set outputs to the provided path
-  clearOutputs(simulation)
-  addOutputs(outputPaths, simulation)
 
   # extract a list of `SimulationResults` objects
   simulationResultsBatch <- purrr::map(

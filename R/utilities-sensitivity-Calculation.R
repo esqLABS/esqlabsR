@@ -296,6 +296,24 @@
   }
 }
 
+#' Inform user if any non-standard PK parameters have been specified
+#'
+#' @keywords internal
+#' @noRd
+.validatePKParameters <- function(pkParameters) {
+  if (!is.null(pkParameters) && !isIncluded(pkParameters, names(ospsuite::StandardPKParameter))) {
+    nsPKNames <- pkParameters[!pkParameters %in% names(ospsuite::StandardPKParameter)]
+
+    message(
+      cat(
+        "Following non-standard PK parameters will not be calculated:",
+        nsPKNames,
+        sep = "\n"
+      )
+    )
+  }
+}
+
 # plotting helpers ------------------------------
 
 #' @name savePlotList
