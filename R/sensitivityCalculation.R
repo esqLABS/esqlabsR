@@ -108,6 +108,8 @@ sensitivityCalculation <- function(simulation,
       .f = ~ .convertToWide(.x)
     )
 
+    # the output paths can be quite long and don't make for good sheet names
+    # instead use `OutputPathXXX` naming pattern for sheets
     names(pkData_wide_list) <- paste0("OutputPath", seq(1:length(unique(pkData$OutputPath))))
 
     # write to a spreadsheet with one sheet per output path
@@ -122,8 +124,8 @@ sensitivityCalculation <- function(simulation,
     "pkData"            = pkData
   )
 
-  # add additional attribute, which will be helpful for plotting methods to
-  # recognize this object
+  # add additional S3 class attribute
+  # helpful for plotting methods to recognize this object
   class(results) <- c("SensitivityCalculation", class(results))
 
   # return the data in a list
