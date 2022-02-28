@@ -3,6 +3,7 @@
 #' @title Run batch simulations and extract results in a dataframe
 #'
 #' @param parameter A single path of the parameter to be varied.
+#' @param parameterPath A **single** parameter path.
 #' @inheritParams sensitivityCalculation
 #'
 #' @note Note that the function will work only with a single parameter path.
@@ -10,15 +11,18 @@
 #' @keywords internal
 #' @noRd
 .extractSimulationResultsBatch <- function(simulation,
-                                           parameter,
+                                           parameterPath,
                                            variationRange) {
+  # extract `Parameter` object
+  parameter <- getAllParametersMatching(parameterPath, simulation)
+
   # create simulation batch for efficient calculations
-  simulationBatch <- createSimulationBatch(simulation, parametersOrPaths = parameter)
+  simulationBatch <- createSimulationBatch(simulation, parametersOrPaths = parameter[[1]])
 
   # for each parameter, set the value to `referenceValue * scaleFactor`
   # and run simulations with these parameter values
   purrr::walk(
-    .x = c(purrr::pluck(parameter, "value") * variationRange),
+    .x = c(purrr::pluck(parameter[[1]], "value") * variationRange),
     .f = ~ simulationBatch$addRunValues(.x)
   )
 
@@ -66,7 +70,7 @@
 #' Extract time-series dataframe from `SimulationResults` object
 #'
 #' @param simResults A **single** instance of `SimulationResults` R6 object.
-#' @param parameterPath A **single** parameter path.
+#' @inheritParams .extractSimulationResultsBatch
 #' @inheritParams sensitivityCalculation
 #'
 #' @keywords internal

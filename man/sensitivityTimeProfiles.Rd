@@ -12,7 +12,6 @@ sensitivityTimeProfiles(
   savePlots = FALSE,
   width = NA,
   height = NA,
-  units = c("in", "cm", "mm", "px"),
   dpi = 300
 )
 }
@@ -45,6 +44,9 @@ current graphics device.}
 Create a concentration-time profile plot
 }
 \examples{
+
+# for reproducibility
+set.seed(123)
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)

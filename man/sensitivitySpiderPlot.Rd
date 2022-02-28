@@ -42,6 +42,9 @@ Sensitivity spider plot for PK parameters
 }
 \examples{
 
+# for reproducibility
+set.seed(123)
+
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"

@@ -10,6 +10,9 @@
 #'
 #' @examples
 #'
+#' # for reproducibility
+#' set.seed(123)
+#'
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 #' simulation <- loadSimulation(simPath)
 #' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -47,7 +50,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     savePlots = FALSE,
                                     width = NA,
                                     height = NA,
-                                    units = c("in", "cm", "mm", "px"),
                                     dpi = 300) {
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")

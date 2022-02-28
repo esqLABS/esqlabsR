@@ -68,7 +68,6 @@
   savePlots <span class="op">=</span> <span class="cn">FALSE</span>,
   width <span class="op">=</span> <span class="cn">NA</span>,
   height <span class="op">=</span> <span class="cn">NA</span>,
-  units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"in"</span>, <span class="st">"cm"</span>, <span class="st">"mm"</span>, <span class="st">"px"</span><span class="op">)</span>,
   dpi <span class="op">=</span> <span class="fl">300</span>
 <span class="op">)</span></code></pre></div>
     </div>
@@ -85,15 +84,9 @@ logarithmic scale.</p></dd>
 <dd><p>Logical that decides whether you wish to save created
 plot(s). They are not saved by default. Note that if there are multiple
 output paths in your model, there will be multiple plots that will be saved.</p></dd>
-<dt>width</dt>
-<dd><p>Plot size in <code>units</code> ("in", "cm", "mm", or "px").
-If not supplied, uses the size of current graphics device.</p></dd>
-<dt>height</dt>
-<dd><p>Plot size in <code>units</code> ("in", "cm", "mm", or "px").
-If not supplied, uses the size of current graphics device.</p></dd>
-<dt>units</dt>
-<dd><p>Plot size in <code>units</code> ("in", "cm", "mm", or "px").
-If not supplied, uses the size of current graphics device.</p></dd>
+<dt>width, height</dt>
+<dd><p>Plot size in inches. If not supplied, uses the size of
+current graphics device.</p></dd>
 <dt>dpi</dt>
 <dd><p>Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.</p></dd>
@@ -108,6 +101,9 @@ spider plots.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"></span>
+<span class="r-in"><span class="co"># for reproducibility</span></span>
+<span class="r-in"><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
+<span class="r-in"></span>
 <span class="r-in"><span class="va">simPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Aciclovir.pkml"</span>, package <span class="op">=</span> <span class="st">"ospsuite"</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="fu">loadSimulation</span><span class="op">(</span><span class="va">simPath</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
@@ -135,7 +131,6 @@ spider plots.</p>
 <span class="r-in">  <span class="fu">sensitivitySpiderPlot</span><span class="op">(</span></span>
 <span class="r-in">    <span class="va">results</span>,</span>
 <span class="r-in">    savePlots <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span class="r-in">    units <span class="op">=</span> <span class="st">"in"</span>,</span>
 <span class="r-in">    height <span class="op">=</span> <span class="fl">6</span>,</span>
 <span class="r-in">    width <span class="op">=</span> <span class="fl">12</span></span>
 <span class="r-in">  <span class="op">)</span></span>

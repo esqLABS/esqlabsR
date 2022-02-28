@@ -23,6 +23,9 @@
 #'
 #' @examples
 #'
+#' # for reproducibility
+#' set.seed(123)
+#'
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 #' simulation <- loadSimulation(simPath)
 #' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -45,6 +48,8 @@ sensitivityCalculation <- function(simulation,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
                                    pkDataFilePath = NULL) {
+  # input validation ------------------------
+
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
@@ -67,25 +72,26 @@ sensitivityCalculation <- function(simulation,
     )
   }
 
+  # creating `SimulationResults` batch ------------------------
+
   # set outputs to the provided path
   clearOutputs(simulation)
   addOutputs(outputPaths, simulation)
 
-  # create simulation batch for efficient calculations
-  parameters <- getAllParametersMatching(parameterPaths, simulation)
-
-  # extract a list with results
+  # extract a list of `SimulationResults` objects
   simulationResultsBatch <- purrr::map(
-    .x = parameters,
+    .x = parameterPaths,
     .f = ~ .extractSimulationResultsBatch(
       simulation     = simulation,
-      parameter      = .x,
+      parameterPath  = .x,
       variationRange = variationRange
     )
   )
 
   # name list with name of each parameter path
   names(simulationResultsBatch) <- parameterPaths
+
+  # extract and save dataframes ------------------------
 
   # extract dataframe for PK parameters
   pkData <- .simulationResultsBatchToPKDataFrame(simulationResultsBatch, parameterPaths)
@@ -115,6 +121,8 @@ sensitivityCalculation <- function(simulation,
     # write to a spreadsheet with one sheet per output path
     writexl::write_xlsx(pkData_wide_list, pkDataFilePath)
   }
+
+  # return `SensitivityCalculation` ------------------------
 
   # final list with needed objects and dataframes for plotting functions
   results <- list(
