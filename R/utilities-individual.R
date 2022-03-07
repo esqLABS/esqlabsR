@@ -99,8 +99,8 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
   # Create the IndividualCharacteristics object
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
     species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = as.numeric(data$`Weight [kg]`[[rowIdx]]),
-    height =  as.numeric(data$`Height [cm]`[[rowIdx]]),
-    age =  as.numeric(data$`Age [year(s)]`[[rowIdx]])
+    height = as.numeric(data$`Height [cm]`[[rowIdx]]),
+    age = as.numeric(data$`Age [year(s)]`[[rowIdx]])
   )
 
   return(individualCharacteristics)
