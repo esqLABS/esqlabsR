@@ -78,9 +78,8 @@ readOSPSTimeValues <- function(dataConfiguration) {
       # If a molecule is specified, retrieve its molecular weight
       moleculeName <- timeValues$getAllMetaData()$Molecule
       if (!is.null(moleculeName) && !is.na(moleculeName)) {
-        compoundProperties <- readxl::read_excel(
-          path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule,
-          .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE)
+        compoundProperties <- readExcel(
+          path = file.path(dataConfiguration$dataFolder, dataConfiguration$compoundPropertiesFile), sheet = timeValues$getAllMetaData()$Molecule
         )
         mwIdx <- which(compoundProperties$`Parameter, [AdditionalParameter]` == "MW")
         mw <- compoundProperties$`Value [1,1]`[[mwIdx]]
