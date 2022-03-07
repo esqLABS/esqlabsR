@@ -70,7 +70,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
                                                  individualId,
                                                  sheet = NULL,
                                                  nullIfNotFound = TRUE) {
-  validateIsString(XLSpath, individualId)
+  validateIsString(c(XLSpath, individualId))
 
   # If no sheet has been specified, read from the first sheet
   if (is.null(sheet)) {
@@ -83,6 +83,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
   )
 
   data <- readExcel(path = XLSpath, sheet = sheet)
+
   if (!all(names(data) == columnNames)) {
     stop(messages$errorWrongIndividualCharacteristicsXLSStructure(XLSpath, columnNames))
   }
@@ -97,9 +98,9 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
 
   # Create the IndividualCharacteristics object
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
-    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = data$`Weight [kg]`[[rowIdx]],
-    height = data$`Height [cm]`[[rowIdx]],
-    age = data$`Age [year(s)]`[[rowIdx]]
+    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = as.numeric(data$`Weight [kg]`[[rowIdx]]),
+    height = as.numeric(data$`Height [cm]`[[rowIdx]]),
+    age = as.numeric(data$`Age [year(s)]`[[rowIdx]])
   )
 
   return(individualCharacteristics)

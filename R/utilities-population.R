@@ -133,7 +133,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
   }
 
   columnNames <- c(
-    "Container.Path", "Parameter.Name", "Mean",
+    "Container Path", "Parameter Name", "Mean",
     "SD", "Distribution"
   )
 
@@ -151,8 +151,8 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
   for (i in seq_along(data$Container.Path)) {
     paramPath <- paste(data[["Container.Path"]][[i]], data[["Parameter.Name"]][[i]], sep = "|")
     paramPaths[[i]] <- paramPath
-    meanVals[[i]] <- data[["Mean"]][[i]]
-    sdVals[[i]] <- data[["SD"]][[i]]
+    meanVals[[i]] <- as.numeric(data[["Mean"]][[i]])
+    sdVals[[i]] <- as.numeric(data[["SD"]][[i]])
     distributions[[i]] <- data[["Distribution"]][[i]]
   }
 
