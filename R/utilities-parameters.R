@@ -50,6 +50,10 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     }
   }
 
+  # replace `NA` in units with `""` represeting the empty unit for
+  # the dimension `Dimensionless`
+  units <- tidyr::replace_na(data = units, replace = "")
+
   return(list(paths = paths, values = values, units = units))
 }
 
