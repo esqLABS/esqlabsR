@@ -48,6 +48,7 @@ pathFromClipboard <- function(path = "clipboard") {
 #' @param ... Any other parameters that can be passed to readxl::read_excel
 #'
 #' @return A tibble with the contents of the excel sheet
+#' @export
 readExcel <- function(path, sheet = NULL, ...) {
   return(readxl::read_excel(path, sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE), ...))
 }
