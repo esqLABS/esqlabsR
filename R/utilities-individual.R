@@ -44,7 +44,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   output <- data.frame(unlist(containerPaths, use.names = FALSE), unlist(paramNames, use.names = FALSE), unlist(as.numeric(values), use.names = FALSE), unlist(units, use.names = FALSE))
   colnames(output) <- columnNames
 
-  writexl::write_xlsx(output, path = outputXLSPath, colNames = TRUE)
+  writexl::write_xlsx(output, path = outputXLSPath, col_names = TRUE)
 }
 
 #' Read individual characteristics from file
@@ -97,17 +97,17 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
   }
 
   # Create the IndividualCharacteristics object
-  #Empty cells are read as `NA` and must be converted to `NULL` for numerical values
+  # Empty cells are read as `NA` and must be converted to `NULL` for numerical values
   weight <- data$`Weight [kg]`[[rowIdx]]
-  if (is.na(weight)){
+  if (is.na(weight)) {
     weight <- NULL
   }
   height <- data$`Height [cm]`[[rowIdx]]
-  if (is.na(height)){
+  if (is.na(height)) {
     height <- NULL
   }
   age <- data$`Age [year(s)]`[[rowIdx]]
-  if (is.na(age)){
+  if (is.na(age)) {
     age <- NULL
   }
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
@@ -147,9 +147,11 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
   allParamUnits <- individual$distributedParameters$units
 
   # For other species, also add derived parameters
-  allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
-  allParamValues <- c(allParamValues, individual$derivedParameters$values)
-  allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
+  if (individualCharacteristics$species != ospsuite::Species$Human) {
+    allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
+    allParamValues <- c(allParamValues, individual$derivedParameters$values)
+    allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
+  }
 
   ospsuite::setParameterValuesByPath(
     parameterPaths = allParamPaths, values = allParamValues, simulation = simulation,
