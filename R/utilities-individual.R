@@ -44,7 +44,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   output <- data.frame(unlist(containerPaths, use.names = FALSE), unlist(paramNames, use.names = FALSE), unlist(as.numeric(values), use.names = FALSE), unlist(units, use.names = FALSE))
   colnames(output) <- columnNames
 
-  writexl::write_xlsx(output, path = outputXLSPath, colNames = TRUE)
+  writexl::write_xlsx(output, path = outputXLSPath, col_names = TRUE)
 }
 
 #' Read individual characteristics from file
@@ -97,10 +97,23 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
   }
 
   # Create the IndividualCharacteristics object
+  # Empty cells are read as `NA` and must be converted to `NULL` for numerical values
+  weight <- data$`Weight [kg]`[[rowIdx]]
+  if (is.na(weight)) {
+    weight <- NULL
+  }
+  height <- data$`Height [cm]`[[rowIdx]]
+  if (is.na(height)) {
+    height <- NULL
+  }
+  age <- data$`Age [year(s)]`[[rowIdx]]
+  if (is.na(age)) {
+    age <- NULL
+  }
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
-    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = as.numeric(data$`Weight [kg]`[[rowIdx]]),
-    height = as.numeric(data$`Height [cm]`[[rowIdx]]),
-    age = as.numeric(data$`Age [year(s)]`[[rowIdx]])
+    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = weight,
+    height = height,
+    age = age
   )
 
   return(individualCharacteristics)
@@ -127,22 +140,21 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
 #' }
 applyIndividualParameters <- function(individualCharacteristics, simulation) {
   individual <- ospsuite::createIndividual(individualCharacteristics)
-  allParamPaths <- c(individual$distributedParameters$paths, individual$derivedParameters$paths)
-  allParamValues <- c(individual$distributedParameters$values, individual$derivedParameters$values)
 
-  condition <- function(p) {
-    TRUE
-  }
-  # For human species, only set parameters that do not override a formula
-  if (individualCharacteristics$species == ospsuite::Species$Human) {
-    condition <- function(path) {
-      task <- ospsuite:::getContainerTask()
-      !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
-    }
+  # For human species, only set distributed parameters
+  allParamPaths <- individual$distributedParameters$paths
+  allParamValues <- individual$distributedParameters$values
+  allParamUnits <- individual$distributedParameters$units
+
+  # For other species, also add derived parameters
+  if (individualCharacteristics$species != ospsuite::Species$Human) {
+    allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
+    allParamValues <- c(allParamValues, individual$derivedParameters$values)
+    allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
   }
 
-  setParameterValuesByPathWithCondition(
+  ospsuite::setParameterValuesByPath(
     parameterPaths = allParamPaths, values = allParamValues, simulation = simulation,
-    condition = condition
+    units = allParamUnits, stopIfNotFound = FALSE
   )
 }
