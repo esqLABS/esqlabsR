@@ -14,6 +14,7 @@ install:
 environment:
   app_version: "3.0"
   USE_RTOOLS: true
+  R_VERSION: "4.1.0"
   R_ARCH: x64
   KEEP_VIGNETTES: true
   NOT_CRAN: true
