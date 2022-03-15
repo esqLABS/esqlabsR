@@ -97,23 +97,12 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
   }
 
   # Create the IndividualCharacteristics object
-  # Empty cells are read as `NA` and must be converted to `NULL` for numerical values
-  weight <- data$`Weight [kg]`[[rowIdx]]
-  if (is.na(weight)) {
-    weight <- NULL
-  }
-  height <- data$`Height [cm]`[[rowIdx]]
-  if (is.na(height)) {
-    height <- NULL
-  }
-  age <- data$`Age [year(s)]`[[rowIdx]]
-  if (is.na(age)) {
-    age <- NULL
-  }
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
-    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = weight,
-    height = height,
-    age = age
+    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]],
+    gender = data$Gender[[rowIdx]],
+    weight = data$`Weight [kg]`[[rowIdx]],
+    height = data$`Height [cm]`[[rowIdx]],
+    age = data$`Age [year(s)]`[[rowIdx]]
   )
 
   return(individualCharacteristics)
