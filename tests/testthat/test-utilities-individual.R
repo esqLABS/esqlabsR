@@ -49,4 +49,3 @@ test_that("It create IndividualCharacteristics when numerical values are empty",
   expect_equal(individualCharacteristics$population, "European_ICRP_2002")
   expect_equal(individualCharacteristics$gender, "MALE")
 })
-

@@ -201,23 +201,14 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
     dataMapping$yLim <- NULL
   }
 
+  # Create an empty plot
   # If axis labels have not been set by the user, generate defaults based
   # on Dimension and unit
-  xlab = dataMapping$xLab
-  ylab = dataMapping$yLab
-  if (is.null(xlab)){
-    xlab <- paste0(dataMapping$xDimension, " [", dataMapping$xUnit, "]")
-  }
-  if (is.null(ylab)){
-    ylab <- paste0(dataMapping$yDimension, " [", dataMapping$yUnit, "]")
-  }
-
-  # Create an empty plot
   plot(NULL, NULL,
     xlim = dataMapping$xLim,
     ylim = dataMapping$yLim,
-    xlab = xlab,
-    ylab = ylab,
+    xlab = dataMapping$xLab %||% paste0(dataMapping$xDimension, " [", dataMapping$xUnit, "]"),
+    ylab = dataMapping$yLab %||% paste0(dataMapping$yDimension, " [", dataMapping$yUnit, "]"),
     log = dataMapping$log,
     main = dataMapping$title,
     ...
