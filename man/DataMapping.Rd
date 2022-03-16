@@ -96,6 +96,7 @@ Supported plot types are listed in the enum \code{PlotTypes}. Default is "Indivi
 \item \href{#method-addModelOutputs}{\code{DataMapping$addModelOutputs()}}
 \item \href{#method-addXYSeries}{\code{DataMapping$addXYSeries()}}
 \item \href{#method-addXYData}{\code{DataMapping$addXYData()}}
+\item \href{#method-addDataSets}{\code{DataMapping$addDataSets()}}
 \item \href{#method-removeXYSeries}{\code{DataMapping$removeXYSeries()}}
 \item \href{#method-getXYSeriesGroupMap}{\code{DataMapping$getXYSeriesGroupMap()}}
 \item \href{#method-setXFactors}{\code{DataMapping$setXFactors()}}
@@ -246,6 +247,30 @@ output is not assigned to any group}
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-addDataSets"></a>}}
+\if{latex}{\out{\hypertarget{method-addDataSets}{}}}
+\subsection{Method \code{addDataSets()}}{
+Add \code{DataSet} object(s).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$addDataSets(dataSets, groups = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{dataSets}}{Object or a list of objects of the type \code{DataSet}}
+
+\item{\code{groups}}{A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{dataSets}
+output is not assigned to any group}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+The objects are transformed to \code{XYData} before adding.
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-removeXYSeries"></a>}}
