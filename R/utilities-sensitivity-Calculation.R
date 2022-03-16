@@ -276,23 +276,15 @@
   argName <- deparse(substitute(argVector))
 
   if (!isOfType(argVector, "character", nullAllowed = TRUE)) {
-    stop(
-      paste0("Only values of `character` type are allowed in `", argName, "` argument."),
-      call. = FALSE
-    )
+    stop(paste0("Only values of `character` type are allowed in `", argName, "` argument."))
   }
 
   if (!hasOnlyDistinctValues(argVector)) {
-    stop(
-      paste0("Only distinct values are allowed in `", argName, "` argument."),
-      call. = FALSE
-    )
+    stop(paste0("Only distinct values are allowed in `", argName, "` argument."))
   }
 
   if (any(nchar(argVector) == 0L)) {
-    stop(paste0("Values in `", argName, "` argument can't be an empty string."),
-      call. = FALSE
-    )
+    stop(paste0("Values in `", argName, "` argument can't be an empty string."))
   }
 }
 
