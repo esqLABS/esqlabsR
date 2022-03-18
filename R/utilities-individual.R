@@ -44,7 +44,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   output <- data.frame(unlist(containerPaths, use.names = FALSE), unlist(paramNames, use.names = FALSE), unlist(as.numeric(values), use.names = FALSE), unlist(units, use.names = FALSE))
   colnames(output) <- columnNames
 
-  writexl::write_xlsx(output, path = outputXLSPath, colNames = TRUE)
+  writexl::write_xlsx(output, path = outputXLSPath, col_names = TRUE)
 }
 
 #' Read individual characteristics from file
@@ -70,7 +70,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
                                                  individualId,
                                                  sheet = NULL,
                                                  nullIfNotFound = TRUE) {
-  validateIsString(XLSpath, individualId)
+  validateIsString(c(XLSpath, individualId))
 
   # If no sheet has been specified, read from the first sheet
   if (is.null(sheet)) {
@@ -81,6 +81,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
     "IndividualId", "Species", "Population", "Gender", "Weight [kg]",
     "Height [cm]", "Age [year(s)]"
   )
+
 
   data <- readExcel(path = XLSpath, sheet = sheet)
   if (!all(names(data) == columnNames)) {
@@ -97,7 +98,9 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
 
   # Create the IndividualCharacteristics object
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
-    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]], gender = data$Gender[[rowIdx]], weight = data$`Weight [kg]`[[rowIdx]],
+    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]],
+    gender = data$Gender[[rowIdx]],
+    weight = data$`Weight [kg]`[[rowIdx]],
     height = data$`Height [cm]`[[rowIdx]],
     age = data$`Age [year(s)]`[[rowIdx]]
   )
@@ -126,22 +129,21 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
 #' }
 applyIndividualParameters <- function(individualCharacteristics, simulation) {
   individual <- ospsuite::createIndividual(individualCharacteristics)
-  allParamPaths <- c(individual$distributedParameters$paths, individual$derivedParameters$paths)
-  allParamValues <- c(individual$distributedParameters$values, individual$derivedParameters$values)
 
-  condition <- function(p) {
-    TRUE
-  }
-  # For human species, only set parameters that do not override a formula
-  if (individualCharacteristics$species == ospsuite::Species$Human) {
-    condition <- function(path) {
-      task <- ospsuite:::getContainerTask()
-      !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
-    }
+  # For human species, only set distributed parameters
+  allParamPaths <- individual$distributedParameters$paths
+  allParamValues <- individual$distributedParameters$values
+  allParamUnits <- individual$distributedParameters$units
+
+  # For other species, also add derived parameters
+  if (individualCharacteristics$species != ospsuite::Species$Human) {
+    allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
+    allParamValues <- c(allParamValues, individual$derivedParameters$values)
+    allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
   }
 
-  setParameterValuesByPathWithCondition(
+  ospsuite::setParameterValuesByPath(
     parameterPaths = allParamPaths, values = allParamValues, simulation = simulation,
-    condition = condition
+    units = allParamUnits, stopIfNotFound = FALSE
   )
 }

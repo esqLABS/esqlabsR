@@ -63,6 +63,7 @@ readOSPSTimeValues <- function(dataConfiguration) {
       timeValues$yDimension <- yDim
       timeValues$yUnit <- yUnit
       timeValues$yErrorUnit <- yErrorUnit
+      timeValues$dataType <- XYDataTypes$Observed
       timeValues$setMetaData(name = "StudyId", value = group$`Study Id`[[1]])
       timeValues$setMetaData(name = "PatientId", value = group$`Study Id`[[1]])
       timeValues$setMetaData(name = "Organ", value = group$Organ[[1]])
@@ -84,7 +85,6 @@ readOSPSTimeValues <- function(dataConfiguration) {
       }
 
       timeValues$setMetaData(name = "GroupId", value = group$`Group Id`[[1]])
-      timeValues$setMetaData(name = "dataType", value = XYDataTypes$Observed)
 
       # Some ugly piece of code to create a tree-like structure.
       # Don't even want to comment

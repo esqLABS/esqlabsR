@@ -483,6 +483,43 @@ DataMapping <- R6::R6Class(
       }
     },
 
+    #' @description Add `DataSet` object(s).
+    #' @details The objects are transformed to `XYData` before adding.
+    #'
+    #' @param dataSets Object or a list of objects of the type `DataSet`
+    #' @param groups A string or a list of strings assigning the data set to a group. If an entry within the list is `NULL`, the corresponding data set is not assigned to any group. If `NULL` (default), all data sets are not assigned to any group. If provided, `groups` must have the same length as `dataSets`
+    #' output is not assigned to any group
+    #' @export
+    addDataSets = function(dataSets, groups = NULL) {
+      validateIsOfType(dataSets, "DataSet")
+      dataSets <- toList(dataSets)
+      xyDataList <- vector("list", length = length(dataSets))
+      for (idx in seq_along(dataSets)) {
+        dataSet <- dataSets[[idx]]
+        label <- dataSet$name
+        # Create a `XYData` object from `DataSet`
+        xyData <- XYData$new(xVals = dataSet$xValues, yVals = dataSet$yValues, yError = dataSet$yErrorValues, label = label)
+        xyData$dataType <- XYDataTypes$Observed
+        xyData$MW <- dataSet$molWeight
+        xyData$xDimension <- dataSet$xDimension
+        xyData$xUnit <- dataSet$xUnit
+        xyData$yDimension <- dataSet$yDimension
+        xyData$yUnit <- dataSet$yUnit
+        # In `DataSet`, yErrorUnit is `NULL` if no error is defined. In `XYData`,
+        # there is always a unit of the error (which is by default set to the base
+        # unit of the y dimension).
+        if (!is.null(dataSet$yErrorUnit)) {
+          xyData$yErrorUnit <- dataSet$yErrorUnit
+        }
+        # Set meta data
+        for (metaDataIdx in seq_along(dataSet$metaData)) {
+          xyData$setMetaData(names(dataSet$metaData)[[metaDataIdx]], dataSet$metaData[[metaDataIdx]])
+        }
+        xyDataList[[idx]] <- xyData
+      }
+      self$addXYData(xyDataList, groups)
+    },
+
     #' @param label label of the x-y values series to be removed
     #' @description
     #' Remove the observed data with given label from the DataMapping.

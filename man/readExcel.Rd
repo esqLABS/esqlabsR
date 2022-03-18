@@ -2,19 +2,21 @@
 % Please edit documentation in R/utilities-file.R
 \name{readExcel}
 \alias{readExcel}
-\title{Read XLSX files with suppressed warnings}
+\title{Read XLSX files using \code{readxl::read_excel} with suppressed warnings}
 \usage{
-readExcel(path, sheet = NULL)
+readExcel(path, sheet = NULL, ...)
 }
 \arguments{
 \item{path}{Full path of an XLS/XLSX file}
 
 \item{sheet}{Name or number of the sheet. If \code{NULL} (default), the first sheet of the
 file is used.}
+
+\item{...}{Any other parameters that can be passed to readxl::read_excel}
 }
 \value{
 A tibble with the contents of the excel sheet
 }
 \description{
-Read XLSX files with suppressed warnings
+Read XLSX files using \code{readxl::read_excel} with suppressed warnings
 }

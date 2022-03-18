@@ -33,7 +33,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     }
     for (i in seq_along(data[["Container Path"]])) {
       path <- paste(data[["Container Path"]][[i]], data[["Parameter Name"]][[i]], sep = "|")
-      value <- data[["Value"]][[i]]
+      value <- as.numeric(data[["Value"]][[i]])
       unit <- data[["Units"]][[i]]
 
       # Check if the entry with this path is already in the output paths.
@@ -49,6 +49,10 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
       }
     }
   }
+
+  # replace `NA` in units with `""` represeting the empty unit for
+  # the dimension `Dimensionless`
+  units <- tidyr::replace_na(data = units, replace = "")
 
   return(list(paths = paths, values = values, units = units))
 }
