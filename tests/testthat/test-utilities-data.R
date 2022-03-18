@@ -42,6 +42,14 @@ test_that("It converts a non numerics LLOQ to zero to NA", {
 ## context("calculateMeanDataSet")
 dataSet1 <- ospsuite::DataSet$new(name = "data1")
 dataSet2 <- ospsuite::DataSet$new(name = "data2")
+
+
+test_that("It returns an empty DataSet if calculating for empty DataSets", {
+  meanDataSet <- calculateMeanDataSet(dataSet1)
+  expect_equal(meanDataSet$xValues, numeric())
+  expect_equal(meanDataSet$yValues, numeric())
+})
+
 dataSet1$setValues(xValues = 1:5, yValues = 1:5)
 dataSet2$setValues(xValues = 2:6, yValues = 4:8)
 
@@ -149,19 +157,19 @@ test_that("It throws an error when molWeights of data sets are different and no 
   expect_error(calculateMeanDataSet(list(dataSet1, dataSet2)), messages$errorOutputMolWeightNeeded())
 })
 
-test_that("It can handle the treatLLOQ argument", {
+test_that("It can handle the lloqMode argument", {
   dataSet1 <- ospsuite::DataSet$new(name = "data1")
   dataSet2 <- ospsuite::DataSet$new(name = "data2")
   dataSet1$setValues(xValues = 1:5, yValues = 1:5)
   dataSet2$setValues(xValues = 2:6, yValues = 4:8)
   dataSet2$LLOQ <- 6
   # LLOQ/2 --> no difference
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), treatLLOQ = "LLOQ/2")
+  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), lloqMode = "LLOQ/2")
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 3:6, 8), tolerance = 1e-06)
   expect_equal(meanDataSet$yErrorValues, c(NaN, rep(sqrt(2), 4), NaN), tolerance = 1e-06)
   # LLOQ
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), treatLLOQ = "LLOQ")
+  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), lloqMode = "LLOQ")
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 4, 4.5, 5, 6, 8), tolerance = 1e-06)
   expect_equal(meanDataSet$yErrorValues, c(
@@ -169,7 +177,7 @@ test_that("It can handle the treatLLOQ argument", {
     sd(c(5, 7)), NaN
   ), tolerance = 1e-06)
   # ZERO
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), treatLLOQ = "ZERO")
+  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), lloqMode = "ZERO")
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 1, 1.5, 5, 6, 8), tolerance = 1e-06)
   expect_equal(meanDataSet$yErrorValues, c(
@@ -177,7 +185,7 @@ test_that("It can handle the treatLLOQ argument", {
     sd(c(5, 7)), NaN
   ), tolerance = 1e-06)
   # ignore
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), treatLLOQ = "ignore")
+  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), lloqMode = "ignore")
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 2, 3, 5, 6, 8), tolerance = 1e-06)
   expect_equal(meanDataSet$yErrorValues, c(NaN, NaN, NaN, sd(c(4, 6)), sd(c(5, 7)), NaN), tolerance = 1e-06)
