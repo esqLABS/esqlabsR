@@ -281,4 +281,4 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
 
 #' Possible entries for the `lloqMode` argument of `calculateMeans()`
 #' @export
-LLOQMode <- ospsuite::enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
+LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
