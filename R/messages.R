@@ -17,7 +17,7 @@ messages$errorCouldNotCompareParameters <- function(parameter1, parameter2, opti
 messages$errorEnumPutListMultipleKeys <- function() {
   paste0("Trying to put multiple keys, but only one key is allowed!")
 }
-messages$erroFileNotFound <- function(filePath, optionalMessage = NULL) {
+messages$errorFileNotFound <- function(filePath, optionalMessage = NULL) {
   paste0("File '", filePath, "' could not be found!")
 }
 messages$errorEsqlabsRSettingNotFound <- function(settingName) {
@@ -54,7 +54,12 @@ messages$warningValueWithinThresholdNotExisting <- function(value, threshold, op
 messages$warningParameterNotFound <- function(parameterPath, optionalMessage = NULL) {
   paste("Parameter with path `", parameterPath, "` does not exist in the simulation! ", optionalMessage)
 }
-
 messages$errorMultipleMetaDataEntries <- function(optionalMessage = NULL) {
   paste("Can only set a single meta data entry at once", optionalMessage)
+}
+messages$errorInvalidMeanMethod <- function() {
+  paste("Invalid value for argument `method`, supported values are `arithmetic` or `geometric`")
+}
+messages$errorOutputMolWeightNeeded <- function() {
+  paste("`outputMolWeight` can not be `NULL` when data sets have different molWeights")
 }

@@ -3,7 +3,7 @@
 #' @param filePath Path to the file
 validateFileExists <- function(filePath) {
   if (!file.exists(filePath)) {
-    stop(messages$erroFileNotFound(filePath))
+    stop(messages$errorFileNotFound(filePath))
   }
 }
 
