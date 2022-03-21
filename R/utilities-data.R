@@ -155,7 +155,7 @@ stringToNum <- function(string) {
 calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLOQMode$`LLOQ/2`,
                                  outputXunit = NULL, outputYunit = NULL, outputMolWeight = NULL) {
   validateIsOfType(dataSets, "DataSet")
-  if (!method %in% c("arithmetic", "geometric")){
+  if (!method %in% c("arithmetic", "geometric")) {
     stop(messages$errorInvalidMeanMethod())
   }
   validateEnumValue(lloqMode, LLOQMode)
@@ -163,7 +163,7 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   meanDataSet <- ospsuite::DataSet$new(name = "Mean")
   df <- ospsuite::dataSetToDataFrame(dataSets)
   # If df is empty, return an empty mean data set
-  if (isEmpty(df)){
+  if (isEmpty(df)) {
     meanDataSet$addMetaData(name = "Subject ID", value = "mean")
     return(meanDataSet)
   }
@@ -172,15 +172,13 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   # molWeight is specified by user - use as specified
   if (!is.null(outputMolWeight)) {
     meanDataSet$molWeight <- outputMolWeight
-  } else
+  } else if (length(molWeights) > 1) {
     # molWeight is not specified by user and molWeights of data sets differ -
     # error
-    if (length(molWeights) > 1) {
     stop(messages$errorOutputMolWeightNeeded())
-  } else
+  } else if (!is.na(molWeights)) {
     # molWeight is not specified by user and all molWeights are equal and not NULL -
     # take this value
-    if (!is.na(molWeights)) {
     meanDataSet$molWeight <- molWeights
   }
 
@@ -206,7 +204,9 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   ind <- !is.na(df$lloq) & df$yValues < df$lloq
   switch(lloqMode,
     # nothing to do for LLOQ/2
-    "LLOQ/2" = {return},
+    "LLOQ/2" = {
+      return
+    },
     # set all data points with lloq that are smaller than it to value of lloq
     "LLOQ" = df[ind, "yValues"] <- df[ind, "lloq"],
     # set all data points with lloq to 0
