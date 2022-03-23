@@ -128,6 +128,7 @@ getSteadyState <- function(quantitiesPaths = NULL,
     }
     outputMap[[simId]] <- list(paths = quantitiesPathsMap[[simId]][indices], values = endValues[indices])
   }
+
   return(outputMap)
 }
 
@@ -242,6 +243,11 @@ exportSteadyStateToXLS <- function(simulation,
   if (length(parameterInitVals) > 0) {
     colnames(parameterInitVals) <- c("Container Path", "Parameter Name", "Value", "Units")
   }
+
   # Write the results into an excel file.
-  writexl::write_xlsx(list("Molecules" = speciesInitVals, "Parameters" = parameterInitVals), path = resultsXLSPath, colNames = TRUE)
+  writexl::write_xlsx(
+    list("Molecules" = speciesInitVals, "Parameters" = parameterInitVals),
+    path = resultsXLSPath,
+    col_names = TRUE
+  )
 }
