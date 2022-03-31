@@ -1,5 +1,13 @@
 # esqlabsR 3.0.0.9000
 
+NEW FUNCTIONS
+
+- To carry out and visualize sensitivity analysis:
+
+* `sensitivityCalculation()`
+* `sensitivitySpiderPlot()`
+* `sensivitityTimeProfiles()`
+
 BREAKING CHANGES
 
 - The package gains a new dependency: [`{ospsuite.utils}`](https://www.open-systems-pharmacology.org/OSPSuite.RUtils/).
@@ -7,7 +15,6 @@ BREAKING CHANGES
 # esqlabsR 2.0.0
 
 - Maintenance and bug fixes.
-
 
 # esqlabsR 1.0.0
 

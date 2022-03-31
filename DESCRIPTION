@@ -10,21 +10,27 @@ License: GPL-2
 URL: https://github.com/esqLABS/esqlabsR
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
-    ospsuite (>= 10.0)
+    ospsuite (>= 11.0)
 Imports:
+    colorspace,
+    dplyr,
+    ggplot2,
     hash,
-    ospsuite.utils,
+    ospsuite.utils (>= 1.2.0),
+    purrr,
     rClr,
     readxl,
     shiny,
     shinyjs,
+    tidyr,
     tools,
     vctrs,
     writexl
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    vdiffr (>= 1.0.0)
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3
