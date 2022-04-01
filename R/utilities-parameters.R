@@ -21,9 +21,8 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     sheets <- c(1)
   }
 
-  paths <- c()
-  values <- c()
-  units <- c()
+  pathsValuesHash <- hash::hash()
+  pathsUnitsHash <- hash::hash()
 
   for (sheet in sheets) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
@@ -31,30 +30,24 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
     }
-    for (i in seq_along(data[["Container Path"]])) {
-      path <- paste(data[["Container Path"]][[i]], data[["Parameter Name"]][[i]], sep = "|")
-      value <- as.numeric(data[["Value"]][[i]])
-      unit <- data[["Units"]][[i]]
 
-      # Check if the entry with this path is already in the output paths.
-      # If yes, overwrite the value, otherwise append a new entry.
-      idx <- match(path, paths)
-      if (is.na(idx)) {
-        paths <- c(paths, path)
-        values <- c(values, value)
-        units <- c(units, unit)
-      } else {
-        values[[idx]] <- value
-        units[[idx]] <- unit
-      }
-    }
+    fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]],
+                       sep = "|")
+    pathsValuesHash[fullPaths] <- as.numeric(data[["Value"]])
+    pathsUnitsHash[fullPaths] <- data[["Units"]]
   }
 
+  paths <- hash::names.hash(pathsValuesHash)
   # replace `NA` in units with `""` represeting the empty unit for
   # the dimension `Dimensionless`
-  units <- tidyr::replace_na(data = units, replace = "")
+  units <- tidyr::replace_na(data = hash::values(pathsUnitsHash, keys = paths,
+                                                 USE.NAMES = FALSE), replace = "")
 
-  return(list(paths = paths, values = values, units = units))
+  returnVal <- list(paths = paths, values = hash::values(pathsValuesHash, keys = paths
+                                                         , USE.NAMES = FALSE), units = units)
+  hash::clear(pathsValuesHash)
+  hash::clear(pathsUnitsHash)
+  return(returnVal)
 }
 
 #' Check if two parameters are equal is respect to certain properties. The parameters are not equal if:
