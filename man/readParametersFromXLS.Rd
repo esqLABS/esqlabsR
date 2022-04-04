@@ -16,7 +16,7 @@ parameters. Multiple sheets can be processed. If no sheets are provided,
 the first one in the Excel file is used.}
 }
 \value{
-A list containing lists 'paths' with the full paths to the
+A list containing vectors 'paths' with the full paths to the
 parameters, 'values' the values of the parameters, and 'units' with the
 units the values are in.
 }

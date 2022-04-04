@@ -7,13 +7,12 @@
 #'   parameters. Multiple sheets can be processed. If no sheets are provided,
 #'   the first one in the Excel file is used.
 #'
-#' @return A list containing lists 'paths' with the full paths to the
+#' @return A list containing vectors 'paths' with the full paths to the
 #'   parameters, 'values' the values of the parameters, and 'units' with the
 #'   units the values are in.
 #' @export
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
-
   validateIsString(paramsXLSpath)
   validateIsString(sheets, nullAllowed = TRUE)
 
@@ -23,28 +22,66 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 
   pathsValuesHash <- hash::hash()
   pathsUnitsHash <- hash::hash()
-
   for (sheet in sheets) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
-
     if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
     }
 
     fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]],
-                       sep = "|")
+      sep = "|"
+    )
     pathsValuesHash[fullPaths] <- as.numeric(data[["Value"]])
-    pathsUnitsHash[fullPaths] <- data[["Units"]]
+    # replace `NA` in units with `""` represeting the empty unit for
+    # the dimension `Dimensionless`
+    pathsUnitsHash[fullPaths] <- tidyr::replace_na(data = data[["Units"]], replace = "")
   }
 
-  paths <- hash::names.hash(pathsValuesHash)
-  # replace `NA` in units with `""` represeting the empty unit for
-  # the dimension `Dimensionless`
-  units <- tidyr::replace_na(data = hash::values(pathsUnitsHash, keys = paths,
-                                                 USE.NAMES = FALSE), replace = "")
+  return(.parametersHashToList(pathsValuesHash, pathsUnitsHash))
+}
 
-  returnVal <- list(paths = paths, values = hash::values(pathsValuesHash, keys = paths
-                                                         , USE.NAMES = FALSE), units = units)
+extendParameterStructure <- function(parameters, newParameters) {
+  if (!identical(names(parameters), c("paths", "values", "units")) || !identical(names(newParameters), c("paths", "values", "units"))) {
+    stop(messages$wrongParametersStructure())
+  }
+
+  # If the parameters structure is empty, return new parameters
+  if (ospsuite.utils::isEmpty(parameters$paths)) {
+    return(newParameters)
+  }
+  # If the new parameters structure is empty, return parameters
+  if (ospsuite.utils::isEmpty(newParameters$paths)) {
+    return(parameters)
+  }
+
+  # Conver the input parameter structure into hashs.
+  pathsValuesHash <- hash::hash(parameters$paths, parameters$values)
+  pathsUnitsHash <- hash::hash(parameters$paths, parameters$units)
+
+  # Add new entries resp. update with new values
+  pathsValuesHash[newParameters$paths] <- newParameters$values
+  pathsUnitsHash[newParameters$paths] <- newParameters$units
+
+  return(.parametersHashToList(pathsValuesHash, pathsUnitsHash))
+}
+
+#' Convert parameters hash structure to list structure
+#'
+#' @param pathsValuesHash Hash with parameter paths as keys and numerical values
+#' as values
+#' @param pathsUnitsHash Hash with parameter paths as keys and units as values
+#'
+#' @noRd
+#'
+#' @return A named list with vectors `paths`, `values`, and `units`
+#' @internal
+.parametersHashToList <- function(pathsValuesHash, pathsUnitsHash) {
+  paths <- hash::names.hash(pathsValuesHash)
+  returnVal <- list(
+    paths = paths,
+    values = hash::values(pathsValuesHash, keys = paths, USE.NAMES = FALSE),
+    units = hash::values(pathsUnitsHash, keys = paths, USE.NAMES = FALSE)
+  )
   hash::clear(pathsValuesHash)
   hash::clear(pathsUnitsHash)
   return(returnVal)
