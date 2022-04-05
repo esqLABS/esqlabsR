@@ -248,14 +248,14 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   # calculate means and standard deviations according to chosen method
   switch(method,
     arithmetic = {
-      yMeans <- tapply(df[, "yValues"], df[, "xValues"], mean)
-      yError <- tapply(df[, "yValues"], df[, "xValues"], sd)
+      yMeans <- tapply(df[["yValues"]], df[["xValues"]], mean)
+      yError <- tapply(df[["yValues"]], df[["xValues"]], sd)
       meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
       meanDataSet$yErrorType <- ospsuite::DataErrorType$ArithmeticStdDev
     },
     geometric = {
-      yMeans <- tapply(df[, "yValues"], df[, "xValues"], geomean)
-      yError <- tapply(df[, "yValues"], df[, "xValues"], geosd)
+      yMeans <- tapply(df[["yValues"]], df[["xValues"]], geomean)
+      yError <- tapply(df[["yValues"]], df[["xValues"]], geosd)
       meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
       meanDataSet$yErrorType <- ospsuite::DataErrorType$GeometricStdDev
     }
