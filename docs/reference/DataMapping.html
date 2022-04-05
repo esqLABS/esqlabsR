@@ -173,6 +173,7 @@ Supported plot types are listed in the enum <code>PlotTypes</code>. Default is "
 <li><p><a href="#method-addModelOutputs"><code>DataMapping$addModelOutputs()</code></a></p></li>
 <li><p><a href="#method-addXYSeries"><code>DataMapping$addXYSeries()</code></a></p></li>
 <li><p><a href="#method-addXYData"><code>DataMapping$addXYData()</code></a></p></li>
+<li><p><a href="#method-addDataSets"><code>DataMapping$addDataSets()</code></a></p></li>
 <li><p><a href="#method-removeXYSeries"><code>DataMapping$removeXYSeries()</code></a></p></li>
 <li><p><a href="#method-getXYSeriesGroupMap"><code>DataMapping$getXYSeriesGroupMap()</code></a></p></li>
 <li><p><a href="#method-setXFactors"><code>DataMapping$setXFactors()</code></a></p></li>
@@ -325,15 +326,41 @@ output is not assigned to any group</p></dd>
 </dl><p></p></div>
 </div>
 
-</div><p></p><hr><a id="method-removeXYSeries"></a><div class="section">
-<h3 id="method-removexyseries-">Method <code>removeXYSeries()</code><a class="anchor" aria-label="anchor" href="#method-removexyseries-"></a></h3>
-<p>Remove the observed data with given label from the DataMapping.</p><div class="section">
+</div><p></p><hr><a id="method-addDataSets"></a><div class="section">
+<h3 id="method-adddatasets-">Method <code>addDataSets()</code><a class="anchor" aria-label="anchor" href="#method-adddatasets-"></a></h3>
+<p>Add <code>DataSet</code> object(s).</p><div class="section">
 <h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">removeXYSeries</span><span class="op">(</span><span class="va">label</span><span class="op">)</span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">dataSets</span>, groups <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>dataSets</code></dt>
+<dd><p>Object or a list of objects of the type <code>DataSet</code></p></dd>
+
+
+<dt><code>groups</code></dt>
+<dd><p>A string or a list of strings assigning the data set to a group. If an entry within the list is <code>NULL</code>, the corresponding data set is not assigned to any group. If <code>NULL</code> (default), all data sets are not assigned to any group. If provided, <code>groups</code> must have the same length as <code>dataSets</code>
+output is not assigned to any group</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="details-1">Details<a class="anchor" aria-label="anchor" href="#details-1"></a></h4>
+<p>The objects are transformed to <code>XYData</code> before adding.</p>
+</div>
+
+
+</div><p></p><hr><a id="method-removeXYSeries"></a><div class="section">
+<h3 id="method-removexyseries-">Method <code>removeXYSeries()</code><a class="anchor" aria-label="anchor" href="#method-removexyseries-"></a></h3>
+<p>Remove the observed data with given label from the DataMapping.</p><div class="section">
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">removeXYSeries</span><span class="op">(</span><span class="va">label</span><span class="op">)</span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>label</code></dt>
 <dd><p>label of the x-y values series to be removed</p></dd>
 
@@ -344,12 +371,12 @@ output is not assigned to any group</p></dd>
 </div><p></p><hr><a id="method-getXYSeriesGroupMap"></a><div class="section">
 <h3 id="method-getxyseriesgroupmap-">Method <code>getXYSeriesGroupMap()</code><a class="anchor" aria-label="anchor" href="#method-getxyseriesgroupmap-"></a></h3>
 <p>Return group mapping of labels.</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">getXYSeriesGroupMap</span><span class="op">(</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="details-1">Details<a class="anchor" aria-label="anchor" href="#details-1"></a></h4>
+<h4 id="details-2">Details<a class="anchor" aria-label="anchor" href="#details-2"></a></h4>
 <p>Returns a named list with keys being labels of xySeries and values group names. If value is <code>NA</code>, no group is defined for this label.</p>
 </div>
 
@@ -361,12 +388,12 @@ output is not assigned to any group</p></dd>
 </div><p></p><hr><a id="method-setXFactors"></a><div class="section">
 <h3 id="method-setxfactors-">Method <code>setXFactors()</code><a class="anchor" aria-label="anchor" href="#method-setxfactors-"></a></h3>
 <p>Set the X-factors of x-y values by labels.</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">setXFactors</span><span class="op">(</span><span class="va">labels</span>, <span class="va">xFactors</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
+<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>labels</code></dt>
 <dd><p>A list of labels of <code>XYData</code>.</p></dd>
 
@@ -378,7 +405,7 @@ output is not assigned to any group</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="details-2">Details<a class="anchor" aria-label="anchor" href="#details-2"></a></h4>
+<h4 id="details-3">Details<a class="anchor" aria-label="anchor" href="#details-3"></a></h4>
 <p>If the data set with a label is not present in the mapping, the label is ignored.</p>
 </div>
 
@@ -386,12 +413,12 @@ output is not assigned to any group</p></dd>
 </div><p></p><hr><a id="method-setYFactors"></a><div class="section">
 <h3 id="method-setyfactors-">Method <code>setYFactors()</code><a class="anchor" aria-label="anchor" href="#method-setyfactors-"></a></h3>
 <p>Set the y-factors of x-y values by labels.</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">setYFactors</span><span class="op">(</span><span class="va">labels</span>, <span class="va">yFactors</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>labels</code></dt>
 <dd><p>A list of label of <code>XYData</code></p></dd>
 
@@ -403,7 +430,7 @@ output is not assigned to any group</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="details-3">Details<a class="anchor" aria-label="anchor" href="#details-3"></a></h4>
+<h4 id="details-4">Details<a class="anchor" aria-label="anchor" href="#details-4"></a></h4>
 <p>If the data set with a label is not present in the mapping, the label is ignored</p>
 </div>
 
@@ -411,12 +438,12 @@ output is not assigned to any group</p></dd>
 </div><p></p><hr><a id="method-setXOffsets"></a><div class="section">
 <h3 id="method-setxoffsets-">Method <code>setXOffsets()</code><a class="anchor" aria-label="anchor" href="#method-setxoffsets-"></a></h3>
 <p>Set the X-offset of x-y values by labels.</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">setXOffsets</span><span class="op">(</span><span class="va">labels</span>, <span class="va">xOffsets</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>labels</code></dt>
 <dd><p>A list of label of <code>XYData</code></p></dd>
 
@@ -428,7 +455,7 @@ output is not assigned to any group</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="details-4">Details<a class="anchor" aria-label="anchor" href="#details-4"></a></h4>
+<h4 id="details-5">Details<a class="anchor" aria-label="anchor" href="#details-5"></a></h4>
 <p>If the data set with a label is not present in the mapping, the label is ignored</p>
 </div>
 
@@ -436,12 +463,12 @@ output is not assigned to any group</p></dd>
 </div><p></p><hr><a id="method-setYOffsets"></a><div class="section">
 <h3 id="method-setyoffsets-">Method <code>setYOffsets()</code><a class="anchor" aria-label="anchor" href="#method-setyoffsets-"></a></h3>
 <p>Set the Y-offset of x-y values by labels.</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">setYOffsets</span><span class="op">(</span><span class="va">labels</span>, <span class="va">yOffsets</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>labels</code></dt>
 <dd><p>A list of label of <code>XYData</code></p></dd>
 
@@ -453,7 +480,7 @@ output is not assigned to any group</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="details-5">Details<a class="anchor" aria-label="anchor" href="#details-5"></a></h4>
+<h4 id="details-6">Details<a class="anchor" aria-label="anchor" href="#details-6"></a></h4>
 <p>If the data set with a label is not present in the mapping, the label is ignored</p>
 </div>
 
@@ -461,12 +488,12 @@ output is not assigned to any group</p></dd>
 </div><p></p><hr><a id="method-setTypes"></a><div class="section">
 <h3 id="method-settypes-">Method <code>setTypes()</code><a class="anchor" aria-label="anchor" href="#method-settypes-"></a></h3>
 <p>Set the type(s) of the data to be plotted, e.g. line, points, etc.</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">setTypes</span><span class="op">(</span><span class="va">labels</span>, <span class="va">types</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>labels</code></dt>
 <dd><p>A list of label of <code>XYData</code></p></dd>
 
@@ -478,7 +505,7 @@ output is not assigned to any group</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="details-6">Details<a class="anchor" aria-label="anchor" href="#details-6"></a></h4>
+<h4 id="details-7">Details<a class="anchor" aria-label="anchor" href="#details-7"></a></h4>
 <p>If no data set for the provided label is present in the mapping, the corresponding value is ignored.
 No check is performed whether a valid type is provided.</p>
 </div>
@@ -487,12 +514,12 @@ No check is performed whether a valid type is provided.</p>
 </div><p></p><hr><a id="method-setLinetypes"></a><div class="section">
 <h3 id="method-setlinetypes-">Method <code>setLinetypes()</code><a class="anchor" aria-label="anchor" href="#method-setlinetypes-"></a></h3>
 <p>Set the line type(s) property of the data to be plotted. Line types as accepted by the base <code>plot</code> lty argument.</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">setLinetypes</span><span class="op">(</span><span class="va">labels</span>, <span class="va">linetypes</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-9">Arguments<a class="anchor" aria-label="anchor" href="#arguments-9"></a></h4>
+<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>labels</code></dt>
 <dd><p>A list of label of <code>XYData</code></p></dd>
 
@@ -504,7 +531,7 @@ No check is performed whether a valid type is provided.</p>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="details-7">Details<a class="anchor" aria-label="anchor" href="#details-7"></a></h4>
+<h4 id="details-8">Details<a class="anchor" aria-label="anchor" href="#details-8"></a></h4>
 <p>If no data set for the provided label is present in the mapping, the corresponding value is ignored.
 No check is performed whether a valid type is provided.Line types as accepted by the base <code>plot</code> lty argument.
 Line types can be provided either as numeric or as character vectors (e.g. "dashed").</p>
@@ -514,12 +541,12 @@ Line types can be provided either as numeric or as character vectors (e.g. "dash
 </div><p></p><hr><a id="method-setColors"></a><div class="section">
 <h3 id="method-setcolors-">Method <code>setColors()</code><a class="anchor" aria-label="anchor" href="#method-setcolors-"></a></h3>
 <p>Set the colors of the data to be plotted</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">setColors</span><span class="op">(</span><span class="va">labels</span>, <span class="va">colors</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-10">Arguments<a class="anchor" aria-label="anchor" href="#arguments-10"></a></h4>
+<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>labels</code></dt>
 <dd><p>A list of label of <code>XYData</code></p></dd>
 
@@ -532,7 +559,7 @@ If the value is <code>NULL</code>, the color is automatically selected when plot
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="details-8">Details<a class="anchor" aria-label="anchor" href="#details-8"></a></h4>
+<h4 id="details-9">Details<a class="anchor" aria-label="anchor" href="#details-9"></a></h4>
 <p>If the data set with a label is not present in the mapping, the label is ignored</p>
 </div>
 
@@ -540,12 +567,12 @@ If the value is <code>NULL</code>, the color is automatically selected when plot
 </div><p></p><hr><a id="method-setConfiguration"></a><div class="section">
 <h3 id="method-setconfiguration-">Method <code>setConfiguration()</code><a class="anchor" aria-label="anchor" href="#method-setconfiguration-"></a></h3>
 <p>Apply settings stored in a <code>DataMappingConfiguration</code></p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">setConfiguration</span><span class="op">(</span><span class="va">dataMappingConfiguration</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
+<h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>dataMappingConfiguration</code></dt>
 <dd><p>An object of type <code>DataMappingConfiguration</code></p></dd>
 
@@ -553,7 +580,7 @@ If the value is <code>NULL</code>, the color is automatically selected when plot
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="details-9">Details<a class="anchor" aria-label="anchor" href="#details-9"></a></h4>
+<h4 id="details-10">Details<a class="anchor" aria-label="anchor" href="#details-10"></a></h4>
 <p>If the data set with a label is not present in the mapping, the label is ignored
 Equivalent to calling <code>setXFactors</code>, <code>setYFactors</code>, <code>setXOffsets</code>,
 <code>setYOffsets</code>, <code>setTypes</code>, and <code>setColors</code>.</p>
@@ -563,12 +590,12 @@ Equivalent to calling <code>setXFactors</code>, <code>setYFactors</code>, <code>
 </div><p></p><hr><a id="method-plot"></a><div class="section">
 <h3 id="method-plot-">Method <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code><a class="anchor" aria-label="anchor" href="#method-plot-"></a></h3>
 <p>Plot the data stored in this <code>DataMapping</code>.</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-12">Arguments<a class="anchor" aria-label="anchor" href="#arguments-12"></a></h4>
+<h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>...</code></dt>
 <dd><p>Any parameter that can be interpreted by the default <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> function</p></dd>
 
@@ -579,12 +606,12 @@ Equivalent to calling <code>setXFactors</code>, <code>setYFactors</code>, <code>
 </div><p></p><hr><a id="method-print"></a><div class="section">
 <h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
 <p>Print the object to the console</p><div class="section">
-<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">DataMapping</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-13">Arguments<a class="anchor" aria-label="anchor" href="#arguments-13"></a></h4>
+<h4 id="arguments-14">Arguments<a class="anchor" aria-label="anchor" href="#arguments-14"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>...</code></dt>
 <dd><p>Rest arguments.</p></dd>
 
@@ -617,7 +644,11 @@ Equivalent to calling <code>setXFactors</code>, <code>setYFactors</code>, <code>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p><p>Developed by Pavel Balazki.</p>
+  <p></p><p>Developed by
+<a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>,
+Pavel Balazki, Johanna Eitel,
+<a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet
+Patil</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
