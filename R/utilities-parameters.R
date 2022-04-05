@@ -40,6 +40,22 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }
 
+#' Extend parameters structure with new entries
+#'
+#' @param parameters A list containing vectors 'paths' with the full paths to the
+#'   parameters, 'values' the values of the parameters, and 'units' with the
+#'   units the values are in. This list will be extended.
+#' @param newParameters A list containing vectors 'paths' with the full paths to the
+#'   parameters, 'values' the values of the parameters, and 'units' with the
+#'   units the values are in. Entries from this list will extend or overwrite
+#'   the list `parameters`
+#'
+#'   @details This function adds new parameter entries from `newParameters` to
+#'  `parameters`. If an entry with the same path is already present in `parameters`,
+#'  its value and unit will be overwritten with the values from `newParameters`.
+#'
+#' @return Updated list of parameter patsh, values, and units
+#' @export
 extendParameterStructure <- function(parameters, newParameters) {
   if (!identical(names(parameters), c("paths", "values", "units")) || !identical(names(newParameters), c("paths", "values", "units"))) {
     stop(messages$wrongParametersStructure())
@@ -67,7 +83,7 @@ extendParameterStructure <- function(parameters, newParameters) {
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }
 
-#' Convert parameters hash structure to list structure
+#' Convert parameters vector structure to list structure
 #'
 #' @param pathsValuesVector Named vector of numerical parameter values
 #' with parameter paths as names
