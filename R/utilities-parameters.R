@@ -20,8 +20,8 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     sheets <- c(1)
   }
 
-  pathsValuesHash <- hash::hash()
-  pathsUnitsHash <- hash::hash()
+  pathsValuesVector <- vector(mode = "numeric")
+  pathsUnitsVector <- vector(mode = "character")
   for (sheet in sheets) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
     if (!all(columnNames %in% names(data))) {
@@ -31,13 +31,13 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]],
       sep = "|"
     )
-    pathsValuesHash[fullPaths] <- as.numeric(data[["Value"]])
+    pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
     # replace `NA` in units with `""` represeting the empty unit for
     # the dimension `Dimensionless`
-    pathsUnitsHash[fullPaths] <- tidyr::replace_na(data = data[["Units"]], replace = "")
+    pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = data[["Units"]], replace = "")
   }
 
-  return(.parametersHashToList(pathsValuesHash, pathsUnitsHash))
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }
 
 extendParameterStructure <- function(parameters, newParameters) {
@@ -55,35 +55,36 @@ extendParameterStructure <- function(parameters, newParameters) {
   }
 
   # Conver the input parameter structure into hashs.
-  pathsValuesHash <- hash::hash(parameters$paths, parameters$values)
-  pathsUnitsHash <- hash::hash(parameters$paths, parameters$units)
+  pathsValuesVector <- parameters$values
+  names(pathsValuesVector) <- parameters$paths
+  pathsUnitsVector <- parameters$units
+  names(pathsUnitsVector) <- parameters$paths
 
   # Add new entries resp. update with new values
-  pathsValuesHash[newParameters$paths] <- newParameters$values
-  pathsUnitsHash[newParameters$paths] <- newParameters$units
+  pathsValuesVector[newParameters$paths] <- newParameters$values
+  pathsUnitsVector[newParameters$paths] <- newParameters$units
 
-  return(.parametersHashToList(pathsValuesHash, pathsUnitsHash))
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }
 
 #' Convert parameters hash structure to list structure
 #'
-#' @param pathsValuesHash Hash with parameter paths as keys and numerical values
-#' as values
-#' @param pathsUnitsHash Hash with parameter paths as keys and units as values
+#' @param pathsValuesVector Named vector of numerical parameter values
+#' with parameter paths as names
+#' @param pathsUnitsVector Named vector of parameter values units with parameter
+#' paths as names
 #'
 #' @noRd
 #'
 #' @return A named list with vectors `paths`, `values`, and `units`
 #' @internal
-.parametersHashToList <- function(pathsValuesHash, pathsUnitsHash) {
-  paths <- hash::names.hash(pathsValuesHash)
+.parametersVectorToList <- function(pathsValuesVector, pathsUnitsVector) {
+  paths <- names(pathsValuesVector)
   returnVal <- list(
     paths = paths,
-    values = hash::values(pathsValuesHash, keys = paths, USE.NAMES = FALSE),
-    units = hash::values(pathsUnitsHash, keys = paths, USE.NAMES = FALSE)
+    values = unname(pathsValuesVector[paths]),
+    units = unname(pathsUnitsVector[paths])
   )
-  hash::clear(pathsValuesHash)
-  hash::clear(pathsUnitsHash)
   return(returnVal)
 }
 
