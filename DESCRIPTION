@@ -2,7 +2,12 @@ Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
 Version: 3.0.0.9000
-Author: esqLABS GmbH
+Authors@R: 
+    c(person("esqLABS GmbH", role = c("cph", "fnd")),
+      person("Pavel", "Balazki", role = "aut"),
+      person("Johanna", "Eitel", role = "aut"),
+      person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")))
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects
     within 'esqLABS' organization.
