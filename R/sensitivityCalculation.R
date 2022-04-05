@@ -22,10 +22,7 @@
 #'   spreadsheet.
 #'
 #' @examples
-#'
-#' # for reproducibility
-#' set.seed(123)
-#'
+#' \dontrun{
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 #' simulation <- loadSimulation(simPath)
 #' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -41,6 +38,7 @@
 #'   outputPaths = outputPaths,
 #'   parameterPaths = parameterPaths
 #' )
+#' }
 #' @export
 sensitivityCalculation <- function(simulation,
                                    outputPaths,

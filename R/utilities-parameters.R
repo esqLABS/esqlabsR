@@ -7,13 +7,12 @@
 #'   parameters. Multiple sheets can be processed. If no sheets are provided,
 #'   the first one in the Excel file is used.
 #'
-#' @return A list containing lists 'paths' with the full paths to the
+#' @return A list containing vectors 'paths' with the full paths to the
 #'   parameters, 'values' the values of the parameters, and 'units' with the
 #'   units the values are in.
 #' @export
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
-
   validateIsString(paramsXLSpath)
   validateIsString(sheets, nullAllowed = TRUE)
 
@@ -21,40 +20,72 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     sheets <- c(1)
   }
 
-  paths <- c()
-  values <- c()
-  units <- c()
-
+  pathsValuesVector <- vector(mode = "numeric")
+  pathsUnitsVector <- vector(mode = "character")
   for (sheet in sheets) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
-
     if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
     }
-    for (i in seq_along(data[["Container Path"]])) {
-      path <- paste(data[["Container Path"]][[i]], data[["Parameter Name"]][[i]], sep = "|")
-      value <- as.numeric(data[["Value"]][[i]])
-      unit <- data[["Units"]][[i]]
 
-      # Check if the entry with this path is already in the output paths.
-      # If yes, overwrite the value, otherwise append a new entry.
-      idx <- match(path, paths)
-      if (is.na(idx)) {
-        paths <- c(paths, path)
-        values <- c(values, value)
-        units <- c(units, unit)
-      } else {
-        values[[idx]] <- value
-        units[[idx]] <- unit
-      }
-    }
+    fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]],
+      sep = "|"
+    )
+    pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
+    # replace `NA` in units with `""` represeting the empty unit for
+    # the dimension `Dimensionless`
+    pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = data[["Units"]], replace = "")
   }
 
-  # replace `NA` in units with `""` represeting the empty unit for
-  # the dimension `Dimensionless`
-  units <- tidyr::replace_na(data = units, replace = "")
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
+}
 
-  return(list(paths = paths, values = values, units = units))
+extendParameterStructure <- function(parameters, newParameters) {
+  if (!identical(names(parameters), c("paths", "values", "units")) || !identical(names(newParameters), c("paths", "values", "units"))) {
+    stop(messages$wrongParametersStructure())
+  }
+
+  # If the parameters structure is empty, return new parameters
+  if (ospsuite.utils::isEmpty(parameters$paths)) {
+    return(newParameters)
+  }
+  # If the new parameters structure is empty, return parameters
+  if (ospsuite.utils::isEmpty(newParameters$paths)) {
+    return(parameters)
+  }
+
+  # Conver the input parameter structure into hashs.
+  pathsValuesVector <- parameters$values
+  names(pathsValuesVector) <- parameters$paths
+  pathsUnitsVector <- parameters$units
+  names(pathsUnitsVector) <- parameters$paths
+
+  # Add new entries resp. update with new values
+  pathsValuesVector[newParameters$paths] <- newParameters$values
+  pathsUnitsVector[newParameters$paths] <- newParameters$units
+
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
+}
+
+#' Convert parameters hash structure to list structure
+#'
+#' @param pathsValuesVector Named vector of numerical parameter values
+#' with parameter paths as names
+#' @param pathsUnitsVector Named vector of parameter values units with parameter
+#' paths as names
+#'
+#' @noRd
+#'
+#' @return A named list with vectors `paths`, `values`, and `units`
+#' @internal
+.parametersVectorToList <- function(pathsValuesVector, pathsUnitsVector) {
+  paths <- names(pathsValuesVector)
+  returnVal <- list(
+    paths = paths,
+    values = unname(pathsValuesVector[paths]),
+    units = unname(pathsUnitsVector[paths])
+  )
+  return(returnVal)
 }
 
 #' Check if two parameters are equal is respect to certain properties. The parameters are not equal if:

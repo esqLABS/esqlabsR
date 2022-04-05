@@ -63,3 +63,10 @@ messages$errorInvalidMeanMethod <- function() {
 messages$errorOutputMolWeightNeeded <- function() {
   paste("`outputMolWeight` can not be `NULL` when data sets have different molWeights")
 }
+
+messages$wrongParametersStructure <- function() {
+  "Wrong parameters structure provided. Expected is a named list with three vectors
+  `paths` representing full parameter paths, `values` with numerical values of the
+  parameters, and `units' representing the units the values are in. All three
+  vectors must have the same length"
+}

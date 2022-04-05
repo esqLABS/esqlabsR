@@ -9,10 +9,7 @@
 #' @import colorspace
 #'
 #' @examples
-#'
-#' # for reproducibility
-#' set.seed(123)
-#'
+#' \dontrun{
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 #' simulation <- loadSimulation(simPath)
 #' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -41,7 +38,7 @@
 #'     width = 12
 #'   )
 #' }
-#'
+#' }
 #' @export
 sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     xAxisLog = FALSE,
