@@ -94,9 +94,8 @@ For other species, all parameters returned by <code>createIndividual</code> are 
 <span class="r-in">  species <span class="op">=</span> <span class="va">Species</span><span class="op">$</span><span class="va">Human</span>, population <span class="op">=</span> <span class="va">HumanPopulation</span><span class="op">$</span><span class="va">European_ICRP_2002</span>,</span>
 <span class="r-in">  gender <span class="op">=</span> <span class="va">Gender</span><span class="op">$</span><span class="va">Male</span>, weight <span class="op">=</span> <span class="fl">70</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in initPKSim():</span> Could not find an installation of PK-Sim on the machine. Please install the OSPSuite or use 'initPKSim()' to specify the installation path</span>
 <span class="r-in"><span class="fu">applyIndividualParameters</span><span class="op">(</span><span class="va">humanIndividualCharacteristics</span>, <span class="va">simulation</span><span class="op">)</span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in isOfType(object, type, nullAllowed):</span> object 'humanIndividualCharacteristics' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in isOfType(object, type, nullAllowed):</span> object 'simulation' not found</span>
 <span class="r-in"><span class="co"># }</span></span>
 </code></pre></div>
     </div>
@@ -105,7 +104,11 @@ For other species, all parameters returned by <code>createIndividual</code> are 
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p><p>Developed by Pavel Balazki.</p>
+  <p></p><p>Developed by
+<a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>,
+Pavel Balazki, Johanna Eitel,
+<a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet
+Patil</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
