@@ -40,6 +40,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/applyIndividualParameters.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/calculateMeanDataSet.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/calculateRMSE.html</loc>
   </url>
   <url>
@@ -151,6 +154,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/isTableFormulasEqual.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/LLOQMode.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/openOuptutDevice.html</loc>
   </url>
   <url>
@@ -196,6 +202,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/plotXYDataAggregated.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/readExcel.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/readIndividualCharacteristicsFromXLS.html</loc>
   </url>
   <url>
@@ -215,6 +224,15 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/sampleRandomValue.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/sensitivityCalculation.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/sensitivitySpiderPlot.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/setParameterValuesByPathWithCondition.html</loc>
