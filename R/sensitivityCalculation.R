@@ -61,6 +61,10 @@ sensitivityCalculation <- function(simulation,
   variationRange <- .validateVariationRange(variationRange)
 
   # creating `SimulationResults` batch ------------------------
+  # Store old simulation outputs and set user defined
+  oldOutputSelections <- simulation$outputSelections$allOutputs
+  clearOutputs(simulation = simulation)
+  addOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
 
   # extract a list of `SimulationResults` objects
   simulationResultsBatch <- purrr::map(
@@ -120,6 +124,12 @@ sensitivityCalculation <- function(simulation,
   # helpful for plotting methods to recognize this object
   class(results) <- c("SensitivityCalculation", class(results))
 
+  # Reset simulation outputs
+  oldOutputSelections <- simulation$outputSelections$allOutputs
+  clearOutputs(simulation = simulation)
+  for (outputSelection in oldOutputSelections) {
+    ospsuite::addOutputs(quantitiesOrPaths = outputSelection$path, simulation = simulation)
+  }
   # return the data in a list
   return(results)
 }
