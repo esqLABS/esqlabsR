@@ -8,6 +8,8 @@ options(
   scipen = 999
 )
 
+# single output path -------------------------------------
+
 # run time-consuming simulations just once
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
@@ -416,6 +418,65 @@ test_that("sensitivitySpiderPlot saves plot file", {
 
   on.exit(unlink(path))
 })
+
+
+# multiple output paths -------------------------------------
+
+simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+simulation <- loadSimulation(simPath)
+outputPaths <- c("Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+                 "Organism|Age",
+                 "Organism|ArterialBlood|Plasma|Aciclovir")
+parameterPaths <- c(
+  "Aciclovir|Lipophilicity",
+  "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+)
+
+results_multiple <- sensitivityCalculation(
+  simulation = simulation,
+  outputPaths = outputPaths,
+  parameterPaths = parameterPaths,
+  variationRange = c(1, 5, 10)
+)
+
+test_that("sensitivityCalculation extracts data correctly for multiple output paths", {
+  expect_equal(nrow(results_multiple$pkData), 81L)
+  expect_equal(unique(results_multiple$pkData$OutputPath), outputPaths)
+})
+
+test_that("sensitivityCalculation saves PK data to xlsx file for multiple output paths", {
+  path <- "mydata.xlsx"
+
+  set.seed(123)
+  results_multiple <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = c(1, 5, 10),
+    pkDataFilePath = path
+  )
+
+  expect_true(file.exists(path))
+
+  on.exit(unlink(path))
+})
+
+
+test_that("sensitivityTimeProfiles saves plot files for multiple output paths", {
+  path1 <- "Profile_OutputPath1.png"
+  path2 <- "Profile_OutputPath2.png"
+  path3 <- "Profile_OutputPath3.png"
+
+  p <- suppressWarnings(sensitivityTimeProfiles(results_multiple, savePlots = TRUE))
+
+  expect_true(file.exists(path1))
+  expect_true(file.exists(path2))
+  expect_true(file.exists(path3))
+
+  on.exit(unlink(c(path1, path2, path3)))
+})
+
 
 # restore old options
 options(old)
