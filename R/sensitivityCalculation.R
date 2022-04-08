@@ -120,16 +120,16 @@ sensitivityCalculation <- function(simulation,
     "pkData"            = pkData
   )
 
-  # add additional S3 class attribute
-  # helpful for plotting methods to recognize this object
-  class(results) <- c("SensitivityCalculation", class(results))
-
   # Reset simulation outputs
   oldOutputSelections <- simulation$outputSelections$allOutputs
   clearOutputs(simulation = simulation)
   for (outputSelection in oldOutputSelections) {
     ospsuite::addOutputs(quantitiesOrPaths = outputSelection$path, simulation = simulation)
   }
+
+  # add additional S3 class attribute
+  # helpful for plotting methods to recognize this object
+  class(results) <- c("SensitivityCalculation", class(results))
 
   # return the data in a list
   return(results)

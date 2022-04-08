@@ -112,14 +112,15 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
 
   if (xAxisLog) {
-    plot <- plot + scale_x_log10()
+    plot <- plot + scale_x_log10(oob = scales::squish_infinite)
   }
 
   if (yAxisLog) {
     plot <- plot +
       scale_y_log10(
         breaks = scales::trans_breaks("log10", function(x) 10^x),
-        labels = scales::trans_format("log10", scales::math_format(10^.x))
+        labels = scales::trans_format("log10", scales::math_format(10^.x)),
+        oob = scales::squish_infinite
       )
   }
 
