@@ -8,7 +8,7 @@ sensitivityTimeProfiles(
   sensitivityCalculation,
   xAxisLog = FALSE,
   yAxisLog = TRUE,
-  palette = NULL,
+  palette = "Cold",
   savePlots = FALSE,
   width = NA,
   height = NA,
