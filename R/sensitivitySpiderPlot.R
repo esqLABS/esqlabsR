@@ -118,8 +118,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   } else {
     plot <- plot +
       scale_y_continuous(
-        breaks = seq(0, max(data$PercentChangePK) + 100, 100),
-        labels = as.character(seq(0, max(data$PercentChangePK) + 100, 100))
+        breaks = seq(0, max(na.omit(data$PercentChangePK)) + 100, 100),
+        labels = as.character(seq(0, max(na.omit(data$PercentChangePK)) + 100, 100))
       )
   }
 

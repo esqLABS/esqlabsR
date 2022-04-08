@@ -130,6 +130,7 @@ sensitivityCalculation <- function(simulation,
   for (outputSelection in oldOutputSelections) {
     ospsuite::addOutputs(quantitiesOrPaths = outputSelection$path, simulation = simulation)
   }
+
   # return the data in a list
   return(results)
 }
