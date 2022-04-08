@@ -110,11 +110,11 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     geom_point(size = 2, shape = 21)
 
   if (xAxisLog) {
-    plot <- plot + scale_x_log10(oob = scales::squish_infinite)
+    plot <- plot + scale_x_log10()
   }
 
   if (yAxisLog) {
-    plot <- plot + scale_y_log10(oob = scales::squish_infinite)
+    plot <- plot + scale_y_log10()
   } else {
     plot <- plot +
       scale_y_continuous(

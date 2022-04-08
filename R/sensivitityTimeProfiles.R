@@ -43,7 +43,7 @@
 sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     xAxisLog = FALSE,
                                     yAxisLog = TRUE,
-                                    palette = NULL,
+                                    palette = "Cold",
                                     savePlots = FALSE,
                                     width = NA,
                                     height = NA,
@@ -102,7 +102,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       aes(Time, Concentration),
       color = "black"
     ) +
-    facet_wrap(~ParameterPath, labeller = label_wrap_gen(width = 15)) +
+    facet_wrap(~ParameterPath, labeller = label_wrap_gen(width = 0)) +
     theme_bw(base_size = 10) +
     labs(
       x = paste0(unique(data$TimeDimension), " [", unique(data$TimeUnit), "]"),
@@ -112,7 +112,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
 
   if (xAxisLog) {
-    plot <- plot + scale_x_log10(oob = scales::squish_infinite)
+    plot <- plot + scale_x_log10()
   }
 
   if (yAxisLog) {
@@ -120,7 +120,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       scale_y_log10(
         breaks = scales::trans_breaks("log10", function(x) 10^x),
         labels = scales::trans_format("log10", scales::math_format(10^.x)),
-        oob = scales::squish_infinite
+
       )
   }
 
