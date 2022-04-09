@@ -116,12 +116,22 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   if (yAxisLog) {
     plot <- plot + scale_y_log10()
   } else {
+    # how many labels on the Y-axis?
+    n_breaks <- labeling::extended(
+      min(na.omit(data$PercentChangePK)),
+      max(na.omit(data$PercentChangePK)),
+      m = 10L
+    )
+
+    # there always needs to be a label at `y = 100`
     plot <- plot +
       scale_y_continuous(
-        breaks = seq(0, max(na.omit(data$PercentChangePK)) + 100, 100),
-        labels = as.character(seq(0, max(na.omit(data$PercentChangePK)) + 100, 100))
+        breaks = c(100, n_breaks),
+        minor_breaks = n_breaks
       )
   }
+
+
 
   plot <- plot +
     geom_hline(
