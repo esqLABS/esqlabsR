@@ -171,18 +171,18 @@ test_that("sensitivityCalculation fails early with incorrect `pkParameters` argu
     "Only distinct values are allowed in `pkParameters` argument."
   )
 
-  expect_output(
+  expect_message(
     sensitivityCalculation(
       simulation = simulation,
       pkParameters = c("C_max", "abc", "xyz"),
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = parameterPaths
     ),
-    cat(
-      "Following non-standard PK parameters will not be calculated:",
-      c("abc", "xyz"),
-      sep = "\n"
-    )
+    "Following non-standard PK parameters will not be calculated:
+abc
+xyz
+",
+    fixed = TRUE
   )
 })
 
@@ -229,7 +229,7 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
       variationRange = c(0.1, 2, 20),
       pkDataFilePath = path
     ),
-    "Only file path with `.xlsx` extension is allowed."
+    "Provided file has extension 'csv', while 'xlsx' was expected instead."
   )
 })
 
@@ -424,9 +424,11 @@ test_that("sensitivitySpiderPlot saves plot file", {
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
-outputPaths <- c("Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-                 "Organism|Age",
-                 "Organism|ArterialBlood|Plasma|Aciclovir")
+outputPaths <- c(
+  "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+  "Organism|Age",
+  "Organism|ArterialBlood|Plasma|Aciclovir"
+)
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",

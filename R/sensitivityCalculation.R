@@ -60,7 +60,13 @@ sensitivityCalculation <- function(simulation,
   # this also makes sure that there is always `1.0` present in this vector
   variationRange <- .validateVariationRange(variationRange)
 
+  # fail early to avoid costly failure after analysis is already carried out
+  if (!is.null(pkDataFilePath)) {
+    validateIsFileExtension(pkDataFilePath, "xlsx")
+  }
+
   # creating `SimulationResults` batch ------------------------
+
   # Store old simulation outputs and set user defined
   oldOutputSelections <- simulation$outputSelections$allOutputs
   clearOutputs(simulation = simulation)
@@ -91,11 +97,6 @@ sensitivityCalculation <- function(simulation,
 
   # write each wide dataframe in a list to a separate sheet in Excel
   if (!is.null(pkDataFilePath)) {
-    # only `xlsx` format allowed
-    if (!isFileExtension(pkDataFilePath, "xlsx")) {
-      stop("Only file path with `.xlsx` extension is allowed.")
-    }
-
     # convert tidy data to wide format for each output path
     pkData_wide_list <- purrr::map(
       .x = pkData %>% split(.$OutputPath),
