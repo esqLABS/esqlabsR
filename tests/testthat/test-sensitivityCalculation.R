@@ -363,7 +363,6 @@ test_that("sensitivityCalculation plots fail with incorrect input objects", {
 
 test_that("sensitivityTimeProfiles plots are as expected", {
   set.seed(123)
-  # make sure a plot is returned
   p <- suppressWarnings(sensitivityTimeProfiles(results))
 
   set.seed(123)
@@ -464,6 +463,16 @@ test_that("sensitivityCalculation saves PK data to xlsx file for multiple output
   on.exit(unlink(path))
 })
 
+test_that("sensitivityTimeProfiles plots are as expected for multiple output paths", {
+  set.seed(123)
+  p_list <- suppressWarnings(sensitivityTimeProfiles(results))
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivityTimeProfiles with multiple output paths",
+    fig = p_list
+  )
+})
 
 test_that("sensitivityTimeProfiles saves plot files for multiple output paths", {
   path1 <- "Profile_OutputPath1.png"
@@ -479,6 +488,18 @@ test_that("sensitivityTimeProfiles saves plot files for multiple output paths", 
   on.exit(unlink(c(path1, path2, path3)))
 })
 
+test_that("sensitivitySpiderPlot plots are as expected for multiple output paths", {
+  set.seed(123)
+  plots_multiple <- sensitivitySpiderPlot(results_multiple)
+
+  pb1 <- ggplot_build(plots_multiple$`Organism|Age`)
+  pb2 <- ggplot_build(plots_multiple$`Organism|ArterialBlood|Plasma|Aciclovir`)
+  pb3 <- ggplot_build(plots_multiple$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`)
+
+  expect_snapshot(pb1$plot$labels)
+  expect_snapshot(pb2$plot$labels)
+  expect_snapshot(pb3$plot$labels)
+})
 
 # restore old options
 options(old)
