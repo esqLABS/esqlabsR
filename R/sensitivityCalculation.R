@@ -21,6 +21,16 @@
 #'   overwritten. Default is `NULL`, meaning the data will not be saved to a
 #'   spreadsheet.
 #'
+#' @family sensitivity-calculation
+#'
+#' @return
+#'
+#' A list containing following objects:
+#' - `SimulationResults`
+#' - specified output paths
+#' - specified parameter paths
+#' - A data frame of PK parameters
+#'
 #' @examples
 #' \dontrun{
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")

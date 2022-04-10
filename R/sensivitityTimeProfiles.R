@@ -8,6 +8,14 @@
 #' @import dplyr
 #' @import colorspace
 #'
+#' @family sensitivity-calculation
+#'
+#' @return
+#'
+#' A single `ggplot` object if a single output path is specified.
+#'
+#' A list of `ggplot` objects if multiple output paths are specified.
+#'
 #' @examples
 #' \dontrun{
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")

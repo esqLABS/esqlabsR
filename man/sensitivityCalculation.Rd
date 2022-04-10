@@ -39,6 +39,15 @@ PK-parameter data should be saved. If a file already exists, it will be
 overwritten. Default is \code{NULL}, meaning the data will not be saved to a
 spreadsheet.}
 }
+\value{
+A list containing following objects:
+\itemize{
+\item \code{SimulationResults}
+\item specified output paths
+\item specified parameter paths
+\item A data frame of PK parameters
+}
+}
 \description{
 Carry out and visualize sensitivity analysis (with OSPSuite)
 }
@@ -61,3 +70,9 @@ sensitivityCalculation(
 )
 }
 }
+\seealso{
+Other sensitivity-calculation: 
+\code{\link{sensitivitySpiderPlot}()},
+\code{\link{sensitivityTimeProfiles}()}
+}
+\concept{sensitivity-calculation}

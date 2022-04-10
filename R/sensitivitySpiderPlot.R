@@ -14,12 +14,13 @@
 #'
 #' @import ggplot2
 #'
+#' @family sensitivity-calculation
+#'
 #' @return
 #'
-#' A list of dataframes with time-series and PK parameters data.
+#' A single `ggplot` object if a single output path is specified.
 #'
-#' This function also prints Concentration-time profile plots and Sensitivity
-#' spider plots.
+#' A list of `ggplot` objects if multiple output paths are specified.
 #'
 #' @examples
 #' \dontrun{
