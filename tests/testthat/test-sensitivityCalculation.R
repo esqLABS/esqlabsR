@@ -391,21 +391,11 @@ test_that("sensitivitySpiderPlot plots are as expected", {
   set.seed(123)
   p <- sensitivitySpiderPlot(results)
 
-  # for some reason, even if the plot looks the same, the SVG is slightly
-  # different each time this is run, so testing using snapshots instead
-  #
-  # set.seed(123)
-  # vdiffr::expect_doppelganger(
-  #   title = "sensitivitySpiderPlot works as expected",
-  #   fig = p
-  # )
-
-  pb <- ggplot_build(p$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`)
-
-  # non-reproducible geom data
-  # expect_snapshot(pb$data)
-
-  expect_snapshot(pb$plot$labels)
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivitySpiderPlot works as expected",
+    fig = p
+  )
 })
 
 test_that("sensitivitySpiderPlot saves plot file", {
@@ -492,13 +482,11 @@ test_that("sensitivitySpiderPlot plots are as expected for multiple output paths
   set.seed(123)
   plots_multiple <- sensitivitySpiderPlot(results_multiple)
 
-  pb1 <- ggplot_build(plots_multiple$`Organism|Age`)
-  pb2 <- ggplot_build(plots_multiple$`Organism|ArterialBlood|Plasma|Aciclovir`)
-  pb3 <- ggplot_build(plots_multiple$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`)
-
-  expect_snapshot(pb1$plot$labels)
-  expect_snapshot(pb2$plot$labels)
-  expect_snapshot(pb3$plot$labels)
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivitySpiderPlot for multiple output paths",
+    fig = plots_multiple
+  )
 })
 
 # restore old options
