@@ -14,12 +14,13 @@
 #'
 #' @import ggplot2
 #'
+#' @family sensitivity-calculation
+#'
 #' @return
 #'
-#' A list of dataframes with time-series and PK parameters data.
+#' A single `ggplot` object if a single output path is specified.
 #'
-#' This function also prints Concentration-time profile plots and Sensitivity
-#' spider plots.
+#' A list of `ggplot` objects if multiple output paths are specified.
 #'
 #' @examples
 #' \dontrun{
@@ -67,7 +68,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   data <- sensitivityCalculation$pkData
 
   # create plot for each output path
-  ls_spider_plots <- purrr::map(
+  ls_plots <- purrr::map(
     .x = data %>% split(.$OutputPath),
     .f = ~ .createSpiderPlot(
       .x,
@@ -78,7 +79,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
   if (savePlots) {
     .savePlotList(
-      ls_spider_plots,
+      ls_plots,
       plot.type = "Spider_",
       height = height,
       width = width,
@@ -86,8 +87,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     )
   }
 
-  # return plots
-  ls_spider_plots
+  # print plots without producing warnings
+  suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~printPlot(.x, .y)))
 }
 
 #' @keywords internal
@@ -105,9 +106,10 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     geom_line(
       aes(group = ParameterPath, color = as.factor(ParameterPath)),
       size = 1.2,
-      alpha = 0.8
+      alpha = 0.8,
+      na.rm = TRUE
     ) +
-    geom_point(size = 2, shape = 21)
+    geom_point(size = 2, shape = 21, na.rm = TRUE)
 
   if (xAxisLog) {
     plot <- plot + scale_x_log10()
@@ -116,25 +118,37 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   if (yAxisLog) {
     plot <- plot + scale_y_log10()
   } else {
+    # how many labels on the Y-axis?
+    n_breaks <- labeling::extended(
+      min(na.omit(data$PercentChangePK)),
+      max(na.omit(data$PercentChangePK)),
+      m = 10L
+    )
+
+    # there always needs to be a label at `y = 100`
     plot <- plot +
       scale_y_continuous(
-        breaks = seq(0, max(data$PercentChangePK) + 100, 100),
-        labels = as.character(seq(0, max(data$PercentChangePK) + 100, 100))
+        breaks = c(100, n_breaks),
+        minor_breaks = n_breaks
       )
   }
+
+
 
   plot <- plot +
     geom_hline(
       yintercept = 100,
       linetype = "dotted",
       color = "black",
-      size = 0.5
+      size = 0.5,
+      na.rm = TRUE
     ) +
     geom_vline(
       xintercept = 100,
       linetype = "dotted",
       color = "black",
-      size = 0.5
+      size = 0.5,
+      na.rm = TRUE
     ) +
     facet_wrap(~PKParameter, scales = "free_y") +
     labs(

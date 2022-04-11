@@ -8,7 +8,7 @@ sensitivityTimeProfiles(
   sensitivityCalculation,
   xAxisLog = FALSE,
   yAxisLog = TRUE,
-  palette = NULL,
+  palette = "Cold",
   savePlots = FALSE,
   width = NA,
   height = NA,
@@ -39,6 +39,11 @@ current graphics device.}
 
 \item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),
 "print" (300), or "screen" (72). Applies only to raster output types.}
+}
+\value{
+A single \code{ggplot} object if a single output path is specified.
+
+A list of \code{ggplot} objects if multiple output paths are specified.
 }
 \description{
 Create a concentration-time profile plot
@@ -75,3 +80,9 @@ if (FALSE) {
 }
 }
 }
+\seealso{
+Other sensitivity-calculation: 
+\code{\link{sensitivityCalculation}()},
+\code{\link{sensitivitySpiderPlot}()}
+}
+\concept{sensitivity-calculation}

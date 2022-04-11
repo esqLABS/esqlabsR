@@ -8,6 +8,14 @@
 #' @import dplyr
 #' @import colorspace
 #'
+#' @family sensitivity-calculation
+#'
+#' @return
+#'
+#' A single `ggplot` object if a single output path is specified.
+#'
+#' A list of `ggplot` objects if multiple output paths are specified.
+#'
 #' @examples
 #' \dontrun{
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
@@ -43,7 +51,7 @@
 sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     xAxisLog = FALSE,
                                     yAxisLog = TRUE,
-                                    palette = NULL,
+                                    palette = "Cold",
                                     savePlots = FALSE,
                                     width = NA,
                                     height = NA,
@@ -59,7 +67,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   )
 
   # create plot for each output path
-  ls_profile_plots <- purrr::map(
+  ls_plots <- purrr::map(
     .x = data %>% split(.$OutputPath),
     .f = ~ .createTimeProfiles(
       .x,
@@ -71,7 +79,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   if (savePlots) {
     .savePlotList(
-      ls_profile_plots,
+      ls_plots,
       plot.type = "Profile_",
       height = height,
       width = width,
@@ -79,8 +87,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   }
 
-  # return plots
-  ls_profile_plots
+  # print plots without producing warnings
+  suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~printPlot(.x, .y)))
 }
 
 
@@ -91,7 +99,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     geom_line(
       data = dplyr::filter(data, ParameterFactor != 1.0),
       aes(Time, Concentration, group = ParameterFactor, color = ParameterFactor),
-      alpha = 0.5
+      alpha = 0.5,
+      na.rm = TRUE
     ) +
     colorspace::scale_color_continuous_qualitative(
       palette = palette,
@@ -100,9 +109,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     geom_line(
       data = dplyr::filter(data, ParameterFactor == 1.0),
       aes(Time, Concentration),
-      color = "black"
+      color = "black",
+      na.rm = TRUE
     ) +
-    facet_wrap(~ParameterPath, labeller = label_wrap_gen(width = 15)) +
+    facet_wrap(~ParameterPath, labeller = label_wrap_gen(width = 0)) +
     theme_bw(base_size = 10) +
     labs(
       x = paste0(unique(data$TimeDimension), " [", unique(data$TimeUnit), "]"),
@@ -128,4 +138,11 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       legend.position = "bottom",
       panel.grid.minor = element_blank()
     )
+}
+
+#' @keywords internal
+#' @noRd
+printPlot <- function(plot, pathName) {
+  print(paste0("Creating plot for path:", pathName))
+  print(plot)
 }

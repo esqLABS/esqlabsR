@@ -242,33 +242,3 @@
       [1] ""
       
 
-# sensitivitySpiderPlot plots are as expected
-
-    Code
-      pb$plot$labels
-    Output
-      $x
-      [1] "Input parameter value [% of reference]"
-      
-      $y
-      [1] "PK-parameter value [% of reference]"
-      
-      $group
-      [1] "Parameter"
-      
-      $colour
-      [1] "Parameter"
-      
-      $title
-      [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-      
-      $yintercept
-      [1] "yintercept"
-      
-      $xintercept
-      [1] "xintercept"
-      
-      $alt
-      [1] ""
-      
-

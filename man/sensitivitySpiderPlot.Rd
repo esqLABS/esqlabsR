@@ -32,10 +32,9 @@ current graphics device.}
 "print" (300), or "screen" (72). Applies only to raster output types.}
 }
 \value{
-A list of dataframes with time-series and PK parameters data.
+A single \code{ggplot} object if a single output path is specified.
 
-This function also prints Concentration-time profile plots and Sensitivity
-spider plots.
+A list of \code{ggplot} objects if multiple output paths are specified.
 }
 \description{
 Sensitivity spider plot for PK parameters
@@ -72,3 +71,9 @@ if (FALSE) {
 }
 }
 }
+\seealso{
+Other sensitivity-calculation: 
+\code{\link{sensitivityCalculation}()},
+\code{\link{sensitivityTimeProfiles}()}
+}
+\concept{sensitivity-calculation}

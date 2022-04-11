@@ -21,6 +21,16 @@
 #'   overwritten. Default is `NULL`, meaning the data will not be saved to a
 #'   spreadsheet.
 #'
+#' @family sensitivity-calculation
+#'
+#' @return
+#'
+#' A list containing following objects:
+#' - `SimulationResults`
+#' - specified output paths
+#' - specified parameter paths
+#' - A data frame of PK parameters
+#'
 #' @examples
 #' \dontrun{
 #' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
@@ -60,7 +70,17 @@ sensitivityCalculation <- function(simulation,
   # this also makes sure that there is always `1.0` present in this vector
   variationRange <- .validateVariationRange(variationRange)
 
+  # fail early to avoid costly failure after analysis is already carried out
+  if (!is.null(pkDataFilePath)) {
+    validateIsFileExtension(pkDataFilePath, "xlsx")
+  }
+
   # creating `SimulationResults` batch ------------------------
+
+  # Store old simulation outputs and set user defined
+  oldOutputSelections <- simulation$outputSelections$allOutputs
+  clearOutputs(simulation = simulation)
+  addOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
 
   # extract a list of `SimulationResults` objects
   simulationResultsBatch <- purrr::map(
@@ -87,11 +107,6 @@ sensitivityCalculation <- function(simulation,
 
   # write each wide dataframe in a list to a separate sheet in Excel
   if (!is.null(pkDataFilePath)) {
-    # only `xlsx` format allowed
-    if (!isFileExtension(pkDataFilePath, "xlsx")) {
-      stop("Only file path with `.xlsx` extension is allowed.")
-    }
-
     # convert tidy data to wide format for each output path
     pkData_wide_list <- purrr::map(
       .x = pkData %>% split(.$OutputPath),
@@ -115,6 +130,13 @@ sensitivityCalculation <- function(simulation,
     "parameterPaths"    = parameterPaths,
     "pkData"            = pkData
   )
+
+  # Reset simulation outputs
+  oldOutputSelections <- simulation$outputSelections$allOutputs
+  clearOutputs(simulation = simulation)
+  for (outputSelection in oldOutputSelections) {
+    ospsuite::addOutputs(quantitiesOrPaths = outputSelection$path, simulation = simulation)
+  }
 
   # add additional S3 class attribute
   # helpful for plotting methods to recognize this object

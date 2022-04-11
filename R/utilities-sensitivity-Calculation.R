@@ -297,11 +297,8 @@
     nsPKNames <- pkParameters[!pkParameters %in% names(ospsuite::StandardPKParameter)]
 
     message(
-      cat(
-        "Following non-standard PK parameters will not be calculated:",
-        nsPKNames,
-        sep = "\n"
-      )
+      "Following non-standard PK parameters will not be calculated:\n",
+      paste0(nsPKNames, collapse = "\n")
     )
   }
 }
