@@ -368,7 +368,7 @@ test_that("sensitivityTimeProfiles plots are as expected", {
   set.seed(123)
   vdiffr::expect_doppelganger(
     title = "sensitivityTimeProfiles works as expected",
-    fig = p
+    fig = suppressWarnings(p)
   )
 
   pb <- suppressWarnings(ggplot_build(p$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`))
@@ -394,7 +394,7 @@ test_that("sensitivitySpiderPlot plots are as expected", {
   set.seed(123)
   vdiffr::expect_doppelganger(
     title = "sensitivitySpiderPlot works as expected",
-    fig = p
+    fig = suppressWarnings(p)
   )
 })
 
@@ -460,7 +460,7 @@ test_that("sensitivityTimeProfiles plots are as expected for multiple output pat
   set.seed(123)
   vdiffr::expect_doppelganger(
     title = "sensitivityTimeProfiles with multiple output paths",
-    fig = p_list
+    fig = suppressWarnings(p_list)
   )
 })
 
@@ -485,7 +485,7 @@ test_that("sensitivitySpiderPlot plots are as expected for multiple output paths
   set.seed(123)
   vdiffr::expect_doppelganger(
     title = "sensitivitySpiderPlot for multiple output paths",
-    fig = plots_multiple
+    fig = suppressWarnings(plots_multiple)
   )
 })
 
