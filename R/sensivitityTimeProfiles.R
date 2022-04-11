@@ -148,7 +148,7 @@ guide_gengrob.guide_longticks <- function(guide, theme) {
       na.rm = TRUE
     ) +
     facet_wrap(~ParameterPath, labeller = label_wrap_gen(width = 0)) +
-    theme_bw(base_size = 10) +
+    theme_bw(base_size = 9) +
     labs(
       x = paste0(unique(data$TimeDimension), " [", unique(data$TimeUnit), "]"),
       y = paste0(unique(data$Dimension), " [", unique(data$Unit), "]"),
