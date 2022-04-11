@@ -68,7 +68,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   data <- sensitivityCalculation$pkData
 
   # create plot for each output path
-  ls_spider_plots <- purrr::map(
+  ls_plots <- purrr::map(
     .x = data %>% split(.$OutputPath),
     .f = ~ .createSpiderPlot(
       .x,
@@ -79,7 +79,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
   if (savePlots) {
     .savePlotList(
-      ls_spider_plots,
+      ls_plots,
       plot.type = "Spider_",
       height = height,
       width = width,
@@ -87,8 +87,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     )
   }
 
-  # return plots
-  ls_spider_plots
+  # print plots without producing warnings
+  suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~printPlot(.x, .y)))
 }
 
 #' @keywords internal
@@ -106,9 +106,10 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     geom_line(
       aes(group = ParameterPath, color = as.factor(ParameterPath)),
       size = 1.2,
-      alpha = 0.8
+      alpha = 0.8,
+      na.rm = TRUE
     ) +
-    geom_point(size = 2, shape = 21)
+    geom_point(size = 2, shape = 21, na.rm = TRUE)
 
   if (xAxisLog) {
     plot <- plot + scale_x_log10()
@@ -139,13 +140,15 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       yintercept = 100,
       linetype = "dotted",
       color = "black",
-      size = 0.5
+      size = 0.5,
+      na.rm = TRUE
     ) +
     geom_vline(
       xintercept = 100,
       linetype = "dotted",
       color = "black",
-      size = 0.5
+      size = 0.5,
+      na.rm = TRUE
     ) +
     facet_wrap(~PKParameter, scales = "free_y") +
     labs(
