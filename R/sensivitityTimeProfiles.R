@@ -88,7 +88,41 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   # print plots without producing warnings
-  suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~printPlot(.x, .y)))
+  suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~ printPlot(.x, .y)))
+}
+
+#' @keywords internal
+#' @noRd
+#'
+#' @note
+#'
+#' **WARNING**: Although these are internal functions, DO NOT prepend them with
+#' `.`. These are S3 methods and not regular functions.
+#'
+#' @references
+#' Adapted from:
+#' https://stackoverflow.com/questions/62558043/continuous-color-bar-with-separators-instead-of-ticks
+guide_longticks <- function(...) {
+  guide <- guide_colourbar(...)
+  class(guide) <- c("guide", "guide_longticks", "colourbar", "colorbar")
+  guide
+}
+
+#' @keywords internal
+#' @noRd
+guide_gengrob.guide_longticks <- function(guide, theme) {
+  dir <- guide$direction
+  guide <- NextMethod()
+  is_ticks <- grep("^ticks$", guide$layout$name)
+  ticks <- guide$grobs[is_ticks][[1]]
+  if (dir == "vertical") {
+    ticks$x1 <- rep(tail(ticks$x1, 1), length(ticks$x1))
+  } else {
+    ticks$y1 <- rep(tail(ticks$y1, 1), length(ticks$y1))
+  }
+
+  guide$grobs[[is_ticks]] <- ticks
+  guide
 }
 
 
@@ -104,7 +138,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     ) +
     colorspace::scale_color_continuous_qualitative(
       palette = palette,
-      breaks = c(min(data$ParameterFactor), max(data$ParameterFactor))
+      breaks = c(min(data$ParameterFactor), 1, max(data$ParameterFactor)),
+      limits = c(min(data$ParameterFactor), max(data$ParameterFactor))
     ) +
     geom_line(
       data = dplyr::filter(data, ParameterFactor == 1.0),
@@ -137,7 +172,14 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     theme(
       legend.position = "bottom",
       panel.grid.minor = element_blank()
-    )
+    ) +
+    guides(colour = guide_longticks(
+      ticks = TRUE,
+      ticks.linewidth = 0.8,
+      ticks.colour = "black",
+      draw.ulim = FALSE,
+      draw.llim = FALSE
+    ))
 }
 
 #' @keywords internal

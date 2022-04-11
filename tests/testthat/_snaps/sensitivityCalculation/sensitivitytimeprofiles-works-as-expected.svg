@@ -178,12 +178,15 @@
 <rect x='286.99' y='531.63' width='175.83' height='39.39' style='stroke-width: 0.97; stroke: none; fill: #FFFFFF;' />
 <image width='86.40' height='17.28' x='371.44' y='536.61' preserveAspectRatio='none' xlink:href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAABCAYAAABkOJMpAAAAnUlEQVQ4jZVRwREEIQyC/tu451V1jXCPdU2MZMf1EwcQUPn9/CRcSxwTMQUANFjRZ/7Wv/fRyrd9dOiv6W9zAYjy+PR74qPHccfhuL5dZGB0svd4zFV5+9Vj5tp7lXzjZfl7z57L+fE/vcb16/T577IGNTfhPQaAMqjDfCogsPA0ZzaMGQvOYZGx6lg4Js7PvU/lTjWvMO3+fdcd+wP0osislsR68gAAAABJRU5ErkJggg=='/>
 <text x='371.58' y='564.38' text-anchor='middle' style='font-size: 8.00px; font-family: sans;' textLength='11.12px' lengthAdjust='spacingAndGlyphs'>0.1</text>
+<text x='375.48' y='564.38' text-anchor='middle' style='font-size: 8.00px; font-family: sans;' textLength='11.12px' lengthAdjust='spacingAndGlyphs'>1.0</text>
 <text x='457.69' y='564.38' text-anchor='middle' style='font-size: 8.00px; font-family: sans;' textLength='15.57px' lengthAdjust='spacingAndGlyphs'>20.0</text>
 <text x='291.97' y='554.76' style='font-size: 10.00px; font-family: sans;' textLength='74.48px' lengthAdjust='spacingAndGlyphs'>Parameter factor</text>
-<line x1='371.58' y1='553.89' x2='371.58' y2='550.43' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<line x1='457.69' y1='553.89' x2='457.69' y2='550.43' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<line x1='371.58' y1='540.07' x2='371.58' y2='536.61' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
-<line x1='457.69' y1='540.07' x2='457.69' y2='536.61' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
+<line x1='375.48' y1='553.89' x2='375.48' y2='536.61' style='stroke-width: 0.60; stroke-linecap: butt;' />
+<line x1='375.48' y1='553.89' x2='375.48' y2='536.61' style='stroke-width: 0.60; stroke-linecap: butt;' />
+<line x1='375.48' y1='553.89' x2='375.48' y2='536.61' style='stroke-width: 0.60; stroke-linecap: butt;' />
+<line x1='375.48' y1='540.07' x2='375.48' y2='536.61' style='stroke-width: 0.60; stroke-linecap: butt;' />
+<line x1='375.48' y1='540.07' x2='375.48' y2='536.61' style='stroke-width: 0.60; stroke-linecap: butt;' />
+<line x1='375.48' y1='540.07' x2='375.48' y2='536.61' style='stroke-width: 0.60; stroke-linecap: butt;' />
 <text x='34.79' y='13.24' style='font-size: 12.00px; font-family: sans;' textLength='416.28px' lengthAdjust='spacingAndGlyphs'>Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</text>
 </g>
 </svg>
