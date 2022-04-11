@@ -91,25 +91,21 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~ printPlot(.x, .y)))
 }
 
-#' @keywords internal
-#' @noRd
-#'
-#' @note
-#'
-#' **WARNING**: Although these are internal functions, DO NOT prepend them with
-#' `.`. These are S3 methods and not regular functions.
+#' @title Long ticks for legend colorbars
 #'
 #' @references
 #' Adapted from:
 #' https://stackoverflow.com/questions/62558043/continuous-color-bar-with-separators-instead-of-ticks
+#'
+#' @export
 guide_longticks <- function(...) {
   guide <- guide_colourbar(...)
   class(guide) <- c("guide", "guide_longticks", "colourbar", "colorbar")
   guide
 }
 
-#' @keywords internal
-#' @noRd
+#' @rdname guide_longticks
+#' @export
 guide_gengrob.guide_longticks <- function(guide, theme) {
   dir <- guide$direction
   guide <- NextMethod()
