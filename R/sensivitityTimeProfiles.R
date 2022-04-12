@@ -88,7 +88,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   # print plots without producing warnings
-  suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~printPlot(.x, .y)))
+  suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~ printPlot(.x, .y)))
 }
 
 
@@ -104,7 +104,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     ) +
     colorspace::scale_color_continuous_qualitative(
       palette = palette,
-      breaks = c(min(data$ParameterFactor), max(data$ParameterFactor))
+      breaks = c(min(data$ParameterFactor), 1, max(data$ParameterFactor)),
+      limits = c(min(data$ParameterFactor), max(data$ParameterFactor))
     ) +
     geom_line(
       data = dplyr::filter(data, ParameterFactor == 1.0),
@@ -113,7 +114,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       na.rm = TRUE
     ) +
     facet_wrap(~ParameterPath, labeller = label_wrap_gen(width = 0)) +
-    theme_bw(base_size = 10) +
+    theme_bw(base_size = 9) +
     labs(
       x = paste0(unique(data$TimeDimension), " [", unique(data$TimeUnit), "]"),
       y = paste0(unique(data$Dimension), " [", unique(data$Unit), "]"),
@@ -137,7 +138,14 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     theme(
       legend.position = "bottom",
       panel.grid.minor = element_blank()
-    )
+    ) +
+    guides(colour = guide_colourbar(
+      ticks = TRUE,
+      ticks.linewidth = 0.8,
+      ticks.colour = "black",
+      draw.ulim = FALSE,
+      draw.llim = FALSE
+    ))
 }
 
 #' @keywords internal

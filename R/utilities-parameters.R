@@ -93,7 +93,7 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' @noRd
 #'
 #' @return A named list with vectors `paths`, `values`, and `units`
-#' @internal
+#' @keywords internal
 .parametersVectorToList <- function(pathsValuesVector, pathsUnitsVector) {
   paths <- names(pathsValuesVector)
   returnVal <- list(
