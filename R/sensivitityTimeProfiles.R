@@ -91,36 +91,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~ printPlot(.x, .y)))
 }
 
-#' @title Long ticks for legend colorbars
-#'
-#' @references
-#' Adapted from:
-#' https://stackoverflow.com/questions/62558043/continuous-color-bar-with-separators-instead-of-ticks
-#'
-#' @export
-guide_longticks <- function(...) {
-  guide <- guide_colourbar(...)
-  class(guide) <- c("guide", "guide_longticks", "colourbar", "colorbar")
-  guide
-}
-
-#' @rdname guide_longticks
-#' @export
-guide_gengrob.guide_longticks <- function(guide, theme) {
-  dir <- guide$direction
-  guide <- NextMethod()
-  is_ticks <- grep("^ticks$", guide$layout$name)
-  ticks <- guide$grobs[is_ticks][[1]]
-  if (dir == "vertical") {
-    ticks$x1 <- rep(tail(ticks$x1, 1), length(ticks$x1))
-  } else {
-    ticks$y1 <- rep(tail(ticks$y1, 1), length(ticks$y1))
-  }
-
-  guide$grobs[[is_ticks]] <- ticks
-  guide
-}
-
 
 #' @keywords internal
 #' @noRd
@@ -169,7 +139,7 @@ guide_gengrob.guide_longticks <- function(guide, theme) {
       legend.position = "bottom",
       panel.grid.minor = element_blank()
     ) +
-    guides(colour = guide_longticks(
+    guides(colour = guide_colourbar(
       ticks = TRUE,
       ticks.linewidth = 0.8,
       ticks.colour = "black",
