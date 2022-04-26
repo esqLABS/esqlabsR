@@ -64,6 +64,9 @@ test_script:
 on_success:
   - Rscript -e "covr::codecov()"
 
+after_test:
+  - ps: copy esqlabsR_*.zip esqlabsR.zip
+
 on_failure:
   - 7z a failure.zip *.Rcheck\*
   - appveyor PushArtifact failure.zip
@@ -84,5 +87,5 @@ artifacts:
   - path: '\*_*.tar.gz'
     name: Bits
 
-  - path: '\*_*.zip'
+  - path: 'esqlabsR*.zip'
     name: Bits
