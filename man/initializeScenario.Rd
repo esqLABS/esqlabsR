@@ -23,5 +23,5 @@ Apply individual model parameters
 Apply test parameters (TestParameters.R)
 Set simulation outputs (OutputPaths.R)
 Set simulation time
-esqlabsR::initializeSimulation()
+initializeSimulation()
 }

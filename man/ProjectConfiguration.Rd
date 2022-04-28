@@ -57,7 +57,6 @@ saved to; relative to the "Code" folder}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{ProjectConfiguration$new()}}
 \item \href{#method-print}{\code{ProjectConfiguration$print()}}
 \item \href{#method-clone}{\code{ProjectConfiguration$clone()}}
 }
@@ -67,19 +66,6 @@ saved to; relative to the "Code" folder}
 \itemize{
 }
 \out{</details>}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
-\subsection{Method \code{new()}}{
-Initialize a new instance of the class
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$new()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-A new \code{ProjectConfiguration} object.
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-print"></a>}}

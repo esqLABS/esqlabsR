@@ -21,10 +21,10 @@ extension ".pkml"). Must be located in the "modelFolder".}
 \item{\code{applicationProtocol}}{Name of the application protocol to be applied. Defined
 in the excel file "ApplicationParameters.xlsx"}
 
-\item{\code{outputDevice}}{Output target of the plot. If NULL (default), the figure is created in the default "plot"
+\item{\code{outputDevice}}{Output target of the plot. If \code{NULL} (default), the figure is created in the default "plot"
 output. Other values indicate output into a file. A list of supported outputs is provided in \code{GraphicsDevices}-enum.}
 
-\item{\code{individualId}}{Id of the individual. If NULL (default), the individual as defined in the simulation file will be simulated.}
+\item{\code{individualId}}{Id of the individual. If \code{NULL} (default), the individual as defined in the simulation file will be simulated.}
 }
 \if{html}{\out{</div>}}
 }
@@ -49,7 +49,7 @@ are created based on information stored in \code{populationParamsFile}.
 Default is "Individual"}
 
 \item{\code{simulationRunOptions}}{Object of type \code{SimulationRunOptions} that will be passed
-to simulation runs. IF \code{NULL}, default options are used}
+to simulation runs. If \code{NULL}, default options are used}
 
 \item{\code{projectConfiguration}}{\code{ProjectConfiguration} that will be used in scenarios.
 Read-only}

@@ -16,7 +16,7 @@ sensitivitySpiderPlot(
 }
 \arguments{
 \item{sensitivityCalculation}{The \code{SensitivityCalculation} object returned by
-\code{esqlabsR::sensitivityCalculation()}.}
+\code{sensitivityCalculation()}.}
 
 \item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
 logarithmic scale.}
