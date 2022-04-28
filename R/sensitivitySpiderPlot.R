@@ -2,7 +2,7 @@
 #' @title Sensitivity spider plot for PK parameters
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
-#'   `esqlabsR::sensitivityCalculation()`.
+#'   `sensitivityCalculation()`.
 #' @param xAxisLog,yAxisLog Logical that decides whether to display the axis on
 #'   logarithmic scale.
 #' @param savePlots Logical that decides whether you wish to save created

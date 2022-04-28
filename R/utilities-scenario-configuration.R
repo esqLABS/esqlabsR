@@ -85,7 +85,7 @@ setApplications <- function(simulation, scenarioConfiguration, applicationProtoc
 
   # If the application is defined in the enum, call the function
   if (!is.null(applicationProtocolsEnum) &&
-      enumHasKey(key = applicationName, enum = applicationProtocolsEnum)) {
+    enumHasKey(key = applicationName, enum = applicationProtocolsEnum)) {
     applicationProtocolsEnum[[applicationName]]()
   } else {
     # Otherwise, set from excel
@@ -102,7 +102,7 @@ setApplications <- function(simulation, scenarioConfiguration, applicationProtoc
 .setApplicationFromExcel <- function(scenarioConfiguration, simulation) {
   excelFilePath <- file.path(
     scenarioConfiguration$projectConfiguration$paramsFolder,
-    (scenarioConfiguration$projectConfiguration$scenarioApplicationsFile)
+    scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
   )
   # Only try to apply parameters if the sheet exists
   if (scenarioConfiguration$applicationProtocol %in% readxl::excel_sheets(excelFilePath)) {

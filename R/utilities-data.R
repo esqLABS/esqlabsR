@@ -307,21 +307,25 @@ LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 #' scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
 #' dataSets <- loadObservedData(scenarioConfiguration)
 #' }
-loadObservedData <- function(scenarioConfiguration, sheets = NULL){
-  importerConfiguration <- ospsuite::loadDataImporterConfiguration(configurationFilePath =  file.path(scenarioConfiguration$projectConfiguration$dataFolder, scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile))
-  ospsuite.utils::validateIsString(sheets, nullAllowed = TRUE)
+loadObservedData <- function(scenarioConfiguration, sheets = NULL) {
+  importerConfiguration <- ospsuite::loadDataImporterConfiguration(configurationFilePath = file.path(scenarioConfiguration$projectConfiguration$dataFolder, scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile))
+  validateIsString(sheets, nullAllowed = TRUE)
   # If sheets have been specified, import only those. Otherwise try to import all
   # sheets
   importAllSheets <- TRUE
-  if(!is.null(sheets)){
+  if (!is.null(sheets)) {
     importerConfiguration$sheets <- sheets
     importAllSheets <- FALSE
   }
 
-  dataSets <- ospsuite::loadDataSetsFromExcel(xlsFilePath = file.path(scenarioConfiguration$projectConfiguration$dataFolder,
-                                                            scenarioConfiguration$projectConfiguration$dataFile),
-                                    importerConfiguration = importerConfiguration,
-                                    importAllSheets = importAllSheets)
+  dataSets <- ospsuite::loadDataSetsFromExcel(
+    xlsFilePath = file.path(
+      scenarioConfiguration$projectConfiguration$dataFolder,
+      scenarioConfiguration$projectConfiguration$dataFile
+    ),
+    importerConfigurationOrPath = importerConfiguration,
+    importAllSheets = importAllSheets
+  )
 
   return(dataSets)
 }

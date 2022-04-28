@@ -6,15 +6,7 @@ ProjectConfiguration <- R6::R6Class(
   "ProjectConfiguration",
   inherit = ospsuite.utils::Printable,
   cloneable = TRUE,
-  active = list(),
-  private = list(),
   public = list(
-    #' @description
-    #' Initialize a new instance of the class
-    #' @return A new `ProjectConfiguration` object.
-    initialize = function() {
-    },
-
     #' @field modelFolder Path to the folder with pkml simulation files;
     #' relative to the "Code" folder.
     modelFolder = NULL,

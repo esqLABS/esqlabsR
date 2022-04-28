@@ -2,7 +2,7 @@
 #'
 #' @param scenarioNames Names of the simulated scenarios. Scenario description is
 #' stored in the `Scenarios.xlsx` file.
-#' @param scenarioConfiguration A \code{ScenarioConfiguration} object
+#' @param scenarioConfiguration A `ScenarioConfiguration` object
 #' @param customParams A list containing vectors 'paths' with the full paths to the
 #' parameters, 'values' the values of the parameters, and 'units' with the
 #' units the values are in. The values to be applied to the model.
@@ -36,7 +36,7 @@ runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NU
       tryCatch(
         {
           # Create a new folder if it does not exist
-          if (!dir.exists(paths = outputFolder)){
+          if (!dir.exists(paths = outputFolder)) {
             dir.create(path = outputFolder)
           }
           ospsuite::saveSimulation(
@@ -64,13 +64,13 @@ runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NU
   for (idx in seq_along(scenarioNames)) {
     simulationName <- scenarioNames[[idx]]
     simulation <- simulations[[simulationName]]
-    if (ospsuite.utils::objectCount(simulationResults) > 1){
+    if (objectCount(simulationResults) > 1) {
       results <- simulationResults[[simulation$id]]
     } else {
       results <- simulationResults
     }
     outputValues <- getOutputValues(results,
-                                    quantitiesOrPaths = getAllQuantitiesMatching(enumValues(OutputPaths), simulation)
+      quantitiesOrPaths = getAllQuantitiesMatching(enumValues(OutputPaths), simulation)
     )
     returnList[[simulationName]] <- list(
       simulation = simulation, results = results,
@@ -91,19 +91,19 @@ runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NU
 #' Apply test parameters (TestParameters.R)
 #' Set simulation outputs (OutputPaths.R)
 #' Set simulation time
-#' esqlabsR::initializeSimulation()
+#' initializeSimulation()
 #'
-#' @param scenarioConfiguration A \code{ScenarioConfiguration} object
+#' @param scenarioConfiguration A `ScenarioConfiguration` object
 #' @param customParams A list with three vectors named `paths`, `values`, `units`
 #' to be applied to the model
 #'
-#' @return Initialized \code{Simulation} object
+#' @return Initialized `Simulation` object
 #' @export
 initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
   # Update `ScenarioConfiguration` with information from excel
   scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)
   # Read parameters from the parameters file
-  params <- esqlabsR::readParametersFromXLS(
+  params <- readParametersFromXLS(
     file.path(
       scenarioConfiguration$projectConfiguration$paramsFolder,
       scenarioConfiguration$projectConfiguration$paramsFile
@@ -113,42 +113,57 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
 
   individualCharacteristics <- NULL
   if (!is.null(scenarioConfiguration$individualId)) {
-    individualCharacteristics <- readIndividualCharacteristicsFromXLS(XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$individualPhysiologyFile), individualId = scenarioConfiguration$individualId, nullIfNotFound = TRUE)
+    individualCharacteristics <- readIndividualCharacteristicsFromXLS(
+      XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$individualPhysiologyFile),
+      individualId = scenarioConfiguration$individualId,
+      nullIfNotFound = TRUE
+    )
 
-    if (is.null(individualCharacteristics)){
-      warning(paste0("No individual characteristics for individual id '",
-                     scenarioConfiguration$individualId, "' found."))
+    if (is.null(individualCharacteristics)) {
+      warning(paste0(
+        "No individual characteristics for individual id '",
+        scenarioConfiguration$individualId, "' found."
+      ))
     }
 
     # Find individual-specific model parameters
-    if (scenarioConfiguration$individualId %in% readxl::excel_sheets(path = file.path(
+    excelSheets <- readxl::excel_sheets(path = file.path(
       scenarioConfiguration$projectConfiguration$paramsFolder,
       scenarioConfiguration$projectConfiguration$individualParamsFile
-    ))) {
-      indivModelParams <- esqlabsR::readParametersFromXLS(file.path(
+    ))
+
+    if (scenarioConfiguration$individualId %in% excelSheets) {
+      indivModelParams <- readParametersFromXLS(file.path(
         scenarioConfiguration$projectConfiguration$paramsFolder,
         scenarioConfiguration$projectConfiguration$individualParamsFile
       ), sheets = scenarioConfiguration$individualId)
 
       # Add individual model parameters to the parameters structure
-      params <- esqlabsR::extendParameterStructure(parameters = params,
-                                                   newParameters = indivModelParams)
+      params <- extendParameterStructure(
+        parameters = params,
+        newParameters = indivModelParams
+      )
     } else {
-      warning(paste0("No individual specific model parameters for individual id '",
-                     scenarioConfiguration$individualId, "' found."))
+      warning(paste0(
+        "No individual specific model parameters for individual id '",
+        scenarioConfiguration$individualId, "' found."
+      ))
     }
   }
 
   if (scenarioConfiguration$setTestParameters) {
     warning("INFO: 'scenarioConfiguration$setTestParameters' is set to TRUE,
             parameter values defined in 'InputCode/TestParameters.R' will be applied!")
-    params <- esqlabsR::extendParameterStructure(parameters = params,
-                                                 newParameters = getTestParameters())
+    params <- extendParameterStructure(
+      parameters = params,
+      newParameters = getTestParameters()
+    )
   }
   if (!is.null(customParams)) {
-    params <- esqlabsR::extendParameterStructure(parameters = params,
-
-                                                 newParameters = customParams)
+    params <- extendParameterStructure(
+      parameters = params,
+      newParameters = customParams
+    )
   }
 
   # Load simulation
@@ -162,7 +177,13 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
   # Set simulation time
   setOutputInterval(simulation = simulation, startTime = 0, endTime = scenarioConfiguration$simulationTime, resolution = scenarioConfiguration$pointsPerMinute)
 
-  esqlabsR::initializeSimulation(simulation = simulation, individualCharacteristics = individualCharacteristics, additionalParams = params, simulateSteadyState = scenarioConfiguration$simulateSteadyState, steadyStateTime = scenarioConfiguration$steadyStateTime)
+  initializeSimulation(
+    simulation = simulation,
+    individualCharacteristics = individualCharacteristics,
+    additionalParams = params,
+    simulateSteadyState = scenarioConfiguration$simulateSteadyState,
+    steadyStateTime = scenarioConfiguration$steadyStateTime
+  )
 
   # Set administration protocols
   setApplications(simulation = simulation, scenarioConfiguration = scenarioConfiguration)
