@@ -227,8 +227,10 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   df$xValues <- mapply(
     function(vals, unit) {
       ospsuite::toUnit(
-        quantityOrDimension = meanDataSet$xDimension, targetUnit = meanDataSet$xUnit,
-        values = vals, sourceUnit = unit
+        quantityOrDimension = meanDataSet$xDimension,
+        targetUnit = meanDataSet$xUnit,
+        values = vals,
+        sourceUnit = unit
       )
     },
     df$xValues, df$xUnit
@@ -238,8 +240,12 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   df$yValues <- mapply(
     function(vals, unit, mw) {
       ospsuite::toUnit(
-        quantityOrDimension = meanDataSet$yDimension, targetUnit = meanDataSet$yUnit,
-        values = vals, sourceUnit = unit, molWeight = mw, molWeightUnit = "g/mol"
+        quantityOrDimension = meanDataSet$yDimension,
+        targetUnit = meanDataSet$yUnit,
+        values = vals,
+        sourceUnit = unit,
+        molWeight = mw,
+        molWeightUnit = "g/mol"
       )
     },
     df$yValues, df$yUnit, df$molWeight
@@ -308,7 +314,12 @@ LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 #' dataSets <- loadObservedData(scenarioConfiguration)
 #' }
 loadObservedData <- function(scenarioConfiguration, sheets = NULL) {
-  importerConfiguration <- ospsuite::loadDataImporterConfiguration(configurationFilePath = file.path(scenarioConfiguration$projectConfiguration$dataFolder, scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile))
+  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+      configurationFilePath = file.path(
+        scenarioConfiguration$projectConfiguration$dataFolder,
+        scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile
+      )
+    )
   validateIsString(sheets, nullAllowed = TRUE)
   # If sheets have been specified, import only those. Otherwise try to import all
   # sheets

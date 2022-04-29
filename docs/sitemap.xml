@@ -58,6 +58,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/compareWithNA.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/DataConfiguration.html</loc>
   </url>
   <url>
@@ -79,7 +82,7 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-isPoint.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/enumGetKey.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-setApplicationFromExcel.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/enumPutList.html</loc>
@@ -95,6 +98,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/exportSteadyStateToXLS.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/extendParameterStructure.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/extendPopulationByUserDefinedParams.html</loc>
@@ -142,6 +148,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/index.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/initializeScenario.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/initializeSimulation.html</loc>
   </url>
   <url>
@@ -157,10 +166,10 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/LLOQMode.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/openOuptutDevice.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/loadObservedData.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/OR.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/openOuptutDevice.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/pathFromClipboard.html</loc>
@@ -202,6 +211,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/plotXYDataAggregated.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/ProjectConfiguration.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/readExcel.html</loc>
   </url>
   <url>
@@ -217,13 +229,22 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/readPopulationCharacteristicsFromXLS.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/readScenarioConfigurationFromExcel.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/reexports.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/removeFromList.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/runScenarios.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/sampleRandomValue.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/ScenarioConfiguration.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/sensitivityCalculation.html</loc>
@@ -235,10 +256,10 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/setParameterValuesByPathWithCondition.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/setApplications.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/setParameterValuesByPathWithUnit.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/setParameterValuesByPathWithCondition.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/sineFunction.html</loc>
