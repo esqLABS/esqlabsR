@@ -282,3 +282,50 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
 #' Possible entries for the `lloqMode` argument of `calculateMeans()`
 #' @export
 LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
+
+#' Load data from excel
+#'
+#' @description Loads data sets from excel. The excel file containing the data
+#' must be located in the folder `scenarioConfiguration$projectConfiguration$dataFolder`
+#' and be named `scenarioConfiguration$projectConfiguration$dataFile`.
+#' Importer configuration file must be located in the same folder and named
+#' `scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile`.
+#'
+#' @param scenarioConfiguration Object of class `ScenarioConfiguration` containing
+#' the necessary information.
+#' @param sheets String or a list of strings defining which sheets to load.
+#' If `NULL` (default), all sheets within the file are loaded.
+#'
+#' @return
+#' A list of `DataSet` objects
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create default project and scenario configurations
+#' projectConfiguration <- createDefaultProjectConfiguration()
+#' scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
+#' dataSets <- loadObservedData(scenarioConfiguration)
+#' }
+loadObservedData <- function(scenarioConfiguration, sheets = NULL) {
+  importerConfiguration <- ospsuite::loadDataImporterConfiguration(configurationFilePath = file.path(scenarioConfiguration$projectConfiguration$dataFolder, scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile))
+  validateIsString(sheets, nullAllowed = TRUE)
+  # If sheets have been specified, import only those. Otherwise try to import all
+  # sheets
+  importAllSheets <- TRUE
+  if (!is.null(sheets)) {
+    importerConfiguration$sheets <- sheets
+    importAllSheets <- FALSE
+  }
+
+  dataSets <- ospsuite::loadDataSetsFromExcel(
+    xlsFilePath = file.path(
+      scenarioConfiguration$projectConfiguration$dataFolder,
+      scenarioConfiguration$projectConfiguration$dataFile
+    ),
+    importerConfigurationOrPath = importerConfiguration,
+    importAllSheets = importAllSheets
+  )
+
+  return(dataSets)
+}

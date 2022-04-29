@@ -62,11 +62,11 @@ extendParameterStructure <- function(parameters, newParameters) {
   }
 
   # If the parameters structure is empty, return new parameters
-  if (ospsuite.utils::isEmpty(parameters$paths)) {
+  if (isEmpty(parameters$paths)) {
     return(newParameters)
   }
   # If the new parameters structure is empty, return parameters
-  if (ospsuite.utils::isEmpty(newParameters$paths)) {
+  if (isEmpty(newParameters$paths)) {
     return(parameters)
   }
 

@@ -70,3 +70,7 @@ messages$wrongParametersStructure <- function() {
   parameters, and `units' representing the units the values are in. All three
   vectors must have the same length"
 }
+
+messages$valueShouldNotBeNegative <- function(parameterName, value) {
+  paste0(parameterName, " must be a positive numerical value, but the value is ", value)
+}
