@@ -5,6 +5,7 @@ options(
   tibble.width = Inf,
   pillar.min_title_chars = Inf,
   pillar.sigfig = 4,
+  digits = 4,
   scipen = 999
 )
 
@@ -459,7 +460,7 @@ test_that("sensitivityTimeProfiles plots are as expected for multiple output pat
 
   set.seed(123)
   vdiffr::expect_doppelganger(
-    title = "sensitivityTimeProfiles with multiple output paths",
+    title = "multiple output path profiles",
     fig = suppressWarnings(p_list)
   )
 })
@@ -484,8 +485,45 @@ test_that("sensitivitySpiderPlot plots are as expected for multiple output paths
 
   set.seed(123)
   vdiffr::expect_doppelganger(
-    title = "sensitivitySpiderPlot for multiple output paths",
+    title = "multiple output path spiders",
     fig = suppressWarnings(plots_multiple)
+  )
+})
+
+# filter data to be plotted -------------------------------------
+
+outputPathsFilter <- "Organism|ArterialBlood|Plasma|Aciclovir"
+parameterPathsFilter <- "Aciclovir|Lipophilicity"
+pkParametersFilter <- c("C_max", "t_max")
+
+test_that("sensitivitySpiderPlot plots are as expected with filters", {
+  set.seed(123)
+  spider_plot_filtered <- sensitivitySpiderPlot(
+    results_multiple,
+    outputPaths = outputPathsFilter,
+    parameterPaths = parameterPathsFilter,
+    pkParameters = pkParametersFilter
+  )
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "filtered spider",
+    fig = suppressWarnings(spider_plot_filtered)
+  )
+})
+
+test_that("sensitivityTimeProfiles plots are as expected with filters", {
+  set.seed(123)
+  profile_plot_filtered <- sensitivityTimeProfiles(
+    results_multiple,
+    outputPaths = outputPathsFilter,
+    parameterPaths = parameterPathsFilter
+  )
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "filtered profile",
+    fig = suppressWarnings(profile_plot_filtered)
   )
 })
 

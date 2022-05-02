@@ -315,11 +315,11 @@ LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 #' }
 loadObservedData <- function(scenarioConfiguration, sheets = NULL) {
   importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-      configurationFilePath = file.path(
-        scenarioConfiguration$projectConfiguration$dataFolder,
-        scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile
-      )
+    configurationFilePath = file.path(
+      scenarioConfiguration$projectConfiguration$dataFolder,
+      scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile
     )
+  )
   validateIsString(sheets, nullAllowed = TRUE)
   # If sheets have been specified, import only those. Otherwise try to import all
   # sheets

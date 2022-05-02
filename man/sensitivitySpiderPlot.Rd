@@ -6,6 +6,9 @@
 \usage{
 sensitivitySpiderPlot(
   sensitivityCalculation,
+  outputPaths = NULL,
+  parameterPaths = NULL,
+  pkParameters = NULL,
   xAxisLog = TRUE,
   yAxisLog = FALSE,
   savePlots = FALSE,
@@ -17,6 +20,12 @@ sensitivitySpiderPlot(
 \arguments{
 \item{sensitivityCalculation}{The \code{SensitivityCalculation} object returned by
 \code{sensitivityCalculation()}.}
+
+\item{outputPaths, parameterPaths, pkParameters}{A single or a vector of the
+output path(s), parameter path(s), and PK parameters to be displayed,
+respectively. If \code{NULL}, all included paths and parameters present in the
+supplied \code{SensitivityCalculation} object will be displayed in the
+visualization.}
 
 \item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
 logarithmic scale.}

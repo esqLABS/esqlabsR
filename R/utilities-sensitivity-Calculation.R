@@ -339,3 +339,29 @@
     )
   )
 }
+
+#' Filter out data not needed for plotting
+#'
+#' @param data Internal data frame used while plotting.
+#' @inheritParams sensitivitySpiderPlot
+#'
+#' @keywords internal
+#' @noRd
+.filterPlottingData <- function(data,
+                                outputPaths = NULL,
+                                parameterPaths = NULL,
+                                pkParameters = NULL) {
+  if (!is.null(outputPaths)) {
+    data <- dplyr::filter(data, OutputPath %in% outputPaths)
+  }
+
+  if (!is.null(parameterPaths)) {
+    data <- dplyr::filter(data, ParameterPath %in% parameterPaths)
+  }
+
+  if (!is.null(pkParameters)) {
+    data <- dplyr::filter(data, PKParameter %in% pkParameters)
+  }
+
+  return(data)
+}
