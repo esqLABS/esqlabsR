@@ -3,6 +3,11 @@
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
 #'   `sensitivityCalculation()`.
+#' @param outputPaths,parameterPaths,pkParameters A single or a vector of the
+#'   output path(s), parameter path(s), and PK parameters to be displayed,
+#'   respectively. If `NULL`, all included paths and parameters present in the
+#'   supplied `SensitivityCalculation` object will be displayed in the
+#'   visualization.
 #' @param xAxisLog,yAxisLog Logical that decides whether to display the axis on
 #'   logarithmic scale.
 #' @param savePlots Logical that decides whether you wish to save created
@@ -55,17 +60,39 @@
 #' }
 #' @export
 sensitivitySpiderPlot <- function(sensitivityCalculation,
+                                  outputPaths = NULL,
+                                  parameterPaths = NULL,
+                                  pkParameters = NULL,
                                   xAxisLog = TRUE,
                                   yAxisLog = FALSE,
                                   savePlots = FALSE,
                                   width = NA,
                                   height = NA,
                                   dpi = 300) {
+  # input validation ------------------------
+
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
 
+  # validate vector arguments of character type
+  .validateCharVectors(outputPaths)
+  .validateCharVectors(parameterPaths)
+  .validateCharVectors(pkParameters)
+
+  # filter data ------------------------
+
   # extrat the needed dataframe from the object
   data <- sensitivityCalculation$pkData
+
+  # filter out data not needed for plotting
+  data <- .filterPlottingData(
+    data,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    pkParameters = pkParameters
+  )
+
+  # list of plots ------------------------
 
   # create plot for each output path
   ls_plots <- purrr::map(
@@ -77,6 +104,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     )
   )
 
+  # if needed, save plots with given specs
   if (savePlots) {
     .savePlotList(
       ls_plots,
@@ -93,7 +121,10 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
 #' @keywords internal
 #' @noRd
-.createSpiderPlot <- function(data, xAxisLog = TRUE, yAxisLog = FALSE) {
+.createSpiderPlot <- function(data,
+                              xAxisLog = TRUE,
+                              yAxisLog = FALSE) {
+  # getting the scales right
   data <- dplyr::mutate(data,
     ParameterFactor = ParameterFactor * 100,
     PercentChangePK = PercentChangePK + 100

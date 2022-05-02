@@ -49,6 +49,8 @@
 #' }
 #' @export
 sensitivityTimeProfiles <- function(sensitivityCalculation,
+                                    outputPaths = NULL,
+                                    parameterPaths = NULL,
                                     xAxisLog = FALSE,
                                     yAxisLog = TRUE,
                                     palette = "Cold",
@@ -56,8 +58,16 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     width = NA,
                                     height = NA,
                                     dpi = 300) {
+  # input validation ------------------------
+
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+
+  # validate vector arguments of character type
+  .validateCharVectors(outputPaths)
+  .validateCharVectors(parameterPaths)
+
+  # filter data ------------------------
 
   # extract the needed dataframe from the object
   data <- .simulationResultsBatchToTimeSeriesDataFrame(
@@ -65,6 +75,16 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     parameterPaths         = sensitivityCalculation$parameterPaths,
     outputPaths            = sensitivityCalculation$outputPaths
   )
+
+  # filter out data not needed for plotting
+  data <- .filterPlottingData(
+    data,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    pkParameters = NULL # not relevant
+  )
+
+  # list of plots ------------------------
 
   # create plot for each output path
   ls_plots <- purrr::map(
@@ -77,6 +97,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   )
 
+  # if needed, save plots with given specs
   if (savePlots) {
     .savePlotList(
       ls_plots,
@@ -94,7 +115,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
 #' @keywords internal
 #' @noRd
-.createTimeProfiles <- function(data, xAxisLog = FALSE, yAxisLog = TRUE, palette = NULL) {
+.createTimeProfiles <- function(data,
+                                xAxisLog = FALSE,
+                                yAxisLog = TRUE,
+                                palette = NULL) {
   plot <- ggplot() +
     geom_line(
       data = dplyr::filter(data, ParameterFactor != 1.0),
