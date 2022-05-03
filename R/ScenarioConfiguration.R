@@ -2,6 +2,7 @@
 #' @docType class
 #' @description An object storing configuration of a specific scenario
 #' @format NULL
+#' @export
 ScenarioConfiguration <- R6::R6Class(
   "ScenarioConfiguration",
   inherit = ospsuite.utils::Printable,
