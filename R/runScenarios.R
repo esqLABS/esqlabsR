@@ -64,11 +64,7 @@ runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NU
   for (idx in seq_along(scenarioNames)) {
     simulationName <- scenarioNames[[idx]]
     simulation <- simulations[[simulationName]]
-    if (objectCount(simulationResults) > 1) {
-      results <- simulationResults[[simulation$id]]
-    } else {
-      results <- simulationResults
-    }
+    results <- simulationResults[[simulation$id]]
     outputValues <- getOutputValues(results,
       quantitiesOrPaths = getAllQuantitiesMatching(enumValues(OutputPaths), simulation)
     )
