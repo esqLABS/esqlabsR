@@ -8,7 +8,6 @@ sensitivityTimeProfiles(
   sensitivityCalculation,
   outputPaths = NULL,
   parameterPaths = NULL,
-  pkParameters = NULL,
   xAxisLog = FALSE,
   yAxisLog = TRUE,
   palette = "Cold",
@@ -29,12 +28,6 @@ supplied \code{SensitivityCalculation} object will be displayed in the
 visualization.}
 
 \item{parameterPaths}{A single or a vector of the
-output path(s), parameter path(s), and PK parameters to be displayed,
-respectively. If \code{NULL}, all included paths and parameters present in the
-supplied \code{SensitivityCalculation} object will be displayed in the
-visualization.}
-
-\item{pkParameters}{A single or a vector of the
 output path(s), parameter path(s), and PK parameters to be displayed,
 respectively. If \code{NULL}, all included paths and parameters present in the
 supplied \code{SensitivityCalculation} object will be displayed in the
