@@ -60,19 +60,14 @@ initializeSimulation <- function(simulation,
     if (all(names(additionalParams) != c("paths", "values", "units"))) {
       stop(messages$errorWrongAdditionalParams)
     }
-    for (i in seq_along(additionalParams$paths)) {
-      param <- ospsuite::getParameter(additionalParams$paths[[i]], container = simulation, stopIfNotFound = stopIfParameterNotFound)
-      if (is.null(param)) {
-        warning(messages$warningParameterNotFound(additionalParams$paths[[i]]))
-        next
-      }
-      unit <- additionalParams$units[[i]]
-      value <- additionalParams$values[[i]]
-      if (is.na(unit)) {
-        unit <- NULL
-      }
-      ospsuite::setParameterValues(parameters = param, values = value, units = unit)
-    }
+
+    ospsuite::setParameterValuesByPath(
+      parameterPaths = additionalParams$paths,
+      values = additionalParams$values,
+      simulation = simulation,
+      units = additionalParams$units,
+      stopIfNotFound = FALSE
+    )
   }
 
   if (simulateSteadyState) {
