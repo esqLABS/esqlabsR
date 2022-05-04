@@ -82,6 +82,74 @@ sensitivityCalculation <- function(simulation,
   clearOutputs(simulation = simulation)
   addOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
 
+  # Create as few simulation batches as possible. All constant parameters can be
+  # simulated in one batch. Each formula parameter must be a separate batch.
+  constantParamPaths <- list()
+  formulaParamPaths <- list()
+  # Store initial values of the parameters, i.e., where scale factor is 1
+  initialValues <- vector("double", length(parameterPaths))
+  names(initialValues) <- parameterPaths
+  # Each simulation batch result has an ID. Create a map of IDs to varied parameter
+  # paths and scale factors (alternatively, values of the parameters could be used
+  # as keys)
+  batchResultsIdMap <- vector("list", length(parameterPaths))
+  names(batchResultsIdMap) <- parameterPaths
+
+  for (parameterPath in parameterPaths){
+    # Initialize batchResultsIdMap for the current parameter
+    batchResultsIdMap[[parameterPath]] <- vector("character", length(variationRange))
+    names(batchResultsIdMap[[parameterPath]]) <- variationRange
+
+    param <- getParameter(parameterPath, simulation)
+    if(param$isConstant){
+      constantParamPaths <- c(constantParamPaths, parameterPath)
+    } else {
+      formulaParamPaths <- c(formulaParamPaths, parameterPath)
+    }
+    initialValues[[parameterPath]] = param$value
+  }
+  constantParamPaths <- unlist(constantParamPaths)
+  formulaParamPaths <- unlist(formulaParamPaths)
+
+  simulationBatches <- list()
+  #Create one batch for all constant parameters
+  if (length(constantParamPaths) > 0){
+    constantBatch <- createSimulationBatch(simulation = simulation,
+                                           parametersOrPaths = constantParamPaths)
+    # Add run values. While varying one parameter, the values of remaining
+    # constant parameters remain at their initial values.
+    for (constantParamPath in constantParamPaths){
+      for (scaleFactorIdx in seq_along(variationRange)){
+        # Change the value of the varied parameter
+        runValues <- initialValues[constantParamPaths]
+        runValues[[constantParamPath]] <- variationRange[[scaleFactorIdx]] * runValues[[constantParamPath]]
+        # Add run values and store the ID in the batchResultsIdMap
+        batchResultsIdMap[[constantParamPath]][[scaleFactorIdx]] <- constantBatch$addRunValues(parameterValues = runValues)
+      }
+    }
+    simulationBatches <- c(simulationBatches, constantBatch)
+  }
+  # Add batches for formula parameters
+  for (formulaParamPath in formulaParamPaths){
+    formulaBatch <- createSimulationBatch(simulation = simulation,
+                                           parametersOrPaths = formulaParamPath)
+    # Add run values.
+    for (scaleFactorIdx in seq_along(variationRange)){
+      batchResultsIdMap[[formulaParamPath]][[scaleFactorIdx]] <- formulaBatch$addRunValues(parameterValues = variationRange[[scaleFactorIdx]] * initialValues[[formulaParamPath]])
+    }
+
+    simulationBatches <- c(simulationBatches, formulaBatch)
+  }
+
+  # Simulate all batches in parallel
+  simulationBatchesResults <- runSimulationBatches(simulationBatches = simulationBatches)
+  # runSimulationBatches returns a list with one entry per simulation batch.
+  # Unlist so all results are in one list. The names of the results are the IDs
+  # of the runs. Using batchResultsIdMap, results for a certain parameter/scale factor
+  # combination can be filtered out.
+  simulationBatchesResults <- unlist(simulationBatchesResults)
+
+####################################################
   # extract a list of `SimulationResults` objects
   simulationResultsBatch <- purrr::map(
     .x = parameterPaths,
