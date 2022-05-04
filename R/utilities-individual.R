@@ -143,7 +143,10 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
   }
 
   ospsuite::setParameterValuesByPath(
-    parameterPaths = allParamPaths, values = allParamValues, simulation = simulation,
-    units = allParamUnits, stopIfNotFound = FALSE
+    parameterPaths = allParamPaths,
+    values = allParamValues,
+    simulation = simulation,
+    units = allParamUnits,
+    stopIfNotFound = FALSE
   )
 }
