@@ -58,19 +58,19 @@ sensitivityCalculation <- function(simulation,
                                    pkDataFilePath = NULL) {
   # input validation ------------------------
 
-  # validate vector arguments of character type
+  # Validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
   .validateCharVectors(pkParameters)
 
-  # check for non-standard PK parameters
+  # Check for non-standard PK parameters
   .validatePKParameters(pkParameters)
 
-  # check provided variation range using custom function
-  # this also makes sure that there is always `1.0` present in this vector
+  # Check provided variation range using custom function.
+  # This also makes sure that there is always `1.0` present in this vector.
   variationRange <- .validateVariationRange(variationRange)
 
-  # fail early to avoid costly failure after analysis is already carried out
+  # Fail early to avoid costly failure after analysis is already carried out.
   if (!is.null(pkDataFilePath)) {
     validateIsFileExtension(pkDataFilePath, "xlsx")
   }
@@ -82,32 +82,35 @@ sensitivityCalculation <- function(simulation,
   clearOutputs(simulation = simulation)
   addOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
 
-  # Create as few simulation batches as possible. All constant parameters can be
-  # simulated in one batch. Each formula parameter must be a separate batch.
+  # Create as few simulation batches as possible.
+  # All constant parameters can be simulated in one batch. Each formula
+  # parameter must be a separate batch.
   constantParamPaths <- list()
   formulaParamPaths <- list()
 
-  # Store initial values of the parameters, i.e., where scale factor is 1
+  # Store initial values of the parameters, i.e., where scale factor is 1.
   initialValues <- vector("double", length(parameterPaths))
   names(initialValues) <- parameterPaths
 
-  # Each simulation batch result has an ID. Create a map of IDs to varied parameter
-  # paths and scale factors (alternatively, values of the parameters could be used
-  # as keys)
+  # Each simulation batch result has an ID.
+  # Create a map of IDs to varied parameter paths and scale factors
+  # (alternatively, values of the parameters could be used as keys).
   batchResultsIdMap <- vector("list", length(parameterPaths))
   names(batchResultsIdMap) <- parameterPaths
 
   for (parameterPath in parameterPaths) {
-    # Initialize batchResultsIdMap for the current parameter
-    batchResultsIdMap[[parameterPath]] <- vector("character", length(variationRange))
+    # Initialize `batchResultsIdMap` for the current parameter
+    batchResultsIdMap[[parameterPath]] <- vector("list", length(variationRange))
     names(batchResultsIdMap[[parameterPath]]) <- variationRange
 
     param <- getParameter(parameterPath, simulation)
+
     if (param$isConstant) {
       constantParamPaths <- c(constantParamPaths, parameterPath)
     } else {
       formulaParamPaths <- c(formulaParamPaths, parameterPath)
     }
+
     initialValues[[parameterPath]] <- param$value
   }
 
@@ -130,7 +133,8 @@ sensitivityCalculation <- function(simulation,
         # Change the value of the varied parameter
         runValues <- initialValues[constantParamPaths]
         runValues[[constantParamPath]] <- variationRange[[scaleFactorIdx]] * runValues[[constantParamPath]]
-        # Add run values and store the ID in the batchResultsIdMap
+
+        # Add run values and store the ID in the `batchResultsIdMap`
         batchResultsIdMap[[constantParamPath]][[scaleFactorIdx]] <- constantBatch$addRunValues(parameterValues = runValues)
       }
     }
@@ -156,56 +160,53 @@ sensitivityCalculation <- function(simulation,
   # Simulate all batches in parallel
   simulationBatchesResults <- runSimulationBatches(simulationBatches = simulationBatches)
 
-  # runSimulationBatches returns a list with one entry per simulation batch.
+  # `runSimulationBatches()` returns a list with one entry per simulation batch.
+  #
   # Unlist so all results are in one list. The names of the results are the IDs
-  # of the runs. Using batchResultsIdMap, results for a certain parameter/scale factor
-  # combination can be filtered out.
+  # of the runs. Using `batchResultsIdMap`, results for a certain
+  # parameter/scale factor combination can be filtered out.
   simulationBatchesResults <- unlist(simulationBatchesResults)
 
-  ####################################################
+  # Create a nested list of simulation batch results.
+  # Outer list indexes each parameter path, while inner list corresponds to each
+  # value of parameter factor.
+  simulationResultsBatch <- batchResultsIdMap
 
-  # extract a list of `SimulationResults` objects
-  simulationResultsBatch <- purrr::map(
-    .x = parameterPaths,
-    .f = ~ .extractSimulationResultsBatch(
-      simulation     = simulation,
-      parameterPath  = .x,
-      variationRange = variationRange
-    )
-  )
+  for (parameterPath in seq_along(simulationResultsBatch)) {
+    for (parameterFactor in seq_along(simulationResultsBatch[[parameterPath]])) {
+      simulationResultsBatch[[parameterPath]][[parameterFactor]] <- purrr::pluck(simulationBatchesResults, batchResultsIdMap[[parameterPath]][[parameterFactor]])
+    }
+  }
 
-  # name list with name of each parameter path
-  names(simulationResultsBatch) <- parameterPaths
+  # extract and save data frames ------------------------
 
-  # extract and save dataframes ------------------------
-
-  # extract dataframe for PK parameters
+  # Extract data frame for PK parameters
   pkData <- .simulationResultsBatchToPKDataFrame(simulationResultsBatch, parameterPaths)
 
-  # filter out unneeded PK parameters
+  # Filter out unneeded PK parameters
   if (!is.null(pkParameters)) {
     pkData <- dplyr::filter(pkData, PKParameter %in% pkParameters)
   }
 
-  # write each wide dataframe in a list to a separate sheet in Excel
+  # Write each wide data frame in a list to a separate sheet in Excel
   if (!is.null(pkDataFilePath)) {
-    # convert tidy data to wide format for each output path
+    # Convert tidy data to wide format for each output path
     pkData_wide_list <- purrr::map(
       .x = pkData %>% split(.$OutputPath),
       .f = ~ .convertToWide(.x)
     )
 
-    # the output paths can be quite long and don't make for good sheet names
-    # instead use `OutputPathXXX` naming pattern for sheets
+    # The output paths can be quite long and don't make for good sheet names, so
+    # use `OutputPathXXX` naming pattern for sheets instead.
     names(pkData_wide_list) <- paste0("OutputPath", seq(1:length(unique(pkData$OutputPath))))
 
-    # write to a spreadsheet with one sheet per output path
+    # Write to a spreadsheet with one sheet per output path.
     writexl::write_xlsx(pkData_wide_list, pkDataFilePath)
   }
 
   # return `SensitivityCalculation` ------------------------
 
-  # final list with needed objects and dataframes for plotting functions
+  # Final list with needed objects and data frames for plotting functions.
   results <- list(
     "simulationResults" = simulationResultsBatch,
     "outputPaths"       = outputPaths,
@@ -221,10 +222,10 @@ sensitivityCalculation <- function(simulation,
     ospsuite::addOutputs(quantitiesOrPaths = outputSelection$path, simulation = simulation)
   }
 
-  # add additional S3 class attribute
-  # helpful for plotting methods to recognize this object
+  # Add additional `S3` class attribute.
+  # Helpful for plotting methods to recognize this object.
   class(results) <- c("SensitivityCalculation", class(results))
 
-  # return the data in a list
+  # Return the data in a list.
   return(results)
 }
