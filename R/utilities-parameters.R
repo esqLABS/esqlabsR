@@ -6,20 +6,12 @@
 #' @param sheets Names of the excel sheets containing the information about the
 #'   parameters. Multiple sheets can be processed. If no sheets are provided,
 #'   the first one in the Excel file is used.
-#' @param columnTypes Either `NULL` to guess all from the spreadsheet or a
-#'   character vector containing one entry per column from these options:
-#'   "skip", "guess", "logical", "numeric", "date", "text" or "list". If exactly
-#'   one `col_type` is specified, it will be recycled. The content of a cell in
-#'   a skipped column is never read and that column will not appear in the data
-#'   frame output. A list cell loads a column as a list of length 1 vectors,
-#'   which are typed using the type guessing logic from `columnTypes = NULL`, but
-#'   on a cell-by-cell basis.
 #'
 #' @return A list containing vectors 'paths' with the full paths to the
 #'   parameters, 'values' the values of the parameters, and 'units' with the
 #'   units the values are in.
 #' @export
-readParametersFromXLS <- function(paramsXLSpath, sheets = NULL, columnTypes = NULL) {
+readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
   validateIsString(paramsXLSpath)
   validateIsString(sheets, nullAllowed = TRUE)
@@ -32,7 +24,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL, columnTypes = NU
   pathsUnitsVector <- vector(mode = "character")
 
   for (sheet in sheets) {
-    data <- readExcel(path = paramsXLSpath, sheet = sheet, col_types = columnTypes)
+    data <- readExcel(path = paramsXLSpath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
