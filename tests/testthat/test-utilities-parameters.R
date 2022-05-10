@@ -1,6 +1,14 @@
 context("readParametersFromXLS-data")
 dataFolder <- getTestDataFilePath("")
 
+test_that("It can read an empty sheet", {
+  paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
+  sheets <- c("EmptySheet")
+  params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
+
+  expect_equal(names(params), c("paths", "values", "units"))
+})
+
 test_that("It can read a properly defined file", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
   sheets <- c("ValidSheet")
