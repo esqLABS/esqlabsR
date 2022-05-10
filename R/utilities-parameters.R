@@ -6,12 +6,20 @@
 #' @param sheets Names of the excel sheets containing the information about the
 #'   parameters. Multiple sheets can be processed. If no sheets are provided,
 #'   the first one in the Excel file is used.
+#' @param columnTypes Either `NULL` to guess all from the spreadsheet or a
+#'   character vector containing one entry per column from these options:
+#'   "skip", "guess", "logical", "numeric", "date", "text" or "list". If exactly
+#'   one `col_type` is specified, it will be recycled. The content of a cell in
+#'   a skipped column is never read and that column will not appear in the data
+#'   frame output. A list cell loads a column as a list of length 1 vectors,
+#'   which are typed using the type guessing logic from `columnTypes = NULL`, but
+#'   on a cell-by-cell basis.
 #'
 #' @return A list containing vectors 'paths' with the full paths to the
 #'   parameters, 'values' the values of the parameters, and 'units' with the
 #'   units the values are in.
 #' @export
-readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
+readParametersFromXLS <- function(paramsXLSpath, sheets = NULL, columnTypes = NULL) {
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
   validateIsString(paramsXLSpath)
   validateIsString(sheets, nullAllowed = TRUE)
@@ -22,19 +30,22 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 
   pathsValuesVector <- vector(mode = "numeric")
   pathsUnitsVector <- vector(mode = "character")
+
   for (sheet in sheets) {
-    data <- readExcel(path = paramsXLSpath, sheet = sheet)
+    data <- readExcel(path = paramsXLSpath, sheet = sheet, col_types = columnTypes)
+
     if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
     }
 
-    fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]],
-      sep = "|"
-    )
+    fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]], sep = "|")
     pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
-    # replace `NA` in units with `""` represeting the empty unit for
-    # the dimension `Dimensionless`
-    pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = data[["Units"]], replace = "")
+
+    # If any data is present, replace `NA` in units with `""` representing the
+    # empty unit for the dimension `Dimensionless`.
+    if (nrow(data) > 0L) {
+      pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = data[["Units"]], replace = "")
+    }
   }
 
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
@@ -57,7 +68,8 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @return Updated list of parameter patsh, values, and units
 #' @export
 extendParameterStructure <- function(parameters, newParameters) {
-  if (!identical(names(parameters), c("paths", "values", "units")) || !identical(names(newParameters), c("paths", "values", "units"))) {
+  if (!identical(names(parameters), c("paths", "values", "units")) ||
+    !identical(names(newParameters), c("paths", "values", "units"))) {
     stop(messages$wrongParametersStructure())
   }
 
@@ -65,12 +77,13 @@ extendParameterStructure <- function(parameters, newParameters) {
   if (isEmpty(parameters$paths)) {
     return(newParameters)
   }
+
   # If the new parameters structure is empty, return parameters
   if (isEmpty(newParameters$paths)) {
     return(parameters)
   }
 
-  # Conver the input parameter structure into hashs.
+  # Convert the input parameter structure into hashes.
   pathsValuesVector <- parameters$values
   names(pathsValuesVector) <- parameters$paths
   pathsUnitsVector <- parameters$units
@@ -96,20 +109,26 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' @keywords internal
 .parametersVectorToList <- function(pathsValuesVector, pathsUnitsVector) {
   paths <- names(pathsValuesVector)
+
   returnVal <- list(
     paths = paths,
     values = unname(pathsValuesVector[paths]),
     units = unname(pathsUnitsVector[paths])
   )
+
   return(returnVal)
 }
 
-#' Check if two parameters are equal is respect to certain properties. The parameters are not equal if:
+#' @title Check if two parameters are equal is respect to certain properties.
+#'
+#' @details
+#' The parameters are not equal if:
 #' The paths of the parameters are not equal;
 #' The types of the formulas differ (types checked: isConstant, isDistributed, isExplicit, isTable);
 #' Constant formulas have different values;
 #' Distributed formulas have different values (not checking for distribution)
-#' Explicit formulas: If formula string are not equal, OR one of the parameter values is fixed (formula is overridden),
+#' Explicit formulas: If formula string are not equal, OR one of the parameter
+#' values is fixed (formula is overridden),
 #' OR both parameter values are fixed and differ,
 #' OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
 #' Table formulas: If the number of points differ, OR any of the points differ,
@@ -131,6 +150,7 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
   if (parameter1$path != parameter2$path) {
     return(FALSE)
   }
+
   formula1 <- parameter1$formula
   formula2 <- parameter2$formula
 
