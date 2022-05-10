@@ -2,18 +2,7 @@
 % Please edit documentation in R/utilities-parameters.R
 \name{isParametersEqual}
 \alias{isParametersEqual}
-\title{Check if two parameters are equal is respect to certain properties. The parameters are not equal if:
-The paths of the parameters are not equal;
-The types of the formulas differ (types checked: isConstant, isDistributed, isExplicit, isTable);
-Constant formulas have different values;
-Distributed formulas have different values (not checking for distribution)
-Explicit formulas: If formula string are not equal, OR one of the parameter values is fixed (formula is overridden),
-OR both parameter values are fixed and differ,
-OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
-Table formulas: If the number of points differ, OR any of the points differ,
-OR one of the parameter values is fixed (formula is overridden),
-OR both parameter values are fixed and differ
-#'}
+\title{Check if two parameters are equal is respect to certain properties.}
 \usage{
 isParametersEqual(parameter1, parameter2, checkFormulaValues = FALSE)
 }
@@ -30,12 +19,16 @@ overridden (isFixedValue == TRUE). FALSE by default.}
 \code{TRUE} if parameters are considered equal, \code{FALSE} otherwise
 }
 \description{
-Check if two parameters are equal is respect to certain properties. The parameters are not equal if:
+Check if two parameters are equal is respect to certain properties.
+}
+\details{
+The parameters are not equal if:
 The paths of the parameters are not equal;
 The types of the formulas differ (types checked: isConstant, isDistributed, isExplicit, isTable);
 Constant formulas have different values;
 Distributed formulas have different values (not checking for distribution)
-Explicit formulas: If formula string are not equal, OR one of the parameter values is fixed (formula is overridden),
+Explicit formulas: If formula string are not equal, OR one of the parameter
+values is fixed (formula is overridden),
 OR both parameter values are fixed and differ,
 OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
 Table formulas: If the number of points differ, OR any of the points differ,

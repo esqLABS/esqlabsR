@@ -1,5 +1,15 @@
-context("readParametersFromXLS-data")
+# context("readParametersFromXLS-data")
 dataFolder <- getTestDataFilePath("")
+
+test_that("It can read an empty sheet", {
+  paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
+  sheets <- c("EmptySheet")
+  params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
+
+  expect_equal(names(params), c("paths", "values", "units"))
+  expect_type(params$values, "double")
+  expect_type(params$units, "character")
+})
 
 test_that("It can read a properly defined file", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
@@ -44,7 +54,7 @@ test_that("It overwrites the value if the path is present in multiple sheets", {
 })
 
 
-context("extendParameterStructure")
+# context("extendParameterStructure")
 
 test_that("It trows an error if wrong structure is provideed", {
   expect_error(extendParameterStructure(

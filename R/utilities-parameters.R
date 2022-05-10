@@ -22,19 +22,18 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 
   pathsValuesVector <- vector(mode = "numeric")
   pathsUnitsVector <- vector(mode = "character")
+
   for (sheet in sheets) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
+
     if (!all(columnNames %in% names(data))) {
       stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
     }
 
-    fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]],
-      sep = "|"
-    )
+    fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]], sep = "|")
     pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
-    # replace `NA` in units with `""` represeting the empty unit for
-    # the dimension `Dimensionless`
-    pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = data[["Units"]], replace = "")
+
+    pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = as.character(data[["Units"]]), replace = "")
   }
 
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
@@ -57,7 +56,8 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @return Updated list of parameter patsh, values, and units
 #' @export
 extendParameterStructure <- function(parameters, newParameters) {
-  if (!identical(names(parameters), c("paths", "values", "units")) || !identical(names(newParameters), c("paths", "values", "units"))) {
+  if (!identical(names(parameters), c("paths", "values", "units")) ||
+    !identical(names(newParameters), c("paths", "values", "units"))) {
     stop(messages$wrongParametersStructure())
   }
 
@@ -65,12 +65,13 @@ extendParameterStructure <- function(parameters, newParameters) {
   if (isEmpty(parameters$paths)) {
     return(newParameters)
   }
+
   # If the new parameters structure is empty, return parameters
   if (isEmpty(newParameters$paths)) {
     return(parameters)
   }
 
-  # Conver the input parameter structure into hashs.
+  # Convert the input parameter structure into hashes.
   pathsValuesVector <- parameters$values
   names(pathsValuesVector) <- parameters$paths
   pathsUnitsVector <- parameters$units
@@ -96,20 +97,26 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' @keywords internal
 .parametersVectorToList <- function(pathsValuesVector, pathsUnitsVector) {
   paths <- names(pathsValuesVector)
+
   returnVal <- list(
     paths = paths,
     values = unname(pathsValuesVector[paths]),
     units = unname(pathsUnitsVector[paths])
   )
+
   return(returnVal)
 }
 
-#' Check if two parameters are equal is respect to certain properties. The parameters are not equal if:
+#' @title Check if two parameters are equal is respect to certain properties.
+#'
+#' @details
+#' The parameters are not equal if:
 #' The paths of the parameters are not equal;
 #' The types of the formulas differ (types checked: isConstant, isDistributed, isExplicit, isTable);
 #' Constant formulas have different values;
 #' Distributed formulas have different values (not checking for distribution)
-#' Explicit formulas: If formula string are not equal, OR one of the parameter values is fixed (formula is overridden),
+#' Explicit formulas: If formula string are not equal, OR one of the parameter
+#' values is fixed (formula is overridden),
 #' OR both parameter values are fixed and differ,
 #' OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
 #' Table formulas: If the number of points differ, OR any of the points differ,
@@ -131,6 +138,7 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
   if (parameter1$path != parameter2$path) {
     return(FALSE)
   }
+
   formula1 <- parameter1$formula
   formula2 <- parameter2$formula
 
