@@ -41,11 +41,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL, columnTypes = NU
     fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]], sep = "|")
     pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
 
-    # If any data is present, replace `NA` in units with `""` representing the
-    # empty unit for the dimension `Dimensionless`.
-    if (nrow(data) > 0L) {
-      pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = data[["Units"]], replace = "")
-    }
+    pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = as.character(data[["Units"]]), replace = "")
   }
 
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
