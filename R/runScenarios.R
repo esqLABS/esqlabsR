@@ -31,14 +31,14 @@ runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NU
       scenarioConfiguration$projectConfiguration$modelFolder,
       format(Sys.time(), "%F %H-%M")
     )
+    # Create a new folder if it does not exist
+    if (!dir.exists(paths = outputFolder)) {
+      dir.create(path = outputFolder)
+    }
     for (scenarioName in scenarioNames) {
       outputPath <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
       tryCatch(
         {
-          # Create a new folder if it does not exist
-          if (!dir.exists(paths = outputFolder)) {
-            dir.create(path = outputFolder)
-          }
           ospsuite::saveSimulation(
             simulation = simulations[[scenarioName]],
             filePath = outputPath
