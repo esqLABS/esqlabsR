@@ -389,7 +389,7 @@ test_that("sensitivitySpiderPlot plots are as expected", {
   )
 })
 
-# saving plots ---------------------------------------
+# saving plots: default ---------------------------------------
 
 test_that("sensitivityTimeProfiles saves plot file", {
   path <- "Profile_OutputPath1.png"
@@ -401,7 +401,21 @@ test_that("sensitivityTimeProfiles saves plot file", {
   on.exit(unlink(path))
 })
 
+test_that("sensitivitySpiderPlot saves plot file", {
+  path <- "Spider_OutputPath1.png"
+
+  p <- sensitivitySpiderPlot(results, savePlots = TRUE)
+
+  expect_true(file.exists(path))
+
+  on.exit(unlink(path))
+})
+
+# saving plots: folder ---------------------------------------
+
 test_that("sensitivityTimeProfiles saves plot file to a specified folder", {
+  testthat::skip_on_appveyor()
+
   path <- "tests/Profile_OutputPath1.png"
 
   p <- suppressWarnings(sensitivityTimeProfiles(results, savePlotsToFolder = "tests/", savePlots = TRUE))
@@ -412,19 +426,11 @@ test_that("sensitivityTimeProfiles saves plot file to a specified folder", {
 })
 
 test_that("sensitivitySpiderPlot saves plot file to a specified folder", {
+  testthat::skip_on_appveyor()
+
   path <- "tests/Spider_OutputPath1.png"
 
   p <- sensitivitySpiderPlot(results, savePlotsToFolder = "tests/", savePlots = TRUE)
-
-  expect_true(file.exists(path))
-
-  on.exit(unlink(path))
-})
-
-test_that("sensitivitySpiderPlot saves plot file", {
-  path <- "Spider_OutputPath1.png"
-
-  p <- sensitivitySpiderPlot(results, savePlots = TRUE)
 
   expect_true(file.exists(path))
 
