@@ -59,22 +59,22 @@ Read-only}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{ScenarioConfiguration$new()}}
-\item \href{#method-addParamSheets}{\code{ScenarioConfiguration$addParamSheets()}}
-\item \href{#method-removeParamSheets}{\code{ScenarioConfiguration$removeParamSheets()}}
-\item \href{#method-print}{\code{ScenarioConfiguration$print()}}
-\item \href{#method-clone}{\code{ScenarioConfiguration$clone()}}
+\item \href{#method-ScenarioConfiguration-new}{\code{ScenarioConfiguration$new()}}
+\item \href{#method-ScenarioConfiguration-addParamSheets}{\code{ScenarioConfiguration$addParamSheets()}}
+\item \href{#method-ScenarioConfiguration-removeParamSheets}{\code{ScenarioConfiguration$removeParamSheets()}}
+\item \href{#method-ScenarioConfiguration-print}{\code{ScenarioConfiguration$print()}}
+\item \href{#method-ScenarioConfiguration-clone}{\code{ScenarioConfiguration$clone()}}
 }
 }
-\if{html}{
-\out{<details open ><summary>Inherited methods</summary>}
-\itemize{
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-ScenarioConfiguration-new"></a>}}
+\if{latex}{\out{\hypertarget{method-ScenarioConfiguration-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize a new instance of the class
 \subsection{Usage}{
@@ -93,8 +93,8 @@ A new \code{ScenarioConfiguration} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-addParamSheets"></a>}}
-\if{latex}{\out{\hypertarget{method-addParamSheets}{}}}
+\if{html}{\out{<a id="method-ScenarioConfiguration-addParamSheets"></a>}}
+\if{latex}{\out{\hypertarget{method-ScenarioConfiguration-addParamSheets}{}}}
 \subsection{Method \code{addParamSheets()}}{
 Add the names of sheets in the parameters excel-file
 that will be applied to the simulation
@@ -111,8 +111,8 @@ that will be applied to the simulation
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-removeParamSheets"></a>}}
-\if{latex}{\out{\hypertarget{method-removeParamSheets}{}}}
+\if{html}{\out{<a id="method-ScenarioConfiguration-removeParamSheets"></a>}}
+\if{latex}{\out{\hypertarget{method-ScenarioConfiguration-removeParamSheets}{}}}
 \subsection{Method \code{removeParamSheets()}}{
 Remove the names of sheets in the parameters excel-file
 from the list of sheets \code{paramSheets}
@@ -130,8 +130,8 @@ If \code{NULL} (default), all sheets are removed}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-ScenarioConfiguration-print"></a>}}
+\if{latex}{\out{\hypertarget{method-ScenarioConfiguration-print}{}}}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{
@@ -147,8 +147,8 @@ Print the object to the console
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-ScenarioConfiguration-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-ScenarioConfiguration-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

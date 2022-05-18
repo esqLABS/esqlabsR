@@ -12,7 +12,13 @@
 #'   logarithmic scale.
 #' @param savePlots Logical that decides whether you wish to save created
 #'   plot(s). They are not saved by default. Note that if there are multiple
-#'   output paths in your model, there will be multiple plots that will be saved.
+#'   output paths in your model, there will be multiple plots that will be
+#'   saved.
+#' @param outputFolder A character string describing path folder where plots
+#'   need to be saved. The path must be relative to the current working
+#'   directory. By default (`""`), the plots will be saved in the current
+#'   working directory (which can be found using `getwd()` function). This
+#'   parameter is relevant only if `savePlots` is set to `TRUE`.
 #' @param width,height Plot size in inches. If not supplied, uses the size of
 #'   current graphics device.
 #' @inheritParams ggplot2::ggsave
@@ -66,13 +72,15 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   xAxisLog = TRUE,
                                   yAxisLog = FALSE,
                                   savePlots = FALSE,
-                                  width = NA,
-                                  height = NA,
+                                  outputFolder = "",
+                                  width = 16,
+                                  height = 9,
                                   dpi = 300) {
   # input validation ------------------------
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  validateIsCharacter(outputFolder, nullAllowed = FALSE)
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
@@ -109,6 +117,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     .savePlotList(
       ls_plots,
       plot.type = "Spider_",
+      outputFolder = outputFolder,
       height = height,
       width = width,
       dpi = dpi
@@ -163,8 +172,6 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         minor_breaks = n_breaks
       )
   }
-
-
 
   plot <- plot +
     geom_hline(

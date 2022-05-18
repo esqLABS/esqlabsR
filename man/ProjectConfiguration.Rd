@@ -57,19 +57,19 @@ saved to; relative to the "Code" folder}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-print}{\code{ProjectConfiguration$print()}}
-\item \href{#method-clone}{\code{ProjectConfiguration$clone()}}
+\item \href{#method-ProjectConfiguration-print}{\code{ProjectConfiguration$print()}}
+\item \href{#method-ProjectConfiguration-clone}{\code{ProjectConfiguration$clone()}}
 }
 }
-\if{html}{
-\out{<details open ><summary>Inherited methods</summary>}
-\itemize{
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-ProjectConfiguration-print"></a>}}
+\if{latex}{\out{\hypertarget{method-ProjectConfiguration-print}{}}}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{
@@ -85,8 +85,8 @@ Print the object to the console
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-ProjectConfiguration-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-ProjectConfiguration-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

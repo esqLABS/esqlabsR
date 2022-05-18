@@ -12,8 +12,9 @@ sensitivityTimeProfiles(
   yAxisLog = TRUE,
   palette = "Cold",
   savePlots = FALSE,
-  width = NA,
-  height = NA,
+  outputFolder = "",
+  width = 16,
+  height = 9,
   dpi = 300
 )
 }
@@ -21,34 +22,29 @@ sensitivityTimeProfiles(
 \item{sensitivityCalculation}{The \code{SensitivityCalculation} object returned by
 \code{sensitivityCalculation()}.}
 
-\item{outputPaths}{A single or a vector of the
-output path(s), parameter path(s), and PK parameters to be displayed,
-respectively. If \code{NULL}, all included paths and parameters present in the
-supplied \code{SensitivityCalculation} object will be displayed in the
-visualization.}
+\item{outputPaths}{Path (or a vector of paths) to the output(s) for which the
+sensitivity will be analyzed.}
 
-\item{parameterPaths}{A single or a vector of the
-output path(s), parameter path(s), and PK parameters to be displayed,
-respectively. If \code{NULL}, all included paths and parameters present in the
-supplied \code{SensitivityCalculation} object will be displayed in the
-visualization.}
+\item{parameterPaths}{A single or a vector of the parameter path(s) to be
+varied.}
 
-\item{xAxisLog}{Logical that decides whether to display the axis on
-logarithmic scale.}
-
-\item{yAxisLog}{Logical that decides whether to display the axis on
+\item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
 logarithmic scale.}
 
 \item{palette}{The name of the palette to be used. Run \code{hcl_palettes(type = "qualitative")} for available options.}
 
 \item{savePlots}{Logical that decides whether you wish to save created
 plot(s). They are not saved by default. Note that if there are multiple
-output paths in your model, there will be multiple plots that will be saved.}
+output paths in your model, there will be multiple plots that will be
+saved.}
 
-\item{width}{Plot size in inches. If not supplied, uses the size of
-current graphics device.}
+\item{outputFolder}{A character string describing path folder where plots
+need to be saved. The path must be relative to the current working
+directory. By default (\code{""}), the plots will be saved in the current
+working directory (which can be found using \code{getwd()} function). This
+parameter is relevant only if \code{savePlots} is set to \code{TRUE}.}
 
-\item{height}{Plot size in inches. If not supplied, uses the size of
+\item{width, height}{Plot size in inches. If not supplied, uses the size of
 current graphics device.}
 
 \item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),

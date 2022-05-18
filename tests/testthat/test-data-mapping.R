@@ -1180,7 +1180,7 @@ test_that("It can change yUnit", {
   expect_equal(dataMapping$yUnit, ospUnits$`Abundance per mass protein`$`nmol/mg mic. protein`)
 })
 
-context("addDataSets")
+## context("addDataSets")
 test_that("It can add one DataSet with a group", {
   file <- getTestDataFilePath("ObsDataAciclovir_1.pkml")
   obsData <- ospsuite::loadDataSetFromPKML(filePath = file)

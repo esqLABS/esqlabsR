@@ -2,6 +2,7 @@
 #' @title Create a concentration-time profile plot
 #'
 #' @inheritParams sensitivitySpiderPlot
+#' @inheritParams sensitivityCalculation
 #' @inheritParams colorspace::scale_color_continuous_qualitative
 #'
 #' @import ggplot2
@@ -55,13 +56,15 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     yAxisLog = TRUE,
                                     palette = "Cold",
                                     savePlots = FALSE,
-                                    width = NA,
-                                    height = NA,
+                                    outputFolder = "",
+                                    width = 16,
+                                    height = 9,
                                     dpi = 300) {
   # input validation ------------------------
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  validateIsCharacter(outputFolder, nullAllowed = FALSE)
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
@@ -102,6 +105,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     .savePlotList(
       ls_plots,
       plot.type = "Profile_",
+      outputFolder = outputFolder,
       height = height,
       width = width,
       dpi = dpi

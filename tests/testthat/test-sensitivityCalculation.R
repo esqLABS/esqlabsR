@@ -360,7 +360,7 @@ test_that("sensitivityCalculation plots fail with incorrect input objects", {
   )
 })
 
-# checking plots ---------------------------------------
+# default plots ---------------------------------------
 
 test_that("sensitivityTimeProfiles plots are as expected", {
   set.seed(123)
@@ -377,16 +377,6 @@ test_that("sensitivityTimeProfiles plots are as expected", {
   expect_snapshot(pb$plot$labels)
 })
 
-test_that("sensitivityTimeProfiles saves plot file", {
-  path <- "Profile_OutputPath1.png"
-
-  p <- suppressWarnings(sensitivityTimeProfiles(results, savePlots = TRUE))
-
-  expect_true(file.exists(path))
-
-  on.exit(unlink(path))
-})
-
 test_that("sensitivitySpiderPlot plots are as expected", {
   # make sure a plot is returned
   set.seed(123)
@@ -399,6 +389,18 @@ test_that("sensitivitySpiderPlot plots are as expected", {
   )
 })
 
+# saving plots: default ---------------------------------------
+
+test_that("sensitivityTimeProfiles saves plot file", {
+  path <- "Profile_OutputPath1.png"
+
+  p <- suppressWarnings(sensitivityTimeProfiles(results, savePlots = TRUE))
+
+  expect_true(file.exists(path))
+
+  on.exit(unlink(path))
+})
+
 test_that("sensitivitySpiderPlot saves plot file", {
   path <- "Spider_OutputPath1.png"
 
@@ -409,6 +411,37 @@ test_that("sensitivitySpiderPlot saves plot file", {
   on.exit(unlink(path))
 })
 
+# saving plots: folder ---------------------------------------
+
+# Following tests are skipped on AppVeyor because they fail with the error:
+# "Unable to start png() device"
+#
+# This is possibly because the path to folder on AppVeyor machines resolves to
+# something longer than what Windows allows.
+
+test_that("sensitivityTimeProfiles saves plot file to a specified folder", {
+  testthat::skip_on_appveyor()
+
+  path <- "tests/Profile_OutputPath1.png"
+
+  p <- suppressWarnings(sensitivityTimeProfiles(results, outputFolder = "tests/", savePlots = TRUE))
+
+  expect_true(file.exists(path))
+
+  on.exit(unlink(path))
+})
+
+test_that("sensitivitySpiderPlot saves plot file to a specified folder", {
+  testthat::skip_on_appveyor()
+
+  path <- "tests/Spider_OutputPath1.png"
+
+  p <- sensitivitySpiderPlot(results, outputFolder = "tests/", savePlots = TRUE)
+
+  expect_true(file.exists(path))
+
+  on.exit(unlink(path))
+})
 
 # multiple output paths -------------------------------------
 
