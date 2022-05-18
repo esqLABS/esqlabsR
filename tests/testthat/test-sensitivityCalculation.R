@@ -413,12 +413,18 @@ test_that("sensitivitySpiderPlot saves plot file", {
 
 # saving plots: folder ---------------------------------------
 
+# Following tests are skipped on AppVeyor because they fail with the error:
+# "Unable to start png() device"
+#
+# This is possibly because the path to folder on AppVeyor machines resolves to
+# something longer than what Windows allows.
+
 test_that("sensitivityTimeProfiles saves plot file to a specified folder", {
   testthat::skip_on_appveyor()
 
   path <- "tests/Profile_OutputPath1.png"
 
-  p <- suppressWarnings(sensitivityTimeProfiles(results, savePlotsToFolder = "tests/", savePlots = TRUE))
+  p <- suppressWarnings(sensitivityTimeProfiles(results, outputFolder = "tests/", savePlots = TRUE))
 
   expect_true(file.exists(path))
 
@@ -430,7 +436,7 @@ test_that("sensitivitySpiderPlot saves plot file to a specified folder", {
 
   path <- "tests/Spider_OutputPath1.png"
 
-  p <- sensitivitySpiderPlot(results, savePlotsToFolder = "tests/", savePlots = TRUE)
+  p <- sensitivitySpiderPlot(results, outputFolder = "tests/", savePlots = TRUE)
 
   expect_true(file.exists(path))
 

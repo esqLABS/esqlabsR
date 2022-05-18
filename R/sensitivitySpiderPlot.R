@@ -14,7 +14,7 @@
 #'   plot(s). They are not saved by default. Note that if there are multiple
 #'   output paths in your model, there will be multiple plots that will be
 #'   saved.
-#' @param savePlotsToFolder A character string describing path folder where plots
+#' @param outputFolder A character string describing path folder where plots
 #'   need to be saved. The path must be relative to the current working
 #'   directory. By default (`""`), the plots will be saved in the current
 #'   working directory (which can be found using `getwd()` function). This
@@ -72,7 +72,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   xAxisLog = TRUE,
                                   yAxisLog = FALSE,
                                   savePlots = FALSE,
-                                  savePlotsToFolder = "",
+                                  outputFolder = "",
                                   width = 16,
                                   height = 9,
                                   dpi = 300) {
@@ -80,7 +80,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  validateIsCharacter(savePlotsToFolder, nullAllowed = FALSE)
+  validateIsCharacter(outputFolder, nullAllowed = FALSE)
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
@@ -117,7 +117,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     .savePlotList(
       ls_plots,
       plot.type = "Spider_",
-      savePlotsToFolder = savePlotsToFolder,
+      outputFolder = outputFolder,
       height = height,
       width = width,
       dpi = dpi

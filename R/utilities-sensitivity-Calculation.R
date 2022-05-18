@@ -289,7 +289,7 @@
 #' @noRd
 .savePlotList <- function(plotlist,
                           plot.type,
-                          savePlotsToFolder = "",
+                          outputFolder = "",
                           width = 16,
                           height = 9,
                           dpi = 300) {
@@ -297,7 +297,7 @@
     .x = plotlist,
     .y = seq(1:length(plotlist)),
     .f = ~ ggplot2::ggsave(
-      filename = paste0(savePlotsToFolder, plot.type, "OutputPath", .y, ".png"),
+      filename = paste0(outputFolder, plot.type, "OutputPath", .y, ".png"),
       plot = .x,
       height = height,
       width = width,

@@ -56,7 +56,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     yAxisLog = TRUE,
                                     palette = "Cold",
                                     savePlots = FALSE,
-                                    savePlotsToFolder = "",
+                                    outputFolder = "",
                                     width = 16,
                                     height = 9,
                                     dpi = 300) {
@@ -64,7 +64,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  validateIsCharacter(savePlotsToFolder, nullAllowed = FALSE)
+  validateIsCharacter(outputFolder, nullAllowed = FALSE)
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
@@ -105,7 +105,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     .savePlotList(
       ls_plots,
       plot.type = "Profile_",
-      savePlotsToFolder = savePlotsToFolder,
+      outputFolder = outputFolder,
       height = height,
       width = width,
       dpi = dpi

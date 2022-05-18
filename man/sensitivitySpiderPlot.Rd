@@ -12,7 +12,7 @@ sensitivitySpiderPlot(
   xAxisLog = TRUE,
   yAxisLog = FALSE,
   savePlots = FALSE,
-  savePlotsToFolder = "",
+  outputFolder = "",
   width = 16,
   height = 9,
   dpi = 300
@@ -36,7 +36,7 @@ plot(s). They are not saved by default. Note that if there are multiple
 output paths in your model, there will be multiple plots that will be
 saved.}
 
-\item{savePlotsToFolder}{A character string describing path folder where plots
+\item{outputFolder}{A character string describing path folder where plots
 need to be saved. The path must be relative to the current working
 directory. By default (\code{""}), the plots will be saved in the current
 working directory (which can be found using \code{getwd()} function). This
