@@ -20,6 +20,7 @@
 #'   PK-parameter data should be saved. If a file already exists, it will be
 #'   overwritten. Default is `NULL`, meaning the data will not be saved to a
 #'   spreadsheet.
+#' @param simulationRunOptions Optional instance of a `SimulationRunOptions` used during the simulation run
 #'
 #' @family sensitivity-calculation
 #'
@@ -55,7 +56,8 @@ sensitivityCalculation <- function(simulation,
                                    parameterPaths,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
-                                   pkDataFilePath = NULL) {
+                                   pkDataFilePath = NULL,
+                                   simulationRunOptions = NULL) {
   # input validation ------------------------
 
   # Validate vector arguments of character type
@@ -158,7 +160,8 @@ sensitivityCalculation <- function(simulation,
   }
 
   # Simulate all batches in parallel
-  simulationBatchesResults <- runSimulationBatches(simulationBatches = simulationBatches)
+  simulationBatchesResults <- runSimulationBatches(simulationBatches = simulationBatches,
+                                                   simulationRunOptions = simulationRunOptions)
 
   # `runSimulationBatches()` returns a list with one entry per simulation batch.
   #
