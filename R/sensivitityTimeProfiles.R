@@ -64,6 +64,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  validateIsCharacter(savePlotsToFolder, nullAllowed = FALSE)
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)

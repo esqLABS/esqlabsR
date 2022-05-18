@@ -80,6 +80,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  validateIsCharacter(savePlotsToFolder, nullAllowed = FALSE)
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
@@ -171,8 +172,6 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         minor_breaks = n_breaks
       )
   }
-
-
 
   plot <- plot +
     geom_hline(
