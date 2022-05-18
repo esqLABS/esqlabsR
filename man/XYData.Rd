@@ -56,26 +56,26 @@ molar and mass dimensions. Can be \code{NULL} (default)}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{XYData$new()}}
-\item \href{#method-yMinPositive}{\code{XYData$yMinPositive()}}
-\item \href{#method-xValuesProcessed}{\code{XYData$xValuesProcessed()}}
-\item \href{#method-yValuesProcessed}{\code{XYData$yValuesProcessed()}}
-\item \href{#method-yErrorProcessed}{\code{XYData$yErrorProcessed()}}
-\item \href{#method-getAllMetaData}{\code{XYData$getAllMetaData()}}
-\item \href{#method-setMetaData}{\code{XYData$setMetaData()}}
-\item \href{#method-print}{\code{XYData$print()}}
-\item \href{#method-clone}{\code{XYData$clone()}}
+\item \href{#method-XYData-new}{\code{XYData$new()}}
+\item \href{#method-XYData-yMinPositive}{\code{XYData$yMinPositive()}}
+\item \href{#method-XYData-xValuesProcessed}{\code{XYData$xValuesProcessed()}}
+\item \href{#method-XYData-yValuesProcessed}{\code{XYData$yValuesProcessed()}}
+\item \href{#method-XYData-yErrorProcessed}{\code{XYData$yErrorProcessed()}}
+\item \href{#method-XYData-getAllMetaData}{\code{XYData$getAllMetaData()}}
+\item \href{#method-XYData-setMetaData}{\code{XYData$setMetaData()}}
+\item \href{#method-XYData-print}{\code{XYData$print()}}
+\item \href{#method-XYData-clone}{\code{XYData$clone()}}
 }
 }
-\if{html}{
-\out{<details open ><summary>Inherited methods</summary>}
-\itemize{
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-XYData-new"></a>}}
+\if{latex}{\out{\hypertarget{method-XYData-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize a new instance of the class. xVals, yVals, and
 yError (optional) must be of the same length
@@ -101,8 +101,8 @@ A new \code{XYData} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-yMinPositive"></a>}}
-\if{latex}{\out{\hypertarget{method-yMinPositive}{}}}
+\if{html}{\out{<a id="method-XYData-yMinPositive"></a>}}
+\if{latex}{\out{\hypertarget{method-XYData-yMinPositive}{}}}
 \subsection{Method \code{yMinPositive()}}{
 Returns the minimal value (minus error, if specified) of the y series that is not negative or null
 \subsection{Usage}{
@@ -116,8 +116,8 @@ value exists, returns Inf.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-xValuesProcessed"></a>}}
-\if{latex}{\out{\hypertarget{method-xValuesProcessed}{}}}
+\if{html}{\out{<a id="method-XYData-xValuesProcessed"></a>}}
+\if{latex}{\out{\hypertarget{method-XYData-xValuesProcessed}{}}}
 \subsection{Method \code{xValuesProcessed()}}{
 x values with all conversions applied.
 \subsection{Usage}{
@@ -138,8 +138,8 @@ specified unit. It is assumed that raw xValues are in \code{xUnit}.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-yValuesProcessed"></a>}}
-\if{latex}{\out{\hypertarget{method-yValuesProcessed}{}}}
+\if{html}{\out{<a id="method-XYData-yValuesProcessed"></a>}}
+\if{latex}{\out{\hypertarget{method-XYData-yValuesProcessed}{}}}
 \subsection{Method \code{yValuesProcessed()}}{
 y values with all conversions applied.
 \subsection{Usage}{
@@ -161,8 +161,8 @@ It is assumed that raw yValues are in \code{yUnit}.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-yErrorProcessed"></a>}}
-\if{latex}{\out{\hypertarget{method-yErrorProcessed}{}}}
+\if{html}{\out{<a id="method-XYData-yErrorProcessed"></a>}}
+\if{latex}{\out{\hypertarget{method-XYData-yErrorProcessed}{}}}
 \subsection{Method \code{yErrorProcessed()}}{
 y error values with all conversions applied.
 \subsection{Usage}{
@@ -184,8 +184,8 @@ specified, \code{NULL} is returned.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getAllMetaData"></a>}}
-\if{latex}{\out{\hypertarget{method-getAllMetaData}{}}}
+\if{html}{\out{<a id="method-XYData-getAllMetaData"></a>}}
+\if{latex}{\out{\hypertarget{method-XYData-getAllMetaData}{}}}
 \subsection{Method \code{getAllMetaData()}}{
 Meta data list of \code{XYData} object
 \subsection{Usage}{
@@ -197,8 +197,8 @@ A named list holding the metadata of this \code{XYData}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setMetaData"></a>}}
-\if{latex}{\out{\hypertarget{method-setMetaData}{}}}
+\if{html}{\out{<a id="method-XYData-setMetaData"></a>}}
+\if{latex}{\out{\hypertarget{method-XYData-setMetaData}{}}}
 \subsection{Method \code{setMetaData()}}{
 Adds a new entry to meta data list of \code{XYData} object or changes its
 value if name is already present in meta data. If only \code{name} is provided
@@ -219,8 +219,8 @@ from meta data.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-XYData-print"></a>}}
+\if{latex}{\out{\hypertarget{method-XYData-print}{}}}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{
@@ -236,8 +236,8 @@ Print the object to the console
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-XYData-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-XYData-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

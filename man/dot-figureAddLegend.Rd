@@ -7,10 +7,6 @@
 .figureAddLegend(x, legend, col, pch, lty, ...)
 }
 \arguments{
-\item{x}{the x and y co-ordinates to be used to position the legend.
-    They can be specified by keyword or in any way which is accepted by
-    \code{\link{xy.coords}}: See \sQuote{Details}.}
-
 \item{legend}{a character or \link{expression} vector
     of length \eqn{\ge 1} to appear in the legend.  Other
     objects will be coerced by \code{\link{as.graphicsAnnot}}.}
@@ -22,9 +18,6 @@
     \code{\link[graphics]{points}}). Unlike \code{points}, this can all be
     specified as a single multi-character string.  \emph{Must} be
     specified for symbol drawing.}
-
-\item{lty}{the line types and widths for lines appearing in the
-    legend.  One of these two \emph{must} be specified for line drawing.}
 
 \item{...}{Additional arguments to be passed to \code{graphics::legend}.}
 }

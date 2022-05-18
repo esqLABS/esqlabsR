@@ -42,26 +42,26 @@ recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} functio
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{DataMappingConfiguration$new()}}
-\item \href{#method-finalize}{\code{DataMappingConfiguration$finalize()}}
-\item \href{#method-setXFactors}{\code{DataMappingConfiguration$setXFactors()}}
-\item \href{#method-setYFactors}{\code{DataMappingConfiguration$setYFactors()}}
-\item \href{#method-setXOffsets}{\code{DataMappingConfiguration$setXOffsets()}}
-\item \href{#method-setYOffsets}{\code{DataMappingConfiguration$setYOffsets()}}
-\item \href{#method-setColors}{\code{DataMappingConfiguration$setColors()}}
-\item \href{#method-setLineTypes}{\code{DataMappingConfiguration$setLineTypes()}}
-\item \href{#method-print}{\code{DataMappingConfiguration$print()}}
+\item \href{#method-DataMappingConfiguration-new}{\code{DataMappingConfiguration$new()}}
+\item \href{#method-DataMappingConfiguration-finalize}{\code{DataMappingConfiguration$finalize()}}
+\item \href{#method-DataMappingConfiguration-setXFactors}{\code{DataMappingConfiguration$setXFactors()}}
+\item \href{#method-DataMappingConfiguration-setYFactors}{\code{DataMappingConfiguration$setYFactors()}}
+\item \href{#method-DataMappingConfiguration-setXOffsets}{\code{DataMappingConfiguration$setXOffsets()}}
+\item \href{#method-DataMappingConfiguration-setYOffsets}{\code{DataMappingConfiguration$setYOffsets()}}
+\item \href{#method-DataMappingConfiguration-setColors}{\code{DataMappingConfiguration$setColors()}}
+\item \href{#method-DataMappingConfiguration-setLineTypes}{\code{DataMappingConfiguration$setLineTypes()}}
+\item \href{#method-DataMappingConfiguration-print}{\code{DataMappingConfiguration$print()}}
 }
 }
-\if{html}{
-\out{<details open ><summary>Inherited methods</summary>}
-\itemize{
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-new"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize a new instance of the class
 \subsection{Usage}{
@@ -73,8 +73,8 @@ A new \code{DataMappingConfiguration} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-finalize"></a>}}
-\if{latex}{\out{\hypertarget{method-finalize}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-finalize"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-finalize}{}}}
 \subsection{Method \code{finalize()}}{
 Clean up upon object removal
 \subsection{Usage}{
@@ -83,8 +83,8 @@ Clean up upon object removal
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setXFactors"></a>}}
-\if{latex}{\out{\hypertarget{method-setXFactors}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setXFactors"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setXFactors}{}}}
 \subsection{Method \code{setXFactors()}}{
 Set the values of x-factors. An x-factor will be multiplied
 by the x-values of the data set.
@@ -106,8 +106,8 @@ the entries in the same order.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setYFactors"></a>}}
-\if{latex}{\out{\hypertarget{method-setYFactors}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setYFactors"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setYFactors}{}}}
 \subsection{Method \code{setYFactors()}}{
 Set the values of y-factors. A y-factor will be multiplied
 by the y-values of the data set.
@@ -129,8 +129,8 @@ and store the entries in the same order.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setXOffsets"></a>}}
-\if{latex}{\out{\hypertarget{method-setXOffsets}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setXOffsets"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setXOffsets}{}}}
 \subsection{Method \code{setXOffsets()}}{
 Set the values of x-offsets. An x-offset will be added to
 the the x-values of the data set.
@@ -152,8 +152,8 @@ the entries in the same order.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setYOffsets"></a>}}
-\if{latex}{\out{\hypertarget{method-setYOffsets}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setYOffsets"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setYOffsets}{}}}
 \subsection{Method \code{setYOffsets()}}{
 Set the values of y-offsets. A y-offset will be added to the
 the y-values of the data set.
@@ -175,8 +175,8 @@ the entries in the same order.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setColors"></a>}}
-\if{latex}{\out{\hypertarget{method-setColors}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setColors"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setColors}{}}}
 \subsection{Method \code{setColors()}}{
 Set the colors that will be used to plot a certain data set.
 \subsection{Usage}{
@@ -196,8 +196,8 @@ argument of the \code{\link[=plot]{plot()}} function}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setLineTypes"></a>}}
-\if{latex}{\out{\hypertarget{method-setLineTypes}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setLineTypes"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setLineTypes}{}}}
 \subsection{Method \code{setLineTypes()}}{
 Set the line types that will be used to plot a certain data set.
 \subsection{Usage}{
@@ -217,8 +217,8 @@ function}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-print"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-print}{}}}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{

@@ -41,19 +41,19 @@ of three HSV values.}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{Plotable$new()}}
-\item \href{#method-print}{\code{Plotable$print()}}
+\item \href{#method-Plotable-new}{\code{Plotable$new()}}
+\item \href{#method-Plotable-print}{\code{Plotable$print()}}
 }
 }
-\if{html}{
-\out{<details open ><summary>Inherited methods</summary>}
-\itemize{
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-Plotable-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Plotable-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize a new instance of the class
 \subsection{Usage}{
@@ -72,8 +72,8 @@ A new \code{Plotable} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-Plotable-print"></a>}}
+\if{latex}{\out{\hypertarget{method-Plotable-print}{}}}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{

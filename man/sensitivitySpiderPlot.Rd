@@ -12,8 +12,8 @@ sensitivitySpiderPlot(
   xAxisLog = TRUE,
   yAxisLog = FALSE,
   savePlots = FALSE,
-  width = NA,
-  height = NA,
+  width = 16,
+  height = 9,
   dpi = 300
 )
 }

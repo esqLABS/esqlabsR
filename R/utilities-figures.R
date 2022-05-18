@@ -127,7 +127,8 @@ figureAddLabel <- function(label, location = "topleft",
 #' @param ... Additional arguments to be passed to `graphics::legend`.
 #' @keywords internal
 .figureAddLegend <- function(x, legend, col, pch, lty, ...) {
-  # Legend does not ignore ellipsis arguments that are not supported, so they must be removed from the arguments list
+  # Legend does not ignore ellipsis arguments that are not supported, so they
+  # must be removed from the arguments list
   supportedArgs <- names(formals(graphics::legend))
   args <- list(...)
   args <- args[which(names(args) %in% supportedArgs)]

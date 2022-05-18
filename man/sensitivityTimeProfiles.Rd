@@ -12,8 +12,8 @@ sensitivityTimeProfiles(
   yAxisLog = TRUE,
   palette = "Cold",
   savePlots = FALSE,
-  width = NA,
-  height = NA,
+  width = 16,
+  height = 9,
   dpi = 300
 )
 }
@@ -21,22 +21,7 @@ sensitivityTimeProfiles(
 \item{sensitivityCalculation}{The \code{SensitivityCalculation} object returned by
 \code{sensitivityCalculation()}.}
 
-\item{outputPaths}{A single or a vector of the
-output path(s), parameter path(s), and PK parameters to be displayed,
-respectively. If \code{NULL}, all included paths and parameters present in the
-supplied \code{SensitivityCalculation} object will be displayed in the
-visualization.}
-
-\item{parameterPaths}{A single or a vector of the
-output path(s), parameter path(s), and PK parameters to be displayed,
-respectively. If \code{NULL}, all included paths and parameters present in the
-supplied \code{SensitivityCalculation} object will be displayed in the
-visualization.}
-
-\item{xAxisLog}{Logical that decides whether to display the axis on
-logarithmic scale.}
-
-\item{yAxisLog}{Logical that decides whether to display the axis on
+\item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
 logarithmic scale.}
 
 \item{palette}{The name of the palette to be used. Run \code{hcl_palettes(type = "qualitative")} for available options.}
@@ -45,10 +30,7 @@ logarithmic scale.}
 plot(s). They are not saved by default. Note that if there are multiple
 output paths in your model, there will be multiple plots that will be saved.}
 
-\item{width}{Plot size in inches. If not supplied, uses the size of
-current graphics device.}
-
-\item{height}{Plot size in inches. If not supplied, uses the size of
+\item{width, height}{Plot size in inches. If not supplied, uses the size of
 current graphics device.}
 
 \item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),

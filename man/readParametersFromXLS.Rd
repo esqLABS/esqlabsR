@@ -6,7 +6,7 @@
 Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
 'Value', and 'Units'}
 \usage{
-readParametersFromXLS(paramsXLSpath, sheets = NULL, columnTypes = NULL)
+readParametersFromXLS(paramsXLSpath, sheets = NULL)
 }
 \arguments{
 \item{paramsXLSpath}{Path to the excel file}
@@ -14,15 +14,6 @@ readParametersFromXLS(paramsXLSpath, sheets = NULL, columnTypes = NULL)
 \item{sheets}{Names of the excel sheets containing the information about the
 parameters. Multiple sheets can be processed. If no sheets are provided,
 the first one in the Excel file is used.}
-
-\item{columnTypes}{Either \code{NULL} to guess all from the spreadsheet or a
-character vector containing one entry per column from these options:
-"skip", "guess", "logical", "numeric", "date", "text" or "list". If exactly
-one \code{col_type} is specified, it will be recycled. The content of a cell in
-a skipped column is never read and that column will not appear in the data
-frame output. A list cell loads a column as a list of length 1 vectors,
-which are typed using the type guessing logic from \code{columnTypes = NULL}, but
-on a cell-by-cell basis.}
 }
 \value{
 A list containing vectors 'paths' with the full paths to the

@@ -34,19 +34,19 @@ An object storing configuration of for observed data import
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{DataConfiguration$new()}}
-\item \href{#method-print}{\code{DataConfiguration$print()}}
+\item \href{#method-DataConfiguration-new}{\code{DataConfiguration$new()}}
+\item \href{#method-DataConfiguration-print}{\code{DataConfiguration$print()}}
 }
 }
-\if{html}{
-\out{<details open ><summary>Inherited methods</summary>}
-\itemize{
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-DataConfiguration-new"></a>}}
+\if{latex}{\out{\hypertarget{method-DataConfiguration-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize a new instance of the class
 \subsection{Usage}{
@@ -71,8 +71,8 @@ A new \code{DataConfiguration} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-DataConfiguration-print"></a>}}
+\if{latex}{\out{\hypertarget{method-DataConfiguration-print}{}}}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{
