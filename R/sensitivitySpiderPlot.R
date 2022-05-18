@@ -145,8 +145,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   ) +
     geom_line(
       aes(group = ParameterPath, color = as.factor(ParameterPath)),
-      size = 1.2,
-      alpha = 0.8,
+      size = 1.4,
+      alpha = 0.7,
       na.rm = TRUE
     ) +
     geom_point(size = 2, shape = 21, na.rm = TRUE)
