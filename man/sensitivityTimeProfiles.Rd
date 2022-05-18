@@ -22,6 +22,12 @@ sensitivityTimeProfiles(
 \item{sensitivityCalculation}{The \code{SensitivityCalculation} object returned by
 \code{sensitivityCalculation()}.}
 
+\item{outputPaths}{Path (or a vector of paths) to the output(s) for which the
+sensitivity will be analyzed.}
+
+\item{parameterPaths}{A single or a vector of the parameter path(s) to be
+varied.}
+
 \item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
 logarithmic scale.}
 

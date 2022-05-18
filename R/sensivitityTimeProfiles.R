@@ -2,6 +2,7 @@
 #' @title Create a concentration-time profile plot
 #'
 #' @inheritParams sensitivitySpiderPlot
+#' @inheritParams sensitivityCalculation
 #' @inheritParams colorspace::scale_color_continuous_qualitative
 #'
 #' @import ggplot2
