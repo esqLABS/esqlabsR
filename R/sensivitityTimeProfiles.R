@@ -127,7 +127,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     geom_line(
       data = dplyr::filter(data, ParameterFactor != 1.0),
       aes(Time, Concentration, group = ParameterFactor, color = ParameterFactor),
-      alpha = 0.5,
+      size = 1.4,
+      alpha = 0.7,
       na.rm = TRUE
     ) +
     colorspace::scale_color_continuous_qualitative(
@@ -139,6 +140,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       data = dplyr::filter(data, ParameterFactor == 1.0),
       aes(Time, Concentration),
       color = "black",
+      size = 1.4,
+      alpha = 0.7,
       na.rm = TRUE
     ) +
     facet_wrap(~ParameterPath, labeller = label_wrap_gen(width = 0)) +
