@@ -55,6 +55,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     yAxisLog = TRUE,
                                     palette = "Cold",
                                     savePlots = FALSE,
+                                    savePlotsToFolder = "",
                                     width = 16,
                                     height = 9,
                                     dpi = 300) {
@@ -102,6 +103,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     .savePlotList(
       ls_plots,
       plot.type = "Profile_",
+      savePlotsToFolder = savePlotsToFolder,
       height = height,
       width = width,
       dpi = dpi
