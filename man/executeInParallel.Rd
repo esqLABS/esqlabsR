@@ -10,7 +10,7 @@ executeInParallel(
   exports = NULL,
   ...,
   outputNames = NULL,
-  nrOfCores = ospsuite:::ospsuiteEnv$numberOfCores()
+  nrOfCores = ospsuite::getOSPSuiteSetting("numberOfCores")
 )
 }
 \arguments{
