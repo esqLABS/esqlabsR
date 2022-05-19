@@ -10,7 +10,7 @@ executeInParallel(
   exports = NULL,
   ...,
   outputNames = NULL,
-  nrOfCores = esqlabsEnv$maxNumberOfCores
+  nrOfCores = ospsuite:::ospsuiteEnv$numberOfCores()
 )
 }
 \arguments{
@@ -31,8 +31,8 @@ index in \code{outputNames} as as the argument value in \code{firstArguments}. I
 specified, \code{outputNames} must have the same length as \code{firstArguments}}
 
 \item{nrOfCores}{Optional: the maximal number of parallel threads. By default
-the value defined in \code{esqlabsEnv$maxNumberOfCores} is used, and equals the
-number of logical cores minus 1.}
+the value defined in \code{ospsuite:::ospsuiteEnv$numberOfCores()} is used, and
+equals the number of logical cores minus 1.}
 }
 \value{
 A list containing the outputs of the function \code{fun} iterated over the
