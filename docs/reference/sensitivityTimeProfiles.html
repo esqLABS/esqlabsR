@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,12 +63,15 @@
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">sensitivityTimeProfiles</span><span class="op">(</span>
   <span class="va">sensitivityCalculation</span>,
+  outputPaths <span class="op">=</span> <span class="cn">NULL</span>,
+  parameterPaths <span class="op">=</span> <span class="cn">NULL</span>,
   xAxisLog <span class="op">=</span> <span class="cn">FALSE</span>,
   yAxisLog <span class="op">=</span> <span class="cn">TRUE</span>,
   palette <span class="op">=</span> <span class="st">"Cold"</span>,
   savePlots <span class="op">=</span> <span class="cn">FALSE</span>,
-  width <span class="op">=</span> <span class="cn">NA</span>,
-  height <span class="op">=</span> <span class="cn">NA</span>,
+  outputFolder <span class="op">=</span> <span class="st">""</span>,
+  width <span class="op">=</span> <span class="fl">16</span>,
+  height <span class="op">=</span> <span class="fl">9</span>,
   dpi <span class="op">=</span> <span class="fl">300</span>
 <span class="op">)</span></code></pre></div>
     </div>
@@ -78,10 +81,13 @@
     <dl><dt>sensitivityCalculation</dt>
 <dd><p>The <code>SensitivityCalculation</code> object returned by
 <code><a href="sensitivityCalculation.html">sensitivityCalculation()</a></code>.</p></dd>
-<dt>xAxisLog</dt>
-<dd><p>Logical that decides whether to display the axis on
-logarithmic scale.</p></dd>
-<dt>yAxisLog</dt>
+<dt>outputPaths</dt>
+<dd><p>Path (or a vector of paths) to the output(s) for which the
+sensitivity will be analyzed.</p></dd>
+<dt>parameterPaths</dt>
+<dd><p>A single or a vector of the parameter path(s) to be
+varied.</p></dd>
+<dt>xAxisLog, yAxisLog</dt>
 <dd><p>Logical that decides whether to display the axis on
 logarithmic scale.</p></dd>
 <dt>palette</dt>
@@ -89,11 +95,15 @@ logarithmic scale.</p></dd>
 <dt>savePlots</dt>
 <dd><p>Logical that decides whether you wish to save created
 plot(s). They are not saved by default. Note that if there are multiple
-output paths in your model, there will be multiple plots that will be saved.</p></dd>
-<dt>width</dt>
-<dd><p>Plot size in inches. If not supplied, uses the size of
-current graphics device.</p></dd>
-<dt>height</dt>
+output paths in your model, there will be multiple plots that will be
+saved.</p></dd>
+<dt>outputFolder</dt>
+<dd><p>A character string describing path folder where plots
+need to be saved. The path must be relative to the current working
+directory. By default (<code>""</code>), the plots will be saved in the current
+working directory (which can be found using <code><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd()</a></code> function). This
+parameter is relevant only if <code>savePlots</code> is set to <code>TRUE</code>.</p></dd>
+<dt>width, height</dt>
 <dd><p>Plot size in inches. If not supplied, uses the size of
 current graphics device.</p></dd>
 <dt>dpi</dt>
@@ -157,7 +167,7 @@ A list of <code>ggplot</code> objects if multiple output paths are specified.</p
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.9000.</p>
 </div>
 
     </footer></div>
