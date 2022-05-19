@@ -414,6 +414,7 @@ test_that("sensitivitySpiderPlot saves plot file", {
 # saving plots: folder ---------------------------------------
 
 test_that("sensitivityTimeProfiles saves plot file to a specified folder", {
+  dir.create("newFolder")
   path <- "newFolder/Profile_OutputPath1.png"
 
   p <- suppressWarnings(sensitivityTimeProfiles(results, outputFolder = "newFolder/", savePlots = TRUE))
@@ -424,6 +425,7 @@ test_that("sensitivityTimeProfiles saves plot file to a specified folder", {
 })
 
 test_that("sensitivitySpiderPlot saves plot file to a specified folder", {
+  dir.create("newFolder")
   path <- "newFolder/Spider_OutputPath1.png"
 
   p <- sensitivitySpiderPlot(results, outputFolder = "newFolder/", savePlots = TRUE)
