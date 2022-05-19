@@ -27,7 +27,7 @@ This section given an overview on various helper utilities methods implemented i
     : `esqlabsR` uses a set of default settings that can be accessed with `getEsqlabsRSetting(settingName)`
     
 ```{r getEsqlabsRSetting, error=TRUE}
-getEsqlabsRSetting("maxNumberOfCores")
+getEsqlabsRSetting("widthPerPlotMapping")
 
 getEsqlabsRSetting("Setting that does not exist")
 ```
