@@ -160,8 +160,10 @@ sensitivityCalculation <- function(simulation,
   }
 
   # Simulate all batches in parallel
-  simulationBatchesResults <- runSimulationBatches(simulationBatches = simulationBatches,
-                                                   simulationRunOptions = simulationRunOptions)
+  simulationBatchesResults <- runSimulationBatches(
+    simulationBatches = simulationBatches,
+    simulationRunOptions = simulationRunOptions
+  )
 
   # `runSimulationBatches()` returns a list with one entry per simulation batch.
   #

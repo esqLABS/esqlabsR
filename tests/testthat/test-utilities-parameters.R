@@ -30,9 +30,10 @@ test_that("It can read a properly defined file with extra columns", {
 test_that("It throws an error when a sheet has wrong structure", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
   sheets <- c("InvalidSheet")
+  columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
   expect_error(readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets),
     regexp =
-      messages$errorWrongParamsXLSStructure(paramsXLSpath)
+      messages$errorWrongXLSStructure(filePath = paramsXLSpath, expectedColNames = columnNames)
   )
 })
 
@@ -68,7 +69,7 @@ test_that("It trows an error if wrong structure is provideed", {
       units = ""
     )
   ),
-  regexp = messages$wrongParametersStructure()
+  regexp = messages$wrongParametersStructure(argumentName = "parameters")
   )
 })
 

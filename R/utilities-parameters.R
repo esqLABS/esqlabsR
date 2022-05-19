@@ -27,7 +27,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
-      stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
+      stop(messages$errorWrongXLSStructure(filePath = paramsXLSpath, expectedColNames = columnNames))
     }
 
     fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]], sep = "|")
@@ -56,9 +56,11 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @return Updated list of parameter patsh, values, and units
 #' @export
 extendParameterStructure <- function(parameters, newParameters) {
-  if (!identical(names(parameters), c("paths", "values", "units")) ||
-    !identical(names(newParameters), c("paths", "values", "units"))) {
-    stop(messages$wrongParametersStructure())
+  if (!identical(names(parameters), c("paths", "values", "units"))) {
+    stop(messages$wrongParametersStructure("parameters"))
+  }
+  if (!identical(names(newParameters), c("paths", "values", "units"))) {
+    stop(messages$wrongParametersStructure("newParameters"))
   }
 
   # If the parameters structure is empty, return new parameters

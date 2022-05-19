@@ -58,7 +58,7 @@ initializeSimulation <- function(simulation,
   # Apply additional parameters
   if (!is.null(additionalParams)) {
     if (all(names(additionalParams) != c("paths", "values", "units"))) {
-      stop(messages$errorWrongAdditionalParams)
+      stop(messages$wrongParametersStructure("additionalParams"))
     }
 
     ospsuite::setParameterValuesByPath(
