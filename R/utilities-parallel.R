@@ -8,8 +8,8 @@
 #'   function relies on that are not passed as arguments. May be `NULL` (default).
 #' @param ... Further arguments of the function.
 #' @param nrOfCores Optional: the maximal number of parallel threads. By default
-#'   the value defined in `ospsuite:::ospsuiteEnv$numberOfCores()` is used, and
-#'   equals the number of logical cores minus 1.
+#'   the value defined in `ospsuite::getOSPSuiteSetting("numberOfCores")` is
+#'   used, and equals the number of logical cores minus 1.
 #' @param outputNames Optional: a list of names used for the output list. Result
 #'   of each execution of `fun` will be named with the name having the same
 #'   index in `outputNames` as as the argument value in `firstArguments`. If
@@ -26,7 +26,7 @@ executeInParallel <- function(fun,
                               exports = NULL,
                               ...,
                               outputNames = NULL,
-                              nrOfCores = ospsuite:::ospsuiteEnv$numberOfCores()) {
+                              nrOfCores = ospsuite::getOSPSuiteSetting("numberOfCores")) {
   if (!is.null(outputNames)) {
     validateIsSameLength(firstArguments, outputNames)
   }
