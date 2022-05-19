@@ -56,11 +56,11 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @return Updated list of parameter patsh, values, and units
 #' @export
 extendParameterStructure <- function(parameters, newParameters) {
-  if (!identical(names(parameters), c("paths", "values", "units"))){
+  if (!identical(names(parameters), c("paths", "values", "units"))) {
     stop(messages$wrongParametersStructure("parameters"))
-    }
-    if (!identical(names(newParameters), c("paths", "values", "units"))) {
-      stop(messages$wrongParametersStructure("newParameters"))
+  }
+  if (!identical(names(newParameters), c("paths", "values", "units"))) {
+    stop(messages$wrongParametersStructure("newParameters"))
   }
 
   # If the parameters structure is empty, return new parameters
