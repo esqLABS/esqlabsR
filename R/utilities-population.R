@@ -25,8 +25,8 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   }
   data <- readExcel(path = XLSpath, sheet = sheet)
 
-  if (!(all(length(names(data)) == length(columnNames)) && all(names(data) == columnNames))) {
-    stop(messages$errorWrongPopCharXLSStructure)
+  if (!all(columnNames %in% names(data))) {
+    stop(messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
   }
   # Find the row with the given population name
   rowIdx <- which(data$PopulationName == populationName)
@@ -138,9 +138,8 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
   )
 
   data <- readExcel(path = XLSpath, sheet = sheet)
-  if (!(all(length(names(data)) == length(columnNames)) &&
-    all(names(data) == columnNames))) {
-    stop(messages$errorWrongPopCharXLSStructure)
+  if (!all(columnNames %in% names(data))) {
+    stop(messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
   }
 
   paramPaths <- c(dim(data)[[1]])

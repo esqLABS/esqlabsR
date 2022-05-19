@@ -10,7 +10,8 @@ sensitivityCalculation(
   parameterPaths,
   variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
   pkParameters = c("C_max", "t_max", "AUC_inf"),
-  pkDataFilePath = NULL
+  pkDataFilePath = NULL,
+  simulationRunOptions = NULL
 )
 }
 \arguments{
@@ -38,6 +39,8 @@ can also specify custom PK parameters.}
 PK-parameter data should be saved. If a file already exists, it will be
 overwritten. Default is \code{NULL}, meaning the data will not be saved to a
 spreadsheet.}
+
+\item{simulationRunOptions}{Optional instance of a \code{SimulationRunOptions} used during the simulation run}
 }
 \value{
 A list containing following objects:
