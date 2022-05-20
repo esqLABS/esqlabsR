@@ -46,9 +46,9 @@ initializeSimulation <- function(simulation,
                                  steadyStateTime = 1000,
                                  ignoreIfFormula = TRUE,
                                  stopIfParameterNotFound = TRUE) {
-  ospsuite:::validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
-  ospsuite:::validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
-  ospsuite:::validateIsLogical(simulateSteadyState)
+  validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
+  validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
+  validateIsLogical(simulateSteadyState)
 
   # Apply parameters of the individual
   if (!is.null(individualCharacteristics)) {
@@ -58,21 +58,16 @@ initializeSimulation <- function(simulation,
   # Apply additional parameters
   if (!is.null(additionalParams)) {
     if (all(names(additionalParams) != c("paths", "values", "units"))) {
-      stop(messages$errorWrongAdditionalParams)
+      stop(messages$wrongParametersStructure("additionalParams"))
     }
-    for (i in seq_along(additionalParams$paths)) {
-      param <- ospsuite::getParameter(additionalParams$paths[[i]], container = simulation, stopIfNotFound = stopIfParameterNotFound)
-      if (is.null(param)) {
-        warning(messages$warningParameterNotFound(additionalParams$paths[[i]]))
-        next
-      }
-      unit <- additionalParams$units[[i]]
-      value <- additionalParams$values[[i]]
-      if (is.na(unit)) {
-        unit <- NULL
-      }
-      ospsuite::setParameterValues(parameters = param, values = value, units = unit)
-    }
+
+    ospsuite::setParameterValuesByPath(
+      parameterPaths = additionalParams$paths,
+      values = additionalParams$values,
+      simulation = simulation,
+      units = additionalParams$units,
+      stopIfNotFound = FALSE
+    )
   }
 
   if (simulateSteadyState) {

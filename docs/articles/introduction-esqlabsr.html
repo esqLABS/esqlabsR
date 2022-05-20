@@ -26,14 +26,14 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div id="navbar" class="collapse navbar-collapse ms-2">
+    <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
@@ -70,6 +70,9 @@
   </div>
 </nav><div class="container template-article">
 
+
+
+
 <div class="row">
   <main id="main"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Introduction to esqlabsR</h1>
@@ -81,13 +84,29 @@
 
     
     
-<p>The <strong><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></strong> R-package is designed to facilitate and standardize <strong>modeling and simulation (M&amp;S)</strong> activities performed in the R environment. The main focus of the package lies on providing standard workflows for running simulations with the <a href="http://www.open-systems-pharmacology.org/" class="external-link">Open Systems Pharmacology</a> Software (OSPS) <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link">R package</a> <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> and creating standardized figures.</p>
+<p>The <strong><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></strong> R-package is designed to
+facilitate and standardize <strong>modeling and simulation
+(M&amp;S)</strong> activities performed in the R environment. The main
+focus of the package lies on providing standard workflows for running
+simulations with the <a href="http://www.open-systems-pharmacology.org/" class="external-link">Open Systems
+Pharmacology</a> Software (OSPS) <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link">R
+package</a> <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> and creating standardized
+figures.</p>
 <div class="section level2">
 <h2 id="general-information">General information<a class="anchor" aria-label="anchor" href="#general-information"></a>
 </h2>
-<p>This package builds up on the functionality of the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> package. It is strongly recommended to get familiar with the <a href="https://docs.open-systems-pharmacology.org/working-with-r/r-introduction" class="external-link">R-Introduction</a> section of the OSPS manual.</p>
-<p>In order to load a simulation in R, it must be present in the <strong>*.pkml</strong> file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the PK-Sim examples folder of the OSPS installation. Alternatively, you can also download it from <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml" class="external-link">here</a>.</p>
-<p>The documentation is divided into three parts covering the following aspects:</p>
+<p>This package builds up on the functionality of the
+<a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> package. It is strongly recommended to get
+familiar with the <a href="https://docs.open-systems-pharmacology.org/working-with-r/r-introduction" class="external-link">R-Introduction</a>
+section of the OSPS manual.</p>
+<p>In order to load a simulation in R, it must be present in the
+<strong>*.pkml</strong> file format. Every simulation in PK-Sim or MoBi
+can be exported to the *.pkml file. The examples shown in this
+documentation are based on the Aciclovir example model, until stated
+otherwise. The model can be found in the PK-Sim examples folder of the
+OSPS installation. Alternatively, you can also download it from <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml" class="external-link">here</a>.</p>
+<p>The documentation is divided into three parts covering the following
+aspects:</p>
 <ul>
 <li><a href="modeling-simulation.html">Facilitating M&amp;S</a></li>
 <li><a href="data-handling.html">Data handling</a></li>
@@ -98,7 +117,16 @@
 <div class="section level2">
 <h2 id="object-oriented-approach">Object-oriented approach<a class="anchor" aria-label="anchor" href="#object-oriented-approach"></a>
 </h2>
-<p>The <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> package utilizes the concept of object-oriented (OO) programming based on the <a href="https://adv-r.hadley.nz/r6.html" class="external-link">R6 system</a>. While the philosophy of the package is to offer a functional programming workflow more common for the R users, it is important to understand some basic concepts of the OO programming. Many of the functions implemented in <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> return an <em>instance</em> (or an <em>object</em>) of a <em>class</em>. These objects can be used as inputs for other methods. Additionally, each object offers a set of properties (which can be other objects) and methods, which are accessible by the <code>$</code> sign:</p>
+<p>The <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> package utilizes the concept of
+object-oriented (OO) programming based on the <a href="https://adv-r.hadley.nz/r6.html" class="external-link">R6 system</a>. While the
+philosophy of the package is to offer a functional programming workflow
+more common for the R users, it is important to understand some basic
+concepts of the OO programming. Many of the functions implemented in
+<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> return an <em>instance</em> (or an
+<em>object</em>) of a <em>class</em>. These objects can be used as
+inputs for other methods. Additionally, each object offers a set of
+properties (which can be other objects) and methods, which are
+accessible by the <code>$</code> sign:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># create an instance of an object</span>
 <span class="va">object1</span> <span class="op">&lt;-</span> <span class="va">ClassName</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span>
@@ -108,29 +136,40 @@
 
 <span class="co"># apply a method associated with this object</span>
 <span class="va">resultOfAFunction</span> <span class="op">&lt;-</span> <span class="va">object1</span><span class="op">$</span><span class="fu">multiply</span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span></code></pre></div>
-<p>Important information about the object can be printed out by calling <code>print(object)</code>.</p>
+<p>Important information about the object can be printed out by calling
+<code>print(object)</code>.</p>
 <dl>
 <dt>The most important classes are:</dt>
-<dd><dl>
+<dd>
+<dl>
 <dt><code>DataMapping</code></dt>
-<dd>Organizes objects of type <code>XYData</code>, describing their groupings and used for creating figures. See <a href="figure-creation.html">Creating figures</a> for more information.
+<dd>
+Organizes objects of type <code>XYData</code>, describing their
+groupings and used for creating figures. See <a href="figure-creation.html">Creating figures</a> for more information.
 </dd>
-</dl></dd>
+</dl>
+</dd>
 <dd>
 <code>Plotable</code>
 </dd>
-<dd><dl>
+<dd>
+<dl>
 <dt>
 <code>XYData</code>, inherits <code>Plotable</code>
 </dt>
-<dd>Organizes any kind of x-y-values data. See <a href="data-handling.html">Data handling</a> for more information.
+<dd>
+Organizes any kind of x-y-values data. See <a href="data-handling.html">Data handling</a> for more information.
 </dd>
-</dl></dd>
-<dd><dl>
+</dl>
+</dd>
+<dd>
+<dl>
 <dt><code>DataConfiguration</code></dt>
-<dd>Structure containing information for observed data import. See <a href="data-handling.html">Data handling</a> for more information.
+<dd>
+Structure containing information for observed data import. See <a href="data-handling.html">Data handling</a> for more information.
 </dd>
-</dl></dd>
+</dl>
+</dd>
 </dl>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
@@ -141,12 +180,12 @@
 
     <footer><div class="pkgdown-footer-left">
   <p></p>
-<p>Developed by Pavel Balazki.</p>
+<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.9000.</p>
 </div>
 
     </footer>

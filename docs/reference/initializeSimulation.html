@@ -18,14 +18,14 @@ conditions."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div id="navbar" class="collapse navbar-collapse ms-2">
+    <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
@@ -123,13 +123,12 @@ non-existent parameters are  ignored.</p></dd>
 <span class="r-in">  species <span class="op">=</span> <span class="va">Species</span><span class="op">$</span><span class="va">Human</span>, population <span class="op">=</span> <span class="va">HumanPopulation</span><span class="op">$</span><span class="va">European_ICRP_2002</span>,</span>
 <span class="r-in">  gender <span class="op">=</span> <span class="va">Gender</span><span class="op">$</span><span class="va">Male</span>, weight <span class="op">=</span> <span class="fl">70</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in rClr::clrLoadAssembly(pksimR):</span> Failure in rclr_ms_call_static_method, but could not retrieve an error message</span>
 <span class="r-in"><span class="va">userParams</span> <span class="op">&lt;-</span> <span class="fu"><a href="readParametersFromXLS.html">readParametersFromXLS</a></span><span class="op">(</span><span class="va">parameterXLSPath</span><span class="op">)</span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in isOfType(object, type, nullAllowed):</span> object 'parameterXLSPath' not found</span>
 <span class="r-in"><span class="fu">initializeSimulation</span><span class="op">(</span><span class="va">simulation</span>, <span class="va">humanIndividualCharacteristics</span>, <span class="va">userParams</span><span class="op">)</span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in isOfType(object, type, nullAllowed):</span> object 'simulation' not found</span>
 <span class="r-in"><span class="va">simulationResults</span> <span class="op">&lt;-</span> <span class="fu">runSimulation</span><span class="op">(</span>simulation <span class="op">=</span> <span class="va">simulation</span><span class="op">)</span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in runSimulations(simulations = simulation, population = population,     agingData = agingData, simulationRunOptions = simulationRunOptions):</span> object 'simulation' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in runSimulation(simulation = simulation):</span> object 'simulation' not found</span>
 <span class="r-in"><span class="co"># }</span></span>
 </code></pre></div>
     </div>
@@ -138,11 +137,11 @@ non-existent parameters are  ignored.</p></dd>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p><p>Developed by Pavel Balazki.</p>
+  <p></p><p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.9000.</p>
 </div>
 
     </footer></div>

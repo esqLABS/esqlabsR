@@ -5,7 +5,7 @@
 #' @param ... Any parameter that can be interpreted by the default [plot()] function
 #' @export
 plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
-  dataMappingList <- ospsuite:::toList(dataMappingList)
+  dataMappingList <- toList(dataMappingList)
 
   nrOfCols <- plotConfiguration$nrOfCols
   # If no number of columns provided, calculate the number needed from
@@ -55,7 +55,7 @@ plotMultiPanel <- function(dataMappingList, plotConfiguration, ...) {
 #' @import ospsuite
 #' @keywords internal
 plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
-  ospsuite:::validateIsOfType(xySeries, "XYData")
+  validateIsOfType(xySeries, "XYData")
   points(xySeries$xValuesProcessed(xUnit),
     xySeries$yValuesProcessed(yUnit),
     type = xySeries$type,
@@ -87,7 +87,7 @@ plotXYData <- function(xySeries, xUnit = NULL, yUnit = NULL, ...) {
 #' @export
 plotXYDataAggregated <- function(xySeries, xUnit = NULL, yUnit = NULL,
                                  quantiles = c(0.05, 0.5, 0.95), ...) {
-  ospsuite:::validateIsOfType(xySeries, "XYData")
+  validateIsOfType(xySeries, "XYData")
   # Get the quantiles for data - lower/mid/upper
   aggregatedData <- getQuantilesYData(
     xValues = xySeries$xValuesProcessed(xUnit),
@@ -129,7 +129,7 @@ plotIndividualProfile <- function(dataMapping, ...) {
 #' @import ospsuite
 #' @export
 plotBoxPlot <- function(dataMapping, ...) {
-  ospsuite:::validateIsOfType(dataMapping, "DataMapping")
+  validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- vector(mode = "character", length = length(dataMapping$xySeries))
 
   allData <- vector(mode = "list", length = length(dataMapping$xySeries))
@@ -180,7 +180,7 @@ plotPopulationQuantiles <- function(dataMapping, ...) {
 #' @import hash
 #' @keywords internal
 plotTimeValues <- function(dataMapping, aggregated, ...) {
-  ospsuite:::validateIsOfType(dataMapping, "DataMapping")
+  validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- c()
   legendColors <- c()
   legendLty <- c()
@@ -202,11 +202,13 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
   }
 
   # Create an empty plot
+  # If axis labels have not been set by the user, generate defaults based
+  # on Dimension and unit
   plot(NULL, NULL,
     xlim = dataMapping$xLim,
     ylim = dataMapping$yLim,
-    xlab = dataMapping$xLab,
-    ylab = dataMapping$yLab,
+    xlab = dataMapping$xLab %||% paste0(dataMapping$xDimension, " [", dataMapping$xUnit, "]"),
+    ylab = dataMapping$yLab %||% paste0(dataMapping$yDimension, " [", dataMapping$yUnit, "]"),
     log = dataMapping$log,
     main = dataMapping$title,
     ...
@@ -390,7 +392,7 @@ plotTimeValues <- function(dataMapping, aggregated, ...) {
 #' @import ospsuite
 #' @export
 plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThreshold = 10, ...) {
-  ospsuite:::validateIsOfType(dataMapping, "DataMapping")
+  validateIsOfType(dataMapping, "DataMapping")
   legendEntries <- c()
   legendColors <- c()
   legendPch <- c()
@@ -511,7 +513,7 @@ plotPredictedVsObserved <- function(dataMapping, foldDistance = 2, timeDiffThres
 #' @import ospsuite
 #' @export
 calculateRMSE <- function(dataMappingList, timeDiffThreshold = 10) {
-  dataMappingList <- ospsuite:::toList(dataMappingList)
+  dataMappingList <- toList(dataMappingList)
 
   error <- 0
   for (dataMapping in dataMappingList) {

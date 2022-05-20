@@ -8,7 +8,7 @@
 An object storing configuration of a plot
 }
 \section{Super class}{
-\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{PlotConfiguration}
+\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{PlotConfiguration}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -44,19 +44,19 @@ is specified, the number of rows calculated to fit all the panels.}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{PlotConfiguration$new()}}
-\item \href{#method-print}{\code{PlotConfiguration$print()}}
+\item \href{#method-PlotConfiguration-new}{\code{PlotConfiguration$new()}}
+\item \href{#method-PlotConfiguration-print}{\code{PlotConfiguration$print()}}
 }
 }
-\if{html}{
-\out{<details open ><summary>Inherited methods</summary>}
-\itemize{
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-PlotConfiguration-new"></a>}}
+\if{latex}{\out{\hypertarget{method-PlotConfiguration-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize a new instance of the class
 \subsection{Usage}{
@@ -68,8 +68,8 @@ A new \code{PlotConfiguration} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-PlotConfiguration-print"></a>}}
+\if{latex}{\out{\hypertarget{method-PlotConfiguration-print}{}}}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{

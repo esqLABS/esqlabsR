@@ -22,7 +22,7 @@ dataMapping$addXYSeries(xValsList = xVals, yValsList = yVals,
 yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), groups = groups)
 }
 \section{Super class}{
-\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{DataMapping}
+\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{DataMapping}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -91,34 +91,35 @@ Supported plot types are listed in the enum \code{PlotTypes}. Default is "Indivi
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{DataMapping$new()}}
-\item \href{#method-finalize}{\code{DataMapping$finalize()}}
-\item \href{#method-addModelOutputs}{\code{DataMapping$addModelOutputs()}}
-\item \href{#method-addXYSeries}{\code{DataMapping$addXYSeries()}}
-\item \href{#method-addXYData}{\code{DataMapping$addXYData()}}
-\item \href{#method-removeXYSeries}{\code{DataMapping$removeXYSeries()}}
-\item \href{#method-getXYSeriesGroupMap}{\code{DataMapping$getXYSeriesGroupMap()}}
-\item \href{#method-setXFactors}{\code{DataMapping$setXFactors()}}
-\item \href{#method-setYFactors}{\code{DataMapping$setYFactors()}}
-\item \href{#method-setXOffsets}{\code{DataMapping$setXOffsets()}}
-\item \href{#method-setYOffsets}{\code{DataMapping$setYOffsets()}}
-\item \href{#method-setTypes}{\code{DataMapping$setTypes()}}
-\item \href{#method-setLinetypes}{\code{DataMapping$setLinetypes()}}
-\item \href{#method-setColors}{\code{DataMapping$setColors()}}
-\item \href{#method-setConfiguration}{\code{DataMapping$setConfiguration()}}
-\item \href{#method-plot}{\code{DataMapping$plot()}}
-\item \href{#method-print}{\code{DataMapping$print()}}
+\item \href{#method-DataMapping-new}{\code{DataMapping$new()}}
+\item \href{#method-DataMapping-finalize}{\code{DataMapping$finalize()}}
+\item \href{#method-DataMapping-addModelOutputs}{\code{DataMapping$addModelOutputs()}}
+\item \href{#method-DataMapping-addXYSeries}{\code{DataMapping$addXYSeries()}}
+\item \href{#method-DataMapping-addXYData}{\code{DataMapping$addXYData()}}
+\item \href{#method-DataMapping-addDataSets}{\code{DataMapping$addDataSets()}}
+\item \href{#method-DataMapping-removeXYSeries}{\code{DataMapping$removeXYSeries()}}
+\item \href{#method-DataMapping-getXYSeriesGroupMap}{\code{DataMapping$getXYSeriesGroupMap()}}
+\item \href{#method-DataMapping-setXFactors}{\code{DataMapping$setXFactors()}}
+\item \href{#method-DataMapping-setYFactors}{\code{DataMapping$setYFactors()}}
+\item \href{#method-DataMapping-setXOffsets}{\code{DataMapping$setXOffsets()}}
+\item \href{#method-DataMapping-setYOffsets}{\code{DataMapping$setYOffsets()}}
+\item \href{#method-DataMapping-setTypes}{\code{DataMapping$setTypes()}}
+\item \href{#method-DataMapping-setLinetypes}{\code{DataMapping$setLinetypes()}}
+\item \href{#method-DataMapping-setColors}{\code{DataMapping$setColors()}}
+\item \href{#method-DataMapping-setConfiguration}{\code{DataMapping$setConfiguration()}}
+\item \href{#method-DataMapping-plot}{\code{DataMapping$plot()}}
+\item \href{#method-DataMapping-print}{\code{DataMapping$print()}}
 }
 }
-\if{html}{
-\out{<details open ><summary>Inherited methods</summary>}
-\itemize{
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-DataMapping-new"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize a new instance of the class
 \subsection{Usage}{
@@ -130,8 +131,8 @@ A new \code{DataMapping} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-finalize"></a>}}
-\if{latex}{\out{\hypertarget{method-finalize}{}}}
+\if{html}{\out{<a id="method-DataMapping-finalize"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-finalize}{}}}
 \subsection{Method \code{finalize()}}{
 Clean up upon object removal
 \subsection{Usage}{
@@ -140,8 +141,8 @@ Clean up upon object removal
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-addModelOutputs"></a>}}
-\if{latex}{\out{\hypertarget{method-addModelOutputs}{}}}
+\if{html}{\out{<a id="method-DataMapping-addModelOutputs"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-addModelOutputs}{}}}
 \subsection{Method \code{addModelOutputs()}}{
 Add simulated results to the data mapping
 
@@ -177,8 +178,8 @@ output is not assigned to any group}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-addXYSeries"></a>}}
-\if{latex}{\out{\hypertarget{method-addXYSeries}{}}}
+\if{html}{\out{<a id="method-DataMapping-addXYSeries"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-addXYSeries}{}}}
 \subsection{Method \code{addXYSeries()}}{
 Add \code{XYData} object(s).
 \subsection{Usage}{
@@ -228,8 +229,8 @@ yErrorList = yErr, labels = list("my series1", "my series2", "my series3"), grou
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-addXYData"></a>}}
-\if{latex}{\out{\hypertarget{method-addXYData}{}}}
+\if{html}{\out{<a id="method-DataMapping-addXYData"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-addXYData}{}}}
 \subsection{Method \code{addXYData()}}{
 Add \code{XYData} object(s). The objects are cloned at adding.
 \subsection{Usage}{
@@ -248,8 +249,32 @@ output is not assigned to any group}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-removeXYSeries"></a>}}
-\if{latex}{\out{\hypertarget{method-removeXYSeries}{}}}
+\if{html}{\out{<a id="method-DataMapping-addDataSets"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-addDataSets}{}}}
+\subsection{Method \code{addDataSets()}}{
+Add \code{DataSet} object(s).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{DataMapping$addDataSets(dataSets, groups = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{dataSets}}{Object or a list of objects of the type \code{DataSet}}
+
+\item{\code{groups}}{A string or a list of strings assigning the data set to a group. If an entry within the list is \code{NULL}, the corresponding data set is not assigned to any group. If \code{NULL} (default), all data sets are not assigned to any group. If provided, \code{groups} must have the same length as \code{dataSets}
+output is not assigned to any group}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+The objects are transformed to \code{XYData} before adding.
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-DataMapping-removeXYSeries"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-removeXYSeries}{}}}
 \subsection{Method \code{removeXYSeries()}}{
 Remove the observed data with given label from the DataMapping.
 \subsection{Usage}{
@@ -265,8 +290,8 @@ Remove the observed data with given label from the DataMapping.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getXYSeriesGroupMap"></a>}}
-\if{latex}{\out{\hypertarget{method-getXYSeriesGroupMap}{}}}
+\if{html}{\out{<a id="method-DataMapping-getXYSeriesGroupMap"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-getXYSeriesGroupMap}{}}}
 \subsection{Method \code{getXYSeriesGroupMap()}}{
 Return group mapping of labels.
 \subsection{Usage}{
@@ -282,8 +307,8 @@ A named list with keys being labels of xySeries and values group names.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setXFactors"></a>}}
-\if{latex}{\out{\hypertarget{method-setXFactors}{}}}
+\if{html}{\out{<a id="method-DataMapping-setXFactors"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-setXFactors}{}}}
 \subsection{Method \code{setXFactors()}}{
 Set the X-factors of x-y values by labels.
 \subsection{Usage}{
@@ -305,8 +330,8 @@ If the data set with a label is not present in the mapping, the label is ignored
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setYFactors"></a>}}
-\if{latex}{\out{\hypertarget{method-setYFactors}{}}}
+\if{html}{\out{<a id="method-DataMapping-setYFactors"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-setYFactors}{}}}
 \subsection{Method \code{setYFactors()}}{
 Set the y-factors of x-y values by labels.
 \subsection{Usage}{
@@ -328,8 +353,8 @@ If the data set with a label is not present in the mapping, the label is ignored
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setXOffsets"></a>}}
-\if{latex}{\out{\hypertarget{method-setXOffsets}{}}}
+\if{html}{\out{<a id="method-DataMapping-setXOffsets"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-setXOffsets}{}}}
 \subsection{Method \code{setXOffsets()}}{
 Set the X-offset of x-y values by labels.
 \subsection{Usage}{
@@ -351,8 +376,8 @@ If the data set with a label is not present in the mapping, the label is ignored
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setYOffsets"></a>}}
-\if{latex}{\out{\hypertarget{method-setYOffsets}{}}}
+\if{html}{\out{<a id="method-DataMapping-setYOffsets"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-setYOffsets}{}}}
 \subsection{Method \code{setYOffsets()}}{
 Set the Y-offset of x-y values by labels.
 \subsection{Usage}{
@@ -374,8 +399,8 @@ If the data set with a label is not present in the mapping, the label is ignored
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setTypes"></a>}}
-\if{latex}{\out{\hypertarget{method-setTypes}{}}}
+\if{html}{\out{<a id="method-DataMapping-setTypes"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-setTypes}{}}}
 \subsection{Method \code{setTypes()}}{
 Set the type(s) of the data to be plotted, e.g. line, points, etc.
 \subsection{Usage}{
@@ -398,8 +423,8 @@ No check is performed whether a valid type is provided.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setLinetypes"></a>}}
-\if{latex}{\out{\hypertarget{method-setLinetypes}{}}}
+\if{html}{\out{<a id="method-DataMapping-setLinetypes"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-setLinetypes}{}}}
 \subsection{Method \code{setLinetypes()}}{
 Set the line type(s) property of the data to be plotted. Line types as accepted by the base \code{plot} lty argument.
 \subsection{Usage}{
@@ -423,8 +448,8 @@ Line types can be provided either as numeric or as character vectors (e.g. "dash
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setColors"></a>}}
-\if{latex}{\out{\hypertarget{method-setColors}{}}}
+\if{html}{\out{<a id="method-DataMapping-setColors"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-setColors}{}}}
 \subsection{Method \code{setColors()}}{
 Set the colors of the data to be plotted
 \subsection{Usage}{
@@ -447,8 +472,8 @@ If the data set with a label is not present in the mapping, the label is ignored
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setConfiguration"></a>}}
-\if{latex}{\out{\hypertarget{method-setConfiguration}{}}}
+\if{html}{\out{<a id="method-DataMapping-setConfiguration"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-setConfiguration}{}}}
 \subsection{Method \code{setConfiguration()}}{
 Apply settings stored in a \code{DataMappingConfiguration}
 \subsection{Usage}{
@@ -470,8 +495,8 @@ Equivalent to calling \code{setXFactors}, \code{setYFactors}, \code{setXOffsets}
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-plot"></a>}}
-\if{latex}{\out{\hypertarget{method-plot}{}}}
+\if{html}{\out{<a id="method-DataMapping-plot"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-plot}{}}}
 \subsection{Method \code{plot()}}{
 Plot the data stored in this \code{DataMapping}.
 \subsection{Usage}{
@@ -487,8 +512,8 @@ Plot the data stored in this \code{DataMapping}.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-DataMapping-print"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMapping-print}{}}}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{

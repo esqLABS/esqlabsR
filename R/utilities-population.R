@@ -17,16 +17,16 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
     "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit"
   )
 
-  ospsuite:::validateIsString(c(XLSpath, populationName))
-  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
+  validateIsString(c(XLSpath, populationName))
+  validateIsString(sheet, nullAllowed = TRUE)
 
   if (is.null(sheet)) {
     sheet <- 1
   }
-  data <- readxl::read_excel(path = XLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+  data <- readExcel(path = XLSpath, sheet = sheet)
 
-  if (!(all(length(names(data)) == length(columnNames)) && all(names(data) == columnNames))) {
-    stop(messages$errorWrongPopCharXLSStructure)
+  if (!all(columnNames %in% names(data))) {
+    stop(messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
   }
   # Find the row with the given population name
   rowIdx <- which(data$PopulationName == populationName)
@@ -83,11 +83,11 @@ extendPopulationByUserDefinedParams <- function(population,
                                                 meanValues,
                                                 sdValues,
                                                 distributions = Distributions$Normal) {
-  ospsuite:::validateIsOfType(population, "Population")
-  ospsuite:::validateIsString(parameterPaths)
-  ospsuite:::validateIsNumeric(meanValues, sdValues)
+  validateIsOfType(population, "Population")
+  validateIsString(parameterPaths)
+  validateIsNumeric(meanValues, sdValues)
   distributions <- distributions %||% rep(Distributions$Normal, length(parameterPaths))
-  ospsuite:::validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
+  validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
 
 
   # Iterate through all parameters and sample a parameter values vector
@@ -125,22 +125,21 @@ extendPopulationByUserDefinedParams <- function(population,
 #' @import readxl
 #' @export
 extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
-  ospsuite:::validateIsOfType(population, "Population")
-  ospsuite:::validateIsString(XLSpath)
-  ospsuite:::validateIsString(sheet, nullAllowed = TRUE)
+  validateIsOfType(population, "Population")
+  validateIsString(XLSpath)
+  validateIsString(sheet, nullAllowed = TRUE)
   if (is.null(sheet)) {
     sheet <- 1
   }
 
   columnNames <- c(
-    "Container.Path", "Parameter.Name", "Mean",
+    "Container Path", "Parameter Name", "Mean",
     "SD", "Distribution"
   )
 
-  data <- readxl::read_excel(path = XLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
-  if (!(all(length(names(data)) == length(columnNames)) &&
-    all(names(data) == columnNames))) {
-    stop(messages$errorWrongPopCharXLSStructure)
+  data <- readExcel(path = XLSpath, sheet = sheet)
+  if (!all(columnNames %in% names(data))) {
+    stop(messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
   }
 
   paramPaths <- c(dim(data)[[1]])
@@ -151,8 +150,8 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
   for (i in seq_along(data$Container.Path)) {
     paramPath <- paste(data[["Container.Path"]][[i]], data[["Parameter.Name"]][[i]], sep = "|")
     paramPaths[[i]] <- paramPath
-    meanVals[[i]] <- data[["Mean"]][[i]]
-    sdVals[[i]] <- data[["SD"]][[i]]
+    meanVals[[i]] <- as.numeric(data[["Mean"]][[i]])
+    sdVals[[i]] <- as.numeric(data[["SD"]][[i]])
     distributions[[i]] <- data[["Distribution"]][[i]]
   }
 

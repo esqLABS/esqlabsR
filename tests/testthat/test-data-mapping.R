@@ -1179,3 +1179,33 @@ test_that("It can change yUnit", {
   dataMapping$yUnit <- ospUnits$`Abundance per mass protein`$`nmol/mg mic. protein`
   expect_equal(dataMapping$yUnit, ospUnits$`Abundance per mass protein`$`nmol/mg mic. protein`)
 })
+
+## context("addDataSets")
+test_that("It can add one DataSet with a group", {
+  file <- getTestDataFilePath("ObsDataAciclovir_1.pkml")
+  obsData <- ospsuite::loadDataSetFromPKML(filePath = file)
+  dataMapping <- DataMapping$new()
+
+  dataMapping$addDataSets(dataSets = obsData, groups = "Group1")
+
+  xyData <- dataMapping$xySeries[[obsData$name]]
+  expect_equal(xyData$label, obsData$name)
+  expect_equal(xyData$xValues, obsData$xValues)
+  expect_equal(xyData$yValues, obsData$yValues)
+  expect_equal(xyData$yError, obsData$yErrorValues)
+
+  expect_equal(xyData$dataType, XYDataTypes$Observed)
+  expect_equal(xyData$MW, obsData$molWeight)
+  expect_equal(xyData$xDimension, obsData$xDimension)
+  expect_equal(xyData$xUnit, obsData$xUnit)
+  expect_equal(xyData$yDimension, obsData$yDimension)
+  expect_equal(xyData$yUnit, obsData$yUnit)
+  # the loaded observed data has no error and therefore no unit.
+  # Skip this use case for now
+  # expect_equal(xyData$yErrorUnit, obsData$yErrorUnit)
+
+  expect_equal(xyData$getAllMetaData(), obsData$metaData)
+  capture.output(print(dataMapping))
+  expect_equal(dataMapping$groupings[["Group1"]], xyData$label)
+  expect_equal(dataMapping$ungroupedSeries, list())
+})

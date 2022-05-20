@@ -5,7 +5,7 @@
 #' @format NULL
 PlotConfiguration <- R6::R6Class(
   "PlotConfiguration",
-  inherit = ospsuite:::Printable,
+  inherit = Printable,
   cloneable = FALSE,
   active = list(),
   private = list(),

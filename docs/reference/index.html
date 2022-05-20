@@ -10,14 +10,14 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div id="navbar" class="collapse navbar-collapse ms-2">
+    <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
@@ -95,6 +95,88 @@
         </dt>
         <dd>PlotConfiguration</dd>
       </dl></div><div class="section level2">
+      <h2 id="sensitivity-analysis">Sensitivity analysis<a class="anchor" aria-label="anchor" href="#sensitivity-analysis"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="sensitivityCalculation.html">sensitivityCalculation()</a></code> 
+        </dt>
+        <dd>Carry out and visualize sensitivity analysis (with OSPSuite)</dd>
+      </dl><dl><dt>
+          
+          <code><a href="sensitivitySpiderPlot.html">sensitivitySpiderPlot()</a></code> 
+        </dt>
+        <dd>Sensitivity spider plot for PK parameters</dd>
+      </dl><dl><dt>
+          
+          <code><a href="sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> 
+        </dt>
+        <dd>Create a concentration-time profile plot</dd>
+      </dl></div><div class="section level2">
+      <h2 id="project-workflow">Project workflow<a class="anchor" aria-label="anchor" href="#project-workflow"></a></h2>
+      
+      
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code> 
+        </dt>
+        <dd>Create a default <code>ProjectConfiguration</code></dd>
+      </dl><dl><dt>
+          
+          <code><a href="DataConfiguration.html">DataConfiguration</a></code> 
+        </dt>
+        <dd>DataConfiguration</dd>
+      </dl><dl><dt>
+          
+          <code><a href="DataMappingConfiguration.html">DataMappingConfiguration</a></code> 
+        </dt>
+        <dd>DataMappingConfiguration</dd>
+      </dl><dl><dt>
+          
+          <code><a href="PlotConfiguration.html">PlotConfiguration</a></code> 
+        </dt>
+        <dd>PlotConfiguration</dd>
+      </dl><dl><dt>
+          
+          <code><a href="ProjectConfiguration.html">ProjectConfiguration</a></code> 
+        </dt>
+        <dd>ProjectConfiguration</dd>
+      </dl><dl><dt>
+          
+          <code><a href="readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> 
+        </dt>
+        <dd>Read scenario definition from excel file</dd>
+      </dl><dl><dt>
+          
+          <code><a href="ScenarioConfiguration.html">ScenarioConfiguration</a></code> 
+        </dt>
+        <dd>ScenarioConfiguration</dd>
+      </dl><dl><dt>
+          
+          <code><a href="initializeScenario.html">initializeScenario()</a></code> 
+        </dt>
+        <dd>Initialize a simulation based on scenario definition</dd>
+      </dl><dl><dt>
+          
+          <code><a href="runScenarios.html">runScenarios()</a></code> 
+        </dt>
+        <dd>Run a set of scenarios.</dd>
+      </dl></div><div class="section level2">
       <h2 id="helper-functions-for-data-import-wrangling-and-export">Helper functions for data import, wrangling, and export<a class="anchor" aria-label="anchor" href="#helper-functions-for-data-import-wrangling-and-export"></a></h2>
       
       
@@ -106,6 +188,11 @@
       
 
       <dl><dt>
+          
+          <code><a href="readExcel.html">readExcel()</a></code> 
+        </dt>
+        <dd>Read XLSX files using <code><a href="https://readxl.tidyverse.org/reference/read_excel.html" class="external-link">readxl::read_excel</a></code> with suppressed warnings</dd>
+      </dl><dl><dt>
           
           <code><a href="readIndividualCharacteristicsFromXLS.html">readIndividualCharacteristicsFromXLS()</a></code> 
         </dt>
@@ -130,6 +217,16 @@ Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
 <code>PopulationCharacteristics</code> object</dd>
       </dl><dl><dt>
           
+          <code><a href="readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> 
+        </dt>
+        <dd>Read scenario definition from excel file</dd>
+      </dl><dl><dt>
+          
+          <code><a href="extendParameterStructure.html">extendParameterStructure()</a></code> 
+        </dt>
+        <dd>Extend parameters structure with new entries</dd>
+      </dl><dl><dt>
+          
           <code><a href="extendPopulationByUserDefinedParams.html">extendPopulationByUserDefinedParams()</a></code> 
         </dt>
         <dd>Add user defined variability on parameters to a population.</dd>
@@ -138,6 +235,11 @@ Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
           <code><a href="extendPopulationFromXLS.html">extendPopulationFromXLS()</a></code> 
         </dt>
         <dd>Add user defined variability on parameters to a population from an excel file.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="setApplications.html">setApplications()</a></code> 
+        </dt>
+        <dd>Set applications</dd>
       </dl><dl><dt>
           
           <code><a href="setParameterValuesByPathWithCondition.html">setParameterValuesByPathWithCondition()</a></code> 
@@ -174,6 +276,11 @@ Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
           <code><a href="compareWithNA.html">compareWithNA()</a></code> 
         </dt>
         <dd>Compare values including NA</dd>
+      </dl><dl><dt>
+          
+          <code><a href="calculateMeanDataSet.html">calculateMeanDataSet()</a></code> 
+        </dt>
+        <dd>Calculate mean and standard deviation for the yValues of the given <code>DataSet</code> objects</dd>
       </dl><dl><dt>
           
           <code><a href="calculateRMSE.html">calculateRMSE()</a></code> 
@@ -242,6 +349,16 @@ For other species, all parameters returned by <code>createIndividual</code> are 
           <code><a href="Distributions.html">Distributions</a></code> 
         </dt>
         <dd>Supported distributions for sampling</dd>
+      </dl><dl><dt>
+          
+          <code><a href="LLOQMode.html">LLOQMode</a></code> 
+        </dt>
+        <dd>Possible entries for the <code>lloqMode</code> argument of <code>calculateMeans()</code></dd>
+      </dl><dl><dt>
+          
+          <code><a href="loadObservedData.html">loadObservedData()</a></code> 
+        </dt>
+        <dd>Load data from excel</dd>
       </dl></div><div class="section level2">
       <h2 id="helper-functions-for-plotting">Helper functions for plotting<a class="anchor" aria-label="anchor" href="#helper-functions-for-plotting"></a></h2>
       
@@ -329,18 +446,7 @@ error.</dd>
           
           <code><a href="isParametersEqual.html">isParametersEqual()</a></code> 
         </dt>
-        <dd>Check if two parameters are equal is respect to certain properties. The parameters are not equal if:
-The paths of the parameters are not equal;
-The types of the formulas differ (types checked: isConstant, isDistributed, isExplicit, isTable);
-Constant formulas have different values;
-Distributed formulas have different values (not checking for distribution)
-Explicit formulas: If formula string are not equal, OR one of the parameter values is fixed (formula is overridden),
-OR both parameter values are fixed and differ,
-OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
-Table formulas: If the number of points differ, OR any of the points differ,
-OR one of the parameter values is fixed (formula is overridden),
-OR both parameter values are fixed and differ
-#'</dd>
+        <dd>Check if two parameters are equal is respect to certain properties.</dd>
       </dl><dl><dt>
           
           <code><a href="isTableFormulasEqual.html">isTableFormulasEqual()</a></code> 
@@ -405,11 +511,6 @@ OR both parameter values are fixed and differ
 
       <dl><dt>
           
-          <code><a href="enumGetKey.html">enumGetKey()</a></code> 
-        </dt>
-        <dd>Get the key mapped to the given value in an <code>enum</code></dd>
-      </dl><dl><dt>
-          
           <code><a href="enumPutList.html">enumPutList()</a></code> 
         </dt>
         <dd>Add a new key-value pairs to an enum, where the value is a list.</dd>
@@ -445,11 +546,6 @@ OR both parameter values are fixed and differ
         <dd>Parallelize the execution of a function over a list of arguments values</dd>
       </dl><dl><dt>
           
-          <code><a href="OR.html">`%||%`</a></code> 
-        </dt>
-        <dd>Convenience function to avoid testing for null. It returns the first object if it is not null otherwise the second object</dd>
-      </dl><dl><dt>
-          
           <code><a href="pathFromClipboard.html">pathFromClipboard()</a></code> 
         </dt>
         <dd>pathFromClipboard</dd>
@@ -469,11 +565,11 @@ OR both parameter values are fixed and differ
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p><p>Developed by Pavel Balazki.</p>
+  <p></p><p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.9000.</p>
 </div>
 
     </footer></div>

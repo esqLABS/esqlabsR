@@ -7,58 +7,118 @@
 #'   parameters. Multiple sheets can be processed. If no sheets are provided,
 #'   the first one in the Excel file is used.
 #'
-#' @return A list containing lists 'paths' with the full paths to the
+#' @return A list containing vectors 'paths' with the full paths to the
 #'   parameters, 'values' the values of the parameters, and 'units' with the
 #'   units the values are in.
 #' @export
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
-
-  ospsuite:::validateIsString(paramsXLSpath)
-  ospsuite:::validateIsString(sheets, nullAllowed = TRUE)
+  validateIsString(paramsXLSpath)
+  validateIsString(sheets, nullAllowed = TRUE)
 
   if (is.null(sheets)) {
     sheets <- c(1)
   }
 
-  paths <- c()
-  values <- c()
-  units <- c()
+  pathsValuesVector <- vector(mode = "numeric")
+  pathsUnitsVector <- vector(mode = "character")
 
   for (sheet in sheets) {
-    data <- readxl::read_excel(path = paramsXLSpath, sheet = sheet, .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE))
+    data <- readExcel(path = paramsXLSpath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
-      stop(messages$errorWrongParamsXLSStructure(paramsXLSpath))
+      stop(messages$errorWrongXLSStructure(filePath = paramsXLSpath, expectedColNames = columnNames))
     }
-    for (i in seq_along(data[["Container Path"]])) {
-      path <- paste(data[["Container Path"]][[i]], data[["Parameter Name"]][[i]], sep = "|")
-      value <- data[["Value"]][[i]]
-      unit <- data[["Units"]][[i]]
 
-      # Check if the entry with this path is already in the output paths.
-      # If yes, overwrite the value, otherwise append a new entry.
-      idx <- match(path, paths)
-      if (is.na(idx)) {
-        paths <- c(paths, path)
-        values <- c(values, value)
-        units <- c(units, unit)
-      } else {
-        values[[idx]] <- value
-        units[[idx]] <- unit
-      }
-    }
+    fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]], sep = "|")
+    pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
+
+    pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = as.character(data[["Units"]]), replace = "")
   }
 
-  return(list(paths = paths, values = values, units = units))
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }
 
-#' Check if two parameters are equal is respect to certain properties. The parameters are not equal if:
+#' Extend parameters structure with new entries
+#'
+#' @param parameters A list containing vectors 'paths' with the full paths to the
+#'   parameters, 'values' the values of the parameters, and 'units' with the
+#'   units the values are in. This list will be extended.
+#' @param newParameters A list containing vectors 'paths' with the full paths to the
+#'   parameters, 'values' the values of the parameters, and 'units' with the
+#'   units the values are in. Entries from this list will extend or overwrite
+#'   the list `parameters`
+#'
+#'   @details This function adds new parameter entries from `newParameters` to
+#'  `parameters`. If an entry with the same path is already present in `parameters`,
+#'  its value and unit will be overwritten with the values from `newParameters`.
+#'
+#' @return Updated list of parameter patsh, values, and units
+#' @export
+extendParameterStructure <- function(parameters, newParameters) {
+  if (!identical(names(parameters), c("paths", "values", "units"))) {
+    stop(messages$wrongParametersStructure("parameters"))
+  }
+  if (!identical(names(newParameters), c("paths", "values", "units"))) {
+    stop(messages$wrongParametersStructure("newParameters"))
+  }
+
+  # If the parameters structure is empty, return new parameters
+  if (isEmpty(parameters$paths)) {
+    return(newParameters)
+  }
+
+  # If the new parameters structure is empty, return parameters
+  if (isEmpty(newParameters$paths)) {
+    return(parameters)
+  }
+
+  # Convert the input parameter structure into hashes.
+  pathsValuesVector <- parameters$values
+  names(pathsValuesVector) <- parameters$paths
+  pathsUnitsVector <- parameters$units
+  names(pathsUnitsVector) <- parameters$paths
+
+  # Add new entries resp. update with new values
+  pathsValuesVector[newParameters$paths] <- newParameters$values
+  pathsUnitsVector[newParameters$paths] <- newParameters$units
+
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
+}
+
+#' Convert parameters vector structure to list structure
+#'
+#' @param pathsValuesVector Named vector of numerical parameter values
+#' with parameter paths as names
+#' @param pathsUnitsVector Named vector of parameter values units with parameter
+#' paths as names
+#'
+#' @noRd
+#'
+#' @return A named list with vectors `paths`, `values`, and `units`
+#' @keywords internal
+.parametersVectorToList <- function(pathsValuesVector, pathsUnitsVector) {
+  paths <- names(pathsValuesVector)
+
+  returnVal <- list(
+    paths = paths,
+    values = unname(pathsValuesVector[paths]),
+    units = unname(pathsUnitsVector[paths])
+  )
+
+  return(returnVal)
+}
+
+#' @title Check if two parameters are equal is respect to certain properties.
+#'
+#' @details
+#' The parameters are not equal if:
 #' The paths of the parameters are not equal;
 #' The types of the formulas differ (types checked: isConstant, isDistributed, isExplicit, isTable);
 #' Constant formulas have different values;
 #' Distributed formulas have different values (not checking for distribution)
-#' Explicit formulas: If formula string are not equal, OR one of the parameter values is fixed (formula is overridden),
+#' Explicit formulas: If formula string are not equal, OR one of the parameter
+#' values is fixed (formula is overridden),
 #' OR both parameter values are fixed and differ,
 #' OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
 #' Table formulas: If the number of points differ, OR any of the points differ,
@@ -74,12 +134,13 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @return `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
 isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE) {
-  ospsuite:::validateIsOfType(c(parameter1, parameter2), "Parameter")
+  validateIsOfType(c(parameter1, parameter2), "Parameter")
 
   # Check for the path
   if (parameter1$path != parameter2$path) {
     return(FALSE)
   }
+
   formula1 <- parameter1$formula
   formula2 <- parameter2$formula
 
@@ -170,17 +231,31 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #'   task <- ospsuite:::getContainerTask()
 #'   !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
 #' }
-#' setParameterValuesByPathWithCondition(c("Organism|Liver|Volume", "Organism|Volume"), c(2, 3), sim, condition)
+#' setParameterValuesByPathWithCondition(
+#'   c("Organism|Liver|Volume", "Organism|Volume"),
+#'   c(2, 3),
+#'   sim,
+#'   condition
+#' )
 #' }
 #' @import ospsuite
 #' @export
-setParameterValuesByPathWithCondition <- function(parameterPaths, values, simulation, condition = function(path) {
+setParameterValuesByPathWithCondition <- function(parameterPaths,
+                                                  values,
+                                                  simulation,
+                                                  condition = function(path) {
                                                     TRUE
-                                                  }, units = NULL) {
+                                                  },
+                                                  units = NULL) {
   for (i in seq_along(parameterPaths)) {
     path <- parameterPaths[[i]]
     if (condition(path)) {
-      ospsuite::setParameterValuesByPath(parameterPaths = parameterPaths[[i]], values = values[[i]], simulation = simulation, units = units[[i]])
+      ospsuite::setParameterValuesByPath(
+        parameterPaths = parameterPaths[[i]],
+        values = values[[i]],
+        simulation = simulation,
+        units = units[[i]]
+      )
     }
   }
 }

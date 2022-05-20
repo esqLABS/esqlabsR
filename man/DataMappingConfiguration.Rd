@@ -8,54 +8,60 @@
 An object storing configuration of a data mapping
 }
 \section{Super class}{
-\code{\link[ospsuite:Printable]{ospsuite::Printable}} -> \code{DataMappingConfiguration}
+\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{DataMappingConfiguration}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{xFactors}}{A named list listing numerical values that x-values are multiplied by. Keys are names of data sets,
-values are numerical factors.}
+\item{\code{xFactors}}{A named list listing numerical values that x-values are
+multiplied by. Keys are names of data sets, values are numerical
+factors.}
 
 \item{\code{yFactors}}{A named list listing numerical values that y-values are multiplied by. Keys are names of data sets,
 values are numerical factors.}
 
-\item{\code{xOffsets}}{A named list listing numerical values that will be added to the x-values. Keys are names of data sets,
-values are numerical values}
+\item{\code{xOffsets}}{A named list listing numerical values that will be added
+to the x-values. Keys are names of data sets, values are numerical
+values}
 
-\item{\code{yOffsets}}{A named list listing numerical values that will be added to the y-values. Keys are names of data sets,
-values are numerical values}
+\item{\code{yOffsets}}{A named list listing numerical values that will be added
+to the y-values. Keys are names of data sets, values are numerical
+values}
 
-\item{\code{lineTypes}}{A named list listing line types that will be used to plot a certain data set. Keys are names of data sets,
-values are numerical values recognized by the \code{lty} argument of the \code{\link[=plot]{plot()}} function}
+\item{\code{lineTypes}}{A named list listing line types that will be used to
+plot a certain data set. Keys are names of data sets, values are
+numerical values recognized by the \code{lty} argument of the \code{\link[=plot]{plot()}}
+function}
 
-\item{\code{colors}}{A named list listing color values that will be used to plot a certain data set. Keys are names of data sets,
-values are values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
+\item{\code{colors}}{A named list listing color values that will be used to plot
+a certain data set. Keys are names of data sets, values are values
+recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{DataMappingConfiguration$new()}}
-\item \href{#method-finalize}{\code{DataMappingConfiguration$finalize()}}
-\item \href{#method-setXFactors}{\code{DataMappingConfiguration$setXFactors()}}
-\item \href{#method-setYFactors}{\code{DataMappingConfiguration$setYFactors()}}
-\item \href{#method-setXOffsets}{\code{DataMappingConfiguration$setXOffsets()}}
-\item \href{#method-setYOffsets}{\code{DataMappingConfiguration$setYOffsets()}}
-\item \href{#method-setColors}{\code{DataMappingConfiguration$setColors()}}
-\item \href{#method-setLineTypes}{\code{DataMappingConfiguration$setLineTypes()}}
-\item \href{#method-print}{\code{DataMappingConfiguration$print()}}
+\item \href{#method-DataMappingConfiguration-new}{\code{DataMappingConfiguration$new()}}
+\item \href{#method-DataMappingConfiguration-finalize}{\code{DataMappingConfiguration$finalize()}}
+\item \href{#method-DataMappingConfiguration-setXFactors}{\code{DataMappingConfiguration$setXFactors()}}
+\item \href{#method-DataMappingConfiguration-setYFactors}{\code{DataMappingConfiguration$setYFactors()}}
+\item \href{#method-DataMappingConfiguration-setXOffsets}{\code{DataMappingConfiguration$setXOffsets()}}
+\item \href{#method-DataMappingConfiguration-setYOffsets}{\code{DataMappingConfiguration$setYOffsets()}}
+\item \href{#method-DataMappingConfiguration-setColors}{\code{DataMappingConfiguration$setColors()}}
+\item \href{#method-DataMappingConfiguration-setLineTypes}{\code{DataMappingConfiguration$setLineTypes()}}
+\item \href{#method-DataMappingConfiguration-print}{\code{DataMappingConfiguration$print()}}
 }
 }
-\if{html}{
-\out{<details open ><summary>Inherited methods</summary>}
-\itemize{
-}
-\out{</details>}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-new"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize a new instance of the class
 \subsection{Usage}{
@@ -67,8 +73,8 @@ A new \code{DataMappingConfiguration} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-finalize"></a>}}
-\if{latex}{\out{\hypertarget{method-finalize}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-finalize"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-finalize}{}}}
 \subsection{Method \code{finalize()}}{
 Clean up upon object removal
 \subsection{Usage}{
@@ -77,10 +83,11 @@ Clean up upon object removal
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setXFactors"></a>}}
-\if{latex}{\out{\hypertarget{method-setXFactors}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setXFactors"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setXFactors}{}}}
 \subsection{Method \code{setXFactors()}}{
-Set the values of x-factors. An x-factor will be multiplied by the x-values of the data set.
+Set the values of x-factors. An x-factor will be multiplied
+by the x-values of the data set.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$setXFactors(labels, xFactors)}\if{html}{\out{</div>}}
 }
@@ -88,19 +95,22 @@ Set the values of x-factors. An x-factor will be multiplied by the x-values of t
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{xFactors}}{A numerical value or a list of numerical values representing the x-factors. Both lists must be of same length
-and store the entries in the same order.}
+\item{\code{xFactors}}{A numerical value or a list of numerical values
+representing the x-factors. Both lists must be of same length and store
+the entries in the same order.}
 }
 \if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setYFactors"></a>}}
-\if{latex}{\out{\hypertarget{method-setYFactors}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setYFactors"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setYFactors}{}}}
 \subsection{Method \code{setYFactors()}}{
-Set the values of y-factors. A y-factor will be multiplied by the y-values of the data set.
+Set the values of y-factors. A y-factor will be multiplied
+by the y-values of the data set.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$setYFactors(labels, yFactors)}\if{html}{\out{</div>}}
 }
@@ -108,19 +118,22 @@ Set the values of y-factors. A y-factor will be multiplied by the y-values of th
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{yFactors}}{A numerical value or a list of numerical values representing the y-factors. Both lists must be of same length
+\item{\code{yFactors}}{A numerical value or a list of numerical values
+representing the y-factors. Both lists must be of same length
 and store the entries in the same order.}
 }
 \if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setXOffsets"></a>}}
-\if{latex}{\out{\hypertarget{method-setXOffsets}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setXOffsets"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setXOffsets}{}}}
 \subsection{Method \code{setXOffsets()}}{
-Set the values of x-offsets. An x-offset will be added to the the x-values of the data set.
+Set the values of x-offsets. An x-offset will be added to
+the the x-values of the data set.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$setXOffsets(labels, xOffsets)}\if{html}{\out{</div>}}
 }
@@ -128,19 +141,22 @@ Set the values of x-offsets. An x-offset will be added to the the x-values of th
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{xOffsets}}{A numerical value or a list of numerical values representing the x-offsets. Both lists must be of same length
-and store the entries in the same order.}
+\item{\code{xOffsets}}{A numerical value or a list of numerical values
+representing the x-offsets. Both lists must be of same length and store
+the entries in the same order.}
 }
 \if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setYOffsets"></a>}}
-\if{latex}{\out{\hypertarget{method-setYOffsets}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setYOffsets"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setYOffsets}{}}}
 \subsection{Method \code{setYOffsets()}}{
-Set the values of y-offsets. A y-offset will be added to the the y-values of the data set.
+Set the values of y-offsets. A y-offset will be added to the
+the y-values of the data set.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{DataMappingConfiguration$setYOffsets(labels, yOffsets)}\if{html}{\out{</div>}}
 }
@@ -148,17 +164,19 @@ Set the values of y-offsets. A y-offset will be added to the the y-values of the
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{yOffsets}}{A numerical value or a list of numerical values representing the y-offsets. Both lists must be of same length
-and store the entries in the same order.}
+\item{\code{yOffsets}}{A numerical value or a list of numerical values
+representing the y-offsets. Both lists must be of same length and store
+the entries in the same order.}
 }
 \if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setColors"></a>}}
-\if{latex}{\out{\hypertarget{method-setColors}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setColors"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setColors}{}}}
 \subsection{Method \code{setColors()}}{
 Set the colors that will be used to plot a certain data set.
 \subsection{Usage}{
@@ -168,16 +186,18 @@ Set the colors that will be used to plot a certain data set.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{colors}}{Values representing a color recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
+\item{\code{colors}}{Values representing a color recognized by the \code{col}
+argument of the \code{\link[=plot]{plot()}} function}
 }
 \if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setLineTypes"></a>}}
-\if{latex}{\out{\hypertarget{method-setLineTypes}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-setLineTypes"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-setLineTypes}{}}}
 \subsection{Method \code{setLineTypes()}}{
 Set the line types that will be used to plot a certain data set.
 \subsection{Usage}{
@@ -187,16 +207,18 @@ Set the line types that will be used to plot a certain data set.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{labels}}{A string or a list of strings representing the names of the data sets}
+\item{\code{labels}}{A string or a list of strings representing the names of the
+data sets}
 
-\item{\code{lineTypes}}{Values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}} function}
+\item{\code{lineTypes}}{Values recognized by the \code{col} argument of the \code{\link[=plot]{plot()}}
+function}
 }
 \if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-DataMappingConfiguration-print"></a>}}
+\if{latex}{\out{\hypertarget{method-DataMappingConfiguration-print}{}}}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{

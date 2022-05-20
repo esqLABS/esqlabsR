@@ -51,3 +51,4 @@ revdep/data.sqlite
 /doc/
 /Meta/
 .tgitconfig
+tests/testthat/Rplots.pdf

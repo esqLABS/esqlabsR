@@ -3,6 +3,13 @@ url: https://esqlabs.github.io/esqlabsR/
 template:
   bootstrap: 5
 
+authors:
+  esqLABS GmbH:
+    href: "https://esqlabs.com/"
+    html: "<img src='https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png' height=24>"
+  Indrajeet Patil:
+    href: https://sites.google.com/site/indrajeetspatilmorality/
+
 reference:
 
   - title: R6 Classes
@@ -12,6 +19,16 @@ reference:
       - XYData
       - Plotable
       - PlotConfiguration
+
+  - title: Sensitivity analysis
+    #desc:
+    contents:
+      - starts_with("sensitivity")
+
+  - title: Project workflow
+    contents:
+      - contains("Configuration")
+      - contains("Scenario")
 
   - title: Helper functions for data import, wrangling, and export
     #desc:
@@ -34,6 +51,8 @@ reference:
       - sampleRandomValue
       - applyIndividualParameters
       - Distributions
+      - LLOQMode
+      - loadObservedData
 
   - title: Helper functions for plotting
     #desc:
@@ -64,7 +83,6 @@ reference:
       - matches("^enum")
       - matches("^get")
       - executeInParallel
-      - OR
       - pathFromClipboard
       - removeFromList
       - sourceAll

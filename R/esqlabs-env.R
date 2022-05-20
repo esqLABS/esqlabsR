@@ -13,14 +13,11 @@ esqlabsEnv$packageName <- "esqlabsR"
 # Version of the package
 esqlabsEnv$packageVersion <- .getPackageVersion()
 
-# Default width of a plot of a single \code{PlotMapping}
+# Default width of a plot of a single `PlotMapping`
 esqlabsEnv$widthPerPlotMapping <- 8
 
-# Default height of a plot of a single \code{PlotMapping}
+# Default height of a plot of a single `PlotMapping`
 esqlabsEnv$heightPerPlotMapping <- 8
-
-# Default maximal number of cores to use for parallel executions
-esqlabsEnv$maxNumberOfCores <- parallel::detectCores() - 1
 
 # Column names to split observed data by
 esqlabsEnv$columnsToSplitDataBy <- c("Group Id", "Gender", "Patient Id", "Dose", "Route", "Molecule", "Organ", "Compartment")
