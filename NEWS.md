@@ -20,7 +20,7 @@ NEW FUNCTIONS
 * `initializeScenario()`
 * `initializeScenario()`
 
-BREAKING CHANGES
+- Maintenance and bug fixes.
 
 - The package gains a new dependency: [`{ospsuite.utils}`](https://www.open-systems-pharmacology.org/OSPSuite.RUtils/).
 
