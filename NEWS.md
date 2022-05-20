@@ -1,24 +1,22 @@
 # esqlabsR 3.0.0
 
-
-
 NEW FUNCTIONS
 
 - To carry out and visualize sensitivity analysis:
 
-* `sensitivityCalculation()`
-* `sensitivitySpiderPlot()`
-* `sensivitityTimeProfiles()`
+  * `sensitivityCalculation()`
+  * `sensitivitySpiderPlot()`
+  * `sensitivityTimeProfiles()`
 
 - Classes and functions for standard esqLABS simulation workflow:
 
-* `ProjectConfiguration`
-* `ScenarioConfiguration`
-* `createDefaultProjectConfiguration()`
-* `readScenarioConfigurationFromExcel()`
-* `setApplications()`
-* `initializeScenario()`
-* `initializeScenario()`
+  * `ProjectConfiguration`
+  * `ScenarioConfiguration`
+  * `createDefaultProjectConfiguration()`
+  * `readScenarioConfigurationFromExcel()`
+  * `setApplications()`
+  * `initializeScenario()`
+  * `initializeScenario()`
 
 BREAKING CHANGES
 
