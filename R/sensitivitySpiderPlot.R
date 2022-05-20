@@ -122,6 +122,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       width = width,
       dpi = dpi
     )
+
+    return(invisible())
   }
 
   # print plots without producing warnings
