@@ -28,7 +28,7 @@
     
     <a class="navbar-brand me-2" href="index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,9 +45,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="articles/data-handling.html">Data handling</a>
     <a class="dropdown-item" href="articles/example-workflow.html">Exemplary workflow</a>
-    <a class="dropdown-item" href="articles/helper-methods.html">Helper methods</a>
     <a class="dropdown-item" href="articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="articles/modeling-simulation.html">Modeling and simulation workflows</a>
   </div>
 </li>
 <li class="nav-item">
@@ -88,27 +86,59 @@
 <h2 id="required-packages">Required packages<a class="anchor" aria-label="anchor" href="#required-packages"></a>
 </h2>
 <ul>
-<li>rClr &gt;0.9.1
+<li>rClr &gt;0.9.2
 <ul>
 <li>
 <a href="https://github.com/Open-Systems-Pharmacology/rClr/releases/" class="external-link uri">https://github.com/Open-Systems-Pharmacology/rClr/releases/</a> or esqLABS internal</li>
 </ul>
 </li>
-<li>ospsuite-r &gt; 10.0
+<li>ospsuite.utils
+<ul>
+<li>
+<a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils" class="external-link uri">https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils</a> or esqLABS internal</li>
+</ul>
+</li>
+<li>tlf
+<ul>
+<li>
+<a href="https://github.com/Open-Systems-Pharmacology/TLF-Library" class="external-link uri">https://github.com/Open-Systems-Pharmacology/TLF-Library</a> or esqLABS internal</li>
+</ul>
+</li>
+<li>ospsuite-r &gt; 11.0
 <ul>
 <li>
 <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link uri">https://github.com/Open-Systems-Pharmacology/OSPSuite-R</a> or esqLABS internal</li>
 </ul>
 </li>
-<li>R6 (CRAN)</li>
-<li>readr (CRAN)</li>
-<li>readxl (CRAN)</li>
-<li>writexl (CRAN)</li>
-<li>hash (CRAN)</li>
-<li>shiny (CRAN)</li>
-<li>shinyjs (CRAN)</li>
-<li>vctrs (CRAN)</li>
 </ul>
+<div class="section level3">
+<h3 id="for-projects-created-for-v3">For projects created for v3<a class="anchor" aria-label="anchor" href="#for-projects-created-for-v3"></a>
+</h3>
+<p>To run code written for version 3 of <code>esqlabsR</code> package, additionally install the <a href="https://github.com/esqLABS/esqlabsRLegacy" class="external-link">esqlabsRLegacy</a> package.</p>
+</div>
+<div class="section level3">
+<h3 id="from-cran">From CRAN:<a class="anchor" aria-label="anchor" href="#from-cran"></a>
+</h3>
+<ul>
+<li>jsonlite</li>
+<li>patchwork</li>
+<li>purrr</li>
+<li>R6</li>
+<li>readr</li>
+<li>stringr</li>
+<li>tidyr</li>
+<li>colorspace</li>
+<li>dplyr</li>
+<li>ggplot2</li>
+<li>hash</li>
+<li>readxl</li>
+<li>shiny</li>
+<li>shinyjs</li>
+<li>tools</li>
+<li>vctrs</li>
+<li>writexl</li>
+</ul>
+</div>
 <div class="section level3">
 <h3 id="for-building-from-source-and-developing">For building from source and developing<a class="anchor" aria-label="anchor" href="#for-building-from-source-and-developing"></a>
 </h3>
@@ -118,12 +148,13 @@
 <li>After installation, add the folder to your $PATH: In start menu, type in “PATH”, select “Change path environment for user”, and add the path to Rtools folder.</li>
 </ul>
 </li>
-<li>roxygen2 (CRAN)</li>
-<li>devtools (CRAN)</li>
-<li>rmarkdown (CRAN)</li>
-<li>testthat (CRAN)</li>
-<li>knitr (CRAN)</li>
-<li>styler (CRAN)</li>
+<li>roxygen2</li>
+<li>devtools</li>
+<li>rmarkdown</li>
+<li>testthat</li>
+<li>knitr</li>
+<li>styler</li>
+<li>vdiffr</li>
 </ul>
 </div>
 </div>

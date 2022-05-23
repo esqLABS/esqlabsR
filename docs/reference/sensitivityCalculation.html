@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,9 +26,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
     <a class="dropdown-item" href="../articles/example-workflow.html">Exemplary workflow</a>
-    <a class="dropdown-item" href="../articles/helper-methods.html">Helper methods</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/modeling-simulation.html">Modeling and simulation workflows</a>
   </div>
 </li>
 <li class="nav-item">
@@ -272,7 +270,7 @@ spreadsheet.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`6`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Number of individuals: 0 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $simulationResults$`Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose`$`7`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> SimulationResults: </span>
@@ -379,44 +377,21 @@ spreadsheet.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [3] "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $pkData</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 171 x 9</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    OutputPath                                                               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    ParameterPath           ParameterFactor ParameterValue PKParameter</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Aciclovir|Lipophilicity             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Aciclovir|Lipophilicity             0.2        -<span style="color: #BB0000;">0.019</span><span style="color: #BB0000; text-decoration: underline;">4</span> AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Aciclovir|Lipophilicity             0.3        -<span style="color: #BB0000;">0.029</span><span style="color: #BB0000; text-decoration: underline;">1</span> AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Aciclovir|Lipophilicity             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Aciclovir|Lipophilicity             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Aciclovir|Lipophilicity             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Aciclovir|Lipophilicity             0.7        -<span style="color: #BB0000;">0.067</span><span style="color: #BB0000; text-decoration: underline;">9</span> AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Aciclovir|Lipophilicity             0.8        -<span style="color: #BB0000;">0.077</span><span style="color: #BB0000; text-decoration: underline;">6</span> AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Aciclovir|Lipophilicity             0.9        -<span style="color: #BB0000;">0.087</span><span style="color: #BB0000; text-decoration: underline;">3</span> AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Aciclovir|Lipophilicity             1          -<span style="color: #BB0000;">0.097</span>  AUC_inf    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    PKParameterValue Unit       PercentChangePK SensitivityPKParameter</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span>            <span style="text-decoration: underline;">4</span>055. µmol*min/l        -<span style="color: #BB0000;">0.441</span><span style="color: #BB0000; text-decoration: underline;">5</span>               0.000<span style="text-decoration: underline;">492</span>7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span>            <span style="text-decoration: underline;">4</span>057. µmol*min/l        -<span style="color: #BB0000;">0.390</span><span style="color: #BB0000; text-decoration: underline;">0</span>               0.000<span style="text-decoration: underline;">978</span>9</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span>            <span style="text-decoration: underline;">4</span>059. µmol*min/l        -<span style="color: #BB0000;">0.339</span><span style="color: #BB0000; text-decoration: underline;">2</span>               0.001<span style="text-decoration: underline;">459</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span>            <span style="text-decoration: underline;">4</span>061. µmol*min/l        -<span style="color: #BB0000;">0.289</span><span style="color: #BB0000; text-decoration: underline;">0</span>               0.001<span style="text-decoration: underline;">932</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span>            <span style="text-decoration: underline;">4</span>063. µmol*min/l        -<span style="color: #BB0000;">0.239</span><span style="color: #BB0000; text-decoration: underline;">4</span>               0.002<span style="text-decoration: underline;">399</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span>            <span style="text-decoration: underline;">4</span>065. µmol*min/l        -<span style="color: #BB0000;">0.190</span><span style="color: #BB0000; text-decoration: underline;">4</span>               0.002<span style="text-decoration: underline;">862</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span>            <span style="text-decoration: underline;">4</span>067. µmol*min/l        -<span style="color: #BB0000;">0.142</span><span style="color: #BB0000; text-decoration: underline;">0</span>               0.003<span style="text-decoration: underline;">319</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span>            <span style="text-decoration: underline;">4</span>069. µmol*min/l        -<span style="color: #BB0000;">0.093</span><span style="color: #BB0000; text-decoration: underline;">75</span>              0.003<span style="text-decoration: underline;">753</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span>            <span style="text-decoration: underline;">4</span>071. µmol*min/l        -<span style="color: #BB0000;">0.046</span><span style="color: #BB0000; text-decoration: underline;">60</span>              0.004<span style="text-decoration: underline;">196</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span>            <span style="text-decoration: underline;">4</span>073. µmol*min/l         0                  <span style="color: #BB0000;">NaN</span>        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ... with 161 more rows</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 168 x 9</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    OutputPath           ParameterPath ParameterFactor ParameterValue PKParameter</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Organism|Peripheral~ Aciclovir|Li~             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Organism|Peripheral~ Aciclovir|Li~             0.2        -<span style="color: #BB0000;">0.019</span><span style="color: #BB0000; text-decoration: underline;">4</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Organism|Peripheral~ Aciclovir|Li~             0.3        -<span style="color: #BB0000;">0.029</span><span style="color: #BB0000; text-decoration: underline;">1</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Organism|Peripheral~ Aciclovir|Li~             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Organism|Peripheral~ Aciclovir|Li~             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Organism|Peripheral~ Aciclovir|Li~             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Organism|Peripheral~ Aciclovir|Li~             0.7        -<span style="color: #BB0000;">0.067</span><span style="color: #BB0000; text-decoration: underline;">9</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Organism|Peripheral~ Aciclovir|Li~             0.8        -<span style="color: #BB0000;">0.077</span><span style="color: #BB0000; text-decoration: underline;">6</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Organism|Peripheral~ Aciclovir|Li~             0.9        -<span style="color: #BB0000;">0.087</span><span style="color: #BB0000; text-decoration: underline;">3</span> AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Organism|Peripheral~ Aciclovir|Li~             1          -<span style="color: #BB0000;">0.097</span>  AUC_inf    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ... with 158 more rows, and 4 more variables: PKParameterValue &lt;dbl&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   Unit &lt;chr&gt;, PercentChangePK &lt;dbl&gt;, SensitivityPKParameter &lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "SensitivityCalculation" "list"                  </span>

@@ -16,9 +16,6 @@ reference:
     desc:  Important objects for modeling and simulation and plotting workflows.
     contents:
       - matches("^Data")
-      - XYData
-      - Plotable
-      - PlotConfiguration
 
   - title: Sensitivity analysis
     #desc:

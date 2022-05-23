@@ -4,9 +4,10 @@ BREAKING CHANGES
 
 - Function `loadObservedData()` requires a `ProjectConfiguration` instead of a 
 `ScenarioConfiguration`.
+
 - `DataMapping`, `DataMappingConfiguration`, `XYData`, `DataConfiguration` and 
 associated functions for creating standard figures are moved to `esqlabsRLegacy` 
-package.
+[package](https://esqlabs.github.io/esqlabsRLegacy/).
 
 # esqlabsR 3.0.0
 

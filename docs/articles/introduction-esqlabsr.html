@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,9 +43,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
     <a class="dropdown-item" href="../articles/example-workflow.html">Exemplary workflow</a>
-    <a class="dropdown-item" href="../articles/helper-methods.html">Helper methods</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/modeling-simulation.html">Modeling and simulation workflows</a>
   </div>
 </li>
 <li class="nav-item">
@@ -105,13 +103,11 @@ can be exported to the *.pkml file. The examples shown in this
 documentation are based on the Aciclovir example model, until stated
 otherwise. The model can be found in the PK-Sim examples folder of the
 OSPS installation. Alternatively, you can also download it from <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml" class="external-link">here</a>.</p>
-<p>The documentation is divided into three parts covering the following
+<p>The documentation is divided into two parts covering the following
 aspects:</p>
 <ul>
-<li><a href="modeling-simulation.html">Facilitating M&amp;S</a></li>
 <li><a href="data-handling.html">Data handling</a></li>
-<li><a href="figure-creation.html">Figure creation</a></li>
-<li><a href="helper-methods.html">Helper methods</a></li>
+<li><a href="example-workflow.html">Standard workflow</a></li>
 </ul>
 </div>
 <div class="section level2">
@@ -138,39 +134,6 @@ accessible by the <code>$</code> sign:</p>
 <span class="va">resultOfAFunction</span> <span class="op">&lt;-</span> <span class="va">object1</span><span class="op">$</span><span class="fu">multiply</span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span></code></pre></div>
 <p>Important information about the object can be printed out by calling
 <code>print(object)</code>.</p>
-<dl>
-<dt>The most important classes are:</dt>
-<dd>
-<dl>
-<dt><code>DataMapping</code></dt>
-<dd>
-Organizes objects of type <code>XYData</code>, describing their
-groupings and used for creating figures. See <a href="figure-creation.html">Creating figures</a> for more information.
-</dd>
-</dl>
-</dd>
-<dd>
-<code>Plotable</code>
-</dd>
-<dd>
-<dl>
-<dt>
-<code>XYData</code>, inherits <code>Plotable</code>
-</dt>
-<dd>
-Organizes any kind of x-y-values data. See <a href="data-handling.html">Data handling</a> for more information.
-</dd>
-</dl>
-</dd>
-<dd>
-<dl>
-<dt><code>DataConfiguration</code></dt>
-<dd>
-Structure containing information for observed data import. See <a href="data-handling.html">Data handling</a> for more information.
-</dd>
-</dl>
-</dd>
-</dl>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

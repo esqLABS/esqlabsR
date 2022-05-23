@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,9 +26,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
     <a class="dropdown-item" href="../articles/example-workflow.html">Exemplary workflow</a>
-    <a class="dropdown-item" href="../articles/helper-methods.html">Helper methods</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/modeling-simulation.html">Modeling and simulation workflows</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -55,14 +53,28 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="4.0.0" id="esqlabsr-400">esqlabsR 4.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-400"></a></h2>
+<p>BREAKING CHANGES</p>
+<ul><li><p>Function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> requires a <code>ProjectConfiguration</code> instead of a <code>ScenarioConfiguration</code>.</p></li>
+<li><p><code>DataMapping</code>, <code>DataMappingConfiguration</code>, <code>XYData</code>, <code>DataConfiguration</code> and associated functions for creating standard figures are moved to <code>esqlabsRLegacy</code> <a href="https://esqlabs.github.io/esqlabsRLegacy/">package</a>.</p></li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="3.0.0" id="esqlabsr-300">esqlabsR 3.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-300"></a></h2>
 <p>NEW FUNCTIONS</p>
 <ul><li><p>To carry out and visualize sensitivity analysis:</p></li>
 <li><p><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code></p></li>
 <li><p><code><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot()</a></code></p></li>
-<li><p><code>sensivitityTimeProfiles()</code></p></li>
-</ul><p>BREAKING CHANGES</p>
-<ul><li>The package gains a new dependency: <a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/" class="external-link"><code>{ospsuite.utils}</code></a>.</li>
+<li><p><code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code></p></li>
+<li><p>Classes and functions for standard esqLABS simulation workflow:</p></li>
+<li><p><code>ProjectConfiguration</code></p></li>
+<li><p><code>ScenarioConfiguration</code></p></li>
+<li><p><code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code></p></li>
+<li><p><code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code></p></li>
+<li><p><code><a href="../reference/setApplications.html">setApplications()</a></code></p></li>
+<li><p><code><a href="../reference/initializeScenario.html">initializeScenario()</a></code></p></li>
+<li><p><code><a href="../reference/initializeScenario.html">initializeScenario()</a></code></p></li>
+<li><p>Maintenance and bug fixes.</p></li>
+<li><p>The package gains a new dependency: <a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/" class="external-link"><code>{ospsuite.utils}</code></a>.</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.0" id="esqlabsr-200">esqlabsR 2.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-200"></a></h2>

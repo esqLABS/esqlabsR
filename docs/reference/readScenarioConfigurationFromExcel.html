@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,9 +26,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
     <a class="dropdown-item" href="../articles/example-workflow.html">Exemplary workflow</a>
-    <a class="dropdown-item" href="../articles/helper-methods.html">Helper methods</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/modeling-simulation.html">Modeling and simulation workflows</a>
   </div>
 </li>
 <li class="nav-item">
@@ -85,7 +83,7 @@ information.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="co"># \dontrun{</span></span>
 <span class="r-in"><span class="co"># Create default ProjectConfiguration</span></span>
 <span class="r-in"><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> `path` does not exist: ‘ProjectConfiguration.xlsx’</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> `path` does not exist: 'ProjectConfiguration.xlsx'</span>
 <span class="r-in"><span class="co"># Create ScenarioConfiguration from ProjectConfiguration</span></span>
 <span class="r-in"><span class="va">scenarioConfiguration</span> <span class="op">&lt;-</span> <span class="va"><a href="ScenarioConfiguration.html">ScenarioConfiguration</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in initialize(...):</span> object 'projectConfiguration' not found</span>

@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">3.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,9 +26,7 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
     <a class="dropdown-item" href="../articles/example-workflow.html">Exemplary workflow</a>
-    <a class="dropdown-item" href="../articles/helper-methods.html">Helper methods</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/modeling-simulation.html">Modeling and simulation workflows</a>
   </div>
 </li>
 <li class="nav-item">
@@ -64,37 +62,8 @@
       
       
 
-      <dl><dt>
-          
-          <code><a href="DataConfiguration.html">DataConfiguration</a></code> 
-        </dt>
-        <dd>DataConfiguration</dd>
-      </dl><dl><dt>
-          
-          <code><a href="DataMapping.html">DataMapping</a></code> 
-        </dt>
-        <dd>DataMapping</dd>
-      </dl><dl><dt>
-          
-          <code><a href="DataMappingConfiguration.html">DataMappingConfiguration</a></code> 
-        </dt>
-        <dd>DataMappingConfiguration</dd>
-      </dl><dl><dt>
-          
-          <code><a href="XYData.html">XYData</a></code> 
-        </dt>
-        <dd>XYData</dd>
-      </dl><dl><dt>
-          
-          <code><a href="Plotable.html">Plotable</a></code> 
-        </dt>
-        <dd>Plotable</dd>
-      </dl><dl><dt>
-          
-          <code><a href="PlotConfiguration.html">PlotConfiguration</a></code> 
-        </dt>
-        <dd>PlotConfiguration</dd>
-      </dl></div><div class="section level2">
+      
+    </div><div class="section level2">
       <h2 id="sensitivity-analysis">Sensitivity analysis<a class="anchor" aria-label="anchor" href="#sensitivity-analysis"></a></h2>
       
       
@@ -136,21 +105,6 @@
           <code><a href="createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code> 
         </dt>
         <dd>Create a default <code>ProjectConfiguration</code></dd>
-      </dl><dl><dt>
-          
-          <code><a href="DataConfiguration.html">DataConfiguration</a></code> 
-        </dt>
-        <dd>DataConfiguration</dd>
-      </dl><dl><dt>
-          
-          <code><a href="DataMappingConfiguration.html">DataMappingConfiguration</a></code> 
-        </dt>
-        <dd>DataMappingConfiguration</dd>
-      </dl><dl><dt>
-          
-          <code><a href="PlotConfiguration.html">PlotConfiguration</a></code> 
-        </dt>
-        <dd>PlotConfiguration</dd>
       </dl><dl><dt>
           
           <code><a href="ProjectConfiguration.html">ProjectConfiguration</a></code> 
@@ -197,11 +151,6 @@
           <code><a href="readIndividualCharacteristicsFromXLS.html">readIndividualCharacteristicsFromXLS()</a></code> 
         </dt>
         <dd>Read individual characteristics from file</dd>
-      </dl><dl><dt>
-          
-          <code><a href="readOSPSTimeValues.html">readOSPSTimeValues()</a></code> 
-        </dt>
-        <dd>Read time-values data from excel file</dd>
       </dl><dl><dt>
           
           <code><a href="readParametersFromXLS.html">readParametersFromXLS()</a></code> 
@@ -283,11 +232,6 @@ Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
         <dd>Calculate mean and standard deviation for the yValues of the given <code>DataSet</code> objects</dd>
       </dl><dl><dt>
           
-          <code><a href="calculateRMSE.html">calculateRMSE()</a></code> 
-        </dt>
-        <dd>Calculate the root mean square error for groupings in <code>dataMapping</code>s</dd>
-      </dl><dl><dt>
-          
           <code><a href="initializeSimulation.html">initializeSimulation()</a></code> 
         </dt>
         <dd>Load a simulation and apply a set of parameters.</dd>
@@ -312,16 +256,6 @@ saturable function value.</dd>
           <code><a href="startFunctionVisualizer.html">startFunctionVisualizer()</a></code> 
         </dt>
         <dd>Start function visualizer</dd>
-      </dl><dl><dt>
-          
-          <code><a href="getQuantilesYData.html">getQuantilesYData()</a></code> 
-        </dt>
-        <dd>Calculate quantiles for given xy-vectors</dd>
-      </dl><dl><dt>
-          
-          <code><a href="plotPopulationQuantiles.html">plotPopulationQuantiles()</a></code> 
-        </dt>
-        <dd>Plot individual time-values profile</dd>
       </dl><dl><dt>
           
           <code><a href="geomean.html">geomean()</a></code> 
@@ -372,36 +306,6 @@ For other species, all parameters returned by <code>createIndividual</code> are 
 
       <dl><dt>
           
-          <code><a href="plotBoxPlot.html">plotBoxPlot()</a></code> 
-        </dt>
-        <dd>Create a box-plot of data</dd>
-      </dl><dl><dt>
-          
-          <code><a href="plotIndividualProfile.html">plotIndividualProfile()</a></code> 
-        </dt>
-        <dd>Plot individual time-values profile</dd>
-      </dl><dl><dt>
-          
-          <code><a href="plotMultiPanel.html">plotMultiPanel()</a></code> 
-        </dt>
-        <dd>Plot multiple <code>PlotMapping</code> in one plot.</dd>
-      </dl><dl><dt>
-          
-          <code><a href="plotPopulationQuantiles.html">plotPopulationQuantiles()</a></code> 
-        </dt>
-        <dd>Plot individual time-values profile</dd>
-      </dl><dl><dt>
-          
-          <code><a href="plotPredictedVsObserved.html">plotPredictedVsObserved()</a></code> 
-        </dt>
-        <dd>Plot a predicted-versus-observed goodness of fit plot</dd>
-      </dl><dl><dt>
-          
-          <code><a href="plotXYDataAggregated.html">plotXYDataAggregated()</a></code> 
-        </dt>
-        <dd>Plot XYData quantiles</dd>
-      </dl><dl><dt>
-          
           <code><a href="col2hsv.html">col2hsv()</a></code> 
         </dt>
         <dd>Returns the HSV values for a given R color name</dd>
@@ -414,7 +318,7 @@ For other species, all parameters returned by <code>createIndividual</code> are 
           
           <code><a href="GraphicsDevices.html">GraphicsDevices</a></code> 
         </dt>
-        <dd>Possible entries for the <code>outputDevice</code> field of a <code>PlotConfiguration</code> object</dd>
+        <dd>Possible entries for the <code>outputDevice</code> field of a <code>ProjectConfiguration</code> object</dd>
       </dl></div><div class="section level2">
       <h2 id="input-validation">Input validation<a class="anchor" aria-label="anchor" href="#input-validation"></a></h2>
       
@@ -427,22 +331,6 @@ For other species, all parameters returned by <code>createIndividual</code> are 
       
 
       <dl><dt>
-          
-          <code><a href="validateFileExists.html">validateFileExists()</a></code> 
-        </dt>
-        <dd>Check if the file exists. If not, stop with an error.</dd>
-      </dl><dl><dt>
-          
-          <code><a href="validateLength.html">validateLength()</a></code> 
-        </dt>
-        <dd>Check if the provided object is of a certain length. If not, stop with an
-error.</dd>
-      </dl><dl><dt>
-          
-          <code><a href="isCharInString.html">isCharInString()</a></code> 
-        </dt>
-        <dd>Is a character part of string?</dd>
-      </dl><dl><dt>
           
           <code><a href="isParametersEqual.html">isParametersEqual()</a></code> 
         </dt>
@@ -462,16 +350,6 @@ error.</dd>
           <code><a href="GenderInt.html">GenderInt</a></code> 
         </dt>
         <dd>Possible gender entries as integer values</dd>
-      </dl><dl><dt>
-          
-          <code><a href="PlotTypes.html">PlotTypes</a></code> 
-        </dt>
-        <dd>Possible entries for the <code>plotType</code> field of a <code>DataMapping</code> object</dd>
-      </dl><dl><dt>
-          
-          <code><a href="XYDataTypes.html">XYDataTypes</a></code> 
-        </dt>
-        <dd>Possible entries for the <code>dataType</code> field of a <code>XYData</code> object</dd>
       </dl><dl><dt>
           
           <code><a href="escapeForRegex.html">escapeForRegex()</a></code> 
@@ -529,11 +407,6 @@ error.</dd>
           <code><a href="getNetHashCode.html">getNetHashCode()</a></code> 
         </dt>
         <dd>Get hash code of the .NET object</dd>
-      </dl><dl><dt>
-          
-          <code><a href="getQuantilesYData.html">getQuantilesYData()</a></code> 
-        </dt>
-        <dd>Calculate quantiles for given xy-vectors</dd>
       </dl><dl><dt>
           
           <code><a href="getSteadyState.html">getSteadyState()</a></code> 
