@@ -7,8 +7,6 @@ BREAKING CHANGES
 
 # esqlabsR 3.0.0
 
-
-
 NEW FUNCTIONS
 
 - To carry out and visualize sensitivity analysis:
