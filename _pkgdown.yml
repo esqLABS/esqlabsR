@@ -42,7 +42,7 @@ reference:
       - matches("^compare")
       - matches("^calculate")
       - contains("Simulation")
-      - contains("Function")
+      - ends_with("Function")
       - contains("Quantiles")
       - matches("^geo")
       - sampleRandomValue
