@@ -1,3 +1,10 @@
+# esqlabsR 4.0.0
+
+BREAKING CHANGES
+
+- Function `loadObservedData()` requires a `ProjectConfiguration` instead of a 
+`ScenarioConfiguration`.
+
 # esqlabsR 3.0.0
 
 

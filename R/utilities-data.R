@@ -292,12 +292,12 @@ LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 #' Load data from excel
 #'
 #' @description Loads data sets from excel. The excel file containing the data
-#' must be located in the folder `scenarioConfiguration$projectConfiguration$dataFolder`
-#' and be named `scenarioConfiguration$projectConfiguration$dataFile`.
+#' must be located in the folder `projectConfiguration$dataFolder`
+#' and be named `projectConfiguration$dataFile`.
 #' Importer configuration file must be located in the same folder and named
-#' `scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile`.
+#' `projectConfiguration$dataImporterConfigurationFile`.
 #'
-#' @param scenarioConfiguration Object of class `ScenarioConfiguration` containing
+#' @param projectConfiguration Object of class `ProjectConfiguration` containing
 #' the necessary information.
 #' @param sheets String or a list of strings defining which sheets to load.
 #' If `NULL` (default), all sheets within the file are loaded.
@@ -308,16 +308,15 @@ LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 #'
 #' @examples
 #' \dontrun{
-#' # Create default project and scenario configurations
+#' # Create default project configuration
 #' projectConfiguration <- createDefaultProjectConfiguration()
-#' scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-#' dataSets <- loadObservedData(scenarioConfiguration)
+#' dataSets <- loadObservedData(projectConfiguration)
 #' }
-loadObservedData <- function(scenarioConfiguration, sheets = NULL) {
+loadObservedData <- function(projectConfiguration, sheets = NULL) {
   importerConfiguration <- ospsuite::loadDataImporterConfiguration(
     configurationFilePath = file.path(
-      scenarioConfiguration$projectConfiguration$dataFolder,
-      scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile
+      projectConfiguration$dataFolder,
+      projectConfiguration$dataImporterConfigurationFile
     )
   )
   validateIsString(sheets, nullAllowed = TRUE)
@@ -331,8 +330,8 @@ loadObservedData <- function(scenarioConfiguration, sheets = NULL) {
 
   dataSets <- ospsuite::loadDataSetsFromExcel(
     xlsFilePath = file.path(
-      scenarioConfiguration$projectConfiguration$dataFolder,
-      scenarioConfiguration$projectConfiguration$dataFile
+      projectConfiguration$dataFolder,
+      projectConfiguration$dataFile
     ),
     importerConfigurationOrPath = importerConfiguration,
     importAllSheets = importAllSheets
