@@ -1,24 +1,32 @@
+# esqlabsR 4.0.0
+
+BREAKING CHANGES
+
+- Function `loadObservedData()` requires a `ProjectConfiguration` instead of a 
+`ScenarioConfiguration`.
+- `DataMapping`, `DataMappingConfiguration`, `XYData`, `DataConfiguration` and 
+associated functions for creating standard figures are moved to `esqlabsRLegacy` 
+package.
+
 # esqlabsR 3.0.0
-
-
 
 NEW FUNCTIONS
 
 - To carry out and visualize sensitivity analysis:
 
-* `sensitivityCalculation()`
-* `sensitivitySpiderPlot()`
-* `sensivitityTimeProfiles()`
+ * `sensitivityCalculation()`
+ * `sensitivitySpiderPlot()`
+ * `sensitivityTimeProfiles()`
 
 - Classes and functions for standard esqLABS simulation workflow:
 
-* `ProjectConfiguration`
-* `ScenarioConfiguration`
-* `createDefaultProjectConfiguration()`
-* `readScenarioConfigurationFromExcel()`
-* `setApplications()`
-* `initializeScenario()`
-* `initializeScenario()`
+ * `ProjectConfiguration`
+ * `ScenarioConfiguration`
+ * `createDefaultProjectConfiguration()`
+ * `readScenarioConfigurationFromExcel()`
+ * `setApplications()`
+ * `initializeScenario()`
+ * `initializeScenario()`
 
 - Maintenance and bug fixes.
 

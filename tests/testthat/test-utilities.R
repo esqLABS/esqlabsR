@@ -135,13 +135,6 @@ test_that("It finds a 0 with relative threshold", {
   expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 10), 2)
 })
 
-
-test_that("It finds a character in a string vector", {
-  expect_true(isCharInString("a", c("bsdalk", "g")))
-  expect_false(isCharInString("a", "g"))
-})
-
-
 test_that("Escape a string for possible regular expression match", {
   expect_equal(escapeForRegex("C:/Downloads"), "\\QC:/Downloads\\E")
 })

@@ -26,12 +26,10 @@ This package builds up on the functionality of the `{ospsuite}` package. It is s
 
 In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the PK-Sim examples folder of the OSPS installation. Alternatively, you can also download it from [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml).
 
-The documentation is divided into three parts covering the following aspects:
+The documentation is divided into two parts covering the following aspects:
 
-* [Facilitating M&S](modeling-simulation.html)
 * [Data handling](data-handling.html)
-* [Figure creation](figure-creation.html)
-* [Helper methods](helper-methods.html)
+* [Standard workflow](example-workflow.html)
 
 ## Object-oriented approach
 
@@ -49,14 +47,3 @@ resultOfAFunction <- object1$multiply(1,2)
 ```
 
 Important information about the object can be printed out by calling `print(object)`.
-
-The most important classes are:
-
-  : `DataMapping`
-    : Organizes objects of type `XYData`, describing their groupings and used for creating figures. See [Creating figures](figure-creation.html) for more information.
-  : `Plotable`
-  : `XYData`, inherits `Plotable`
-    : Organizes any kind of x-y-values data. See [Data handling](data-handling.html) for more information.
-
-  : `DataConfiguration`
-    : Structure containing information for observed data import. See [Data handling](data-handling.html) for more information.

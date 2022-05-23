@@ -19,16 +19,6 @@ esqlabsEnv$widthPerPlotMapping <- 8
 # Default height of a plot of a single `PlotMapping`
 esqlabsEnv$heightPerPlotMapping <- 8
 
-# Column names to split observed data by
-esqlabsEnv$columnsToSplitDataBy <- c("Group Id", "Gender", "Patient Id", "Dose", "Route", "Molecule", "Organ", "Compartment")
-
-# Column index for x values in observed data files
-esqlabsEnv$XValuesColumn <- 10
-# Column index for y values in observed data files
-esqlabsEnv$YValuesColumn <- 11
-# Column index for y error values in observed data files
-esqlabsEnv$YErrorColumn <- 12
-
 #' Get the value of a global esqlabsR setting.
 #'
 #' @param settingName String name of the setting
@@ -39,7 +29,7 @@ esqlabsEnv$YErrorColumn <- 12
 #'
 #' @examples
 #' getEsqlabsRSetting("packageVersion")
-#' getEsqlabsRSetting("widthPerPlotMapping")
+#' getEsqlabsRSetting("packageName")
 getEsqlabsRSetting <- function(settingName) {
   if (!(any(names(esqlabsEnv) == settingName))) {
     stop(messages$errorEsqlabsRSettingNotFound(settingName))

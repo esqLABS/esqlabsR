@@ -51,6 +51,11 @@ about all compounds in the model. Must be located in the "dataFolder"}
 
 \item{\code{outputFolder}}{Path to the folder where the results should be
 saved to; relative to the "Code" folder}
+
+\item{\code{outputDevice}}{Output target of the plot. If \code{NULL} (default), the
+figure is created in the default "plot" output. Other values indicate
+output into a file. A list of supported outputs is provided in
+\code{GraphicsDevices}-enum.}
 }
 \if{html}{\out{</div>}}
 }

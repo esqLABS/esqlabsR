@@ -47,6 +47,11 @@ ProjectConfiguration <- R6::R6Class(
     #' @field outputFolder Path to the folder where the results should be
     #' saved to; relative to the "Code" folder
     outputFolder = NULL,
+    #' @field outputDevice Output target of the plot. If `NULL` (default), the
+    #' figure is created in the default "plot" output. Other values indicate
+    #' output into a file. A list of supported outputs is provided in
+    #' `GraphicsDevices`-enum.
+    outputDevice = NULL,
 
     #' @description
     #' Print the object to the console
@@ -65,6 +70,7 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Experimental data file", self$dataFile)
       private$printLine("Data importer configuration", self$dataImporterConfigurationFile)
       private$printLine("Output folder", self$outputFolder)
+      private$printLine("Output device", self$outputDevice)
       invisible(self)
     }
   )
