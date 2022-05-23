@@ -19,6 +19,10 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-This package offers a workflow for creating standardized figures for time-values data, such as time-concentration profiles, goodness-of-fit plots, etc. The integral part of these workflows are the objects of the class `DataMapping`. A `DataMapping` organizes the objects of the class `XYData` (see [Data handling](data-handling.html) for more information) into groups and maps simulation results to observed data.
-
-## `DataMapping` overview
+- ProjectConfiguration
+- ScenarioConfiguration
+- createDefaultProjectConfiguration
+- readScenarioConfigurationFromExcel
+- setApplications
+- initializeScenario
+- runScenarios
