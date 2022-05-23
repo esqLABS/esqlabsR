@@ -16,29 +16,49 @@ The latest version of the package comes as a binary `*.zip` and can be downloade
 
 ## Required packages
 
-- rClr >0.9.1
+- rClr >0.9.2
   - https://github.com/Open-Systems-Pharmacology/rClr/releases/ or esqLABS internal
-- ospsuite-r > 10.0
+- ospsuite.utils
+  - https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils or esqLABS internal
+- tlf
+  - https://github.com/Open-Systems-Pharmacology/TLF-Library or esqLABS internal
+- ospsuite-r > 11.0
   - https://github.com/Open-Systems-Pharmacology/OSPSuite-R or esqLABS internal
-- R6 (CRAN)
-- readr (CRAN)
-- readxl (CRAN)
-- writexl (CRAN)
-- hash (CRAN)
-- shiny (CRAN)
-- shinyjs (CRAN)
-- vctrs (CRAN)
+  
+### For projects created for v3
+To run code written for version 3 of `esqlabsR` package, additionally install the
+[esqlabsRLegacy](https://github.com/esqLABS/esqlabsRLegacy) package.
+
+### From CRAN:
+- jsonlite
+- patchwork
+- purrr
+- R6
+- readr
+- stringr
+- tidyr
+- colorspace
+- dplyr
+- ggplot2
+- hash
+- readxl
+- shiny
+- shinyjs
+- tools
+- vctrs
+- writexl
 
 ### For building from source and developing
 
 - Rtools (https://cran.r-project.org/bin/windows/Rtools/)
   - After installation, add the folder to your $PATH: In start menu, type in "PATH", select "Change path environment for user", and add the path to Rtools folder.
-- roxygen2 (CRAN)
-- devtools (CRAN)
-- rmarkdown (CRAN)
-- testthat (CRAN)
-- knitr (CRAN)
-- styler (CRAN)
+- roxygen2
+- devtools
+- rmarkdown
+- testthat
+- knitr
+- styler
+- vdiffr
 
 ## Contributing
 

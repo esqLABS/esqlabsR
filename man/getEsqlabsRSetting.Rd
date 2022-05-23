@@ -18,5 +18,5 @@ Get the value of a global esqlabsR setting.
 }
 \examples{
 getEsqlabsRSetting("packageVersion")
-getEsqlabsRSetting("widthPerPlotMapping")
+getEsqlabsRSetting("packageName")
 }

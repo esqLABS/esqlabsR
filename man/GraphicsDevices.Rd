@@ -3,7 +3,7 @@
 \docType{data}
 \name{GraphicsDevices}
 \alias{GraphicsDevices}
-\title{Possible entries for the \code{outputDevice} field of a \code{PlotConfiguration} object}
+\title{Possible entries for the \code{outputDevice} field of a \code{ProjectConfiguration} object}
 \format{
 An object of class \code{list} of length 1.
 }
@@ -11,6 +11,6 @@ An object of class \code{list} of length 1.
 GraphicsDevices
 }
 \description{
-Possible entries for the \code{outputDevice} field of a \code{PlotConfiguration} object
+Possible entries for the \code{outputDevice} field of a \code{ProjectConfiguration} object
 }
 \keyword{datasets}
