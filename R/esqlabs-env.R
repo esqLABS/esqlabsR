@@ -21,7 +21,7 @@ esqlabsEnv$heightPerPlotMapping <- 8
 
 #' Names of the settings stored in esqlabsEnv Can be used with `getEsqlabsRSetting()`
 #' @export
-esqLabsRSettingNames <- enum(names(esqlabsEnv))
+esqlabsRSettingNames <- enum(names(esqlabsEnv))
 
 #' Get the value of a global esqlabsR setting.
 #'
