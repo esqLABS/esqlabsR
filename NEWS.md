@@ -4,7 +4,7 @@ BREAKING CHANGES
 
 - The package gains a new dependency: [`{ospsuite.parameteridentification}`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/).
 
-- Function `getSteadyState()` has been moved to package `ospsuite.parameteridentification`.
+- Function `getSteadyState()` has been moved to package `{ospsuite.parameteridentification}`.
 
 - Function `loadObservedData()` requires a `ProjectConfiguration` instead of a 
 `ScenarioConfiguration`.
