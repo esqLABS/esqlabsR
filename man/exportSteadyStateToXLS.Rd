@@ -15,23 +15,32 @@ exportSteadyStateToXLS(
 )
 }
 \arguments{
-\item{quantitiesPaths}{List of quantity paths (molecules and/or parameters) for which the steady-state is to be simulated. If \code{NULL} (default), all molecules and state variable parameters are considered. The same list is applied for all simulations.}
+\item{quantitiesPaths}{List of quantity paths (molecules and/or parameters)
+for which the steady-state will be simulated. If \code{NULL} (default), all
+molecules and state variable parameters are considered. The same list is
+applied for all simulations.}
 
 \item{resultsXLSPath}{Path to the xls-file where the results will be written
 to. If the file does not exist, a new file is created. If no path is
 provided, the file will be created in the same directory where the model
 file is located. The name of the file will be \verb{<SimulationFileName>_SS}.}
 
-\item{steadyStateTime}{Simulation time (minutes). Must be long enough for system to reach a steady-state. 1000 by default}
+\item{steadyStateTime}{Simulation time (minutes). Must be long enough for
+system to reach a steady-state. 1000 by default}
 
-\item{ignoreIfFormula}{If \code{TRUE} (default), species and parameters with initial values defined by a formula are not included.}
+\item{ignoreIfFormula}{If \code{TRUE} (default), species and parameters with
+initial values defined by a formula are not included.}
 
-\item{stopIfNotFound}{Boolean. If \code{TRUE} (default), an error is thrown when results for certain species were not generated.
-This may happen when due to numerical problems some values cannot be calculated, though the whole simulation converges. Setting this argument to \code{FALSE} allows
-to ignore such errors. Check the outputs for empty values when using this option.}
+\item{stopIfNotFound}{Boolean. If \code{TRUE} (default), an error is thrown when
+results for certain species were not generated. This may happen when due to
+numerical problems some values cannot be calculated, though the whole
+simulation converges. Setting this argument to \code{FALSE} allows to ignore
+such errors. Check the outputs for empty values when using this option.}
 
-\item{lowerThreshold}{Numerical value (in µmol). Any steady-state values below this value are considered as numerical noise and replaced by 0. If \code{lowerThreshold} is \code{NULL},
-no cut-off is applied. Default value is 1e-15.}
+\item{lowerThreshold}{Numerical value (in default unit of the output).
+Any steady-state values below this value are considered as numerical noise
+and replaced by 0. If \code{lowerThreshold} is \code{NULL}, no cut-off is applied.
+Default value is 1e-15.}
 }
 \description{
 Export steady-state to excel
