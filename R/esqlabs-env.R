@@ -19,6 +19,10 @@ esqlabsEnv$widthPerPlotMapping <- 8
 # Default height of a plot of a single `PlotMapping`
 esqlabsEnv$heightPerPlotMapping <- 8
 
+#' Names of the settings stored in esqlabsEnv Can be used with `getEsqlabsRSetting()`
+#' @export
+esqLabsRSettingNames <- enum(names(esqlabsEnv))
+
 #' Get the value of a global esqlabsR setting.
 #'
 #' @param settingName String name of the setting
@@ -31,8 +35,8 @@ esqlabsEnv$heightPerPlotMapping <- 8
 #' getEsqlabsRSetting("packageVersion")
 #' getEsqlabsRSetting("packageName")
 getEsqlabsRSetting <- function(settingName) {
-  if (!(any(names(esqlabsEnv) == settingName))) {
-    stop(messages$errorEsqlabsRSettingNotFound(settingName))
+  if (!(any(names(ospsuiteEnv) == settingName))) {
+    stop(messages$errorPackageSettingNotFound(settingName, ospsuiteEnv))
   }
 
   obj <- esqlabsEnv[[settingName]]
