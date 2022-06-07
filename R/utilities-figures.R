@@ -122,3 +122,27 @@ col2hsv <- function(color) {
 #' Possible entries for the `outputDevice` field of a `ProjectConfiguration` object
 #' @export
 GraphicsDevices <- enum(list("PNG"))
+
+
+#' Create `DefaultPlotConfiguration` object with esqLABS defaults
+#'
+#' @return A `DefaultPlotConfiguration` object
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' plotConfig <- createEsqlabsPlotConfiguration()
+#' plotIndividualTimeProfile(dataCombined, plotConfig)
+#' }
+createEsqlabsPlotConfiguration <- function() {
+  plotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
+
+  plotConfiguration$xLabelSize <- 8
+  plotConfiguration$titleSize <- 8
+  plotConfiguration$yLabelSize <- 8
+  plotConfiguration$xAxisLabelTicksSize <- 8
+  plotConfiguration$yAxisLabelTicksSize <- 8
+  plotConfiguration$legendTitleSize <- 6
+
+  return(plotConfiguration)
+}

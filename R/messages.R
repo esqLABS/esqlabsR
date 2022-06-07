@@ -13,10 +13,6 @@ messages$errorEnumPutListMultipleKeys <- function() {
   paste0("Trying to put multiple keys, but only one key is allowed!")
 }
 
-messages$errorEsqlabsRSettingNotFound <- function(settingName) {
-  paste0("No global setting with the name '", settingName, "' exists. Available global settings are:\n", paste0(names(esqlabsEnv), collapse = ", "))
-}
-
 messages$errorDistributionNotSupported <- function(string) {
   paste0("The distribution '", string, "' is not supported. Supported distributions are listed in `Distributions`.")
 }
