@@ -2,19 +2,27 @@
 % Please edit documentation in R/utilities-figures.R
 \name{createEsqlabsPlotConfiguration}
 \alias{createEsqlabsPlotConfiguration}
-\title{Create \code{DefaultPlotConfiguration} object with esqLABS defaults}
+\title{Create an instance of \code{DefaultPlotConfiguration} R6 class}
 \usage{
 createEsqlabsPlotConfiguration()
 }
 \value{
-A \code{DefaultPlotConfiguration} object
+An instance of \code{DefaultPlotConfiguration} R6 class.
 }
 \description{
-Create \code{DefaultPlotConfiguration} object with esqLABS defaults
+An instance of \code{DefaultPlotConfiguration} R6 class is needed for creating
+visualizations with the \code{{ospsuite}} package.
+
+The default attributes of the class are chosen to reflect the corporate
+standards adopted by esqLABS GmbH.
 }
 \examples{
-\dontrun{
-plotConfig <- createEsqlabsPlotConfiguration()
-plotIndividualTimeProfile(dataCombined, plotConfig)
+createEsqlabsPlotConfiguration()
+
 }
+\seealso{
+Other create-plotting-configurations: 
+\code{\link{createEsqlabsExportConfiguration}()},
+\code{\link{createEsqlabsPlotGridConfiguration}()}
 }
+\concept{create-plotting-configurations}

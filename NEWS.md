@@ -1,8 +1,19 @@
 # esqlabsR 4.0.0
 
+MAJOR CHANGES
+
+- Three new functions to create configuration objects needed for data visualization workflows:
+  
+  * `createEsqlabsPlotConfiguration()`
+  * `createEsqlabsPlotGridConfiguration()`
+  * `createEsqlabsExportConfiguration()`
+
 BREAKING CHANGES
 
-- The package gains a new dependency: [`{ospsuite.parameteridentification}`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/).
+- The package gains new dependencies:
+
+  * [`{ospsuite.parameteridentification}`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/) 
+  * [`{tlf}`](https://www.open-systems-pharmacology.org/TLF-Library/).
 
 - Function `getSteadyState()` has been moved to package `{ospsuite.parameteridentification}`.
 
