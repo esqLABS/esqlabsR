@@ -54,8 +54,22 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="4.0.0" id="esqlabsr-400">esqlabsR 4.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-400"></a></h2>
-<p>BREAKING CHANGES</p>
-<ul><li><p>Function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> requires a <code>ProjectConfiguration</code> instead of a <code>ScenarioConfiguration</code>.</p></li>
+<p>MAJOR CHANGES</p>
+<ul><li>
+<p>Three new functions to create configuration objects needed for data visualization workflows:</p>
+<ul><li><code><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration()</a></code></li>
+<li><code><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration()</a></code></li>
+<li><code><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration()</a></code></li>
+</ul></li>
+</ul><p>BREAKING CHANGES</p>
+<ul><li>
+<p>The package gains new dependencies:</p>
+<ul><li><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/" class="external-link"><code>{ospsuite.parameteridentification}</code></a></li>
+<li>
+<a href="https://www.open-systems-pharmacology.org/TLF-Library/" class="external-link"><code>{tlf}</code></a>.</li>
+</ul></li>
+<li><p>Function <code>getSteadyState()</code> has been moved to package <a href="https://github.com/open-systems-pharmacology/ospsuite.parameteridentification" class="external-link">ospsuite.parameteridentification</a>.</p></li>
+<li><p>Function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> requires a <code>ProjectConfiguration</code> instead of a <code>ScenarioConfiguration</code>.</p></li>
 <li><p><code>DataMapping</code>, <code>DataMappingConfiguration</code>, <code>XYData</code>, <code>DataConfiguration</code> and associated functions for creating standard figures are moved to <code>esqlabsRLegacy</code> <a href="https://esqlabs.github.io/esqlabsRLegacy/">package</a>.</p></li>
 </ul></div>
     <div class="section level2">

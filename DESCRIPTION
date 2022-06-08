@@ -30,6 +30,7 @@ Imports:
     shinyjs,
     tidyr,
     tools,
+    tlf (>= 1.4.0),
     vctrs,
     writexl
 Suggests: 

@@ -112,26 +112,26 @@
         <dd>ProjectConfiguration</dd>
       </dl><dl><dt>
           
-          <code><a href="readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> 
-        </dt>
-        <dd>Read scenario definition from excel file</dd>
-      </dl><dl><dt>
-          
-          <code><a href="ScenarioConfiguration.html">ScenarioConfiguration</a></code> 
-        </dt>
-        <dd>ScenarioConfiguration</dd>
-      </dl><dl><dt>
-          
           <code><a href="initializeScenario.html">initializeScenario()</a></code> 
         </dt>
         <dd>Initialize a simulation based on scenario definition</dd>
       </dl><dl><dt>
           
+          <code><a href="readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> 
+        </dt>
+        <dd>Read scenario definition from excel file</dd>
+      </dl><dl><dt>
+          
           <code><a href="runScenarios.html">runScenarios()</a></code> 
         </dt>
         <dd>Run a set of scenarios.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="ScenarioConfiguration.html">ScenarioConfiguration</a></code> 
+        </dt>
+        <dd>ScenarioConfiguration</dd>
       </dl></div><div class="section level2">
-      <h2 id="helper-functions-for-data-import-wrangling-and-export">Helper functions for data import, wrangling, and export<a class="anchor" aria-label="anchor" href="#helper-functions-for-data-import-wrangling-and-export"></a></h2>
+      <h2 id="helpers-for-data-import-wrangling-and-export">Helpers for data import, wrangling, and export<a class="anchor" aria-label="anchor" href="#helpers-for-data-import-wrangling-and-export"></a></h2>
       
       
 
@@ -205,7 +205,7 @@ Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
         </dt>
         <dd>Export steady-state to excel</dd>
       </dl></div><div class="section level2">
-      <h2 id="helper-functions-for-modeling-and-simulation">Helper functions for modeling and simulation<a class="anchor" aria-label="anchor" href="#helper-functions-for-modeling-and-simulation"></a></h2>
+      <h2 id="helpers-for-modeling-and-simulation">Helpers for modeling and simulation<a class="anchor" aria-label="anchor" href="#helpers-for-modeling-and-simulation"></a></h2>
       
       
 
@@ -289,7 +289,7 @@ For other species, all parameters returned by <code>createIndividual</code> are 
         </dt>
         <dd>Load data from excel</dd>
       </dl></div><div class="section level2">
-      <h2 id="helper-functions-for-plotting">Helper functions for plotting<a class="anchor" aria-label="anchor" href="#helper-functions-for-plotting"></a></h2>
+      <h2 id="helpers-for-plotting">Helpers for plotting<a class="anchor" aria-label="anchor" href="#helpers-for-plotting"></a></h2>
       
       
 
@@ -314,6 +314,21 @@ For other species, all parameters returned by <code>createIndividual</code> are 
           <code><a href="GraphicsDevices.html">GraphicsDevices</a></code> 
         </dt>
         <dd>Possible entries for the <code>outputDevice</code> field of a <code>ProjectConfiguration</code> object</dd>
+      </dl><dl><dt>
+          
+          <code><a href="createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration()</a></code> 
+        </dt>
+        <dd>Create an instance of <code>ExportConfiguration</code> R6 class</dd>
+      </dl><dl><dt>
+          
+          <code><a href="createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration()</a></code> 
+        </dt>
+        <dd>Create an instance of <code>DefaultPlotConfiguration</code> R6 class</dd>
+      </dl><dl><dt>
+          
+          <code><a href="createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration()</a></code> 
+        </dt>
+        <dd>Create an instance of <code>PlotGridConfiguration</code> R6 class</dd>
       </dl></div><div class="section level2">
       <h2 id="input-validation">Input validation<a class="anchor" aria-label="anchor" href="#input-validation"></a></h2>
       
@@ -404,11 +419,6 @@ For other species, all parameters returned by <code>createIndividual</code> are 
         <dd>Get hash code of the .NET object</dd>
       </dl><dl><dt>
           
-          <code><a href="getSteadyState.html">getSteadyState()</a></code> 
-        </dt>
-        <dd>Get the steady-state values of species and state variable parameters.</dd>
-      </dl><dl><dt>
-          
           <code><a href="executeInParallel.html">executeInParallel()</a></code> 
         </dt>
         <dd>Parallelize the execution of a function over a list of arguments values</dd>
@@ -427,6 +437,11 @@ For other species, all parameters returned by <code>createIndividual</code> are 
           <code><a href="sourceAll.html">sourceAll()</a></code> 
         </dt>
         <dd>Source all .R files located in a specific folder</dd>
+      </dl><dl><dt>
+          
+          <code><a href="esqlabsRSettingNames.html">esqlabsRSettingNames</a></code> 
+        </dt>
+        <dd>Names of the settings stored in esqlabsEnv Can be used with <code><a href="../reference/getEsqlabsRSetting.html">getEsqlabsRSetting()</a></code></dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>

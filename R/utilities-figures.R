@@ -124,25 +124,97 @@ col2hsv <- function(color) {
 GraphicsDevices <- enum(list("PNG"))
 
 
-#' Create `DefaultPlotConfiguration` object with esqLABS defaults
+#' @title Create an instance of `DefaultPlotConfiguration` R6 class
+#' @rdname createEsqlabsPlotConfiguration
 #'
-#' @return A `DefaultPlotConfiguration` object
-#' @export
+#' @description
+#'
+#' An instance of `DefaultPlotConfiguration` R6 class is needed for creating
+#' visualizations with the `{ospsuite}` package.
+#'
+#' The default attributes of the class are chosen to reflect the corporate
+#' standards adopted by esqLABS GmbH.
+#'
+#' @return An instance of `DefaultPlotConfiguration` R6 class.
 #'
 #' @examples
-#' \dontrun{
-#' plotConfig <- createEsqlabsPlotConfiguration()
-#' plotIndividualTimeProfile(dataCombined, plotConfig)
-#' }
+#' createEsqlabsPlotConfiguration()
+#'
+#' @family create-plotting-configurations
+#'
+#' @export
 createEsqlabsPlotConfiguration <- function() {
-  plotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
+  defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
-  plotConfiguration$xLabelSize <- 8
-  plotConfiguration$titleSize <- 8
-  plotConfiguration$yLabelSize <- 8
-  plotConfiguration$xAxisLabelTicksSize <- 8
-  plotConfiguration$yAxisLabelTicksSize <- 8
-  plotConfiguration$legendTitleSize <- 6
+  defaultPlotConfiguration$titleSize <- 8
+  defaultPlotConfiguration$xLabelSize <- 8
+  defaultPlotConfiguration$yLabelSize <- 8
+  defaultPlotConfiguration$xAxisLabelTicksSize <- 8
+  defaultPlotConfiguration$yAxisLabelTicksSize <- 8
+  defaultPlotConfiguration$legendCaptionSize <- 6
+  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTop
 
-  return(plotConfiguration)
+  return(defaultPlotConfiguration)
+}
+
+#' @title Create an instance of `PlotGridConfiguration` R6 class
+#' @rdname createEsqlabsPlotGridConfiguration
+#'
+#' @description
+#'
+#' An instance of `PlotGridConfiguration` R6 class from `{tlf}` package is
+#' needed for creating a grid of multiple visualizations created using the
+#' `{ospsuite}` package.
+#'
+#' The default attributes of the class are chosen to reflect the corporate
+#' standards adopted by esqLABS GmbH.
+#'
+#' @return An instance of `PlotGridConfiguration` R6 class.
+#'
+#' @examples
+#' createEsqlabsPlotGridConfiguration()
+#'
+#' @family create-plotting-configurations
+#'
+#' @export
+createEsqlabsPlotGridConfiguration <- function() {
+  plotGridConfiguration <- tlf::PlotGridConfiguration$new()
+
+  plotGridConfiguration$tagLevels <- "a"
+
+  return(plotGridConfiguration)
+}
+
+#' @title Create an instance of `ExportConfiguration` R6 class
+#' @rdname createEsqlabsExportConfiguration
+#'
+#' @description
+#'
+#' An instance of `ExportConfiguration` R6 class from `{tlf}` package is needed
+#' for saving the plots and plot grids created using the `{ospsuite}` package.
+#'
+#' The default attributes of the class are chosen to reflect the corporate
+#' standards adopted by esqLABS GmbH.
+#'
+#' @return An instance of `ExportConfiguration` R6 class.
+#'
+#' @examples
+#' myProjConfig <- ProjectConfiguration$new()
+#' createEsqlabsExportConfiguration(myProjConfig)
+#'
+#' @family create-plotting-configurations
+#'
+#' @export
+createEsqlabsExportConfiguration <- function(projectConfiguration) {
+  exportConfiguration <- tlf::ExportConfiguration$new()
+
+  exportConfiguration$path <- projectConfiguration$outputFolder
+  exportConfiguration$dpi <- 300
+  exportConfiguration$format <- projectConfiguration$outputDevice
+
+  exportConfiguration$width <- 18
+  exportConfiguration$height <- 18
+  exportConfiguration$units <- "cm"
+
+  return(exportConfiguration)
 }

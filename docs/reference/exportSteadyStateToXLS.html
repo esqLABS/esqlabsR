@@ -72,33 +72,44 @@
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
-    <dl><dt>simulation</dt>
-<dd><p><code>Simulation</code> object</p></dd>
-<dt>quantitiesPaths</dt>
+    <dl><dt>quantitiesPaths</dt>
 <dd><p>List of quantity paths (molecules and/or parameters)
-for which the steady-state is to be simulated. If <code>NULL</code> (default), all
-molecules and state variable parameters are considered.</p></dd>
+for which the steady-state will be simulated. If <code>NULL</code> (default), all
+molecules and state variable parameters are considered. The same list is
+applied for all simulations.</p></dd>
+
+
 <dt>resultsXLSPath</dt>
 <dd><p>Path to the xls-file where the results will be written
 to. If the file does not exist, a new file is created. If no path is
 provided, the file will be created in the same directory where the model
-file is located.</p></dd>
+file is located. The name of the file will be <code>&lt;SimulationFileName&gt;_SS</code>.</p></dd>
+
+
 <dt>steadyStateTime</dt>
 <dd><p>Simulation time (minutes). Must be long enough for
 system to reach a steady-state. 1000 by default</p></dd>
+
+
 <dt>ignoreIfFormula</dt>
 <dd><p>If <code>TRUE</code> (default), species and parameters with
 initial values defined by a formula are not included.</p></dd>
+
+
 <dt>stopIfNotFound</dt>
 <dd><p>Boolean. If <code>TRUE</code> (default), an error is thrown when
 results for certain species were not generated. This may happen when due to
 numerical problems some values cannot be calculated, though the whole
 simulation converges. Setting this argument to <code>FALSE</code> allows to ignore
 such errors. Check the outputs for empty values when using this option.</p></dd>
+
+
 <dt>lowerThreshold</dt>
-<dd><p>Numerical value (in µmol). Any steady-state values
-below this value are considered as numerical noise and replaced by 0. If
-<code>lowerThreshold</code> is <code>NULL</code>, no cut-off is applied. Default value is 1e-15.</p></dd>
+<dd><p>Numerical value (in default unit of the output).
+Any steady-state values below this value are considered as numerical noise
+and replaced by 0. If <code>lowerThreshold</code> is <code>NULL</code>, no cut-off is applied.
+Default value is 1e-15.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
