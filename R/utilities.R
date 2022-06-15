@@ -82,7 +82,7 @@ geosd <- function(x, na.rm = FALSE) {
 #' @import rClr
 #'
 #' @return Value of the .NET-method "GetHashCode"
-getNetHashCode <- function(netWrapper) {
+.getNetHashCode <- function(netWrapper) {
   validateIsOfType(netWrapper, "DotNetWrapper")
   rClr::clrGet(netWrapper$ref, "HashCode")
 }
