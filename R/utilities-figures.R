@@ -185,6 +185,9 @@ createEsqlabsPlotGridConfiguration <- function() {
   return(plotGridConfiguration)
 }
 
+#' @param projectConfiguration Object of class `ProjectConfiguration`
+#' that contains information about the output paths.
+#'
 #' @title Create an instance of `ExportConfiguration` R6 class
 #' @rdname createEsqlabsExportConfiguration
 #'

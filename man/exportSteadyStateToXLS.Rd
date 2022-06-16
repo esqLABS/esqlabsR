@@ -16,6 +16,9 @@ exportSteadyStateToXLS(
 )
 }
 \arguments{
+\item{simulation}{A \code{Simulation} object that will be updated with the steady
+state}
+
 \item{quantitiesPaths}{List of quantity paths (molecules and/or parameters)
 for which the steady-state will be simulated. If \code{NULL} (default), all
 molecules and state variable parameters are considered. The same list is

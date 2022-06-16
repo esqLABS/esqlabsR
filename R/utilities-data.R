@@ -104,7 +104,6 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   switch(lloqMode,
     # nothing to do for LLOQ/2
     "LLOQ/2" = {
-      return
     },
     # set all data points with lloq that are smaller than it to value of lloq
     "LLOQ" = df[ind, "yValues"] <- df[ind, "lloq"],
