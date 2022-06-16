@@ -16,7 +16,8 @@ exportSteadyStateToXLS <- function(simulation,
                                    steadyStateTime = 1000,
                                    ignoreIfFormula = TRUE,
                                    stopIfNotFound = TRUE,
-                                   lowerThreshold = 1e-15) {
+                                   lowerThreshold = 1e-15,
+                                   simulationRunOptions = NULL) {
   # If no explicit path to the results-file is provided, store the results file
   # in the same folder as the model file.
   if (resultsXLSPath == "") {
@@ -36,7 +37,8 @@ exportSteadyStateToXLS <- function(simulation,
     steadyStateTime = steadyStateTime,
     ignoreIfFormula = ignoreIfFormula,
     stopIfNotFound = stopIfNotFound,
-    lowerThreshold = lowerThreshold
+    lowerThreshold = lowerThreshold,
+    simulationRunOptions = simulationRunOptions
   )[[simulation$id]]
 
   nrOfEntries <- length(initialValues$paths)
