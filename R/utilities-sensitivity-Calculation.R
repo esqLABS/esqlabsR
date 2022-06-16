@@ -162,6 +162,7 @@
 }
 
 #' @keywords internal
+#' @import stringr
 #' @noRd
 .convertToWide <- function(data) {
   data %>%

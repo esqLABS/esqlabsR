@@ -131,6 +131,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 }
 
 #' @keywords internal
+#' @import labeling
 #' @noRd
 .createSpiderPlot <- function(data,
                               xAxisLog = TRUE,

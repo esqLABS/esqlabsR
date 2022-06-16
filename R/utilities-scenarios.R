@@ -178,7 +178,8 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
     individualCharacteristics = individualCharacteristics,
     additionalParams = params,
     simulateSteadyState = scenarioConfiguration$simulateSteadyState,
-    steadyStateTime = scenarioConfiguration$steadyStateTime
+    steadyStateTime = scenarioConfiguration$steadyStateTime,
+    simulationRunOptions = scenarioConfiguration$simulationRunOptions
   )
 
   # Set administration protocols

@@ -21,7 +21,6 @@ Imports:
     colorspace,
     dplyr,
     ggplot2,
-    hash,
     ospsuite.utils (>= 1.3.0),
     purrr,
     rClr,
@@ -31,7 +30,9 @@ Imports:
     tidyr,
     tools,
     vctrs,
-    writexl
+    writexl,
+    labeling,
+    stringr
 Suggests: 
     knitr,
     rmarkdown,

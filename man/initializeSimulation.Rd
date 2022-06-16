@@ -11,7 +11,8 @@ initializeSimulation(
   simulateSteadyState = FALSE,
   steadyStateTime = 1000,
   ignoreIfFormula = TRUE,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  simulationRunOptions = NULL
 )
 }
 \arguments{
@@ -40,6 +41,9 @@ simulation}
 \item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), an error is
 thrown if any of the \code{additionalParams} does not exist. If \code{FALSE},
 non-existent parameters are  ignored.}
+
+\item{simulationRunOptions}{Optional instance of a \code{SimulationRunOptions}
+used during the simulation run.}
 }
 \description{
 Helper method that combines a set of common steps performed
