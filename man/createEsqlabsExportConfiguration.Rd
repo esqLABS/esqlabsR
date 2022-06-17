@@ -6,6 +6,10 @@
 \usage{
 createEsqlabsExportConfiguration(projectConfiguration)
 }
+\arguments{
+\item{projectConfiguration}{Object of class \code{ProjectConfiguration}
+that contains information about the output paths.}
+}
 \value{
 An instance of \code{ExportConfiguration} R6 class.
 }

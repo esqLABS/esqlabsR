@@ -25,6 +25,8 @@
 #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
 #'   thrown if any of the `additionalParams` does not exist. If `FALSE`,
 #'   non-existent parameters are  ignored.
+#'  @param simulationRunOptions Optional instance of a `SimulationRunOptions`
+#'  used during the simulation run.
 #' @import ospsuite ospsuite.parameteridentification
 #' @export
 #'
@@ -45,7 +47,8 @@ initializeSimulation <- function(simulation,
                                  simulateSteadyState = FALSE,
                                  steadyStateTime = 1000,
                                  ignoreIfFormula = TRUE,
-                                 stopIfParameterNotFound = TRUE) {
+                                 stopIfParameterNotFound = TRUE,
+                                 simulationRunOptions = NULL) {
   validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
   validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
   validateIsLogical(simulateSteadyState)
@@ -71,7 +74,12 @@ initializeSimulation <- function(simulation,
   }
 
   if (simulateSteadyState) {
-    initialValues <- getSteadyState(simulations = simulation, steadyStateTime = steadyStateTime, ignoreIfFormula = ignoreIfFormula)[[simulation$id]]
+    initialValues <- getSteadyState(
+      simulations = simulation,
+      steadyStateTime = steadyStateTime,
+      ignoreIfFormula = ignoreIfFormula,
+      simulationRunOptions = simulationRunOptions
+    )[[simulation$id]]
     ospsuite::setQuantityValuesByPath(
       quantityPaths = initialValues$paths,
       values = initialValues$values,

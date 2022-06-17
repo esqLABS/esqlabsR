@@ -7,6 +7,8 @@
 #'   to. If the file does not exist, a new file is created. If no path is
 #'   provided, the file will be created in the same directory where the model
 #'   file is located. The name of the file will be `<SimulationFileName>_SS`.
+#' @param simulation A `Simulation` object that will be updated with the steady
+#' state
 #' @inheritParams ospsuite.parameteridentification::getSteadyState
 #' @import ospsuite.utils ospsuite.parameteridentification
 #' @export
@@ -16,7 +18,8 @@ exportSteadyStateToXLS <- function(simulation,
                                    steadyStateTime = 1000,
                                    ignoreIfFormula = TRUE,
                                    stopIfNotFound = TRUE,
-                                   lowerThreshold = 1e-15) {
+                                   lowerThreshold = 1e-15,
+                                   simulationRunOptions = NULL) {
   # If no explicit path to the results-file is provided, store the results file
   # in the same folder as the model file.
   if (resultsXLSPath == "") {
@@ -36,7 +39,8 @@ exportSteadyStateToXLS <- function(simulation,
     steadyStateTime = steadyStateTime,
     ignoreIfFormula = ignoreIfFormula,
     stopIfNotFound = stopIfNotFound,
-    lowerThreshold = lowerThreshold
+    lowerThreshold = lowerThreshold,
+    simulationRunOptions = simulationRunOptions
   )[[simulation$id]]
 
   nrOfEntries <- length(initialValues$paths)

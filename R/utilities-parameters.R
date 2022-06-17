@@ -73,7 +73,7 @@ extendParameterStructure <- function(parameters, newParameters) {
     return(parameters)
   }
 
-  # Convert the input parameter structure into hashes.
+  # Convert the input parameter structure into named vectors.
   pathsValuesVector <- parameters$values
   names(pathsValuesVector) <- parameters$paths
   pathsUnitsVector <- parameters$units
