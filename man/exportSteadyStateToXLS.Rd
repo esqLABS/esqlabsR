@@ -45,9 +45,6 @@ such errors. Check the outputs for empty values when using this option.}
 Any steady-state values below this value are considered as numerical noise
 and replaced by 0. If \code{lowerThreshold} is \code{NULL}, no cut-off is applied.
 Default value is 1e-15.}
-
-\item{simulationRunOptions}{Optional instance of a \code{SimulationRunOptions}
-used during the simulation run.}
 }
 \description{
 Export steady-state to excel
