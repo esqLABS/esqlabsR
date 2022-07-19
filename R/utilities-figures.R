@@ -151,7 +151,7 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration$yLabelSize <- 8
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
   defaultPlotConfiguration$yAxisLabelTicksSize <- 8
-  defaultPlotConfiguration$legendCaptionSize <- 6
+  defaultPlotConfiguration$legendTitleSize <- 6
   defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTop
 
   return(defaultPlotConfiguration)
