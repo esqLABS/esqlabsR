@@ -63,12 +63,6 @@ Read-only}
 \item \href{#method-ScenarioConfiguration-clone}{\code{ScenarioConfiguration$clone()}}
 }
 }
-\if{html}{\out{
-<details open><summary>Inherited methods</summary>
-<ul>
-</ul>
-</details>
-}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ScenarioConfiguration-new"></a>}}
 \if{latex}{\out{\hypertarget{method-ScenarioConfiguration-new}{}}}

@@ -197,20 +197,25 @@ sensitivityCalculation <- function(simulation,
     pkData <- dplyr::filter(pkData, PKParameter %in% pkParameters)
   }
 
-  # Write each wide data frame in a list to a separate sheet in Excel
+  # Write each data frame in a list to a separate sheet in Excel
   if (!is.null(pkDataFilePath)) {
-    # Convert tidy data to wide format for each output path
-    pkData_wide_list <- purrr::map(
-      .x = pkData %>% split(.$OutputPath),
-      .f = ~ .convertToWide(.x)
-    )
+    # If there is no data to write to Excel sheet, inform the user and do nothing.
+    if (nrow(pkData) == 0L) {
+      warning(messages$noPKDataToWrite())
+    } else {
+      # Convert tidy data to wide format for each output path
+      pkData_wide_list <- purrr::map(
+        .x = pkData %>% split(.$OutputPath),
+        .f = ~ .convertToWide(.x)
+      )
 
-    # The output paths can be quite long and don't make for good sheet names, so
-    # use `OutputPathXXX` naming pattern for sheets instead.
-    names(pkData_wide_list) <- paste0("OutputPath", seq(1:length(unique(pkData$OutputPath))))
+      # The output paths can be quite long and don't make for good sheet names, so
+      # use `OutputPathXXX` naming pattern for sheets instead.
+      names(pkData_wide_list) <- paste0("OutputPath", seq(1:length(unique(pkData$OutputPath))))
 
-    # Write to a spreadsheet with one sheet per output path.
-    writexl::write_xlsx(pkData_wide_list, pkDataFilePath)
+      # Write to a spreadsheet with one sheet per output path.
+      writexl::write_xlsx(pkData_wide_list, pkDataFilePath)
+    }
   }
 
   # return `SensitivityCalculation` ------------------------
