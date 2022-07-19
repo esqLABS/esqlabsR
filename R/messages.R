@@ -30,11 +30,11 @@ messages$warningValueWithinThresholdNotExisting <- function(value, threshold, op
 }
 
 messages$errorInvalidMeanMethod <- function() {
-  paste("Invalid value for argument `method`, supported values are `arithmetic` or `geometric`")
+  "Invalid value for argument `method`, supported values are `arithmetic` or `geometric`"
 }
 
 messages$errorOutputMolWeightNeeded <- function() {
-  paste("`outputMolWeight` can not be `NULL` when data sets have different molWeights")
+  "`outputMolWeight` can not be `NULL` when data sets have different molWeights"
 }
 
 messages$wrongParametersStructure <- function(argumentName) {
@@ -46,4 +46,9 @@ messages$wrongParametersStructure <- function(argumentName) {
 
 messages$valueShouldNotBeNegative <- function(parameterName, value) {
   paste0(parameterName, " must be a positive numerical value, but the value is ", value)
+}
+
+
+messages$noPKDataToWrite <- function() {
+  "`pkDataFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
 }
