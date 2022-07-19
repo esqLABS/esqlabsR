@@ -105,10 +105,11 @@ sensitivityCalculation <- function(simulation,
     batchResultsIdMap[[parameterPath]] <- vector("list", length(variationRange))
     names(batchResultsIdMap[[parameterPath]]) <- variationRange
     # Check if the parameter is given by an explicit formula
-    if (ospsuite::isExplicitFormulaByPath(
+    isExplicitFormulaByPath <- ospsuite::isExplicitFormulaByPath(
       path = parameterPath,
       simulation = simulation
-    )) {
+    )
+    if (isExplicitFormulaByPath) {
       formulaParamPaths <- c(formulaParamPaths, parameterPath)
     } else {
       constantParamPaths <- c(constantParamPaths, parameterPath)
