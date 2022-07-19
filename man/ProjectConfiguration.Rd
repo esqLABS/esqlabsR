@@ -66,12 +66,6 @@ output into a file. A list of supported outputs is provided in
 \item \href{#method-ProjectConfiguration-clone}{\code{ProjectConfiguration$clone()}}
 }
 }
-\if{html}{\out{
-<details open><summary>Inherited methods</summary>
-<ul>
-</ul>
-</details>
-}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ProjectConfiguration-print"></a>}}
 \if{latex}{\out{\hypertarget{method-ProjectConfiguration-print}{}}}
