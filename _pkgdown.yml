@@ -12,11 +12,6 @@ authors:
 
 reference:
 
-  - title: R6 Classes
-    desc:  Important objects for modeling and simulation and plotting workflows.
-    contents:
-      - matches("^Data")
-
   - title: Sensitivity analysis
     #desc:
     contents:
