@@ -26,7 +26,6 @@ Imports:
     rClr,
     readxl,
     shiny,
-    shinyjs,
     tidyr,
     tools,
     tlf (>= 1.4.0),
@@ -37,6 +36,7 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
+    shinyjs,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0)
 VignetteBuilder: 
