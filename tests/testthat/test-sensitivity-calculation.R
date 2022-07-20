@@ -1,6 +1,8 @@
 # save old options
 old <- options()
 
+# change the default printing of the tibbles so that all columns are shown
+# in snapshots
 options(
   tibble.width = Inf,
   pillar.min_title_chars = Inf,

@@ -40,8 +40,9 @@ simulation}
 
 \item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), an error is
 thrown if any of the \code{additionalParams} does not exist. If \code{FALSE},
-non-existent parameters are  ignored.
-@param simulationRunOptions Optional instance of a \code{SimulationRunOptions}
+non-existent parameters are  ignored.}
+
+\item{simulationRunOptions}{Optional instance of a \code{SimulationRunOptions}
 used during the simulation run.}
 }
 \description{
