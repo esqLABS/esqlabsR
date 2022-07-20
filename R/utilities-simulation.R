@@ -25,7 +25,7 @@
 #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
 #'   thrown if any of the `additionalParams` does not exist. If `FALSE`,
 #'   non-existent parameters are  ignored.
-#'  @param simulationRunOptions Optional instance of a `SimulationRunOptions`
+#' @param simulationRunOptions Optional instance of a `SimulationRunOptions`
 #'  used during the simulation run.
 #' @import ospsuite ospsuite.parameteridentification
 #' @export

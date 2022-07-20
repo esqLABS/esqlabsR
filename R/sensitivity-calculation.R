@@ -171,7 +171,10 @@ sensitivityCalculation <- function(simulation,
   )
 
   # `runSimulationBatches()` returns a list with one entry per simulation batch.
-  #
+  # First remove the names of the upper level of the list to get all result in
+  # one flat list in the next step but maintain the IDs of the runs
+  names(simulationBatchesResults) <- NULL
+
   # Unlist so all results are in one list. The names of the results are the IDs
   # of the runs. Using `batchResultsIdMap`, results for a certain
   # parameter/scale factor combination can be filtered out.
