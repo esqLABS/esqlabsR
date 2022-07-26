@@ -2,18 +2,18 @@
 % Please edit documentation in R/utilities-file.R
 \name{pathFromClipboard}
 \alias{pathFromClipboard}
-\title{pathFromClipboard}
+\title{Convert Windows filepaths for R}
 \usage{
 pathFromClipboard(path = "clipboard")
 }
 \arguments{
-\item{path}{Path that will be converted. If "clipboard" (default), path is
+\item{path}{Path that will be converted. If \code{"clipboard"} (default), path is
 queried from clipboard.}
 }
 \value{
-String representation of a file path with \code{/} as separator
+String representation of a file path with \code{/} as separator.
 }
 \description{
-Converts the windows-like path (using \verb{\\}) from the clipboard to the form
+Converts the Windows-like path (using \verb{\\}) from the clipboard to the form
 readable by R (using\verb{ /}).
 }
