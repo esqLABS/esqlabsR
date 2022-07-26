@@ -2,20 +2,20 @@
 % Please edit documentation in R/utilities.R
 \name{compareWithNA}
 \alias{compareWithNA}
-\title{Compare values including NA}
+\title{Compare values including \code{NA}}
 \usage{
 compareWithNA(v1, v2)
 }
 \arguments{
-\item{v1}{Value or a list of values to compare. May include NA.}
+\item{v1}{Value or a list of values to compare. May include \code{NA}.}
 
-\item{v2}{Value or a list of values to compare. May include NA.}
+\item{v2}{Value or a list of values to compare. May include \code{NA}.}
 }
 \value{
-TRUE wherever elements are the same, including NA's,
+\code{TRUE} wherever elements are the same, including \code{NA}'s,
 }
 \description{
-Compare values including NA
+Compare values including \code{NA}
 }
 \details{
 From http://www.cookbook-r.com/Manipulating_data/Comparing_vectors_or_factors_with_NA/
