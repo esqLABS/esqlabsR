@@ -20,14 +20,16 @@ test_that("`sourceAll()` sources all files in the directory", {
 
 ##  context("pathFromClipboard")
 
-# test_that("`pathFromClipboard()` converts paths as expected", {
-#   skip_if_not_installed("clipr")
-#
-#   path <- "C:\\Users\\Documents"
-#   clipr::write_clip(path, allow_non_interactive = TRUE)
-#
-#   expect_equal(
-#     pathFromClipboard(),
-#     "C:/Users/Documents"
-#   )
-# })
+test_that("`pathFromClipboard()` converts paths as expected", {
+  skip_if_not_installed("clipr")
+
+  local({
+    path <- "C:\\Users\\Documents"
+    clipr::write_clip(path, allow_non_interactive = TRUE)
+
+    expect_equal(
+      pathFromClipboard(),
+      "C:/Users/Documents"
+    )
+  })
+})
