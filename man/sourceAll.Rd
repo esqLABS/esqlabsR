@@ -9,9 +9,9 @@ sourceAll(folderPath, recursive = FALSE)
 \arguments{
 \item{folderPath}{Path to the folder where .R files are located}
 
-\item{recursive}{If TRUE, the contents of the sub-folders are also sourced,
+\item{recursive}{If \code{TRUE}, the contents of the sub-folders are also sourced,
 otherwise only the files located directly in the directory are considered.
-Default is FALSE.}
+Default is \code{FALSE}.}
 }
 \description{
 Source all .R files located in a specific folder

@@ -1,9 +1,9 @@
 #' Source all .R files located in a specific folder
 #'
 #' @param folderPath Path to the folder where .R files are located
-#' @param recursive If TRUE, the contents of the sub-folders are also sourced,
+#' @param recursive If `TRUE`, the contents of the sub-folders are also sourced,
 #' otherwise only the files located directly in the directory are considered.
-#' Default is FALSE.
+#' Default is `FALSE`.
 #' @export
 sourceAll <- function(folderPath, recursive = FALSE) {
   filesPaths <- list.files(folderPath, recursive = recursive)
@@ -18,15 +18,15 @@ sourceAll <- function(folderPath, recursive = FALSE) {
   invisible(lapply(file.path(folderPath, filesPaths), sourceFile))
 }
 
-#' pathFromClipboard
+#' Convert Windows filepaths for R
 #'
-#' Converts the windows-like path (using `\`) from the clipboard to the form
+#' Converts the Windows-like path (using `\`) from the clipboard to the form
 #' readable by R (using` /`).
 #'
-#' @param path Path that will be converted. If "clipboard" (default), path is
+#' @param path Path that will be converted. If `"clipboard"` (default), path is
 #'   queried from clipboard.
 #'
-#' @return String representation of a file path with `/` as separator
+#' @return String representation of a file path with `/` as separator.
 #' @export
 pathFromClipboard <- function(path = "clipboard") {
   y <- if (path == "clipboard") {
