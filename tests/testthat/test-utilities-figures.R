@@ -1,7 +1,7 @@
 ## context("esqLABS_colors")
 
 test_that("esqLABS_colors input validation works as expected", {
-  expect_error(esqLABS_colors(-1), "nrOfColors must be positive")
+  expect_error(esqLABS_colors(-1), messages$nrOfColorsShouldBePositive(-1))
 })
 
 test_that("esqLABS_colors wprks with empty argument vector", {
