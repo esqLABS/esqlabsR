@@ -18,8 +18,8 @@ environment:
   R_ARCH: x64
   KEEP_VIGNETTES: true
   NOT_CRAN: true
-  #We use this variale to skip some tests that depend on PK-Sim using "skip_on_ci"
-  CI: true
+  # We use this variale to skip some tests that depend on PK-Sim using "skip_on_ci"
+  # CI: true
 
 version: "$(app_version).{build}"
 
