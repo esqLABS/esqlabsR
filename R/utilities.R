@@ -114,14 +114,14 @@ removeFromList <- function(entry, listArg) {
   return(listArg)
 }
 
-#' Compare values including NA
+#' Compare values including `NA`
 #'
-#' @param v1 Value or a list of values to compare. May include NA.
-#' @param v2 Value or a list of values to compare. May include NA.
+#' @param v1 Value or a list of values to compare. May include `NA`.
+#' @param v2 Value or a list of values to compare. May include `NA`.
 #' @details From http://www.cookbook-r.com/Manipulating_data/Comparing_vectors_or_factors_with_NA/
 #'
-#' @return TRUE wherever elements are the same, including NA's,
-# and FALSE everywhere else.
+#' @return `TRUE` wherever elements are the same, including `NA`'s,
+# and `FALSE` everywhere else.
 #' @export
 compareWithNA <- function(v1, v2) {
   same <- (v1 == v2) | (is.na(v1) & is.na(v2))
