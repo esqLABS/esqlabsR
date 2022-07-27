@@ -1,11 +1,50 @@
 ## context("esqLABS_colors")
+
+test_that("esqLABS_colors input validation works as expected", {
+  expect_error(esqLABS_colors(-1), messages$nrOfColorsShouldBePositive(-1))
+})
+
+test_that("esqLABS_colors wprks with empty argument vector", {
+  expect_equal(length(esqLABS_colors(0)), 0)
+})
+
 test_that("esqLABS_colors returns two colors", {
   expect_equal(length(esqLABS_colors(2)), 2)
+})
+
+test_that("esqLABS_colors returns three colors", {
+  expect_equal(length(esqLABS_colors(3)), 3)
 })
 
 test_that("esqLABS_colors returns ten colors", {
   expect_equal(length(esqLABS_colors(10)), 10)
 })
+
+test_that("esqLABS_colors returns ten colors", {
+  expect_equal(length(esqLABS_colors(10)), 10)
+})
+
+## context("col2hsv")
+
+test_that("col2hsv returns expected HSV values for a given R color name", {
+  expect_equal(
+    col2hsv("yellow"),
+    structure(c(0.166666666666667, 1, 1),
+      .Dim = c(3L, 1L),
+      .Dimnames = list(c("h", "s", "v"), NULL)
+    )
+  )
+
+  expect_equal(
+    col2hsv("white"),
+    structure(c(0, 0, 1),
+      .Dim = c(3L, 1L),
+      .Dimnames = list(c("h", "s", "v"), NULL)
+    )
+  )
+})
+
+
 
 ## context("createEsqlabsPlotConfiguration")
 

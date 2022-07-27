@@ -48,6 +48,10 @@ messages$valueShouldNotBeNegative <- function(parameterName, value) {
   paste0(parameterName, " must be a positive numerical value, but the value is ", value)
 }
 
+messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
+  paste0("nrOfColors must be positive, value ", nrOfColors, " is not valid!")
+}
+
 
 messages$noPKDataToWrite <- function() {
   "`pkDataFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."

@@ -37,7 +37,7 @@ esqLABS_colors <- function(nrOfColors) {
   deltaV_r_g <- max(esqRed_hsv[3], esqGreen_hsv[3]) - min(esqRed_hsv[3], esqGreen_hsv[3])
 
   if (nrOfColors < 0) {
-    stop("nrOfColors must be positive, value ", nrOfColors, " is not valid!")
+    stop(messages$nrOfColorsShouldBePositive(nrOfColors))
   }
   if (nrOfColors == 0) {
     return(c())
