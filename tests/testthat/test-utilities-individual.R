@@ -50,3 +50,28 @@ test_that("It create IndividualCharacteristics when numerical values are empty",
   expect_equal(individualCharacteristics$population, "European_ICRP_2002")
   expect_equal(individualCharacteristics$gender, "MALE")
 })
+
+## context("writeIndividualToXLS")
+
+test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
+  withr::with_tempdir(
+    code = {
+      simulation <- loadSimulation(system.file("extdata", "simple.pkml", package = "ospsuite"))
+      humanIndividualCharacteristics <- createIndividualCharacteristics(
+        species = Species$Human,
+        population = HumanPopulation$European_ICRP_2002,
+        gender = Gender$Male,
+        weight = 70
+      )
+      tmp <- writeIndividualToXLS(humanIndividualCharacteristics, "ParameterSet.xlsx")
+      df <- readxl::read_xlsx(tmp)
+
+      expect_equal(dim(df), c(96L, 4L))
+      expect_equal(colnames(df), c("Container Path", "Parameter Name", "Value", "Units"))
+      expect_equal(
+        unique(df$Units),
+        c("year(s)", "week(s)", "dm", NA, "kg", "l", "l/min/kg organ", "l/min", "min")
+      )
+    }
+  )
+})
