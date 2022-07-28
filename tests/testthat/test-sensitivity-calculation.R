@@ -237,7 +237,7 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
 # checking `SensitivityCalculation`  object ------------------
 
 test_that("sensitivityCalculation returns the correct object", {
-  expect_s3_class(results, "SensitivityCalculation")
+  expect_true(isOfType(results, "SensitivityCalculation"))
 
   expect_equal(
     length(results$simulationResults),

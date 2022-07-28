@@ -50,7 +50,7 @@ test_that("col2hsv returns expected HSV values for a given R color name", {
 
 test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults", {
   myPC <- createEsqlabsPlotConfiguration()
-  expect_s3_class(myPC, "DefaultPlotConfiguration")
+  expect_true(isOfType(myPC, "DefaultPlotConfiguration"))
   expect_equal(myPC$titleSize, 8)
 })
 
@@ -58,7 +58,7 @@ test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults"
 
 test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defaults", {
   myPGC <- createEsqlabsPlotGridConfiguration()
-  expect_s3_class(myPGC, "PlotGridConfiguration")
+  expect_true(isOfType(myPGC, "PlotGridConfiguration"))
   expect_equal(myPGC$tagLevels, "a")
 })
 
@@ -67,6 +67,6 @@ test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defau
 test_that("createEsqlabsExportConfiguration() creates object with chosen defaults", {
   myProjConfig <- ProjectConfiguration$new()
   myEC <- createEsqlabsExportConfiguration(myProjConfig)
-  expect_s3_class(myEC, "ExportConfiguration")
+  expect_true(isOfType(myEC, "ExportConfiguration"))
   expect_equal(myEC$units, "cm")
 })
