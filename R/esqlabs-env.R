@@ -1,8 +1,3 @@
-.getPackageVersion <- function() {
-  version <- getNamespaceVersion("esqlabsR")
-  return(version)
-}
-
 # Environment that holds various global variables and settings for the esqlabsR,
 # It is not exported and should not be directly manipulated by other packages.
 esqlabsEnv <- new.env(parent = emptyenv())
@@ -11,7 +6,7 @@ esqlabsEnv <- new.env(parent = emptyenv())
 esqlabsEnv$packageName <- "esqlabsR"
 
 # Version of the package
-esqlabsEnv$packageVersion <- .getPackageVersion()
+esqlabsEnv$packageVersion <- getNamespaceVersion("esqlabsR")
 
 # Default width of a plot of a single `PlotMapping`
 esqlabsEnv$widthPerPlotMapping <- 8

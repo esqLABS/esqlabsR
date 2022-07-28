@@ -25,11 +25,13 @@ The latest version of the package comes as a binary `*.zip` and can be downloade
 - ospsuite-r > 11.0
   - https://github.com/Open-Systems-Pharmacology/OSPSuite-R or esqLABS internal
   
-### For projects created for v3
+### For projects created for version 3
+
 To run code written for version 3 of `esqlabsR` package, additionally install the
 [esqlabsRLegacy](https://github.com/esqLABS/esqlabsRLegacy) package.
 
 ### From CRAN:
+
 - jsonlite
 - patchwork
 - purrr
@@ -48,22 +50,10 @@ To run code written for version 3 of `esqlabsR` package, additionally install th
 - vctrs
 - writexl
 
-### For building from source and developing
-
-- Rtools (https://cran.r-project.org/bin/windows/Rtools/)
-  - After installation, add the folder to your $PATH: In start menu, type in "PATH", select "Change path environment for user", and add the path to Rtools folder.
-- roxygen2
-- devtools
-- rmarkdown
-- testthat
-- knitr
-- styler
-- vdiffr
-
 ## Contributing
 
-- Follow the OSPS-R [coding standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md)
-- Some additional useful information can be found [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's)
+- Follow the OSPS-R [coding standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md).
+- Some additional useful information can be found [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's).
 
 ## Code of Conduct
 
