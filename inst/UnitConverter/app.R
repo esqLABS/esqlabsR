@@ -1,3 +1,18 @@
+#---------- Initialization of app ----------#
+# Load required packages
+require(shiny)
+
+#---------- User interface ----------#
+ui <- fluidPage(
+  shinyjs::useShinyjs(),
+  titlePanel("Unit Converter"),
+  selectInput("dimension", "Dimension",
+    choices = ospsuite::ospDimensions[ospsuite::ospDimensions != "Dimensionless"]
+  ),
+  uiOutput("units")
+)
+
+#---------- Backend logic ----------#
 server <- function(input, output, session) {
   dimension <- NULL
   currentMolWeight <- NULL
@@ -84,3 +99,5 @@ server <- function(input, output, session) {
     isolate(updateNumericInput(session, "value1", value = converted))
   })
 }
+
+shinyApp(ui = ui, server = server)
