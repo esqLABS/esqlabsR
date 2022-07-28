@@ -54,6 +54,8 @@ test_that("It create IndividualCharacteristics when numerical values are empty",
 ## context("writeIndividualToXLS")
 
 test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
+  skip_if_not_installed("withr")
+
   withr::with_tempdir(
     code = {
       simulation <- loadSimulation(system.file("extdata", "simple.pkml", package = "ospsuite"))
