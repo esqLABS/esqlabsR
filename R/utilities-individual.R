@@ -49,7 +49,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   )
   colnames(output) <- columnNames
 
-  writexl::write_xlsx(output, path = outputXLSPath, col_names = TRUE)
+  writeExcel(data = output, path = outputXLSPath)
 }
 
 #' Read individual characteristics from file

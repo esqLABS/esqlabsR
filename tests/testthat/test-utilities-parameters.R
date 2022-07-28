@@ -123,3 +123,73 @@ test_that("It extends a structure by a new structure", {
   expect_equal(extended$values, c(1, 1, 3))
   expect_equal(extended$units, c("", "", "µmol"))
 })
+
+
+# exportParametersToXLS
+simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+simulation <- loadSimulation(simPath)
+
+param1 <- getParameter(path = "Organism|Weight", simulation)
+param2 <- getParameter(path = "Organism|Age", simulation)
+
+test_that("It writes the excel file with one parameter provided", {
+  withr::with_tempdir(
+    code = {
+      xlsPath <- "tmp.xlsx"
+      exportParametersToXLS(parameters = param1, paramsXLSpath = xlsPath)
+
+      # Load from xls and compare
+      params <- readParametersFromXLS(paramsXLSpath = xlsPath)
+
+      expect_equal(params$paths[[1]], param1$path)
+      expect_equal(params$values[[1]], param1$value)
+      expect_equal(params$units[[1]], param1$unit)
+    }
+  )
+})
+
+test_that("It writes the excel file with one parameter provided
+          and specified sheet", {
+  withr::with_tempdir(
+    code = {
+      xlsPath <- "tmp.xlsx"
+      sheet <- "newSheet"
+      exportParametersToXLS(
+        parameters = param1, paramsXLSpath = xlsPath,
+        sheet = sheet
+      )
+
+      # Load from xls and compare
+      params <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet)
+
+      expect_equal(params$paths[[1]], param1$path)
+      expect_equal(params$values[[1]], param1$value)
+      expect_equal(params$units[[1]], param1$unit)
+    }
+  )
+})
+
+test_that("It writes the excel file with two parameters provided
+          and specified sheet", {
+  withr::with_tempdir(
+    code = {
+      xlsPath <- "tmp.xlsx"
+      sheet <- "newSheet"
+      exportParametersToXLS(
+        parameters = c(param1, param2), paramsXLSpath = xlsPath,
+        sheet = sheet
+      )
+
+      # Load from xls and compare
+      params <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet)
+
+      expect_equal(params$paths[[1]], param1$path)
+      expect_equal(params$values[[1]], param1$value)
+      expect_equal(params$units[[1]], param1$unit)
+
+      expect_equal(params$paths[[2]], param2$path)
+      expect_equal(params$values[[2]], param2$value)
+      expect_equal(params$units[[2]], param2$unit)
+    }
+  )
+})

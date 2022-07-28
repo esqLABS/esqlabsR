@@ -26,12 +26,6 @@ exportSteadyStateToXLS <- function(simulation,
     simulationPath <- tools::file_path_sans_ext(simulation$sourceFile)
     resultsXLSPath <- paste0(simulationPath, "_SS.xlsx")
   }
-  # If the provided path to the output file targets a non-existent directory,
-  # try to create the directory
-  resultsDir <- dirname(resultsXLSPath)
-  if (!file.exists(resultsDir)) {
-    dir.create(resultsDir, recursive = TRUE)
-  }
 
   initialValues <- getSteadyState(
     simulations = simulation,
@@ -117,10 +111,8 @@ exportSteadyStateToXLS <- function(simulation,
   if (length(parameterInitVals) > 0) {
     colnames(parameterInitVals) <- c("Container Path", "Parameter Name", "Value", "Units")
   }
+
   # Write the results into an excel file.
-  writexl::write_xlsx(
-    list("Molecules" = speciesInitVals, "Parameters" = parameterInitVals),
-    path = resultsXLSPath,
-    col_names = TRUE
-  )
+  data <- list("Molecules" = speciesInitVals, "Parameters" = parameterInitVals)
+  writeExcel(data = data, path = resultsXLSPath)
 }
