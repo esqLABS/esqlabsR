@@ -218,7 +218,7 @@ sensitivityCalculation <- function(simulation,
       names(pkData_wide_list) <- paste0("OutputPath", seq(1:length(unique(pkData$OutputPath))))
 
       # Write to a spreadsheet with one sheet per output path.
-      writexl::write_xlsx(pkData_wide_list, pkDataFilePath)
+      writeExcel(data = pkData_wide_list, path = pkDataFilePath)
     }
   }
 

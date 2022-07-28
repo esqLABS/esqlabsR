@@ -26,12 +26,6 @@ exportSteadyStateToXLS <- function(simulation,
     simulationPath <- tools::file_path_sans_ext(simulation$sourceFile)
     resultsXLSPath <- paste0(simulationPath, "_SS.xlsx")
   }
-  # If the provided path to the output file targets a non-existent directory,
-  # try to create the directory
-  resultsDir <- dirname(resultsXLSPath)
-  if (!file.exists(resultsDir)) {
-    dir.create(resultsDir, recursive = TRUE)
-  }
 
   initialValues <- getSteadyState(
     simulations = simulation,
@@ -94,8 +88,13 @@ exportSteadyStateToXLS <- function(simulation,
   }
 
   speciesInitVals <- data.frame(
-    unlist(moleculeContainerPath, use.names = FALSE), unlist(moleculeName, use.names = FALSE), unlist(moleculeIsPresent, use.names = FALSE), unlist(moleculeValue, use.names = FALSE),
-    unlist(moleculeUnits, use.names = FALSE), unlist(moleculeScaleDivisor, use.names = FALSE), unlist(moleculeNegValsAllowed, use.names = FALSE)
+    unlist(moleculeContainerPath, use.names = FALSE),
+    unlist(moleculeName, use.names = FALSE),
+    unlist(moleculeIsPresent, use.names = FALSE),
+    unlist(moleculeValue, use.names = FALSE),
+    unlist(moleculeUnits, use.names = FALSE),
+    unlist(moleculeScaleDivisor, use.names = FALSE),
+    unlist(moleculeNegValsAllowed, use.names = FALSE)
   )
 
   if (length(speciesInitVals) > 0) {
@@ -103,12 +102,17 @@ exportSteadyStateToXLS <- function(simulation,
   }
 
   parameterInitVals <- data.frame(
-    unlist(parameterContainerPath, use.names = FALSE), unlist(parameterName, use.names = FALSE), unlist(parameterValue, use.names = FALSE), unlist(parameterUnits, use.names = FALSE)
+    unlist(parameterContainerPath, use.names = FALSE),
+    unlist(parameterName, use.names = FALSE),
+    unlist(parameterValue, use.names = FALSE),
+    unlist(parameterUnits, use.names = FALSE)
   )
 
   if (length(parameterInitVals) > 0) {
     colnames(parameterInitVals) <- c("Container Path", "Parameter Name", "Value", "Units")
   }
+
   # Write the results into an excel file.
-  writexl::write_xlsx(list("Molecules" = speciesInitVals, "Parameters" = parameterInitVals), path = resultsXLSPath, col_names = TRUE)
+  data <- list("Molecules" = speciesInitVals, "Parameters" = parameterInitVals)
+  writeExcel(data = data, path = resultsXLSPath)
 }

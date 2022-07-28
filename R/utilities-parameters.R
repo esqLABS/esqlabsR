@@ -39,6 +39,61 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }
 
+#' Export simulation parameters to excel
+#'
+#' @description Creates an excel file with information from the passed
+#' parameters. The excel sheet will contain columns "Container Path",
+#' "Parameter Name", "Value", and "Units". The resulting file can be loaded in
+#' `MoBi` or in `R` with the function `readParametersFromXLS()`.
+#'
+#' @param parameters A single or a list of `Parameter` objects
+#' @param paramsXLSpath Path to the excel file
+#' @param sheet (Optional) name of the excel sheet
+
+#' @export
+exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
+  validateIsOfType(parameters, "Parameter")
+  validateIsCharacter(sheet, nullAllowed = TRUE)
+  if (!is.null(sheet)) {
+    validateIsOfLength(sheet, 1)
+  }
+  # Make sure parameters is a list even if only one parameter is passed
+  parameters <- c(parameters)
+
+  parameterContainerPath <-
+    parameterUnits <-
+    parameterName <- vector("character", length(parameters))
+  parameterValue <- vector("numeric", length(parameters))
+
+  for (paramIdx in seq_along(parameters)) {
+    param <- parameters[[paramIdx]]
+    parameterContainerPath[[paramIdx]] <- param$parentContainer$path
+    parameterName[[paramIdx]] <- param$name
+    parameterUnits[[paramIdx]] <- param$unit
+    parameterValue[[paramIdx]] <- param$value
+  }
+
+  output <- data.frame(
+    unlist(parameterContainerPath, use.names = FALSE),
+    unlist(parameterName, use.names = FALSE),
+    unlist(parameterValue, use.names = FALSE),
+    unlist(parameterUnits, use.names = FALSE)
+  )
+
+  if (length(output) > 0) {
+    colnames(output) <- c("Container Path", "Parameter Name", "Value", "Units")
+  }
+
+  # Write the results into an excel file.
+  # Wrap the output data frame into a list and name the list if sheet name
+  # has been provided
+  data <- list(output)
+  if (!is.null(sheet)) {
+    names(data) <- sheet
+  }
+  writeExcel(data = data, path = paramsXLSpath)
+}
+
 #' Extend parameters structure with new entries
 #'
 #' @param parameters A list containing vectors 'paths' with the full paths to the

@@ -41,10 +41,15 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
     units[i] <- individual$distributedParameters$units[[i]]
   }
 
-  output <- data.frame(unlist(containerPaths, use.names = FALSE), unlist(paramNames, use.names = FALSE), unlist(as.numeric(values), use.names = FALSE), unlist(units, use.names = FALSE))
+  output <- data.frame(
+    unlist(containerPaths, use.names = FALSE),
+    unlist(paramNames, use.names = FALSE),
+    unlist(as.numeric(values), use.names = FALSE),
+    unlist(units, use.names = FALSE)
+  )
   colnames(output) <- columnNames
 
-  writexl::write_xlsx(output, path = outputXLSPath, col_names = TRUE)
+  writeExcel(data = output, path = outputXLSPath)
 }
 
 #' Read individual characteristics from file
@@ -118,7 +123,6 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
 #' @export
 #'
 #' @examples
-#' #'
 #' \dontrun{
 #' simulation <- loadSimulation(filePath = modelPath)
 #' humanIndividualCharacteristics <- createIndividualCharacteristics(
