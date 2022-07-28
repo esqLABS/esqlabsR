@@ -1,5 +1,13 @@
 test_that("Names for settings are as expected", {
-  expect_snapshot(esqlabsRSettingNames)
+  expect_equal(
+    esqlabsRSettingNames,
+    list(
+      packageVersion = "packageVersion",
+      packageName = "packageName",
+      widthPerPlotMapping = "widthPerPlotMapping",
+      heightPerPlotMapping = "heightPerPlotMapping"
+    )
+  )
 })
 
 test_that("Check that values for package environment bindings are correct", {
@@ -9,4 +17,5 @@ test_that("Check that values for package environment bindings are correct", {
   )
 
   expect_equal(getEsqlabsRSetting("packageName"), "esqlabsR")
+  expect_type(getEsqlabsRSetting("packageVersion"), "character")
 })
