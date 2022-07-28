@@ -154,9 +154,9 @@ compareSimulationParameters <- function(simulation1, simulation2) {
 #' Get paramters of applications in the simulation
 #'
 #' @param simulation A `Simulation` object
-#' @param moleculeNames Names of the molecules for which administrations the
-#' parameters will be returned. If `NUll`(default), applications for all
-#' molecules are returned.
+#' @param moleculeNames Names of the molecules which applications parameters
+#' will be returned. If `NUll`(default), applications for all molecules are
+#'  returned.
 #'
 #' @details Every application event has a `ProtocolSchemaItem` container that
 #' holds parametes describing the dose, start time, infusion time etc. This

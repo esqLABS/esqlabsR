@@ -9,9 +9,9 @@ getAllApplicationParameters(simulation, moleculeNames = NULL)
 \arguments{
 \item{simulation}{A \code{Simulation} object}
 
-\item{moleculeNames}{Names of the molecules for which administrations the
-parameters will be returned. If \code{NUll}(default), applications for all
-molecules are returned.}
+\item{moleculeNames}{Names of the molecules which applications parameters
+will be returned. If \code{NUll}(default), applications for all molecules are
+returned.}
 }
 \value{
 A list of \code{Parameter} objects defining the applications in the
@@ -22,7 +22,7 @@ Get paramters of applications in the simulation
 }
 \details{
 Every application event has a \code{ProtocolSchemaItem} container that
-holds parametes describing the dose, start time, infusion time etc.. This
+holds parametes describing the dose, start time, infusion time etc. This
 functions returns a list of all constant parameters located under the
 \code{ProtocolSchemaItem} container of applications defined for the \code{moleculeNames}.
 }

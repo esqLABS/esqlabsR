@@ -54,6 +54,9 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
   validateIsOfType(parameters, "Parameter")
   validateIsCharacter(sheet, nullAllowed = TRUE)
+  if (!is.null(sheet)) {
+    validateIsOfLength(sheet, 1)
+  }
   # Make sure parameters is a list even if only one parameter is passed
   parameters <- c(parameters)
 
@@ -86,7 +89,6 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
   # has been provided
   data <- list(output)
   if (!is.null(sheet)) {
-    validateIsOfLength(sheet, 1)
     names(data) <- sheet
   }
   writeExcel(data = data, path = paramsXLSpath)

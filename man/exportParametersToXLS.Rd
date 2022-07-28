@@ -17,5 +17,5 @@ exportParametersToXLS(parameters, paramsXLSpath, sheet = NULL)
 Creates an excel file with information from the passed
 parameters. The excel sheet will contain columns "Container Path",
 "Parameter Name", "Value", and "Units". The resulting file can be loaded in
-\code{MoBi} or in \code{R} with the function \code{readParametersFromXLS}.
+\code{MoBi} or in \code{R} with the function \code{readParametersFromXLS()}.
 }
