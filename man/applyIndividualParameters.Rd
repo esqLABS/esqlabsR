@@ -19,7 +19,6 @@ For human species, only parameters that do not override formulas are applied.
 For other species, all parameters returned by \code{createIndividual} are applied.
 }
 \examples{
-#'
 \dontrun{
 simulation <- loadSimulation(filePath = modelPath)
 humanIndividualCharacteristics <- createIndividualCharacteristics(
