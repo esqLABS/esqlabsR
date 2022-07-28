@@ -52,3 +52,5 @@ revdep/data.sqlite
 /Meta/
 .tgitconfig
 tests/testthat/Rplots.pdf
+# {shinytest2}: Ignore new debug snapshots for `$expect_values()`
+*_.new.png
