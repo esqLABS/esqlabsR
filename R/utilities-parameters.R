@@ -44,7 +44,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' @description Creates an excel file with information from the passed
 #' parameters. The excel sheet will contain columns "Container Path",
 #' "Parameter Name", "Value", and "Units". The resulting file can be loaded in
-#' `MoBi` or in `R` with the function `readParametersFromXLS`.
+#' `MoBi` or in `R` with the function `readParametersFromXLS()`.
 #'
 #' @param parameters A single or a list of `Parameter` objects
 #' @param paramsXLSpath Path to the excel file
