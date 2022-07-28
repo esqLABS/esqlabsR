@@ -8,7 +8,17 @@ MAJOR CHANGES
   * `createEsqlabsPlotGridConfiguration()`
   * `createEsqlabsExportConfiguration()`
 
+- New function `getAllApplicationParameters()` that returns all parameters of 
+applications in a simulation
+- New function `exportParametersToXLS()` to write parameter information into an 
+excel file that can be loaded in MoBi or R using the `readParametersFromXLS()`
+function.
+- New function `writeExcel()` that is a wrapper for creating a directory 
+(if not present) and writing to excel file using `writexl::write_xlsx()`.
+
 BREAKING CHANGES
+
+- The package requires R version >=4.1.
 
 - The package gains new dependencies:
 
