@@ -159,7 +159,7 @@ compareSimulationParameters <- function(simulation1, simulation2) {
 #' molecules are returned.
 #'
 #' @details Every application event has a `ProtocolSchemaItem` container that
-#' holds parametes describing the dose, start time, infusion time etc.. This
+#' holds parametes describing the dose, start time, infusion time etc. This
 #' functions returns a list of all constant parameters located under the
 #' `ProtocolSchemaItem` container of applications defined for the `moleculeNames`.
 #'
