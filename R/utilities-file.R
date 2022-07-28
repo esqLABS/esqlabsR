@@ -57,3 +57,24 @@ readExcel <- function(path, sheet = NULL, ...) {
     ...
   ))
 }
+
+#' Write data to excel
+#'
+#' @details Uses `writexl::write_xlsx` to write data to excel. If the folder
+#' does not exist, creates folder(s) recursively.
+#'
+#' @param data Data frame or named list of data frames that will be sheets in
+#' the xlsx
+#' @inheritParams writexl::write_xlsx
+#' @export
+writeExcel <- function(data, path, col_names = TRUE) {
+  # If the provided path to the output file targets a non-existent directory,
+  # try to create the directory
+  resultsDir <- dirname(path)
+  if (!file.exists(resultsDir)) {
+    dir.create(resultsDir, recursive = TRUE)
+  }
+
+  # Write the data into an excel file.
+  writexl::write_xlsx(data, path = path, col_names = col_names)
+}

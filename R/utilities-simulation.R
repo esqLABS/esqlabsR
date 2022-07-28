@@ -150,3 +150,59 @@ compareSimulationParameters <- function(simulation1, simulation2) {
 
   return(list(In1NotIn2 = pathsIn1NotIn2, In2NotIn1 = pathsIn2NotIn1, Different = pathsDiff))
 }
+
+#' Get paramters of applications in the simulation
+#'
+#' @param simulation A `Simulation` object
+#' @param moleculeNames Names of the molecules for which administrations the
+#' parameters will be returned. If `NUll`(default), applications for all
+#' molecules are returned.
+#'
+#' @details Every application event has a `ProtocolSchemaItem` container that
+#' holds parametes describing the dose, start time, infusion time etc.. This
+#' functions returns a list of all constant parameters located under the
+#' `ProtocolSchemaItem` container of applications defined for the `moleculeNames`.
+#'
+#' @return A list of `Parameter` objects defining the applications in the
+#' simulation.
+#' @export
+#'
+#' @examples
+#' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+#' simulation <- loadSimulation(simPath)
+#' applicationParams <- getAllApplicationParameters(simulation = simulation)
+#'
+#' applicationParams <- getAllApplicationParameters(
+#'   simulation = simulation,
+#'   moleculeNames = "Aciclovir"
+#' )
+getAllApplicationParameters <- function(simulation, moleculeNames = NULL) {
+  validateIsOfType(simulation, "Simulation")
+  validateIsCharacter(moleculeNames, nullAllowed = TRUE)
+
+  # If no molecules have been specified, get application parameters for all
+  # molecules in the simulation
+  moleculeNames <- moleculeNames %||% simulation$allFloatingMoleculeNames()
+
+  # Returns an object of class `Application` for each administration event
+  applications <- unlist(lapply(moleculeNames, \(x)simulation$allApplicationsFor(x)), use.names = FALSE)
+
+  # Gather all parameters in one list that will be the output of the function
+  allParams <- list()
+
+  for (application in applications) {
+    # get parent container of the application
+    parentContainer <- application$startTime$parentContainer
+    containerPath <- parentContainer$path
+    # Get all non-formula parameters of ProtocolSchemaItem
+    params <- getAllParametersMatching("*", parentContainer)
+
+    for (param in params) {
+      if (!param$isFormula) {
+        allParams <- c(allParams, param)
+      }
+    }
+  }
+
+  return(allParams)
+}

@@ -44,7 +44,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   output <- data.frame(unlist(containerPaths, use.names = FALSE), unlist(paramNames, use.names = FALSE), unlist(as.numeric(values), use.names = FALSE), unlist(units, use.names = FALSE))
   colnames(output) <- columnNames
 
-  writexl::write_xlsx(output, path = outputXLSPath, col_names = TRUE)
+  writeExcel(data = output, path = outputXLSPath)
 }
 
 #' Read individual characteristics from file
