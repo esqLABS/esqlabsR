@@ -1,8 +1,6 @@
 ##  context("sourceAll")
 
 test_that("`sourceAll()` sources all files in the directory", {
-  skip_if_not_installed("withr")
-
   withr::with_tempdir(
     code = {
       f1 <- file.create("f1.R")
@@ -21,8 +19,6 @@ test_that("`sourceAll()` sources all files in the directory", {
 ##  context("pathFromClipboard")
 
 test_that("`pathFromClipboard()` converts paths as expected", {
-  skip_if_not_installed("clipr")
-
   # This will work only in interactive mode, i.e. with
   # `devtools::test_active_file()` or `devtools::test()`, but not during R CMD
   # Check on CRAN or AppVeyor where the system clipboard is not available
