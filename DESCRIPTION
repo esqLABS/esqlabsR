@@ -39,6 +39,7 @@ Suggests:
     clipr,
     knitr,
     rmarkdown,
+    shinytest2,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
     withr
