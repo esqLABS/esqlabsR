@@ -183,7 +183,7 @@ test_that("It sets the LLOQ if it is given for any of the original data sets", {
   dataSet1$setValues(xValues = 1:5, yValues = 1:5)
   dataSet2$setValues(xValues = 2:5, yValues = 4:7)
   meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2))
-  expect_equal(meanDataSet$LLOQ, NULL)
+  expect_null(meanDataSet$LLOQ)
 
   dataSet2$LLOQ <- 2
   meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2))

@@ -5,23 +5,23 @@ test_that("esqLABS_colors input validation works as expected", {
 })
 
 test_that("esqLABS_colors wprks with empty argument vector", {
-  expect_equal(length(esqLABS_colors(0)), 0)
+  expect_length(esqLABS_colors(0), 0)
 })
 
 test_that("esqLABS_colors returns two colors", {
-  expect_equal(length(esqLABS_colors(2)), 2)
+  expect_length(esqLABS_colors(2), 2)
 })
 
 test_that("esqLABS_colors returns three colors", {
-  expect_equal(length(esqLABS_colors(3)), 3)
+  expect_length(esqLABS_colors(3), 3)
 })
 
 test_that("esqLABS_colors returns ten colors", {
-  expect_equal(length(esqLABS_colors(10)), 10)
+  expect_length(esqLABS_colors(10), 10)
 })
 
 test_that("esqLABS_colors returns ten colors", {
-  expect_equal(length(esqLABS_colors(10)), 10)
+  expect_length(esqLABS_colors(10), 10)
 })
 
 ## context("col2hsv")
