@@ -18,18 +18,23 @@ knitr::opts_chunk$set(
 )
 ```
 
-The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation (M&S)** activities performed in the R environment. The main focus of the package lies on providing standard workflows for running simulations with the [Open Systems Pharmacology](http://www.open-systems-pharmacology.org/) Software (OSPS) [R package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) `{ospsuite}` and creating standardized figures.
+The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation (M&S)** of PBPK models implemented in PK-Sim and executed from R. The package provides functions to read and run scenarios, workflows and simulations and create plots and visualization based on no-code input from Excel files. The package is based on R functions in the `{ospsuite}` [package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R), part of the [Open Systems Pharmacology](https://www.open-systems-pharmacology.org/) software framework.
 
-## General information
+## Installation ##
+Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts).
 
-This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R-Introduction](https://docs.open-systems-pharmacology.org/working-with-r/r-introduction) section of the OSPS manual.
+## Motivation
+
+This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R Introduction](https://docs.open-systems-pharmacology.org/working-with-r/r-introduction) section of the OSPS manual.
 
 In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the PK-Sim examples folder of the OSPS installation. Alternatively, you can also download it from [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml).
 
-The documentation is divided into two parts covering the following aspects:
+The documentation below covers several aspects of the software usage:
 
 * [Data handling](data-handling.html)
-* [Standard workflow](example-workflow.html)
+* [Running simulations](example-workflow.html)
+* [Visualization and reporting](example-visualization.html)
+* [Sensitivity analysis](example-sensitivity.html)
 
 ## Object-oriented approach
 
@@ -47,3 +52,11 @@ resultOfAFunction <- object1$multiply(1,2)
 ```
 
 Important information about the object can be printed out by calling `print(object)`.
+
+## Function reference
+
+## Contributing
+
+As part of the OSPS software community, follow the OSPS-R [coding standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md). Advice on how to set up your workflow for R development can be found [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's). 
+
+Please note that the esqlabsR project is released with a [Contributor Code of Conduct](https://www.contributor-covenant.org/version/2/0/code_of_conduct/). By contributing to this project, you agree to abide by its terms.
