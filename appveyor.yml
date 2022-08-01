@@ -60,10 +60,9 @@ build_script:
   - Rscript -e "install.packages(c('FME', 'readr', 'tidyr', 'ggplot2', 'patchwork'), repos = 'http://cran.us.r-project.org')"
   # soft dependencies (Suggests)
   - Rscript -e "install.packages(c('covr', 'clipr', 'shinytest2', 'vdiffr', 'withr'), repos = 'http://cran.us.r-project.org')"
-  #- Rscript -e "install.packages('https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-rutils/artifacts/ospsuite.utils.zip', repos = NULL, type = 'binary')"
+  - Rscript -e "install.packages('https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-rutils/artifacts/ospsuite.utils.zip', repos = NULL, type = 'binary')"
   - Rscript -e "install.packages('https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/tlf-library/artifacts/tlf.zip', repos = NULL, type = 'binary')"
   - Rscript -e "install.packages('https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-parameteridentification/artifacts/ospsuite.parameteridentification.zip', repos = NULL, type = 'binary')"
-  - Rscript -e "install.packages('ospsuite.parameteridentification.zip', repos = NULL)"
 
 test_script:
   - travis-tool.sh run_tests
