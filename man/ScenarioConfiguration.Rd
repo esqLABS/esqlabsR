@@ -31,9 +31,11 @@ in the excel file "ApplicationParameters.xlsx"}
 \item{\code{setTestParameters}}{Boolean representing whether parameters defined in \code{TestParameters} are to be applied
 to the simulation}
 
-\item{\code{simulateSteadyState}}{Boolean representing whether the simulation will be brought to a steady-state first}
+\item{\code{simulateSteadyState}}{Boolean representing whether the simulation
+will be brought to a steady-state first}
 
-\item{\code{simulationTime}}{Boolean representing whether the simulation will be brought to a steady-state first}
+\item{\code{simulationTime}}{Simulation time in minutes. If \code{NULL} (default),
+simulation time as defined in the \code{Smulation} object will be used.}
 
 \item{\code{pointsPerMinute}}{Resultion of the ouputs in points per minute}
 
