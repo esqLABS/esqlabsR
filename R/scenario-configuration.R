@@ -18,7 +18,8 @@ ScenarioConfiguration <- R6::R6Class(
         private$.setTestParameters <- value
       }
     },
-    #' @field simulateSteadyState Boolean representing whether the simulation will be brought to a steady-state first
+    #' @field simulateSteadyState Boolean representing whether the simulation
+    #' will be brought to a steady-state first
     simulateSteadyState = function(value) {
       if (missing(value)) {
         private$.simulateSteadyState
@@ -27,7 +28,8 @@ ScenarioConfiguration <- R6::R6Class(
         private$.simulateSteadyState <- value
       }
     },
-    #' @field simulationTime Boolean representing whether the simulation will be brought to a steady-state first
+    #' @field simulationTime Simulation time in minutes. If `NULL` (default),
+    #' simulation time as defined in the `Smulation` object will be used.
     simulationTime = function(value) {
       if (missing(value)) {
         private$.simulationTime
