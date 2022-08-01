@@ -16,7 +16,7 @@ test_that("It can read a properly defined file", {
   sheets <- c("ValidSheet")
   params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
 
-  expect_equal(names(params), c("paths", "values", "units"))
+  expect_named(params, c("paths", "values", "units"))
 })
 
 test_that("It can read a properly defined file with extra columns", {
@@ -24,12 +24,12 @@ test_that("It can read a properly defined file with extra columns", {
   sheets <- c("ValidSheed_extraColumns")
   params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
 
-  expect_equal(names(params), c("paths", "values", "units"))
+  expect_named(params, c("paths", "values", "units"))
 })
 
 test_that("It throws an error when a sheet has wrong structure", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
-  sheets <- c("InvalidSheet")
+  sheets <- "InvalidSheet"
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
   expect_error(readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets),
     regexp =
@@ -74,7 +74,7 @@ test_that("It trows an error if wrong structure is provideed", {
 })
 
 test_that("It extends an empty structure by new values", {
-  params <- list(paths = c(), values = c(), units = c())
+  params <- list(paths = NULL, values = NULL, units = NULL)
   newParams <- list(
     paths = c("Path1", "Path2"), values = c(1, 2),
     units = c("", "µmol")
@@ -91,7 +91,7 @@ test_that("It extends an empty structure by new values", {
 })
 
 test_that("It extends a structure by empty structure", {
-  newParams <- list(paths = c(), values = c(), units = c())
+  newParams <- list(paths = NULL, values = NULL, units = NULL)
   params <- list(
     paths = c("Path1", "Path2"), values = c(1, 2),
     units = c("", "µmol")
