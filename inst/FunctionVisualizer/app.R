@@ -244,8 +244,6 @@ server <- function(input, output, session) {
       plotdata <- subset(plotdata, x_values <= x_max)
       plotdata <- subset(plotdata, x_values >= x_min)
 
-      ys <- unlist(plotdata[, -1])
-      ys <- ys[is.finite(ys)]
       lenObsData <- max(ncol(v$observedData) - 1, 0)
       color <- rainbow(max(ncol(plotdata) - 2, lenObsData))
 
