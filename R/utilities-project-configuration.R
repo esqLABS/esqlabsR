@@ -1,13 +1,15 @@
 #' Create a default `ProjectConfiguration`
 #'
-#' @details Create a `ProjectConfiguration` based on the "ProjectConfiguration.xlsx"
+#' @inheritParams readExcel
+#'
+#' @details Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
 #' located in the "Code" folder.
 #'
 #' @return Object of type `ProjectConfiguration`
 #' @export
-createDefaultProjectConfiguration <- function() {
+createDefaultProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
   # Read data from excel
-  data <- readExcel(path = file.path("ProjectConfiguration.xlsx"))
+  data <- readExcel(path = path)
   # Create an empty project configuration object and population with data from
   # excel
   projectConfiguration <- ProjectConfiguration$new()

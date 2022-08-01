@@ -36,8 +36,10 @@ Set the values of parameters in the simulation by path, if the \code{condition} 
 simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
 sim <- loadSimulation(simPath)
 condition <- function(path) {
-  ospsuite::isExplicitFormulaByPath(path = path,
-  simulation = sim)
+  ospsuite::isExplicitFormulaByPath(
+    path = path,
+    simulation = sim
+  )
 }
 setParameterValuesByPathWithCondition(
   c("Organism|Liver|Volume", "Organism|Volume"),
