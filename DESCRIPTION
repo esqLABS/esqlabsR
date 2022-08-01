@@ -17,7 +17,7 @@ BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
     R (>= 4.1),
     ospsuite (>= 11.0),
-    ospsuite.parameteridentification
+    ospsuite.parameteridentification (>= 1.2.0)
 Imports:
     colorspace,
     dplyr,
