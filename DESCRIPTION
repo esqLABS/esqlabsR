@@ -35,8 +35,6 @@ Imports:
     writexl,
     stringr,
     labeling
-Remotes:
-    esqLABS/ospsuite.parameteridentification
 Suggests: 
     clipr,
     knitr,
