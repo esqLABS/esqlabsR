@@ -14,6 +14,7 @@ test_that("`ScenarioConfiguration` active bindings are modified", {
     mySC$simulationRunOptions <- NULL
 
     mySC$removeParamSheets(NULL)
+    mySC$addParamSheets(c("mySheet1", "mySheet2"))
 
     mySC
   })

@@ -11,6 +11,7 @@
       mySC$simulationType <- "Population"
       mySC$simulationRunOptions <- NULL
       mySC$removeParamSheets(NULL)
+      mySC$addParamSheets(c("mySheet1", "mySheet2"))
       mySC
     Output
       ProjectConfiguration: 
@@ -30,7 +31,7 @@
       ScenarioConfiguration: 
          Model file name: 
          Scenario name: 
-         Parameters sheets: 
+         Parameters sheets: mySheet1 mySheet2 
          Individual Id: 
          Application protocol: 
          Simulation time: 10 
