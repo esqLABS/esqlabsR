@@ -31,7 +31,7 @@ of the simulation are applied as initial conditions for all molecules.
 Default is \code{FALSE}.}
 
 \item{steadyStateTime}{Simulation time (minutes) for the steady-state
-simulation. Must be long enough for system to reach a steady-state 1000 by
+simulation. Must be long enough for system to reach a steady-state. 1000 by
 default.}
 
 \item{ignoreIfFormula}{If \code{TRUE} (default), species and parameters with

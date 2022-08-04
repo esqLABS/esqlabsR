@@ -16,12 +16,12 @@ to be applied to the model}
 Initialized \code{Simulation} object
 }
 \description{
-Load simulation
-Apply parameters from global XLS
-Apply individual physiology
-Apply individual model parameters
-Apply test parameters (TestParameters.R)
-Set simulation outputs (OutputPaths.R)
-Set simulation time
-initializeSimulation()
+Load simulation.
+Apply parameters from global XLS.
+Apply individual physiology.
+Apply individual model parameters.
+Apply test parameters (TestParameters.R).
+Set simulation outputs (OutputPaths.R).
+Set simulation time.
+initializeSimulation().
 }

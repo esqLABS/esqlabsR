@@ -29,7 +29,7 @@ ScenarioConfiguration <- R6::R6Class(
       }
     },
     #' @field simulationTime Simulation time in minutes. If `NULL` (default),
-    #' simulation time as defined in the `Smulation` object will be used.
+    #' simulation time as defined in the `Simulation` object will be used.
     simulationTime = function(value) {
       if (missing(value)) {
         private$.simulationTime
@@ -41,7 +41,7 @@ ScenarioConfiguration <- R6::R6Class(
         private$.simulationTime <- value
       }
     },
-    #' @field pointsPerMinute Resultion of the ouputs in points per minute
+    #' @field pointsPerMinute Resolution of the outputs in points per minute
     pointsPerMinute = function(value) {
       if (missing(value)) {
         private$.pointsPerMinute
@@ -138,7 +138,8 @@ a parameter sheet from the list")
     #' @field applicationProtocol Name of the application protocol to be applied. Defined
     #' in the excel file "ApplicationParameters.xlsx"
     applicationProtocol = NULL,
-    #' @field individualId Id of the individual. If `NULL` (default), the individual as defined in the simulation file will be simulated.
+    #' @field individualId Id of the individual as specified in "IndividualParameters.xlsx". 
+    #' If `NULL` (default), the individual as defined in the simulation file will be simulated.
     individualId = NULL,
     #' @description Add the names of sheets in the parameters excel-file
     #' that will be applied to the simulation

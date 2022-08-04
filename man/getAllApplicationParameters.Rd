@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities-simulation.R
 \name{getAllApplicationParameters}
 \alias{getAllApplicationParameters}
-\title{Get paramters of applications in the simulation}
+\title{Get parameters of applications in the simulation}
 \usage{
 getAllApplicationParameters(simulation, moleculeNames = NULL)
 }
@@ -18,12 +18,12 @@ A list of \code{Parameter} objects defining the applications in the
 simulation.
 }
 \description{
-Get paramters of applications in the simulation
+Get parameters of applications in the simulation
 }
 \details{
 Every application event has a \code{ProtocolSchemaItem} container that
 holds parametes describing the dose, start time, infusion time etc. This
-functions returns a list of all constant parameters located under the
+function returns a list of all constant parameters located under the
 \code{ProtocolSchemaItem} container of applications defined for the \code{moleculeNames}.
 }
 \examples{

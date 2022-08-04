@@ -13,7 +13,7 @@
 #'
 #' @return A named list, where the names are scenario names, and the values are
 #' lists with the initialized `Simulation` object with applied parameters,
-#' `SimulatioResults` objec produced by running the simulation, and output values
+#' `SimulatioResults` objects produced by running the simulation, and output values
 #' of the `SimulationResults`.
 #' @export
 runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NULL,
@@ -80,14 +80,14 @@ runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NU
 #' Initialize a simulation based on scenario definition
 #'
 #' @description
-#' Load simulation
-#' Apply parameters from global XLS
-#' Apply individual physiology
-#' Apply individual model parameters
-#' Apply test parameters (TestParameters.R)
-#' Set simulation outputs (OutputPaths.R)
-#' Set simulation time
-#' initializeSimulation()
+#' Load simulation.
+#' Apply parameters from global XLS.
+#' Apply individual physiology.
+#' Apply individual model parameters.
+#' Apply test parameters (TestParameters.R).
+#' Set simulation outputs (OutputPaths.R).
+#' Set simulation time.
+#' initializeSimulation().
 #'
 #' @param scenarioConfiguration A `ScenarioConfiguration` object
 #' @param customParams A list with three vectors named `paths`, `values`, `units`
