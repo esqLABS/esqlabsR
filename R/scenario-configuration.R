@@ -18,7 +18,8 @@ ScenarioConfiguration <- R6::R6Class(
         private$.setTestParameters <- value
       }
     },
-    #' @field simulateSteadyState Boolean representing whether the simulation will be brought to a steady-state first
+    #' @field simulateSteadyState Boolean representing whether the simulation
+    #' will be brought to a steady-state first
     simulateSteadyState = function(value) {
       if (missing(value)) {
         private$.simulateSteadyState
@@ -27,8 +28,8 @@ ScenarioConfiguration <- R6::R6Class(
         private$.simulateSteadyState <- value
       }
     },
-    #' @field simulationTime Time in minutes to simulate. If `NULL` (default), the duration will be as defined in the
-    #' simulation file
+    #' @field simulationTime Simulation time in minutes. If `NULL` (default),
+    #' simulation time as defined in the `Smulation` object will be used.
     simulationTime = function(value) {
       if (missing(value)) {
         private$.simulationTime
@@ -40,6 +41,7 @@ ScenarioConfiguration <- R6::R6Class(
         private$.simulationTime <- value
       }
     },
+    #' @field pointsPerMinute Resultion of the ouputs in points per minute
     #' @field pointsPerMinute Resolution of the outputs in points per minute
     pointsPerMinute = function(value) {
       if (missing(value)) {

@@ -170,8 +170,10 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
   # Set the outputs
   clearOutputs(simulation)
   addOutputs(quantitiesOrPaths = enumValues(OutputPaths), simulation = simulation)
-  # Set simulation time
-  setOutputInterval(simulation = simulation, startTime = 0, endTime = scenarioConfiguration$simulationTime, resolution = scenarioConfiguration$pointsPerMinute)
+  # Set simulation time if defined by the user.
+  if (!is.null(scenarioConfiguration$simulationTime)) {
+    setOutputInterval(simulation = simulation, startTime = 0, endTime = scenarioConfiguration$simulationTime, resolution = scenarioConfiguration$pointsPerMinute)
+  }
 
   initializeSimulation(
     simulation = simulation,

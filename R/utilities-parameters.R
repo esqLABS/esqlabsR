@@ -278,13 +278,13 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #'
 #' @examples
-#' \dontrun{
-#'
 #' simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
 #' sim <- loadSimulation(simPath)
 #' condition <- function(path) {
-#'   task <- ospsuite:::getContainerTask()
-#'   !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
+#'   ospsuite::isExplicitFormulaByPath(
+#'     path = path,
+#'     simulation = sim
+#'   )
 #' }
 #' setParameterValuesByPathWithCondition(
 #'   c("Organism|Liver|Volume", "Organism|Volume"),
@@ -292,7 +292,6 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #'   sim,
 #'   condition
 #' )
-#' }
 #' @import ospsuite
 #' @export
 setParameterValuesByPathWithCondition <- function(parameterPaths,

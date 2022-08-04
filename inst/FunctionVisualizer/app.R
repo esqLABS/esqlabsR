@@ -113,7 +113,7 @@ server <- function(input, output, session) {
 
       # create min, max, current - numeric inputs for each variable in the equation
       # plus slider input
-      variable_list <- lapply(1:length(v$varnames), function(i) {
+      variable_list <- lapply(seq_along(v$varnames), function(i) {
         splitLayout(
           cellWidths = c("10%", "70%", "10%", "10%"),
           numericInput(v$mins[i], "min", 0),
@@ -140,7 +140,7 @@ server <- function(input, output, session) {
 
   # update slider min when corresponding value in numeric input field is changed
   observer_min <- observe({
-    lapply(1:length(v$mins), function(i) {
+    lapply(seq_along(v$mins), function(i) {
       newval <- input[[v$mins[i]]]
       isolate(updateSliderInput(session, v$varnames[i], min = newval))
     })
@@ -148,7 +148,7 @@ server <- function(input, output, session) {
 
   # update slider max when corresponding value in numeric input field is changed
   observer_max <- observe({
-    lapply(1:length(v$maxs), function(i) {
+    lapply(seq_along(v$maxs), function(i) {
       newval <- input[[v$maxs[i]]]
       stepsize <- as.numeric(paste0("1e", floor(log10(newval - input[[v$mins[i]]])) - 2))
       isolate({
@@ -160,7 +160,7 @@ server <- function(input, output, session) {
 
   # update current slider position when corresponding value in numeric input field is changed
   observer_current <- observe({
-    lapply(1:length(v$current), function(i) {
+    lapply(seq_along(v$current), function(i) {
       newval <- input[[v$current[i]]]
       isolate(updateSliderInput(session, v$varnames[i], value = newval))
     })
@@ -168,7 +168,7 @@ server <- function(input, output, session) {
 
   # update numeric input field 'current' when corresponding slider is used
   observer_slider <- observe({
-    lapply(1:length(v$current), function(i) {
+    lapply(seq_along(v$current), function(i) {
       newval <- input[[v$varnames[i]]]
       isolate(updateNumericInput(session, v$current[i], value = newval))
     })
@@ -244,10 +244,6 @@ server <- function(input, output, session) {
       plotdata <- subset(plotdata, x_values <= x_max)
       plotdata <- subset(plotdata, x_values >= x_min)
 
-      ys <- unlist(plotdata[, -1])
-      ys <- ys[is.finite(ys)]
-      y_min <- min(ys)
-      y_max <- max(ys)
       lenObsData <- max(ncol(v$observedData) - 1, 0)
       color <- rainbow(max(ncol(plotdata) - 2, lenObsData))
 
@@ -318,7 +314,7 @@ server <- function(input, output, session) {
     }
     arg <- input$argument
 
-    lapply(1:length(v$varnames), function(i) {
+    lapply(seq_along(v$varnames), function(i) {
       variable <- v$varnames[i]
       if (variable != arg) {
         shinyjs::enable(variable)
