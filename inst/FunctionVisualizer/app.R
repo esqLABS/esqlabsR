@@ -68,7 +68,7 @@ server <- function(input, output, session) {
     if (!is.null(input$argument)) {
       currentArg <<- input$argument
     }
-    if (v$equation != input$equation) {
+    if (v$equation != input$equation & !is.null(v$snapshots)) {
       colnames(v$snapshots) <- c("x_values", paste(v$equation, "with", colnames(v$snapshots)[-1]))
     }
     v$update <- input$updatevars
