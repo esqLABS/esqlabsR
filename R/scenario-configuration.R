@@ -29,7 +29,7 @@ ScenarioConfiguration <- R6::R6Class(
       }
     },
     #' @field simulationTime Simulation time in minutes. If `NULL` (default),
-    #' simulation time as defined in the `Smulation` object will be used.
+    #' simulation time as defined in the `Simulation` object will be used.
     simulationTime = function(value) {
       if (missing(value)) {
         private$.simulationTime
@@ -41,7 +41,6 @@ ScenarioConfiguration <- R6::R6Class(
         private$.simulationTime <- value
       }
     },
-    #' @field pointsPerMinute Resultion of the ouputs in points per minute
     #' @field pointsPerMinute Resolution of the outputs in points per minute
     pointsPerMinute = function(value) {
       if (missing(value)) {

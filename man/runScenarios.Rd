@@ -29,7 +29,7 @@ current timestamp. The name of the file is the name of the scenario.}
 \value{
 A named list, where the names are scenario names, and the values are
 lists with the initialized \code{Simulation} object with applied parameters,
-\code{SimulatioResults} objec produced by running the simulation, and output values
+\code{SimulatioResults} objects produced by running the simulation, and output values
 of the \code{SimulationResults}.
 }
 \description{
