@@ -15,6 +15,7 @@
 #' myEnum <- enum(c(a = "b"))
 #' myEnum <- enumPut("c", "d", myEnum)
 #' myEnum <- enumPut(c("c", "d", "g"), list(12, 2, "a"), myEnum, overwrite = TRUE)
+#' myEnum <- enumPutList("g", list(12, 2, "a"), myEnum, overwrite = TRUE)
 enumPutList <- function(key, values, enum, overwrite = FALSE) {
   if (length(key) > 1) {
     stop(messages$errorEnumPutListMultipleKeys())

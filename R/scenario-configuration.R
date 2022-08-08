@@ -143,8 +143,8 @@ a parameter sheet from the list"
     #' @field applicationProtocol Name of the application protocol to be applied. Defined
     #' in the excel file "ApplicationParameters.xlsx"
     applicationProtocol = NULL,
-    #' @field individualId Id of the individual. If `NULL` (default), the
-    #'   individual as defined in the simulation file will be simulated.
+    #' @field individualId Id of the individual as specified in "IndividualParameters.xlsx". 
+    #' If `NULL` (default), the individual as defined in the simulation file will be simulated.
     individualId = NULL,
     #' @description Add the names of sheets in the parameters excel-file
     #' that will be applied to the simulation

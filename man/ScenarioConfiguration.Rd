@@ -21,8 +21,8 @@ extension ".pkml"). Must be located in the "modelFolder".}
 \item{\code{applicationProtocol}}{Name of the application protocol to be applied. Defined
 in the excel file "ApplicationParameters.xlsx"}
 
-\item{\code{individualId}}{Id of the individual. If \code{NULL} (default), the
-individual as defined in the simulation file will be simulated.}
+\item{\code{individualId}}{Id of the individual as specified in "IndividualParameters.xlsx".
+If \code{NULL} (default), the individual as defined in the simulation file will be simulated.}
 }
 \if{html}{\out{</div>}}
 }
