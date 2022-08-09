@@ -18,14 +18,39 @@ knitr::opts_chunk$set(
 )
 ```
 
-The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation (M&S)** of PBPK models implemented in PK-Sim and executed from R. The package provides functions to read and run scenarios, workflows and simulations and create plots and visualization based on no-code input from Excel files. The package is based on R functions in the `{ospsuite}` [package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R), part of the [Open Systems Pharmacology](https://www.open-systems-pharmacology.org/) software framework.
+The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation** (M&S) of PBPK models implemented in PK-Sim and executed from R. The package provides functions to read and run scenarios, workflows and simulations and create plots and visualization based on no-code input from Excel files. The package is based on R functions in the `{ospsuite}` [package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R), part of the [Open Systems Pharmacology](https://www.open-systems-pharmacology.org/) software framework.
 
 ## Installation ##
-Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts).
+Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts). The `{esqlabsR}` package requires the following packages: 
+
+* Available from CRAN:
+    * jsonlite
+    * patchwork
+    * purrr
+    * R6
+    * readr
+    * stringr
+    * tidyr
+    * colorspace
+    * dplyr
+    * ggplot2
+    * hash
+    * readxl
+    * shiny
+    * shinyjs
+    * tools
+    * vctrs
+    * writexl
+
+* Available from github: 
+    * [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
+    * [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
+    * [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
+    * [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.0
 
 ## Motivation
 
-This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R Introduction](https://docs.open-systems-pharmacology.org/working-with-r/r-introduction) section of the OSPS manual.
+This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R Introduction](https://docs.open-systems-pharmacology.org/working-with-r/introduction-ospsuite-r) section of the OSPS manual.
 
 In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the PK-Sim examples folder of the OSPS installation. Alternatively, you can also download it from [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml).
 

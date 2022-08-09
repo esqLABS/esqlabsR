@@ -13,7 +13,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>", 
+  eval = FALSE
 )
 ```
 
@@ -21,10 +22,16 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-This package utilites the functionalities for reading data from excel files 
-implemented in the `ospsuite` package. To read data from excel defined in a
-project configuration, use function `loadObservedData()`. The function returns 
-a list of `DataSet` objects.
+The workflow of modeling and simulation involves running simulations and comparing simulated data against observed data. The observed data must come in Excel files and can be loaded into the R environment with a `loadObservedData()` helper function. The following code loads data from an Excel file in `/tests/data` into an `observedData` variable. 
+``` {r}
+projectConfiguration <- createDefaultProjectConfiguration()
+dataSheets <- "<Study Id 1>"
+observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+```
+
+The `createDefaultProjectConfiguration()` function assumes that the working folder has a `ProjectConfiguration.xlsx` Excel file. A default configuration file is shipped with the package: [/tests/data](https://github.com/esqLABS/esqlabsR/tree/develop/tests/data). The `ProjectConfiguration.xlsx` file and the `projectConfiguration` class instance will contain the path to the Excel file with observed data.
+
+The `loadObservedData()` function returns a list of `DataSet` class instances. The resulting object will be used later to [run simulations](example-workflow.html), [plot results](example-visualization.html) and [run a sensitivity analysis](example-sensitivity.html).
 
 For further information, see `ospsuite` documentation on:
 
