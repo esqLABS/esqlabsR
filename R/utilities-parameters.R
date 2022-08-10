@@ -179,7 +179,7 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' Table formulas: If the number of points differ, OR any of the points differ,
 #' OR one of the parameter values is fixed (formula is overridden),
 #' OR both parameter values are fixed and differ.
-#' 
+#'
 #' @param parameter1 First parameter to compare
 #' @param parameter2 Second parameter to compare
 #' @param checkFormulaValues If TRUE, values of explicit formulas are always

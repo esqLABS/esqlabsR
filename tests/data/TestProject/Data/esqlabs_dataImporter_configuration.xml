@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImporterConfiguration fileName="D:\Documents\esqlabs GmbH\Quality Management - Documents\Level 4 Work Instructions\Data Templates\DT04_v02.01_ProjName_TimeValuesData.xlsx" namingConventions="{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}" version="15">
+  <Parameters>
+    <MappingDataFormatParameter columnName="Time">
+      <MappedColumn name="Time">
+        <Unit columnName="Time unit" selectedUnit="h" />
+      </MappedColumn>
+    </MappingDataFormatParameter>
+    <MappingDataFormatParameter columnName="Measurement">
+      <MappedColumn lloqColumn="LLOQ" name="Measurement">
+        <Unit columnName="Measurement unit" selectedUnit="mmol/l" />
+      </MappedColumn>
+    </MappingDataFormatParameter>
+    <MappingDataFormatParameter columnName="Error">
+      <MappedColumn errorStdDev="Arithmetic Standard Deviation" name="Error">
+        <Unit columnName="Measurement unit" selectedUnit="mg/dl" />
+      </MappedColumn>
+    </MappingDataFormatParameter>
+    <MetaDataFormatParameter columnName="Study Id" metaDataId="Study Id" isColumn="1" />
+    <MetaDataFormatParameter columnName="Subject Id" metaDataId="Subject Id" isColumn="1" />
+    <MetaDataFormatParameter columnName="Organ" metaDataId="Organ" isColumn="1" />
+    <MetaDataFormatParameter columnName="Compartment" metaDataId="Compartment" isColumn="1" />
+    <MetaDataFormatParameter columnName="Species" metaDataId="Species" isColumn="1" />
+    <MetaDataFormatParameter columnName="Gender" metaDataId="Gender" isColumn="1" />
+    <MetaDataFormatParameter columnName="Dose" metaDataId="Dose" isColumn="1" />
+    <MetaDataFormatParameter columnName="Molecule" metaDataId="Molecule" isColumn="1" />
+    <MetaDataFormatParameter columnName="Molecular Weight" metaDataId="Molecular Weight" isColumn="1" />
+    <MetaDataFormatParameter columnName="Route" metaDataId="Route" isColumn="1" />
+    <GroupByDataFormatParameter columnName="Group Id" />
+  </Parameters>
+  <FormulaCache>
+    <StringMap />
+  </FormulaCache>
+</ImporterConfiguration>
