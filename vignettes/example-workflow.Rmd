@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Within the `esqlabsR` framework, the simulations are run by defining and executing multiple *scenarios*. To define a scenario, create an Excel file located in `projectConfiguration$scenarioDefinitionFile` that lists the scenario name, involved individuals, application protocols, simulation time, PKML model and model parameters. An example of the scenario definition used in this example is available [on github](https://github.com/esqLABS/esqlabsR/blob/develop/tests/data/Scenarios.xlsx).
+Within the `esqlabsR` framework, the simulations are run by defining and executing multiple *scenarios*. To define a scenario, create an Excel file located in `projectConfiguration$scenarioDefinitionFile` that lists the scenario name, involved individuals, application protocols, simulation time, PKML model and model parameters. An example of the scenario definition used in this example is available [on github](https://github.com/esqLABS/esqlabsR/blob/HEAD/tests/data/TestProject/Parameters/Scenarios.xlsx).
 
 Scenarios are then executed by creating a `ScenarioConfiguration` class instance and calling a `runScenarios()` function:
 

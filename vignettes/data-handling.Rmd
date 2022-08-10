@@ -29,7 +29,7 @@ dataSheets <- "<Study Id 1>"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
 ```
 
-The `createDefaultProjectConfiguration()` function assumes that the working folder has a `ProjectConfiguration.xlsx` Excel file. A default configuration file is shipped with the package: [/tests/data](https://github.com/esqLABS/esqlabsR/tree/develop/tests/data). The `ProjectConfiguration.xlsx` file and the `projectConfiguration` class instance will contain the path to the Excel file with observed data.
+The `createDefaultProjectConfiguration()` function assumes that the working folder has a `ProjectConfiguration.xlsx` Excel file. A default configuration file is shipped with the package: [/tests/data](https://github.com/esqLABS/esqlabsR/tree/HEAD/tests/data/Parameters.xlsx). The `ProjectConfiguration.xlsx` file and the `projectConfiguration` class instance will contain the path to the Excel file with observed data.
 
 The `loadObservedData()` function returns a list of `DataSet` class instances. The resulting object will be used later to [run simulations](example-workflow.html), [plot results](example-visualization.html) and [run a sensitivity analysis](example-sensitivity.html).
 
