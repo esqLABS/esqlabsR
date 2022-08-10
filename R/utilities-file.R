@@ -45,7 +45,7 @@ pathFromClipboard <- function(path = "clipboard") {
 #' @param path Full path of an XLS/XLSX file
 #' @param sheet Name or number of the sheet. If `NULL` (default), the first sheet of the
 #'   file is used.
-#' @param ... Any other parameters that can be passed to readxl::read_excel
+#' @param ... Any other parameters that can be passed to `readxl::read_excel`
 #'
 #' @return A tibble with the contents of the excel sheet
 #' @export

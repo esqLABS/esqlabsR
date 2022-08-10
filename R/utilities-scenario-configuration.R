@@ -65,7 +65,7 @@ readScenarioConfigurationFromExcel <- function(scenarioConfiguration) {
   return(scenarioConfiguration)
 }
 
-#' Set applications
+#' Set an application protocol in a `Simulation`
 #'
 #' @details Set the parameter values describing the application protocol
 #' defined in the scenario configuration. Either calling a function that is stored

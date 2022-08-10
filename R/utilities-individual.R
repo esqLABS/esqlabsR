@@ -118,7 +118,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
 #' For other species, all parameters returned by `createIndividual` are applied.
 #'
 #' @param individualCharacteristics `IndividualCharacteristics` describing an individual. Optional
-#' @param simulation `Simulation` loaded form the PKML file
+#' @param simulation `Simulation` loaded from the PKML file
 #' @import ospsuite
 #' @export
 #'

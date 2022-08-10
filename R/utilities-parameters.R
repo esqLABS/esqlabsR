@@ -104,7 +104,7 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
 #'   units the values are in. Entries from this list will extend or overwrite
 #'   the list `parameters`
 #'
-#'   @details This function adds new parameter entries from `newParameters` to
+#' @details This function adds new parameter entries from `newParameters` to
 #'  `parameters`. If an entry with the same path is already present in `parameters`,
 #'  its value and unit will be overwritten with the values from `newParameters`.
 #'
@@ -164,7 +164,7 @@ extendParameterStructure <- function(parameters, newParameters) {
   return(returnVal)
 }
 
-#' @title Check if two parameters are equal is respect to certain properties.
+#' @title Check if two parameters are equal with respect to certain properties.
 #'
 #' @details
 #' The parameters are not equal if:
@@ -178,8 +178,8 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
 #' Table formulas: If the number of points differ, OR any of the points differ,
 #' OR one of the parameter values is fixed (formula is overridden),
-#' OR both parameter values are fixed and differ
-#' #'
+#' OR both parameter values are fixed and differ.
+#' 
 #' @param parameter1 First parameter to compare
 #' @param parameter2 Second parameter to compare
 #' @param checkFormulaValues If TRUE, values of explicit formulas are always
@@ -278,13 +278,13 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #'
 #' @examples
-#' \dontrun{
-#'
 #' simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
 #' sim <- loadSimulation(simPath)
 #' condition <- function(path) {
-#'   task <- ospsuite:::getContainerTask()
-#'   !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
+#'   ospsuite::isExplicitFormulaByPath(
+#'     path = path,
+#'     simulation = sim
+#'   )
 #' }
 #' setParameterValuesByPathWithCondition(
 #'   c("Organism|Liver|Volume", "Organism|Volume"),
@@ -292,7 +292,6 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #'   sim,
 #'   condition
 #' )
-#' }
 #' @import ospsuite
 #' @export
 setParameterValuesByPathWithCondition <- function(parameterPaths,

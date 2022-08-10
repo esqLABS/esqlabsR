@@ -11,7 +11,7 @@ applyIndividualParameters(individualCharacteristics, simulation)
 \arguments{
 \item{individualCharacteristics}{\code{IndividualCharacteristics} describing an individual. Optional}
 
-\item{simulation}{\code{Simulation} loaded form the PKML file}
+\item{simulation}{\code{Simulation} loaded from the PKML file}
 }
 \description{
 Apply an individual to the simulation.

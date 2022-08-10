@@ -93,14 +93,14 @@ test_that("It returns NULL if the distance is higher than the absolute threshold
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
-  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 0.9), NULL)
+  expect_null(getIndexClosestToValue(value = value, array = array, thresholdRel = 0.9))
 })
 
 test_that("It only finds exact matches for absolute threshold = 0", {
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
-  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0), NULL)
+  expect_null(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0))
   value <- 1
   expect_equal(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0), 3)
 })

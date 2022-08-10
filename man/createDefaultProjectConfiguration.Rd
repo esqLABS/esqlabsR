@@ -4,7 +4,12 @@
 \alias{createDefaultProjectConfiguration}
 \title{Create a default \code{ProjectConfiguration}}
 \usage{
-createDefaultProjectConfiguration()
+createDefaultProjectConfiguration(
+  path = file.path("ProjectConfiguration.xlsx")
+)
+}
+\arguments{
+\item{path}{Full path of an XLS/XLSX file}
 }
 \value{
 Object of type \code{ProjectConfiguration}
@@ -13,6 +18,6 @@ Object of type \code{ProjectConfiguration}
 Create a default \code{ProjectConfiguration}
 }
 \details{
-Create a \code{ProjectConfiguration} based on the "ProjectConfiguration.xlsx"
+Create a \code{ProjectConfiguration} based on the \code{"ProjectConfiguration.xlsx"}
 located in the "Code" folder.
 }

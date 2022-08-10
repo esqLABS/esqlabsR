@@ -17,7 +17,7 @@
 #'   of the simulation are applied as initial conditions for all molecules.
 #'   Default is `FALSE`.
 #' @param steadyStateTime Simulation time (minutes) for the steady-state
-#'   simulation. Must be long enough for system to reach a steady-state 1000 by
+#'   simulation. Must be long enough for system to reach a steady-state. 1000 by
 #'   default.
 #' @param ignoreIfFormula If `TRUE` (default), species and parameters with
 #'   initial values defined by a formula are not included in the steady-state
@@ -151,7 +151,7 @@ compareSimulationParameters <- function(simulation1, simulation2) {
   return(list(In1NotIn2 = pathsIn1NotIn2, In2NotIn1 = pathsIn2NotIn1, Different = pathsDiff))
 }
 
-#' Get paramters of applications in the simulation
+#' Get parameters of applications in the simulation
 #'
 #' @param simulation A `Simulation` object
 #' @param moleculeNames Names of the molecules which applications parameters
@@ -160,7 +160,7 @@ compareSimulationParameters <- function(simulation1, simulation2) {
 #'
 #' @details Every application event has a `ProtocolSchemaItem` container that
 #' holds parametes describing the dose, start time, infusion time etc. This
-#' functions returns a list of all constant parameters located under the
+#' function returns a list of all constant parameters located under the
 #' `ProtocolSchemaItem` container of applications defined for the `moleculeNames`.
 #'
 #' @return A list of `Parameter` objects defining the applications in the
