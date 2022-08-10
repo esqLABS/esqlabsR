@@ -33,13 +33,18 @@ The `createDefaultProjectConfiguration()` function assumes that the working fold
 
 The `loadObservedData()` function returns a list of `DataSet` class instances. The resulting object will be used later to [run simulations](example-workflow.html), [plot results](example-visualization.html) and [run a sensitivity analysis](example-sensitivity.html).
 
-For further information, see `ospsuite` documentation on:
+More detailed information on function signatures can be found in:
 
-- [DataImporterConfiguration](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataImporterConfiguration.html)
-- [createImporterConfigurationForFile()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/createImporterConfigurationForFile.html)
-- [loadDataImporterConfiguration()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html)
-- [DataSet](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
-- [dataSetToDataFrame](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/dataSetToDataFrame.html)
-- [loadDataSetsFromExcel()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html)
-- [loadDataSetFromPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetFromPKML.html)
-- [saveDataSetToPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/saveDataSetToPKML.html)
+* `esqlabsR` documentation on:
+    * [createDefaultProjectConfiguration()](https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html)
+    * [ProjectConfiguration class](https://esqlabs.github.io/esqlabsR/reference/ProjectConfiguration.html)
+    * [loadObservedData()](https://esqlabs.github.io/esqlabsR/reference/loadObservedData.html)
+* `ospsuite` documentation on:
+    * [DataImporterConfiguration class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataImporterConfiguration.html)
+    * [createImporterConfigurationForFile()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/createImporterConfigurationForFile.html)
+    * [loadDataImporterConfiguration()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html)
+    * [DataSet class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
+    * [dataSetToDataFrame()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/dataSetToDataFrame.html)
+    * [loadDataSetsFromExcel()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html)
+    * [loadDataSetFromPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetFromPKML.html)
+    * [saveDataSetToPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/saveDataSetToPKML.html)
