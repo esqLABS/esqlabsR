@@ -1,5 +1,5 @@
 testInstalledPackages <- function() {
-  # returns TRUE if esqlabsR can be loaded, 
+  # returns TRUE if esqlabsR can be loaded,
   # or raises errors otherwise
   library(esqlabsR)
   return(TRUE)
@@ -7,7 +7,7 @@ testInstalledPackages <- function() {
 
 testPKSIMConnection <- function() {
   pkSimPath <- NULL
-  # returns TRUE if esqlabsR can be loaded, 
+  # returns TRUE if esqlabsR can be loaded,
   # or raises errors otherwise
   library(esqlabsR)
   library(ospsuite)
@@ -16,7 +16,7 @@ testPKSIMConnection <- function() {
 }
 
 testSimulationsRunning <- function() {
-  # returns TRUE if simulations run correctly, 
+  # returns TRUE if simulations run correctly,
   # or raises errors otherwise
   library(esqlabsR)
   sourceAll(file.path(getwd(), "utils"))
@@ -38,11 +38,13 @@ testSimulationsRunning <- function() {
 }
 
 displayProgress <- function(current, success = TRUE, message = NULL, suppressOutput = TRUE) {
-  states <- c("Installing RENV", "Installing CRAN packages", 
-              "Checking RTOOLS", "Installing rClr", "Installing ospsuite.utils", 
-              "Installing tlf", "Installing ospsuite", "Installing ospsuite.PI", 
-              "Installing esqlabsR", "Testing installed packages", "Testing PK-Sim connection",
-              "Testing simulations")
+  states <- c(
+    "Installing RENV", "Installing CRAN packages",
+    "Checking RTOOLS", "Installing rClr", "Installing ospsuite.utils",
+    "Installing tlf", "Installing ospsuite", "Installing ospsuite.PI",
+    "Installing esqlabsR", "Testing installed packages", "Testing PK-Sim connection",
+    "Testing simulations"
+  )
   if (suppressOutput) {
     cat("\014")
     for (i in seq_along(states)) {
@@ -60,12 +62,13 @@ updateEnvironment <- function(rtoolsPath = NULL, rclrVersion = "0.9.2", suppress
   # Use RENV to snapshot the existing environment
   installationLockfile <- paste0("pre.", as.integer(Sys.time()), ".lock")
   renv::snapshot(lockfile = installationLockfile, prompt = FALSE)
-  
+
   # Update the packages
   displayProgress("Installing CRAN packages", suppressOutput = suppressOutput)
-  install.packages(c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs", "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "patchwork"), 
-                   dependencies = TRUE)
-  
+  install.packages(c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs", "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "patchwork"),
+    dependencies = TRUE
+  )
+
   displayProgress("Checking RTOOLS", suppressOutput = suppressOutput)
   if (Sys.which("make") == "") { # rtools is not found
     if (!is.null(rtoolsPath)) { # adding an existing installation of rtools to path
@@ -83,7 +86,7 @@ updateEnvironment <- function(rtoolsPath = NULL, rclrVersion = "0.9.2", suppress
   displayProgress("Installing rClr", suppressOutput = suppressOutput)
   if (version$major == "4") {
     install.packages(paste0("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v", rclrVersion, "/rClr_", rclrVersion, ".zip"), repos = NULL)
-  } 
+  }
   if (version$major == "3") {
     install.packages(paste0("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v", rclrVersion, "-R3/rClr_", rclrVersion, ".zip"), repos = NULL)
   }
@@ -97,7 +100,7 @@ updateEnvironment <- function(rtoolsPath = NULL, rclrVersion = "0.9.2", suppress
   install.packages("https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-parameteridentification/artifacts/ospsuite.parameteridentification.zip", repos = NULL)
   displayProgress("Installing esqlabsR", suppressOutput = suppressOutput)
   install.packages("https://ci.appveyor.com/api/projects/StephanSchaller/esqlabsr/artifacts/esqlabsR.zip", repos = NULL)
-  
+
   # Test if a new environment is working
   # If it does, snapshot the environment with an interactive prompt
   # If it does not, revert to a previous state
@@ -112,13 +115,13 @@ updateEnvironment <- function(rtoolsPath = NULL, rclrVersion = "0.9.2", suppress
     }
     return()
   }
-  
+
   displayProgress("Testing PK-Sim connection", suppressOutput = suppressOutput)
   flagConnection <- FALSE
   try(flagConnection <- testPKSIMConnection())
   if (!flagConnection) {
     displayProgress("Testing PK-Sim connection", success = FALSE, message = "PK-Sim fails to load. The installation might be incompatible with your current version of PK-Sim", suppressOutput = suppressOutput)
-    #renv::restore(installationLockfile, prompt = FALSE, clean = TRUE)
+    # renv::restore(installationLockfile, prompt = FALSE, clean = TRUE)
     if (file.exists(installationLockfile)) {
       file.remove(installationLockfile)
     }
@@ -130,7 +133,7 @@ updateEnvironment <- function(rtoolsPath = NULL, rclrVersion = "0.9.2", suppress
   try(flagSimulations <- testSimulationsRunning())
   if (!flagSimulations) {
     displayProgress("Testing simulations", success = FALSE, message = "Simulations failed. The installation might be incompatible with your current version of PK-Sim", suppressOutput = suppressOutput)
-    #renv::restore(installationLockfile, prompt = FALSE, clean = TRUE)
+    # renv::restore(installationLockfile, prompt = FALSE, clean = TRUE)
     if (file.exists(installationLockfile)) {
       file.remove(installationLockfile)
     }
