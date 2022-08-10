@@ -76,17 +76,6 @@ geosd <- function(x, na.rm = FALSE) {
   exp(sd(log(x), na.rm = na.rm))
 }
 
-#' Get hash code of the .NET object
-#'
-#' @param netWrapper Any object from the ospsuite-R that inherits from DotNetWrapper
-#' @import rClr
-#'
-#' @return Value of the .NET-method "GetHashCode"
-.getNetHashCode <- function(netWrapper) {
-  validateIsOfType(netWrapper, "DotNetWrapper")
-  rClr::clrGet(netWrapper$ref, "HashCode")
-}
-
 
 #' Remove an entry from a list
 #'

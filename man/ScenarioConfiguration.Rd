@@ -29,8 +29,8 @@ If \code{NULL} (default), the individual as defined in the simulation file will 
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{setTestParameters}}{Boolean representing whether parameters defined in \code{TestParameters} are to be applied
-to the simulation}
+\item{\code{setTestParameters}}{Boolean representing whether parameters defined
+in \code{TestParameters} are to be applied to the simulation}
 
 \item{\code{simulateSteadyState}}{Boolean representing whether the simulation
 will be brought to a steady-state first}
@@ -40,13 +40,15 @@ simulation time as defined in the \code{Simulation} object will be used.}
 
 \item{\code{pointsPerMinute}}{Resolution of the outputs in points per minute}
 
-\item{\code{steadyStateTime}}{Time in minutes to simulate if simulating steady-state. May be NULL}
+\item{\code{steadyStateTime}}{Time in minutes to simulate if simulating steady-state. May be \code{NULL}.}
 
-\item{\code{paramSheets}}{Names of the sheets from the parameters-excel file that will be applied to the simulation}
+\item{\code{paramSheets}}{Names of the sheets from the parameters-excel file
+that will be applied to the simulation}
 
-\item{\code{simulationType}}{Type of the simulation - "Individual" or "Population". If "Population", population characteristics
-are created based on information stored in \code{populationParamsFile}.
-Default is "Individual"}
+\item{\code{simulationType}}{Type of the simulation - "Individual" or
+"Population". If "Population", population characteristics are created
+based on information stored in \code{populationParamsFile}. Default is
+"Individual"}
 
 \item{\code{simulationRunOptions}}{Object of type \code{SimulationRunOptions} that will be passed
 to simulation runs. If \code{NULL}, default options are used}

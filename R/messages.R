@@ -52,6 +52,9 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
   paste0("nrOfColors must be positive, value ", nrOfColors, " is not valid!")
 }
 
+messages$wrongSimulationType <- function() {
+  "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"
+}
 
 messages$noPKDataToWrite <- function() {
   "`pkDataFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."

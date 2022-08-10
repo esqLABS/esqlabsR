@@ -8,8 +8,8 @@ ScenarioConfiguration <- R6::R6Class(
   inherit = ospsuite.utils::Printable,
   cloneable = TRUE,
   active = list(
-    #' @field setTestParameters Boolean representing whether parameters defined in `TestParameters` are to be applied
-    #' to the simulation
+    #' @field setTestParameters Boolean representing whether parameters defined
+    #'   in `TestParameters` are to be applied to the simulation
     setTestParameters = function(value) {
       if (missing(value)) {
         private$.setTestParameters
@@ -53,7 +53,7 @@ ScenarioConfiguration <- R6::R6Class(
         private$.pointsPerMinute <- value
       }
     },
-    #' @field steadyStateTime Time in minutes to simulate if simulating steady-state. May be NULL
+    #' @field steadyStateTime Time in minutes to simulate if simulating steady-state. May be `NULL`.
     steadyStateTime = function(value) {
       if (missing(value)) {
         private$.steadyStateTime
@@ -65,18 +65,23 @@ ScenarioConfiguration <- R6::R6Class(
         private$.steadyStateTime <- value
       }
     },
-    #' @field paramSheets Names of the sheets from the parameters-excel file that will be applied to the simulation
+    #' @field paramSheets Names of the sheets from the parameters-excel file
+    #'   that will be applied to the simulation
     paramSheets = function(value) {
       if (missing(value)) {
         private$.paramSheets
       } else {
-        stop("Field paramSheets is read-only! Use functions 'addParamSheet' and 'removeParamSheet' to add or remove
-a parameter sheet from the list")
+        stop(paste0(
+          messages$errorPropertyReadOnly("paramSheets"),
+          ". Use functions 'addParamSheet' and 'removeParamSheet' to add or remove
+a parameter sheet from the list"
+        ))
       }
     },
-    #' @field simulationType Type of the simulation - "Individual" or "Population". If "Population", population characteristics
-    #' are created based on information stored in `populationParamsFile`.
-    #' Default is "Individual"
+    #' @field simulationType Type of the simulation - "Individual" or
+    #'   "Population". If "Population", population characteristics are created
+    #'   based on information stored in `populationParamsFile`. Default is
+    #'   "Individual"
     simulationType = function(value) {
       if (missing(value)) {
         private$.simulationType
@@ -84,7 +89,7 @@ a parameter sheet from the list")
         if (value %in% c("Individual", "Population")) {
           private$.simulationType <- value
         } else {
-          stop("Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'")
+          stop(messages$wrongSimulationType())
         }
       }
     },
@@ -145,7 +150,11 @@ a parameter sheet from the list")
     #' that will be applied to the simulation
     #' @param sheetNames A name or a list of names of the excel sheet
     addParamSheets = function(sheetNames) {
-      private$.paramSheets <- enumPut(sheetNames, sheetNames, enum = private$.paramSheets, overwrite = TRUE)
+      private$.paramSheets <- enumPut(sheetNames,
+        sheetNames,
+        enum = private$.paramSheets,
+        overwrite = TRUE
+      )
     },
     #' @description Remove the names of sheets in the parameters excel-file
     #' from the list of sheets `paramSheets`
