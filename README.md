@@ -1,6 +1,6 @@
-# esqlabsR
+# esqlabsR <img src="man/figures/logo.png" align="right" width="240" />
 
-Utilities functions for modeling and simulation workflows within *esqLABS*.
+Utilities functions for modeling and simulation workflows within *esqLABS*. 
 
 <!-- badges: start -->
 
