@@ -9,7 +9,8 @@ Utilities functions for modeling and simulation workflows within *esqLABS*.
   
 <!-- badges: end -->
 
-## Installation ##
+## Installation
+
 Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts). The `{esqlabsR}` package requires the following packages: 
 
 * Available from CRAN:
