@@ -50,3 +50,10 @@ resultOfAFunction <- object1$multiply(1,2)
 ```
 
 Important information about the object can be printed out by calling `print(object)`.
+
+## Configuring a project with no-code Excel files
+
+To facilitate modeling activities in a team with diverse backgrounds, `esqlabsR` employs Excel configuration files that define every aspect of a modeling project. The cornerstone of this configuration is a `ProjectConfiguration.xlsx` Excel file that should be located in the `/Code/` folder of the work package. This Excel file is expected to contain fields that populate an instance of a [`ProjectConfiguration` class](../reference/ProjectConfiguration.html). Paths and filenames in the project configuration Excel file are used later to [read observed data](/data-handling.html), define the [simulation scenarios](/example-workflow.html) and store the analysis results.
+
+The project configuration Excel file references eight more Excel files that contain model parameters, scenario definitions and compound properties. Example of configuration files are included in the `/tests/data/TestProject` folder of the repository.
+
