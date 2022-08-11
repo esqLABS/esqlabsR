@@ -13,7 +13,7 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>", 
+  comment = "#>",
   eval = FALSE
 )
 ```
@@ -23,6 +23,7 @@ library(esqlabsR)
 ```
 
 The workflow of modeling and simulation involves running simulations and comparing simulated data against observed data. The observed data must come in Excel files and can be loaded into the R environment with a `loadObservedData()` helper function. The following code loads data from an Excel file in `/tests/data` into an `observedData` variable. 
+
 ``` {r}
 projectConfiguration <- createDefaultProjectConfiguration()
 dataSheets <- "<Study Id 1>"

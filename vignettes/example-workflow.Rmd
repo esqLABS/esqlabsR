@@ -11,7 +11,7 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>", 
+  comment = "#>",
   eval = FALSE
 )
 ```
@@ -29,9 +29,11 @@ scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
 OutputPaths <- enum(list(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 ))
-simulatedScenarios <- runScenarios(scenarioNames = c("TestScenario"),
-                                   scenarioConfiguration = scenarioConfiguration, 
-                                   customParams = NULL, saveSimulationsToPKML = FALSE)
+simulatedScenarios <- runScenarios(
+  scenarioNames = c("TestScenario"),
+  scenarioConfiguration = scenarioConfiguration,
+  customParams = NULL, saveSimulationsToPKML = FALSE
+)
 ```
 
 The `runScenarios()` function relies on an `OutputPaths` variable being defined in the current environment. The variable is expected to contain [references to an entity](https://docs.open-systems-pharmacology.org/working-with-mobi/mobi-documentation/model-building-components) that will be used as an output variable for the simulation.
