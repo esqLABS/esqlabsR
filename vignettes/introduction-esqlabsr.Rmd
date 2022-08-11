@@ -52,7 +52,7 @@ Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project
 
 This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R Introduction](https://docs.open-systems-pharmacology.org/working-with-r/introduction-ospsuite-r) section of the OSPS manual.
 
-In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the PK-Sim examples folder of the OSPS installation. Alternatively, you can also download it from [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml).
+In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the [GitHub repository](https://github.com/Open-Systems-Pharmacology/Example_Aciclovir) as PK-Sim project. The pkml file can be downloaded from [ospsuite-r](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml) repository.
 
 The documentation below covers several aspects of the software usage:
 
