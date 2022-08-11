@@ -49,7 +49,19 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/Distributions.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-getNetHashCode.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-setApplicationFromExcel.html</loc>
@@ -61,10 +73,16 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/escapeForRegex.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/esqlabsRSettingNames.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/esqLABS_colors.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/executeInParallel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/exportParametersToXLS.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/exportSteadyStateToXLS.html</loc>
@@ -89,6 +107,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/geosd.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/getAllApplicationParameters.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/getEsqlabsRSetting.html</loc>
@@ -194,6 +215,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/stringToNum.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/writeExcel.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/writeIndividualToXLS.html</loc>

@@ -18,18 +18,21 @@ knitr::opts_chunk$set(
 )
 ```
 
-The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation (M&S)** activities performed in the R environment. The main focus of the package lies on providing standard workflows for running simulations with the [Open Systems Pharmacology](http://www.open-systems-pharmacology.org/) Software (OSPS) [R package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) `{ospsuite}` and creating standardized figures.
+The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation** (M&S) of PBPK and QSP models implemented in [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS) and executed from R. The package provides functions to read and run scenarios, workflows and simulations and create plots and visualization based on no-code input from Excel files. The package is based on R functions in the [`ospsuite` package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R).
 
-## General information
 
-This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R-Introduction](https://docs.open-systems-pharmacology.org/working-with-r/r-introduction) section of the OSPS manual.
+## Motivation
 
-In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the PK-Sim examples folder of the OSPS installation. Alternatively, you can also download it from [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml).
+This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R Introduction](https://docs.open-systems-pharmacology.org/working-with-r/introduction-ospsuite-r) section of the OSPS manual.
 
-The documentation is divided into two parts covering the following aspects:
+In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the [GitHub repository](https://github.com/Open-Systems-Pharmacology/Example_Aciclovir) as PK-Sim project. The pkml file can be downloaded from [ospsuite-r](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml) repository.
+
+The articles below covers several aspects of the software usage:
 
 * [Data handling](data-handling.html)
-* [Standard workflow](example-workflow.html)
+* [Running simulations](example-workflow.html)
+* [Visualization and reporting](example-visualization.html)
+* [Sensitivity analysis](example-sensitivity.html)
 
 ## Object-oriented approach
 

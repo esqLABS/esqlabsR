@@ -11,44 +11,37 @@ Utilities functions for modeling and simulation workflows within *esqLABS*.
 
 ## Installation
 
-The latest version of the package comes as a binary `*.zip` and can be downloaded from here (the `.zip` folder under `Artifacts` panel):
-<https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts>
+Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts). The `{esqlabsR}` package requires the following packages: 
 
-## Required packages
+* Available from CRAN:
+    * jsonlite
+    * patchwork
+    * purrr
+    * R6
+    * readr
+    * stringr
+    * tidyr
+    * colorspace
+    * dplyr
+    * ggplot2
+    * hash
+    * readxl
+    * shiny
+    * shinyjs
+    * tools
+    * vctrs
+    * writexl
 
-- rClr >0.9.2
-  - https://github.com/Open-Systems-Pharmacology/rClr/releases/ or esqLABS internal
-- ospsuite.utils
-  - https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils or esqLABS internal
-- tlf
-  - https://github.com/Open-Systems-Pharmacology/TLF-Library or esqLABS internal
-- ospsuite-r > 11.0
-  - https://github.com/Open-Systems-Pharmacology/OSPSuite-R or esqLABS internal
+* Available from github: 
+    * [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
+    * [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
+    * [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
+    * [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.0
   
 ### For projects created for version 3
 
 To run code written for version 3 of `esqlabsR` package, additionally install the
 [esqlabsRLegacy](https://github.com/esqLABS/esqlabsRLegacy) package.
-
-### From CRAN:
-
-- jsonlite
-- patchwork
-- purrr
-- R6
-- readr
-- stringr
-- tidyr
-- colorspace
-- dplyr
-- ggplot2
-- hash
-- readxl
-- shiny
-- shinyjs
-- tools
-- vctrs
-- writexl
 
 ## Contributing
 
