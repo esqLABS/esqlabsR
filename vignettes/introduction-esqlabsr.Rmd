@@ -20,33 +20,6 @@ knitr::opts_chunk$set(
 
 The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation** (M&S) of PBPK models implemented in PK-Sim and executed from R. The package provides functions to read and run scenarios, workflows and simulations and create plots and visualization based on no-code input from Excel files. The package is based on R functions in the `{ospsuite}` [package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R), part of the [Open Systems Pharmacology](https://www.open-systems-pharmacology.org/) software framework.
 
-## Installation ##
-Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts). The `{esqlabsR}` package requires the following packages: 
-
-* Available from CRAN:
-    * jsonlite
-    * patchwork
-    * purrr
-    * R6
-    * readr
-    * stringr
-    * tidyr
-    * colorspace
-    * dplyr
-    * ggplot2
-    * hash
-    * readxl
-    * shiny
-    * shinyjs
-    * tools
-    * vctrs
-    * writexl
-
-* Available from github: 
-    * [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
-    * [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
-    * [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
-    * [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.0
 
 ## Motivation
 
@@ -54,7 +27,7 @@ This package builds up on the functionality of the `{ospsuite}` package. It is s
 
 In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the PK-Sim examples folder of the OSPS installation. Alternatively, you can also download it from [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml).
 
-The documentation below covers several aspects of the software usage:
+The articles below covers several aspects of the software usage:
 
 * [Data handling](data-handling.html)
 * [Running simulations](example-workflow.html)
@@ -77,11 +50,3 @@ resultOfAFunction <- object1$multiply(1,2)
 ```
 
 Important information about the object can be printed out by calling `print(object)`.
-
-## Function reference
-
-## Contributing
-
-As part of the OSPS software community, follow the OSPS-R [coding standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md). Advice on how to set up your workflow for R development can be found [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's). 
-
-Please note that the esqlabsR project is released with a [Contributor Code of Conduct](https://www.contributor-covenant.org/version/2/0/code_of_conduct/). By contributing to this project, you agree to abide by its terms.
