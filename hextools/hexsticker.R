@@ -14,7 +14,7 @@ company <- image_read("hextools/esqlabs.jpg")
 sticker(
   company,
   package = "esqlabsR",
-  p_color	= "#545452",
+  p_color       = "#545452",
   p_family = google_font_name,
   p_size = 40,
   p_x = 1,
