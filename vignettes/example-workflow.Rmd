@@ -61,6 +61,8 @@ print(simulatedScenarios$TestScenario$results)
 print(head(simulatedScenarios$TestScenario$outputValues$data))
 ```
 
+== Troubleshooting 
+
 More detailed information on function signatures can be found in:
 
 * `esqlabsR` documentation on:
