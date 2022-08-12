@@ -1,6 +1,6 @@
 # esqlabsR <img src="man/figures/logo.png" align="right" width="240" />
 
-Utilities functions for modeling and simulation workflows within *esqLABS*. 
+The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation** (M&S) of PBPK and QSP models implemented in [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS) and executed from R. The package provides functions to read and run scenarios, workflows and simulations and create plots and visualization based on no-code input from Excel files. The package is based on R functions in the [`ospsuite` package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R).
 
 <!-- badges: start -->
 

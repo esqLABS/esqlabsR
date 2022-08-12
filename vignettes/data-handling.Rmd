@@ -15,18 +15,20 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+knitr::opts_knit$set(
+  root.dir = "../tests/data/TestProject/Code/"
+)
 ```
 
 ```{r, echo = FALSE, results = "hide", message = FALSE}
 library(esqlabsR)
 ```
 
-The workflow of modeling and simulation involves running simulations and comparing simulated data against observed data. Functionalities of `esqlabsR` require observed data to be present as [`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html) objects. Please refer to the article [Observed data](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/observed-data.html) for information on how to load data from excel or *.pkml files.
+The workflow of modeling and simulation involves running simulations and comparing simulated data against observed data. Functionalities of `esqlabsR` require observed data to be present as [`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html) objects. Please refer to the article [Observed data](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/observed-data.html) for information on how to load data from Excel or *.pkml files.
 
-The function `loadObservedData()` facilitates loading data in standard esqlabs projects. Assuming the standard project folder structure with observed data being present in the "Data" folder, loading data can be done with the following code:
+The function `loadObservedData()` facilitates loading data in standard esqlabs projects. Assuming the standard project folder structure is followed, and Excel files with observed data are present in the `Data` folder, the following chunk of code loads the data:
 
 ```{r loadObservedData}
-setwd("../tests/data/TestProject/Code/")
 # Create a ProjectConfiguration based on the file located in `tests/data/TestProject/Code`
 projectConfiguration <- createDefaultProjectConfiguration()
 dataSheets <- "Laskin 1982.Group A"
@@ -34,11 +36,7 @@ observedData <- loadObservedData(projectConfiguration = projectConfiguration, sh
 
 print(names(observedData))
 ```
-The function will load from the excel file specified in the `ProjectConfiguration.xlsx`. 
-The function returns a list of `DataSet` class instances. The resulting object 
-will be used later to [run simulations](example-workflow.html), 
-[plot results](example-visualization.html) and 
-[run a sensitivity analysis](example-sensitivity.html).
+The `loadObservedData()` function loads the data from a path stored in the `projectConfiguration$dataFile`. This function returns a list of `DataSet` class instances. The resulting object will be used later to [run simulations](example-workflow.html), [plot results](example-visualization.html) and [run a sensitivity analysis](example-sensitivity.html).
 
 More detailed information on function signatures can be found in:
 
