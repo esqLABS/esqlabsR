@@ -32,7 +32,7 @@ The articles below covers several aspects of the software usage:
 * [Data handling](data-handling.html)
 * [Running simulations](example-workflow.html)
 * [Visualization and reporting](example-visualization.html)
-* [Sensitivity analysis](example-sensitivity.html)
+* [Sensitivity analysis](sensitivity-analysis.html)
 
 ## Object-oriented approach
 
