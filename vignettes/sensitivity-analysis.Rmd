@@ -53,7 +53,7 @@ In the aciclovir example case, the default value of lipophilicity was -0.100 log
 
 The results of the sensitivity analysis can be plotted with the `sensitivitySpiderPlot()` function.
 
-```{r plot}
+```{r plot, fig.width=7, fig.height=4}
 sensitivitySpiderPlot(analysis)
 ```
 

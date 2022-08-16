@@ -51,23 +51,23 @@ Plotting functions in the `{ospsuite}` package are wrappers around `{tlf}` plott
 
 Time profile plots visualize the pharmacokinetics of the drug in question and help assess if the observed data (shown with scatter plots) match the simulated data (shown with line plots).
 
-```{r plot time profile}
+```{r plot time profile, fig.width=7, fig.height=4}
 plotIndividualTimeProfile(dataCombined)
 ```
 
 Observed vs simulated plots show if simulated time points and observed time points follow a linear trend.
 
-```{r plot obs vs pred}
+```{r plot obs vs pred, fig.width=7, fig.height=4}
 plotObservedVsSimulated(dataCombined)
 ```
 
 Residual plots show if there is a systematic bias in how the simulation represents values either in high-concentration or low-concentration regions, or, alternatively, in early or late time periods.
 
-```{r residuals vs simulated}
+```{r residuals vs simulated, fig.width=7, fig.height=4}
 plotResidualsVsSimulated(dataCombined)
 ```
 
-```{r residuals vs time}
+```{r residuals vs time, fig.width=7, fig.height=4}
 plotResidualsVsTime(dataCombined)
 ```
 
