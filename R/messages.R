@@ -59,3 +59,7 @@ messages$wrongSimulationType <- function() {
 messages$noPKDataToWrite <- function() {
   "`pkDataFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
 }
+
+messages$cannotGetMoleculeFromQuantity <- function(quantityPath, optionalMessage = NULL) {
+  paste0("Could not retrieve molecule name for the quantity with the path '", quantityPath, "'. ", optionalMessage)
+}
