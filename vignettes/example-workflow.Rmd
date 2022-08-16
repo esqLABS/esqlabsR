@@ -61,7 +61,7 @@ print(simulatedScenarios$TestScenario$results)
 print(head(simulatedScenarios$TestScenario$outputValues$data))
 ```
 
-== Troubleshooting 
+## Troubleshooting 
 
 More detailed information on function signatures can be found in:
 
