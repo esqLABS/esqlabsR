@@ -34,6 +34,8 @@ simulatedScenarios <- runScenarios(
 )
 ```
 
+### Workflow
+
 Sensitivity analysis quantifies how the pharmacokinetics of the drug changes with a variation in simulation parameters. This is important to track if the values of simulation parameters are uncertain.
 
 In the aciclovir simulation example, the lipophilicity of aciclovir was assumed to be -0.100 in log units. In the sensitivity analysis, we want to quantify how much the pharmacokinetic parameters change if the lipophilicity of aciclovir varies in the (-0.01 .. -1.00) range.
@@ -57,7 +59,9 @@ The results of the sensitivity analysis can be plotted with the `sensitivitySpid
 sensitivitySpiderPlot(analysis)
 ```
 
-## Troubleshooting
+### Troubleshooting
+
+* The `SensitivityPKParameter` column in the output of `analysis$pkData` will be `NA` in the rows corresponding to the initial parameter values.
 
 More detailed information on function signatures can be found in:
 

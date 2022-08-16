@@ -25,6 +25,8 @@ dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
 ```
 
+### Workflow 
+
 Within the `esqlabsR` framework, the simulations are run by defining and executing multiple *scenarios*. To define a scenario, create an Excel file located in `projectConfiguration$scenarioDefinitionFile` that lists the scenario name, involved individuals, application protocols, simulation time, PKML model and model parameters. 
 
 The package includes [an example scenario](https://github.com/esqLABS/esqlabsR/blob/HEAD/tests/data/TestProject/Parameters/Scenarios.xlsx) that models the administration of a single dose of 250 mg aciclovir intravenously to an individual with a 90 mL/min estimated glomerular filtration rate. To define this scenario, the example configuration includes several Excel configuration files:
@@ -61,7 +63,9 @@ print(simulatedScenarios$TestScenario$results)
 print(head(simulatedScenarios$TestScenario$outputValues$data))
 ```
 
-## Troubleshooting 
+### Troubleshooting 
+
+* The `runScenarios()` function will fail if the `OutputPaths` variable is missing in the current environment. Make sure to have this variable set up immediately before calling the `runScenarios()` function.
 
 More detailed information on function signatures can be found in:
 

@@ -34,6 +34,8 @@ simulatedScenarios <- runScenarios(
 )
 ```
 
+### Workflow
+
 Plotting the simulation results is an important part of model diagnostics and quality control. Simulated modeling scenarios can be passed to plotting functions from the `{ospsuite}` package to create uniformly-looking plots.
 
 `DataCombined` is a class used to store matching observed and simulated data. Initialize a new class instance and populate it with data with the following code:
@@ -78,7 +80,9 @@ plotObject <- plotIndividualTimeProfile(dataCombined)
 ggplot2::ggsave(filename = "../Results/aciclovir_time_profile.png", plotObject, width = 8, height = 4)
 ```
 
-## Troubleshooting
+### Troubleshooting
+
+* At any time, you can check the groups assigned to the datasets in the `DataCombined` class instance by examining the output of `dataCombined$toDataFrame()`.
 
 More detailed information on function signatures can be found in:
 
