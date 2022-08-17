@@ -26,7 +26,7 @@ library(esqlabsR)
 
 ### Workflow
 
-The workflow of modeling and simulation involves running simulations and comparing simulated data against observed data. Functionalities of `esqlabsR` require observed data to be present as [`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html) objects. Please refer to the article [Observed data](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/observed-data.html) for information on how to load data from Excel or *.pkml files.
+The workflow of modeling and simulation involves running simulations and comparing simulated data against observed data. Functionalities of `esqlabsR` require observed data to be present as [`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html) objects. Please refer to the article [Observed data](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/observed-data.html) for information on how to load data from Excel or `*.pkml` files.
 
 The function `loadObservedData()` facilitates loading data in standard esqlabs projects. Assuming the standard project folder structure is followed, and Excel files with observed data are present in the `Data` folder, the following chunk of code loads the data:
 

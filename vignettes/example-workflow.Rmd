@@ -37,7 +37,7 @@ The package includes [an example scenario](https://github.com/esqLABS/esqlabsR/b
 * the `Scenarios.xlsx` defines a scenario called `TestScenario`, using `Indiv1` as an individual and `Aciclovir_iv_250mg` as the application protocol. The model file `Aciclovir.pkml` is also referenced and is expected to exist in the `projectConfiguration$modelFolder` folder. 
 * the `IndividualParameters.xlsx` file redefines the GFR to be 90 mL/min
 
-Scenarios are then executed by creating a `ScenarioConfiguration` class instance and calling a `runScenarios()` function with a specific scenario name (`TestScenario` in this case):
+Scenarios are then executed by creating a `ScenarioConfiguration` object and calling a `runScenarios()` function with a specific scenario name (`TestScenario` in this case):
 
 ```{r runScenarios}
 scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
@@ -53,7 +53,7 @@ simulatedScenarios <- runScenarios(
 
 The `runScenarios()` function relies on an `OutputPaths` variable being defined in the current environment. The variable is expected to contain [references to an entity](https://docs.open-systems-pharmacology.org/working-with-mobi/mobi-documentation/model-building-components) that will be used as an output variable for the simulation.
 
-The `runScenarios()` function returns a named list of lists with `Simulation` class instances, `SimulationResults` class instances, and vectors of output values.
+The `runScenarios()` function returns a named list of lists with `Simulation` objects, `SimulationResults` objects, and vectors of output values.
 
 ```{r simulatedScenarios}
 print(simulatedScenarios$TestScenario$results)

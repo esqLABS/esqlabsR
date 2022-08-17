@@ -1,7 +1,6 @@
 ---
 title: "Sensitivity analysis"
 output: rmarkdown::html_vignette
-#output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Sensitivity analysis}
   %\VignetteEngine{knitr::rmarkdown}
@@ -38,9 +37,9 @@ simulatedScenarios <- runScenarios(
 
 Sensitivity analysis quantifies how the pharmacokinetics of the drug changes with a variation in simulation parameters. This is important to track if the values of simulation parameters are uncertain.
 
-In the aciclovir simulation example, the lipophilicity of aciclovir was assumed to be -0.100 in log units. In the sensitivity analysis, we want to quantify how much the pharmacokinetic parameters change if the lipophilicity of aciclovir varies in the (-0.01 .. -1.00) range.
+In the aciclovir simulation example, the lipophilicity of aciclovir was assumed to be -0.100 in log units. In the sensitivity analysis, we want to quantify how much the pharmacokinetic parameters change if the lipophilicity of aciclovir varies in the (-0.01, -1.00) range.
 
-The `sensitivityCalculation()` function in the `{esqlabsR}` package does that by re-running the simulation with a set of updated parameter values. The function returns a list with output paths, parameter paths, an instance of `SimulationResults` class and a data frame with computed pharmacokinetic parameters for each of the input parameter values.
+The `sensitivityCalculation()` function in the `{esqlabsR}` package does that by re-running the simulation with a set of updated parameter values. The function returns a list with output paths, parameter paths, a `SimulationResults` object, and a data frame with computed pharmacokinetic parameters for each of the input parameter values.
 
 ```{r analysis}
 simulation <- simulatedScenarios$TestScenario$simulation
@@ -51,7 +50,7 @@ analysis <- sensitivityCalculation(simulation, OutputPaths, parameterPaths = "Ac
 head(analysis$pkData)
 ```
 
-In the aciclovir example case, the default value of lipophilicity was -0.100 log units, corresponding to the area under curve of 3915.87 µmol×min/L. Changing the lipophilicity to -0.01 log units leads to a decrease of AUC to 3895.43 µmol×min/L (a change of -0.52%), while changing the lipophilicity to -1.00 log units leads to an increase of AUC to 4015.73 µmol×min/L (a change of 2.55%).
+In the aciclovir example case, the default value of lipophilicity was -0.100 log units, corresponding to the area under curve (AUC) of 3915.87 µmol×min/L. Changing the lipophilicity to -0.01 log units leads to a decrease of AUC to 3895.43 µmol×min/L (a change of -0.52%), while changing the lipophilicity to -1.00 log units leads to an increase of AUC to 4015.73 µmol×min/L (a change of 2.55%).
 
 The results of the sensitivity analysis can be plotted with the `sensitivitySpiderPlot()` function.
 

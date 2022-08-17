@@ -18,7 +18,7 @@ knitr::opts_knit$set(
 )
 ```
 
-```{r, echo = FALSE, results = "hide", message = F}
+```{r, echo = FALSE, results = "hide", message = FALSE}
 library(esqlabsR)
 projectConfiguration <- createDefaultProjectConfiguration()
 dataSheets <- "Laskin 1982.Group A"
@@ -47,7 +47,7 @@ dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results, names
 dataCombined$toDataFrame()
 ```
 
-The simulation results are stored in a list returned by the `runScenarios()` function. Plotting and visualization is performed by storing these results along with matching observed data in an instance of the `DataCombined` class and passing it to plotting functions.
+The simulation results are stored in a list returned by the `runScenarios()` function. Plotting and visualization is performed by storing these results along with matching observed data in a `DataCombined` object and passing it to plotting functions.
 
 Plotting functions in the `{ospsuite}` package are wrappers around `{tlf}` plotting functions that provide default plot configuration options. All of them accept instances of `DataCombined` class as the data source. 
 
@@ -75,14 +75,14 @@ plotResidualsVsTime(dataCombined)
 
 The resulting plots (returned by plotting functions) are instances of `ggplot` class. They can be modified and saved to files with `{ggplot2}` functions:
 
-```{r save plots}
+```{r save-plots}
 plotObject <- plotIndividualTimeProfile(dataCombined)
 ggplot2::ggsave(filename = "../Results/aciclovir_time_profile.png", plotObject, width = 8, height = 4)
 ```
 
 ### Troubleshooting
 
-* At any time, you can check the groups assigned to the datasets in the `DataCombined` class instance by examining the output of `dataCombined$toDataFrame()`.
+* At any time, you can check the groups assigned to the datasets in the `DataCombined` object by examining the output of `dataCombined$toDataFrame()`.
 
 More detailed information on function signatures can be found in:
 
