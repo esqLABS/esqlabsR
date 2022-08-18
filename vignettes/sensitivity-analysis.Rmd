@@ -52,10 +52,18 @@ head(analysis$pkData)
 
 In the aciclovir example case, the default value of lipophilicity was -0.100 log units, corresponding to the area under curve (AUC) of 3915.87 µmol×min/L. Changing the lipophilicity to -0.01 log units leads to a decrease of AUC to 3895.43 µmol×min/L (a change of -0.52%), while changing the lipophilicity to -1.00 log units leads to an increase of AUC to 4015.73 µmol×min/L (a change of 2.55%).
 
-The results of the sensitivity analysis can be plotted with the `sensitivitySpiderPlot()` function.
+The results of the sensitivity analysis can be plotted with two functions:
 
-```{r plot, fig.width=7, fig.height=4}
+* the `sensitivitySpiderPlot()` function shows a separate plot for each of the pharmacokinetic parameters under investigation. By default, the `sensitivityCalculation()` function computes the changes in area under curve (`AUC_inf`), maximum concentration (`C_max`) and time when the maximum concentration is reached (`t_max`).
+
+```{r spider-plot, fig.width=7, fig.height=4}
 sensitivitySpiderPlot(analysis)
+```
+
+* the `sensitivityTimeProfiles()` function plots the concentration profile for each of the input parameter values:
+
+```{r time-profile, fig.width=7, fig.height=4}
+sensitivityTimeProfiles(analysis)
 ```
 
 ### Troubleshooting
