@@ -75,3 +75,5 @@ More detailed information on function signatures can be found in:
 * `esqlabsR` documentation on:
     * [sensitivityCalculation()](https://esqlabs.github.io/esqlabsR/reference/sensitivityCalculation.html)
     * [sensitivitySpiderPlot()](https://esqlabs.github.io/esqlabsR/reference/sensitivitySpiderPlot.html)
+    * [sensitivityTimeProfiles()](https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html)
+
