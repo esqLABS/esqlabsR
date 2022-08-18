@@ -51,13 +51,14 @@ The simulation results are stored in a list returned by the `runScenarios()` fun
 
 Plotting functions in the `{ospsuite}` package are wrappers around `{tlf}` plotting functions that provide default plot configuration options. All of them accept instances of `DataCombined` class as the data source. 
 
-Time profile plots visualize the pharmacokinetics of the drug in question and help assess if the observed data (shown with scatter plots) match the simulated data (shown with line plots).
+Time profile plots visualize the pharmacokinetics of the drug in question and help assess if the observed data (represented by points and error bars) match the simulated data (represented by lines).
+
 
 ```{r plot time profile, fig.width=7, fig.height=4}
 plotIndividualTimeProfile(dataCombined)
 ```
 
-Observed vs simulated plots show if simulated time points and observed time points follow a linear trend.
+Observed versus simulated plots show if simulated time points and observed time points follow a linear trend.
 
 ```{r plot obs vs pred, fig.width=7, fig.height=4}
 plotObservedVsSimulated(dataCombined)
@@ -73,7 +74,7 @@ plotResidualsVsSimulated(dataCombined)
 plotResidualsVsTime(dataCombined)
 ```
 
-The resulting plots (returned by plotting functions) are instances of `ggplot` class. They can be modified and saved to files with `{ggplot2}` functions:
+The plots returned by plotting functions are `ggplot` objects. They can be modified further and saved to files with `{ggplot2}` functions:
 
 ```{r save-plots}
 plotObject <- plotIndividualTimeProfile(dataCombined)
