@@ -17,7 +17,7 @@ knitr::opts_knit$set(
 )
 ```
 
-```{r, echo = FALSE, results = "hide", message = F}
+```{r, echo = FALSE, results = "hide", message = FALSE}
 library(esqlabsR)
 projectConfiguration <- createDefaultProjectConfiguration()
 dataSheets <- "Laskin 1982.Group A"
