@@ -3,7 +3,6 @@ title: "Introduction to esqlabsR"
 output: 
   rmarkdown::html_vignette:
     toc: true
-#output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Introduction to esqlabsR}
   %\VignetteEngine{knitr::rmarkdown}
@@ -32,7 +31,7 @@ The articles below covers several aspects of the software usage:
 * [Data handling](data-handling.html)
 * [Running simulations](example-workflow.html)
 * [Visualization and reporting](example-visualization.html)
-* [Sensitivity analysis](example-sensitivity.html)
+* [Sensitivity analysis](sensitivity-analysis.html)
 
 ## Object-oriented approach
 
@@ -50,3 +49,12 @@ resultOfAFunction <- object1$multiply(1,2)
 ```
 
 Important information about the object can be printed out by calling `print(object)`.
+
+## Configuring a project with no-code Excel files
+
+To facilitate modeling activities in a team with diverse backgrounds, `esqlabsR` employs Excel configuration files that define every aspect of a modeling project. The modeling projects are expected to follow a strict folder structure: 
+
+* the `Code/ProjectConfiguration.xlsx` file is a cornerstone Excel file that stores relative paths to all project components, including modeling scenarios, data files and parameter files. This Excel file is expected to contain fields that populate an instance of a [`ProjectConfiguration` class](../reference/ProjectConfiguration.html).
+* by default, the `Code` folder contains R script files
+* by default, the `Data` folder contains Excel files with observed data
+* by default, the `Parameters` folder contains Excel files with global, population and individual model parameters, definitions of application protocols and modeling scenarios. Examples of configuration files are included in the `/tests/data/TestProject` folder of the repository.
