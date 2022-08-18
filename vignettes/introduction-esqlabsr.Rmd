@@ -3,7 +3,6 @@ title: "Introduction to esqlabsR"
 output: 
   rmarkdown::html_vignette:
     toc: true
-#output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Introduction to esqlabsR}
   %\VignetteEngine{knitr::rmarkdown}

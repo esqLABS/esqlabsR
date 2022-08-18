@@ -1,7 +1,6 @@
 ---
 title: "Running simulations"
 output: rmarkdown::html_vignette
-#output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Example workflow}
   %\VignetteEngine{knitr::rmarkdown}
