@@ -49,8 +49,10 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
+    <a class="dropdown-item" href="../articles/example-visualization.html">Visualization and reporting</a>
     <a class="dropdown-item" href="../articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
+    <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
   </div>
 </li>
 <li class="nav-item">
@@ -89,25 +91,50 @@
 
     
     
+<div class="section level3">
+<h3 id="workflow">Workflow<a class="anchor" aria-label="anchor" href="#workflow"></a>
+</h3>
 <p>The workflow of modeling and simulation involves running simulations
-and comparing simulated data against observed data. The observed data
-must come in Excel files and can be loaded into the R environment with a
-<code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> helper function. The following code
-loads data from an Excel file in <code>/tests/data</code> into an
-<code>observedData</code> variable.</p>
+and comparing simulated data against observed data. Functionalities of
+<code>esqlabsR</code> require observed data to be present as <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html" class="external-link"><code>DataSet</code></a>
+objects. Please refer to the article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/observed-data.html" class="external-link">Observed
+data</a> for information on how to load data from Excel or
+<code>*.pkml</code> files.</p>
+<p>The <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code> function expects
+to have a master configuration file called
+<code>ProjectConfiguration.xlsx</code> at the <code>/Code/</code> folder
+of the work package.</p>
+<p>The function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> facilitates loading data
+in standard <em>esqLABS</em> projects. Assuming the standard project
+folder structure is followed, and Excel files with observed data are
+present in the <code>projectConfiguration$dataFolder</code> folder, the
+following chunk of code loads the data:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"&lt;Study Id 1&gt;"</span></span>
-<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>, sheets <span class="op">=</span> <span class="va">dataSheets</span><span class="op">)</span></span></code></pre></div>
-<p>The <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code> function assumes
-that the working folder has a <code>ProjectConfiguration.xlsx</code>
-Excel file. A default configuration file is shipped with the package: <a href="https://github.com/esqLABS/esqlabsR/tree/HEAD/tests/data/Parameters.xlsx" class="external-link">/tests/data</a>.
-The <code>ProjectConfiguration.xlsx</code> file and the
-<code>projectConfiguration</code> class instance will contain the path
-to the Excel file with observed data.</p>
-<p>The <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> function returns a list of
-<code>DataSet</code> class instances. The resulting object will be used
-later to <a href="example-workflow.html">run simulations</a>, <a href="example-visualization.html">plot results</a> and <a href="example-sensitivity.html">run a sensitivity analysis</a>.</p>
+<span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
+<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>, sheets <span class="op">=</span> <span class="va">dataSheets</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">observedData</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Aciclovir_Laskin 1982.Group A_1_Human_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv"</span></span></code></pre></div>
+<p>The <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> function loads the data from a
+path stored in the <code>projectConfiguration$dataFile</code>. This
+function returns a list of <code>DataSet</code> class instances. The
+resulting object will be used later to <a href="example-workflow.html">run simulations</a>, <a href="example-visualization.html">plot results</a> and <a href="sensitivity-analysis.html">run a sensitivity analysis</a>.</p>
+</div>
+<div class="section level3">
+<h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
+</h3>
+<ul>
+<li><p>The <code>sheets</code> argument of the
+<code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> function should be a string or a list of
+strings. If a specified sheet is not found in the file, it will be
+omitted with a warning; the <code>observedData</code> variable may then
+be an empty named list.</p></li>
+<li><p>If the data file specified in
+<code>projectConfiguration$dataFile</code> is missing in the filesystem,
+the <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> function will fail with an
+<code>Invalid File</code> message.</p></li>
+</ul>
 <p>More detailed information on function signatures can be found in:</p>
 <ul>
 <li>
@@ -134,7 +161,10 @@ class</a></li>
 <li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/saveDataSetToPKML.html" class="external-link">saveDataSetToPKML()</a></li>
 </ul>
 </li>
-</ul></main>
+</ul>
+</div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 

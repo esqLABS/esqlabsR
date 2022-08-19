@@ -7,6 +7,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/articles/data-handling.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/example-visualization.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/example-workflow.html</loc>
   </url>
   <url>
@@ -14,6 +17,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/introduction-esqlabsr.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/sensitivity-analysis.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/authors.html</loc>
@@ -116,6 +122,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/getIndexClosestToValue.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/getMoleculeNameFromQuantity.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/getNetHashCode.html</loc>
