@@ -70,7 +70,7 @@ reference:
     contents:
       - matches("^start")
 
-  - title: Miscllaneous
+  - title: Miscellaneous
     #desc:
     contents:
       - matches("^enum")
@@ -80,4 +80,3 @@ reference:
       - removeFromList
       - sourceAll
       - esqlabsRSettingNames
-
