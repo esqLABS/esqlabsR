@@ -17,7 +17,7 @@ units the values are in. Entries from this list will extend or overwrite
 the list \code{parameters}}
 }
 \value{
-Updated list of parameter patsh, values, and units
+Updated list of parameter paths, values, and units
 }
 \description{
 Extend parameters structure with new entries

@@ -108,7 +108,7 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
 #'  `parameters`. If an entry with the same path is already present in `parameters`,
 #'  its value and unit will be overwritten with the values from `newParameters`.
 #'
-#' @return Updated list of parameter patsh, values, and units
+#' @return Updated list of parameter paths, values, and units
 #' @export
 extendParameterStructure <- function(parameters, newParameters) {
   if (!identical(names(parameters), c("paths", "values", "units"))) {
