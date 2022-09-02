@@ -22,7 +22,7 @@ Get parameters of applications in the simulation
 }
 \details{
 Every application event has a \code{ProtocolSchemaItem} container that
-holds parametes describing the dose, start time, infusion time etc. This
+holds parameters describing the dose, start time, infusion time etc. This
 function returns a list of all constant parameters located under the
 \code{ProtocolSchemaItem} container of applications defined for the \code{moleculeNames}.
 }

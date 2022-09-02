@@ -51,8 +51,10 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="articles/data-handling.html">Data handling</a>
+    <a class="dropdown-item" href="articles/example-visualization.html">Visualization and reporting</a>
     <a class="dropdown-item" href="articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
+    <a class="dropdown-item" href="articles/sensitivity-analysis.html">Sensitivity analysis</a>
   </div>
 </li>
 <li class="nav-item">
@@ -82,52 +84,16 @@
 <img src="logo.png" class="logo" alt=""><h1 id="esqlabsr-">esqlabsR <a class="anchor" aria-label="anchor" href="#esqlabsr-"></a>
 </h1>
 </div>
-<p>Utilities functions for modeling and simulation workflows within <em>esqLABS</em>.</p>
+<p>The <strong><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></strong> R-package is designed to facilitate and standardize <strong>modeling and simulation</strong> (M&amp;S) of PBPK and QSP models implemented in <a href="https://www.open-systems-pharmacology.org/" class="external-link">Open Systems Pharmacology Software</a> (OSPS) and executed from R. The package provides functions to read and run scenarios, workflows, and simulations. Furthermore, it creates visualizations based on non-code input from Excel files. The package is based on R functions in the <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link"><code>ospsuite</code> package</a>.</p>
 <!-- badges: start -->
 
 <!-- badges: end -->
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>The latest version of the package comes as a binary <code>*.zip</code> and can be downloaded from here (the <code>.zip</code> folder under <code>Artifacts</code> panel): <a href="https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts" class="external-link uri">https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts</a></p>
-</div>
-<div class="section level2">
-<h2 id="required-packages">Required packages<a class="anchor" aria-label="anchor" href="#required-packages"></a>
-</h2>
+<p>Install as a binary file from <a href="https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts" class="external-link">an AppVeyor link</a>. The <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> package requires the following packages:</p>
 <ul>
-<li>rClr &gt;0.9.2
-<ul>
-<li>
-<a href="https://github.com/Open-Systems-Pharmacology/rClr/releases/" class="external-link uri">https://github.com/Open-Systems-Pharmacology/rClr/releases/</a> or esqLABS internal</li>
-</ul>
-</li>
-<li>ospsuite.utils
-<ul>
-<li>
-<a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils" class="external-link uri">https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils</a> or esqLABS internal</li>
-</ul>
-</li>
-<li>tlf
-<ul>
-<li>
-<a href="https://github.com/Open-Systems-Pharmacology/TLF-Library" class="external-link uri">https://github.com/Open-Systems-Pharmacology/TLF-Library</a> or esqLABS internal</li>
-</ul>
-</li>
-<li>ospsuite-r &gt; 11.0
-<ul>
-<li>
-<a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link uri">https://github.com/Open-Systems-Pharmacology/OSPSuite-R</a> or esqLABS internal</li>
-</ul>
-</li>
-</ul>
-<div class="section level3">
-<h3 id="for-projects-created-for-version-3">For projects created for version 3<a class="anchor" aria-label="anchor" href="#for-projects-created-for-version-3"></a>
-</h3>
-<p>To run code written for version 3 of <code>esqlabsR</code> package, additionally install the <a href="https://github.com/esqLABS/esqlabsRLegacy" class="external-link">esqlabsRLegacy</a> package.</p>
-</div>
-<div class="section level3">
-<h3 id="from-cran">From CRAN:<a class="anchor" aria-label="anchor" href="#from-cran"></a>
-</h3>
+<li>Available from CRAN:
 <ul>
 <li>jsonlite</li>
 <li>patchwork</li>
@@ -147,6 +113,22 @@
 <li>vctrs</li>
 <li>writexl</li>
 </ul>
+</li>
+<li>Available from github:
+<ul>
+<li>
+<a href="https://github.com/Open-Systems-Pharmacology/rClr/" class="external-link">rClr</a> &gt; 0.9.2</li>
+<li><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a></li>
+<li><a href="https://github.com/Open-Systems-Pharmacology/TLF-Library" class="external-link">tlf</a></li>
+<li>
+<a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link">ospsuite</a> &gt; 11.0</li>
+</ul>
+</li>
+</ul>
+<div class="section level3">
+<h3 id="for-projects-created-for-version-3">For projects created for version 3<a class="anchor" aria-label="anchor" href="#for-projects-created-for-version-3"></a>
+</h3>
+<p>To run code written for version 3 of <code>esqlabsR</code> package, additionally install the <a href="https://github.com/esqLABS/esqlabsRLegacy" class="external-link">esqlabsRLegacy</a> package.</p>
 </div>
 </div>
 <div class="section level2">
