@@ -14,5 +14,3 @@ test_that("`FunctionVisualizer` Shiny app works", {
   appdir <- system.file(package = "esqlabsR", "FunctionVisualizer")
   test_app(appdir)
 })
-
-

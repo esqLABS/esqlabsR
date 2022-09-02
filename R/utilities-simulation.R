@@ -52,6 +52,7 @@ initializeSimulation <- function(simulation,
   validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
   validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
   validateIsLogical(simulateSteadyState)
+  validateIsNumeric(steadyStateTime)
 
   # Apply parameters of the individual
   if (!is.null(individualCharacteristics)) {
@@ -64,13 +65,16 @@ initializeSimulation <- function(simulation,
       stop(messages$wrongParametersStructure("additionalParams"))
     }
 
-    ospsuite::setParameterValuesByPath(
-      parameterPaths = additionalParams$paths,
-      values = additionalParams$values,
-      simulation = simulation,
-      units = additionalParams$units,
-      stopIfNotFound = FALSE
-    )
+    # Skip if the correct structure is supplied, but no parameters are defined
+    if (!isEmpty(additionalParams$paths)) {
+      ospsuite::setParameterValuesByPath(
+        parameterPaths = additionalParams$paths,
+        values = additionalParams$values,
+        simulation = simulation,
+        units = additionalParams$units,
+        stopIfNotFound = FALSE
+      )
+    }
   }
 
   if (simulateSteadyState) {
