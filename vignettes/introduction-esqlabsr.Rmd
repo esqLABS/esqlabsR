@@ -57,4 +57,6 @@ To facilitate modeling activities in a team with diverse backgrounds, `esqlabsR`
 * the `Code/ProjectConfiguration.xlsx` file is a cornerstone Excel file that stores relative paths to all project components, including modeling scenarios, data files and parameter files. This Excel file is expected to contain fields that populate an instance of a [`ProjectConfiguration` class](../reference/ProjectConfiguration.html).
 * by default, the `Code` folder contains R script files
 * by default, the `Data` folder contains Excel files with observed data
-* by default, the `Parameters` folder contains Excel files with global, population and individual model parameters, definitions of application protocols and modeling scenarios. Examples of configuration files are included in the `/tests/data/TestProject` folder of the repository.
+* by default, the `Parameters` folder contains Excel files with global, population and individual model parameters, definitions of application protocols and modeling scenarios.
+
+An exemplary project folder including the subfolders and files mentioned above can be found in the `/tests/data/TestProject` folder of the repository.
