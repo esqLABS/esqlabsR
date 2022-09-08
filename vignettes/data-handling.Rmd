@@ -27,7 +27,7 @@ library(esqlabsR)
 
 The workflow of modeling and simulation involves running simulations and comparing simulated data against observed data. Functionalities of `esqlabsR` require observed data to be present as [`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html) objects. Please refer to the article [Observed data](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/observed-data.html) for information on how to load data from Excel or `*.pkml` files.
 
-The `createDefaultProjectConfiguration()` function expects to have a master configuration file called `ProjectConfiguration.xlsx` at the `/Code/` folder of the work package.
+The `createDefaultProjectConfiguration()` function expects to have a master configuration file called `ProjectConfiguration.xlsx` at the `/Code/` folder of the work package. It creates a [`ProjectConfiguration`](../reference/ProjectConfiguration.html) from this Excel file, containing information about the location of certain folders and files in the project folder.
 
 The function `loadObservedData()` facilitates loading data in standard *esqLABS* projects. Assuming the standard project folder structure is followed, and Excel files with observed data are present in the `projectConfiguration$dataFolder` folder, the following chunk of code loads the data:
 
@@ -39,7 +39,7 @@ observedData <- loadObservedData(projectConfiguration = projectConfiguration, sh
 print(names(observedData))
 ```
 
-The `loadObservedData()` function loads the data from a path stored in the `projectConfiguration$dataFile`. This function returns a list of `DataSet` class instances. The resulting object will be used later to [run simulations](example-workflow.html), [plot results](example-visualization.html) and [run a sensitivity analysis](sensitivity-analysis.html).
+The `loadObservedData()` function loads the data from a path stored in the `projectConfiguration$dataFile`. This function returns a list of `DataSet` class instances. The resulting object will be used later to [plot results](example-visualization.html) to compare simulated and observed data.
 
 ### Troubleshooting
 

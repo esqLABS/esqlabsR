@@ -47,7 +47,7 @@ dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results, names
 dataCombined$toDataFrame()
 ```
 
-The simulation results are stored in a list returned by the `runScenarios()` function. Plotting and visualization is performed by storing these results along with matching observed data in a `DataCombined` object and passing it to plotting functions.
+The simulation results are stored in a list returned by the `runScenarios()` function. Plotting and visualization is performed by storing these results along with matching observed data in a `DataCombined` object and passing it to plotting functions. Observed data in the form of `Data Set` objects is added to a `DataCombined` object via the `addDataSets` method, simulated data can be added by using `addSimulationResults`. Observed and simulated data can be linked by setting the  `groups` argument in both methods. Data of the same group will then be plotted together when calling plotting functions on the `DataCombined` object.
 
 Plotting functions in the `{ospsuite}` package are wrappers around `{tlf}` plotting functions that provide default plot configuration options. All of them accept instances of `DataCombined` class as the data source. 
 
