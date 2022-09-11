@@ -54,7 +54,7 @@ server <- function(input, output, session) {
 
   # add more functions
   # maybe use base namespace
-  mathexpressions <- c("exp", "log", "sin", "sqrt", "floor", "ceiling", "pi")
+  mathexpressions <- c("exp", "log", "sin", "cos", "tan", "sqrt", "floor", "ceiling", "pi")
   currentArg <- NULL
 
   v <- reactiveValues(
@@ -373,7 +373,7 @@ server <- function(input, output, session) {
     }
   })
 
-  observeEvent(input$removeLatestObsData, {
+  observeEvent(input$removeLastObsData, {
     if (ncol(v$observedData) > 2) {
       v$observedData <- v$observedData[1:(ncol(v$observedData) - 1)]
     } else {
