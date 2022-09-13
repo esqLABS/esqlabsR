@@ -23,8 +23,9 @@ The function can be entered in the *Equation* field. It must be defined accordin
 Data points can be added to the graph in the *Add single points to plot* section below the plot, they will be displayed by `+` in the output. Another option for adding multiple data points at once is by uploading data from a xls/xlsx file. The columns for the x and y values, as well as a label for the data to appear in the legend of the plot, can be chosen in a pop-up window. 
 
 ![Pop-up window for adding data from xls/xlsx files](Figures/functionVisualizerPopup.jpg){width=25%}
+
 ### Unit Converter
 
-The Unit Converter provides a graphical interface for use of the [toUnit()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/toUnit.html) function. First you choose one of the dimensions from the dropdown menu, then two units to convert between and type in the value to be converted. In the special case of the dimensions `Concentration` and `Amount` conversion between molecular and mass units is possible, e.g. from mol/l to mg/l, therefore a molecular weight in g/mol must be provided in the respective field. In all other cases this field is deactivated.
+The Unit Converter provides a graphical interface for use of the [toUnit()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/toUnit.html) function. First, choose a quantity from the dropdown menu, then, choose the input and output units, and type in the value to be converted. The tool also allows to convert `Concentration` to `Amount` quantities, e. g. from mol/l to mg/l. For that, a molecular weight value in g/mol must be provided in the respective field. In all other cases, this field is deactivated.
 
 ![Example input for the Unit Converter app](Figures/unitConverter.jpg){width=25%}
