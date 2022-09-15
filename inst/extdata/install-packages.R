@@ -13,7 +13,7 @@ packageInstallationMessages <- list(
 )
 
 # List of packages that will be installed from CRAN
-.cranPackages <- c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs", "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "patchwork")
+.cranPackages <- c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs", "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "patchwork", "jsonlite")
 #Download paths of released package versions
 .releasePaths <- list(ospsuite.utils = "https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.3.17/ospsuite.utils_1.3.17.tar.gz",
                       tlf = "https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.4.89/tlf_1.4.89.tar.gz",
