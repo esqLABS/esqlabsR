@@ -12,9 +12,11 @@ packageInstallationMessages <- list(
   working directory is the root of project `Code` folder"
 )
 
+# List of packages that will be installed from CRAN
+.cranPackages <- c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs", "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "patchwork")
 #Download paths of released package versions
-.releasePaths <- list(ospsuite.utils = "https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.3.17/ospsuite.utils_1.3.17.zip",
-                      tlf = "https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.4.89/tlf_1.4.89.zip",
+.releasePaths <- list(ospsuite.utils = "https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.3.17/ospsuite.utils_1.3.17.tar.gz",
+                      tlf = "https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.4.89/tlf_1.4.89.tar.gz",
                       ospsuite = "https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v11.0.123/ospsuite_11.0.123.zip",
                       ospsuite.parameteridentification = "https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/releases/download/v1.1.0/ospsuite.parameteridentification_1.1.0.9002.zip",
                       esqlabsR = "https://github.com/esqLABS/esqlabsR/releases/download/3.0.89/esqlabsR_3.0.89.zip")
@@ -56,6 +58,7 @@ cleanEnvironment <- function(){
   rm(packageInstallationMessages,
      .releasePaths,
      .developPaths,
+     .cranPackages,
      testInstalledPackages,
      testPKSIMConnection,
      cleanEnvironment,
@@ -131,7 +134,7 @@ installOSPPackages <- function(rtoolsPath = NULL, rclrVersion = "0.9.2",
                                developerVersion = FALSE){
   # Install dependencies from CRAN
   displayProgress("Installing CRAN packages", suppressOutput = suppressOutput)
-  install.packages(c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs", "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "patchwork"),
+  install.packages(.cranPackages,
                    dependencies = TRUE)
 
   displayProgress("Checking RTOOLS", suppressOutput = suppressOutput)
