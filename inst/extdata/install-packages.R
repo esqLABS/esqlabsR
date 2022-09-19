@@ -12,9 +12,11 @@ packageInstallationMessages <- list(
   working directory is the root of project `Code` folder"
 )
 
+# List of packages that will be installed from CRAN
+.cranPackages <- c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs", "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "patchwork", "jsonlite")
 #Download paths of released package versions
-.releasePaths <- list(ospsuite.utils = "https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.3.17/ospsuite.utils_1.3.17.zip",
-                      tlf = "https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.4.89/tlf_1.4.89.zip",
+.releasePaths <- list(ospsuite.utils = "https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.3.17/ospsuite.utils_1.3.17.tar.gz",
+                      tlf = "https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.4.89/tlf_1.4.89.tar.gz",
                       ospsuite = "https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v11.0.123/ospsuite_11.0.123.zip",
                       ospsuite.parameteridentification = "https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/releases/download/v1.1.0/ospsuite.parameteridentification_1.1.0.9002.zip",
                       esqlabsR = "https://github.com/esqLABS/esqlabsR/releases/download/3.0.89/esqlabsR_3.0.89.zip")
@@ -56,6 +58,7 @@ cleanEnvironment <- function(){
   rm(packageInstallationMessages,
      .releasePaths,
      .developPaths,
+     .cranPackages,
      testInstalledPackages,
      testPKSIMConnection,
      cleanEnvironment,
@@ -131,7 +134,7 @@ installOSPPackages <- function(rtoolsPath = NULL, rclrVersion = "0.9.2",
                                developerVersion = FALSE){
   # Install dependencies from CRAN
   displayProgress("Installing CRAN packages", suppressOutput = suppressOutput)
-  install.packages(c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs", "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "patchwork"),
+  install.packages(.cranPackages,
                    dependencies = TRUE)
 
   displayProgress("Checking RTOOLS", suppressOutput = suppressOutput)
@@ -180,8 +183,8 @@ installOSPPackages <- function(rtoolsPath = NULL, rclrVersion = "0.9.2",
 #' and (if `testExampleSimulation` is `TRUE`) run a test scenario. If loading
 #' the package fails, the previous state of the library is restored.
 #'
-#' @param updatePackages If `TRUE` (default), all installed packages will be
-#' updated prior to installation
+#' @param updatePackages If `TRUE`, all installed packages will be
+#' updated prior to installation. Default is `FALSE`.
 #' @param pkSimPath Path where PK-Sim is installed. If this is not specified
 #' (`NULL`), path is estimated by the `ospsuite` package.
 #' @param rtoolsPath Path to where rtools are installed. If `NULL` (default),
@@ -190,15 +193,14 @@ installOSPPackages <- function(rtoolsPath = NULL, rclrVersion = "0.9.2",
 #' @param testExampleSimulation If `TRUE` (default), try to run a scenario `TestScenario`.
 #' This will fail if either no such scenario is defined, or the project structure
 #' is not compatible with the current package.
-#' @param developerVersion If `FALSE` (default), release verions of the packages
-#' will be installed. If `TRUE`, latest developer builds of the osps packages
-#' will be installed
+#' @param developerVersion If `TRUE` (default), latest developer builds of the
+#' osps packages will be installed.
 #' @param suppressOutput
-installPackagesLocally <- function(updatePackages = TRUE, pkSimPath = NULL,
+installPackagesLocally <- function(updatePackages = FALSE, pkSimPath = NULL,
                                    rtoolsPath = NULL, rclrVersion = "0.9.2",
                                    suppressOutput = TRUE,
                                    testExampleSimulation = TRUE,
-                                   developerVersion = FALSE){
+                                   developerVersion = TRUE){
   # Always install renv to make sure that the project is using the most
   # recent version
   displayProgress("Installing RENV")
@@ -238,19 +240,6 @@ installPackagesLocally <- function(updatePackages = TRUE, pkSimPath = NULL,
     return()
   }
 
-  displayProgress("Testing PK-Sim connection", suppressOutput = suppressOutput)
-  flagConnection <- FALSE
-  try(flagConnection <- testPKSIMConnection(pkSimPath = pkSimPath))
-  if (!flagConnection) {
-    displayProgress("Testing PK-Sim connection", success = FALSE,
-                    message = packageInstallationMessages$PKSimLoadFails,
-                    suppressOutput = suppressOutput)
-    if (file.exists(installationLockfile)) {
-      file.remove(installationLockfile)
-    }
-    return()
-  }
-
   if(testExampleSimulation){
     displayProgress("Testing simulations", suppressOutput = suppressOutput)
     flagSimulations <- FALSE
@@ -276,21 +265,20 @@ installPackagesLocally <- function(updatePackages = TRUE, pkSimPath = NULL,
 
 #' Install osps packages and their dependencies into global library.
 #'
-#' @param updatePackages If `TRUE` (default), all installed packages will be
-#' updated prior to installation
+#' @param updatePackages If `TRUE`, all installed packages will be
+#' updated prior to installation. Default is `FALSE`.
 #' @param pkSimPath Path where PK-Sim is installed. If this is not specified
 #' (`NULL`), path is estimated by the `ospsuite` package.
 #' @param rtoolsPath Path to where rtools are installed. If `NULL` (default),
 #' the path is deduced from system environment variables.
 #' @param rclrVersion Version of rClr package. Default is 0.9.2 for Windows R4.
-#' @param developerVersion If `FALSE` (default), release verions of the packages
-#' will be installed. If `TRUE`, latest developer builds of the osps packages
-#' will be installed
+#' @param developerVersion If `TRUE` (default), latest developer builds of the
+#' osps packages will be installed.
 #' @param suppressOutput
-installPackagesGlobally <- function(updatePackages = TRUE, pkSimPath = NULL,
+installPackagesGlobally <- function(updatePackages = FALSE, pkSimPath = NULL,
                                     rtoolsPath = NULL, rclrVersion = "0.9.2",
                                     suppressOutput = TRUE,
-                                    developerVersion = FALSE){
+                                    developerVersion = TRUE){
   installOSPPackages(rtoolsPath = rtoolsPath, rclrVersion = rclrVersion,
                      suppressOutput = suppressOutput,
                      developerVersion = developerVersion)
@@ -312,8 +300,8 @@ installPackagesGlobally <- function(updatePackages = TRUE, pkSimPath = NULL,
 
 pkSimPath <- NULL
 pkSimPath <- "c:\\Program Files\\Open Systems Pharmacology\\PK-Sim 11.1\\"
-#installPackagesGlobally(updatePackages = TRUE, pkSimPath = pkSimPath, suppressOutput = TRUE, developerVersion = TRUE)
-#installPackagesLocally(updatePackages = TRUE, pkSimPath = pkSimPath, suppressOutput = TRUE, developerVersion = TRUE)
+#installPackagesGlobally(pkSimPath = pkSimPath, suppressOutput = TRUE, developerVersion = TRUE)
+#installPackagesLocally(pkSimPath = pkSimPath, suppressOutput = TRUE, developerVersion = TRUE)
 
 #Clean the workspace
 #cleanEnvironment()
