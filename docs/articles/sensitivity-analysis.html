@@ -53,6 +53,8 @@
     <a class="dropdown-item" href="../articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
     <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
+    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
   </div>
 </li>
 <li class="nav-item">
@@ -100,10 +102,13 @@ track if the values of simulation parameters are uncertain.</p>
 <p>In the aciclovir simulation example, the lipophilicity of aciclovir
 was assumed to be -0.100 in log units. In the sensitivity analysis, we
 want to quantify how much the pharmacokinetic parameters change if the
-lipophilicity of aciclovir varies in the (-0.01, -1.00) range.</p>
+lipophilicity of aciclovir is varied by certain factors.</p>
 <p>The <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> function in the
 <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> package does that by re-running the simulation
-with a set of updated parameter values. The function returns a list with
+with a set of updated parameter values. By default, the parameter will
+be multiplied by 0.1, 0.2, 0.3, …, 1, 2, 3, … and 10, and for each value
+a simulation will be run. These factors can be customized by the
+<code>variationRange</code> argument. The function returns a list with
 output paths, parameter paths, a <code>SimulationResults</code> object,
 and a data frame with computed pharmacokinetic parameters for each of
 the input parameter values.</p>
@@ -117,12 +122,12 @@ the input parameter values.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
 <span><span class="co">#&gt;   OutputPath       Param…¹ Param…² Param…³ PKPar…⁴ PKPar…⁵ Unit  Perce…⁶ Sensi…⁷</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|Periph… Aciclo…     0.1   -<span style="color: #BB0000;">0.01</span> AUC_inf   <span style="text-decoration: underline;">3</span>897. µmol…  -<span style="color: #BB0000;">0.522</span> 5.83<span style="color: #949494;">e</span><span style="color: #BB0000;">-4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Organism|Periph… Aciclo…     0.2   -<span style="color: #BB0000;">0.02</span> AUC_inf   <span style="text-decoration: underline;">3</span>899. µmol…  -<span style="color: #BB0000;">0.461</span> 1.16<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Organism|Periph… Aciclo…     0.3   -<span style="color: #BB0000;">0.03</span> AUC_inf   <span style="text-decoration: underline;">3</span>901. µmol…  -<span style="color: #BB0000;">0.401</span> 1.73<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|Periph… Aciclo…     0.4   -<span style="color: #BB0000;">0.04</span> AUC_inf   <span style="text-decoration: underline;">3</span>904. µmol…  -<span style="color: #BB0000;">0.342</span> 2.29<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|Periph… Aciclo…     0.5   -<span style="color: #BB0000;">0.05</span> AUC_inf   <span style="text-decoration: underline;">3</span>906. µmol…  -<span style="color: #BB0000;">0.283</span> 2.84<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|Periph… Aciclo…     0.6   -<span style="color: #BB0000;">0.06</span> AUC_inf   <span style="text-decoration: underline;">3</span>908. µmol…  -<span style="color: #BB0000;">0.225</span> 3.38<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|Periph… Aciclo…     0.1   -<span style="color: #BB0000;">0.01</span> AUC_inf   <span style="text-decoration: underline;">3</span>896. µmol…  -<span style="color: #BB0000;">0.522</span> 5.83<span style="color: #949494;">e</span><span style="color: #BB0000;">-4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Organism|Periph… Aciclo…     0.2   -<span style="color: #BB0000;">0.02</span> AUC_inf   <span style="text-decoration: underline;">3</span>898. µmol…  -<span style="color: #BB0000;">0.461</span> 1.16<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Organism|Periph… Aciclo…     0.3   -<span style="color: #BB0000;">0.03</span> AUC_inf   <span style="text-decoration: underline;">3</span>900. µmol…  -<span style="color: #BB0000;">0.401</span> 1.73<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|Periph… Aciclo…     0.4   -<span style="color: #BB0000;">0.04</span> AUC_inf   <span style="text-decoration: underline;">3</span>903. µmol…  -<span style="color: #BB0000;">0.342</span> 2.29<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|Periph… Aciclo…     0.5   -<span style="color: #BB0000;">0.05</span> AUC_inf   <span style="text-decoration: underline;">3</span>905. µmol…  -<span style="color: #BB0000;">0.283</span> 2.84<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|Periph… Aciclo…     0.6   -<span style="color: #BB0000;">0.06</span> AUC_inf   <span style="text-decoration: underline;">3</span>907. µmol…  -<span style="color: #BB0000;">0.225</span> 3.38<span style="color: #949494;">e</span><span style="color: #BB0000;">-3</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># … with abbreviated variable names ¹​ParameterPath, ²​ParameterFactor,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   ³​ParameterValue, ⁴​PKParameter, ⁵​PKParameterValue, ⁶​PercentChangePK,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   ⁷​SensitivityPKParameter</span></span></span></code></pre></div>
@@ -183,7 +188,7 @@ corresponding to the initial parameter values.</li>
 
     <footer><div class="pkgdown-footer-left">
   <p></p>
-<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>.</p>
+<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, Sergei Vavilov, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

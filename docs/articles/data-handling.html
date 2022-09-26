@@ -53,6 +53,8 @@
     <a class="dropdown-item" href="../articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
     <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
+    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
   </div>
 </li>
 <li class="nav-item">
@@ -103,7 +105,9 @@ data</a> for information on how to load data from Excel or
 <p>The <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code> function expects
 to have a master configuration file called
 <code>ProjectConfiguration.xlsx</code> at the <code>/Code/</code> folder
-of the work package.</p>
+of the work package. It creates a <a href="../reference/ProjectConfiguration.html"><code>ProjectConfiguration</code></a>
+from this Excel file, containing information about the location of
+certain folders and files in the project folder.</p>
 <p>The function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> facilitates loading data
 in standard <em>esqLABS</em> projects. Assuming the standard project
 folder structure is followed, and Excel files with observed data are
@@ -119,7 +123,8 @@ following chunk of code loads the data:</p>
 <p>The <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> function loads the data from a
 path stored in the <code>projectConfiguration$dataFile</code>. This
 function returns a list of <code>DataSet</code> class instances. The
-resulting object will be used later to <a href="example-workflow.html">run simulations</a>, <a href="example-visualization.html">plot results</a> and <a href="sensitivity-analysis.html">run a sensitivity analysis</a>.</p>
+resulting object will be used later to <a href="example-visualization.html">plot results</a> to compare simulated
+and observed data.</p>
 </div>
 <div class="section level3">
 <h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
@@ -171,7 +176,7 @@ class</a></li>
 
     <footer><div class="pkgdown-footer-left">
   <p></p>
-<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>.</p>
+<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, Sergei Vavilov, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

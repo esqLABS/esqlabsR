@@ -4,8 +4,10 @@ Title: esqLABS utilities package
 Version: 4.0.0
 Authors@R: 
     c(person("esqLABS GmbH", role = c("cph", "fnd")),
-      person("Pavel", "Balazki", role = c("cre", "aut"), email = "pavel.balazki@esqlabs.com"),
-      person("Johanna", "Eitel", role = "aut"),
+      person("Pavel", "Balazki", , "https://github.com/PavelBal", role = c("cre", "aut"), 
+      email = "pavel.balazki@esqlabs.com"),
+      person("Johanna", "Eitel", , "https://github.com/hannaei", role = "aut"),
+      person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"),
       person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
            comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")))
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
