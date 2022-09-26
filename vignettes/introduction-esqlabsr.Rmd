@@ -17,26 +17,28 @@ knitr::opts_chunk$set(
 )
 ```
 
-The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation** (M&S) of PBPK and QSP models implemented in [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS) and executed from R. The package provides functions to read and run scenarios, workflows and simulations and create plots and visualization based on no-code input from Excel files. The package is based on R functions in the [`ospsuite` package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R).
+The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation** (M&S) of PBPK and QSP models implemented in [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS) and executed from R. The package provides functions to read and run scenarios, workflows and simulations and create plots and visualization based on no-code input from Excel files. The package is based on R functions in the [`ospsuite` package](https://github.com/Open-Systems-Pharmacology/dev/OSPSuite-R).
 
 
 ## Motivation
 
-This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R Introduction](https://docs.open-systems-pharmacology.org/working-with-r/introduction-ospsuite-r) section of the OSPS manual.
+This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R Introduction](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/). 
+Functions reference for the `{ospsuite}` can be found [here](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/index.html), 
+while articles describing the usage of the package with examples are found [here](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/).
 
 In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the [GitHub repository](https://github.com/Open-Systems-Pharmacology/Example_Aciclovir) as PK-Sim project. The pkml file can be downloaded from [ospsuite-r](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml) repository.
 
-The articles below covers several aspects of the software usage:
+The articles below cover several aspects of the software usage:
 
+* [Standard workflow](standard-workflow.html)
 * [Data handling](data-handling.html)
-* [Running simulations](example-workflow.html)
 * [Visualization and reporting](example-visualization.html)
 * [Sensitivity analysis](sensitivity-analysis.html)
 * [Available Shiny apps](shiny-apps.html)
 
 ## Object-oriented approach
 
-The `{esqlabsR}` package utilizes the concept of object-oriented (OO) programming based on the [R6 system](https://adv-r.hadley.nz/r6.html). While the philosophy of the package is to offer a functional programming workflow more common for the R users, it is important to understand some basic concepts of the OO programming. Many of the functions implemented in `{esqlabsR}` return an *instance* (or an *object*) of a *class*. These objects can be used as inputs for other methods. Additionally, each object offers a set of properties (which can be other objects) and methods, which are accessible by the `$` sign:
+The `{esqlabsR}` package utilizes the concept of object-oriented (OO) programming based on the [R6 system](https://adv-r.hadley.nz/r6.html). While the philosophy of the package is to offer a functional programming workflow more common for the R users, it is important to understand some basic concepts of the OO programming. Many of the functions implemented in `{esqlabsR}` return an *instance* (or an *object*) of a *class*. These objects can be used as inputs for other methods. Additionally, each object offers a set of properties (which can be other objects) and methods, which are accessible by the `$` character:
 
 ```r
 # create an instance of an object
@@ -60,4 +62,4 @@ To facilitate modeling activities in a team with diverse backgrounds, `esqlabsR`
 * by default, the `Data` folder contains Excel files with observed data
 * by default, the `Parameters` folder contains Excel files with global, population and individual model parameters, definitions of application protocols and modeling scenarios.
 
-An exemplary project folder including the subfolders and files mentioned above can be found in the `/tests/data/TestProject` folder of the repository.
+An exemplary project folder including the subfolders and files mentioned above can be found in the `/tests/data/TestProject` folder of the [`{esqlabsr}` repository](https://github.com/esqLABS/esqlabsR/tree/develop/tests/data/TestProject).

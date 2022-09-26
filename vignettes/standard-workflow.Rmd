@@ -1,0 +1,206 @@
+---
+title: "Standard workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Standard workflow}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+knitr::opts_knit$set(
+  root.dir = "../tests/data/TestProject/Code/"
+)
+```
+
+```{r, echo = FALSE, results = "hide", message = F}
+library(esqlabsR)
+```
+
+### Defining scenarios
+
+Within the `esqlabsR` framework, the simulations are run by defining and
+executing multiple *scenarios*. A scenario is defined by the simulation
+file containing the model structure, parametrization of the model,
+application protocol, and (optionally) the physiology of the simulated
+individual or population. To simplify scenarios set up, all these
+information are stored in excel files with defined structure.
+
+Information about location of scenario definition files, simulation
+files, output folders etc. is stored in excel file
+`ProjectConfiguration.xlsx` located in the folder `Code`. Usually it is
+not required to edit the contents of this file.
+
+The first step in the workflow is to create a `ProjectConfiguration`
+from this file that will be used by the scripts to know where to find
+the required data (for all following examples, we assume that the
+current working directory is the `Code` folder):
+
+```{r}
+projectConfiguration <- createDefaultProjectConfiguration()
+print(projectConfiguration)
+```
+
+Next, we will define a *scenario* that we want to simulate in the excel
+file `Parameters/Scenarios.xlsx` (or other as set in
+`projectConfiguration$scenarioDefinitionFile`). The package includes [an
+example
+scenario](https://github.com/esqLABS/esqlabsR/blob/HEAD/tests/data/TestProject/Parameters/Scenarios.xlsx)
+that models the administration of a single dose of 250 mg aciclovir
+intravenously to an individual with a 90 ml/min estimated glomerular
+filtration rate. To define a scenario, create a new row in the
+`Scenarios.xlsx` file with the following content:
+
+-   **Scenario_name**: unique name of the scenario. The name must be a
+    [valid R variables
+    name](https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f).
+-   **IndividualId**: Name (ID) of an individual. This name refers to
+    the name of the individual as used in excel files
+    `IndividualPhysiology.xlsx` for definition of the biometric
+    properties of the simulated individual and
+    `IndividualParameters.xlsx` for definition of individual-specific
+    model parameters. **IndividualId** may be empty. In this case,
+    standard individual as defined in the `pkml` simulation without any
+    individual-specific model parameters will be simulated. 
+To create an individual with specific biometric characteristics, define
+an entry with the same individual id in the file
+`IndividualPhysiology.xlsx`. The same individual can be used in multiple
+scenarios. Note that though it is technically possible to apply a
+species different from the one in the original simulation, the
+correctness of the results is not guaranteed as there exist some
+structural differences between the species.
+
+-   **ModelParameterSheets**: A list of sheet names from the
+    `ModelParameter.xlsx` file, separated by a `,`. Each sheet must have
+    the columns `Container Path`, `Parameter Name`, `Value`, and
+    `Units`. Parameter values from specified sheets will be applied to
+    the model in the order of their definition. E.g., if we define
+    `Global, Aciclovir`, then parameters from the `Aciclovir` sheet will
+    be applied after the `Global` parameters. **ModelParameterSheets**
+    may be empty or specify as many sheets as required. Note that the
+    specified sheets must be present in the `ModelParameter.xlsx` file.
+    The purpose of this approach is to have *global* parameters that can
+    be applied to most scenarios, and separate set of parameters for
+    e.g. different *disease states* (parameter sheets `Healthy` and
+    `CKD`), or separate parametrization of different *compounds* (sheet
+    `Aciclovir`).  
+We can further refine the parametrization of the scenario by specifying
+the individual parameters in the `IndividualParameters.xlsx` file.
+Create a sheet with the name as the *IndividualId* specified for the
+respective scenario and populate it the same structure as the
+`ModelParameters.xlsx` file. This way we can define e.g.
+individual-specific clearance values or, as in our case, the glomerular
+filtration rate. Individual specific parameters are applied after the
+parameters defined in the *ModelParameterSheets*. We can use an
+individual in multiple scenarios. If an individual is specified in the
+scenario definition, but no sheet with this name exists in the
+`IndividualParameters.xlsx` file, this step is simply ignored.
+
+-   **ApplicationProtocol**: name of the application protocol that will
+    be applied. Applications are defined as a set of parameters that
+    will be applied to the model in the file
+    `ApplicationParameters.xlsx`. For each application, create a sheet
+    with the name as specified in the **ApplicationProtocol** entry and
+    populate it with the same structure as the `ModelParameter.xlsx`
+    file...
+  Configuring application protocols this way requires that the loaded
+simulation includes all possible applications that can be turned on and
+off by setting parameters, e.g. the `Dose` or `Start time` parameters.
+As it might be cumbersome to manually create entries for all
+administration parameters, we can use the
+`getAllApplicationParameters()` function to get a list of all (constant)
+parameters located in the `Applications` container. In the following
+example, we will extract application parameters for the molecule
+`Aciclovir` from the example simulation:
+```{r}
+sim <- loadSimulation(system.file("extdata", "Aciclovir.pkml", package = "ospsuite"))
+applicationParams <- getAllApplicationParameters(sim)
+print(applicationParams)
+```
+and export the parameters to an excel file using the
+`exportParametersToXLS()` function:
+```{r, eval=FALSE}
+exportParametersToXLS(parameters = applicationParams, paramsXLSpath = "../Applications.xlsx")
+```
+The created excel file will have the same structure as all
+Parameter-files and can be directly loaded in MoBi or R using the
+`readParametersFromXLS()` function.
+
+- **SimulationTime**: Time of the simulation. The [output intervel](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setOutputInterval.html) 
+of the simulation will be set to the range [0 - `SimulationTime`] with the resolution 
+of 1 point per minute.
+
+- **SimulationTimeUnit**: Unit for `SimulationTime`. For supported units, see 
+`ospsuite::ospUnits`.
+
+- **SteadyState**: If `TRUE`, the model will be simulated for a "sufficiently long"
+time (1000 minutes by default). The steady-state time can be specified in the 
+`ScenarioConfiguration` (see Section [Running scenarios](#running-scenarios)).
+
+- **ModelFile**: Name of the `pkml` file with the simulation. Must be located in 
+the folder defined in `ProjectConfiguration$modelFolder`.
+
+### Running scenarios
+
+Scenarios are then executed by creating a `ScenarioConfiguration` object
+and calling a `runScenarios()` function with a specific scenario name
+(`TestScenario` in this case):
+
+```{r runScenarios}
+scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
+OutputPaths <- enum(list(
+  Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+))
+simulatedScenarios <- runScenarios(
+  scenarioNames = c("TestScenario"),
+  scenarioConfiguration = scenarioConfiguration,
+  customParams = NULL, saveSimulationsToPKML = FALSE
+)
+```
+
+The `runScenarios()` function relies on an `OutputPaths` variable being
+defined in the current environment. The variable is expected to contain
+path(s) to outputs generated by the model. In our case this is the
+simulated concentration of Aciclovir in the peripheral venous blood
+plasma.
+
+The `runScenarios()` function returns a named list of lists with
+`Simulation` objects, `SimulationResults` objects, and vectors of output
+values.
+
+```{r simulatedScenarios}
+print(simulatedScenarios$TestScenario$results)
+```
+
+```{r outputValues}
+print(head(simulatedScenarios$TestScenario$outputValues$data))
+```
+
+### Troubleshooting
+
+-   The `runScenarios()` function will fail if the `OutputPaths`
+    variable is missing in the current environment. Make sure to have
+    this variable set up immediately before calling the `runScenarios()`
+    function.
+
+More detailed information on function signatures can be found in:
+
+-   `esqlabsR` documentation on:
+    -   [ProjectConfiguration
+        class](https://esqlabs.github.io/esqlabsR/reference/ProjectConfiguration.html)
+    -   [ScenarioConfiguration
+        class](https://esqlabs.github.io/esqlabsR/reference/ScenarioConfiguration.html)
+    -   [readScenarioConfigurationFromExcel()](https://esqlabs.github.io/esqlabsR/reference/readScenarioConfigurationFromExcel.html)
+    -   [runScenarios()](https://esqlabs.github.io/esqlabsR/reference/runScenarios.html)
+-   `ospsuite` documentation on:
+    -   [Simulation
+        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html)
+    -   [SimulationResults
+        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html)
