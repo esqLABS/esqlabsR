@@ -1,17 +1,3 @@
-## context("utilities-data")
-
-test_that("It can read a properly defined file", {
-  dataConf <- DataConfiguration$new(
-    dataFolder = getTestDataFilePath(""),
-    dataFile = "CompiledDataSet.xlsx",
-    compoundPropertiesFile = "Compound_Properties.xlsx",
-    dataSheets = c("TestSheet_1")
-  )
-
-  observedData <- readOSPSTimeValues(dataConfiguration = dataConf)
-  expect_equal(length(observedData[[1]]), 2)
-})
-
 ## context("stringToNum")
 
 test_that("It converts a single positive number", {
@@ -197,7 +183,7 @@ test_that("It sets the LLOQ if it is given for any of the original data sets", {
   dataSet1$setValues(xValues = 1:5, yValues = 1:5)
   dataSet2$setValues(xValues = 2:5, yValues = 4:7)
   meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2))
-  expect_equal(meanDataSet$LLOQ, NULL)
+  expect_null(meanDataSet$LLOQ)
 
   dataSet2$LLOQ <- 2
   meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2))

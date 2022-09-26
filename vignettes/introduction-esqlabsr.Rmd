@@ -3,7 +3,6 @@ title: "Introduction to esqlabsR"
 output: 
   rmarkdown::html_vignette:
     toc: true
-#output: pdf_document
 vignette: >
   %\VignetteIndexEntry{Introduction to esqlabsR}
   %\VignetteEngine{knitr::rmarkdown}
@@ -18,20 +17,22 @@ knitr::opts_chunk$set(
 )
 ```
 
-The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation (M&S)** activities performed in the R environment. The main focus of the package lies on providing standard workflows for running simulations with the [Open Systems Pharmacology](http://www.open-systems-pharmacology.org/) Software (OSPS) [R package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) `{ospsuite}` and creating standardized figures.
+The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation** (M&S) of PBPK and QSP models implemented in [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS) and executed from R. The package provides functions to read and run scenarios, workflows and simulations and create plots and visualization based on no-code input from Excel files. The package is based on R functions in the [`ospsuite` package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R).
 
-## General information
 
-This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R-Introduction](https://docs.open-systems-pharmacology.org/working-with-r/r-introduction) section of the OSPS manual.
+## Motivation
 
-In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the PK-Sim examples folder of the OSPS installation. Alternatively, you can also download it from [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml).
+This package builds up on the functionality of the `{ospsuite}` package. It is strongly recommended to get familiar with the [R Introduction](https://docs.open-systems-pharmacology.org/working-with-r/introduction-ospsuite-r) section of the OSPS manual.
 
-The documentation is divided into three parts covering the following aspects:
+In order to load a simulation in R, it must be present in the **\*.pkml** file format. Every simulation in PK-Sim or MoBi can be exported to the *.pkml file. The examples shown in this documentation are based on the Aciclovir example model, until stated otherwise. The model can be found in the [GitHub repository](https://github.com/Open-Systems-Pharmacology/Example_Aciclovir) as PK-Sim project. The pkml file can be downloaded from [ospsuite-r](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml) repository.
 
-* [Facilitating M&S](modeling-simulation.html)
+The articles below covers several aspects of the software usage:
+
 * [Data handling](data-handling.html)
-* [Figure creation](figure-creation.html)
-* [Helper methods](helper-methods.html)
+* [Running simulations](example-workflow.html)
+* [Visualization and reporting](example-visualization.html)
+* [Sensitivity analysis](sensitivity-analysis.html)
+* [Available Shiny apps](shiny-apps.html)
 
 ## Object-oriented approach
 
@@ -50,13 +51,13 @@ resultOfAFunction <- object1$multiply(1,2)
 
 Important information about the object can be printed out by calling `print(object)`.
 
-The most important classes are:
+## Configuring a project with no-code Excel files
 
-  : `DataMapping`
-    : Organizes objects of type `XYData`, describing their groupings and used for creating figures. See [Creating figures](figure-creation.html) for more information.
-  : `Plotable`
-  : `XYData`, inherits `Plotable`
-    : Organizes any kind of x-y-values data. See [Data handling](data-handling.html) for more information.
+To facilitate modeling activities in a team with diverse backgrounds, `esqlabsR` employs Excel configuration files that define every aspect of a modeling project. The modeling projects are expected to follow a strict folder structure: 
 
-  : `DataConfiguration`
-    : Structure containing information for observed data import. See [Data handling](data-handling.html) for more information.
+* the `Code/ProjectConfiguration.xlsx` file is a cornerstone Excel file that stores relative paths to all project components, including modeling scenarios, data files and parameter files. This Excel file is expected to contain fields that populate an instance of a [`ProjectConfiguration` class](../reference/ProjectConfiguration.html).
+* by default, the `Code` folder contains R script files
+* by default, the `Data` folder contains Excel files with observed data
+* by default, the `Parameters` folder contains Excel files with global, population and individual model parameters, definitions of application protocols and modeling scenarios.
+
+An exemplary project folder including the subfolders and files mentioned above can be found in the `/tests/data/TestProject` folder of the repository.

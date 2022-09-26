@@ -17,7 +17,7 @@
 #'   of the simulation are applied as initial conditions for all molecules.
 #'   Default is `FALSE`.
 #' @param steadyStateTime Simulation time (minutes) for the steady-state
-#'   simulation. Must be long enough for system to reach a steady-state 1000 by
+#'   simulation. Must be long enough for system to reach a steady-state. 1000 by
 #'   default.
 #' @param ignoreIfFormula If `TRUE` (default), species and parameters with
 #'   initial values defined by a formula are not included in the steady-state
@@ -25,7 +25,9 @@
 #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
 #'   thrown if any of the `additionalParams` does not exist. If `FALSE`,
 #'   non-existent parameters are  ignored.
-#' @import ospsuite
+#' @param simulationRunOptions Optional instance of a `SimulationRunOptions`
+#'  used during the simulation run.
+#' @import ospsuite ospsuite.parameteridentification
 #' @export
 #'
 #' @examples
@@ -45,10 +47,12 @@ initializeSimulation <- function(simulation,
                                  simulateSteadyState = FALSE,
                                  steadyStateTime = 1000,
                                  ignoreIfFormula = TRUE,
-                                 stopIfParameterNotFound = TRUE) {
+                                 stopIfParameterNotFound = TRUE,
+                                 simulationRunOptions = NULL) {
   validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
   validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
   validateIsLogical(simulateSteadyState)
+  validateIsNumeric(steadyStateTime)
 
   # Apply parameters of the individual
   if (!is.null(individualCharacteristics)) {
@@ -61,17 +65,25 @@ initializeSimulation <- function(simulation,
       stop(messages$wrongParametersStructure("additionalParams"))
     }
 
-    ospsuite::setParameterValuesByPath(
-      parameterPaths = additionalParams$paths,
-      values = additionalParams$values,
-      simulation = simulation,
-      units = additionalParams$units,
-      stopIfNotFound = FALSE
-    )
+    # Skip if the correct structure is supplied, but no parameters are defined
+    if (!isEmpty(additionalParams$paths)) {
+      ospsuite::setParameterValuesByPath(
+        parameterPaths = additionalParams$paths,
+        values = additionalParams$values,
+        simulation = simulation,
+        units = additionalParams$units,
+        stopIfNotFound = FALSE
+      )
+    }
   }
 
   if (simulateSteadyState) {
-    initialValues <- getSteadyState(simulations = simulation, steadyStateTime = steadyStateTime, ignoreIfFormula = ignoreIfFormula)[[simulation$id]]
+    initialValues <- getSteadyState(
+      simulations = simulation,
+      steadyStateTime = steadyStateTime,
+      ignoreIfFormula = ignoreIfFormula,
+      simulationRunOptions = simulationRunOptions
+    )[[simulation$id]]
     ospsuite::setQuantityValuesByPath(
       quantityPaths = initialValues$paths,
       values = initialValues$values,
@@ -141,4 +153,60 @@ compareSimulationParameters <- function(simulation1, simulation2) {
   }
 
   return(list(In1NotIn2 = pathsIn1NotIn2, In2NotIn1 = pathsIn2NotIn1, Different = pathsDiff))
+}
+
+#' Get parameters of applications in the simulation
+#'
+#' @param simulation A `Simulation` object
+#' @param moleculeNames Names of the molecules which applications parameters
+#' will be returned. If `NUll`(default), applications for all molecules are
+#'  returned.
+#'
+#' @details Every application event has a `ProtocolSchemaItem` container that
+#' holds parameters describing the dose, start time, infusion time etc. This
+#' function returns a list of all constant parameters located under the
+#' `ProtocolSchemaItem` container of applications defined for the `moleculeNames`.
+#'
+#' @return A list of `Parameter` objects defining the applications in the
+#' simulation.
+#' @export
+#'
+#' @examples
+#' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+#' simulation <- loadSimulation(simPath)
+#' applicationParams <- getAllApplicationParameters(simulation = simulation)
+#'
+#' applicationParams <- getAllApplicationParameters(
+#'   simulation = simulation,
+#'   moleculeNames = "Aciclovir"
+#' )
+getAllApplicationParameters <- function(simulation, moleculeNames = NULL) {
+  validateIsOfType(simulation, "Simulation")
+  validateIsCharacter(moleculeNames, nullAllowed = TRUE)
+
+  # If no molecules have been specified, get application parameters for all
+  # molecules in the simulation
+  moleculeNames <- moleculeNames %||% simulation$allFloatingMoleculeNames()
+
+  # Returns an object of class `Application` for each administration event
+  applications <- unlist(lapply(moleculeNames, \(x)simulation$allApplicationsFor(x)), use.names = FALSE)
+
+  # Gather all parameters in one list that will be the output of the function
+  allParams <- list()
+
+  for (application in applications) {
+    # get parent container of the application
+    parentContainer <- application$startTime$parentContainer
+    containerPath <- parentContainer$path
+    # Get all non-formula parameters of ProtocolSchemaItem
+    params <- getAllParametersMatching("*", parentContainer)
+
+    for (param in params) {
+      if (!param$isFormula) {
+        allParams <- c(allParams, param)
+      }
+    }
+  }
+
+  return(allParams)
 }

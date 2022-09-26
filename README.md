@@ -1,6 +1,6 @@
-# esqlabsR
+# esqlabsR <img src="man/figures/logo.png" align="right" width="240" />
 
-Utilities functions for modeling and simulation workflows within *esqLABS*.
+The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation** (M&S) of PBPK and QSP models implemented in [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS) and executed from R. The package provides functions to read and run scenarios, workflows, and simulations. Furthermore, it creates visualizations based on non-code input from Excel files. The package is based on R functions in the [`ospsuite` package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R).
 
 <!-- badges: start -->
 
@@ -11,39 +11,40 @@ Utilities functions for modeling and simulation workflows within *esqLABS*.
 
 ## Installation
 
-The latest version of the package comes as a binary `*.zip` and can be downloaded from here (the `.zip` folder under `Artifacts` panel):
-<https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts>
+Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts). The `{esqlabsR}` package requires the following packages: 
 
-## Required packages
+* Available from CRAN:
+    * colorspace,
+    * dplyr,
+    * ggplot2,
+    * purrr,
+    * readxl,
+    * shiny,
+    * shinyjs,
+    * tidyr,
+    * tools,
+    * vctrs,
+    * writexl,
+    * stringr,
+    * labeling
+  
 
-- rClr >0.9.1
-  - https://github.com/Open-Systems-Pharmacology/rClr/releases/ or esqLABS internal
-- ospsuite-r > 10.0
-  - https://github.com/Open-Systems-Pharmacology/OSPSuite-R or esqLABS internal
-- R6 (CRAN)
-- readr (CRAN)
-- readxl (CRAN)
-- writexl (CRAN)
-- hash (CRAN)
-- shiny (CRAN)
-- shinyjs (CRAN)
-- vctrs (CRAN)
+* Available from github: 
+    * [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
+    * [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
+    * [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
+    * [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.0
+    * [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
+  
+### For projects created for version 3
 
-### For building from source and developing
-
-- Rtools (https://cran.r-project.org/bin/windows/Rtools/)
-  - After installation, add the folder to your $PATH: In start menu, type in "PATH", select "Change path environment for user", and add the path to Rtools folder.
-- roxygen2 (CRAN)
-- devtools (CRAN)
-- rmarkdown (CRAN)
-- testthat (CRAN)
-- knitr (CRAN)
-- styler (CRAN)
+To run code written for version 3 of `esqlabsR` package, additionally install the
+[esqlabsRLegacy](https://github.com/esqLABS/esqlabsRLegacy) package.
 
 ## Contributing
 
-- Follow the OSPS-R [coding standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md)
-- Some additional useful information can be found [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's)
+- Follow the OSPS-R [coding standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md).
+- Some additional useful information can be found [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's).
 
 ## Code of Conduct
 

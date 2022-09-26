@@ -1,30 +1,72 @@
-## context("utilities-figures")
+## context("esqLABS_colors")
 
-test_that("Correct usage of .isPoint", {
-  expect_equal(.isPoint(""), FALSE)
-  expect_equal(.isPoint("l"), FALSE)
-  expect_equal(.isPoint("p"), TRUE)
-  expect_equal(.isPoint("lp"), TRUE)
-  expect_equal(.isPoint("pl"), TRUE)
-  expect_equal(.isPoint("ps"), TRUE)
-  expect_equal(.isPoint("b"), TRUE)
+test_that("esqLABS_colors input validation works as expected", {
+  expect_error(esqLABS_colors(-1), messages$nrOfColorsShouldBePositive(-1))
+})
+
+test_that("esqLABS_colors wprks with empty argument vector", {
+  expect_length(esqLABS_colors(0), 0)
+})
+
+test_that("esqLABS_colors returns two colors", {
+  expect_length(esqLABS_colors(2), 2)
+})
+
+test_that("esqLABS_colors returns three colors", {
+  expect_length(esqLABS_colors(3), 3)
+})
+
+test_that("esqLABS_colors returns ten colors", {
+  expect_length(esqLABS_colors(10), 10)
+})
+
+test_that("esqLABS_colors returns ten colors", {
+  expect_length(esqLABS_colors(10), 10)
+})
+
+## context("col2hsv")
+
+test_that("col2hsv returns expected HSV values for a given R color name", {
+  expect_equal(
+    col2hsv("yellow"),
+    structure(c(0.166666666666667, 1, 1),
+      .Dim = c(3L, 1L),
+      .Dimnames = list(c("h", "s", "v"), NULL)
+    )
+  )
+
+  expect_equal(
+    col2hsv("white"),
+    structure(c(0, 0, 1),
+      .Dim = c(3L, 1L),
+      .Dimnames = list(c("h", "s", "v"), NULL)
+    )
+  )
 })
 
 
-test_that("Correct usage of .isLine", {
-  expect_equal(.isLine(""), FALSE)
-  expect_equal(.isLine("p"), FALSE)
-  expect_equal(.isLine("l"), TRUE)
-  expect_equal(.isLine("lp"), TRUE)
-  expect_equal(.isLine("pl"), TRUE)
-  expect_equal(.isLine("sl"), TRUE)
-  expect_equal(.isLine("b"), TRUE)
+
+## context("createEsqlabsPlotConfiguration")
+
+test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults", {
+  myPC <- createEsqlabsPlotConfiguration()
+  expect_true(isOfType(myPC, "DefaultPlotConfiguration"))
+  expect_equal(myPC$titleSize, 8)
 })
 
-test_that("It returns two colors", {
-  expect_equal(length(esqLABS_colors(2)), 2)
+## context("createEsqlabsPlotGridConfiguration")
+
+test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defaults", {
+  myPGC <- createEsqlabsPlotGridConfiguration()
+  expect_true(isOfType(myPGC, "PlotGridConfiguration"))
+  expect_equal(myPGC$tagLevels, "a")
 })
 
-test_that("It returns ten colors", {
-  expect_equal(length(esqLABS_colors(10)), 10)
+## context("createEsqlabsExportConfiguration")
+
+test_that("createEsqlabsExportConfiguration() creates object with chosen defaults", {
+  myProjConfig <- ProjectConfiguration$new()
+  myEC <- createEsqlabsExportConfiguration(myProjConfig)
+  expect_true(isOfType(myEC, "ExportConfiguration"))
+  expect_equal(myEC$units, "cm")
 })

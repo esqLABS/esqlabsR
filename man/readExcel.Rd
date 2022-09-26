@@ -12,7 +12,7 @@ readExcel(path, sheet = NULL, ...)
 \item{sheet}{Name or number of the sheet. If \code{NULL} (default), the first sheet of the
 file is used.}
 
-\item{...}{Any other parameters that can be passed to readxl::read_excel}
+\item{...}{Any other parameters that can be passed to \code{readxl::read_excel}}
 }
 \value{
 A tibble with the contents of the excel sheet

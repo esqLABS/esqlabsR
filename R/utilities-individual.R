@@ -41,10 +41,15 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
     units[i] <- individual$distributedParameters$units[[i]]
   }
 
-  output <- data.frame(unlist(containerPaths, use.names = FALSE), unlist(paramNames, use.names = FALSE), unlist(as.numeric(values), use.names = FALSE), unlist(units, use.names = FALSE))
+  output <- data.frame(
+    unlist(containerPaths, use.names = FALSE),
+    unlist(paramNames, use.names = FALSE),
+    unlist(as.numeric(values), use.names = FALSE),
+    unlist(units, use.names = FALSE)
+  )
   colnames(output) <- columnNames
 
-  writexl::write_xlsx(output, path = outputXLSPath, col_names = TRUE)
+  writeExcel(data = output, path = outputXLSPath)
 }
 
 #' Read individual characteristics from file
@@ -113,12 +118,11 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath,
 #' For other species, all parameters returned by `createIndividual` are applied.
 #'
 #' @param individualCharacteristics `IndividualCharacteristics` describing an individual. Optional
-#' @param simulation `Simulation` loaded form the PKML file
+#' @param simulation `Simulation` loaded from the PKML file
 #' @import ospsuite
 #' @export
 #'
 #' @examples
-#' #'
 #' \dontrun{
 #' simulation <- loadSimulation(filePath = modelPath)
 #' humanIndividualCharacteristics <- createIndividualCharacteristics(

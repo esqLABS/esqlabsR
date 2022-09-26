@@ -237,7 +237,7 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
 # checking `SensitivityCalculation`  object ------------------
 
 test_that("sensitivityCalculation returns the correct object", {
-  expect_s3_class(results, "SensitivityCalculation")
+  expect_true(isOfType(results, "SensitivityCalculation"))
 
   expect_equal(
     length(results$simulationResults),
@@ -458,7 +458,7 @@ results_multiple <- sensitivityCalculation(
 )
 
 test_that("sensitivityCalculation extracts data correctly for multiple output paths", {
-  expect_equal(nrow(results_multiple$pkData), 81L)
+  expect_identical(nrow(results_multiple$pkData), 81L)
   expect_equal(unique(results_multiple$pkData$OutputPath), outputPaths)
 })
 

@@ -93,14 +93,14 @@ test_that("It returns NULL if the distance is higher than the absolute threshold
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
-  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 0.9), NULL)
+  expect_null(getIndexClosestToValue(value = value, array = array, thresholdRel = 0.9))
 })
 
 test_that("It only finds exact matches for absolute threshold = 0", {
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
-  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0), NULL)
+  expect_null(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0))
   value <- 1
   expect_equal(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0), 3)
 })
@@ -135,13 +135,17 @@ test_that("It finds a 0 with relative threshold", {
   expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 10), 2)
 })
 
-
-test_that("It finds a character in a string vector", {
-  expect_true(isCharInString("a", c("bsdalk", "g")))
-  expect_false(isCharInString("a", "g"))
-})
-
-
 test_that("Escape a string for possible regular expression match", {
   expect_equal(escapeForRegex("C:/Downloads"), "\\QC:/Downloads\\E")
+})
+
+##  context("compareWithNA")
+
+test_that("`compareWithNA()` works as expected", {
+  res <- compareWithNA(
+    c(NA, "a", "b", NA),
+    c(NA, "c", "b", "a")
+  )
+
+  expect_equal(res, c(TRUE, FALSE, TRUE, FALSE))
 })

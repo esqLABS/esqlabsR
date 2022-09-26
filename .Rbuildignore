@@ -47,3 +47,4 @@ references.bib
 ^scripts$
 .tgitconfig
 ^rakefile\.rb$
+_\.new\.png$

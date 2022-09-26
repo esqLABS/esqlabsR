@@ -12,14 +12,6 @@ authors:
 
 reference:
 
-  - title: R6 Classes
-    desc:  Important objects for modeling and simulation and plotting workflows.
-    contents:
-      - matches("^Data")
-      - XYData
-      - Plotable
-      - PlotConfiguration
-
   - title: Sensitivity analysis
     #desc:
     contents:
@@ -27,10 +19,10 @@ reference:
 
   - title: Project workflow
     contents:
-      - contains("Configuration")
+      - contains("Project")
       - contains("Scenario")
 
-  - title: Helper functions for data import, wrangling, and export
+  - title: Helpers for data import, wrangling, and export
     #desc:
     contents:
       - matches("^read")
@@ -39,13 +31,13 @@ reference:
       - matches("^write")
       - matches("^export")
 
-  - title: Helper functions for modeling and simulation
+  - title: Helpers for modeling and simulation
     #desc:
     contents:
       - matches("^compare")
       - matches("^calculate")
       - contains("Simulation")
-      - contains("Function")
+      - ends_with("Function")
       - contains("Quantiles")
       - matches("^geo")
       - sampleRandomValue
@@ -54,13 +46,14 @@ reference:
       - LLOQMode
       - loadObservedData
 
-  - title: Helper functions for plotting
+  - title: Helpers for plotting
     #desc:
     contents:
       - matches("^plot")
       - matches("^col")
       - contains("color")
       - GraphicsDevices
+      - has_concept("create-plotting-configurations")
 
   - title: Input validation
     #desc:
@@ -77,7 +70,7 @@ reference:
     contents:
       - matches("^start")
 
-  - title: Miscllaneous
+  - title: Miscellaneous
     #desc:
     contents:
       - matches("^enum")
@@ -86,4 +79,4 @@ reference:
       - pathFromClipboard
       - removeFromList
       - sourceAll
-
+      - esqlabsRSettingNames

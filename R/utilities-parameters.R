@@ -39,6 +39,61 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }
 
+#' Export simulation parameters to excel
+#'
+#' @description Creates an excel file with information from the passed
+#' parameters. The excel sheet will contain columns "Container Path",
+#' "Parameter Name", "Value", and "Units". The resulting file can be loaded in
+#' `MoBi` or in `R` with the function `readParametersFromXLS()`.
+#'
+#' @param parameters A single or a list of `Parameter` objects
+#' @param paramsXLSpath Path to the excel file
+#' @param sheet (Optional) name of the excel sheet
+
+#' @export
+exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
+  validateIsOfType(parameters, "Parameter")
+  validateIsCharacter(sheet, nullAllowed = TRUE)
+  if (!is.null(sheet)) {
+    validateIsOfLength(sheet, 1)
+  }
+  # Make sure parameters is a list even if only one parameter is passed
+  parameters <- c(parameters)
+
+  parameterContainerPath <-
+    parameterUnits <-
+    parameterName <- vector("character", length(parameters))
+  parameterValue <- vector("numeric", length(parameters))
+
+  for (paramIdx in seq_along(parameters)) {
+    param <- parameters[[paramIdx]]
+    parameterContainerPath[[paramIdx]] <- param$parentContainer$path
+    parameterName[[paramIdx]] <- param$name
+    parameterUnits[[paramIdx]] <- param$unit
+    parameterValue[[paramIdx]] <- param$value
+  }
+
+  output <- data.frame(
+    unlist(parameterContainerPath, use.names = FALSE),
+    unlist(parameterName, use.names = FALSE),
+    unlist(parameterValue, use.names = FALSE),
+    unlist(parameterUnits, use.names = FALSE)
+  )
+
+  if (length(output) > 0) {
+    colnames(output) <- c("Container Path", "Parameter Name", "Value", "Units")
+  }
+
+  # Write the results into an excel file.
+  # Wrap the output data frame into a list and name the list if sheet name
+  # has been provided
+  data <- list(output)
+  if (!is.null(sheet)) {
+    names(data) <- sheet
+  }
+  writeExcel(data = data, path = paramsXLSpath)
+}
+
 #' Extend parameters structure with new entries
 #'
 #' @param parameters A list containing vectors 'paths' with the full paths to the
@@ -49,11 +104,11 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #'   units the values are in. Entries from this list will extend or overwrite
 #'   the list `parameters`
 #'
-#'   @details This function adds new parameter entries from `newParameters` to
+#' @details This function adds new parameter entries from `newParameters` to
 #'  `parameters`. If an entry with the same path is already present in `parameters`,
 #'  its value and unit will be overwritten with the values from `newParameters`.
 #'
-#' @return Updated list of parameter patsh, values, and units
+#' @return Updated list of parameter paths, values, and units
 #' @export
 extendParameterStructure <- function(parameters, newParameters) {
   if (!identical(names(parameters), c("paths", "values", "units"))) {
@@ -73,7 +128,7 @@ extendParameterStructure <- function(parameters, newParameters) {
     return(parameters)
   }
 
-  # Convert the input parameter structure into hashes.
+  # Convert the input parameter structure into named vectors.
   pathsValuesVector <- parameters$values
   names(pathsValuesVector) <- parameters$paths
   pathsUnitsVector <- parameters$units
@@ -109,7 +164,7 @@ extendParameterStructure <- function(parameters, newParameters) {
   return(returnVal)
 }
 
-#' @title Check if two parameters are equal is respect to certain properties.
+#' @title Check if two parameters are equal with respect to certain properties.
 #'
 #' @details
 #' The parameters are not equal if:
@@ -123,8 +178,8 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
 #' Table formulas: If the number of points differ, OR any of the points differ,
 #' OR one of the parameter values is fixed (formula is overridden),
-#' OR both parameter values are fixed and differ
-#' #'
+#' OR both parameter values are fixed and differ.
+#'
 #' @param parameter1 First parameter to compare
 #' @param parameter2 Second parameter to compare
 #' @param checkFormulaValues If TRUE, values of explicit formulas are always
@@ -223,13 +278,13 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' @param simulation Simulation used to retrieve parameter instances from given paths.
 #'
 #' @examples
-#' \dontrun{
-#'
 #' simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
 #' sim <- loadSimulation(simPath)
 #' condition <- function(path) {
-#'   task <- ospsuite:::getContainerTask()
-#'   !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
+#'   ospsuite::isExplicitFormulaByPath(
+#'     path = path,
+#'     simulation = sim
+#'   )
 #' }
 #' setParameterValuesByPathWithCondition(
 #'   c("Organism|Liver|Volume", "Organism|Volume"),
@@ -237,7 +292,6 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #'   sim,
 #'   condition
 #' )
-#' }
 #' @import ospsuite
 #' @export
 setParameterValuesByPathWithCondition <- function(parameterPaths,

@@ -1,24 +1,58 @@
+# esqlabsR 4.0.0
+
+MAJOR CHANGES
+
+- Three new functions to create configuration objects needed for data visualization workflows:
+  
+  * `createEsqlabsPlotConfiguration()`
+  * `createEsqlabsPlotGridConfiguration()`
+  * `createEsqlabsExportConfiguration()`
+
+- New function `getAllApplicationParameters()` that returns all parameters of 
+applications in a simulation
+- New function `exportParametersToXLS()` to write parameter information into an 
+excel file that can be loaded in MoBi or R using the `readParametersFromXLS()`
+function.
+- New function `writeExcel()` that is a wrapper for creating a directory 
+(if not present) and writing to excel file using `writexl::write_xlsx()`.
+
+BREAKING CHANGES
+
+- The package requires R version >=4.1.
+
+- The package gains new dependencies:
+
+  * [`{ospsuite.parameteridentification}`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/) 
+  * [`{tlf}`](https://www.open-systems-pharmacology.org/TLF-Library/).
+
+- Function `getSteadyState()` has been moved to package `{ospsuite.parameteridentification}`.
+
+- Function `loadObservedData()` requires a `ProjectConfiguration` instead of a 
+`ScenarioConfiguration`.
+
+- `DataMapping`, `DataMappingConfiguration`, `XYData`, `DataConfiguration` and 
+associated functions for creating standard figures are moved to `esqlabsRLegacy` 
+[package](https://esqlabs.github.io/esqlabsRLegacy/).
+
 # esqlabsR 3.0.0
-
-
 
 NEW FUNCTIONS
 
 - To carry out and visualize sensitivity analysis:
 
-* `sensitivityCalculation()`
-* `sensitivitySpiderPlot()`
-* `sensivitityTimeProfiles()`
+ * `sensitivityCalculation()`
+ * `sensitivitySpiderPlot()`
+ * `sensitivityTimeProfiles()`
 
 - Classes and functions for standard esqLABS simulation workflow:
 
-* `ProjectConfiguration`
-* `ScenarioConfiguration`
-* `createDefaultProjectConfiguration()`
-* `readScenarioConfigurationFromExcel()`
-* `setApplications()`
-* `initializeScenario()`
-* `initializeScenario()`
+ * `ProjectConfiguration`
+ * `ScenarioConfiguration`
+ * `createDefaultProjectConfiguration()`
+ * `readScenarioConfigurationFromExcel()`
+ * `setApplications()`
+ * `initializeScenario()`
+ * `initializeScenario()`
 
 - Maintenance and bug fixes.
 

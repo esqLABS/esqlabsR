@@ -4,10 +4,10 @@
 \alias{loadObservedData}
 \title{Load data from excel}
 \usage{
-loadObservedData(scenarioConfiguration, sheets = NULL)
+loadObservedData(projectConfiguration, sheets = NULL)
 }
 \arguments{
-\item{scenarioConfiguration}{Object of class \code{ScenarioConfiguration} containing
+\item{projectConfiguration}{Object of class \code{ProjectConfiguration} containing
 the necessary information.}
 
 \item{sheets}{String or a list of strings defining which sheets to load.
@@ -18,16 +18,15 @@ A list of \code{DataSet} objects
 }
 \description{
 Loads data sets from excel. The excel file containing the data
-must be located in the folder \code{scenarioConfiguration$projectConfiguration$dataFolder}
-and be named \code{scenarioConfiguration$projectConfiguration$dataFile}.
+must be located in the folder \code{projectConfiguration$dataFolder}
+and be named \code{projectConfiguration$dataFile}.
 Importer configuration file must be located in the same folder and named
-\code{scenarioConfiguration$projectConfiguration$dataImporterConfigurationFile}.
+\code{projectConfiguration$dataImporterConfigurationFile}.
 }
 \examples{
 \dontrun{
-# Create default project and scenario configurations
+# Create default project configuration
 projectConfiguration <- createDefaultProjectConfiguration()
-scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-dataSets <- loadObservedData(scenarioConfiguration)
+dataSets <- loadObservedData(projectConfiguration)
 }
 }

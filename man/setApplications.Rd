@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities-scenario-configuration.R
 \name{setApplications}
 \alias{setApplications}
-\title{Set applications}
+\title{Set an application protocol in a \code{Simulation}}
 \usage{
 setApplications(
   simulation,
@@ -22,7 +22,7 @@ protocol defined in the \code{scenarioConfiguiration}, the parameters to set
 are extracted from excel.}
 }
 \description{
-Set applications
+Set an application protocol in a \code{Simulation}
 }
 \details{
 Set the parameter values describing the application protocol

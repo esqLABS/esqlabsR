@@ -11,7 +11,7 @@ applyIndividualParameters(individualCharacteristics, simulation)
 \arguments{
 \item{individualCharacteristics}{\code{IndividualCharacteristics} describing an individual. Optional}
 
-\item{simulation}{\code{Simulation} loaded form the PKML file}
+\item{simulation}{\code{Simulation} loaded from the PKML file}
 }
 \description{
 Apply an individual to the simulation.
@@ -19,7 +19,6 @@ For human species, only parameters that do not override formulas are applied.
 For other species, all parameters returned by \code{createIndividual} are applied.
 }
 \examples{
-#'
 \dontrun{
 simulation <- loadSimulation(filePath = modelPath)
 humanIndividualCharacteristics <- createIndividualCharacteristics(

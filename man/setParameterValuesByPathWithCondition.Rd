@@ -33,13 +33,13 @@ are assumed to be in base units. If not \code{NULL}, must have the same length a
 Set the values of parameters in the simulation by path, if the \code{condition} is true.
 }
 \examples{
-\dontrun{
-
 simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
 sim <- loadSimulation(simPath)
 condition <- function(path) {
-  task <- ospsuite:::getContainerTask()
-  !rClr::clrCall(task, "IsExplicitFormulaByPath", simulation$ref, enc2utf8(path))
+  ospsuite::isExplicitFormulaByPath(
+    path = path,
+    simulation = sim
+  )
 }
 setParameterValuesByPathWithCondition(
   c("Organism|Liver|Volume", "Organism|Volume"),
@@ -47,5 +47,4 @@ setParameterValuesByPathWithCondition(
   sim,
   condition
 )
-}
 }

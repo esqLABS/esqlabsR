@@ -16,7 +16,7 @@ test_that("It can read a properly defined file", {
   sheets <- c("ValidSheet")
   params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
 
-  expect_equal(names(params), c("paths", "values", "units"))
+  expect_named(params, c("paths", "values", "units"))
 })
 
 test_that("It can read a properly defined file with extra columns", {
@@ -24,12 +24,12 @@ test_that("It can read a properly defined file with extra columns", {
   sheets <- c("ValidSheed_extraColumns")
   params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
 
-  expect_equal(names(params), c("paths", "values", "units"))
+  expect_named(params, c("paths", "values", "units"))
 })
 
 test_that("It throws an error when a sheet has wrong structure", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
-  sheets <- c("InvalidSheet")
+  sheets <- "InvalidSheet"
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
   expect_error(readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets),
     regexp =
@@ -74,7 +74,7 @@ test_that("It trows an error if wrong structure is provideed", {
 })
 
 test_that("It extends an empty structure by new values", {
-  params <- list(paths = c(), values = c(), units = c())
+  params <- list(paths = NULL, values = NULL, units = NULL)
   newParams <- list(
     paths = c("Path1", "Path2"), values = c(1, 2),
     units = c("", "µmol")
@@ -91,7 +91,7 @@ test_that("It extends an empty structure by new values", {
 })
 
 test_that("It extends a structure by empty structure", {
-  newParams <- list(paths = c(), values = c(), units = c())
+  newParams <- list(paths = NULL, values = NULL, units = NULL)
   params <- list(
     paths = c("Path1", "Path2"), values = c(1, 2),
     units = c("", "µmol")
@@ -122,4 +122,74 @@ test_that("It extends a structure by a new structure", {
   expect_equal(extended$paths, c("Path1", "Path2", "Path3"))
   expect_equal(extended$values, c(1, 1, 3))
   expect_equal(extended$units, c("", "", "µmol"))
+})
+
+
+# exportParametersToXLS
+simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+simulation <- loadSimulation(simPath)
+
+param1 <- getParameter(path = "Organism|Weight", simulation)
+param2 <- getParameter(path = "Organism|Age", simulation)
+
+test_that("It writes the excel file with one parameter provided", {
+  withr::with_tempdir(
+    code = {
+      xlsPath <- "tmp.xlsx"
+      exportParametersToXLS(parameters = param1, paramsXLSpath = xlsPath)
+
+      # Load from xls and compare
+      params <- readParametersFromXLS(paramsXLSpath = xlsPath)
+
+      expect_equal(params$paths[[1]], param1$path)
+      expect_equal(params$values[[1]], param1$value)
+      expect_equal(params$units[[1]], param1$unit)
+    }
+  )
+})
+
+test_that("It writes the excel file with one parameter provided
+          and specified sheet", {
+  withr::with_tempdir(
+    code = {
+      xlsPath <- "tmp.xlsx"
+      sheet <- "newSheet"
+      exportParametersToXLS(
+        parameters = param1, paramsXLSpath = xlsPath,
+        sheet = sheet
+      )
+
+      # Load from xls and compare
+      params <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet)
+
+      expect_equal(params$paths[[1]], param1$path)
+      expect_equal(params$values[[1]], param1$value)
+      expect_equal(params$units[[1]], param1$unit)
+    }
+  )
+})
+
+test_that("It writes the excel file with two parameters provided
+          and specified sheet", {
+  withr::with_tempdir(
+    code = {
+      xlsPath <- "tmp.xlsx"
+      sheet <- "newSheet"
+      exportParametersToXLS(
+        parameters = c(param1, param2), paramsXLSpath = xlsPath,
+        sheet = sheet
+      )
+
+      # Load from xls and compare
+      params <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet)
+
+      expect_equal(params$paths[[1]], param1$path)
+      expect_equal(params$values[[1]], param1$value)
+      expect_equal(params$units[[1]], param1$unit)
+
+      expect_equal(params$paths[[2]], param2$path)
+      expect_equal(params$values[[2]], param2$value)
+      expect_equal(params$units[[2]], param2$unit)
+    }
+  )
 })

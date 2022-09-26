@@ -1,8 +1,3 @@
-.getPackageVersion <- function() {
-  version <- getNamespaceVersion("esqlabsR")
-  return(version)
-}
-
 # Environment that holds various global variables and settings for the esqlabsR,
 # It is not exported and should not be directly manipulated by other packages.
 esqlabsEnv <- new.env(parent = emptyenv())
@@ -11,7 +6,7 @@ esqlabsEnv <- new.env(parent = emptyenv())
 esqlabsEnv$packageName <- "esqlabsR"
 
 # Version of the package
-esqlabsEnv$packageVersion <- .getPackageVersion()
+esqlabsEnv$packageVersion <- getNamespaceVersion("esqlabsR")
 
 # Default width of a plot of a single `PlotMapping`
 esqlabsEnv$widthPerPlotMapping <- 8
@@ -19,15 +14,9 @@ esqlabsEnv$widthPerPlotMapping <- 8
 # Default height of a plot of a single `PlotMapping`
 esqlabsEnv$heightPerPlotMapping <- 8
 
-# Column names to split observed data by
-esqlabsEnv$columnsToSplitDataBy <- c("Group Id", "Gender", "Patient Id", "Dose", "Route", "Molecule", "Organ", "Compartment")
-
-# Column index for x values in observed data files
-esqlabsEnv$XValuesColumn <- 10
-# Column index for y values in observed data files
-esqlabsEnv$YValuesColumn <- 11
-# Column index for y error values in observed data files
-esqlabsEnv$YErrorColumn <- 12
+#' Names of the settings stored in esqlabsEnv Can be used with `getEsqlabsRSetting()`
+#' @export
+esqlabsRSettingNames <- enum(names(esqlabsEnv))
 
 #' Get the value of a global esqlabsR setting.
 #'
@@ -39,10 +28,10 @@ esqlabsEnv$YErrorColumn <- 12
 #'
 #' @examples
 #' getEsqlabsRSetting("packageVersion")
-#' getEsqlabsRSetting("widthPerPlotMapping")
+#' getEsqlabsRSetting("packageName")
 getEsqlabsRSetting <- function(settingName) {
   if (!(any(names(esqlabsEnv) == settingName))) {
-    stop(messages$errorEsqlabsRSettingNotFound(settingName))
+    stop(messages$errorPackageSettingNotFound(settingName, esqlabsEnv))
   }
 
   obj <- esqlabsEnv[[settingName]]
