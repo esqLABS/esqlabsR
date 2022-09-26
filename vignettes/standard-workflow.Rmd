@@ -149,22 +149,18 @@ the folder defined in `ProjectConfiguration$modelFolder`.
 
 ### Running scenarios
 
-To translate all the information we have defined in the excel files in a structure 
-that can be understood by `R`, we must create a 
-
 Scenarios are then executed by creating a `ScenarioConfiguration` object
 and calling a `runScenarios()` function with a specific scenario name
 (`TestScenario` in this case):
 
 ```{r runScenarios}
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = "TestScenario",
-  projectConfiguration = projectConfiguration
-)
-
+scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
+OutputPaths <- enum(list(
+  Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+))
 simulatedScenarios <- runScenarios(
-  scenarioConfigurations = scenarioConfigurations,
+  scenarioNames = c("TestScenario"),
+  scenarioConfiguration = scenarioConfiguration,
   customParams = NULL, saveSimulationsToPKML = FALSE
 )
 ```
