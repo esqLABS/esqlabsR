@@ -14,29 +14,27 @@ The **`{esqlabsR}`** R-package is designed to facilitate and standardize **model
 Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts). The `{esqlabsR}` package requires the following packages: 
 
 * Available from CRAN:
-    * jsonlite
-    * patchwork
-    * purrr
-    * R6
-    * readr
-    * stringr
-    * tidyr
-    * colorspace
-    * dplyr
-    * ggplot2
-    * hash
-    * readxl
-    * shiny
-    * shinyjs
-    * tools
-    * vctrs
-    * writexl
+    * colorspace,
+    * dplyr,
+    * ggplot2,
+    * purrr,
+    * readxl,
+    * shiny,
+    * shinyjs,
+    * tidyr,
+    * tools,
+    * vctrs,
+    * writexl,
+    * stringr,
+    * labeling
+  
 
 * Available from github: 
     * [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
     * [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
     * [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
     * [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.0
+    * [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
   
 ### For projects created for version 3
 
