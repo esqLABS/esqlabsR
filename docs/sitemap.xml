@@ -22,6 +22,12 @@
     <loc>https://esqlabs.github.io/esqlabsR/articles/sensitivity-analysis.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/shiny-apps.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/standard-workflow.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/authors.html</loc>
   </url>
   <url>
@@ -65,9 +71,6 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/Distributions.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-getNetHashCode.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-setApplicationFromExcel.html</loc>
@@ -125,12 +128,6 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/getMoleculeNameFromQuantity.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/getNetHashCode.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/getSteadyState.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/GraphicsDevices.html</loc>

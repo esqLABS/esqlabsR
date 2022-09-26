@@ -29,6 +29,8 @@
     <a class="dropdown-item" href="../articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
     <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
+    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
   </div>
 </li>
 <li class="nav-item">
@@ -104,7 +106,7 @@ are assumed to be in base units. If not <code>NULL</code>, must have the same le
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">simPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"simple.pkml"</span>, package <span class="op">=</span> <span class="st">"ospsuite"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu">loadSimulation</span><span class="op">(</span><span class="va">simPath</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">condition</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">path</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="fu">ospsuite</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ospsuite/man/isExplicitFormulaByPath.html" class="external-link">isExplicitFormulaByPath</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">ospsuite</span><span class="fu">::</span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/isExplicitFormulaByPath.html" class="external-link">isExplicitFormulaByPath</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    path <span class="op">=</span> <span class="va">path</span>,</span></span>
 <span class="r-in"><span>    simulation <span class="op">=</span> <span class="va">sim</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
@@ -122,7 +124,7 @@ are assumed to be in base units. If not <code>NULL</code>, must have the same le
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p><p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>.</p>
+  <p></p><p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, Sergei Vavilov, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
