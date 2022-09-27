@@ -39,13 +39,14 @@ The package includes [an example scenario](https://github.com/esqLABS/esqlabsR/b
 Scenarios are then executed by creating a `ScenarioConfiguration` object and calling a `runScenarios()` function with a specific scenario name (`TestScenario` in this case):
 
 ```{r runScenarios}
-scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-OutputPaths <- enum(list(
-  Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-))
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = "TestScenario",
+  projectConfiguration = projectConfiguration
+)
+
 simulatedScenarios <- runScenarios(
-  scenarioNames = c("TestScenario"),
-  scenarioConfiguration = scenarioConfiguration,
+  scenarioConfigurations = scenarioConfigurations,
   customParams = NULL, saveSimulationsToPKML = FALSE
 )
 ```
