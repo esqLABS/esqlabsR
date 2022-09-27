@@ -63,3 +63,7 @@ messages$noPKDataToWrite <- function() {
 messages$cannotGetMoleculeFromQuantity <- function(quantityPath, optionalMessage = NULL) {
   paste0("Could not retrieve molecule name for the quantity with the path '", quantityPath, "'. ", optionalMessage)
 }
+
+messages$scenarioConfigurationNameNotFoundWhenReading <- function(scenarioName) {
+  return(paste0("readScenarioDefinition: Scenario '", scenarioName, "' is not specified!"))
+}

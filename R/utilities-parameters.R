@@ -111,12 +111,14 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
 #' @return Updated list of parameter paths, values, and units
 #' @export
 extendParameterStructure <- function(parameters, newParameters) {
-  if (!identical(names(parameters), c("paths", "values", "units"))) {
-    stop(messages$wrongParametersStructure("parameters"))
-  }
-  if (!identical(names(newParameters), c("paths", "values", "units"))) {
-    stop(messages$wrongParametersStructure("newParameters"))
-  }
+  .validateParametersStructure(
+    parameterStructure = parameters,
+    argumentName = "parameters"
+  )
+  .validateParametersStructure(
+    parameterStructure = newParameters,
+    argumentName = "newParameters"
+  )
 
   # If the parameters structure is empty, return new parameters
   if (isEmpty(parameters$paths)) {
