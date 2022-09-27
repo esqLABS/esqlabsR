@@ -23,6 +23,10 @@ in the excel file "ApplicationParameters.xlsx"}
 
 \item{\code{individualId}}{Id of the individual as specified in "IndividualParameters.xlsx".
 If \code{NULL} (default), the individual as defined in the simulation file will be simulated.}
+
+\item{\code{outputPaths}}{a list of output paths for which the results will be
+calculated. If \code{NULL} (default), outputs as defined in the simulation
+are used.}
 }
 \if{html}{\out{</div>}}
 }

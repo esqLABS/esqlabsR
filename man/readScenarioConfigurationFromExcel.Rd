@@ -2,33 +2,35 @@
 % Please edit documentation in R/utilities-scenario-configuration.R
 \name{readScenarioConfigurationFromExcel}
 \alias{readScenarioConfigurationFromExcel}
-\title{Read scenario definition from excel file}
+\title{Read scenario definition(s) from excel file}
 \usage{
-readScenarioConfigurationFromExcel(scenarioConfiguration)
+readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)
 }
 \arguments{
-\item{scenarioConfiguration}{A \code{ScenarioConfiguration} that will be updated.}
+\item{scenarioNames}{Names of the scenarios that are defined in the excel file}
+
+\item{projectConfiguration}{A \code{ProjectConfiguration} object holding base information}
 }
 \value{
-Updated \code{ScenarioConfiguration}
+A named list of \code{ScenarioConfiguration} objects withe the names of the
+list being the \code{scenarioNames}.
 }
 \description{
-Read scenario definition from excel file
+Read scenario definition(s) from excel file
 }
 \details{
 Reads scenario definition from the excel file defined in
-\code{ProjectConfiguration} and updates the \code{ScenarioConfiguration} with new
+\code{ProjectConfiguration} and creates \code{ScenarioConfiguration} objects with new
 information.
+If a scenario that is specified in \code{scenarioNames} is not found in the excel
+file, an error is thrown.
 }
 \examples{
 \dontrun{
 # Create default ProjectConfiguration
 projectConfiguration <- createDefaultProjectConfiguration()
-# Create ScenarioConfiguration from ProjectConfiguration
-scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-# Set scenario name
-scenarioConfiguration$scenarioName <- "MyScenario"
+scenarioName <- "MyScenario"
 # Read scenario definition from excel
-scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)
+scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)[[scenarioName]]
 }
 }
