@@ -23,13 +23,14 @@ library(esqlabsR)
 projectConfiguration <- createDefaultProjectConfiguration()
 dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
-scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-OutputPaths <- enum(list(
-  Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-))
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = "TestScenario",
+  projectConfiguration = projectConfiguration
+)
+
 simulatedScenarios <- runScenarios(
-  scenarioNames = c("TestScenario"),
-  scenarioConfiguration = scenarioConfiguration,
+  scenarioConfigurations = scenarioConfigurations,
   customParams = NULL, saveSimulationsToPKML = FALSE
 )
 ```

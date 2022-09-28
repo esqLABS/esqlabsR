@@ -1,9 +1,10 @@
 ## context("readIndividualCharacteristicsFromXLS")
 skip_on_ci()
 
+XLSpath <- "../data/IndividualPhysiology.xlsx"
+
 test_that("It returns NULL if the specified individual Id cannot be found in
           the file and nullIfNotFound is TRUE", {
-  XLSpath <- "../data/IndividualPhysiology.xlsx"
   individualId <- "notPresent"
 
   expect_null(readIndividualCharacteristicsFromXLS(
@@ -14,7 +15,6 @@ test_that("It returns NULL if the specified individual Id cannot be found in
 
 test_that("It throws an error if the specified individual Id cannot be found in
           the file and nullIfNotFound is FALSE", {
-  XLSpath <- "../data/IndividualPhysiology.xlsx"
   individualId <- "notPresent"
 
   expect_error(readIndividualCharacteristicsFromXLS(
@@ -25,7 +25,6 @@ test_that("It throws an error if the specified individual Id cannot be found in
 })
 
 test_that("It create IndividualCharacteristics with the correct values", {
-  XLSpath <- "../data/IndividualPhysiology.xlsx"
   individualId <- "Vicini_1999"
   individualCharacteristics <- readIndividualCharacteristicsFromXLS(
     XLSpath = XLSpath,
@@ -40,7 +39,6 @@ test_that("It create IndividualCharacteristics with the correct values", {
 })
 
 test_that("It create IndividualCharacteristics when numerical values are empty", {
-  XLSpath <- "../data/IndividualPhysiology.xlsx"
   individualId <- "Individual_with_NAs"
   individualCharacteristics <- readIndividualCharacteristicsFromXLS(
     XLSpath = XLSpath,

@@ -1,8 +1,7 @@
 #' Run a set of scenarios.
 #'
-#' @param scenarioNames Names of the simulated scenarios. Scenario description is
-#' stored in the `Scenarios.xlsx` file.
-#' @param scenarioConfiguration A `ScenarioConfiguration` object
+#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to be
+#' simulated.
 #' @param customParams A list containing vectors 'paths' with the full paths to the
 #' parameters, 'values' the values of the parameters, and 'units' with the
 #' units the values are in. The values to be applied to the model.
@@ -16,31 +15,46 @@
 #' `SimulatioResults` objects produced by running the simulation, and output values
 #' of the `SimulationResults`.
 #' @export
-runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NULL,
+runScenarios <- function(scenarioConfigurations, customParams = NULL,
                          saveSimulationsToPKML = FALSE) {
-  simulations <- vector("list", length(scenarioNames))
-  for (i in seq_along(simulations)) {
-    scenarioConfiguration$scenarioName <- scenarioNames[[i]]
-    simulations[[i]] <- initializeScenario(scenarioConfiguration = scenarioConfiguration, customParams = customParams)
-  }
-  names(simulations) <- scenarioNames
+  validateIsOfType(scenarioConfigurations, "ScenarioConfiguration")
+  validateIsLogical(saveSimulationsToPKML)
+  .validateParametersStructure(
+    parameterStructure = customParams,
+    argumentName = "customParams",
+    nullAllowed = TRUE
+  )
+  # Suffix that will be appended to the name of output folder where the simulations
+  # will be saved to, if specified. Have to generate it once before the loop,
+  # otherwise multiple folders could be created because of time delay in initialization.
+  outputFolderSuffix <- format(Sys.time(), "%F %H-%M")
 
-  # Save simulations to PKML
-  if (saveSimulationsToPKML) {
-    outputFolder <- file.path(
-      scenarioConfiguration$projectConfiguration$modelFolder,
-      format(Sys.time(), "%F %H-%M")
-    )
-    # Create a new folder if it does not exist
-    if (!dir.exists(paths = outputFolder)) {
-      dir.create(path = outputFolder)
-    }
-    for (scenarioName in scenarioNames) {
-      outputPath <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
+  simulations <- vector("list", length(scenarioConfigurations))
+  scenarioNames <- vector("character", length(scenarioConfigurations))
+
+  # For each scenario configuration, create a simulation object
+  for (i in seq_along(scenarioConfigurations)) {
+    scenarioConfiguration <- scenarioConfigurations[[i]]
+    scenarioNames[[i]] <- scenarioConfiguration$scenarioName
+    simulation <- initializeScenario(scenarioConfiguration = scenarioConfiguration, customParams = customParams)
+
+    # Save simulation to PKML
+    if (saveSimulationsToPKML) {
+      outputFolder <- file.path(
+        scenarioConfiguration$projectConfiguration$modelFolder,
+        outputFolderSuffix
+      )
+      # Create a new folder if it does not exist
+      if (!dir.exists(paths = outputFolder)) {
+        dir.create(path = outputFolder)
+      }
+
+      # Save the current simulation
+      outputPath <- file.path(outputFolder, paste0(scenarioNames[[i]], ".pkml"))
       tryCatch(
         {
           ospsuite::saveSimulation(
-            simulation = simulations[[scenarioName]],
+            simulation = simulation,
             filePath = outputPath
           )
         },
@@ -54,7 +68,11 @@ runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NU
         }
       )
     }
+
+    simulations[[i]] <- simulation
   }
+  names(simulations) <- scenarioNames
+  names(scenarioConfigurations) < scenarioNames
 
   # Simulate all simulations concurrently
   simulationResults <- runSimulations(simulations = simulations, simulationRunOptions = scenarioConfiguration$simulationRunOptions)
@@ -65,8 +83,17 @@ runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NU
     simulationName <- scenarioNames[[idx]]
     simulation <- simulations[[simulationName]]
     results <- simulationResults[[simulation$id]]
+
+    # Retrieving quantities from paths to support pattern matching with '*'
+    outputQuantities <- NULL
+    if (!is.null(scenarioConfigurations[[simulationName]]$outputPaths)) {
+      outputQuantities <- getAllQuantitiesMatching(
+        scenarioConfigurations[[simulationName]]$outputPaths,
+        simulation
+      )
+    }
     outputValues <- getOutputValues(results,
-      quantitiesOrPaths = getAllQuantitiesMatching(enumValues(OutputPaths), simulation)
+      quantitiesOrPaths = outputQuantities
     )
     returnList[[simulationName]] <- list(
       simulation = simulation, results = results,
@@ -96,8 +123,6 @@ runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NU
 #' @return Initialized `Simulation` object
 #' @export
 initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
-  # Update `ScenarioConfiguration` with information from excel
-  scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)
   # Read parameters from the parameters file
   params <- readParametersFromXLS(
     file.path(
@@ -107,6 +132,7 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
     scenarioConfiguration$paramSheets
   )
 
+  # Apply individual physiology, if specified
   individualCharacteristics <- NULL
   if (!is.null(scenarioConfiguration$individualId)) {
     individualCharacteristics <- readIndividualCharacteristicsFromXLS(
@@ -147,6 +173,7 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
     }
   }
 
+  # Apply test parameters, if specified
   if (scenarioConfiguration$setTestParameters) {
     warning("INFO: 'scenarioConfiguration$setTestParameters' is set to TRUE,
             parameter values defined in 'InputCode/TestParameters.R' will be applied!")
@@ -167,9 +194,11 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
     scenarioConfiguration$projectConfiguration$modelFolder,
     scenarioConfiguration$modelFile
   ), loadFromCache = FALSE)
-  # Set the outputs
-  clearOutputs(simulation)
-  addOutputs(quantitiesOrPaths = enumValues(OutputPaths), simulation = simulation)
+  # Set the outputs, if new were specified
+  if (!is.null(scenarioConfiguration$outputPaths)) {
+    clearOutputs(simulation)
+    addOutputs(quantitiesOrPaths = scenarioConfiguration$outputPaths, simulation = simulation)
+  }
   # Set simulation time if defined by the user.
   if (!is.null(scenarioConfiguration$simulationTime)) {
     setOutputInterval(simulation = simulation, startTime = 0, endTime = scenarioConfiguration$simulationTime, resolution = scenarioConfiguration$pointsPerMinute)

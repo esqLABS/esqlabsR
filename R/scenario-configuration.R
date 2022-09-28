@@ -146,6 +146,10 @@ a parameter sheet from the list"
     #' @field individualId Id of the individual as specified in "IndividualParameters.xlsx".
     #' If `NULL` (default), the individual as defined in the simulation file will be simulated.
     individualId = NULL,
+    #' @field outputPaths a list of output paths for which the results will be
+    #' calculated. If `NULL` (default), outputs as defined in the simulation
+    #' are used.
+    outputPaths = NULL,
     #' @description Add the names of sheets in the parameters excel-file
     #' that will be applied to the simulation
     #' @param sheetNames A name or a list of names of the excel sheet

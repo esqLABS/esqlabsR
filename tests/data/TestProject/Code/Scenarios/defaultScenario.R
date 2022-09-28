@@ -1,16 +1,30 @@
 defaultScenario <- function(projectConfiguration) {
   ########### Initializing and running scenarios########
   ospsuite.utils::validateIsOfType(projectConfiguration, ProjectConfiguration)
-  # Create a base scenario configuration based on the current project configuration
-  scenarioConfiguration <- esqlabsR::ScenarioConfiguration$new(projectConfiguration)
-  # If set to `TRUE`, parameters defined in
-  # "InputCoode/TestParameters.R" will be applied
-  scenarioConfiguration$setTestParameters <- FALSE
 
   # Define which scenarios to run
   scenarioNames <- c("TestScenario")
+
+  # Create `ScenarioConfiguration` objects from excel files
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Adjust scenario configurations, if necessary.
+  # E.g., enable setting of test parameters. If set to `TRUE`, parameters
+  # defined in "InputCoode/TestParameters.R" will be applied
+  scenarioConfigurations[[1]]$setTestParameters <- FALSE
+  # Set output paths for each scenario
+  for (scenarioConfiguration in scenarioConfigurations) {
+    scenarioConfiguration$outputPaths <- enumValues(OutputPaths)
+  }
+
   # Initialize and run scenarios
-  simulatedScenarios <- esqlabsR::runScenarios(scenarioNames = scenarioNames, scenarioConfiguration = scenarioConfiguration, customParams = NULL, saveSimulationsToPKML = FALSE)
+  simulatedScenarios <- runScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    customParams = NULL, saveSimulationsToPKML = FALSE
+  )
 
   ########### Load observed data - data template v10########
   # Which sheets to load

@@ -22,13 +22,14 @@ library(esqlabsR)
 projectConfiguration <- createDefaultProjectConfiguration()
 dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
-scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-OutputPaths <- enum(list(
-  Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-))
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = "TestScenario",
+  projectConfiguration = projectConfiguration
+)
+
 simulatedScenarios <- runScenarios(
-  scenarioNames = c("TestScenario"),
-  scenarioConfiguration = scenarioConfiguration,
+  scenarioConfigurations = scenarioConfigurations,
   customParams = NULL, saveSimulationsToPKML = FALSE
 )
 ```
@@ -76,4 +77,3 @@ More detailed information on function signatures can be found in:
     * [sensitivityCalculation()](https://esqlabs.github.io/esqlabsR/reference/sensitivityCalculation.html)
     * [sensitivitySpiderPlot()](https://esqlabs.github.io/esqlabsR/reference/sensitivitySpiderPlot.html)
     * [sensitivityTimeProfiles()](https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html)
-
