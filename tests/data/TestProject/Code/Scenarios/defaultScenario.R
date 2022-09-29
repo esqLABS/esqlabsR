@@ -20,7 +20,7 @@ defaultScenario <- function(projectConfiguration) {
     scenarioConfiguration$outputPaths <- enumValues(OutputPaths)
   }
 
-  # Initialize and run scenarios
+  # Run scenarios
   simulatedScenarios <- runScenarios(
     scenarioConfigurations = scenarioConfigurations,
     customParams = NULL, saveSimulationsToPKML = FALSE

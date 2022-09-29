@@ -119,6 +119,7 @@ administration parameters, we can use the
 parameters located in the `Applications` container. In the following
 example, we will extract application parameters for the molecule
 `Aciclovir` from the example simulation:
+
 ```{r}
 sim <- loadSimulation(system.file("extdata", "Aciclovir.pkml", package = "ospsuite"))
 applicationParams <- getAllApplicationParameters(sim)
@@ -133,7 +134,7 @@ The created excel file will have the same structure as all
 Parameter-files and can be directly loaded in MoBi or R using the
 `readParametersFromXLS()` function.
 
-- **SimulationTime**: Time of the simulation. The [output intervel](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setOutputInterval.html) 
+- **SimulationTime**: Time of the simulation. The [output interval](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setOutputInterval.html) 
 of the simulation will be set to the range [0 - `SimulationTime`] with the resolution 
 of 1 point per minute.
 
@@ -147,48 +148,95 @@ time (1000 minutes by default). The steady-state time can be specified in the
 - **ModelFile**: Name of the `pkml` file with the simulation. Must be located in 
 the folder defined in `ProjectConfiguration$modelFolder`.
 
+### Code-based specifications
+
+In addition to scenario set ups through the excel sheets, further specifications 
+are made in the `R` files located in the `InputCode` project folder. Files in this 
+folder must be sourced prior to using.
+
+- **OutputPaths**: You can specify the output paths (i.e., paths to the molecules/
+parameters for which outputs will be simulated) for each scenario separately 
+(see Section [Running scenarios](#running-scenarios)). For more convenient access 
+to the paths, you can specify all paths in the `OutputPaths` enum (an `enum` is 
+just a named list) and easily access them by their alias names (e.g. `Aciclovir_PVB` 
+for `"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"`).
+
+- **TestParameters**:  During model development/fitting phase, you might want to 
+test out parameter values before storing them in the `Parameters` excel files. 
+You can define the paths of the parameters, their values and the units in the 
+`TestParameters` file. Remember to `source` the file each time you change any values. 
+You can turn setting test parameters on and off in the `ScenarioConfiguration` 
+(see Section [Running scenarios](#running-scenarios)).
+
 ### Running scenarios
 
-Scenarios are then executed by creating a `ScenarioConfiguration` object
-and calling a `runScenarios()` function with a specific scenario name
-(`TestScenario` in this case):
+Scenarios are executed by creating `ScenarioConfiguration` objects
+and calling the `runScenarios()`function. Though it is possible to create an 
+empty `ScenarioConfiguration` and populate it by hand, we usually want to create 
+scenario configurations from the excel files by calling the `readScenarioConfigurationFromExcel()` function. A `ScenarioConfiguration` is based 
+on the `ProjectConfiguration`, which has to be provided as an argument to the 
+function. To read the configuration for the *'TestScenario'* scenario defined in 
+the `Scenarios.xlsx` file, we call
 
-```{r runScenarios}
-scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
+```{r createScenarioConfigurations}
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = "TestScenario",
+  projectConfiguration = projectConfiguration
+)
+
+print(scenarioConfigurations$TestScenario)
+```
+
+Before running the scenarios, we can modify `ScenarioConfigurations` by setting 
+parameters that are currently not accessible through excel files. One the most 
+common property is `$outputPaths` that define for which paths the results will 
+be stored.
+
+```{r}
+# Define the OutputPaths enum, if not done allready
 OutputPaths <- enum(list(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 ))
+
+# Set output paths for each scenario
+for (scenarioConfiguration in scenarioConfigurations) {
+  scenarioConfiguration$outputPaths <- enumValues(OutputPaths)
+}
+```
+
+In model development/fitting phase, we also might want to apply some test parameter 
+values:
+
+```{r eval = FALSE}
+# Set output paths for each scenario
+for (scenarioConfiguration in scenarioConfigurations) {
+  scenarioConfiguration$setTestParameters <- TRUE
+}
+```
+
+Make sure that you have sourced the `TestParameters` file in this case.
+
+Once all scenario configurations are set up, we can simulate them by calling the 
+`runScenarios()` function. We can specify to save the initialized simulation 
+(i.e. the simulation with individual physiology and parametrization applied as 
+defined by the scenario configuration). In such case, a folder with the current 
+date and time will be created in the folder where the simulation `pkml` files 
+are located.
+
+```{r runScenarios}
 simulatedScenarios <- runScenarios(
-  scenarioNames = c("TestScenario"),
-  scenarioConfiguration = scenarioConfiguration,
+  scenarioConfigurations = scenarioConfigurations,
   customParams = NULL, saveSimulationsToPKML = FALSE
 )
+
+names(simulatedScenarios)
 ```
 
-The `runScenarios()` function relies on an `OutputPaths` variable being
-defined in the current environment. The variable is expected to contain
-path(s) to outputs generated by the model. In our case this is the
-simulated concentration of Aciclovir in the peripheral venous blood
-plasma.
-
-The `runScenarios()` function returns a named list of lists with
-`Simulation` objects, `SimulationResults` objects, and vectors of output
-values.
-
-```{r simulatedScenarios}
-print(simulatedScenarios$TestScenario$results)
-```
-
-```{r outputValues}
-print(head(simulatedScenarios$TestScenario$outputValues$data))
-```
+The function returns results of the simulations. For each scenario, a [`Simulation`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html) object, a [`SimulationResults`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html) object, and vectors of output values (retrieved by the [`getOutputValues()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getOutputValues.html) 
+function) are returned.
 
 ### Troubleshooting
-
--   The `runScenarios()` function will fail if the `OutputPaths`
-    variable is missing in the current environment. Make sure to have
-    this variable set up immediately before calling the `runScenarios()`
-    function.
 
 More detailed information on function signatures can be found in:
 
@@ -199,8 +247,3 @@ More detailed information on function signatures can be found in:
         class](https://esqlabs.github.io/esqlabsR/reference/ScenarioConfiguration.html)
     -   [readScenarioConfigurationFromExcel()](https://esqlabs.github.io/esqlabsR/reference/readScenarioConfigurationFromExcel.html)
     -   [runScenarios()](https://esqlabs.github.io/esqlabsR/reference/runScenarios.html)
--   `ospsuite` documentation on:
-    -   [Simulation
-        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html)
-    -   [SimulationResults
-        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html)

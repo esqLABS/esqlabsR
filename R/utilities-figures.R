@@ -146,13 +146,13 @@ GraphicsDevices <- enum(list("PNG"))
 createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
-  defaultPlotConfiguration$titleSize <- 8
+  defaultPlotConfiguration$titleSize <- 14
   defaultPlotConfiguration$xLabelSize <- 8
   defaultPlotConfiguration$yLabelSize <- 8
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
   defaultPlotConfiguration$yAxisLabelTicksSize <- 8
   defaultPlotConfiguration$legendTitleSize <- 6
-  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTop
+  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
 
   return(defaultPlotConfiguration)
 }
@@ -213,8 +213,10 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) {
 
   exportConfiguration$path <- projectConfiguration$outputFolder
   exportConfiguration$dpi <- 300
-  exportConfiguration$format <- projectConfiguration$outputDevice
-
+  # NULL is not supported by ExportConfiguration, so we should assign here
+  # something useful. NULL in the ProjectConfiguration currently means "do not
+  # export".
+  exportConfiguration$format <- projectConfiguration$outputDevice %||% "PNG"
   exportConfiguration$width <- 18
   exportConfiguration$height <- 18
   exportConfiguration$units <- "cm"
