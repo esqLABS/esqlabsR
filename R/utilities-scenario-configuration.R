@@ -1,68 +1,87 @@
-#' Read scenario definition from excel file
+#' Read scenario definition(s) from excel file
+#'
+#' @param scenarioNames Names of the scenarios that are defined in the excel file
+#' @param projectConfiguration A `ProjectConfiguration` object holding base information
 #'
 #' @details Reads scenario definition from the excel file defined in
-#' `ProjectConfiguration` and updates the `ScenarioConfiguration` with new
+#' `ProjectConfiguration` and creates `ScenarioConfiguration` objects with new
 #' information.
+#' If a scenario that is specified in `scenarioNames` is not found in the excel
+#' file, an error is thrown.
 #'
-#' @param scenarioConfiguration A `ScenarioConfiguration` that will be updated.
-#'
-#' @return Updated `ScenarioConfiguration`
+#' @return A named list of `ScenarioConfiguration` objects withe the names of the
+#' list being the `scenarioNames`.
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' # Create default ProjectConfiguration
 #' projectConfiguration <- createDefaultProjectConfiguration()
-#' # Create ScenarioConfiguration from ProjectConfiguration
-#' scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-#' # Set scenario name
-#' scenarioConfiguration$scenarioName <- "MyScenario"
+#' scenarioName <- "MyScenario"
 #' # Read scenario definition from excel
-#' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)
+#' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)[[scenarioName]]
 #' }
-readScenarioConfigurationFromExcel <- function(scenarioConfiguration) {
+readScenarioConfigurationFromExcel <- function(scenarioNames, projectConfiguration) {
+  validateIsString(scenarioNames)
+  validateIsOfType(projectConfiguration, ProjectConfiguration)
+
   # Current scenario definition structure:
   # "Scenario_name", "IndividualId", "ModelParameterSheets", "ApplicationProtocol",
   # "SimulationTime", "SimulationTimeUnit", "SteadyState", "ModelFile"
   colTypes <- c("text", "text", "text", "text", "numeric", "text", "logical", "text")
-  data <- readExcel(
+  wholeData <- readExcel(
     path = file.path(
-      scenarioConfiguration$projectConfiguration$paramsFolder,
-      scenarioConfiguration$projectConfiguration$scenarioDefinitionFile
+      projectConfiguration$paramsFolder,
+      projectConfiguration$scenarioDefinitionFile
     ),
     col_types = colTypes
   )
-  # Select the scenario
-  if (!scenarioConfiguration$scenarioName %in% data$Scenario_name) {
-    stop("readScenarioDefinition: Scenario '", scenarioConfiguration$scenarioName, "' is not specified!")
+
+  # Create a scenario configuration for each name
+  scenarioConfigurations <- vector("list", length(scenarioNames))
+  for (i in seq_along(scenarioNames)) {
+    scenarioName <- scenarioNames[[i]]
+
+    # Select the scenario
+    if (!scenarioName %in% wholeData$Scenario_name) {
+      stop(messages$scenarioConfigurationNameNotFoundWhenReading(scenarioName))
+    }
+    data <- wholeData[wholeData$Scenario_name == scenarioName, ]
+
+    # Create a base scenario configuration based on the current project configuration
+    scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
+
+    # Scenario name
+    scenarioConfiguration$scenarioName <- scenarioName
+    # Parameter sheets
+    paramSheets <- gsub(data$ModelParameterSheets, pattern = " ", replacement = "", fixed = TRUE)
+    if (!is.na(paramSheets)) {
+      scenarioConfiguration$addParamSheets(strsplit(x = paramSheets, split = ",", fixed = TRUE)[[1]])
+    }
+
+    # Simulation time
+    simTime <- data$SimulationTime
+    simTimeUnit <- data$SimulationTimeUnit
+    scenarioConfiguration$simulationTime <- ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
+
+    # Individual id
+    scenarioConfiguration$individualId <- data$IndividualId
+
+    # Application protocol
+    scenarioConfiguration$applicationProtocol <- data$ApplicationProtocol
+
+    # Simulate steady-state?
+    scenarioConfiguration$simulateSteadyState <- data$SteadyState
+
+    # Model file
+    scenarioConfiguration$modelFile <- data$ModelFile
+
+    # Add the new ScenarioConfiguration to the output list
+    scenarioConfigurations[[i]] <- scenarioConfiguration
   }
-  data <- data[data$Scenario_name == scenarioConfiguration$scenarioName, ]
+  names(scenarioConfigurations) <- scenarioNames
 
-  # Parameter sheets
-  scenarioConfiguration$removeParamSheets()
-  paramSheets <- gsub(data$ModelParameterSheets, pattern = " ", replacement = "", fixed = TRUE)
-  if (!is.na(paramSheets)) {
-    scenarioConfiguration$addParamSheets(strsplit(x = paramSheets, split = ",", fixed = TRUE)[[1]])
-  }
-
-  # Simulation time
-  simTime <- data$SimulationTime
-  simTimeUnit <- data$SimulationTimeUnit
-  scenarioConfiguration$simulationTime <- ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
-
-  # Individual id
-  scenarioConfiguration$individualId <- data$IndividualId
-
-  # Application protocol
-  scenarioConfiguration$applicationProtocol <- data$ApplicationProtocol
-
-  # Simulate steady-state?
-  scenarioConfiguration$simulateSteadyState <- data$SteadyState
-
-  # Model file
-  scenarioConfiguration$modelFile <- data$ModelFile
-
-  return(scenarioConfiguration)
+  return(scenarioConfigurations)
 }
 
 #' Set an application protocol in a `Simulation`

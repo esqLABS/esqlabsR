@@ -1,0 +1,134 @@
+---
+title: "Visualization and reporting"
+output: rmarkdown::html_vignette
+#output: pdf_document
+vignette: >
+  %\VignetteIndexEntry{Visualization and reporting}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+knitr::opts_knit$set(
+  root.dir = "../tests/data/TestProject/Code/"
+)
+```
+
+### Workflow
+
+Plotting the simulation results is an important part of model diagnostics and 
+quality control. Simulated modeling scenarios can be passed to plotting functions 
+from the `{ospsuite}` package to create uniformly-looking plots. To get familiar 
+with the `DataCombined` class used to store matching observed and simulated data, 
+read the [Working with `DataCombined` class](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined.html) 
+article. The article [Visualizations with `DataCombined`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined-plotting.html) 
+covers the basics on how to create supported plot types and how to customize them. 
+
+For the following examples, we will simulate an example scenario as described in 
+[Standard workflow](standard-workflow.html) and load the corresponding observed 
+data as described in [Data handling](data-handling.html).
+
+```{r, echo = TRUE, message = FALSE}
+library(esqlabsR)
+# Create a project configuration
+projectConfiguration <- createDefaultProjectConfiguration()
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = "TestScenario",
+  projectConfiguration = projectConfiguration
+)
+# Run scenario configuration
+simulatedScenarios <- runScenarios(
+  scenarioConfigurations = scenarioConfigurations,
+  customParams = NULL, saveSimulationsToPKML = FALSE
+)
+
+# Load observed data
+dataSheets <- "Laskin 1982.Group A"
+observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+```
+
+The simulation results are stored in a list returned by the `runScenarios()` 
+function. Plotting and visualization is performed by storing these results 
+along with matching observed data in a `DataCombined` object and passing it to 
+plotting functions. Observed data in the form of `DataSet` objects are added to a 
+`DataCombined` object via the `addDataSets()` function, simulated results can be 
+added by using the `addSimulationResults()` function. Observed and simulated 
+data can be linked by setting the `groups` argument in both methods. Data sets of the 
+same group will then be plotted together when calling plotting functions on the `DataCombined` object.
+
+Let's create a `DataCombined` object and populate it with data with the following code:
+
+```{r datacombined}
+dataCombined <- DataCombined$new()
+dataCombined$addDataSets(observedData, names = "Observed", groups = "Aciclovir")
+dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
+  names = "Simulated",
+  groups = "Aciclovir"
+)
+```
+
+Customization of the generated figures - specifying title, axes ranges, axes units, 
+position of the legend, etc., are done through *plot configurations* - objects 
+of the class [`DefaultPlotConfiguration`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html). 
+To combine multiple plots into a multi-panel figure, create a `PlotGridConfiguration` 
+object, add plots to it, and plot with the `plotGrid()` method. Finally, to export 
+a plot to a file (e.g., `PNG` or `PDF`), use an `ExportConfiguration` object.
+
+To use configurations with similar look and feel in the different `esqLABS` projects, 
+create the configurations using the following functions:
+
+  - [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html)
+  - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html)
+  - [`createEsqlabsExportConfiguration(projectConfiguration)`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html)
+
+The next example shows how to create a multi-panel figure using the default 
+configurations.
+
+```{r plot-time-profile, fig.width=7, fig.height=7}
+plotConfig <- createEsqlabsPlotConfiguration()
+gridConfig <- createEsqlabsPlotGridConfiguration()
+exportConfig <- createEsqlabsExportConfiguration(projectConfiguration)
+
+plotConfig$title <- "Time profile"
+indivPlot <- plotIndividualTimeProfile(dataCombined, defaultPlotConfiguration = plotConfig)
+
+plotConfig$title <- "Observed-vs-simulated"
+obsVsSimPlot <- plotObservedVsSimulated(dataCombined, defaultPlotConfiguration = plotConfig)
+
+plotConfig$title <- "Res-vs-time"
+resVsTimePlot <- plotResidualsVsTime(dataCombined, defaultPlotConfiguration = plotConfig)
+
+plotConfig$title <- "Res-vs-simulated"
+resVsSimPlot <- plotResidualsVsSimulated(dataCombined, defaultPlotConfiguration = plotConfig)
+
+gridConfig$addPlots(list(indivPlot, obsVsSimPlot, resVsTimePlot, resVsSimPlot))
+gridConfig$title <- "All aciclovir plots"
+gridPlot <- plotGrid(gridConfig)
+gridPlot
+```
+
+To save the plot to a `PNG` file, make sure that `fileName` argument end with 
+`.png`:
+
+```{r saveToPng, eval = FALSE}
+exportConfig$savePlot(gridPlot, fileName = "All plots.png")
+```
+
+### Troubleshooting
+
+* At any time, you can check the groups assigned to the datasets in the `DataCombined` 
+object by calling the `DataCombined$groupMap` or by examining the output of `dataCombined$toDataFrame()`.
+
+More detailed information on function signatures can be found in:
+
+* `ospsuite` documentation on:
+    * [DataCombined class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html)
+    * [plotIndividualTimeProfile()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html)
+    * [plotObservedVsSimulated()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html)
+    * [plotResidualsVsSimulated()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html)
+    * [plotResidualsVsTime()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html)

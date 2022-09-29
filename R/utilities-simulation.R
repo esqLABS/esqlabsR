@@ -61,10 +61,10 @@ initializeSimulation <- function(simulation,
 
   # Apply additional parameters
   if (!is.null(additionalParams)) {
-    if (all(names(additionalParams) != c("paths", "values", "units"))) {
-      stop(messages$wrongParametersStructure("additionalParams"))
-    }
-
+    .validateParametersStructure(
+      parameterStructure = additionalParams,
+      argumentName = "additionalParams"
+    )
     # Skip if the correct structure is supplied, but no parameters are defined
     if (!isEmpty(additionalParams$paths)) {
       ospsuite::setParameterValuesByPath(

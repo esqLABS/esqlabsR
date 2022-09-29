@@ -1,7 +1,7 @@
 Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
-Version: 4.0.0
+Version: 5.0.0
 Authors@R: 
     c(person("esqLABS GmbH", role = c("cph", "fnd")),
       person("Pavel", "Balazki", , "https://github.com/PavelBal", role = c("cre", "aut"), 

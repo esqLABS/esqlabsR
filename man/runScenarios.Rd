@@ -5,17 +5,14 @@
 \title{Run a set of scenarios.}
 \usage{
 runScenarios(
-  scenarioNames,
-  scenarioConfiguration,
+  scenarioConfigurations,
   customParams = NULL,
   saveSimulationsToPKML = FALSE
 )
 }
 \arguments{
-\item{scenarioNames}{Names of the simulated scenarios. Scenario description is
-stored in the \code{Scenarios.xlsx} file.}
-
-\item{scenarioConfiguration}{A \code{ScenarioConfiguration} object}
+\item{scenarioConfigurations}{List of \code{ScenarioConfiguration} objects to be
+simulated.}
 
 \item{customParams}{A list containing vectors 'paths' with the full paths to the
 parameters, 'values' the values of the parameters, and 'units' with the
