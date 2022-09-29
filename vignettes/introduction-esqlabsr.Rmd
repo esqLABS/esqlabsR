@@ -32,7 +32,6 @@ The articles below cover several aspects of the software usage:
 * [Standard workflow](standard-workflow.html)
 * [Data handling](data-handling.html)
 * [Visualization and reporting](example-visualization.html)
-* [Sensitivity analysis](sensitivity-analysis.html)
 * [Available Shiny apps](shiny-apps.html)
 
 ## Object-oriented approach

@@ -48,3 +48,4 @@ references.bib
 .tgitconfig
 ^rakefile\.rb$
 _\.new\.png$
+vignettes/senstivity-analysis.Rmd

@@ -51,7 +51,7 @@ test_that("col2hsv returns expected HSV values for a given R color name", {
 test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults", {
   myPC <- createEsqlabsPlotConfiguration()
   expect_true(isOfType(myPC, "DefaultPlotConfiguration"))
-  expect_equal(myPC$titleSize, 8)
+  expect_equal(myPC$titleSize, 14)
 })
 
 ## context("createEsqlabsPlotGridConfiguration")

@@ -119,7 +119,8 @@ displayProgress <- function(current, success = TRUE, message = NULL, suppressOut
 #' will be installed. If `TRUE`, latest developer builds of the osps packages
 #' will be installed
 #' @param lib character vector giving the library directories where to install
-#' the packages. Recycled as needed. If missing, defaults to the first element of .libPaths().
+#' the packages. Recycled as needed. Defaults to the first element
+#' of .libPaths().
 #' @param suppressOutput
 #'
 #' @return
@@ -129,7 +130,7 @@ displayProgress <- function(current, success = TRUE, message = NULL, suppressOut
 installOSPPackages <- function(rclrVersion = "0.9.2",
                                suppressOutput = TRUE,
                                developerVersion = FALSE,
-                               lib = NULL){
+                               lib = .libPaths()[[1]]){
   install.packages("pkgbuild", lib = lib)
   displayProgress("Checking RTOOLS", suppressOutput = suppressOutput)
   if (!pkgbuild::has_rtools()) { # rtools is not found
@@ -188,14 +189,14 @@ installOSPPackages <- function(rclrVersion = "0.9.2",
 #' @param developerVersion If `TRUE` (default), latest developer builds of the
 #' osps packages will be installed.
 #' @param lib character vector giving the library directories where to install
-#' the packages. Recycled as needed. If missing, defaults to the first element of .libPaths().
+#' the packages. Recycled as needed. Defaults to the first element of .libPaths().
 #' @param suppressOutput
 installPackagesLocally <- function(updatePackages = FALSE, pkSimPath = NULL,
                                    rclrVersion = "0.9.2",
                                    suppressOutput = TRUE,
                                    testExampleSimulation = TRUE,
                                    developerVersion = TRUE,
-                                   lib = NULL){
+                                   lib = .libPaths()[[1]]){
   # Always install renv to make sure that the project is using the most
   # recent version
   displayProgress("Installing RENV")
@@ -267,13 +268,13 @@ installPackagesLocally <- function(updatePackages = FALSE, pkSimPath = NULL,
 #' @param developerVersion If `TRUE` (default), latest developer builds of the
 #' osps packages will be installed.
 #' @param lib character vector giving the library directories where to install
-#' the packages. Recycled as needed. If missing, defaults to the first element of .libPaths().
+#' the packages. Recycled as needed. Defaults to the first element of .libPaths().
 #' @param suppressOutput
 installPackagesGlobally <- function(updatePackages = FALSE, pkSimPath = NULL,
                                     rclrVersion = "0.9.2",
                                     suppressOutput = TRUE,
                                     developerVersion = TRUE,
-                                    lib = NULL){
+                                    lib = .libPaths()[[1]]){
   installOSPPackages(rclrVersion = rclrVersion,
                      suppressOutput = suppressOutput,
                      developerVersion = developerVersion)
