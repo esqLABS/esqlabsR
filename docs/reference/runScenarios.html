@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">5.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,13 +24,17 @@
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
-    <a class="dropdown-item" href="../articles/example-visualization.html">Visualization and reporting</a>
-    <a class="dropdown-item" href="../articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
-    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Running simulations</h6>
     <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Processing data</h6>
+    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
+    <a class="dropdown-item" href="../articles/visualization-and-reporting.html">Visualization and reporting</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6>
+    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
   </div>
 </li>
 <li class="nav-item">
@@ -64,8 +68,7 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">runScenarios</span><span class="op">(</span></span>
-<span>  <span class="va">scenarioNames</span>,</span>
-<span>  <span class="va">scenarioConfiguration</span>,</span>
+<span>  <span class="va">scenarioConfigurations</span>,</span>
 <span>  customParams <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  saveSimulationsToPKML <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -73,13 +76,9 @@
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
-    <dl><dt>scenarioNames</dt>
-<dd><p>Names of the simulated scenarios. Scenario description is
-stored in the <code>Scenarios.xlsx</code> file.</p></dd>
-
-
-<dt>scenarioConfiguration</dt>
-<dd><p>A <code>ScenarioConfiguration</code> object</p></dd>
+    <dl><dt>scenarioConfigurations</dt>
+<dd><p>List of <code>ScenarioConfiguration</code> objects to be
+simulated.</p></dd>
 
 
 <dt>customParams</dt>

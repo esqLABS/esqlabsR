@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">5.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,13 +24,17 @@
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
-    <a class="dropdown-item" href="../articles/example-visualization.html">Visualization and reporting</a>
-    <a class="dropdown-item" href="../articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
-    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Running simulations</h6>
     <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Processing data</h6>
+    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
+    <a class="dropdown-item" href="../articles/visualization-and-reporting.html">Visualization and reporting</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6>
+    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -57,6 +61,31 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="5.0.0" id="esqlabsr-500">esqlabsR 5.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-500"></a></h2>
+<div class="section level4">
+<h4 id="major-changes-5-0-0">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-5-0-0"></a></h4>
+<ul><li><p><code>ScenarioConfiguration</code> gets a new field <code>outputPaths</code> which is a list of output paths for which the results will be calculated. If <code>NULL</code> (default), outputs as defined in the simulation are used.</p></li>
+<li>
+<p>The workflow for running scenarios changed to:</p>
+<ul><li>Create a <code>RunConfiguration</code> with <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code>
+</li>
+<li>Create <code>ScenarioConfigurations</code>, e.g. with <code>readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)</code>
+</li>
+<li>Run scenarios with <code>runScenarios(scenarioConfigurations)</code>
+</li>
+</ul></li>
+</ul></div>
+<div class="section level4">
+<h4 id="breaking-changes-5-0-0">BREAKING CHANGES<a class="anchor" aria-label="anchor" href="#breaking-changes-5-0-0"></a></h4>
+<ul><li>
+<code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> has a new signature and requires a list of <code>scenarioNames</code> and a <code>ProjectConfiguration</code>. The output is a named list of <code>ScenarioConfiguration</code> objects.</li>
+<li>
+<code><a href="../reference/initializeScenario.html">initializeScenario()</a></code> does not update scenario configuration from excel any more.</li>
+<li>Output paths are not set from global variable <code>OutputPaths</code> any more but from the respective field of <code>ScenarioConfgiruation</code>
+</li>
+</ul><hr></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="4.0.0" id="esqlabsr-400">esqlabsR 4.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-400"></a></h2>
 <p>MAJOR CHANGES</p>
 <ul><li>
@@ -76,10 +105,10 @@
 <li>
 <a href="https://www.open-systems-pharmacology.org/TLF-Library/" class="external-link"><code>{tlf}</code></a>.</li>
 </ul></li>
-<li><p>Function <code>getSteadyState()</code> has been moved to package <a href="https://github.com/open-systems-pharmacology/ospsuite.parameteridentification" class="external-link">ospsuite.parameteridentification</a>.</p></li>
+<li><p>Function <code><a href="https://rdrr.io/pkg/ospsuite.parameteridentification/man/getSteadyState.html" class="external-link">getSteadyState()</a></code> has been moved to package <a href="https://github.com/open-systems-pharmacology/ospsuite.parameteridentification" class="external-link">ospsuite.parameteridentification</a>.</p></li>
 <li><p>Function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> requires a <code>ProjectConfiguration</code> instead of a <code>ScenarioConfiguration</code>.</p></li>
 <li><p><code>DataMapping</code>, <code>DataMappingConfiguration</code>, <code>XYData</code>, <code>DataConfiguration</code> and associated functions for creating standard figures are moved to <code>esqlabsRLegacy</code> <a href="https://esqlabs.github.io/esqlabsRLegacy/">package</a>.</p></li>
-</ul></div>
+</ul><hr></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="3.0.0" id="esqlabsr-300">esqlabsR 3.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-300"></a></h2>
 <p>NEW FUNCTIONS</p>
@@ -97,11 +126,11 @@
 <li><p><code><a href="../reference/initializeScenario.html">initializeScenario()</a></code></p></li>
 <li><p>Maintenance and bug fixes.</p></li>
 <li><p>The package gains a new dependency: <a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/" class="external-link"><code>{ospsuite.utils}</code></a>.</p></li>
-</ul></div>
+</ul><hr></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.0" id="esqlabsr-200">esqlabsR 2.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-200"></a></h2>
 <ul><li>Maintenance and bug fixes.</li>
-</ul></div>
+</ul><hr></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="esqlabsr-100">esqlabsR 1.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-100"></a></h2>
 <ul><li>Initial release of the package.</li>

@@ -80,3 +80,25 @@ reference:
       - removeFromList
       - sourceAll
       - esqlabsRSettingNames
+
+articles:
+  - title: Introduction
+    navbar:
+    contents:
+      - introduction-esqlabsr
+  - title: Running simulations
+    navbar: Running simulations
+    desc: Articles about how to run simulations
+    contents:
+      - standard-workflow
+  - title: Processing data
+    navbar: Processing data
+    desc: Articles about how to process and analyse data
+    contents:
+      - data-handling
+      - visualization-and-reporting
+  - title: Miscellaneous
+    navbar: Miscellaneous
+  #desc:
+    contents:
+      - shiny-apps

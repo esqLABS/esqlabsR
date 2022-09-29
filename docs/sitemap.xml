@@ -7,25 +7,19 @@
     <loc>https://esqlabs.github.io/esqlabsR/articles/data-handling.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/articles/example-visualization.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/articles/example-workflow.html</loc>
-  </url>
-  <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/index.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/introduction-esqlabsr.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/articles/sensitivity-analysis.html</loc>
-  </url>
-  <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/shiny-apps.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/standard-workflow.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/visualization-and-reporting.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/authors.html</loc>
@@ -74,6 +68,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-setApplicationFromExcel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateParametersStructure.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/enumPutList.html</loc>

@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">5.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,13 +48,17 @@
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
-    <a class="dropdown-item" href="../articles/example-visualization.html">Visualization and reporting</a>
-    <a class="dropdown-item" href="../articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
-    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Running simulations</h6>
     <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Processing data</h6>
+    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
+    <a class="dropdown-item" href="../articles/visualization-and-reporting.html">Visualization and reporting</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6>
+    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
   </div>
 </li>
 <li class="nav-item">
@@ -99,15 +103,18 @@ facilitate and standardize <strong>modeling and simulation</strong>
 Pharmacology Software</a> (OSPS) and executed from R. The package
 provides functions to read and run scenarios, workflows and simulations
 and create plots and visualization based on no-code input from Excel
-files. The package is based on R functions in the <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link"><code>ospsuite</code>
+files. The package is based on R functions in the <a href="https://github.com/Open-Systems-Pharmacology/dev/OSPSuite-R" class="external-link"><code>ospsuite</code>
 package</a>.</p>
 <div class="section level2">
 <h2 id="motivation">Motivation<a class="anchor" aria-label="anchor" href="#motivation"></a>
 </h2>
 <p>This package builds up on the functionality of the
 <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> package. It is strongly recommended to get
-familiar with the <a href="https://docs.open-systems-pharmacology.org/working-with-r/introduction-ospsuite-r" class="external-link">R
-Introduction</a> section of the OSPS manual.</p>
+familiar with the <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/" class="external-link">R
+Introduction</a>. Functions reference for the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a>
+can be found <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/index.html" class="external-link">here</a>,
+while articles describing the usage of the package with examples are
+found <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/" class="external-link">here</a>.</p>
 <p>In order to load a simulation in R, it must be present in the
 <strong>*.pkml</strong> file format. Every simulation in PK-Sim or MoBi
 can be exported to the *.pkml file. The examples shown in this
@@ -116,13 +123,12 @@ otherwise. The model can be found in the <a href="https://github.com/Open-System
 repository</a> as PK-Sim project. The pkml file can be downloaded from
 <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R/blob/develop/inst/extdata/Aciclovir.pkml" class="external-link">ospsuite-r</a>
 repository.</p>
-<p>The articles below covers several aspects of the software usage:</p>
+<p>The articles below cover several aspects of the software usage:</p>
 <ul>
+<li><a href="standard-workflow.html">Standard workflow</a></li>
 <li><a href="data-handling.html">Data handling</a></li>
-<li><a href="example-workflow.html">Running simulations</a></li>
 <li><a href="example-visualization.html">Visualization and
 reporting</a></li>
-<li><a href="sensitivity-analysis.html">Sensitivity analysis</a></li>
 <li><a href="shiny-apps.html">Available Shiny apps</a></li>
 </ul>
 </div>
@@ -138,7 +144,7 @@ concepts of the OO programming. Many of the functions implemented in
 <em>object</em>) of a <em>class</em>. These objects can be used as
 inputs for other methods. Additionally, each object offers a set of
 properties (which can be other objects) and methods, which are
-accessible by the <code>$</code> sign:</p>
+accessible by the <code>$</code> character:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># create an instance of an object</span></span>
 <span><span class="va">object1</span> <span class="op">&lt;-</span> <span class="va">ClassName</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
@@ -175,7 +181,8 @@ application protocols and modeling scenarios.</li>
 </ul>
 <p>An exemplary project folder including the subfolders and files
 mentioned above can be found in the <code>/tests/data/TestProject</code>
-folder of the repository.</p>
+folder of the <a href="https://github.com/esqLABS/esqlabsR/tree/develop/tests/data/TestProject" class="external-link"><code>{esqlabsr}</code>
+repository</a>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

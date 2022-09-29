@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">5.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,13 +48,17 @@
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
-    <a class="dropdown-item" href="../articles/example-visualization.html">Visualization and reporting</a>
-    <a class="dropdown-item" href="../articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
-    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Running simulations</h6>
     <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Processing data</h6>
+    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
+    <a class="dropdown-item" href="../articles/visualization-and-reporting.html">Visualization and reporting</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6>
+    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
   </div>
 </li>
 <li class="nav-item">
@@ -102,29 +106,30 @@ and comparing simulated data against observed data. Functionalities of
 objects. Please refer to the article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/observed-data.html" class="external-link">Observed
 data</a> for information on how to load data from Excel or
 <code>*.pkml</code> files.</p>
-<p>The <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code> function expects
-to have a master configuration file called
-<code>ProjectConfiguration.xlsx</code> at the <code>/Code/</code> folder
-of the work package. It creates a <a href="../reference/ProjectConfiguration.html"><code>ProjectConfiguration</code></a>
-from this Excel file, containing information about the location of
-certain folders and files in the project folder.</p>
-<p>The function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> facilitates loading data
-in standard <em>esqLABS</em> projects. Assuming the standard project
-folder structure is followed, and Excel files with observed data are
-present in the <code>projectConfiguration$dataFolder</code> folder, the
-following chunk of code loads the data:</p>
+<p><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> offers a convenience function
+<code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> that facilitates loading data in
+standard <em>esqLABS</em> projects. Assuming the standard project folder
+structure is followed and a valid <code>ProjectConfiguration</code> (see
+<a href="standard-workflow.html">Standard workflow</a>) and Excel files
+with observed data are present in the
+<code>projectConfiguration$dataFolder</code> folder, the following code
+loads the data:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
-<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>, sheets <span class="op">=</span> <span class="va">dataSheets</span><span class="op">)</span></span>
+<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  sheets <span class="op">=</span> <span class="va">dataSheets</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">observedData</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Aciclovir_Laskin 1982.Group A_1_Human_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv"</span></span></code></pre></div>
-<p>The <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> function loads the data from a
-path stored in the <code>projectConfiguration$dataFile</code>. This
-function returns a list of <code>DataSet</code> class instances. The
-resulting object will be used later to <a href="example-visualization.html">plot results</a> to compare simulated
-and observed data.</p>
+<p>The function loads the data from the file
+<code>projectConfiguration$dataFile</code> from the folder
+<code>projectConfiguration$dataFolder</code> and returns a list of
+<code>DataSet</code> objects. The resulting object will be used later to
+<a href="example-visualization.html">plot results</a> to compare
+simulated and observed data.</p>
 </div>
 <div class="section level3">
 <h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
