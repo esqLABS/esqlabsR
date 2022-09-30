@@ -131,7 +131,8 @@ installOSPPackages <- function(rclrVersion = "0.9.2",
                                suppressOutput = TRUE,
                                developerVersion = FALSE,
                                lib = .libPaths()[[1]]){
-  install.packages("pkgbuild", lib = lib)
+  # pkgbuild is only needed for the installation script itself, can be installed once
+  # install.packages("pkgbuild", lib = lib)
   displayProgress("Checking RTOOLS", suppressOutput = suppressOutput)
   if (!pkgbuild::has_rtools()) { # rtools is not found
     displayProgress("Checking RTOOLS", success = FALSE, message = packageInstallationMessages$installRTools, suppressOutput = suppressOutput)
@@ -291,7 +292,7 @@ installPackagesGlobally <- function(updatePackages = FALSE, pkSimPath = NULL,
     update.packages(ask = FALSE)
   }
 
-  displayProgress("Installation sucessful", suppressOutput = suppressOutput)
+  displayProgress("Installation successful", suppressOutput = suppressOutput)
 }
 
 pkSimPath <- NULL
