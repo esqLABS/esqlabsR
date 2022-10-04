@@ -215,9 +215,11 @@ installPackagesLocally <- function(updatePackages = FALSE, pkSimPath = NULL,
 
   # Install packages
   installPackagesGlobally(updatePackages = updatePackages,
+                          pkSimPath = pkSimPath,
                           rclrVersion = rclrVersion,
                           suppressOutput = suppressOutput,
-                          developerVersion = developerVersion)
+                          developerVersion = developerVersion,
+                          lib = lib)
 
   # Test if a new environment is working
   # If it does, snapshot the environment with an interactive prompt
