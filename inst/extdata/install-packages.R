@@ -1,3 +1,15 @@
+# Tokens for accessing developer versions
+.developHttpsHeaders <- list(ospsuite.utils = c(),
+                             tlf = c(),
+                             ospsuite = c(),
+                             ospsuite.parameteridentification = c("Authorization" = "Bearer v2.4n7xybvbbboj2ye9fmk5"),
+                             esqlabsR = c())
+.releaseHttpsHeaders <- list(ospsuite.utils = c(),
+                             tlf = c(),
+                             ospsuite = c(),
+                             ospsuite.parameteridentification = c("Authorization" = "Bearer v2.4n7xybvbbboj2ye9fmk5"),
+                             esqlabsR = c())
+
 # Message strings used in the setup script
 packageInstallationMessages <- list(
   installRTools = "Install Rtools compatible with your R version, then run updateEnvironment() again.)",
@@ -55,6 +67,8 @@ cleanEnvironment <- function(){
   rm(packageInstallationMessages,
      .releasePaths,
      .developPaths,
+     .releaseHttpsHeaders,
+     .developHttpsHeaders,
      .cranPackages,
      testInstalledPackages,
      testPKSIMConnection,
@@ -156,20 +170,22 @@ installOSPPackages <- function(rclrVersion = "0.9.2",
   }
 
   packagePaths <- .releasePaths
+  httpsHeaders <- .releaseHttpsHeaders
   if (developerVersion) {
     packagePaths <- .developPaths
+    httpsHeaders <- .developHttpsHeaders
   }
 
   displayProgress("Installing ospsuite.utils", suppressOutput = suppressOutput)
-  install.packages(packagePaths$ospsuite.utils, repos = NULL, lib = lib)
+  install.packages(packagePaths$ospsuite.utils, repos = NULL, lib = lib, headers = httpsHeaders$ospsuite.utils)
   displayProgress("Installing tlf", suppressOutput = suppressOutput)
-  install.packages(packagePaths$tlf, repos = NULL, lib = lib)
+  install.packages(packagePaths$tlf, repos = NULL, lib = lib, headers = httpsHeaders$tlf)
   displayProgress("Installing ospsuite", suppressOutput = suppressOutput)
-  install.packages(packagePaths$ospsuite, repos = NULL, lib = lib)
+  install.packages(packagePaths$ospsuite, repos = NULL, lib = lib, headers = httpsHeaders$ospsuite)
   displayProgress("Installing ospsuite.PI", suppressOutput = suppressOutput)
-  install.packages(packagePaths$ospsuite.parameteridentification, repos = NULL, lib = lib)
+  install.packages(packagePaths$ospsuite.parameteridentification, repos = NULL, lib = lib, headers = httpsHeaders$ospsuite.parameteridentification)
   displayProgress("Installing esqlabsR", suppressOutput = suppressOutput)
-  install.packages(packagePaths$esqlabsR, repos = NULL, lib = lib)
+  install.packages(packagePaths$esqlabsR, repos = NULL, lib = lib, headers = httpsHeaders$esqlabsR)
 }
 
 #' Install osps packages and their dependencies into project library.
