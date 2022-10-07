@@ -7,7 +7,7 @@
 .releaseHttpsHeaders <- list(ospsuite.utils = c(),
                              tlf = c(),
                              ospsuite = c(),
-                             ospsuite.parameteridentification = c("Authorization" = "Bearer v2.4n7xybvbbboj2ye9fmk5"),
+                             ospsuite.parameteridentification = c(),
                              esqlabsR = c())
 
 # Message strings used in the setup script
@@ -33,7 +33,7 @@ packageInstallationMessages <- list(
 .developPaths <- list(ospsuite.utils = "https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-rutils/artifacts/ospsuite.utils.zip",
                       tlf = "https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/tlf-library/artifacts/tlf.zip",
                       ospsuite = "https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-r/artifacts/ospsuite.zip",
-                      ospsuite.parameteridentification = "https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-parameteridentification/artifacts/ospsuite.parameteridentification.zip",
+                      ospsuite.parameteridentification = "https://ci.appveyor.com/api/projects/StephanSchaller/esqlabs-parameteridentification/artifacts/ospsuite.parameteridentification.zip",
                       esqlabsR = "https://ci.appveyor.com/api/projects/StephanSchaller/esqlabsr/artifacts/esqlabsR.zip")
 
 #' Test if installed packages can be loaded
