@@ -1,5 +1,14 @@
 # esqlabsR 5.0.0
 
+### BREAKING CHANGES
+
+- `readScenarioConfigurationFromExcel()` has a new signature and requires a list of 
+`scenarioNames` and a `ProjectConfiguration`. The output is a named list of `ScenarioConfiguration` 
+objects.
+- `initializeScenario()` does not update scenario configuration from excel any more.
+- Output paths are not set from global variable `OutputPaths` any more but 
+from the respective field of `ScenarioConfgiruation`
+
 ### MAJOR CHANGES
 
 - `ScenarioConfiguration` gets a new field `outputPaths` which is a list of 
@@ -10,15 +19,11 @@ outputs as defined in the simulation are used.
   - Create a `RunConfiguration` with `createDefaultProjectConfiguration()`
   - Create `ScenarioConfigurations`, e.g. with `readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`
   - Run scenarios with `runScenarios(scenarioConfigurations)`
+  
+### MINOR CHANGES
 
-### BREAKING CHANGES
-
-- `readScenarioConfigurationFromExcel()` has a new signature and requires a list of 
-`scenarioNames` and a `ProjectConfiguration`. The output is a named list of `ScenarioConfiguration` 
-objects.
-- `initializeScenario()` does not update scenario configuration from excel any more.
-- Output paths are not set from global variable `OutputPaths` any more but 
-from the respective field of `ScenarioConfgiruation`
+- Function `stringToNum()` gets additional arguments `lloqMode` and `uloqMode`
+that determine how entries of type "<number" and ">number" will be treated.
 
 ------
 

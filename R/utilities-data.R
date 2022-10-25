@@ -1,26 +1,74 @@
 #' Convert string to numeric
 #'
 #' @param string A string or a list of strings to be converted to numeric values
-#' @details Tries to convert each string to a numeric with `as.numeric`
-#' If any conversion fails and returns an NA, the value is tested for being a LLOQ-value,
-#' i.e., of a form "<2". If this is a case, the value is substituted by 0.
-#' In any other case where the string cannot be converted to a numeric, an NA is returned.
+#' @param lloqMode How to treat entries below LLOQ, i.e., of a form "<2":
+#'  `LLOQ/2` (default): return the number divided by 2,
+#'  `LLOQ`: return the numerical value,
+#'  `ZERO`: return 0,
+#'  `ignore`: return `NA`
+#' @param uloqMode How to treat entries above ULOQ, i.e., of a form ">2":
+#'  `ULOQ`: return the numerical value,
+#'  `ignore`: return `NA`
+#'
+#' @details Tries to convert each string to a numeric with `as.numeric()`.
+#' If any conversion fails and returns `NA`, the value is tested for being a LLOQ-
+#' or a ULOQ value, i.e., of a form "<2" or ">2", respectively. If this is a case,
+#' the returned value is defined by the parameters `lloqMode` and `uloqMode`.
+#' In any other case where the string cannot be converted to a numeric, `NA` is returned.
 #' @return A numeric value or a list of numeric values
 #' @export
-stringToNum <- function(string) {
+stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMode$ULOQ) {
+  # Input validations
+  validateEnumValue(lloqMode, LLOQMode)
+  validateEnumValue(uloqMode, ULOQMode)
+  # Remove all whitespaces
+  string <- gsub(" ", "", string, fixed = TRUE)
   # Attempt to convert all passed values to numeric
   numVals <- as.numeric(string)
 
-  # If any values could not be interpreted and were coerced to NA, decide what to do (e.g. LLOQ treatment)
+  # If any values could not be interpreted and were coerced to NA, decide what to do (e.g. LLOQ and ULOQ treatment)
   naVals <- is.na(numVals)
   if (any(naVals)) {
     for (idx in which(naVals)) {
+      # If the value in the original string is NA, skip
       if (is.na(string[[idx]])) {
         next
       }
       # CHECK FOR LLOQ
       if (substring(string[[idx]], first = 1, last = 1) == "<") {
-        numVals[[idx]] <- 0
+        # Transform the value that follow the "<" character
+        value <- as.numeric(substring(string[[idx]], first = 2))
+        # If value is NA (could not convert to numeric), continue, as the output
+        # should be NA
+        if (is.na(value)) {
+          next
+        }
+        switch(lloqMode,
+          "LLOQ/2" = {
+            numVals[[idx]] <- value / 2
+          },
+          "LLOQ" = numVals[[idx]] <- value,
+          # set all data points with lloq to 0
+          "ZERO" = numVals[[idx]] <- 0,
+          # remove data points with lloq
+          "ignore" = numVals[[idx]] <- NA
+        )
+      }
+
+      # CHECK FOR ULOQ
+      if (substring(string[[idx]], first = 1, last = 1) == ">") {
+        # Transform the value that follow the "<" character
+        value <- as.numeric(substring(string[[idx]], first = 2))
+        # If value is NA (could not convert to numeric), continue, as the output
+        # should be NA
+        if (is.na(value)) {
+          next
+        }
+        switch(uloqMode,
+          "ULOQ" = numVals[[idx]] <- value,
+          # remove data points with lloq
+          "ignore" = numVals[[idx]] <- NA
+        )
       }
     }
   }
@@ -186,6 +234,10 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
 #' Possible entries for the `lloqMode` argument of `calculateMeans()`
 #' @export
 LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
+
+#' Possible modes to treat values above the upper limit of quantification.
+#' @export
+ULOQMode <- enum(list("ULOQ", "ignore"))
 
 #' Load data from excel
 #'
