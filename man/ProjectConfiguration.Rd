@@ -39,6 +39,9 @@ definitions. Must be located in the "paramsFolder".}
 parameters such as application protocol parameters. Must be located in
 the "paramsFolder".}
 
+\item{\code{plotsFile}}{Name of the excel file with plot definitions.
+Must be located in the "paramsFolder".}
+
 \item{\code{dataFolder}}{Path to the folder where experimental data files are located}
 
 \item{\code{dataFile}}{Name of the excel file with experimental data}

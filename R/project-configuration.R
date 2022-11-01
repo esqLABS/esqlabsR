@@ -34,6 +34,9 @@ ProjectConfiguration <- R6::R6Class(
     #'  parameters such as application protocol parameters. Must be located in
     #'   the "paramsFolder".
     scenarioApplicationsFile = NULL,
+    #' @field plotsFile Name of the excel file with plot definitions.
+    #' Must be located in the "paramsFolder".
+    plotsFile = NULL,
     #' @field dataFolder Path to the folder where experimental data files are located
     dataFolder = NULL,
     #' @field dataFile Name of the excel file with experimental data
@@ -66,6 +69,7 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Population parameters file name", self$populationParamsFile)
       private$printLine("Scenario definitions file name", self$scenarioDefinitionFile)
       private$printLine("Scenario applications definitions file name", self$scenarioApplicationsFile)
+      private$printLine("Plot definitions file name", self$plotsFile)
       private$printLine("Experimental data folder", self$dataFolder)
       private$printLine("Experimental data file", self$dataFile)
       private$printLine("Data importer configuration", self$dataImporterConfigurationFile)

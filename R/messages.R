@@ -67,3 +67,18 @@ messages$cannotGetMoleculeFromQuantity <- function(quantityPath, optionalMessage
 messages$scenarioConfigurationNameNotFoundWhenReading <- function(scenarioName) {
   return(paste0("readScenarioDefinition: Scenario '", scenarioName, "' is not specified!"))
 }
+
+messages$warningInvalidScenarioName <- function(scenarioNames, file) {
+  paste0("The following scenarios from ", file, " are not present in `simulatedScenarios`: ",
+         paste(scenarioNames, collapse = ", "))
+}
+
+messages$warningInvalidDataSetName <- function(dataSetNames, file) {
+  paste0("The following scenarios from ", file, " are not present in `observedData`: ",
+         paste(dataSetNames, collapse = ", "))
+}
+
+messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
+  paste0("The plots with plotIDs ", paste(plotIDs, collapse = ", "), " could not be added to plot grid `",
+         plotGridTitle, "`. Please check if they are defined in sheet `plotConfiguration` and data is added in sheet `DataCombined`.")
+}

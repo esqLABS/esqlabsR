@@ -223,3 +223,129 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) {
 
   return(exportConfiguration)
 }
+
+#' Generate plots as defined in excel file `projectConfiguration$plotsFile`
+#'
+#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`
+#' @param observedData A list of `DataSet` objects
+#' @param projectConfiguration Object of class `ProjectConfiguration`
+#' that contains information about the output paths and the excel file
+#' where plots are defined.
+#'
+#'
+#' @return A list of `ggplot` objects
+#'
+#' @export
+plotsFromExcel <- function(simulatedScenarios, observedData, projectConfiguration) {
+  validateIsOfType(observedData, DataSet)
+  validateIsOfType(projectConfiguration, ProjectConfiguration)
+  dfDataCombined <- readExcel(projectConfiguration$plotsFile, sheet = "DataCombined")
+
+  # warnings for invalid data in plot definitions from excel
+  # scenario not present in simulatedScenarios
+  missingScenarios <- setdiff(setdiff(dfDataCombined$scenario, names(simulatedScenarios)), NA)
+  if (length(missingScenarios) != 0) {
+    warning(messages$warningInvalidScenarioName(missingScenarios, projectConfiguration$plotsFile))
+    dfDataCombined <- dfDataCombined[!(dfDataCombined$scenario %in% missingScenarios),]
+  }
+  # data set name not present in observedData
+  missingDataSets <- setdiff(setdiff(dfDataCombined$dataSet, names(observedData)), NA)
+  if (length(missingDataSets) != 0) {
+    warning(messages$warningInvalidDataSetName(missingDataSets, projectConfiguration$plotsFile))
+    dfDataCombined <- dfDataCombined[!(dfDataCombined$dataSet %in% missingDataSets),]
+  }
+
+  # create named list of DataCombined objects
+  dataCombinedNames <- unique(dfDataCombined$DataCombinedName)
+  dataCombinedList <- list()
+  for (name in dataCombinedNames) {
+    dataCombinedList[[name]] <- DataCombined$new()
+    # add data to DataCombined object
+    # add simulated data
+    simulated <- dplyr::filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
+    if (nrow(simulated) > 0) {
+      for (j in 1:nrow(simulated)) {
+        dataCombinedList[[name]]$addSimulationResults(
+          simulationResults = simulatedScenarios[[simulated[j,]$scenario]]$results,
+          quantitiesOrPaths = simulated[j,]$path,
+          groups = simulated[j,]$group,
+          names = simulated[j,]$label)
+      }
+    }
+
+    # add observed data
+    observed <- dplyr::filter(dfDataCombined, DataCombinedName == name, dataType == "observed")
+    if (nrow(observed) > 0) {
+      dataSets <- observedData[observed$dataSet]
+      dataCombinedList[[name]]$addDataSets(dataSets, groups = observed$group)
+    }
+  }
+
+  # read sheet "plotConfiguration"
+  dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile, sheet = "plotConfiguration")
+  # remove dataCombineds that have not been generated due to missing data
+  # or are not defined in sheet "DataCombined"
+  dfPlotConfigurations <- dfPlotConfigurations[dfPlotConfigurations$DataCombinedName %in% dfDataCombined$DataCombinedName,]
+  # merge limit columns to character columns xAxisLimits and yAxisLimits
+  dfPlotConfigurations <- dplyr::mutate(dfPlotConfigurations, xAxisLimits = ifelse(!is.na(xLimLower) & !is.na(xLimUpper),
+                                                                                   paste0("c(", xLimLower, ",", xLimUpper, ")"), NA),
+                                        xLimLower = NULL, xLimUpper = NULL)
+  dfPlotConfigurations <- dplyr::mutate(dfPlotConfigurations, yAxisLimits = ifelse(!is.na(yLimLower) & !is.na(yLimUpper),
+                                                                                   paste0("c(", yLimLower, ",", yLimUpper, ")"), NA),
+                                        yLimLower = NULL, yLimUpper = NULL)
+
+  # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
+  plotConfigurationList <- apply(dfPlotConfigurations[, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType"))],
+                                 1, .plotConfigurationFromRow)
+
+  # create a list of plots from dataCombinedList and plotConfigurationList
+  plotList <- lapply(seq_along(plotConfigurationList), \(i) {
+    dataCombined = dataCombinedList[[dfPlotConfigurations$DataCombinedName[i]]]
+    switch (dfPlotConfigurations$plotType[i],
+            individual = plotIndividualTimeProfile(dataCombined, plotConfigurationList[[i]]),
+            population = plotPopulationTimeProfile(dataCombined, plotConfigurationList[[i]]),
+            observedVsSimulated = plotObservedVsSimulated(dataCombined, plotConfigurationList[[i]]),
+            residualsVsSimulated = plotResidualsVsSimulated(dataCombined, plotConfigurationList[[i]]),
+            residualsVsTime = plotResidualsVsTime(dataCombined, plotConfigurationList[[i]])
+    )
+  })
+  names(plotList) <- dfPlotConfigurations$plotID
+
+  # read sheet "plotGrids" with info for plotGridConfigurations
+  colTypes <- c("text", "text")
+  dfPlotGrids <- readExcel(projectConfiguration$plotsFile, sheet = "plotGrids", col_types = colTypes)
+  dfPlotGrids$plotIDs <- strsplit(dfPlotGrids$plotIDs, split = "[[:punct:]]")
+
+  # create plotGridConfiguration objects and add plots from plotList
+  validPlotIDs <- as.character(dfPlotConfigurations$plotID)
+  multiPanelPlots <- apply(dfPlotGrids, 1, \(row) {
+    plotGridConfiguration <- createEsqlabsPlotGridConfiguration()
+    plotGridConfiguration$title <- row$title
+    plotGridConfiguration$addPlots(plotList[intersect(row$plotIDs, validPlotIDs)])
+    if (length(invalidPlotIDs <- setdiff(row$plotIDs, validPlotIDs)) != 0) {
+      warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
+    }
+    plotGrid(plotGridConfiguration)
+  })
+  names(multiPanelPlots) <- dfPlotGrids$title
+
+  return(multiPanelPlots)
+}
+
+.plotConfigurationFromRow <- function(...) {
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+  lapply(seq_along(...), function(i) {
+    value <- ...[[i]]
+    colName <- names(...)[[i]]
+    if (!is.na(value)) {
+      # numeric columns
+      if (colName %in% c("xAxisLimits", "yAxisLimits")) {
+        plotConfiguration[[colName]] <- eval(parse(text = value))
+      # character columns
+      } else {
+        plotConfiguration[[colName]] <- value
+      }
+    }}
+  )
+  return(plotConfiguration)
+}
