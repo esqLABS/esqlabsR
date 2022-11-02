@@ -11,7 +11,7 @@ The **`{esqlabsR}`** R-package is designed to facilitate and standardize **model
 
 ## Installation
 
-Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/build/artifacts). The `{esqlabsR}` package requires the following packages: 
+Install as a binary file from [an AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/branch/develop/artifacts/). The `{esqlabsR}` package requires the following packages: 
 
 * Available from CRAN:
     * colorspace,
