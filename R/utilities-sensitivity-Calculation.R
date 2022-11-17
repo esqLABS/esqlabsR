@@ -123,9 +123,9 @@
       PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
       SensitivityPKParameter =
       # delta PK / PK
-        ((PKParameterValue - PKParameterBaseValue) / PKParameterValue) *
+        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
           # p / delta p
-          (ParameterValue / (ParameterValue - ParameterBaseValue))
+          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
     )
 }
 
