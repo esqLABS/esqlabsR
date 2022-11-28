@@ -20,9 +20,24 @@ test_that("It converts a non numerics to NA", {
   expect_equal(stringToNum(string), c(21, NA, -21))
 })
 
-test_that("It converts a non numerics LLOQ to zero to NA", {
-  string <- c("21", "one", "<5", "-21")
-  expect_equal(stringToNum(string), c(21, NA, 0, -21))
+test_that("It converts a LLOQ values", {
+  string <- c("21", "one", "<5", "-21", " < - 5 ", "<s")
+  # LLOQ/2
+  expect_equal(stringToNum(string, lloqMode = LLOQMode$`LLOQ/2`), c(21, NA, 2.5, -21, -2.5, NA))
+  # LLOQ
+  expect_equal(stringToNum(string, lloqMode = LLOQMode$LLOQ), c(21, NA, 5, -21, -5, NA))
+  # ZERO
+  expect_equal(stringToNum(string, lloqMode = LLOQMode$ZERO), c(21, NA, 0, -21, 0, NA))
+  # IGNORE
+  expect_equal(stringToNum(string, lloqMode = LLOQMode$ignore), c(21, NA, NA, -21, NA, NA))
+})
+
+test_that("It converts a ULOQ values", {
+  string <- c("21", "one", ">5", "-21", " > - 5 ", "<s")
+  # ULOQ
+  expect_equal(stringToNum(string, uloqMode = ULOQMode$ULOQ), c(21, NA, 5, -21, -5, NA))
+  # IGNORE
+  expect_equal(stringToNum(string, uloqMode = ULOQMode$ignore), c(21, NA, NA, -21, NA, NA))
 })
 
 ## context("calculateMeanDataSet")

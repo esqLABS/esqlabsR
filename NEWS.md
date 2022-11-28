@@ -1,5 +1,14 @@
 # esqlabsR 5.0.0
 
+### BREAKING CHANGES
+
+- `readScenarioConfigurationFromExcel()` has a new signature and requires a list of 
+`scenarioNames` and a `ProjectConfiguration`. The output is a named list of `ScenarioConfiguration` 
+objects.
+- `initializeScenario()` does not update scenario configuration from excel any more.
+- Output paths are not set from global variable `OutputPaths` any more but 
+from the respective field of `ScenarioConfgiruation`
+
 ### MAJOR CHANGES
 
 - `ScenarioConfiguration` gets a new field `outputPaths` which is a list of 
@@ -11,17 +20,15 @@ outputs as defined in the simulation are used.
   - Create `ScenarioConfigurations`, e.g. with `readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`
   - Run scenarios with `runScenarios(scenarioConfigurations)`
   
+<<<<<<< HEAD
 - `ProjectConfiguration` gets a new field `plotsFile`. It is the name of the excel file with plot definitions and must be located in the `paramsFolder`.
 - Plots can be created by calling the new function `createPlotsFromExcel()`. It requires as input parameters `simulatedScenarios` (a list of simulated scenarios as returned by `runScenarios()`), `observedData` (a list of `DataSet` objects) and a `ProjectConfiguration` object `projectConfiguration`.
+=======
+### MINOR CHANGES
+>>>>>>> 81f558c47645c263913249f83e980524ccdd3f72
 
-### BREAKING CHANGES
-
-- `readScenarioConfigurationFromExcel()` has a new signature and requires a list of 
-`scenarioNames` and a `ProjectConfiguration`. The output is a named list of `ScenarioConfiguration` 
-objects.
-- `initializeScenario()` does not update scenario configuration from excel any more.
-- Output paths are not set from global variable `OutputPaths` any more but 
-from the respective field of `ScenarioConfgiruation`
+- Function `stringToNum()` gets additional arguments `lloqMode` and `uloqMode`
+that determine how entries of type "<number" and ">number" will be treated.
 
 ------
 
