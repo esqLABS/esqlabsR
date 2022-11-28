@@ -1,5 +1,3 @@
-# TODO: uncomment once esqLABS/esqlabs.ParameterIdentification version can be used
-#
 # test_that("`exportSteadyStateToXLS` generates excel sheet path", {
 #   withr::with_tempdir(
 #     code = {
