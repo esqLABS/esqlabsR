@@ -69,16 +69,26 @@ messages$scenarioConfigurationNameNotFoundWhenReading <- function(scenarioName) 
 }
 
 messages$warningInvalidScenarioName <- function(scenarioNames, file) {
-  paste0("The following scenarios from ", file, " are not present in `simulatedScenarios`: ",
-         paste(scenarioNames, collapse = ", "))
+  paste0(
+    "The following scenarios from ", file, " are not present in `simulatedScenarios`: ",
+    paste(scenarioNames, collapse = ", "), ". Data can not be added to `DataCombined` object, empty objects will not be plotted."
+  )
 }
 
 messages$warningInvalidDataSetName <- function(dataSetNames, file) {
-  paste0("The following scenarios from ", file, " are not present in `observedData`: ",
-         paste(dataSetNames, collapse = ", "))
+  paste0(
+    "The following scenarios from ", file, " are not present in `observedData`: ",
+    paste(dataSetNames, collapse = ", "), ". Data can not be added to `DataCombined` object, empty objects will not be plotted."
+  )
 }
 
 messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
-  paste0("The plots with plotIDs ", paste(plotIDs, collapse = ", "), " could not be added to plot grid `",
-         plotGridTitle, "`. Please check if they are defined in sheet `plotConfiguration` and data is added in sheet `DataCombined`.")
+  paste0(
+    "The plots with plotIDs ", paste(plotIDs, collapse = ", "), " could not be added to plot grid `",
+    plotGridTitle, "`. Please check if they are defined in sheet `plotConfiguration` and data is added in sheet `DataCombined`."
+  )
+}
+
+messages$missingLabel <- function() {
+  "Missing values found in mandatory column 'label' of sheet 'DataCombined'. Fill in values to proceed."
 }

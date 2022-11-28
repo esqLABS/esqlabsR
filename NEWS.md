@@ -10,6 +10,9 @@ outputs as defined in the simulation are used.
   - Create a `RunConfiguration` with `createDefaultProjectConfiguration()`
   - Create `ScenarioConfigurations`, e.g. with `readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`
   - Run scenarios with `runScenarios(scenarioConfigurations)`
+  
+- `ProjectConfiguration` gets a new field `plotsFile`. It is the name of the excel file with plot definitions and must be located in the `paramsFolder`.
+- Plots can be created by calling the new function `createPlotsFromExcel()`. It requires as input parameters `simulatedScenarios` (a list of simulated scenarios as returned by `runScenarios()`), `observedData` (a list of `DataSet` objects) and a `ProjectConfiguration` object `projectConfiguration`.
 
 ### BREAKING CHANGES
 
