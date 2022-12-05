@@ -4,7 +4,12 @@
 \alias{createPlotsFromExcel}
 \title{Generate plots as defined in excel file \code{projectConfiguration$plotsFile}}
 \usage{
-createPlotsFromExcel(simulatedScenarios, observedData, projectConfiguration)
+createPlotsFromExcel(
+  simulatedScenarios,
+  observedData,
+  projectConfiguration,
+  stopIfNotFound = TRUE
+)
 }
 \arguments{
 \item{simulatedScenarios}{A list of simulated scenarios as returned by \code{runScenarios()}}
@@ -14,6 +19,9 @@ createPlotsFromExcel(simulatedScenarios, observedData, projectConfiguration)
 \item{projectConfiguration}{Object of class \code{ProjectConfiguration}
 that contains information about the output paths and the excel file
 where plots are defined.}
+
+\item{stopIfNotFound}{If TRUE (default), the function stops if any of the
+simulated results or observed data are not found. If FALSE a warning is printed.}
 }
 \value{
 A list of \code{ggplot} objects

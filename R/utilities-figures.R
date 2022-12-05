@@ -231,12 +231,14 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) {
 #' @param projectConfiguration Object of class `ProjectConfiguration`
 #' that contains information about the output paths and the excel file
 #' where plots are defined.
+#' @param stopIfNotFound If TRUE (default), the function stops if any of the
+#' simulated results or observed data are not found. If FALSE a warning is printed.
 #'
 #'
 #' @return A list of `ggplot` objects
 #'
 #' @export
-createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfiguration) {
+createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfiguration, stopIfNotFound = TRUE) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   dfDataCombined <- readExcel(projectConfiguration$plotsFile, sheet = "DataCombined")
@@ -245,12 +247,14 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   # scenario not present in simulatedScenarios
   missingScenarios <- setdiff(setdiff(dfDataCombined$scenario, names(simulatedScenarios)), NA)
   if (length(missingScenarios) != 0) {
+    if (stopIfNotFound) {error(messages$stopInvalidScenarioName(missingScenarios))}
     warning(messages$warningInvalidScenarioName(missingScenarios, projectConfiguration$plotsFile))
     dfDataCombined <- dfDataCombined[!(dfDataCombined$scenario %in% missingScenarios), ]
   }
   # data set name not present in observedData
   missingDataSets <- setdiff(setdiff(dfDataCombined$dataSet, names(observedData)), NA)
   if (length(missingDataSets) != 0) {
+    if (stopIfNotFound) {error(messages$stopInvalidDataSetName(missingDataSets))}
     warning(messages$warningInvalidDataSetName(missingDataSets, projectConfiguration$plotsFile))
     dfDataCombined <- dfDataCombined[!(dfDataCombined$dataSet %in% missingDataSets), ]
   }
@@ -353,7 +357,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     }
     plotGrid(plotGridConfiguration)
   })
-  names(multiPanelPlots) <- dfPlotGrids$title
+  names(multiPanelPlots) <- dfPlotGrids$name
 
   return(multiPanelPlots)
 }

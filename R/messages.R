@@ -92,3 +92,17 @@ messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
 messages$missingLabel <- function() {
   "Missing values found in mandatory column 'label' of sheet 'DataCombined'. Fill in values to proceed."
 }
+
+messages$stopInvalidScenarioName <- function(scenarioNames) {
+  paste0(
+    "The following scenarios from ", file, " are not present in `simulatedScenarios`: ",
+    paste(scenarioNames, collapse = ", ")
+  )
+}
+
+messages$stopInvalidDataSetName <- function(dataSetNames) {
+  paste0(
+    "The following scenarios are not present in `observedData`: ",
+    paste(dataSetNames, collapse = ", ")
+  )
+}
