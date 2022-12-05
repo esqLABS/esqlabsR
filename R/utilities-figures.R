@@ -267,7 +267,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     dataCombined <- DataCombined$new()
     # add data to DataCombined object
     # add simulated data
-    simulated <- dplyr::filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
+    simulated <- filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
     if (nrow(simulated) > 0) {
       for (j in 1:nrow(simulated)) {
         dataCombined$addSimulationResults(
@@ -280,7 +280,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     }
 
     # add observed data
-    observed <- dplyr::filter(dfDataCombined, DataCombinedName == name, dataType == "observed")
+    observed <- filter(dfDataCombined, DataCombinedName == name, dataType == "observed")
     if (nrow(observed) > 0) {
       dataSets <- observedData[observed$dataSet]
       dataCombined$addDataSets(dataSets, names = observed$label, groups = observed$group)
@@ -289,19 +289,29 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   })
   names(dataCombinedList) <- dataCombinedNames
 
+  # apply data transformations
+  dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors)) %>%
+    replace_na(list(xOffsets = 0, yOffsets = 0, xScaleFactors = 1, yScaleFactors = 1))
+  apply(dfTransform, 1, \(row) {
+    dataCombinedList[[row[["DataCombinedName"]]]]$setDataTransformations(
+      forNames = row[["label"]], xOffsets = as.numeric(row[["xOffsets"]]), yOffsets = as.numeric(row[["yOffsets"]]),
+      xScaleFactors = as.numeric(row[["xScaleFactors"]]), yScaleFactors = as.numeric(row[["yScaleFactors"]])
+    )
+  })
+
   # read sheet "plotConfiguration"
   dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile, sheet = "plotConfiguration")
   # remove DataCombined objects that have not been generated due to missing data
   # or are not defined in sheet "DataCombined"
   dfPlotConfigurations <- dfPlotConfigurations[dfPlotConfigurations$DataCombinedName %in% dfDataCombined$DataCombinedName, ]
   # merge limit columns to character columns xAxisLimits and yAxisLimits
-  dfPlotConfigurations <- dplyr::mutate(dfPlotConfigurations,
+  dfPlotConfigurations <- mutate(dfPlotConfigurations,
     xAxisLimits = ifelse(!is.na(xLimLower) & !is.na(xLimUpper),
       paste0("c(", xLimLower, ",", xLimUpper, ")"), NA
     ),
     xLimLower = NULL, xLimUpper = NULL
   )
-  dfPlotConfigurations <- dplyr::mutate(dfPlotConfigurations,
+  dfPlotConfigurations <- mutate(dfPlotConfigurations,
     yAxisLimits = ifelse(!is.na(yLimLower) & !is.na(yLimUpper),
       paste0("c(", yLimLower, ",", yLimUpper, ")"), NA
     ),
