@@ -11,6 +11,9 @@ from the respective field of `ScenarioConfgiruation`
 
 ### MAJOR CHANGES
 
+- `sensitivityCalculation()` - fixed bug in wrong calculation of sensitivity values.
+Please be aware that the results produced by earlier versions are wrong.
+
 - `ScenarioConfiguration` gets a new field `outputPaths` which is a list of 
 output paths for which the results will be calculated. If `NULL` (default), 
 outputs as defined in the simulation are used.
