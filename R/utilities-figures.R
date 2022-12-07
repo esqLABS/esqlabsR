@@ -237,24 +237,30 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) {
 #'
 #' @return A list of `ggplot` objects
 #'
+#' @import tidyr
+#'
 #' @export
 createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfiguration, stopIfNotFound = TRUE) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
-  dfDataCombined <- readExcel(projectConfiguration$plotsFile, sheet = "DataCombined")
+  dfDataCombined <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "DataCombined")
+  # Exit early if no DataCombined are defined
+  if (dim(dfDataCombined)[[1]] == 0){
+    return()
+  }
 
   # warnings for invalid data in plot definitions from excel
   # scenario not present in simulatedScenarios
   missingScenarios <- setdiff(setdiff(dfDataCombined$scenario, names(simulatedScenarios)), NA)
   if (length(missingScenarios) != 0) {
-    if (stopIfNotFound) {error(messages$stopInvalidScenarioName(missingScenarios))}
+    if (stopIfNotFound) {stop(messages$stopInvalidScenarioName(missingScenarios))}
     warning(messages$warningInvalidScenarioName(missingScenarios, projectConfiguration$plotsFile))
     dfDataCombined <- dfDataCombined[!(dfDataCombined$scenario %in% missingScenarios), ]
   }
   # data set name not present in observedData
   missingDataSets <- setdiff(setdiff(dfDataCombined$dataSet, names(observedData)), NA)
   if (length(missingDataSets) != 0) {
-    if (stopIfNotFound) {error(messages$stopInvalidDataSetName(missingDataSets))}
+    if (stopIfNotFound) {stop(messages$stopInvalidDataSetName(missingDataSets))}
     warning(messages$warningInvalidDataSetName(missingDataSets, projectConfiguration$plotsFile))
     dfDataCombined <- dfDataCombined[!(dfDataCombined$dataSet %in% missingDataSets), ]
   }
@@ -262,7 +268,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   # mandatory column label - remove rows without entry and throw error
   missingLabel <- sum(is.na(dfDataCombined$label))
   if (missingLabel > 0) {
-    error(messages$missingLabel())
+    stop(messages$missingLabel())
   }
 
   # create named list of DataCombined objects

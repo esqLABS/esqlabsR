@@ -29,10 +29,11 @@ observedData <- esqlabsR::loadObservedData(
   sheets = dataSheets
 )
 
-test_that("No plots are defined in the excel sheet", {
+test_that("It returns NULL if no DataCombined are defined in the excel sheet", {
 plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
 observedData = observedData,
 projectConfiguration = projectConfiguration,
 stopIfNotFound = TRUE)
+expect_null(plots)
 }
 )
