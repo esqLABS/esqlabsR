@@ -129,10 +129,10 @@ test_that("It trows an error if not output path is specified for a simulated dat
 
 
 
-test_that("It trows an error if mandatory label field is not filled out", {
-  expect_error(createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
+test_that("It creates a plot if no data transformations are present", {
+  plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
                                     observedData = observedData,
                                     projectConfiguration = projectConfiguration,
-                                    stopIfNotFound = TRUE), regexp = messages$missingLabel())
+                                    stopIfNotFound = TRUE)
 }
 )

@@ -245,7 +245,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   dfDataCombined <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "DataCombined")
   # Exit early if no DataCombined are defined
-  if (dim(dfDataCombined)[[1]] == 0){
+  if (dim(dfDataCombined)[[1]] == 0) {
     return()
   }
 
@@ -253,14 +253,18 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   # scenario not present in simulatedScenarios
   missingScenarios <- setdiff(setdiff(dfDataCombined$scenario, names(simulatedScenarios)), NA)
   if (length(missingScenarios) != 0) {
-    if (stopIfNotFound) {stop(messages$stopInvalidScenarioName(missingScenarios))}
+    if (stopIfNotFound) {
+      stop(messages$stopInvalidScenarioName(missingScenarios))
+    }
     warning(messages$warningInvalidScenarioName(missingScenarios, projectConfiguration$plotsFile))
     dfDataCombined <- dfDataCombined[!(dfDataCombined$scenario %in% missingScenarios), ]
   }
   # data set name not present in observedData
   missingDataSets <- setdiff(setdiff(dfDataCombined$dataSet, names(observedData)), NA)
   if (length(missingDataSets) != 0) {
-    if (stopIfNotFound) {stop(messages$stopInvalidDataSetName(missingDataSets))}
+    if (stopIfNotFound) {
+      stop(messages$stopInvalidDataSetName(missingDataSets))
+    }
     warning(messages$warningInvalidDataSetName(missingDataSets, projectConfiguration$plotsFile))
     dfDataCombined <- dfDataCombined[!(dfDataCombined$dataSet %in% missingDataSets), ]
   }
@@ -282,7 +286,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
       for (j in 1:nrow(simulated)) {
         # No path is specified
         path <- simulated[j, ]$path
-        if (is.na(path)){
+        if (is.na(path)) {
           stop(messages$stopNoPathProvided(name))
         }
         dataCombined$addSimulationResults(
@@ -307,12 +311,15 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   # apply data transformations
   dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors)) %>%
     replace_na(list(xOffsets = 0, yOffsets = 0, xScaleFactors = 1, yScaleFactors = 1))
-  apply(dfTransform, 1, \(row) {
-    dataCombinedList[[row[["DataCombinedName"]]]]$setDataTransformations(
-      forNames = row[["label"]], xOffsets = as.numeric(row[["xOffsets"]]), yOffsets = as.numeric(row[["yOffsets"]]),
-      xScaleFactors = as.numeric(row[["xScaleFactors"]]), yScaleFactors = as.numeric(row[["yScaleFactors"]])
-    )
-  })
+  # Apply data transformations if specified in the excel file
+  if (dim(dfTransform)[[1]] != 0) {
+    apply(dfTransform, 1, \(row) {
+      dataCombinedList[[row[["DataCombinedName"]]]]$setDataTransformations(
+        forNames = row[["label"]], xOffsets = as.numeric(row[["xOffsets"]]), yOffsets = as.numeric(row[["yOffsets"]]),
+        xScaleFactors = as.numeric(row[["xScaleFactors"]]), yScaleFactors = as.numeric(row[["yScaleFactors"]])
+      )
+    })
+  }
 
   # read sheet "plotConfiguration"
   dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile, sheet = "plotConfiguration")
