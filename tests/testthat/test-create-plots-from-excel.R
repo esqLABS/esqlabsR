@@ -30,10 +30,109 @@ observedData <- esqlabsR::loadObservedData(
 )
 
 test_that("It returns NULL if no DataCombined are defined in the excel sheet", {
-plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
-observedData = observedData,
-projectConfiguration = projectConfiguration,
-stopIfNotFound = TRUE)
-expect_null(plots)
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         df <- data.frame(list("DataCombinedName" = NA,
+                                               "dataType" = NA,
+                                               "label" = NA,
+                                               "scenario" = NA,
+                                               "path" = NA,
+                                               "dataSet" = NA,
+                                               "group" = NA,
+                                               "xOffsets" = NA,
+                                               "yOffsets" = NA,
+                                               "xScaleFactors" = NA,
+                                               "yScaleFactors" = NA))
+                         writeExcel(data = list("DataCombined" = df), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+                         plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
+                                                       observedData = observedData,
+                                                       projectConfiguration = projectConfigurationLocal,
+                                                       stopIfNotFound = TRUE)
+                         expect_null(plots)
+                       }
+  )
+}
+)
+
+test_that("It trows an error if mandatory label field is not filled out", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         df <- data.frame(list("DataCombinedName" = "AciclovirPVB_noLabel",
+                                               "dataType" = NA,
+                                               "label" = NA,
+                                               "scenario" = NA,
+                                               "path" = NA,
+                                               "dataSet" = NA,
+                                               "group" = NA,
+                                               "xOffsets" = NA,
+                                               "yOffsets" = NA,
+                                               "xScaleFactors" = NA,
+                                               "yScaleFactors" = NA))
+                         writeExcel(data = list("DataCombined" = df), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+                         expect_error(createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
+                                                           observedData = observedData,
+                                                           projectConfiguration = projectConfiguration,
+                                                           stopIfNotFound = TRUE), regexp = messages$missingLabel())
+                       }
+  )
+
+
+}
+)
+
+test_that("It trows an error if not output path is specified for a simulated data", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         df <- data.frame(list("DataCombinedName" = "AciclovirPVB",
+                                               "dataType" = "simulated",
+                                               "label" = "Aciclovir simulated",
+                                               "scenario" = "TestScenario",
+                                               "path" = NA,
+                                               "dataSet" = NA,
+                                               "group" = NA,
+                                               "xOffsets" = NA,
+                                               "yOffsets" = NA,
+                                               "xScaleFactors" = NA,
+                                               "yScaleFactors" = NA))
+                         writeExcel(data = list("DataCombined" = df), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+                         expect_error(createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
+                                                           observedData = observedData,
+                                                           projectConfiguration = projectConfiguration,
+                                                           stopIfNotFound = TRUE), regexp = messages$stopNoPathProvided("AciclovirPVB"))
+                       }
+  )
+
+
+}
+)
+
+# It does not fail when no transformations are specified
+
+
+
+
+test_that("It trows an error if mandatory label field is not filled out", {
+  expect_error(createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
+                                    observedData = observedData,
+                                    projectConfiguration = projectConfiguration,
+                                    stopIfNotFound = TRUE), regexp = messages$missingLabel())
 }
 )

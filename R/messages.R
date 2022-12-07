@@ -100,6 +100,12 @@ messages$stopInvalidScenarioName <- function(scenarioNames) {
   )
 }
 
+messages$stopNoPathProvided <- function(dataCombinedName) {
+  paste0(
+    "No output path is defined for the DataCombined '", dataCombinedName, "'.
+    Each simulation output must have an output path specified.")
+}
+
 messages$stopInvalidDataSetName <- function(dataSetNames) {
   paste0(
     "The following scenarios are not present in `observedData`: ",

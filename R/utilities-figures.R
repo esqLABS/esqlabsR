@@ -280,9 +280,14 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     simulated <- filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
     if (nrow(simulated) > 0) {
       for (j in 1:nrow(simulated)) {
+        # No path is specified
+        path <- simulated[j, ]$path
+        if (is.na(path)){
+          stop(messages$stopNoPathProvided(name))
+        }
         dataCombined$addSimulationResults(
           simulationResults = simulatedScenarios[[simulated[j, ]$scenario]]$results,
-          quantitiesOrPaths = simulated[j, ]$path,
+          quantitiesOrPaths = path,
           groups = simulated[j, ]$group,
           names = simulated[j, ]$label
         )
