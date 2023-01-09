@@ -223,3 +223,253 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) {
 
   return(exportConfiguration)
 }
+
+#' Generate plots as defined in excel file `projectConfiguration$plotsFile`
+#'
+#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`
+#' @param observedData A list of `DataSet` objects
+#' @param projectConfiguration Object of class `ProjectConfiguration`
+#' that contains information about the output paths and the excel file
+#' where plots are defined.
+#' @param stopIfNotFound If TRUE (default), the function stops if any of the
+#' simulated results or observed data are not found. If FALSE a warning is printed.
+#'
+#'
+#' @return A list of `ggplot` objects
+#'
+#' @import tidyr
+#'
+#' @export
+createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfiguration, stopIfNotFound = TRUE) {
+  validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
+  validateIsOfType(projectConfiguration, "ProjectConfiguration")
+  # read sheet "plotGrids" with info for plotGridConfigurations
+  dfPlotGrids <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "plotGrids")
+  # Exit early if no PlotGrid is defined
+  if (dim(dfPlotGrids)[[1]] == 0) {
+    return()
+  }
+  # read sheet "DataCombined"
+  dfDataCombined <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "DataCombined")
+  # read sheet "plotConfiguration"
+  dfPlotConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "plotConfiguration")
+  dfDataCombined <- .validateDataCombinedFromExcel(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound)
+  dataCombinedNames <- unique(dfDataCombined$DataCombinedName)
+  dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, dataCombinedNames)
+  dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
+
+  # Only consider plotIDs that are specified in the plot grids
+  validPlotIDs <- as.character(unique(unlist(dfPlotGrids$plotIDs)))
+  # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
+  plotConfigurationList <- apply(
+    dfPlotConfigurations[dfPlotConfigurations$plotID %in% validPlotIDs, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType"))],
+    1, .plotConfigurationFromRow
+  )
+  names(plotConfigurationList) <- validPlotIDs
+
+  # Valid DataCombined. Only consider those that are used in plots
+  validDataCombined <- unique(dfPlotConfigurations[dfPlotConfigurations$plotID %in% validPlotIDs,]$DataCombinedName)
+
+  # create named list of DataCombined objects. Only create for DataCombined that are used in plotConfiguration
+  dataCombinedList <- lapply(validDataCombined, \(name) {
+    dataCombined <- DataCombined$new()
+    # add data to DataCombined object
+    # add simulated data
+    simulated <- filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
+    if (nrow(simulated) > 0) {
+      for (j in 1:nrow(simulated)) {
+        dataCombined$addSimulationResults(
+          simulationResults = simulatedScenarios[[simulated[j, ]$scenario]]$results,
+          quantitiesOrPaths = simulated[j, ]$path,
+          groups = simulated[j, ]$group,
+          names = simulated[j, ]$label
+        )
+      }
+    }
+
+    # add observed data
+    observed <- filter(dfDataCombined, DataCombinedName == name, dataType == "observed")
+    if (nrow(observed) > 0) {
+      dataSets <- observedData[observed$dataSet]
+      dataCombined$addDataSets(dataSets, names = observed$label, groups = observed$group)
+    }
+    dataCombined
+  })
+  names(dataCombinedList) <- unique(dfPlotConfigurations$DataCombinedName)
+
+  # apply data transformations
+  dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors)) %>%
+    replace_na(list(xOffsets = 0, yOffsets = 0, xScaleFactors = 1, yScaleFactors = 1))
+  # Apply data transformations if specified in the excel file
+  if (dim(dfTransform)[[1]] != 0) {
+    apply(dfTransform, 1, \(row) {
+      dataCombinedList[[row[["DataCombinedName"]]]]$setDataTransformations(
+        forNames = row[["label"]], xOffsets = as.numeric(row[["xOffsets"]]), yOffsets = as.numeric(row[["yOffsets"]]),
+        xScaleFactors = as.numeric(row[["xScaleFactors"]]), yScaleFactors = as.numeric(row[["yScaleFactors"]])
+      )
+    })
+  }
+
+  # create a list of plots from dataCombinedList and plotConfigurationList
+  plotList <- lapply(validPlotIDs, \(plotId) {
+    dataCombined <- dataCombinedList[[dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$DataCombinedName]]
+    switch(dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
+      individual = plotIndividualTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
+      population = plotPopulationTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
+      observedVsSimulated = plotObservedVsSimulated(dataCombined, plotConfigurationList[[plotId]]),
+      residualsVsSimulated = plotResidualsVsSimulated(dataCombined, plotConfigurationList[[plotId]]),
+      residualsVsTime = plotResidualsVsTime(dataCombined, plotConfigurationList[[plotId]])
+    )
+  })
+  names(plotList) <- validPlotIDs
+
+  # create plotGridConfiguration objects and add plots from plotList
+  multiPanelPlots <- apply(dfPlotGrids, 1, \(row) {
+    plotGridConfiguration <- createEsqlabsPlotGridConfiguration()
+    plotGridConfiguration$title <- row$title
+    plotsToAdd <- plotList[intersect(unlist(row$plotIDs), validPlotIDs)]
+    # Have to remove NULL instances. NULL can be produced e.g. when trying to create
+    # a simulated vs observed plot without any groups
+    plotsToAdd <- plotsToAdd[lengths(plotsToAdd) != 0]
+    #Cannot create a plot grid if no plots are added. Skip
+    if (length(plotsToAdd) == 0){
+      return(NULL)
+    }
+    plotGridConfiguration$addPlots(plots = plotsToAdd)
+    if (length(invalidPlotIDs <- setdiff(unlist(row$plotIDs), validPlotIDs)) != 0) {
+      warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
+    }
+    plotGrid(plotGridConfiguration)
+  })
+  names(multiPanelPlots) <- dfPlotGrids$name
+
+  return(multiPanelPlots)
+}
+
+#' @keywords internal
+.plotConfigurationFromRow <- function(...) {
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+  lapply(seq_along(...), function(i) {
+    value <- ...[[i]]
+    colName <- names(...)[[i]]
+    if (!is.na(value)) {
+      # numeric columns
+      if (colName %in% c("xAxisLimits", "yAxisLimits")) {
+        plotConfiguration[[colName]] <- eval(parse(text = value))
+        # character columns
+      } else {
+        plotConfiguration[[colName]] <- value
+      }
+    }
+  })
+  return(plotConfiguration)
+}
+
+.validateDataCombinedFromExcel <- function(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound){
+  # mandatory column label is empty - throw error
+  missingLabel <- sum(is.na(dfDataCombined$label))
+  if (missingLabel > 0) {
+    stop(messages$missingLabel())
+  }
+
+  # mandatory column dataType is empty - throw error
+  missingLabel <- sum(is.na(dfDataCombined$dataType))
+  if (missingLabel > 0) {
+    stop(messages$missingDataType())
+  }
+
+  # dataType == simulated, but no scenario defined - throw error
+  missingLabel <- sum(is.na(dfDataCombined[dfDataCombined$dataType == "simulated",]$scenario))
+  if (missingLabel > 0) {
+    stop(messages$missingScenarioName())
+  }
+
+  # dataType == simulated, but no path defined - throw error
+  missingLabel <- is.na(dfDataCombined[dfDataCombined$dataType == "simulated",]$path)
+  if (sum(missingLabel) > 0) {
+    stop(messages$stopNoPathProvided(dfDataCombined[missingLabel & dfDataCombined$dataType == "simulated",]$DataCombinedName))
+  }
+
+  # dataType == observed, but no data set defined - throw error
+  missingLabel <- is.na(dfDataCombined[dfDataCombined$dataType == "observed",]$dataSet)
+  if (sum(missingLabel) > 0) {
+    stop(messages$stopNoDataSetProvided(dfDataCombined[missingLabel & dfDataCombined$dataType == "observed",]$DataCombinedName))
+  }
+
+  # warnings for invalid data in plot definitions from excel
+  # scenario not present in simulatedScenarios
+  missingScenarios <- setdiff(setdiff(dfDataCombined$scenario, names(simulatedScenarios)), NA)
+  if (length(missingScenarios) != 0) {
+    if (stopIfNotFound) {
+      stop(messages$stopInvalidScenarioName(missingScenarios))
+    }
+    warning(messages$warningInvalidScenarioName(missingScenarios))
+    dfDataCombined <- dfDataCombined[!(dfDataCombined$scenario %in% missingScenarios), ]
+  }
+  # data set name not present in observedData
+  missingDataSets <- setdiff(setdiff(dfDataCombined$dataSet, names(observedData)), NA)
+  if (length(missingDataSets) != 0) {
+    if (stopIfNotFound) {
+      stop(messages$stopInvalidDataSetName(missingDataSets))
+    }
+    warning(messages$warningInvalidDataSetName(missingDataSets))
+    dfDataCombined <- dfDataCombined[!(dfDataCombined$dataSet %in% missingDataSets), ]
+  }
+
+  return(dfDataCombined)
+}
+
+.validatePlotConfigurationFromExcel <- function(dfPlotConfigurations, dataCombinedNames){
+  # mandatory column DataCombinedName is empty - throw error
+  missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
+  if (missingLabel > 0) {
+    stop(messages$missingDataCombinedName())
+  }
+
+  # mandatory column plotType is empty - throw error
+  missingLabel <- sum(is.na(dfPlotConfigurations$plotType))
+  if (missingLabel > 0) {
+    stop(messages$missingPlotType())
+  }
+
+  # DataCombined that are not defined in the DataCombined sheet. Stop if any.
+  missingDataCombined <- setdiff(setdiff(dfPlotConfigurations$DataCombinedName, dataCombinedNames), NA)
+  if (length(missingDataCombined) != 0) {
+      stop(messages$stopInvalidDataCombinedName(missingDataCombined))
+  }
+
+  # merge limit columns to character columns xAxisLimits and yAxisLimits
+  dfPlotConfigurations <- mutate(dfPlotConfigurations,
+                                 xAxisLimits = ifelse(!is.na(xLimLower) & !is.na(xLimUpper),
+                                                      paste0("c(", xLimLower, ",", xLimUpper, ")"), NA
+                                 ),
+                                 xLimLower = NULL, xLimUpper = NULL
+  )
+  dfPlotConfigurations <- mutate(dfPlotConfigurations,
+                                 yAxisLimits = ifelse(!is.na(yLimLower) & !is.na(yLimUpper),
+                                                      paste0("c(", yLimLower, ",", yLimUpper, ")"), NA
+                                 ),
+                                 yLimLower = NULL, yLimUpper = NULL
+  )
+
+  return(dfPlotConfigurations)
+}
+
+.validatePlotGridsFromExcel <- function(dfPlotGrids, plotIDs){
+  # mandatory column plotIDs is empty - throw error
+  missingLabel <- sum(is.na(dfPlotGrids$plotIDs))
+  if (missingLabel > 0) {
+    stop(messages$missingPlotIDs())
+  }
+  # Remove white spaces
+  dfPlotGrids$plotIDs <- gsub(dfPlotGrids$plotIDs, pattern = " ", replacement = "", fixed = TRUE)
+  dfPlotGrids$plotIDs <- strsplit(dfPlotGrids$plotIDs, split = "[[:punct:]]")
+
+  # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
+  missingPlots <- setdiff(setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs), NA)
+  if (length(missingPlots) != 0) {
+    stop(messages$errorInvalidPlotID(missingPlots))
+  }
+
+  return(dfPlotGrids)
+}
