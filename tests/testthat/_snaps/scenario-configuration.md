@@ -23,6 +23,7 @@
          Population parameters file name: 
          Scenario definitions file name: 
          Scenario applications definitions file name: 
+         Plot definitions file name: 
          Experimental data folder: 
          Experimental data file: 
          Data importer configuration: 
