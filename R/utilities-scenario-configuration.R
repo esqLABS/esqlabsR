@@ -27,8 +27,8 @@ readScenarioConfigurationFromExcel <- function(scenarioNames, projectConfigurati
 
   # Current scenario definition structure:
   # "Scenario_name", "IndividualId", "ModelParameterSheets", "ApplicationProtocol",
-  # "SimulationTime", "SimulationTimeUnit", "SteadyState", "ModelFile"
-  colTypes <- c("text", "text", "text", "text", "numeric", "text", "logical", "text")
+  # "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile"
+  colTypes <- c("text", "text", "text", "text", "numeric", "text", "logical", "numeric", "text", "text")
   wholeData <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
@@ -73,6 +73,17 @@ readScenarioConfigurationFromExcel <- function(scenarioNames, projectConfigurati
     # Simulate steady-state?
     scenarioConfiguration$simulateSteadyState <- data$SteadyState
 
+    # Steady-state time
+    ssTime <- data$SteadyStateTime
+    ssTimeUnit <- data$SteadyStateTimeUnit
+
+    if (!is.na(ssTime)){
+      scenarioConfiguration$steadyStateTime <- ospsuite::toBaseUnit(
+        quantityOrDimension = ospDimensions$Time,
+        values = ssTime,
+        unit = ssTimeUnit)
+    }
+
     # Model file
     scenarioConfiguration$modelFile <- data$ModelFile
 
@@ -88,7 +99,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames, projectConfigurati
 #'
 #' @details Set the parameter values describing the application protocol
 #' defined in the scenario configuration. Either calling a function that is stored
-#' in the `applicationProotocolsEnum`, or from excel.
+#' in the `applicationProtocolsEnum`, or from excel.
 #'
 #' @param simulation A `Simulation` object that will be modified.
 #' @param scenarioConfiguration A `ScenarioConfiguration` object holding the

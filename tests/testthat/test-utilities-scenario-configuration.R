@@ -82,5 +82,5 @@ test_that("It creates multiple correct scenarios", {
   ))
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$simulationRunOptions, NULL)
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$simulationType, "Individual")
-  expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$steadyStateTime, 1000)
+  expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$steadyStateTime, 500)
 })

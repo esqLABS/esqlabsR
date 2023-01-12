@@ -142,8 +142,12 @@ of 1 point per minute.
 `ospsuite::ospUnits`.
 
 - **SteadyState**: If `TRUE`, the model will be simulated for a "sufficiently long"
-time (1000 minutes by default). The steady-state time can be specified in the 
-`ScenarioConfiguration` (see Section [Running scenarios](#running-scenarios)).
+time (1000 minutes by default).
+
+- **SteadyStateTime**: Time for the steady-state.
+
+- **SteadyStateTimeUnit**: nUit for `SteadyStateTime`. For supported units, see 
+`ospsuite::ospUnits`.
 
 - **ModelFile**: Name of the `pkml` file with the simulation. Must be located in 
 the folder defined in `ProjectConfiguration$modelFolder`.
