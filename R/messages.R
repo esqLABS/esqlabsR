@@ -137,18 +137,27 @@ messages$stopInvalidDataCombinedName <- function(dataCombinedNames) {
 messages$stopNoPathProvided <- function(dataCombinedName) {
   paste0(
     "No output path is defined for the DataCombined '", paste0(dataCombinedName, collapse = ", "), "'.
-    Each simulation output must have an output path specified.")
+    Each simulation output must have an output path specified."
+  )
 }
 
 messages$stopNoDataSetProvided <- function(dataCombinedName) {
   paste0(
     "No data set is defined for the DataCombined '", paste0(dataCombinedName, collapse = ", "), "'.
-    Each observed data must have a 'dataSet' specified.")
+    Each observed data must have a 'dataSet' specified."
+  )
 }
 
 messages$stopInvalidDataSetName <- function(dataSetNames) {
   paste0(
     "The following data sets are not present in `observedData`: ",
     paste(dataSetNames, collapse = ", ")
+  )
+}
+
+messages$errorWrongArguments <- function(expectedArguments) {
+  paste0(
+    "Wrong arguments provided for the function! Expected arguments are: ",
+    expectedArguments, "."
   )
 }
