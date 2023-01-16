@@ -111,6 +111,38 @@ a parameter sheet from the list"
       } else {
         stop(messages$errorPropertyReadOnly("projectConfiguration"))
       }
+    },
+    #' @field customFunction A function that will be applied at the very last
+    #' step of simulation initialization. Can be applied for advanced scenario
+    #' configuration. If the function requires additional arguments, they must be
+    #' defined in `customFunctionArgs` as a list. The object `simulation` can always
+    #' be accessed.
+    #' @example \dontrun{
+    #' #This example gets the current value of the "Age" parameter and multiplies
+    #' #it by a factor coming from argument.
+    #' #Assume that scenarioConfiguration has been created from excel.
+    #' scenarioConfiguration$customFunction <- function(
+    #' }
+    customFunction = function(value) {
+      if (missing(value)) {
+        private$.customFunction
+      } else {
+        validateIsOfType(value, "function")
+        private$.customFunction <- value
+      }
+    },
+
+    #' @field customFunctionArgs Arguments for the`customFunction()`
+    #' Named list of type `list(argumentName = value)`
+    customFunctionArgs = function(value) {
+      if (missing(value)) {
+        private$.customFunctionArgs
+      } else {
+        if (!setequal(names(value), formalArgs(private$.customFunction))) {
+          stop(messages$errorWrongArguments(formalArgs(private$.customFunction)))
+        }
+        private$.customFunctionArgs <- value
+      }
     }
   ),
   private = list(
@@ -123,7 +155,9 @@ a parameter sheet from the list"
     .individualCharacteristics = NULL,
     .paramSheets = NULL,
     .simulationType = "Individual",
-    .simulationRunOptions = NULL
+    .simulationRunOptions = NULL,
+    .customFunction = NULL,
+    .customFunctionArgs = list()
   ),
   public = list(
     #' @description

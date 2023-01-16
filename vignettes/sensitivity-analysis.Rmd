@@ -1,6 +1,8 @@
 ---
 title: "Sensitivity analysis"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    toc: true
 vignette: >
   %\VignetteIndexEntry{Sensitivity analysis}
   %\VignetteEngine{knitr::rmarkdown}

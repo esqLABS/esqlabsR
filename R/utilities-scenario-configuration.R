@@ -27,8 +27,8 @@ readScenarioConfigurationFromExcel <- function(scenarioNames, projectConfigurati
 
   # Current scenario definition structure:
   # "Scenario_name", "IndividualId", "ModelParameterSheets", "ApplicationProtocol",
-  # "SimulationTime", "SimulationTimeUnit", "SteadyState", "ModelFile"
-  colTypes <- c("text", "text", "text", "text", "numeric", "text", "logical", "text")
+  # "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile"
+  colTypes <- c("text", "text", "text", "text", "numeric", "text", "logical", "numeric", "text", "text")
   wholeData <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
@@ -73,6 +73,18 @@ readScenarioConfigurationFromExcel <- function(scenarioNames, projectConfigurati
     # Simulate steady-state?
     scenarioConfiguration$simulateSteadyState <- data$SteadyState
 
+    # Steady-state time
+    ssTime <- data$SteadyStateTime
+    ssTimeUnit <- data$SteadyStateTimeUnit
+
+    if (!is.na(ssTime)) {
+      scenarioConfiguration$steadyStateTime <- ospsuite::toBaseUnit(
+        quantityOrDimension = ospDimensions$Time,
+        values = ssTime,
+        unit = ssTimeUnit
+      )
+    }
+
     # Model file
     scenarioConfiguration$modelFile <- data$ModelFile
 
@@ -84,41 +96,18 @@ readScenarioConfigurationFromExcel <- function(scenarioNames, projectConfigurati
   return(scenarioConfigurations)
 }
 
-#' Set an application protocol in a `Simulation`
+#' Set an application protocol in a `Simulation` from the excel file.
 #'
 #' @details Set the parameter values describing the application protocol
-#' defined in the scenario configuration. Either calling a function that is stored
-#' in the `applicationProotocolsEnum`, or from excel.
+#' defined in the scenario configuration.
 #'
 #' @param simulation A `Simulation` object that will be modified.
 #' @param scenarioConfiguration A `ScenarioConfiguration` object holding the
 #' name of the application protocol.
-#' @param applicationProtocolsEnum (Optional) A named list with functions that
-#' define setting the application. If `NULL` or no entry with the application
-#' protocol defined in the `scenarioConfiguiration`, the parameters to set
-#' are extracted from excel.
 #'
 #' @export
-setApplications <- function(simulation, scenarioConfiguration, applicationProtocolsEnum = NULL) {
-  applicationName <- scenarioConfiguration$applicationProtocol
-
-  # If the application is defined in the enum, call the function
-  if (!is.null(applicationProtocolsEnum) &&
-    enumHasKey(key = applicationName, enum = applicationProtocolsEnum)) {
-    applicationProtocolsEnum[[applicationName]]()
-  } else {
-    # Otherwise, set from excel
-    .setApplicationFromExcel(scenarioConfiguration = scenarioConfiguration, simulation = simulation)
-  }
-}
-
-#' Set application protocol from excel
-#'
-#' @param scenarioConfiguration A `ScenarioConfiguration` object holding the
-#' name of the application protocol.
-#' @param simulation A `Simulation` object that will be modified.
-#' @keywords internal
-.setApplicationFromExcel <- function(scenarioConfiguration, simulation) {
+setApplications <- function(simulation, scenarioConfiguration) {
+  # Set from excel
   excelFilePath <- file.path(
     scenarioConfiguration$projectConfiguration$paramsFolder,
     scenarioConfiguration$projectConfiguration$scenarioApplicationsFile

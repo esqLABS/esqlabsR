@@ -1,0 +1,15 @@
+pandoc: 2.19.2
+pkgdown: 2.0.7
+pkgdown_sha: ~
+articles:
+  data-handling: data-handling.html
+  introduction-esqlabsr: introduction-esqlabsr.html
+  sensitivity-analysis: sensitivity-analysis.html
+  shiny-apps: shiny-apps.html
+  standard-workflow: standard-workflow.html
+  visualization-and-reporting: visualization-and-reporting.html
+last_built: 2023-01-16T11:28Z
+urls:
+  reference: https://esqlabs.github.io/esqlabsR/reference
+  article: https://esqlabs.github.io/esqlabsR/articles
+

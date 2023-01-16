@@ -216,5 +216,15 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
   # Set administration protocols
   setApplications(simulation = simulation, scenarioConfiguration = scenarioConfiguration)
 
+  # Call the custom function.
+  if (!is.null(scenarioConfiguration$customFunction)) {
+    # Set the environment of the custom function to the current environment so it
+    # has access to the `simulation` object
+    environment(scenarioConfiguration$customFunction) <- environment()
+    # Call the custom function with the arguments as defined in the scenario
+    # configuration
+    do.call(what = scenarioConfiguration$customFunction, args = scenarioConfiguration$customFunctionArgs)
+  }
+
   return(simulation)
 }
