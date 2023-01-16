@@ -146,7 +146,7 @@ time (1000 minutes by default).
 
 - **SteadyStateTime**: Time for the steady-state.
 
-- **SteadyStateTimeUnit**: nUit for `SteadyStateTime`. For supported units, see 
+- **SteadyStateTimeUnit**: Unit for `SteadyStateTime`. For supported units, see 
 `ospsuite::ospUnits`.
 
 - **ModelFile**: Name of the `pkml` file with the simulation. Must be located in 
