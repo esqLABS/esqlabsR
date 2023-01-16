@@ -4,16 +4,18 @@
 \alias{readScenarioConfigurationFromExcel}
 \title{Read scenario definition(s) from excel file}
 \usage{
-readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)
+readScenarioConfigurationFromExcel(scenarioNames = NULL, projectConfiguration)
 }
 \arguments{
-\item{scenarioNames}{Names of the scenarios that are defined in the excel file}
+\item{scenarioNames}{Names of the scenarios that are defined in the excel file.
+If \code{NULL} (default), all scenarios specified in the excel file will be
+created.}
 
 \item{projectConfiguration}{A \code{ProjectConfiguration} object holding base information}
 }
 \value{
 A named list of \code{ScenarioConfiguration} objects withe the names of the
-list being the \code{scenarioNames}.
+list being scenario names.
 }
 \description{
 Read scenario definition(s) from excel file

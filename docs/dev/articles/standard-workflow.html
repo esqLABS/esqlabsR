@@ -419,6 +419,10 @@ argument to the function. To read the configuration for the
 <span><span class="co">#&gt;    Simulate steady-state: FALSE </span></span>
 <span><span class="co">#&gt;    Steady-state time: 1000 </span></span>
 <span><span class="co">#&gt;    Set test parameters: FALSE</span></span></code></pre></div>
+<p>Alternatively, we can create configurations for all scenarios defined
+in the <code>Scenarios.xlsx</code> by calling
+<code>readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)</code>
+without specifying scenarios names.</p>
 <p>Before running the scenarios, we can modify
 <code>ScenarioConfigurations</code> by setting parameters that are
 currently not accessible through excel files. One the most common

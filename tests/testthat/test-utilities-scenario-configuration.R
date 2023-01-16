@@ -86,6 +86,13 @@ test_that("It creates multiple correct scenarios", {
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$steadyStateTime, 500)
 })
 
+test_that("It creates all scenarios if no name is defined", {
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    projectConfiguration = projectConfiguration
+  )
+  expect_equal(names(scenarioConfigurations), c("TestScenario", "TestScenario2"))
+})
+
 test_that("It correctly applies a custom function", {
   scenarioNames <- "TestScenario"
 

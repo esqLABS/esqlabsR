@@ -35,6 +35,9 @@ class gets new fields `customFunction` and `customFunctionArgs`.
 - Function `stringToNum()` gets additional arguments `lloqMode` and `uloqMode`
 that determine how entries of type "<number" and ">number" will be treated.
 
+- `readScenarioConfigurationFromExcel()` will read all scenarios defined in the 
+`Scenarios.xlsx` file if no scenario names are specified (argument `scenarioNames = NULL`).
+
 ------
 
 # esqlabsR 4.0.0

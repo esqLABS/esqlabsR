@@ -87,11 +87,12 @@
 </ul></li>
 <li><p><code>ProjectConfiguration</code> gets a new field <code>plotsFile</code>. It is the name of the excel file with plot definitions and must be located in the <code>paramsFolder</code>.</p></li>
 <li><p>Plots can be created by calling the new function <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>. It requires as input parameters <code>simulatedScenarios</code> (a list of simulated scenarios as returned by <code><a href="../reference/runScenarios.html">runScenarios()</a></code>), <code>observedData</code> (a list of <code>DataSet</code> objects) and a <code>ProjectConfiguration</code> object <code>projectConfiguration</code>.</p></li>
-<li><p><code>ScenarioConfiguration</code> support custom functions to modify the <code>Simulation</code> object as the last step of scenario initialization. For this, the ´ScenarioConfiguration<code>class gets new fields</code>customFunction<code>and</code>customFunctionArgs`.</p></li>
+<li><p><code>ScenarioConfiguration</code> supports custom functions to modify the <code>Simulation</code> object as the last step of scenario initialization. For this, the <code>ScenarioConfiguration</code> class gets new fields <code>customFunction</code> and <code>customFunctionArgs</code>.</p></li>
 </ul></div>
 <div class="section level4">
 <h4 id="minor-changes-5-0-0">MINOR CHANGES<a class="anchor" aria-label="anchor" href="#minor-changes-5-0-0"></a></h4>
-<ul><li>Function <code><a href="../reference/stringToNum.html">stringToNum()</a></code> gets additional arguments <code>lloqMode</code> and <code>uloqMode</code> that determine how entries of type “&lt;number” and “&gt;number” will be treated.</li>
+<ul><li><p>Function <code><a href="../reference/stringToNum.html">stringToNum()</a></code> gets additional arguments <code>lloqMode</code> and <code>uloqMode</code> that determine how entries of type “&lt;number” and “&gt;number” will be treated.</p></li>
+<li><p><code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> will read all scenarios defined in the <code>Scenarios.xlsx</code> file if no scenario names are specified (argument <code>scenarioNames = NULL</code>).</p></li>
 </ul><hr></div>
 </div>
     <div class="section level2">
