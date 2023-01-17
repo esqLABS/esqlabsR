@@ -28,7 +28,6 @@
          Experimental data file: 
          Data importer configuration: 
          Output folder: 
-         Output device: 
       ScenarioConfiguration: 
          Model file name: 
          Scenario name: 

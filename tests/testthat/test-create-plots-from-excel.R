@@ -35,7 +35,7 @@ dataCombinedDf <- data.frame(list(
   "scenario" = c(scenarioNames, NA),
   "path" = c(outputPaths, NA),
   "dataSet" = c(NA, names(observedData)),
-  "group" = c(NA, NA),
+  "group" = c("Aciclovir PVB", "Aciclovir PVB"),
   "xOffsets" = c(NA, NA),
   "yOffsets" = c(NA, NA),
   "xScaleFactors" = c(NA, NA),
@@ -566,11 +566,44 @@ test_that("It exports plot grids as defined in sheet `exportConfiguration`", {
   )
 })
 
-# Creation of plots - FAILING
-# test_that("It creates a plot if no data transformations are present", {
-#   plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
-#                                     observedData = observedData,
-#                                     projectConfiguration = projectConfiguration,
-#                                     stopIfNotFound = TRUE)
-# }
-# )
+test_that("It throws an error when trying to set a property that is not supported by the configuration", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotConfigurationDfLocal$"blabla" <- "1,2,3"
+
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- exportConfigurationDf
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+      expect_error(createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      ), regexp = messages$invalidConfigurationPropertyFromExcel(propertyName = "blabla",
+                                                                 configurationType = "DefaultPlotConfiguration"))
+    }
+  )
+})
+
+# Creation of plots
+test_that("It creates a plot if no data transformations are present", {
+  plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
+                                    observedData = observedData,
+                                    projectConfiguration = projectConfiguration,
+                                    stopIfNotFound = TRUE)
+  expect_length(plots, 2)
+}
+)

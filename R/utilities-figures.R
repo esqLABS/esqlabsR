@@ -361,10 +361,16 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
 .createConfigurationFromRow <- function(defaultConfiguration, ...) {
   columns <- c(...)
   newConfiguration <- defaultConfiguration$clone()
+
   lapply(seq_along(columns), function(i) {
     value <- columns[[i]]
     colName <- names(columns)[[i]]
     if (!is.na(value)) {
+      # Check if the field name is supported by the configuration class
+      if (!.validateClassHasField(object = newConfiguration, field = colName)){
+        stop(messages$invalidConfigurationPropertyFromExcel(propertyName = colName,
+                                                            configurationType = class(newConfiguration)[[1]]))
+      }
       # columns with single numeric values and numeric vectors
       if (colName %in% c("xAxisLimits", "yAxisLimits", "width", "height", "dpi")) {
         newConfiguration[[colName]] <- eval(parse(text = value))
@@ -374,6 +380,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
       }
     }
   })
+
   return(newConfiguration)
 }
 

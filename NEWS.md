@@ -8,6 +8,8 @@ objects.
 - `initializeScenario()` does not update scenario configuration from excel any more.
 - Output paths are not set from global variable `OutputPaths` any more but 
 from the respective field of `ScenarioConfgiruation`
+- `ProjectConfiguration` does not have field `$outputDevice` any more.
+- Enum `GraphicsDevices` has been removed.
 
 ### MAJOR CHANGES
 
