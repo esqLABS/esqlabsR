@@ -57,8 +57,11 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     # Scenario name
     scenarioConfiguration$scenarioName <- scenarioName
     # Parameter sheets
-    paramSheets <- gsub(data$ModelParameterSheets, pattern = " ", replacement = "", fixed = TRUE)
+    paramSheets <- data$ModelParameterSheets
     if (!is.na(paramSheets)) {
+      sheetNames <- strsplit(x = paramSheets, split = ",", fixed = TRUE)[[1]]
+      #Remove leading/trailing whitespaces
+      sheetNames <- trimws(sheetNames)
       scenarioConfiguration$addParamSheets(strsplit(x = paramSheets, split = ",", fixed = TRUE)[[1]])
     }
 
