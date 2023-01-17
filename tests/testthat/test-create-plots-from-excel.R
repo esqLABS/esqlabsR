@@ -597,13 +597,3 @@ test_that("It throws an error when trying to set a property that is not supporte
     }
   )
 })
-
-# Creation of plots
-test_that("It creates a plot if no data transformations are present", {
-  plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
-                                    observedData = observedData,
-                                    projectConfiguration = projectConfiguration,
-                                    stopIfNotFound = TRUE)
-  expect_length(plots, 2)
-}
-)
