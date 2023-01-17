@@ -10,6 +10,9 @@ authors:
   Indrajeet Patil:
     href: https://sites.google.com/site/indrajeetspatilmorality/
 
+development:
+  mode: devel
+
 reference:
 
   - title: Sensitivity analysis
@@ -21,6 +24,7 @@ reference:
     contents:
       - contains("Project")
       - contains("Scenario")
+      - createPlotsFromExcel
 
   - title: Helpers for data import, wrangling, and export
     #desc:
@@ -44,6 +48,7 @@ reference:
       - applyIndividualParameters
       - Distributions
       - LLOQMode
+      - ULOQMode
       - loadObservedData
 
   - title: Helpers for plotting
@@ -91,6 +96,7 @@ articles:
     desc: Articles about how to run simulations
     contents:
       - standard-workflow
+      - sensitivity-analysis
   - title: Processing data
     navbar: Processing data
     desc: Articles about how to process and analyse data

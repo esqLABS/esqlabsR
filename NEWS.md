@@ -25,10 +25,18 @@ outputs as defined in the simulation are used.
   
 - `ProjectConfiguration` gets a new field `plotsFile`. It is the name of the excel file with plot definitions and must be located in the `paramsFolder`.
 - Plots can be created by calling the new function `createPlotsFromExcel()`. It requires as input parameters `simulatedScenarios` (a list of simulated scenarios as returned by `runScenarios()`), `observedData` (a list of `DataSet` objects) and a `ProjectConfiguration` object `projectConfiguration`.
+
+- `ScenarioConfiguration` supports custom functions to modify the `Simulation` 
+object as the last step of scenario initialization. For this, the `ScenarioConfiguration` 
+class gets new fields `customFunction` and `customFunctionArgs`.
+
 ### MINOR CHANGES
 
 - Function `stringToNum()` gets additional arguments `lloqMode` and `uloqMode`
 that determine how entries of type "<number" and ">number" will be treated.
+
+- `readScenarioConfigurationFromExcel()` will read all scenarios defined in the 
+`Scenarios.xlsx` file if no scenario names are specified (argument `scenarioNames = NULL`).
 
 ------
 

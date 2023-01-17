@@ -142,8 +142,12 @@ of 1 point per minute.
 `ospsuite::ospUnits`.
 
 - **SteadyState**: If `TRUE`, the model will be simulated for a "sufficiently long"
-time (1000 minutes by default). The steady-state time can be specified in the 
-`ScenarioConfiguration` (see Section [Running scenarios](#running-scenarios)).
+time (1000 minutes by default).
+
+- **SteadyStateTime**: Time for the steady-state.
+
+- **SteadyStateTimeUnit**: Unit for `SteadyStateTime`. For supported units, see 
+`ospsuite::ospUnits`.
 
 - **ModelFile**: Name of the `pkml` file with the simulation. Must be located in 
 the folder defined in `ProjectConfiguration$modelFolder`.
@@ -168,6 +172,69 @@ You can define the paths of the parameters, their values and the units in the
 You can turn setting test parameters on and off in the `ScenarioConfiguration` 
 (see Section [Running scenarios](#running-scenarios)).
 
+### Custom functions
+
+Initialization of a scenario creates a `Simulation` object that is fully parametrized 
+according to the specifications of the scenario. However, sometimes further modifications 
+to the simulations are required that cannot be represented by fixed parameter 
+values stored in excel files. Imagine a scenario where the value of a certain parameter 
+depends on other parameters not known at the time point of excel file creation. 
+Another use case is a dose escalation study. Instead of defining every dose in a 
+separate **ApplicationProtocol" sheet, the set of doses to simulate could be defined 
+in an `R` list and passed as an argument to a function that sets the dose parameter 
+for a scenario.
+
+This can be achieved through defining a function that will be applied to the 
+`Simulation` object created from a `ScenarioConfiguration` at the very last step 
+of initialization. The function can reference the `simulation` variable and accept 
+additional arguments. The argument values are then defined in the field `customFunctionArgs`.
+
+In the following example, we will define a custom function that multiplies the 
+`Dose` parameter by a certain factor. The path to the dose parameter and the 
+multiplication factor are defined as arguments.
+
+```{r}
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = "TestScenario",
+  projectConfiguration = projectConfiguration
+)
+
+# Path to the dose parameter
+doseParamPath <- "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+
+# Initialize the simulation from the scenario without a custom function
+sim <- initializeScenario(scenarioConfigurations[[1]])
+# get the value of dose parameter
+oldVal <- getQuantityValuesByPath(doseParamPath, sim)
+print(paste0("Default dose parameter value: ", oldVal))
+
+# Define a custom function
+customFunction <- function(doseFactor, doseParamPath) {
+  doseParam <- getParameter(
+    path = doseParamPath,
+    container = simulation
+  )
+  doseParam$value <- doseParam$value * doseFactor
+}
+
+# Add the custom function to the scenario
+
+scenarioConfigurations$TestScenario$customFunction <- customFunction
+
+# Set the values of the arguments
+scenarioConfigurations$TestScenario$customFunctionArgs <- list(
+  doseFactor = 2,
+  doseParamPath = doseParamPath
+)
+
+# Initialize the simulation with the scenario with the custom function and get
+# the value of the dose parameter.
+sim <- initializeScenario(scenarioConfigurations[[1]])
+
+print(paste0("Dose parameter value with custom function: ", getQuantityValuesByPath(doseParamPath, sim)))
+```
+
 ### Running scenarios
 
 Scenarios are executed by creating `ScenarioConfiguration` objects
@@ -187,6 +254,9 @@ scenarioConfigurations <- readScenarioConfigurationFromExcel(
 
 print(scenarioConfigurations$TestScenario)
 ```
+
+Alternatively, we can create configurations for all scenarios defined in the 
+`Scenarios.xlsx` by calling `readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)` without specifying scenarios names.
 
 Before running the scenarios, we can modify `ScenarioConfigurations` by setting 
 parameters that are currently not accessible through excel files. One the most 

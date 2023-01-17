@@ -59,6 +59,15 @@ to simulation runs. If \code{NULL}, default options are used}
 
 \item{\code{projectConfiguration}}{\code{ProjectConfiguration} that will be used in scenarios.
 Read-only}
+
+\item{\code{customFunction}}{A function that will be applied at the very last
+step of simulation initialization. Can be applied for advanced scenario
+configuration. If the function requires additional arguments, they must be
+defined in \code{customFunctionArgs} as a list. The object \code{simulation} can always
+be accessed.}
+
+\item{\code{customFunctionArgs}}{Arguments for the\code{customFunction()}
+Named list of type \code{list(argumentName = value)}}
 }
 \if{html}{\out{</div>}}
 }
