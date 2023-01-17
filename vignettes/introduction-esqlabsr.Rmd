@@ -31,12 +31,13 @@ The articles below cover several aspects of the software usage:
 
 * [Standard workflow](standard-workflow.html)
 * [Data handling](data-handling.html)
-* [Visualization and reporting](example-visualization.html)
+* [Visualization and reporting](visualization-and-reporting.html)
+* [Sensitivity analysis](sensitivity-analysis.html)
 * [Available Shiny apps](shiny-apps.html)
 
 ## Object-oriented approach
 
-The `{esqlabsR}` package utilizes the concept of object-oriented (OO) programming based on the [R6 system](https://adv-r.hadley.nz/r6.html). While the philosophy of the package is to offer a functional programming workflow more common for the R users, it is important to understand some basic concepts of the OO programming. Many of the functions implemented in `{esqlabsR}` return an *instance* (or an *object*) of a *class*. These objects can be used as inputs for other methods. Additionally, each object offers a set of properties (which can be other objects) and methods, which are accessible by the `$` character:
+The `{esqlabsR}` package utilizes the concept of object-oriented (OO) programming based on the [R6 system](https://adv-r.hadley.nz/r6.html). While the philosophy of the package is to offer a functional programming workflow more common for the R users, it is important to understand some basic concepts of the OO programming. Many of the functions implemented in `{esqlabsR}` return an *instance* (or an *object*) of a *class*. These objects can be used as inputs fopkgr other methods. Additionally, each object offers a set of properties (which can be other objects) and methods, which are accessible by the `$` character:
 
 ```r
 # create an instance of an object
