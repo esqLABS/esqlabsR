@@ -62,7 +62,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
       sheetNames <- strsplit(x = paramSheets, split = ",", fixed = TRUE)[[1]]
       #Remove leading/trailing whitespaces
       sheetNames <- trimws(sheetNames)
-      scenarioConfiguration$addParamSheets(strsplit(x = paramSheets, split = ",", fixed = TRUE)[[1]])
+      scenarioConfiguration$addParamSheets(sheetNames)
     }
 
     # Simulation time
