@@ -255,6 +255,9 @@ scenarioConfigurations <- readScenarioConfigurationFromExcel(
 print(scenarioConfigurations$TestScenario)
 ```
 
+Alternatively, we can create configurations for all scenarios defined in the 
+`Scenarios.xlsx` by calling `readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)` without specifying scenarios names.
+
 Before running the scenarios, we can modify `ScenarioConfigurations` by setting 
 parameters that are currently not accessible through excel files. One the most 
 common property is `$outputPaths` that define for which paths the results will 

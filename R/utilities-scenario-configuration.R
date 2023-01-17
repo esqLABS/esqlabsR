@@ -1,6 +1,8 @@
 #' Read scenario definition(s) from excel file
 #'
-#' @param scenarioNames Names of the scenarios that are defined in the excel file
+#' @param scenarioNames Names of the scenarios that are defined in the excel file.
+#' If `NULL` (default), all scenarios specified in the excel file will be
+#' created.
 #' @param projectConfiguration A `ProjectConfiguration` object holding base information
 #'
 #' @details Reads scenario definition from the excel file defined in
@@ -10,7 +12,7 @@
 #' file, an error is thrown.
 #'
 #' @return A named list of `ScenarioConfiguration` objects withe the names of the
-#' list being the `scenarioNames`.
+#' list being scenario names.
 #' @export
 #'
 #' @examples
@@ -21,8 +23,8 @@
 #' # Read scenario definition from excel
 #' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)[[scenarioName]]
 #' }
-readScenarioConfigurationFromExcel <- function(scenarioNames, projectConfiguration) {
-  validateIsString(scenarioNames)
+readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConfiguration) {
+  validateIsString(scenarioNames, nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 
   # Current scenario definition structure:
@@ -37,6 +39,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames, projectConfigurati
     col_types = colTypes
   )
 
+  scenarioNames <- scenarioNames %||% wholeData$Scenario_name
   # Create a scenario configuration for each name
   scenarioConfigurations <- vector("list", length(scenarioNames))
   for (i in seq_along(scenarioNames)) {
