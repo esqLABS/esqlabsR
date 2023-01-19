@@ -482,7 +482,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   }
   # Remove white spaces
   dfPlotGrids$plotIDs <- gsub(dfPlotGrids$plotIDs, pattern = " ", replacement = "", fixed = TRUE)
-  dfPlotGrids$plotIDs <- strsplit(dfPlotGrids$plotIDs, split = "[[:punct:]]")
+  dfPlotGrids$plotIDs <- strsplit(dfPlotGrids$plotIDs, split = ",")
 
   # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
   missingPlots <- setdiff(setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs), NA)

@@ -597,3 +597,42 @@ test_that("It throws an error when trying to set a property that is not supporte
     }
   )
 })
+
+test_that("It correctly treats names with underscores", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$outputFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotConfigurationDfLocal$plotID <- "P_1"
+      plotGridsDfLocal <- plotGridsDf
+      plotGridsDfLocal$plotIDs <- "P_1"
+      exportConfigurationDfLocal <- data.frame(
+        plotGridName = rep("Aciclovir", 2),
+        outputName = c("Aciclovir1", "Aciclovir2"),
+        height = c(10, NA)
+      )
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      )
+      expect_true(file.exists(file.path(tempDir, "Aciclovir1.png")))
+      expect_true(file.exists(file.path(tempDir, "Aciclovir2.png")))
+    }
+  )
+})
