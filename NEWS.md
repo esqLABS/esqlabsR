@@ -40,6 +40,9 @@ that determine how entries of type "<number" and ">number" will be treated.
 - `readScenarioConfigurationFromExcel()` will read all scenarios defined in the 
 `Scenarios.xlsx` file if no scenario names are specified (argument `scenarioNames = NULL`).
 
+- Default name of the excel file with definition of individual biometrics changed 
+from `IndividualPhysiology.xlsx` to `IndividualBiometrics.xlsx`.
+
 ------
 
 # esqlabsR 4.0.0

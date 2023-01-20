@@ -1,7 +1,7 @@
 ## context("readIndividualCharacteristicsFromXLS")
 skip_on_ci()
 
-XLSpath <- "../data/IndividualPhysiology.xlsx"
+XLSpath <- "../data/IndividualBiometrics.xlsx"
 
 test_that("It returns NULL if the specified individual Id cannot be found in
           the file and nullIfNotFound is TRUE", {
