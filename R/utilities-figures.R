@@ -296,7 +296,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     }
     dataCombined
   })
-  names(dataCombinedList) <- unique(dfPlotConfigurations$DataCombinedName)
+  names(dataCombinedList) <- validDataCombined
 
   # apply data transformations
   dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors)) %>%
