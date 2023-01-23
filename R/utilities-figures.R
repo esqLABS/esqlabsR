@@ -410,6 +410,16 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   return(newConfiguration)
 }
 
+#' Validate and process the 'DataCombined' sheet
+#'
+#' @param dfDataCombined Data frame created by reading the ' DataCombined' sheet
+#' @param simulatedScenarios List of simulated scenarios as created by `runScenarios()`
+#' @param observedData Observed data objects
+#' @param stopIfNotFound if `TRUE`, throw an error if a simulated result of an
+#' observed data are not found
+#'
+#' @return Processed `dfDataCombined`
+#' @keywords internal
 .validateDataCombinedFromExcel <- function(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound) {
   # mandatory column label is empty - throw error
   missingLabel <- sum(is.na(dfDataCombined$label))
@@ -464,6 +474,13 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   return(dfDataCombined)
 }
 
+#' Validate and process the 'plotConfiguration' sheet
+#'
+#' @param dfPlotConfigurations Data frame created by reading the ' plotConfiguration' sheet
+#' @param dataCombinedNames Names of the 'DataCombined' that are referenced in the plot configurations
+#'
+#' @return Processed `dfPlotConfigurations`
+#' @keywords internal
 .validatePlotConfigurationFromExcel <- function(dfPlotConfigurations, dataCombinedNames) {
   # mandatory column DataCombinedName is empty - throw error
   missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
@@ -486,6 +503,13 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   return(dfPlotConfigurations)
 }
 
+#' Validate and process the 'plotGrids' sheet
+#'
+#' @param dfPlotGrids Data frame created by reading the ' plotGrids' sheet
+#' @param plotIDs IDs of the plots that are referenced in the plot grids
+#'
+#' @return Processed `dfPlotGrids`
+#' @keywords internal
 .validatePlotGridsFromExcel <- function(dfPlotGrids, plotIDs) {
   # mandatory column plotIDs is empty - throw error
   missingLabel <- sum(is.na(dfPlotGrids$plotIDs))
