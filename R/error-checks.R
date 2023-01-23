@@ -27,8 +27,8 @@
 #' @return `TRUE` if the `object` has an active binding `field`,
 #' `FALSE?  otherwise.
 #' @keywords internal
-.validateClassHasField <- function(object, field){
-  if (!field %in% names(object)){
+.validateClassHasField <- function(object, field) {
+  if (!field %in% names(object)) {
     return(FALSE)
   }
   return(TRUE)

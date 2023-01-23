@@ -592,8 +592,10 @@ test_that("It throws an error when trying to set a property that is not supporte
         observedData = observedData,
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
-      ), regexp = messages$invalidConfigurationPropertyFromExcel(propertyName = "blabla",
-                                                                 configurationType = "DefaultPlotConfiguration"))
+      ), regexp = messages$invalidConfigurationPropertyFromExcel(
+        propertyName = "blabla",
+        configurationType = "DefaultPlotConfiguration"
+      ))
     }
   )
 })

@@ -261,6 +261,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   validPlotIDs <- as.character(unique(unlist(dfPlotGrids$plotIDs)))
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
   plotConfiguration <- createEsqlabsPlotConfiguration()
+
   plotConfigurationList <- apply(
     dfPlotConfigurations[dfPlotConfigurations$plotID %in% validPlotIDs, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType"))],
     1, .createConfigurationFromRow,
@@ -270,6 +271,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
 
   # Valid DataCombined. Only consider those that are used in plots
   validDataCombined <- unique(dfPlotConfigurations[dfPlotConfigurations$plotID %in% validPlotIDs, ]$DataCombinedName)
+  dfDataCombined <- dfDataCombined[dfDataCombined$DataCombinedName %in% validDataCombined, ]
 
   # create named list of DataCombined objects. Only create for DataCombined that are used in plotConfiguration
   dataCombinedList <- lapply(validDataCombined, \(name) {
@@ -294,7 +296,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
       dataSets <- observedData[observed$dataSet]
       dataCombined$addDataSets(dataSets, names = observed$label, groups = observed$group)
     }
-    dataCombined
+    return(dataCombined)
   })
   names(dataCombinedList) <- validDataCombined
 
@@ -336,6 +338,10 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     if (length(plotsToAdd) == 0) {
       return(NULL)
     }
+    # When only one plot is in the grid, do not show panel labels
+    if (length(plotsToAdd) == 1) {
+      plotGridConfiguration$tagLevels <- NULL
+    }
     plotGridConfiguration$addPlots(plots = plotsToAdd)
     if (length(invalidPlotIDs <- setdiff(unlist(row$plotIDs), validPlotIDs)) != 0) {
       warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
@@ -367,17 +373,37 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     colName <- names(columns)[[i]]
     if (!is.na(value)) {
       # Check if the field name is supported by the configuration class
-      if (!.validateClassHasField(object = newConfiguration, field = colName)){
-        stop(messages$invalidConfigurationPropertyFromExcel(propertyName = colName,
-                                                            configurationType = class(newConfiguration)[[1]]))
+      if (!.validateClassHasField(object = newConfiguration, field = colName)) {
+        stop(messages$invalidConfigurationPropertyFromExcel(
+          propertyName = colName,
+          configurationType = class(newConfiguration)[[1]]
+        ))
       }
-      # columns with single numeric values and numeric vectors
-      if (colName %in% c("xAxisLimits", "yAxisLimits", "width", "height", "dpi")) {
-        newConfiguration[[colName]] <- eval(parse(text = value))
-        # character columns
-      } else {
-        newConfiguration[[colName]] <- value
+      # For fields that require multiple values (e.g., axis limits require the
+      # upper and the lower limit value), values are separated by a ','.
+      # Split the input string first
+      value <- unlist(strsplit(value, split = ","))
+
+      # Expected type of the field to cast the value to the
+      # correct type. For fields that do not have a default value (NULL), we have
+      # to assume character until a better solution is found
+      expectedType <- "character"
+      # Try to get the expected type of the field from the default value
+      defVal <- newConfiguration[[colName]]
+      if (!is.null(defVal)) {
+        expectedType <- typeof(defVal)
       }
+      # Special treatment for axis limits, as we know their data type but cannot
+      # get it with the proposed generic way since default limits are not set
+      if (colName %in% c("xAxisLimits", "yAxisLimits")) {
+        expectedType <- "double"
+      }
+
+      # Caste the value and set it
+      newConfiguration[[colName]] <- as(
+        object = value,
+        Class = expectedType
+      )
     }
   })
 
@@ -456,20 +482,6 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   if (length(missingDataCombined) != 0) {
     stop(messages$stopInvalidDataCombinedName(missingDataCombined))
   }
-
-  # merge limit columns to character columns xAxisLimits and yAxisLimits
-  dfPlotConfigurations <- mutate(dfPlotConfigurations,
-    xAxisLimits = ifelse(!is.na(xLimLower) & !is.na(xLimUpper),
-      paste0("c(", xLimLower, ",", xLimUpper, ")"), NA
-    ),
-    xLimLower = NULL, xLimUpper = NULL
-  )
-  dfPlotConfigurations <- mutate(dfPlotConfigurations,
-    yAxisLimits = ifelse(!is.na(yLimLower) & !is.na(yLimUpper),
-      paste0("c(", yLimLower, ",", yLimUpper, ")"), NA
-    ),
-    yLimLower = NULL, yLimUpper = NULL
-  )
 
   return(dfPlotConfigurations)
 }

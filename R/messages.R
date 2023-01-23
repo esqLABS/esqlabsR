@@ -162,7 +162,7 @@ messages$errorWrongArguments <- function(expectedArguments) {
   )
 }
 
-messages$invalidConfigurationPropertyFromExcel <- function(propertyName, configurationType){
+messages$invalidConfigurationPropertyFromExcel <- function(propertyName, configurationType) {
   paste0("Trying to apply property '", propertyName, "' that is not supported by
          the configuration '", configurationType, "'! Check column names in the
          excel file defining plot configurations.")
