@@ -638,3 +638,67 @@ test_that("It correctly treats names with underscores", {
     }
   )
 })
+
+test_that("It throws a warning when trying to export non-existent plot grid to file", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- data.frame(
+        plotGridName = "invalidPlotGridName",
+        outputName = "Aciclovir1"
+      )
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+      expect_warning(createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      ), regexp = messages$missingPlotGrids(missingPlotGrids = "invalidPlotGridName"))
+    }
+  )
+})
+
+test_that("It throws a warning when outputName is missing in sheet 'exportConfiguration'", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- data.frame(
+        plotGridName = "Aciclovir",
+        outputName = NA
+      )
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+      expect_warning(createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      ), regexp = messages$missingOutputFileName())
+    }
+  )
+})

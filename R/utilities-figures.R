@@ -327,7 +327,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   names(plotList) <- validPlotIDs
 
   # create plotGridConfiguration objects and add plots from plotList
-  multiPanelPlots <- apply(dfPlotGrids, 1, \(row) {
+  plotGrids <- apply(dfPlotGrids, 1, \(row) {
     plotGridConfiguration <- createEsqlabsPlotGridConfiguration()
     plotGridConfiguration$title <- row$title
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), validPlotIDs)]
@@ -348,21 +348,28 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     }
     plotGrid(plotGridConfiguration)
   })
-  names(multiPanelPlots) <- dfPlotGrids$name
+  names(plotGrids) <- dfPlotGrids$name
 
+  dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
     exportConfiguration <- createEsqlabsExportConfiguration(projectConfiguration)
     exportConfigurations <- apply(select(dfExportConfigurations, -plotGridName), 1, .createConfigurationFromRow, defaultConfiguration = exportConfiguration)
     # export plotGrid if defined in exportConfigurations
     lapply(seq_along(exportConfigurations), function(i) {
-      exportConfigurations[[i]]$savePlot(multiPanelPlots[[dfExportConfigurations$plotGridName[i]]])
+      exportConfigurations[[i]]$savePlot(plotGrids[[dfExportConfigurations$plotGridName[i]]])
     })
   }
 
-  return(multiPanelPlots)
+  return(plotGrids)
 }
 
+#' Create a plotConfiguration or exportConfiguration objects from a row of sheet
+#' 'plotConfiguration' or 'exportConfiguration'
+#'
+#' @param defaultConfiguration default plotConfiguration or exportConfiguration
+#' @param ... row with configuration properties
+#' @return A customized plot- or exportConfiguration object
 #' @keywords internal
 .createConfigurationFromRow <- function(defaultConfiguration, ...) {
   columns <- c(...)
@@ -527,4 +534,29 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   }
 
   return(dfPlotGrids)
+}
+
+#' Validate and process the 'exportConfiguration' sheet
+#'
+#' @param dfExportConfigurations Data frame created by reading the 'exportConfiguration' sheet
+#' @param plotGrids List of multipanel plots created previously
+#'
+#' @return Processed `dfExportConfigurations`
+#' @keywords internal
+.validateExportConfigurationsFromExcel <- function(dfExportConfigurations, plotGrids) {
+  # mandatory column outputName is empty - throw warning, remove rows
+  missingName <- sum(is.na(dfExportConfigurations$name))
+  if (missingName > 0) {
+    dfExportConfigurations <- dfExportConfigurations[!is.na(dfExportConfigurations$name), ]
+    warning(messages$missingOutputFileName())
+  }
+
+  plotGrids <- purrr::compact(plotGrids)
+  missingPlotGrids <- setdiff(dfExportConfigurations$plotGridName, names(plotGrids))
+  if (length(missingPlotGrids) != 0) {
+    dfExportConfigurations <- dfExportConfigurations[!(dfExportConfigurations$plotGridName %in% missingPlotGrids), ]
+    warning(messages$missingPlotGrids(missingPlotGrids))
+  }
+
+  return(dfExportConfigurations)
 }

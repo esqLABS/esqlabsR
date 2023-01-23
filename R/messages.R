@@ -167,3 +167,13 @@ messages$invalidConfigurationPropertyFromExcel <- function(propertyName, configu
          the configuration '", configurationType, "'! Check column names in the
          excel file defining plot configurations.")
 }
+
+messages$missingOutputFileName <- function() {
+  paste0("Missing values found in mandatory column 'outputName' of sheet 'exportConfiguration'. No plots are exported to file for corresponding rows.")
+}
+
+messages$missingPlotGrids <- function(missingPlotGrids) {
+  paste0("Invalid values in column 'plotGridName' of sheet 'exportConfiguration': ",
+         paste(missingPlotGrids, collapse = ", "),
+         ". Plot grids are either not defined or empty and can not be exported to file.")
+}
