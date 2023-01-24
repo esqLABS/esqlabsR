@@ -119,10 +119,6 @@ col2hsv <- function(color) {
   return(rgb2hsv(rgb))
 }
 
-#' Possible entries for the `outputDevice` field of a `ProjectConfiguration` object
-#' @export
-GraphicsDevices <- enum(list("PNG"))
-
 
 #' @title Create an instance of `DefaultPlotConfiguration` R6 class
 #' @rdname createEsqlabsPlotConfiguration
@@ -216,7 +212,7 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) {
   # NULL is not supported by ExportConfiguration, so we should assign here
   # something useful. NULL in the ProjectConfiguration currently means "do not
   # export".
-  exportConfiguration$format <- projectConfiguration$outputDevice %||% "PNG"
+  exportConfiguration$format <- "PNG"
   exportConfiguration$width <- 18
   exportConfiguration$height <- 18
   exportConfiguration$units <- "cm"
@@ -253,6 +249,9 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   dfDataCombined <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "DataCombined")
   # read sheet "plotConfiguration"
   dfPlotConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "plotConfiguration")
+  # read sheet "exportConfiguration"
+  dfExportConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "exportConfiguration") %>%
+    rename(name = outputName)
   dfDataCombined <- .validateDataCombinedFromExcel(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound)
   dataCombinedNames <- unique(dfDataCombined$DataCombinedName)
   dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, dataCombinedNames)
@@ -261,14 +260,18 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   # Only consider plotIDs that are specified in the plot grids
   validPlotIDs <- as.character(unique(unlist(dfPlotGrids$plotIDs)))
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+
   plotConfigurationList <- apply(
     dfPlotConfigurations[dfPlotConfigurations$plotID %in% validPlotIDs, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType"))],
-    1, .plotConfigurationFromRow
+    1, .createConfigurationFromRow,
+    defaultConfiguration = plotConfiguration
   )
   names(plotConfigurationList) <- validPlotIDs
 
   # Valid DataCombined. Only consider those that are used in plots
   validDataCombined <- unique(dfPlotConfigurations[dfPlotConfigurations$plotID %in% validPlotIDs, ]$DataCombinedName)
+  dfDataCombined <- dfDataCombined[dfDataCombined$DataCombinedName %in% validDataCombined, ]
 
   # create named list of DataCombined objects. Only create for DataCombined that are used in plotConfiguration
   dataCombinedList <- lapply(validDataCombined, \(name) {
@@ -293,9 +296,9 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
       dataSets <- observedData[observed$dataSet]
       dataCombined$addDataSets(dataSets, names = observed$label, groups = observed$group)
     }
-    dataCombined
+    return(dataCombined)
   })
-  names(dataCombinedList) <- unique(dfPlotConfigurations$DataCombinedName)
+  names(dataCombinedList) <- validDataCombined
 
   # apply data transformations
   dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors)) %>%
@@ -324,7 +327,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   names(plotList) <- validPlotIDs
 
   # create plotGridConfiguration objects and add plots from plotList
-  multiPanelPlots <- apply(dfPlotGrids, 1, \(row) {
+  plotGrids <- apply(dfPlotGrids, 1, \(row) {
     plotGridConfiguration <- createEsqlabsPlotGridConfiguration()
     plotGridConfiguration$title <- row$title
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), validPlotIDs)]
@@ -335,36 +338,95 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     if (length(plotsToAdd) == 0) {
       return(NULL)
     }
+    # When only one plot is in the grid, do not show panel labels
+    if (length(plotsToAdd) == 1) {
+      plotGridConfiguration$tagLevels <- NULL
+    }
     plotGridConfiguration$addPlots(plots = plotsToAdd)
     if (length(invalidPlotIDs <- setdiff(unlist(row$plotIDs), validPlotIDs)) != 0) {
       warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
     }
     plotGrid(plotGridConfiguration)
   })
-  names(multiPanelPlots) <- dfPlotGrids$name
+  names(plotGrids) <- dfPlotGrids$name
 
-  return(multiPanelPlots)
+  dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
+  if (nrow(dfExportConfigurations) > 0) {
+    # create a list of ExportConfiguration objects from dfExportConfigurations
+    exportConfiguration <- createEsqlabsExportConfiguration(projectConfiguration)
+    exportConfigurations <- apply(select(dfExportConfigurations, -plotGridName), 1, .createConfigurationFromRow, defaultConfiguration = exportConfiguration)
+    # export plotGrid if defined in exportConfigurations
+    lapply(seq_along(exportConfigurations), function(i) {
+      exportConfigurations[[i]]$savePlot(plotGrids[[dfExportConfigurations$plotGridName[i]]])
+    })
+  }
+
+  return(plotGrids)
 }
 
+#' Create a plotConfiguration or exportConfiguration objects from a row of sheet
+#' 'plotConfiguration' or 'exportConfiguration'
+#'
+#' @param defaultConfiguration default plotConfiguration or exportConfiguration
+#' @param ... row with configuration properties
+#' @return A customized plot- or exportConfiguration object
 #' @keywords internal
-.plotConfigurationFromRow <- function(...) {
-  plotConfiguration <- createEsqlabsPlotConfiguration()
-  lapply(seq_along(...), function(i) {
-    value <- ...[[i]]
-    colName <- names(...)[[i]]
+.createConfigurationFromRow <- function(defaultConfiguration, ...) {
+  columns <- c(...)
+  newConfiguration <- defaultConfiguration$clone()
+
+  lapply(seq_along(columns), function(i) {
+    value <- columns[[i]]
+    colName <- names(columns)[[i]]
     if (!is.na(value)) {
-      # numeric columns
-      if (colName %in% c("xAxisLimits", "yAxisLimits")) {
-        plotConfiguration[[colName]] <- eval(parse(text = value))
-        # character columns
-      } else {
-        plotConfiguration[[colName]] <- value
+      # Check if the field name is supported by the configuration class
+      if (!.validateClassHasField(object = newConfiguration, field = colName)) {
+        stop(messages$invalidConfigurationPropertyFromExcel(
+          propertyName = colName,
+          configurationType = class(newConfiguration)[[1]]
+        ))
       }
+      # For fields that require multiple values (e.g., axis limits require the
+      # upper and the lower limit value), values are separated by a ','.
+      # Split the input string first
+      value <- unlist(strsplit(value, split = ","))
+
+      # Expected type of the field to cast the value to the
+      # correct type. For fields that do not have a default value (NULL), we have
+      # to assume character until a better solution is found
+      expectedType <- "character"
+      # Try to get the expected type of the field from the default value
+      defVal <- newConfiguration[[colName]]
+      if (!is.null(defVal)) {
+        expectedType <- typeof(defVal)
+      }
+      # Special treatment for axis limits, as we know their data type but cannot
+      # get it with the proposed generic way since default limits are not set
+      if (colName %in% c("xAxisLimits", "yAxisLimits")) {
+        expectedType <- "double"
+      }
+
+      # Caste the value and set it
+      newConfiguration[[colName]] <- as(
+        object = value,
+        Class = expectedType
+      )
     }
   })
-  return(plotConfiguration)
+
+  return(newConfiguration)
 }
 
+#' Validate and process the 'DataCombined' sheet
+#'
+#' @param dfDataCombined Data frame created by reading the ' DataCombined' sheet
+#' @param simulatedScenarios List of simulated scenarios as created by `runScenarios()`
+#' @param observedData Observed data objects
+#' @param stopIfNotFound if `TRUE`, throw an error if a simulated result of an
+#' observed data are not found
+#'
+#' @return Processed `dfDataCombined`
+#' @keywords internal
 .validateDataCombinedFromExcel <- function(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound) {
   # mandatory column label is empty - throw error
   missingLabel <- sum(is.na(dfDataCombined$label))
@@ -419,6 +481,13 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   return(dfDataCombined)
 }
 
+#' Validate and process the 'plotConfiguration' sheet
+#'
+#' @param dfPlotConfigurations Data frame created by reading the ' plotConfiguration' sheet
+#' @param dataCombinedNames Names of the 'DataCombined' that are referenced in the plot configurations
+#'
+#' @return Processed `dfPlotConfigurations`
+#' @keywords internal
 .validatePlotConfigurationFromExcel <- function(dfPlotConfigurations, dataCombinedNames) {
   # mandatory column DataCombinedName is empty - throw error
   missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
@@ -438,23 +507,16 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     stop(messages$stopInvalidDataCombinedName(missingDataCombined))
   }
 
-  # merge limit columns to character columns xAxisLimits and yAxisLimits
-  dfPlotConfigurations <- mutate(dfPlotConfigurations,
-    xAxisLimits = ifelse(!is.na(xLimLower) & !is.na(xLimUpper),
-      paste0("c(", xLimLower, ",", xLimUpper, ")"), NA
-    ),
-    xLimLower = NULL, xLimUpper = NULL
-  )
-  dfPlotConfigurations <- mutate(dfPlotConfigurations,
-    yAxisLimits = ifelse(!is.na(yLimLower) & !is.na(yLimUpper),
-      paste0("c(", yLimLower, ",", yLimUpper, ")"), NA
-    ),
-    yLimLower = NULL, yLimUpper = NULL
-  )
-
   return(dfPlotConfigurations)
 }
 
+#' Validate and process the 'plotGrids' sheet
+#'
+#' @param dfPlotGrids Data frame created by reading the ' plotGrids' sheet
+#' @param plotIDs IDs of the plots that are referenced in the plot grids
+#'
+#' @return Processed `dfPlotGrids`
+#' @keywords internal
 .validatePlotGridsFromExcel <- function(dfPlotGrids, plotIDs) {
   # mandatory column plotIDs is empty - throw error
   missingLabel <- sum(is.na(dfPlotGrids$plotIDs))
@@ -463,7 +525,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   }
   # Remove white spaces
   dfPlotGrids$plotIDs <- gsub(dfPlotGrids$plotIDs, pattern = " ", replacement = "", fixed = TRUE)
-  dfPlotGrids$plotIDs <- strsplit(dfPlotGrids$plotIDs, split = "[[:punct:]]")
+  dfPlotGrids$plotIDs <- strsplit(dfPlotGrids$plotIDs, split = ",")
 
   # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
   missingPlots <- setdiff(setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs), NA)
@@ -472,4 +534,29 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   }
 
   return(dfPlotGrids)
+}
+
+#' Validate and process the 'exportConfiguration' sheet
+#'
+#' @param dfExportConfigurations Data frame created by reading the 'exportConfiguration' sheet
+#' @param plotGrids List of multipanel plots created previously
+#'
+#' @return Processed `dfExportConfigurations`
+#' @keywords internal
+.validateExportConfigurationsFromExcel <- function(dfExportConfigurations, plotGrids) {
+  # mandatory column outputName is empty - throw warning, remove rows
+  missingName <- sum(is.na(dfExportConfigurations$name))
+  if (missingName > 0) {
+    dfExportConfigurations <- dfExportConfigurations[!is.na(dfExportConfigurations$name), ]
+    warning(messages$missingOutputFileName())
+  }
+
+  plotGrids <- purrr::compact(plotGrids)
+  missingPlotGrids <- setdiff(dfExportConfigurations$plotGridName, names(plotGrids))
+  if (length(missingPlotGrids) != 0) {
+    dfExportConfigurations <- dfExportConfigurations[!(dfExportConfigurations$plotGridName %in% missingPlotGrids), ]
+    warning(messages$missingPlotGrids(missingPlotGrids))
+  }
+
+  return(dfExportConfigurations)
 }

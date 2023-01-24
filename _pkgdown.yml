@@ -57,7 +57,6 @@ reference:
       - matches("^plot")
       - matches("^col")
       - contains("color")
-      - GraphicsDevices
       - has_concept("create-plotting-configurations")
 
   - title: Input validation

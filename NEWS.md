@@ -8,6 +8,8 @@ objects.
 - `initializeScenario()` does not update scenario configuration from excel any more.
 - Output paths are not set from global variable `OutputPaths` any more but 
 from the respective field of `ScenarioConfgiruation`
+- `ProjectConfiguration` does not have field `$outputDevice` any more.
+- Enum `GraphicsDevices` has been removed.
 
 ### MAJOR CHANGES
 
@@ -37,6 +39,9 @@ that determine how entries of type "<number" and ">number" will be treated.
 
 - `readScenarioConfigurationFromExcel()` will read all scenarios defined in the 
 `Scenarios.xlsx` file if no scenario names are specified (argument `scenarioNames = NULL`).
+
+- Default name of the excel file with definition of individual biometrics changed 
+from `IndividualPhysiology.xlsx` to `IndividualBiometrics.xlsx`.
 
 ------
 

@@ -3,7 +3,6 @@
 export("%||%")
 export(Distributions)
 export(GenderInt)
-export(GraphicsDevices)
 export(LLOQMode)
 export(ProjectConfiguration)
 export(ScenarioConfiguration)

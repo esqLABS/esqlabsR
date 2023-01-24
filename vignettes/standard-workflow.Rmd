@@ -63,7 +63,7 @@ filtration rate. To define a scenario, create a new row in the
     name](https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f).
 -   **IndividualId**: Name (ID) of an individual. This name refers to
     the name of the individual as used in excel files
-    `IndividualPhysiology.xlsx` for definition of the biometric
+    `IndividualBiometrics.xlsx` for definition of the biometric
     properties of the simulated individual and
     `IndividualParameters.xlsx` for definition of individual-specific
     model parameters. **IndividualId** may be empty. In this case,
@@ -71,7 +71,7 @@ filtration rate. To define a scenario, create a new row in the
     individual-specific model parameters will be simulated. 
 To create an individual with specific biometric characteristics, define
 an entry with the same individual id in the file
-`IndividualPhysiology.xlsx`. The same individual can be used in multiple
+`IndividualBiometrics.xlsx`. The same individual can be used in multiple
 scenarios. Note that though it is technically possible to apply a
 species different from the one in the original simulation, the
 correctness of the results is not guaranteed as there exist some

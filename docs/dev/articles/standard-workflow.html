@@ -135,8 +135,7 @@ examples, we assume that the current working directory is the
 <span><span class="co">#&gt;    Experimental data folder: ../Data </span></span>
 <span><span class="co">#&gt;    Experimental data file: TestProject_TimeValuesData.xlsx </span></span>
 <span><span class="co">#&gt;    Data importer configuration: esqlabs_dataImporter_configuration.xml </span></span>
-<span><span class="co">#&gt;    Output folder: ../Results </span></span>
-<span><span class="co">#&gt;    Output device:</span></span></code></pre></div>
+<span><span class="co">#&gt;    Output folder: ../Results</span></span></code></pre></div>
 <p>Next, we will define a <em>scenario</em> that we want to simulate in
 the excel file <code>Parameters/Scenarios.xlsx</code> (or other as set
 in <code>projectConfiguration$scenarioDefinitionFile</code>). The
@@ -407,7 +406,6 @@ argument to the function. To read the configuration for the
 <span><span class="co">#&gt;    Experimental data file: TestProject_TimeValuesData.xlsx </span></span>
 <span><span class="co">#&gt;    Data importer configuration: esqlabs_dataImporter_configuration.xml </span></span>
 <span><span class="co">#&gt;    Output folder: ../Results </span></span>
-<span><span class="co">#&gt;    Output device: </span></span>
 <span><span class="co">#&gt; ScenarioConfiguration: </span></span>
 <span><span class="co">#&gt;    Model file name: Aciclovir.pkml </span></span>
 <span><span class="co">#&gt;    Scenario name: TestScenario </span></span>
@@ -430,13 +428,13 @@ property is <code>$outputPaths</code> that define for which paths the
 results will be stored.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define the OutputPaths enum, if not done allready</span></span>
-<span><span class="va">OutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ospsuite.utils/man/enum.html" class="external-link">enum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span><span class="va">OutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/enum.html" class="external-link">enum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  Aciclovir_PVB <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Set output paths for each scenario</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">scenarioConfiguration</span> <span class="kw">in</span> <span class="va">scenarioConfigurations</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">scenarioConfiguration</span><span class="op">$</span><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ospsuite.utils/man/enumValues.html" class="external-link">enumValues</a></span><span class="op">(</span><span class="va">OutputPaths</span><span class="op">)</span></span>
+<span>  <span class="va">scenarioConfiguration</span><span class="op">$</span><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/enumValues.html" class="external-link">enumValues</a></span><span class="op">(</span><span class="va">OutputPaths</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>In model development/fitting phase, we also might want to apply some
 test parameter values:</p>
