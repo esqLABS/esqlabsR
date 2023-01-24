@@ -252,29 +252,26 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   # read sheet "exportConfiguration"
   dfExportConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "exportConfiguration") %>%
     rename(name = outputName)
-  dfDataCombined <- .validateDataCombinedFromExcel(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound)
-  dataCombinedNames <- unique(dfDataCombined$DataCombinedName)
-  dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, dataCombinedNames)
-  dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
 
-  # Only consider plotIDs that are specified in the plot grids
-  validPlotIDs <- as.character(unique(unlist(dfPlotGrids$plotIDs)))
+  dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
+  # Filter and validate only used plot configurations
+  dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
+  dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, unique(dfDataCombined$DataCombinedName))
+  # Filter and validate only used data combined
+  dfDataCombined <- dplyr::filter(dfDataCombined, DataCombinedName %in% unique(dfPlotConfigurations$DataCombinedName))
+  dfDataCombined <- .validateDataCombinedFromExcel(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound)
+
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
   plotConfiguration <- createEsqlabsPlotConfiguration()
-
   plotConfigurationList <- apply(
-    dfPlotConfigurations[dfPlotConfigurations$plotID %in% validPlotIDs, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType"))],
+    dfPlotConfigurations[, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType"))],
     1, .createConfigurationFromRow,
     defaultConfiguration = plotConfiguration
   )
-  names(plotConfigurationList) <- validPlotIDs
-
-  # Valid DataCombined. Only consider those that are used in plots
-  validDataCombined <- unique(dfPlotConfigurations[dfPlotConfigurations$plotID %in% validPlotIDs, ]$DataCombinedName)
-  dfDataCombined <- dfDataCombined[dfDataCombined$DataCombinedName %in% validDataCombined, ]
+  names(plotConfigurationList) <- dfPlotConfigurations$plotID
 
   # create named list of DataCombined objects. Only create for DataCombined that are used in plotConfiguration
-  dataCombinedList <- lapply(validDataCombined, \(name) {
+  dataCombinedList <- lapply(unique(dfDataCombined$DataCombinedName), \(name) {
     dataCombined <- DataCombined$new()
     # add data to DataCombined object
     # add simulated data
@@ -298,7 +295,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
     }
     return(dataCombined)
   })
-  names(dataCombinedList) <- validDataCombined
+  names(dataCombinedList) <- unique(dfDataCombined$DataCombinedName)
 
   # apply data transformations
   dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors)) %>%
@@ -314,7 +311,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
   }
 
   # create a list of plots from dataCombinedList and plotConfigurationList
-  plotList <- lapply(validPlotIDs, \(plotId) {
+  plotList <- lapply(dfPlotConfigurations$plotID, \(plotId) {
     dataCombined <- dataCombinedList[[dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$DataCombinedName]]
     switch(dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
       individual = plotIndividualTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
@@ -324,13 +321,13 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
       residualsVsTime = plotResidualsVsTime(dataCombined, plotConfigurationList[[plotId]])
     )
   })
-  names(plotList) <- validPlotIDs
+  names(plotList) <- dfPlotConfigurations$plotID
 
   # create plotGridConfiguration objects and add plots from plotList
   plotGrids <- apply(dfPlotGrids, 1, \(row) {
     plotGridConfiguration <- createEsqlabsPlotGridConfiguration()
     plotGridConfiguration$title <- row$title
-    plotsToAdd <- plotList[intersect(unlist(row$plotIDs), validPlotIDs)]
+    plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create
     # a simulated vs observed plot without any groups
     plotsToAdd <- plotsToAdd[lengths(plotsToAdd) != 0]
@@ -343,7 +340,7 @@ createPlotsFromExcel <- function(simulatedScenarios, observedData, projectConfig
       plotGridConfiguration$tagLevels <- NULL
     }
     plotGridConfiguration$addPlots(plots = plotsToAdd)
-    if (length(invalidPlotIDs <- setdiff(unlist(row$plotIDs), validPlotIDs)) != 0) {
+    if (length(invalidPlotIDs <- setdiff(unlist(row$plotIDs), dfPlotConfigurations$plotID)) != 0) {
       warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
     }
     plotGrid(plotGridConfiguration)
