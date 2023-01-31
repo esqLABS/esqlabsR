@@ -77,6 +77,25 @@ species different from the one in the original simulation, the
 correctness of the results is not guaranteed as there exist some
 structural differences between the species.
 
+-   **PopulationId**: Name (ID) of a population. This name refers to
+    the name of the population as used in excel file
+    `PopulationParameters.xlsx` for definition of the demographic
+    properties of the simulated population. If **PopulationId** is empty, the 
+    scenario is simulated as an individual simulation. Otherwise, a population as 
+    defined in the sheet `Demographics` of the `PopulationParameters.xlsx` file 
+    will be created and the scenario simulated as a population simulation.
+    
+To create a population with specific biographic characteristics, define
+an entry with the same population id in the file
+`PopulationParameters.xlsx`. The same population can be used in multiple
+scenarios. **Note**: You can define both an **IndividualId** and a **PopulationId**. 
+In this case, individual-specific parameters from the `IndividualParameters.xlsx` 
+will be applied to the simulation prior to applying the population parameters.
+Keep in mind, that any physiological parameters defined for an individual that 
+are also part of the parameter set of a population will be overwritten by the population!
+If e.g. you specify the GFR of the individual in the `IndividualParameters.xlsx`,
+it will be overwritten by the GFR values sampled in the simulation.
+
 -   **ModelParameterSheets**: A list of sheet names from the
     `ModelParameter.xlsx` file, separated by a `,`. Each sheet must have
     the columns `Container Path`, `Parameter Name`, `Value`, and

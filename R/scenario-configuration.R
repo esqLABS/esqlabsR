@@ -180,6 +180,11 @@ a parameter sheet from the list"
     #' @field individualId Id of the individual as specified in "IndividualParameters.xlsx".
     #' If `NULL` (default), the individual as defined in the simulation file will be simulated.
     individualId = NULL,
+    #' @field populationId Id of the population as specified in "PopulationParameters.xlsx",
+    #' sheet "Demographics". If `ScenarioConfguration$simulationType` is `population`,
+    #' a population will be created a the scenario will be simulated as a population
+    #' simulation.
+    populationId = NULL,
     #' @field outputPaths a list of output paths for which the results will be
     #' calculated. If `NULL` (default), outputs as defined in the simulation
     #' are used.
@@ -215,6 +220,7 @@ a parameter sheet from the list"
       private$printLine("Scenario name", self$scenarioName)
       private$printLine("Parameters sheets", enumKeys(self$paramSheets))
       private$printLine("Individual Id", self$individualId)
+      private$printLine("Population Id", self$populationId)
       private$printLine("Application protocol", self$applicationProtocol)
       private$printLine("Simulation time", self$simulationTime)
       private$printLine("Points per minute", self$pointsPerMinute)
