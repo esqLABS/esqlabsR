@@ -16,7 +16,7 @@ from the respective field of `ScenarioConfgiruation`
 ### MAJOR CHANGES
 
 - Paths of model outputs are defined in the excel file `Scenarios.xlsx`. In the 
-sheet `OutputPaths`, create an entry for each output. The row `OutputPath` is the full 
+sheet `OutputPaths`, create an entry for each output. The column `OutputPath` is the full 
 path to the output, while `OutputPathId` can be an identifier that conveniently allows 
 to select the correct output.
 In the `Scenarios` sheet, enter the IDs of all paths the outputs should be generated for,
