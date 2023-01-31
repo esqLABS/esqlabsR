@@ -177,3 +177,7 @@ messages$missingPlotGrids <- function(missingPlotGrids) {
          paste(missingPlotGrids, collapse = ", "),
          ". Plot grids are either not defined or empty and can not be exported to file.")
 }
+
+messages$invalidPlotGridNames <- function(plotGridNames){
+  paste("Following plot grid names have been specified but are not present in the `plotGrids` sheet! Define these plots first: ", paste0(plotGridNames, collapse = ", "))
+}

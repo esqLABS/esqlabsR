@@ -432,40 +432,38 @@ test_that("It trows an error if a plot requires a DataCombined that is not defin
 })
 
 # Validation plotGrids
-test_that("It returns NULL if no plotGrids are defined in the excel sheet", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      plotGridsDfLocal <- data.frame(list(
-        "name" = NA,
-        "plotIDs" = NA,
-        "title" = NA
-      ))
-      exportConfigurationDfLocal <- exportConfigurationDf
-      writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
-
-
+test_that("It creates plots for all plot grids when plotGridNames is NULL", {
+      print(getwd())
       plots <- createPlotsFromExcel(
         simulatedScenarios = simulatedScenarios,
         observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
+        projectConfiguration = projectConfiguration,
         stopIfNotFound = TRUE
       )
-      expect_null(plots)
-    }
-  )
+      expect_equal(names(plots), c("Aciclovir", "Aciclovr2"))
+})
+
+test_that("It creates plots only for specified plotGrids", {
+      plots <- createPlotsFromExcel(
+        plotGridNames = "Aciclovir",
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfiguration,
+        stopIfNotFound = TRUE
+      )
+      expect_equal(names(plots), c("Aciclovir"))
+})
+
+test_that("It trows an error when specified plot grid names are not defined in the sheet", {
+  expect_error(createPlotsFromExcel(
+    plotGridNames = c("foo", "Aciclovir", "bar"),
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData,
+    projectConfiguration = projectConfiguration,
+    stopIfNotFound = TRUE
+  ),
+
+  messages$invalidPlotGridNames(c("foo", "bar")))
 })
 
 test_that("It trows an error if mandatory field plotIDs is not filled out", {
