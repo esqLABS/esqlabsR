@@ -33,6 +33,7 @@
          Scenario name: 
          Parameters sheets: mySheet1 mySheet2 
          Individual Id: 
+         Population Id: 
          Application protocol: 
          Simulation time: 10 
          Points per minute: 100 

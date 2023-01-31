@@ -17,7 +17,7 @@
 #' @export
 runScenarios <- function(scenarioConfigurations, customParams = NULL,
                          saveSimulationsToPKML = FALSE) {
-  validateIsOfType(scenarioConfigurations, "ScenarioConfiguration")
+  .validateScenarioConfigurations(scenarioConfigurations)
   validateIsLogical(saveSimulationsToPKML)
   .validateParametersStructure(
     parameterStructure = customParams,
@@ -31,22 +31,36 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
 
   simulations <- vector("list", length(scenarioConfigurations))
   scenarioNames <- vector("character", length(scenarioConfigurations))
+  populations <- vector("list", length(scenarioConfigurations))
 
   # For each scenario configuration, create a simulation object
   for (i in seq_along(scenarioConfigurations)) {
     scenarioConfiguration <- scenarioConfigurations[[i]]
-    scenarioNames[[i]] <- scenarioConfiguration$scenarioName
     simulation <- initializeScenario(scenarioConfiguration = scenarioConfiguration, customParams = customParams)
+    simulations[[i]] <- simulation
+    scenarioNames[[i]] <- scenarioConfiguration$scenarioName
+    # Defining an empty population as `NA` because test for `NULL` is painful
+    population <- NA
+
+    # Create a population for population scenarios
+    if (scenarioConfiguration$simulationType == "Population"){
+      popCharacteristics <- readPopulationCharacteristicsFromXLS(XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$populationParamsFile),
+                                                                 populationName = scenarioConfiguration$populationId,
+                                                                 sheet = "Demographics")
+      population <- createPopulation(populationCharacteristics = popCharacteristics)
+    }
+    populations[[i]] <- population
 
     # Save simulation to PKML
     if (saveSimulationsToPKML) {
       outputFolder <- file.path(
-        scenarioConfiguration$projectConfiguration$modelFolder,
+        scenarioConfiguration$projectConfiguration$outputFolder,
+        "SimulationResults",
         outputFolderSuffix
       )
       # Create a new folder if it does not exist
       if (!dir.exists(paths = outputFolder)) {
-        dir.create(path = outputFolder)
+        dir.create(path = outputFolder, recursive = TRUE)
       }
 
       # Save the current simulation
@@ -68,19 +82,26 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
         }
       )
     }
-
-    simulations[[i]] <- simulation
   }
   names(simulations) <- scenarioNames
-  names(scenarioConfigurations) < scenarioNames
+  names(scenarioConfigurations) <- scenarioNames
+  names(populations) <- scenarioNames
 
-  # Simulate all simulations concurrently
-  simulationResults <- runSimulations(simulations = simulations, simulationRunOptions = scenarioConfiguration$simulationRunOptions)
+  # Simulate individual simulations concurrently
+  individualSimulationsIdx <- is.na(populations)
+  simulationResults <- runSimulations(simulations = simulations[individualSimulationsIdx], simulationRunOptions = scenarioConfiguration$simulationRunOptions)
+
+  # Run population simulations sequentially and add the to the list of simulation results
+  for (scenarioName in scenarioNames[!individualSimulationsIdx]){
+    populationResults <- runSimulations(simulations = simulations[[scenarioName]],
+                                        population = populations[[scenarioName]],
+                                        simulationRunOptions = scenarioConfiguration$simulationRunOptions)
+    simulationResults <- c(simulationResults, populationResults)
+  }
 
   returnList <- vector("list", length(simulationResults))
   names(returnList) <- scenarioNames
-  for (idx in seq_along(scenarioNames)) {
-    simulationName <- scenarioNames[[idx]]
+  for (simulationName in scenarioNames) {
     simulation <- simulations[[simulationName]]
     results <- simulationResults[[simulation$id]]
 

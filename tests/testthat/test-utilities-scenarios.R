@@ -68,6 +68,29 @@ test_that("It runs two scenarios", {
   expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths, defaultOutputPath)
 })
 
+test_that("It runs population and individual scenarios", {
+  # Define which scenarios to run
+  scenarioNames <- c(
+    "TestScenario",
+    "PopulationScenario"
+  )
+  # Create `ScenarioConfiguration` objects from excel files
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+  simulatedScenarios <- runScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    customParams = NULL, saveSimulationsToPKML = FALSE
+  )
+
+  expect_equal(names(simulatedScenarios), scenarioNames)
+  #Check that the first scenario is individual simulation
+  expect_equal(length(simulatedScenarios[[scenarioNames[[1]]]]$results$allIndividualIds), 1)
+  #Check that the second scenario is population simulation
+  expect_equal(length(simulatedScenarios[[scenarioNames[[2]]]]$results$allIndividualIds), 2)
+})
+
 # test_that("It saves simulations if saveSimulationsToPKML = TRUE", {
 #   #ToDo - have to write to temp dir!
 # })

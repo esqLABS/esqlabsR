@@ -177,3 +177,9 @@ messages$missingPlotGrids <- function(missingPlotGrids) {
          paste(missingPlotGrids, collapse = ", "),
          ". Plot grids are either not defined or empty and can not be exported to file.")
 }
+
+messages$noPopulationIdForPopulationScenario <- function(scenarioName){
+  paste0("Simulation type of the scenario with scenario name '", scenarioName, "' is set to
+         'Population', but the field `populationId` is not set! Every population
+         simulation scenario must have a population id defined")
+}
