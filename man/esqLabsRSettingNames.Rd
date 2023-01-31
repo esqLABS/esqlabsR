@@ -5,7 +5,7 @@
 \alias{esqlabsRSettingNames}
 \title{Names of the settings stored in esqlabsEnv Can be used with \code{getEsqlabsRSetting()}}
 \format{
-An object of class \code{list} of length 4.
+An object of class \code{list} of length 2.
 }
 \usage{
 esqlabsRSettingNames

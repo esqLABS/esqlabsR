@@ -8,12 +8,6 @@ esqlabsEnv$packageName <- "esqlabsR"
 # Version of the package
 esqlabsEnv$packageVersion <- getNamespaceVersion("esqlabsR")
 
-# Default width of a plot of a single `PlotMapping`
-esqlabsEnv$widthPerPlotMapping <- 8
-
-# Default height of a plot of a single `PlotMapping`
-esqlabsEnv$heightPerPlotMapping <- 8
-
 #' Names of the settings stored in esqlabsEnv Can be used with `getEsqlabsRSetting()`
 #' @export
 esqlabsRSettingNames <- enum(names(esqlabsEnv))
