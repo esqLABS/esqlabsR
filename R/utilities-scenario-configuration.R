@@ -138,11 +138,11 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #'
 #' @param scenarioConfigurations Scenario configurations to validate.
 #' @keywords internal
-.validateScenarioConfigurations <- function(scenarioConfigurations){
+.validateScenarioConfigurations <- function(scenarioConfigurations) {
   validateIsOfType(scenarioConfigurations, "ScenarioConfiguration")
 
   # Check if population is defined for each population scenario
-  for (scenarioConfiguration in scenarioConfigurations){
+  for (scenarioConfiguration in scenarioConfigurations) {
     if (scenarioConfiguration$simulationType == "Population" && is.null(scenarioConfiguration$populationId)) {
       stop(messages$noPopulationIdForPopulationScenario(scenarioConfiguration$scenarioName))
     }

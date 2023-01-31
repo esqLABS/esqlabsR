@@ -468,6 +468,41 @@ test_that("It returns NULL if no plotGrids are defined in the excel sheet", {
   )
 })
 
+test_that("It creates plots for all plot grids when plotGridNames is NULL", {
+  print(getwd())
+  plots <- createPlotsFromExcel(
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData,
+    projectConfiguration = projectConfiguration,
+    stopIfNotFound = TRUE
+  )
+  expect_equal(names(plots), c("Aciclovir", "Aciclovr2"))
+})
+
+test_that("It creates plots only for specified plotGrids", {
+  plots <- createPlotsFromExcel(
+    plotGridNames = "Aciclovir",
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData,
+    projectConfiguration = projectConfiguration,
+    stopIfNotFound = TRUE
+  )
+  expect_equal(names(plots), c("Aciclovir"))
+})
+
+test_that("It trows an error when specified plot grid names are not defined in the sheet", {
+  expect_error(
+    createPlotsFromExcel(
+      plotGridNames = c("foo", "Aciclovir", "bar"),
+      simulatedScenarios = simulatedScenarios,
+      observedData = observedData,
+      projectConfiguration = projectConfiguration,
+      stopIfNotFound = TRUE
+    ),
+    messages$invalidPlotGridNames(c("foo", "bar"))
+  )
+})
+
 test_that("It trows an error if mandatory field plotIDs is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()

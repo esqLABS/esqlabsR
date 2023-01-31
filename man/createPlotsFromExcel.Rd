@@ -5,6 +5,7 @@
 \title{Generate plots as defined in excel file \code{projectConfiguration$plotsFile}}
 \usage{
 createPlotsFromExcel(
+  plotGridNames = NULL,
   simulatedScenarios,
   observedData,
   projectConfiguration,
@@ -12,6 +13,11 @@ createPlotsFromExcel(
 )
 }
 \arguments{
+\item{plotGridNames}{Names of the plot grid specified in the sheet \code{plotGrids}
+for which the figures will be created. If \code{NULL} (default), all plot grids
+specified in the excel sheet will be created. If a plot grid with a given name
+does not exist, an error is thrown.}
+
 \item{simulatedScenarios}{A list of simulated scenarios as returned by \code{runScenarios()}}
 
 \item{observedData}{A list of \code{DataSet} objects}

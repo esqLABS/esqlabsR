@@ -117,7 +117,7 @@ a parameter sheet from the list"
     #' configuration. If the function requires additional arguments, they must be
     #' defined in `customFunctionArgs` as a list. The object `simulation` can always
     #' be accessed.
-    #' @example \dontrun{
+    #' @examples \dontrun{
     #' #This example gets the current value of the "Age" parameter and multiplies
     #' #it by a factor coming from argument.
     #' #Assume that scenarioConfiguration has been created from excel.

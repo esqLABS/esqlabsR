@@ -178,8 +178,10 @@ test_that("It throws an error when trying to set wrong arguments for the custom 
 })
 
 test_that("It throws an error when no population is specified for a population scenario", {
-  scenarioNames <- c("TestScenario",
-                     "PopulationScenario")
+  scenarioNames <- c(
+    "TestScenario",
+    "PopulationScenario"
+  )
 
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
     scenarioNames = scenarioNames,

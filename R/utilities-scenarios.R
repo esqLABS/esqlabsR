@@ -43,10 +43,12 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
     population <- NA
 
     # Create a population for population scenarios
-    if (scenarioConfiguration$simulationType == "Population"){
-      popCharacteristics <- readPopulationCharacteristicsFromXLS(XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$populationParamsFile),
-                                                                 populationName = scenarioConfiguration$populationId,
-                                                                 sheet = "Demographics")
+    if (scenarioConfiguration$simulationType == "Population") {
+      popCharacteristics <- readPopulationCharacteristicsFromXLS(
+        XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$populationParamsFile),
+        populationName = scenarioConfiguration$populationId,
+        sheet = "Demographics"
+      )
       population <- createPopulation(populationCharacteristics = popCharacteristics)
     }
     populations[[i]] <- population
@@ -92,10 +94,12 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
   simulationResults <- runSimulations(simulations = simulations[individualSimulationsIdx], simulationRunOptions = scenarioConfiguration$simulationRunOptions)
 
   # Run population simulations sequentially and add the to the list of simulation results
-  for (scenarioName in scenarioNames[!individualSimulationsIdx]){
-    populationResults <- runSimulations(simulations = simulations[[scenarioName]],
-                                        population = populations[[scenarioName]],
-                                        simulationRunOptions = scenarioConfiguration$simulationRunOptions)
+  for (scenarioName in scenarioNames[!individualSimulationsIdx]) {
+    populationResults <- runSimulations(
+      simulations = simulations[[scenarioName]],
+      population = populations[[scenarioName]],
+      simulationRunOptions = scenarioConfiguration$simulationRunOptions
+    )
     simulationResults <- c(simulationResults, populationResults)
   }
 
