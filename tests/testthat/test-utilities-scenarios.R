@@ -85,9 +85,9 @@ test_that("It runs population and individual scenarios", {
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
-  #Check that the first scenario is individual simulation
+  # Check that the first scenario is individual simulation
   expect_equal(length(simulatedScenarios[[scenarioNames[[1]]]]$results$allIndividualIds), 1)
-  #Check that the second scenario is population simulation
+  # Check that the second scenario is population simulation
   expect_equal(length(simulatedScenarios[[scenarioNames[[2]]]]$results$allIndividualIds), 2)
 })
 

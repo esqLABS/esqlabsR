@@ -7,6 +7,19 @@
 \description{
 An object storing configuration of a specific scenario
 }
+\examples{
+
+## ------------------------------------------------
+## Method `ScenarioConfiguration$new`
+## ------------------------------------------------
+
+\dontrun{
+#This example gets the current value of the "Age" parameter and multiplies
+#it by a factor coming from argument.
+#Assume that scenarioConfiguration has been created from excel.
+scenarioConfiguration$customFunction <- function(
+}
+}
 \section{Super class}{
 \code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{ScenarioConfiguration}
 }
@@ -23,6 +36,11 @@ in the excel file "ApplicationParameters.xlsx"}
 
 \item{\code{individualId}}{Id of the individual as specified in "IndividualParameters.xlsx".
 If \code{NULL} (default), the individual as defined in the simulation file will be simulated.}
+
+\item{\code{populationId}}{Id of the population as specified in "PopulationParameters.xlsx",
+sheet "Demographics". If \code{ScenarioConfguration$simulationType} is \code{population},
+a population will be created a the scenario will be simulated as a population
+simulation.}
 
 \item{\code{outputPaths}}{a list of output paths for which the results will be
 calculated. If \code{NULL} (default), outputs as defined in the simulation
@@ -100,6 +118,19 @@ Initialize a new instance of the class
 \subsection{Returns}{
 A new \code{ScenarioConfiguration} object.
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+#This example gets the current value of the "Age" parameter and multiplies
+#it by a factor coming from argument.
+#Assume that scenarioConfiguration has been created from excel.
+scenarioConfiguration$customFunction <- function(
+}
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ScenarioConfiguration-addParamSheets"></a>}}

@@ -248,7 +248,7 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   # read sheet "plotGrids" with info for plotGridConfigurations
   dfPlotGrids <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "plotGrids")
   # Filter for only specified plot grids
-  if (!is.null(plotGridNames)){
+  if (!is.null(plotGridNames)) {
     # Throw an error if a plot grid name that is passed is not defined in the excel file
     missingPlotGrids <- setdiff(plotGridNames, unique(dfPlotGrids$name))
     if (length(missingPlotGrids) != 0) {
