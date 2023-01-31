@@ -2,6 +2,8 @@
 
 ### BREAKING CHANGES
 
+- `Scenarios` excel file gets additional columns `SteadyStateTime`, `SteadyStateTimeUnit`, 
+`PopulationId`.
 - `readScenarioConfigurationFromExcel()` has a new signature and requires a list of 
 `scenarioNames` and a `ProjectConfiguration`. The output is a named list of `ScenarioConfiguration` 
 objects.
@@ -12,6 +14,16 @@ from the respective field of `ScenarioConfgiruation`
 - Enum `GraphicsDevices` has been removed.
 
 ### MAJOR CHANGES
+
+- `ScenarioConfiguration` gets a new field `populationId`, specifying the id of 
+population as defined in the `PopulationParameters.xlsx` file, sheet `Demographics`.
+If the field is `NULL`, the scenario is simulated as an individual simulation, 
+otherwise a population simulation is performed.
+
+- `runScenraios()` supports scenario configurations for population simulations
+
+- Target folder for saving `*.pkml` simulations when `runScenarios(scenarioConfigurations, saveSimulationsToPKML = TRUE)`
+changed from `Models/Simulations/<DateSuffix>` to `Results/SimulationResults/<DateSuffix>`.
 
 - `sensitivityCalculation()` - fixed bug in wrong calculation of sensitivity values.
 Please be aware that the results produced by earlier versions are wrong.

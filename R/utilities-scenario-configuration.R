@@ -28,9 +28,9 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 
   # Current scenario definition structure:
-  # "Scenario_name", "IndividualId", "ModelParameterSheets", "ApplicationProtocol",
+  # "Scenario_name", "IndividualId", "PopulationId", "ModelParameterSheets", "ApplicationProtocol",
   # "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile"
-  colTypes <- c("text", "text", "text", "text", "numeric", "text", "logical", "numeric", "text", "text")
+  colTypes <- c("text", "text", "text", "text", "text", "numeric", "text", "logical", "numeric", "text", "text")
   wholeData <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
@@ -72,6 +72,12 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
 
     # Individual id
     scenarioConfiguration$individualId <- data$IndividualId
+
+    # Population id
+    if (!is.na(data$PopulationId)) {
+      scenarioConfiguration$populationId <- data$PopulationId
+      scenarioConfiguration$simulationType <- "Population"
+    }
 
     # Application protocol
     scenarioConfiguration$applicationProtocol <- data$ApplicationProtocol
@@ -125,5 +131,20 @@ setApplications <- function(simulation, scenarioConfiguration) {
       parameterPaths = params$paths, values = params$values,
       simulation = simulation, units = params$units
     )
+  }
+}
+
+#' Validate `ScenarioConfiguration` objects
+#'
+#' @param scenarioConfigurations Scenario configurations to validate.
+#' @keywords internal
+.validateScenarioConfigurations <- function(scenarioConfigurations){
+  validateIsOfType(scenarioConfigurations, "ScenarioConfiguration")
+
+  # Check if population is defined for each population scenario
+  for (scenarioConfiguration in scenarioConfigurations){
+    if (scenarioConfiguration$simulationType == "Population" && is.null(scenarioConfiguration$populationId)) {
+      stop(messages$noPopulationIdForPopulationScenario(scenarioConfiguration$scenarioName))
+    }
   }
 }
