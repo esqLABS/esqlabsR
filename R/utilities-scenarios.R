@@ -7,13 +7,12 @@
 #' units the values are in. The values to be applied to the model.
 #' @param saveSimulationsToPKML Logical, defaults to `FALSE`. If `TRUE`,
 #' initialized simulations are saved to PKML before simulating. The output folder
-#' is the model folder defined in `ProjectConfiguration` with the subfolder with the
-#' current timestamp. The name of the file is the name of the scenario.
+#' is the `Results/SimulationResults/<DateSuffix>`. The name of the file is the name of the scenario.
 #'
 #' @return A named list, where the names are scenario names, and the values are
-#' lists with the initialized `Simulation` object with applied parameters,
-#' `SimulatioResults` objects produced by running the simulation, and output values
-#' of the `SimulationResults`.
+#' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
+#' `results` being `SimulatioResults` object produced by running the simulation,
+#' and `outputValues` the output values of the `SimulationResults`.
 #' @export
 runScenarios <- function(scenarioConfigurations, customParams = NULL,
                          saveSimulationsToPKML = FALSE) {
@@ -252,4 +251,112 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
   }
 
   return(simulation)
+}
+
+#' Save results of scenario simulations to csv.
+#'
+#' @param simulatedScenarios Named list with `simulation`, `results` and `outputValues`
+#' as produced by `runScenarios()`
+#' @param projectConfiguration An instance of `ProjectConfiguration`
+#' @param outputFolder Optional - path to the folder where the results will be
+#' stored. If `NULL` (default), a sub-folder in
+#' `ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>`.
+#'
+#' @details For each scenario, a separate csv file will be created. Results can be read with
+#' the `loadScenarioResults()` function.
+#'
+#' @export
+#'
+#' @examples \dontrun{
+#' projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
+#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
+#'   projectConfiguration = projectConfiguration
+#' )
+#' simulatedScenarios <- runScenarios(
+#'   scenarioConfigurations = scenarioConfigurations,
+#'   saveSimulationsToPKML = TRUE
+#' )
+#' saveResults(simulatedScenarios, projectConfiguration)
+#' }
+saveScenarioResults <- function(simulatedScenarios, projectConfiguration, outputFolder = NULL) {
+  outputFolder <- file.path(
+    projectConfiguration$outputFolder,
+    "SimulationResults",
+    format(Sys.time(), "%F %H-%M")
+  )
+
+  for (i in seq_along(simulatedScenarios)) {
+    results <- simulatedScenarios[[i]]$results
+    scenarioName <- names(simulatedScenarios)[[i]]
+
+    outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
+    tryCatch(
+      {
+        # Create a new folder if it does not exist
+        if (!dir.exists(paths = outputFolder)) {
+          dir.create(path = outputFolder, recursive = TRUE)
+        }
+        ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
+      },
+      error = function(cond) {
+        warning(paste0("Cannot save to path '", outputFolder, "'"))
+        message("Original error message:")
+        message(cond)
+      },
+      warning = function(cond) {
+        warning(cond)
+      }
+    )
+  }
+}
+
+#' Load simulated scenarios from csv and pkml.
+#'
+#' @param scenarioNames Names of simulated scenarios
+#' @param resultsFolder Path to the folder where simulation results as scv and
+#' the corresponding simulations as pkml are located.
+#'
+#' @details This function requires simulation results AND the corresponding
+#' simulation files being located in the same folder (`resultsFolder`) and have
+#' the names of the scenarios.
+#'
+#' @return A named list, where the names are scenario names, and the values are
+#' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
+#' `results` being `SimulatioResults` object produced by running the simulation,
+#' and `outputValues` the output values of the `SimulationResults`.
+#'
+#' @export
+#'
+#' @examples \dontrun{
+#' # First simulate scenarios and save the results
+#' projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
+#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
+#'   projectConfiguration = projectConfiguration
+#' )
+#' simulatedScenarios <- runScenarios(
+#'   scenarioConfigurations = scenarioConfigurations,
+#'   saveSimulationsToPKML = TRUE
+#' )
+#' saveResults(simulatedScenarios, projectConfiguration)
+#'
+#' # Now load the results
+#' scnarioNames <- names(simulatedScenarios)
+#' simulatedScenarios <- loadScenarioResults(
+#'   scnarioNames = scnarioNames,
+#'   resultsFolder = pathToTheFolder
+#' )
+#' }
+loadScenarioResults <- function(scenarioNames, resultsFolder) {
+  simulatedScenarios <- list()
+  for (i in seq_along(scenarioNames)) {
+    simulation <- loadSimulation(paste0(resultsFolder, "/", scenarioNames[[i]], ".pkml"))
+
+    results <- importResultsFromCSV(simulation = simulation, filePaths = paste0(resultsFolder, "/", scenarioNames[[i]], ".csv"))
+    outputValues <- getOutputValues(results,
+      quantitiesOrPaths = results$allQuantityPaths
+    )
+    simulatedScenarios[[scenarioNames[[i]]]] <- list(simulation = simulation, results = results, outputValues = outputValues)
+  }
+
+  return(simulatedScenarios)
 }

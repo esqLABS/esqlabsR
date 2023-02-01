@@ -44,6 +44,12 @@ outputs as defined in the simulation are used.
 object as the last step of scenario initialization. For this, the `ScenarioConfiguration` 
 class gets new fields `customFunction` and `customFunctionArgs`.
 
+- New function `saveScenarioResults()` to save results produced by the `runScenarios()` 
+function to csv files.
+
+- New function `loadScenarioResults()` to load results from csv files into a structure
+as produced by the `runScenarios()` function.
+
 ### MINOR CHANGES
 
 - Function `stringToNum()` gets additional arguments `lloqMode` and `uloqMode`
