@@ -330,6 +330,11 @@ simulatedScenarios <- runScenarios(
 names(simulatedScenarios)
 ```
 
+It is a good idea to store simulation results as `*.scv` alongside with simulations 
+as `.*pkml` and load them for further processing to avoid re-simulating every time 
+e.g. a change to a figure showing the simulation results is required. Check out 
+the documentation of the functions [`saveScenarioResults()`](https://esqlabs.github.io/esqlabsR/reference/saveScenarioResults) and [`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/reference/loadScenarioResults).
+
 The function returns results of the simulations. For each scenario, a
 [`Simulation`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html)
 object, a
