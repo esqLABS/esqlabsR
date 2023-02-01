@@ -61,6 +61,7 @@ filtration rate. To define a scenario, create a new row in the
 -   **Scenario_name**: unique name of the scenario. The name must be a
     [valid R variables
     name](https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f).
+
 -   **IndividualId**: Name (ID) of an individual. This name refers to
     the name of the individual as used in excel files
     `IndividualBiometrics.xlsx` for definition of the biometric
@@ -68,33 +69,35 @@ filtration rate. To define a scenario, create a new row in the
     `IndividualParameters.xlsx` for definition of individual-specific
     model parameters. **IndividualId** may be empty. In this case,
     standard individual as defined in the `pkml` simulation without any
-    individual-specific model parameters will be simulated. 
-To create an individual with specific biometric characteristics, define
-an entry with the same individual id in the file
-`IndividualBiometrics.xlsx`. The same individual can be used in multiple
-scenarios. Note that though it is technically possible to apply a
-species different from the one in the original simulation, the
-correctness of the results is not guaranteed as there exist some
-structural differences between the species.
+    individual-specific model parameters will be simulated. To create an
+    individual with specific biometric characteristics, define an entry
+    with the same individual id in the file `IndividualBiometrics.xlsx`.
+    The same individual can be used in multiple scenarios. Note that
+    though it is technically possible to apply a species different from
+    the one in the original simulation, the correctness of the results
+    is not guaranteed as there exist some structural differences between
+    the species.
 
--   **PopulationId**: Name (ID) of a population. This name refers to
-    the name of the population as used in excel file
+-   **PopulationId**: Name (ID) of a population. This name refers to the
+    name of the population as used in excel file
     `PopulationParameters.xlsx` for definition of the demographic
-    properties of the simulated population. If **PopulationId** is empty, the 
-    scenario is simulated as an individual simulation. Otherwise, a population as 
-    defined in the sheet `Demographics` of the `PopulationParameters.xlsx` file 
-    will be created and the scenario simulated as a population simulation.
-    
+    properties of the simulated population. If **PopulationId** is
+    empty, the scenario is simulated as an individual simulation.
+    Otherwise, a population as defined in the sheet `Demographics` of
+    the `PopulationParameters.xlsx` file will be created and the
+    scenario simulated as a population simulation.
+
 To create a population with specific biographic characteristics, define
 an entry with the same population id in the file
 `PopulationParameters.xlsx`. The same population can be used in multiple
-scenarios. **Note**: You can define both an **IndividualId** and a **PopulationId**. 
-In this case, individual-specific parameters from the `IndividualParameters.xlsx` 
-will be applied to the simulation prior to applying the population parameters.
-Keep in mind, that any physiological parameters defined for an individual that 
-are also part of the parameter set of a population will be overwritten by the population!
-If e.g. you specify the GFR of the individual in the `IndividualParameters.xlsx`,
-it will be overwritten by the GFR values sampled in the simulation.
+scenarios. **Note**: You can define both an **IndividualId** and a
+**PopulationId**. In this case, individual-specific parameters from the
+`IndividualParameters.xlsx` will be applied to the simulation prior to
+applying the population parameters. Keep in mind, that any physiological
+parameters defined for an individual that are also part of the parameter
+set of a population will be overwritten by the population! If e.g. you
+specify the GFR of the individual in the `IndividualParameters.xlsx`, it
+will be overwritten by the GFR values sampled in the simulation.
 
 -   **ModelParameterSheets**: A list of sheet names from the
     `ModelParameter.xlsx` file, separated by a `,`. Each sheet must have
@@ -109,18 +112,19 @@ it will be overwritten by the GFR values sampled in the simulation.
     be applied to most scenarios, and separate set of parameters for
     e.g. different *disease states* (parameter sheets `Healthy` and
     `CKD`), or separate parametrization of different *compounds* (sheet
-    `Aciclovir`).  
-We can further refine the parametrization of the scenario by specifying
-the individual parameters in the `IndividualParameters.xlsx` file.
-Create a sheet with the name as the *IndividualId* specified for the
-respective scenario and populate it the same structure as the
-`ModelParameters.xlsx` file. This way we can define e.g.
-individual-specific clearance values or, as in our case, the glomerular
-filtration rate. Individual specific parameters are applied after the
-parameters defined in the *ModelParameterSheets*. We can use an
-individual in multiple scenarios. If an individual is specified in the
-scenario definition, but no sheet with this name exists in the
-`IndividualParameters.xlsx` file, this step is simply ignored.
+    `Aciclovir`).\
+    We can further refine the parametrization of the scenario by
+    specifying the individual parameters in the
+    `IndividualParameters.xlsx` file. Create a sheet with the name as
+    the *IndividualId* specified for the respective scenario and
+    populate it the same structure as the `ModelParameters.xlsx` file.
+    This way we can define e.g. individual-specific clearance values or,
+    as in our case, the glomerular filtration rate. Individual specific
+    parameters are applied after the parameters defined in the
+    *ModelParameterSheets*. We can use an individual in multiple
+    scenarios. If an individual is specified in the scenario definition,
+    but no sheet with this name exists in the
+    `IndividualParameters.xlsx` file, this step is simply ignored.
 
 -   **ApplicationProtocol**: name of the application protocol that will
     be applied. Applications are defined as a set of parameters that
@@ -128,89 +132,104 @@ scenario definition, but no sheet with this name exists in the
     `ApplicationParameters.xlsx`. For each application, create a sheet
     with the name as specified in the **ApplicationProtocol** entry and
     populate it with the same structure as the `ModelParameter.xlsx`
-    file...
-  Configuring application protocols this way requires that the loaded
-simulation includes all possible applications that can be turned on and
-off by setting parameters, e.g. the `Dose` or `Start time` parameters.
-As it might be cumbersome to manually create entries for all
-administration parameters, we can use the
-`getAllApplicationParameters()` function to get a list of all (constant)
-parameters located in the `Applications` container. In the following
-example, we will extract application parameters for the molecule
-`Aciclovir` from the example simulation:
+    file... Configuring application protocols this way requires that the
+    loaded simulation includes all possible applications that can be
+    turned on and off by setting parameters, e.g. the `Dose` or
+    `Start time` parameters. As it might be cumbersome to manually
+    create entries for all administration parameters, we can use the
+    `getAllApplicationParameters()` function to get a list of all
+    (constant) parameters located in the `Applications` container. In
+    the following example, we will extract application parameters for
+    the molecule `Aciclovir` from the example simulation:
 
 ```{r}
 sim <- loadSimulation(system.file("extdata", "Aciclovir.pkml", package = "ospsuite"))
 applicationParams <- getAllApplicationParameters(sim)
 print(applicationParams)
 ```
+
 and export the parameters to an excel file using the
 `exportParametersToXLS()` function:
+
 ```{r, eval=FALSE}
 exportParametersToXLS(parameters = applicationParams, paramsXLSpath = "../Applications.xlsx")
 ```
+
 The created excel file will have the same structure as all
 Parameter-files and can be directly loaded in MoBi or R using the
 `readParametersFromXLS()` function.
 
-- **SimulationTime**: Time of the simulation. The [output interval](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setOutputInterval.html) 
-of the simulation will be set to the range [0 - `SimulationTime`] with the resolution 
-of 1 point per minute.
+-   **SimulationTime**: Time of the simulation. The [output
+    interval](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setOutputInterval.html)
+    of the simulation will be set to the range [0 - `SimulationTime`]
+    with the resolution of 1 point per minute.
 
-- **SimulationTimeUnit**: Unit for `SimulationTime`. For supported units, see 
-`ospsuite::ospUnits`.
+-   **SimulationTimeUnit**: Unit for `SimulationTime`. For supported
+    units, see `ospsuite::ospUnits`.
 
-- **SteadyState**: If `TRUE`, the model will be simulated for a "sufficiently long"
-time (1000 minutes by default).
+-   **SteadyState**: If `TRUE`, the model will be simulated for a
+    "sufficiently long" time (1000 minutes by default).
 
-- **SteadyStateTime**: Time for the steady-state.
+-   **SteadyStateTime**: Time for the steady-state.
 
-- **SteadyStateTimeUnit**: Unit for `SteadyStateTime`. For supported units, see 
-`ospsuite::ospUnits`.
+-   **SteadyStateTimeUnit**: Unit for `SteadyStateTime`. For supported
+    units, see `ospsuite::ospUnits`.
 
-- **ModelFile**: Name of the `pkml` file with the simulation. Must be located in 
-the folder defined in `ProjectConfiguration$modelFolder`.
+-   **ModelFile**: Name of the `pkml` file with the simulation. Must be
+    located in the folder defined in `ProjectConfiguration$modelFolder`.
+
+-   **OutputPathsIds**: Paths of model outputs (i.e., paths to
+    the molecules/ parameters for which outputs will be simulated) can be defined in the
+    sheet `OutputPaths`. Create an entry for each output path by
+    entering the full path into the column `OutputPath` and defining a
+    unique identifier to this path in the column `OutputPathId`. The
+    content of the sheet could look like this:
+
+    | OutputPathId       | OutputPath                                                                   |
+    |-----------------|-------------------------------------------------------|
+    | Aciclovir_PVB      | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
+    | Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container          |
+
+In the `Scenarios` sheet, enter the IDs of all paths the outputs should
+be generated for, separated by a comma, e.g. `Aciclovir_PVB, Aciclovir_fat_cell`.
 
 ### Code-based specifications
 
-In addition to scenario set ups through the excel sheets, further specifications 
-are made in the `R` files located in the `InputCode` project folder. Files in this 
-folder must be sourced prior to using.
+In addition to scenario set ups through the excel sheets, further
+specifications are made in the `R` files located in the `InputCode`
+project folder. Files in this folder must be sourced prior to using.
 
-- **OutputPaths**: You can specify the output paths (i.e., paths to the molecules/
-parameters for which outputs will be simulated) for each scenario separately 
-(see Section [Running scenarios](#running-scenarios)). For more convenient access 
-to the paths, you can specify all paths in the `OutputPaths` enum (an `enum` is 
-just a named list) and easily access them by their alias names (e.g. `Aciclovir_PVB` 
-for `"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"`).
-
-- **TestParameters**:  During model development/fitting phase, you might want to 
-test out parameter values before storing them in the `Parameters` excel files. 
-You can define the paths of the parameters, their values and the units in the 
-`TestParameters` file. Remember to `source` the file each time you change any values. 
-You can turn setting test parameters on and off in the `ScenarioConfiguration` 
-(see Section [Running scenarios](#running-scenarios)).
+-   **TestParameters**: During model development/fitting phase, you
+    might want to test out parameter values before storing them in the
+    `Parameters` excel files. You can define the paths of the
+    parameters, their values and the units in the `TestParameters` file.
+    Remember to `source` the file each time you change any values. You
+    can turn setting test parameters on and off in the
+    `ScenarioConfiguration` (see Section [Running
+    scenarios](#running-scenarios)).
 
 ### Custom functions
 
-Initialization of a scenario creates a `Simulation` object that is fully parametrized 
-according to the specifications of the scenario. However, sometimes further modifications 
-to the simulations are required that cannot be represented by fixed parameter 
-values stored in excel files. Imagine a scenario where the value of a certain parameter 
-depends on other parameters not known at the time point of excel file creation. 
-Another use case is a dose escalation study. Instead of defining every dose in a 
-separate **ApplicationProtocol" sheet, the set of doses to simulate could be defined 
-in an `R` list and passed as an argument to a function that sets the dose parameter 
-for a scenario.
+Initialization of a scenario creates a `Simulation` object that is fully
+parametrized according to the specifications of the scenario. However,
+sometimes further modifications to the simulations are required that
+cannot be represented by fixed parameter values stored in excel files.
+Imagine a scenario where the value of a certain parameter depends on
+other parameters not known at the time point of excel file creation.
+Another use case is a dose escalation study. Instead of defining every
+dose in a separate \*\*ApplicationProtocol" sheet, the set of doses to
+simulate could be defined in an `R` list and passed as an argument to a
+function that sets the dose parameter for a scenario.
 
-This can be achieved through defining a function that will be applied to the 
-`Simulation` object created from a `ScenarioConfiguration` at the very last step 
-of initialization. The function can reference the `simulation` variable and accept 
-additional arguments. The argument values are then defined in the field `customFunctionArgs`.
+This can be achieved through defining a function that will be applied to
+the `Simulation` object created from a `ScenarioConfiguration` at the
+very last step of initialization. The function can reference the
+`simulation` variable and accept additional arguments. The argument
+values are then defined in the field `customFunctionArgs`.
 
-In the following example, we will define a custom function that multiplies the 
-`Dose` parameter by a certain factor. The path to the dose parameter and the 
-multiplication factor are defined as arguments.
+In the following example, we will define a custom function that
+multiplies the `Dose` parameter by a certain factor. The path to the
+dose parameter and the multiplication factor are defined as arguments.
 
 ```{r}
 # Create `ScenarioConfiguration` objects from excel files
@@ -254,15 +273,17 @@ sim <- initializeScenario(scenarioConfigurations[[1]])
 print(paste0("Dose parameter value with custom function: ", getQuantityValuesByPath(doseParamPath, sim)))
 ```
 
-### Running scenarios
+### Running scenarios {#running-scenarios}
 
-Scenarios are executed by creating `ScenarioConfiguration` objects
-and calling the `runScenarios()`function. Though it is possible to create an 
-empty `ScenarioConfiguration` and populate it by hand, we usually want to create 
-scenario configurations from the excel files by calling the `readScenarioConfigurationFromExcel()` function. A `ScenarioConfiguration` is based 
-on the `ProjectConfiguration`, which has to be provided as an argument to the 
-function. To read the configuration for the *'TestScenario'* scenario defined in 
-the `Scenarios.xlsx` file, we call
+Scenarios are executed by creating `ScenarioConfiguration` objects and
+calling the `runScenarios()`function. Though it is possible to create an
+empty `ScenarioConfiguration` and populate it by hand, we usually want
+to create scenario configurations from the excel files by calling the
+`readScenarioConfigurationFromExcel()` function. A
+`ScenarioConfiguration` is based on the `ProjectConfiguration`, which
+has to be provided as an argument to the function. To read the
+configuration for the *'TestScenario'* scenario defined in the
+`Scenarios.xlsx` file, we call
 
 ```{r createScenarioConfigurations}
 # Create `ScenarioConfiguration` objects from excel files
@@ -274,28 +295,15 @@ scenarioConfigurations <- readScenarioConfigurationFromExcel(
 print(scenarioConfigurations$TestScenario)
 ```
 
-Alternatively, we can create configurations for all scenarios defined in the 
-`Scenarios.xlsx` by calling `readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)` without specifying scenarios names.
+Alternatively, we can create configurations for all scenarios defined in
+the `Scenarios.xlsx` by calling
+`readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)`
+without specifying scenarios names.
 
-Before running the scenarios, we can modify `ScenarioConfigurations` by setting 
-parameters that are currently not accessible through excel files. One the most 
-common property is `$outputPaths` that define for which paths the results will 
-be stored.
-
-```{r}
-# Define the OutputPaths enum, if not done allready
-OutputPaths <- enum(list(
-  Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-))
-
-# Set output paths for each scenario
-for (scenarioConfiguration in scenarioConfigurations) {
-  scenarioConfiguration$outputPaths <- enumValues(OutputPaths)
-}
-```
-
-In model development/fitting phase, we also might want to apply some test parameter 
-values:
+Before running the scenarios, we can modify `ScenarioConfigurations` by
+setting parameters that are currently not accessible through excel
+files. In model development/fitting phase, we might want to apply some
+test parameter values:
 
 ```{r eval = FALSE}
 # Set output paths for each scenario
@@ -306,12 +314,12 @@ for (scenarioConfiguration in scenarioConfigurations) {
 
 Make sure that you have sourced the `TestParameters` file in this case.
 
-Once all scenario configurations are set up, we can simulate them by calling the 
-`runScenarios()` function. We can specify to save the initialized simulation 
-(i.e. the simulation with individual physiology and parametrization applied as 
-defined by the scenario configuration). In such case, a folder with the current 
-date and time will be created in the folder where the simulation `pkml` files 
-are located.
+Once all scenario configurations are set up, we can simulate them by
+calling the `runScenarios()` function. We can specify to save the
+initialized simulation (i.e. the simulation with individual physiology
+and parametrization applied as defined by the scenario configuration).
+In such case, a folder with the current date and time will be created in
+the folder where the simulation `pkml` files are located.
 
 ```{r runScenarios}
 simulatedScenarios <- runScenarios(
@@ -322,7 +330,12 @@ simulatedScenarios <- runScenarios(
 names(simulatedScenarios)
 ```
 
-The function returns results of the simulations. For each scenario, a [`Simulation`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html) object, a [`SimulationResults`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html) object, and vectors of output values (retrieved by the [`getOutputValues()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getOutputValues.html) 
+The function returns results of the simulations. For each scenario, a
+[`Simulation`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html)
+object, a
+[`SimulationResults`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html)
+object, and vectors of output values (retrieved by the
+[`getOutputValues()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getOutputValues.html)
 function) are returned.
 
 ### Troubleshooting

@@ -29,14 +29,23 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
 
   # Current scenario definition structure:
   # "Scenario_name", "IndividualId", "PopulationId", "ModelParameterSheets", "ApplicationProtocol",
-  # "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile"
-  colTypes <- c("text", "text", "text", "text", "text", "numeric", "text", "logical", "numeric", "text", "text")
+  # "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
+  # "OutputPathsIds"
+  colTypes <- c("text", "text", "text", "text", "text", "numeric", "text", "logical", "numeric", "text", "text", "text")
   wholeData <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
       projectConfiguration$scenarioDefinitionFile
     ),
-    col_types = colTypes
+    col_types = colTypes,
+    sheet = "Scenarios"
+  )
+  outputPathsDf <- readExcel(
+    path = file.path(
+      projectConfiguration$paramsFolder,
+      projectConfiguration$scenarioDefinitionFile
+    ),
+    sheet = "OutputPaths"
   )
 
   scenarioNames <- scenarioNames %||% wholeData$Scenario_name
@@ -99,6 +108,22 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
 
     # Model file
     scenarioConfiguration$modelFile <- data$ModelFile
+
+    # OutputPaths
+    if (!is.na(data$OutputPathsIds)) {
+      pathIds <- strsplit(x = data$OutputPathsIds, split = ",", fixed = TRUE)[[1]]
+      # Remove leading/trailing whitespaces
+      pathIds <- trimws(pathIds)
+      # Check if all paths IDs are defined in the OutputPaths sheet
+      missingIds <- setdiff(pathIds, outputPathsDf$OutputPathId)
+      if (length(missingIds) != 0) {
+        stop(messages$invalidOutputPathIdsfunction(outputPathIds = missingIds, scenarioName = scenarioName))
+      }
+      # Get the paths corresponding to the ids
+      outputPaths <- dplyr::filter(outputPathsDf, OutputPathId %in% pathIds)$OutputPath
+
+      scenarioConfiguration$outputPaths <- outputPaths
+    }
 
     # Add the new ScenarioConfiguration to the output list
     scenarioConfigurations[[i]] <- scenarioConfiguration
