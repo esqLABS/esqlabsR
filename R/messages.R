@@ -189,3 +189,7 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
 messages$invalidPlotGridNames <- function(plotGridNames) {
   paste("Following plot grid names have been specified but are not present in the `plotGrids` sheet! Define these plots first: ", paste0(plotGridNames, collapse = ", "))
 }
+
+messages$invalidOutputPathIds <- function(outputPathIds, scenarioname) {
+  paste("Following output path IDs have been specified as output for scenario '", scenarioName, "', but are not present in the `OutputPaths` sheet! Define these outputs first: ", paste0(outputPathIds, collapse = ", "))
+}
