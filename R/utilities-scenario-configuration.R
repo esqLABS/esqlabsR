@@ -77,7 +77,10 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     # Simulation time
     simTime <- data$SimulationTime
     simTimeUnit <- data$SimulationTimeUnit
-    scenarioConfiguration$simulationTime <- ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
+    # Set the time only if new value is defined
+    if (!is.na(simTime)) {
+      scenarioConfiguration$simulationTime <- ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
+    }
 
     # Individual id
     scenarioConfiguration$individualId <- data$IndividualId

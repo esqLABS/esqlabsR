@@ -1,4 +1,4 @@
-defaultScenario <- function(projectConfiguration) {
+defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALSE) {
   ########### Initializing and running scenarios########
   ospsuite.utils::validateIsOfType(projectConfiguration, ProjectConfiguration)
 
@@ -23,11 +23,20 @@ defaultScenario <- function(projectConfiguration) {
   scenarioConfigurations[[1]]$simulationRunOptions <- SimulationRunOptions$new()
   scenarioConfigurations[[1]]$simulationRunOptions$checkForNegativeValues <- FALSE
 
-  # Run scenarios
-  simulatedScenarios <- runScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    customParams = NULL, saveSimulationsToPKML = FALSE
-  )
+
+  customParams <- NULL
+  # Replace by the folder where the resutls are stored, if applicable!
+  resultsSubFolder <- "DateAndTimeSuffixForTheSubfolder"
+  # Run or load scenarios
+  if (loadPreSimulatedResults) {
+    simulatedScenarios <- loadScenarioResults(names(scenarioConfigurations), file.path(projectConfiguration$outputFolder, "SimulationResults", resultsSubFolder))
+  } else {
+    simulatedScenarios <- runScenarios(
+      scenarioConfigurations = scenarioConfigurations,
+      customParams = customParams, saveSimulationsToPKML = TRUE
+    )
+    saveScenarioResults(simulatedScenarios, projectConfiguration)
+  }
 
   ########### Load observed data########
   # Which sheets to load
