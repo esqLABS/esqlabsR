@@ -247,6 +247,9 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
 
   # read sheet "plotGrids" with info for plotGridConfigurations
   dfPlotGrids <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "plotGrids")
+  # read sheet "exportConfiguration"
+  dfExportConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "exportConfiguration") %>%
+    rename(name = outputName)
   # Filter for only specified plot grids
   if (!is.null(plotGridNames)) {
     # Throw an error if a plot grid name that is passed is not defined in the excel file
@@ -256,6 +259,7 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
     }
 
     dfPlotGrids <- dplyr::filter(dfPlotGrids, name %in% plotGridNames)
+    dfExportConfigurations <- dplyr::filter(dfExportConfigurations, plotGridName %in% plotGridNames)
   }
 
   # Exit early if no PlotGrid is defined
@@ -266,9 +270,6 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   dfDataCombined <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "DataCombined")
   # read sheet "plotConfiguration"
   dfPlotConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "plotConfiguration")
-  # read sheet "exportConfiguration"
-  dfExportConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "exportConfiguration") %>%
-    rename(name = outputName)
 
   # Pre-process the sheet 'plotGrids'
   dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
@@ -282,7 +283,7 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
   plotConfiguration <- createEsqlabsPlotConfiguration()
   plotConfigurationList <- apply(
-    dfPlotConfigurations[, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType"))],
+    dfPlotConfigurations[, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType", "quantiles", "foldDistance"))],
     1, .createConfigurationFromRow,
     defaultConfiguration = plotConfiguration
   )
@@ -333,8 +334,26 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
     dataCombined <- dataCombinedList[[dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$DataCombinedName]]
     switch(dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
       individual = plotIndividualTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
-      population = plotPopulationTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
-      observedVsSimulated = plotObservedVsSimulated(dataCombined, plotConfigurationList[[plotId]]),
+      population = {
+        quantiles <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$quantiles
+        if (is.na(quantiles)) {
+          plotPopulationTimeProfile(dataCombined, plotConfigurationList[[plotId]])
+        } else {
+          plotPopulationTimeProfile(dataCombined, plotConfigurationList[[plotId]],
+            quantiles = as.numeric(unlist(strsplit(quantiles, split = ",")))
+          )
+        }
+      },
+      observedVsSimulated = {
+        foldDist <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$foldDistance
+        if (is.na(foldDist)) {
+          plotObservedVsSimulated(dataCombined, plotConfigurationList[[plotId]])
+        } else {
+          plotObservedVsSimulated(dataCombined, plotConfigurationList[[plotId]],
+            foldDistance = as.numeric(unlist(strsplit(foldDist, split = ",")))
+          )
+        }
+      },
       residualsVsSimulated = plotResidualsVsSimulated(dataCombined, plotConfigurationList[[plotId]]),
       residualsVsTime = plotResidualsVsTime(dataCombined, plotConfigurationList[[plotId]])
     )
@@ -342,9 +361,11 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   names(plotList) <- dfPlotConfigurations$plotID
 
   # create plotGridConfiguration objects and add plots from plotList
+  defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
   plotGrids <- apply(dfPlotGrids, 1, \(row) {
-    plotGridConfiguration <- createEsqlabsPlotGridConfiguration()
-    plotGridConfiguration$title <- row$title
+    plotGridConfiguration <- .createConfigurationFromRow(defaultConfiguration = defaultPlotGridConfig,
+                                                         row[!(names(row) %in% c("name", "plotIDs"))])
+
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create
     # a simulated vs observed plot without any groups
