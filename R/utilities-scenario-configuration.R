@@ -95,7 +95,9 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     scenarioConfiguration$applicationProtocol <- data$ApplicationProtocol
 
     # Simulate steady-state?
-    scenarioConfiguration$simulateSteadyState <- data$SteadyState
+    if (!is.na(data$SteadyState)){
+      scenarioConfiguration$simulateSteadyState <- data$SteadyState
+    }
 
     # Steady-state time
     ssTime <- data$SteadyStateTime
