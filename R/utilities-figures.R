@@ -275,8 +275,9 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
   # Filter and validate only used data combined
   dataCombinedList <- createDataCombinedFromExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
-                                                  sheet = "DataCombined", dataCombinedNames = unique(dfPlotConfigurations$DataCombinedName),
-                                                  simulatedScenarios, observedData, stopIfNotFound)
+    sheet = "DataCombined", dataCombinedNames = unique(dfPlotConfigurations$DataCombinedName),
+    simulatedScenarios, observedData, stopIfNotFound
+  )
   dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, names(dataCombinedList))
 
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
@@ -322,8 +323,10 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   # create plotGridConfiguration objects and add plots from plotList
   defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
   plotGrids <- apply(dfPlotGrids, 1, \(row) {
-    plotGridConfiguration <- .createConfigurationFromRow(defaultConfiguration = defaultPlotGridConfig,
-                                                         row[!(names(row) %in% c("name", "plotIDs"))])
+    plotGridConfiguration <- .createConfigurationFromRow(
+      defaultConfiguration = defaultPlotGridConfig,
+      row[!(names(row) %in% c("name", "plotIDs"))]
+    )
 
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create
@@ -458,7 +461,9 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   # Remove white spaces
   dfPlotGrids$plotIDs <- strsplit(x = dfPlotGrids$plotIDs, split = ",", fixed = TRUE)
   # Remove leading/trailing whitespaces
-  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(x){trimws(x)})
+  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(x){
+    trimws(x)
+  })
 
   # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
   missingPlots <- setdiff(setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs), NA)
