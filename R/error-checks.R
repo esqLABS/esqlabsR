@@ -1,4 +1,3 @@
-
 #' Validate parameter list structure
 #'
 #' @param parameterStructure Object to be checked. Expected is a named list
