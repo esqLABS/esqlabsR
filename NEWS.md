@@ -1,5 +1,21 @@
 # esqlabsR 5.0.0
 
+### New functionalities
+- Plots can be created by calling the new function `createPlotsFromExcel()`. It requires as input parameters `simulatedScenarios` (a list of simulated scenarios as returned by `runScenarios()`), `observedData` (a list of `DataSet` objects) and a `ProjectConfiguration` object `projectConfiguration`.
+
+- New function `createDataCombinedFromExcel()` creates `DataCombined` objects as 
+defined in the `Plots.xlsx` file.
+
+- New function `saveScenarioResults()` to save results produced by the `runScenarios()` 
+function to csv files.
+
+- New function `loadScenarioResults()` to load results from csv files into a structure
+as produced by the `runScenarios()` function.
+
+- `ScenarioConfiguration` supports custom functions to modify the `Simulation` 
+object as the last step of scenario initialization. For this, the `ScenarioConfiguration` 
+class gets new fields `customFunction` and `customFunctionArgs`.
+
 ### BREAKING CHANGES
 
 - `Scenarios` excel file gets additional columns `SteadyStateTime`, `SteadyStateTimeUnit`, 
@@ -30,7 +46,7 @@ population as defined in the `PopulationParameters.xlsx` file, sheet `Demographi
 If the field is `NULL`, the scenario is simulated as an individual simulation, 
 otherwise a population simulation is performed.
 
-- `runScenraios()` supports scenario configurations for population simulations
+- `runScenarios()` supports scenario configurations for population simulations
 
 - Target folder for saving `*.pkml` simulations when `runScenarios(scenarioConfigurations, saveSimulationsToPKML = TRUE)`
 changed from `Models/Simulations/<DateSuffix>` to `Results/SimulationResults/<DateSuffix>`.
@@ -48,17 +64,6 @@ outputs as defined in the simulation are used.
   - Run scenarios with `runScenarios(scenarioConfigurations)`
   
 - `ProjectConfiguration` gets a new field `plotsFile`. It is the name of the excel file with plot definitions and must be located in the `paramsFolder`.
-- Plots can be created by calling the new function `createPlotsFromExcel()`. It requires as input parameters `simulatedScenarios` (a list of simulated scenarios as returned by `runScenarios()`), `observedData` (a list of `DataSet` objects) and a `ProjectConfiguration` object `projectConfiguration`.
-
-- `ScenarioConfiguration` supports custom functions to modify the `Simulation` 
-object as the last step of scenario initialization. For this, the `ScenarioConfiguration` 
-class gets new fields `customFunction` and `customFunctionArgs`.
-
-- New function `saveScenarioResults()` to save results produced by the `runScenarios()` 
-function to csv files.
-
-- New function `loadScenarioResults()` to load results from csv files into a structure
-as produced by the `runScenarios()` function.
 
 ### MINOR CHANGES
 
