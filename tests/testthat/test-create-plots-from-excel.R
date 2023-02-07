@@ -50,10 +50,10 @@ plotConfigurationDf <- data.frame(list(
   "yUnit" = NA,
   "xAxisScale" = NA,
   "yAxisScale" = NA,
-  "xLimLower" = NA,
-  "xLimUpper" = NA,
-  "yLimLower" = NA,
-  "yLimUpper" = NA
+  "xAxisLimits" = NA,
+  "yAxisLimits" = NA,
+  "quantiles" = NA,
+  "foldDistance" = NA
 ))
 plotGridsDf <- data.frame(list(
   "name" = "Aciclovir",
@@ -469,7 +469,6 @@ test_that("It returns NULL if no plotGrids are defined in the excel sheet", {
 })
 
 test_that("It creates plots for all plot grids when plotGridNames is NULL", {
-  print(getwd())
   plots <- createPlotsFromExcel(
     simulatedScenarios = simulatedScenarios,
     observedData = observedData,
