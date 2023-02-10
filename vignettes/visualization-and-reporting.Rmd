@@ -85,6 +85,9 @@ create the configurations using the following functions:
   - [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html)
   - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html)
   - [`createEsqlabsExportConfiguration(projectConfiguration)`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html)
+  
+For the list of supported properties of the `PlotGirdConfiguration`, refer to the 
+[reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html) 
 
 The next example shows how to create a multi-panel figure using the default 
 configurations.
@@ -92,7 +95,6 @@ configurations.
 ```{r plot-time-profile, fig.width=7, fig.height=7}
 plotConfig <- createEsqlabsPlotConfiguration()
 gridConfig <- createEsqlabsPlotGridConfiguration()
-exportConfig <- createEsqlabsExportConfiguration(projectConfiguration)
 
 plotConfig$title <- "Time profile"
 indivPlot <- plotIndividualTimeProfile(dataCombined, defaultPlotConfiguration = plotConfig)
@@ -112,10 +114,11 @@ gridPlot <- plotGrid(gridConfig)
 gridPlot
 ```
 
-To save the plot to a `PNG` file, make sure that `fileName` argument end with 
+To save the plot to a `PNG` file, use the [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html). Make sure that `fileName` argument end with 
 `.png`:
 
 ```{r saveToPng, eval = FALSE}
+exportConfig <- createEsqlabsExportConfiguration(projectConfiguration)
 exportConfig$savePlot(gridPlot, fileName = "All plots.png")
 ```
 
@@ -127,8 +130,12 @@ object by calling the `DataCombined$groupMap` or by examining the output of `dat
 More detailed information on function signatures can be found in:
 
 * `ospsuite` documentation on:
-    * [DataCombined class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html)
-    * [plotIndividualTimeProfile()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html)
-    * [plotObservedVsSimulated()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html)
-    * [plotResidualsVsSimulated()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html)
-    * [plotResidualsVsTime()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html)
+    * [`DataCombined` class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html)
+    * [`plotIndividualTimeProfile()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html)
+    * [`plotObservedVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html)
+    * [`plotResidualsVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html)
+    * [`plotResidualsVsTime()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html)
+* `tlf` documentation on:
+    * [`PlotGridConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
+    * [`plotGrid()`](https://www.open-systems-pharmacology.org/TLF-Library/reference/plotGrid.html)
+    * [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)

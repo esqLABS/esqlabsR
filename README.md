@@ -14,6 +14,7 @@ The **`{esqlabsR}`** R-package is designed to facilitate and standardize **model
 Install as a binary file from [the AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/branch/develop/artifacts/). The `{esqlabsR}` package requires the following packages: 
 
 * Available from CRAN:
+    * R6
     * colorspace,
     * dplyr,
     * ggplot2,
@@ -26,15 +27,20 @@ Install as a binary file from [the AppVeyor link](https://ci.appveyor.com/projec
     * vctrs,
     * writexl,
     * stringr,
-    * labeling
-  
+    * labeling,
+    * readr,
+    * rlang,
+    * jsonlite,
+    * patchwork,
+    * hash,
+    * FME
 
 * Available from github: 
     * [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
-    * [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
-    * [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
-    * [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.0
-    * [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
+    * [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils) > 1.4.0
+    * [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library) > 1.5.0
+    * [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.1
+    * [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification) > 1.2
   
 ### For projects created for version 3
 
@@ -48,4 +54,4 @@ To run code written for version 3 of `esqlabsR` package, additionally install th
 
 ## Code of Conduct
 
-  Please note that the esqlabsR project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
+Please note that the esqlabsR project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
