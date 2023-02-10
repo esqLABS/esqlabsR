@@ -113,8 +113,8 @@ testSimulationsRunning <- function() {
 }
 
 displayProgress <- function(current, success = TRUE, message = NULL, suppressOutput = TRUE) {
-  states <- c("Installing RENV", "Installing CRAN packages",  "Checking RTOOLS",
-             "Installing rClr", "Installing ospsuite.utils",
+  states <- c("Installing RENV", "Installing minimal PK-Sim DLLs", "Installing CRAN packages",  
+			  "Checking RTOOLS", "Installing rClr", "Installing ospsuite.utils",
               "Installing tlf", "Installing ospsuite", "Installing ospsuite.PI",
               "Installing esqlabsR", "Testing installed packages", "Testing PK-Sim connection",
               "Testing simulations",
@@ -235,6 +235,12 @@ installPackagesLocally <- function(updatePackages = FALSE, pkSimPath = NULL,
   installationLockfile <- paste0("pre.", as.integer(Sys.time()), ".lock")
   renv::snapshot(lockfile = installationLockfile, prompt = FALSE)
 
+  displayProgress("Installing minimal PK-Sim DLLs")
+  tmpArchiveFile <- tempfile()
+  download.file(.developPaths$pksimMinimal, tmpArchiveFile)
+  unzip(tmpArchiveFile, exdir = "PKSim")
+  unlink(tmpArchiveFile)
+
   # Install packages
   installPackagesGlobally(updatePackages = updatePackages,
                           pkSimPath = pkSimPath,
@@ -279,7 +285,7 @@ installPackagesLocally <- function(updatePackages = FALSE, pkSimPath = NULL,
     file.remove(installationLockfile)
   }
 
-  displayProgress("Installation sucessful", suppressOutput = suppressOutput)
+  displayProgress("Installation successful", suppressOutput = suppressOutput)
   return(invisible(TRUE))
 }
 
