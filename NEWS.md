@@ -33,7 +33,7 @@ from the respective field of `ScenarioConfgiruation`
 
 - Paths of model outputs are defined in the excel file `Scenarios.xlsx`. In the 
 sheet `OutputPaths`, create an entry for each output. The column `OutputPath` is the full 
-path to the output, while `OutputPathId` can be an identifier that conveniently allows 
+path to the output, while `OutputPathId` is an identifier that conveniently allows 
 to select the correct output.
 In the `Scenarios` sheet, enter the IDs of all paths the outputs should be generated for,
 separated by a `,`, e.g. `Aciclovir_PVB, Aciclovir_fat_cell`. 
@@ -42,7 +42,7 @@ If no outputs are specified, the outputs as defined in the simulation `.pkml` fi
 will be produced.
 
 - `ScenarioConfiguration` gets a new field `populationId`, specifying the id of 
-population as defined in the `PopulationParameters.xlsx` file, sheet `Demographics`.
+the population as defined in the `PopulationParameters.xlsx` file, sheet `Demographics`.
 If the field is `NULL`, the scenario is simulated as an individual simulation, 
 otherwise a population simulation is performed.
 

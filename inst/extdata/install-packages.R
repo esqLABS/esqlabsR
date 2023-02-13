@@ -4,10 +4,11 @@
                              ospsuite = c(),
                              ospsuite.parameteridentification = c("Authorization" = "Bearer v2.4n7xybvbbboj2ye9fmk5"),
                              esqlabsR = c())
+# Still using the non-official PI package as the official repository is not updated yet
 .releaseHttpsHeaders <- list(ospsuite.utils = c(),
                              tlf = c(),
                              ospsuite = c(),
-                             ospsuite.parameteridentification = c(),
+                             ospsuite.parameteridentification = c("Authorization" = "Bearer v2.4n7xybvbbboj2ye9fmk5"),
                              esqlabsR = c())
 
 # Message strings used in the setup script
@@ -22,11 +23,15 @@ packageInstallationMessages <- list(
 )
 
 # List of packages that will be installed from CRAN
-.cranPackages <- c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs", "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "patchwork", "jsonlite", "purrr")
+.cranPackages <- c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs",
+                   "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME",
+                   "patchwork", "jsonlite", "purrr", "colorspace", "rlang", "tools",
+                   "labeling", "knitr", "rmarkdown"
+)
 #Download paths of released package versions
-.releasePaths <- list(ospsuite.utils = "https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.3.17/ospsuite.utils_1.3.17.tar.gz",
-                      tlf = "https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.4.89/tlf_1.4.89.tar.gz",
-                      ospsuite = "https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v11.0.123/ospsuite_11.0.123.zip",
+.releasePaths <- list(ospsuite.utils = "https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.4.23/ospsuite.utils_1.4.23.tar.gz",
+                      tlf = "https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.5.121/tlf_1.5.121.tar.gz",
+                      ospsuite = "https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/download/v11.1.197/ospsuite_11.1.197.zip",
                       ospsuite.parameteridentification = "https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/releases/download/v1.1.0/ospsuite.parameteridentification_1.1.0.9002.zip",
                       esqlabsR = "https://github.com/esqLABS/esqlabsR/releases/download/3.0.89/esqlabsR_3.0.89.zip")
 #Download paths of latest develop package versions
@@ -34,7 +39,8 @@ packageInstallationMessages <- list(
                       tlf = "https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/tlf-library/artifacts/tlf.zip",
                       ospsuite = "https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-r/artifacts/ospsuite.zip",
                       ospsuite.parameteridentification = "https://ci.appveyor.com/api/projects/StephanSchaller/esqlabs-parameteridentification/artifacts/ospsuite.parameteridentification.zip",
-                      esqlabsR = "https://ci.appveyor.com/api/projects/StephanSchaller/esqlabsr/artifacts/esqlabsR.zip")
+                      esqlabsR = "https://ci.appveyor.com/api/projects/StephanSchaller/esqlabsr/artifacts/esqlabsR.zip",
+                      pksimMinimal = "https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-r/artifacts/pksim_minimal.zip")
 
 #' Test if installed packages can be loaded
 #'
@@ -93,22 +99,29 @@ testSimulationsRunning <- function() {
   sourceAll(file.path(getwd(), "Scenarios"))
   sourceAll(file.path(getwd(), "TransferFunctions"))
   projectConfiguration <- createDefaultProjectConfiguration()
+  # Define which scenarios to run
   scenarioNames <- c("TestScenario")
-  scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-  scenarioConfiguration$setTestParameters <- FALSE
-  simulations <- vector("list", length(scenarioNames))
-  for (i in seq_along(simulations)) {
-    scenarioConfiguration$scenarioName <- scenarioNames[[i]]
-    simulations[[i]] <- initializeScenario(scenarioConfiguration = scenarioConfiguration)
-  }
-  names(simulations) <- scenarioNames
-  simulationResults <- runSimulations(simulations = simulations, simulationRunOptions = scenarioConfiguration$simulationRunOptions)
+  # Set scenario names to NULL if you want to simulate all scenarios defined in the
+  # excel file
+  # scenarioNames <- NULL
+  
+  # Create `ScenarioConfiguration` objects from excel files
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+  scenarioConfigurations[[1]]$setTestParameters <- FALSE
+  simulatedScenarios <- runScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    customParams = NULL, saveSimulationsToPKML = TRUE
+  )
+  
   return(TRUE)
 }
 
 displayProgress <- function(current, success = TRUE, message = NULL, suppressOutput = TRUE) {
-  states <- c("Installing RENV", "Installing CRAN packages",  "Checking RTOOLS",
-             "Installing rClr", "Installing ospsuite.utils",
+  states <- c("Installing RENV", "Installing minimal PK-Sim DLLs", "Installing CRAN packages",  
+			  "Checking RTOOLS", "Installing rClr", "Installing ospsuite.utils",
               "Installing tlf", "Installing ospsuite", "Installing ospsuite.PI",
               "Installing esqlabsR", "Testing installed packages", "Testing PK-Sim connection",
               "Testing simulations",
@@ -229,6 +242,12 @@ installPackagesLocally <- function(updatePackages = FALSE, pkSimPath = NULL,
   installationLockfile <- paste0("pre.", as.integer(Sys.time()), ".lock")
   renv::snapshot(lockfile = installationLockfile, prompt = FALSE)
 
+  displayProgress("Installing minimal PK-Sim DLLs")
+  tmpArchiveFile <- tempfile()
+  download.file(.developPaths$pksimMinimal, tmpArchiveFile)
+  unzip(tmpArchiveFile, exdir = "PKSim")
+  unlink(tmpArchiveFile)
+
   # Install packages
   installPackagesGlobally(updatePackages = updatePackages,
                           pkSimPath = pkSimPath,
@@ -273,7 +292,7 @@ installPackagesLocally <- function(updatePackages = FALSE, pkSimPath = NULL,
     file.remove(installationLockfile)
   }
 
-  displayProgress("Installation sucessful", suppressOutput = suppressOutput)
+  displayProgress("Installation successful", suppressOutput = suppressOutput)
   return(invisible(TRUE))
 }
 
@@ -313,10 +332,9 @@ installPackagesGlobally <- function(updatePackages = FALSE, pkSimPath = NULL,
   displayProgress("Installation successful", suppressOutput = suppressOutput)
 }
 
-pkSimPath <- NULL
-pkSimPath <- "c:\\Program Files\\Open Systems Pharmacology\\PK-Sim 11.1\\"
-#installPackagesGlobally(pkSimPath = pkSimPath, suppressOutput = TRUE, developerVersion = TRUE)
+pkSimPath <- "PKSim"
 #installPackagesLocally(pkSimPath = pkSimPath, suppressOutput = TRUE, developerVersion = TRUE)
+#installPackagesGlobally(suppressOutput = TRUE, developerVersion = TRUE)
 
 #Clean the workspace
 #cleanEnvironment()

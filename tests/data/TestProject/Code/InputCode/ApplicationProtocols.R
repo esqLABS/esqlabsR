@@ -1,1 +1,0 @@
-ApplicationProtocols <- enum(list())

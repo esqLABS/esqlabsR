@@ -68,7 +68,7 @@ filtration rate. To define a scenario, create a new row in the
     properties of the simulated individual and
     `IndividualParameters.xlsx` for definition of individual-specific
     model parameters. **IndividualId** may be empty. In this case,
-    standard individual as defined in the `pkml` simulation without any
+    the individual as defined in the `pkml` simulation without any
     individual-specific model parameters will be simulated. To create an
     individual with specific biometric characteristics, define an entry
     with the same individual id in the file `IndividualBiometrics.xlsx`.
@@ -87,7 +87,7 @@ filtration rate. To define a scenario, create a new row in the
     the `PopulationParameters.xlsx` file will be created and the
     scenario simulated as a population simulation.
 
-To create a population with specific biographic characteristics, define
+To create a population with specific demographic characteristics, define
 an entry with the same population id in the file
 `PopulationParameters.xlsx`. The same population can be used in multiple
 scenarios. **Note**: You can define both an **IndividualId** and a
@@ -116,8 +116,8 @@ will be overwritten by the GFR values sampled in the simulation.
     We can further refine the parametrization of the scenario by
     specifying the individual parameters in the
     `IndividualParameters.xlsx` file. Create a sheet with the name as
-    the *IndividualId* specified for the respective scenario and
-    populate it the same structure as the `ModelParameters.xlsx` file.
+    the *IndividualId* specified for the respective scenario with the same 
+    structure as the `ModelParameters.xlsx` file.
     This way we can define e.g. individual-specific clearance values or,
     as in our case, the glomerular filtration rate. Individual specific
     parameters are applied after the parameters defined in the
@@ -132,7 +132,7 @@ will be overwritten by the GFR values sampled in the simulation.
     `ApplicationParameters.xlsx`. For each application, create a sheet
     with the name as specified in the **ApplicationProtocol** entry and
     populate it with the same structure as the `ModelParameter.xlsx`
-    file... Configuring application protocols this way requires that the
+    file. Configuring application protocols this way requires that the
     loaded simulation includes all possible applications that can be
     turned on and off by setting parameters, e.g. the `Dose` or
     `Start time` parameters. As it might be cumbersome to manually
@@ -195,7 +195,7 @@ be generated for, separated by a comma, e.g. `Aciclovir_PVB, Aciclovir_fat_cell`
 
 ### Code-based specifications
 
-In addition to scenario set ups through the excel sheets, further
+In addition to scenario setups through the excel sheets, further
 specifications are made in the `R` files located in the `InputCode`
 project folder. Files in this folder must be sourced prior to using.
 
@@ -298,7 +298,7 @@ print(scenarioConfigurations$TestScenario)
 Alternatively, we can create configurations for all scenarios defined in
 the `Scenarios.xlsx` by calling
 `readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)`
-without specifying scenarios names.
+without specifying scenarios' names.
 
 Before running the scenarios, we can modify `ScenarioConfigurations` by
 setting parameters that are currently not accessible through excel
@@ -330,7 +330,7 @@ simulatedScenarios <- runScenarios(
 names(simulatedScenarios)
 ```
 
-It is a good idea to store simulation results as `*.scv` alongside with simulations 
+It is a good idea to store simulation results as `*.csv` along with simulations 
 as `.*pkml` and load them for further processing to avoid re-simulating every time 
 e.g. a change to a figure showing the simulation results is required. Check out 
 the documentation of the functions [`saveScenarioResults()`](https://esqlabs.github.io/esqlabsR/reference/saveScenarioResults) and [`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/reference/loadScenarioResults).
