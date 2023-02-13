@@ -1,6 +1,5 @@
-pkSimPath <- NULL
+pkSimPath <- "PKSim"
 # For local testing, if required
-# pkSimPath <- "c:\\Program Files\\Open Systems Pharmacology\\PK-Sim 11.1\\"
 
 initPKSim(pkSimPath)
 sourceAll(file.path(getwd(), "utils"))

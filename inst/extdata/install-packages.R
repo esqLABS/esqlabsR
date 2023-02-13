@@ -99,16 +99,23 @@ testSimulationsRunning <- function() {
   sourceAll(file.path(getwd(), "Scenarios"))
   sourceAll(file.path(getwd(), "TransferFunctions"))
   projectConfiguration <- createDefaultProjectConfiguration()
+  # Define which scenarios to run
   scenarioNames <- c("TestScenario")
-  scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-  scenarioConfiguration$setTestParameters <- FALSE
-  simulations <- vector("list", length(scenarioNames))
-  for (i in seq_along(simulations)) {
-    scenarioConfiguration$scenarioName <- scenarioNames[[i]]
-    simulations[[i]] <- initializeScenario(scenarioConfiguration = scenarioConfiguration)
-  }
-  names(simulations) <- scenarioNames
-  simulationResults <- runSimulations(simulations = simulations, simulationRunOptions = scenarioConfiguration$simulationRunOptions)
+  # Set scenario names to NULL if you want to simulate all scenarios defined in the
+  # excel file
+  # scenarioNames <- NULL
+  
+  # Create `ScenarioConfiguration` objects from excel files
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+  scenarioConfigurations[[1]]$setTestParameters <- FALSE
+  simulatedScenarios <- runScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    customParams = NULL, saveSimulationsToPKML = TRUE
+  )
+  
   return(TRUE)
 }
 
