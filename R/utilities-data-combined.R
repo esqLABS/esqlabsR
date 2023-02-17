@@ -54,11 +54,49 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
   names(dataCombinedList) <- unique(dfDataCombined$DataCombinedName)
 
   # apply data transformations
-  dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors)) %>%
-    replace_na(list(xOffsets = 0, yOffsets = 0, xScaleFactors = 1, yScaleFactors = 1))
+  dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors))
   # Apply data transformations if specified in the excel file
-  if (dim(dfTransform)[[1]] != 0) {
+  if (dim(dfTransform)[[1]] != 0) { #
     apply(dfTransform, 1, \(row) {
+      # Get the data frame of the Data combined to retrieve units and MW
+      dataCombined_df <- dataCombinedList[[row[["DataCombinedName"]]]]$toDataFrame()
+      singleRow <- dataCombined_df[dataCombined_df$name == row[["label"]], ][1, ]
+
+      # If offsets are defined, convert them to the default unit of the data
+      # Extract the base unit of the data (or simulation result) and the unit
+      # defined for the offset.
+      # We don't have to check for NAs because 'toUnit()' returns NA for NA
+      xDimension <- singleRow$xDimension
+      xBaseUnit <- row[["xOffsetsUnits"]]
+      xTargetUnit <- singleRow$xUnit
+      # Empty units should be converted to "" for the dimension "Fraction" or "Dimensionless"
+      if (is.na(xTargetUnit)) {
+        targetUnit <- ""
+      }
+      row[["xOffsets"]] <- toUnit(
+        quantityOrDimension = xDimension,
+        values = as.numeric(row[["xOffsets"]]),
+        targetUnit = xTargetUnit,
+        sourceUnit = xBaseUnit
+      )
+
+      yDimension <- singleRow$yDimension
+      yBaseUnit <- singleRow$yUnit
+      yTargetUnit <- row[["yOffsetsUnits"]]
+      yMW <- singleRow$molWeight
+      # Empty units should be converted to "" for the dimension "Fraction" or "Dimensionless"
+      if (is.na(yTargetUnit)) {
+        targetUnit <- ""
+      }
+      row[["yOffsets"]] <- toUnit(
+        quantityOrDimension = yDimension,
+        values = as.numeric(row[["yOffsets"]]),
+        targetUnit = yTargetUnit,
+        sourceUnit = yBaseUnit,
+        molWeight = yMW,
+        molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+      )
+
       dataCombinedList[[row[["DataCombinedName"]]]]$setDataTransformations(
         forNames = row[["label"]], xOffsets = as.numeric(row[["xOffsets"]]), yOffsets = as.numeric(row[["yOffsets"]]),
         xScaleFactors = as.numeric(row[["xScaleFactors"]]), yScaleFactors = as.numeric(row[["yScaleFactors"]])

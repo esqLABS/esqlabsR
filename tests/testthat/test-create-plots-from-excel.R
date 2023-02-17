@@ -37,7 +37,9 @@ dataCombinedDf <- data.frame(list(
   "dataSet" = c(NA, names(observedData)),
   "group" = c("Aciclovir PVB", "Aciclovir PVB"),
   "xOffsets" = c(NA, NA),
+  "xOffsetsUnits" = c(NA, NA),
   "yOffsets" = c(NA, NA),
+  "yOffsetsUnits" = c(NA, NA),
   "xScaleFactors" = c(NA, NA),
   "yScaleFactors" = c(NA, NA)
 ))
