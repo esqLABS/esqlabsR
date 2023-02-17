@@ -81,8 +81,8 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
       )
 
       yDimension <- singleRow$yDimension
-      yBaseUnit <- singleRow$yUnit
-      yTargetUnit <- row[["yOffsetsUnits"]]
+      yBaseUnit <- row[["yOffsetsUnits"]]
+      yTargetUnit <- singleRow$yUnit
       yMW <- singleRow$molWeight
       # Empty units should be converted to "" for the dimension "Fraction" or "Dimensionless"
       if (is.na(yTargetUnit)) {
