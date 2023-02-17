@@ -56,7 +56,7 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
   # apply data transformations
   dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors))
   # Apply data transformations if specified in the excel file
-  if (dim(dfTransform)[[1]] != 0) { #
+  if (dim(dfTransform)[[1]] != 0) {
     apply(dfTransform, 1, \(row) {
       # Get the data frame of the Data combined to retrieve units and MW
       dataCombined_df <- dataCombinedList[[row[["DataCombinedName"]]]]$toDataFrame()
