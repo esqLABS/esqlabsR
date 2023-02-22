@@ -12,7 +12,7 @@ extendPopulationByGender <- function(population) {
   genderValues <- lapply(population$getCovariateValues("Gender"), function(x) {
     GenderInt[[x]]
   })
-  genderValues <- unlist(genderValues)
+  genderValues <- unlist(genderValues, use.names = FALSE)
 
   population$setParameterValues(parameterOrPath = genderPath, values = genderValues)
 }

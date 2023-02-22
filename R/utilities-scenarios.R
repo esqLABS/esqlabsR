@@ -178,7 +178,7 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
       scenarioConfiguration$projectConfiguration$individualParamsFile
     ))
 
-    if (scenarioConfiguration$individualId %in% excelSheets) {
+    if (any(excelSheets == scenarioConfiguration$individualId)) {
       indivModelParams <- readParametersFromXLS(file.path(
         scenarioConfiguration$projectConfiguration$paramsFolder,
         scenarioConfiguration$projectConfiguration$individualParamsFile

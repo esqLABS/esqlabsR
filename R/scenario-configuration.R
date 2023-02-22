@@ -86,7 +86,7 @@ a parameter sheet from the list"
       if (missing(value)) {
         private$.simulationType
       } else {
-        if (value %in% c("Individual", "Population")) {
+        if (any(c("Individual", "Population") == value)) {
           private$.simulationType <- value
         } else {
           stop(messages$wrongSimulationType())

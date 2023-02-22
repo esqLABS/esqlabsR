@@ -102,7 +102,7 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
 calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLOQMode$`LLOQ/2`,
                                  outputXunit = NULL, outputYunit = NULL, outputMolWeight = NULL) {
   validateIsOfType(dataSets, "DataSet")
-  if (!method %in% c("arithmetic", "geometric")) {
+  if (!any(c("arithmetic", "geometric") == method)) {
     stop(messages$errorInvalidMeanMethod())
   }
   validateEnumValue(lloqMode, LLOQMode)
@@ -164,7 +164,7 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   # meanDataSet$LLOQ = arithmetic mean lloq of all data sets with lloq
   lloqMean <- suppressWarnings(mean(unlist(sapply(c(dataSets), function(x) {
     x$LLOQ
-  })), na.rm = TRUE))
+  }), use.names = FALSE), na.rm = TRUE))
   if (!is.na(lloqMean)) {
     meanDataSet$LLOQ <- lloqMean
   }

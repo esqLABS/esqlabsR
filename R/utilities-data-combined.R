@@ -71,7 +71,7 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
       xTargetUnit <- singleRow$xUnit
       # Empty units should be converted to "" for the dimension "Fraction" or "Dimensionless"
       if (is.na(xTargetUnit)) {
-        targetUnit <- ""
+        xTargetUnit <- ""
       }
       row[["xOffsets"]] <- toUnit(
         quantityOrDimension = xDimension,
@@ -86,7 +86,7 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
       yMW <- singleRow$molWeight
       # Empty units should be converted to "" for the dimension "Fraction" or "Dimensionless"
       if (is.na(yTargetUnit)) {
-        targetUnit <- ""
+        yTargetUnit <- ""
       }
       row[["yOffsets"]] <- toUnit(
         quantityOrDimension = yDimension,
@@ -157,7 +157,7 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
       stop(messages$stopInvalidScenarioName(missingScenarios))
     }
     warning(messages$warningInvalidScenarioName(missingScenarios))
-    dfDataCombined <- dfDataCombined[!(dfDataCombined$scenario %in% missingScenarios), ]
+    dfDataCombined <- dfDataCombined[!(missingScenarios == dfDataCombined$scenario), ]
   }
   # data set name not present in observedData
   missingDataSets <- setdiff(setdiff(dfDataCombined$dataSet, names(observedData)), NA)
@@ -166,7 +166,7 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
       stop(messages$stopInvalidDataSetName(missingDataSets))
     }
     warning(messages$warningInvalidDataSetName(missingDataSets))
-    dfDataCombined <- dfDataCombined[!(dfDataCombined$dataSet %in% missingDataSets), ]
+    dfDataCombined <- dfDataCombined[!(missingDataSets == dfDataCombined$dataSet), ]
   }
 
   return(dfDataCombined)
