@@ -121,8 +121,8 @@ sensitivityCalculation <- function(simulation,
     )
   }
 
-  constantParamPaths <- unlist(constantParamPaths)
-  formulaParamPaths <- unlist(formulaParamPaths)
+  constantParamPaths <- unlist(constantParamPaths, use.names = FALSE)
+  formulaParamPaths <- unlist(formulaParamPaths, use.names = FALSE)
 
   simulationBatches <- list()
 

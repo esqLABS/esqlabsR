@@ -27,7 +27,7 @@
 #' `FALSE?  otherwise.
 #' @keywords internal
 .validateClassHasField <- function(object, field) {
-  if (!field %in% names(object)) {
+  if (!any(names(object) == field)) {
     return(FALSE)
   }
   return(TRUE)

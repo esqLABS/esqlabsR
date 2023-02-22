@@ -274,9 +274,13 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   # Filter and validate only used plot configurations
   dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
   # Filter and validate only used data combined
-  dataCombinedList <- createDataCombinedFromExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
-    sheet = "DataCombined", dataCombinedNames = unique(dfPlotConfigurations$DataCombinedName),
-    simulatedScenarios, observedData, stopIfNotFound
+  dataCombinedList <- createDataCombinedFromExcel(
+    file = file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
+    sheet = "DataCombined",
+    dataCombinedNames = unique(dfPlotConfigurations$DataCombinedName),
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData,
+    stopIfNotFound = stopIfNotFound
   )
   dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, names(dataCombinedList))
 

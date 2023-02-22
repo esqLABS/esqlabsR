@@ -27,7 +27,7 @@ getMoleculeNameFromQuantity <- function(quantity) {
   quantityType <- quantity$quantityType
 
   # If the passed quantitiy is a molecule, return its name
-  if (quantityType %in% c("Drug", "Molecule")) {
+  if (any(c("Drug", "Molecule") == quantityType)) {
     return(quantity$name)
   }
 
@@ -36,7 +36,7 @@ getMoleculeNameFromQuantity <- function(quantity) {
   parentContainerType <- parentContainer$containerType
 
   # If parent container is not a molecule, stop with an error
-  if (!(parentContainerType %in% c("Drug", "Molecule"))) {
+  if (!(any(c("Drug", "Molecule") == parentContainerType))) {
     stop(messages$cannotGetMoleculeFromQuantity(quantity$path))
   }
 

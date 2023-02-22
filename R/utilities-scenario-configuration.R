@@ -55,7 +55,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     scenarioName <- scenarioNames[[i]]
 
     # Select the scenario
-    if (!scenarioName %in% wholeData$Scenario_name) {
+    if (!any(wholeData$Scenario_name == scenarioName)) {
       stop(messages$scenarioConfigurationNameNotFoundWhenReading(scenarioName))
     }
     data <- wholeData[wholeData$Scenario_name == scenarioName, ]
@@ -155,7 +155,7 @@ setApplications <- function(simulation, scenarioConfiguration) {
     scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
   )
   # Only try to apply parameters if the sheet exists
-  if (scenarioConfiguration$applicationProtocol %in% readxl::excel_sheets(excelFilePath)) {
+  if (any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
     params <- readParametersFromXLS(excelFilePath, scenarioConfiguration$applicationProtocol)
     ospsuite::setParameterValuesByPath(
       parameterPaths = params$paths, values = params$values,
