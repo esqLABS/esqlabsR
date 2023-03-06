@@ -143,13 +143,14 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
   defaultPlotConfiguration$titleSize <- 14
-  defaultPlotConfiguration$xLabelSize <- 8
-  defaultPlotConfiguration$yLabelSize <- 8
-  defaultPlotConfiguration$xAxisLabelTicksSize <- 8
-  defaultPlotConfiguration$yAxisLabelTicksSize <- 8
-  defaultPlotConfiguration$legendTitleSize <- 6
+  defaultPlotConfiguration$xLabelSize <- 10
+  defaultPlotConfiguration$yLabelSize <- 10
+  defaultPlotConfiguration$xAxisLabelTicksSize <- 10
+  defaultPlotConfiguration$yAxisLabelTicksSize <- 10
+  defaultPlotConfiguration$legendTitleSize <- 8
   defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
-
+  #Workaroud for a bug in TLF package https://github.com/Open-Systems-Pharmacology/TLF-Library/issues/413
+  defaultPlotConfiguration$pointsShape <- defaultPlotConfiguration$pointsShape[1:14]
   return(defaultPlotConfiguration)
 }
 
