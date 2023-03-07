@@ -20,7 +20,6 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
   validateIsString(sheet, nullAllowed = TRUE)
 
   dfDataCombined <- readExcel(path = file, sheet = sheet %||% 1)
-
   if (!is.null(dataCombinedNames)) {
     dfDataCombined <- filter(dfDataCombined, DataCombinedName %in% dataCombinedNames)
   }
