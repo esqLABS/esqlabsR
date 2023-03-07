@@ -148,6 +148,8 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration$xAxisLabelTicksSize <- 10
   defaultPlotConfiguration$yAxisLabelTicksSize <- 10
   defaultPlotConfiguration$legendTitleSize <- 8
+  defaultPlotConfiguration$legendBorderColor <- "grey10"
+  defaultPlotConfiguration$legendBorderType <- 1
   defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
   #Workaroud for a bug in TLF package https://github.com/Open-Systems-Pharmacology/TLF-Library/issues/413
   defaultPlotConfiguration$pointsShape <- defaultPlotConfiguration$pointsShape[1:14]
