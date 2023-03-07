@@ -22,15 +22,17 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
 
 ## context("compareSimulationParameters")
 
-test_that("`compareSimulationParameters()` produces no differences with identical simulations", {
+test_that("`compareSimulations()` produces no differences with identical simulations", {
   simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
   sim1 <- loadSimulation(simPath)
   sim2 <- loadSimulation(simPath)
 
-  res <- compareSimulationParameters(sim1, sim2)
+  res <- compareSimulations(sim1, sim2)
+  enmptyNamedList <- list()
+  names(enmptyNamedList) <- vector()
   expect_equal(
     res,
-    list(In1NotIn2 = list(), In2NotIn1 = list(), Different = list())
+    list(Parameters = list(In1NotIn2 = NULL, In2NotIn1 = NULL, Different = enmptyNamedList))
   )
 })
 # getAllApplicationParameters

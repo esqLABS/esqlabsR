@@ -16,8 +16,11 @@ as produced by the `runScenarios()` function.
 object as the last step of scenario initialization. For this, the `ScenarioConfiguration` 
 class gets new fields `customFunction` and `customFunctionArgs`.
 
+- New function `compareSimulation()` to compare two simulations for differences.
+
 ### BREAKING CHANGES
 
+- Function `compareSimulationParameters()` has been removed and replaced by `compareSimulations()`
 - `Scenarios` excel file gets additional columns `SteadyStateTime`, `SteadyStateTimeUnit`, 
 `PopulationId`, `OutputPathsIds`.
 - `readScenarioConfigurationFromExcel()` has a new signature and requires a list of 
@@ -64,6 +67,11 @@ outputs as defined in the simulation are used.
   - Run scenarios with `runScenarios(scenarioConfigurations)`
   
 - `ProjectConfiguration` gets a new field `plotsFile`. It is the name of the excel file with plot definitions and must be located in the `paramsFolder`.
+
+- When defining an individual of other species than human in `ScenarioConfiguration` 
+and applying it to a human model, missing species-specific parameters are applied and the 
+scaling works properly. Supported scalingsa are: Human to rat, human to monkey, 
+human to rabbit.
 
 ### MINOR CHANGES
 

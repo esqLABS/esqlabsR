@@ -187,10 +187,11 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' @param checkFormulaValues If TRUE, values of explicit formulas are always
 #'   compared. Otherwise, the values are only compared if the formulas are
 #'   overridden (isFixedValue == TRUE). FALSE by default.
+#' @param compareFormulasByValue If `FALSE`(default), formulas are compared by their types and string. If `TRUE`, only values are compared.
 #'
 #' @return `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
-isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE) {
+isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE, compareFormulasByValue = FALSE) {
   validateIsOfType(c(parameter1, parameter2), "Parameter")
 
   # Check for the path
@@ -201,6 +202,11 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
   formula1 <- parameter1$formula
   formula2 <- parameter2$formula
 
+  # Compare by value
+  if (compareFormulasByValue){
+    return(identical(parameter1$value, parameter2$value))
+  }
+
   # Check for formula type equality
   if (!all(
     c(formula1$isConstant, formula1$isDistributed, formula1$isExplicit, formula1$isTable) ==
@@ -210,8 +216,9 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
   }
 
   # Constant or distributed formula - check for value
+  # Comparing using 'identical' to capture NaN and NA cases which can happen
   if (formula1$isConstant || formula1$isDistributed) {
-    return(parameter1$value == parameter2$value)
+    return(identical(parameter1$value, parameter2$value))
   }
 
   # Explicit or table formula - check if values are overridden
@@ -226,7 +233,7 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
 
   # Explicit
   if (formula1$isExplicit) {
-    if (checkFormulaValues && (parameter1$value != parameter2$value)) {
+    if (checkFormulaValues && (!identical(parameter1$value, parameter2$value))) {
       return(FALSE)
     }
 
