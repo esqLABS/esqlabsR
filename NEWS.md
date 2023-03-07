@@ -84,6 +84,8 @@ that determine how entries of type "<number" and ">number" will be treated.
 - Default name of the excel file with definition of individual biometrics changed 
 from `IndividualPhysiology.xlsx` to `IndividualBiometrics.xlsx`.
 
+- Dark grey frame around legends by default.
+
 ------
 
 # esqlabsR 4.0.0
