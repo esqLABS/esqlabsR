@@ -148,6 +148,8 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
   defaultPlotConfiguration$yAxisLabelTicksSize <- 8
   defaultPlotConfiguration$legendTitleSize <- 6
+  defaultPlotConfiguration$legendBorderColor <- "grey10"
+  defaultPlotConfiguration$legendBorderType <- 1
   defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
 
   return(defaultPlotConfiguration)
