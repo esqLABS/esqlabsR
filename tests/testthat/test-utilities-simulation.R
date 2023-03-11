@@ -35,6 +35,22 @@ test_that("`compareSimulations()` produces no differences with identical simulat
     list(Parameters = list(In1NotIn2 = NULL, In2NotIn1 = NULL, Different = enmptyNamedList))
   )
 })
+
+test_that("`compareSimulations()` lists differencies on parameter correctly", {
+  sim1 <- loadSimulation(testthat::test_path("../data/simple.pkml"))
+  sim2 <- loadSimulation(testthat::test_path("../data/simple2.pkml"))
+
+  res <- compareSimulations(sim1, sim2)
+  in1notIn2Paths <- c("Organism|RHSParameter")
+  in2notIn1Paths <- c("Organism|in2NotIn1")
+  differentPaths <- c("Organism|Q")
+
+  expect_equal(res$Parameters$In1NotIn2[[1]]$path, getAllParametersMatching(in1notIn2Paths, sim1)[[1]]$path)
+  expect_equal(res$Parameters$In2NotIn1[[1]]$path, getAllParametersMatching(in2notIn1Paths, sim2)[[1]]$path)
+
+  expect_equal(res$Parameters$Different[[1]]$simulation1$value, getAllParametersMatching(differentPaths, sim1)[[1]]$value)
+  expect_equal(res$Parameters$Different[[1]]$simulation2$value, getAllParametersMatching(differentPaths, sim2)[[1]]$value)
+})
 # getAllApplicationParameters
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")

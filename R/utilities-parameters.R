@@ -203,7 +203,7 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
   formula2 <- parameter2$formula
 
   # Compare by value
-  if (compareFormulasByValue){
+  if (compareFormulasByValue) {
     return(identical(parameter1$value, parameter2$value))
   }
 

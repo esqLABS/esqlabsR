@@ -156,7 +156,7 @@ compareSimulations <- function(simulation1, simulation2, compareFormulasByValue 
 
   # For parameters present in both simulations, compare parameters pair wise and
   # store them if they differ
-  paramsDiff <- sapply(commonPaths, function(path){
+  paramsDiff <- sapply(commonPaths, function(path) {
     param1 <- getParameter(path, simulation1)
     param2 <- getParameter(path, simulation2)
 
