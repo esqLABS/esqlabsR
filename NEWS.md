@@ -7,7 +7,7 @@
 defined in the `Plots.xlsx` file.
 
 - New function `saveScenarioResults()` to save results produced by the `runScenarios()` 
-function to csv files.
+function to csv files and corresponding simulations to pkml files.
 
 - New function `loadScenarioResults()` to load results from csv files into a structure
 as produced by the `runScenarios()` function.

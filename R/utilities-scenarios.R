@@ -261,6 +261,8 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
 #' @param outputFolder Optional - path to the folder where the results will be
 #' stored. If `NULL` (default), a sub-folder in
 #' `ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>`.
+#' @param saveSimulationsToPKML If `TRUE` (default), simulations corresponding to
+#' the results are saved to PKML along with the results.
 #'
 #' @details For each scenario, a separate csv file will be created. Results can be read with
 #' the `loadScenarioResults()` function.
@@ -274,12 +276,14 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
 #' )
 #' simulatedScenarios <- runScenarios(
 #'   scenarioConfigurations = scenarioConfigurations,
-#'   saveSimulationsToPKML = TRUE
+#'   saveSimulationsToPKML = FALSE
 #' )
 #' saveResults(simulatedScenarios, projectConfiguration)
 #' }
-saveScenarioResults <- function(simulatedScenarios, projectConfiguration, outputFolder = NULL) {
-  outputFolder <- file.path(
+saveScenarioResults <- function(simulatedScenarios, projectConfiguration, outputFolder = NULL, saveSimulationsToPKML = TRUE) {
+  validateIsLogical(saveSimulationsToPKML)
+
+  outputFolder <- outputFolder %||% file.path(
     projectConfiguration$outputFolder,
     "SimulationResults",
     format(Sys.time(), "%F %H-%M")
@@ -290,6 +294,7 @@ saveScenarioResults <- function(simulatedScenarios, projectConfiguration, output
     scenarioName <- names(simulatedScenarios)[[i]]
 
     outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
+    outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
     tryCatch(
       {
         # Create a new folder if it does not exist
@@ -297,6 +302,12 @@ saveScenarioResults <- function(simulatedScenarios, projectConfiguration, output
           dir.create(path = outputFolder, recursive = TRUE)
         }
         ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
+        if (saveSimulationsToPKML) {
+          ospsuite::saveSimulation(
+            simulation = simulation,
+            filePath = outputPathSim
+          )
+        }
       },
       error = function(cond) {
         warning(paste0("Cannot save to path '", outputFolder, "'"))
