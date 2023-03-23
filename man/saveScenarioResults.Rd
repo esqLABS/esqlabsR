@@ -7,7 +7,8 @@
 saveScenarioResults(
   simulatedScenarios,
   projectConfiguration,
-  outputFolder = NULL
+  outputFolder = NULL,
+  saveSimulationsToPKML = TRUE
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ as produced by \code{runScenarios()}}
 \item{outputFolder}{Optional - path to the folder where the results will be
 stored. If \code{NULL} (default), a sub-folder in
 \verb{ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>}.}
+
+\item{saveSimulationsToPKML}{If \code{TRUE} (default), simulations corresponding to
+the results are saved to PKML along with the results.}
 }
 \description{
 Save results of scenario simulations to csv.
@@ -35,7 +39,7 @@ scenarioConfigurations <- readScenarioConfigurationFromExcel(
 )
 simulatedScenarios <- runScenarios(
   scenarioConfigurations = scenarioConfigurations,
-  saveSimulationsToPKML = TRUE
+  saveSimulationsToPKML = FALSE
 )
 saveResults(simulatedScenarios, projectConfiguration)
 }
