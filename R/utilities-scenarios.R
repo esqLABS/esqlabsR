@@ -294,7 +294,6 @@ saveScenarioResults <- function(simulatedScenarios, projectConfiguration, output
     scenarioName <- names(simulatedScenarios)[[i]]
 
     outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
-    outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
     tryCatch(
       {
         # Create a new folder if it does not exist
@@ -303,6 +302,7 @@ saveScenarioResults <- function(simulatedScenarios, projectConfiguration, output
         }
         ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
         if (saveSimulationsToPKML) {
+          outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
           ospsuite::saveSimulation(
             simulation = simulation,
             filePath = outputPathSim
