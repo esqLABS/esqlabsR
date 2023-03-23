@@ -304,7 +304,7 @@ saveScenarioResults <- function(simulatedScenarios, projectConfiguration, output
         if (saveSimulationsToPKML) {
           outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
           ospsuite::saveSimulation(
-            simulation = simulation,
+            simulation = simulatedScenarios[[i]]$simulation,
             filePath = outputPathSim
           )
         }
