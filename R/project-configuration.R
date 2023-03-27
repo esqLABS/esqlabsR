@@ -17,13 +17,10 @@ ProjectConfiguration <- R6::R6Class(
     #' @field paramsFile Name of the excel file with global model
     #' parametrization. Must be located in the "paramsFolder".
     paramsFile = NULL,
-    #' @field individualParamsFile Name of the excel file with
+    #' @field individualsFile Name of the excel file with
     #' individual-specific model parametrization. Must be located in the
     #' "paramsFolder"
-    individualParamsFile = NULL,
-    #' @field individualPhysiologyFile Name of the excel file with
-    #' individual physiology information. Must be located in the "paramsFolder".
-    individualPhysiologyFile = NULL,
+    individualsFile = NULL,
     #' @field populationParamsFile Name of the excel file with population
     #' information. Must be located in the "paramsFolder".
     populationParamsFile = NULL,
@@ -59,8 +56,7 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Model folder", self$modelFolder)
       private$printLine("Parameters folder", self$paramsFolder)
       private$printLine("Parameters file name", self$paramsFile)
-      private$printLine("Individual parameters file name", self$individualParamsFile)
-      private$printLine("Individual physiology file name", self$individualPhysiologyFile)
+      private$printLine("Individual parameters file name", self$individualsFile)
       private$printLine("Population parameters file name", self$populationParamsFile)
       private$printLine("Scenario definitions file name", self$scenarioDefinitionFile)
       private$printLine("Scenario applications definitions file name", self$scenarioApplicationsFile)

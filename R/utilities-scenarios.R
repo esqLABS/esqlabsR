@@ -160,7 +160,7 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
   individualCharacteristics <- NULL
   if (!is.null(scenarioConfiguration$individualId)) {
     individualCharacteristics <- readIndividualCharacteristicsFromXLS(
-      XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$individualPhysiologyFile),
+      XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$individualsFile),
       individualId = scenarioConfiguration$individualId,
       nullIfNotFound = TRUE
     )
@@ -175,13 +175,13 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
     # Find individual-specific model parameters
     excelSheets <- readxl::excel_sheets(path = file.path(
       scenarioConfiguration$projectConfiguration$paramsFolder,
-      scenarioConfiguration$projectConfiguration$individualParamsFile
+      scenarioConfiguration$projectConfiguration$individualsFile
     ))
 
     if (any(excelSheets == scenarioConfiguration$individualId)) {
       indivModelParams <- readParametersFromXLS(file.path(
         scenarioConfiguration$projectConfiguration$paramsFolder,
-        scenarioConfiguration$projectConfiguration$individualParamsFile
+        scenarioConfiguration$projectConfiguration$individualsFile
       ), sheets = scenarioConfiguration$individualId)
 
       # Add individual model parameters to the parameters structure
