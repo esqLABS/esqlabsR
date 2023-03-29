@@ -24,7 +24,7 @@ packageInstallationMessages <- list(
 
 # List of packages that will be installed from CRAN
 .cranPackages <- c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs",
-                   "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME",
+                   "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "GenSA",
                    "patchwork", "jsonlite", "purrr", "colorspace", "rlang", "tools",
                    "labeling", "knitr", "rmarkdown"
 )
@@ -104,7 +104,7 @@ testSimulationsRunning <- function() {
   # Set scenario names to NULL if you want to simulate all scenarios defined in the
   # excel file
   # scenarioNames <- NULL
-  
+
   # Create `ScenarioConfiguration` objects from excel files
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
     scenarioNames = scenarioNames,
@@ -115,12 +115,12 @@ testSimulationsRunning <- function() {
     scenarioConfigurations = scenarioConfigurations,
     customParams = NULL, saveSimulationsToPKML = TRUE
   )
-  
+
   return(TRUE)
 }
 
 displayProgress <- function(current, success = TRUE, message = NULL, suppressOutput = TRUE) {
-  states <- c("Installing RENV", "Installing minimal PK-Sim DLLs", "Installing CRAN packages",  
+  states <- c("Installing RENV", "Installing minimal PK-Sim DLLs", "Installing CRAN packages",
 			  "Checking RTOOLS", "Installing rClr", "Installing ospsuite.utils",
               "Installing tlf", "Installing ospsuite", "Installing ospsuite.PI",
               "Installing esqlabsR", "Testing installed packages", "Testing PK-Sim connection",
@@ -333,8 +333,8 @@ installPackagesGlobally <- function(updatePackages = FALSE, pkSimPath = NULL,
 }
 
 pkSimPath <- "PKSim"
-#installPackagesLocally(pkSimPath = pkSimPath, suppressOutput = TRUE, developerVersion = TRUE)
-#installPackagesGlobally(suppressOutput = TRUE, developerVersion = TRUE)
+#installPackagesLocally(pkSimPath = pkSimPath, suppressOutput = FALSE, developerVersion = TRUE)
+#installPackagesGlobally(suppressOutput = FALSE, developerVersion = TRUE)
 
 #Clean the workspace
 #cleanEnvironment()

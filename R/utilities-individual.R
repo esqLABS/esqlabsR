@@ -73,7 +73,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' @export
 readIndividualCharacteristicsFromXLS <- function(XLSpath,
                                                  individualId,
-                                                 sheet = NULL,
+                                                 sheet = "IndividualBiometrics",
                                                  nullIfNotFound = TRUE) {
   validateIsString(c(XLSpath, individualId))
 

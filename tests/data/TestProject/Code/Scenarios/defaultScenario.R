@@ -40,7 +40,7 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
 
   ########### Load observed data########
   # Which sheets to load
-  dataSheets <- "Laskin 1982.Group A"
+  dataSheets <- c("Laskin 1982.Group A")
   observedData <- esqlabsR::loadObservedData(
     projectConfiguration = projectConfiguration,
     sheets = dataSheets

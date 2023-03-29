@@ -19,7 +19,6 @@
          Parameters folder: 
          Parameters file name: 
          Individual parameters file name: 
-         Individual physiology file name: 
          Population parameters file name: 
          Scenario definitions file name: 
          Scenario applications definitions file name: 
