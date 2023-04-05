@@ -301,7 +301,7 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
       individual = plotIndividualTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
       population = {
         quantiles <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$quantiles
-        if (is.na(quantiles)) {
+        if (is.na(quantiles) | is.null(quantiles)) {
           plotPopulationTimeProfile(dataCombined, plotConfigurationList[[plotId]])
         } else {
           plotPopulationTimeProfile(dataCombined, plotConfigurationList[[plotId]],
