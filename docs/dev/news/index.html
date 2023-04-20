@@ -64,8 +64,23 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="5.0.0" id="esqlabsr-500">esqlabsR 5.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-500"></a></h2>
 <div class="section level4">
+<h4 id="new-functionalities-5-0-0">New functionalities<a class="anchor" aria-label="anchor" href="#new-functionalities-5-0-0"></a></h4>
+<ul><li><p>Plots can be created by calling the new function <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>. It requires as input parameters <code>simulatedScenarios</code> (a list of simulated scenarios as returned by <code><a href="../reference/runScenarios.html">runScenarios()</a></code>), <code>observedData</code> (a list of <code>DataSet</code> objects) and a <code>ProjectConfiguration</code> object <code>projectConfiguration</code>.</p></li>
+<li><p>New function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> creates <code>DataCombined</code> objects as defined in the <code>Plots.xlsx</code> file.</p></li>
+<li><p>New function <code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code> to save results produced by the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function to csv files and corresponding simulations to pkml files.</p></li>
+<li><p>New function <code><a href="../reference/loadScenarioResults.html">loadScenarioResults()</a></code> to load results from csv files into a structure as produced by the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function.</p></li>
+<li><p><code>ScenarioConfiguration</code> supports custom functions to modify the <code>Simulation</code> object as the last step of scenario initialization. For this, the <code>ScenarioConfiguration</code> class gets new fields <code>customFunction</code> and <code>customFunctionArgs</code>.</p></li>
+<li><p>New function <code>compareSimulation()</code> to compare two simulations for differences.</p></li>
+<li><p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> also returns a <code>Population</code> object for population simulations.</p></li>
+<li><p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> gets a new argument <code>savePopulationToCSV</code>, with default value <code>FALSE</code>.</p></li>
+</ul></div>
+<div class="section level4">
 <h4 id="breaking-changes-5-0-0">BREAKING CHANGES<a class="anchor" aria-label="anchor" href="#breaking-changes-5-0-0"></a></h4>
-<ul><li>
+<ul><li>Function <code>compareSimulationParameters()</code> has been removed and replaced by <code><a href="../reference/compareSimulations.html">compareSimulations()</a></code>
+</li>
+<li>
+<code>Scenarios</code> excel file gets additional columns <code>SteadyStateTime</code>, <code>SteadyStateTimeUnit</code>, <code>PopulationId</code>, <code>OutputPathsIds</code>.</li>
+<li>
 <code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> has a new signature and requires a list of <code>scenarioNames</code> and a <code>ProjectConfiguration</code>. The output is a named list of <code>ScenarioConfiguration</code> objects.</li>
 <li>
 <code><a href="../reference/initializeScenario.html">initializeScenario()</a></code> does not update scenario configuration from excel any more.</li>
@@ -77,7 +92,13 @@
 </ul></div>
 <div class="section level4">
 <h4 id="major-changes-5-0-0">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-5-0-0"></a></h4>
-<ul><li><p><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> - fixed bug in wrong calculation of sensitivity values. Please be aware that the results produced by earlier versions are wrong.</p></li>
+<ul><li>Paths of model outputs are defined in the excel file <code>Scenarios.xlsx</code>. In the sheet <code>OutputPaths</code>, create an entry for each output. The column <code>OutputPath</code> is the full path to the output, while <code>OutputPathId</code> is an identifier that conveniently allows to select the correct output. In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs should be generated for, separated by a <code>,</code>, e.g. <code>Aciclovir_PVB, Aciclovir_fat_cell</code>.</li>
+</ul><p>If no outputs are specified, the outputs as defined in the simulation <code>.pkml</code> file will be produced.</p>
+<ul><li><p><code>ScenarioConfiguration</code> gets a new field <code>populationId</code>, specifying the id of the population as defined in the <code>PopulationParameters.xlsx</code> file, sheet <code>Demographics</code>. If the field is <code>NULL</code>, the scenario is simulated as an individual simulation, otherwise a population simulation is performed.</p></li>
+<li><p><code>ScenarioConfiguration</code> gets a new field <code>readPopulationFromCSV</code>. If <code>FALSE</code> (default), a new population is created from defined population demographics. If <code>TRUE</code>, a simulation will be imported from a csv sheet located in the folder <code>Parameters/Populations</code> and named as the <code>PopulationId</code>.</p></li>
+<li><p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> supports scenario configurations for population simulations</p></li>
+<li><p>Target folder for saving <code>*.pkml</code> simulations when <code>runScenarios(scenarioConfigurations, saveSimulationsToPKML = TRUE)</code> changed from <code>Models/Simulations/&lt;DateSuffix&gt;</code> to <code>Results/SimulationResults/&lt;DateSuffix&gt;</code>.</p></li>
+<li><p><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> - fixed bug in wrong calculation of sensitivity values. Please be aware that the results produced by earlier versions are wrong.</p></li>
 <li><p><code>ScenarioConfiguration</code> gets a new field <code>outputPaths</code> which is a list of output paths for which the results will be calculated. If <code>NULL</code> (default), outputs as defined in the simulation are used.</p></li>
 <li>
 <p>The workflow for running scenarios changed to:</p>
@@ -89,13 +110,14 @@
 </li>
 </ul></li>
 <li><p><code>ProjectConfiguration</code> gets a new field <code>plotsFile</code>. It is the name of the excel file with plot definitions and must be located in the <code>paramsFolder</code>.</p></li>
-<li><p>Plots can be created by calling the new function <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>. It requires as input parameters <code>simulatedScenarios</code> (a list of simulated scenarios as returned by <code><a href="../reference/runScenarios.html">runScenarios()</a></code>), <code>observedData</code> (a list of <code>DataSet</code> objects) and a <code>ProjectConfiguration</code> object <code>projectConfiguration</code>.</p></li>
-<li><p><code>ScenarioConfiguration</code> supports custom functions to modify the <code>Simulation</code> object as the last step of scenario initialization. For this, the <code>ScenarioConfiguration</code> class gets new fields <code>customFunction</code> and <code>customFunctionArgs</code>.</p></li>
+<li><p>When defining an individual of other species than human in <code>ScenarioConfiguration</code> and applying it to a human model, missing species-specific parameters are applied and the scaling works properly. Supported scalingsa are: Human to rat, human to monkey, human to rabbit.</p></li>
 </ul></div>
 <div class="section level4">
 <h4 id="minor-changes-5-0-0">MINOR CHANGES<a class="anchor" aria-label="anchor" href="#minor-changes-5-0-0"></a></h4>
 <ul><li><p>Function <code><a href="../reference/stringToNum.html">stringToNum()</a></code> gets additional arguments <code>lloqMode</code> and <code>uloqMode</code> that determine how entries of type “&lt;number” and “&gt;number” will be treated.</p></li>
 <li><p><code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> will read all scenarios defined in the <code>Scenarios.xlsx</code> file if no scenario names are specified (argument <code>scenarioNames = NULL</code>).</p></li>
+<li><p>Default name of the excel file with definition of individual biometrics changed from <code>IndividualPhysiology.xlsx</code> to <code>IndividualBiometrics.xlsx</code>.</p></li>
+<li><p>Dark grey frame around legends by default.</p></li>
 </ul><hr></div>
 </div>
     <div class="section level2">

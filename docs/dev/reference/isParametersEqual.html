@@ -68,7 +68,12 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">isParametersEqual</span><span class="op">(</span><span class="va">parameter1</span>, <span class="va">parameter2</span>, checkFormulaValues <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">isParametersEqual</span><span class="op">(</span></span>
+<span>  <span class="va">parameter1</span>,</span>
+<span>  <span class="va">parameter2</span>,</span>
+<span>  checkFormulaValues <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  compareFormulasByValue <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -85,6 +90,10 @@
 <dd><p>If TRUE, values of explicit formulas are always
 compared. Otherwise, the values are only compared if the formulas are
 overridden (isFixedValue == TRUE). FALSE by default.</p></dd>
+
+
+<dt>compareFormulasByValue</dt>
+<dd><p>If <code>FALSE</code>(default), formulas are compared by their types and string. If <code>TRUE</code>, only values are compared.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -92,6 +92,13 @@ in the excel file "ApplicationParameters.xlsx"</p></dd>
 If <code>NULL</code> (default), the individual as defined in the simulation file will be simulated.</p></dd>
 
 
+<dt><code>populationId</code></dt>
+<dd><p>Id of the population as specified in "PopulationParameters.xlsx",
+sheet "Demographics". If <code>ScenarioConfguration$simulationType</code> is <code>population</code>,
+a population will be created a the scenario will be simulated as a population
+simulation.</p></dd>
+
+
 <dt><code>outputPaths</code></dt>
 <dd><p>a list of output paths for which the results will be
 calculated. If <code>NULL</code> (default), outputs as defined in the simulation
@@ -110,6 +117,12 @@ in <code>TestParameters</code> are to be applied to the simulation</p></dd>
 <dt><code>simulateSteadyState</code></dt>
 <dd><p>Boolean representing whether the simulation
 will be brought to a steady-state first</p></dd>
+
+
+<dt><code>readPopulationFromCSV</code></dt>
+<dd><p>Boolean representing whether the a new population
+will be created (value is <code>FALSE</code>) or an existing population will be imported
+from a csv.</p></dd>
 
 
 <dt><code>simulationTime</code></dt>
@@ -192,6 +205,17 @@ Named list of type <code>list(argumentName = value)</code></p></dd>
 <h4 id="returns">Returns<a class="anchor" aria-label="anchor" href="#returns"></a></h4>
 <p>A new <code>ScenarioConfiguration</code> object.</p>
 </div>
+<div class="section">
+<h4 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h4>
+<p></p><div class="r example copy"><div class="sourceCode"><pre><code>\dontrun{
+#This example gets the current value of the "Age" parameter and multiplies
+#it by a factor coming from argument.
+#Assume that scenarioConfiguration has been created from excel.
+scenarioConfiguration$customFunction &lt;- function(
+}
+</code></pre></div><p></p></div>
+</div>
+
 
 </div><p></p><hr><a id="method-ScenarioConfiguration-addParamSheets"></a><div class="section">
 <h3 id="method-addparamsheets-">Method <code>addParamSheets()</code><a class="anchor" aria-label="anchor" href="#method-addparamsheets-"></a></h3>
@@ -264,6 +288,10 @@ If <code>NULL</code> (default), all sheets are removed</p></dd>
 
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 
