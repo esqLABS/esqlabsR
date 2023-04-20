@@ -35,7 +35,9 @@ Imports:
     vctrs,
     writexl,
     stringr,
-    labeling
+    labeling,
+    showtext,
+    sysfonts
 Suggests: 
     clipr,
     knitr,
