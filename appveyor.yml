@@ -52,9 +52,9 @@ before_test:
   - pandoc -v
 
 build_script:
-  - travis-tool.sh install_deps
   - travis-tool.sh r_binary_install curl
   - Rscript install_ext_deps.R
+  - travis-tool.sh install_deps
 
 test_script:
   - travis-tool.sh run_tests
