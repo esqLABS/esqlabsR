@@ -22,12 +22,9 @@ parametrization; relative to the "Code" folder.}
 \item{\code{paramsFile}}{Name of the excel file with global model
 parametrization. Must be located in the "paramsFolder".}
 
-\item{\code{individualParamsFile}}{Name of the excel file with
+\item{\code{individualsFile}}{Name of the excel file with
 individual-specific model parametrization. Must be located in the
 "paramsFolder"}
-
-\item{\code{individualPhysiologyFile}}{Name of the excel file with
-individual physiology information. Must be located in the "paramsFolder".}
 
 \item{\code{populationParamsFile}}{Name of the excel file with population
 information. Must be located in the "paramsFolder".}
