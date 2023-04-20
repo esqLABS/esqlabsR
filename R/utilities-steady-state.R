@@ -9,8 +9,8 @@
 #'   file is located. The name of the file will be `<SimulationFileName>_SS`.
 #' @param simulation A `Simulation` object that will be updated with the steady
 #' state
-#' @inheritParams getSteadyState
-#' @import ospsuite.utils
+#' @inheritParams ospsuite.parameteridentification::getSteadyState
+#' @import ospsuite.utils ospsuite.parameteridentification
 #' @export
 exportSteadyStateToXLS <- function(simulation,
                                    quantitiesPaths = NULL,
