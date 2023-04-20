@@ -17,6 +17,7 @@ install.packages(c("clipr",
                    "knitr",
                    "openxlsx",
                    "rmarkdown",
+                   "showtext", # to pass snaps tests
                    "shinytest2",
                    "testthat",
                    "vdiffr",

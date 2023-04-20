@@ -39,12 +39,13 @@ Imports:
     tools,
     vctrs,
     writexl
-Suggests: 
+Suggests:
     clipr,
     knitr,
     openxlsx,
     rmarkdown,
     shinytest2,
+    showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
     withr
