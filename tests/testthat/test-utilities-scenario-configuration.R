@@ -119,7 +119,7 @@ test_that("It creates all scenarios if no name is defined", {
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
     projectConfiguration = projectConfiguration
   )
-  expect_equal(names(scenarioConfigurations), c("TestScenario", "TestScenario2", "PopulationScenario"))
+  expect_equal(names(scenarioConfigurations), c("TestScenario", "TestScenario2", "PopulationScenario", "PopulationScenarioFromCSV"))
 })
 
 test_that("It correctly applies a custom function", {
