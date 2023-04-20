@@ -2,14 +2,15 @@ Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
 Version: 5.0.0
-Authors@R: 
-    c(person("esqLABS GmbH", role = c("cph", "fnd")),
-      person("Pavel", "Balazki", , "https://github.com/PavelBal", role = c("cre", "aut"), 
-      email = "pavel.balazki@esqlabs.com"),
-      person("Johanna", "Eitel", , "https://github.com/hannaei", role = "aut"),
-      person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
+Authors@R: c(
+    person("esqLABS GmbH", role = c("cph", "fnd")),
+    person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
+           comment = "https://github.com/PavelBal"),
+    person("Johanna", "Eitel", , "https://github.com/hannaei", role = "aut"),
+    person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
            comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")),
-      person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"))
+    person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut")
+  )
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects
     within 'esqLABS' organization.
@@ -18,27 +19,30 @@ URL: https://github.com/esqLABS/esqlabsR
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
     R (>= 4.1),
-    ospsuite (>= 11.1),
-    ospsuite.parameteridentification (>= 1.2)
+    ospsuite (>= 11.1)
 Imports:
     colorspace,
     dplyr,
     ggplot2,
+    hash,
+    labeling,
     ospsuite.utils (>= 1.4.0),
+    parallel,
     purrr,
+    R6,
     readxl,
     shiny,
     shinyjs,
-    tidyr,
-    tools,
-    tlf (>= 1.5.0),
-    vctrs,
-    writexl,
     stringr,
-    labeling
+    tidyr,
+    tlf (>= 1.5.0),
+    tools,
+    vctrs,
+    writexl
 Suggests: 
     clipr,
     knitr,
+    openxlsx,
     rmarkdown,
     shinytest2,
     testthat (>= 3.0.0),
@@ -46,6 +50,10 @@ Suggests:
     withr
 VignetteBuilder: 
     knitr
+Remotes:
+    Open-Systems-Pharmacology/OSPSuite-R,
+    Open-Systems-Pharmacology/OSPSuite.RUtils,
+    Open-Systems-Pharmacology/TLF-Library
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US

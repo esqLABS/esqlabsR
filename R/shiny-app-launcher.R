@@ -1,5 +1,7 @@
 #' Start function visualizer
 #' @details Starts a shiny app for visualizing of function values.
+#' @import shiny
+#' @import shinyjs
 #' @export
 startFunctionVisualizer <- function() {
   appDir <- system.file("FunctionVisualizer", package = "esqlabsR")
