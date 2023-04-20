@@ -26,7 +26,7 @@ packageInstallationMessages <- list(
 .cranPackages <- c("R6", "stringr", "readr", "hash", "readxl", "shiny", "shinyjs",
                    "vctrs", "writexl", "dplyr", "tidyr", "ggplot2", "FME", "GenSA",
                    "patchwork", "jsonlite", "purrr", "colorspace", "rlang", "tools",
-                   "labeling", "knitr", "rmarkdown"
+                   "labeling", "knitr", "rmarkdown", "data.table"
 )
 #Download paths of released package versions
 .releasePaths <- list(ospsuite.utils = "https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.4.23/ospsuite.utils_1.4.23.tar.gz",

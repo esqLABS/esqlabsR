@@ -12,8 +12,8 @@ saveScenarioResults(
 )
 }
 \arguments{
-\item{simulatedScenarios}{Named list with \code{simulation}, \code{results} and \code{outputValues}
-as produced by \code{runScenarios()}}
+\item{simulatedScenarios}{Named list with \code{simulation}, \code{results}, \code{outputValues},
+and \code{population} as produced by \code{runScenarios()}.}
 
 \item{projectConfiguration}{An instance of \code{ProjectConfiguration}}
 
@@ -28,8 +28,9 @@ the results are saved to PKML along with the results.}
 Save results of scenario simulations to csv.
 }
 \details{
-For each scenario, a separate csv file will be created. Results can be read with
-the \code{loadScenarioResults()} function.
+For each scenario, a separate csv file will be created. If the scenario
+is a population simulation, a population is stored along with the results with
+the file name suffix \verb{_population}. Results can be read with the \code{loadScenarioResults()} function.
 }
 \examples{
 \dontrun{

@@ -57,6 +57,10 @@ in \code{TestParameters} are to be applied to the simulation}
 \item{\code{simulateSteadyState}}{Boolean representing whether the simulation
 will be brought to a steady-state first}
 
+\item{\code{readPopulationFromCSV}}{Boolean representing whether the a new population
+will be created (value is \code{FALSE}) or an existing population will be imported
+from a csv.}
+
 \item{\code{simulationTime}}{Simulation time in minutes. If \code{NULL} (default),
 simulation time as defined in the \code{Simulation} object will be used.}
 
