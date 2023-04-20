@@ -23,4 +23,3 @@ install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/dow
 # No longer depending on
 # download.file('https://ci.appveyor.com/api/projects/StephanSchaller/esqlabs-parameteridentification/artifacts/ospsuite.parameteridentification.zip?pr=false', destfile = 'ospsuite.parameteridentification.zip', mode='wb', headers = c('Authorization' = 'Bearer v2.4n7xybvbbboj2ye9fmk5')); install.packages('ospsuite.parameteridentification.zip', repos = NULL, type = 'binary')"
 
-
