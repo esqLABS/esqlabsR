@@ -23,13 +23,23 @@ install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/dow
                   repos = NULL, 
                   type = 'binary')
 remotes::install_github("esqLABS/esqlabsR")
+
 ``` 
 
-  
 ### For projects created for version 3
 
 To run code written for version 3 of `esqlabsR` package, additionally install the
 [esqlabsRLegacy](https://github.com/esqLABS/esqlabsRLegacy) package.
+
+## Open Systems Pharmacology Packages
+
+`{esqlabsR}` relies on the following Open Systems Pharmacology packages:
+  - [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
+  - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils) > 1.4.0
+  - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library) > 1.5.0
+  - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.1
+  - [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification) > 1.2
+  
 
 ## Contributing
 
