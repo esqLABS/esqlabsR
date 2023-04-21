@@ -155,6 +155,8 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
     )
   }
 
+  # Call gc() on .NET
+  ospsuite::clearMemory()
   return(returnList)
 }
 
