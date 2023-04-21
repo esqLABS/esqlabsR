@@ -34,6 +34,7 @@ To run code written for version 3 of `esqlabsR` package, additionally install th
 ## Open Systems Pharmacology Packages
 
 `{esqlabsR}` relies on the following Open Systems Pharmacology packages:
+
   - [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
   - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils) > 1.4.0
   - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library) > 1.5.0
