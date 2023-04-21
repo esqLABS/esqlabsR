@@ -10,8 +10,7 @@ Authors@R: c(
     person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
            comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")),
     person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"),
-    person("Felix", "MIL", , "felix.mil@esqlabs.com", role = c("aut"),
-       comment = "https://github.com/Felixmil")
+    person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut"))
   )
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects
