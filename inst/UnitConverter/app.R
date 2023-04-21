@@ -1,6 +1,7 @@
 #---------- Initialization of app ----------#
 # Load required packages
 require(shiny)
+require(shinyjs)
 
 #---------- User interface ----------#
 ui <- fluidPage(
