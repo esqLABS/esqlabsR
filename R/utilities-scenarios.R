@@ -94,7 +94,7 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
       )
     }
 
-    # Save population to SCV
+    # Save population to CSV
     if (savePopulationToCSV) {
       outputFolder <- file.path(
         scenarioConfiguration$projectConfiguration$outputFolder,
