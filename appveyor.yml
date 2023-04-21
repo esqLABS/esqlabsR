@@ -53,7 +53,7 @@ before_test:
 
 build_script:
   - travis-tool.sh install_deps
-  - travis-tool.sh r_binary_install curl
+  # - travis-tool.sh r_binary_install curl
   - Rscript install_ext_deps.R
 
 test_script:
