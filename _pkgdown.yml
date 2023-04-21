@@ -34,6 +34,7 @@ reference:
       - matches("^set")
       - matches("^write")
       - matches("^export")
+      - createDataCombinedFromExcel
 
   - title: Helpers for modeling and simulation
     #desc:
