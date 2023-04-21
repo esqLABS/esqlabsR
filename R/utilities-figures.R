@@ -391,8 +391,9 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
       }
       # For fields that require multiple values (e.g., axis limits require the
       # upper and the lower limit value), values are separated by a ','.
-      # Split the input string first
-      value <- unlist(strsplit(as.character(value), split = ","))
+      # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
+      # Split the input string by ',' but do not split within ""
+      value <- unlist(scan(text = as.character(value), what = "character", sep = ","))
 
       # Expected type of the field to cast the value to the
       # correct type. For fields that do not have a default value (NULL), we have
