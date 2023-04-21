@@ -7,15 +7,20 @@
 #' units the values are in. The values to be applied to the model.
 #' @param saveSimulationsToPKML Logical, defaults to `FALSE`. If `TRUE`,
 #' initialized simulations are saved to PKML before simulating. The output folder
-#' is the `Results/SimulationResults/<DateSuffix>`. The name of the file is the name of the scenario.
+#' is the `Results/Simulations/<DateSuffix>`. The name of the file is the name of the scenario.
+#' @param savePopulationToCSV Logical, defaults to `FALSE`. If `TRUE`,
+#' populations of population scenarios are saved to csv before simulating. The output folder
+#' is the `Results/Populations/<DateSuffix>`. The name of the file is the name of the scenario
+#' with suffix `_population`.
 #'
 #' @return A named list, where the names are scenario names, and the values are
 #' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
 #' `results` being `SimulatioResults` object produced by running the simulation,
-#' and `outputValues` the output values of the `SimulationResults`.
+#' `outputValues` the output values of the `SimulationResults`, and `population`
+#' the `Population` object if the scenario is a population simulation.
 #' @export
 runScenarios <- function(scenarioConfigurations, customParams = NULL,
-                         saveSimulationsToPKML = FALSE) {
+                         saveSimulationsToPKML = FALSE, savePopulationToCSV = FALSE) {
   .validateScenarioConfigurations(scenarioConfigurations)
   validateIsLogical(saveSimulationsToPKML)
   .validateParametersStructure(
@@ -43,12 +48,17 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
 
     # Create a population for population scenarios
     if (scenarioConfiguration$simulationType == "Population") {
-      popCharacteristics <- readPopulationCharacteristicsFromXLS(
-        XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$populationParamsFile),
-        populationName = scenarioConfiguration$populationId,
-        sheet = "Demographics"
-      )
-      population <- createPopulation(populationCharacteristics = popCharacteristics)
+      if (scenarioConfiguration$readPopulationFromCSV) {
+        populationPath <- paste0(file.path(scenarioConfiguration$projectConfiguration$paramsFolder, "Populations", scenarioConfiguration$populationId), ".csv")
+        population <- loadPopulation(populationPath)
+      } else {
+        popCharacteristics <- readPopulationCharacteristicsFromXLS(
+          XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$populationParamsFile),
+          populationName = scenarioConfiguration$populationId,
+          sheet = "Demographics"
+        )
+        population <- createPopulation(populationCharacteristics = popCharacteristics)
+      }
     }
     populations[[i]] <- population
 
@@ -56,7 +66,7 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
     if (saveSimulationsToPKML) {
       outputFolder <- file.path(
         scenarioConfiguration$projectConfiguration$outputFolder,
-        "SimulationResults",
+        "Simulations",
         outputFolderSuffix
       )
       # Create a new folder if it does not exist
@@ -83,6 +93,24 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
         }
       )
     }
+
+    # Save population to CSV
+    if (savePopulationToCSV) {
+      outputFolder <- file.path(
+        scenarioConfiguration$projectConfiguration$outputFolder,
+        "Populations",
+        outputFolderSuffix
+      )
+      # Create a new folder if it does not exist
+      if (!dir.exists(paths = outputFolder)) {
+        dir.create(path = outputFolder, recursive = TRUE)
+      }
+      if (!is.null(simulatedScenarios[[i]]$population) && !is.na(simulatedScenarios[[i]]$population)) {
+        ospsuite::exportPopulationToCSV(simulatedScenarios[[i]]$population$population,
+          filePath = file.path(outputFolder, paste0(scenarioName, "population.csv"))
+        )
+      }
+    }
   }
   names(simulations) <- scenarioNames
   names(scenarioConfigurations) <- scenarioNames
@@ -107,6 +135,7 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
   for (simulationName in scenarioNames) {
     simulation <- simulations[[simulationName]]
     results <- simulationResults[[simulation$id]]
+    population <- populations[[simulationName]]
 
     # Retrieving quantities from paths to support pattern matching with '*'
     outputQuantities <- NULL
@@ -121,7 +150,8 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
     )
     returnList[[simulationName]] <- list(
       simulation = simulation, results = results,
-      outputValues = outputValues
+      outputValues = outputValues,
+      population = population
     )
   }
 
@@ -255,8 +285,8 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
 
 #' Save results of scenario simulations to csv.
 #'
-#' @param simulatedScenarios Named list with `simulation`, `results` and `outputValues`
-#' as produced by `runScenarios()`
+#' @param simulatedScenarios Named list with `simulation`, `results`, `outputValues`,
+#' and `population` as produced by `runScenarios()`.
 #' @param projectConfiguration An instance of `ProjectConfiguration`
 #' @param outputFolder Optional - path to the folder where the results will be
 #' stored. If `NULL` (default), a sub-folder in
@@ -264,8 +294,9 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
 #' @param saveSimulationsToPKML If `TRUE` (default), simulations corresponding to
 #' the results are saved to PKML along with the results.
 #'
-#' @details For each scenario, a separate csv file will be created. Results can be read with
-#' the `loadScenarioResults()` function.
+#' @details For each scenario, a separate csv file will be created. If the scenario
+#' is a population simulation, a population is stored along with the results with
+#' the file name suffix `_population`. Results can be read with the `loadScenarioResults()` function.
 #'
 #' @export
 #'
@@ -300,12 +331,20 @@ saveScenarioResults <- function(simulatedScenarios, projectConfiguration, output
         if (!dir.exists(paths = outputFolder)) {
           dir.create(path = outputFolder, recursive = TRUE)
         }
+        # Save results
         ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
+        # Save simulations
         if (saveSimulationsToPKML) {
           outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
           ospsuite::saveSimulation(
             simulation = simulatedScenarios[[i]]$simulation,
             filePath = outputPathSim
+          )
+        }
+        # Save population
+        if (!is.null(simulatedScenarios[[i]]$population) && all(!is.na(simulatedScenarios[[i]]$population))) {
+          ospsuite::exportPopulationToCSV(simulatedScenarios[[i]]$population$population,
+            filePath = file.path(outputFolder, paste0(scenarioName, "_population.csv"))
           )
         }
       },

@@ -28,13 +28,17 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 
   # Current scenario definition structure:
-  expectedColumns <- c("Scenario_name", "IndividualId", "PopulationId", "ModelParameterSheets", "ApplicationProtocol",
-                       "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
-                       "OutputPathsIds")
-  #Define the casting functions to cast columns to specific type
-  colTypes <- c("as.character", "as.character", "as.character", "as.character",
-                "as.character", "as.numeric", "as.character", "as.logical",
-                "as.numeric", "as.character", "as.character", "as.character")
+  expectedColumns <- c(
+    "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol",
+    "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
+    "OutputPathsIds"
+  )
+  # Define the casting functions to cast columns to specific type
+  colTypes <- c(
+    "as.character", "as.character", "as.character", "as.logical", "as.character",
+    "as.character", "as.numeric", "as.character", "as.logical",
+    "as.numeric", "as.character", "as.character", "as.character"
+  )
 
   # Read data without specifying column types. This is required to generate a
   # meaningful error message if the input file has wrong column structure
@@ -108,6 +112,11 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     if (!is.na(data$PopulationId)) {
       scenarioConfiguration$populationId <- data$PopulationId
       scenarioConfiguration$simulationType <- "Population"
+    }
+
+    # ReadPopulationFromCSV
+    if (!is.na(data$ReadPopulationFromCSV)) {
+      scenarioConfiguration$readPopulationFromCSV <- data$ReadPopulationFromCSV
     }
 
     # Application protocol

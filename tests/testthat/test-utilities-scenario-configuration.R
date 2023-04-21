@@ -134,7 +134,7 @@ test_that("It creates all scenarios if no name is defined", {
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
     projectConfiguration = projectConfiguration
   )
-  expect_equal(names(scenarioConfigurations), c("TestScenario", "TestScenario2", "PopulationScenario"))
+  expect_equal(names(scenarioConfigurations), c("TestScenario", "TestScenario2", "PopulationScenario", "PopulationScenarioFromCSV"))
 })
 
 test_that("It correctly applies a custom function", {
@@ -209,9 +209,11 @@ test_that("It throws an error when no population is specified for a population s
 })
 
 test_that("It throws an error when reading wrong file structure for scenario configuration", {
-  expectedColumns <- c("Scenario_name", "IndividualId", "PopulationId", "ModelParameterSheets", "ApplicationProtocol",
-                       "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
-                       "OutputPathsIds")
+  expectedColumns <- c(
+    "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol",
+    "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
+    "OutputPathsIds"
+  )
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$paramsFolder <- tempDir
@@ -227,7 +229,8 @@ test_that("It throws an error when reading wrong file structure for scenario con
         regexp = messages$errorWrongXLSStructure(filePath = file.path(
           projectConfigurationLocal$paramsFolder,
           projectConfigurationLocal$scenarioDefinitionFile
-        ), expectedColNames = expectedColumns), fixed = TRUE)
+        ), expectedColNames = expectedColumns), fixed = TRUE
+      )
     }
   )
 })

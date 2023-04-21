@@ -33,6 +33,7 @@
          Parameters sheets: mySheet1 mySheet2 
          Individual Id: 
          Population Id: 
+         Read population from csv file: FALSE 
          Application protocol: 
          Simulation time: 10 
          Points per minute: 100 

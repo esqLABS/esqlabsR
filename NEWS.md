@@ -18,6 +18,9 @@ class gets new fields `customFunction` and `customFunctionArgs`.
 
 - New function `compareSimulation()` to compare two simulations for differences.
 
+- `runScenarios()` also returns a `Population` object for population simulations.
+- `runScenarios()` gets a new argument `savePopulationToCSV`, with default value `FALSE`.
+
 ### BREAKING CHANGES
 
 - Function `compareSimulationParameters()` has been removed and replaced by `compareSimulations()`
@@ -48,6 +51,11 @@ will be produced.
 the population as defined in the `PopulationParameters.xlsx` file, sheet `Demographics`.
 If the field is `NULL`, the scenario is simulated as an individual simulation, 
 otherwise a population simulation is performed.
+
+- `ScenarioConfiguration` gets a new field `readPopulationFromCSV`. If `FALSE` (default), 
+a new population is created from defined population demographics. If `TRUE`, a simulation
+will be imported from a csv sheet located in the folder `Parameters/Populations` and 
+named as the `PopulationId`.
 
 - `runScenarios()` supports scenario configurations for population simulations
 
