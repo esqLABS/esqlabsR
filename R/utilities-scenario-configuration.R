@@ -28,10 +28,10 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 
   # Current scenario definition structure:
-  # "Scenario_name", "IndividualId", "PopulationId", "ModelParameterSheets", "ApplicationProtocol",
+  # "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol",
   # "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
   # "OutputPathsIds"
-  colTypes <- c("text", "text", "text", "text", "text", "numeric", "text", "logical", "numeric", "text", "text", "text")
+  colTypes <- c("text", "text", "text", "logical", "text", "text", "numeric", "text", "logical", "numeric", "text", "text", "text")
   wholeData <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
@@ -89,6 +89,11 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     if (!is.na(data$PopulationId)) {
       scenarioConfiguration$populationId <- data$PopulationId
       scenarioConfiguration$simulationType <- "Population"
+    }
+
+    # ReadPopulationFromCSV
+    if (!is.na(data$ReadPopulationFromCSV)) {
+      scenarioConfiguration$readPopulationFromCSV <- data$ReadPopulationFromCSV
     }
 
     # Application protocol

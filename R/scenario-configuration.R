@@ -25,7 +25,26 @@ ScenarioConfiguration <- R6::R6Class(
         private$.simulateSteadyState
       } else {
         validateIsLogical(value)
+        # If the value is `NA`, do not change
+        if (is.na(value)) {
+          invisible()
+        }
         private$.simulateSteadyState <- value
+      }
+    },
+    #' @field readPopulationFromCSV Boolean representing whether the a new population
+    #' will be created (value is `FALSE`) or an existing population will be imported
+    #' from a csv.
+    readPopulationFromCSV = function(value) {
+      if (missing(value)) {
+        private$.readPopulationFromCsv
+      } else {
+        validateIsLogical(value)
+        # If the value is `NA`, do not change
+        if (is.na(value)) {
+          invisible()
+        }
+        private$.readPopulationFromCsv <- value
       }
     },
     #' @field simulationTime Simulation time in minutes. If `NULL` (default),
@@ -155,6 +174,7 @@ a parameter sheet from the list"
     .individualCharacteristics = NULL,
     .paramSheets = NULL,
     .simulationType = "Individual",
+    .readPopulationFromCsv = FALSE,
     .simulationRunOptions = NULL,
     .customFunction = NULL,
     .customFunctionArgs = list()
@@ -221,6 +241,7 @@ a parameter sheet from the list"
       private$printLine("Parameters sheets", enumKeys(self$paramSheets))
       private$printLine("Individual Id", self$individualId)
       private$printLine("Population Id", self$populationId)
+      private$printLine("Read population from csv file", self$readPopulationFromCSV)
       private$printLine("Application protocol", self$applicationProtocol)
       private$printLine("Simulation time", self$simulationTime)
       private$printLine("Points per minute", self$pointsPerMinute)
