@@ -7,7 +7,8 @@
 runScenarios(
   scenarioConfigurations,
   customParams = NULL,
-  saveSimulationsToPKML = FALSE
+  saveSimulationsToPKML = FALSE,
+  savePopulationToCSV = FALSE
 )
 }
 \arguments{
@@ -20,13 +21,19 @@ units the values are in. The values to be applied to the model.}
 
 \item{saveSimulationsToPKML}{Logical, defaults to \code{FALSE}. If \code{TRUE},
 initialized simulations are saved to PKML before simulating. The output folder
-is the \verb{Results/SimulationResults/<DateSuffix>}. The name of the file is the name of the scenario.}
+is the \verb{Results/Simulations/<DateSuffix>}. The name of the file is the name of the scenario.}
+
+\item{savePopulationToCSV}{Logical, defaults to \code{FALSE}. If \code{TRUE},
+populations of population scenarios are saved to csv before simulating. The output folder
+is the \verb{Results/Populations/<DateSuffix>}. The name of the file is the name of the scenario
+with suffix \verb{_population}.}
 }
 \value{
 A named list, where the names are scenario names, and the values are
 lists with the entries \code{simulation} being the initialized \code{Simulation} object with applied parameters,
 \code{results} being \code{SimulatioResults} object produced by running the simulation,
-and \code{outputValues} the output values of the \code{SimulationResults}.
+\code{outputValues} the output values of the \code{SimulationResults}, and \code{population}
+the \code{Population} object if the scenario is a population simulation.
 }
 \description{
 Run a set of scenarios.
