@@ -18,7 +18,8 @@ startUnitConverter <- function() {
 }
 
 #' Check if shiny, shinyjs packages are installed
-checkShinyPackages <- function() {
+#' @noRd
+checkShinyDeps <- function() {
   rlang::check_installed("shiny", reason = "to launch this shiny App")
   rlang::check_installed("shinyjs", reason = "to launch this shiny App")
 }
