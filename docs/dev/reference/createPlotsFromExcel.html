@@ -69,6 +69,7 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">createPlotsFromExcel</span><span class="op">(</span></span>
+<span>  plotGridNames <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">simulatedScenarios</span>,</span>
 <span>  <span class="va">observedData</span>,</span>
 <span>  <span class="va">projectConfiguration</span>,</span>
@@ -78,7 +79,14 @@
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
-    <dl><dt>simulatedScenarios</dt>
+    <dl><dt>plotGridNames</dt>
+<dd><p>Names of the plot grid specified in the sheet <code>plotGrids</code>
+for which the figures will be created. If <code>NULL</code> (default), all plot grids
+specified in the excel sheet will be created. If a plot grid with a given name
+does not exist, an error is thrown.</p></dd>
+
+
+<dt>simulatedScenarios</dt>
 <dd><p>A list of simulated scenarios as returned by <code><a href="runScenarios.html">runScenarios()</a></code></p></dd>
 
 
@@ -109,7 +117,7 @@ simulated results or observed data are not found. If FALSE a warning is printed.
 
 
     <footer><div class="pkgdown-footer-left">
-  <p></p><p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov.</p>
+  <p></p><p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, Felix MIL.</p>
 </div>
 
 <div class="pkgdown-footer-right">

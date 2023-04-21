@@ -168,12 +168,13 @@ following functions:</p>
 <li><a href="https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html"><code>createEsqlabsPlotGridConfiguration()</code></a></li>
 <li><a href="https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html"><code>createEsqlabsExportConfiguration(projectConfiguration)</code></a></li>
 </ul>
+<p>For the list of supported properties of the
+<code>PlotGirdConfiguration</code>, refer to the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link">reference</a></p>
 <p>The next example shows how to create a multi-panel figure using the
 default configurations.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plotConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">gridConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Time profile"</span></span>
 <span><span class="va">indivPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
@@ -192,10 +193,12 @@ default configurations.</p>
 <span><span class="va">gridPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/tlf/man/plotGrid.html" class="external-link">plotGrid</a></span><span class="op">(</span><span class="va">gridConfig</span><span class="op">)</span></span>
 <span><span class="va">gridPlot</span></span></code></pre></div>
 <p><img src="visualization-and-reporting_files/figure-html/plot-time-profile-1.png" width="672"></p>
-<p>To save the plot to a <code>PNG</code> file, make sure that
-<code>fileName</code> argument end with <code>.png</code>:</p>
+<p>To save the plot to a <code>PNG</code> file, use the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link"><code>ExportConfiguration</code></a>.
+Make sure that <code>fileName</code> argument end with
+<code>.png</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">exportConfig</span><span class="op">$</span><span class="fu">savePlot</span><span class="op">(</span><span class="va">gridPlot</span>, fileName <span class="op">=</span> <span class="st">"All plots.png"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
+<span><span class="va">exportConfig</span><span class="op">$</span><span class="fu">savePlot</span><span class="op">(</span><span class="va">gridPlot</span>, fileName <span class="op">=</span> <span class="st">"All plots.png"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
@@ -211,12 +214,20 @@ the <code>DataCombined</code> object by calling the
 <li>
 <code>ospsuite</code> documentation on:
 <ul>
-<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link"><code>DataCombined</code>
 class</a></li>
-<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile()</a></li>
-<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated()</a></li>
-<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html" class="external-link">plotResidualsVsSimulated()</a></li>
-<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html" class="external-link">plotResidualsVsTime()</a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link"><code>plotIndividualTimeProfile()</code></a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link"><code>plotObservedVsSimulated()</code></a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html" class="external-link"><code>plotResidualsVsSimulated()</code></a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html" class="external-link"><code>plotResidualsVsTime()</code></a></li>
+</ul>
+</li>
+<li>
+<code>tlf</code> documentation on:
+<ul>
+<li><a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html" class="external-link"><code>PlotGridConfiguration</code></a></li>
+<li><a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/plotGrid.html" class="external-link"><code>plotGrid()</code></a></li>
+<li><a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link"><code>ExportConfiguration</code></a></li>
 </ul>
 </li>
 </ul>
@@ -229,7 +240,7 @@ class</a></li>
 
     <footer><div class="pkgdown-footer-left">
   <p></p>
-<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov.</p>
+<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, Felix MIL.</p>
 </div>
 
 <div class="pkgdown-footer-right">

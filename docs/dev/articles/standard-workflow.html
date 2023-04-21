@@ -100,7 +100,7 @@
     
     
 <div class="section level3">
-<h3 id="defining-scenarios">Defining scenarios<a class="anchor" aria-label="anchor" href="#defining-scenarios"></a>
+<h3 id="simulation-workflow">Simulation workflow<a class="anchor" aria-label="anchor" href="#simulation-workflow"></a>
 </h3>
 <p>Within the <code>esqlabsR</code> framework, the simulations are run
 by defining and executing multiple <em>scenarios</em>. A scenario is
@@ -109,6 +109,74 @@ parametrization of the model, application protocol, and (optionally) the
 physiology of the simulated individual or population. To simplify
 scenarios set up, all these information are stored in excel files with
 defined structure.</p>
+<p>The step wise approach of setting up a new simulation scenario is
+shown in Figure 1, detailed description of the excel files structures
+and <code>R</code> code are given in Section #defining-scenarios.</p>
+<div class="figure">
+<img src="Figures/ScenarioWorkflow.png" alt=""><p class="caption">Figure 1: Workflow of scenario set up</p>
+</div>
+<ol start="0" style="list-style-type: decimal">
+<li><p>After the model has been developed in PK-Sim and/or MoBi, a
+simulation must be stored as a <em>.pkml</em> file in the
+<code>Models/Simulations</code> folder. To set up a simulation/scenario
+in <code>R</code>, open the file <code>Scenarios.xlsx</code> located in
+the folder <code>Parameters</code>.</p></li>
+<li><p>Start defining a scenario by giving it an <em>name</em> in the
+<code>Scenario_name</code> column. Scenario name will be used later to
+retrieve simulation results and use them e.g. in figure
+definitions.</p></li>
+<li><p>Specify the simulation <code>*.pkml</code> file in the column
+<code>ModelFile</code>.</p></li>
+<li><ol style="list-style-type: lower-alpha">
+<li>If you simply want to run the simulation with the settings as it has
+been exported from PK-Sim or MoBi, you can proceed to section
+#running-scenarios.</li>
+<li>If you want to customize the simulation from <code>R</code>, follow
+the next steps.</li>
+</ol></li>
+<li><p>If you want to apply parameter values from the
+<code>ModelParameters.xlsx</code> file, specify which sheets to load in
+the <code>ModelParameterSheets</code> column.</p></li>
+<li>
+<p>If you want to simulate a specific individual with individual
+characteristics (age, weight, etc.) or apply individual model parameter
+values to the simulation, define the individual in the
+<code>IndividualId</code> column. Then create a new individual entry in
+the <code>Individuals.xlsx</code> file.</p>
+<ol style="list-style-type: lower-alpha">
+<li>To create a new individual with specific biometrics, create a new
+row in the <code>IndividualBiometrics</code> sheet.</li>
+<li>To define an individual-specific parametrization, create a new sheet
+and name it as the ID of the individual.</li>
+</ol>
+</li>
+<li><p>If you want to run a <em>population simulation</em>, specify a
+population in the column <code>PopulationId</code>. If you want to
+create a new population each time you run the scenario, define
+population demographics in the <code>Demographics</code> sheet of the
+<code>PopulationParameters.xlsx</code> file. Keep in mind that
+simulation results might differ each time you run the scenario, as new
+population will be generated each time!</p></li>
+</ol>
+<p>If you want to import a population from existing csv file, set the
+value of the <code>ReadPopulationFromCSV</code> column to
+<code>TRUE</code>. The population csv file must be located in the
+<code>Parameters/Populations</code> folder.</p>
+<ol start="7" style="list-style-type: decimal">
+<li><p>Change the simulation time, if required.</p></li>
+<li><p>You can define the outputs of the simulation in the
+<code>OutputPathsIds</code> column. For convenience, not the full paths
+to the outputs must be listed, but the their acronyms. The full path for
+each acronym must be defined in the sheet
+<code>OutputPaths</code>.</p></li>
+<li><p>Finally, you can simulate different protocols from the same
+simulation file by defining an application protocol in the column
+<code>ApplicationProtocol</code>. See description below.</p></li>
+</ol>
+</div>
+<div class="section level3">
+<h3 id="project-configuration">Project configuration<a class="anchor" aria-label="anchor" href="#project-configuration"></a>
+</h3>
 <p>Information about location of scenario definition files, simulation
 files, output folders etc. is stored in excel file
 <code>ProjectConfiguration.xlsx</code> located in the folder
@@ -126,8 +194,7 @@ examples, we assume that the current working directory is the
 <span><span class="co">#&gt;    Model folder: ../Models/Simulations </span></span>
 <span><span class="co">#&gt;    Parameters folder: ../Parameters </span></span>
 <span><span class="co">#&gt;    Parameters file name: ModelParameters.xlsx </span></span>
-<span><span class="co">#&gt;    Individual parameters file name: IndividualParameters.xlsx </span></span>
-<span><span class="co">#&gt;    Individual physiology file name: IndividualPhysiology.xlsx </span></span>
+<span><span class="co">#&gt;    Individual parameters file name: Individuals.xlsx </span></span>
 <span><span class="co">#&gt;    Population parameters file name: PopulationParameters.xlsx </span></span>
 <span><span class="co">#&gt;    Scenario definitions file name: Scenarios.xlsx </span></span>
 <span><span class="co">#&gt;    Scenario applications definitions file name: ApplicationParameters.xlsx </span></span>
@@ -136,6 +203,10 @@ examples, we assume that the current working directory is the
 <span><span class="co">#&gt;    Experimental data file: TestProject_TimeValuesData.xlsx </span></span>
 <span><span class="co">#&gt;    Data importer configuration: esqlabs_dataImporter_configuration.xml </span></span>
 <span><span class="co">#&gt;    Output folder: ../Results</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="defining-scenarios">Defining scenarios<a class="anchor" aria-label="anchor" href="#defining-scenarios"></a>
+</h3>
 <p>Next, we will define a <em>scenario</em> that we want to simulate in
 the excel file <code>Parameters/Scenarios.xlsx</code> (or other as set
 in <code>projectConfiguration$scenarioDefinitionFile</code>). The
@@ -151,19 +222,43 @@ name must be a <a href="https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-v
 R variables name</a>.</p></li>
 <li><p><strong>IndividualId</strong>: Name (ID) of an individual. This
 name refers to the name of the individual as used in excel files
-<code>IndividualPhysiology.xlsx</code> for definition of the biometric
+<code>IndividualBiometrics.xlsx</code> for definition of the biometric
 properties of the simulated individual and
 <code>IndividualParameters.xlsx</code> for definition of
 individual-specific model parameters. <strong>IndividualId</strong> may
-be empty. In this case, standard individual as defined in the
+be empty. In this case, the individual as defined in the
 <code>pkml</code> simulation without any individual-specific model
 parameters will be simulated. To create an individual with specific
 biometric characteristics, define an entry with the same individual id
-in the file <code>IndividualPhysiology.xlsx</code>. The same individual
+in the file <code>IndividualBiometrics.xlsx</code>. The same individual
 can be used in multiple scenarios. Note that though it is technically
 possible to apply a species different from the one in the original
 simulation, the correctness of the results is not guaranteed as there
 exist some structural differences between the species.</p></li>
+<li><p><strong>PopulationId</strong>: Name (ID) of a population. This
+name refers to the name of the population as used in excel file
+<code>PopulationParameters.xlsx</code> for definition of the demographic
+properties of the simulated population. If <strong>PopulationId</strong>
+is empty, the scenario is simulated as an individual simulation.
+Otherwise, a population as defined in the sheet
+<code>Demographics</code> of the <code>PopulationParameters.xlsx</code>
+file will be created and the scenario simulated as a population
+simulation.</p></li>
+</ul>
+<p>To create a population with specific demographic characteristics,
+define an entry with the same population id in the file
+<code>PopulationParameters.xlsx</code>. The same population can be used
+in multiple scenarios. <strong>Note</strong>: You can define both an
+<strong>IndividualId</strong> and a <strong>PopulationId</strong>. In
+this case, individual-specific parameters from the
+<code>IndividualParameters.xlsx</code> will be applied to the simulation
+prior to applying the population parameters. Keep in mind, that any
+physiological parameters defined for an individual that are also part of
+the parameter set of a population will be overwritten by the population!
+If e.g. you specify the GFR of the individual in the
+<code>IndividualParameters.xlsx</code>, it will be overwritten by the
+GFR values sampled in the simulation.</p>
+<ul>
 <li><p><strong>ModelParameterSheets</strong>: A list of sheet names from
 the <code>ModelParameter.xlsx</code> file, separated by a
 <code>,</code>. Each sheet must have the columns
@@ -184,9 +279,9 @@ states</em> (parameter sheets <code>Healthy</code> and
 We can further refine the parametrization of the scenario by specifying
 the individual parameters in the <code>IndividualParameters.xlsx</code>
 file. Create a sheet with the name as the <em>IndividualId</em>
-specified for the respective scenario and populate it the same structure
-as the <code>ModelParameters.xlsx</code> file. This way we can define
-e.g. individual-specific clearance values or, as in our case, the
+specified for the respective scenario with the same structure as the
+<code>ModelParameters.xlsx</code> file. This way we can define
+e.g. individual-specific clearance values or, as in our case, the
 glomerular filtration rate. Individual specific parameters are applied
 after the parameters defined in the <em>ModelParameterSheets</em>. We
 can use an individual in multiple scenarios. If an individual is
@@ -199,7 +294,7 @@ parameters that will be applied to the model in the file
 <code>ApplicationParameters.xlsx</code>. For each application, create a
 sheet with the name as specified in the
 <strong>ApplicationProtocol</strong> entry and populate it with the same
-structure as the <code>ModelParameter.xlsx</code> file… Configuring
+structure as the <code>ModelParameter.xlsx</code> file. Configuring
 application protocols this way requires that the loaded simulation
 includes all possible applications that can be turned on and off by
 setting parameters, e.g. the <code>Dose</code> or
@@ -275,32 +370,58 @@ steady-state.</p></li>
 <li><p><strong>ModelFile</strong>: Name of the <code>pkml</code> file
 with the simulation. Must be located in the folder defined in
 <code>ProjectConfiguration$modelFolder</code>.</p></li>
+<li>
+<p><strong>OutputPathsIds</strong>: Paths of model outputs (i.e.,
+paths to the molecules/ parameters for which outputs will be simulated)
+can be defined in the sheet <code>OutputPaths</code>. Create an entry
+for each output path by entering the full path into the column
+<code>OutputPath</code> and defining a unique identifier to this path in
+the column <code>OutputPathId</code>. The content of the sheet could
+look like this:</p>
+<table class="table">
+<colgroup>
+<col width="32%">
+<col width="67%">
+</colgroup>
+<thead><tr class="header">
+<th>OutputPathId</th>
+<th>OutputPath</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Aciclovir_PVB</td>
+<td>Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous
+Blood)</td>
+</tr>
+<tr class="even">
+<td>Aciclovir_fat_cell</td>
+<td>Organism|Fat|Intracellular|Aciclovir|Concentration in container</td>
+</tr>
+</tbody>
+</table>
+</li>
 </ul>
+<p>In the <code>Scenarios</code> sheet, enter the IDs of all paths the
+outputs should be generated for, separated by a comma, e.g.
+<code>Aciclovir_PVB, Aciclovir_fat_cell</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="code-based-specifications">Code-based specifications<a class="anchor" aria-label="anchor" href="#code-based-specifications"></a>
 </h3>
-<p>In addition to scenario set ups through the excel sheets, further
+<p>In addition to scenario setups through the excel sheets, further
 specifications are made in the <code>R</code> files located in the
 <code>InputCode</code> project folder. Files in this folder must be
 sourced prior to using.</p>
 <ul>
-<li><p><strong>OutputPaths</strong>: You can specify the output paths
-(i.e., paths to the molecules/ parameters for which outputs will be
-simulated) for each scenario separately (see Section <a href="#running-scenarios">Running scenarios</a>). For more convenient
-access to the paths, you can specify all paths in the
-<code>OutputPaths</code> enum (an <code>enum</code> is just a named
-list) and easily access them by their alias names
-(e.g. <code>Aciclovir_PVB</code> for
-<code>"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</code>).</p></li>
-<li><p><strong>TestParameters</strong>: During model development/fitting
+<li>
+<strong>TestParameters</strong>: During model development/fitting
 phase, you might want to test out parameter values before storing them
 in the <code>Parameters</code> excel files. You can define the paths of
 the parameters, their values and the units in the
 <code>TestParameters</code> file. Remember to <code>source</code> the
 file each time you change any values. You can turn setting test
 parameters on and off in the <code>ScenarioConfiguration</code> (see
-Section <a href="#running-scenarios">Running scenarios</a>).</p></li>
+Section <a href="#running-scenarios">Running scenarios</a>).</li>
 </ul>
 </div>
 <div class="section level3">
@@ -371,6 +492,26 @@ arguments.</p>
 <span><span class="co">#&gt; [1] "Dose parameter value with custom function: 5e-04"</span></span></code></pre></div>
 </div>
 <div class="section level3">
+<h3 id="scenario-parametrization-hierarchy">Scenario parametrization hierarchy<a class="anchor" aria-label="anchor" href="#scenario-parametrization-hierarchy"></a>
+</h3>
+<p>The final parametrization is a combination of the different
+parametrization steps defined at various levels, as has been described
+in the section above. The following figure summarizes the hierarchy of
+the parametrization.</p>
+<div class="figure">
+<img src="Figures/ParametrizationHierarchy.png" alt=""><p class="caption">Parametrization sequence</p>
+</div>
+<p>If a parameter path is defined in multiple steps, its value will be
+overwritten by the subsequent steps. That means, individual parameter
+values will overwrite the values defined in the “ModelParameters.xlsx”
+file, and parameters defined in <code>customParams</code> argument of
+the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function will overwrite everything
+else.</p>
+<p>The order of parameter sheets of the “ModelParameters.xlsx” file
+defined in the <strong>ModelParameterSheets</strong> column define the
+order how the parameters are applied.</p>
+</div>
+<div class="section level3">
 <h3 id="running-scenarios">Running scenarios<a class="anchor" aria-label="anchor" href="#running-scenarios"></a>
 </h3>
 <p>Scenarios are executed by creating <code>ScenarioConfiguration</code>
@@ -396,8 +537,7 @@ argument to the function. To read the configuration for the
 <span><span class="co">#&gt;    Model folder: ../Models/Simulations </span></span>
 <span><span class="co">#&gt;    Parameters folder: ../Parameters </span></span>
 <span><span class="co">#&gt;    Parameters file name: ModelParameters.xlsx </span></span>
-<span><span class="co">#&gt;    Individual parameters file name: IndividualParameters.xlsx </span></span>
-<span><span class="co">#&gt;    Individual physiology file name: IndividualPhysiology.xlsx </span></span>
+<span><span class="co">#&gt;    Individual parameters file name: Individuals.xlsx </span></span>
 <span><span class="co">#&gt;    Population parameters file name: PopulationParameters.xlsx </span></span>
 <span><span class="co">#&gt;    Scenario definitions file name: Scenarios.xlsx </span></span>
 <span><span class="co">#&gt;    Scenario applications definitions file name: ApplicationParameters.xlsx </span></span>
@@ -411,6 +551,8 @@ argument to the function. To read the configuration for the
 <span><span class="co">#&gt;    Scenario name: TestScenario </span></span>
 <span><span class="co">#&gt;    Parameters sheets: Global </span></span>
 <span><span class="co">#&gt;    Individual Id: Indiv1 </span></span>
+<span><span class="co">#&gt;    Population Id: </span></span>
+<span><span class="co">#&gt;    Read population from csv file: FALSE </span></span>
 <span><span class="co">#&gt;    Application protocol: Aciclovir_iv_250mg </span></span>
 <span><span class="co">#&gt;    Simulation time: 1440 </span></span>
 <span><span class="co">#&gt;    Points per minute: 1 </span></span>
@@ -420,25 +562,13 @@ argument to the function. To read the configuration for the
 <p>Alternatively, we can create configurations for all scenarios defined
 in the <code>Scenarios.xlsx</code> by calling
 <code>readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)</code>
-without specifying scenarios names.</p>
+without specifying scenarios’ names.</p>
 <p>Before running the scenarios, we can modify
 <code>ScenarioConfigurations</code> by setting parameters that are
-currently not accessible through excel files. One the most common
-property is <code>$outputPaths</code> that define for which paths the
-results will be stored.</p>
+currently not accessible through excel files. In model
+development/fitting phase, we might want to apply some test parameter
+values:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Define the OutputPaths enum, if not done allready</span></span>
-<span><span class="va">OutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/enum.html" class="external-link">enum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  Aciclovir_PVB <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
-<span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Set output paths for each scenario</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">scenarioConfiguration</span> <span class="kw">in</span> <span class="va">scenarioConfigurations</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">scenarioConfiguration</span><span class="op">$</span><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/enumValues.html" class="external-link">enumValues</a></span><span class="op">(</span><span class="va">OutputPaths</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p>In model development/fitting phase, we also might want to apply some
-test parameter values:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set output paths for each scenario</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">scenarioConfiguration</span> <span class="kw">in</span> <span class="va">scenarioConfigurations</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">scenarioConfiguration</span><span class="op">$</span><span class="va">setTestParameters</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span>
@@ -452,7 +582,7 @@ physiology and parametrization applied as defined by the scenario
 configuration). In such case, a folder with the current date and time
 will be created in the folder where the simulation <code>pkml</code>
 files are located.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">simulatedScenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
 <span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarioConfigurations</span>,</span>
 <span>  customParams <span class="op">=</span> <span class="cn">NULL</span>, saveSimulationsToPKML <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -460,6 +590,16 @@ files are located.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "TestScenario"</span></span></code></pre></div>
+<p>It is a good idea to store simulation results as <code>*.csv</code>
+along with simulations as <code>.*pkml</code> and, optionally, the used
+population as <code>*.scv</code> file and load them for further
+processing to avoid re-simulating every time e.g. a change to a figure
+showing the simulation results is required. The convenient function for
+saving results of a scenario run is
+<code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code>.</p>
+<p>For futher information, check out the documentation of the functions
+<a href="https://esqlabs.github.io/esqlabsR/reference/saveScenarioResults"><code>saveScenarioResults()</code></a>
+and <a href="https://esqlabs.github.io/esqlabsR/reference/loadScenarioResults"><code>loadScenarioResults()</code></a>.</p>
 <p>The function returns results of the simulations. For each scenario, a
 <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html" class="external-link"><code>Simulation</code></a>
 object, a <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html" class="external-link"><code>SimulationResults</code></a>
@@ -492,7 +632,7 @@ class</a></li>
 
     <footer><div class="pkgdown-footer-left">
   <p></p>
-<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov.</p>
+<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, Felix MIL.</p>
 </div>
 
 <div class="pkgdown-footer-right">
