@@ -259,7 +259,7 @@ createPlotsFromExcel <- function(
   dfExportConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
     sheet = "exportConfiguration"
   ) %>%
-    rename(name = "outputName")
+    rename(name = outputName)
   # Filter for only specified plot grids
   if (!is.null(plotGridNames)) {
     # Throw an error if a plot grid name that is passed is not defined in the excel file
@@ -268,8 +268,8 @@ createPlotsFromExcel <- function(
       stop(messages$invalidPlotGridNames(missingPlotGrids))
     }
 
-    dfPlotGrids <- dplyr::filter(dfPlotGrids, "name" %in% plotGridNames)
-    dfExportConfigurations <- dplyr::filter(dfExportConfigurations, "plotGridName" %in% plotGridNames)
+    dfPlotGrids <- dplyr::filter(dfPlotGrids, name %in% plotGridNames)
+    dfExportConfigurations <- dplyr::filter(dfExportConfigurations, plotGridName %in% plotGridNames)
   }
 
   # Exit early if no PlotGrid is defined
@@ -284,7 +284,7 @@ createPlotsFromExcel <- function(
   # Pre-process the sheet 'plotGrids'
   dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
   # Filter and validate only used plot configurations
-  dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, "plotID" %in% unlist(unique(dfPlotGrids$plotIDs)))
+  dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
   # Filter and validate only used data combined
   dataCombinedList <- createDataCombinedFromExcel(
     file = file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
@@ -368,7 +368,7 @@ createPlotsFromExcel <- function(
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
     exportConfiguration <- createEsqlabsExportConfiguration(projectConfiguration)
-    exportConfigurations <- apply(select(dfExportConfigurations, -"plotGridName"),
+    exportConfigurations <- apply(select(dfExportConfigurations, -plotGridName),
       1,
       .createConfigurationFromRow,
       defaultConfiguration = exportConfiguration

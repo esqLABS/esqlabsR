@@ -26,7 +26,7 @@ createDataCombinedFromExcel <- function(
 
   dfDataCombined <- readExcel(path = file, sheet = sheet %||% 1)
   if (!is.null(dataCombinedNames)) {
-    dfDataCombined <- filter(dfDataCombined, "DataCombinedName" %in% dataCombinedNames)
+    dfDataCombined <- filter(dfDataCombined, DataCombinedName %in% dataCombinedNames)
   }
   dfDataCombined <- .validateDataCombinedFromExcel(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound)
 
@@ -35,7 +35,7 @@ createDataCombinedFromExcel <- function(
     dataCombined <- DataCombined$new()
     # add data to DataCombined object
     # add simulated data
-    simulated <- filter(dfDataCombined, "DataCombinedName" == name, "dataType" == "simulated")
+    simulated <- filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
     if (nrow(simulated) > 0) {
       for (j in seq_len(nrow(simulated))) {
         dataCombined$addSimulationResults(

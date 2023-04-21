@@ -154,7 +154,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
         stop(messages$invalidOutputPathIdsfunction(outputPathIds = missingIds, scenarioName = scenarioName))
       }
       # Get the paths corresponding to the ids
-      outputPaths <- dplyr::filter(outputPathsDf, "OutputPathId" %in% pathIds)$OutputPath
+      outputPaths <- dplyr::filter(outputPathsDf, OutputPathId %in% pathIds)$OutputPath
 
       scenarioConfiguration$outputPaths <- outputPaths
     }
