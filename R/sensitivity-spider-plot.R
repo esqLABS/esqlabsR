@@ -103,7 +103,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   # list of plots ------------------------
 
   # create plot for each output path
-  ls_plots <- purrr::map(
+  lsPlots <- purrr::map(
     .x = data %>% split(.$OutputPath),
     .f = ~ .createSpiderPlot(
       .x,
@@ -115,7 +115,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   # if needed, save plots with given specs
   if (savePlots) {
     .savePlotList(
-      ls_plots,
+      lsPlots,
       plot.type = "Spider_",
       outputFolder = outputFolder,
       height = height,
@@ -127,7 +127,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   }
 
   # print plots without producing warnings
-  suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~ .printPlot(.x, .y)))
+  suppressWarnings(purrr::walk2(lsPlots, names(lsPlots), ~ .printPlot(.x, .y)))
 }
 
 #' @keywords internal
@@ -161,7 +161,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     plot <- plot + scale_y_log10()
   } else {
     # how many labels on the Y-axis?
-    n_breaks <- labeling::extended(
+    nBreaks <- labeling::extended(
       min(na.omit(data$PercentChangePK)),
       max(na.omit(data$PercentChangePK)),
       m = 10L
@@ -170,8 +170,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     # there always needs to be a label at `y = 100`
     plot <- plot +
       scale_y_continuous(
-        breaks = c(100, n_breaks),
-        minor_breaks = n_breaks
+        breaks = c(100, nBreaks),
+        minor_breaks = nBreaks
       )
   }
 

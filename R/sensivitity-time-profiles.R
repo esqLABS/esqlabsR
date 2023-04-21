@@ -90,7 +90,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # list of plots ------------------------
 
   # create plot for each output path
-  ls_plots <- purrr::map(
+  lsPlots <- purrr::map(
     .x = data %>% split(.$OutputPath),
     .f = ~ .createTimeProfiles(
       .x,
@@ -103,7 +103,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # if needed, save plots with given specs
   if (savePlots) {
     .savePlotList(
-      ls_plots,
+      lsPlots,
       plot.type = "Profile_",
       outputFolder = outputFolder,
       height = height,
@@ -115,7 +115,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   # print plots without producing warnings
-  suppressWarnings(purrr::walk2(ls_plots, names(ls_plots), ~ .printPlot(.x, .y)))
+  suppressWarnings(purrr::walk2(lsPlots, names(lsPlots), ~ .printPlot(.x, .y)))
 }
 
 

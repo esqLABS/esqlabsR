@@ -49,11 +49,18 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
     # Create a population for population scenarios
     if (scenarioConfiguration$simulationType == "Population") {
       if (scenarioConfiguration$readPopulationFromCSV) {
-        populationPath <- paste0(file.path(scenarioConfiguration$projectConfiguration$paramsFolder, "Populations", scenarioConfiguration$populationId), ".csv")
+        populationPath <- paste0(file.path(
+          scenarioConfiguration$projectConfiguration$paramsFolder,
+          "Populations",
+          scenarioConfiguration$populationId
+        ), ".csv")
         population <- loadPopulation(populationPath)
       } else {
         popCharacteristics <- readPopulationCharacteristicsFromXLS(
-          XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$populationParamsFile),
+          XLSpath = file.path(
+            scenarioConfiguration$projectConfiguration$paramsFolder,
+            scenarioConfiguration$projectConfiguration$populationParamsFile
+          ),
           populationName = scenarioConfiguration$populationId,
           sheet = "Demographics"
         )
@@ -105,8 +112,8 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
       if (!dir.exists(paths = outputFolder)) {
         dir.create(path = outputFolder, recursive = TRUE)
       }
-      if (!is.null(simulatedScenarios[[i]]$population) && !is.na(simulatedScenarios[[i]]$population)) {
-        ospsuite::exportPopulationToCSV(simulatedScenarios[[i]]$population$population,
+      if (!is.null(population)) {
+        ospsuite::exportPopulationToCSV(population$population,
           filePath = file.path(outputFolder, paste0(scenarioName, "population.csv"))
         )
       }
@@ -118,7 +125,10 @@ runScenarios <- function(scenarioConfigurations, customParams = NULL,
 
   # Simulate individual simulations concurrently
   individualSimulationsIdx <- is.na(populations)
-  simulationResults <- runSimulations(simulations = simulations[individualSimulationsIdx], simulationRunOptions = scenarioConfiguration$simulationRunOptions)
+  simulationResults <- runSimulations(
+    simulations = simulations[individualSimulationsIdx],
+    simulationRunOptions = scenarioConfiguration$simulationRunOptions
+  )
 
   # Run population simulations sequentially and add the to the list of simulation results
   for (scenarioName in scenarioNames[!individualSimulationsIdx]) {
@@ -190,7 +200,10 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
   individualCharacteristics <- NULL
   if (!is.null(scenarioConfiguration$individualId)) {
     individualCharacteristics <- readIndividualCharacteristicsFromXLS(
-      XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$individualsFile),
+      XLSpath = file.path(
+        scenarioConfiguration$projectConfiguration$paramsFolder,
+        scenarioConfiguration$projectConfiguration$individualsFile
+      ),
       individualId = scenarioConfiguration$individualId,
       nullIfNotFound = TRUE
     )
@@ -231,6 +244,7 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
   if (scenarioConfiguration$setTestParameters) {
     warning("INFO: 'scenarioConfiguration$setTestParameters' is set to TRUE,
             parameter values defined in 'InputCode/TestParameters.R' will be applied!")
+    # 2DO - remove dependency from getTestParameters() that must be defined outside of the package!
     params <- extendParameterStructure(
       parameters = params,
       newParameters = getTestParameters()
@@ -255,7 +269,12 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
   }
   # Set simulation time if defined by the user.
   if (!is.null(scenarioConfiguration$simulationTime)) {
-    setOutputInterval(simulation = simulation, startTime = 0, endTime = scenarioConfiguration$simulationTime, resolution = scenarioConfiguration$pointsPerMinute)
+    setOutputInterval(
+      simulation = simulation,
+      startTime = 0,
+      endTime = scenarioConfiguration$simulationTime,
+      resolution = scenarioConfiguration$pointsPerMinute
+    )
   }
 
   initializeSimulation(
@@ -311,7 +330,11 @@ initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
 #' )
 #' saveResults(simulatedScenarios, projectConfiguration)
 #' }
-saveScenarioResults <- function(simulatedScenarios, projectConfiguration, outputFolder = NULL, saveSimulationsToPKML = TRUE) {
+saveScenarioResults <- function(
+    simulatedScenarios,
+    projectConfiguration,
+    outputFolder = NULL,
+    saveSimulationsToPKML = TRUE) {
   validateIsLogical(saveSimulationsToPKML)
 
   outputFolder <- outputFolder %||% file.path(
@@ -401,11 +424,16 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
   for (i in seq_along(scenarioNames)) {
     simulation <- loadSimulation(paste0(resultsFolder, "/", scenarioNames[[i]], ".pkml"))
 
-    results <- importResultsFromCSV(simulation = simulation, filePaths = paste0(resultsFolder, "/", scenarioNames[[i]], ".csv"))
+    results <- importResultsFromCSV(
+      simulation = simulation,
+      filePaths = paste0(resultsFolder, "/", scenarioNames[[i]], ".csv")
+    )
+
     outputValues <- getOutputValues(results,
       quantitiesOrPaths = results$allQuantityPaths
     )
-    simulatedScenarios[[scenarioNames[[i]]]] <- list(simulation = simulation, results = results, outputValues = outputValues)
+    simulatedScenarios[[scenarioNames[[i]]]] <-
+      list(simulation = simulation, results = results, outputValues = outputValues)
   }
 
   return(simulatedScenarios)

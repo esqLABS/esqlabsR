@@ -67,7 +67,10 @@ initializeSimulation <- function(simulation,
     excelSheets <- readxl::excel_sheets(path = indivParamsFilePath)
 
     if (any(excelSheets == individualCharacteristics$species)) {
-      indivParams <- readParametersFromXLS(paramsXLSpath = indivParamsFilePath, sheets = individualCharacteristics$species)
+      indivParams <- readParametersFromXLS(
+        paramsXLSpath = indivParamsFilePath,
+        sheets = individualCharacteristics$species
+      )
       # NOT extending the `additionalParams` structure, otherwise it could
       # overwrite user defined parameters!
       ospsuite::setParameterValuesByPath(
@@ -127,7 +130,9 @@ initializeSimulation <- function(simulation,
 #'
 #' @param simulation1 First `Simulation` to compare
 #' @param simulation2 Second `Simulation` to compare
-#' @param compareFormulasByValue If `FALSE` (default), parameters are considered not equal if the have the same value but different formulas (e.g., a constant vs. explicit formula). If `TRUE`, only values are compared.
+#' @param compareFormulasByValue If `FALSE` (default), parameters are considered not equal
+#' if the have the same value but different formulas (e.g., a constant vs. explicit formula).
+#' If `TRUE`, only values are compared.
 #'
 #' @return Named list with following levels:
 #' - `Parameters` with named lists `In1NotIn2`, `In2NotIn1`, and `Different`,
@@ -205,7 +210,7 @@ getAllApplicationParameters <- function(simulation, moleculeNames = NULL) {
   moleculeNames <- moleculeNames %||% simulation$allFloatingMoleculeNames()
 
   # Returns an object of class `Application` for each administration event
-  applications <- unlist(lapply(moleculeNames, \(x)simulation$allApplicationsFor(x)), use.names = FALSE)
+  applications <- unlist(lapply(moleculeNames, \(x) simulation$allApplicationsFor(x)), use.names = FALSE)
 
   # Gather all parameters in one list that will be the output of the function
   allParams <- list()
@@ -213,7 +218,6 @@ getAllApplicationParameters <- function(simulation, moleculeNames = NULL) {
   for (application in applications) {
     # get parent container of the application
     parentContainer <- application$startTime$parentContainer
-    containerPath <- parentContainer$path
     # Get all non-formula parameters of ProtocolSchemaItem
     params <- getAllParametersMatching("*", parentContainer)
 

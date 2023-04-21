@@ -23,15 +23,15 @@
 #' # Read scenario definition from excel
 #' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)[[scenarioName]]
 #' }
-readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConfiguration) {
+readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConfiguration) { # nolint: object_length_linter.
   validateIsString(scenarioNames, nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 
   # Current scenario definition structure:
   expectedColumns <- c(
-    "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol",
-    "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
-    "OutputPathsIds"
+    "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets",
+    "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime",
+    "SteadyStateTimeUnit", "ModelFile", "OutputPathsIds"
   )
   # Define the casting functions to cast columns to specific type
   colTypes <- c(
@@ -102,7 +102,8 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     simTimeUnit <- data$SimulationTimeUnit
     # Set the time only if new value is defined
     if (!is.na(simTime)) {
-      scenarioConfiguration$simulationTime <- ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
+      scenarioConfiguration$simulationTime <-
+        ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
     }
 
     # Individual id
@@ -153,7 +154,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
         stop(messages$invalidOutputPathIdsfunction(outputPathIds = missingIds, scenarioName = scenarioName))
       }
       # Get the paths corresponding to the ids
-      outputPaths <- dplyr::filter(outputPathsDf, OutputPathId %in% pathIds)$OutputPath
+      outputPaths <- dplyr::filter(outputPathsDf, "OutputPathId" %in% pathIds)$OutputPath
 
       scenarioConfiguration$outputPaths <- outputPaths
     }

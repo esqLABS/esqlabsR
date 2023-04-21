@@ -11,7 +11,7 @@
 #' in the excel file.
 #' @import readxl
 #' @export
-readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) {
+readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) { # nolint: object_length_linter, object_name_linter.
   columnNames <- c(
     "PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax",
     "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit"
@@ -57,7 +57,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
 #' Possible gender entries as integer values
 #'
 #' @export
-GenderInt <- enum(list(
+GenderInt <- enum(list( # nolint: object_name_linter.
   MALE = 1,
   FEMALE = 2,
   UNKNOWN = 3
@@ -78,7 +78,7 @@ GenderInt <- enum(list(
 #'   be sampled. Must have the same length as `parameterPaths`.
 #' A list of supported distributions is defined in `Distributions`. Default is `"Normal"`.
 #' @export
-extendPopulationByUserDefinedParams <- function(population,
+extendPopulationByUserDefinedParams <- function(population, # nolint: object_length_linter.
                                                 parameterPaths,
                                                 meanValues,
                                                 sdValues,
@@ -164,7 +164,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
 
 #' Supported distributions for sampling
 #' @export
-Distributions <- enum(list(
+Distributions <- enum(list( # nolint: object_name_linter.
   "Normal",
   "LogNormal"
 ))
