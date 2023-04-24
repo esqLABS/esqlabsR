@@ -121,6 +121,17 @@ projectConfiguration <- createDefaultProjectConfiguration()
 print(projectConfiguration)
 ```
 
+
+If required, you can change the location of one of the files or folders:
+
+```{r,eval=FALSE}
+#change the location of the output folder 
+projectConfiguration$outputFolder <- "../anotherOutputFolder"
+
+#change the location of the model parameters file
+projectConfiguration$modelParametersFile <- "../anotherModelParameters.xlsx"
+```
+
 ### Defining scenarios {#defining-scenarios}
 
 Next, we will define a *scenario* that we want to simulate in the excel
