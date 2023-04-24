@@ -1,12 +1,18 @@
 messages <- ospsuite.utils::messages
 
 messages$errorWrongXLSStructure <- function(filePath, expectedColNames, optionalMessage = NULL) {
-  paste0("Loading from XLS failed, the file '", filePath, "' has wrong structure!
-    The file should contain columns '", paste0(expectedColNames, collapse = ", "), "'", optionalMessage)
+  paste0(
+    "Loading from XLS failed, the file '", filePath, "' has wrong structure!
+    The file should contain columns '", paste0(expectedColNames, collapse = ", "), "'",
+    optionalMessage
+  )
 }
 
 messages$errorCouldNotCompareParameters <- function(parameter1, parameter2, optionalMessage = NULL) {
-  paste0("Could not compare parameters with paths '", parameter1$path, "' and '", parameter2$path, "'. ", optionalMessage)
+  paste0(
+    "Could not compare parameters with paths '", parameter1$path, "' and '", parameter2$path, "'. ",
+    optionalMessage
+  )
 }
 
 messages$errorEnumPutListMultipleKeys <- function() {
@@ -26,7 +32,10 @@ messages$errorWrongIndividualId <- function(individualId) {
 }
 
 messages$warningValueWithinThresholdNotExisting <- function(value, threshold, optionalMessage = NULL) {
-  paste("value `", value, "` not found in the array within the absolute threshold of  ", threshold, optionalMessage)
+  paste(
+    "value `", value, "` not found in the array within the absolute threshold of  ", threshold,
+    optionalMessage
+  )
 }
 
 messages$errorInvalidMeanMethod <- function() {
@@ -71,21 +80,24 @@ messages$scenarioConfigurationNameNotFoundWhenReading <- function(scenarioName) 
 messages$warningInvalidScenarioName <- function(scenarioNames) {
   paste0(
     "The following scenarios from are not present in `simulatedScenarios`: ",
-    paste(scenarioNames, collapse = ", "), ". Data can not be added to `DataCombined` object, empty objects will not be plotted."
+    paste(scenarioNames, collapse = ", "),
+    ". Data can not be added to `DataCombined` object, empty objects will not be plotted."
   )
 }
 
 messages$warningInvalidDataSetName <- function(dataSetNames) {
   paste0(
     "The following scenarios from are not present in `observedData`: ",
-    paste(dataSetNames, collapse = ", "), ". Data can not be added to `DataCombined` object, empty objects will not be plotted."
+    paste(dataSetNames, collapse = ", "),
+    ". Data can not be added to `DataCombined` object, empty objects will not be plotted."
   )
 }
 
 messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
   paste0(
     "The plots with plotIDs ", paste(plotIDs, collapse = ", "), " could not be added to plot grid `",
-    plotGridTitle, "`. Please check if they are defined in sheet `plotConfiguration` and data is added in sheet `DataCombined`."
+    plotGridTitle,
+    "`. Please check if they are defined in sheet `plotConfiguration` and data is added in sheet `DataCombined`."
   )
 }
 
@@ -141,6 +153,12 @@ messages$stopNoPathProvided <- function(dataCombinedName) {
   )
 }
 
+messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
+  paste0(
+    "Output path '", path, "' is defined in the DataCombined '", paste0(dataCombinedName, collapse = ", "), "' for scenario '", scenarioName, "' but has not been simulated. Please check that the output path is specified for this scenario."
+  )
+}
+
 messages$stopNoDataSetProvided <- function(dataCombinedName) {
   paste0(
     "No data set is defined for the DataCombined '", paste0(dataCombinedName, collapse = ", "), "'.
@@ -187,9 +205,16 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
 }
 
 messages$invalidPlotGridNames <- function(plotGridNames) {
-  paste("Following plot grid names have been specified but are not present in the `plotGrids` sheet! Define these plots first: ", paste0(plotGridNames, collapse = ", "))
+  paste(
+    "Following plot grid names have been specified but are not present in the `plotGrids` sheet! Define these plots first: ",
+    paste0(plotGridNames, collapse = ", ")
+  )
 }
 
-messages$invalidOutputPathIds <- function(outputPathIds, scenarioname) {
-  paste("Following output path IDs have been specified as output for scenario '", scenarioName, "', but are not present in the `OutputPaths` sheet! Define these outputs first: ", paste0(outputPathIds, collapse = ", "))
+messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
+  paste(
+    "Following output path IDs have been specified as output for scenario '", scenarioName,
+    "', but are not present in the `OutputPaths` sheet! Define these outputs first: ",
+    paste0(outputPathIds, collapse = ", ")
+  )
 }

@@ -2,6 +2,22 @@
 # Create a project configuration
 projectConfiguration <- createDefaultProjectConfiguration(path = "../data/ProjectConfiguration_forTests.xlsx")
 
+# Template scenario configuration for testing
+scenariosDf <- data.frame(list(
+  "Scenario_name" = "TestScenario",
+  "IndividualId" = "Indiv1",
+  "PopulationId" = c(NA),
+  "ModelParameterSheets" = c(NA),
+  "ApplicationProtocol" = c(NA),
+  "SimulationTime" = c(NA),
+  "SimulationTimeUnit" = c(NA),
+  "SteadyState" = c(NA),
+  "SteadyStateTime" = c(NA),
+  "SteadyStateTimeUnit" = c(NA),
+  "ModelFile" = c("Aciclovir.pkml"),
+  "OutputPathsIds" = c(NA)
+))
+
 test_that("it throws an error when wrong scenario is defined", {
   scenarioNames <- "wrong"
   expect_error(
@@ -85,7 +101,6 @@ test_that("It creates multiple correct scenarios", {
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$simulationType, "Individual")
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$steadyStateTime, 500)
 })
-
 
 test_that("It creates a population scenario", {
   scenarioNames <- "PopulationScenario"
@@ -191,4 +206,31 @@ test_that("It throws an error when no population is specified for a population s
   scenarioConfigurations$PopulationScenario$populationId <- NULL
 
   expect_error(runScenarios(scenarioConfigurations), messages$noPopulationIdForPopulationScenario("PopulationScenario"))
+})
+
+test_that("It throws an error when reading wrong file structure for scenario configuration", {
+  expectedColumns <- c(
+    "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol",
+    "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
+    "OutputPathsIds"
+  )
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Scenarios.xlsx",
+    tmpdir = tempDir,
+    code = {
+      scenariosDfLocal <- scenariosDf[3:12]
+      writeExcel(data = list(
+        "Scenarios" = scenariosDfLocal
+      ), path = file.path(tempDir, "Scenarios.xlsx"), )
+      expect_error(readScenarioConfigurationFromExcel(projectConfiguration = projectConfigurationLocal),
+        regexp = messages$errorWrongXLSStructure(filePath = file.path(
+          projectConfigurationLocal$paramsFolder,
+          projectConfigurationLocal$scenarioDefinitionFile
+        ), expectedColNames = expectedColumns), fixed = TRUE
+      )
+    }
+  )
 })

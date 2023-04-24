@@ -187,7 +187,8 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' @param checkFormulaValues If TRUE, values of explicit formulas are always
 #'   compared. Otherwise, the values are only compared if the formulas are
 #'   overridden (isFixedValue == TRUE). FALSE by default.
-#' @param compareFormulasByValue If `FALSE`(default), formulas are compared by their types and string. If `TRUE`, only values are compared.
+#' @param compareFormulasByValue If `FALSE`(default), formulas are compared by their types and string. If `TRUE`,
+#'  only values are compared.
 #'
 #' @return `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
@@ -244,7 +245,6 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
     return(isTableFormulasEqual(formula1, formula2))
   }
 
-  #  stop(messages$errorCouldNotCompareParameters(parameter1, parameter2))
   return(FALSE)
 }
 
@@ -303,7 +303,7 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' )
 #' @import ospsuite
 #' @export
-setParameterValuesByPathWithCondition <- function(parameterPaths,
+setParameterValuesByPathWithCondition <- function(parameterPaths, # nolint: object_length_linter.
                                                   values,
                                                   simulation,
                                                   condition = function(path) {
