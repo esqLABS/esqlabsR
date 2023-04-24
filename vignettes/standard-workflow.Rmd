@@ -144,39 +144,39 @@ intravenously to an individual with a 90 ml/min estimated glomerular
 filtration rate. To define a scenario, create a new row in the
 `Scenarios.xlsx` file with the following content:
 
--   **Scenario_name**: unique name of the scenario. The name must be a
-    [valid R variables
+-   **Scenario_name**  
+unique name of the scenario. The name must be a [valid R variables 
     name](https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f).
 
--   **IndividualId**: Name (ID) of an individual. This name refers to
+-   **IndividualId**  
+Name (ID) of an individual. This name refers to
     the name of the individual as used in excel files
     `IndividualBiometrics.xlsx` for definition of the biometric
     properties of the simulated individual and
     `IndividualParameters.xlsx` for definition of individual-specific
-    model parameters. **IndividualId** may be empty. In this case, the
+model parameters.  
+**IndividualId** may be empty. In this case, the
     individual as defined in the `pkml` simulation without any
-    individual-specific model parameters will be simulated. To create an
-    individual with specific biometric characteristics, define an entry
-    with the same individual id in the file `IndividualBiometrics.xlsx`.
-    The same individual can be used in multiple scenarios. Note that
-    though it is technically possible to apply a species different from
-    the one in the original simulation, the correctness of the results
+individual-specific model parameters will be simulated.The same individual 
+can be used in multiple scenarios.   
+Note that though it is technically possible to apply a species different 
+from the one in the original simulation, the correctness of the results
     is not guaranteed as there exist some structural differences between
     the species.
 
--   **PopulationId**: Name (ID) of a population. This name refers to the
-    name of the population as used in excel file
-    `PopulationParameters.xlsx` for definition of the demographic
-    properties of the simulated population. If **PopulationId** is
-    empty, the scenario is simulated as an individual simulation.
-    Otherwise, a population as defined in the sheet `Demographics` of
-    the `PopulationParameters.xlsx` file will be created and the
+-   **PopulationId**
+Name (ID) of a population. This name refers to the name of the population as 
+used in excel file`PopulationParameters.xlsx` for definition of the demographic
+properties of the simulated population.   
+If **PopulationId** is empty, the scenario is simulated as an individual 
+simulation. Otherwise, a population as defined in the sheet `Demographics`
+of the `PopulationParameters.xlsx` file will be created and the
     scenario simulated as a population simulation.
-
 To create a population with specific demographic characteristics, define
 an entry with the same population id in the file
 `PopulationParameters.xlsx`. The same population can be used in multiple
-scenarios. **Note**: You can define both an **IndividualId** and a
+scenarios.  
+**Note**: You can define both an **IndividualId** and a
 **PopulationId**. In this case, individual-specific parameters from the
 `IndividualParameters.xlsx` will be applied to the simulation prior to
 applying the population parameters. Keep in mind, that any physiological
@@ -185,10 +185,10 @@ set of a population will be overwritten by the population! If e.g. you
 specify the GFR of the individual in the `IndividualParameters.xlsx`, it
 will be overwritten by the GFR values sampled in the simulation.
 
--   **ModelParameterSheets**: A list of sheet names from the
-    `ModelParameter.xlsx` file, separated by a `,`. Each sheet must have
-    the columns `Container Path`, `Parameter Name`, `Value`, and
-    `Units`. Parameter values from specified sheets will be applied to
+-   **ModelParameterSheets**
+A list of sheet names from the `ModelParameter.xlsx` file, separated by a `,`.
+Each sheet must have the columns `Container Path`, `Parameter Name`, `Value`, 
+and `Units`. Parameter values from specified sheets will be applied to
     the model in the order of their definition. E.g., if we define
     `Global, Aciclovir`, then parameters from the `Aciclovir` sheet will
     be applied after the `Global` parameters. **ModelParameterSheets**
@@ -212,9 +212,9 @@ will be overwritten by the GFR values sampled in the simulation.
     exists in the `IndividualParameters.xlsx` file, this step is simply
     ignored.
 
--   **ApplicationProtocol**: name of the application protocol that will
-    be applied. Applications are defined as a set of parameters that
-    will be applied to the model in the file
+-   **ApplicationProtocol**
+Name of the application protocol that will be applied. Applications are defined 
+as a set of parameters that will be applied to the model in the file
     `ApplicationParameters.xlsx`. For each application, create a sheet
     with the name as specified in the **ApplicationProtocol** entry and
     populate it with the same structure as the `ModelParameter.xlsx`
