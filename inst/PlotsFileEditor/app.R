@@ -19,8 +19,8 @@ ui <- fluidPage(
       "DataCombined",
       br(),
       fluidRow(
-        column(3, actionButton("addDataCombined", "Add DataCombined")),
-        column(3, span(textOutput("infoAddDataCombined"), style = "color:red")),
+        column(2, actionButton("addData", "Add Data")),
+        column(4, span(textOutput("infoAddData"), style = "color:red")),
       ),
       br(),
       fluidRow(
@@ -82,6 +82,7 @@ ui <- fluidPage(
         column(2, actionButton("addPlotGrid", "Add Plot Grid")),
         column(3, span(textOutput("infoAddPlotGrid"), style = "color:red")),
       ),
+      br(),
       fluidRow(
         column(3, textInput("plotGridName", label = "name")),
         column(3, selectizeInput("plotIDs", label = "plotIDs", choices = "", multiple = TRUE)),
@@ -186,6 +187,7 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$dataType, {
+    output$infoAddData <- NULL
     if (input$dataType == "simulated") {
       shinyjs::enable("scenario")
       shinyjs::enable("path")
@@ -204,13 +206,18 @@ server <- function(input, output, session) {
 
   output$plotGridSheet <- renderTable(dfPlotGrids())
 
-  observeEvent(input$addDataCombined, {
+  observeEvent(input$addData, {
     # obligatory inputs 'DataCombinedName' and 'label'
     if (gsub(" ", "", input$DataCombinedName) == "" || gsub(" ", "", input$label) == "") {
-      output$infoAddDataCombined <- renderText("Please fill in fields 'DataCombinedName' and 'label'")
+      output$infoAddData <- renderText("Please fill in fields 'DataCombinedName' and 'label'")
       return()
     }
+    output$infoAddData <- NULL
     if (input$dataType == "simulated") {
+      if (gsub(" ", "", input$scenario) == "" || gsub(" ", "", input$path) == "") {
+        output$infoAddData <- renderText("Please fill in fields 'scenario' and 'path'")
+        return()
+      }
       newRow <- data.frame(
         DataCombinedName = input$DataCombinedName,
         dataType = input$dataType,
@@ -220,7 +227,7 @@ server <- function(input, output, session) {
       )
     } else {
       if (gsub(" ", "", input$dataSet) == "") {
-        output$infoAddDataCombined <- renderText("Please fill in field 'dataSet'")
+        output$infoAddData <- renderText("Please fill in field 'dataSet'")
         return()
       }
       newRow <- data.frame(
@@ -237,13 +244,14 @@ server <- function(input, output, session) {
 
   observeEvent(input$addPlot, {
     if (gsub(" ", "", input$plotID) == "") {
-      output$infoAddPlotGrid <- renderText("Please fill in field 'plotID'")
+      output$infoAddPlot <- renderText("Please fill in field 'plotID'")
       return()
     }
     if (gsub(" ", "", input$plotID) %in% dfPlots()$plotID) {
-      output$infoAddPlotGrid <- renderText("Plot ID already exists, please choose another ID")
+      output$infoAddPlot <- renderText("Plot ID already exists, please choose another ID")
       return()
     }
+    output$infoAddPlot <- NULL
     newRow <- data.frame(
       plotID = input$plotID,
       DataCombinedName = input$PlotDataCombined,
@@ -268,9 +276,10 @@ server <- function(input, output, session) {
       return()
     }
     if (gsub(" ", "", input$plotGridName) %in% dfPlotGrids()$name) {
-      output$infoAddPlot <- renderText("Plot grid already exists, please choose another name")
+      output$infoAddPlotGrid <- renderText("Plot grid already exists, please choose another name")
       return()
     }
+    output$infoAddPlot <- NULL
     newRow <- data.frame(
       name = input$plotGridName,
       plotIDs = paste(input$plotIDs, collapse = ", "),
