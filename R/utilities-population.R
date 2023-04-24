@@ -164,7 +164,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
 
 #' Supported distributions for sampling
 #' @export
-Distributions <- enum(list( # nolint: object_name_linter.
+Distributions <- enum(list(
   "Normal",
   "LogNormal"
 ))
