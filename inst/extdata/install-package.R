@@ -68,8 +68,11 @@ installEsqLabsR <- function() {
 
   checkRtools()
 
-  cli::cli_progress_step("Getting minimal version of PKSim.")
-  getPKSimMinimal()
+  if (installOption == 1) {
+    cli::cli_progress_step("Getting minimal version of PKSim.")
+    getPKSimMinimal()
+  }
+
 
   cli::cli_progress_step("Installing esqlabsR and dependencies")
   install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip",
