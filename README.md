@@ -1,4 +1,4 @@
-# esqlabsR <img src="man/figures/logo.png" align="right" width="240" />
+# esqlabsR <a href="https://esqlabs.github.io/esqlabsR"><img src="man/figures/logo.png" align="right" height="138" /></a>
 
 The **`{esqlabsR}`** R-package is designed to facilitate and standardize **modeling and simulation** (M&S) of PBPK and QSP models implemented in [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS) and executed from R. The package provides functions to read and run scenarios, workflows, and simulations. Furthermore, it creates visualizations based on non-code input from Excel files. The package is based on R functions in the [`ospsuite` package](https://github.com/Open-Systems-Pharmacology/OSPSuite-R).
 
@@ -11,41 +11,36 @@ The **`{esqlabsR}`** R-package is designed to facilitate and standardize **model
 
 ## Installation
 
-Install as a binary file from [the AppVeyor link](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/branch/develop/artifacts/). The `{esqlabsR}` package requires the following packages: 
 
-* Available from CRAN:
-    * R6
-    * colorspace,
-    * dplyr,
-    * ggplot2,
-    * purrr,
-    * readxl,
-    * shiny,
-    * shinyjs,
-    * tidyr,
-    * tools,
-    * vctrs,
-    * writexl,
-    * stringr,
-    * labeling,
-    * readr,
-    * rlang,
-    * jsonlite,
-    * patchwork,
-    * hash,
-    * FME
+```r
+# {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on 
+# {rClr} (https://github.com/Open-Systems-Pharmacology/rClr) which is not 
+# available on CRAN.
+# Therefore, these must be installed from github using `{remotes}`.
 
-* Available from github: 
-    * [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
-    * [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils) > 1.4.0
-    * [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library) > 1.5.0
-    * [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.1
-    * [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification) > 1.2
-  
+install.packages("remotes")
+install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip', 
+                  repos = NULL, 
+                  type = 'binary')
+remotes::install_github("esqLABS/esqlabsR")
+
+``` 
+
 ### For projects created for version 3
 
 To run code written for version 3 of `esqlabsR` package, additionally install the
 [esqlabsRLegacy](https://github.com/esqLABS/esqlabsRLegacy) package.
+
+## Open Systems Pharmacology Packages
+
+`{esqlabsR}` relies on the following Open Systems Pharmacology packages:
+
+  - [rClr](https://github.com/Open-Systems-Pharmacology/rClr/) > 0.9.2
+  - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils) > 1.4.0
+  - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library) > 1.5.0
+  - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) > 11.1
+  - [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification) > 1.2
+  
 
 ## Contributing
 

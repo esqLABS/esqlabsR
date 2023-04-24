@@ -49,7 +49,13 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/compareSimulationParameters.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/compareSimulations.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/compareWithNA.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombinedFromExcel.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/createDefaultProjectConfiguration.html</loc>
@@ -70,10 +76,28 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/Distributions.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-createConfigurationFromRow.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateClassHasField.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateDataCombinedFromExcel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateExportConfigurationsFromExcel.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateParametersStructure.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validatePlotConfigurationFromExcel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validatePlotGridsFromExcel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateScenarioConfigurations.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/enumPutList.html</loc>
@@ -157,6 +181,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedData.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/pathFromClipboard.html</loc>
   </url>
   <url>
@@ -188,6 +215,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/sampleRandomValue.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/saveScenarioResults.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/ScenarioConfiguration.html</loc>
