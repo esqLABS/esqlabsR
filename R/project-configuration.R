@@ -3,7 +3,7 @@
 #' @description An object storing configuration used project-wide
 #' @format NULL
 #' @export
-ProjectConfiguration <- R6::R6Class( # nolint: object_name_linter.
+ProjectConfiguration <- R6::R6Class(
   "ProjectConfiguration",
   inherit = ospsuite.utils::Printable,
   cloneable = TRUE,

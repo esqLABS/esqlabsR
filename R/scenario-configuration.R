@@ -3,7 +3,7 @@
 #' @description An object storing configuration of a specific scenario
 #' @format NULL
 #' @export
-ScenarioConfiguration <- R6::R6Class( # nolint: object_name_linter, cyclocomp_linter.
+ScenarioConfiguration <- R6::R6Class(
   "ScenarioConfiguration",
   inherit = ospsuite.utils::Printable,
   cloneable = TRUE,

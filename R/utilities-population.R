@@ -11,7 +11,7 @@
 #' in the excel file.
 #' @import readxl
 #' @export
-readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) { # nolint: object_length_linter, object_name_linter.
+readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) {
   columnNames <- c(
     "PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax",
     "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit"

@@ -23,7 +23,7 @@
 #' # Read scenario definition from excel
 #' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)[[scenarioName]]
 #' }
-readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConfiguration) { # nolint: object_length_linter.
+readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConfiguration) {
   validateIsString(scenarioNames, nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 

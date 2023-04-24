@@ -7,7 +7,7 @@
 #'
 #' @return Object of type `ProjectConfiguration`
 #' @export
-createDefaultProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) { # nolint: object_length_linter.
+createDefaultProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
   # Read data from excel
   data <- readExcel(path = path)
   # Create an empty project configuration object and population with data from

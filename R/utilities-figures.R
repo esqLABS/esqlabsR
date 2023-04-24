@@ -299,7 +299,8 @@ createPlotsFromExcel <- function(
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
   plotConfiguration <- createEsqlabsPlotConfiguration()
   plotConfigurationList <- apply(
-    dfPlotConfigurations[, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType", "quantiles", "foldDistance"))],
+    dfPlotConfigurations[, !(names(dfPlotConfigurations) %in%
+      c("plotID", "DataCombinedName", "plotType", "quantiles", "foldDistance"))],
     1, .createConfigurationFromRow,
     defaultConfiguration = plotConfiguration
   )
