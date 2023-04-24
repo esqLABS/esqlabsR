@@ -153,6 +153,12 @@ messages$stopNoPathProvided <- function(dataCombinedName) {
   )
 }
 
+messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
+  paste0(
+    "Output path '", path, "' is defined in the DataCombined '", paste0(dataCombinedName, collapse = ", "), "' for scenario '", scenarioName, "' but has not been simulated. Please check that the output path is specified for this scenario."
+  )
+}
+
 messages$stopNoDataSetProvided <- function(dataCombinedName) {
   paste0(
     "No data set is defined for the DataCombined '", paste0(dataCombinedName, collapse = ", "), "'.
