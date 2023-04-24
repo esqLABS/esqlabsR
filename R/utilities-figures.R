@@ -393,7 +393,10 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
       # upper and the lower limit value), values are separated by a ','.
       # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
       # Split the input string by ',' but do not split within ""
-      value <- unlist(scan(text = as.character(value), what = "character", sep = ","))
+      value <- unlist(trimws(scan(
+        text = as.character(value), what = "character", sep = ",",
+        quiet = TRUE
+      )))
 
       # Expected type of the field to cast the value to the
       # correct type. For fields that do not have a default value (NULL), we have
