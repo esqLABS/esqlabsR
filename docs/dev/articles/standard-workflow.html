@@ -111,33 +111,47 @@ scenarios set up, all these information are stored in excel files with
 defined structure.</p>
 <p>The step wise approach of setting up a new simulation scenario is
 shown in Figure 1, detailed description of the excel files structures
-and <code>R</code> code are given in Section #defining-scenarios.</p>
+and <code>R</code> code are given in the <a href="#defining-scenarios">defining Scenarios</a> section.</p>
 <div class="figure">
 <img src="Figures/ScenarioWorkflow.png" alt=""><p class="caption">Figure 1: Workflow of scenario set up</p>
 </div>
-<ol start="0" style="list-style-type: decimal">
+<div class="section level4">
+<h4 id="add-a-simulation">Add a simulation<a class="anchor" aria-label="anchor" href="#add-a-simulation"></a>
+</h4>
+<ol style="list-style-type: decimal">
 <li><p>After the model has been developed in PK-Sim and/or MoBi, a
 simulation must be stored as a <em>.pkml</em> file in the
-<code>Models/Simulations</code> folder. To set up a simulation/scenario
-in <code>R</code>, open the file <code>Scenarios.xlsx</code> located in
-the folder <code>Parameters</code>.</p></li>
+<code>Models/Simulations</code> folder.</p></li>
+<li><p>To set up a simulation/scenario in <code>R</code>, open the file
+<code>Scenarios.xlsx</code> located in the folder
+<code>Parameters</code>.</p></li>
 <li><p>Start defining a scenario by giving it an <em>name</em> in the
 <code>Scenario_name</code> column. Scenario name will be used later to
 retrieve simulation results and use them e.g. in figure
 definitions.</p></li>
-<li><p>Specify the simulation <code>*.pkml</code> file in the column
-<code>ModelFile</code>.</p></li>
-<li><ol style="list-style-type: lower-alpha">
-<li>If you simply want to run the simulation with the settings as it has
-been exported from PK-Sim or MoBi, you can proceed to section
-#running-scenarios.</li>
-<li>If you want to customize the simulation from <code>R</code>, follow
-the next steps.</li>
-</ol></li>
-<li><p>If you want to apply parameter values from the
-<code>ModelParameters.xlsx</code> file, specify which sheets to load in
-the <code>ModelParameterSheets</code> column.</p></li>
-<li>
+<li><p>Specify the simulation <code>*.pkml</code> file to use in the
+column <code>ModelFile</code>.</p></li>
+<li><p>If you simply want to run the simulation with the settings as it
+has been exported from PK-Sim or MoBi, you can proceed to <a href="#running-scenarios">running Scenarios</a> section. Otherwise,
+<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> will allow you to <a href="#customize-the-simulation">customize</a> directly from
+<code>R</code>.</p></li>
+</ol>
+</div>
+<div class="section level4">
+<h4 id="customize-the-simulation">Customize the simulation<a class="anchor" aria-label="anchor" href="#customize-the-simulation"></a>
+</h4>
+<div class="section level5">
+<h5 id="simulation-parameters">Simulation Parameters<a class="anchor" aria-label="anchor" href="#simulation-parameters"></a>
+</h5>
+<p>You can define simulation parameters in the
+<code>ModelParameters.xlsx</code> file. In order to apply to the
+simulation, you need to specify which sheets to load in the
+<code>ModelParameterSheets</code> column of the
+<code>Scenarios.xlsx</code> file.</p>
+</div>
+<div class="section level5">
+<h5 id="individuals">Individuals<a class="anchor" aria-label="anchor" href="#individuals"></a>
+</h5>
 <p>If you want to simulate a specific individual with individual
 characteristics (age, weight, etc.) or apply individual model parameter
 values to the simulation, define the individual in the
@@ -149,30 +163,45 @@ row in the <code>IndividualBiometrics</code> sheet.</li>
 <li>To define an individual-specific parametrization, create a new sheet
 and name it as the ID of the individual.</li>
 </ol>
-</li>
-<li><p>If you want to run a <em>population simulation</em>, specify a
+</div>
+<div class="section level5">
+<h5 id="population">Population<a class="anchor" aria-label="anchor" href="#population"></a>
+</h5>
+<p>If you want to run a <em>population simulation</em>, specify a
 population in the column <code>PopulationId</code>. If you want to
 create a new population each time you run the scenario, define
 population demographics in the <code>Demographics</code> sheet of the
 <code>PopulationParameters.xlsx</code> file. Keep in mind that
 simulation results might differ each time you run the scenario, as new
-population will be generated each time!</p></li>
-</ol>
+population will be generated each time!</p>
 <p>If you want to import a population from existing csv file, set the
 value of the <code>ReadPopulationFromCSV</code> column to
 <code>TRUE</code>. The population csv file must be located in the
 <code>Parameters/Populations</code> folder.</p>
-<ol start="7" style="list-style-type: decimal">
-<li><p>Change the simulation time, if required.</p></li>
-<li><p>You can define the outputs of the simulation in the
+</div>
+<div class="section level5">
+<h5 id="time">Time<a class="anchor" aria-label="anchor" href="#time"></a>
+</h5>
+<p>Simulation time can also be changed with the
+<code>SimulationTime</code> and <code>SimulationTimeUnit</code>
+columns.</p>
+</div>
+<div class="section level5">
+<h5 id="outputpath">OutputPath<a class="anchor" aria-label="anchor" href="#outputpath"></a>
+</h5>
+<p>You can define the outputs of the simulation in the
 <code>OutputPathsIds</code> column. For convenience, not the full paths
 to the outputs must be listed, but the their acronyms. The full path for
-each acronym must be defined in the sheet
-<code>OutputPaths</code>.</p></li>
-<li><p>Finally, you can simulate different protocols from the same
-simulation file by defining an application protocol in the column
-<code>ApplicationProtocol</code>. See description below.</p></li>
-</ol>
+each acronym must be defined in the sheet <code>OutputPaths</code>.</p>
+</div>
+<div class="section level5">
+<h5 id="administration-protocols">Administration Protocols<a class="anchor" aria-label="anchor" href="#administration-protocols"></a>
+</h5>
+<p>Finally, you can simulate different administration protocols from the
+same simulation file by defining an application protocol in the column
+<code>ApplicationProtocol</code>. See description below.</p>
+</div>
+</div>
 </div>
 <div class="section level3">
 <h3 id="project-configuration">Project configuration<a class="anchor" aria-label="anchor" href="#project-configuration"></a>
@@ -203,6 +232,14 @@ examples, we assume that the current working directory is the
 <span><span class="co">#&gt;    Experimental data file: TestProject_TimeValuesData.xlsx </span></span>
 <span><span class="co">#&gt;    Data importer configuration: esqlabs_dataImporter_configuration.xml </span></span>
 <span><span class="co">#&gt;    Output folder: ../Results</span></span></code></pre></div>
+<p>If required, you can change the location of one of the files or
+folders:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">#change the location of the output folder </span></span>
+<span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="st">"../anotherOutputFolder"</span></span>
+<span></span>
+<span><span class="co">#change the location of the model parameters file</span></span>
+<span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">modelParametersFile</span> <span class="op">&lt;-</span> <span class="st">"../anotherModelParameters.xlsx"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="defining-scenarios">Defining scenarios<a class="anchor" aria-label="anchor" href="#defining-scenarios"></a>
@@ -217,38 +254,34 @@ estimated glomerular filtration rate. To define a scenario, create a new
 row in the <code>Scenarios.xlsx</code> file with the following
 content:</p>
 <ul>
-<li><p><strong>Scenario_name</strong>: unique name of the scenario. The
-name must be a <a href="https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f" class="external-link">valid
+<li><p><strong>Scenario_name</strong><br>
+unique name of the scenario. The name must be a <a href="https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f" class="external-link">valid
 R variables name</a>.</p></li>
-<li><p><strong>IndividualId</strong>: Name (ID) of an individual. This
-name refers to the name of the individual as used in excel files
-<code>IndividualBiometrics.xlsx</code> for definition of the biometric
-properties of the simulated individual and
-<code>IndividualParameters.xlsx</code> for definition of
-individual-specific model parameters. <strong>IndividualId</strong> may
-be empty. In this case, the individual as defined in the
-<code>pkml</code> simulation without any individual-specific model
-parameters will be simulated. To create an individual with specific
-biometric characteristics, define an entry with the same individual id
-in the file <code>IndividualBiometrics.xlsx</code>. The same individual
-can be used in multiple scenarios. Note that though it is technically
-possible to apply a species different from the one in the original
-simulation, the correctness of the results is not guaranteed as there
-exist some structural differences between the species.</p></li>
-<li><p><strong>PopulationId</strong>: Name (ID) of a population. This
-name refers to the name of the population as used in excel file
-<code>PopulationParameters.xlsx</code> for definition of the demographic
-properties of the simulated population. If <strong>PopulationId</strong>
-is empty, the scenario is simulated as an individual simulation.
-Otherwise, a population as defined in the sheet
-<code>Demographics</code> of the <code>PopulationParameters.xlsx</code>
-file will be created and the scenario simulated as a population
-simulation.</p></li>
-</ul>
-<p>To create a population with specific demographic characteristics,
-define an entry with the same population id in the file
-<code>PopulationParameters.xlsx</code>. The same population can be used
-in multiple scenarios. <strong>Note</strong>: You can define both an
+<li><p><strong>IndividualId</strong><br>
+Name (ID) of an individual. This name refers to the name of the
+individual as used in excel files <code>IndividualBiometrics.xlsx</code>
+for definition of the biometric properties of the simulated individual
+and <code>IndividualParameters.xlsx</code> for definition of
+individual-specific model parameters.<br><strong>IndividualId</strong> may be empty. In this case, the individual
+as defined in the <code>pkml</code> simulation without any
+individual-specific model parameters will be simulated.The same
+individual can be used in multiple scenarios.<br>
+Note that though it is technically possible to apply a species different
+from the one in the original simulation, the correctness of the results
+is not guaranteed as there exist some structural differences between the
+species.</p></li>
+<li><p><strong>PopulationId</strong> Name (ID) of a population. This
+name refers to the name of the population as used in excel
+file<code>PopulationParameters.xlsx</code> for definition of the
+demographic properties of the simulated population.<br>
+If <strong>PopulationId</strong> is empty, the scenario is simulated as
+an individual simulation. Otherwise, a population as defined in the
+sheet <code>Demographics</code> of the
+<code>PopulationParameters.xlsx</code> file will be created and the
+scenario simulated as a population simulation. To create a population
+with specific demographic characteristics, define an entry with the same
+population id in the file <code>PopulationParameters.xlsx</code>. The
+same population can be used in multiple scenarios.<br><strong>Note</strong>: You can define both an
 <strong>IndividualId</strong> and a <strong>PopulationId</strong>. In
 this case, individual-specific parameters from the
 <code>IndividualParameters.xlsx</code> will be applied to the simulation
@@ -257,9 +290,8 @@ physiological parameters defined for an individual that are also part of
 the parameter set of a population will be overwritten by the population!
 If e.g. you specify the GFR of the individual in the
 <code>IndividualParameters.xlsx</code>, it will be overwritten by the
-GFR values sampled in the simulation.</p>
-<ul>
-<li><p><strong>ModelParameterSheets</strong>: A list of sheet names from
+GFR values sampled in the simulation.</p></li>
+<li><p><strong>ModelParameterSheets</strong> A list of sheet names from
 the <code>ModelParameter.xlsx</code> file, separated by a
 <code>,</code>. Each sheet must have the columns
 <code>Container Path</code>, <code>Parameter Name</code>,
@@ -288,7 +320,7 @@ can use an individual in multiple scenarios. If an individual is
 specified in the scenario definition, but no sheet with this name exists
 in the <code>IndividualParameters.xlsx</code> file, this step is simply
 ignored.</p></li>
-<li><p><strong>ApplicationProtocol</strong>: name of the application
+<li><p><strong>ApplicationProtocol</strong> Name of the application
 protocol that will be applied. Applications are defined as a set of
 parameters that will be applied to the model in the file
 <code>ApplicationParameters.xlsx</code>. For each application, create a
@@ -306,7 +338,7 @@ container. In the following example, we will extract application
 parameters for the molecule <code>Aciclovir</code> from the example
 simulation:</p></li>
 </ul>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu">loadSimulation</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Aciclovir.pkml"</span>, package <span class="op">=</span> <span class="st">"ospsuite"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">applicationParams</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getAllApplicationParameters.html">getAllApplicationParameters</a></span><span class="op">(</span><span class="va">sim</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">applicationParams</span><span class="op">)</span></span>
@@ -346,7 +378,7 @@ simulation:</p></li>
 <span><span class="co">#&gt;    isStateVariable: FALSE</span></span></code></pre></div>
 <p>and export the parameters to an excel file using the
 <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> function:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/exportParametersToXLS.html">exportParametersToXLS</a></span><span class="op">(</span>parameters <span class="op">=</span> <span class="va">applicationParams</span>, paramsXLSpath <span class="op">=</span> <span class="st">"../Applications.xlsx"</span><span class="op">)</span></span></code></pre></div>
 <p>The created excel file will have the same structure as all
 Parameter-files and can be directly loaded in MoBi or R using the
@@ -448,7 +480,7 @@ defined in the field <code>customFunctionArgs</code>.</p>
 multiplies the <code>Dose</code> parameter by a certain factor. The path
 to the dose parameter and the multiplication factor are defined as
 arguments.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
 <span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
 <span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
@@ -525,7 +557,7 @@ from the excel files by calling the
 argument to the function. To read the configuration for the
 <em>‘TestScenario’</em> scenario defined in the
 <code>Scenarios.xlsx</code> file, we call</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
 <span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
 <span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
@@ -568,7 +600,7 @@ without specifying scenarios’ names.</p>
 currently not accessible through excel files. In model
 development/fitting phase, we might want to apply some test parameter
 values:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set output paths for each scenario</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">scenarioConfiguration</span> <span class="kw">in</span> <span class="va">scenarioConfigurations</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">scenarioConfiguration</span><span class="op">$</span><span class="va">setTestParameters</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span>
@@ -582,7 +614,7 @@ physiology and parametrization applied as defined by the scenario
 configuration). In such case, a folder with the current date and time
 will be created in the folder where the simulation <code>pkml</code>
 files are located.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">simulatedScenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
 <span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarioConfigurations</span>,</span>
 <span>  customParams <span class="op">=</span> <span class="cn">NULL</span>, saveSimulationsToPKML <span class="op">=</span> <span class="cn">FALSE</span></span>
