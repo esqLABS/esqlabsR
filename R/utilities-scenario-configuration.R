@@ -93,7 +93,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     }
     data <- wholeData[wholeData$Scenario_name == scenarioName, ]
     # If multiple rows with the same scenario name if present, stop with an error
-    if (dim(data)[1] > 1) {
+    if (nrow(data) > 1) {
       stop(messages$stopScenarioNameNonUnique(scenarioName))
     }
 
