@@ -57,7 +57,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
 #' Possible gender entries as integer values
 #'
 #' @export
-GenderInt <- enum(list( # nolint: object_name_linter.
+GenderInt <- enum(list(
   MALE = 1,
   FEMALE = 2,
   UNKNOWN = 3
