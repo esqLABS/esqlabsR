@@ -38,6 +38,11 @@ createDataCombinedFromExcel <- function(
     simulated <- filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
     if (nrow(simulated) > 0) {
       for (j in seq_len(nrow(simulated))) {
+        # Check if the output has been simulated
+        if (!any(simulatedScenarios[[simulated[j, ]$scenario]]$results$allQuantityPaths == simulated[j, ]$path)) {
+          stop(messages$stopWrongOutputPath(dataCombinedName = name, scenarioName = simulated[j, ]$scenario, path = simulated[j, ]$path))
+        }
+
         dataCombined$addSimulationResults(
           simulationResults = simulatedScenarios[[simulated[j, ]$scenario]]$results,
           quantitiesOrPaths = simulated[j, ]$path,

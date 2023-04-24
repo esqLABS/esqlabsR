@@ -190,6 +190,41 @@ test_that("It trows an error if no output path is specified for a simulated data
   )
 })
 
+test_that("It trows an error if wrong output path is specified for a simulated data", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      dataCombinedDfLocal$path <- "foo"
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- exportConfigurationDf
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      ), regexp = messages$stopWrongOutputPath(
+        dataCombinedName = dataCombinedDfLocal$DataCombinedName[[1]],
+        scenarioName = dataCombinedDfLocal$scenario[[1]],
+        path = dataCombinedDfLocal$path[[1]]
+      ))
+    }
+  )
+})
+
 test_that("It trows an error if no data set is specified for observed data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
