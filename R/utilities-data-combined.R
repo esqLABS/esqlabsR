@@ -15,7 +15,12 @@
 #' @import tidyr
 #'
 #' @export
-createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = NULL, simulatedScenarios = NULL, observedData = NULL, stopIfNotFound = TRUE) {
+createDataCombinedFromExcel <- function(
+    file,
+    sheet = NULL, dataCombinedNames = NULL,
+    simulatedScenarios = NULL,
+    observedData = NULL,
+    stopIfNotFound = TRUE) {
   validateIsString(file)
   validateIsString(sheet, nullAllowed = TRUE)
 
@@ -32,7 +37,7 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
     # add simulated data
     simulated <- filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
     if (nrow(simulated) > 0) {
-      for (j in 1:nrow(simulated)) {
+      for (j in seq_len(nrow(simulated))) {
         dataCombined$addSimulationResults(
           simulationResults = simulatedScenarios[[simulated[j, ]$scenario]]$results,
           quantitiesOrPaths = simulated[j, ]$path,
@@ -53,13 +58,16 @@ createDataCombinedFromExcel <- function(file, sheet = NULL, dataCombinedNames = 
   names(dataCombinedList) <- unique(dfDataCombined$DataCombinedName)
 
   # apply data transformations
-  dfTransform <- filter(dfDataCombined, !is.na(xOffsets) | !is.na(yOffsets) | !is.na(xScaleFactors) | !is.na(yScaleFactors))
+  dfTransform <- filter(dfDataCombined, !is.na(xOffsets) |
+    !is.na("yOffsets") |
+    !is.na("xScaleFactors") |
+    !is.na("yScaleFactors"))
   # Apply data transformations if specified in the excel file
   if (dim(dfTransform)[[1]] != 0) {
     apply(dfTransform, 1, \(row) {
       # Get the data frame of the Data combined to retrieve units and MW
-      dataCombined_df <- dataCombinedList[[row[["DataCombinedName"]]]]$toDataFrame()
-      singleRow <- dataCombined_df[dataCombined_df$name == row[["label"]], ][1, ]
+      dataCombinedDf <- dataCombinedList[[row[["DataCombinedName"]]]]$toDataFrame()
+      singleRow <- dataCombinedDf[dataCombinedDf$name == row[["label"]], ][1, ]
 
       # If offsets are defined, convert them to the default unit of the data
       # Extract the base unit of the data (or simulation result) and the unit

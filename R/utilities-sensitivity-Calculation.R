@@ -295,7 +295,7 @@
                           dpi = 300) {
   purrr::walk2(
     .x = plotlist,
-    .y = seq(1:length(plotlist)),
+    .y = seq_along(plotlist),
     .f = ~ ggplot2::ggsave(
       filename = paste0(outputFolder, plot.type, "OutputPath", .y, ".png"),
       plot = .x,

@@ -28,18 +28,41 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 
   # Current scenario definition structure:
-  # "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol",
-  # "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
-  # "OutputPathsIds"
-  colTypes <- c("text", "text", "text", "logical", "text", "text", "numeric", "text", "logical", "numeric", "text", "text", "text")
+  expectedColumns <- c(
+    "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets",
+    "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime",
+    "SteadyStateTimeUnit", "ModelFile", "OutputPathsIds"
+  )
+  # Define the casting functions to cast columns to specific type
+  colTypes <- c(
+    "as.character", "as.character", "as.character", "as.logical", "as.character",
+    "as.character", "as.numeric", "as.character", "as.logical",
+    "as.numeric", "as.character", "as.character", "as.character"
+  )
+
+  # Read data without specifying column types. This is required to generate a
+  # meaningful error message if the input file has wrong column structure
   wholeData <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
       projectConfiguration$scenarioDefinitionFile
     ),
-    col_types = colTypes,
     sheet = "Scenarios"
   )
+
+  # Check if the structure is correct
+  if (length(expectedColumns) != length(names(wholeData)) && any((expectedColumns != names(wholeData)))) {
+    stop(messages$errorWrongXLSStructure(filePath = file.path(
+      projectConfiguration$paramsFolder,
+      projectConfiguration$scenarioDefinitionFile
+    ), expectedColNames = expectedColumns))
+  }
+
+  # 2DO - Cast column types
+  # for (idx in seq_along(colTypes)){
+  #   wholeData[idx] <- do.call(colTypes[[idx]], wholeData[idx])
+  # }
+
   outputPathsDf <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
@@ -79,7 +102,8 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     simTimeUnit <- data$SimulationTimeUnit
     # Set the time only if new value is defined
     if (!is.na(simTime)) {
-      scenarioConfiguration$simulationTime <- ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
+      scenarioConfiguration$simulationTime <-
+        ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
     }
 
     # Individual id
