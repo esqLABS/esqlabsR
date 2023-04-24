@@ -738,3 +738,51 @@ test_that("It throws a warning when outputName is missing in sheet 'exportConfig
     }
   )
 })
+
+test_that(".createConfigurationFromRow correctly reads values in quotes", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+
+  inputValues <- c(
+    "Test without quotes",
+    "Test, separated",
+    "Test with \"quotes\"",
+    "Test with \"quotes\" and, comma",
+    "Test with \"quotes, comma\"",
+    "Test with, \"quotes, comma\" and, comma"
+  )
+
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      plotGridsDfLocal <- as.data.frame(lapply(plotGridsDf, rep, 6))
+      plotGridsDfLocal$tagSuffix <- inputValues
+      writeExcel(data = list(
+        "plotGrids" = plotGridsDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+      plotGridsDfFromExcel <- readExcel(file.path(tempDir, "Plots.xlsx"), sheet = "plotGrids")
+
+      defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
+      parsedValues <- apply(plotGridsDfLocal, 1, \(row) {
+        plotGridConfiguration <- .createConfigurationFromRow(
+          defaultConfiguration = defaultPlotGridConfig,
+          row[!(names(row) %in% c("name", "plotIDs"))]
+        )
+        return(plotGridConfiguration$tagSuffix)
+      })
+
+      expectedValues <- list(
+        c("Test without quotes"),
+        c("Test", "separated"),
+        c("Test with quotes"),
+        c("Test with quotes and", "comma"),
+        "Test with quotes, comma",
+        c("Test with", "quotes, comma and", "comma")
+      )
+      expect_equal(parsedValues, expectedValues)
+    }
+  )
+})

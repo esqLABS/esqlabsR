@@ -172,6 +172,9 @@ sensitivityCalculation <- function(simulation,
     simulationRunOptions = simulationRunOptions
   )
 
+  # Call gc() on .NET
+  ospsuite::clearMemory()
+
   # `runSimulationBatches()` returns a list with one entry per simulation batch.
   # First remove the names of the upper level of the list to get all result in
   # one flat list in the next step but maintain the IDs of the runs
