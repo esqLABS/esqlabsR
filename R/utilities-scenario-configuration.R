@@ -35,33 +35,40 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
   )
   # Define the casting functions to cast columns to specific type
   colTypes <- c(
-    "as.character", "as.character", "as.character", "as.logical", "as.character",
-    "as.character", "as.numeric", "as.character", "as.logical",
-    "as.numeric", "as.character", "as.character", "as.character"
+    "text", "text", "text", "logical", "text",
+    "text", "numeric", "text", "logical",
+    "numeric", "text", "text", "text"
   )
 
-  # Read data without specifying column types. This is required to generate a
-  # meaningful error message if the input file has wrong column structure
-  wholeData <- readExcel(
+  # Read only the header of the excel file to check structure
+  header <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
       projectConfiguration$scenarioDefinitionFile
     ),
-    sheet = "Scenarios"
+    sheet = "Scenarios",
+    n_max = 0
   )
 
   # Check if the structure is correct
-  if (length(expectedColumns) != length(names(wholeData)) && any((expectedColumns != names(wholeData)))) {
+  if (!identical(names(header), expectedColumns)) {
     stop(messages$errorWrongXLSStructure(filePath = file.path(
       projectConfiguration$paramsFolder,
       projectConfiguration$scenarioDefinitionFile
     ), expectedColNames = expectedColumns))
   }
 
-  # 2DO - Cast column types
-  # for (idx in seq_along(colTypes)){
-  #   wholeData[idx] <- do.call(colTypes[[idx]], wholeData[idx])
-  # }
+  # If no errors were raised before, structure is correct. Whole excel file is
+  # read with column types.
+  wholeData <- readExcel(
+    path = file.path(
+      projectConfiguration$paramsFolder,
+      projectConfiguration$scenarioDefinitionFile
+    ),
+    sheet = "Scenarios",
+    col_types = colTypes
+  )
+
 
   outputPathsDf <- readExcel(
     path = file.path(
