@@ -78,7 +78,7 @@ GenderInt <- enum(list(
 #'   be sampled. Must have the same length as `parameterPaths`.
 #' A list of supported distributions is defined in `Distributions`. Default is `"Normal"`.
 #' @export
-extendPopulationByUserDefinedParams <- function(population,
+extendPopulationByUserDefinedParams <- function(population, # nolint: object_length_linter.
                                                 parameterPaths,
                                                 meanValues,
                                                 sdValues,

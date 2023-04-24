@@ -17,24 +17,24 @@
 #' @export
 esqLABS_colors <- function(nrOfColors) {
   # esqLABS colors in HSV model
-  esqRed_hsv <- rgb2hsv(235, 23, 51, maxColorValue = 255)
-  esqBlue_hsv <- rgb2hsv(13, 141, 218, maxColorValue = 255)
-  esqGreen_hsv <- rgb2hsv(38, 176, 66, maxColorValue = 255)
+  esqRedHSV <- rgb2hsv(235, 23, 51, maxColorValue = 255)
+  esqBlueHSV <- rgb2hsv(13, 141, 218, maxColorValue = 255)
+  esqGreenHSV <- rgb2hsv(38, 176, 66, maxColorValue = 255)
   # default color palette.
   esq_palette <- c(
-    hsv(esqBlue_hsv[1], esqBlue_hsv[2], esqBlue_hsv[3]),
-    hsv(esqRed_hsv[1], esqRed_hsv[2], esqRed_hsv[3]),
-    hsv(esqGreen_hsv[1], esqGreen_hsv[2], esqGreen_hsv[3])
+    hsv(esqBlueHSV[1], esqBlueHSV[2], esqBlueHSV[3]),
+    hsv(esqRedHSV[1], esqRedHSV[2], esqRedHSV[3]),
+    hsv(esqGreenHSV[1], esqGreenHSV[2], esqGreenHSV[3])
   )
 
   # pre-calculate distances between blue and red and red and green.
-  deltaH_b_r <- (esqRed_hsv[1] - esqBlue_hsv[1])
-  deltaS_b_r <- max(esqRed_hsv[2], esqBlue_hsv[2]) - min(esqRed_hsv[2], esqBlue_hsv[2])
-  deltaV_b_r <- max(esqRed_hsv[3], esqBlue_hsv[3]) - min(esqRed_hsv[3], esqBlue_hsv[3])
+  deltaH_b_r <- (esqRedHSV[1] - esqBlueHSV[1])
+  deltaS_b_r <- max(esqRedHSV[2], esqBlueHSV[2]) - min(esqRedHSV[2], esqBlueHSV[2])
+  deltaV_b_r <- max(esqRedHSV[3], esqBlueHSV[3]) - min(esqRedHSV[3], esqBlueHSV[3])
 
-  deltaH_r_g <- abs(esqRed_hsv[1] - (esqGreen_hsv[1] + 1))
-  deltaS_r_g <- max(esqRed_hsv[2], esqGreen_hsv[2]) - min(esqRed_hsv[2], esqGreen_hsv[2])
-  deltaV_r_g <- max(esqRed_hsv[3], esqGreen_hsv[3]) - min(esqRed_hsv[3], esqGreen_hsv[3])
+  deltaH_r_g <- abs(esqRedHSV[1] - (esqGreenHSV[1] + 1))
+  deltaS_r_g <- max(esqRedHSV[2], esqGreenHSV[2]) - min(esqRedHSV[2], esqGreenHSV[2])
+  deltaV_r_g <- max(esqRedHSV[3], esqGreenHSV[3]) - min(esqRedHSV[3], esqGreenHSV[3])
 
   if (nrOfColors < 0) {
     stop(messages$nrOfColorsShouldBePositive(nrOfColors))
@@ -63,12 +63,12 @@ esqLABS_colors <- function(nrOfColors) {
     deltaS <- deltaS_b_r / (nrOfColors_first + 1)
     deltaV <- deltaV_b_r / (nrOfColors_first + 1)
 
-    h <- esqBlue_hsv[1] + deltaH * i
+    h <- esqBlueHSV[1] + deltaH * i
     if (h > 1) {
       h <- h - 1
     }
-    s <- min(esqBlue_hsv[2], esqRed_hsv[2]) + deltaS * i
-    v <- min(esqBlue_hsv[3], esqRed_hsv[3]) + deltaV * i
+    s <- min(esqBlueHSV[2], esqRedHSV[2]) + deltaS * i
+    v <- min(esqBlueHSV[3], esqRedHSV[3]) + deltaV * i
 
     palette <- c(palette, hsv(h, s, v))
   }
@@ -82,12 +82,12 @@ esqLABS_colors <- function(nrOfColors) {
       deltaS <- deltaS_r_g / (nrOfColors_second + 1)
       deltaV <- deltaV_r_g / (nrOfColors_second + 1)
 
-      h <- esqRed_hsv[1] + deltaH * i
+      h <- esqRedHSV[1] + deltaH * i
       if (h > 1) {
         h <- h - 1
       }
-      s <- min(esqGreen_hsv[2], esqRed_hsv[2]) + deltaS * i
-      v <- min(esqGreen_hsv[3], esqRed_hsv[3]) + deltaV * i
+      s <- min(esqGreenHSV[2], esqRedHSV[2]) + deltaS * i
+      v <- min(esqGreenHSV[3], esqRedHSV[3]) + deltaV * i
 
       palette <- c(palette, hsv(h, s, v))
     }
@@ -174,7 +174,7 @@ createEsqlabsPlotConfiguration <- function() {
 #' @family create-plotting-configurations
 #'
 #' @export
-createEsqlabsPlotGridConfiguration <- function() {
+createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linter.
   plotGridConfiguration <- tlf::PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
@@ -205,7 +205,7 @@ createEsqlabsPlotGridConfiguration <- function() {
 #' @family create-plotting-configurations
 #'
 #' @export
-createEsqlabsExportConfiguration <- function(projectConfiguration) {
+createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: object_length_linter.
   exportConfiguration <- tlf::ExportConfiguration$new()
 
   exportConfiguration$path <- projectConfiguration$outputFolder
@@ -241,15 +241,24 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) {
 #' @import tidyr
 #'
 #' @export
-createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, observedData, projectConfiguration, stopIfNotFound = TRUE) {
+createPlotsFromExcel <- function(
+    plotGridNames = NULL,
+    simulatedScenarios,
+    observedData,
+    projectConfiguration,
+    stopIfNotFound = TRUE) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
 
   # read sheet "plotGrids" with info for plotGridConfigurations
-  dfPlotGrids <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "plotGrids")
+  dfPlotGrids <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
+    sheet = "plotGrids"
+  )
   # read sheet "exportConfiguration"
-  dfExportConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "exportConfiguration") %>%
+  dfExportConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
+    sheet = "exportConfiguration"
+  ) %>%
     rename(name = outputName)
   # Filter for only specified plot grids
   if (!is.null(plotGridNames)) {
@@ -268,7 +277,9 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
     return()
   }
   # read sheet "plotConfiguration"
-  dfPlotConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile), sheet = "plotConfiguration")
+  dfPlotConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
+    sheet = "plotConfiguration"
+  )
 
   # Pre-process the sheet 'plotGrids'
   dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
@@ -288,7 +299,8 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
   plotConfiguration <- createEsqlabsPlotConfiguration()
   plotConfigurationList <- apply(
-    dfPlotConfigurations[, !(names(dfPlotConfigurations) %in% c("plotID", "DataCombinedName", "plotType", "quantiles", "foldDistance"))],
+    dfPlotConfigurations[, !(names(dfPlotConfigurations) %in%
+      c("plotID", "DataCombinedName", "plotType", "quantiles", "foldDistance"))],
     1, .createConfigurationFromRow,
     defaultConfiguration = plotConfiguration
   )
@@ -357,7 +369,11 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
     exportConfiguration <- createEsqlabsExportConfiguration(projectConfiguration)
-    exportConfigurations <- apply(select(dfExportConfigurations, -plotGridName), 1, .createConfigurationFromRow, defaultConfiguration = exportConfiguration)
+    exportConfigurations <- apply(select(dfExportConfigurations, -plotGridName),
+      1,
+      .createConfigurationFromRow,
+      defaultConfiguration = exportConfiguration
+    )
     # export plotGrid if defined in exportConfigurations
     lapply(seq_along(exportConfigurations), function(i) {
       exportConfigurations[[i]]$savePlot(plotGrids[[dfExportConfigurations$plotGridName[i]]])
@@ -391,8 +407,12 @@ createPlotsFromExcel <- function(plotGridNames = NULL, simulatedScenarios, obser
       }
       # For fields that require multiple values (e.g., axis limits require the
       # upper and the lower limit value), values are separated by a ','.
-      # Split the input string first
-      value <- unlist(strsplit(as.character(value), split = ","))
+      # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
+      # Split the input string by ',' but do not split within ""
+      value <- unlist(trimws(scan(
+        text = as.character(value), what = "character", sep = ",",
+        quiet = TRUE
+      )))
 
       # Expected type of the field to cast the value to the
       # correct type. For fields that do not have a default value (NULL), we have

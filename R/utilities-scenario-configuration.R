@@ -60,6 +60,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
 
   # If no errors were raised before, structure is correct. Whole excel file is
   # read with column types.
+
   wholeData <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
@@ -68,7 +69,6 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     sheet = "Scenarios",
     col_types = colTypes
   )
-
 
   outputPathsDf <- readExcel(
     path = file.path(
@@ -109,7 +109,8 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     simTimeUnit <- data$SimulationTimeUnit
     # Set the time only if new value is defined
     if (!is.na(simTime)) {
-      scenarioConfiguration$simulationTime <- ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
+      scenarioConfiguration$simulationTime <-
+        ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
     }
 
     # Individual id
