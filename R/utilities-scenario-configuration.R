@@ -71,7 +71,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
   )
 
   # Remove empty rows
-  wholeData <- wholeData[rowSums(is.na(wholeData)) != ncol(wholeData), ]
+  wholeData <- dplyr::filter(wholeData, !dplyr::if_all(dplyr::everything(), is.na))
 
   outputPathsDf <- readExcel(
     path = file.path(
