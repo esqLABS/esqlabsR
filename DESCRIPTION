@@ -37,8 +37,13 @@ Imports:
     tlf (>= 1.5.0),
     tools,
     vctrs,
-    writexl
-Suggests:
+    writexl,
+    stringr,
+    labeling,
+    showtext,
+    sysfonts,
+    readr
+Suggests: 
     clipr,
     knitr,
     openxlsx,

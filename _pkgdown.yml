@@ -61,6 +61,7 @@ reference:
       - matches("^col")
       - contains("color")
       - has_concept("create-plotting-configurations")
+      - createDataCombinedFromExcel
 
   - title: Input validation
     #desc:
