@@ -1,6 +1,8 @@
 # install dependencies
 installationDeps <- function(installOption) {
   cat("Installing installation dependencies.\n")
+  
+  # if user chose local installation, install renv and initialize it
   if (installOption == 1) {
     install.packages("renv")
     renv::init(bare = TRUE, restart = FALSE)
@@ -9,7 +11,7 @@ installationDeps <- function(installOption) {
   install.packages("cli", quiet = TRUE)
   install.packages("remotes", quiet = TRUE)
   install.packages("rstudioapi", quiet = TRUE)
-  # if user chose local installation, install renv and initialize it
+
 }
 
 # check if rtools is installed
