@@ -204,8 +204,8 @@ and `Units`. Parameter values from specified sheets will be applied to
     specifying the individual parameters in the
     `IndividualParameters.xlsx` file. Create a sheet with the name as
     the *IndividualId* specified for the respective scenario with the
-    same structure as the `ModelParameters.xlsx` file. This way we can
-    define e.g. individual-specific clearance values or, as in our case,
+    same structure as the `ModelParameters.xlsx` file. This way you can
+    define e.g. individual-specific clearance values or, as in the example case,
     the glomerular filtration rate. Individual specific parameters are
     applied after the parameters defined in the *ModelParameterSheets*.
     You can use an individual in multiple scenarios. If an individual is

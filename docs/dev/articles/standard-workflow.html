@@ -109,103 +109,19 @@ parametrization of the model, application protocol, and (optionally) the
 physiology of the simulated individual or population. To simplify
 scenarios set up, all these information are stored in excel files with
 defined structure.</p>
+<p>The package includes <a href="https://github.com/esqLABS/esqlabsR/blob/HEAD/tests/data/TestProject/Parameters/Scenarios.xlsx" class="external-link">an
+example scenario</a> that models the administration of a single dose of
+250 mg aciclovir intravenously to an individual with a 90 ml/min
+estimated glomerular filtration rate.</p>
 <p>The step wise approach of setting up a new simulation scenario is
 shown in Figure 1, detailed description of the excel files structures
-and <code>R</code> code are given in the <a href="#defining-scenarios">defining Scenarios</a> section.</p>
+and <code>R</code> code are given in the <a href="#files-structure">Configuration files structure</a> section.</p>
 <div class="figure">
 <img src="Figures/ScenarioWorkflow.png" alt=""><p class="caption">Figure 1: Workflow of scenario set up</p>
 </div>
 <div class="section level4">
-<h4 id="add-a-simulation">Add a simulation<a class="anchor" aria-label="anchor" href="#add-a-simulation"></a>
+<h4 id="project-configuration">Project configuration<a class="anchor" aria-label="anchor" href="#project-configuration"></a>
 </h4>
-<ol style="list-style-type: decimal">
-<li><p>After the model has been developed in PK-Sim and/or MoBi, a
-simulation must be stored as a <em>.pkml</em> file in the
-<code>Models/Simulations</code> folder.</p></li>
-<li><p>To set up a simulation/scenario in <code>R</code>, open the file
-<code>Scenarios.xlsx</code> located in the folder
-<code>Parameters</code>.</p></li>
-<li><p>Start defining a scenario by giving it an <em>name</em> in the
-<code>Scenario_name</code> column. Scenario name will be used later to
-retrieve simulation results and use them e.g. in figure
-definitions.</p></li>
-<li><p>Specify the simulation <code>*.pkml</code> file to use in the
-column <code>ModelFile</code>.</p></li>
-<li><p>If you simply want to run the simulation with the settings as it
-has been exported from PK-Sim or MoBi, you can proceed to <a href="#running-scenarios">running Scenarios</a> section. Otherwise,
-<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> will allow you to <a href="#customize-the-simulation">customize</a> directly from
-<code>R</code>.</p></li>
-</ol>
-</div>
-<div class="section level4">
-<h4 id="customize-the-simulation">Customize the simulation<a class="anchor" aria-label="anchor" href="#customize-the-simulation"></a>
-</h4>
-<div class="section level5">
-<h5 id="simulation-parameters">Simulation Parameters<a class="anchor" aria-label="anchor" href="#simulation-parameters"></a>
-</h5>
-<p>You can define simulation parameters in the
-<code>ModelParameters.xlsx</code> file. In order to apply to the
-simulation, you need to specify which sheets to load in the
-<code>ModelParameterSheets</code> column of the
-<code>Scenarios.xlsx</code> file.</p>
-</div>
-<div class="section level5">
-<h5 id="individuals">Individuals<a class="anchor" aria-label="anchor" href="#individuals"></a>
-</h5>
-<p>If you want to simulate a specific individual with individual
-characteristics (age, weight, etc.) or apply individual model parameter
-values to the simulation, define the individual in the
-<code>IndividualId</code> column. Then create a new individual entry in
-the <code>Individuals.xlsx</code> file.</p>
-<ol style="list-style-type: lower-alpha">
-<li>To create a new individual with specific biometrics, create a new
-row in the <code>IndividualBiometrics</code> sheet.</li>
-<li>To define an individual-specific parametrization, create a new sheet
-and name it as the ID of the individual.</li>
-</ol>
-</div>
-<div class="section level5">
-<h5 id="population">Population<a class="anchor" aria-label="anchor" href="#population"></a>
-</h5>
-<p>If you want to run a <em>population simulation</em>, specify a
-population in the column <code>PopulationId</code>. If you want to
-create a new population each time you run the scenario, define
-population demographics in the <code>Demographics</code> sheet of the
-<code>PopulationParameters.xlsx</code> file. Keep in mind that
-simulation results might differ each time you run the scenario, as new
-population will be generated each time!</p>
-<p>If you want to import a population from existing csv file, set the
-value of the <code>ReadPopulationFromCSV</code> column to
-<code>TRUE</code>. The population csv file must be located in the
-<code>Parameters/Populations</code> folder.</p>
-</div>
-<div class="section level5">
-<h5 id="time">Time<a class="anchor" aria-label="anchor" href="#time"></a>
-</h5>
-<p>Simulation time can also be changed with the
-<code>SimulationTime</code> and <code>SimulationTimeUnit</code>
-columns.</p>
-</div>
-<div class="section level5">
-<h5 id="outputpath">OutputPath<a class="anchor" aria-label="anchor" href="#outputpath"></a>
-</h5>
-<p>You can define the outputs of the simulation in the
-<code>OutputPathsIds</code> column. For convenience, not the full paths
-to the outputs must be listed, but the their acronyms. The full path for
-each acronym must be defined in the sheet <code>OutputPaths</code>.</p>
-</div>
-<div class="section level5">
-<h5 id="administration-protocols">Administration Protocols<a class="anchor" aria-label="anchor" href="#administration-protocols"></a>
-</h5>
-<p>Finally, you can simulate different administration protocols from the
-same simulation file by defining an application protocol in the column
-<code>ApplicationProtocol</code>. See description below.</p>
-</div>
-</div>
-</div>
-<div class="section level3">
-<h3 id="project-configuration">Project configuration<a class="anchor" aria-label="anchor" href="#project-configuration"></a>
-</h3>
 <p>Information about location of scenario definition files, simulation
 files, output folders etc. is stored in excel file
 <code>ProjectConfiguration.xlsx</code> located in the folder
@@ -241,56 +157,153 @@ folders:</p>
 <span><span class="co">#change the location of the model parameters file</span></span>
 <span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">modelParametersFile</span> <span class="op">&lt;-</span> <span class="st">"../anotherModelParameters.xlsx"</span></span></code></pre></div>
 </div>
+<div class="section level4">
+<h4 id="add-new-scenario">Add new scenario<a class="anchor" aria-label="anchor" href="#add-new-scenario"></a>
+</h4>
+<ol style="list-style-type: decimal">
+<li><p>After the model has been developed in PK-Sim and/or MoBi, a
+simulation must be stored as a <em>.pkml</em> file in the
+<code>Models/Simulations</code> folder.</p></li>
+<li><p>To set up a simulation/scenario in <code>R</code>, open the file
+<code>Scenarios.xlsx</code> located in the folder
+<code>Parameters</code>. Start defining a scenario by giving it a
+<em>name</em> in the <code>Scenario_name</code> column. Scenario name
+will be used later to retrieve simulation results and use them e.g. in
+figure definitions.</p></li>
+<li><p>Specify the simulation <code>*.pkml</code> file to use in the
+column <code>ModelFile</code>.</p></li>
+</ol>
+<p>If you simply want to run the simulation with the settings as it has
+been exported from PK-Sim or MoBi, you can proceed to <a href="#running-scenarios">running Scenarios</a> section.</p>
+</div>
+<div class="section level4">
+<h4 id="customize-the-scenario">Customize the scenario<a class="anchor" aria-label="anchor" href="#customize-the-scenario"></a>
+</h4>
+<div class="section level5">
+<h5 id="simulation-parameters">4. Simulation Parameters<a class="anchor" aria-label="anchor" href="#simulation-parameters"></a>
+</h5>
+<p>You can define simulation parameters in the
+<code>ModelParameters.xlsx</code> file. In order to apply to the
+simulation, you need to specify which sheets to load in the
+<code>ModelParameterSheets</code> column of the
+<code>Scenarios.xlsx</code> file.</p>
+</div>
+<div class="section level5">
+<h5 id="individuals">5. Individuals<a class="anchor" aria-label="anchor" href="#individuals"></a>
+</h5>
+<p>If you want to simulate a specific individual with individual
+characteristics (age, weight, etc.) or apply individual model parameter
+values to the simulation, define the individual in the
+<code>IndividualId</code> column. Then create a new individual entry in
+the <code>Individuals.xlsx</code> file.</p>
+<ol style="list-style-type: lower-alpha">
+<li>To create a new individual with specific biometrics, create a new
+row in the <code>IndividualBiometrics</code> sheet.</li>
+<li>To define an individual-specific parametrization, create a new sheet
+and name it as the ID of the individual.</li>
+</ol>
+</div>
+<div class="section level5">
+<h5 id="population">6. Population<a class="anchor" aria-label="anchor" href="#population"></a>
+</h5>
+<p>If you want to run a <em>population simulation</em>, specify a
+population in the column <code>PopulationId</code>. If you want to
+create a new population each time you run the scenario, define
+population demographics in the <code>Demographics</code> sheet of the
+<code>PopulationParameters.xlsx</code> file. Keep in mind that
+simulation results might differ each time you run the scenario, as new
+population will be generated each time!</p>
+<p>If you want to import a population from existing csv file, set the
+value of the <code>ReadPopulationFromCSV</code> column to
+<code>TRUE</code>. The population csv file must be located in the
+<code>Parameters/Populations</code> folder.</p>
+</div>
+<div class="section level5">
+<h5 id="time">7. Time<a class="anchor" aria-label="anchor" href="#time"></a>
+</h5>
+<p>Simulation time can also be changed with the
+<code>SimulationTime</code> and <code>SimulationTimeUnit</code>
+columns.</p>
+</div>
+<div class="section level5">
+<h5 id="outputpath">8. OutputPath<a class="anchor" aria-label="anchor" href="#outputpath"></a>
+</h5>
+<p>You can define the outputs of the simulation in the
+<code>OutputPathsIds</code> column. For convenience, not the full paths
+to the outputs must be listed, but the their acronyms. The full path for
+each acronym must be defined in the sheet <code>OutputPaths</code>.</p>
+</div>
+<div class="section level5">
+<h5 id="administration-protocols">9. Administration Protocols<a class="anchor" aria-label="anchor" href="#administration-protocols"></a>
+</h5>
+<p>Finally, you can simulate different administration protocols from the
+same simulation file by defining an application protocol in the column
+<code>ApplicationProtocol</code>. See description below.</p>
+</div>
+</div>
+</div>
 <div class="section level3">
-<h3 id="defining-scenarios">Defining scenarios<a class="anchor" aria-label="anchor" href="#defining-scenarios"></a>
+<h3 id="files-structure">Configuration files structure<a class="anchor" aria-label="anchor" href="#files-structure"></a>
 </h3>
-<p>Next, we will define a <em>scenario</em> that we want to simulate in
-the excel file <code>Parameters/Scenarios.xlsx</code> (or other as set
-in <code>projectConfiguration$scenarioDefinitionFile</code>). The
-package includes <a href="https://github.com/esqLABS/esqlabsR/blob/HEAD/tests/data/TestProject/Parameters/Scenarios.xlsx" class="external-link">an
-example scenario</a> that models the administration of a single dose of
-250 mg aciclovir intravenously to an individual with a 90 ml/min
-estimated glomerular filtration rate. To define a scenario, create a new
-row in the <code>Scenarios.xlsx</code> file with the following
-content:</p>
+<p>The relevant excel files for definition of the scenarios are: -
+<code>ApplicationParameters.xlsx</code> - <code>Individuals.xlsx</code>
+- <code>ModelParameters.xlsx</code> -
+<code>PopulationParameters.xlsx</code> - <code>Scenarios.xlsx</code></p>
+<p>The <code>Scenarios</code> sheet of the <code>Scenarios.xlsx</code>
+file has the following structure:</p>
 <ul>
 <li><p><strong>Scenario_name</strong><br>
 unique name of the scenario. The name must be a <a href="https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f" class="external-link">valid
 R variables name</a>.</p></li>
 <li><p><strong>IndividualId</strong><br>
 Name (ID) of an individual. This name refers to the name of the
-individual as used in excel files <code>IndividualBiometrics.xlsx</code>
-for definition of the biometric properties of the simulated individual
-and <code>IndividualParameters.xlsx</code> for definition of
-individual-specific model parameters.<br><strong>IndividualId</strong> may be empty. In this case, the individual
-as defined in the <code>pkml</code> simulation without any
+individual as used in excel file <code>Individuals.xlsx</code> for
+definition of the biometric properties (sheet
+<code>IndividualBiometrics</code>) of the simulated individual
+individual-specific model parameters. For the latter, create a separate
+sheet in the <code>Individuals.xlsx</code> files with sheet name being
+the <code>IndividualId</code>. The structure of these sheets is the same
+as the structure of the sheets in <code>ModelParameter.xlsx</code> file,
+see decription below.</p></li>
+</ul>
+<p><strong>IndividualId</strong> may be empty. In this case, the
+individual as defined in the <code>pkml</code> simulation without any
 individual-specific model parameters will be simulated.The same
-individual can be used in multiple scenarios.<br>
-Note that though it is technically possible to apply a species different
-from the one in the original simulation, the correctness of the results
-is not guaranteed as there exist some structural differences between the
-species.</p></li>
-<li><p><strong>PopulationId</strong> Name (ID) of a population. This
-name refers to the name of the population as used in excel
-file<code>PopulationParameters.xlsx</code> for definition of the
-demographic properties of the simulated population.<br>
-If <strong>PopulationId</strong> is empty, the scenario is simulated as
-an individual simulation. Otherwise, a population as defined in the
-sheet <code>Demographics</code> of the
-<code>PopulationParameters.xlsx</code> file will be created and the
-scenario simulated as a population simulation. To create a population
-with specific demographic characteristics, define an entry with the same
-population id in the file <code>PopulationParameters.xlsx</code>. The
-same population can be used in multiple scenarios.<br><strong>Note</strong>: You can define both an
-<strong>IndividualId</strong> and a <strong>PopulationId</strong>. In
-this case, individual-specific parameters from the
+individual can be used in multiple scenarios.</p>
+<p>It is possible to scale from a human model to the species
+<strong>Rat</strong>, <strong>Rabbit</strong>, and
+<strong>Monkey</strong> by applying the respective individual to the
+simulation. Other species scalings are technically possible but the
+correctness of the results is not guaranteed as there exist some
+structural differences between the species.</p>
+<ul>
+<li>
+<strong>PopulationId</strong> Name (ID) of a population. If empty,
+the scenario is simulated as an individual simulation. Otherwise,
+population simulation is performed. If the column
+<strong>ReadPopulationFromCSV</strong> is set to <code>FALSE</code>,
+<strong>PopulationId</strong> refers to the name o f the population as
+defined in the sheet <code>Demographics</code> of the file
+<code>PopulationParameters.xlsx</code>. To create a population with
+specific demographic characteristics, define an entry with the same
+population id in the <code>Demographics</code>. The same population can
+be used in multiple scenarios. If the column
+<strong>ReadPopulationFromCSV</strong> is s et to <code>TRUE</code>, the
+population will be imported from the csv file located in the folder
+<code>Parameters/Populations</code>, the name of the file must be the id
+of the population.</li>
+</ul>
+<p><strong>Note</strong>: You can define both an
+<strong>IndividualId</strong> and a <strong>PopulationId</strong>. In t
+his case, individual-specific parameters from the
 <code>IndividualParameters.xlsx</code> will be applied to the simulation
 prior to applying the population parameters. Keep in mind, that any
 physiological parameters defined for an individual that are also part of
 the parameter set of a population will be overwritten by the population!
 If e.g. you specify the GFR of the individual in the
 <code>IndividualParameters.xlsx</code>, it will be overwritten by the
-GFR values sampled in the simulation.</p></li>
+GFR values sampled in the simulation.</p>
+<ul>
 <li><p><strong>ModelParameterSheets</strong> A list of sheet names from
 the <code>ModelParameter.xlsx</code> file, separated by a
 <code>,</code>. Each sheet must have the columns
@@ -308,17 +321,18 @@ scenarios, and separate set of parameters for e.g. different <em>disease
 states</em> (parameter sheets <code>Healthy</code> and
 <code>CKD</code>), or separate parametrization of different
 <em>compounds</em> (sheet <code>Aciclovir</code>).<br>
-We can further refine the parametrization of the scenario by specifying
+You can further refine the parametrization of the scenario by specifying
 the individual parameters in the <code>IndividualParameters.xlsx</code>
 file. Create a sheet with the name as the <em>IndividualId</em>
 specified for the respective scenario with the same structure as the
-<code>ModelParameters.xlsx</code> file. This way we can define
-e.g. individual-specific clearance values or, as in our case, the
-glomerular filtration rate. Individual specific parameters are applied
-after the parameters defined in the <em>ModelParameterSheets</em>. We
-can use an individual in multiple scenarios. If an individual is
-specified in the scenario definition, but no sheet with this name exists
-in the <code>IndividualParameters.xlsx</code> file, this step is simply
+<code>ModelParameters.xlsx</code> file. This way you can define
+e.g. individual-specific clearance values or, as in the example case,
+the glomerular filtration rate. Individual specific parameters are
+applied after the parameters defined in the
+<em>ModelParameterSheets</em>. You can use an individual in multiple
+scenarios. If an individual is specified in the scenario definition, but
+no sheet with this name exists in the
+<code>IndividualParameters.xlsx</code> file, this step is simply
 ignored.</p></li>
 <li><p><strong>ApplicationProtocol</strong> Name of the application
 protocol that will be applied. Applications are defined as a set of

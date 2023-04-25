@@ -46,9 +46,6 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/col2hsv.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/compareSimulationParameters.html</loc>
-  </url>
-  <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/compareSimulations.html</loc>
   </url>
   <url>
@@ -152,9 +149,6 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/getMoleculeNameFromQuantity.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/GraphicsDevices.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/hillFunction.html</loc>
