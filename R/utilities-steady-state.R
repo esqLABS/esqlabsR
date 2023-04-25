@@ -98,7 +98,8 @@ exportSteadyStateToXLS <- function(simulation,
   )
 
   if (length(speciesInitVals) > 0) {
-    colnames(speciesInitVals) <- c("Container Path", "Molecule Name", "Is Present", "Value", "Units", "Scale Divisor", "Neg. Values Allowed")
+    colnames(speciesInitVals) <-
+      c("Container Path", "Molecule Name", "Is Present", "Value", "Units", "Scale Divisor", "Neg. Values Allowed")
   }
 
   parameterInitVals <- data.frame(

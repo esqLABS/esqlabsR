@@ -190,6 +190,41 @@ test_that("It trows an error if no output path is specified for a simulated data
   )
 })
 
+test_that("It trows an error if wrong output path is specified for a simulated data", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      dataCombinedDfLocal$path <- "foo"
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- exportConfigurationDf
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      ), regexp = messages$stopWrongOutputPath(
+        dataCombinedName = dataCombinedDfLocal$DataCombinedName[[1]],
+        scenarioName = dataCombinedDfLocal$scenario[[1]],
+        path = dataCombinedDfLocal$path[[1]]
+      ))
+    }
+  )
+})
+
 test_that("It trows an error if no data set is specified for observed data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
@@ -735,6 +770,54 @@ test_that("It throws a warning when outputName is missing in sheet 'exportConfig
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
       ), regexp = messages$missingOutputFileName())
+    }
+  )
+})
+
+test_that(".createConfigurationFromRow correctly reads values in quotes", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+
+  inputValues <- c(
+    "Test without quotes",
+    "Test, separated",
+    "Test with \"quotes\"",
+    "Test with \"quotes\" and, comma",
+    "Test with \"quotes, comma\"",
+    "Test with, \"quotes, comma\" and, comma"
+  )
+
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      plotGridsDfLocal <- as.data.frame(lapply(plotGridsDf, rep, 6))
+      plotGridsDfLocal$tagSuffix <- inputValues
+      writeExcel(data = list(
+        "plotGrids" = plotGridsDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+      plotGridsDfFromExcel <- readExcel(file.path(tempDir, "Plots.xlsx"), sheet = "plotGrids")
+
+      defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
+      parsedValues <- apply(plotGridsDfLocal, 1, \(row) {
+        plotGridConfiguration <- .createConfigurationFromRow(
+          defaultConfiguration = defaultPlotGridConfig,
+          row[!(names(row) %in% c("name", "plotIDs"))]
+        )
+        return(plotGridConfiguration$tagSuffix)
+      })
+
+      expectedValues <- list(
+        c("Test without quotes"),
+        c("Test", "separated"),
+        c("Test with quotes"),
+        c("Test with quotes and", "comma"),
+        "Test with quotes, comma",
+        c("Test with", "quotes, comma and", "comma")
+      )
+      expect_equal(parsedValues, expectedValues)
     }
   )
 })

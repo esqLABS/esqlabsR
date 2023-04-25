@@ -2,14 +2,16 @@ Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
 Version: 5.0.0
-Authors@R: 
-    c(person("esqLABS GmbH", role = c("cph", "fnd")),
-      person("Pavel", "Balazki", , "https://github.com/PavelBal", role = c("cre", "aut"), 
-      email = "pavel.balazki@esqlabs.com"),
-      person("Johanna", "Eitel", , "https://github.com/hannaei", role = "aut"),
-      person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
+Authors@R: c(
+    person("esqLABS GmbH", role = c("cph", "fnd")),
+    person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
+           comment = "https://github.com/PavelBal"),
+    person("Johanna", "Eitel", , "https://github.com/hannaei", role = "aut"),
+    person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
            comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")),
-      person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"))
+    person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"),
+    person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut"))
+  )
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects
     within 'esqLABS' organization.
@@ -17,21 +19,23 @@ License: GPL-2
 URL: https://github.com/esqLABS/esqlabsR
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
-    R (>= 4.1),
     ospsuite (>= 11.1),
-    ospsuite.parameteridentification (>= 1.2)
+    R (>= 4.1)
 Imports:
     colorspace,
     dplyr,
     ggplot2,
+    labeling,
+    ospsuite.parameteridentification,
     ospsuite.utils (>= 1.4.0),
+    parallel,
     purrr,
+    R6,
     readxl,
-    shiny,
-    shinyjs,
+    stringr,
     tidyr,
-    tools,
     tlf (>= 1.5.0),
+    tools,
     vctrs,
     writexl,
     stringr,
@@ -42,13 +46,22 @@ Imports:
 Suggests: 
     clipr,
     knitr,
+    openxlsx,
     rmarkdown,
+    shiny,
+    shinyjs,
     shinytest2,
+    showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
     withr
 VignetteBuilder: 
     knitr
+Remotes:  
+    Open-Systems-Pharmacology/OSPSuite.RUtils,
+    Open-Systems-Pharmacology/TLF-Library,
+    Open-Systems-Pharmacology/OSPSuite-R,
+    Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
