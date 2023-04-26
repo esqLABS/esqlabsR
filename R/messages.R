@@ -218,3 +218,9 @@ messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
     paste0(outputPathIds, collapse = ", ")
   )
 }
+
+messages$stopScenarioNameNonUnique <- function(scenarioName) {
+  paste0(
+    "Scenario '", scenarioName, "' is defined multiple times! Make sure that each
+    scenario defined in the excel file has a unique name.")
+}
