@@ -64,9 +64,9 @@ createDataCombinedFromExcel <- function(
 
   # apply data transformations
   dfTransform <- filter(dfDataCombined, !is.na(xOffsets) |
-    !is.na("yOffsets") |
-    !is.na("xScaleFactors") |
-    !is.na("yScaleFactors"))
+    !is.na(yOffsets) |
+    !is.na(xScaleFactors) |
+    !is.na(yScaleFactors))
   # Apply data transformations if specified in the excel file
   if (dim(dfTransform)[[1]] != 0) {
     apply(dfTransform, 1, \(row) {
@@ -161,6 +161,11 @@ createDataCombinedFromExcel <- function(
     stop(messages$stopNoDataSetProvided(dfDataCombined[missingLabel & dfDataCombined$dataType == "observed", ]$DataCombinedName))
   }
 
+  # Store the names of all DataCombined before filtering. This is required
+  # to create empty rows for DataCombined for which no data exists. This way,
+  # empty data combined can still be created.
+  dcNames <- unique(dfDataCombined$DataCombinedName)
+
   # warnings for invalid data in plot definitions from excel
   # scenario not present in simulatedScenarios
   missingScenarios <- setdiff(setdiff(dfDataCombined$scenario, names(simulatedScenarios)), NA)
@@ -179,6 +184,13 @@ createDataCombinedFromExcel <- function(
     }
     warning(messages$warningInvalidDataSetName(missingDataSets))
     dfDataCombined <- dfDataCombined[!(missingDataSets == dfDataCombined$dataSet), ]
+  }
+
+  # Identify the names of DataCombined that have been completely removed
+  missingDc <- setdiff(dcNames, unique(dfDataCombined$DataCombinedName))
+  # Create empty rows for each missing DataCombined
+  for (name in missingDc) {
+    dfDataCombined[nrow(dfDataCombined) + 1, ] <- as.list(c(name, rep(NA, ncol(dfDataCombined) - 1)))
   }
 
   return(dfDataCombined)

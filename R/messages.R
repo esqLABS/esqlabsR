@@ -79,7 +79,7 @@ messages$scenarioConfigurationNameNotFoundWhenReading <- function(scenarioName) 
 
 messages$warningInvalidScenarioName <- function(scenarioNames) {
   paste0(
-    "The following scenarios from are not present in `simulatedScenarios`: ",
+    "The following scenarios are not present in `simulatedScenarios`: ",
     paste(scenarioNames, collapse = ", "),
     ". Data can not be added to `DataCombined` object, empty objects will not be plotted."
   )
@@ -87,7 +87,7 @@ messages$warningInvalidScenarioName <- function(scenarioNames) {
 
 messages$warningInvalidDataSetName <- function(dataSetNames) {
   paste0(
-    "The following scenarios from are not present in `observedData`: ",
+    "The following data sets are not present in `observedData`: ",
     paste(dataSetNames, collapse = ", "),
     ". Data can not be added to `DataCombined` object, empty objects will not be plotted."
   )
