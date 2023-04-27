@@ -11,9 +11,10 @@ test_that("It runs one scenario without specifying output paths", {
     scenarioNames = scenarioNames,
     projectConfiguration = projectConfiguration
   )
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+
   simulatedScenarios <- runScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    customParams = NULL, saveSimulationsToPKML = FALSE
+    scenarios = scenarios
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
@@ -37,9 +38,11 @@ test_that("It runs one scenario with specifying output paths", {
   for (scenarioConfiguration in scenarioConfigurations) {
     scenarioConfiguration$outputPaths <- enumValues(OutputPaths)
   }
+
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+
   simulatedScenarios <- runScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    customParams = NULL, saveSimulationsToPKML = FALSE
+    scenarios = scenarios
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
@@ -59,9 +62,11 @@ test_that("It runs two scenarios", {
   )
   # Disable steady-state for second config
   scenarioConfigurations[[2]]$simulateSteadyState <- FALSE
+
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+
   simulatedScenarios <- runScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    customParams = NULL, saveSimulationsToPKML = FALSE
+    scenarios = scenarios
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
@@ -84,9 +89,9 @@ test_that("It runs population and individual scenarios", {
     scenarioNames = scenarioNames,
     projectConfiguration = projectConfiguration
   )
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
   simulatedScenarios <- runScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    customParams = NULL, saveSimulationsToPKML = FALSE
+    scenarios = scenarios
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
@@ -95,7 +100,3 @@ test_that("It runs population and individual scenarios", {
   # Check that the second scenario is population simulation
   expect_equal(length(simulatedScenarios[[scenarioNames[[2]]]]$results$allIndividualIds), 2)
 })
-
-# test_that("It saves simulations if saveSimulationsToPKML = TRUE", {
-#   #ToDo - have to write to temp dir!
-# })

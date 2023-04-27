@@ -151,10 +151,10 @@ examples, we assume that the current working directory is the
 <p>If required, you can change the location of one of the files or
 folders:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#change the location of the output folder </span></span>
+<code class="sourceCode R"><span><span class="co"># change the location of the output folder</span></span>
 <span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="st">"../anotherOutputFolder"</span></span>
 <span></span>
-<span><span class="co">#change the location of the model parameters file</span></span>
+<span><span class="co"># change the location of the model parameters file</span></span>
 <span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">modelParametersFile</span> <span class="op">&lt;-</span> <span class="st">"../anotherModelParameters.xlsx"</span></span></code></pre></div>
 </div>
 <div class="section level4">
@@ -452,92 +452,6 @@ outputs should be generated for, separated by a comma, e.g.
 <code>Aciclovir_PVB, Aciclovir_fat_cell</code>.</p>
 </div>
 <div class="section level3">
-<h3 id="code-based-specifications">Code-based specifications<a class="anchor" aria-label="anchor" href="#code-based-specifications"></a>
-</h3>
-<p>In addition to scenario setups through the excel sheets, further
-specifications are made in the <code>R</code> files located in the
-<code>InputCode</code> project folder. Files in this folder must be
-sourced prior to using.</p>
-<ul>
-<li>
-<strong>TestParameters</strong>: During model development/fitting
-phase, you might want to test out parameter values before storing them
-in the <code>Parameters</code> excel files. You can define the paths of
-the parameters, their values and the units in the
-<code>TestParameters</code> file. Remember to <code>source</code> the
-file each time you change any values. You can turn setting test
-parameters on and off in the <code>ScenarioConfiguration</code> (see
-Section <a href="#running-scenarios">Running scenarios</a>).</li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="custom-functions">Custom functions<a class="anchor" aria-label="anchor" href="#custom-functions"></a>
-</h3>
-<p>Initialization of a scenario creates a <code>Simulation</code> object
-that is fully parametrized according to the specifications of the
-scenario. However, sometimes further modifications to the simulations
-are required that cannot be represented by fixed parameter values stored
-in excel files. Imagine a scenario where the value of a certain
-parameter depends on other parameters not known at the time point of
-excel file creation. Another use case is a dose escalation study.
-Instead of defining every dose in a separate **ApplicationProtocol”
-sheet, the set of doses to simulate could be defined in an
-<code>R</code> list and passed as an argument to a function that sets
-the dose parameter for a scenario.</p>
-<p>This can be achieved through defining a function that will be applied
-to the <code>Simulation</code> object created from a
-<code>ScenarioConfiguration</code> at the very last step of
-initialization. The function can reference the <code>simulation</code>
-variable and accept additional arguments. The argument values are then
-defined in the field <code>customFunctionArgs</code>.</p>
-<p>In the following example, we will define a custom function that
-multiplies the <code>Dose</code> parameter by a certain factor. The path
-to the dose parameter and the multiplication factor are defined as
-arguments.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
-<span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
-<span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
-<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Path to the dose parameter</span></span>
-<span><span class="va">doseParamPath</span> <span class="op">&lt;-</span> <span class="st">"Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span></span>
-<span></span>
-<span><span class="co"># Initialize the simulation from the scenario without a custom function</span></span>
-<span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initializeScenario.html">initializeScenario</a></span><span class="op">(</span><span class="va">scenarioConfigurations</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co"># get the value of dose parameter</span></span>
-<span><span class="va">oldVal</span> <span class="op">&lt;-</span> <span class="fu">getQuantityValuesByPath</span><span class="op">(</span><span class="va">doseParamPath</span>, <span class="va">sim</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Default dose parameter value: "</span>, <span class="va">oldVal</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Default dose parameter value: 0.00025"</span></span>
-<span></span>
-<span><span class="co"># Define a custom function</span></span>
-<span><span class="va">customFunction</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">doseFactor</span>, <span class="va">doseParamPath</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">doseParam</span> <span class="op">&lt;-</span> <span class="fu">getParameter</span><span class="op">(</span></span>
-<span>    path <span class="op">=</span> <span class="va">doseParamPath</span>,</span>
-<span>    container <span class="op">=</span> <span class="va">simulation</span></span>
-<span>  <span class="op">)</span></span>
-<span>  <span class="va">doseParam</span><span class="op">$</span><span class="va">value</span> <span class="op">&lt;-</span> <span class="va">doseParam</span><span class="op">$</span><span class="va">value</span> <span class="op">*</span> <span class="va">doseFactor</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Add the custom function to the scenario</span></span>
-<span></span>
-<span><span class="va">scenarioConfigurations</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">customFunction</span> <span class="op">&lt;-</span> <span class="va">customFunction</span></span>
-<span></span>
-<span><span class="co"># Set the values of the arguments</span></span>
-<span><span class="va">scenarioConfigurations</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">customFunctionArgs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  doseFactor <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  doseParamPath <span class="op">=</span> <span class="va">doseParamPath</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Initialize the simulation with the scenario with the custom function and get</span></span>
-<span><span class="co"># the value of the dose parameter.</span></span>
-<span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/initializeScenario.html">initializeScenario</a></span><span class="op">(</span><span class="va">scenarioConfigurations</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Dose parameter value with custom function: "</span>, <span class="fu">getQuantityValuesByPath</span><span class="op">(</span><span class="va">doseParamPath</span>, <span class="va">sim</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Dose parameter value with custom function: 5e-04"</span></span></code></pre></div>
-</div>
-<div class="section level3">
 <h3 id="scenario-parametrization-hierarchy">Scenario parametrization hierarchy<a class="anchor" aria-label="anchor" href="#scenario-parametrization-hierarchy"></a>
 </h3>
 <p>The final parametrization is a combination of the different
@@ -560,18 +474,25 @@ order how the parameters are applied.</p>
 <div class="section level3">
 <h3 id="running-scenarios">Running scenarios<a class="anchor" aria-label="anchor" href="#running-scenarios"></a>
 </h3>
-<p>Scenarios are executed by creating <code>ScenarioConfiguration</code>
-objects and calling the <code><a href="../reference/runScenarios.html">runScenarios()</a></code>function. Though it
-is possible to create an empty <code>ScenarioConfiguration</code> and
+<p>Running scenarios can be devided into three steps: 1) creating the
+<code>ScenarioConfiguration</code> objects, 2) creating the
+<code>Scenario</code> objects from configurations, and 3) running the
+scenarios.</p>
+<div class="section level4">
+<h4 id="creating-scenarioconfiguration-objects">Creating <code>ScenarioConfiguration</code> objects<a class="anchor" aria-label="anchor" href="#creating-scenarioconfiguration-objects"></a>
+</h4>
+<p>A <code>ScenarioConfiguration</code> object holds all information
+about a scenario that is defined in the excel files. Though it is
+possible to create an empty <code>ScenarioConfiguration</code> and
 populate it by hand, we usually want to create scenario configurations
 from the excel files by calling the
 <code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> function. A
 <code>ScenarioConfiguration</code> is based on the
 <code>ProjectConfiguration</code>, which has to be provided as an
-argument to the function. To read the configuration for the
+argument to the function. To read create the configuration for the
 <em>‘TestScenario’</em> scenario defined in the
 <code>Scenarios.xlsx</code> file, we call</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
 <span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
 <span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
@@ -603,38 +524,61 @@ argument to the function. To read the configuration for the
 <span><span class="co">#&gt;    Simulation time: 1440 </span></span>
 <span><span class="co">#&gt;    Points per minute: 1 </span></span>
 <span><span class="co">#&gt;    Simulate steady-state: FALSE </span></span>
-<span><span class="co">#&gt;    Steady-state time: 1000 </span></span>
-<span><span class="co">#&gt;    Set test parameters: FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt;    Steady-state time: 1000</span></span></code></pre></div>
 <p>Alternatively, we can create configurations for all scenarios defined
 in the <code>Scenarios.xlsx</code> by calling
 <code>readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)</code>
 without specifying scenarios’ names.</p>
-<p>Before running the scenarios, we can modify
-<code>ScenarioConfigurations</code> by setting parameters that are
-currently not accessible through excel files. In model
-development/fitting phase, we might want to apply some test parameter
-values:</p>
+</div>
+<div class="section level4">
+<h4 id="creating-scenario-objects-from-configurations">Creating <code>Scenario</code> objects from configurations<a class="anchor" aria-label="anchor" href="#creating-scenario-objects-from-configurations"></a>
+</h4>
+<p>Once all scenario configurations are set up, <code>Scenario</code>
+objects can be created from them. A <code>Scenario</code> object
+contains the fully parametrized simulation, the <code>Population</code>
+object in case of a population simulation, the underlying
+<code>ScenarioConfiguration</code> object, and the list of all user
+defined parameters.</p>
+<p>During model development/fitting phase, you might want to test out
+parameter values before storing them in the <code>Parameters</code>
+excel files. You can define the paths of the test parameters, their
+values and the units in the <code>TestParameters</code> file and pass
+them as <code>customParams</code> argument to the
+<code><a href="../reference/createScenarios.html">createScenarios()</a></code> function.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create `Scenario` objects from `ScenarioConfiguration` objects</span></span>
+<span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarios.html">createScenarios</a></span><span class="op">(</span><span class="va">scenarioConfigurations</span><span class="op">)</span></span></code></pre></div>
+<p>You can view the final parametrization that is applied to the
+simulation by calling the <code>finalCustomParams</code> property:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Set output paths for each scenario</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">scenarioConfiguration</span> <span class="kw">in</span> <span class="va">scenarioConfigurations</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">scenarioConfiguration</span><span class="op">$</span><span class="va">setTestParameters</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p>Make sure that you have sourced the <code>TestParameters</code> file
-in this case.</p>
-<p>Once all scenario configurations are set up, we can simulate them by
-calling the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function. We can specify to save
-the initialized simulation (i.e. the simulation with individual
-physiology and parametrization applied as defined by the scenario
-configuration). In such case, a folder with the current date and time
-will be created in the folder where the simulation <code>pkml</code>
-files are located.</p>
+<code class="sourceCode R"><span><span class="va">scenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">finalCustomParams</span></span>
+<span><span class="co">#&gt; $paths</span></span>
+<span><span class="co">#&gt; [1] "Organism|Liver|EHC continuous fraction"                           </span></span>
+<span><span class="co">#&gt; [2] "Organism|Kidney|GFR"                                              </span></span>
+<span><span class="co">#&gt; [3] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $values</span></span>
+<span><span class="co">#&gt; [1]   1  90 250</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $units</span></span>
+<span><span class="co">#&gt; [1] ""       "ml/min" "mg"</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="running-scenarios-1">Running scenarios<a class="anchor" aria-label="anchor" href="#running-scenarios-1"></a>
+</h4>
+<p>Once the <code>Scenario</code> objects are created, they can be
+simulated by calling the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function. The
+output of this function is a named list, where the names are scenario
+names, and the values are the lists of simulations,
+<code>SimulatioResults</code> produced by running the simulation, the
+output values of the <code>SimulationResults</code>, and the population
+if the scenario is a population simulation.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">simulatedScenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
-<span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarioConfigurations</span>,</span>
-<span>  customParams <span class="op">=</span> <span class="cn">NULL</span>, saveSimulationsToPKML <span class="op">=</span> <span class="cn">FALSE</span></span>
+<code class="sourceCode R"><span><span class="va">simulatedScenariosResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
+<span>  scenarios <span class="op">=</span> <span class="va">scenarios</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "TestScenario"</span></span></code></pre></div>
 <p>It is a good idea to store simulation results as <code>*.csv</code>
 along with simulations as <code>.*pkml</code> and, optionally, the used
@@ -643,14 +587,10 @@ processing to avoid re-simulating every time e.g. a change to a figure
 showing the simulation results is required. The convenient function for
 saving results of a scenario run is
 <code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code>.</p>
-<p>For futher information, check out the documentation of the functions
+<p>For further information, check out the documentation of the functions
 <a href="https://esqlabs.github.io/esqlabsR/reference/saveScenarioResults"><code>saveScenarioResults()</code></a>
 and <a href="https://esqlabs.github.io/esqlabsR/reference/loadScenarioResults"><code>loadScenarioResults()</code></a>.</p>
-<p>The function returns results of the simulations. For each scenario, a
-<a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html" class="external-link"><code>Simulation</code></a>
-object, a <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html" class="external-link"><code>SimulationResults</code></a>
-object, and vectors of output values (retrieved by the <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getOutputValues.html" class="external-link"><code>getOutputValues()</code></a>
-function) are returned.</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
@@ -678,7 +618,7 @@ class</a></li>
 
     <footer><div class="pkgdown-footer-left">
   <p></p>
-<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" height="24"></a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov.</p>
+<p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png" style="max-width:33px">esqLABS</a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, <a href="https://github.com/Felixmil" class="external-link">Felix Mil</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -110,7 +110,6 @@ testSimulationsRunning <- function() {
     scenarioNames = scenarioNames,
     projectConfiguration = projectConfiguration
   )
-  scenarioConfigurations[[1]]$setTestParameters <- FALSE
   simulatedScenarios <- runScenarios(
     scenarioConfigurations = scenarioConfigurations,
     customParams = NULL, saveSimulationsToPKML = TRUE

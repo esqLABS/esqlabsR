@@ -49,9 +49,6 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/compareSimulations.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/compareSimulations.html</loc>
-  </url>
-  <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/compareWithNA.html</loc>
   </url>
   <url>
@@ -71,6 +68,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/createPlotsFromExcel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/createScenarios.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/Distributions.html</loc>
@@ -215,6 +215,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/saveScenarioResults.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/Scenario.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/ScenarioConfiguration.html</loc>

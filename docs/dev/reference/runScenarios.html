@@ -68,38 +68,19 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">runScenarios</span><span class="op">(</span></span>
-<span>  <span class="va">scenarioConfigurations</span>,</span>
-<span>  customParams <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  saveSimulationsToPKML <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  savePopulationToCSV <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">runScenarios</span><span class="op">(</span><span class="va">scenarios</span>, simulationRunOptions <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
-    <dl><dt>scenarioConfigurations</dt>
+    <dl><dt>simulationRunOptions</dt>
+<dd><p>Object of type <code>SimulationRunOptions</code> that will be passed
+to simulation runs. If <code>NULL</code>, default options are used.</p></dd>
+
+
+<dt>scenarioConfigurations</dt>
 <dd><p>List of <code>ScenarioConfiguration</code> objects to be
 simulated.</p></dd>
-
-
-<dt>customParams</dt>
-<dd><p>A list containing vectors 'paths' with the full paths to the
-parameters, 'values' the values of the parameters, and 'units' with the
-units the values are in. The values to be applied to the model.</p></dd>
-
-
-<dt>saveSimulationsToPKML</dt>
-<dd><p>Logical, defaults to <code>FALSE</code>. If <code>TRUE</code>,
-initialized simulations are saved to PKML before simulating. The output folder
-is the <code>Results/Simulations/&lt;DateSuffix&gt;</code>. The name of the file is the name of the scenario.</p></dd>
-
-
-<dt>savePopulationToCSV</dt>
-<dd><p>Logical, defaults to <code>FALSE</code>. If <code>TRUE</code>,
-populations of population scenarios are saved to csv before simulating. The output folder
-is the <code>Results/Populations/&lt;DateSuffix&gt;</code>. The name of the file is the name of the scenario
-with suffix <code>_population</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

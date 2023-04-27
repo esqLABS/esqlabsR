@@ -84,11 +84,7 @@ conditions.</p>
 <span>  <span class="va">simulation</span>,</span>
 <span>  individualCharacteristics <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  additionalParams <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  simulateSteadyState <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  steadyStateTime <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>  ignoreIfFormula <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  stopIfParameterNotFound <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  simulationRunOptions <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  stopIfParameterNotFound <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -108,35 +104,10 @@ describing an individual.</p></dd>
 'units'.</p></dd>
 
 
-<dt>simulateSteadyState</dt>
-<dd><p>Logical. If <code>TRUE</code>, the model is simulated for
-<code>steadyStateTime</code> minutes after applying parameter values defined in
-<code>individualCharacteristics</code> and <code>additionalParams</code>, and the end results
-of the simulation are applied as initial conditions for all molecules.
-Default is <code>FALSE</code>.</p></dd>
-
-
-<dt>steadyStateTime</dt>
-<dd><p>Simulation time (minutes) for the steady-state
-simulation. Must be long enough for system to reach a steady-state. 1000 by
-default.</p></dd>
-
-
-<dt>ignoreIfFormula</dt>
-<dd><p>If <code>TRUE</code> (default), species and parameters with
-initial values defined by a formula are not included in the steady-state
-simulation</p></dd>
-
-
 <dt>stopIfParameterNotFound</dt>
 <dd><p>Logical. If <code>TRUE</code> (default), an error is
 thrown if any of the <code>additionalParams</code> does not exist. If <code>FALSE</code>,
 non-existent parameters are  ignored.</p></dd>
-
-
-<dt>simulationRunOptions</dt>
-<dd><p>Optional instance of a <code>SimulationRunOptions</code>
-used during the simulation run.</p></dd>
 
 </dl></div>
 

@@ -4,29 +4,14 @@
 \alias{runScenarios}
 \title{Run a set of scenarios.}
 \usage{
-runScenarios(
-  scenarioConfigurations,
-  customParams = NULL,
-  saveSimulationsToPKML = FALSE,
-  savePopulationToCSV = FALSE
-)
+runScenarios(scenarios, simulationRunOptions = NULL)
 }
 \arguments{
+\item{simulationRunOptions}{Object of type \code{SimulationRunOptions} that will be passed
+to simulation runs. If \code{NULL}, default options are used.}
+
 \item{scenarioConfigurations}{List of \code{ScenarioConfiguration} objects to be
 simulated.}
-
-\item{customParams}{A list containing vectors 'paths' with the full paths to the
-parameters, 'values' the values of the parameters, and 'units' with the
-units the values are in. The values to be applied to the model.}
-
-\item{saveSimulationsToPKML}{Logical, defaults to \code{FALSE}. If \code{TRUE},
-initialized simulations are saved to PKML before simulating. The output folder
-is the \verb{Results/Simulations/<DateSuffix>}. The name of the file is the name of the scenario.}
-
-\item{savePopulationToCSV}{Logical, defaults to \code{FALSE}. If \code{TRUE},
-populations of population scenarios are saved to csv before simulating. The output folder
-is the \verb{Results/Populations/<DateSuffix>}. The name of the file is the name of the scenario
-with suffix \verb{_population}.}
 }
 \value{
 A named list, where the names are scenario names, and the values are
