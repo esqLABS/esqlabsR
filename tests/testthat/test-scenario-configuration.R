@@ -7,9 +7,8 @@ test_that("`ScenarioConfiguration` active bindings are modified", {
     mySC$setTestParameters <- TRUE
     mySC$simulateSteadyState <- TRUE
 
-    mySC$simulationTime <- 10
+    mySC$simulationTime <- "0, 10, 1"
     mySC$steadyStateTime <- 5
-    mySC$pointsPerMinute <- 100
     mySC$simulationType <- "Population"
     mySC$simulationRunOptions <- NULL
 
@@ -25,8 +24,6 @@ test_that("It produces expected errors for incorrect active binding values", {
 
   expect_error(mySC$setTestParameters <- 1, messages$errorWrongType("value", "numeric", "logical"))
   expect_error(mySC$simulateSteadyState <- 1, messages$errorWrongType("value", "numeric", "logical"))
-  expect_error(mySC$simulationTime <- -1, messages$valueShouldNotBeNegative("simulationTime", -1))
   expect_error(mySC$steadyStateTime <- -1, messages$valueShouldNotBeNegative("steadyStateTime", -1))
-  expect_error(mySC$pointsPerMinute <- -1, messages$valueShouldNotBeNegative("pointsPerMinute", -1))
   expect_error(mySC$simulationType <- "X", messages$wrongSimulationType())
 })

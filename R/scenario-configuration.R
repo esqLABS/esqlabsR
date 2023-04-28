@@ -47,31 +47,29 @@ ScenarioConfiguration <- R6::R6Class(
         private$.readPopulationFromCsv <- value
       }
     },
-    #' @field simulationTime Simulation time in minutes. If `NULL` (default),
+    #' @field simulationTime Specified simulation time intervals. If `NULL` (default),
     #' simulation time as defined in the `Simulation` object will be used.
+    #' Accepted are multiple time intervals separated by a ';'. Each time interval
+    #' is a triplet of values <StartTime, EndTime, Resolution>, where `Resolution` is the number of
+    #' simulated points per time unit defined in the column `TimeUnit`.
     simulationTime = function(value) {
       if (missing(value)) {
         private$.simulationTime
       } else {
-        validateIsNumeric(value)
-        if (value < 0) {
-          stop(messages$valueShouldNotBeNegative("simulationTime", value))
-        }
-        private$.simulationTime <- value
+        private$.simulationTime <- .parseSimulationTimeIntervals(value)
       }
     },
-    #' @field pointsPerMinute Resolution of the outputs in points per minute
-    pointsPerMinute = function(value) {
+
+    #' @field simulationTimeUnit Unit of the simulation time intervals.
+    simulationTimeUnit = function(value) {
       if (missing(value)) {
-        private$.pointsPerMinute
+        private$.simulationTimeUnit
       } else {
-        validateIsNumeric(value)
-        if (value < 0) {
-          stop(messages$valueShouldNotBeNegative("pointsPerMinute", value))
-        }
-        private$.pointsPerMinute <- value
+        validateUnit(value, ospDimensions$Time)
+        private$.simulationTimeUnit <- value
       }
     },
+
     #' @field steadyStateTime Time in minutes to simulate if simulating steady-state. May be `NULL`.
     steadyStateTime = function(value) {
       if (missing(value)) {
@@ -169,7 +167,7 @@ a parameter sheet from the list"
     .setTestParameters = FALSE,
     .simulateSteadyState = FALSE,
     .simulationTime = NULL,
-    .pointsPerMinute = 1,
+    .simulationTimeUnit = ospUnits$Time$min,
     .steadyStateTime = 1000,
     .individualCharacteristics = NULL,
     .paramSheets = NULL,
@@ -243,8 +241,14 @@ a parameter sheet from the list"
       private$printLine("Population Id", self$populationId)
       private$printLine("Read population from csv file", self$readPopulationFromCSV)
       private$printLine("Application protocol", self$applicationProtocol)
-      private$printLine("Simulation time", self$simulationTime)
-      private$printLine("Points per minute", self$pointsPerMinute)
+      private$printLine("Simulation time intervals")
+      for (i in seq_along(self$simulationTime)) {
+        private$printLine("  Interval", i)
+        private$printLine("    Start", self$simulationTime[[i]][1])
+        private$printLine("    End", self$simulationTime[[i]][2])
+        private$printLine("    Resolution", self$simulationTime[[i]][3])
+      }
+      private$printLine("Simulation time intervals unit", self$simulationTimeUnit)
       private$printLine("Simulate steady-state", self$simulateSteadyState)
       private$printLine("Steady-state time", self$steadyStateTime)
       private$printLine("Set test parameters", self$setTestParameters)

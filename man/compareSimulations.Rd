@@ -11,7 +11,9 @@ compareSimulations(simulation1, simulation2, compareFormulasByValue = FALSE)
 
 \item{simulation2}{Second \code{Simulation} to compare}
 
-\item{compareFormulasByValue}{If \code{FALSE} (default), parameters are considered not equal if the have the same value but different formulas (e.g., a constant vs. explicit formula). If \code{TRUE}, only values are compared.}
+\item{compareFormulasByValue}{If \code{FALSE} (default), parameters are considered not equal
+if the have the same value but different formulas (e.g., a constant vs. explicit formula).
+If \code{TRUE}, only values are compared.}
 }
 \value{
 Named list with following levels:

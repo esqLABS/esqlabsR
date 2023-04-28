@@ -20,7 +20,8 @@ isParametersEqual(
 compared. Otherwise, the values are only compared if the formulas are
 overridden (isFixedValue == TRUE). FALSE by default.}
 
-\item{compareFormulasByValue}{If \code{FALSE}(default), formulas are compared by their types and string. If \code{TRUE}, only values are compared.}
+\item{compareFormulasByValue}{If \code{FALSE}(default), formulas are compared by their types and string. If \code{TRUE},
+only values are compared.}
 }
 \value{
 \code{TRUE} if parameters are considered equal, \code{FALSE} otherwise

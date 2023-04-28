@@ -225,3 +225,14 @@ messages$stopScenarioNameNonUnique <- function(scenarioName) {
     scenario defined in the excel file has a unique name."
   )
 }
+
+messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
+  paste0(
+    "The time interval string '", timeIntervalString, "' is not valid! Please
+    check the format of the string. Following criteria must be
+    met: 1) Each time interval must contain three numbers separated by a ',', 2) all
+    numbers must be positive, 3) The first number (start time) must be smaller than
+    the second number (end time), 4) The third number (resolution) must
+    be greater than zero. Time intervals must be separated by a ';'."
+  )
+}

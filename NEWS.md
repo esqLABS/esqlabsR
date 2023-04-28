@@ -23,6 +23,10 @@ class gets new fields `customFunction` and `customFunctionArgs`.
 
 ### BREAKING CHANGES
 
+- Definition of simulation time in the `Scenarios.xlsx` file changed. The new expected format 
+is a triplet of values <StartTime, EndTime, Resolution>, where `Resolution` is the number of 
+simulated points per time unit defined in the column `TimeUnit`.
+- Field `poinstPerMinute` of `ScenarioConfiguration` has been removed.
 - Function `compareSimulationParameters()` has been removed and replaced by `compareSimulations()`
 - `Scenarios` excel file gets additional columns `SteadyStateTime`, `SteadyStateTimeUnit`, 
 `PopulationId`, `OutputPathsIds`.
