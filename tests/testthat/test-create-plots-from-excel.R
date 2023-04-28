@@ -821,3 +821,35 @@ test_that(".createConfigurationFromRow correctly reads values in quotes", {
     }
   )
 })
+
+# It returns an empty data combined when no data set is found
+test_that("It returns an empty DataCombined when no data is available", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- data.frame(
+        plotGridName = c(NA),
+        outputName = c(NA)
+      )
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+      dataCombined <- createDataCombinedFromExcel(
+        file = file.path(tempDir, "Plots.xlsx"),
+        stopIfNotFound = FALSE
+      )
+      expect_equal(dataCombined[[1]], DataCombined$new())
+    }
+  )
+})

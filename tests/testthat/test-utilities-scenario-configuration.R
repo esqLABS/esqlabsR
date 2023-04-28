@@ -7,6 +7,7 @@ scenariosDf <- data.frame(list(
   "Scenario_name" = "TestScenario",
   "IndividualId" = "Indiv1",
   "PopulationId" = c(NA),
+  "ReadPopulationFromCSV" = c(NA),
   "ModelParameterSheets" = c(NA),
   "ApplicationProtocol" = c(NA),
   "SimulationTime" = c(NA),
@@ -100,6 +101,29 @@ test_that("It creates multiple correct scenarios", {
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$simulationRunOptions, NULL)
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$simulationType, "Individual")
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$steadyStateTime, 500)
+})
+
+test_that("It does not fail on empty rows", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Scenarios.xlsx",
+    tmpdir = tempDir,
+    code = {
+      scenariosDfLocal <- as.data.frame(lapply(scenariosDf, rep, 2))
+      scenariosDfLocal[3, ] <- scenariosDfLocal[2, ]
+      scenariosDfLocal[2, ] <- scenariosDfLocal[4, ]
+      scenariosDfLocal[3, ]$Scenario_name <- "TestScenario2"
+      writeExcel(data = list(
+        "Scenarios" = scenariosDfLocal,
+        "OutputPaths" = data.frame()
+      ), path = file.path(tempDir, "Scenarios.xlsx"), )
+
+      scenarioConfigs <- readScenarioConfigurationFromExcel(projectConfiguration = projectConfigurationLocal)
+      expect_equal(names(scenarioConfigs), c("TestScenario", "TestScenario2"))
+    }
+  )
 })
 
 test_that("It creates a population scenario", {

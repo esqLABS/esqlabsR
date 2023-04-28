@@ -70,6 +70,9 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     col_types = colTypes
   )
 
+  # Remove empty rows
+  wholeData <- dplyr::filter(wholeData, !dplyr::if_all(dplyr::everything(), is.na))
+
   outputPathsDf <- readExcel(
     path = file.path(
       projectConfiguration$paramsFolder,
@@ -89,6 +92,10 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
       stop(messages$scenarioConfigurationNameNotFoundWhenReading(scenarioName))
     }
     data <- wholeData[wholeData$Scenario_name == scenarioName, ]
+    # If multiple rows with the same scenario name if present, stop with an error
+    if (nrow(data) > 1) {
+      stop(messages$stopScenarioNameNonUnique(scenarioName))
+    }
 
     # Create a base scenario configuration based on the current project configuration
     scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
