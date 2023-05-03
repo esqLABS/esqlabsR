@@ -10,7 +10,9 @@ setApplications(simulation, scenarioConfiguration)
 \item{simulation}{A \code{Simulation} object that will be modified.}
 
 \item{scenarioConfiguration}{A \code{ScenarioConfiguration} object holding the
-name of the application protocol.}
+name of the application protocol.
+
+This function is deprecated. Use \code{setParametersFromXLS} instead.}
 }
 \description{
 Set an application protocol in a \code{Simulation} from the excel file.

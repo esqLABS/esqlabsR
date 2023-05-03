@@ -5,14 +5,14 @@
 \title{Save results of scenario simulations to csv.}
 \usage{
 saveScenarioResults(
-  simulatedScenarios,
+  simulatedScenariosResults,
   projectConfiguration,
   outputFolder = NULL,
   saveSimulationsToPKML = TRUE
 )
 }
 \arguments{
-\item{simulatedScenarios}{Named list with \code{simulation}, \code{results}, \code{outputValues},
+\item{simulatedScenariosResults}{Named list with \code{simulation}, \code{results}, \code{outputValues},
 and \code{population} as produced by \code{runScenarios()}.}
 
 \item{projectConfiguration}{An instance of \code{ProjectConfiguration}}

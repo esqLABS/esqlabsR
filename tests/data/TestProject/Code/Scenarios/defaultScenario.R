@@ -1,4 +1,4 @@
-defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALSE) {
+defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALSE, setTestParameters = FALSE) {
   ########### Initializing and running scenarios########
   ospsuite.utils::validateIsOfType(projectConfiguration, ProjectConfiguration)
 
@@ -14,28 +14,33 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
     projectConfiguration = projectConfiguration
   )
 
-  # Adjust scenario configurations, if necessary.
-  # E.g., enable setting of test parameters. If set to `TRUE`, parameters
-  # defined in "InputCoode/TestParameters.R" will be applied
-  scenarioConfigurations[[1]]$setTestParameters <- FALSE
-
-  # Disable check for negative values if required
-  scenarioConfigurations[[1]]$simulationRunOptions <- SimulationRunOptions$new()
-  scenarioConfigurations[[1]]$simulationRunOptions$checkForNegativeValues <- FALSE
-
+  # Adjust simulation run options, if necessary.
+  # E.g. disable check for negative values if required
+  simulationRunOptions <- SimulationRunOptions$new()
+  simulationRunOptions$checkForNegativeValues <- FALSE
 
   customParams <- NULL
+  # Apply parameters defined in "InputCoode/TestParameters.R"
+  if (setTestParameters) {
+    customParams <- getTestParameters(customParams)
+  }
+
   # Replace by the folder where the resutls are stored, if applicable!
   resultsSubFolder <- "DateAndTimeSuffixForTheSubfolder"
   # Run or load scenarios
   if (loadPreSimulatedResults) {
-    simulatedScenarios <- loadScenarioResults(names(scenarioConfigurations), file.path(projectConfiguration$outputFolder, "SimulationResults", resultsSubFolder))
-  } else {
-    simulatedScenarios <- runScenarios(
-      scenarioConfigurations = scenarioConfigurations,
-      customParams = customParams, saveSimulationsToPKML = TRUE
+    simulatedScenariosResults <- loadScenarioResults(
+      names(scenarioConfigurations),
+      file.path(projectConfiguration$outputFolder, "SimulationResults", resultsSubFolder)
     )
-    saveScenarioResults(simulatedScenarios, projectConfiguration)
+  } else {
+    # Create scenarios
+    scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, customParams = customParams)
+
+    simulatedScenariosResults <- runScenarios(
+      scenarios = scenarios, projectConfiguration = projectConfiguration
+    )
+    saveScenarioResults(simulatedScenariosResults, projectConfiguration)
   }
 
   ########### Load observed data########
@@ -52,12 +57,12 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
   # sort(names(observedData))
   ########## Create figures########
   plots <- createPlotsFromExcel(
-    simulatedScenarios = simulatedScenarios,
+    simulatedScenariosResults = simulatedScenariosResults,
     observedData = observedData,
     projectConfiguration = projectConfiguration,
     stopIfNotFound = TRUE
   )
 
   # Return a list with simulated scenarios and created plots
-  return(list(simulatedScenarios = simulatedScenarios, plots = plots))
+  return(list(simulatedScenariosResults = simulatedScenariosResults, plots = plots))
 }

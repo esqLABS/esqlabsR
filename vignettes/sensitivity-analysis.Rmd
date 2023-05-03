@@ -5,8 +5,10 @@ output:
     toc: true
 vignette: >
   %\VignetteIndexEntry{Sensitivity analysis}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -30,9 +32,10 @@ scenarioConfigurations <- readScenarioConfigurationFromExcel(
   projectConfiguration = projectConfiguration
 )
 
+scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+
 simulatedScenarios <- runScenarios(
-  scenarioConfigurations = scenarioConfigurations,
-  customParams = NULL, saveSimulationsToPKML = FALSE
+  scenarios = scenarios
 )
 ```
 

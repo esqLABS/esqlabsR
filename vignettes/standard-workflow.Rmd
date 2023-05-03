@@ -290,86 +290,6 @@ In the `Scenarios` sheet, enter the IDs of all paths the outputs should
 be generated for, separated by a comma, e.g.
 `Aciclovir_PVB, Aciclovir_fat_cell`.
 
-### Code-based specifications
-
-In addition to scenario setups through the excel sheets, further
-specifications are made in the `R` files located in the `InputCode`
-project folder. Files in this folder must be sourced prior to using.
-
--   **TestParameters**: During model development/fitting phase, you
-    might want to test out parameter values before storing them in the
-    `Parameters` excel files. You can define the paths of the
-    parameters, their values and the units in the `TestParameters` file.
-    Remember to `source` the file each time you change any values. You
-    can turn setting test parameters on and off in the
-    `ScenarioConfiguration` (see Section [Running
-    scenarios](#running-scenarios)).
-
-### Custom functions
-
-Initialization of a scenario creates a `Simulation` object that is fully
-parametrized according to the specifications of the scenario. However,
-sometimes further modifications to the simulations are required that
-cannot be represented by fixed parameter values stored in excel files.
-Imagine a scenario where the value of a certain parameter depends on
-other parameters not known at the time point of excel file creation.
-Another use case is a dose escalation study. Instead of defining every
-dose in a separate \*\*ApplicationProtocol" sheet, the set of doses to
-simulate could be defined in an `R` list and passed as an argument to a
-function that sets the dose parameter for a scenario.
-
-This can be achieved through defining a function that will be applied to
-the `Simulation` object created from a `ScenarioConfiguration` at the
-very last step of initialization. The function can reference the
-`simulation` variable and accept additional arguments. The argument
-values are then defined in the field `customFunctionArgs`.
-
-In the following example, we will define a custom function that
-multiplies the `Dose` parameter by a certain factor. The path to the
-dose parameter and the multiplication factor are defined as arguments.
-
-```{r}
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = "TestScenario",
-  projectConfiguration = projectConfiguration
-)
-
-# Path to the dose parameter
-doseParamPath <- "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
-
-# Initialize the simulation from the scenario without a custom function
-sim <- initializeScenario(scenarioConfigurations[[1]])
-# get the value of dose parameter
-oldVal <- getQuantityValuesByPath(doseParamPath, sim)
-print(paste0("Default dose parameter value: ", oldVal))
-
-# Define a custom function
-customFunction <- function(doseFactor, doseParamPath) {
-  doseParam <- getParameter(
-    path = doseParamPath,
-    container = simulation
-  )
-  doseParam$value <- doseParam$value * doseFactor
-}
-
-# Add the custom function to the scenario
-
-scenarioConfigurations$TestScenario$customFunction <- customFunction
-
-# Set the values of the arguments
-scenarioConfigurations$TestScenario$customFunctionArgs <- list(
-  doseFactor = 2,
-  doseParamPath = doseParamPath
-)
-
-# Initialize the simulation with the scenario with the custom function and get
-# the value of the dose parameter.
-sim <- initializeScenario(scenarioConfigurations[[1]])
-
-print(paste0("Dose parameter value with custom function: ", getQuantityValuesByPath(doseParamPath, sim)))
-```
-
 ### Scenario parametrization hierarchy
 
 The final parametrization is a combination of the different parametrization steps 
@@ -389,15 +309,18 @@ The order of parameter sheets of the "ModelParameters.xlsx" file defined in the
 
 ### Running scenarios {#running-scenarios}
 
-Scenarios are executed by creating `ScenarioConfiguration` objects and
-calling the `runScenarios()`function. Though it is possible to create an
-empty `ScenarioConfiguration` and populate it by hand, we usually want
-to create scenario configurations from the excel files by calling the
-`readScenarioConfigurationFromExcel()` function. A
-`ScenarioConfiguration` is based on the `ProjectConfiguration`, which
-has to be provided as an argument to the function. To read the
-configuration for the *'TestScenario'* scenario defined in the
-`Scenarios.xlsx` file, we call
+Running scenarios can be devided into three steps: 1) creating the 
+`ScenarioConfiguration` objects, 2) creating the `Scenario` objects from configurations,
+and 3) running the scenarios.
+
+#### Creating `ScenarioConfiguration` objects
+A `ScenarioConfiguration` object holds all information about a scenario that is defined 
+in the excel files. Though it is possible to create an empty `ScenarioConfiguration` 
+and populate it by hand, we usually want to create scenario configurations from the
+ excel files by calling the `readScenarioConfigurationFromExcel()` function. A
+`ScenarioConfiguration` is based on the `ProjectConfiguration`, which has to be provided as
+ an argument to the function. To read create the configuration for the *'TestScenario'* scenario 
+ defined in the `Scenarios.xlsx` file, we call
 
 ```{r createScenarioConfigurations}
 # Create `ScenarioConfiguration` objects from excel files
@@ -414,34 +337,43 @@ the `Scenarios.xlsx` by calling
 `readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)`
 without specifying scenarios' names.
 
-Before running the scenarios, we can modify `ScenarioConfigurations` by
-setting parameters that are currently not accessible through excel
-files. In model development/fitting phase, we might want to apply some
-test parameter values:
+#### Creating `Scenario` objects from configurations
 
-```{r eval = FALSE}
-# Set output paths for each scenario
-for (scenarioConfiguration in scenarioConfigurations) {
-  scenarioConfiguration$setTestParameters <- TRUE
-}
+Once all scenario configurations are set up, `Scenario` objects can be created from them.
+A `Scenario` object contains the fully parametrized simulation, the `Population` object in 
+case of a population simulation, the underlying `ScenarioConfiguration` object, and the list of 
+all user defined parameters.
+
+During model development/fitting phase, you might want to test out parameter values
+before storing them in the `Parameters` excel files. You can define the paths of the
+test parameters, their values and the units in the `TestParameters` file and pass 
+them as `customParams` argument to the `createScenarios()` function.
+
+```{r createScenarios}
+# Create `Scenario` objects from `ScenarioConfiguration` objects
+scenarios <- createScenarios(scenarioConfigurations)
 ```
 
-Make sure that you have sourced the `TestParameters` file in this case.
+You can view the final parametrization that is applied to the simulation by calling 
+the `finalCustomParams` property:
 
-Once all scenario configurations are set up, we can simulate them by
-calling the `runScenarios()` function. We can specify to save the
-initialized simulation (i.e. the simulation with individual physiology
-and parametrization applied as defined by the scenario configuration).
-In such case, a folder with the current date and time will be created in
-the folder where the simulation `pkml` files are located.
+```{r}
+scenarios$TestScenario$finalCustomParams
+```
+
+#### Running scenarios 
+
+Once the `Scenario` objects are created, they can be simulated by calling the `runScenarios()` function.
+The output of this function is a named list, where the names are scenario names, and the values are the lists of
+simulations, `SimulatioResults` produced by running the simulation, the output values of the `SimulationResults`,
+and the population if the scenario is a population simulation.
 
 ```{r runScenarios}
-simulatedScenarios <- runScenarios(
-  scenarioConfigurations = scenarioConfigurations,
-  customParams = NULL, saveSimulationsToPKML = FALSE
+simulatedScenariosResults <- runScenarios(
+  scenarios = scenarios
 )
 
-names(simulatedScenarios)
+names(simulatedScenariosResults)
 ```
 
 It is a good idea to store simulation results as `*.csv` along with
@@ -450,18 +382,10 @@ re-simulating every time e.g. a change to a figure showing the
 simulation results is required. The convenient function for saving results of a 
 scenario run is `saveScenarioResults()`.
 
-For futher information, check out the documentation of the functions
+For further information, check out the documentation of the functions
 [`saveScenarioResults()`](https://esqlabs.github.io/esqlabsR/reference/saveScenarioResults)
 and
 [`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/reference/loadScenarioResults).
-
-The function returns results of the simulations. For each scenario, a
-[`Simulation`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html)
-object, a
-[`SimulationResults`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html)
-object, and vectors of output values (retrieved by the
-[`getOutputValues()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getOutputValues.html)
-function) are returned.
 
 ### Troubleshooting
 

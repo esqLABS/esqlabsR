@@ -124,9 +124,9 @@ load the corresponding observed data as described in <a href="data-handling.html
 <span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co"># Run scenario configuration</span></span>
+<span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarios.html">createScenarios</a></span><span class="op">(</span>scenarioConfigurations <span class="op">=</span> <span class="va">scenarioConfigurations</span><span class="op">)</span></span>
 <span><span class="va">simulatedScenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
-<span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarioConfigurations</span>,</span>
-<span>  customParams <span class="op">=</span> <span class="cn">NULL</span>, saveSimulationsToPKML <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  scenarios <span class="op">=</span> <span class="va">scenarios</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load observed data</span></span>
