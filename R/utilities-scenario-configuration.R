@@ -190,8 +190,11 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
 #' @param scenarioConfiguration A `ScenarioConfiguration` object holding the
 #' name of the application protocol.
 #'
+#' This function is deprecated. Use `setParametersFromXLS` instead.
+#'
 #' @export
 setApplications <- function(simulation, scenarioConfiguration) {
+  .Deprecated("setApplications", "setParametersFromXLS")
   # Set from excel
   excelFilePath <- file.path(
     scenarioConfiguration$projectConfiguration$paramsFolder,

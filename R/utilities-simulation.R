@@ -11,23 +11,9 @@
 #'   describing an individual.
 #' @param additionalParams Optional named list with lists 'paths', 'values', and
 #'   'units'.
-#' @param simulateSteadyState Logical. If `TRUE`, the model is simulated for
-#'   `steadyStateTime` minutes after applying parameter values defined in
-#'   `individualCharacteristics` and `additionalParams`, and the end results
-#'   of the simulation are applied as initial conditions for all molecules.
-#'   Default is `FALSE`.
-#' @param steadyStateTime Simulation time (minutes) for the steady-state
-#'   simulation. Must be long enough for system to reach a steady-state. 1000 by
-#'   default.
-#' @param ignoreIfFormula If `TRUE` (default), species and parameters with
-#'   initial values defined by a formula are not included in the steady-state
-#'   simulation
 #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
 #'   thrown if any of the `additionalParams` does not exist. If `FALSE`,
 #'   non-existent parameters are  ignored.
-#' @param simulationRunOptions Optional instance of a `SimulationRunOptions`
-#'  used during the simulation run.
-#' @import ospsuite ospsuite.parameteridentification
 #' @export
 #'
 #' @examples
@@ -44,15 +30,10 @@
 initializeSimulation <- function(simulation,
                                  individualCharacteristics = NULL,
                                  additionalParams = NULL,
-                                 simulateSteadyState = FALSE,
-                                 steadyStateTime = 1000,
-                                 ignoreIfFormula = TRUE,
-                                 stopIfParameterNotFound = TRUE,
-                                 simulationRunOptions = NULL) {
+                                 stopIfParameterNotFound = TRUE) {
   validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
   validateIsOfType(individualCharacteristics, "IndividualCharacteristics", nullAllowed = TRUE)
-  validateIsLogical(simulateSteadyState)
-  validateIsNumeric(steadyStateTime)
+  .validateParametersStructure(additionalParams, "additionalParams", nullAllowed = TRUE)
 
   # Apply parameters of the individual
   if (!is.null(individualCharacteristics)) {
@@ -85,10 +66,6 @@ initializeSimulation <- function(simulation,
 
   # Apply additional parameters
   if (!is.null(additionalParams)) {
-    .validateParametersStructure(
-      parameterStructure = additionalParams,
-      argumentName = "additionalParams"
-    )
     # Skip if the correct structure is supplied, but no parameters are defined
     if (!isEmpty(additionalParams$paths)) {
       ospsuite::setParameterValuesByPath(
@@ -96,23 +73,9 @@ initializeSimulation <- function(simulation,
         values = additionalParams$values,
         simulation = simulation,
         units = additionalParams$units,
-        stopIfNotFound = FALSE
+        stopIfNotFound = stopIfParameterNotFound
       )
     }
-  }
-
-  if (simulateSteadyState) {
-    initialValues <- getSteadyState(
-      simulations = simulation,
-      steadyStateTime = steadyStateTime,
-      ignoreIfFormula = ignoreIfFormula,
-      simulationRunOptions = simulationRunOptions
-    )[[simulation$id]]
-    ospsuite::setQuantityValuesByPath(
-      quantityPaths = initialValues$paths,
-      values = initialValues$values,
-      simulation = simulation
-    )
   }
 }
 

@@ -1,6 +1,8 @@
 # esqlabsR 5.0.0
 
 ### New functionalities
+- New function `createScenarios()` to create `Scenario` objects from `ScenarioConfiguration` objects
+
 - Plots can be created by calling the new function `createPlotsFromExcel()`. It requires as input parameters `simulatedScenarios` (a list of simulated scenarios as returned by `runScenarios()`), `observedData` (a list of `DataSet` objects) and a `ProjectConfiguration` object `projectConfiguration`.
 
 - New function `createDataCombinedFromExcel()` creates `DataCombined` objects as 
@@ -12,10 +14,6 @@ function to csv files and corresponding simulations to pkml files.
 - New function `loadScenarioResults()` to load results from csv files into a structure
 as produced by the `runScenarios()` function.
 
-- `ScenarioConfiguration` supports custom functions to modify the `Simulation` 
-object as the last step of scenario initialization. For this, the `ScenarioConfiguration` 
-class gets new fields `customFunction` and `customFunctionArgs`.
-
 - New function `compareSimulation()` to compare two simulations for differences.
 
 - `runScenarios()` also returns a `Population` object for population simulations.
@@ -23,19 +21,28 @@ class gets new fields `customFunction` and `customFunctionArgs`.
 
 ### BREAKING CHANGES
 
+- Field `setTestParameters` removed from `ScenarioConfiguration`
+- Function `initializeScenario()` has been removed
 - Function `compareSimulationParameters()` has been removed and replaced by `compareSimulations()`
 - `Scenarios` excel file gets additional columns `SteadyStateTime`, `SteadyStateTimeUnit`, 
 `PopulationId`, `OutputPathsIds`.
 - `readScenarioConfigurationFromExcel()` has a new signature and requires a list of 
 `scenarioNames` and a `ProjectConfiguration`. The output is a named list of `ScenarioConfiguration` 
 objects.
-- `initializeScenario()` does not update scenario configuration from excel any more.
 - Output paths are not set from global variable `OutputPaths` any more but 
 from the respective field of `ScenarioConfgiruation`
 - `ProjectConfiguration` does not have field `$outputDevice` any more.
+- `ScenarioConfiguration` does not store `SimulationRunOptions` any more. Simulation run options must be passed to the `runScenarios()` function. Different run options cannot be used within one scenarios run.
 - Enum `GraphicsDevices` has been removed.
+- Function `initializeSimulation()` does not have arguments `simulateSteadyState`, `steadyStateTime` and `simulationRunOptions` any more.
 
 ### MAJOR CHANGES
+
+- New class `Scenario` that represents a scenario created from a `ScenarioConfiguration`
+
+- `ScenarioConfiguration` gets a new field `outputPaths` which is a list of 
+output paths for which the results will be calculated. If `NULL` (default), 
+outputs as defined in the simulation are used.
 
 - Paths of model outputs are defined in the excel file `Scenarios.xlsx`. In the 
 sheet `OutputPaths`, create an entry for each output. The column `OutputPath` is the full 
@@ -65,14 +72,15 @@ changed from `Models/Simulations/<DateSuffix>` to `Results/SimulationResults/<Da
 - `sensitivityCalculation()` - fixed bug in wrong calculation of sensitivity values.
 Please be aware that the results produced by earlier versions are wrong.
 
-- `ScenarioConfiguration` gets a new field `outputPaths` which is a list of 
-output paths for which the results will be calculated. If `NULL` (default), 
-outputs as defined in the simulation are used.
-
 * The workflow for running scenarios changed to:  
-  - Create a `RunConfiguration` with `createDefaultProjectConfiguration()`
+  - Create a `ProjectConfiguration` with `createDefaultProjectConfiguration()`
   - Create `ScenarioConfigurations`, e.g. with `readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`
   - Run scenarios with `runScenarios(scenarioConfigurations)`
+  
+  - Alternatively: 
+  - Create a `ProjectConfiguration` with `createDefaultProjectConfiguration()`
+  - Create `ScenarioConfigurations`, e.g. with `readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`
+  
   
 - `ProjectConfiguration` gets a new field `plotsFile`. It is the name of the excel file with plot definitions and must be located in the `paramsFolder`.
 
@@ -80,6 +88,8 @@ outputs as defined in the simulation are used.
 and applying it to a human model, missing species-specific parameters are applied and the 
 scaling works properly. Supported scalingsa are: Human to rat, human to monkey, 
 human to rabbit.
+
+- `initializeSimulation()` does not perform steady-state run any more. This is done as part of the `runScenarios()` function.
 
 ### MINOR CHANGES
 
@@ -89,8 +99,7 @@ that determine how entries of type "<number" and ">number" will be treated.
 - `readScenarioConfigurationFromExcel()` will read all scenarios defined in the 
 `Scenarios.xlsx` file if no scenario names are specified (argument `scenarioNames = NULL`).
 
-- Default name of the excel file with definition of individual biometrics changed 
-from `IndividualPhysiology.xlsx` to `IndividualBiometrics.xlsx`.
+- Function `setApplications()` is deprecated.
 
 - Dark grey frame around legends by default.
 
@@ -151,7 +160,6 @@ NEW FUNCTIONS
  * `createDefaultProjectConfiguration()`
  * `readScenarioConfigurationFromExcel()`
  * `setApplications()`
- * `initializeScenario()`
  * `initializeScenario()`
 
 - Maintenance and bug fixes.

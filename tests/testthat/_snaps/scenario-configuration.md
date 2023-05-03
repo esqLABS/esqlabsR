@@ -3,13 +3,11 @@
     Code
       mySC <- ScenarioConfiguration$new(projectConfiguration = ProjectConfiguration$
         new())
-      mySC$setTestParameters <- TRUE
       mySC$simulateSteadyState <- TRUE
       mySC$simulationTime <- 10
       mySC$steadyStateTime <- 5
       mySC$pointsPerMinute <- 100
       mySC$simulationType <- "Population"
-      mySC$simulationRunOptions <- NULL
       mySC$removeParamSheets(NULL)
       mySC$addParamSheets(c("mySheet1", "mySheet2"))
       mySC
@@ -39,5 +37,4 @@
          Points per minute: 100 
          Simulate steady-state: TRUE 
          Steady-state time: 5 
-         Set test parameters: TRUE 
 

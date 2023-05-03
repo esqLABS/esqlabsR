@@ -16,9 +16,10 @@ for (scenarioConfiguration in scenarioConfigurations) {
 }
 
 # Run scenarios
+scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+
 simulatedScenarios <- runScenarios(
-  scenarioConfigurations = scenarioConfigurations,
-  customParams = NULL, saveSimulationsToPKML = FALSE
+  scenarios = scenarios
 )
 
 # Load observed data

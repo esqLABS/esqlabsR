@@ -8,16 +8,6 @@ ScenarioConfiguration <- R6::R6Class(
   inherit = ospsuite.utils::Printable,
   cloneable = TRUE,
   active = list(
-    #' @field setTestParameters Boolean representing whether parameters defined
-    #'   in `TestParameters` are to be applied to the simulation
-    setTestParameters = function(value) {
-      if (missing(value)) {
-        private$.setTestParameters
-      } else {
-        validateIsLogical(value)
-        private$.setTestParameters <- value
-      }
-    },
     #' @field simulateSteadyState Boolean representing whether the simulation
     #' will be brought to a steady-state first
     simulateSteadyState = function(value) {
@@ -112,16 +102,6 @@ a parameter sheet from the list"
         }
       }
     },
-    #' @field simulationRunOptions Object of type `SimulationRunOptions` that will be passed
-    #' to simulation runs. If `NULL`, default options are used
-    simulationRunOptions = function(value) {
-      if (missing(value)) {
-        private$.simulationRunOptions
-      } else {
-        validateIsOfType(value, SimulationRunOptions, nullAllowed = TRUE)
-        private$.simulationRunOptions <- value
-      }
-    },
     #' @field projectConfiguration `ProjectConfiguration` that will be used in scenarios.
     #' Read-only
     projectConfiguration = function(value) {
@@ -130,43 +110,10 @@ a parameter sheet from the list"
       } else {
         stop(messages$errorPropertyReadOnly("projectConfiguration"))
       }
-    },
-    #' @field customFunction A function that will be applied at the very last
-    #' step of simulation initialization. Can be applied for advanced scenario
-    #' configuration. If the function requires additional arguments, they must be
-    #' defined in `customFunctionArgs` as a list. The object `simulation` can always
-    #' be accessed.
-    #' @examples \dontrun{
-    #' #This example gets the current value of the "Age" parameter and multiplies
-    #' #it by a factor coming from argument.
-    #' #Assume that scenarioConfiguration has been created from excel.
-    #' scenarioConfiguration$customFunction <- function(
-    #' }
-    customFunction = function(value) {
-      if (missing(value)) {
-        private$.customFunction
-      } else {
-        validateIsOfType(value, "function")
-        private$.customFunction <- value
-      }
-    },
-
-    #' @field customFunctionArgs Arguments for the`customFunction()`
-    #' Named list of type `list(argumentName = value)`
-    customFunctionArgs = function(value) {
-      if (missing(value)) {
-        private$.customFunctionArgs
-      } else {
-        if (!setequal(names(value), formalArgs(private$.customFunction))) {
-          stop(messages$errorWrongArguments(formalArgs(private$.customFunction)))
-        }
-        private$.customFunctionArgs <- value
-      }
     }
   ),
   private = list(
     .projectConfiguration = NULL,
-    .setTestParameters = FALSE,
     .simulateSteadyState = FALSE,
     .simulationTime = NULL,
     .pointsPerMinute = 1,
@@ -174,10 +121,7 @@ a parameter sheet from the list"
     .individualCharacteristics = NULL,
     .paramSheets = NULL,
     .simulationType = "Individual",
-    .readPopulationFromCsv = FALSE,
-    .simulationRunOptions = NULL,
-    .customFunction = NULL,
-    .customFunctionArgs = list()
+    .readPopulationFromCsv = FALSE
   ),
   public = list(
     #' @description
@@ -247,7 +191,6 @@ a parameter sheet from the list"
       private$printLine("Points per minute", self$pointsPerMinute)
       private$printLine("Simulate steady-state", self$simulateSteadyState)
       private$printLine("Steady-state time", self$steadyStateTime)
-      private$printLine("Set test parameters", self$setTestParameters)
       invisible(self)
     }
   )
