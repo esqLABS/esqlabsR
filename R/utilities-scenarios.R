@@ -129,15 +129,8 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL) {
     nullAllowed = TRUE
   )
 
-  scenarios <- vector("list", length(scenarioConfigurations))
-
-  # For each scenario configuration, create a `Scenario` object
-  for (i in seq_along(scenarioConfigurations)) {
-    scenarioConfiguration <- scenarioConfigurations[[i]]
-    scenario <- Scenario$new(scenarioConfiguration, customParams = customParams)
-    scenarios[[i]] <- scenario
-    names(scenarios)[[i]] <- scenarioConfiguration$scenarioName
-  }
+  scenarios <- purrr::map(scenarioConfigurations, ~ Scenario$new(.x, customParams = customParams)) %>%
+    purrr::set_names(purrr::map(scenarioConfigurations, ~ .x$scenarioName))
 
   return(scenarios)
 }
