@@ -45,10 +45,13 @@ will be brought to a steady-state first}
 will be created (value is \code{FALSE}) or an existing population will be imported
 from a csv.}
 
-\item{\code{simulationTime}}{Simulation time in minutes. If \code{NULL} (default),
-simulation time as defined in the \code{Simulation} object will be used.}
+\item{\code{simulationTime}}{Specified simulation time intervals. If \code{NULL} (default),
+simulation time as defined in the \code{Simulation} object will be used.
+Accepted are multiple time intervals separated by a ';'. Each time interval
+is a triplet of values <StartTime, EndTime, Resolution>, where \code{Resolution} is the number of
+simulated points per time unit defined in the column \code{TimeUnit}.}
 
-\item{\code{pointsPerMinute}}{Resolution of the outputs in points per minute}
+\item{\code{simulationTimeUnit}}{Unit of the simulation time intervals.}
 
 \item{\code{steadyStateTime}}{Time in minutes to simulate if simulating steady-state. May be \code{NULL}.}
 

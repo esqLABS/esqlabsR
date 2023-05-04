@@ -246,10 +246,19 @@ The created excel file will have the same structure as all
 Parameter-files and can be directly loaded in MoBi or R using the
 `readParametersFromXLS()` function.
 
--   **SimulationTime**: Time of the simulation. The [output
-    interval](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setOutputInterval.html)
-    of the simulation will be set to the range [0 - `SimulationTime`]
-    with the resolution of 1 point per minute.
+-   **SimulationTime**: Time of the simulation. Multiple simulation time intervals can be defined,
+    each interval being a triplet of values <StartTime, EndTime, Resolution>, where `Resolution` is the number of 
+simulated points per time unit defined in the column `TimeUnit`. Simulation intervals are separater by a `;`.
+
+For example, to simulate the model for 10 minutes with a resolution of 1 point per minute, the value of the 
+column `SimulationTime` should be `0, 10, 1`, and that of the column `SimulationTimeUnit` should be `min`.
+To simulate the model for 
+* 20 hours with a resolution of 1 point per minute, then 
+* for 3 weeks (equals to 3*7*24 = 504 hours) with a resolution of 1 point per hour, and finally 
+* for 2 days (equals to 504 + 2*24 = 552 hours) with a resolution of 10 point per hour, 
+
+the value of the column `SimulationTime` should be 
+`0, 20, 60; 20, 504, 1; 504, 552, 10`, and that of the column `SimulationTimeUnit` should be `h`.
 
 -   **SimulationTimeUnit**: Unit for `SimulationTime`. For supported
     units, see `ospsuite::ospUnits`.

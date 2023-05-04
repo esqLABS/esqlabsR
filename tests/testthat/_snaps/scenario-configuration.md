@@ -4,9 +4,8 @@
       mySC <- ScenarioConfiguration$new(projectConfiguration = ProjectConfiguration$
         new())
       mySC$simulateSteadyState <- TRUE
-      mySC$simulationTime <- 10
+      mySC$simulationTime <- "0, 10, 1"
       mySC$steadyStateTime <- 5
-      mySC$pointsPerMinute <- 100
       mySC$simulationType <- "Population"
       mySC$removeParamSheets(NULL)
       mySC$addParamSheets(c("mySheet1", "mySheet2"))
@@ -33,8 +32,12 @@
          Population Id: 
          Read population from csv file: FALSE 
          Application protocol: 
-         Simulation time: 10 
-         Points per minute: 100 
+         Simulation time intervals: 
+           Interval: 1 
+             Start: 0 
+             End: 10 
+             Resolution: 1 
+         Simulation time intervals unit: min 
          Simulate steady-state: TRUE 
          Steady-state time: 5 
 
