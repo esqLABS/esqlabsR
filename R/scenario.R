@@ -158,12 +158,29 @@ Scenario <- R6::R6Class(
       }
       # Set simulation time if defined by the user.
       if (!is.null(scenarioConfiguration$simulationTime)) {
-        setOutputInterval(
-          simulation = simulation,
-          startTime = 0,
-          endTime = scenarioConfiguration$simulationTime,
-          resolution = scenarioConfiguration$pointsPerMinute
-        )
+        # clear output intervals
+        clearOutputIntervals(simulation)
+        # Iterate through all output intervals and add them to simulation
+        for (i in seq_along(scenarioConfiguration$simulationTime)) {
+          addOutputInterval(
+            simulation = simulation,
+            startTime = toBaseUnit(
+              quantityOrDimension = ospDimensions$Time,
+              values = scenarioConfiguration$simulationTime[[i]][1],
+              unit = scenarioConfiguration$simulationTimeUnit
+            ),
+            endTime = toBaseUnit(
+              quantityOrDimension = ospDimensions$Time,
+              values = scenarioConfiguration$simulationTime[[i]][2],
+              unit = scenarioConfiguration$simulationTimeUnit
+            ),
+            resolution = scenarioConfiguration$simulationTime[[i]][3] / toBaseUnit(
+              quantityOrDimension = ospDimensions$Time,
+              values = 1,
+              unit = scenarioConfiguration$simulationTimeUnit
+            )
+          )
+        }
       }
 
       initializeSimulation(
