@@ -8,9 +8,9 @@ ProjectConfiguration <- R6::R6Class(
   inherit = ospsuite.utils::Printable,
   cloneable = TRUE,
   active = list(
-    #' @field projectConfigurationDirPath Path to the folder that serve as base
-    #' path for other parameters. If NULL, then, other Folder parameters should
-    #' be absolute paths.
+    #' @field projectConfigurationFilePath Path to the file that serve as base
+    #' path for other parameters. If NULL, then, other paths should be absolute
+    #'  paths.
     projectConfigurationFilePath = function(value) {
       if (missing(value)) {
         private$.projectConfigurationFilePath
@@ -19,6 +19,9 @@ ProjectConfiguration <- R6::R6Class(
         self
       }
     },
+    #' @field projectConfigurationDirPath Path to the folder that serve as base
+    #' path for other paths. If NULL, then, other paths should be absolute
+    #' paths.
     projectConfigurationDirPath = function(value) {
       if (missing(value)) {
         private$.projectConfigurationDirPath
@@ -229,14 +232,20 @@ ProjectConfiguration <- R6::R6Class(
     }
   ),
   public = list(
-    initialize = function(projectConfigurationFilePath = NULL) {
+    #' Initialize
+    #'
+    #' @param projectConfigurationFilePath A string representing the path to the
+    #' project configuration file.
+    initialize = function(projectConfigurationFilePath = character()) {
       if (!missing(projectConfigurationFilePath)) {
         self$projectConfigurationFilePath <- projectConfigurationFilePath
       } else {
         private$.projectConfigurationDirPath <- NULL
       }
     },
-    print = function(...) {
+    #' Print
+    #' @description print prints a summary of the Project Configuration.
+    print = function() {
       private$printClass()
       private$printLine("Relative path from working directory", getwd())
       private$printLine("Project Configuration File", fs::path_rel(as.character(self$projectConfigurationFilePath)))
