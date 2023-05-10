@@ -27,15 +27,16 @@ practices. Learn more about the **{esqlabsR}**’s workflow in
 ## Installation
 
 ``` r
-# {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on 
-# {rClr} (https://github.com/Open-Systems-Pharmacology/rClr) which is not 
+# {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on
+# {rClr} (https://github.com/Open-Systems-Pharmacology/rClr) which is not
 # available on CRAN.
 # Therefore, these must be installed from github using `{remotes}`.
 
 install.packages("remotes")
-install.packages('https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip', 
-                  repos = NULL, 
-                  type = 'binary')
+install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip",
+  repos = NULL,
+  type = "binary"
+)
 
 remotes::install_github("esqLABS/esqlabsR")
 ```

@@ -49,8 +49,10 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
 
   # Check if the structure is correct
   if (!identical(names(header), expectedColumns)) {
-    stop(messages$errorWrongXLSStructure(filePath = projectConfiguration$scenarioDefinitionFile,
-                                         expectedColNames = expectedColumns))
+    stop(messages$errorWrongXLSStructure(
+      filePath = projectConfiguration$scenarioDefinitionFile,
+      expectedColNames = expectedColumns
+    ))
   }
 
   # If no errors were raised before, structure is correct. Whole excel file is

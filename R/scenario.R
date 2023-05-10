@@ -98,7 +98,8 @@ Scenario <- R6::R6Class(
 
         if (any(excelSheets == scenarioConfiguration$individualId)) {
           indivModelParams <- readParametersFromXLS(scenarioConfiguration$projectConfiguration$individualsFile,
-                                                    sheets = scenarioConfiguration$individualId)
+            sheets = scenarioConfiguration$individualId
+          )
 
           # Add individual model parameters to the parameters structure
           params <- extendParameterStructure(
