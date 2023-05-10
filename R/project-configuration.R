@@ -2,6 +2,7 @@
 #' @docType class
 #' @description An object storing configuration used project-wide
 #' @format NULL
+#' @import fs
 #' @export
 ProjectConfiguration <- R6::R6Class(
   "ProjectConfiguration",

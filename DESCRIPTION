@@ -39,16 +39,13 @@ Imports:
     tools,
     vctrs,
     writexl,
-    stringr,
-    labeling,
-    showtext,
-    sysfonts,
-    readr
+    stringr
 Suggests: 
     clipr,
     knitr,
     openxlsx,
     rmarkdown,
+    rlang,
     shiny,
     shinyjs,
     shinytest2,
