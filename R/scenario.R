@@ -73,10 +73,7 @@ Scenario <- R6::R6Class(
       scenarioConfiguration <- private$.scenarioConfiguration
       # Read parameters from the parameters file
       params <- readParametersFromXLS(
-        file.path(
-          scenarioConfiguration$projectConfiguration$paramsFolder,
-          scenarioConfiguration$projectConfiguration$paramsFile
-        ),
+        scenarioConfiguration$projectConfiguration$paramsFile,
         scenarioConfiguration$paramSheets
       )
 
@@ -84,10 +81,7 @@ Scenario <- R6::R6Class(
       individualCharacteristics <- NULL
       if (!is.null(scenarioConfiguration$individualId)) {
         individualCharacteristics <- readIndividualCharacteristicsFromXLS(
-          XLSpath = file.path(
-            scenarioConfiguration$projectConfiguration$paramsFolder,
-            scenarioConfiguration$projectConfiguration$individualsFile
-          ),
+          XLSpath = scenarioConfiguration$projectConfiguration$individualsFile,
           individualId = scenarioConfiguration$individualId,
           nullIfNotFound = TRUE
         )
@@ -100,16 +94,11 @@ Scenario <- R6::R6Class(
         }
 
         # Find individual-specific model parameters
-        excelSheets <- readxl::excel_sheets(path = file.path(
-          scenarioConfiguration$projectConfiguration$paramsFolder,
-          scenarioConfiguration$projectConfiguration$individualsFile
-        ))
+        excelSheets <- readxl::excel_sheets(path = scenarioConfiguration$projectConfiguration$individualsFile)
 
         if (any(excelSheets == scenarioConfiguration$individualId)) {
-          indivModelParams <- readParametersFromXLS(file.path(
-            scenarioConfiguration$projectConfiguration$paramsFolder,
-            scenarioConfiguration$projectConfiguration$individualsFile
-          ), sheets = scenarioConfiguration$individualId)
+          indivModelParams <- readParametersFromXLS(scenarioConfiguration$projectConfiguration$individualsFile,
+                                                    sheets = scenarioConfiguration$individualId)
 
           # Add individual model parameters to the parameters structure
           params <- extendParameterStructure(
@@ -132,10 +121,7 @@ Scenario <- R6::R6Class(
       }
 
       # Set administration protocols
-      excelFilePath <- file.path(
-        scenarioConfiguration$projectConfiguration$paramsFolder,
-        scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
-      )
+      excelFilePath <- scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
       if (any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
         applicationParams <- readParametersFromXLS(excelFilePath, scenarioConfiguration$applicationProtocol)
         params <- extendParameterStructure(
@@ -209,10 +195,7 @@ Scenario <- R6::R6Class(
           population <- loadPopulation(populationPath)
         } else {
           popCharacteristics <- readPopulationCharacteristicsFromXLS(
-            XLSpath = file.path(
-              scenarioConfiguration$projectConfiguration$paramsFolder,
-              scenarioConfiguration$projectConfiguration$populationParamsFile
-            ),
+            XLSpath = scenarioConfiguration$projectConfiguration$populationParamsFile,
             populationName = scenarioConfiguration$populationId,
             sheet = "Demographics"
           )

@@ -12,6 +12,8 @@
       mySC
     Output
       ProjectConfiguration: 
+         Relative path from working directory: C:/Users/Felix/Code/esqlabsR/tests/testthat 
+         Project Configuration File: 
          Model folder: 
          Parameters folder: 
          Parameters file name: 
@@ -23,6 +25,7 @@
          Experimental data folder: 
          Experimental data file: 
          Data importer configuration: 
+         Compound Properties File: 
          Output folder: 
       ScenarioConfiguration: 
          Model file name: 

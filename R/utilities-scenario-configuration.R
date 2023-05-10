@@ -42,30 +42,22 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
 
   # Read only the header of the excel file to check structure
   header <- readExcel(
-    path = file.path(
-      projectConfiguration$paramsFolder,
-      projectConfiguration$scenarioDefinitionFile
-    ),
+    path = projectConfiguration$scenarioDefinitionFile,
     sheet = "Scenarios",
     n_max = 0
   )
 
   # Check if the structure is correct
   if (!identical(names(header), expectedColumns)) {
-    stop(messages$errorWrongXLSStructure(filePath = file.path(
-      projectConfiguration$paramsFolder,
-      projectConfiguration$scenarioDefinitionFile
-    ), expectedColNames = expectedColumns))
+    stop(messages$errorWrongXLSStructure(filePath = projectConfiguration$scenarioDefinitionFile,
+                                         expectedColNames = expectedColumns))
   }
 
   # If no errors were raised before, structure is correct. Whole excel file is
   # read with column types.
 
   wholeData <- readExcel(
-    path = file.path(
-      projectConfiguration$paramsFolder,
-      projectConfiguration$scenarioDefinitionFile
-    ),
+    path = projectConfiguration$scenarioDefinitionFile,
     sheet = "Scenarios",
     col_types = colTypes
   )
@@ -74,10 +66,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
   wholeData <- dplyr::filter(wholeData, !dplyr::if_all(dplyr::everything(), is.na))
 
   outputPathsDf <- readExcel(
-    path = file.path(
-      projectConfiguration$paramsFolder,
-      projectConfiguration$scenarioDefinitionFile
-    ),
+    path = projectConfiguration$scenarioDefinitionFile,
     sheet = "OutputPaths"
   )
 
@@ -195,10 +184,7 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
 setApplications <- function(simulation, scenarioConfiguration) {
   .Deprecated("setApplications", "setParametersFromXLS")
   # Set from excel
-  excelFilePath <- file.path(
-    scenarioConfiguration$projectConfiguration$paramsFolder,
-    scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
-  )
+  excelFilePath <- scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
   # Only try to apply parameters if the sheet exists
   if (any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
     params <- readParametersFromXLS(excelFilePath, scenarioConfiguration$applicationProtocol)

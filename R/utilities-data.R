@@ -264,10 +264,7 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' }
 loadObservedData <- function(projectConfiguration, sheets = NULL) {
   importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-    configurationFilePath = file.path(
-      projectConfiguration$dataFolder,
-      projectConfiguration$dataImporterConfigurationFile
-    )
+    configurationFilePath = projectConfiguration$dataImporterConfigurationFile
   )
   validateIsString(sheets, nullAllowed = TRUE)
   # If sheets have been specified, import only those. Otherwise try to import all
@@ -279,10 +276,7 @@ loadObservedData <- function(projectConfiguration, sheets = NULL) {
   }
 
   dataSets <- ospsuite::loadDataSetsFromExcel(
-    xlsFilePath = file.path(
-      projectConfiguration$dataFolder,
-      projectConfiguration$dataFile
-    ),
+    xlsFilePath = projectConfiguration$dataFile,
     importerConfigurationOrPath = importerConfiguration,
     importAllSheets = importAllSheets
   )
