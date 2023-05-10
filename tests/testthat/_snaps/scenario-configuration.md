@@ -9,24 +9,8 @@
       mySC$simulationType <- "Population"
       mySC$removeParamSheets(NULL)
       mySC$addParamSheets(c("mySheet1", "mySheet2"))
-      mySC
+      mySC$print(projectConfiguration = FALSE)
     Output
-      ProjectConfiguration: 
-         Relative path from working directory: C:/Users/Felix/Code/esqlabsR/tests/testthat 
-         Project Configuration File: 
-         Model folder: 
-         Parameters folder: 
-         Parameters file name: 
-         Individual parameters file name: 
-         Population parameters file name: 
-         Scenario definitions file name: 
-         Scenario applications definitions file name: 
-         Plot definitions file name: 
-         Experimental data folder: 
-         Experimental data file: 
-         Data importer configuration: 
-         Compound Properties File: 
-         Output folder: 
       ScenarioConfiguration: 
          Model file name: 
          Scenario name: 
