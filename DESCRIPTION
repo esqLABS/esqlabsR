@@ -24,6 +24,7 @@ Depends:
 Imports:
     colorspace,
     dplyr,
+    fs,
     ggplot2,
     labeling,
     ospsuite.parameteridentification,
