@@ -174,9 +174,11 @@ a parameter sheet from the list"
     },
     #' @description
     #' Print the object to the console
-    #' @param ... Rest arguments.
-    print = function(...) {
-      self$projectConfiguration$print()
+    #' @param projectConfiguration Whether to also print project configuration. default to TRUE.
+    print = function(projectConfiguration = TRUE) {
+      if (projectConfiguration) {
+        self$projectConfiguration$print()
+      }
       private$printClass()
       private$printLine("Model file name", self$modelFile)
       private$printLine("Scenario name", self$scenarioName)

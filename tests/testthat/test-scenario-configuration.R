@@ -13,7 +13,7 @@ test_that("`ScenarioConfiguration` active bindings are modified", {
     mySC$removeParamSheets(NULL)
     mySC$addParamSheets(c("mySheet1", "mySheet2"))
 
-    mySC
+    mySC$print(projectConfiguration = FALSE)
   })
 })
 
