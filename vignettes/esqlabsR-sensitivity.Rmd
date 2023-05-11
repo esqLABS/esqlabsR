@@ -1,14 +1,10 @@
 ---
-title: "Sensitivity analysis"
-output: 
-  rmarkdown::html_vignette:
-    toc: true
+title: "esqlabsR-sensitivity"
+output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Sensitivity analysis}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{esqlabsR-sensitivity}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  chunk_output_type: console
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
@@ -16,14 +12,15 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-knitr::opts_knit$set(
-  root.dir = "../tests/data/TestProject/Code/"
-)
+```
+
+```{r setup}
+library(esqlabsR)
 ```
 
 ```{r, echo = FALSE, results = "hide", message = FALSE}
 library(esqlabsR)
-projectConfiguration <- createDefaultProjectConfiguration()
+projectConfiguration <- createDefaultProjectConfiguration(path = "../tests/data/TestProject/Code/ProjectConfiguration.xlsx")
 dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
 # Create `ScenarioConfiguration` objects from excel files

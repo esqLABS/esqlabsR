@@ -1,9 +1,8 @@
 ---
-title: "Visualization and reporting"
+title: "esqlabsR-plotting"
 output: rmarkdown::html_vignette
-#output: pdf_document
 vignette: >
-  %\VignetteIndexEntry{Visualization and reporting}
+  %\VignetteIndexEntry{esqlabsR-plotting}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,9 +12,10 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-knitr::opts_knit$set(
-  root.dir = "../tests/data/TestProject/Code/"
-)
+```
+
+```{r setup}
+library(esqlabsR)
 ```
 
 ### Workflow
@@ -35,7 +35,7 @@ data as described in [Data handling](data-handling.html).
 ```{r, echo = TRUE, message = FALSE}
 library(esqlabsR)
 # Create a project configuration
-projectConfiguration <- createDefaultProjectConfiguration()
+projectConfiguration <- createDefaultProjectConfiguration(path = "../tests/data/TestProject/Code/ProjectConfiguration.xlsx")
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   scenarioNames = "TestScenario",

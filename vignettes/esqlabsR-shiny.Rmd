@@ -1,13 +1,18 @@
 ---
-title: "Using the esqlabsR Shiny apps"
-output: 
-  rmarkdown::html_vignette:
-    toc: true
+title: "esqlabsR-shiny"
+output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Using the esqlabsR Shiny apps}
+  %\VignetteIndexEntry{esqlabsR-shiny}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
 
 The esqlabsR packages comes with two Shiny apps: the Function Visualizer and the Unit Converter app. They are run by the commands `startFunctionVisualizer()` and `startUnitConverter()`, which will open a new window with a graphical user interface.
 

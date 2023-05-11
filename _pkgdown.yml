@@ -90,24 +90,14 @@ reference:
       - esqlabsRSettingNames
 
 articles:
-  - title: Introduction
-    navbar:
+  - title: Guides
+    navbar: Guides
     contents:
-      - introduction-esqlabsr
-  - title: Running simulations
-    navbar: Running simulations
-    desc: Articles about how to run simulations
-    contents:
-      - standard-workflow
-      - sensitivity-analysis
-  - title: Processing data
-    navbar: Processing data
-    desc: Articles about how to process and analyse data
-    contents:
-      - data-handling
-      - visualization-and-reporting
+      - esqlabsR-workflow
+      - esqlabsR-plotting
+      - esqlabsR-sensitivity
   - title: Miscellaneous
     navbar: Miscellaneous
-  #desc:
     contents:
-      - shiny-apps
+      - esqlabsR-shiny
+      - esqlabsR-advanced
