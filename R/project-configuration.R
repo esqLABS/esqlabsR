@@ -172,9 +172,9 @@ ProjectConfiguration <- R6::R6Class(
     #' saved to; relative to the "Code" folder
     outputFolder = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.outputFolder, self$projectConfigurationDirPath, must_work)
+        private$.clean_path(private$.outputFolder, self$projectConfigurationDirPath)
       } else {
-        private$.clean_path(value, self$projectConfigurationDirPath, must_work)
+        private$.clean_path(value, self$projectConfigurationDirPath)
         private$.outputFolder <- value
         self
       }
