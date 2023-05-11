@@ -252,11 +252,11 @@ createPlotsFromExcel <- function(
   validateIsString(plotGridNames, nullAllowed = TRUE)
 
   # read sheet "plotGrids" with info for plotGridConfigurations
-  dfPlotGrids <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
+  dfPlotGrids <- readExcel(projectConfiguration$plotsFile,
     sheet = "plotGrids"
   )
   # read sheet "exportConfiguration"
-  dfExportConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
+  dfExportConfigurations <- readExcel(projectConfiguration$plotsFile,
     sheet = "exportConfiguration"
   ) %>%
     rename(name = outputName)
@@ -277,7 +277,7 @@ createPlotsFromExcel <- function(
     return()
   }
   # read sheet "plotConfiguration"
-  dfPlotConfigurations <- readExcel(file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
+  dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile,
     sheet = "plotConfiguration"
   )
 
@@ -287,7 +287,7 @@ createPlotsFromExcel <- function(
   dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
   # Filter and validate only used data combined
   dataCombinedList <- createDataCombinedFromExcel(
-    file = file.path(projectConfiguration$paramsFolder, projectConfiguration$plotsFile),
+    file = projectConfiguration$plotsFile,
     sheet = "DataCombined",
     dataCombinedNames = unique(dfPlotConfigurations$DataCombinedName),
     simulatedScenarios = simulatedScenarios,

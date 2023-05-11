@@ -10,73 +10,100 @@ An object storing configuration used project-wide
 \section{Super class}{
 \code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{ProjectConfiguration}
 }
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
+\section{Active bindings}{
+\if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{modelFolder}}{Path to the folder with pkml simulation files;
-relative to the "Code" folder.}
+\item{\code{projectConfigurationFilePath}}{Path to the file that serve as base
+path for other parameters. If NULL, then, other paths should be absolute
+paths.}
 
-\item{\code{paramsFolder}}{Path to the folder with excel files with
-parametrization; relative to the "Code" folder.}
+\item{\code{projectConfigurationDirPath}}{Path to the folder that serve as base
+path for other paths. If NULL, then, other paths should be absolute
+paths.}
+
+\item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
+
+\item{\code{paramsFolder}}{Path to the folder containing excel files with model
+parameterization;}
 
 \item{\code{paramsFile}}{Name of the excel file with global model
-parametrization. Must be located in the "paramsFolder".}
+parameterization.
+Must be located in the "paramsFolder".}
 
 \item{\code{individualsFile}}{Name of the excel file with
-individual-specific model parametrization. Must be located in the
-"paramsFolder"}
+individual-specific model parameterization.
+Must be located in the "paramsFolder"}
 
 \item{\code{populationParamsFile}}{Name of the excel file with population
-information. Must be located in the "paramsFolder".}
+information.
+Must be located in the "paramsFolder".}
 
 \item{\code{scenarioDefinitionFile}}{Name of the excel file with scenario
-definitions. Must be located in the "paramsFolder".}
+definitions.
+Must be located in the "paramsFolder".}
 
 \item{\code{scenarioApplicationsFile}}{Name of the excel file scenario-specific
-parameters such as application protocol parameters. Must be located in
-the "paramsFolder".}
+parameters such as application protocol parameters.
+Must be located in the "paramsFolder".}
 
 \item{\code{plotsFile}}{Name of the excel file with plot definitions.
 Must be located in the "paramsFolder".}
 
-\item{\code{dataFolder}}{Path to the folder where experimental data files are located}
+\item{\code{dataFolder}}{Path to the folder where experimental data files are
+located.}
 
-\item{\code{dataFile}}{Name of the excel file with experimental data}
+\item{\code{dataFile}}{Name of the excel file with experimental data.
+Must be located in the "dataFolder"}
 
 \item{\code{dataImporterConfigurationFile}}{Name of data importer configuration
-file in xml format used to load the data. Must be located in the "dataFolder"}
+file in xml format used to load the data.
+Must be located in the "dataFolder"}
 
-\item{\code{compoundPropertiesFile}}{Path to the excel file containing information
-about all compounds in the model. Must be located in the "dataFolder"}
+\item{\code{compoundPropertiesFile}}{Path to the excel file containing
+information about all compounds in the model.
+Must be located in the "dataFolder"}
 
 \item{\code{outputFolder}}{Path to the folder where the results should be
-saved to; relative to the "Code" folder}
+saved to; relative to the "Code" folder
+Initialize}
 }
 \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-ProjectConfiguration-new}{\code{ProjectConfiguration$new()}}
 \item \href{#method-ProjectConfiguration-print}{\code{ProjectConfiguration$print()}}
 \item \href{#method-ProjectConfiguration-clone}{\code{ProjectConfiguration$clone()}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ProjectConfiguration-new"></a>}}
+\if{latex}{\out{\hypertarget{method-ProjectConfiguration-new}{}}}
+\subsection{Method \code{new()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$new(projectConfigurationFilePath = character())}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{projectConfigurationFilePath}}{A string representing the path to the
+project configuration file.
+Print}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ProjectConfiguration-print"></a>}}
 \if{latex}{\out{\hypertarget{method-ProjectConfiguration-print}{}}}
 \subsection{Method \code{print()}}{
-Print the object to the console
+print prints a summary of the Project Configuration.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$print(...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$print()}\if{html}{\out{</div>}}
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{...}}{Rest arguments.}
-}
-\if{html}{\out{</div>}}
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ProjectConfiguration-clone"></a>}}
