@@ -1,5 +1,5 @@
 ---
-title: "Introduction to esqlabsR"
+title: "Get Started"
 output: 
   rmarkdown::html_vignette:
     toc: true
@@ -84,6 +84,7 @@ Individual parameters file name: Parameters/Individuals.xlsx
 Population parameters file name: Parameters/PopulationParameters.xlsx
 Scenario definitions file name: Parameters/Scenarios.xlsx
 ...
+```
 <!-- Scenario applications definitions file name: Parameters/ApplicationParameters.xlsx  -->
 <!-- Plot definitions file name: Parameters/Plots.xlsx  -->
 <!-- Experimental data folder: Data  -->
@@ -91,7 +92,6 @@ Scenario definitions file name: Parameters/Scenarios.xlsx
 <!-- Data importer configuration: Data/esqlabs_dataImporter_configuration.xml  -->
 <!-- Compound Properties File: Data/Compound Properties.xlsx  -->
 <!-- Output folder: Results  -->
-```
 
 Notice that the `ProjectConfiguration` links to the other and files that 
 constitute the project.
@@ -101,14 +101,7 @@ For more information about esqlabsR's project structure, read `vignette("esqlabs
 ## Design Simulations
 
 Now that our project is ready, the next step is to run simulations. In esqlabsR,
-simulation are run by defining and executing multiple **scenarios.** A scenario 
-is defined by:  
-
-- The model to use,
-- The parameters of the model,
-- The application protocol,
-- The simulation Time,
-- [optional] The physiology of the individual or population.
+simulation are run by defining and executing multiple **scenarios**.
 
 To modify, add or delete a scenario, we edit the `Parameters/Scenarios.xslx` 
 file. Each row of this file is a scenario. Each Column is a parameter that will 
@@ -144,12 +137,10 @@ my_project_configuration <- createDefaultProjectConfiguration(path = example_Pro
 my_scenarios <-  createScenarios(
   readScenarioConfigurationFromExcel( 
     scenarioNames = "TestScenario", 
-    projectConfiguration = my_project_configuration
-  )
-)
+    projectConfiguration = my_project_configuration))
 ```
 
-```{r}
+```{r, echo = FALSE}
 my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FALSE)
 ```
 
