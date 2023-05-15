@@ -39,7 +39,17 @@ These templates are where all the parameters for running simulations,
 compute results and generating plots are defined. They are organized in 
 different folders and their structure must not be altered.
 
-The expected simulation project's folder structure is the following:
+
+A project can me initialized with the `init_project` function.
+
+```{r, eval=FALSE}
+library(esqlabsR)
+
+init_project(type = "example") 
+# or simply init_project() to create an empty folder structure and excel templates.
+```
+
+It will create the expected simulation project's folder structure:
 
 ```sh
 simulation_project/
@@ -50,29 +60,19 @@ simulation_project/
 └── Results
 ```
 
-A project can me initialized with `init_project`.
-
-```{r, eval=FALSE}
-library(esqlabsR)
-
-init_project(type = "example") 
-# or simply init_project() to create an empty folder structure and excel templates.
-```
 Each one of these folders contains a series of `.xlsx` files with specific 
 purpose. But the cornerstone of this setup is the `ProjectConfiguration.xlsx`.
 
-### `ProjectConfiguration.xlsx`
 This file defines *where* all the necessary files are stored in the project 
 folder. All the path specified in the `Value` column should be *relative* to the
-`ProjectConfiguration.xlsx` location.
-
-The `ProjectConfiguration.xlsx` file will be used by `esqlabsR` to generate a
-`ProjectConfiguration` object which is the central piece of a project.
+`ProjectConfiguration.xlsx` location. It must be imported using 
+`createDefaultProjectConfiguration`
 
 ```{r, eval=FALSE}
 my_project_configuration <- createDefaultProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
 
 ```
+
 ```
 ProjectConfiguration: 
 Relative path from working directory: C:/[path]/TestProject
@@ -81,28 +81,28 @@ Model folder: Models/Simulations
 Parameters folder: Parameters 
 Parameters file name: Parameters/ModelParameters.xlsx 
 Individual parameters file name: Parameters/Individuals.xlsx 
-Population parameters file name: Parameters/PopulationParameters.xlsx 
-Scenario definitions file name: Parameters/Scenarios.xlsx 
-Scenario applications definitions file name: Parameters/ApplicationParameters.xlsx 
-Plot definitions file name: Parameters/Plots.xlsx 
-Experimental data folder: Data 
-Experimental data file: Data/TestProject_TimeValuesData.xlsx 
-Data importer configuration: Data/esqlabs_dataImporter_configuration.xml 
-Compound Properties File: Data/Compound Properties.xlsx 
-Output folder: Results 
+Population parameters file name: Parameters/PopulationParameters.xlsx
+Scenario definitions file name: Parameters/Scenarios.xlsx
+...
+<!-- Scenario applications definitions file name: Parameters/ApplicationParameters.xlsx  -->
+<!-- Plot definitions file name: Parameters/Plots.xlsx  -->
+<!-- Experimental data folder: Data  -->
+<!-- Experimental data file: Data/TestProject_TimeValuesData.xlsx  -->
+<!-- Data importer configuration: Data/esqlabs_dataImporter_configuration.xml  -->
+<!-- Compound Properties File: Data/Compound Properties.xlsx  -->
+<!-- Output folder: Results  -->
 ```
 
 Notice that the `ProjectConfiguration` links to the other and files that 
 constitute the project.
 
-For more information about esqlabsR's project structure, read `vignettes("esqlabsR-project-structure")`.
+For more information about esqlabsR's project structure, read `vignette("esqlabsR-project-structure")`.
 
 ## Design Simulations
 
 Now that our project is ready, the next step is to run simulations. In esqlabsR,
-simulation are run by defining and executing multiple **scenarios.**
-
-A scenario is defined by:  
+simulation are run by defining and executing multiple **scenarios.** A scenario 
+is defined by:  
 
 - The model to use,
 - The parameters of the model,
@@ -110,9 +110,9 @@ A scenario is defined by:
 - The simulation Time,
 - [optional] The physiology of the individual or population.
 
-To modify, add or delete a scenario, we edit the `$scenarioDefinitionFile` of the 
-`ProjectConfiguration` object. Each row of this file is a scenario. Each Column is a parameter that will be 
-used to define the scenarios.
+To modify, add or delete a scenario, we edit the `Parameters/Scenarios.xslx` 
+file. Each row of this file is a scenario. Each Column is a parameter that will 
+be used to define the scenarios.
 
 Here are the main parameters that can be set for a scenario:
 
@@ -123,10 +123,15 @@ Here are the main parameters that can be set for a scenario:
 - `SimulationTime` and `SimulationTimeUnit` define the time range to simulate, it should be three numbers for start, end, resolution
 - `Individuald`: the id of the individual to simulate. The id and settings for individuals are defined in `Parameters/Individuals.xlsx`,
 
-Notice that the `Scenarios.xslx` file is mainly constituted of "link" to other excel templates. For example, if we want to change the characteristic of the individual we run the simulation on, we can either edit its properties directly in the `Individuals.xlsx` file or  add a new row with a different `IndividualId` and change to this new value in the `Scenarios.xslx` file.
+Notice that the `Scenarios.xslx` file is mainly constituted of "link" to other excel templates. 
 
-For more information on all the scenario parameters that can be setup, read `vignette('esqlabsR-workflow)`.
 
+For example, if we want to change the characteristic of the individual we run the simulation on, we can either edit its properties directly in the `Individuals.xlsx` file or  add a new row with a different `IndividualId` and change to this new value in the `Scenarios.xslx` file.
+
+For more information on all the scenario parameters that can be setup, read `vignette("esqlabsR-workflow")`.
+
+
+## Run Simulations
 
 Once all the scenario parameters are all setup in th excel files, we can import 
 them using `createScenarios` and `readScenarioConfigurationFromExcel`:
@@ -137,28 +142,21 @@ my_project_configuration <- createDefaultProjectConfiguration(path = example_Pro
 
 ```{r}
 my_scenarios <-  createScenarios(
-  readScenarioConfigurationFromExcel( # Read scenarios from excel file
-    scenarioNames = "TestScenario", # Import the scenario defined as "TestScenario" 
-    # in the excel file
+  readScenarioConfigurationFromExcel( 
+    scenarioNames = "TestScenario", 
     projectConfiguration = my_project_configuration
   )
 )
 ```
 
 ```{r}
-my_scenarios$TestScenario$scenarioConfiguration
+my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FALSE)
 ```
 
-
-## Run Simulations
-
-
-
+Then, we run the simulations by passing the scenarios we defined:
 ```{r}
-my_simulation <- runScenarios(
-  scenarios = my_scenarios
-)
+my_simulation <- runScenarios(my_scenarios)
 ```
 
 
-## Plot results
+## Plot Simulation results
