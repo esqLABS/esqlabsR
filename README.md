@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# esqlabsR <a href="https://esqlabs.github.io/esqlabsR"><img src="man/figures/logo.png" align="right" height="138" /></a>
+# esqlabsR <a href="https://esqlabs.github.io/esqlabsR"><img src="man/figures/logo.png" align="right" width="120" /></a>
 
 <!-- badges: start -->
 
@@ -11,19 +11,24 @@ status](https://ci.appveyor.com/api/projects/status/github/esqlabs/esqlabsr?bran
 
 <!-- badges: end -->
 
-## Overview
+The `esqlabsR` package facilitates and standardizes the modeling and
+simulation of physiologically based pharmacokinetic (PBPK) and
+quantitative structure-property relationship (QSP) models implemented in
+the [Open Systems Pharmacology
+Software](https://www.open-systems-pharmacology.org/).
 
-The goal of **{esqlabsR}** is to facilitate and standardize **modeling
-and simulation** (M&S) of **PBPK** and **QSP** models implemented in
-[Open Systems Pharmacology
-Software](https://www.open-systems-pharmacology.org/) and executed from
-R.  
-The package provides functions to read and run scenarios, workflows, and
-simulations. Additionally, it generates visualizations based on non-code
-input from Excel files.  
-By utilizing {esqlabsR} for your M&S needs, you can streamline your
-workflow and ensure standardized data practices. Get started with
-**{esqlabsR}** in `vignette("esqlabsR")`.
+The package provides functions to:
+
+- Read and run scenarios, workflows, and simulations,
+- Generate standardized plots and other reporting materials,
+- Interact with the OSPS features based on Excel files templates
+
+The esqlabsR package is designed for PBPK modelers using the OSPS suite.
+By using the esqlabsR package, you can streamline your modeling and
+simulation workflow and ensure standardized and reproducible practices.
+
+To get started with the esqlabsR package, please read the
+`vignette("esqlabsR")`.
 
 ## Installation
 
@@ -42,11 +47,8 @@ install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/dow
 remotes::install_github("esqLABS/esqlabsR")
 ```
 
-### For projects created for version 3
-
-To run code written for version 3 of `esqlabsR` package, additionally
-install the [esqlabsRLegacy](https://github.com/esqLABS/esqlabsRLegacy)
-package.
+Note: For projects created for version 3 of `esqlabsR` package, install
+[`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
 
 ## Usage
 
@@ -56,7 +58,7 @@ library(esqlabsR)
 
 # Load excel-based configuration
 my_project_configuration <- 
-  createDefaultProjectConfiguration("tests/data/TestProject/Code/ProjectConfiguration.xlsx")
+  createDefaultProjectConfiguration(example_ProjectConfiguration())
 
 
 # Setup simulation scenarios
@@ -89,11 +91,13 @@ plotIndividualTimeProfile(my_datacombined)
 
 ## Learn More
 
-to get started, first read `vignette("esqlabsR")`. Then read more about
+To get started, first read `vignette("esqlabsR")`. Then read more about
 the specific topics:
 
 - Start with `vignette("esqlabsR-workflow")` to learn how to work with
   esqlabsR from A to Z.
+- `vignettes("esqlabsR-project-structure")` details the structure and
+  purpose of each component of an esqlabsR project.
 - `vignette("esqlabsR-plotting")` describes how to generate
   visualizations from simulations.
 - `vignette("esqlabsR-sensitivity")` explains how to perform sensitivity
@@ -105,8 +109,7 @@ the specific topics:
 
 ## Related Work
 
-`{esqlabsR}` relies on the following Open Systems Pharmacology R
-packages:
+`esqlabsR` relies on the following Open Systems Pharmacology R packages:
 
 - [rClr](https://github.com/Open-Systems-Pharmacology/rClr/)
 - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
