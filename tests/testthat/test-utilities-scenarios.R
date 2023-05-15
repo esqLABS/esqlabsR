@@ -1,6 +1,6 @@
 ##  context("runScenarios")
 # Create a project configuration
-projectConfiguration <- createDefaultProjectConfiguration(path = "../data/ProjectConfiguration_forTests.xlsx")
+projectConfiguration <- createDefaultProjectConfiguration(test_ProjectConfiguration())
 defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("It runs one scenario without specifying output paths", {

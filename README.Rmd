@@ -76,7 +76,7 @@ library(esqlabsR)
 
 # Load excel-based configuration
 my_project_configuration <- 
-  createDefaultProjectConfiguration("tests/data/TestProject/Code/ProjectConfiguration.xlsx")
+  createDefaultProjectConfiguration(example_ProjectConfiguration())
 
 
 # Setup simulation scenarios
@@ -133,6 +133,7 @@ To get started, first read `vignette("esqlabsR")`. Then read more about the spec
 
 - Follow the OSPS-R [coding standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md).
 - Some additional useful information can be found [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's).
+
 
 ## Code of Conduct
 

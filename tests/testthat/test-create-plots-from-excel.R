@@ -1,4 +1,4 @@
-projectConfiguration <- createDefaultProjectConfiguration(file.path("..", "data", "ProjectConfiguration_forTests.xlsx"))
+projectConfiguration <- test_ProjectConfiguration()
 
 # Define which scenarios to run
 scenarioNames <- c("TestScenario")
