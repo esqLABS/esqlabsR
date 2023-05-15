@@ -17,16 +17,12 @@ development:
 
 reference:
 
-  - title: Sensitivity analysis
-    #desc:
-    contents:
-      - starts_with("sensitivity")
-
   - title: Project workflow
     contents:
       - contains("Project")
       - contains("Scenario")
       - createPlotsFromExcel
+      - init_project
 
   - title: Helpers for data import, wrangling, and export
     #desc:
@@ -72,6 +68,11 @@ reference:
       - GenderInt
       - contains("Types")
       - escapeForRegex
+
+  - title: Sensitivity analysis
+    #desc:
+    contents:
+      - starts_with("sensitivity")
 
   - title: Shiny applications
     #desc:
