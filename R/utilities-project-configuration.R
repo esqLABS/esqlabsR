@@ -11,3 +11,73 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
   projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = path)
   return(projectConfiguration)
 }
+
+#' Initialize esqlabsR Project Folder
+#'
+#' @description
+#'
+#' Creates the default project folder structure with excels file templates in
+#' the working directory.
+#'
+#' @param type A string defining the type of initialization. `"new"`
+#' for folder and empty excel templates and `"example"` for an example.
+#' @export
+init_project <- function(type = "new") {
+
+  rlang::arg_match(type, c("new","example"))
+
+  source_folder <- switch(type,
+                          "new" = esqlabsR_example("NewProject"),
+                          "example" = esqlabsR_example("TestProject"))
+
+  for (dir in fs::dir_ls(source_folder, type = "directory")) {
+    fs::dir_copy(dir,
+                 new_path = getwd(),
+                 overwrite = FALSE)
+  }
+
+  for (file in fs::dir_ls(source_folder, type = "file")) {
+    fs::file_copy(file,
+                  new_path = getwd(),
+                  overwrite = FALSE)
+  }
+}
+
+
+
+#' Get the path to example ProjectConfiguration.xlsx
+#'
+#' @return a string representing the path to the ProjectConfiguration.xlsx file
+#' used as example
+#' @export
+#'
+#' @examples
+#' example_ProjectConfiguration()
+example_ProjectConfiguration <- function(){
+  esqlabsR_example("TestProject/Code/projectConfiguration.xlsx")
+}
+
+#' Get the path to tests' ProjectConfiguration.xlsx
+#'
+#' @return a string representing the path to the ProjectConfiguration.xlsx file
+#' used as test.
+#' @export
+#'
+#' @examples
+#' example_ProjectConfiguration()
+test_ProjectConfiguration <- function(){
+  esqlabsR_example("TestProject/Code/projectConfiguration.xlsx")
+}
+
+#' Get the path to tests' ProjectConfiguration.xlsx
+#'
+#' @return a string representing the path to the ProjectConfiguration.xlsx file
+#' used as test.
+#' @export
+#'
+#' @examples
+#' example_ProjectConfiguration()
+test_ProjectConfiguration <- function(){
+  esqlabsR_example("TestProject/Code/projectConfiguration.xlsx")
+}
+
