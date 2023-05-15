@@ -94,6 +94,7 @@ articles:
   - title: Guides
     navbar: Guides
     contents:
+      - esqlabsR-project-structure
       - esqlabsR-workflow
       - esqlabsR-plotting
       - esqlabsR-sensitivity
