@@ -96,7 +96,7 @@ the specific topics:
 
 - Start with `vignette("esqlabsR-workflow")` to learn how to work with
   esqlabsR from A to Z.
-- `vignettes("esqlabsR-project-structure")` details the structure and
+- `vignette("esqlabsR-project-structure")` details the structure and
   purpose of each component of an esqlabsR project.
 - `vignette("esqlabsR-plotting")` describes how to generate
   visualizations from simulations.

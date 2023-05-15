@@ -111,7 +111,7 @@ plotIndividualTimeProfile(my_datacombined)
 To get started, first read `vignette("esqlabsR")`. Then read more about the specific topics:
 
   - Start with `vignette("esqlabsR-workflow")` to learn how to work with esqlabsR from A to Z.
-  - `vignettes("esqlabsR-project-structure")` details the structure and purpose of each component of an esqlabsR project.
+  - `vignette("esqlabsR-project-structure")` details the structure and purpose of each component of an esqlabsR project.
   - `vignette("esqlabsR-plotting")` describes how to generate visualizations from simulations.
   - `vignette("esqlabsR-sensitivity")` explains how to perform sensitivity analysis.
   - `vignette("esqlabsR-shiny")` introduces the several shiny applications available in the package.
