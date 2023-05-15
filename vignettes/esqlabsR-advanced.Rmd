@@ -1,5 +1,5 @@
 ---
-title: "esqlabsR-advanced"
+title: "Advanced Topics"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{esqlabsR-advanced}

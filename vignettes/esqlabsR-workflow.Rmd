@@ -1,5 +1,5 @@
 ---
-title: "esqlabsR-workflow"
+title: "Use esqlabsR's Workflow"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{esqlabsR-workflow}

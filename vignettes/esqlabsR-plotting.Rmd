@@ -1,5 +1,5 @@
 ---
-title: "esqlabsR-plotting"
+title: "Plotting"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{esqlabsR-plotting}
