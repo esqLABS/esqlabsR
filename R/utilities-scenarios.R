@@ -157,11 +157,11 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL) {
 #' scenarioConfigurations <- readScenarioConfigurationFromExcel(
 #'   projectConfiguration = projectConfiguration
 #' )
-#' simulatedScenarios <- runScenarios(
-#'   scenarioConfigurations = scenarioConfigurations,
-#'   saveSimulationsToPKML = FALSE
+#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+#' simulatedScenariosResults <- runScenarios(
+#'   scenarios = scenarios
 #' )
-#' saveResults(simulatedScenarios, projectConfiguration)
+#' saveResults(simulatedScenariosResults, projectConfiguration)
 #' }
 saveScenarioResults <- function(
     simulatedScenariosResults,
@@ -176,9 +176,9 @@ saveScenarioResults <- function(
     format(Sys.time(), "%F %H-%M")
   )
 
-  for (i in seq_along(simulatedScenarios)) {
-    results <- simulatedScenarios[[i]]$results
-    scenarioName <- names(simulatedScenarios)[[i]]
+  for (i in seq_along(simulatedScenariosResults)) {
+    results <- simulatedScenariosResults[[i]]$results
+    scenarioName <- names(simulatedScenariosResults)[[i]]
 
     outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
     tryCatch(
@@ -193,13 +193,13 @@ saveScenarioResults <- function(
         if (saveSimulationsToPKML) {
           outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
           ospsuite::saveSimulation(
-            simulation = simulatedScenarios[[i]]$simulation,
+            simulation = simulatedScenariosResults[[i]]$simulation,
             filePath = outputPathSim
           )
         }
         # Save population
-        if (!is.null(simulatedScenarios[[i]]$population) && all(!is.na(simulatedScenarios[[i]]$population))) {
-          ospsuite::exportPopulationToCSV(simulatedScenarios[[i]]$population$population,
+        if (!is.null(simulatedScenariosResults[[i]]$population) && all(!is.na(simulatedScenariosResults[[i]]$population))) {
+          ospsuite::exportPopulationToCSV(simulatedScenariosResults[[i]]$population$population,
             filePath = file.path(outputFolder, paste0(scenarioName, "_population.csv"))
           )
         }
@@ -239,21 +239,21 @@ saveScenarioResults <- function(
 #' scenarioConfigurations <- readScenarioConfigurationFromExcel(
 #'   projectConfiguration = projectConfiguration
 #' )
-#' simulatedScenarios <- runScenarios(
-#'   scenarioConfigurations = scenarioConfigurations,
-#'   saveSimulationsToPKML = TRUE
+#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+#' simulatedScenariosResults <- runScenarios(
+#'   scenarios = scenarios
 #' )
-#' saveResults(simulatedScenarios, projectConfiguration)
+#' saveResults(simulatedScenariosResults, projectConfiguration)
 #'
 #' # Now load the results
-#' scnarioNames <- names(simulatedScenarios)
-#' simulatedScenarios <- loadScenarioResults(
+#' scnarioNames <- names(scenarios)
+#' simulatedScenariosResults <- loadScenarioResults(
 #'   scnarioNames = scnarioNames,
 #'   resultsFolder = pathToTheFolder
 #' )
 #' }
 loadScenarioResults <- function(scenarioNames, resultsFolder) {
-  simulatedScenarios <- list()
+  simulatedScenariosResults <- list()
   for (i in seq_along(scenarioNames)) {
     simulation <- loadSimulation(paste0(resultsFolder, "/", scenarioNames[[i]], ".pkml"))
 
@@ -265,9 +265,9 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
     outputValues <- getOutputValues(results,
       quantitiesOrPaths = results$allQuantityPaths
     )
-    simulatedScenarios[[scenarioNames[[i]]]] <-
+    simulatedScenariosResults[[scenarioNames[[i]]]] <-
       list(simulation = simulation, results = results, outputValues = outputValues)
   }
 
-  return(simulatedScenarios)
+  return(simulatedScenariosResults)
 }

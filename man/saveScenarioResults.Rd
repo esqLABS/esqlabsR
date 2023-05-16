@@ -38,10 +38,10 @@ projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   projectConfiguration = projectConfiguration
 )
-simulatedScenarios <- runScenarios(
-  scenarioConfigurations = scenarioConfigurations,
-  saveSimulationsToPKML = FALSE
+scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+simulatedScenariosResults <- runScenarios(
+  scenarios = scenarios
 )
-saveResults(simulatedScenarios, projectConfiguration)
+saveResults(simulatedScenariosResults, projectConfiguration)
 }
 }
