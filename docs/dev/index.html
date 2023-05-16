@@ -46,23 +46,25 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item">
+  <a class="nav-link" href="articles/esqlabsR.html">Get started</a>
+</li>
+<li class="nav-item">
   <a class="nav-link" href="reference/index.html">Reference</a>
 </li>
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <div class="dropdown-divider"></div>
-    <h6 class="dropdown-header" data-toc-skip>Running simulations</h6>
-    <a class="dropdown-item" href="articles/standard-workflow.html">Standard workflow</a>
-    <a class="dropdown-item" href="articles/sensitivity-analysis.html">Sensitivity analysis</a>
-    <div class="dropdown-divider"></div>
-    <h6 class="dropdown-header" data-toc-skip>Processing data</h6>
-    <a class="dropdown-item" href="articles/data-handling.html">Data handling</a>
-    <a class="dropdown-item" href="articles/visualization-and-reporting.html">Visualization and reporting</a>
+    <h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6>
+    <a class="dropdown-item" href="articles/esqlabsR-workflow-overview.html">Overview</a>
+    <a class="dropdown-item" href="articles/esqlabsR-project-structure.html">1. Initialize a Project</a>
+    <a class="dropdown-item" href="articles/esqlabsR-design-simulations.html">2. Design Simulations</a>
+    <a class="dropdown-item" href="articles/esqlabsR-run-simulations.html">3. Run Simulations</a>
+    <a class="dropdown-item" href="articles/esqlabsR-plot-results.html">4. Plot Results</a>
     <div class="dropdown-divider"></div>
     <h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6>
-    <a class="dropdown-item" href="articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <a class="dropdown-item" href="articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a>
+    <a class="dropdown-item" href="articles/esqlabsR-shiny.html">esqlabsR Applications</a>
+    <a class="dropdown-item" href="articles/esqlabsR-advanced.html">Advanced Topics</a>
   </div>
 </li>
 <li class="nav-item">
@@ -93,45 +95,100 @@
 <a class="anchor" aria-label="anchor" href="#esqlabsr-"></a>
 </h1>
 </div>
-<p>The <strong><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></strong> R-package is designed to facilitate and standardize <strong>modeling and simulation</strong> (M&amp;S) of PBPK and QSP models implemented in <a href="https://www.open-systems-pharmacology.org/" class="external-link">Open Systems Pharmacology Software</a> (OSPS) and executed from R. The package provides functions to read and run scenarios, workflows, and simulations. Furthermore, it creates visualizations based on non-code input from Excel files. The package is based on R functions in the <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link"><code>ospsuite</code> package</a>.</p>
 <!-- badges: start -->
 
 <!-- badges: end -->
+<p>The <code>esqlabsR</code> package facilitates and standardizes the modeling and simulation of physiologically based pharmacokinetic (PBPK) and quantitative structure-property relationship (QSP) models implemented in the <a href="https://www.open-systems-pharmacology.org/" class="external-link">Open Systems Pharmacology Software</a>.</p>
+<p>The esqlabsR package is designed for PBPK modelers using the OSPS suite. By using the esqlabsR package, you can streamline your modeling and simulation workflow and ensure standardized and reproducible practices.</p>
+<p>The package provides functions to:</p>
+<ul>
+<li>Design, import and run Simulations,</li>
+<li>Generate standardized plots and other reporting materials,</li>
+<li>Interact with the OSPS features using simple Excel files.</li>
+</ul>
+<p>To get started with the esqlabsR package, please read the <code><a href="articles/esqlabsR.html">vignette("esqlabsR")</a></code>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on </span></span>
-<span><span class="co"># {rClr} (https://github.com/Open-Systems-Pharmacology/rClr) which is not </span></span>
+<code class="sourceCode R"><span><span class="co"># {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on</span></span>
+<span><span class="co"># {rClr} (https://github.com/Open-Systems-Pharmacology/rClr) which is not</span></span>
 <span><span class="co"># available on CRAN.</span></span>
 <span><span class="co"># Therefore, these must be installed from github using `{remotes}`.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip'</span>, </span>
-<span>                  repos <span class="op">=</span> <span class="cn">NULL</span>, </span>
-<span>                  type <span class="op">=</span> <span class="st">'binary'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip"</span>,</span>
+<span>                 repos <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>                 type <span class="op">=</span> <span class="st">"binary"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"esqLABS/esqlabsR"</span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="for-projects-created-for-version-3">For projects created for version 3<a class="anchor" aria-label="anchor" href="#for-projects-created-for-version-3"></a>
-</h3>
-<p>To run code written for version 3 of <code>esqlabsR</code> package, additionally install the <a href="https://github.com/esqLABS/esqlabsRLegacy" class="external-link">esqlabsRLegacy</a> package.</p>
-</div>
+<p>Note: For projects created for version 3 of <code>esqlabsR</code> package, install <a href="https://github.com/esqLABS/esqlabsRLegacy" class="external-link"><code>esqlabsRLegacy</code></a>.</p>
 </div>
 <div class="section level2">
-<h2 id="open-systems-pharmacology-packages">Open Systems Pharmacology Packages<a class="anchor" aria-label="anchor" href="#open-systems-pharmacology-packages"></a>
+<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> relies on the following Open Systems Pharmacology packages:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># load esqlabsR</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Load excel-based configuration</span></span>
+<span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> </span>
+<span>  <span class="fu"><a href="reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="co"># Setup simulation scenarios</span></span>
+<span><span class="va">my_scenarios</span> <span class="op">&lt;-</span> </span>
+<span>  <span class="fu"><a href="reference/createScenarios.html">createScenarios</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span> <span class="co"># Read scenarios from excel file</span></span>
+<span>      scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>, <span class="co"># Import the scenario defined as "TestScenario" </span></span>
+<span>                                      <span class="co"># in the excel file</span></span>
+<span>      projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Run simulations</span></span>
+<span><span class="va">my_simulation</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
+<span>  scenarios <span class="op">=</span> <span class="va">my_scenarios</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Initialize a datacombine object to store simulation results</span></span>
+<span><span class="va">my_datacombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">my_simulation</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
+<span>                                     names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
+<span>                                     groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Plot simulation results</span></span>
+<span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">my_datacombined</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-unnamed-chunk-4-1.png" width="80%" style="display: block; margin: auto;"></p>
+</div>
+<div class="section level2">
+<h2 id="learn-more">Learn More<a class="anchor" aria-label="anchor" href="#learn-more"></a>
+</h2>
+<p>To get started, first read <code><a href="articles/esqlabsR.html">vignette("esqlabsR")</a></code>. Then read more about the specific topics:</p>
 <ul>
+<li>Start with <code><a href="articles/esqlabsR-workflow-overview.html">vignette("esqlabsR-workflow-overview")</a></code> to learn about the esqlabsR’s streamlined workflow.</li>
 <li>
-<a href="https://github.com/Open-Systems-Pharmacology/rClr/" class="external-link">rClr</a> &gt; 0.9.2</li>
+<code><a href="articles/esqlabsR-project-structure.html">vignette("esqlabsR-project-structure")</a></code> details the structure and purpose of each component file and directory of an esqlabsR project.</li>
 <li>
-<a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a> &gt; 1.4.0</li>
+<code><a href="articles/esqlabsR-design-simulations.html">vignette("esqlabsR-design-simulations")</a></code> explains how you can design your own simulations only using excel files.</li>
 <li>
-<a href="https://github.com/Open-Systems-Pharmacology/TLF-Library" class="external-link">tlf</a> &gt; 1.5.0</li>
+<code><a href="articles/esqlabsR-run-simulations.html">vignette("esqlabsR-run-simulations")</a></code> describes all you need to know to run your customized simulations.</li>
 <li>
-<a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link">ospsuite</a> &gt; 11.1</li>
-<li>
-<a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification" class="external-link">ospsuite.parameteridentification</a> &gt; 1.2</li>
+<code><a href="articles/esqlabsR-plot-results.html">vignette("esqlabsR-plot-results")</a></code> explains how to generate visualizations from simulations.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="related-work">Related Work<a class="anchor" aria-label="anchor" href="#related-work"></a>
+</h2>
+<p><code>esqlabsR</code> relies on the following Open Systems Pharmacology R packages:</p>
+<ul>
+<li><a href="https://github.com/Open-Systems-Pharmacology/rClr/" class="external-link">rClr</a></li>
+<li><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a></li>
+<li><a href="https://github.com/Open-Systems-Pharmacology/TLF-Library" class="external-link">tlf</a></li>
+<li><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link">ospsuite</a></li>
+<li><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification" class="external-link">ospsuite.parameteridentification</a></li>
 </ul>
 </div>
 <div class="section level2">
