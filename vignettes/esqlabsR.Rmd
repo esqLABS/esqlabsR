@@ -13,7 +13,6 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  dpi = 300,
   warning = FALSE,
   message = FALSE
 )
@@ -190,7 +189,7 @@ my_datacombined$addSimulationResults(my_simulation$TestScenario$results,
 
 Finally, the plot is generated:
 
-```{r, out.width="80%", fig.align="center", fig.width=7, fig.asp=0.618, dpi=300}
+```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
 plotIndividualTimeProfile(my_datacombined)
 ```
 
@@ -200,7 +199,7 @@ In some cases, we also want to plot the observed experimental data (stored in
 to be plotted.
 
   
-```{r, out.width="80%", fig.align="center", fig.width=7, fig.asp=0.618, dpi=300}
+```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
 observed_data <- loadObservedData(projectConfiguration = my_project_configuration,
                                   sheets = "Laskin 1982.Group A")
 
