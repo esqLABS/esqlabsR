@@ -17,15 +17,15 @@ quantitative structure-property relationship (QSP) models implemented in
 the [Open Systems Pharmacology
 Software](https://www.open-systems-pharmacology.org/).
 
-The package provides functions to:
-
-- Read and run scenarios, workflows, and simulations,
-- Generate standardized plots and other reporting materials,
-- Interact with the OSPS features based on Excel files templates
-
 The esqlabsR package is designed for PBPK modelers using the OSPS suite.
 By using the esqlabsR package, you can streamline your modeling and
 simulation workflow and ensure standardized and reproducible practices.
+
+The package provides functions to:
+
+- Design, import and run Simulations,
+- Generate standardized plots and other reporting materials,
+- Interact with the OSPS features using simple Excel files.
 
 To get started with the esqlabsR package, please read the
 `vignette("esqlabsR")`.
@@ -94,18 +94,16 @@ plotIndividualTimeProfile(my_datacombined)
 To get started, first read `vignette("esqlabsR")`. Then read more about
 the specific topics:
 
-- Start with `vignette("esqlabsR-workflow")` to learn how to work with
-  esqlabsR from A to Z.
+- Start with `vignette("esqlabsR-workflow-overview")` to learn about the
+  esqlabsR’s streamlined workflow.
 - `vignette("esqlabsR-project-structure")` details the structure and
-  purpose of each component of an esqlabsR project.
-- `vignette("esqlabsR-plotting")` describes how to generate
+  purpose of each component file and directory of an esqlabsR project.
+- `vignette("esqlabsR-design-simulations")` explains how you can design
+  your own simulations only using excel files.
+- `vignette("esqlabsR-run-simulations")` describes all you need to know
+  to run your customized simulations.
+- `vignette("esqlabsR-plot-results")` explains how to generate
   visualizations from simulations.
-- `vignette("esqlabsR-sensitivity")` explains how to perform sensitivity
-  analysis.
-- `vignette("esqlabsR-shiny")` introduces the several shiny applications
-  available in the package.
-- `vignette("esqlabsR-advanced")` is available to dig deeper in the
-  advanced concepts of the package.
 
 ## Related Work
 
