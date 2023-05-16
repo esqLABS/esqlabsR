@@ -91,15 +91,17 @@ reference:
       - esqlabsRSettingNames
 
 articles:
-  - title: Guides
-    navbar: Guides
+  - title: esqlabsR Workflow
+    navbar: esqlabsR Workflow
     contents:
+      - esqlabsR-workflow-overview
       - esqlabsR-project-structure
-      - esqlabsR-workflow
-      - esqlabsR-plotting
-      - esqlabsR-sensitivity
+      - esqlabsR-design-simulations
+      - esqlabsR-run-simulations
+      - esqlabsR-plot-results
   - title: Miscellaneous
     navbar: Miscellaneous
     contents:
+      - esqlabsR-sensitivity
       - esqlabsR-shiny
       - esqlabsR-advanced
