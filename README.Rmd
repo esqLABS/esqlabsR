@@ -11,7 +11,6 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%",
   message = FALSE,
   warning = FALSE
 )
@@ -71,7 +70,7 @@ Note: For projects created for version 3 of `esqlabsR` package, install [`esqlab
 showtext::showtext_opts(dpi=300)
 ```
 
-```{r, warning=FALSE, out.width="80%", fig.align="center", fig.width=7, fig.asp=0.618, dpi=300}
+```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
 # load esqlabsR
 library(esqlabsR)
 
