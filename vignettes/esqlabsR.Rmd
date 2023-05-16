@@ -31,7 +31,6 @@ had designed a streamlined simulation workflow that relies on simple concepts :
 
 - esqlabsR uses a predefined project structure to make sure its stays organized,
 - esqlabsR uses excel files as a convenient way to inputs parameters,
-- esqlabsR ...
 
 
 ## Initialize Project
@@ -125,7 +124,7 @@ Notice that the `Scenarios.xslx` file is mainly constituted of "link" to other e
 
 For example, if we want to change the characteristic of the individual we run the simulation on, we can either edit its properties directly in the `Individuals.xlsx` file or  add a new row with a different `IndividualId` and change to this new value in the `Scenarios.xslx` file.
 
-For more information on all the scenario parameters that can be setup, read `vignette("esqlabsR-workflow")`.
+For more information on all the scenario parameters that can be setup, read `vignette("esqlabsR-design-simulations")`.
 
 
 ## Run Simulations
@@ -168,7 +167,7 @@ my_simulation <- loadScenarioResults(scenarioNames = "TestScenario",
 ```
 
 
-Learn more on how to run simulations in `vignette("esqlabsR-simulations")`.
+Learn more on how to run simulations in `vignette("esqlabsR-run-simulations")`.
 
 ## Plot Results
 
@@ -191,7 +190,7 @@ my_datacombined$addSimulationResults(my_simulation$TestScenario$results,
 
 Finally, the plot is generated:
 
-```{r} 
+```{r, out.width="80%", fig.align="center", fig.width=7, fig.asp=0.618, dpi=300}
 plotIndividualTimeProfile(my_datacombined)
 ```
 
@@ -201,7 +200,7 @@ In some cases, we also want to plot the observed experimental data (stored in
 to be plotted.
 
   
-```{r}
+```{r, out.width="80%", fig.align="center", fig.width=7, fig.asp=0.618, dpi=300}
 observed_data <- loadObservedData(projectConfiguration = my_project_configuration,
                                   sheets = "Laskin 1982.Group A")
 
