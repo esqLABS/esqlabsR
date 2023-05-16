@@ -72,7 +72,7 @@ You can define the outputs of the simulation in the `OutputPathsIds` column. For
 
 Finally, you can simulate different administration protocols from the same simulation file by defining an application protocol in the column `ApplicationProtocol`. See description below.
 
-### Configuration files structure {#files-structure}
+## Configuration files structure {#files-structure}
 
 The relevant excel files for definition of the scenarios are:
 
@@ -146,7 +146,7 @@ Paths of model outputs (i.e., paths to the molecules/ parameters for which outpu
 
 In the `Scenarios` sheet, enter the IDs of all paths the outputs should be generated for, separated by a comma, e.g. `Aciclovir_PVB, Aciclovir_fat_cell`.
 
-### Scenario parameterization hierarchy
+## Scenario parameterization hierarchy
 
 The final parameterization is a combination of the different parameterization steps defined at various levels, as has been described in the section above. The following figure summarizes the hierarchy of the parameterization
 
