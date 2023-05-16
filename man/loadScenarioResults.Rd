@@ -33,15 +33,15 @@ projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   projectConfiguration = projectConfiguration
 )
-simulatedScenarios <- runScenarios(
-  scenarioConfigurations = scenarioConfigurations,
-  saveSimulationsToPKML = TRUE
+scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+simulatedScenariosResults <- runScenarios(
+  scenarios = scenarios
 )
-saveResults(simulatedScenarios, projectConfiguration)
+saveResults(simulatedScenariosResults, projectConfiguration)
 
 # Now load the results
-scnarioNames <- names(simulatedScenarios)
-simulatedScenarios <- loadScenarioResults(
+scnarioNames <- names(scenarios)
+simulatedScenariosResults <- loadScenarioResults(
   scnarioNames = scnarioNames,
   resultsFolder = pathToTheFolder
 )
