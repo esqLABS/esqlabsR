@@ -208,5 +208,5 @@ my_datacombined$addDataSets(observed_data, names = "Observed", groups = "Aciclov
 plotObservedVsSimulated(my_datacombined)
 ```
 
-Many other plots are available in esqlabsR, read `vignette("esqlabsR-plot-results")` 
+Many other plot types are available in `{esqlabsR}`, read `vignette("esqlabsR-plot-results")` 
 to learn more.
