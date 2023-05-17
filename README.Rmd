@@ -112,7 +112,7 @@ To get started, first read `vignette("esqlabsR")`. Then read more about the spec
 
   - Start with `vignette("esqlabsR-workflow-overview")` to learn about the esqlabsR's streamlined workflow.
   - `vignette("esqlabsR-project-structure")` details the structure and purpose of each component file and directory of an esqlabsR project.
-  - `vignette("esqlabsR-design-simulations")` explains how you can design your own simulations only using excel files.
+  - `vignette("esqlabsR-design-scenarios")` explains how you can design your own simulations only using excel files.
   - `vignette("esqlabsR-run-simulations")` describes all you need to know to run your customized simulations.
   - `vignette("esqlabsR-plot-results")` explains how to generate visualizations from simulations.
 

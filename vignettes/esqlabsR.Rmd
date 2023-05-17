@@ -97,7 +97,7 @@ Note that the `ProjectConfiguration` stores paths to other files that are used i
 
 For more information about esqlabsR's project structure, read `vignette("esqlabsR-project-structure")`.
 
-## Design Simulations
+## Design Scenarios
 
 Now that the project's file structure is ready, the next step is to run simulations. In `{esqlabsR}`,
 simulation are run by defining and executing multiple **scenarios**.
@@ -121,7 +121,7 @@ Note that multiple aspects of a simulation scenario are defined in other excel f
 
 For example, if we want to change the characteristic of the individual used in the simulation, we must add a new row with a different `IndividualId` in the `IndividualBiometrics` sheet of the`Individuals.xlsx` file and/or specify a parameter sheet with this `IndividualId` in the same file.
 
-For more information on all the scenario parameters that can be setup, read `vignette("esqlabsR-design-simulations")`.
+For more information on all the scenario parameters that can be setup, read `vignette("esqlabsR-design-scenarios")`.
 
 
 ## Run Scenarios

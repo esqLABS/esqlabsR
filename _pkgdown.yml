@@ -96,7 +96,7 @@ articles:
     contents:
       - esqlabsR-workflow-overview
       - esqlabsR-project-structure
-      - esqlabsR-design-simulations
+      - esqlabsR-design-scenarios
       - esqlabsR-run-simulations
       - esqlabsR-plot-results
   - title: Miscellaneous

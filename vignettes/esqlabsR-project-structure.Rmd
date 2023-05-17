@@ -79,7 +79,7 @@ Output folder: Results
 ```
 
 Now that the project structure is initialized and the `ProjectConfiguration` was 
-created, read `vignette("esqlabsR-design-simulations")` to continue the process.
+created, read `vignette("esqlabsR-design-scenarios")` to continue the process.
 To learn more about ProjectConfiguration, read the following sections.
 
 ## Details

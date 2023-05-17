@@ -12,14 +12,15 @@ status](https://ci.appveyor.com/api/projects/status/github/esqlabs/esqlabsr?bran
 <!-- badges: end -->
 
 The `esqlabsR` package facilitates and standardizes the modeling and
-simulation of physiologically based pharmacokinetic (PBPK) and
-quantitative structure-property relationship (QSP) models implemented in
-the [Open Systems Pharmacology
+simulation of physiologically based kinetic (PBK) and quantitative
+systems pharmacology/toxicology (QSP/T) models implemented in the [Open
+Systems Pharmacology
 Software](https://www.open-systems-pharmacology.org/).
 
-The esqlabsR package is designed for PBPK modelers using the OSPS suite.
+The esqlabsR package is designed for PBK modelers using the OSPS suite.
 By using the esqlabsR package, you can streamline your modeling and
-simulation workflow and ensure standardized and reproducible practices.
+simulation (M&S) workflow and ensure standardized and reproducible
+practices.
 
 The package provides functions to:
 
@@ -76,7 +77,7 @@ my_simulation <- runScenarios(
   scenarios = my_scenarios
 )
 
-# Initialize a datacombine object to store simulation results
+# Initialize a `DataCombined` object to store simulation results
 my_datacombined <- DataCombined$new()
 
 my_datacombined$addSimulationResults(my_simulation$TestScenario$results,
@@ -98,7 +99,7 @@ the specific topics:
   esqlabsR’s streamlined workflow.
 - `vignette("esqlabsR-project-structure")` details the structure and
   purpose of each component file and directory of an esqlabsR project.
-- `vignette("esqlabsR-design-simulations")` explains how you can design
+- `vignette("esqlabsR-design-scenarios")` explains how you can design
   your own simulations only using excel files.
 - `vignette("esqlabsR-run-simulations")` describes all you need to know
   to run your customized simulations.

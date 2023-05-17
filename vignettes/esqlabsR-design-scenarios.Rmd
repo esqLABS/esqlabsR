@@ -1,5 +1,5 @@
 ---
-title: "2. Design Simulations"
+title: "2. Design Scenarios
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{esqlabsR-simulations}

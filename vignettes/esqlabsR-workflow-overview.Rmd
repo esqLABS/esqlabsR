@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 esqlabsR's projects are organized in a 4 steps process:
 
 1. Initialize Project
-2. Design Simulations
+2. Design Scenarios
 3. Run Simulations
 4. Plot Results
 
@@ -37,12 +37,12 @@ in many steps during the rest of the process.
 
 Learn more in `vignette("esqlabsR-project-structure")`.
 
-## 2. Design Simulations
+## 2. Design Scenarios
 In esqlabsR, simulations are defined as *scenarios*, which are setup during this
 step. During this process, you will be able to setup all the parameters and 
 options so you can build any simulation scenario you want.
 
-Learn more in `vignette("esqlabsR-design-simulations")`.
+Learn more in `vignette("esqlabsR-design-scenarios")`.
 
 ## 3. Run Simulations
 This is where esqlabsR will interact with the {ospsuite} to run simulations.
