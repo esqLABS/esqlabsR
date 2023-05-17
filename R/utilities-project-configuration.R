@@ -27,8 +27,8 @@ init_project <- function(type = "new") {
   rlang::arg_match(type, c("new","example"))
 
   source_folder <- switch(type,
-                          "new" = esqlabsR_example("NewProject"),
-                          "example" = esqlabsR_example("TestProject"))
+                          "new" = example_directory("NewProject"),
+                          "example" = example_directory("TestProject"))
 
   for (dir in fs::dir_ls(source_folder, type = "directory")) {
     fs::dir_copy(dir,
@@ -55,7 +55,7 @@ init_project <- function(type = "new") {
 #' example_ProjectConfiguration()
 example_ProjectConfiguration <- function(){
   # for now it targets TestProject as it is both an example and a test project
-  esqlabsR_example("TestProject/projectConfiguration.xlsx")
+  file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
 }
 
 #' Get the path to tests' ProjectConfiguration.xlsx
@@ -67,6 +67,6 @@ example_ProjectConfiguration <- function(){
 #' test_ProjectConfiguration()
 test_ProjectConfiguration <- function(){
   # for now it targets TestProject as it is both an example and a test project
-  esqlabsR_example("TestProject/projectConfiguration.xlsx")
+  file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
 }
 

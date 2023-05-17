@@ -3,12 +3,12 @@
 #' esqlabsR comes bundled with some example Project in its `inst/extdata`
 #' directory. This function make them easy to access.
 #'
-#' @param path Name of file. If `NULL`, the example files will be listed.
+#' @param name Name of example project. If `NULL`, the example names will be listed.
 #' @keywords internal
-esqlabsR_example <- function(path = NULL) {
+example_directory <- function(name = NULL) {
   if (is.null(path)) {
     dir(system.file("extdata","examples", package = "esqlabsR"))
   } else {
-    system.file("extdata","examples", path, package = "esqlabsR", mustWork = TRUE)
+    system.file("extdata","examples", name, package = "esqlabsR", mustWork = TRUE)
   }
 }
