@@ -25,11 +25,11 @@ showtext::showtext_opts(dpi=300)
 ## Introduction
 
 
-We designed esqlabsR to make life easier for OSPS users. To achieve this, we
+We designed `{esqlabsR}` to make life easier for OSPS users. To achieve this, we
 streamlined the workflow relying on these simple concepts :
 
-- esqlabsR uses a predefined project structure to make sure its stays organized,
-- esqlabsR uses excel files as a convenient way to inputs parameters,
+- `{esqlabsR}` uses a predefined project folder structure,
+- `{esqlabsR}` uses excel files as a convenient way to inputs parameters and define simulation scenarios.
 
 
 ## Initialize Project
@@ -41,7 +41,7 @@ compute results and generating plots are defined. They are organized in
 different folders and their structure must not be altered.
 
 
-A project can me initialized with the `init_project` function.
+A new project folder can be initialized with the `init_project()` function.
 
 ```{r, eval=FALSE}
 library(esqlabsR)
@@ -66,8 +66,7 @@ purpose. But the cornerstone of this setup is the `ProjectConfiguration.xlsx`.
 
 This file defines *where* all the necessary files are stored in the project 
 folder. All the path specified in the `Value` column should be *relative* to the
-`ProjectConfiguration.xlsx` location. It must be imported using 
-`createDefaultProjectConfiguration`
+`ProjectConfiguration.xlsx` location. Loading the project configuration is the first step in any workflow using `{esqlabsR}`.
 
 ```{r, eval=FALSE}
 my_project_configuration <- createDefaultProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
@@ -94,14 +93,13 @@ Scenario definitions file name: Parameters/Scenarios.xlsx
 <!-- Compound Properties File: Data/Compound Properties.xlsx  -->
 <!-- Output folder: Results  -->
 
-Notice that the `ProjectConfiguration` links to the other and files that 
-constitute the project.
+Note that the `ProjectConfiguration` stores paths to other files that are used in the project.
 
 For more information about esqlabsR's project structure, read `vignette("esqlabsR-project-structure")`.
 
 ## Design Simulations
 
-Now that our project is ready, the next step is to run simulations. In esqlabsR,
+Now that the project's file structure is ready, the next step is to run simulations. In `{esqlabsR}`,
 simulation are run by defining and executing multiple **scenarios**.
 
 To modify, add or delete a scenario, we edit the `Parameters/Scenarios.xslx` 
@@ -113,22 +111,22 @@ Here are the main parameters that can be set for a scenario:
 - `ModelFile` is the name of the `.pkml` file that can be found in the `Models/` directory.
 - `ModelParameterSheets` is the name of the *sheet* in `Parameters/ModelParameters.xlsx` that contains the parameters to apply to the model,
 - `ApplicationProtocol` is the name of the *sheet* in `Parameters/ApplicationParameters.xlsx` that specify the simulated drug administration protocol,
-- `SimulationTime` and `SimulationTimeUnit` define the time range to simulate, it should be three numbers for start, end, resolution
+- `SimulationTime` and `SimulationTimeUnit` define the time range to simulate, it should be three numbers for `{start, end, resolution}`
 - `Individuald`: the id of the individual to simulate. The id and settings for individuals are defined in `Parameters/Individuals.xlsx`,
 - `PopulationId`: the id of the *population* to simulate. The id and settings for populations are defined in `Parameters/PopulationParameters.xlsx`,
 
-Notice that the `Scenarios.xslx` file is mainly constituted of "link" to other excel templates. 
+Note that multiple aspects of a simulation scenario are defined in other excel files, and the `Scenarios.xslx` file links to the specific sheets or other information stored in those files. 
 
 ![](Figures/scenarios_links_files.png)
 
-For example, if we want to change the characteristic of the individual we run the simulation on, we can either edit its properties directly in the `Individuals.xlsx` file or  add a new row with a different `IndividualId` and change to this new value in the `Scenarios.xslx` file.
+For example, if we want to change the characteristic of the individual used in the simulation, we must add a new row with a different `IndividualId` in the `IndividualBiometrics` sheet of the`Individuals.xlsx` file and/or specify a parameter sheet with this `IndividualId` in the same file.
 
 For more information on all the scenario parameters that can be setup, read `vignette("esqlabsR-design-simulations")`.
 
 
-## Run Simulations
+## Run Scenarios
 
-Once all the scenario parameters are all setup in th excel files, we can import 
+Once all the scenario properties are setup in the excel files, we can import the scenarios
 them using `createScenarios` and `readScenarioConfigurationFromExcel`:
 
 ```{r, echo=FALSE, warning=FALSE, message = FALSE}
