@@ -13,6 +13,4 @@ used as test.
 \description{
 Get the path to tests' ProjectConfiguration.xlsx
 }
-\examples{
-test_ProjectConfiguration()
-}
+\keyword{internal}
