@@ -55,7 +55,7 @@
     <h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6>
     <a class="dropdown-item" href="../articles/esqlabsR-workflow-overview.html">Overview</a>
     <a class="dropdown-item" href="../articles/esqlabsR-project-structure.html">1. Initialize a Project</a>
-    <a class="dropdown-item" href="../articles/esqlabsR-design-simulations.html">2. Design Simulations</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-design-scenarios.html">2. Design Scenarios</a>
     <a class="dropdown-item" href="../articles/esqlabsR-run-simulations.html">3. Run Simulations</a>
     <a class="dropdown-item" href="../articles/esqlabsR-plot-results.html">4. Plot Results</a>
     <div class="dropdown-divider"></div>
@@ -101,15 +101,6 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Loading required package: ospsuite</span></span>
-<span><span class="co">#&gt; Loading required package: rClr</span></span>
-<span><span class="co">#&gt; Loading the dynamic library for Microsoft .NET runtime...</span></span>
-<span><span class="co">#&gt; Loaded Common Language Runtime version 4.0.30319.42000</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="workflow">Workflow<a class="anchor" aria-label="anchor" href="#workflow"></a>
-</h3>
 <p>Plotting the simulation results is an important part of model
 diagnostics and quality control. Simulated modeling scenarios can be
 passed to plotting functions from the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> package to
@@ -122,12 +113,12 @@ supported plot types and how to customize them.</p>
 <p>For the following examples, we will simulate an example scenario as
 described in <a href="standard-workflow.html">Standard workflow</a> and
 load the corresponding observed data as described in <a href="data-handling.html">Data handling</a>.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span><span class="co"># Create a project configuration</span></span>
-<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"../tests/data/TestProject/Code/ProjectConfiguration.xlsx"</span><span class="op">)</span></span>
+<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning in private$.clean_path(value, self$dataFolder, must_work):</span></span>
-<span><span class="co">#&gt; C:/Users/Felix/Code/esqlabsR/tests/data/TestProject/Data/Compound</span></span>
+<span><span class="co">#&gt; C:/Users/Felix/AppData/Local/R/win-library/4.3/esqlabsR/extdata/examples/TestProject/Data/Compound</span></span>
 <span><span class="co">#&gt; Properties.xlsx does not exist</span></span>
 <span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
 <span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
@@ -143,6 +134,9 @@ load the corresponding observed data as described in <a href="data-handling.html
 <span><span class="co"># Load observed data</span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
 <span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>, sheets <span class="op">=</span> <span class="va">dataSheets</span><span class="op">)</span></span></code></pre></div>
+<div class="section level2">
+<h2 id="create-a-datacombined-object">Create a <code>DataCombined</code> object<a class="anchor" aria-label="anchor" href="#create-a-datacombined-object"></a>
+</h2>
 <p>The simulation results are stored in a list returned by the
 <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function. Plotting and visualization is
 performed by storing these results along with matching observed data in
@@ -156,13 +150,17 @@ methods. Data sets of the same group will then be plotted together when
 calling plotting functions on the <code>DataCombined</code> object.</p>
 <p>Let’s create a <code>DataCombined</code> object and populate it with
 data with the following code:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dataCombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observedData</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
 <span>  names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
 <span>  groups <span class="op">=</span> <span class="st">"Aciclovir"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="customize-and-generate-plots">Customize and generate plots<a class="anchor" aria-label="anchor" href="#customize-and-generate-plots"></a>
+</h2>
 <p>Customization of the generated figures - specifying title, axes
 ranges, axes units, position of the legend, etc., are done through
 <em>plot configurations</em> - objects of the class <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html" class="external-link"><code>DefaultPlotConfiguration</code></a>.
@@ -183,7 +181,7 @@ following functions:</p>
 <code>PlotGirdConfiguration</code>, refer to the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link">reference</a></p>
 <p>The next example shows how to create a multi-panel figure using the
 default configurations.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plotConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">gridConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -211,12 +209,67 @@ default configurations.</p>
 <span><span class="va">gridPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/tlf/man/plotGrid.html" class="external-link">plotGrid</a></span><span class="op">(</span><span class="va">gridConfig</span><span class="op">)</span></span>
 <span><span class="va">gridPlot</span></span></code></pre></div>
 <p><img src="esqlabsR-plot-results_files/figure-html/plot-time-profile-1.png" width="672"></p>
+</div>
+<div class="section level2">
+<h2 id="save-plots">Save Plots<a class="anchor" aria-label="anchor" href="#save-plots"></a>
+</h2>
 <p>To save the plot to a <code>PNG</code> file, use the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link"><code>ExportConfiguration</code></a>.
 Make sure that <code>fileName</code> argument end with
 <code>.png</code>:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
 <span><span class="va">exportConfig</span><span class="op">$</span><span class="fu">savePlot</span><span class="op">(</span><span class="va">gridPlot</span>, fileName <span class="op">=</span> <span class="st">"All plots.png"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a>
+</h2>
+<div class="section level3">
+<h3 id="observed-data">Observed Data<a class="anchor" aria-label="anchor" href="#observed-data"></a>
+</h3>
+<p>The workflow of modeling and simulation involves running simulations
+and comparing simulated data against observed data. Functionalities of
+<code>esqlabsR</code> require observed data to be present as <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html" class="external-link"><code>DataSet</code></a>
+objects. Please refer to the article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html" class="external-link">Observed
+data</a> for information on how to load data from Excel or
+<code>*.pkml</code> files.</p>
+<p><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> offers a convenience function
+<code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> that facilitates loading data in
+standard <em>esqLABS</em> projects. Assuming the standard project folder
+structure is followed and a valid <code>ProjectConfiguration</code> (see
+<a href="standard-workflow.html">Standard workflow</a>) and Excel files
+with observed data are present in the
+<code>projectConfiguration$dataFolder</code> folder, the following code
+loads the data:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in private$.clean_path(value, self$dataFolder, must_work):</span></span>
+<span><span class="co">#&gt; C:/Users/Felix/AppData/Local/R/win-library/4.3/esqlabsR/extdata/examples/TestProject/Data/Compound</span></span>
+<span><span class="co">#&gt; Properties.xlsx does not exist</span></span>
+<span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
+<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  sheets <span class="op">=</span> <span class="va">dataSheets</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">observedData</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Aciclovir_Laskin 1982.Group A_1_Human_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv"</span></span></code></pre></div>
+<p>The function loads the data from the file
+<code>projectConfiguration$dataFile</code> from the folder
+<code>projectConfiguration$dataFolder</code> and returns a list of
+<code>DataSet</code> objects. The resulting object will be used later to
+<a href="example-visualization.html">plot results</a> to compare
+simulated and observed data.</p>
+<ul>
+<li><p>The <code>sheets</code> argument of the
+<code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> function should be a string or a list of
+strings. If a specified sheet is not found in the file, it will be
+omitted with a warning; the <code>observedData</code> variable may then
+be an empty named list.</p></li>
+<li><p>If the data file specified in
+<code>projectConfiguration$dataFile</code> is missing in the filesystem,
+the <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> function will fail with an
+<code>Invalid File</code> message.</p></li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
@@ -232,6 +285,16 @@ the <code>DataCombined</code> object by calling the
 <li>
 <code>ospsuite</code> documentation on:
 <ul>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html" class="external-link">loadDataImporterConfiguration()</a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataImporterConfiguration.html" class="external-link">DataImporterConfiguration
+class</a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/createImporterConfigurationForFile.html" class="external-link">createImporterConfigurationForFile()</a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html" class="external-link">DataSet
+class</a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/dataSetToDataFrame.html" class="external-link">dataSetToDataFrame()</a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html" class="external-link">loadDataSetsFromExcel()</a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetFromPKML.html" class="external-link">loadDataSetFromPKML()</a></li>
+<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/saveDataSetToPKML.html" class="external-link">saveDataSetToPKML()</a></li>
 <li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link"><code>DataCombined</code>
 class</a></li>
 <li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link"><code>plotIndividualTimeProfile()</code></a></li>
@@ -249,7 +312,8 @@ class</a></li>
 </ul>
 </li>
 </ul>
-<!-- # TODO --><!-- inject the following (originally from "data handling" vignette) --><!-- The workflow of modeling and simulation involves running simulations and comparing simulated data against observed data. Functionalities of `esqlabsR` require observed data to be present as [`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html) objects. Please refer to the article [Observed data](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html) for information on how to load data from Excel or `*.pkml` files. --><!-- `{esqlabsR}` offers a convenience function `loadObservedData()` that facilitates loading data in standard *esqLABS* projects. Assuming the standard project folder structure is followed and a valid `ProjectConfiguration` (see [Standard workflow](standard-workflow.html)) and Excel files with observed data are present in the `projectConfiguration$dataFolder` folder, the following code loads the data: --><!-- ```{r loadObservedData} --><!-- projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration()) --><!-- dataSheets <- "Laskin 1982.Group A" --><!-- observedData <- loadObservedData( --><!--   projectConfiguration = projectConfiguration, --><!--   sheets = dataSheets --><!-- ) --><!-- print(names(observedData)) --><!-- ``` --><!-- The function loads the data from the file `projectConfiguration$dataFile` from the folder `projectConfiguration$dataFolder` and returns a list of `DataSet` objects. The resulting object will be used later to [plot results](example-visualization.html) to compare simulated and observed data. --><!-- ### Troubleshooting --><!-- -   The `sheets` argument of the `loadObservedData()` function should be a string or a list of strings. If a specified sheet is not found in the file, it will be omitted with a warning; the `observedData` variable may then be an empty named list. --><!-- -   If the data file specified in `projectConfiguration$dataFile` is missing in the filesystem, the `loadObservedData()` function will fail with an `Invalid File` message. --><!-- More detailed information on function signatures can be found in: --><!-- -   `esqlabsR` documentation on: --><!-- -   [createDefaultProjectConfiguration()](https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html) --><!-- -   [ProjectConfiguration class](https://esqlabs.github.io/esqlabsR/reference/ProjectConfiguration.html) --><!-- -   [loadObservedData()](https://esqlabs.github.io/esqlabsR/reference/loadObservedData.html) --><!-- -   `ospsuite` documentation on: --><!-- -   [DataImporterConfiguration class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataImporterConfiguration.html) --><!-- -   [createImporterConfigurationForFile()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/createImporterConfigurationForFile.html) --><!-- -   [loadDataImporterConfiguration()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html) --><!-- -   [DataSet class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html) --><!-- -   [dataSetToDataFrame()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/dataSetToDataFrame.html) --><!-- -   [loadDataSetsFromExcel()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html) --><!-- -   [loadDataSetFromPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetFromPKML.html) --><!-- -   [saveDataSetToPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/saveDataSetToPKML.html) -->
+<!-- ### Troubleshooting --><!-- More detailed information on function signatures can be found in: --><!-- -   `esqlabsR` documentation on: --><!-- -   [createDefaultProjectConfiguration()](https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html) --><!-- -   [ProjectConfiguration class](https://esqlabs.github.io/esqlabsR/reference/ProjectConfiguration.html) --><!-- -   [loadObservedData()](https://esqlabs.github.io/esqlabsR/reference/loadObservedData.html) --><!-- -   `ospsuite` documentation on: -->
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

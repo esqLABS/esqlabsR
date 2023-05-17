@@ -55,7 +55,7 @@
     <h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6>
     <a class="dropdown-item" href="../articles/esqlabsR-workflow-overview.html">Overview</a>
     <a class="dropdown-item" href="../articles/esqlabsR-project-structure.html">1. Initialize a Project</a>
-    <a class="dropdown-item" href="../articles/esqlabsR-design-simulations.html">2. Design Simulations</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-design-scenarios.html">2. Design Scenarios</a>
     <a class="dropdown-item" href="../articles/esqlabsR-run-simulations.html">3. Run Simulations</a>
     <a class="dropdown-item" href="../articles/esqlabsR-plot-results.html">4. Plot Results</a>
     <div class="dropdown-divider"></div>
@@ -104,27 +104,29 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>We designed esqlabsR to make life easier for OSPS users. To achieve
-this, we had designed a streamlined simulation workflow that relies on
+<p>We designed <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> to make life easier for OSPS
+users. To achieve this, we streamlined the workflow relying on these
 simple concepts :</p>
 <ul>
-<li>esqlabsR uses a predefined project structure to make sure its stays
-organized,</li>
-<li>esqlabsR uses excel files as a convenient way to inputs
-parameters,</li>
+<li>
+<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> uses a predefined project folder
+structure,</li>
+<li>
+<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> uses excel files as a convenient way to
+inputs parameters and define simulation scenarios.</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="initialize-project">Initialize Project<a class="anchor" aria-label="anchor" href="#initialize-project"></a>
 </h2>
-<p>The major way <code>esqlabsR</code> facilitate modeling and
+<p>The major way <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> facilitate modeling and
 simulation with OSPS is the adoption of a project structure based on
 Excel files. These templates are where all the parameters for running
 simulations, compute results and generating plots are defined. They are
 organized in different folders and their structure must not be
 altered.</p>
-<p>A project can me initialized with the <code>init_project</code>
-function.</p>
+<p>A new project folder can be initialized with the
+<code><a href="../reference/init_project.html">init_project()</a></code> function.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span></span>
@@ -144,8 +146,9 @@ files with specific purpose. But the cornerstone of this setup is the
 <p>This file defines <em>where</em> all the necessary files are stored
 in the project folder. All the path specified in the <code>Value</code>
 column should be <em>relative</em> to the
-<code>ProjectConfiguration.xlsx</code> location. It must be imported
-using <code>createDefaultProjectConfiguration</code></p>
+<code>ProjectConfiguration.xlsx</code> location. Loading the project
+configuration is the first step in any workflow using
+<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"path/to/ProjectConfiguration.xlsx"</span><span class="op">)</span></span></code></pre></div>
 <pre><code>ProjectConfiguration: 
@@ -165,17 +168,17 @@ Scenario definitions file name: Parameters/Scenarios.xlsx
 <!-- Data importer configuration: Data/esqlabs_dataImporter_configuration.xml  -->
 <!-- Compound Properties File: Data/Compound Properties.xlsx  -->
 <!-- Output folder: Results  -->
-<p>Notice that the <code>ProjectConfiguration</code> links to the other
-and files that constitute the project.</p>
+<p>Note that the <code>ProjectConfiguration</code> stores paths to other
+files that are used in the project.</p>
 <p>For more information about esqlabsR’s project structure, read
 <code><a href="../articles/esqlabsR-project-structure.html">vignette("esqlabsR-project-structure")</a></code>.</p>
 </div>
 <div class="section level2">
-<h2 id="design-simulations">Design Simulations<a class="anchor" aria-label="anchor" href="#design-simulations"></a>
+<h2 id="design-scenarios">Design Scenarios<a class="anchor" aria-label="anchor" href="#design-scenarios"></a>
 </h2>
-<p>Now that our project is ready, the next step is to run simulations.
-In esqlabsR, simulation are run by defining and executing multiple
-<strong>scenarios</strong>.</p>
+<p>Now that the project’s file structure is ready, the next step is to
+run simulations. In <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>, simulation are run by
+defining and executing multiple <strong>scenarios</strong>.</p>
 <p>To modify, add or delete a scenario, we edit the
 <code>Parameters/Scenarios.xslx</code> file. Each row of this file is a
 scenario. Each Column is a parameter that will be used to define the
@@ -195,8 +198,9 @@ in <code>Parameters/ApplicationParameters.xlsx</code> that specify the
 simulated drug administration protocol,</li>
 <li>
 <code>SimulationTime</code> and <code>SimulationTimeUnit</code>
-define the time range to simulate, it should be three numbers for start,
-end, resolution</li>
+define the time range to simulate, it should be three numbers for
+<code>{start, end, resolution}</code>
+</li>
 <li>
 <code>Individuald</code>: the id of the individual to simulate. The
 id and settings for individuals are defined in
@@ -206,23 +210,25 @@ id and settings for individuals are defined in
 simulate. The id and settings for populations are defined in
 <code>Parameters/PopulationParameters.xlsx</code>,</li>
 </ul>
-<p>Notice that the <code>Scenarios.xslx</code> file is mainly
-constituted of “link” to other excel templates.</p>
+<p>Note that multiple aspects of a simulation scenario are defined in
+other excel files, and the <code>Scenarios.xslx</code> file links to the
+specific sheets or other information stored in those files.</p>
 <p><img src="Figures/scenarios_links_files.png"></p>
 <p>For example, if we want to change the characteristic of the
-individual we run the simulation on, we can either edit its properties
-directly in the <code>Individuals.xlsx</code> file or add a new row with
-a different <code>IndividualId</code> and change to this new value in
-the <code>Scenarios.xslx</code> file.</p>
+individual used in the simulation, we must add a new row with a
+different <code>IndividualId</code> in the
+<code>IndividualBiometrics</code> sheet of
+the<code>Individuals.xlsx</code> file and/or specify a parameter sheet
+with this <code>IndividualId</code> in the same file.</p>
 <p>For more information on all the scenario parameters that can be
-setup, read <code><a href="../articles/esqlabsR-design-simulations.html">vignette("esqlabsR-design-simulations")</a></code>.</p>
+setup, read <code><a href="../articles/esqlabsR-design-scenarios.html">vignette("esqlabsR-design-scenarios")</a></code>.</p>
 </div>
 <div class="section level2">
-<h2 id="run-simulations">Run Simulations<a class="anchor" aria-label="anchor" href="#run-simulations"></a>
+<h2 id="run-scenarios">Run Scenarios<a class="anchor" aria-label="anchor" href="#run-scenarios"></a>
 </h2>
-<p>Once all the scenario parameters are all setup in th excel files, we
-can import them using <code>createScenarios</code> and
-<code>readScenarioConfigurationFromExcel</code>:</p>
+<p>Once all the scenario properties are setup in the excel files, we can
+import the scenarios them using <code><a href="../reference/createScenarios.html">createScenarios()</a></code> and
+<code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_scenarios</span> <span class="op">&lt;-</span>  <span class="fu"><a href="../reference/createScenarios.html">createScenarios</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span> </span>
@@ -246,16 +252,16 @@ can import them using <code>createScenarios</code> and
 <span><span class="co">#&gt;    Steady-state time: 1000</span></span></code></pre>
 <p>Then, we run the simulations by passing the scenarios we defined:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_simulation</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span><span class="va">my_scenarios</span><span class="op">)</span></span></code></pre></div>
-<p>Simulation results can be saved for later use without rerun the
-simulation using <code>saveScenarioResults</code> and
-<code>loadScenarioResults</code>.</p>
+<code class="sourceCode R"><span><span class="va">myScenarioResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span><span class="va">my_scenarios</span><span class="op">)</span></span></code></pre></div>
+<p>Simulation results can be saved for later use:
+<code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code> and
+<code><a href="../reference/loadScenarioResults.html">loadScenarioResults()</a></code>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span><span class="va">my_simulation</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span><span class="va">myScenarioResults</span>,</span>
 <span>                    projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
 <span>                    outputFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">my_simulation</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadScenarioResults.html">loadScenarioResults</a></span><span class="op">(</span>scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
+<span><span class="va">myScenarioResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadScenarioResults.html">loadScenarioResults</a></span><span class="op">(</span>scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
 <span>                                     resultsFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span><span class="op">)</span></span></code></pre></div>
 <p>Learn more on how to run simulations in
 <code><a href="../articles/esqlabsR-run-simulations.html">vignette("esqlabsR-run-simulations")</a></code>.</p>
@@ -264,13 +270,16 @@ simulation using <code>saveScenarioResults</code> and
 <h2 id="plot-results">Plot Results<a class="anchor" aria-label="anchor" href="#plot-results"></a>
 </h2>
 <p>The simulation results can now be plotted. For this, the package
-relies on osps’s datacombined and plotting functions.</p>
-<p>First, a dataCombined object is initialized:</p>
+relies on on the concept of combining multiple simulation results and
+observed data using the <code>DataCombined</code> class and creating
+figures using functions implemented in the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a>
+package.</p>
+<p>First, a <code>DataCombined</code> object is initialized:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_datacombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Then, simulation result are added to the dataCombined object:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">my_simulation</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
+<code class="sourceCode R"><span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">myScenarioResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
 <span>                                     names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
 <span>                                     groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span></code></pre></div>
 <p>Finally, the plot is generated:</p>
@@ -288,7 +297,7 @@ store observed dataset for them to be plotted.</p>
 <span></span>
 <span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated</a></span><span class="op">(</span><span class="va">my_datacombined</span><span class="op">)</span></span></code></pre></div>
 <p><img src="esqlabsR_files/figure-html/unnamed-chunk-12-1.png" width="80%" style="display: block; margin: auto;"></p>
-<p>Many other plots are available in esqlabsR, read
+<p>Many other plot types are available in <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>, read
 <code><a href="../articles/esqlabsR-plot-results.html">vignette("esqlabsR-plot-results")</a></code> to learn more.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
