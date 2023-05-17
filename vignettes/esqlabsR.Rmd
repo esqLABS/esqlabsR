@@ -18,41 +18,39 @@ knitr::opts_chunk$set(
 )
 library(esqlabsR)
 require(readxl)
-showtext::showtext_opts(dpi=300)
+showtext::showtext_opts(dpi = 300)
 ```
-
 
 ## Introduction
 
+We designed `{esqlabsR}` to make life easier for OSPS users. To achieve
+this, we streamlined the workflow relying on these simple concepts :
 
-We designed `{esqlabsR}` to make life easier for OSPS users. To achieve this, we
-streamlined the workflow relying on these simple concepts :
-
-- `{esqlabsR}` uses a predefined project folder structure,
-- `{esqlabsR}` uses excel files as a convenient way to inputs parameters and define simulation scenarios.
-
+-   `{esqlabsR}` uses a predefined project folder structure,
+-   `{esqlabsR}` uses excel files as a convenient way to inputs
+    parameters and define simulation scenarios.
 
 ## Initialize Project
 
-The major way `{esqlabsR}` facilitate modeling and simulation with OSPS is the 
-adoption of a project structure based on Excel files. 
-These templates are where all the parameters for running simulations, 
-compute results and generating plots are defined. They are organized in 
+The major way `{esqlabsR}` facilitate modeling and simulation with OSPS
+is the adoption of a project structure based on Excel files. These
+templates are where all the parameters for running simulations, compute
+results and generating plots are defined. They are organized in
 different folders and their structure must not be altered.
 
-
-A new project folder can be initialized with the `init_project()` function.
+A new project folder can be initialized with the `init_project()`
+function.
 
 ```{r, eval=FALSE}
 library(esqlabsR)
 
-init_project(type = "example") 
+init_project(type = "example")
 # or simply init_project() to create an empty folder structure and excel templates.
 ```
 
 It will create the expected simulation project's folder structure:
 
-```sh
+``` sh
 simulation_project/
 ├── ProjectConfiguration.xlsx
 ├── Data
@@ -61,19 +59,24 @@ simulation_project/
 └── Results
 ```
 
-Each one of these folders contains a series of `.xlsx` files with specific 
-purpose. But the cornerstone of this setup is the `ProjectConfiguration.xlsx`.
+Each one of these folders contains a series of `.xlsx` files with
+specific purpose. They are all linked to the project through the
+`ProjectConfiguration.xlsx` file.
 
-This file defines *where* all the necessary files are stored in the project 
-folder. All the path specified in the `Value` column should be *relative* to the
-`ProjectConfiguration.xlsx` location. Loading the project configuration is the first step in any workflow using `{esqlabsR}`.
+This file defines *where* all the necessary files are stored in the
+project folder. This file is already preconfigured and should not be changed in
+most cases. However, if target files would come to change location, 
+`ProjectConfiguration.xlsx` should reflect that. All the path specified in the 
+`Value` column should be *relative* to the `ProjectConfiguration.xlsx` location. 
+
+Loading the project configuration is the first step in any workflow using
+`{esqlabsR}`.
 
 ```{r, eval=FALSE}
 my_project_configuration <- createDefaultProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
-
 ```
 
-```
+```         
 ProjectConfiguration: 
 Relative path from working directory: C:/[path]/TestProject
 Project Configuration File: Code/ProjectConfiguration.xlsx 
@@ -85,59 +88,88 @@ Population parameters file name: Parameters/PopulationParameters.xlsx
 Scenario definitions file name: Parameters/Scenarios.xlsx
 ...
 ```
+
 <!-- Scenario applications definitions file name: Parameters/ApplicationParameters.xlsx  -->
+
 <!-- Plot definitions file name: Parameters/Plots.xlsx  -->
+
 <!-- Experimental data folder: Data  -->
+
 <!-- Experimental data file: Data/TestProject_TimeValuesData.xlsx  -->
+
 <!-- Data importer configuration: Data/esqlabs_dataImporter_configuration.xml  -->
+
 <!-- Compound Properties File: Data/Compound Properties.xlsx  -->
+
 <!-- Output folder: Results  -->
 
-Note that the `ProjectConfiguration` stores paths to other files that are used in the project.
+Note that the `ProjectConfiguration` stores paths to other files that
+are used in the project.
 
-For more information about esqlabsR's project structure, read `vignette("esqlabsR-project-structure")`.
+For more information about esqlabsR's project structure, read
+`vignette("esqlabsR-project-structure")`.
 
 ## Design Scenarios
 
-Now that the project's file structure is ready, the next step is to run simulations. In `{esqlabsR}`,
-simulation are run by defining and executing multiple **scenarios**.
+Now that the project's file structure is ready, the next step is to run
+simulations. In `{esqlabsR}`, simulation are run by defining and
+executing multiple **scenarios**.
 
-To modify, add or delete a scenario, we edit the `Parameters/Scenarios.xslx` 
-file. Each row of this file is a scenario. Each Column is a parameter that will 
-be used to define the scenarios.
+To modify, add or delete a scenario, we edit the
+`Parameters/Scenarios.xslx` file. Each row of this file is a scenario.
+Each Column is a parameter that will be used to define the scenarios.
 
 Here are the main parameters that can be set for a scenario:
 
-- `ModelFile` is the name of the `.pkml` file that can be found in the `Models/` directory.
-- `ModelParameterSheets` is the name of the *sheet* in `Parameters/ModelParameters.xlsx` that contains the parameters to apply to the model,
-- `ApplicationProtocol` is the name of the *sheet* in `Parameters/ApplicationParameters.xlsx` that specify the simulated drug administration protocol,
-- `SimulationTime` and `SimulationTimeUnit` define the time range to simulate, it should be three numbers for `{start, end, resolution}`
-- `Individuald`: the id of the individual to simulate. The id and settings for individuals are defined in `Parameters/Individuals.xlsx`,
-- `PopulationId`: the id of the *population* to simulate. The id and settings for populations are defined in `Parameters/PopulationParameters.xlsx`,
+-   `ModelFile` is the name of the `.pkml` file that can be found in the
+    `Models/` directory.
+-   `ModelParameterSheets` is the name of the *sheet* in
+    `Parameters/ModelParameters.xlsx` that contains the parameters to
+    apply to the model,
+-   `ApplicationProtocol` is the name of the *sheet* in
+    `Parameters/ApplicationParameters.xlsx` that specify the simulated
+    drug administration protocol,
+-   `SimulationTime` and `SimulationTimeUnit` define the time range to
+    simulate, it should be three numbers for `{start, end, resolution}`
+-   `Individuald`: the id of the individual to simulate. The id and
+    settings for individuals are defined in
+    `Parameters/Individuals.xlsx`,
+-   `PopulationId`: the id of the *population* to simulate. The id and
+    settings for populations are defined in
+    `Parameters/PopulationParameters.xlsx`,
 
-Note that multiple aspects of a simulation scenario are defined in other excel files, and the `Scenarios.xslx` file links to the specific sheets or other information stored in those files. 
+Note that multiple aspects of a simulation scenario are defined in other
+excel files, and the `Scenarios.xslx` file links to the specific sheets
+or other information stored in those files.
 
 ![](Figures/scenarios_links_files.png)
 
-For example, if we want to change the characteristic of the individual used in the simulation, we must add a new row with a different `IndividualId` in the `IndividualBiometrics` sheet of the`Individuals.xlsx` file and/or specify a parameter sheet with this `IndividualId` in the same file.
+For example, if we want to change the characteristic of the individual
+used in the simulation, we must add a new row with a different
+`IndividualId` in the `IndividualBiometrics` sheet of
+the`Individuals.xlsx` file and/or specify a parameter sheet with this
+`IndividualId` in the same file.
 
-For more information on all the scenario parameters that can be setup, read `vignette("esqlabsR-design-scenarios")`.
-
+For more information on all the scenario parameters that can be setup,
+read `vignette("esqlabsR-design-scenarios")`.
 
 ## Run Scenarios
 
-Once all the scenario properties are setup in the excel files, we can import the scenarios
-them using `createScenarios()` and `readScenarioConfigurationFromExcel()`:
+Once all the scenario properties are setup in the excel files, we can
+import the scenarios them using `createScenarios()` and
+`readScenarioConfigurationFromExcel()`:
 
 ```{r, echo=FALSE, warning=FALSE, message = FALSE}
 my_project_configuration <- createDefaultProjectConfiguration(path = example_ProjectConfiguration())
 ```
 
 ```{r}
-my_scenarios <-  createScenarios(
-  readScenarioConfigurationFromExcel( 
-    scenarioNames = "TestScenario", 
-    projectConfiguration = my_project_configuration))
+my_scenarios <- createScenarios(
+  readScenarioConfigurationFromExcel(
+    scenarioNames = "TestScenario",
+    projectConfiguration = my_project_configuration
+  )
+)
 ```
 
 ```{r, echo = FALSE}
@@ -145,33 +177,35 @@ my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FAL
 ```
 
 Then, we run the simulations by passing the scenarios we defined:
+
 ```{r}
 myScenarioResults <- runScenarios(my_scenarios)
 ```
 
-
-Simulation results can be saved for later use:
-`saveScenarioResults()` and `loadScenarioResults()`.
+Simulation results can be saved for later use: `saveScenarioResults()`
+and `loadScenarioResults()`.
 
 ```{r, eval = FALSE}
 saveScenarioResults(myScenarioResults,
-                    projectConfiguration = my_project_configuration,
-                    outputFolder = my_project_configuration$outputFolder)
+  projectConfiguration = my_project_configuration,
+  outputFolder = my_project_configuration$outputFolder
+)
 
-myScenarioResults <- loadScenarioResults(scenarioNames = "TestScenario",
-                                     resultsFolder = my_project_configuration$outputFolder)
-
+myScenarioResults <- loadScenarioResults(
+  scenarioNames = "TestScenario",
+  resultsFolder = my_project_configuration$outputFolder
+)
 ```
 
-
-Learn more on how to run simulations in `vignette("esqlabsR-run-simulations")`.
+Learn more on how to run simulations in
+`vignette("esqlabsR-run-simulations")`.
 
 ## Plot Results
 
-The simulation results can now be plotted. For this, the package relies on 
-on the concept of combining multiple simulation results and observed data using 
-the `DataCombined` class and creating figures using functions implemented in the 
-`{ospsuite}` package.
+The simulation results can now be plotted. For this, the package relies
+on on the concept of combining multiple simulation results and observed
+data using the `DataCombined` class and creating figures using functions
+implemented in the `{ospsuite}` package.
 
 First, a `DataCombined` object is initialized:
 
@@ -183,8 +217,9 @@ Then, simulation result are added to the dataCombined object:
 
 ```{r}
 my_datacombined$addSimulationResults(myScenarioResults$TestScenario$results,
-                                     names = "Simulated",
-                                     groups = "Aciclovir")
+  names = "Simulated",
+  groups = "Aciclovir"
+)
 ```
 
 Finally, the plot is generated:
@@ -193,20 +228,20 @@ Finally, the plot is generated:
 plotIndividualTimeProfile(my_datacombined)
 ```
 
+In some cases, we also want to plot the observed experimental data
+(stored in `Data/`). DataCombined also has the abilitity to store
+observed dataset for them to be plotted.
 
-In some cases, we also want to plot the observed experimental data (stored in 
-`Data/`). DataCombined also has the abilitity to store observed dataset for them 
-to be plotted.
-
-  
 ```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-observed_data <- loadObservedData(projectConfiguration = my_project_configuration,
-                                  sheets = "Laskin 1982.Group A")
+observed_data <- loadObservedData(
+  projectConfiguration = my_project_configuration,
+  sheets = "Laskin 1982.Group A"
+)
 
 my_datacombined$addDataSets(observed_data, names = "Observed", groups = "Aciclovir")
 
 plotObservedVsSimulated(my_datacombined)
 ```
 
-Many other plot types are available in `{esqlabsR}`, read `vignette("esqlabsR-plot-results")` 
-to learn more.
+Many other plot types are available in `{esqlabsR}`, read
+`vignette("esqlabsR-plot-results")` to learn more.
