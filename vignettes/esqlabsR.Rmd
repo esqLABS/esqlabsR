@@ -34,7 +34,7 @@ streamlined the workflow relying on these simple concepts :
 
 ## Initialize Project
 
-The major way `esqlabsR` facilitate modeling and simulation with OSPS is the 
+The major way `{esqlabsR}` facilitate modeling and simulation with OSPS is the 
 adoption of a project structure based on Excel files. 
 These templates are where all the parameters for running simulations, 
 compute results and generating plots are defined. They are organized in 
@@ -127,7 +127,7 @@ For more information on all the scenario parameters that can be setup, read `vig
 ## Run Scenarios
 
 Once all the scenario properties are setup in the excel files, we can import the scenarios
-them using `createScenarios` and `readScenarioConfigurationFromExcel`:
+them using `createScenarios()` and `readScenarioConfigurationFromExcel()`:
 
 ```{r, echo=FALSE, warning=FALSE, message = FALSE}
 my_project_configuration <- createDefaultProjectConfiguration(path = example_ProjectConfiguration())
@@ -151,7 +151,7 @@ myScenarioResults <- runScenarios(my_scenarios)
 
 
 Simulation results can be saved for later use:
-`saveScenarioResults` and `loadScenarioResults`.
+`saveScenarioResults()` and `loadScenarioResults()`.
 
 ```{r, eval = FALSE}
 saveScenarioResults(myScenarioResults,
