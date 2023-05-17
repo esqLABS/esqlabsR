@@ -130,7 +130,7 @@ altered.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/init_project.html">init_project</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"example"</span><span class="op">)</span> </span>
+<span><span class="fu"><a href="../reference/init_project.html">init_project</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"example"</span><span class="op">)</span></span>
 <span><span class="co"># or simply init_project() to create an empty folder structure and excel templates.</span></span></code></pre></div>
 <p>It will create the expected simulation project’s folder
 structure:</p>
@@ -141,14 +141,17 @@ structure:</p>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> Parameters</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="ex">└──</span> Results</span></code></pre></div>
 <p>Each one of these folders contains a series of <code>.xlsx</code>
-files with specific purpose. But the cornerstone of this setup is the
-<code>ProjectConfiguration.xlsx</code>.</p>
+files with specific purpose. They are all linked to the project through
+the <code>ProjectConfiguration.xlsx</code> file.</p>
 <p>This file defines <em>where</em> all the necessary files are stored
-in the project folder. All the path specified in the <code>Value</code>
-column should be <em>relative</em> to the
-<code>ProjectConfiguration.xlsx</code> location. Loading the project
-configuration is the first step in any workflow using
-<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</p>
+in the project folder. This file is already preconfigured and should not
+be changed in most cases. However, if target files would come to change
+location, <code>ProjectConfiguration.xlsx</code> should reflect that.
+All the path specified in the <code>Value</code> column should be
+<em>relative</em> to the <code>ProjectConfiguration.xlsx</code>
+location.</p>
+<p>Loading the project configuration is the first step in any workflow
+using <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"path/to/ProjectConfiguration.xlsx"</span><span class="op">)</span></span></code></pre></div>
 <pre><code>ProjectConfiguration: 
@@ -230,10 +233,12 @@ setup, read <code><a href="../articles/esqlabsR-design-scenarios.html">vignette(
 import the scenarios them using <code><a href="../reference/createScenarios.html">createScenarios()</a></code> and
 <code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_scenarios</span> <span class="op">&lt;-</span>  <span class="fu"><a href="../reference/createScenarios.html">createScenarios</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span> </span>
-<span>    scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>, </span>
-<span>    projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">my_scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarios.html">createScenarios</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
+<span>    scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
+<span>    projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; ScenarioConfiguration: </span></span>
 <span><span class="co">#&gt;    Model file name: Aciclovir.pkml </span></span>
 <span><span class="co">#&gt;    Scenario name: TestScenario </span></span>
@@ -258,11 +263,14 @@ import the scenarios them using <code><a href="../reference/createScenarios.html
 <code><a href="../reference/loadScenarioResults.html">loadScenarioResults()</a></code>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span><span class="va">myScenarioResults</span>,</span>
-<span>                    projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
-<span>                    outputFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span><span class="op">)</span></span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
+<span>  outputFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">myScenarioResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadScenarioResults.html">loadScenarioResults</a></span><span class="op">(</span>scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
-<span>                                     resultsFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">myScenarioResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadScenarioResults.html">loadScenarioResults</a></span><span class="op">(</span></span>
+<span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
+<span>  resultsFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Learn more on how to run simulations in
 <code><a href="../articles/esqlabsR-run-simulations.html">vignette("esqlabsR-run-simulations")</a></code>.</p>
 </div>
@@ -280,8 +288,9 @@ package.</p>
 <p>Then, simulation result are added to the dataCombined object:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">myScenarioResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
-<span>                                     names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
-<span>                                     groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span></code></pre></div>
+<span>  names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
+<span>  groups <span class="op">=</span> <span class="st">"Aciclovir"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Finally, the plot is generated:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">my_datacombined</span><span class="op">)</span></span></code></pre></div>
@@ -290,8 +299,10 @@ package.</p>
 (stored in <code>Data/</code>). DataCombined also has the abilitity to
 store observed dataset for them to be plotted.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">observed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
-<span>                                  sheets <span class="op">=</span> <span class="st">"Laskin 1982.Group A"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">observed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
+<span>  sheets <span class="op">=</span> <span class="st">"Laskin 1982.Group A"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observed_data</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
 <span></span>
