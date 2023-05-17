@@ -146,7 +146,7 @@ my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FAL
 
 Then, we run the simulations by passing the scenarios we defined:
 ```{r}
-my_simulation <- runScenarios(my_scenarios)
+myScenarioResults <- runScenarios(my_scenarios)
 ```
 
 
@@ -154,11 +154,11 @@ Simulation results can be saved for later use:
 `saveScenarioResults` and `loadScenarioResults`.
 
 ```{r, eval = FALSE}
-saveScenarioResults(my_simulation,
+saveScenarioResults(myScenarioResults,
                     projectConfiguration = my_project_configuration,
                     outputFolder = my_project_configuration$outputFolder)
 
-my_simulation <- loadScenarioResults(scenarioNames = "TestScenario",
+myScenarioResults <- loadScenarioResults(scenarioNames = "TestScenario",
                                      resultsFolder = my_project_configuration$outputFolder)
 
 ```
@@ -169,7 +169,9 @@ Learn more on how to run simulations in `vignette("esqlabsR-run-simulations")`.
 ## Plot Results
 
 The simulation results can now be plotted. For this, the package relies on 
-on the concept of combining multiple simulation results and observed data using the `DataCombined` class and creating figures using functions implemented in the `{ospsuite}` package.
+on the concept of combining multiple simulation results and observed data using 
+the `DataCombined` class and creating figures using functions implemented in the 
+`{ospsuite}` package.
 
 First, a `DataCombined` object is initialized:
 
