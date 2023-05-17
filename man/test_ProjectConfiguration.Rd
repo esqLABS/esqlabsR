@@ -5,22 +5,14 @@
 \title{Get the path to tests' ProjectConfiguration.xlsx}
 \usage{
 test_ProjectConfiguration()
-
-test_ProjectConfiguration()
 }
 \value{
-a string representing the path to the ProjectConfiguration.xlsx file
-used as test.
-
 a string representing the path to the ProjectConfiguration.xlsx file
 used as test.
 }
 \description{
 Get the path to tests' ProjectConfiguration.xlsx
-
-Get the path to tests' ProjectConfiguration.xlsx
 }
 \examples{
-example_ProjectConfiguration()
-example_ProjectConfiguration()
+test_ProjectConfiguration()
 }
