@@ -26,6 +26,8 @@ esqlabsR's projects are organized in a 4 steps process:
 While step 1 need to be done just once, you will be able to iterate easily as
 you fine tune your simulation and plots using simple code and excel files.
 
+![esqlabsR Workflow](Figures/esqlabs-workflow.png)
+
 ## 1. Project initialization
 This first step is here to initialize the specific directories and file 
 structure that esqlabsR needs.
