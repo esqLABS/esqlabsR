@@ -26,7 +26,7 @@ showtext::showtext_opts(dpi=300)
 
 
 We designed esqlabsR to make life easier for OSPS users. To achieve this, we
-had designed a streamlined simulation workflow that relies on simple concepts :
+streamlined the workflow relying on these simple concepts :
 
 - esqlabsR uses a predefined project structure to make sure its stays organized,
 - esqlabsR uses excel files as a convenient way to inputs parameters,
