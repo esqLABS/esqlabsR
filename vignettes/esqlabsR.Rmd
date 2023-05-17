@@ -152,7 +152,7 @@ my_simulation <- runScenarios(my_scenarios)
 ```
 
 
-Simulation results can be saved for later use without rerun the simulation using
+Simulation results can be saved for later use:
 `saveScenarioResults` and `loadScenarioResults`.
 
 ```{r, eval = FALSE}
