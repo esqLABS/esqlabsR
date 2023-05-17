@@ -23,7 +23,7 @@ Project Structure can be initialized with `init_project`.
 ```{r, eval=FALSE, message = FALSE}
 library(esqlabsR)
 
-init_project(type = "demo") 
+init_project(type = "demo")
 # or simply init_project() to create an empty folder structure and excel templates.
 ```
 
@@ -110,18 +110,19 @@ All these directories and file have a specific purpose and template and are
 describe in next sections.
 
 ```{r, echo = FALSE}
-#TODO Fix the "Description" text in excel file (not relative to Code folder anymore)
+# TODO Fix the "Description" text in excel file (not relative to Code folder anymore)
 ProjectConfiguration_excel <- readxl::read_xlsx(example_ProjectConfiguration())
 
 reactable::reactable(ProjectConfiguration_excel,
-                     columns = list(
-                       "Property" = reactable::colDef(minWidth = 50),
-                       "Value" = reactable::colDef(show = FALSE),
-                       "Description" = reactable::colDef(minWidth = 100)
-                     ),
-                     outlined = TRUE,
-                     pagination = FALSE,
-                     highlight = TRUE)
+  columns = list(
+    "Property" = reactable::colDef(minWidth = 50),
+    "Value" = reactable::colDef(show = FALSE),
+    "Description" = reactable::colDef(minWidth = 100)
+  ),
+  outlined = TRUE,
+  pagination = FALSE,
+  highlight = TRUE
+)
 ```
 
 

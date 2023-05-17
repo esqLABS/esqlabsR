@@ -113,7 +113,7 @@ print(applicationParams)
 and export the parameters to an excel file using the `exportParametersToXLS()` function:
 
 ```{r, eval=FALSE}
-  exportParametersToXLS(parameters = applicationParams, paramsXLSpath = "../Applications.xlsx")
+exportParametersToXLS(parameters = applicationParams, paramsXLSpath = "../Applications.xlsx")
 ```
 
 The created excel file will have the same structure as all Parameter-files and can be directly loaded in MoBi or R using the `readParametersFromXLS()` function.
