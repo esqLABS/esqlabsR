@@ -171,7 +171,7 @@ Learn more on how to run simulations in `vignette("esqlabsR-run-simulations")`.
 ## Plot Results
 
 The simulation results can now be plotted. For this, the package relies on 
-osps's datacombined and plotting functions.
+on the concept of combining multiple simulation results and observed data using the `DataCombined` class and creating figures using functions implemented in the `{ospsuite}` package.
 
 First, a `DataCombined` object is initialized:
 
