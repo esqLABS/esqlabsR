@@ -94,7 +94,7 @@ my_simulation <- runScenarios(
   scenarios = my_scenarios
 )
 
-# Initialize a datacombine object to store simulation results
+# Initialize a `DataCombined` object to store simulation results
 my_datacombined <- DataCombined$new()
 
 my_datacombined$addSimulationResults(my_simulation$TestScenario$results,
