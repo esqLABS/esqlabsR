@@ -11,7 +11,7 @@ status](https://ci.appveyor.com/api/projects/status/github/esqlabs/esqlabsr?bran
 
 <!-- badges: end -->
 
-The `esqlabsR` package facilitates and standardizes the modeling and
+The `{esqlabsR}` package facilitates and standardizes the modeling and
 simulation of physiologically based kinetic (PBK) and quantitative
 systems pharmacology/toxicology (QSP/T) models implemented in the [Open
 Systems Pharmacology
