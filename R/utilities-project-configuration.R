@@ -55,7 +55,7 @@ init_project <- function(type = "new") {
 #' example_ProjectConfiguration()
 example_ProjectConfiguration <- function(){
   # for now it targets TestProject as it is both an example and a test project
-  esqlabsR_example("TestProject/Code/projectConfiguration.xlsx")
+  esqlabsR_example("TestProject/projectConfiguration.xlsx")
 }
 
 #' Get the path to tests' ProjectConfiguration.xlsx
@@ -67,6 +67,6 @@ example_ProjectConfiguration <- function(){
 #' test_ProjectConfiguration()
 test_ProjectConfiguration <- function(){
   # for now it targets TestProject as it is both an example and a test project
-  esqlabsR_example("TestProject/Code/projectConfiguration.xlsx")
+  esqlabsR_example("TestProject/projectConfiguration.xlsx")
 }
 
