@@ -101,14 +101,11 @@
 
     
     
-<div class="section level2">
-<h2 id="running-scenarios">Running scenarios<a class="anchor" aria-label="anchor" href="#running-scenarios"></a>
-</h2>
-<p>Running scenarios can be devided into three steps:</p>
+<p>Running scenarios can be divided into three steps:</p>
 <ol style="list-style-type: decimal">
-<li>creating the <code>ScenarioConfiguration</code> objects,</li>
-<li>creating the <code>Scenario</code> objects from configurations,</li>
-<li>running the scenarios.</li>
+<li>Creating the <code>ScenarioConfiguration</code> objects,</li>
+<li>Creating the <code>Scenario</code> objects from configurations,</li>
+<li>Running the scenarios.</li>
 </ol>
 <div class="section level3">
 <h3 id="creating-scenarioconfiguration-objects">Creating <code>ScenarioConfiguration</code> objects<a class="anchor" aria-label="anchor" href="#creating-scenarioconfiguration-objects"></a>
@@ -185,7 +182,7 @@ simulation by calling the <code>finalCustomParams</code> property:</p>
 <span><span class="co">#&gt; [1] ""       "ml/min" "mg"</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="running-scenarios-1">Running scenarios<a class="anchor" aria-label="anchor" href="#running-scenarios-1"></a>
+<h3 id="running-scenarios">Running scenarios<a class="anchor" aria-label="anchor" href="#running-scenarios"></a>
 </h3>
 <p>Once the <code>Scenario</code> objects are created, they can be
 simulated by calling the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function. The
@@ -199,19 +196,60 @@ if the scenario is a population simulation.</p>
 <span>  scenarios <span class="op">=</span> <span class="va">scenarios</span></span>
 <span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># Each simulation is stored separately inside the simulatedScenariosResults</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "TestScenario"</span></span></code></pre></div>
+<span></span>
+<span><span class="co"># Each simulation can be accessed using its name</span></span>
+<span><span class="va">simulatedScenariosResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">simulation</span></span>
+<span></span>
+<span><span class="co"># Of course, it contains simulated results as dataframe</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">outputValues</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># It also contains dataframe's metadata</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">outputValues</span><span class="op">$</span><span class="va">metaData</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "TestScenario"</span></span>
+<span><span class="co">#&gt; Simulation: </span></span>
+<span><span class="co">#&gt;    Name: Vergin 1995 IV </span></span>
+<span><span class="co">#&gt;    Source file: C:/Users/Felix/AppData/Local/R/win-library/4.3/esqlabsR/extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml </span></span>
+<span><span class="co">#&gt;   IndividualId Time</span></span>
+<span><span class="co">#&gt; 1            0    0</span></span>
+<span><span class="co">#&gt; 2            0    1</span></span>
+<span><span class="co">#&gt; 3            0    2</span></span>
+<span><span class="co">#&gt; 4            0    3</span></span>
+<span><span class="co">#&gt; 5            0    4</span></span>
+<span><span class="co">#&gt; 6            0    5</span></span>
+<span><span class="co">#&gt;   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span></span>
+<span><span class="co">#&gt; 1                                                                  0.000000</span></span>
+<span><span class="co">#&gt; 2                                                                  2.712699</span></span>
+<span><span class="co">#&gt; 3                                                                  7.829848</span></span>
+<span><span class="co">#&gt; 4                                                                 13.106704</span></span>
+<span><span class="co">#&gt; 5                                                                 18.253128</span></span>
+<span><span class="co">#&gt; 6                                                                 23.233686</span></span>
+<span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span>
+<span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`$unit</span></span>
+<span><span class="co">#&gt; [1] "µmol/l"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`$dimension</span></span>
+<span><span class="co">#&gt; [1] "Concentration (molar)"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $Time</span></span>
+<span><span class="co">#&gt; $Time$unit</span></span>
+<span><span class="co">#&gt; [1] "min"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $Time$dimension</span></span>
+<span><span class="co">#&gt; [1] "Time"</span></span></code></pre></div>
 <p>It is a good idea to store simulation results as <code>*.csv</code>
 along with simulations as <code>.*pkml</code> and, optionally, the used
 population as <code>*.csv</code> file and load them for further
 processing to avoid re-simulating every time e.g. a change to a figure
 showing the simulation results is required. The convenient function for
-saving results of a scenario run is
-<code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code>.</p>
-<p>For further information, check out the documentation of the functions
-<a href="https://esqlabs.github.io/esqlabsR/reference/saveScenarioResults"><code>saveScenarioResults()</code></a>
-and <a href="https://esqlabs.github.io/esqlabsR/reference/loadScenarioResults"><code>loadScenarioResults()</code></a>.</p>
-</div>
+saving results of a scenario run is <code>saveScenarioResults</code>.
+Then, you will be able to restore the results using
+<code>loadScenarioResults</code>.</p>
+<p>Now that the results were generated, you can proceed to the next step
+in <code><a href="../articles/esqlabsR-plot-results.html">vignette("esqlabsR-plot-results")</a></code>.
+<!-- To learn more about the options for running simulations, read the following sections. --></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
