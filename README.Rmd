@@ -29,7 +29,7 @@ library(dplyr)
 <!-- badges: end -->
 
 
-The `esqlabsR` package facilitates and standardizes the modeling and simulation of physiologically based pharmacokinetic (PBPK) and quantitative structure-property relationship (QSP) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/).  
+The `esqlabsR` package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/).  
 
 The esqlabsR package is designed for PBPK modelers using the OSPS suite. By using the esqlabsR package, you can streamline your modeling and simulation workflow and ensure standardized and reproducible practices.
 
