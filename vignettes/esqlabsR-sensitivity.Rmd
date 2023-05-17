@@ -20,7 +20,7 @@ library(esqlabsR)
 
 ```{r, echo = FALSE, results = "hide", message = FALSE}
 library(esqlabsR)
-projectConfiguration <- createDefaultProjectConfiguration(path = "../tests/data/TestProject/Code/ProjectConfiguration.xlsx")
+projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
 dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
 # Create `ScenarioConfiguration` objects from excel files

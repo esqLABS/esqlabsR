@@ -29,7 +29,7 @@ data as described in [Data handling](data-handling.html).
 ```{r, echo = TRUE, message = FALSE}
 library(esqlabsR)
 # Create a project configuration
-projectConfiguration <- createDefaultProjectConfiguration(path = "../tests/data/TestProject/Code/ProjectConfiguration.xlsx")
+projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   scenarioNames = "TestScenario",
