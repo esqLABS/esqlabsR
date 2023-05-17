@@ -182,7 +182,7 @@ my_datacombined <- DataCombined$new()
 Then, simulation result are added to the dataCombined object:
 
 ```{r}
-my_datacombined$addSimulationResults(my_simulation$TestScenario$results,
+my_datacombined$addSimulationResults(myScenarioResults$TestScenario$results,
                                      names = "Simulated",
                                      groups = "Aciclovir")
 ```
