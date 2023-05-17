@@ -18,14 +18,11 @@ library(esqlabsR)
 projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
 ```
 
+Running scenarios can be divided into three steps: 
 
-## Running scenarios {#running-scenarios}
-
-Running scenarios can be devided into three steps: 
-
-  1) creating the `ScenarioConfiguration` objects, 
-  2) creating the `Scenario` objects from configurations,
-  3) running the scenarios.
+  1. Creating the `ScenarioConfiguration` objects, 
+  2. Creating the `Scenario` objects from configurations,
+  3. Running the scenarios.
 
 ### Creating `ScenarioConfiguration` objects
 
@@ -66,14 +63,25 @@ scenarios$TestScenario$finalCustomParams
 
 Once the `Scenario` objects are created, they can be simulated by calling the `runScenarios()` function. The output of this function is a named list, where the names are scenario names, and the values are the lists of simulations, `SimulatioResults` produced by running the simulation, the output values of the `SimulationResults`, and the population if the scenario is a population simulation.
 
-```{r runScenarios}
+```{r runScenarios, results='hold'}
 simulatedScenariosResults <- runScenarios(
   scenarios = scenarios
 )
 
+# Each simulation is stored separately inside the simulatedScenariosResults
 names(simulatedScenariosResults)
+
+# Each simulation can be accessed using its name
+simulatedScenariosResults$TestScenario$simulation
+
+# Of course, it contains simulated results as dataframe
+head(simulatedScenariosResults$TestScenario$outputValues$data)
+
+# It also contains dataframe's metadata
+head(simulatedScenariosResults$TestScenario$outputValues$metaData)
 ```
 
-It is a good idea to store simulation results as `*.csv` along with simulations as `.*pkml` and, optionally, the used population as `*.csv` file and load them for further processing to avoid re-simulating every time e.g. a change to a figure showing the simulation results is required. The convenient function for saving results of a scenario run is `saveScenarioResults()`.
+It is a good idea to store simulation results as `*.csv` along with simulations as `.*pkml` and, optionally, the used population as `*.csv` file and load them for further processing to avoid re-simulating every time e.g. a change to a figure showing the simulation results is required. The convenient function for saving results of a scenario run is `saveScenarioResults`. Then, you will be able to restore the results using `loadScenarioResults`.
 
-For further information, check out the documentation of the functions [`saveScenarioResults()`](https://esqlabs.github.io/esqlabsR/reference/saveScenarioResults) and [`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/reference/loadScenarioResults).
+Now that the results were generated, you can proceed to the next step in `vignette("esqlabsR-plot-results")`.
+<!-- To learn more about the options for running simulations, read the following sections. -->

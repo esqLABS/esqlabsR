@@ -27,7 +27,7 @@ init_project(type = "demo")
 # or simply init_project() to create an empty folder structure and excel templates.
 ```
 
-It will create a set of directories and files that match the expected project's 
+This will create a set of directories and files that match the expected project's 
 structure.
 
 ```
@@ -80,8 +80,11 @@ Output folder: Results
 
 Now that the project structure is initialized and the `ProjectConfiguration` was 
 created, read `vignette("esqlabsR-design-simulations")` to continue the process.
+To learn more about ProjectConfiguration, read the following sections.
 
-## Change ProjectConfiguration from R
+## Details
+
+### Change ProjectConfiguration from R
 
 If required, you can change the location of one of the files or folders using relative or absolute path
 
@@ -94,9 +97,7 @@ projectConfiguration$modelParametersFile <- "absolute/path/to/anotherModelParame
 ```
 
 
-## Details
-
-### `ProjectConfiguration.xlsx`
+### About `ProjectConfiguration.xlsx`
 
 The `ProjectConfiguration.xlsx` file will be used by `esqlabsR` to generate a
 `ProjectConfiguration` object which is the central piece of a project.
