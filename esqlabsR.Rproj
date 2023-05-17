@@ -22,3 +22,6 @@ PackageRoxygenize: rd,collate,namespace
 
 QuitChildProcessesOnExit: Yes
 DisableExecuteRprofile: Yes
+
+MarkdownWrap: Column
+MarkdownWrapAtColumn: 72
