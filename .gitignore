@@ -53,4 +53,7 @@ revdep/data.sqlite
 tests/testthat/Rplots.pdf
 # {shinytest2}: Ignore new debug snapshots for `$expect_values()`
 *_.new.png
+# vscode configuration
 .vscode
+# notebook cache
+*_cache
