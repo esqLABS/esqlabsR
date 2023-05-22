@@ -1,6 +1,8 @@
 ---
 title: "Presentations"
 output: rmarkdown::html_vignette
+resource_files: 
+  - presentations/introduction-to-esqlabsR.html
 vignette: >
   %\VignetteIndexEntry{presentations}
   %\VignetteEngine{knitr::rmarkdown}
