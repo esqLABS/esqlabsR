@@ -1,26 +1,59 @@
 # install dependencies
 installationDeps <- function(installOption) {
   cat("Installing installation dependencies.\n")
-  
+
   # if user chose local installation, install renv and initialize it
   if (installOption == 1) {
     install.packages("renv")
-    renv::init(bare = TRUE, restart = FALSE)
+    require(renv)
+    init(bare = TRUE, restart = FALSE)
   }
-  install.packages("pkgbuild", quiet = TRUE)
-  install.packages("cli", quiet = TRUE)
-  install.packages("remotes", quiet = TRUE)
-  install.packages("rstudioapi", quiet = TRUE)
 
+  # Declare packages
+  packages <- c("cli","remotes","rstudioapi")
+
+  # Loop through each package
+  for (package in packages) {
+
+    # Install package
+    # Note: `installed.packages()` returns a vector of all the installed packages
+    if (!require(package,character.only = T, quietly = T)) {
+      # Install it
+      install.packages(
+        package,
+        dependencies = TRUE
+      )
+    }
+
+    # Load package
+    # Note: `.packages()` returns a vector of all the loaded packages
+    if (!(package %in% .packages())) {
+      # Load it
+      library(
+        package,
+        character.only = TRUE
+      )
+    }
+  }
+
+  # install.packages("pkgbuild", quiet = TRUE)
+  # install.packages("cli", quiet = TRUE)
+  # install.packages("remotes", quiet = TRUE)
+  # install.packages("rstudioapi", quiet = TRUE)
+
+  # require("pkgbuild")
+  # require("cli")
+  # require("remotes")
+  # require("rstudioapi")
 }
 
 # check if rtools is installed
 checkRtools <- function() {
   if (!pkgbuild::find_rtools()) {
-    cli::cli_alert_danger("Rtools is not installed. Please install it before continuing.")
-    cli::cli_alert_info("You can download Rtools from https://cran.r-project.org/bin/windows/Rtools/")
-    cli::cli_alert_info("Please install the latest version of Rtools.")
-    cli::cli_alert_info("After installing Rtools, please restart R and run this script again.")
+    cli_alert_danger("Rtools is not installed. Please install it before continuing.")
+    cli_alert_info("You can download Rtools from https://cran.r-project.org/bin/windows/Rtools/")
+    cli_alert_info("Please install the latest version of Rtools.")
+    cli_alert_info("After installing Rtools, please restart R and run this script again.")
     stop("Rtools is not installed.")
   }
 }
