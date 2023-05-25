@@ -25,25 +25,27 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 #' for folder and empty excel templates and `"example"` for an example.
 #' @export
 init_project <- function(destination = ".", type = "new") {
-
   destination <- fs::path_abs(destination)
 
-  rlang::arg_match(type, c("new","example"))
+  rlang::arg_match(type, c("new", "example"))
 
   source_folder <- switch(type,
-                          "new" = example_directory("NewProject"),
-                          "example" = example_directory("TestProject"))
+    "new" = example_directory("NewProject"),
+    "example" = example_directory("TestProject")
+  )
 
   for (dir in fs::dir_ls(source_folder, type = "directory")) {
     fs::dir_copy(dir,
-                 new_path = destination,
-                 overwrite = FALSE)
+      new_path = destination,
+      overwrite = FALSE
+    )
   }
 
   for (file in fs::dir_ls(source_folder, type = "file")) {
     fs::file_copy(file,
-                  new_path = destination,
-                  overwrite = FALSE)
+      new_path = destination,
+      overwrite = FALSE
+    )
   }
 }
 
@@ -57,7 +59,7 @@ init_project <- function(destination = ".", type = "new") {
 #'
 #' @examples
 #' example_ProjectConfiguration()
-example_ProjectConfiguration <- function(){
+example_ProjectConfiguration <- function() {
   # for now it targets TestProject as it is both an example and a test project
   file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
 }
@@ -67,8 +69,7 @@ example_ProjectConfiguration <- function(){
 #' @return a string representing the path to the ProjectConfiguration.xlsx file
 #' used as test.
 #' @keywords internal
-test_ProjectConfiguration <- function(){
+test_ProjectConfiguration <- function() {
   # for now it targets TestProject as it is both an example and a test project
   file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
 }
-

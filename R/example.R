@@ -7,8 +7,8 @@
 #' @keywords internal
 example_directory <- function(name = NULL) {
   if (is.null(path)) {
-    dir(system.file("extdata","examples", package = "esqlabsR"))
+    dir(system.file("extdata", "examples", package = "esqlabsR"))
   } else {
-    system.file("extdata","examples", name, package = "esqlabsR", mustWork = TRUE)
+    system.file("extdata", "examples", name, package = "esqlabsR", mustWork = TRUE)
   }
 }
