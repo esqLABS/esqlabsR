@@ -100,7 +100,7 @@ load_esqlabsR <- function(){
 run_test_simulation <- function() {
   # Run test simulation to verify installation
 
-  cli_progress_step("Runn test simulation.")
+  cli_progress_step("Run test simulation.")
 
   tryCatch(expr = {
     require(esqlabsR)
@@ -186,7 +186,6 @@ restart_rstudio <- function() {
   }
 }
 
-# Main installation script
 setup_esqlabsR <- function() {
   # Display a menu asking if user wants to install packages in local env or  globally
   install_option <- utils::menu(c("In local environment (available for one project)", "In Glocal environment (available for all projects)"),
@@ -211,5 +210,5 @@ setup_esqlabsR <- function() {
 
 }
 
-# run installation function
+# Run this function to setup esqlabsR
 setup_esqlabsR()
