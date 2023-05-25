@@ -2,8 +2,7 @@ install_script_deps <- function(install_option) {
 
   # install dependencies required for this script
 
-  cat("Install prerequisite dependencies.\n")
-
+  cat("Install prerequisite dependencies\n")
   # if user chose local installation, install renv and initialize it
   if (install_option == 1) {
     install.packages("renv")
@@ -23,7 +22,8 @@ install_script_deps <- function(install_option) {
       # Install it
       install.packages(
         package,
-        dependencies = TRUE
+        dependencies = TRUE,
+        quiet = TRUE
       )
     }
 
@@ -37,8 +37,7 @@ install_script_deps <- function(install_option) {
       )
     }
   }
-
-  cli_alert_success(text = "Prerequesite dependencies available.")
+  cli_alert_success("Install prerequisite dependencies")
 }
 
 check_RTools <- function() {
@@ -50,6 +49,7 @@ check_RTools <- function() {
     cli_alert_info("After installing Rtools, please restart R and run this script again.")
     stop("Rtools is not installed.")
   }
+  cli_progress_done(result = "done")
 }
 
 get_PKSim_Minimal <- function(install_option) {
@@ -71,6 +71,8 @@ get_PKSim_Minimal <- function(install_option) {
 
     snapshot(prompt = FALSE)
 
+    cli_progress_done(result = "done")
+
   }
 
 
@@ -89,12 +91,16 @@ get_esqlabsR <- function(){
                  quiet = TRUE,
                  build = TRUE
   )
+
+  cli_progress_done(result = "done")
 }
 
 load_esqlabsR <- function(){
   cli_progress_step("Load esqlabsR")
   # test if installed packages can be loaded
   library("esqlabsR")
+
+  cli_progress_done(result = "done")
 }
 
 run_test_simulation <- function() {
@@ -135,14 +141,18 @@ run_test_simulation <- function() {
 }
 
 initialize_project <- function(){
+
   initialize_option <- utils::menu(c("Yes", "No"),
                                    title = "Do you want to initialize project folder structure ?"
   )
+
   if (initialize_option == 1) {
+    cli_progress_step("Initialize project structure")
     init_project(destination = "../")
+    update_project_conf_file()
+    cli_progress_done(result = "done")
   }
 
-  update_project_conf_file()
 }
 
 update_project_conf_file <- function(){
