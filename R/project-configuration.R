@@ -263,6 +263,32 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Compound Properties File", fs::path_rel(as.character(self$compoundPropertiesFile)))
       private$printLine("Output folder", fs::path_rel(as.character(self$outputFolder)))
       invisible(self)
+    },
+    #' Save ProjectConfiguration object to ProjectConfiguration.xlsx
+    #'
+    #' @export
+    save = function() {
+      excel_file <- readExcel(path = self$projectConfigurationFilePath)
+
+      for (prop in excel_file$Property) {
+        path <- ""
+
+        if (!is.null(self[[prop]])) {
+          if (fs::is_dir(self[[prop]])) {
+            # if property is a directory, save relative path from ProjectConf dir
+            path <- fs::path_rel(
+              path = self[[prop]],
+              start = self$projectConfigurationDirPath
+            )
+          } else if (fs::is_file(self[[prop]])) {
+            # if property is a file, then save only its name
+            path <- basename(self[[prop]])
+          }
+        }
+
+        excel_file[excel_file$Property == prop, ]$Value <- path
+      }
+      writeExcel(excel_file, path = self$projectConfigurationFilePath)
     }
   )
 )
