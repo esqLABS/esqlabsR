@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 
-esqlabsR's projects are organized in a 4 steps process:
+esqlabsR's projects are set up in a four steps process:
 
 1. Initialize Project
 2. Design Scenarios
@@ -29,8 +29,8 @@ you fine tune your simulation and plots using simple code and excel files.
 ![esqlabsR Workflow](Figures/esqlabs-workflow.png)
 
 ## 1. Project initialization
-This first step is here to initialize the specific directories and file 
-structure that esqlabsR needs.
+This first step is to initialize the specific directories and file 
+structure required for the workflows.
 
 The output is a `ProjectConfiguration` object that will be used 
 in many steps during the rest of the process.
@@ -38,22 +38,18 @@ in many steps during the rest of the process.
 Learn more in `vignette("esqlabsR-project-structure")`.
 
 ## 2. Design Scenarios
-In esqlabsR, simulations are defined as *scenarios*, which are setup during this
-step. During this process, you will be able to setup all the parameters and 
-options so you can build any simulation scenario you want.
+In esqlabsR, simulations are defined as *scenarios*, which are set up during this
+step.
 
 Learn more in `vignette("esqlabsR-design-scenarios")`.
 
 ## 3. Run Simulations
-This is where esqlabsR will interact with the {ospsuite} to run simulations.
-
-At the end of this step, you will get your simulation results.
+After scenarios have been set up, the simulations are run, and the results are returned.
 
 Learn more in `vignette("esqlabsR-run-simulations")`.
 
 ## 4. Plot Results
-esqlabsR also integrate convenient and automated ways to generate plots and 
-compose plotgrids from simulation results.
+`esqlabsR` implements convenient and automated ways to generate various plots for visual representation of simulation results.
 
 Learn more in `vignette("esqlabsR-plot-results")`.
 

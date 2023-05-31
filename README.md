@@ -48,7 +48,7 @@ install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/dow
 remotes::install_github("esqLABS/esqlabsR")
 ```
 
-Note: For projects created for version 3 of `esqlabsR` package, install
+Note: For projects created for version 3 of `{esqlabsR}` package, install
 [`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
 
 ## Usage
