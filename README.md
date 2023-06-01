@@ -15,10 +15,10 @@ The `{esqlabsR}` package facilitates and standardizes the modeling and
 simulation of physiologically based kinetic (PBK) and quantitative
 systems pharmacology/toxicology (QSP/T) models implemented in the [Open
 Systems Pharmacology
-Software](https://www.open-systems-pharmacology.org/).
+Software](https://www.open-systems-pharmacology.org/) (OSPS).
 
-The esqlabsR package is designed for PBK modelers using the OSPS suite.
-By using the esqlabsR package, you can streamline your modeling and
+The `{esqlabsR}` package is designed for PBK modelers who use the OSPS
+suite. By using this package, you can streamline your modeling and
 simulation (M&S) workflow and ensure standardized and reproducible
 practices.
 
@@ -32,6 +32,9 @@ To get started with the esqlabsR package, please read the
 `vignette("esqlabsR")`.
 
 ## Installation
+
+Currently, esqlabsR is available only for Windows system. You can
+install the package by running:
 
 ``` r
 # {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on
@@ -48,7 +51,7 @@ install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/dow
 remotes::install_github("esqLABS/esqlabsR")
 ```
 
-Note: For projects created for version 3 of `{esqlabsR}` package, install
+Note: For projects created for version 3 of `esqlabsR` package, install
 [`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
 
 ## Usage
@@ -108,7 +111,8 @@ the specific topics:
 
 ## Related Work
 
-`esqlabsR` relies on the following Open Systems Pharmacology R packages:
+`{esqlabsR}` relies on the following Open Systems Pharmacology R
+packages:
 
 - [rClr](https://github.com/Open-Systems-Pharmacology/rClr/)
 - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)

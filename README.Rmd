@@ -46,6 +46,8 @@ To get started with the esqlabsR package, please read the `vignette("esqlabsR")`
 
 ## Installation
 
+Currently, esqlabsR is available only for Windows system. You can install the package by running:
+
 ```{r, eval=FALSE}
 # {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on
 # {rClr} (https://github.com/Open-Systems-Pharmacology/rClr) which is not
