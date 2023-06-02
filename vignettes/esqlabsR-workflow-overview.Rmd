@@ -56,8 +56,3 @@ esqlabsR also integrate convenient and automated ways to generate plots and
 compose plotgrids from simulation results.
 
 Learn more in `vignette("esqlabsR-plot-results")`.
-
-
-
-
-

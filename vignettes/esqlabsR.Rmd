@@ -23,20 +23,17 @@ showtext::showtext_opts(dpi = 300)
 
 ## Introduction
 
-We designed `{esqlabsR}` to make life easier for OSPS users. To achieve
-this, we streamlined the workflow relying on these simple concepts :
+`{esqlabsR}` is designed to make life easier for OSPS users. The workflows implemented 
+in this package rely on simple concepts:
 
--   `{esqlabsR}` uses a predefined project folder structure,
--   `{esqlabsR}` uses excel files as a convenient way to inputs
-    parameters and define simulation scenarios.
+-   a predefined project folder structure,
+-   Excel files for definition of simulation scenarios out outputs.
 
 ## Initialize Project
 
-The major way `{esqlabsR}` facilitate modeling and simulation with OSPS
-is the adoption of a project structure based on Excel files. These
-templates are where all the parameters for running simulations, compute
-results and generating plots are defined. They are organized in
-different folders and their structure must not be altered.
+`{esqlabsR}` facilitates modeling and simulation workflows with OSPS relying on 
+a well defined project structure based on Excel files. These files are organized
+in different folders and their structure must not be altered.
 
 A new project folder can be initialized with the `init_project()`
 function.
@@ -48,20 +45,12 @@ init_project(type = "example")
 # or simply init_project() to create an empty folder structure and excel templates.
 ```
 
-It will create the expected simulation project's folder structure:
-
-``` sh
-simulation_project/
-├── ProjectConfiguration.xlsx
-├── Data
-├── Models
-├── Parameters
-└── Results
-```
+It will create the expected simulation project's folder structure, which is described 
+in details in `vignette("esqlabsR-project-structure")`.
 
 Each one of these folders contains a series of `.xlsx` files with
 specific purpose. They are all linked to the project through the
-`ProjectConfiguration.xlsx` file.
+`ProjectConfiguration.xlsx` file located in the root of the project folder.
 
 This file defines *where* all the necessary files are stored in the
 project folder. This file is already preconfigured and should not be changed in
@@ -106,29 +95,25 @@ Scenario definitions file name: Parameters/Scenarios.xlsx
 Note that the `ProjectConfiguration` stores paths to other files that
 are used in the project.
 
-For more information about esqlabsR's project structure, read
-`vignette("esqlabsR-project-structure")`.
-
 ## Design Scenarios
 
 Now that the project's file structure is ready, the next step is to run
 simulations. In `{esqlabsR}`, simulation are run by defining and
 executing multiple **scenarios**.
 
-To modify, add or delete a scenario, we edit the
-`Parameters/Scenarios.xslx` file. Each row of this file is a scenario.
-Each Column is a parameter that will be used to define the scenarios.
+To modify, add or delete a scenario, edit the
+`Parameters/Scenarios.xslx` file. Each row of this file defines a simulation scenario.
 
-Here are the main parameters that can be set for a scenario:
+The main properties that can be defined for a scenario are:
 
 -   `ModelFile` is the name of the `.pkml` file that can be found in the
     `Models/` directory.
--   `ModelParameterSheets` is the name of the *sheet* in
-    `Parameters/ModelParameters.xlsx` that contains the parameters to
+-   `ModelParameterSheets` are the names of the *sheets* in
+    `Parameters/ModelParameters.xlsx` that contain the parameters to
     apply to the model,
 -   `ApplicationProtocol` is the name of the *sheet* in
     `Parameters/ApplicationParameters.xlsx` that specify the simulated
-    drug administration protocol,
+    administration protocol,
 -   `SimulationTime` and `SimulationTimeUnit` define the time range to
     simulate, it should be three numbers for `{start, end, resolution}`
 -   `Individuald`: the id of the individual to simulate. The id and
@@ -136,7 +121,7 @@ Here are the main parameters that can be set for a scenario:
     `Parameters/Individuals.xlsx`,
 -   `PopulationId`: the id of the *population* to simulate. The id and
     settings for populations are defined in
-    `Parameters/PopulationParameters.xlsx`,
+    `Parameters/PopulationParameters.xlsx`.
 
 Note that multiple aspects of a simulation scenario are defined in other
 excel files, and the `Scenarios.xslx` file links to the specific sheets
@@ -155,9 +140,9 @@ read `vignette("esqlabsR-design-scenarios")`.
 
 ## Run Scenarios
 
-Once all the scenario properties are setup in the excel files, we can
-import the scenarios them using `createScenarios()` and
-`readScenarioConfigurationFromExcel()`:
+Once all the scenario properties are set up in the excel files, we can
+import `ScenarioConfiguration` using `readScenarioConfigurationFromExcel()` and create 
+`Scenario` objects with `createScenarios()`:
 
 ```{r, echo=FALSE, warning=FALSE, message = FALSE}
 my_project_configuration <- createDefaultProjectConfiguration(path = example_ProjectConfiguration())
@@ -229,8 +214,8 @@ plotIndividualTimeProfile(my_datacombined)
 ```
 
 In some cases, we also want to plot the observed experimental data
-(stored in `Data/`). DataCombined also has the abilitity to store
-observed dataset for them to be plotted.
+(stored in `Data/`). `DataCombined` also has the ability to store
+observed data for them to be plotted.
 
 ```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
 observed_data <- loadObservedData(
