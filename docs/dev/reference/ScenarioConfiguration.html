@@ -18,24 +18,26 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item">
+      <ul class="navbar-nav me-auto"><li class="nav-item">
+  <a class="nav-link" href="../articles/esqlabsR.html">Get started</a>
+</li>
+<li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <div class="dropdown-divider"></div>
-    <h6 class="dropdown-header" data-toc-skip>Running simulations</h6>
-    <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
-    <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
-    <div class="dropdown-divider"></div>
-    <h6 class="dropdown-header" data-toc-skip>Processing data</h6>
-    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
-    <a class="dropdown-item" href="../articles/visualization-and-reporting.html">Visualization and reporting</a>
+    <h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6>
+    <a class="dropdown-item" href="../articles/esqlabsR-workflow-overview.html">Overview</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-project-structure.html">1. Initialize a Project</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-design-scenarios.html">2. Design Scenarios</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-run-simulations.html">3. Run Simulations</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-plot-results.html">4. Plot Results</a>
     <div class="dropdown-divider"></div>
     <h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6>
-    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a>
   </div>
 </li>
 <li class="nav-item">
@@ -121,12 +123,15 @@ from a csv.</p></dd>
 
 
 <dt><code>simulationTime</code></dt>
-<dd><p>Simulation time in minutes. If <code>NULL</code> (default),
-simulation time as defined in the <code>Simulation</code> object will be used.</p></dd>
+<dd><p>Specified simulation time intervals. If <code>NULL</code> (default),
+simulation time as defined in the <code>Simulation</code> object will be used.
+Accepted are multiple time intervals separated by a ';'. Each time interval
+is a triplet of values &lt;StartTime, EndTime, Resolution&gt;, where <code>Resolution</code> is the number of
+simulated points per time unit defined in the column <code>TimeUnit</code>.</p></dd>
 
 
-<dt><code>pointsPerMinute</code></dt>
-<dd><p>Resolution of the outputs in points per minute</p></dd>
+<dt><code>simulationTimeUnit</code></dt>
+<dd><p>Unit of the simulation time intervals.</p></dd>
 
 
 <dt><code>steadyStateTime</code></dt>
@@ -222,13 +227,13 @@ If <code>NULL</code> (default), all sheets are removed</p></dd>
 <h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
 <p>Print the object to the console</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ScenarioConfiguration</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ScenarioConfiguration</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>...</code></dt>
-<dd><p>Rest arguments.</p></dd>
+<p></p><div class="arguments"><dl><dt><code>projectConfiguration</code></dt>
+<dd><p>Whether to also print project configuration. default to TRUE.</p></dd>
 
 
 </dl><p></p></div>

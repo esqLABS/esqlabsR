@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# esqlabsR <a href="https://esqlabs.github.io/esqlabsR"><img src="man/figures/logo.png" align="right" height="138" /></a>
+# esqlabsR <a href="https://esqlabs.github.io/esqlabsR"><img src="man/figures/logo.png" align="right" width="120" /></a>
 
 <!-- badges: start -->
 
@@ -11,20 +11,30 @@ status](https://ci.appveyor.com/api/projects/status/github/esqlabs/esqlabsr?bran
 
 <!-- badges: end -->
 
-## Overview
+The `{esqlabsR}` package facilitates and standardizes the modeling and
+simulation of physiologically based kinetic (PBK) and quantitative
+systems pharmacology/toxicology (QSP/T) models implemented in the [Open
+Systems Pharmacology
+Software](https://www.open-systems-pharmacology.org/) (OSPS).
 
-The goal of **{esqlabsR}** is to facilitate and standardize **modeling
-and simulation** (M&S) of **PBPK** and **QSP** models implemented in
-[Open Systems Pharmacology
-Software](https://www.open-systems-pharmacology.org/) and executed from
-R. The package provides functions to read and run scenarios, workflows,
-and simulations. Additionally, it generates visualizations based on
-non-code input from Excel files. By utilizing {esqlabsR} for your M&S
-needs, you can streamline your workflow and ensure standardized data
-practices. Learn more about the **{esqlabsR}**’s workflow in
-`vignette("standard-workflow")`.
+The `{esqlabsR}` package is designed for PBK modelers who use the OSPS
+suite. By using this package, you can streamline your modeling and
+simulation (M&S) workflow and ensure standardized and reproducible
+practices.
+
+The package provides functions to:
+
+- Design, import and run Simulations,
+- Generate standardized plots and other reporting materials,
+- Interact with the OSPS features using simple Excel files.
+
+To get started with the esqlabsR package, please read the
+`vignette("esqlabsR")`.
 
 ## Installation
+
+Currently, esqlabsR is available only for Windows system. You can
+install the package by running:
 
 ``` r
 # {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on
@@ -34,67 +44,70 @@ practices. Learn more about the **{esqlabsR}**’s workflow in
 
 install.packages("remotes")
 install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip",
-  repos = NULL,
-  type = "binary"
+                 repos = NULL,
+                 type = "binary"
 )
 
 remotes::install_github("esqLABS/esqlabsR")
 ```
 
-### For projects created for version 3
-
-To run code written for version 3 of `esqlabsR` package, additionally
-install the [esqlabsRLegacy](https://github.com/esqLABS/esqlabsRLegacy)
-package.
+Note: For projects created for version 3 of `esqlabsR` package, install
+[`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
 
 ## Usage
 
 ``` r
+# load esqlabsR
 library(esqlabsR)
 
-my_project_configuration <- createDefaultProjectConfiguration(path = "tests/data/TestProject/Code/ProjectConfiguration.xlsx")
+# Load excel-based configuration
+my_project_configuration <- 
+  createDefaultProjectConfiguration(example_ProjectConfiguration())
 
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = "TestScenario",
-  projectConfiguration = my_project_configuration
+
+# Setup simulation scenarios
+my_scenarios <- 
+  createScenarios(
+    readScenarioConfigurationFromExcel( # Read scenarios from excel file
+      scenarioNames = "TestScenario", # Import the scenario defined as "TestScenario" 
+                                      # in the excel file
+      projectConfiguration = my_project_configuration
+    )
+  )
+
+# Run simulations
+my_simulation <- runScenarios(
+  scenarios = my_scenarios
 )
 
+# Initialize a `DataCombined` object to store simulation results
+my_datacombined <- DataCombined$new()
 
-scenarios <- createScenarios(scenarioConfigurations)
+my_datacombined$addSimulationResults(my_simulation$TestScenario$results,
+                                     names = "Simulated",
+                                     groups = "Aciclovir")
 
-simulatedScenariosResults <- runScenarios(
-  scenarios = scenarios
-)
+# Plot simulation results
+plotIndividualTimeProfile(my_datacombined)
 ```
 
-in esqlabsR, simulations are run by defining and executing multiple
-scenarios. A scenario is defined by:
+<img src="man/figures/README-unnamed-chunk-4-1.png" width="80%" style="display: block; margin: auto;" />
 
-- The model,
-- The parameterization of the model,
-- The application protocol,
-- \[optional\] The physiology of the individual or population.
+## Learn More
 
-All these inputs can be setup in a collection excel files with
-predefined structures.
+To get started, first read `vignette("esqlabsR")`. Then read more about
+the specific topics:
 
-The package includes an example scenario that models the administration
-of a single dose of 250 mg aciclovir intravenously to an individual with
-a 90 ml/min estimated glomerular filtration rate. Here is a preview of
-it content:
-
-<div class="kable-table">
-
-| Scenario_name             | IndividualId | PopulationId   | ApplicationProtocol | ModelFile      | ModelParameterSheets |
-|:--------------------------|:-------------|:---------------|:--------------------|:---------------|:---------------------|
-| TestScenario              | Indiv1       | NA             | Aciclovir_iv_250mg  | Aciclovir.pkml | Global               |
-| TestScenario2             | Indiv        | NA             | Aciclovir_iv_250mg  | Aciclovir.pkml | Global               |
-| PopulationScenario        | Indiv        | TestPopulation | Aciclovir_iv_250mg  | Aciclovir.pkml | Global               |
-| PopulationScenarioFromCSV | Indiv        | TestPopulation | Aciclovir_iv_250mg  | Aciclovir.pkml | Global               |
-
-</div>
-
-All these variables are linking to other
+- Start with `vignette("esqlabsR-workflow-overview")` to learn about the
+  esqlabsR’s streamlined workflow.
+- `vignette("esqlabsR-project-structure")` details the structure and
+  purpose of each component file and directory of an esqlabsR project.
+- `vignette("esqlabsR-design-scenarios")` explains how you can design
+  your own simulations only using excel files.
+- `vignette("esqlabsR-run-simulations")` describes all you need to know
+  to run your customized simulations.
+- `vignette("esqlabsR-plot-results")` explains how to generate
+  visualizations from simulations.
 
 ## Related Work
 

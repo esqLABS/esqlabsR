@@ -3,7 +3,6 @@ doc
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
-
 # Folder config file
 Desktop.ini
 # Recycle Bin used on file shares
@@ -54,3 +53,4 @@ revdep/data.sqlite
 tests/testthat/Rplots.pdf
 # {shinytest2}: Ignore new debug snapshots for `$expect_values()`
 *_.new.png
+.vscode

@@ -1,0 +1,228 @@
+---
+title: "4. Plot Results"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{esqlabsR-plot-results}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Plotting the simulation results is an integral part of model diagnostics
+and quality control. Simulated modeling scenarios can be passed to
+plotting functions from the `{ospsuite}` package to create
+uniformly-looking plots. To get familiar with the `DataCombined` class
+used to store matching observed and simulated data, read the [Working
+with `DataCombined`
+class](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined.html)
+article. The article [Visualizations with
+`DataCombined`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined-plotting.html)
+covers the basics of creating supported plot types and how to customize
+them.
+
+For the following examples, we will simulate an example scenario as
+described in [Standard workflow](standard-workflow.html) and load the
+corresponding observed data as described in [Data
+handling](data-handling.html).
+
+```{r, echo = TRUE, message = FALSE}
+library(esqlabsR)
+# Create a project configuration
+projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = "TestScenario",
+  projectConfiguration = projectConfiguration
+)
+# Run scenario configuration
+scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+simulatedScenarios <- runScenarios(
+  scenarios = scenarios
+)
+
+# Load observed data
+dataSheets <- "Laskin 1982.Group A"
+observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+```
+
+## Create a `DataCombined` object
+
+The simulation results are stored in a list returned by the
+`runScenarios()` function. Plotting and visualization are performed by
+storing these results, matching observed data in a `DataCombined`
+object, and passing it to plotting functions. Observed data in the form
+of `DataSet` objects are added to a `DataCombined` object via the
+`addDataSets()` function, and simulated results can be added by using
+the `addSimulationResults()` function. Observed and simulated data can
+be linked by setting the `groups` argument in both methods. Data sets of
+the same group will then be plotted together when calling plotting
+functions on the `DataCombined` object.
+
+Let's create a `DataCombined` object and populate it with data with the
+following code:
+
+```{r datacombined}
+dataCombined <- DataCombined$new()
+dataCombined$addDataSets(observedData, names = "Observed", groups = "Aciclovir")
+dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
+  names = "Simulated",
+  groups = "Aciclovir"
+)
+```
+
+## Customize and generate plots
+
+Customization of the generated figures - specifying title, axes ranges,
+axes units, the position of the legend, etc., are done through *plot
+configurations* - objects of the class
+[`DefaultPlotConfiguration`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html).
+To combine multiple plots into a multi-panel figure, create a
+`PlotGridConfiguration` object, add plots to it, and plot with the
+`plotGrid()` method. Finally, to export a plot to a file (e.g., `PNG` or
+`PDF`), use an `ExportConfiguration` object.
+
+To use configurations with a similar look and feel in the different
+`esqLABS` projects, create the configurations using the following
+functions:
+
+-   [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html)
+-   [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html)
+-   [`createEsqlabsExportConfiguration(projectConfiguration)`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html)
+
+For the list of supported properties of the `PlotGirdConfiguration`,
+refer to the
+[reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
+
+The next example shows how to create a multi-panel figure using the
+default configurations.
+
+```{r plot-time-profile, fig.width=7, fig.height=7}
+plotConfig <- createEsqlabsPlotConfiguration()
+gridConfig <- createEsqlabsPlotGridConfiguration()
+
+plotConfig$title <- "Time profile"
+indivPlot <- plotIndividualTimeProfile(dataCombined, defaultPlotConfiguration = plotConfig)
+
+plotConfig$title <- "Observed-vs-simulated"
+obsVsSimPlot <- plotObservedVsSimulated(dataCombined, defaultPlotConfiguration = plotConfig)
+
+plotConfig$title <- "Res-vs-time"
+resVsTimePlot <- plotResidualsVsTime(dataCombined, defaultPlotConfiguration = plotConfig)
+
+plotConfig$title <- "Res-vs-simulated"
+resVsSimPlot <- plotResidualsVsSimulated(dataCombined, defaultPlotConfiguration = plotConfig)
+
+gridConfig$addPlots(list(indivPlot, obsVsSimPlot, resVsTimePlot, resVsSimPlot))
+gridConfig$title <- "All aciclovir plots"
+gridPlot <- plotGrid(gridConfig)
+gridPlot
+```
+
+## Save Plots
+
+To save the plot to a `PNG` file, use the
+[`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html).
+Make sure that the `fileName` argument ends with `.png`:
+
+```{r saveToPng, eval = FALSE}
+exportConfig <- createEsqlabsExportConfiguration(projectConfiguration)
+exportConfig$savePlot(gridPlot, fileName = "All plots.png")
+```
+
+## Details
+
+### Observed Data
+
+The modeling and simulation workflow involves running simulations and
+comparing simulated data against observed data. Functionalities of
+`esqlabsR` require observed data to be present as
+[`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
+objects. Please refer to the article [Observed
+data](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html)
+for information on loading data from Excel or `*.pkml` files.
+
+`{esqlabsR}` offers a convenience function `loadObservedData()` that
+facilitates loading data in standard *esqLABS* projects. Assuming the
+standard project folder structure is followed, and a valid
+`ProjectConfiguration` (see [Standard workflow](standard-workflow.html))
+and Excel files with observed data are present in the
+`projectConfiguration$dataFolder` folder, the following code loads the
+data:
+
+```{r loadObservedData}
+projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
+dataSheets <- "Laskin 1982.Group A"
+observedData <- loadObservedData(
+  projectConfiguration = projectConfiguration,
+  sheets = dataSheets
+)
+
+print(names(observedData))
+```
+
+The function loads the data from the file
+`projectConfiguration$dataFile` from the folder
+`projectConfiguration$dataFolder` and returns a list of `DataSet`
+objects. The resulting object will be used later to [plot
+results](example-visualization.html) to compare simulated and observed
+data.
+
+-   The `sheets` argument of the `loadObservedData()` function should be
+    a string or a list of strings. If a specified sheet is not found in
+    the file, it will be omitted with a warning; the `observedData`
+    variable may be an empty named list.
+
+-   If the data file specified in `projectConfiguration$dataFile` is
+    missing in the filesystem, the `loadObservedData()` function will
+    fail with an `Invalid File` message.
+
+### Troubleshooting
+
+-   At any time, you can check the groups assigned to the datasets in
+    the `DataCombined` object by calling the `DataCombined$groupMap` or
+    by examining the output of `dataCombined$toDataFrame()`.
+
+More detailed information on function signatures can be found in the
+following:
+
+-   `ospsuite` documentation on:
+    -   [loadDataImporterConfiguration()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html)
+    -   [DataImporterConfiguration
+        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataImporterConfiguration.html)
+    -   [createImporterConfigurationForFile()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/createImporterConfigurationForFile.html)
+    -   [DataSet
+        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
+    -   [dataSetToDataFrame()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/dataSetToDataFrame.html)
+    -   [loadDataSetsFromExcel()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html)
+    -   [loadDataSetFromPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetFromPKML.html)
+    -   [saveDataSetToPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/saveDataSetToPKML.html)
+    -   [`DataCombined`
+        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html)
+    -   [`plotIndividualTimeProfile()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html)
+    -   [`plotObservedVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html)
+    -   [`plotResidualsVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html)
+    -   [`plotResidualsVsTime()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html)
+-   `tlf` documentation on:
+    -   [`PlotGridConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
+    -   [`plotGrid()`](https://www.open-systems-pharmacology.org/TLF-Library/reference/plotGrid.html)
+    -   [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
+
+<!-- ### Troubleshooting -->
+
+<!-- More detailed information on function signatures can be found in: -->
+
+<!-- -   `esqlabsR` documentation on: -->
+
+<!-- -   [createDefaultProjectConfiguration()](https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html) -->
+
+<!-- -   [ProjectConfiguration class](https://esqlabs.github.io/esqlabsR/reference/ProjectConfiguration.html) -->
+
+<!-- -   [loadObservedData()](https://esqlabs.github.io/esqlabsR/reference/loadObservedData.html) -->
+
+<!-- -   `ospsuite` documentation on: -->
