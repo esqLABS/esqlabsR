@@ -12,12 +12,9 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-```
 
-```{r setup}
 library(esqlabsR)
 ```
-
 
 
 ## Object-oriented approach
