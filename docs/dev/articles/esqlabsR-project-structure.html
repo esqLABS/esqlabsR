@@ -104,63 +104,60 @@
 <div class="section level2">
 <h2 id="initialize-the-project-structure">Initialize the Project Structure<a class="anchor" aria-label="anchor" href="#initialize-the-project-structure"></a>
 </h2>
-<p>Project Structure can be initialized with
-<code>init_project</code>.</p>
+<p>Project Structure can be initialized by calling the function
+<code><a href="../reference/init_project.html">init_project()</a></code>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/init_project.html">init_project</a></span><span class="op">(</span>type <span class="op">=</span> <span class="st">"demo"</span><span class="op">)</span></span>
-<span><span class="co"># or simply init_project() to create an empty folder structure and excel templates.</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/init_project.html">init_project</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>This will create a set of directories and files that match the
 expected project’s structure.</p>
-<pre><code>my_project
-├── ProjectConfiguration.xlsx
-├── Data
-├── Models
-├── Parameters
-│   ├── ApplicationParameters.xlsx
-│   ├── Individuals.xlsx
-│   ├── ModelParameters.xlsx
-│   ├── Plots.xlsx
-│   ├── PopulationParameters.xlsx
-│   ├── Populations
-│   │   └── PopulationScenario_population.csv
-│   └── Scenarios.xlsx
-└── Results
-    ├── Figures
-    └── SimulationResults
-</code></pre>
+<pre><code><span><span class="co">#&gt; <span style="color: #0000BB; font-weight: bold;">C:/Users/PavelBalazki/AppData/Local/R/win-library/4.2/esqlabsR/extdata/examples/TestProject</span></span></span>
+<span><span class="co">#&gt; ├── <span style="color: #0000BB; font-weight: bold;">Code</span></span></span>
+<span><span class="co">#&gt; │   ├── <span style="color: #0000BB; font-weight: bold;">DoNotSource</span></span></span>
+<span><span class="co">#&gt; │   ├── <span style="color: #0000BB; font-weight: bold;">InputCode</span></span></span>
+<span><span class="co">#&gt; │   ├── <span style="color: #0000BB; font-weight: bold;">Scenarios</span></span></span>
+<span><span class="co">#&gt; │   ├── <span style="color: #0000BB; font-weight: bold;">utils</span></span></span>
+<span><span class="co">#&gt; │   └── V00.01.Rproj</span></span>
+<span><span class="co">#&gt; ├── <span style="color: #0000BB; font-weight: bold;">Data</span></span></span>
+<span><span class="co">#&gt; │   ├── esqlabs_dataImporter_configuration.xml</span></span>
+<span><span class="co">#&gt; │   ├── <span style="color: #0000BB; font-weight: bold;">PKML</span></span></span>
+<span><span class="co">#&gt; │   └── TestProject_TimeValuesData.xlsx</span></span>
+<span><span class="co">#&gt; ├── <span style="color: #0000BB; font-weight: bold;">Models</span></span></span>
+<span><span class="co">#&gt; │   ├── <span style="color: #0000BB; font-weight: bold;">PKML</span></span></span>
+<span><span class="co">#&gt; │   ├── <span style="color: #0000BB; font-weight: bold;">Simulations</span></span></span>
+<span><span class="co">#&gt; │   │   └── Aciclovir.pkml</span></span>
+<span><span class="co">#&gt; │   └── <span style="color: #0000BB; font-weight: bold;">Snapshots</span></span></span>
+<span><span class="co">#&gt; ├── <span style="color: #0000BB; font-weight: bold;">Parameters</span></span></span>
+<span><span class="co">#&gt; │   ├── ApplicationParameters.xlsx</span></span>
+<span><span class="co">#&gt; │   ├── Individuals.xlsx</span></span>
+<span><span class="co">#&gt; │   ├── ModelParameters.xlsx</span></span>
+<span><span class="co">#&gt; │   ├── Plots.xlsx</span></span>
+<span><span class="co">#&gt; │   ├── PopulationParameters.xlsx</span></span>
+<span><span class="co">#&gt; │   ├── <span style="color: #0000BB; font-weight: bold;">Populations</span></span></span>
+<span><span class="co">#&gt; │   │   └── PopulationScenario_population.csv</span></span>
+<span><span class="co">#&gt; │   └── Scenarios.xlsx</span></span>
+<span><span class="co">#&gt; ├── ProjectConfiguration.xlsx</span></span>
+<span><span class="co">#&gt; └── <span style="color: #0000BB; font-weight: bold;">Results</span></span></span>
+<span><span class="co">#&gt;     ├── <span style="color: #0000BB; font-weight: bold;">Figures</span></span></span>
+<span><span class="co">#&gt;     └── <span style="color: #0000BB; font-weight: bold;">SimulationResults</span></span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="create-a-projectconfiguration">Create a ProjectConfiguration<a class="anchor" aria-label="anchor" href="#create-a-projectconfiguration"></a>
 </h2>
-<p>The ProjectConfiguration is crucial for esqlabsR project since it
-describes the paths to the model, excel, data files and directories. It
-will be used at several steps in the process so it needs to be created
-before performing any simulations.</p>
+<p>The <code>ProjectConfiguration</code> stores the paths to the model-,
+data-, and other files and directories. It will be used at several steps
+in <code>esqlabsR</code> workflows so it needs to be created before
+performing any simulations.</p>
+<p>By printing the <code>ProjectConfiguration</code>, we can see the
+locations of all files used in the workflows:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<pre><code>ProjectConfiguration: 
-Relative path from working directory: C:/[path]/TestProject
-Project Configuration File: Code/ProjectConfiguration.xlsx 
-Model folder: Models/Simulations 
-Parameters folder: Parameters 
-Parameters file name: Parameters/ModelParameters.xlsx 
-Individual parameters file name: Parameters/Individuals.xlsx 
-Population parameters file name: Parameters/PopulationParameters.xlsx
-Scenario definitions file name: Parameters/Scenarios.xlsx
-Scenario applications definitions file name: Parameters/ApplicationParameters.xlsx
-Plot definitions file name: Parameters/Plots.xlsx
-Experimental data folder: Data
-Experimental data file: Data/TestProject_TimeValuesData.xlsx
-Data importer configuration: Data/esqlabs_dataImporter_configuration.xml
-Compound Properties File: Data/Compound Properties.xlsx
-Output folder: Results</code></pre>
 <p>Now that the project structure is initialized and the
-<code>ProjectConfiguration</code> was created, read
+<code>ProjectConfiguration</code> is created, read
 <code><a href="../articles/esqlabsR-design-scenarios.html">vignette("esqlabsR-design-scenarios")</a></code> to continue the
-process. To learn more about ProjectConfiguration, read the following
-sections.</p>
+process. To learn more about <code>ProjectConfiguration</code>, read the
+following sections.</p>
 </div>
 <div class="section level2">
 <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a>
@@ -169,8 +166,8 @@ sections.</p>
 <h3 id="change-projectconfiguration-from-r">Change ProjectConfiguration from R<a class="anchor" aria-label="anchor" href="#change-projectconfiguration-from-r"></a>
 </h3>
 <p>If required, you can change the location of one of the files or
-folders using relative or absolute path</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+folders using relative or absolute paths</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># change the location of the output folder</span></span>
 <span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="st">"../anotherOutputFolder"</span></span>
 <span></span>
@@ -182,15 +179,16 @@ folders using relative or absolute path</p>
 </h3>
 <p>The <code>ProjectConfiguration.xlsx</code> file will be used by
 <code>esqlabsR</code> to generate a <code>ProjectConfiguration</code>
-object which is the central piece of a project.</p>
+object which is the central piece of a project. It should be located in
+the root folder of the project.</p>
 <p>This file defines <em>where</em> all the necessary files are stored
 in the project folder. All the path specified in the <code>Value</code>
 column should be <em>relative</em> to the
 <code>ProjectConfiguration.xlsx</code> location.</p>
-<p>All these directories and file have a specific purpose and template
+<p>All these directories and files have a specific purpose and template
 and are describe in next sections.</p>
-<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-816ae523345212ec2776" style="width:auto;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-816ae523345212ec2776">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Property":["modelFolder","paramsFolder","paramsFile","individualsFile","populationParamsFile","scenarioDefinitionFile","scenarioApplicationsFile","plotsFile","dataFolder","dataFile","dataImporterConfigurationFile","compoundPropertiesFile","outputFolder"],"Value":["Models/Simulations","Parameters","ModelParameters.xlsx","Individuals.xlsx","PopulationParameters.xlsx","Scenarios.xlsx","ApplicationParameters.xlsx","Plots.xlsx","Data","TestProject_TimeValuesData.xlsx","esqlabs_dataImporter_configuration.xml","Compound Properties.xlsx","Results"],"Description":["Path to the folder with pkml simulation files; relative to the \"Code\" folder","Path to the folder with excel files with parametrization; relative to the \"Code\" folder.","Name of the excel file with global model parametrization. Must be located in the \"paramsFolder\"","Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\"","Name of the excel file with population information. Must be located in the \"paramsFolder\"","Name of the excel file with scenario definitions. Must be located in the \"paramsFolder\"","Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"paramsFolder\"","Name of the excel file with plot definitions. Must be located in the \"paramsFolder\"","Path to the folder where experimental data files are located; relative to the \"Code\" folder","Name of the excel file with experimental data. Must be located in the \"dataFolder\"","Name of data importer configuration file in xml format used to load the data. Must be located in the \"dataFolder\"","Path to the excel file containing information about all compounds in the model. Must be located in the \"dataFolder\"","Path to the folder where the results should be saved to; relative to the \"Code\" folder"]},"columns":[{"id":"Property","name":"Property","type":"character","minWidth":50},{"id":"Value","name":"Value","type":"character","show":false},{"id":"Description","name":"Description","type":"character","minWidth":100}],"pagination":false,"highlight":true,"outlined":true,"dataKey":"6a6875ec5cafca2132c6b4f0b5e0d757"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><!-- #### `Data/` --><!-- The `Data/` folder should contain all the Excel files with observed experimental  --><!-- data. --><!-- #### `Models/` --><!-- The `Models/` folder should contain all the `.pkml` files generated with the  --><!-- OSPS suite. --><!-- #### `Parameters/` --><!-- The `Parameters/` folder contains all the main Excel templates that serve as  --><!-- inputs to parameterize the simulations, plot outputs *etc.* --><!-- #### `Results/` --><!-- The `Results/` is where Figures and SimulationResults outputs generated by --><!-- `esqlabsR` will be written by default. -->
+<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-90c78aa0bc89ebf0de72" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-90c78aa0bc89ebf0de72">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Property":["modelFolder","paramsFolder","paramsFile","individualsFile","populationParamsFile","scenarioDefinitionFile","scenarioApplicationsFile","plotsFile","dataFolder","dataFile","dataImporterConfigurationFile","compoundPropertiesFile","outputFolder"],"Value":["Models/Simulations","Parameters","ModelParameters.xlsx","Individuals.xlsx","PopulationParameters.xlsx","Scenarios.xlsx","ApplicationParameters.xlsx","Plots.xlsx","Data","TestProject_TimeValuesData.xlsx","esqlabs_dataImporter_configuration.xml",null,"Results"],"Description":["Path to the folder with pkml simulation files; relative to the location of this file","Path to the folder with excel files with parametrization; relative to the location of this file","Name of the excel file with global model parametrization. Must be located in the \"paramsFolder\"","Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\"","Name of the excel file with population information. Must be located in the \"paramsFolder\"","Name of the excel file with scenario definitions. Must be located in the \"paramsFolder\"","Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"paramsFolder\"","Name of the excel file with plot definitions. Must be located in the \"paramsFolder\"","Path to the folder where experimental data files are located; relative to the location of this file","Name of the excel file with experimental data. Must be located in the \"dataFolder\"","Name of data importer configuration file in xml format used to load the data. Must be located in the \"dataFolder\"","Path to the excel file containing information about all compounds in the model. Must be located in the \"dataFolder\"","Path to the folder where the results should be saved to; relative to the location of this file"]},"columns":[{"id":"Property","name":"Property","type":"character","minWidth":50},{"id":"Value","name":"Value","type":"character","show":false},{"id":"Description","name":"Description","type":"character","minWidth":100}],"pagination":false,"highlight":true,"outlined":true,"dataKey":"67802ed2e5b629f114de6c6a4e4d3e46"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><!-- #### `Data/` --><!-- The `Data/` folder should contain all the Excel files with observed experimental  --><!-- data. --><!-- #### `Models/` --><!-- The `Models/` folder should contain all the `.pkml` files generated with the  --><!-- OSPS suite. --><!-- #### `Parameters/` --><!-- The `Parameters/` folder contains all the main Excel templates that serve as  --><!-- inputs to parameterize the simulations, plot outputs *etc.* --><!-- #### `Results/` --><!-- The `Results/` is where Figures and SimulationResults outputs generated by --><!-- `esqlabsR` will be written by default. -->
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

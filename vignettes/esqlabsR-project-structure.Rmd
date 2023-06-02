@@ -18,75 +18,43 @@ library(esqlabsR)
 
 ## Initialize the Project Structure
 
-Project Structure can be initialized with `init_project`.
+Project Structure can be initialized by calling the function `init_project()`.
 
 ```{r, eval=FALSE, message = FALSE}
 library(esqlabsR)
 
-init_project(type = "demo")
-# or simply init_project() to create an empty folder structure and excel templates.
+init_project()
 ```
 
 This will create a set of directories and files that match the expected project's 
 structure.
 
-```
-my_project
-├── ProjectConfiguration.xlsx
-├── Data
-├── Models
-├── Parameters
-│   ├── ApplicationParameters.xlsx
-│   ├── Individuals.xlsx
-│   ├── ModelParameters.xlsx
-│   ├── Plots.xlsx
-│   ├── PopulationParameters.xlsx
-│   ├── Populations
-│   │   └── PopulationScenario_population.csv
-│   └── Scenarios.xlsx
-└── Results
-    ├── Figures
-    └── SimulationResults
 
+```{r, echo = FALSE}
+fs::dir_tree(path = esqlabsR:::example_directory("TestProject"), glob = "*.md|*.R", invert = TRUE)
 ```
 ## Create a ProjectConfiguration
 
-The ProjectConfiguration is crucial for esqlabsR project since it describes
-the paths to the model, excel, data files and directories. It will be used
-at several steps in the process so it needs to be created before performing
-any simulations.
+The `ProjectConfiguration` stores the paths to the model-, data-, and other files
+and directories. It will be used at several steps in `esqlabsR` workflows so it 
+needs to be created before performing any simulations.
 
-```{r, eval = FALSE}
+By printing the `ProjectConfiguration`, we can see the locations of all files 
+used in the workflows:
+
+```{r, eval = TRUE}
 my_project_configuration <- createDefaultProjectConfiguration(path = example_ProjectConfiguration())
 ```
-```
-ProjectConfiguration: 
-Relative path from working directory: C:/[path]/TestProject
-Project Configuration File: Code/ProjectConfiguration.xlsx 
-Model folder: Models/Simulations 
-Parameters folder: Parameters 
-Parameters file name: Parameters/ModelParameters.xlsx 
-Individual parameters file name: Parameters/Individuals.xlsx 
-Population parameters file name: Parameters/PopulationParameters.xlsx
-Scenario definitions file name: Parameters/Scenarios.xlsx
-Scenario applications definitions file name: Parameters/ApplicationParameters.xlsx
-Plot definitions file name: Parameters/Plots.xlsx
-Experimental data folder: Data
-Experimental data file: Data/TestProject_TimeValuesData.xlsx
-Data importer configuration: Data/esqlabs_dataImporter_configuration.xml
-Compound Properties File: Data/Compound Properties.xlsx
-Output folder: Results
-```
 
-Now that the project structure is initialized and the `ProjectConfiguration` was 
+Now that the project structure is initialized and the `ProjectConfiguration` is 
 created, read `vignette("esqlabsR-design-scenarios")` to continue the process.
-To learn more about ProjectConfiguration, read the following sections.
+To learn more about `ProjectConfiguration`, read the following sections.
 
 ## Details
 
 ### Change ProjectConfiguration from R
 
-If required, you can change the location of one of the files or folders using relative or absolute path
+If required, you can change the location of one of the files or folders using relative or absolute paths
 
 ```{r, eval=FALSE}
 # change the location of the output folder
@@ -100,17 +68,17 @@ projectConfiguration$modelParametersFile <- "absolute/path/to/anotherModelParame
 ### About `ProjectConfiguration.xlsx`
 
 The `ProjectConfiguration.xlsx` file will be used by `esqlabsR` to generate a
-`ProjectConfiguration` object which is the central piece of a project.
+`ProjectConfiguration` object which is the central piece of a project. It should 
+be located in the root folder of the project.
 
 This file defines *where* all the necessary files are stored in the project 
 folder. All the path specified in the `Value` column should be *relative* to the
 `ProjectConfiguration.xlsx` location.
 
-All these directories and file have a specific purpose and template and are 
+All these directories and files have a specific purpose and template and are 
 describe in next sections.
 
 ```{r, echo = FALSE}
-# TODO Fix the "Description" text in excel file (not relative to Code folder anymore)
 ProjectConfiguration_excel <- readxl::read_xlsx(example_ProjectConfiguration())
 
 reactable::reactable(ProjectConfiguration_excel,

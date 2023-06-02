@@ -19,15 +19,14 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 #' Creates the default project folder structure with excels file templates in
 #' the working directory.
 #'
-#' @param type A string defining the type of initialization. `"new"`
-#' for folder and empty excel templates and `"example"` for an example.
+#' @param type A string defining the type of initialization. Currently, only `"example"`
+#' is supported and will create an example project.
 #' @export
-init_project <- function(type = "new") {
+init_project <- function(type = "example") {
 
-  rlang::arg_match(type, c("new","example"))
+  rlang::arg_match(type, c("example"))
 
   source_folder <- switch(type,
-                          "new" = example_directory("NewProject"),
                           "example" = example_directory("TestProject"))
 
   for (dir in fs::dir_ls(source_folder, type = "directory")) {

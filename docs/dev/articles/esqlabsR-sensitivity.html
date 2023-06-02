@@ -107,9 +107,6 @@
 <span><span class="co">#&gt; Loading required package: rClr</span></span>
 <span><span class="co">#&gt; Loading the dynamic library for Microsoft .NET runtime...</span></span>
 <span><span class="co">#&gt; Loaded Common Language Runtime version 4.0.30319.42000</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; Warning in private$.clean_path(value, self$dataFolder, must_work):</span></span>
-<span><span class="co">#&gt; C:/Users/Felix/AppData/Local/Temp/RtmpWaLKOJ/temp_libpath7684279699f/esqlabsR/extdata/examples/TestProject/Data/Compound</span></span>
-<span><span class="co">#&gt; Properties.xlsx does not exist</span></span></code></pre>
 <div class="section level3">
 <h3 id="workflow">Workflow<a class="anchor" aria-label="anchor" href="#workflow"></a>
 </h3>
@@ -133,7 +130,7 @@ with output paths for which the sensitivity has been calculated, paths
 of parameters that have been varied, a <code>SimulationResults</code>
 object, and a data frame with calculated PK parameters for each of the
 input parameter values.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">simulation</span></span>
 <span><span class="va">OutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/enum.html" class="external-link">enum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  Aciclovir_PVB <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
@@ -171,7 +168,7 @@ changes in area under the curve (<code>AUC_inf</code>), maximum
 concentration (<code>C_max</code>), and time when the maximum
 concentration is reached (<code>t_max</code>).</li>
 </ul>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Creating plot for path: Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span></code></pre></div>
 <p><img src="esqlabsR-sensitivity_files/figure-html/spider-plot-1.png" width="672"></p>
@@ -179,7 +176,7 @@ concentration is reached (<code>t_max</code>).</li>
 <li>the <code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> function plots the
 concentration profile for each of the input parameter values:</li>
 </ul>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Creating plot for path: Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span></code></pre></div>
 <p><img src="esqlabsR-sensitivity_files/figure-html/time-profile-1.png" width="672"></p>

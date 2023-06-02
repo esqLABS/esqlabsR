@@ -4,11 +4,11 @@
 \alias{init_project}
 \title{Initialize esqlabsR Project Folder}
 \usage{
-init_project(type = "new")
+init_project(type = "example")
 }
 \arguments{
-\item{type}{A string defining the type of initialization. \code{"new"}
-for folder and empty excel templates and \code{"example"} for an example.}
+\item{type}{A string defining the type of initialization. Currently, only \code{"example"}
+is supported and will create an example project.}
 }
 \description{
 Creates the default project folder structure with excels file templates in

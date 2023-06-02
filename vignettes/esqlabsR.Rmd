@@ -41,8 +41,7 @@ function.
 ```{r, eval=FALSE}
 library(esqlabsR)
 
-init_project(type = "example")
-# or simply init_project() to create an empty folder structure and excel templates.
+init_project()
 ```
 
 It will create the expected simulation project's folder structure, which is described 
