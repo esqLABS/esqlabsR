@@ -111,16 +111,16 @@
 <h3 id="creating-scenarioconfiguration-objects">Creating <code>ScenarioConfiguration</code> objects<a class="anchor" aria-label="anchor" href="#creating-scenarioconfiguration-objects"></a>
 </h3>
 <p>A <code>ScenarioConfiguration</code> object holds all information
-about a scenario that is defined in the excel files. Though it is
+about a scenario that is defined in the Excel files. Though it is
 possible to create an empty <code>ScenarioConfiguration</code> and
 populate it by hand, we usually want to create scenario configurations
-from the excel files by calling the
+from the Excel files by calling the
 <code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> function. A
 <code>ScenarioConfiguration</code> is based on the
 <code>ProjectConfiguration</code>, which has to be provided as an
-argument to the function. To read create the configuration for the
+argument to the function. To create the configuration for the
 <em>‘TestScenario’</em> scenario defined in the
-<code>Scenarios.xlsx</code> file, we call</p>
+<code>Scenarios.xlsx</code> file, we call:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
 <span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
@@ -146,7 +146,7 @@ argument to the function. To read create the configuration for the
 <p>Alternatively, we can create configurations for all scenarios defined
 in the <code>Scenarios.xlsx</code> by calling
 <code>readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)</code>
-without specifying scenarios’ names.</p>
+without specifying the scenarios’ names.</p>
 </div>
 <div class="section level3">
 <h3 id="creating-scenario-objects-from-configurations">Creating <code>Scenario</code> objects from configurations<a class="anchor" aria-label="anchor" href="#creating-scenario-objects-from-configurations"></a>
@@ -155,12 +155,12 @@ without specifying scenarios’ names.</p>
 objects can be created from them. A <code>Scenario</code> object
 contains the fully parametrized simulation, the <code>Population</code>
 object in case of a population simulation, the underlying
-<code>ScenarioConfiguration</code> object, and the list of all user
-defined parameters.</p>
-<p>During model development/fitting phase, you might want to test out
+<code>ScenarioConfiguration</code> object, and the list of all
+user-defined parameters.</p>
+<p>During the model development/fitting phase, you might want to test
 parameter values before storing them in the <code>Parameters</code>
-excel files. You can define the paths of the test parameters, their
-values and the units in the <code>TestParameters</code> file and pass
+Excel files. You can define the paths of the test parameters, their
+values, and the units in the <code>TestParameters</code> file and pass
 them as <code>customParams</code> argument to the
 <code><a href="../reference/createScenarios.html">createScenarios()</a></code> function.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -210,7 +210,7 @@ if the scenario is a population simulation.</p>
 <span><span class="co">#&gt; [1] "TestScenario"</span></span>
 <span><span class="co">#&gt; Simulation: </span></span>
 <span><span class="co">#&gt;    Name: Vergin 1995 IV </span></span>
-<span><span class="co">#&gt;    Source file: C:/Users/Felix/AppData/Local/Temp/RtmpWaLKOJ/temp_libpath7684279699f/esqlabsR/extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml </span></span>
+<span><span class="co">#&gt;    Source file: C:/Users/Felix/AppData/Local/Temp/RtmpCIzDkb/temp_libpath83546728870/esqlabsR/extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml </span></span>
 <span><span class="co">#&gt;   IndividualId Time</span></span>
 <span><span class="co">#&gt; 1            0    0</span></span>
 <span><span class="co">#&gt; 2            0    1</span></span>
@@ -220,11 +220,11 @@ if the scenario is a population simulation.</p>
 <span><span class="co">#&gt; 6            0    5</span></span>
 <span><span class="co">#&gt;   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span></span>
 <span><span class="co">#&gt; 1                                                                  0.000000</span></span>
-<span><span class="co">#&gt; 2                                                                  2.713010</span></span>
-<span><span class="co">#&gt; 3                                                                  7.830177</span></span>
-<span><span class="co">#&gt; 4                                                                 13.106917</span></span>
-<span><span class="co">#&gt; 5                                                                 18.253193</span></span>
-<span><span class="co">#&gt; 6                                                                 23.233595</span></span>
+<span><span class="co">#&gt; 2                                                                  2.713115</span></span>
+<span><span class="co">#&gt; 3                                                                  7.830478</span></span>
+<span><span class="co">#&gt; 4                                                                 13.107437</span></span>
+<span><span class="co">#&gt; 5                                                                 18.253973</span></span>
+<span><span class="co">#&gt; 6                                                                 23.234667</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`$unit</span></span>
 <span><span class="co">#&gt; [1] "µmol/l"</span></span>
@@ -240,16 +240,16 @@ if the scenario is a population simulation.</p>
 <span><span class="co">#&gt; $Time$dimension</span></span>
 <span><span class="co">#&gt; [1] "Time"</span></span></code></pre></div>
 <p>It is a good idea to store simulation results as <code>*.csv</code>
-along with simulations as <code>.*pkml</code> and, optionally, the used
-population as <code>*.csv</code> file and load them for further
-processing to avoid re-simulating every time e.g. a change to a figure
+along with simulations as <code>.*pkml</code> and, optionally, the
+applied population as <code>*.csv</code> file and load them for further
+processing to avoid re-simulating every time, e.g., a change to a figure
 showing the simulation results is required. The convenient function for
-saving results of a scenario run is <code>saveScenarioResults</code>.
-Then, you will be able to restore the results using
-<code>loadScenarioResults</code>.</p>
-<p>Now that the results were generated, you can proceed to the next step
-in <code><a href="../articles/esqlabsR-plot-results.html">vignette("esqlabsR-plot-results")</a></code>.
-<!-- To learn more about the options for running simulations, read the following sections. --></p>
+saving the results of a scenario run is
+<code>saveScenarioResults</code>. Then, you will be able to restore the
+results using <code>loadScenarioResults</code>.</p>
+<p>Now that the results have been generated, you can proceed to the next
+step in the <code><a href="../articles/esqlabsR-plot-results.html">vignette("esqlabsR-plot-results")</a></code>.
+<!-- Read the following sections to learn more about the options for running simulations. --></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
