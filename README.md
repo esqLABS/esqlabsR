@@ -15,10 +15,10 @@ The `{esqlabsR}` package facilitates and standardizes the modeling and
 simulation of physiologically based kinetic (PBK) and quantitative
 systems pharmacology/toxicology (QSP/T) models implemented in the [Open
 Systems Pharmacology
-Software](https://www.open-systems-pharmacology.org/).
+Software](https://www.open-systems-pharmacology.org/) (OSPS).
 
-The esqlabsR package is designed for PBK modelers using the OSPS suite.
-By using the esqlabsR package, you can streamline your modeling and
+The `{esqlabsR}` package is designed for PBK modelers who use the OSPS
+suite. By using this package, you can streamline your modeling and
 simulation (M&S) workflow and ensure standardized and reproducible
 practices.
 
@@ -31,7 +31,16 @@ The package provides functions to:
 To get started with the esqlabsR package, please read the
 `vignette("esqlabsR")`.
 
-## Installation
+The package provides functions to:
+
+- Design, import and run Simulations,
+- Generate standardized plots and other reporting materials,
+- Interact with the OSPS features using simple Excel files.
+
+# \## Installation
+
+Currently, esqlabsR is available only for Windows system. You can
+install the package by running:
 
 ``` r
 # {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on
@@ -41,8 +50,8 @@ To get started with the esqlabsR package, please read the
 
 install.packages("remotes")
 install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip",
-  repos = NULL,
-  type = "binary"
+                 repos = NULL,
+                 type = "binary"
 )
 
 remotes::install_github("esqLABS/esqlabsR")
@@ -58,24 +67,20 @@ Note: For projects created for version 3 of `esqlabsR` package, install
 library(esqlabsR)
 
 # Load excel-based configuration
-my_project_configuration <-
+my_project_configuration <- 
   createDefaultProjectConfiguration(example_ProjectConfiguration())
 
-
 # Setup simulation scenarios
-my_scenarios <-
+my_scenarios <- 
   createScenarios(
     readScenarioConfigurationFromExcel( # Read scenarios from excel file
-      scenarioNames = "TestScenario", # Import the scenario defined as "TestScenario"
-      # in the excel file
+      scenarioNames = "TestScenario", # Import the scenario defined as "TestScenario" 
+                                      # in the excel file
       projectConfiguration = my_project_configuration
     )
   )
 
-# Run simulations
-my_simulation <- runScenarios(
-  scenarios = my_scenarios
-)
+my_simulation <- runScenarios(my_scenarios)
 
 # Initialize a `DataCombined` object to store simulation results
 my_datacombined <- DataCombined$new()
@@ -109,7 +114,8 @@ the specific topics:
 
 ## Related Work
 
-`esqlabsR` relies on the following Open Systems Pharmacology R packages:
+`{esqlabsR}` relies on the following Open Systems Pharmacology R
+packages:
 
 - [rClr](https://github.com/Open-Systems-Pharmacology/rClr/)
 - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
