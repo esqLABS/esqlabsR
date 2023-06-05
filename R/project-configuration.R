@@ -264,10 +264,11 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Output folder", fs::path_rel(as.character(self$outputFolder)))
       invisible(self)
     },
-    #' Save ProjectConfiguration object to ProjectConfiguration.xlsx
+    #' @description Export ProjectConfiguration object to ProjectConfiguration.xlsx
     #'
     #' @export
     save = function() {
+
       excel_file <- readExcel(path = self$projectConfigurationFilePath)
 
       for (prop in excel_file$Property) {
