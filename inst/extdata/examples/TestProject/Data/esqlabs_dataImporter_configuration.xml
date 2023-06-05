@@ -1,9 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<<<<<<< HEAD
-<ImporterConfiguration fileName="D:\Documents\esqlabs GmbH\Quality Management - Documents\Level 4 Work Instructions\Data Templates\DT04_v02.01_ProjName_TimeValuesData.xlsx" namingConventions="{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}" version="15">
-=======
 <ImporterConfiguration fileName="" namingConventions="{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}" version="15">
->>>>>>> 5020742007f556a25e3510d263fbabb3e29f0184
   <Parameters>
     <MappingDataFormatParameter columnName="Time">
       <MappedColumn name="Time">

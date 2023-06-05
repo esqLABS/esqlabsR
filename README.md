@@ -31,13 +31,7 @@ The package provides functions to:
 To get started with the esqlabsR package, please read the
 `vignette("esqlabsR")`.
 
-The package provides functions to:
-
-- Design, import and run Simulations,
-- Generate standardized plots and other reporting materials,
-- Interact with the OSPS features using simple Excel files.
-
-# \## Installation
+## Installation
 
 Currently, esqlabsR is available only for Windows system. You can
 install the package by running:
@@ -70,6 +64,7 @@ library(esqlabsR)
 my_project_configuration <- 
   createDefaultProjectConfiguration(example_ProjectConfiguration())
 
+
 # Setup simulation scenarios
 my_scenarios <- 
   createScenarios(
@@ -80,15 +75,17 @@ my_scenarios <-
     )
   )
 
-my_simulation <- runScenarios(my_scenarios)
+# Run simulations
+my_simulation <- runScenarios(
+  scenarios = my_scenarios
+)
 
 # Initialize a `DataCombined` object to store simulation results
 my_datacombined <- DataCombined$new()
 
 my_datacombined$addSimulationResults(my_simulation$TestScenario$results,
-  names = "Simulated",
-  groups = "Aciclovir"
-)
+                                     names = "Simulated",
+                                     groups = "Aciclovir")
 
 # Plot simulation results
 plotIndividualTimeProfile(my_datacombined)
