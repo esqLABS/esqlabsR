@@ -4,9 +4,12 @@
 \alias{init_project}
 \title{Initialize esqlabsR Project Folder}
 \usage{
-init_project(type = "new")
+init_project(destination = ".", type = "new")
 }
 \arguments{
+\item{destination}{A string defining the path where to initialize the project.
+default to current working directory.}
+
 \item{type}{A string defining the type of initialization. \code{"new"}
 for folder and empty excel templates and \code{"example"} for an example.}
 }
