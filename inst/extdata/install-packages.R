@@ -67,7 +67,7 @@ get_PKSim_Minimal <- function(install_option) {
 
     cli_progress_step("Verify PKSim installation")
     # test if PK-Sim.R dll can be loaded
-    initPKSim()
+    ospsuite::initPKSim(pksimFolderPath = "PKSim")
 
     snapshot(prompt = FALSE)
 
@@ -206,9 +206,10 @@ setup_esqlabsR <- function() {
 
   check_RTools()
 
-  get_PKSim_Minimal(install_option)
 
   get_esqlabsR()
+
+  get_PKSim_Minimal(install_option)
 
   load_esqlabsR()
 
