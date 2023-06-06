@@ -21,16 +21,13 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 #'
 #' @param destination A string defining the path where to initialize the project.
 #' default to current working directory.
-#' @param type A string defining the type of initialization. `"new"`
-#' for folder and empty excel templates and `"example"` for an example.
 #' @export
-init_project <- function(destination = ".", type = "new") {
+init_project <- function(destination = ".") {
   destination <- fs::path_abs(destination)
 
-  rlang::arg_match(type, c("new", "example"))
+  type = "example"
 
   source_folder <- switch(type,
-    "new" = example_directory("NewProject"),
     "example" = example_directory("TestProject")
   )
 
