@@ -97,6 +97,8 @@ get_esqlabsR <- function(){
 
 load_esqlabsR <- function(){
   cli_progress_step("Load esqlabsR")
+  unloadNamespace(ns = "esqlabsR")
+  unloadNamespace(ns = "ospsuite.parameteridentification")
   # test if installed packages can be loaded
   library("esqlabsR")
 
@@ -205,7 +207,6 @@ setup_esqlabsR <- function() {
   install_script_deps(install_option)
 
   check_RTools()
-
 
   get_esqlabsR()
 
