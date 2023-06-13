@@ -17,16 +17,12 @@ development:
 
 reference:
 
-  - title: Sensitivity analysis
-    #desc:
-    contents:
-      - starts_with("sensitivity")
-
   - title: Project workflow
     contents:
       - contains("Project")
       - contains("Scenario")
       - createPlotsFromExcel
+      - init_project
 
   - title: Helpers for data import, wrangling, and export
     #desc:
@@ -73,6 +69,11 @@ reference:
       - contains("Types")
       - escapeForRegex
 
+  - title: Sensitivity analysis
+    #desc:
+    contents:
+      - starts_with("sensitivity")
+
   - title: Shiny applications
     #desc:
     contents:
@@ -90,24 +91,17 @@ reference:
       - esqlabsRSettingNames
 
 articles:
-  - title: Introduction
-    navbar:
+  - title: esqlabsR Workflow
+    navbar: esqlabsR Workflow
     contents:
-      - introduction-esqlabsr
-  - title: Running simulations
-    navbar: Running simulations
-    desc: Articles about how to run simulations
-    contents:
-      - standard-workflow
-      - sensitivity-analysis
-  - title: Processing data
-    navbar: Processing data
-    desc: Articles about how to process and analyse data
-    contents:
-      - data-handling
-      - visualization-and-reporting
+      - esqlabsR-workflow-overview
+      - esqlabsR-project-structure
+      - esqlabsR-design-scenarios
+      - esqlabsR-run-simulations
+      - esqlabsR-plot-results
   - title: Miscellaneous
     navbar: Miscellaneous
-  #desc:
     contents:
-      - shiny-apps
+      - esqlabsR-sensitivity
+      - esqlabsR-shiny
+      - esqlabsR-advanced

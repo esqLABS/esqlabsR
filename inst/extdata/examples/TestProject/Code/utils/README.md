@@ -1,0 +1,1 @@
+Set of useful functions that are not part of the esqlabsR package yet.

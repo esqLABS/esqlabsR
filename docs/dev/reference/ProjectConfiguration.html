@@ -18,24 +18,26 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item">
+      <ul class="navbar-nav me-auto"><li class="nav-item">
+  <a class="nav-link" href="../articles/esqlabsR.html">Get started</a>
+</li>
+<li class="active nav-item">
   <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <div class="dropdown-divider"></div>
-    <h6 class="dropdown-header" data-toc-skip>Running simulations</h6>
-    <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
-    <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
-    <div class="dropdown-divider"></div>
-    <h6 class="dropdown-header" data-toc-skip>Processing data</h6>
-    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
-    <a class="dropdown-item" href="../articles/visualization-and-reporting.html">Visualization and reporting</a>
+    <h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6>
+    <a class="dropdown-item" href="../articles/esqlabsR-workflow-overview.html">Overview</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-project-structure.html">1. Initialize a Project</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-design-scenarios.html">2. Design Scenarios</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-run-simulations.html">3. Run Simulations</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-plot-results.html">4. Plot Results</a>
     <div class="dropdown-divider"></div>
     <h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6>
-    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a>
   </div>
 </li>
 <li class="nav-item">
@@ -72,42 +74,56 @@
     <p><code><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/Printable.html" class="external-link">ospsuite.utils::Printable</a></code> -&gt; <code>ProjectConfiguration</code></p>
     </div>
     <div class="section level2">
-    <h2 id="public-fields">Public fields<a class="anchor" aria-label="anchor" href="#public-fields"></a></h2>
-    <p></p><div class="r6-fields"><dl><dt><code>modelFolder</code></dt>
-<dd><p>Path to the folder with pkml simulation files;
-relative to the "Code" folder.</p></dd>
+    <h2 id="active-bindings">Active bindings<a class="anchor" aria-label="anchor" href="#active-bindings"></a></h2>
+    <p></p><div class="r6-active-bindings"><dl><dt><code>projectConfigurationFilePath</code></dt>
+<dd><p>Path to the file that serve as base
+path for other parameters. If NULL, then, other paths should be absolute
+paths.</p></dd>
+
+
+<dt><code>projectConfigurationDirPath</code></dt>
+<dd><p>Path to the folder that serve as base
+path for other paths. If NULL, then, other paths should be absolute
+paths.</p></dd>
+
+
+<dt><code>modelFolder</code></dt>
+<dd><p>Path to the folder containing pkml simulation files.</p></dd>
 
 
 <dt><code>paramsFolder</code></dt>
-<dd><p>Path to the folder with excel files with
-parametrization; relative to the "Code" folder.</p></dd>
+<dd><p>Path to the folder containing excel files with model
+parameterization;</p></dd>
 
 
 <dt><code>paramsFile</code></dt>
 <dd><p>Name of the excel file with global model
-parametrization. Must be located in the "paramsFolder".</p></dd>
+parameterization.
+Must be located in the "paramsFolder".</p></dd>
 
 
 <dt><code>individualsFile</code></dt>
 <dd><p>Name of the excel file with
-individual-specific model parametrization. Must be located in the
-"paramsFolder"</p></dd>
+individual-specific model parameterization.
+Must be located in the "paramsFolder"</p></dd>
 
 
 <dt><code>populationParamsFile</code></dt>
 <dd><p>Name of the excel file with population
-information. Must be located in the "paramsFolder".</p></dd>
+information.
+Must be located in the "paramsFolder".</p></dd>
 
 
 <dt><code>scenarioDefinitionFile</code></dt>
 <dd><p>Name of the excel file with scenario
-definitions. Must be located in the "paramsFolder".</p></dd>
+definitions.
+Must be located in the "paramsFolder".</p></dd>
 
 
 <dt><code>scenarioApplicationsFile</code></dt>
 <dd><p>Name of the excel file scenario-specific
-parameters such as application protocol parameters. Must be located in
-the "paramsFolder".</p></dd>
+parameters such as application protocol parameters.
+Must be located in the "paramsFolder".</p></dd>
 
 
 <dt><code>plotsFile</code></dt>
@@ -116,26 +132,31 @@ Must be located in the "paramsFolder".</p></dd>
 
 
 <dt><code>dataFolder</code></dt>
-<dd><p>Path to the folder where experimental data files are located</p></dd>
+<dd><p>Path to the folder where experimental data files are
+located.</p></dd>
 
 
 <dt><code>dataFile</code></dt>
-<dd><p>Name of the excel file with experimental data</p></dd>
+<dd><p>Name of the excel file with experimental data.
+Must be located in the "dataFolder"</p></dd>
 
 
 <dt><code>dataImporterConfigurationFile</code></dt>
 <dd><p>Name of data importer configuration
-file in xml format used to load the data. Must be located in the "dataFolder"</p></dd>
+file in xml format used to load the data.
+Must be located in the "dataFolder"</p></dd>
 
 
 <dt><code>compoundPropertiesFile</code></dt>
-<dd><p>Path to the excel file containing information
-about all compounds in the model. Must be located in the "dataFolder"</p></dd>
+<dd><p>Path to the excel file containing
+information about all compounds in the model.
+Must be located in the "dataFolder"</p></dd>
 
 
 <dt><code>outputFolder</code></dt>
 <dd><p>Path to the folder where the results should be
-saved to; relative to the "Code" folder</p></dd>
+saved to; relative to the "Code" folder
+Initialize</p></dd>
 
 
 </dl><p></p></div>
@@ -146,28 +167,40 @@ saved to; relative to the "Code" folder</p></dd>
 <div class="section">
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 
-<ul><li><p><a href="#method-ProjectConfiguration-print"><code>ProjectConfiguration$print()</code></a></p></li>
+<ul><li><p><a href="#method-ProjectConfiguration-new"><code>ProjectConfiguration$new()</code></a></p></li>
+<li><p><a href="#method-ProjectConfiguration-print"><code>ProjectConfiguration$print()</code></a></p></li>
 <li><p><a href="#method-ProjectConfiguration-clone"><code>ProjectConfiguration$clone()</code></a></p></li>
-</ul></div><p></p><hr><a id="method-ProjectConfiguration-print"></a><div class="section">
-<h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
-<p>Print the object to the console</p><div class="section">
+</ul></div><p></p><hr><a id="method-ProjectConfiguration-new"></a><div class="section">
+<h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
+
+<div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ProjectConfiguration</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/ProjectConfiguration.html">ProjectConfiguration</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>projectConfigurationFilePath <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>...</code></dt>
-<dd><p>Rest arguments.</p></dd>
+<p></p><div class="arguments"><dl><dt><code>projectConfigurationFilePath</code></dt>
+<dd><p>A string representing the path to the
+project configuration file.
+Print</p></dd>
 
 
 </dl><p></p></div>
 </div>
 
+</div><p></p><hr><a id="method-ProjectConfiguration-print"></a><div class="section">
+<h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
+<p>print prints a summary of the Project Configuration.</p><div class="section">
+<h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ProjectConfiguration</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+
 </div><p></p><hr><a id="method-ProjectConfiguration-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ProjectConfiguration</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
