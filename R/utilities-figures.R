@@ -143,14 +143,16 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
   defaultPlotConfiguration$titleSize <- 14
-  defaultPlotConfiguration$xLabelSize <- 10
-  defaultPlotConfiguration$yLabelSize <- 10
+  defaultPlotConfiguration$xLabelSize <- 12
+  defaultPlotConfiguration$yLabelSize <- 12
   defaultPlotConfiguration$xAxisLabelTicksSize <- 10
   defaultPlotConfiguration$yAxisLabelTicksSize <- 10
   defaultPlotConfiguration$legendTitleSize <- 8
   defaultPlotConfiguration$legendBorderColor <- "grey10"
   defaultPlotConfiguration$legendBorderType <- 1
   defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
+
+  defaultPlotConfiguration$yAxisLabelTicksAngle <- 0
   return(defaultPlotConfiguration)
 }
 
@@ -178,6 +180,8 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
   plotGridConfiguration <- tlf::PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
+  plotGridConfiguration$tagSize <- 12
+  plotGridConfiguration$titleSize <- 14
 
   return(plotGridConfiguration)
 }
@@ -206,7 +210,7 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
 #'
 #' @export
 createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: object_length_linter.
-  exportConfiguration <- tlf::ExportConfiguration$new()
+  exportConfiguration <- esqlabsR::ExportConfiguration$new()
 
   exportConfiguration$path <- projectConfiguration$outputFolder
   exportConfiguration$dpi <- 300
@@ -214,10 +218,13 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: o
   # something useful. NULL in the ProjectConfiguration currently means "do not
   # export".
   exportConfiguration$format <- "PNG"
-  exportConfiguration$width <- 18
-  exportConfiguration$height <- 18
+  # exportConfiguration$width <- 18
+  # exportConfiguration$height <- 18
+  exportConfiguration$heightPerRow <- 9
   exportConfiguration$units <- "cm"
 
+
+  exportConfiguration$addPlots
   return(exportConfiguration)
 }
 

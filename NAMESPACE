@@ -2,6 +2,7 @@
 
 export("%||%")
 export(Distributions)
+export(ExportConfiguration)
 export(GenderInt)
 export(LLOQMode)
 export(ProjectConfiguration)

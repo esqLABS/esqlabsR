@@ -19,6 +19,10 @@ as produced by the `runScenarios()` function.
 - `runScenarios()` also returns a `Population` object for population simulations.
 - `runScenarios()` gets a new argument `savePopulationToCSV`, with default value `FALSE`.
 
+- `eslqbsR` extends the `tlf::ExportConfiguration` class to dynamically calculate 
+the height of the exported figure from the number of rows and the new parameter
+`heightPerRow`.
+
 ### BREAKING CHANGES
 
 - Field `setTestParameters` removed from `ScenarioConfiguration`
