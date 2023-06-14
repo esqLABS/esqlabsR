@@ -142,17 +142,27 @@ col2hsv <- function(color) {
 createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
+  # Size
   defaultPlotConfiguration$titleSize <- 14
   defaultPlotConfiguration$xLabelSize <- 12
   defaultPlotConfiguration$yLabelSize <- 12
   defaultPlotConfiguration$xAxisLabelTicksSize <- 10
   defaultPlotConfiguration$yAxisLabelTicksSize <- 10
   defaultPlotConfiguration$legendTitleSize <- 8
+
+  # Legend appearance
   defaultPlotConfiguration$legendBorderColor <- "grey10"
   defaultPlotConfiguration$legendBorderType <- 1
   defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
 
+  # Axis appearance
   defaultPlotConfiguration$yAxisLabelTicksAngle <- 0
+
+  # Colors
+  defaultPlotConfiguration$pointsColor <- esqlabsEnv$colorPalette
+  defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
+  defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
+
   return(defaultPlotConfiguration)
 }
 
@@ -218,13 +228,10 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: o
   # something useful. NULL in the ProjectConfiguration currently means "do not
   # export".
   exportConfiguration$format <- "PNG"
-  # exportConfiguration$width <- 18
+  exportConfiguration$width <- 18
   # exportConfiguration$height <- 18
   exportConfiguration$heightPerRow <- 9
   exportConfiguration$units <- "cm"
-
-
-  exportConfiguration$addPlots
   return(exportConfiguration)
 }
 
