@@ -21,6 +21,7 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 #'
 #' @param destination A string defining the path where to initialize the project.
 #' default to current working directory.
+#' @inheritParams fs::dir_copy
 #' @export
 init_project <- function(destination = ".", overwrite = FALSE) {
   destination <- fs::path_abs(destination)
@@ -28,7 +29,7 @@ init_project <- function(destination = ".", overwrite = FALSE) {
   type = "example"
 
   source_folder <- switch(type,
-    "example" = esqlabsR:::example_directory("TestProject")
+    "example" = example_directory("TestProject")
   )
 
   for (dir in fs::dir_ls(source_folder, type = "directory")) {
