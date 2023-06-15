@@ -87,7 +87,7 @@ get_esqlabsR <- function(){
                    type = "binary",
                    quiet = TRUE
   )
-  install_github("esqLABS/esqlabsR",
+  remotes::install_github("esqLABS/esqlabsR",
                  quiet = TRUE,
                  build = TRUE
   )
@@ -151,18 +151,13 @@ initialize_project <- function(){
   if (initialize_option == 1) {
     cli_progress_step("Initialize project structure")
     init_project(destination = "../")
-    update_project_conf_file()
+    update_project_conf()
     cli_progress_done(result = "done")
   }
 
 }
 
-update_project_conf_file <- function(){
-  proj_name <- get_project_name()
-
-  timevalues_file <-
-    list.files("../Data",
-               pattern = "*TimeValuesData.xlsx")[1]
+update_project_conf <- function(){
 
   compoundpropertiesinternal_file <-
     list.files("../Data",
@@ -171,11 +166,33 @@ update_project_conf_file <- function(){
   project_configuration <-
     createDefaultProjectConfiguration(path = "../ProjectConfiguration.xlsx")
 
-  project_configuration$dataFile <- timevalues_file
+  new_timevalue_name <- rename_timevalue_file()
+
+  project_configuration$dataFile <- new_timevalue_name
 
   project_configuration$compoundPropertiesFile <- compoundpropertiesinternal_file
 
   project_configuration$save()
+}
+
+rename_timevalue_file <- function(){
+
+  proj_name <- get_project_name()
+
+  timevalues_file <-
+    list.files("../Data",
+               pattern = "*TimeValuesData.xlsx",
+               full.names = TRUE)[1]
+
+  new_name <- gsub(basename(timevalues_file),
+                   paste0(proj_name,"_TimeValuesData.xlsx"),
+                   timevalues_file)
+
+  file.rename(timevalues_file, new_name)
+
+  return(new_name)
+
+
 }
 
 get_project_name <- function(){

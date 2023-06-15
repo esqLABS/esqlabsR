@@ -268,6 +268,7 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @export
     save = function() {
+
       excel_file <- readExcel(path = self$projectConfigurationFilePath)
 
       for (prop in excel_file$Property) {
