@@ -7,6 +7,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-design-scenarios.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-design-simulations.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-plot-results.html</loc>
   </url>
   <url>
@@ -116,6 +119,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqlabsRSettingNames.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqlabsR_example.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqLABS_colors.html</loc>

@@ -19,26 +19,31 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 #' Creates the default project folder structure with excels file templates in
 #' the working directory.
 #'
-#' @param type A string defining the type of initialization. Currently, only `"example"`
-#' is supported and will create an example project.
+#' @param destination A string defining the path where to initialize the project.
+#' default to current working directory.
+#' @inheritParams fs::dir_copy
 #' @export
-init_project <- function(type = "example") {
+init_project <- function(destination = ".", overwrite = FALSE) {
+  destination <- fs::path_abs(destination)
 
-  rlang::arg_match(type, c("example"))
+  type = "example"
 
   source_folder <- switch(type,
-                          "example" = example_directory("TestProject"))
+    "example" = example_directory("TestProject")
+  )
 
   for (dir in fs::dir_ls(source_folder, type = "directory")) {
     fs::dir_copy(dir,
-                 new_path = getwd(),
-                 overwrite = FALSE)
+      new_path = destination,
+      overwrite = overwrite
+    )
   }
 
   for (file in fs::dir_ls(source_folder, type = "file")) {
     fs::file_copy(file,
-                  new_path = getwd(),
-                  overwrite = FALSE)
+      new_path = destination,
+      overwrite = overwrite
+    )
   }
 }
 
@@ -52,7 +57,7 @@ init_project <- function(type = "example") {
 #'
 #' @examples
 #' example_ProjectConfiguration()
-example_ProjectConfiguration <- function(){
+example_ProjectConfiguration <- function() {
   # for now it targets TestProject as it is both an example and a test project
   file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
 }
@@ -62,7 +67,7 @@ example_ProjectConfiguration <- function(){
 #' @return a string representing the path to the ProjectConfiguration.xlsx file
 #' used as test.
 #' @keywords internal
-test_ProjectConfiguration <- function(){
+test_ProjectConfiguration <- function() {
   # for now it targets TestProject as it is both an example and a test project
   file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
 }
