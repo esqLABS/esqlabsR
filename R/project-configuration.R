@@ -196,13 +196,25 @@ ProjectConfiguration <- R6::R6Class(
     .dataImporterConfigurationFile = NULL,
     .compoundPropertiesFile = NULL,
     .outputFolder = NULL,
+    .read_config = function(file_path) {
+      path <- private$.clean_path(file_path)
+      # Update private values
+      private$.projectConfigurationFilePath <- path
+      private$.projectConfigurationDirPath <- dirname(path)
+
+      data <- readExcel(path = path)
+      for (property in data$Property) {
+        # Update each private property
+        self[[property]] <- data[data$Property == property, ]$Value
+      }
+    },
     .clean_path = function(path, parent = NULL, must_work = TRUE) {
       # In case project configuration is initialized empty
       if (is.null(path) || is.na(path)) {
         return(NULL)
       }
       if (is.null(parent) || is.na(parent) || fs::is_absolute_path(path)) {
-        # When provided path is full or doesn't have parent, don't append parent
+        # When provided path is absolute or doesn't have parent directory, don't append parent
         abs_path <- fs::path_abs(path)
       } else {
         # When provided path is relative, append parent
@@ -216,20 +228,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!fs::file_exists(abs_path) && must_work == FALSE) {
         warning(abs_path, " does not exist")
       }
-
       return(abs_path)
-    },
-    .read_config = function(file_path) {
-      path <- private$.clean_path(file_path)
-      # Update private values
-      private$.projectConfigurationFilePath <- path
-      private$.projectConfigurationDirPath <- dirname(path)
-
-      data <- readExcel(path = path)
-      for (property in data$Property) {
-        # Update each private property
-        self[[property]] <- data[data$Property == property, ]$Value
-      }
     }
   ),
   public = list(
@@ -264,6 +263,33 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Compound Properties File", fs::path_rel(as.character(self$compoundPropertiesFile)))
       private$printLine("Output folder", fs::path_rel(as.character(self$outputFolder)))
       invisible(self)
+    },
+    #' @description Export ProjectConfiguration object to ProjectConfiguration.xlsx
+    #'
+    #' @export
+    save = function() {
+
+      excel_file <- readExcel(path = self$projectConfigurationFilePath)
+
+      for (prop in excel_file$Property) {
+        path <- ""
+
+        if (!is.null(self[[prop]])) {
+          if (fs::is_dir(self[[prop]])) {
+            # if property is a directory, save relative path from ProjectConf dir
+            path <- fs::path_rel(
+              path = self[[prop]],
+              start = self$projectConfigurationDirPath
+            )
+          } else if (fs::is_file(self[[prop]])) {
+            # if property is a file, then save only its name
+            path <- basename(self[[prop]])
+          }
+        }
+
+        excel_file[excel_file$Property == prop, ]$Value <- path
+      }
+      writeExcel(excel_file, path = self$projectConfigurationFilePath)
     }
   )
 )

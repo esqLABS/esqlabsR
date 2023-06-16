@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/data-handling.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-advanced.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-design-scenarios.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-design-simulations.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-plot-results.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-project-structure.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-run-simulations.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-sensitivity.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-shiny.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-workflow-overview.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/introduction-esqlabsr.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity-analysis.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/shiny-apps.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/standard-workflow.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/articles/visualization-and-reporting.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/authors.html</loc>
@@ -109,7 +121,16 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqlabsRSettingNames.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqlabsR_example.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqLABS_colors.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/example_directory.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/example_ProjectConfiguration.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/executeInParallel.html</loc>
@@ -160,10 +181,10 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/initializeScenario.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/initializeSimulation.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/initializeSimulation.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/init_project.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/isParametersEqual.html</loc>
@@ -251,6 +272,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/stringToNum.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/test_ProjectConfiguration.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/ULOQMode.html</loc>
