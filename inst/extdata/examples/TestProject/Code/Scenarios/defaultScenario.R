@@ -38,7 +38,8 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
     scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, customParams = customParams)
 
     simulatedScenariosResults <- runScenarios(
-      scenarios = scenarios, projectConfiguration = projectConfiguration
+      scenarios = scenarios,
+      simulationRunOptions = simulationRunOptions
     )
     saveScenarioResults(simulatedScenariosResults, projectConfiguration)
   }

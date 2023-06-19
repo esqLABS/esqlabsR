@@ -151,8 +151,8 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration$legendTitleSize <- 8
 
   # Legend appearance
-  defaultPlotConfiguration$legendBorderColor <- "grey10"
-  defaultPlotConfiguration$legendBorderType <- 1
+  #defaultPlotConfiguration$legendBorderColor <- "grey10"
+  #defaultPlotConfiguration$legendBorderType <- 1
   defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
 
   # Axis appearance
