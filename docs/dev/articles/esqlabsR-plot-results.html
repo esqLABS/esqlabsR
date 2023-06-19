@@ -63,6 +63,7 @@
     <a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a>
     <a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a>
     <a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a>
+    <a class="dropdown-item" href="../articles/presentations.html">Presentations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -184,6 +185,13 @@ default configurations.</p>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Time profile"</span></span>
 <span><span class="va">indivPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: The `limits` argument of `AxisConfiguration()` is deprecated as of tlf 1.5.0.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use the `axisLimits` argument instead.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">R6</span> package.</span></span>
+<span><span class="co">#&gt;   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/r-lib/R6/issues&gt;</span>.</span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Observed-vs-simulated"</span></span>
 <span><span class="va">obsVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
@@ -239,7 +247,7 @@ loads the data:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">observedData</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Aciclovir_Laskin 1982.Group A_1_Human_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "Aciclovir_Laskin 1982.Group A_1_Human_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"</span></span></code></pre></div>
 <p>The function loads the data from the file
 <code>projectConfiguration$dataFile</code> from the folder
 <code>projectConfiguration$dataFolder</code> and returns a list of
