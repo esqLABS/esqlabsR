@@ -1,6 +1,9 @@
 # esqlabsR 5.0.0
 
 ### New functionalities
+- New function `loadObservedDataFromPKML()` to load data from `*.pkml` located in 
+the "PKML" sub-folder of the "Data" folder.
+
 - New function `createScenarios()` to create `Scenario` objects from `ScenarioConfiguration` objects
 
 - Plots can be created by calling the new function `createPlotsFromExcel()`. It requires as input parameters `simulatedScenarios` (a list of simulated scenarios as returned by `runScenarios()`), `observedData` (a list of `DataSet` objects) and a `ProjectConfiguration` object `projectConfiguration`.
