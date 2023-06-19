@@ -19,14 +19,18 @@ desc::desc_clear_remotes()
 
 desc::desc_set_remotes(
   c(paste(
-    "url::",
-    c("https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.4.23/ospsuite.utils_1.4.23.tar.gz",
-      "https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.5.125/tlf_1.5.125.tar.gz",
-      "https://github.com/Open-Systems-Pharmacology/OSPSuite-R/archive/refs/tags/v11.2.251.tar.gz"
+    # "url::",
+    # c(
+      # "https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.4.23/ospsuite.utils_1.4.23.tar.gz"
+      # "https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.5.125/tlf_1.5.125.tar.gz"
+      # "https://github.com/Open-Systems-Pharmacology/OSPSuite-R/archive/refs/tags/v11.2.251.tar.gz"
       # "https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/releases/download/v1.1.0/ospsuite.parameteridentification_1.1.0.9002.tar.gz" # Update this when 1.2 is "release" in repo
     ),
-    collapse = ",\n\t\t",
-    sep = ""),
+    # collapse = ",\n\t\t",
+    # sep = ""),
+    "Open-Systems-Pharmacology/OSPSuite.RUtils@88152af44e32e714a1d5c80237c239105ed85120",
+    "Open-Systems-Pharmacology/TLF-Library@03e1acfc38c283536e1841b681a04f2eb42e08f9",
+    "Open-Systems-Pharmacology/OSPSuite-R@7e08e5603982f11ae72d5c8998f3d998e8a37650",
     "Open-Systems-Pharmacology/OSPSuite.ParameterIdentification" # delete this when 1.2 is released for PI
   )
 )
