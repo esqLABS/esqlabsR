@@ -74,6 +74,7 @@ Initialize}
 \itemize{
 \item \href{#method-ProjectConfiguration-new}{\code{ProjectConfiguration$new()}}
 \item \href{#method-ProjectConfiguration-print}{\code{ProjectConfiguration$print()}}
+\item \href{#method-ProjectConfiguration-save}{\code{ProjectConfiguration$save()}}
 \item \href{#method-ProjectConfiguration-clone}{\code{ProjectConfiguration$clone()}}
 }
 }
@@ -102,6 +103,16 @@ Print}
 print prints a summary of the Project Configuration.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$print()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ProjectConfiguration-save"></a>}}
+\if{latex}{\out{\hypertarget{method-ProjectConfiguration-save}{}}}
+\subsection{Method \code{save()}}{
+Export ProjectConfiguration object to ProjectConfiguration.xlsx
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$save()}\if{html}{\out{</div>}}
 }
 
 }
