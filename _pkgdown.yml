@@ -13,7 +13,7 @@ authors:
     href: https://github.com/Felixmil
 
 development:
-  mode: devel
+  mode: auto
 
 reference:
 
