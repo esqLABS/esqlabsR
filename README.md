@@ -48,6 +48,12 @@ install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/dow
                  type = "binary"
 )
 
+remotes::install_github("esqLABS/esqlabsR@*release")
+```
+
+Get the latest development version with:
+
+``` r
 remotes::install_github("esqLABS/esqlabsR")
 ```
 
@@ -91,7 +97,7 @@ my_datacombined$addSimulationResults(my_simulation$TestScenario$results,
 plotIndividualTimeProfile(my_datacombined)
 ```
 
-<img src="man/figures/README-unnamed-chunk-4-1.png" width="80%" style="display: block; margin: auto;" />
+<img src="man/figures/README-unnamed-chunk-5-1.png" width="80%" style="display: block; margin: auto;" />
 
 ## Learn More
 
