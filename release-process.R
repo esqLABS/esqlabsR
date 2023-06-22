@@ -45,8 +45,9 @@ usethis::use_version(which = labels(new_version))
 
 pkgdown::build_site(devel = FALSE)
 
-gert::git_add(files = "docs/.")
-gert::git_commit_all("pkgdown::build_site(devel = FALSE)")
+
+gert::git_add(files = "docs")
+gert::git_commit("pkgdown::build_site(devel = FALSE)")
 
 ## Push branch to remote
 usethis::pr_push()
