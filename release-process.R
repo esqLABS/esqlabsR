@@ -2,17 +2,29 @@ require(usethis)
 require(gert)
 require(desc)
 require(pkgdown)
+require(yaml)
 
 ###### Dev -> Release ######
 
-## Open a new PR with new version
+# Choose the new version
 new_version <- usethis:::choose_version("What should the new version be?")
 
+# Open a new PR with new version
 usethis::pr_init(branch = paste("release", new_version, sep="-"))
 
-## Replace ospsuite dependencies with latest releases versions
-desc::desc_clear_remotes()
+# Update version in Appveyor
+appveyor_config <- yaml::read_yaml(file = "appveyor.yml")
 
+appveyor_config$environment$app_version <- new_version
+
+yaml::write_yaml(appveyor_config, file = "appveyor.yml")
+
+
+# Update DESCRIPTION
+## Update OSPS dependencies remotes
+
+### Replace ospsuite dependencies with latest release versions
+desc::desc_clear_remotes()
 
 desc::desc_set_remotes(
   # When latest released version of dependencies contains all necessary features, use url::
@@ -40,12 +52,15 @@ desc::desc_set_remotes(
     )
 )
 
-# INFO: Accept the commit suggestion when running this
+## Update Version string (accept commit suggestion)
 usethis::use_version(which = labels(new_version))
 
+
+# Update Documentation
+## Build documentation
 pkgdown::build_site(devel = FALSE)
 
-
+## Commit and push documentation
 gert::git_add(files = "docs")
 gert::git_commit("pkgdown::build_site(devel = FALSE)")
 
@@ -65,7 +80,17 @@ usethis::use_github_release()
 
 ###### Release -> Dev ######
 
-## Replace ospsuite dependencies remotes for development branches
+dev_version <- usethis:::choose_version(which = "dev")
+
+# Update version in Appveyor
+appveyor_config <- yaml::read_yaml(file = "appveyor.yml")
+
+appveyor_config$environment$app_version <- dev_version
+
+yaml::write_yaml(appveyor_config, file = "appveyor.yml")
+
+# Update DESCRIPTION
+## Update OSPS dependencies remotes to latest development versions
 desc::desc_clear_remotes()
 
 usethis::use_dev_package(package = "ospsuite.utils",
@@ -84,12 +109,17 @@ usethis::use_dev_package(package = "ospsuite.parameteridentification",
                          type = "Imports",
                          remote = "Open-Systems-Pharmacology/OSPSuite.ParameterIdentification")
 
-## Add .9000 to version number
+## Update version to dev (accept commit suggestions)
 usethis::use_dev_version()
 
+
+# Update Documentation
+## Build documentation
 pkgdown::build_site(devel = TRUE)
 
-gert::git_add(files = "docs/.")
-gert::git_commit_all("pkgdown::build_site(devel = FALSE)")
+## Commit and push documentation
+gert::git_add(files = "docs")
+gert::git_commit("pkgdown::build_site(devel = FALSE)")
 
+## Push to main branch directly
 gert::git_push()
