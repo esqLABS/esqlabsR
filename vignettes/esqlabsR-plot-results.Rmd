@@ -27,9 +27,8 @@ covers the basics of creating supported plot types and how to customize
 them.
 
 For the following examples, we will simulate an example scenario as
-described in [Standard workflow](standard-workflow.html) and load the
-corresponding observed data as described in [Data
-handling](data-handling.html).
+described in `vignette("esqlabsR-design-scenarios")` and load the
+corresponding observed data as described in the [Observed Data](#observed-data) section.
 
 ```{r, echo = TRUE, message = FALSE}
 library(esqlabsR)
