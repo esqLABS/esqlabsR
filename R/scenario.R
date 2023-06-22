@@ -79,7 +79,9 @@ Scenario <- R6::R6Class(
 
       # Apply individual physiology, if specified
       individualCharacteristics <- NULL
-      if (!is.null(scenarioConfiguration$individualId)) {
+      # Check for 'NULL' and 'NA'. 'NA' happens when no individual is defined in
+      # the excel file.
+      if (!is.null(scenarioConfiguration$individualId) && !is.na(scenarioConfiguration$individualId)) {
         individualCharacteristics <- readIndividualCharacteristicsFromXLS(
           XLSpath = scenarioConfiguration$projectConfiguration$individualsFile,
           individualId = scenarioConfiguration$individualId,
@@ -123,7 +125,8 @@ Scenario <- R6::R6Class(
 
       # Set administration protocols
       excelFilePath <- scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
-      if (any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
+      # Checking for 'NA' if administration protocol is not set in excel file.
+      if (!is.na(scenarioConfiguration$applicationProtocol) && any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
         applicationParams <- readParametersFromXLS(excelFilePath, scenarioConfiguration$applicationProtocol)
         params <- extendParameterStructure(
           parameters = params,

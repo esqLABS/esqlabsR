@@ -253,7 +253,7 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' If `NULL` (default), all sheets within the file are loaded.
 #'
 #' @return
-#' A list of `DataSet` objects
+#' A named list of `DataSet` objects, with names being the names of the data sets.
 #' @export
 #'
 #' @examples
@@ -280,6 +280,52 @@ loadObservedData <- function(projectConfiguration, sheets = NULL) {
     importerConfigurationOrPath = importerConfiguration,
     importAllSheets = importAllSheets
   )
+
+  return(dataSets)
+}
+
+#' Load data from pkml
+#'
+#' @description Loads data sets that are exported as pkml. The files must be
+#' located in the folder `projectConfiguration$dataFolder`, subfolder `pkml`.
+#' and be named `projectConfiguration$dataFile`.
+#'
+#' @param projectConfiguration Object of class `ProjectConfiguration` containing
+#' the necessary information.
+#' @param obsDataNames String or a list of strings defining data sets to load
+#' If `NULL` (default), all data sets located in the folder are loaded. Must not
+#' contain the ".pkml" file extension.
+#'
+#' @return
+#' A named list of `DataSet` objects, with names being the names of the data sets.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create default project configuration
+#' projectConfiguration <- createDefaultProjectConfiguration()
+#' dataSets <- loadObservedData(projectConfiguration)
+#' }
+loadObservedDataFromPKML <- function(projectConfiguration, obsDataNames = NULL) {
+  ospsuite.utils::validateIsString(obsDataNames, nullAllowed = TRUE)
+  # If data sets have been specified, import only those. Otherwise try to import all
+  # files
+  if (!is.null(obsDataNames)){
+    allFiles <- paste0(obsDataNames, ".pkml")
+  } else {
+    allFiles <- list.files(path = file.path(projectConfiguration$dataFolder,
+                                            "pkml"), pattern = "*.pkml")
+  }
+
+  dataSets <- lapply(allFiles, function(fileName){
+    ospsuite::loadDataSetFromPKML(filePath = file.path(projectConfiguration$dataFolder,
+                                                       "pkml",
+                                                       fileName)
+    )
+  })
+  names(dataSets) <- lapply(dataSets, function(x) {
+    x$name
+  })
 
   return(dataSets)
 }
