@@ -39,16 +39,20 @@ createDataCombinedFromExcel <- function(
     if (nrow(simulated) > 0) {
       for (j in seq_len(nrow(simulated))) {
         # Check if the output has been simulated
-        if (!any(simulatedScenarios[[simulated[j, ]$scenario]]$results$allQuantityPaths == simulated[j, ]$path)) {
-          stop(messages$stopWrongOutputPath(dataCombinedName = name, scenarioName = simulated[j, ]$scenario, path = simulated[j, ]$path))
+        # If yes, add it to the DataCombined
+        if (any(simulatedScenarios[[simulated[j, ]$scenario]]$results$allQuantityPaths == simulated[j, ]$path)) {
+          dataCombined$addSimulationResults(
+            simulationResults = simulatedScenarios[[simulated[j, ]$scenario]]$results,
+            quantitiesOrPaths = simulated[j, ]$path,
+            groups = simulated[j, ]$group,
+            names = simulated[j, ]$label
+          )
+        } else {
+          if (stopIfNotFound){
+            stop(messages$stopWrongOutputPath(dataCombinedName = name, scenarioName = simulated[j, ]$scenario, path = simulated[j, ]$path))
+          }
+          warning(messages$stopWrongOutputPath(dataCombinedName = name, scenarioName = simulated[j, ]$scenario, path = simulated[j, ]$path))
         }
-
-        dataCombined$addSimulationResults(
-          simulationResults = simulatedScenarios[[simulated[j, ]$scenario]]$results,
-          quantitiesOrPaths = simulated[j, ]$path,
-          groups = simulated[j, ]$group,
-          names = simulated[j, ]$label
-        )
       }
     }
 
