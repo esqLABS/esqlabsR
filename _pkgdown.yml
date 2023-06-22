@@ -49,6 +49,7 @@ reference:
       - LLOQMode
       - ULOQMode
       - loadObservedData
+      - loadObservedDataFromPKML
 
   - title: Helpers for plotting
     #desc:
