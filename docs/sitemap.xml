@@ -7,6 +7,33 @@
     <loc>https://esqlabs.github.io/esqlabsR/articles/data-handling.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR-advanced.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR-design-scenarios.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR-plot-results.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR-project-structure.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR-run-simulations.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR-sensitivity.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR-shiny.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR-workflow-overview.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/index.html</loc>
   </url>
   <url>
@@ -49,7 +76,13 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/compareSimulationParameters.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/compareSimulations.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/compareWithNA.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/createDataCombinedFromExcel.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html</loc>
@@ -64,13 +97,40 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/createPlotsFromExcel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/createScenarios.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/Distributions.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-createConfigurationFromRow.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-setApplicationFromExcel.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateClassHasField.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateDataCombinedFromExcel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateExportConfigurationsFromExcel.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateParametersStructure.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-validatePlotConfigurationFromExcel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-validatePlotGridsFromExcel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateScenarioConfigurations.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/enumPutList.html</loc>
@@ -83,6 +143,12 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/esqLABS_colors.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/example_directory.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/example_ProjectConfiguration.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/executeInParallel.html</loc>
@@ -142,6 +208,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/initializeSimulation.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/init_project.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/isParametersEqual.html</loc>
   </url>
   <url>
@@ -152,6 +221,12 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/loadObservedData.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/loadObservedDataFromPKML.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/loadScenarioResults.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/pathFromClipboard.html</loc>
@@ -187,6 +262,12 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/sampleRandomValue.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/saveScenarioResults.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/Scenario.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/ScenarioConfiguration.html</loc>
   </url>
   <url>
@@ -218,6 +299,12 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/stringToNum.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/test_ProjectConfiguration.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/ULOQMode.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/writeExcel.html</loc>
