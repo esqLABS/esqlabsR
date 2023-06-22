@@ -14,7 +14,7 @@ environment:
   KEEP_VIGNETTES: 'true'
   NOT_CRAN: 'true'
   app_version: 5.0.0
-version: "$(app_version).{build}"
+version: "$(app_version)"
 before_build: rake "prepare_for_build[%APPVEYOR_BUILD_VERSION%]"
 cache: C:\RLibrary
 platform: x64
