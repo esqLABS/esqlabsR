@@ -4,14 +4,14 @@
 \alias{init_project}
 \title{Initialize esqlabsR Project Folder}
 \usage{
-init_project(destination = ".", type = "new")
+init_project(destination = ".", overwrite = FALSE)
 }
 \arguments{
 \item{destination}{A string defining the path where to initialize the project.
 default to current working directory.}
 
-\item{type}{A string defining the type of initialization. \code{"new"}
-for folder and empty excel templates and \code{"example"} for an example.}
+\item{overwrite}{Overwrite files if they exist. If this is \code{FALSE} and the
+file exists an error will be thrown.}
 }
 \description{
 Creates the default project folder structure with excels file templates in
