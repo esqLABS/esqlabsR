@@ -12,13 +12,13 @@ install:
   - git submodule update --init --recursive
 
 environment:
-  USE_RTOOLS: true
+  USE_RTOOLS: 'true'
   R_VERSION: "4.2.0"
   R_ARCH: x64
-  KEEP_VIGNETTES: true
-  NOT_CRAN: true
+  KEEP_VIGNETTES: 'true'
+  NOT_CRAN: 'true'
   # We use this variale to skip some tests that depend on PK-Sim using "skip_on_ci"
-  # CI: true
+  # CI: 'true'
 
 
 before_build:
@@ -33,16 +33,16 @@ skip_commits:
   files:
     - "*.md"
 
-skip_branch_with_pr: true
+skip_branch_with_pr: 'true'
 
-skip_tags: true
+skip_tags: 'true'
 
 branches:
   only:
     - develop
 
 pull_requests:
-  do_not_increment_build_number: true
+  do_not_increment_build_number: 'true'
 
 before_test:
   - cinst pandoc
