@@ -1,32 +1,36 @@
 image: Visual Studio 2019
 init:
--   ps: |
-        $ErrorActionPreference = "Stop"
-        Invoke-WebRequest http://raw.github.com/krlmlr/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
-        Import-Module '..\appveyor-tool.ps1'
+- ps: |
+    $ErrorActionPreference = "Stop"
+    Invoke-WebRequest http://raw.github.com/krlmlr/r-appveyor/master/scripts/appveyor-tool.ps1 -OutFile "..\appveyor-tool.ps1"
+    Import-Module '..\appveyor-tool.ps1'
 install:
--   ps: Bootstrap
+- ps: Bootstrap
 - git submodule update --init --recursive
 environment:
-    USE_RTOOLS: 'true'
-    R_VERSION: 4.2.0
-    R_ARCH: x64
-    KEEP_VIGNETTES: 'true'
-    NOT_CRAN: 'true'
+  USE_RTOOLS: 'true'
+  R_VERSION: 4.2.0
+  R_ARCH: x64
+  KEEP_VIGNETTES: 'true'
+  NOT_CRAN: 'true'
+  app_version: 5.0.0
+version: "$(app_version).{build}"
 before_build: rake "prepare_for_build[%APPVEYOR_BUILD_VERSION%]"
 cache: C:\RLibrary
 platform: x64
 skip_commits:
-    files: '*.md'
+  files: '*.md'
 skip_branch_with_pr: 'true'
 skip_tags: 'true'
 branches:
-    only: develop
+  only:
+  - develop
+  - main
 pull_requests:
-    do_not_increment_build_number: 'true'
+  do_not_increment_build_number: 'true'
 before_test:
 - cinst pandoc
--   ps: $env:Path += ";C:\Program Files (x86)\Pandoc\"
+- ps: $env:Path += ";C:\Program Files (x86)\Pandoc\"
 - pandoc -v
 build_script:
 - travis-tool.sh install_deps
@@ -34,20 +38,20 @@ build_script:
 test_script: travis-tool.sh run_tests
 on_success: Rscript -e "covr::codecov()"
 after_test:
--   ps: copy esqlabsR_*.zip esqlabsR.zip
+- ps: copy esqlabsR_*.zip esqlabsR.zip
 on_failure:
 - 7z a failure.zip *.Rcheck\*
 - appveyor PushArtifact failure.zip
 artifacts:
--   path: '*.Rcheck\**\*.log'
-    name: Logs
--   path: '*.Rcheck\**\*.out'
-    name: Logs
--   path: '*.Rcheck\**\*.fail'
-    name: Logs
--   path: '*.Rcheck\**\*.Rout'
-    name: Logs
--   path: \*_*.tar.gz
-    name: Bits
--   path: esqlabsR*.zip
-    name: Bits
+- path: '*.Rcheck\**\*.log'
+  name: Logs
+- path: '*.Rcheck\**\*.out'
+  name: Logs
+- path: '*.Rcheck\**\*.fail'
+  name: Logs
+- path: '*.Rcheck\**\*.Rout'
+  name: Logs
+- path: \*_*.tar.gz
+  name: Bits
+- path: esqlabsR*.zip
+  name: Bits
