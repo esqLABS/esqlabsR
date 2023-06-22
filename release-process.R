@@ -58,9 +58,16 @@ usethis::use_version(which = labels(new_version))
 
 # Update Documentation
 ## Build documentation
+devtools::document()
+
+## Commit and push docs
+gert::git_add(files = "man")
+gert::git_commit("devtools::document()")
+
+## Build pkgdown site
 pkgdown::build_site(devel = FALSE)
 
-## Commit and push documentation
+## Commit and push docs
 gert::git_add(files = "docs")
 gert::git_commit("pkgdown::build_site(devel = FALSE)")
 
@@ -115,9 +122,16 @@ usethis::use_dev_version()
 
 # Update Documentation
 ## Build documentation
+devtools::document()
+
+## Commit and push docs
+gert::git_add(files = "man")
+gert::git_commit("devtools::document()")
+
+## Build pkgdown site
 pkgdown::build_site(devel = TRUE)
 
-## Commit and push documentation
+## Commit and push docs
 gert::git_add(files = "docs")
 gert::git_commit("pkgdown::build_site(devel = FALSE)")
 
