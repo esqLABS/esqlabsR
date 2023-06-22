@@ -12,7 +12,6 @@ install:
   - git submodule update --init --recursive
 
 environment:
-  app_version: "5.0"
   USE_RTOOLS: true
   R_VERSION: "4.2.0"
   R_ARCH: x64
@@ -21,7 +20,6 @@ environment:
   # We use this variale to skip some tests that depend on PK-Sim using "skip_on_ci"
   # CI: true
 
-version: "$(app_version).{build}"
 
 before_build:
   - rake "prepare_for_build[%APPVEYOR_BUILD_VERSION%]"
