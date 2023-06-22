@@ -38,6 +38,7 @@
     <a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a>
     <a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a>
     <a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a>
+    <a class="dropdown-item" href="../articles/presentations.html">Presentations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -105,7 +106,9 @@ file is located. The name of the file will be <code>&lt;SimulationFileName&gt;_S
 
 <dt>steadyStateTime</dt>
 <dd><p>Simulation time (minutes). Must be long enough for
-system to reach a steady-state. 1000 by default</p></dd>
+system to reach a steady-state. 1000 by default. Either a single value (will
+be applied for all simulations), or a vector of values specific for each
+simulation. In latter case, must have equal size as <code>simulations</code>.</p></dd>
 
 
 <dt>ignoreIfFormula</dt>

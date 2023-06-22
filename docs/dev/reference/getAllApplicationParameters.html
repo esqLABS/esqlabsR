@@ -38,6 +38,7 @@
     <a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a>
     <a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a>
     <a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a>
+    <a class="dropdown-item" href="../articles/presentations.html">Presentations</a>
   </div>
 </li>
 <li class="nav-item">
@@ -103,7 +104,7 @@ function returns a list of all constant parameters located under the
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">simPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Aciclovir.pkml"</span>, package <span class="op">=</span> <span class="st">"ospsuite"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadSimulation.html" class="external-link">loadSimulation</a></span><span class="op">(</span><span class="va">simPath</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="fu">loadSimulation</span><span class="op">(</span><span class="va">simPath</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">applicationParams</span> <span class="op">&lt;-</span> <span class="fu">getAllApplicationParameters</span><span class="op">(</span>simulation <span class="op">=</span> <span class="va">simulation</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">applicationParams</span> <span class="op">&lt;-</span> <span class="fu">getAllApplicationParameters</span><span class="op">(</span></span></span>
