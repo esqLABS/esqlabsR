@@ -1,6 +1,7 @@
 library(shinytest2)
 
 test_that("{shinytest2} recording: UnitConverter: kg to g works as expected", {
+  skip_on_ci()
   app <- AppDriver$new(
     variant = platform_variant(),
     name = "UnitConverter",

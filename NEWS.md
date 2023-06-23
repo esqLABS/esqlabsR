@@ -1,5 +1,4 @@
-# esqlabsR 5.0.1
-
+# esqlabsR (development version)
 
 - Protein ontogenies can be defined for the populations. To specify ontogenies for 
 proteins in the simulation, list the proteins you want to define ontogenies for 
