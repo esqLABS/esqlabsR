@@ -87,7 +87,12 @@ usethis::use_github_release()
 
 ###### Release -> Dev ######
 
+
+
 dev_version <- usethis:::choose_version(which = "dev")
+
+usethis::pr_init(branch = paste0("switch-to-dev-",dev_version))
+
 
 # Update version in Appveyor
 appveyor_config <- yaml::read_yaml(file = "appveyor.yml")
@@ -114,7 +119,7 @@ usethis::use_dev_package(package = "ospsuite",
 
 usethis::use_dev_package(package = "ospsuite.parameteridentification",
                          type = "Imports",
-                         remote = "Open-Systems-Pharmacology/OSPSuite.ParameterIdentification")
+                         remote = "esqLABS/esqlabs.ParameterIdentification")
 
 ## Update version to dev (accept commit suggestions)
 usethis::use_dev_version()
@@ -132,8 +137,8 @@ gert::git_commit("devtools::document()")
 pkgdown::build_site(devel = TRUE)
 
 ## Commit and push docs
-gert::git_add(files = "docs")
+gert::git_add(files = "docs/dev")
 gert::git_commit("pkgdown::build_site(devel = FALSE)")
 
 ## Push to main branch directly
-gert::git_push()
+usethis::pr_push()
