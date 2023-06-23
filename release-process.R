@@ -138,7 +138,7 @@ pkgdown::build_site(devel = TRUE)
 
 ## Commit and push docs
 gert::git_add(files = "docs/dev")
-gert::git_commit("pkgdown::build_site(devel = FALSE)")
+gert::git_commit("pkgdown::build_site(devel = TRUE)")
 
 ## Push to main branch directly
 usethis::pr_push()
