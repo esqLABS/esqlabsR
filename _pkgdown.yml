@@ -13,7 +13,7 @@ authors:
     href: https://github.com/Felixmil
 
 development:
-  mode: devel
+  mode: auto
 
 reference:
 
@@ -49,6 +49,7 @@ reference:
       - LLOQMode
       - ULOQMode
       - loadObservedData
+      - loadObservedDataFromPKML
 
   - title: Helpers for plotting
     #desc:

@@ -11,8 +11,12 @@ articles:
   esqlabsR-shiny: esqlabsR-shiny.html
   esqlabsR-workflow-overview: esqlabsR-workflow-overview.html
   esqlabsR: esqlabsR.html
+<<<<<<< HEAD
+last_built: 2023-06-19T14:21Z
+=======
   presentations: presentations.html
 last_built: 2023-06-22T15:37Z
+>>>>>>> d2624f8e8ca67f3b141eda09e0513ef7be08ab5d
 urls:
   reference: https://esqlabs.github.io/esqlabsR/reference
   article: https://esqlabs.github.io/esqlabsR/articles
