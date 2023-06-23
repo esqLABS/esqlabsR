@@ -7,7 +7,7 @@
 readIndividualCharacteristicsFromXLS(
   XLSpath,
   individualId,
-  sheet = NULL,
+  sheet = "IndividualBiometrics",
   nullIfNotFound = TRUE
 )
 }

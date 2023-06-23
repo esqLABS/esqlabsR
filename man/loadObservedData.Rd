@@ -14,7 +14,7 @@ the necessary information.}
 If \code{NULL} (default), all sheets within the file are loaded.}
 }
 \value{
-A list of \code{DataSet} objects
+A named list of \code{DataSet} objects, with names being the names of the data sets.
 }
 \description{
 Loads data sets from excel. The excel file containing the data

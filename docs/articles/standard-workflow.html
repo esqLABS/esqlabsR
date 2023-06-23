@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">4.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">5.0.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,13 +48,17 @@
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
-    <a class="dropdown-item" href="../articles/example-visualization.html">Visualization and reporting</a>
-    <a class="dropdown-item" href="../articles/example-workflow.html">Running simulations</a>
     <a class="dropdown-item" href="../articles/introduction-esqlabsr.html">Introduction to esqlabsR</a>
-    <a class="dropdown-item" href="../articles/sensitivity-analysis.html">Sensitivity analysis</a>
-    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Running simulations</h6>
     <a class="dropdown-item" href="../articles/standard-workflow.html">Standard workflow</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Processing data</h6>
+    <a class="dropdown-item" href="../articles/data-handling.html">Data handling</a>
+    <a class="dropdown-item" href="../articles/visualization-and-reporting.html">Visualization and reporting</a>
+    <div class="dropdown-divider"></div>
+    <h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6>
+    <a class="dropdown-item" href="../articles/shiny-apps.html">Using the esqlabsR Shiny apps</a>
   </div>
 </li>
 <li class="nav-item">
@@ -117,7 +121,7 @@ examples, we assume that the current working directory is the
 <code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ProjectConfiguration: </span></span>
-<span><span class="co">#&gt;    Model folder: ../Models </span></span>
+<span><span class="co">#&gt;    Model folder: ../Models/Simulations </span></span>
 <span><span class="co">#&gt;    Parameters folder: ../Parameters </span></span>
 <span><span class="co">#&gt;    Parameters file name: ModelParameters.xlsx </span></span>
 <span><span class="co">#&gt;    Individual parameters file name: IndividualParameters.xlsx </span></span>
@@ -252,7 +256,7 @@ Parameter-files and can be directly loaded in MoBi or R using the
 <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function.</p>
 <ul>
 <li><p><strong>SimulationTime</strong>: Time of the simulation. The <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setOutputInterval.html" class="external-link">output
-intervel</a> of the simulation will be set to the range [0 -
+interval</a> of the simulation will be set to the range [0 -
 <code>SimulationTime</code>] with the resolution of 1 point per
 minute.</p></li>
 <li><p><strong>SimulationTimeUnit</strong>: Unit for
@@ -268,64 +272,126 @@ with the simulation. Must be located in the folder defined in
 </ul>
 </div>
 <div class="section level3">
+<h3 id="code-based-specifications">Code-based specifications<a class="anchor" aria-label="anchor" href="#code-based-specifications"></a>
+</h3>
+<p>In addition to scenario set ups through the excel sheets, further
+specifications are made in the <code>R</code> files located in the
+<code>InputCode</code> project folder. Files in this folder must be
+sourced prior to using.</p>
+<ul>
+<li><p><strong>OutputPaths</strong>: You can specify the output paths
+(i.e., paths to the molecules/ parameters for which outputs will be
+simulated) for each scenario separately (see Section <a href="#running-scenarios">Running scenarios</a>). For more convenient
+access to the paths, you can specify all paths in the
+<code>OutputPaths</code> enum (an <code>enum</code> is just a named
+list) and easily access them by their alias names
+(e.g. <code>Aciclovir_PVB</code> for
+<code>"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</code>).</p></li>
+<li><p><strong>TestParameters</strong>: During model development/fitting
+phase, you might want to test out parameter values before storing them
+in the <code>Parameters</code> excel files. You can define the paths of
+the parameters, their values and the units in the
+<code>TestParameters</code> file. Remember to <code>source</code> the
+file each time you change any values. You can turn setting test
+parameters on and off in the <code>ScenarioConfiguration</code> (see
+Section <a href="#running-scenarios">Running scenarios</a>).</p></li>
+</ul>
+</div>
+<div class="section level3">
 <h3 id="running-scenarios">Running scenarios<a class="anchor" aria-label="anchor" href="#running-scenarios"></a>
 </h3>
-<p>To translate all the information we have defined in the excel files
-in a structure that can be understood by <code>R</code>, we must create
-a</p>
-<p>Scenarios are then executed by creating a
-<code>ScenarioConfiguration</code> object and calling a
-<code><a href="../reference/runScenarios.html">runScenarios()</a></code> function with a specific scenario name
-(<code>TestScenario</code> in this case):</p>
+<p>Scenarios are executed by creating <code>ScenarioConfiguration</code>
+objects and calling the <code><a href="../reference/runScenarios.html">runScenarios()</a></code>function. Though it
+is possible to create an empty <code>ScenarioConfiguration</code> and
+populate it by hand, we usually want to create scenario configurations
+from the excel files by calling the
+<code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> function. A
+<code>ScenarioConfiguration</code> is based on the
+<code>ProjectConfiguration</code>, which has to be provided as an
+argument to the function. To read the configuration for the
+<em>‘TestScenario’</em> scenario defined in the
+<code>Scenarios.xlsx</code> file, we call</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">scenarioConfiguration</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/ScenarioConfiguration.html">ScenarioConfiguration</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
+<span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
+<span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">scenarioConfigurations</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ProjectConfiguration: </span></span>
+<span><span class="co">#&gt;    Model folder: ../Models/Simulations </span></span>
+<span><span class="co">#&gt;    Parameters folder: ../Parameters </span></span>
+<span><span class="co">#&gt;    Parameters file name: ModelParameters.xlsx </span></span>
+<span><span class="co">#&gt;    Individual parameters file name: IndividualParameters.xlsx </span></span>
+<span><span class="co">#&gt;    Individual physiology file name: IndividualPhysiology.xlsx </span></span>
+<span><span class="co">#&gt;    Population parameters file name: PopulationParameters.xlsx </span></span>
+<span><span class="co">#&gt;    Scenario definitions file name: Scenarios.xlsx </span></span>
+<span><span class="co">#&gt;    Scenario applications definitions file name: ApplicationParameters.xlsx </span></span>
+<span><span class="co">#&gt;    Experimental data folder: ../Data </span></span>
+<span><span class="co">#&gt;    Experimental data file: TestProject_TimeValuesData.xlsx </span></span>
+<span><span class="co">#&gt;    Data importer configuration: esqlabs_dataImporter_configuration.xml </span></span>
+<span><span class="co">#&gt;    Output folder: ../Results </span></span>
+<span><span class="co">#&gt;    Output device: </span></span>
+<span><span class="co">#&gt; ScenarioConfiguration: </span></span>
+<span><span class="co">#&gt;    Model file name: Aciclovir.pkml </span></span>
+<span><span class="co">#&gt;    Scenario name: TestScenario </span></span>
+<span><span class="co">#&gt;    Parameters sheets: Global </span></span>
+<span><span class="co">#&gt;    Individual Id: Indiv1 </span></span>
+<span><span class="co">#&gt;    Application protocol: Aciclovir_iv_250mg </span></span>
+<span><span class="co">#&gt;    Simulation time: 1440 </span></span>
+<span><span class="co">#&gt;    Points per minute: 1 </span></span>
+<span><span class="co">#&gt;    Simulate steady-state: FALSE </span></span>
+<span><span class="co">#&gt;    Steady-state time: 1000 </span></span>
+<span><span class="co">#&gt;    Set test parameters: FALSE</span></span></code></pre></div>
+<p>Before running the scenarios, we can modify
+<code>ScenarioConfigurations</code> by setting parameters that are
+currently not accessible through excel files. One the most common
+property is <code>$outputPaths</code> that define for which paths the
+results will be stored.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Define the OutputPaths enum, if not done allready</span></span>
 <span><span class="va">OutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ospsuite.utils/man/enum.html" class="external-link">enum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  Aciclovir_PVB <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">simulatedScenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
-<span>  scenarioNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TestScenario"</span><span class="op">)</span>,</span>
-<span>  scenarioConfiguration <span class="op">=</span> <span class="va">scenarioConfiguration</span>,</span>
-<span>  customParams <span class="op">=</span> <span class="cn">NULL</span>, saveSimulationsToPKML <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>The <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function relies on an
-<code>OutputPaths</code> variable being defined in the current
-environment. The variable is expected to contain path(s) to outputs
-generated by the model. In our case this is the simulated concentration
-of Aciclovir in the peripheral venous blood plasma.</p>
-<p>The <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function returns a named list of
-lists with <code>Simulation</code> objects,
-<code>SimulationResults</code> objects, and vectors of output
-values.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span><span class="op">)</span></span>
-<span><span class="co">#&gt; SimulationResults: </span></span>
-<span><span class="co">#&gt;    Number of individuals: 1</span></span></code></pre></div>
+<span></span>
+<span><span class="co"># Set output paths for each scenario</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">scenarioConfiguration</span> <span class="kw">in</span> <span class="va">scenarioConfigurations</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">scenarioConfiguration</span><span class="op">$</span><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/ospsuite.utils/man/enumValues.html" class="external-link">enumValues</a></span><span class="op">(</span><span class="va">OutputPaths</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>In model development/fitting phase, we also might want to apply some
+test parameter values:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">outputValues</span><span class="op">$</span><span class="va">data</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   IndividualId Time</span></span>
-<span><span class="co">#&gt; 1            0    0</span></span>
-<span><span class="co">#&gt; 2            0    1</span></span>
-<span><span class="co">#&gt; 3            0    2</span></span>
-<span><span class="co">#&gt; 4            0    3</span></span>
-<span><span class="co">#&gt; 5            0    4</span></span>
-<span><span class="co">#&gt; 6            0    5</span></span>
-<span><span class="co">#&gt;   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span></span>
-<span><span class="co">#&gt; 1                                                                  0.000000</span></span>
-<span><span class="co">#&gt; 2                                                                  2.713168</span></span>
-<span><span class="co">#&gt; 3                                                                  7.830613</span></span>
-<span><span class="co">#&gt; 4                                                                 13.109206</span></span>
-<span><span class="co">#&gt; 5                                                                 18.258501</span></span>
-<span><span class="co">#&gt; 6                                                                 23.242720</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Set output paths for each scenario</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">scenarioConfiguration</span> <span class="kw">in</span> <span class="va">scenarioConfigurations</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">scenarioConfiguration</span><span class="op">$</span><span class="va">setTestParameters</span> <span class="op">&lt;-</span> <span class="cn">TRUE</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Make sure that you have sourced the <code>TestParameters</code> file
+in this case.</p>
+<p>Once all scenario configurations are set up, we can simulate them by
+calling the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function. We can specify to save
+the initialized simulation (i.e. the simulation with individual
+physiology and parametrization applied as defined by the scenario
+configuration). In such case, a folder with the current date and time
+will be created in the folder where the simulation <code>pkml</code>
+files are located.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">simulatedScenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
+<span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarioConfigurations</span>,</span>
+<span>  customParams <span class="op">=</span> <span class="cn">NULL</span>, saveSimulationsToPKML <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "TestScenario"</span></span></code></pre></div>
+<p>The function returns results of the simulations. For each scenario, a
+<a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html" class="external-link"><code>Simulation</code></a>
+object, a <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html" class="external-link"><code>SimulationResults</code></a>
+object, and vectors of output values (retrieved by the <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getOutputValues.html" class="external-link"><code>getOutputValues()</code></a>
+function) are returned.</p>
 </div>
 <div class="section level3">
 <h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
 </h3>
-<ul>
-<li>The <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function will fail if the
-<code>OutputPaths</code> variable is missing in the current environment.
-Make sure to have this variable set up immediately before calling the
-<code><a href="../reference/runScenarios.html">runScenarios()</a></code> function.</li>
-</ul>
 <p>More detailed information on function signatures can be found in:</p>
 <ul>
 <li>
@@ -337,15 +403,6 @@ class</a></li>
 class</a></li>
 <li><a href="https://esqlabs.github.io/esqlabsR/reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></li>
 <li><a href="https://esqlabs.github.io/esqlabsR/reference/runScenarios.html">runScenarios()</a></li>
-</ul>
-</li>
-<li>
-<code>ospsuite</code> documentation on:
-<ul>
-<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/Simulation.html" class="external-link">Simulation
-class</a></li>
-<li><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationResults.html" class="external-link">SimulationResults
-class</a></li>
 </ul>
 </li>
 </ul>

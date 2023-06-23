@@ -1,115 +1,248 @@
-#' Read scenario definition from excel file
+#' Read scenario definition(s) from excel file
+#'
+#' @param scenarioNames Names of the scenarios that are defined in the excel file.
+#' If `NULL` (default), all scenarios specified in the excel file will be
+#' created.
+#' @param projectConfiguration A `ProjectConfiguration` object holding base information
 #'
 #' @details Reads scenario definition from the excel file defined in
-#' `ProjectConfiguration` and updates the `ScenarioConfiguration` with new
+#' `ProjectConfiguration` and creates `ScenarioConfiguration` objects with new
 #' information.
+#' If a scenario that is specified in `scenarioNames` is not found in the excel
+#' file, an error is thrown.
 #'
-#' @param scenarioConfiguration A `ScenarioConfiguration` that will be updated.
-#'
-#' @return Updated `ScenarioConfiguration`
+#' @return A named list of `ScenarioConfiguration` objects withe the names of the
+#' list being scenario names.
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' # Create default ProjectConfiguration
 #' projectConfiguration <- createDefaultProjectConfiguration()
-#' # Create ScenarioConfiguration from ProjectConfiguration
-#' scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
-#' # Set scenario name
-#' scenarioConfiguration$scenarioName <- "MyScenario"
+#' scenarioName <- "MyScenario"
 #' # Read scenario definition from excel
-#' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)
+#' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)[[scenarioName]]
 #' }
-readScenarioConfigurationFromExcel <- function(scenarioConfiguration) {
+readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConfiguration) {
+  validateIsString(scenarioNames, nullAllowed = TRUE)
+  validateIsOfType(projectConfiguration, ProjectConfiguration)
+
   # Current scenario definition structure:
-  # "Scenario_name", "IndividualId", "ModelParameterSheets", "ApplicationProtocol",
-  # "SimulationTime", "SimulationTimeUnit", "SteadyState", "ModelFile"
-  colTypes <- c("text", "text", "text", "text", "numeric", "text", "logical", "text")
-  data <- readExcel(
-    path = file.path(
-      scenarioConfiguration$projectConfiguration$paramsFolder,
-      scenarioConfiguration$projectConfiguration$scenarioDefinitionFile
-    ),
+  expectedColumns <- c(
+    "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol",
+    "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile",
+    "OutputPathsIds"
+  )
+  # Define the casting functions to cast columns to specific type
+  colTypes <- c(
+    "text", "text", "text", "logical", "text",
+    "text", "text", "text", "logical",
+    "numeric", "text", "text", "text"
+  )
+
+  # Read only the header of the excel file to check structure
+  header <- readExcel(
+    path = projectConfiguration$scenarioDefinitionFile,
+    sheet = "Scenarios",
+    n_max = 0
+  )
+
+  # Check if the structure is correct
+  if (!identical(names(header), expectedColumns)) {
+    stop(messages$errorWrongXLSStructure(
+      filePath = projectConfiguration$scenarioDefinitionFile,
+      expectedColNames = expectedColumns
+    ))
+  }
+
+  # If no errors were raised before, structure is correct. Whole excel file is
+  # read with column types.
+
+  wholeData <- readExcel(
+    path = projectConfiguration$scenarioDefinitionFile,
+    sheet = "Scenarios",
     col_types = colTypes
   )
-  # Select the scenario
-  if (!scenarioConfiguration$scenarioName %in% data$Scenario_name) {
-    stop("readScenarioDefinition: Scenario '", scenarioConfiguration$scenarioName, "' is not specified!")
+
+  # Remove empty rows
+  wholeData <- dplyr::filter(wholeData, !dplyr::if_all(dplyr::everything(), is.na))
+
+  outputPathsDf <- readExcel(
+    path = projectConfiguration$scenarioDefinitionFile,
+    sheet = "OutputPaths"
+  )
+
+  scenarioNames <- scenarioNames %||% wholeData$Scenario_name
+  # Create a scenario configuration for each name
+  scenarioConfigurations <- vector("list", length(scenarioNames))
+  for (i in seq_along(scenarioNames)) {
+    scenarioName <- scenarioNames[[i]]
+
+    # Select the scenario
+    if (!any(wholeData$Scenario_name == scenarioName)) {
+      stop(messages$scenarioConfigurationNameNotFoundWhenReading(scenarioName))
+    }
+    data <- wholeData[wholeData$Scenario_name == scenarioName, ]
+    # If multiple rows with the same scenario name if present, stop with an error
+    if (nrow(data) > 1) {
+      stop(messages$stopScenarioNameNonUnique(scenarioName))
+    }
+
+    # Create a base scenario configuration based on the current project configuration
+    scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
+
+    # Scenario name
+    scenarioConfiguration$scenarioName <- scenarioName
+    # Parameter sheets
+    paramSheets <- data$ModelParameterSheets
+    if (!is.na(paramSheets)) {
+      sheetNames <- strsplit(x = paramSheets, split = ",", fixed = TRUE)[[1]]
+      # Remove leading/trailing whitespaces
+      sheetNames <- trimws(sheetNames)
+      scenarioConfiguration$addParamSheets(sheetNames)
+    }
+
+    # Simulation time
+    # Set the time only if new value is defined
+    if (!is.na(data$SimulationTime)) {
+      scenarioConfiguration$simulationTime <- data$SimulationTime
+
+      scenarioConfiguration$simulationTimeUnit <- data$SimulationTimeUnit
+    }
+
+    # Individual id
+    scenarioConfiguration$individualId <- data$IndividualId
+
+    # Population id
+    if (!is.na(data$PopulationId)) {
+      scenarioConfiguration$populationId <- data$PopulationId
+      scenarioConfiguration$simulationType <- "Population"
+    }
+
+    # ReadPopulationFromCSV
+    if (!is.na(data$ReadPopulationFromCSV)) {
+      scenarioConfiguration$readPopulationFromCSV <- data$ReadPopulationFromCSV
+    }
+
+    # Application protocol
+    scenarioConfiguration$applicationProtocol <- data$ApplicationProtocol
+
+    # Simulate steady-state?
+    if (!is.na(data$SteadyState)) {
+      scenarioConfiguration$simulateSteadyState <- data$SteadyState
+    }
+
+    # Steady-state time
+    ssTime <- data$SteadyStateTime
+    ssTimeUnit <- data$SteadyStateTimeUnit
+
+    if (!is.na(ssTime)) {
+      scenarioConfiguration$steadyStateTime <- ospsuite::toBaseUnit(
+        quantityOrDimension = ospDimensions$Time,
+        values = ssTime,
+        unit = ssTimeUnit
+      )
+    }
+
+    # Model file
+    scenarioConfiguration$modelFile <- data$ModelFile
+
+    # OutputPaths
+    if (!is.na(data$OutputPathsIds)) {
+      pathIds <- strsplit(x = data$OutputPathsIds, split = ",", fixed = TRUE)[[1]]
+      # Remove leading/trailing whitespaces
+      pathIds <- trimws(pathIds)
+      # Check if all paths IDs are defined in the OutputPaths sheet
+      missingIds <- setdiff(pathIds, outputPathsDf$OutputPathId)
+      if (length(missingIds) != 0) {
+        stop(messages$invalidOutputPathIdsfunction(outputPathIds = missingIds, scenarioName = scenarioName))
+      }
+      # Get the paths corresponding to the ids
+      outputPaths <- dplyr::filter(outputPathsDf, OutputPathId %in% pathIds)$OutputPath
+
+      scenarioConfiguration$outputPaths <- outputPaths
+    }
+
+    # Add the new ScenarioConfiguration to the output list
+    scenarioConfigurations[[i]] <- scenarioConfiguration
   }
-  data <- data[data$Scenario_name == scenarioConfiguration$scenarioName, ]
+  names(scenarioConfigurations) <- scenarioNames
 
-  # Parameter sheets
-  scenarioConfiguration$removeParamSheets()
-  paramSheets <- gsub(data$ModelParameterSheets, pattern = " ", replacement = "", fixed = TRUE)
-  if (!is.na(paramSheets)) {
-    scenarioConfiguration$addParamSheets(strsplit(x = paramSheets, split = ",", fixed = TRUE)[[1]])
-  }
-
-  # Simulation time
-  simTime <- data$SimulationTime
-  simTimeUnit <- data$SimulationTimeUnit
-  scenarioConfiguration$simulationTime <- ospsuite::toBaseUnit(ospDimensions$Time, values = simTime, unit = simTimeUnit)
-
-  # Individual id
-  scenarioConfiguration$individualId <- data$IndividualId
-
-  # Application protocol
-  scenarioConfiguration$applicationProtocol <- data$ApplicationProtocol
-
-  # Simulate steady-state?
-  scenarioConfiguration$simulateSteadyState <- data$SteadyState
-
-  # Model file
-  scenarioConfiguration$modelFile <- data$ModelFile
-
-  return(scenarioConfiguration)
+  return(scenarioConfigurations)
 }
 
-#' Set an application protocol in a `Simulation`
+#' Set an application protocol in a `Simulation` from the excel file.
 #'
 #' @details Set the parameter values describing the application protocol
-#' defined in the scenario configuration. Either calling a function that is stored
-#' in the `applicationProotocolsEnum`, or from excel.
+#' defined in the scenario configuration.
 #'
 #' @param simulation A `Simulation` object that will be modified.
 #' @param scenarioConfiguration A `ScenarioConfiguration` object holding the
 #' name of the application protocol.
-#' @param applicationProtocolsEnum (Optional) A named list with functions that
-#' define setting the application. If `NULL` or no entry with the application
-#' protocol defined in the `scenarioConfiguiration`, the parameters to set
-#' are extracted from excel.
+#'
+#' This function is deprecated. Use `setParametersFromXLS` instead.
 #'
 #' @export
-setApplications <- function(simulation, scenarioConfiguration, applicationProtocolsEnum = NULL) {
-  applicationName <- scenarioConfiguration$applicationProtocol
-
-  # If the application is defined in the enum, call the function
-  if (!is.null(applicationProtocolsEnum) &&
-    enumHasKey(key = applicationName, enum = applicationProtocolsEnum)) {
-    applicationProtocolsEnum[[applicationName]]()
-  } else {
-    # Otherwise, set from excel
-    .setApplicationFromExcel(scenarioConfiguration = scenarioConfiguration, simulation = simulation)
-  }
-}
-
-#' Set application protocol from excel
-#'
-#' @param scenarioConfiguration A `ScenarioConfiguration` object holding the
-#' name of the application protocol.
-#' @param simulation A `Simulation` object that will be modified.
-#' @keywords internal
-.setApplicationFromExcel <- function(scenarioConfiguration, simulation) {
-  excelFilePath <- file.path(
-    scenarioConfiguration$projectConfiguration$paramsFolder,
-    scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
-  )
+setApplications <- function(simulation, scenarioConfiguration) {
+  .Deprecated("setApplications", "setParametersFromXLS")
+  # Set from excel
+  excelFilePath <- scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
   # Only try to apply parameters if the sheet exists
-  if (scenarioConfiguration$applicationProtocol %in% readxl::excel_sheets(excelFilePath)) {
+  if (any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
     params <- readParametersFromXLS(excelFilePath, scenarioConfiguration$applicationProtocol)
     ospsuite::setParameterValuesByPath(
       parameterPaths = params$paths, values = params$values,
       simulation = simulation, units = params$units
     )
   }
+}
+
+#' Validate `ScenarioConfiguration` objects
+#'
+#' @param scenarioConfigurations Scenario configurations to validate.
+#' @keywords internal
+.validateScenarioConfigurations <- function(scenarioConfigurations) {
+  validateIsOfType(scenarioConfigurations, "ScenarioConfiguration")
+
+  # Check if population is defined for each population scenario
+  for (scenarioConfiguration in scenarioConfigurations) {
+    if (scenarioConfiguration$simulationType == "Population" && is.null(scenarioConfiguration$populationId)) {
+      stop(messages$noPopulationIdForPopulationScenario(scenarioConfiguration$scenarioName))
+    }
+  }
+}
+
+# Parse simulation time intervals
+.parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
+  # Check if the simulation time intervals are defined
+  if (is.null(simulationTimeIntervalsString)) {
+    return(NULL)
+  }
+
+  # Split the string by ';'
+  simulationTimeIntervals <- strsplit(x = simulationTimeIntervalsString, split = ";", fixed = TRUE)[[1]]
+  # Split each interval by ','
+  simulationTimeIntervals <- strsplit(x = simulationTimeIntervals, split = ",", fixed = TRUE)
+  # Convert to numeric
+  simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
+  # Validate that all are numeric
+  validateIsNumeric(simulationTimeIntervals)
+  # Validate that all are positive
+  if (any(unlist(simulationTimeIntervals) < 0)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  # Validate all intervals are of length 3
+  if (any(sapply(simulationTimeIntervals, length) != 3)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  # Validate all resolution entries are greater than 0
+  if (any(sapply(simulationTimeIntervals, function(x) x[3] <= 0))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  # Validate all start values are smaller than end values
+  if (any(sapply(simulationTimeIntervals, function(x) x[1] >= x[2]))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+
+  return(simulationTimeIntervals)
 }

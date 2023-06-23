@@ -8,16 +8,6 @@ ScenarioConfiguration <- R6::R6Class(
   inherit = ospsuite.utils::Printable,
   cloneable = TRUE,
   active = list(
-    #' @field setTestParameters Boolean representing whether parameters defined
-    #'   in `TestParameters` are to be applied to the simulation
-    setTestParameters = function(value) {
-      if (missing(value)) {
-        private$.setTestParameters
-      } else {
-        validateIsLogical(value)
-        private$.setTestParameters <- value
-      }
-    },
     #' @field simulateSteadyState Boolean representing whether the simulation
     #' will be brought to a steady-state first
     simulateSteadyState = function(value) {
@@ -25,34 +15,51 @@ ScenarioConfiguration <- R6::R6Class(
         private$.simulateSteadyState
       } else {
         validateIsLogical(value)
+        # If the value is `NA`, do not change
+        if (is.na(value)) {
+          invisible()
+        }
         private$.simulateSteadyState <- value
       }
     },
-    #' @field simulationTime Simulation time in minutes. If `NULL` (default),
+    #' @field readPopulationFromCSV Boolean representing whether the a new population
+    #' will be created (value is `FALSE`) or an existing population will be imported
+    #' from a csv.
+    readPopulationFromCSV = function(value) {
+      if (missing(value)) {
+        private$.readPopulationFromCsv
+      } else {
+        validateIsLogical(value)
+        # If the value is `NA`, do not change
+        if (is.na(value)) {
+          invisible()
+        }
+        private$.readPopulationFromCsv <- value
+      }
+    },
+    #' @field simulationTime Specified simulation time intervals. If `NULL` (default),
     #' simulation time as defined in the `Simulation` object will be used.
+    #' Accepted are multiple time intervals separated by a ';'. Each time interval
+    #' is a triplet of values <StartTime, EndTime, Resolution>, where `Resolution` is the number of
+    #' simulated points per time unit defined in the column `TimeUnit`.
     simulationTime = function(value) {
       if (missing(value)) {
         private$.simulationTime
       } else {
-        validateIsNumeric(value)
-        if (value < 0) {
-          stop(messages$valueShouldNotBeNegative("simulationTime", value))
-        }
-        private$.simulationTime <- value
+        private$.simulationTime <- .parseSimulationTimeIntervals(value)
       }
     },
-    #' @field pointsPerMinute Resolution of the outputs in points per minute
-    pointsPerMinute = function(value) {
+
+    #' @field simulationTimeUnit Unit of the simulation time intervals.
+    simulationTimeUnit = function(value) {
       if (missing(value)) {
-        private$.pointsPerMinute
+        private$.simulationTimeUnit
       } else {
-        validateIsNumeric(value)
-        if (value < 0) {
-          stop(messages$valueShouldNotBeNegative("pointsPerMinute", value))
-        }
-        private$.pointsPerMinute <- value
+        validateUnit(value, ospDimensions$Time)
+        private$.simulationTimeUnit <- value
       }
     },
+
     #' @field steadyStateTime Time in minutes to simulate if simulating steady-state. May be `NULL`.
     steadyStateTime = function(value) {
       if (missing(value)) {
@@ -86,21 +93,11 @@ a parameter sheet from the list"
       if (missing(value)) {
         private$.simulationType
       } else {
-        if (value %in% c("Individual", "Population")) {
+        if (any(c("Individual", "Population") == value)) {
           private$.simulationType <- value
         } else {
           stop(messages$wrongSimulationType())
         }
-      }
-    },
-    #' @field simulationRunOptions Object of type `SimulationRunOptions` that will be passed
-    #' to simulation runs. If `NULL`, default options are used
-    simulationRunOptions = function(value) {
-      if (missing(value)) {
-        private$.simulationRunOptions
-      } else {
-        validateIsOfType(value, SimulationRunOptions, nullAllowed = TRUE)
-        private$.simulationRunOptions <- value
       }
     },
     #' @field projectConfiguration `ProjectConfiguration` that will be used in scenarios.
@@ -115,15 +112,14 @@ a parameter sheet from the list"
   ),
   private = list(
     .projectConfiguration = NULL,
-    .setTestParameters = FALSE,
     .simulateSteadyState = FALSE,
     .simulationTime = NULL,
-    .pointsPerMinute = 1,
+    .simulationTimeUnit = ospUnits$Time$min,
     .steadyStateTime = 1000,
     .individualCharacteristics = NULL,
     .paramSheets = NULL,
     .simulationType = "Individual",
-    .simulationRunOptions = NULL
+    .readPopulationFromCsv = FALSE
   ),
   public = list(
     #' @description
@@ -146,6 +142,15 @@ a parameter sheet from the list"
     #' @field individualId Id of the individual as specified in "IndividualParameters.xlsx".
     #' If `NULL` (default), the individual as defined in the simulation file will be simulated.
     individualId = NULL,
+    #' @field populationId Id of the population as specified in "PopulationParameters.xlsx",
+    #' sheet "Demographics". If `ScenarioConfguration$simulationType` is `population`,
+    #' a population will be created a the scenario will be simulated as a population
+    #' simulation.
+    populationId = NULL,
+    #' @field outputPaths a list of output paths for which the results will be
+    #' calculated. If `NULL` (default), outputs as defined in the simulation
+    #' are used.
+    outputPaths = NULL,
     #' @description Add the names of sheets in the parameters excel-file
     #' that will be applied to the simulation
     #' @param sheetNames A name or a list of names of the excel sheet
@@ -169,20 +174,29 @@ a parameter sheet from the list"
     },
     #' @description
     #' Print the object to the console
-    #' @param ... Rest arguments.
-    print = function(...) {
-      self$projectConfiguration$print()
+    #' @param projectConfiguration Whether to also print project configuration. default to TRUE.
+    print = function(projectConfiguration = TRUE) {
+      if (projectConfiguration) {
+        self$projectConfiguration$print()
+      }
       private$printClass()
       private$printLine("Model file name", self$modelFile)
       private$printLine("Scenario name", self$scenarioName)
       private$printLine("Parameters sheets", enumKeys(self$paramSheets))
       private$printLine("Individual Id", self$individualId)
+      private$printLine("Population Id", self$populationId)
+      private$printLine("Read population from csv file", self$readPopulationFromCSV)
       private$printLine("Application protocol", self$applicationProtocol)
-      private$printLine("Simulation time", self$simulationTime)
-      private$printLine("Points per minute", self$pointsPerMinute)
+      private$printLine("Simulation time intervals")
+      for (i in seq_along(self$simulationTime)) {
+        private$printLine("  Interval", i)
+        private$printLine("    Start", self$simulationTime[[i]][1])
+        private$printLine("    End", self$simulationTime[[i]][2])
+        private$printLine("    Resolution", self$simulationTime[[i]][3])
+      }
+      private$printLine("Simulation time intervals unit", self$simulationTimeUnit)
       private$printLine("Simulate steady-state", self$simulateSteadyState)
       private$printLine("Steady-state time", self$steadyStateTime)
-      private$printLine("Set test parameters", self$setTestParameters)
       invisible(self)
     }
   )

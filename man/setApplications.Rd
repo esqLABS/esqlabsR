@@ -2,30 +2,22 @@
 % Please edit documentation in R/utilities-scenario-configuration.R
 \name{setApplications}
 \alias{setApplications}
-\title{Set an application protocol in a \code{Simulation}}
+\title{Set an application protocol in a \code{Simulation} from the excel file.}
 \usage{
-setApplications(
-  simulation,
-  scenarioConfiguration,
-  applicationProtocolsEnum = NULL
-)
+setApplications(simulation, scenarioConfiguration)
 }
 \arguments{
 \item{simulation}{A \code{Simulation} object that will be modified.}
 
 \item{scenarioConfiguration}{A \code{ScenarioConfiguration} object holding the
-name of the application protocol.}
+name of the application protocol.
 
-\item{applicationProtocolsEnum}{(Optional) A named list with functions that
-define setting the application. If \code{NULL} or no entry with the application
-protocol defined in the \code{scenarioConfiguiration}, the parameters to set
-are extracted from excel.}
+This function is deprecated. Use \code{setParametersFromXLS} instead.}
 }
 \description{
-Set an application protocol in a \code{Simulation}
+Set an application protocol in a \code{Simulation} from the excel file.
 }
 \details{
 Set the parameter values describing the application protocol
-defined in the scenario configuration. Either calling a function that is stored
-in the \code{applicationProotocolsEnum}, or from excel.
+defined in the scenario configuration.
 }

@@ -58,18 +58,19 @@ test_that("It overwrites the value if the path is present in multiple sheets", {
 # context("extendParameterStructure")
 
 test_that("It trows an error if wrong structure is provideed", {
-  expect_error(extendParameterStructure(
-    parameters = list(
-      paths = "one",
-      values = 2
+  expect_error(
+    extendParameterStructure(
+      parameters = list(
+        paths = "one",
+        values = 2
+      ),
+      newParameters = list(
+        paths = "one",
+        values = 2,
+        units = ""
+      )
     ),
-    newParameters = list(
-      paths = "one",
-      values = 2,
-      units = ""
-    )
-  ),
-  regexp = messages$wrongParametersStructure(argumentName = "parameters")
+    regexp = messages$wrongParametersStructure(argumentName = "parameters")
   )
 })
 

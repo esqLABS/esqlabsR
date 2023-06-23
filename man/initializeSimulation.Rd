@@ -8,11 +8,7 @@ initializeSimulation(
   simulation,
   individualCharacteristics = NULL,
   additionalParams = NULL,
-  simulateSteadyState = FALSE,
-  steadyStateTime = 1000,
-  ignoreIfFormula = TRUE,
-  stopIfParameterNotFound = TRUE,
-  simulationRunOptions = NULL
+  stopIfParameterNotFound = TRUE
 )
 }
 \arguments{
@@ -24,26 +20,9 @@ describing an individual.}
 \item{additionalParams}{Optional named list with lists 'paths', 'values', and
 'units'.}
 
-\item{simulateSteadyState}{Logical. If \code{TRUE}, the model is simulated for
-\code{steadyStateTime} minutes after applying parameter values defined in
-\code{individualCharacteristics} and \code{additionalParams}, and the end results
-of the simulation are applied as initial conditions for all molecules.
-Default is \code{FALSE}.}
-
-\item{steadyStateTime}{Simulation time (minutes) for the steady-state
-simulation. Must be long enough for system to reach a steady-state. 1000 by
-default.}
-
-\item{ignoreIfFormula}{If \code{TRUE} (default), species and parameters with
-initial values defined by a formula are not included in the steady-state
-simulation}
-
 \item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), an error is
 thrown if any of the \code{additionalParams} does not exist. If \code{FALSE},
 non-existent parameters are  ignored.}
-
-\item{simulationRunOptions}{Optional instance of a \code{SimulationRunOptions}
-used during the simulation run.}
 }
 \description{
 Helper method that combines a set of common steps performed

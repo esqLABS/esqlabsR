@@ -1,191 +1,273 @@
 #' Run a set of scenarios.
 #'
-#' @param scenarioNames Names of the simulated scenarios. Scenario description is
-#' stored in the `Scenarios.xlsx` file.
-#' @param scenarioConfiguration A `ScenarioConfiguration` object
-#' @param customParams A list containing vectors 'paths' with the full paths to the
-#' parameters, 'values' the values of the parameters, and 'units' with the
-#' units the values are in. The values to be applied to the model.
-#' @param saveSimulationsToPKML Logical, defaults to `FALSE`. If `TRUE`,
-#' initialized simulations are saved to PKML before simulating. The output folder
-#' is the model folder defined in `ProjectConfiguration` with the subfolder with the
-#' current timestamp. The name of the file is the name of the scenario.
+#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to be
+#' simulated.
+#' @param simulationRunOptions Object of type `SimulationRunOptions` that will be passed
+#' to simulation runs. If `NULL`, default options are used.
 #'
 #' @return A named list, where the names are scenario names, and the values are
-#' lists with the initialized `Simulation` object with applied parameters,
-#' `SimulatioResults` objects produced by running the simulation, and output values
-#' of the `SimulationResults`.
+#' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
+#' `results` being `SimulatioResults` object produced by running the simulation,
+#' `outputValues` the output values of the `SimulationResults`, and `population`
+#' the `Population` object if the scenario is a population simulation.
+#' @import ospsuite.parameteridentification
 #' @export
-runScenarios <- function(scenarioNames, scenarioConfiguration, customParams = NULL,
-                         saveSimulationsToPKML = FALSE) {
-  simulations <- vector("list", length(scenarioNames))
-  for (i in seq_along(simulations)) {
-    scenarioConfiguration$scenarioName <- scenarioNames[[i]]
-    simulations[[i]] <- initializeScenario(scenarioConfiguration = scenarioConfiguration, customParams = customParams)
-  }
-  names(simulations) <- scenarioNames
-
-  # Save simulations to PKML
-  if (saveSimulationsToPKML) {
-    outputFolder <- file.path(
-      scenarioConfiguration$projectConfiguration$modelFolder,
-      format(Sys.time(), "%F %H-%M")
-    )
-    # Create a new folder if it does not exist
-    if (!dir.exists(paths = outputFolder)) {
-      dir.create(path = outputFolder)
+runScenarios <- function(scenarios, simulationRunOptions = NULL) {
+  # List of individiaul simulations
+  individualSimulations <- list()
+  # List of population scenarios
+  populationScenarios <- list()
+  # List of simulation with steady-state
+  steadyStateSimulations <- list()
+  # Have to store steady-state times separately, because they are not part of the simulation object
+  steadyStateTimes <- list()
+  for (scenario in scenarios) {
+    if (scenario$scenarioType == "Individual") {
+      individualSimulations <- c(individualSimulations, scenario$simulation)
+    } else {
+      populationScenarios <- c(populationScenarios, scenario)
     }
-    for (scenarioName in scenarioNames) {
-      outputPath <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
-      tryCatch(
-        {
-          ospsuite::saveSimulation(
-            simulation = simulations[[scenarioName]],
-            filePath = outputPath
-          )
-        },
-        error = function(cond) {
-          warning(paste0("Cannot save to path '", outputFolder, "'"))
-          message("Original error message:")
-          message(cond)
-        },
-        warning = function(cond) {
-          warning(cond)
-        }
+
+    if (scenario$scenarioConfiguration$simulateSteadyState) {
+      steadyStateSimulations <- c(steadyStateSimulations, scenario$simulation)
+      steadyStateTimes <- c(steadyStateTimes, scenario$scenarioConfiguration$steadyStateTime)
+    }
+  }
+
+  # Simulate steady-state concurrently
+  if (length(steadyStateSimulations) > 0) {
+    initialValues <- ospsuite.parameteridentification::getSteadyState(
+      simulations = steadyStateSimulations,
+      steadyStateTime = steadyStateTimes, ignoreIfFormula = TRUE,
+      simulationRunOptions = simulationRunOptions
+    )
+  }
+
+  # Set initial values for steady-state simulations
+  for (simulation in steadyStateSimulations) {
+    ospsuite::setQuantityValuesByPath(
+      quantityPaths = initialValues[[simulation$id]]$paths,
+      values = initialValues[[simulation$id]]$values, simulation = simulation
+    )
+  }
+
+  # Run invidual simulations
+  simulationResults <- runSimulations(
+    simulations = individualSimulations,
+    simulationRunOptions = simulationRunOptions
+  )
+
+  # Run population simulations sequentially and add the to the list of simulation results
+  for (scenario in populationScenarios) {
+    populationResults <- runSimulations(
+      simulations = scenario$simulation,
+      population = scenario$population,
+      simulationRunOptions = simulationRunOptions
+    )
+    simulationResults <- c(simulationResults, populationResults)
+  }
+
+  # Create output list with simulation results, simulation objects, and population objects
+  returnList <- vector("list", length(simulationResults))
+  for (idx in seq_along(scenarios)) {
+    scenario <- scenarios[[idx]]
+    scenarioName <- scenario$scenarioConfiguration$scenarioName
+    simulation <- scenario$simulation
+    id <- simulation$id
+    results <- simulationResults[[id]]
+    population <- scenario$population
+
+    # Retrieving quantities from paths to support pattern matching with '*'
+    outputQuantities <- NULL
+    if (!is.null(scenario$scenarioConfiguration$outputPaths)) {
+      outputQuantities <- getAllQuantitiesMatching(
+        scenario$scenarioConfiguration$outputPaths,
+        simulation
       )
     }
-  }
-
-  # Simulate all simulations concurrently
-  simulationResults <- runSimulations(simulations = simulations, simulationRunOptions = scenarioConfiguration$simulationRunOptions)
-
-  returnList <- vector("list", length(simulationResults))
-  names(returnList) <- scenarioNames
-  for (idx in seq_along(scenarioNames)) {
-    simulationName <- scenarioNames[[idx]]
-    simulation <- simulations[[simulationName]]
-    results <- simulationResults[[simulation$id]]
     outputValues <- getOutputValues(results,
-      quantitiesOrPaths = getAllQuantitiesMatching(enumValues(OutputPaths), simulation)
+      quantitiesOrPaths = outputQuantities
     )
-    returnList[[simulationName]] <- list(
+    returnList[[idx]] <- list(
       simulation = simulation, results = results,
-      outputValues = outputValues
+      outputValues = outputValues,
+      population = population
     )
+    names(returnList)[[idx]] <- scenarioName
   }
 
+  # Call gc() on .NET
+  ospsuite::clearMemory()
   return(returnList)
 }
 
-#' Initialize a simulation based on scenario definition
+#' Create `Scenario` objects from `ScenarioConfiguration` objects
 #'
 #' @description
 #' Load simulation.
 #' Apply parameters from global XLS.
 #' Apply individual physiology.
 #' Apply individual model parameters.
-#' Apply test parameters (TestParameters.R).
-#' Set simulation outputs (OutputPaths.R).
+#' Set simulation outputs.
 #' Set simulation time.
 #' initializeSimulation().
+#' Create population
 #'
-#' @param scenarioConfiguration A `ScenarioConfiguration` object
-#' @param customParams A list with three vectors named `paths`, `values`, `units`
-#' to be applied to the model
+#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to be
+#' simulated.
+#' @param customParams A list containing vectors 'paths' with the full paths to the
+#' parameters, 'values' the values of the parameters, and 'units' with the
+#' units the values are in. The values to be applied to the model.
 #'
-#' @return Initialized `Simulation` object
+#' @return Named list of `Scenario` objects.
 #' @export
-initializeScenario <- function(scenarioConfiguration, customParams = NULL) {
-  # Update `ScenarioConfiguration` with information from excel
-  scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)
-  # Read parameters from the parameters file
-  params <- readParametersFromXLS(
-    file.path(
-      scenarioConfiguration$projectConfiguration$paramsFolder,
-      scenarioConfiguration$projectConfiguration$paramsFile
-    ),
-    scenarioConfiguration$paramSheets
+createScenarios <- function(scenarioConfigurations, customParams = NULL) {
+  .validateScenarioConfigurations(scenarioConfigurations)
+  .validateParametersStructure(
+    parameterStructure = customParams,
+    argumentName = "customParams",
+    nullAllowed = TRUE
   )
 
-  individualCharacteristics <- NULL
-  if (!is.null(scenarioConfiguration$individualId)) {
-    individualCharacteristics <- readIndividualCharacteristicsFromXLS(
-      XLSpath = file.path(scenarioConfiguration$projectConfiguration$paramsFolder, scenarioConfiguration$projectConfiguration$individualPhysiologyFile),
-      individualId = scenarioConfiguration$individualId,
-      nullIfNotFound = TRUE
-    )
+  scenarios <- purrr::map(scenarioConfigurations, ~ Scenario$new(.x, customParams = customParams)) %>%
+    purrr::set_names(purrr::map(scenarioConfigurations, ~ .x$scenarioName))
 
-    if (is.null(individualCharacteristics)) {
-      warning(paste0(
-        "No individual characteristics for individual id '",
-        scenarioConfiguration$individualId, "' found."
-      ))
-    }
+  return(scenarios)
+}
 
-    # Find individual-specific model parameters
-    excelSheets <- readxl::excel_sheets(path = file.path(
-      scenarioConfiguration$projectConfiguration$paramsFolder,
-      scenarioConfiguration$projectConfiguration$individualParamsFile
-    ))
+#' Save results of scenario simulations to csv.
+#'
+#' @param simulatedScenariosResults Named list with `simulation`, `results`, `outputValues`,
+#' and `population` as produced by `runScenarios()`.
+#' @param projectConfiguration An instance of `ProjectConfiguration`
+#' @param outputFolder Optional - path to the folder where the results will be
+#' stored. If `NULL` (default), a sub-folder in
+#' `ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>`.
+#' @param saveSimulationsToPKML If `TRUE` (default), simulations corresponding to
+#' the results are saved to PKML along with the results.
+#'
+#' @details For each scenario, a separate csv file will be created. If the scenario
+#' is a population simulation, a population is stored along with the results with
+#' the file name suffix `_population`. Results can be read with the `loadScenarioResults()` function.
+#'
+#' @export
+#'
+#' @examples \dontrun{
+#' projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
+#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
+#'   projectConfiguration = projectConfiguration
+#' )
+#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+#' simulatedScenariosResults <- runScenarios(
+#'   scenarios = scenarios
+#' )
+#' saveResults(simulatedScenariosResults, projectConfiguration)
+#' }
+saveScenarioResults <- function(
+    simulatedScenariosResults,
+    projectConfiguration,
+    outputFolder = NULL,
+    saveSimulationsToPKML = TRUE) {
+  validateIsLogical(saveSimulationsToPKML)
 
-    if (scenarioConfiguration$individualId %in% excelSheets) {
-      indivModelParams <- readParametersFromXLS(file.path(
-        scenarioConfiguration$projectConfiguration$paramsFolder,
-        scenarioConfiguration$projectConfiguration$individualParamsFile
-      ), sheets = scenarioConfiguration$individualId)
-
-      # Add individual model parameters to the parameters structure
-      params <- extendParameterStructure(
-        parameters = params,
-        newParameters = indivModelParams
-      )
-    } else {
-      warning(paste0(
-        "No individual specific model parameters for individual id '",
-        scenarioConfiguration$individualId, "' found."
-      ))
-    }
-  }
-
-  if (scenarioConfiguration$setTestParameters) {
-    warning("INFO: 'scenarioConfiguration$setTestParameters' is set to TRUE,
-            parameter values defined in 'InputCode/TestParameters.R' will be applied!")
-    params <- extendParameterStructure(
-      parameters = params,
-      newParameters = getTestParameters()
-    )
-  }
-  if (!is.null(customParams)) {
-    params <- extendParameterStructure(
-      parameters = params,
-      newParameters = customParams
-    )
-  }
-
-  # Load simulation
-  simulation <- ospsuite::loadSimulation(filePath = file.path(
-    scenarioConfiguration$projectConfiguration$modelFolder,
-    scenarioConfiguration$modelFile
-  ), loadFromCache = FALSE)
-  # Set the outputs
-  clearOutputs(simulation)
-  addOutputs(quantitiesOrPaths = enumValues(OutputPaths), simulation = simulation)
-  # Set simulation time if defined by the user.
-  if (!is.null(scenarioConfiguration$simulationTime)) {
-    setOutputInterval(simulation = simulation, startTime = 0, endTime = scenarioConfiguration$simulationTime, resolution = scenarioConfiguration$pointsPerMinute)
-  }
-
-  initializeSimulation(
-    simulation = simulation,
-    individualCharacteristics = individualCharacteristics,
-    additionalParams = params,
-    simulateSteadyState = scenarioConfiguration$simulateSteadyState,
-    steadyStateTime = scenarioConfiguration$steadyStateTime,
-    simulationRunOptions = scenarioConfiguration$simulationRunOptions
+  outputFolder <- outputFolder %||% file.path(
+    projectConfiguration$outputFolder,
+    "SimulationResults",
+    format(Sys.time(), "%F %H-%M")
   )
 
-  # Set administration protocols
-  setApplications(simulation = simulation, scenarioConfiguration = scenarioConfiguration)
+  for (i in seq_along(simulatedScenariosResults)) {
+    results <- simulatedScenariosResults[[i]]$results
+    scenarioName <- names(simulatedScenariosResults)[[i]]
 
-  return(simulation)
+    outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
+    tryCatch(
+      {
+        # Create a new folder if it does not exist
+        if (!dir.exists(paths = outputFolder)) {
+          dir.create(path = outputFolder, recursive = TRUE)
+        }
+        # Save results
+        ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
+        # Save simulations
+        if (saveSimulationsToPKML) {
+          outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
+          ospsuite::saveSimulation(
+            simulation = simulatedScenariosResults[[i]]$simulation,
+            filePath = outputPathSim
+          )
+        }
+        # Save population
+        if (!is.null(simulatedScenariosResults[[i]]$population) && all(!is.na(simulatedScenariosResults[[i]]$population))) {
+          ospsuite::exportPopulationToCSV(simulatedScenariosResults[[i]]$population$population,
+            filePath = file.path(outputFolder, paste0(scenarioName, "_population.csv"))
+          )
+        }
+      },
+      error = function(cond) {
+        warning(paste0("Cannot save to path '", outputFolder, "'"))
+        message("Original error message:")
+        message(cond)
+      },
+      warning = function(cond) {
+        warning(cond)
+      }
+    )
+  }
+}
+
+#' Load simulated scenarios from csv and pkml.
+#'
+#' @param scenarioNames Names of simulated scenarios
+#' @param resultsFolder Path to the folder where simulation results as scv and
+#' the corresponding simulations as pkml are located.
+#'
+#' @details This function requires simulation results AND the corresponding
+#' simulation files being located in the same folder (`resultsFolder`) and have
+#' the names of the scenarios.
+#'
+#' @return A named list, where the names are scenario names, and the values are
+#' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
+#' `results` being `SimulatioResults` object produced by running the simulation,
+#' and `outputValues` the output values of the `SimulationResults`.
+#'
+#' @export
+#'
+#' @examples \dontrun{
+#' # First simulate scenarios and save the results
+#' projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
+#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
+#'   projectConfiguration = projectConfiguration
+#' )
+#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+#' simulatedScenariosResults <- runScenarios(
+#'   scenarios = scenarios
+#' )
+#' saveResults(simulatedScenariosResults, projectConfiguration)
+#'
+#' # Now load the results
+#' scnarioNames <- names(scenarios)
+#' simulatedScenariosResults <- loadScenarioResults(
+#'   scnarioNames = scnarioNames,
+#'   resultsFolder = pathToTheFolder
+#' )
+#' }
+loadScenarioResults <- function(scenarioNames, resultsFolder) {
+  simulatedScenariosResults <- list()
+  for (i in seq_along(scenarioNames)) {
+    simulation <- loadSimulation(paste0(resultsFolder, "/", scenarioNames[[i]], ".pkml"))
+
+    results <- importResultsFromCSV(
+      simulation = simulation,
+      filePaths = paste0(resultsFolder, "/", scenarioNames[[i]], ".csv")
+    )
+
+    outputValues <- getOutputValues(results,
+      quantitiesOrPaths = results$allQuantityPaths
+    )
+    simulatedScenariosResults[[scenarioNames[[i]]]] <-
+      list(simulation = simulation, results = results, outputValues = outputValues)
+  }
+
+  return(simulatedScenariosResults)
 }

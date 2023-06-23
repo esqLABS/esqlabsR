@@ -123,9 +123,9 @@
       PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
       SensitivityPKParameter =
       # delta PK / PK
-        ((PKParameterValue - PKParameterBaseValue) / PKParameterValue) *
+        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
           # p / delta p
-          (ParameterValue / (ParameterValue - ParameterBaseValue))
+          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
     )
 }
 
@@ -295,7 +295,7 @@
                           dpi = 300) {
   purrr::walk2(
     .x = plotlist,
-    .y = seq(1:length(plotlist)),
+    .y = seq_along(plotlist),
     .f = ~ ggplot2::ggsave(
       filename = paste0(outputFolder, plot.type, "OutputPath", .y, ".png"),
       plot = .x,

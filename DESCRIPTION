@@ -1,15 +1,17 @@
 Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
-Version: 4.0.0
-Authors@R: 
-    c(person("esqLABS GmbH", role = c("cph", "fnd")),
-      person("Pavel", "Balazki", , "https://github.com/PavelBal", role = c("cre", "aut"), 
-      email = "pavel.balazki@esqlabs.com"),
-      person("Johanna", "Eitel", , "https://github.com/hannaei", role = "aut"),
-      person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"),
-      person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
-           comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")))
+Version: 5.0.0
+Authors@R: c(
+    person("esqLABS GmbH", role = c("cph", "fnd")),
+    person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
+           comment = "https://github.com/PavelBal"),
+    person("Johanna", "Eitel", , "https://github.com/hannaei", role = "aut"),
+    person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")),
+    person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"),
+    person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut"))
+  )
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: Utilities functions for modeling and simulation projects
     within 'esqLABS' organization.
@@ -17,30 +19,38 @@ License: GPL-2
 URL: https://github.com/esqLABS/esqlabsR
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
-    R (>= 4.1),
-    ospsuite (>= 11.0),
-    ospsuite.parameteridentification
+    ospsuite (>= 11.1),
+    R (>= 4.1)
 Imports:
     colorspace,
     dplyr,
+    fs,
     ggplot2,
-    ospsuite.utils (>= 1.3.0),
+    labeling,
+    ospsuite.parameteridentification,
+    ospsuite.utils (>= 1.4.0),
+    parallel,
     purrr,
+    R6,
     readxl,
-    shiny,
-    shinyjs,
+    stringr,
     tidyr,
+    tlf (>= 1.5.0),
     tools,
-    tlf (>= 1.4.0),
     vctrs,
     writexl,
-    stringr,
-    labeling
+    stringr
 Suggests: 
     clipr,
     knitr,
+    openxlsx,
+    reactable,
     rmarkdown,
+    rlang,
+    shiny,
+    shinyjs,
     shinytest2,
+    showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
     withr
@@ -50,4 +60,9 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
+Remotes:  
+    Open-Systems-Pharmacology/OSPSuite.RUtils@88152af44e32e714a1d5c80237c239105ed85120,
+    Open-Systems-Pharmacology/TLF-Library@03e1acfc38c283536e1841b681a04f2eb42e08f9,
+    Open-Systems-Pharmacology/OSPSuite-R@7e08e5603982f11ae72d5c8998f3d998e8a37650,
+    esqLABS/esqlabs.ParameterIdentification@8559c93d4589c5195298c859b51f90f53d916e11

@@ -1,0 +1,500 @@
+---
+subtitle: '![](../../man/figures/logo.png){width=400}'
+title: "Introduction to"
+format: revealjs
+
+date: 2023-06-22
+#author: Felix MIL
+
+self-contained: true
+code-annotations: hover
+code-line-numbers: false
+
+execute: 
+  echo: true
+---
+
+
+
+# esqlabsR ?  {background-color="#0D8DDA" .white-text} 
+
+```{r, include=FALSE, message = FALSE, warning = FALSE}
+require(emoji)
+require(readxl)
+require(reactable)
+library(esqlabsR)
+library(dplyr)
+library(showtext)
+
+
+showtext::showtext_opts(dpi = 300)
+
+my_project_configuration <- 
+  createDefaultProjectConfiguration(path = test_ProjectConfiguration())
+```
+
+```{css, echo = FALSE}
+.center {
+text-align: center;
+}
+
+.white-text {
+color: white;
+}
+```
+
+## `{esqlabsR}` What ?
+<br>
+
+:::: {.columns}
+::: {.column width="60%"}
+
+<br>
+
+-   R package
+-   for PBK and QSP/T Modeling
+-   Based on [Open Systems Pharmacology
+Software](https://www.open-systems-pharmacology.org/)
+:::
+
+::: {.column .center width="40%"}
+![](../../man/figures/logo.png){width="80%"}
+:::
+::::
+
+::: footer
+`{esqlabsR}` ?
+:::
+
+## `{esqlabsR}` Why ?
+<br>
+
+-   Simple functions to design, run and save simulations,
+-   Interact with the OSPS features using Excel files,
+-   Generate standardized plots automatically.
+
+<br>
+
+::: {.center}
+**`r emoji::emoji(keyword = "arrow_right")` Streamlined Simulation Workflow `r emoji::emoji(keyword = "rocket")`
+**
+:::
+
+::: footer
+`{esqlabsR}` ?
+:::
+
+## `{esqlabsR}` Where ?
+<br>
+<br>
+
+- {{< fa brands github >}} Code repository: [github.com/esqLABS/esqlabsR](https://github.com/esqLABS/esqlabsR)
+
+- {{< fa book >}} Documentation: [esqlabs.github.io/esqlabsR/](https://esqlabs.github.io/esqlabsR)
+
+- {{< fa arrow-trend-up >}} Get Started: [esqlabs.github.io/esqlabsR/dev/](https://esqlabs.github.io/esqlabsR)
+
+
+::: footer
+`{esqlabsR}` ?
+:::
+
+
+## `{esqlabsR}` How ?
+<br>
+
+::: {.center}
+```{r, eval=FALSE}
+#| code-line-numbers: "|7"
+install.packages("remotes")
+install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip",
+                 repos = NULL,
+                 type = "binary"
+)
+
+remotes::install_github("esqLABS/esqlabsR")
+```
+<br>
+
+**`r emoji::emoji("package")` Installation**
+:::
+
+## `{esqlabsR}` How ?
+<br>
+
+::: {.center}
+![](../Figures/esqlabs-workflow.png)
+<br>
+
+**esqlabsR Workflow**
+:::
+
+::: footer
+`{esqlabsR}` ?
+:::
+
+
+# Get Started {background-color="#26B042" .white-text}
+
+
+# I. Initialize Project
+
+## Project Structure
+<br>
+
+```{r, eval=FALSE, echo = TRUE}
+library(esqlabsR)
+init_project()
+```
+
+<br>
+
+`init_project()` will create the expected simulation project’s folder structure.
+
+<br>
+
+::: {.callout-note}
+`init_project()` is a new feature available in esqlabsR v5.0.0
+:::
+
+::: footer
+I Initialize Project
+:::
+
+## Project Structure {auto-animate=true}
+Each one of these folders contains a series of .xlsx files with specific purpose. 
+
+```{r, echo = FALSE, eval=FALSE}
+# rerun this if project structure change and paste below
+file_tree <- fs::dir_tree(esqlabsR:::esqlabsR_example("NewProject"))
+```
+
+```{.sh}
+my_project
+├── ProjectConfiguration.xlsx
+├── Data
+├── Models
+├── Parameters
+│   ├── ApplicationParameters.xlsx
+│   ├── Individuals.xlsx
+│   ├── ModelParameters.xlsx
+│   ├── Plots.xlsx
+│   ├── PopulationParameters.xlsx
+│   ├── Populations
+│   │   └── PopulationScenario_population.csv
+│   └── Scenarios.xlsx
+└── Results
+├── Figures
+└── SimulationResults
+```
+::: footer
+I Initialize Project
+:::
+
+## Project Structure {auto-animate=true}
+
+Project's files are linked by the `ProjectConfiguration.xlsx` file.
+
+```{.sh code-line-numbers="2"}
+my_project
+├── ProjectConfiguration.xlsx
+├── Data
+├── Models
+├── Parameters
+│   ├── ApplicationParameters.xlsx
+│   ├── Individuals.xlsx
+│   ├── ModelParameters.xlsx
+│   ├── Plots.xlsx
+│   ├── PopulationParameters.xlsx
+│   ├── Populations
+│   │   └── PopulationScenario_population.csv
+│   └── Scenarios.xlsx
+└── Results
+├── Figures
+└── SimulationResults
+```
+
+::: footer
+I Initialize Project
+:::
+
+## Project Structure {auto-animate=true}
+
+Everything is already configured !
+
+```{r, echo = FALSE}
+reactable::reactable(
+  data = head(readxl::read_xlsx(path = test_ProjectConfiguration())),
+  columns = list(
+    "Property" = reactable::colDef(minWidth = 50),
+    "Value" = reactable::colDef(minWidth = 50),
+    "Description" = reactable::colDef(minWidth = 100)
+  ),
+  outlined = TRUE,
+  pagination = FALSE,
+  highlight = TRUE,style = list(fontSize = 20)
+)
+
+```
+
+::: footer
+I Initialize Project
+:::
+
+## ProjectConfiguration
+<br>
+
+:::{.center}
+`createDefaultProjectConfiguration(path)`
+:::
+
+- targets `ProjectConfiguration.xlsx` file,
+- creates a `ProjectConfiguration` object,
+- Needed for all next steps !
+
+<br>
+
+```{r, eval = FALSE}
+my_project_configuration <- 
+  createDefaultProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
+```
+
+::: footer
+I Initialize Project
+:::
+
+## ProjectConfiguration
+
+```{r, eval = FALSE}
+my_project_configuration
+```
+
+<br>
+
+```
+ProjectConfiguration: 
+Project Configuration File: TestProject/Code/projectConfiguration.xlsx 
+Model folder: TestProject/Models/Simulations 
+Parameters folder: TestProject/Parameters 
+Parameters file name: TestProject/Parameters/ModelParameters.xlsx 
+Individual parameters file name: TestProject/Parameters/Individuals.xlsx 
+...
+```
+::: footer
+I Initialize Project
+:::
+
+# II. Design Scenarios
+
+## Scenarios
+<br>
+
+Simulations are defined by **Scenarios**.
+
+. . .
+
+Scenarios are setup in the `Parameters/Scenarios.xslx` file.
+
+. . .
+
+
+```{r, echo = FALSE}
+scenarios <- 
+  readxl::read_xlsx(my_project_configuration$scenarioDefinitionFile)
+
+reactable::reactable(
+  data = scenarios %>%
+    select(Scenario_name, 
+           ModelFile, 
+           ModelParameterSheets, 
+           SimulationTime, 
+           IndividualId, 
+           PopulationId),
+  outlined = TRUE,
+  pagination = FALSE,
+  highlight = TRUE,
+  style = list(fontSize = 20)
+)
+```
+
+::: footer
+II Design Scenarios
+:::
+
+## Scenarios parameterization
+
+- Model
+- Model parameters
+- Application protocol
+- Time range
+- Individual characteristics
+- Population 
+- ...
+
+. . .
+
+:::{.center}
+**All in {{< fa file-excel >}} files !**
+:::
+
+
+::: footer
+II Design Scenarios
+:::
+
+## Parameters files
+
+:::{.center}
+![](../Figures/scenarios_links_files.png){width=70%}
+:::
+
+::: footer
+II Design Scenarios
+:::
+
+# III. Run Simulations
+
+## Read Scenarios
+
+```{r, cache = TRUE}
+#| code-line-numbers: "3"
+my_scenarios <- createScenarios(
+  readScenarioConfigurationFromExcel(
+    scenarioNames = "TestScenario",
+    projectConfiguration = my_project_configuration
+  )
+)
+```
+
+::: footer
+III Run Simulations
+:::
+
+## Scenarios Recap
+
+```{r, eval = FALSE}
+my_scenarios
+```
+
+```{r, echo = FALSE}
+my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FALSE)
+```
+
+::: footer
+III Run Simulations
+:::
+
+## Run Simulations
+
+```{r, cache = TRUE}
+myScenarioResults <- runScenarios(my_scenarios)
+```
+
+<br>
+
+```{r, echo = FALSE}
+reactable::reactable(
+  data = head(myScenarioResults$TestScenario$outputValues$data),
+  columns = list(
+    "IndividualId" = reactable::colDef(minWidth = 50),
+    "Time" = reactable::colDef(minWidth = 50),
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" = reactable::colDef(minWidth = 200)),
+  outlined = TRUE,
+  pagination = FALSE,
+  highlight = TRUE,style = list(fontSize = 20)
+)
+```
+
+
+::: footer
+III Run Simulations
+:::
+
+
+# IV. Plot Results
+
+## OSPS plotting functions
+
+Simulation results are compatible with `{ospsuite}` plotting workflow.
+
+
+```{r, cache = TRUE}
+my_datacombined <- DataCombined$new()
+
+my_datacombined$addSimulationResults(myScenarioResults$TestScenario$results,
+  names = "Simulated",
+  groups = "Aciclovir"
+)
+```
+
+::: footer
+IV Plot Results
+:::
+
+## OSPS plotting functions
+
+```{r, cache = TRUE, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
+plotIndividualTimeProfile(my_datacombined)
+```
+
+::: footer
+IV Plot Results
+:::
+
+## New in 5.0.0 
+
+<br>
+
+:::{.center}
+
+Create plots (or plotgrids) from excel files !
+
+<br>
+
+![](../figures/Plotsxlsx.png){width=90%}
+
+<br>
+
+**Release soon !**
+
+:::
+
+::: footer
+IV Plot Results
+:::
+
+
+## 
+
+<br>
+<br>
+
+::: {.center}
+![](../Figures/esqlabs-workflow.png)
+:::
+
+
+# Feedback Wanted {background-color="#EB1733"}
+
+## Help us improve esqlabsR
+
+<br>
+
+:::{.center}
+- Install & try,
+- Create a Github Account,
+- (Add a `r emoji::emoji("star")` to github repo),
+- Leave comments/requests at: 
+  [github.com/esqLABS/esqlabsR/issues](https://github.com/esqLABS/esqlabsR/issues)
+:::
+
+
+# ![](../../man/figures/logo.png){width=400}
+
+:::{.center}
+**Thank You**
+:::
+
+
+
+

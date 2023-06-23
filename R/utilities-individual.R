@@ -32,7 +32,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 
   for (i in seq_along(individual$distributedParameters$paths)) {
     fullPathParts <- strsplit(individual$distributedParameters$paths[[i]], split = "|", fixed = TRUE)[[1]]
-    containerPath <- paste(fullPathParts[1:length(fullPathParts) - 1], collapse = "|")
+    containerPath <- paste(fullPathParts[seq_along(fullPathParts) - 1], collapse = "|")
     paramName <- fullPathParts[[length(fullPathParts)]]
 
     containerPaths[i] <- containerPath
@@ -71,9 +71,9 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' @return An `IndividualCharacteristics` object
 #' @import ospsuite
 #' @export
-readIndividualCharacteristicsFromXLS <- function(XLSpath,
+readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_length_linter.
                                                  individualId,
-                                                 sheet = NULL,
+                                                 sheet = "IndividualBiometrics",
                                                  nullIfNotFound = TRUE) {
   validateIsString(c(XLSpath, individualId))
 

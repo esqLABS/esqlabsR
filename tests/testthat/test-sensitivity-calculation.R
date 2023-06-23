@@ -298,7 +298,7 @@ results2 <- sensitivityCalculation(
 
 pkDataWide <- esqlabsR:::.convertToWide(results2$pkData)
 
-test_that("sensitivityCalculation PK parameters datafram dimensions are as expected", {
+test_that("sensitivityCalculation PK parameters dataframe dimensions are as expected", {
   expect_equal(dim(pkDataWide), c(12L, 56L))
 })
 

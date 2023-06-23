@@ -121,8 +121,8 @@ sensitivityCalculation <- function(simulation,
     )
   }
 
-  constantParamPaths <- unlist(constantParamPaths)
-  formulaParamPaths <- unlist(formulaParamPaths)
+  constantParamPaths <- unlist(constantParamPaths, use.names = FALSE)
+  formulaParamPaths <- unlist(formulaParamPaths, use.names = FALSE)
 
   simulationBatches <- list()
 
@@ -142,7 +142,8 @@ sensitivityCalculation <- function(simulation,
         runValues[[constantParamPath]] <- variationRange[[scaleFactorIdx]] * runValues[[constantParamPath]]
 
         # Add run values and store the ID in the `batchResultsIdMap`
-        batchResultsIdMap[[constantParamPath]][[scaleFactorIdx]] <- constantBatch$addRunValues(parameterValues = runValues)
+        batchResultsIdMap[[constantParamPath]][[scaleFactorIdx]] <-
+          constantBatch$addRunValues(parameterValues = runValues)
       }
     }
 
@@ -158,7 +159,8 @@ sensitivityCalculation <- function(simulation,
 
     # Add run values.
     for (scaleFactorIdx in seq_along(variationRange)) {
-      batchResultsIdMap[[formulaParamPath]][[scaleFactorIdx]] <- formulaBatch$addRunValues(parameterValues = variationRange[[scaleFactorIdx]] * initialValues[[formulaParamPath]])
+      batchResultsIdMap[[formulaParamPath]][[scaleFactorIdx]] <-
+        formulaBatch$addRunValues(parameterValues = variationRange[[scaleFactorIdx]] * initialValues[[formulaParamPath]])
     }
 
     simulationBatches <- c(simulationBatches, formulaBatch)
@@ -169,6 +171,9 @@ sensitivityCalculation <- function(simulation,
     simulationBatches = simulationBatches,
     simulationRunOptions = simulationRunOptions
   )
+
+  # Call gc() on .NET
+  ospsuite::clearMemory()
 
   # `runSimulationBatches()` returns a list with one entry per simulation batch.
   # First remove the names of the upper level of the list to get all result in
@@ -187,7 +192,8 @@ sensitivityCalculation <- function(simulation,
 
   for (parameterPath in seq_along(simulationResultsBatch)) {
     for (parameterFactor in seq_along(simulationResultsBatch[[parameterPath]])) {
-      simulationResultsBatch[[parameterPath]][[parameterFactor]] <- purrr::pluck(simulationBatchesResults, batchResultsIdMap[[parameterPath]][[parameterFactor]])
+      simulationResultsBatch[[parameterPath]][[parameterFactor]] <-
+        purrr::pluck(simulationBatchesResults, batchResultsIdMap[[parameterPath]][[parameterFactor]])
     }
   }
 
@@ -208,17 +214,17 @@ sensitivityCalculation <- function(simulation,
       warning(messages$noPKDataToWrite())
     } else {
       # Convert tidy data to wide format for each output path
-      pkData_wide_list <- purrr::map(
+      pkDataWideList <- purrr::map(
         .x = pkData %>% split(.$OutputPath),
         .f = ~ .convertToWide(.x)
       )
 
       # The output paths can be quite long and don't make for good sheet names, so
       # use `OutputPathXXX` naming pattern for sheets instead.
-      names(pkData_wide_list) <- paste0("OutputPath", seq(1:length(unique(pkData$OutputPath))))
+      names(pkDataWideList) <- paste0("OutputPath", seq(seq_along(unique(pkData$OutputPath))))
 
       # Write to a spreadsheet with one sheet per output path.
-      writeExcel(data = pkData_wide_list, path = pkDataFilePath)
+      writeExcel(data = pkDataWideList, path = pkDataFilePath)
     }
   }
 

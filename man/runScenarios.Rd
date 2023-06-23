@@ -4,33 +4,21 @@
 \alias{runScenarios}
 \title{Run a set of scenarios.}
 \usage{
-runScenarios(
-  scenarioNames,
-  scenarioConfiguration,
-  customParams = NULL,
-  saveSimulationsToPKML = FALSE
-)
+runScenarios(scenarios, simulationRunOptions = NULL)
 }
 \arguments{
-\item{scenarioNames}{Names of the simulated scenarios. Scenario description is
-stored in the \code{Scenarios.xlsx} file.}
+\item{simulationRunOptions}{Object of type \code{SimulationRunOptions} that will be passed
+to simulation runs. If \code{NULL}, default options are used.}
 
-\item{scenarioConfiguration}{A \code{ScenarioConfiguration} object}
-
-\item{customParams}{A list containing vectors 'paths' with the full paths to the
-parameters, 'values' the values of the parameters, and 'units' with the
-units the values are in. The values to be applied to the model.}
-
-\item{saveSimulationsToPKML}{Logical, defaults to \code{FALSE}. If \code{TRUE},
-initialized simulations are saved to PKML before simulating. The output folder
-is the model folder defined in \code{ProjectConfiguration} with the subfolder with the
-current timestamp. The name of the file is the name of the scenario.}
+\item{scenarioConfigurations}{List of \code{ScenarioConfiguration} objects to be
+simulated.}
 }
 \value{
 A named list, where the names are scenario names, and the values are
-lists with the initialized \code{Simulation} object with applied parameters,
-\code{SimulatioResults} objects produced by running the simulation, and output values
-of the \code{SimulationResults}.
+lists with the entries \code{simulation} being the initialized \code{Simulation} object with applied parameters,
+\code{results} being \code{SimulatioResults} object produced by running the simulation,
+\code{outputValues} the output values of the \code{SimulationResults}, and \code{population}
+the \code{Population} object if the scenario is a population simulation.
 }
 \description{
 Run a set of scenarios.
