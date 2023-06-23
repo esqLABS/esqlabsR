@@ -205,6 +205,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedData.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedDataFromPKML.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.html</loc>
   </url>
   <url>
