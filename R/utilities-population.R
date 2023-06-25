@@ -51,7 +51,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
     } else
       # Parse the list of ontogenies
       if(names(data[rowIdx, ][i]) == 'Ontogeny'){
-      ontogenies <- strsplit(x = value, split = ",", fixed = TRUE)[[1]]
+      ontogenies <- unlist(strsplit(x = value, split = ",", fixed = TRUE))
       ontogenies <- trimws(ontogenies)
       next
     } else
