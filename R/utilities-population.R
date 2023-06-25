@@ -57,7 +57,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
     } else
       # Parse the list of proteins
       if(names(data[rowIdx, ][i]) == 'Protein'){
-      proteins <-  strsplit(x = value, split = ",", fixed = TRUE)[[1]]
+      proteins <-  unlist(strsplit(x = value, split = ",", fixed = TRUE))
       proteins <- trimws(proteins)
       next
     }
