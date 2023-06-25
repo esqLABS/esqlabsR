@@ -39,7 +39,7 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   arguments <- list()
   # Starting to iterate by 2 as the first entry is "PopulationName" and
   # is not an argument
-  # Pre-define ontogenies and proteins lists. Of no ontogenies are specified,
+  # Pre-define ontogenies and proteins lists. If no ontogenies are specified,
   # the objects are not created otherwise
   ontogenies <- NULL
   proteins <- NULL
