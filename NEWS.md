@@ -1,5 +1,12 @@
 # esqlabsR (development version)
 
+- Protein ontogenies can be defined for the populations. To specify ontogenies for 
+proteins in the simulation, list the proteins you want to define ontogenies for 
+in the colume 'Protein', separated by a ','. Speficy the ontogenies available 
+in PK-Sim (see article https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies) in the columne 'Ontogenies'. The number of entries in the 
+both columns must be equal.
+- Excel file 'PopulationParameters.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
+
 # esqlabsR 5.0.0
 
 ### New functionalities

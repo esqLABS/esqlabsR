@@ -39,14 +39,43 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   arguments <- list()
   # Starting to iterate by 2 as the first entry is "PopulationName" and
   # is not an argument
+  # Pre-define ontogenies and proteins lists. If no ontogenies are specified,
+  # the objects are not created otherwise
+  ontogenies <- NULL
+  proteins <- NULL
   for (i in 2:length(data[rowIdx, ])) {
     value <- data[[rowIdx, i]]
+    # Skip column, if no value defined
     if (is.na(value)) {
+      next
+    } else
+      # Parse the list of ontogenies
+      if(names(data[rowIdx, ][i]) == 'Ontogeny'){
+      ontogenies <- unlist(strsplit(x = value, split = ",", fixed = TRUE))
+      ontogenies <- trimws(ontogenies)
+      next
+    } else
+      # Parse the list of proteins
+      if(names(data[rowIdx, ][i]) == 'Protein'){
+      proteins <-  unlist(strsplit(x = value, split = ",", fixed = TRUE))
+      proteins <- trimws(proteins)
       next
     }
     name <- names(data[rowIdx, ][i])
     arguments[[name]] <- value
   }
+
+  # Create ontogenies for the proteins
+  validateIsSameLength(proteins, ontogenies)
+  moleculeOntogenies <-  vector("list", length(proteins))
+  for(i in seq_along(proteins)){
+    ontogeny <- ontogenies[[i]]
+    validateEnumValue(value = ontogeny, enum = ospsuite::StandardOntogeny)
+      moleculeOntogenies[[i]] <- ospsuite::MoleculeOntogeny$new(molecule = proteins[[i]],
+                                                      ontogeny = ospsuite::StandardOntogeny[[ontogeny]])
+    }
+    arguments[['moleculeOntogenies']] <- moleculeOntogenies
+
 
   # Using do.call to call the method with arguments in a list
   populationCharacterstics <- do.call(createPopulationCharacteristics, arguments)
