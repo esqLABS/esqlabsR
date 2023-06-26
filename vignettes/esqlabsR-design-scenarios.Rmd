@@ -60,7 +60,7 @@ You can define simulation parameters in the `ModelParameters.xlsx` file.
 To apply them to the simulation, you need to specify which sheets to
 load in the `ModelParameterSheets` column of the `Scenarios.xlsx` file.
 
-### 5. Individuals
+### 5. Individuals {#individuals}
 
 If you want to simulate a specific individual with individual
 characteristics (age, weight, etc.) or apply individual model parameter
@@ -72,6 +72,18 @@ a)  To create a new individual with specific biometrics, create a new
     row in the `IndividualBiometrics` sheet.
 b)  To define an individual-specific parametrization, create a new sheet
     and name it as the individual's ID.
+
+If your model contains proteins (e.g., enzymes or transporters), you
+have to specify their ontongenies in the columns 'Protein' and
+'Ontogeny'. If not specified, age-dependent protein expression will not
+be considered. You can specify a list of protein names in the column
+'Protein', separated by a `,`, and a list of standard ontogenies
+implemented in the PK-Sim database in the column 'Ontogeny'. For
+example, if your model contains proteins with names `CYP3A4_alternative`
+and `CYP2D6_alternative`, you can specify their ontogenies by entering
+`CYP3A4_alternative, CYP2D6_alternative` in the 'Protein' column, and
+`CYP3A4, CYP2D6` in the 'Ontogeny' column. To see the list of supported
+ontogienes, call `ospsuite::StandardOntogeny`.
 
 ### 6. Population
 
@@ -85,6 +97,10 @@ will be generated each time!
 If you want to import a population from an existing CSV file, set the
 value of the `ReadPopulationFromCSV` column to `TRUE`. The population
 CSV file must be located in the `Parameters/Populations` folder.
+
+To apply ontogenies of proteins implemented in PK-Sim data base, you
+have to specify the ontogenies for the proteins in the mode. See Section
+[5. Individuals](#individuals) for more information.
 
 ### 7. Time
 
@@ -284,7 +300,7 @@ this path in the column `OutputPathId`. The content of the sheet could
 look like this:
 
 | OutputPathId       | OutputPath                                                                   |
-|--------------------|----------------------------------------------------|
+|-----------------|-------------------------------------------------------|
 | Aciclovir_PVB      | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
 | Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container          |
 
