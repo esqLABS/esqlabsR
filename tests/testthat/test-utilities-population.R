@@ -28,3 +28,65 @@ test_that("`sampleRandomValue()` generates needed distribution", {
     tolerance = 0.001
   )
 })
+
+test_that("It creates population characteristics with ontogenies from excel", {
+  excelPath <- system.file("extdata", "examples", "TestProject", "Parameters", "PopulationParameters.xlsx", package = "esqlabsR")
+
+  populationCharachterstics <- readPopulationCharacteristicsFromXLS(
+    XLSpath = excelPath,
+    populationName = "TestPopulation"
+  )
+
+  expect_equal(
+    c(
+      populationCharachterstics$species,
+      populationCharachterstics$population,
+      populationCharachterstics$numberOfIndividuals,
+      populationCharachterstics$proportionOfFemales,
+      populationCharachterstics$age$min,
+      populationCharachterstics$age$max,
+      c(
+        populationCharachterstics$allMoleculeOntogenies[[1]]$molecule,
+        populationCharachterstics$allMoleculeOntogenies[[2]]$molecule
+      )
+    ),
+    c(
+      ospsuite::Species$Human,
+      ospsuite::HumanPopulation$European_ICRP_2002,
+      2,
+      0,
+      22,
+      41,
+      c("CYP3A4", "CYP2D6")
+    )
+  )
+})
+
+test_that("It creates population characteristics without ontogenies from excel", {
+  excelPath <- system.file("extdata", "examples", "TestProject", "Parameters", "PopulationParameters.xlsx", package = "esqlabsR")
+
+  populationCharachterstics <- readPopulationCharacteristicsFromXLS(
+    XLSpath = excelPath,
+    populationName = "TestPopulation_noOnto"
+  )
+  expect_equal(
+    c(
+      populationCharachterstics$species,
+      populationCharachterstics$population,
+      populationCharachterstics$numberOfIndividuals,
+      populationCharachterstics$proportionOfFemales,
+      populationCharachterstics$age$min,
+      populationCharachterstics$age$max,
+      populationCharachterstics$allMoleculeOntogenies
+    ),
+    c(
+      ospsuite::Species$Human,
+      ospsuite::HumanPopulation$European_ICRP_2002,
+      2,
+      0,
+      22,
+      41,
+      NULL
+    )
+  )
+})

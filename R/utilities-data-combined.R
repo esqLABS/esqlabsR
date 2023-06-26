@@ -48,7 +48,7 @@ createDataCombinedFromExcel <- function(
             names = simulated[j, ]$label
           )
         } else {
-          if (stopIfNotFound){
+          if (stopIfNotFound) {
             stop(messages$stopWrongOutputPath(dataCombinedName = name, scenarioName = simulated[j, ]$scenario, path = simulated[j, ]$path))
           }
           warning(messages$stopWrongOutputPath(dataCombinedName = name, scenarioName = simulated[j, ]$scenario, path = simulated[j, ]$path))
