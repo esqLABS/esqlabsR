@@ -56,8 +56,8 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #'
 #' @details Read individual characteristics from an excel sheet
 #' and create an `IndividualCharacteristics`-object. The excel sheet must have
-#' the column `IndividualId`, `Species`, `Population`, `Gender`, `Weight [kg]`,
-#' `Height [cm]`, `Age [year(s)]`, and `BMI`.
+#' the columns `IndividualId`, `Species`, `Population`, `Gender`, `Weight [kg]`,
+#' `Height [cm]`, `Age [year(s)]`, `Protein`, and `Ontogeny`.
 
 #' @param XLSpath Full path to the excel file
 #'
@@ -84,12 +84,11 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_lengt
 
   columnNames <- c(
     "IndividualId", "Species", "Population", "Gender", "Weight [kg]",
-    "Height [cm]", "Age [year(s)]"
+    "Height [cm]", "Age [year(s)]", "Protein", "Ontogeny"
   )
 
-
   data <- readExcel(path = XLSpath, sheet = sheet)
-  if (!all(names(data) == columnNames)) {
+  if (!all(columnNames %in% names(data))) {
     stop(messages$errorWrongIndividualCharacteristicsXLSStructure(XLSpath, columnNames))
   }
   # Find the row with the given individual id
@@ -101,13 +100,17 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_lengt
     stop(messages$errorWrongIndividualId(individualId))
   }
 
+  # Create ontogenies for the proteins
+  moleculeOntogenies <- .readOntongeniesFromXLS(data[rowIdx, ])
+
   # Create the IndividualCharacteristics object
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
     species = data$Species[[rowIdx]], population = data$Population[[rowIdx]],
     gender = data$Gender[[rowIdx]],
     weight = data$`Weight [kg]`[[rowIdx]],
     height = data$`Height [cm]`[[rowIdx]],
-    age = data$`Age [year(s)]`[[rowIdx]]
+    age = data$`Age [year(s)]`[[rowIdx]],
+    moleculeOntogenies = moleculeOntogenies
   )
 
   return(individualCharacteristics)

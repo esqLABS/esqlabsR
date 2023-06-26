@@ -14,7 +14,7 @@
 readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) {
   columnNames <- c(
     "PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax",
-    "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit"
+    "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein", "Ontogeny"
   )
 
   validateIsString(c(XLSpath, populationName))
@@ -39,43 +39,22 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   arguments <- list()
   # Starting to iterate by 2 as the first entry is "PopulationName" and
   # is not an argument
-  # Pre-define ontogenies and proteins lists. If no ontogenies are specified,
-  # the objects are not created otherwise
-  ontogenies <- NULL
-  proteins <- NULL
   for (i in 2:length(data[rowIdx, ])) {
     value <- data[[rowIdx, i]]
     # Skip column, if no value defined
     if (is.na(value)) {
       next
-    } else
-      # Parse the list of ontogenies
-      if(names(data[rowIdx, ][i]) == 'Ontogeny'){
-      ontogenies <- unlist(strsplit(x = value, split = ",", fixed = TRUE))
-      ontogenies <- trimws(ontogenies)
-      next
-    } else
-      # Parse the list of proteins
-      if(names(data[rowIdx, ][i]) == 'Protein'){
-      proteins <-  unlist(strsplit(x = value, split = ",", fixed = TRUE))
-      proteins <- trimws(proteins)
+    }
+    columnName <- names(data[rowIdx, ][i])
+    # skip columns 'Ontogeny' and 'Protein' as they will be processed separately
+    if (any(columnName == c("Ontogeny", "Protein"))) {
       next
     }
-    name <- names(data[rowIdx, ][i])
-    arguments[[name]] <- value
+    arguments[[columnName]] <- value
   }
 
   # Create ontogenies for the proteins
-  validateIsSameLength(proteins, ontogenies)
-  moleculeOntogenies <-  vector("list", length(proteins))
-  for(i in seq_along(proteins)){
-    ontogeny <- ontogenies[[i]]
-    validateEnumValue(value = ontogeny, enum = ospsuite::StandardOntogeny)
-      moleculeOntogenies[[i]] <- ospsuite::MoleculeOntogeny$new(molecule = proteins[[i]],
-                                                      ontogeny = ospsuite::StandardOntogeny[[ontogeny]])
-    }
-    arguments[['moleculeOntogenies']] <- moleculeOntogenies
-
+  arguments[["moleculeOntogenies"]] <- .readOntongeniesFromXLS(data[rowIdx, ])
 
   # Using do.call to call the method with arguments in a list
   populationCharacterstics <- do.call(createPopulationCharacteristics, arguments)
@@ -224,4 +203,42 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
     return(vals)
   }
   return(NULL)
+}
+
+#' Title
+#'
+#' @param data Data from from excel file containing columns 'Protein' and
+#' 'Ontogeny'
+#'
+#' @return A list of `MoleculeOntogeny` objects
+.readOntongeniesFromXLS <- function(data) {
+  # Read columns 'Ontogeny' and 'Protein'
+  ontogenies <- data$Ontogeny
+  # Proteins/ontogenies are separated by a ','
+  ontogenies <- unlist(strsplit(x = ontogenies, split = ",", fixed = TRUE))
+  # Remove whitespaces
+  ontogenies <- trimws(ontogenies)
+  proteins <- data$Protein
+  proteins <- unlist(strsplit(x = proteins, split = ",", fixed = TRUE))
+  proteins <- trimws(proteins)
+
+  # For each protein, an ontogeny must be specified
+  validateIsSameLength(proteins, ontogenies)
+  # Return 'NULL' if no ontogenies are specified. Not returning earlier to catch
+  # a case where e.g. protein names are specified but not the ontogenies (lenghts
+  # are not equal)
+  if (anyNA(proteins)) {
+    return(NULL)
+  }
+  moleculeOntogenies <- vector("list", length(proteins))
+  for (i in seq_along(proteins)) {
+    ontogeny <- ontogenies[[i]]
+    validateEnumValue(value = ontogeny, enum = ospsuite::StandardOntogeny)
+    moleculeOntogenies[[i]] <- ospsuite::MoleculeOntogeny$new(
+      molecule = proteins[[i]],
+      ontogeny = ospsuite::StandardOntogeny[[ontogeny]]
+    )
+  }
+
+  return(moleculeOntogenies)
 }
