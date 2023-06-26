@@ -11,8 +11,7 @@ environment:
   USE_RTOOLS: 'true'
   R_VERSION: 4.2.0
   R_ARCH: x64
-  KEEP_VIGNETTES: 'false'
-  R_BUILD_ARGS: --no-build-vignettes --no-manual
+  KEEP_VIGNETTES: 'true'
   NOT_CRAN: 'true'
   app_version: "5.0.0.9000"
 version: $(app_version)-{build}
