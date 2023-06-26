@@ -13,7 +13,7 @@ environment:
   R_ARCH: x64
   KEEP_VIGNETTES: 'true'
   NOT_CRAN: 'true'
-  app_version: 5.0.0.9000
+  app_version: "5.0.0.9000"
 version: $(app_version)-{build}
 before_build: rake "prepare_for_build[%APPVEYOR_BUILD_VERSION%]"
 cache: C:\RLibrary
@@ -26,8 +26,6 @@ branches:
   only:
   - develop
   - main
-pull_requests:
-  do_not_increment_build_number: 'true'
 before_test:
 - cinst pandoc
 - ps: $env:Path += ";C:\Program Files (x86)\Pandoc\"
