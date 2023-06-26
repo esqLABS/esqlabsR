@@ -89,7 +89,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_lengt
 
   data <- readExcel(path = XLSpath, sheet = sheet)
   if (!all(columnNames %in% names(data))) {
-    stop(messages$errorWrongIndividualCharacteristicsXLSStructure(XLSpath, columnNames))
+    stop(messages$errorWrongXLSStructure(XLSpath, columnNames))
   }
   # Find the row with the given individual id
   rowIdx <- which(data$IndividualId == individualId)
