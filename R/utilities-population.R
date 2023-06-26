@@ -214,11 +214,15 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 .readOntongeniesFromXLS <- function(data) {
   # Read columns 'Ontogeny' and 'Protein'
   ontogenies <- data$Ontogeny
+  # calling 'as.character' as sometimes empty cells in Excel are not recognized as
+  # chr NA, but some other NA, and strsplit fails.
+  ontogenies <- as.character(ontogenies)
   # Proteins/ontogenies are separated by a ','
   ontogenies <- unlist(strsplit(x = ontogenies, split = ",", fixed = TRUE))
   # Remove whitespaces
   ontogenies <- trimws(ontogenies)
   proteins <- data$Protein
+  proteins <- as.character(proteins)
   proteins <- unlist(strsplit(x = proteins, split = ",", fixed = TRUE))
   proteins <- trimws(proteins)
 
