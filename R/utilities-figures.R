@@ -486,10 +486,14 @@ createPlotsFromExcel <- function(
 
   # The values can be enclosed in "" in case the title should contain a ','.
   # Split the input string by ',' but do not split within ""
-  dfPlotGrids$plotIDs <- unlist(trimws(scan(
-    text = as.character(dfPlotGrids$plotIDs), what = "character", sep = ",",
-    quiet = TRUE
-  )))
+  # Have to do it one row at a time, otherwise it returns one separate list entry
+  # for each plot it (and not lists of plot ids)
+  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId){
+    unlist(trimws(scan(
+      text = as.character(plotId), what = "character", sep = ",",
+      quiet = TRUE
+    )))
+  })
 
   # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
   missingPlots <- setdiff(setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs), NA)

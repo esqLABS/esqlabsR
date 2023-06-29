@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities-population.R
 \name{.readOntongeniesFromXLS}
 \alias{.readOntongeniesFromXLS}
-\title{Title}
+\title{Read ontogeny mapping from excel}
 \usage{
 .readOntongeniesFromXLS(data)
 }
@@ -14,5 +14,5 @@
 A list of \code{MoleculeOntogeny} objects
 }
 \description{
-Title
+Read ontogeny mapping from excel
 }

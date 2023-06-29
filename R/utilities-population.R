@@ -205,7 +205,7 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
   return(NULL)
 }
 
-#' Title
+#' Read ontogeny mapping from excel
 #'
 #' @param data Data from from excel file containing columns 'Protein' and
 #' 'Ontogeny'
