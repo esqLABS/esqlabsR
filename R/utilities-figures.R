@@ -483,12 +483,13 @@ createPlotsFromExcel <- function(
   if (missingLabel > 0) {
     stop(messages$missingPlotIDs())
   }
-  # Remove white spaces
-  dfPlotGrids$plotIDs <- strsplit(x = dfPlotGrids$plotIDs, split = ",", fixed = TRUE)
-  # Remove leading/trailing whitespaces
-  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(x){
-    trimws(x)
-  })
+
+  # The values can be enclosed in "" in case the title should contain a ','.
+  # Split the input string by ',' but do not split within ""
+  dfPlotGrids$plotIDs <- unlist(trimws(scan(
+    text = as.character(dfPlotGrids$plotIDs), what = "character", sep = ",",
+    quiet = TRUE
+  )))
 
   # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
   missingPlots <- setdiff(setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs), NA)
