@@ -103,7 +103,7 @@ messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
 
 messages$errorInvalidPlotID <- function(plotIDs) {
   paste0(
-    "The plots with plotIDs ", paste(plotIDs, collapse = ", "), " are used in the sheet
+    "The plots with plotIDs ", paste(plotIDs, collapse = ",\n"), " are used in the sheet
     'plotGrids' but are not defined in the sheet 'plotConfiguration'."
   )
 }
