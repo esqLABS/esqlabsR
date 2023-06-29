@@ -24,7 +24,6 @@ skip_branch_with_pr: 'true'
 skip_tags: 'true'
 branches:
   only:
-  - develop
   - main
 pull_requests:
   do_not_increment_build_number: 'true'
