@@ -161,7 +161,7 @@ messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
 
 messages$stopNoDataSetProvided <- function(dataCombinedName) {
   paste0(
-    "No data set is defined for the DataCombined '", paste0(dataCombinedName, collapse = ", "), "'.
+    "No data set is defined for the DataCombined '", paste0(dataCombinedName, collapse = ", \n"), "'.
     Each observed data must have a 'dataSet' specified."
   )
 }
