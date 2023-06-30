@@ -381,8 +381,7 @@ createPlotsFromExcel <- function(
       name <- gsub(pattern = "/", "_", name, fixed = TRUE)
       exportConfiguration$name <- name
       return(exportConfiguration)
-    }
-    )
+    })
     # export plotGrid if defined in exportConfigurations
     lapply(seq_along(exportConfigurations), function(i) {
       exportConfigurations[[i]]$savePlot(plotGrids[[dfExportConfigurations$plotGridName[i]]])
