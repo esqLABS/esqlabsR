@@ -342,8 +342,9 @@ createPlotsFromExcel <- function(
   plotGrids <- apply(dfPlotGrids, 1, \(row) {
     plotGridConfiguration <- .createConfigurationFromRow(
       defaultConfiguration = defaultPlotGridConfig,
-      row[!(names(row) %in% c("name", "plotIDs"))]
+      row[!(names(row) %in% c("name", "plotIDs", "title"))]
     )
+    plotGridConfiguration$title <- row$name
 
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create
@@ -368,11 +369,19 @@ createPlotsFromExcel <- function(
   dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
-    exportConfiguration <- createEsqlabsExportConfiguration(projectConfiguration)
-    exportConfigurations <- apply(select(dfExportConfigurations, -plotGridName),
-      1,
-      .createConfigurationFromRow,
-      defaultConfiguration = exportConfiguration
+    defaultExportConfiguration <- createEsqlabsExportConfiguration(projectConfiguration)
+    exportConfigurations <- apply(dfExportConfigurations, 1, \(row){
+      exportConfiguration <- .createConfigurationFromRow(
+        defaultConfiguration = defaultExportConfiguration,
+        row[!(names(row) %in% c("plotGridName", "name"))]
+      )
+      # Replace "\" and "/" by "_" so the file name does not result in folders
+      name <- row[["name"]]
+      name <- gsub(pattern = "\\", "_", name, fixed = TRUE)
+      name <- gsub(pattern = "/", "_", name, fixed = TRUE)
+      exportConfiguration$name <- name
+      return(exportConfiguration)
+    }
     )
     # export plotGrid if defined in exportConfigurations
     lapply(seq_along(exportConfigurations), function(i) {
