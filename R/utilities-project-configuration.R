@@ -26,7 +26,7 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 init_project <- function(destination = ".", overwrite = FALSE) {
   destination <- fs::path_abs(destination)
 
-  type = "example"
+  type <- "example"
 
   source_folder <- switch(type,
     "example" = example_directory("TestProject")
@@ -71,4 +71,3 @@ test_ProjectConfiguration <- function() {
   # for now it targets TestProject as it is both an example and a test project
   file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
 }
-

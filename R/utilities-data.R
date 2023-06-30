@@ -310,18 +310,21 @@ loadObservedDataFromPKML <- function(projectConfiguration, obsDataNames = NULL) 
   ospsuite.utils::validateIsString(obsDataNames, nullAllowed = TRUE)
   # If data sets have been specified, import only those. Otherwise try to import all
   # files
-  if (!is.null(obsDataNames)){
+  if (!is.null(obsDataNames)) {
     allFiles <- paste0(obsDataNames, ".pkml")
   } else {
-    allFiles <- list.files(path = file.path(projectConfiguration$dataFolder,
-                                            "pkml"), pattern = "*.pkml")
+    allFiles <- list.files(path = file.path(
+      projectConfiguration$dataFolder,
+      "pkml"
+    ), pattern = "*.pkml")
   }
 
-  dataSets <- lapply(allFiles, function(fileName){
-    ospsuite::loadDataSetFromPKML(filePath = file.path(projectConfiguration$dataFolder,
-                                                       "pkml",
-                                                       fileName)
-    )
+  dataSets <- lapply(allFiles, function(fileName) {
+    ospsuite::loadDataSetFromPKML(filePath = file.path(
+      projectConfiguration$dataFolder,
+      "pkml",
+      fileName
+    ))
   })
   names(dataSets) <- lapply(dataSets, function(x) {
     x$name
