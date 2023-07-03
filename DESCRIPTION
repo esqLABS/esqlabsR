@@ -48,6 +48,8 @@ Suggests:
     rmarkdown,
     rlang,
     shiny,
+    shinydashboard,
+    shinydashboardPlus,
     shinyjs,
     shinytest2,
     showtext,
