@@ -222,7 +222,6 @@ Scenario <- R6::R6Class(
     #' units the values are in.
     #' @return A new `Scenario` object.
     initialize = function(scenarioConfiguration, customParams = NULL) {
-      browser()
       private$.scenarioConfiguration <- scenarioConfiguration
       private$.simulation <- private$.initializeFromConfiguration(customParams = customParams)
       private$.initializePopulationFromConfiguration()
