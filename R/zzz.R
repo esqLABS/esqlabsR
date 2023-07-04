@@ -13,6 +13,15 @@
   nrOfColors <- 52
   # First three colors are fixed
   firstColors <- esqLABS_colors(3)
+  # Add secondary colors
+  firstColors <- c(firstColors,
+                   "#e6a489",
+                   "#8ac8b9",
+                   "#9f8fcd",
+                   "#74a778",
+                   "#5e6598",
+                   "#c87699"
+  )
   # Get colors in between the three fixed colors
   unsortedColors <- esqLABS_colors(nrOfColors)
   unsortedColors <- setdiff(unsortedColors, firstColors)

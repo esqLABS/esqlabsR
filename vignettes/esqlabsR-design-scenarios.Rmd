@@ -300,7 +300,7 @@ this path in the column `OutputPathId`. The content of the sheet could
 look like this:
 
 | OutputPathId       | OutputPath                                                                   |
-|-----------------|-------------------------------------------------------|
+|--------------------|------------------------------------------------------------------------------|
 | Aciclovir_PVB      | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
 | Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container          |
 

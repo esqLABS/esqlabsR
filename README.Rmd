@@ -60,9 +60,14 @@ install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/dow
   type = "binary"
 )
 
-remotes::install_github("esqLABS/esqlabsR")
+remotes::install_github("esqLABS/esqlabsR@*release")
 ```
 
+Get the latest development version with:
+
+```{r, eval=FALSE}
+remotes::install_github("esqLABS/esqlabsR")
+```
 
 Note: For projects created for version 3 of `esqlabsR` package, install [`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
 

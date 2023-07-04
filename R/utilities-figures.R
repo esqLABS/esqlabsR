@@ -17,9 +17,9 @@
 #' @export
 esqLABS_colors <- function(nrOfColors) {
   # esqLABS colors in HSV model
-  esqRedHSV <- rgb2hsv(235, 23, 51, maxColorValue = 255)
-  esqBlueHSV <- rgb2hsv(13, 141, 218, maxColorValue = 255)
-  esqGreenHSV <- rgb2hsv(38, 176, 66, maxColorValue = 255)
+  esqRedHSV <- rgb2hsv(234, 94, 94, maxColorValue = 255)
+  esqBlueHSV <- rgb2hsv(74, 189, 203, maxColorValue = 255)
+  esqGreenHSV <- rgb2hsv(118, 187, 96, maxColorValue = 255)
   # default color palette.
   esq_palette <- c(
     hsv(esqBlueHSV[1], esqBlueHSV[2], esqBlueHSV[3]),
@@ -144,11 +144,13 @@ createEsqlabsPlotConfiguration <- function() {
 
   # Size
   defaultPlotConfiguration$titleSize <- 14
-  defaultPlotConfiguration$xLabelSize <- 12
-  defaultPlotConfiguration$yLabelSize <- 12
-  defaultPlotConfiguration$xAxisLabelTicksSize <- 10
-  defaultPlotConfiguration$yAxisLabelTicksSize <- 10
-  defaultPlotConfiguration$legendTitleSize <- 8
+  defaultPlotConfiguration$xLabelSize <- 10
+  defaultPlotConfiguration$yLabelSize <- 10
+  defaultPlotConfiguration$xAxisLabelTicksSize <- 8
+  defaultPlotConfiguration$yAxisLabelTicksSize <- 8
+  defaultPlotConfiguration$legendKeysSize <- 6
+
+
 
   # Legend appearance
   #defaultPlotConfiguration$legendBorderColor <- "grey10"
@@ -190,8 +192,8 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
   plotGridConfiguration <- tlf::PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
-  plotGridConfiguration$tagSize <- 12
-  plotGridConfiguration$titleSize <- 14
+  plotGridConfiguration$tagSize <- 10
+  plotGridConfiguration$titleSize <- 12
 
   return(plotGridConfiguration)
 }
@@ -230,7 +232,7 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: o
   exportConfiguration$format <- "PNG"
   exportConfiguration$width <- 18
   # exportConfiguration$height <- 18
-  exportConfiguration$heightPerRow <- 9
+  exportConfiguration$heightPerRow <- 12
   exportConfiguration$units <- "cm"
   return(exportConfiguration)
 }
@@ -356,8 +358,9 @@ createPlotsFromExcel <- function(
   plotGrids <- apply(dfPlotGrids, 1, \(row) {
     plotGridConfiguration <- .createConfigurationFromRow(
       defaultConfiguration = defaultPlotGridConfig,
-      row[!(names(row) %in% c("name", "plotIDs"))]
+      row[!(names(row) %in% c("name", "plotIDs", "title"))]
     )
+    plotGridConfiguration$title <- row$name
 
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create
@@ -382,12 +385,19 @@ createPlotsFromExcel <- function(
   dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
-    exportConfiguration <- createEsqlabsExportConfiguration(projectConfiguration)
-    exportConfigurations <- apply(select(dfExportConfigurations, -plotGridName),
-      1,
-      .createConfigurationFromRow,
-      defaultConfiguration = exportConfiguration
-    )
+    defaultExportConfiguration <- createEsqlabsExportConfiguration(projectConfiguration)
+    exportConfigurations <- apply(dfExportConfigurations, 1, \(row){
+      exportConfiguration <- .createConfigurationFromRow(
+        defaultConfiguration = defaultExportConfiguration,
+        row[!(names(row) %in% c("plotGridName", "name"))]
+      )
+      # Replace "\" and "/" by "_" so the file name does not result in folders
+      name <- row[["name"]]
+      name <- gsub(pattern = "\\", "_", name, fixed = TRUE)
+      name <- gsub(pattern = "/", "_", name, fixed = TRUE)
+      exportConfiguration$name <- name
+      return(exportConfiguration)
+    })
     # export plotGrid if defined in exportConfigurations
     lapply(seq_along(exportConfigurations), function(i) {
       exportConfigurations[[i]]$savePlot(plotGrids[[dfExportConfigurations$plotGridName[i]]])
@@ -497,11 +507,16 @@ createPlotsFromExcel <- function(
   if (missingLabel > 0) {
     stop(messages$missingPlotIDs())
   }
-  # Remove white spaces
-  dfPlotGrids$plotIDs <- strsplit(x = dfPlotGrids$plotIDs, split = ",", fixed = TRUE)
-  # Remove leading/trailing whitespaces
-  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(x){
-    trimws(x)
+
+  # The values can be enclosed in "" in case the title should contain a ','.
+  # Split the input string by ',' but do not split within ""
+  # Have to do it one row at a time, otherwise it returns one separate list entry
+  # for each plot it (and not lists of plot ids)
+  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId){
+    unlist(trimws(scan(
+      text = as.character(plotId), what = "character", sep = ",",
+      quiet = TRUE
+    )))
   })
 
   # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.

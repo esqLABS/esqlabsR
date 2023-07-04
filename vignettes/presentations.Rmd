@@ -1,0 +1,26 @@
+---
+title: "Presentations"
+output: rmarkdown::html_vignette
+resource_files: 
+  - presentations/introduction-to-esqlabsR.html
+vignette: >
+  %\VignetteIndexEntry{presentations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{css echo=FALSE}
+.bordered{
+  border-style: solid;
+  border-width: 1px;
+}
+```
+
+
+<div class="bordered">
+
+[![Introduction to esqlabsR](presentations/introduction-to-esqlabsR-miniature.png)](presentations/introduction-to-esqlabsR.html)
+
+</div>
+
+
