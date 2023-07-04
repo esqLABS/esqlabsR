@@ -52,7 +52,7 @@ Scenario <- R6::R6Class(
     #' @field scenarioType Type of the scenario - individual or population. Read-only
     scenarioType = function(value) {
       if (missing(value)) {
-        if (!any(is.na(private$.population)) && isOfType(private$.population$population, "Population")) {
+        if (!any(is.na(private$.population)) && isOfType(private$.population, "Population")) {
           "Population"
         } else {
           "Individual"
@@ -204,6 +204,8 @@ Scenario <- R6::R6Class(
             sheet = "Demographics"
           )
           population <- createPopulation(populationCharacteristics = popCharacteristics)
+          # Create population returns a list, in cotrast to load population, where the object is returned!
+          population <- population$population
         }
       }
       private$.population <- population
