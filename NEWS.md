@@ -7,6 +7,9 @@ in the column 'Protein' of files 'PopulationParameters.xlsx' or 'Individuals.xls
 - Excel file 'PopulationParameters.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
 - Excel file 'Individuals.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
 
+### BUG FIXES
+- exportParametersToXLS - ignore parameters with NaN https://github.com/esqLABS/esqlabsR/issues/480
+
 # esqlabsR 5.0.0
 
 ### New functionalities
