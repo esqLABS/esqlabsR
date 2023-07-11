@@ -237,6 +237,6 @@ messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
   )
 }
 
-messages$stopScenarioMissingTimeUnit <- function(scenarioName){
+messages$stopScenarioMissingTimeUnit <- function(scenarioName) {
   paste0("Scenario '", scenarioName, "' has simulation time defined, but no unit is specified! Please specify simulation time unit.")
 }
