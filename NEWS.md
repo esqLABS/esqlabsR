@@ -9,6 +9,7 @@ in the column 'Protein' of files 'PopulationParameters.xlsx' or 'Individuals.xls
 
 ### BUG FIXES
 - exportParametersToXLS - ignore parameters with NaN https://github.com/esqLABS/esqlabsR/issues/480
+- Show a meaningful error when no time unit is specified for a scenario https://github.com/esqLABS/esqlabsR/issues/483
 
 # esqlabsR 5.0.0
 
