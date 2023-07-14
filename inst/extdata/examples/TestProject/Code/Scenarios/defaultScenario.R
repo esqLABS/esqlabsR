@@ -58,7 +58,7 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
   # sort(names(observedData))
   ########## Create figures########
   plots <- createPlotsFromExcel(
-    simulatedScenariosResults = simulatedScenariosResults,
+    simulatedScenarios = simulatedScenariosResults,
     observedData = observedData,
     projectConfiguration = projectConfiguration,
     stopIfNotFound = TRUE
