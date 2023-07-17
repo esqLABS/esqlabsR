@@ -1,5 +1,6 @@
 #---------- Initialization of app ----------#
 # Load required packages
+library(esqlabsR)
 library(shiny)
 library(shinydashboard)
 library(shinydashboardPlus)
@@ -174,10 +175,8 @@ server <- function(input, output, session) {
 
     r$projConfigFileMessage <- paste(" Current project configuration file:", r$newConfigFile)
 
-    codeFolder <- dirname(r$newConfigFile)
-
-    r$plotFile <- file.path(codeFolder, r$newProjectConfiguration$paramsFolder, r$newProjectConfiguration$plotsFile)
-    r$scenarioFile <- file.path(codeFolder, r$newProjectConfiguration$paramsFolder, r$newProjectConfiguration$scenarioDefinitionFile)
+    r$plotFile <- r$newProjectConfiguration$plotsFile
+    r$scenarioFile <- r$newProjectConfiguration$scenarioDefinitionFile
 
     # Load plotFile
     if (file.exists(r$plotFile)) {
@@ -200,10 +199,8 @@ server <- function(input, output, session) {
     }
 
     # Load dataFile
-
-    dataFolder <- file.path(codeFolder, r$newProjectConfiguration$dataFolder)
-    dataFile <- file.path(dataFolder, r$newProjectConfiguration$dataFile)
-    dataImporterConfigurationFile <- file.path(dataFolder, r$newProjectConfiguration$dataImporterConfigurationFile)
+    dataFile <- r$newProjectConfiguration$dataFile
+    dataImporterConfigurationFile <- r$newProjectConfiguration$dataImporterConfigurationFile
     if (file.exists(dataFile) & file.exists(dataImporterConfigurationFile)) {
       tryCatch(
         {
