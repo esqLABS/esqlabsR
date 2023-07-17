@@ -143,7 +143,7 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
   # Size
-  defaultPlotConfiguration$titleSize <- 14
+  defaultPlotConfiguration$titleSize <- 12
   defaultPlotConfiguration$xLabelSize <- 10
   defaultPlotConfiguration$yLabelSize <- 10
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
@@ -360,7 +360,7 @@ createPlotsFromExcel <- function(
       defaultConfiguration = defaultPlotGridConfig,
       row[!(names(row) %in% c("name", "plotIDs", "title"))]
     )
-    plotGridConfiguration$title <- row$name
+    plotGridConfiguration$title <- row$title
 
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create
