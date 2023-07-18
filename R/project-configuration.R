@@ -33,151 +33,125 @@ ProjectConfiguration <- R6::R6Class(
     #' @field modelFolder Path to the folder containing pkml simulation files.
     modelFolder = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.modelFolder, self$projectConfigurationDirPath)
-      } else {
-        private$.clean_path(value, self$projectConfigurationDirPath)
-        private$.modelFolder <- value
-        self
+        value <-  private$.modelFolder
       }
+      private$.modelFolder <- value
+      private$.clean_path(value, self$projectConfigurationDirPath)
     },
     #' @field paramsFolder Path to the folder containing excel files with model
     #' parameterization;
     paramsFolder = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.paramsFolder, self$projectConfigurationDirPath)
-      } else {
-        private$.clean_path(value, self$projectConfigurationDirPath)
-        private$.paramsFolder <- value
-        self
+        value <-  private$.paramsFolder
       }
+      private$.paramsFolder <- value
+      private$.clean_path(value, self$projectConfigurationDirPath)
     },
     #' @field paramsFile Name of the excel file with global model
     #' parameterization.
     #' Must be located in the "paramsFolder".
     paramsFile = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.paramsFile, self$paramsFolder)
-      } else {
-        private$.clean_path(value, self$paramsFolder)
-        private$.paramsFile <- value
-        self
+        value <-  private$.paramsFile
       }
+      private$.paramsFile <- value
+      private$.clean_path(value, self$paramsFolder)
     },
     #' @field individualsFile Name of the excel file with
     #' individual-specific model parameterization.
     #' Must be located in the "paramsFolder"
     individualsFile = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.individualsFile, self$paramsFolder)
-      } else {
-        private$.clean_path(value, self$paramsFolder)
-        private$.individualsFile <- value
-        self
+        value <-  private$.individualsFile
       }
+      private$.individualsFile <- value
+      private$.clean_path(value, self$paramsFolder)
     },
     #' @field populationParamsFile Name of the excel file with population
     #' information.
     #' Must be located in the "paramsFolder".
     populationParamsFile = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.populationParamsFile, self$paramsFolder)
-      } else {
-        private$.clean_path(value, self$paramsFolder)
-        private$.populationParamsFile <- value
-        self
+        value <-  private$.populationParamsFile
       }
+      private$.populationParamsFile <- value
+      private$.clean_path(value, self$paramsFolder)
     },
     #' @field scenarioDefinitionFile Name of the excel file with scenario
     #' definitions.
     #' Must be located in the "paramsFolder".
     scenarioDefinitionFile = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.scenarioDefinitionFile, self$paramsFolder)
-      } else {
-        private$.clean_path(value, self$paramsFolder)
-        private$.scenarioDefinitionFile <- value
-        self
+        value <-  private$.scenarioDefinitionFile
       }
+      private$.scenarioDefinitionFile <- value
+      private$.clean_path(value, self$paramsFolder)
     },
     #' @field scenarioApplicationsFile Name of the excel file scenario-specific
     #'  parameters such as application protocol parameters.
     #'  Must be located in the "paramsFolder".
     scenarioApplicationsFile = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.scenarioApplicationsFile, self$paramsFolder)
-      } else {
-        private$.clean_path(value, self$paramsFolder)
-        private$.scenarioApplicationsFile <- value
-        self
+        value <-  private$.scenarioApplicationsFile
       }
+      private$.scenarioApplicationsFile <- value
+      private$.clean_path(value, self$paramsFolder)
     },
     #' @field plotsFile Name of the excel file with plot definitions.
     #' Must be located in the "paramsFolder".
     plotsFile = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.plotsFile, self$paramsFolder)
-      } else {
-        private$.clean_path(value, self$paramsFolder)
-        private$.plotsFile <- value
-        self
+        value <-  private$.plotsFile
       }
+      private$.plotsFile <- value
+      private$.clean_path(value, self$paramsFolder)
     },
     #' @field dataFolder Path to the folder where experimental data files are
     #' located.
     dataFolder = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.dataFolder, self$projectConfigurationDirPath)
-      } else {
-        private$.clean_path(value, self$projectConfigurationDirPath)
-        private$.dataFolder <- value
-        self
+        value <-  private$.dataFolder
       }
+      private$.dataFolder <- value
+      private$.clean_path(value, self$projectConfigurationDirPath)
     },
     #' @field dataFile Name of the excel file with experimental data.
     #' Must be located in the "dataFolder"
     dataFile = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.dataFile, self$dataFolder)
-      } else {
-        private$.clean_path(value, self$dataFolder)
-        private$.dataFile <- value
-        self
+        value <-  private$.dataFile
       }
+      private$.dataFile <- value
+      private$.clean_path(value, self$dataFolder)
     },
     #' @field dataImporterConfigurationFile Name of data importer configuration
     #' file in xml format used to load the data.
     #' Must be located in the "dataFolder"
     dataImporterConfigurationFile = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.dataImporterConfigurationFile, self$dataFolder)
-      } else {
-        private$.clean_path(value, self$dataFolder)
-        private$.dataImporterConfigurationFile <- value
-        self
+        value <- private$.dataImporterConfigurationFile
       }
+      private$.dataImporterConfigurationFile <- value
+      private$.clean_path(value, self$dataFolder)
     },
     #' @field compoundPropertiesFile Path to the excel file containing
     #' information about all compounds in the model.
     #' Must be located in the "dataFolder"
-    compoundPropertiesFile = function(value, must_work = FALSE) {
+    compoundPropertiesFile = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.compoundPropertiesFile, self$dataFolder, must_work)
-      } else {
-        private$.clean_path(value, self$dataFolder, must_work)
-        private$.compoundPropertiesFile <- value
-        self
+        value <- private$.compoundPropertiesFile
       }
+      private$.compoundPropertiesFile <- value
+      private$.clean_path(value, self$dataFolder, must_work = FALSE)
     },
     #' @field outputFolder Path to the folder where the results should be
     #' saved to; relative to the "Code" folder
     outputFolder = function(value) {
       if (missing(value)) {
-        private$.clean_path(private$.outputFolder, self$projectConfigurationDirPath)
-      } else {
-        private$.clean_path(value, self$projectConfigurationDirPath)
-        private$.outputFolder <- value
-        self
+        value <- private$.outputFolder
       }
+      private$.outputFolder <- value
+      private$.clean_path(value, self$projectConfigurationDirPath, must_work = FALSE)
     }
   ),
   private = list(
@@ -223,11 +197,9 @@ ProjectConfiguration <- R6::R6Class(
 
       # Check wether the generated path exists
       if (!fs::file_exists(abs_path) && must_work == TRUE) {
-        stop(abs_path, " does not exist")
-      }
-      if (!fs::file_exists(abs_path) && must_work == FALSE) {
         warning(abs_path, " does not exist")
       }
+
       return(abs_path)
     }
   ),

@@ -7,6 +7,8 @@ in the column 'Protein' of files 'PopulationParameters.xlsx' or 'Individuals.xls
 - Excel file 'PopulationParameters.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
 - Excel file 'Individuals.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
 
+- Throw a warning instead of an error if a path specified in `ProjectConfiguration` does not exist. `$outputFolder` existence is not checked anymore.
+
 ### BUG FIXES
 - exportParametersToXLS - ignore parameters with NaN https://github.com/esqLABS/esqlabsR/issues/480
 - Show a meaningful error when no time unit is specified for a scenario https://github.com/esqLABS/esqlabsR/issues/483

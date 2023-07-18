@@ -162,8 +162,8 @@ createEsqlabsPlotConfiguration <- function() {
 
   # Colors
   defaultPlotConfiguration$pointsColor <- esqlabsEnv$colorPalette
-  defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
-  defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
+  #defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
+  #defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
 
   return(defaultPlotConfiguration)
 }
