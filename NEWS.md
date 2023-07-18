@@ -7,6 +7,8 @@ in the column 'Protein' of files 'PopulationParameters.xlsx' or 'Individuals.xls
 - Excel file 'PopulationParameters.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
 - Excel file 'Individuals.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
 
+- Throw a warning instead of an error if a path specified in `ProjectConfiguration` does not exist. `$outputFolder` existence is not checked anymore.
+
 # esqlabsR 5.0.0
 
 ### New functionalities
