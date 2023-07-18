@@ -12,14 +12,14 @@
       mySC$print(projectConfiguration = FALSE)
     Output
       ScenarioConfiguration: 
-         Model file name: 
-         Scenario name: 
+         Model file name: NULL 
+         Scenario name: NULL 
          Parameters sheets: mySheet1 mySheet2 
-         Individual Id: 
-         Population Id: 
+         Individual Id: NULL 
+         Population Id: NULL 
          Read population from csv file: FALSE 
-         Application protocol: 
-         Simulation time intervals: 
+         Application protocol: NULL 
+         Simulation time intervals: NULL 
            Interval: 1 
              Start: 0 
              End: 10 
