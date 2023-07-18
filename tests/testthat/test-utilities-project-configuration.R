@@ -13,3 +13,9 @@ test_that("`createDefaultProjectConfiguration()` with specified path works as ex
   myConfig <- createDefaultProjectConfiguration(test_ProjectConfiguration())
   expect_true(isOfType(myConfig, "ProjectConfiguration"))
 })
+
+test_that("A warning is (not) displayed if path/file does not exist", {
+  myConfig <- createDefaultProjectConfiguration(test_ProjectConfiguration())
+  expect_no_warning(myConfig$outputFolder <- "this/directory/does/not/exist")
+  expect_warning(myConfig$dataFolder <- "this/directory/does/not/exist")
+})
