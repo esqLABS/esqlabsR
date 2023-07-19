@@ -107,6 +107,10 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
     if (!is.na(data$SimulationTime)) {
       scenarioConfiguration$simulationTime <- data$SimulationTime
 
+      if (is.na(data$SimulationTimeUnit)) {
+        stop(messages$stopScenarioMissingTimeUnit(scenarioName))
+      }
+
       scenarioConfiguration$simulationTimeUnit <- data$SimulationTimeUnit
     }
 

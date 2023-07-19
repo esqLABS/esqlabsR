@@ -9,6 +9,10 @@ in the column 'Protein' of files 'PopulationParameters.xlsx' or 'Individuals.xls
 
 - Throw a warning instead of an error if a path specified in `ProjectConfiguration` does not exist. `$outputFolder` existence is not checked anymore.
 
+### BUG FIXES
+- exportParametersToXLS - ignore parameters with NaN https://github.com/esqLABS/esqlabsR/issues/480
+- Show a meaningful error when no time unit is specified for a scenario https://github.com/esqLABS/esqlabsR/issues/483
+
 # esqlabsR 5.0.0
 
 ### New functionalities
