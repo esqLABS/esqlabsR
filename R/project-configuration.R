@@ -33,7 +33,7 @@ ProjectConfiguration <- R6::R6Class(
     #' @field modelFolder Path to the folder containing pkml simulation files.
     modelFolder = function(value) {
       if (missing(value)) {
-        value <-  private$.modelFolder
+        value <- private$.modelFolder
       }
       private$.modelFolder <- value
       private$.clean_path(value, self$projectConfigurationDirPath)
@@ -42,7 +42,7 @@ ProjectConfiguration <- R6::R6Class(
     #' parameterization;
     paramsFolder = function(value) {
       if (missing(value)) {
-        value <-  private$.paramsFolder
+        value <- private$.paramsFolder
       }
       private$.paramsFolder <- value
       private$.clean_path(value, self$projectConfigurationDirPath)
@@ -52,7 +52,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "paramsFolder".
     paramsFile = function(value) {
       if (missing(value)) {
-        value <-  private$.paramsFile
+        value <- private$.paramsFile
       }
       private$.paramsFile <- value
       private$.clean_path(value, self$paramsFolder)
@@ -62,7 +62,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "paramsFolder"
     individualsFile = function(value) {
       if (missing(value)) {
-        value <-  private$.individualsFile
+        value <- private$.individualsFile
       }
       private$.individualsFile <- value
       private$.clean_path(value, self$paramsFolder)
@@ -72,7 +72,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "paramsFolder".
     populationParamsFile = function(value) {
       if (missing(value)) {
-        value <-  private$.populationParamsFile
+        value <- private$.populationParamsFile
       }
       private$.populationParamsFile <- value
       private$.clean_path(value, self$paramsFolder)
@@ -82,7 +82,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "paramsFolder".
     scenarioDefinitionFile = function(value) {
       if (missing(value)) {
-        value <-  private$.scenarioDefinitionFile
+        value <- private$.scenarioDefinitionFile
       }
       private$.scenarioDefinitionFile <- value
       private$.clean_path(value, self$paramsFolder)
@@ -92,7 +92,7 @@ ProjectConfiguration <- R6::R6Class(
     #'  Must be located in the "paramsFolder".
     scenarioApplicationsFile = function(value) {
       if (missing(value)) {
-        value <-  private$.scenarioApplicationsFile
+        value <- private$.scenarioApplicationsFile
       }
       private$.scenarioApplicationsFile <- value
       private$.clean_path(value, self$paramsFolder)
@@ -101,7 +101,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "paramsFolder".
     plotsFile = function(value) {
       if (missing(value)) {
-        value <-  private$.plotsFile
+        value <- private$.plotsFile
       }
       private$.plotsFile <- value
       private$.clean_path(value, self$paramsFolder)
@@ -110,7 +110,7 @@ ProjectConfiguration <- R6::R6Class(
     #' located.
     dataFolder = function(value) {
       if (missing(value)) {
-        value <-  private$.dataFolder
+        value <- private$.dataFolder
       }
       private$.dataFolder <- value
       private$.clean_path(value, self$projectConfigurationDirPath)
@@ -119,7 +119,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "dataFolder"
     dataFile = function(value) {
       if (missing(value)) {
-        value <-  private$.dataFile
+        value <- private$.dataFile
       }
       private$.dataFile <- value
       private$.clean_path(value, self$dataFolder)

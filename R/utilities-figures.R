@@ -153,8 +153,8 @@ createEsqlabsPlotConfiguration <- function() {
 
 
   # Legend appearance
-  #defaultPlotConfiguration$legendBorderColor <- "grey10"
-  #defaultPlotConfiguration$legendBorderType <- 1
+  # defaultPlotConfiguration$legendBorderColor <- "grey10"
+  # defaultPlotConfiguration$legendBorderType <- 1
   defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
 
   # Axis appearance
@@ -162,8 +162,8 @@ createEsqlabsPlotConfiguration <- function() {
 
   # Colors
   defaultPlotConfiguration$pointsColor <- esqlabsEnv$colorPalette
-  #defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
-  #defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
+  defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
+  defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
 
   return(defaultPlotConfiguration)
 }
