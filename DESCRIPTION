@@ -50,10 +50,10 @@ Suggests:
     shiny,
     shinyjs,
     shinytest2,
+    showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
     withr,
-    showtext
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3
