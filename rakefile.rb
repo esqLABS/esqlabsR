@@ -10,7 +10,6 @@ OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 APPVEYOR_ACCOUNT_NAME = 'open-systems-pharmacology-ci'
 
 task :prepare_for_build, [:build_version] do |t, args|
-  update_package_version(args.build_version, description_file)
   install_pksim('develop')
 end
 
