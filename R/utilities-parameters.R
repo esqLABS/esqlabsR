@@ -68,7 +68,7 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
   for (paramIdx in seq_along(parameters)) {
     param <- parameters[[paramIdx]]
     value <- param$value
-    if (!is.nan(value)){
+    if (!is.nan(value)) {
       parameterContainerPath[[paramIdx]] <- param$parentContainer$path
       parameterName[[paramIdx]] <- param$name
       parameterUnits[[paramIdx]] <- param$unit
