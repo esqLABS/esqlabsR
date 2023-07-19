@@ -91,6 +91,11 @@ reference:
       - sourceAll
       - esqlabsRSettingNames
 
+  - title: Inherited classes
+    #desc:
+    contents:
+      - ExportConfiguration
+
 articles:
   - title: esqlabsR Workflow
     navbar: esqlabsR Workflow

@@ -42,6 +42,6 @@ scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
 simulatedScenariosResults <- runScenarios(
   scenarios = scenarios
 )
-saveResults(simulatedScenariosResults, projectConfiguration)
+saveScenarioResults(simulatedScenariosResults, projectConfiguration)
 }
 }

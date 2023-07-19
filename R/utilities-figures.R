@@ -17,9 +17,9 @@
 #' @export
 esqLABS_colors <- function(nrOfColors) {
   # esqLABS colors in HSV model
-  esqRedHSV <- rgb2hsv(235, 23, 51, maxColorValue = 255)
-  esqBlueHSV <- rgb2hsv(13, 141, 218, maxColorValue = 255)
-  esqGreenHSV <- rgb2hsv(38, 176, 66, maxColorValue = 255)
+  esqRedHSV <- rgb2hsv(234, 94, 94, maxColorValue = 255)
+  esqBlueHSV <- rgb2hsv(74, 189, 203, maxColorValue = 255)
+  esqGreenHSV <- rgb2hsv(118, 187, 96, maxColorValue = 255)
   # default color palette.
   esq_palette <- c(
     hsv(esqBlueHSV[1], esqBlueHSV[2], esqBlueHSV[3]),
@@ -142,15 +142,29 @@ col2hsv <- function(color) {
 createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
-  defaultPlotConfiguration$titleSize <- 14
+  # Size
+  defaultPlotConfiguration$titleSize <- 12
   defaultPlotConfiguration$xLabelSize <- 10
   defaultPlotConfiguration$yLabelSize <- 10
-  defaultPlotConfiguration$xAxisLabelTicksSize <- 10
-  defaultPlotConfiguration$yAxisLabelTicksSize <- 10
-  defaultPlotConfiguration$legendTitleSize <- 8
-  defaultPlotConfiguration$legendBorderColor <- "grey10"
-  defaultPlotConfiguration$legendBorderType <- 1
+  defaultPlotConfiguration$xAxisLabelTicksSize <- 8
+  defaultPlotConfiguration$yAxisLabelTicksSize <- 8
+  defaultPlotConfiguration$legendKeysSize <- 6
+
+
+
+  # Legend appearance
+  # defaultPlotConfiguration$legendBorderColor <- "grey10"
+  # defaultPlotConfiguration$legendBorderType <- 1
   defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
+
+  # Axis appearance
+  defaultPlotConfiguration$yAxisLabelTicksAngle <- 0
+
+  # Colors
+  defaultPlotConfiguration$pointsColor <- esqlabsEnv$colorPalette
+  defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
+  defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
+
   return(defaultPlotConfiguration)
 }
 
@@ -178,6 +192,8 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
   plotGridConfiguration <- tlf::PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
+  plotGridConfiguration$tagSize <- 10
+  plotGridConfiguration$titleSize <- 12
 
   return(plotGridConfiguration)
 }
@@ -206,7 +222,7 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
 #'
 #' @export
 createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: object_length_linter.
-  exportConfiguration <- tlf::ExportConfiguration$new()
+  exportConfiguration <- esqlabsR::ExportConfiguration$new()
 
   exportConfiguration$path <- projectConfiguration$outputFolder
   exportConfiguration$dpi <- 300
@@ -215,9 +231,9 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: o
   # export".
   exportConfiguration$format <- "PNG"
   exportConfiguration$width <- 18
-  exportConfiguration$height <- 18
+  # exportConfiguration$height <- 18
+  exportConfiguration$heightPerRow <- 12
   exportConfiguration$units <- "cm"
-
   return(exportConfiguration)
 }
 
@@ -344,7 +360,7 @@ createPlotsFromExcel <- function(
       defaultConfiguration = defaultPlotGridConfig,
       row[!(names(row) %in% c("name", "plotIDs", "title"))]
     )
-    plotGridConfiguration$title <- row$name
+    plotGridConfiguration$title <- row$title
 
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create

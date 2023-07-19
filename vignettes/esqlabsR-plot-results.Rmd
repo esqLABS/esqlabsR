@@ -134,6 +134,11 @@ exportConfig <- createEsqlabsExportConfiguration(projectConfiguration)
 exportConfig$savePlot(gridPlot, fileName = "All plots.png")
 ```
 
+By default, the height of the output figure is calculated from the number of rows 
+in the multi-panel plot and the height defined in `ExportConfiguration$heightPerRow`.
+If you want to define a fixed height with the parameter `ExportConfiguration$height`,
+set `ExportConfiguration$heightPerRow = NULL`.
+
 ## Details
 
 ### Observed Data

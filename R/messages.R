@@ -169,7 +169,7 @@ messages$stopNoDataSetProvided <- function(dataCombinedName) {
 messages$stopInvalidDataSetName <- function(dataSetNames) {
   paste0(
     "The following data sets are not present in `observedData`: ",
-    paste(dataSetNames, collapse = ", ")
+    paste(dataSetNames, collapse = ",\n")
   )
 }
 
@@ -193,7 +193,7 @@ messages$missingOutputFileName <- function() {
 messages$missingPlotGrids <- function(missingPlotGrids) {
   paste0(
     "Invalid values in column 'plotGridName' of sheet 'exportConfiguration': ",
-    paste(missingPlotGrids, collapse = ", "),
+    paste(missingPlotGrids, collapse = ",\n"),
     ". Plot grids are either not defined or empty and can not be exported to file."
   )
 }
@@ -207,7 +207,7 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
 messages$invalidPlotGridNames <- function(plotGridNames) {
   paste(
     "Following plot grid names have been specified but are not present in the `plotGrids` sheet! Define these plots first: ",
-    paste0(plotGridNames, collapse = ", ")
+    paste0(plotGridNames, collapse = ",\n")
   )
 }
 
@@ -215,7 +215,7 @@ messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
   paste(
     "Following output path IDs have been specified as output for scenario '", scenarioName,
     "', but are not present in the `OutputPaths` sheet! Define these outputs first: ",
-    paste0(outputPathIds, collapse = ", ")
+    paste0(outputPathIds, collapse = ",\n")
   )
 }
 

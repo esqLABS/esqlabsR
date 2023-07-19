@@ -161,7 +161,7 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL) {
 #' simulatedScenariosResults <- runScenarios(
 #'   scenarios = scenarios
 #' )
-#' saveResults(simulatedScenariosResults, projectConfiguration)
+#' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
 #' }
 saveScenarioResults <- function(
     simulatedScenariosResults,
