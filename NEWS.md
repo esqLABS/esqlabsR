@@ -1,5 +1,8 @@
 # esqlabsR (development version)
 
+- Plots are using new color palette
+- Some modifications to plot configuration files for better plots
+
 - Protein ontogenies can be defined for populations and individuals. To specify ontogenies for 
 proteins in the simulation, list the proteins you want to define ontogenies for 
 in the column 'Protein' of files 'PopulationParameters.xlsx' or 'Individuals.xlsx', separated by a ','. Speficy the ontogenies available in PK-Sim (see article https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies) in the column 'Ontogenies'. The number of entries in the  both columns must be equal.
