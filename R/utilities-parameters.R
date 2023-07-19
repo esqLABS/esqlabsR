@@ -87,7 +87,9 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
     unlist(parameterName, use.names = FALSE),
     unlist(parameterValue, use.names = FALSE),
     unlist(parameterUnits, use.names = FALSE)
-  )
+  ) %>%
+    # Remove rows for which all values are NA
+    dplyr::filter(dplyr::if_any(dplyr::everything(), ~ !is.na(.)))
 
   if (length(output) > 0) {
     colnames(output) <- c("Container Path", "Parameter Name", "Value", "Units")
