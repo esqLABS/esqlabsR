@@ -327,7 +327,7 @@ createPlotsFromExcel <- function(
     dataCombined <- dataCombinedList[[dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$DataCombinedName]]
     switch(dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
       # Individual time profile
-           individual = plotIndividualTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
+      individual = plotIndividualTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
       # Population time profile
       population = {
         aggregation <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$aggregation
@@ -336,11 +336,11 @@ createPlotsFromExcel <- function(
         args$dataCombined <- dataCombined
         args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
         # Is aggregation defined?
-        if (!is.null(aggregation) && !is.na(aggregation)){
+        if (!is.null(aggregation) && !is.na(aggregation)) {
           args$aggregation <- aggregation
         }
         # quantiles defined?
-        if (!is.null(quantiles) && !is.na(quantiles)){
+        if (!is.null(quantiles) && !is.na(quantiles)) {
           args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
         }
         do.call(plotPopulationTimeProfile, args)
@@ -368,7 +368,10 @@ createPlotsFromExcel <- function(
       defaultConfiguration = defaultPlotGridConfig,
       row[!(names(row) %in% c("name", "plotIDs", "title"))]
     )
-    plotGridConfiguration$title <- row$title
+    browser()
+    if (!is.na(row$title)){
+      plotGridConfiguration$title <- row$title
+    }
 
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create
