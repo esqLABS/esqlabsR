@@ -204,7 +204,7 @@ Scenario <- R6::R6Class(
             sheet = "Demographics"
           )
           population <- createPopulation(populationCharacteristics = popCharacteristics)
-          # Create population returns a list, in cotrast to load population, where the object is returned!
+          # Create population returns a list, in contrast to load population, where the object is returned!
           population <- population$population
         }
       }
