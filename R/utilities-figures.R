@@ -368,7 +368,7 @@ createPlotsFromExcel <- function(
       defaultConfiguration = defaultPlotGridConfig,
       row[!(names(row) %in% c("name", "plotIDs", "title"))]
     )
-    browser()
+
     if (!is.na(row$title)) {
       plotGridConfiguration$title <- row$title
     }
