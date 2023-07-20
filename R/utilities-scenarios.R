@@ -198,7 +198,7 @@ saveScenarioResults <- function(
           )
         }
         # Save population
-        if (!is.null(simulatedScenariosResults[[i]]$population) && all(!is.na(simulatedScenariosResults[[i]]$population))) {
+        if (isOfType(simulatedScenariosResults[[i]]$population, "Population")) {
           ospsuite::exportPopulationToCSV(simulatedScenariosResults[[i]]$population,
             filePath = file.path(outputFolder, paste0(scenarioName, "_population.csv"))
           )

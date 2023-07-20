@@ -52,7 +52,7 @@ Scenario <- R6::R6Class(
     #' @field scenarioType Type of the scenario - individual or population. Read-only
     scenarioType = function(value) {
       if (missing(value)) {
-        if (!any(is.na(private$.population)) && isOfType(private$.population, "Population")) {
+        if (isOfType(private$.population, "Population")) {
           "Population"
         } else {
           "Individual"
