@@ -217,7 +217,7 @@ restart_rstudio <- function() {
 
 setup_esqlabsR <- function() {
   # Display a menu asking if user wants to install packages in local env or  globally
-  install_option <- utils::menu(c("In local environment (available for one project)", "In Glocal environment (available for all projects)"),
+  install_option <- utils::menu(c("In local environment (available for one project)", "In Global environment (available for all projects)"),
                                 title = "Where do you want to install {esqlabsR} and other packages?"
   )
 
