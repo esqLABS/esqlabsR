@@ -316,7 +316,7 @@ createPlotsFromExcel <- function(
   plotConfiguration <- createEsqlabsPlotConfiguration()
   plotConfigurationList <- apply(
     dfPlotConfigurations[, !(names(dfPlotConfigurations) %in%
-      c("plotID", "DataCombinedName", "plotType", "quantiles", "foldDistance"))],
+      c("plotID", "DataCombinedName", "plotType", "aggregation", "quantiles", "foldDistance"))],
     1, .createConfigurationFromRow,
     defaultConfiguration = plotConfiguration
   )
@@ -326,16 +326,24 @@ createPlotsFromExcel <- function(
   plotList <- lapply(dfPlotConfigurations$plotID, \(plotId) {
     dataCombined <- dataCombinedList[[dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$DataCombinedName]]
     switch(dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
+      # Individual time profile
       individual = plotIndividualTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
+      # Population time profile
       population = {
+        aggregation <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$aggregation
         quantiles <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$quantiles
-        if (is.null(quantiles) || is.na(quantiles)) {
-          plotPopulationTimeProfile(dataCombined, plotConfigurationList[[plotId]])
-        } else {
-          plotPopulationTimeProfile(dataCombined, plotConfigurationList[[plotId]],
-            quantiles = as.numeric(unlist(strsplit(quantiles, split = ",")))
-          )
+        args <- list()
+        args$dataCombined <- dataCombined
+        args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
+        # Is aggregation defined?
+        if (!is.null(aggregation) && !is.na(aggregation)) {
+          args$aggregation <- aggregation
         }
+        # quantiles defined?
+        if (!is.null(quantiles) && !is.na(quantiles)) {
+          args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
+        }
+        do.call(plotPopulationTimeProfile, args)
       },
       observedVsSimulated = {
         foldDist <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$foldDistance
@@ -360,7 +368,10 @@ createPlotsFromExcel <- function(
       defaultConfiguration = defaultPlotGridConfig,
       row[!(names(row) %in% c("name", "plotIDs", "title"))]
     )
-    plotGridConfiguration$title <- row$title
+
+    if (!is.na(row$title)) {
+      plotGridConfiguration$title <- row$title
+    }
 
     plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create
