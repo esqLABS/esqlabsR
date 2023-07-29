@@ -150,12 +150,14 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration$yAxisLabelTicksSize <- 8
   defaultPlotConfiguration$legendKeysSize <- 6
 
+  # Lines size
+  defaultPlotConfiguration$linesSize <- 0.5
 
 
   # Legend appearance
   # defaultPlotConfiguration$legendBorderColor <- "grey10"
   # defaultPlotConfiguration$legendBorderType <- 1
-  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
+  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopLeft
 
   # Axis appearance
   defaultPlotConfiguration$yAxisLabelTicksAngle <- 0
@@ -551,4 +553,24 @@ createPlotsFromExcel <- function(
   }
 
   return(dfExportConfigurations)
+}
+
+#' Extract Legend labels from a ggplot object
+#' @description Extract legend labels from a ggplot object.
+#' @param plotObj an object of class ggplot.
+#' @return A list of legend labels
+#' @keywords internal
+.getLegendLabel <- function(plotObj){
+  validateIsOfType(plotObj, "ggplot")
+  # Build the plot to get legend titles
+  tmp <- ggplot_build(plotObj)
+  leg <- which(sapply(tmp$plot$scales$scales, function(x) x$guide) == "legend")
+  # Don't know exactly why, but there are (sometimes?) two entries that are "legend".
+  # Both have the same label, whih we need.
+  if(length(leg) > 0) {
+    leg <- tmp$plot$scales$scales[[leg[[1]]]]
+  } else {
+    return(NULL)
+  }
+  return(leg$get_labels())
 }

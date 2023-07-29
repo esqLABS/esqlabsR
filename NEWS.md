@@ -1,5 +1,10 @@
 # esqlabsR (development version)
 
+- `ExportConfiguration` created with `createEsqlabsExportConfiguration()` gets 
+a new argument `autoscaleText` for the method `savePlot()`. If `TRUE`(default),
+sizes of figures tiles and legends text are reduced if required to fit the whole 
+string into the figure. Text size specifications in the plots become therefore 
+the maximal possible size.
 - Plots are using new color palette
 - Some modifications to plot configuration files for better plots
 
