@@ -28,6 +28,7 @@ createDataCombinedFromExcel <- function(
   if (!is.null(dataCombinedNames)) {
     dfDataCombined <- filter(dfDataCombined, DataCombinedName %in% dataCombinedNames)
   }
+
   dfDataCombined <- .validateDataCombinedFromExcel(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound)
 
   # create named list of DataCombined objects
@@ -187,7 +188,7 @@ createDataCombinedFromExcel <- function(
       stop(messages$stopInvalidDataSetName(missingDataSets))
     }
     warning(messages$warningInvalidDataSetName(missingDataSets))
-    dfDataCombined <- dfDataCombined[!(missingDataSets == dfDataCombined$dataSet), ]
+    dfDataCombined <- dfDataCombined[!(dfDataCombined$dataSet %in% missingDataSets), ]
   }
 
   # Identify the names of DataCombined that have been completely removed
