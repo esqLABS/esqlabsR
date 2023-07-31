@@ -142,6 +142,10 @@ col2hsv <- function(color) {
 createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
+  # Title
+  # Left or center?
+  defaultPlotConfiguration$titleAlign <- "left"
+
   # Size
   defaultPlotConfiguration$titleSize <- 12
   defaultPlotConfiguration$xLabelSize <- 10
