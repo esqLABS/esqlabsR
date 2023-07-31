@@ -15,7 +15,49 @@ knitr::opts_chunk$set(
 ```
 
 Plotting the simulation results is an integral part of model diagnostics
-and quality control. Simulated modeling scenarios can be passed to
+and quality control.
+
+`{esqlabsR}` implements an excel-based workflow for creation of figures from simulated 
+scenarios. The figures are defined in the excel file "Plotx.xlsx". The general workflow is:
+
+CREATE A WORKFLOW FIGURE! (multiple) simulation results coming from simulated 
+scenarios plus (multiple) observed data sets are added to `DataCombined` (sheet `DataCombined`).
+From a single `DataCombined`, multiple plots (individual/population time profile, 
+simulated-vs-observed, etc) can be created in `plotConfiguration` sheet. The plots
+with ther plot IDs can be combined to multi-panel figures in the sheet `plotGrids`.
+THIS IS THEN THE FINAL PLOT THAT WILL BE RETURNED. So even for a plot with only one 
+panel, a plot grid must be defined.
+
+Calling function `createPlotsFromExcel()` returns ggplot-objects, one object for 
+each plot grid (all or only specified). By default, if any of the simulated results 
+or observed data specified for the plots is not found, and error is thrown. If setting
+`ignoreIfNotFound = FALSE`, these data are simply ignored and not added to the plots.
+Might be useful if not all scenarios are simulated, but still want to plot at least
+the data.
+
+IF you want to save plots to png during creation, list the plot grids in the 
+sheet `exportConfiguration`.
+
+Describe the most important columns, namely those present in the Plots.xlsx of 
+the example project. Describe that the user can additionally add a column for any 
+property of the respective `configuration` class (example for this).
+
+For properties that accept a list of values (e.g. `xAxisLimits`), the values are 
+separated by a `,`. If an entry itself should contain a `,`, e.g. the name of a plotID
+that is combined to a multi-pannel plot in a plot grid, enclose the entry into parenthesis.
+
+E.g. in column `plotIDs` of the `plotGrids` sheet: 
+
+`"Name of the first plot, which contains a comma", "Name of the secold plot"`.
+
+You can also return the `DataCombined` objects defined in the `DataCombined` sheet
+with the function `createDataCombinedFromExcel()`.
+
+
+!!! MOVE THE SECTION BELOW TO SOMETHING LIKE "basics of figure creation with ospsuite-r".
+
+
+Simulated modeling scenarios can be passed to
 plotting functions from the `{ospsuite}` package to create
 uniformly-looking plots. To get familiar with the `DataCombined` class
 used to store matching observed and simulated data, read the [Working
