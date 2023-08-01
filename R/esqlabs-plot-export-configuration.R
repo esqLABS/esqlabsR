@@ -39,7 +39,7 @@ ExportConfiguration <- R6::R6Class(
       # text elements and subtract them from 'widthPerPanel'.
       plotGridTitleFactor <- 0.95
       panelTitleFactor <- 0.17
-      legendLabelFactor <- 0.075
+      legendLabelFactor <- 0.15
 
       ### Plot grid title
       if (isOfType(plotObject, "patchwork")) {
@@ -66,7 +66,10 @@ ExportConfiguration <- R6::R6Class(
       if (!isEmpty(plotObject$theme$plot.title)) {
         plotObject$theme$plot.title$size <-
           private$.calculateTextSize(
-            string = plotObject$labels$title,
+            # For whatever reason, it seems that the title is stored as a list
+            # if string separated by a ",". Therefore, for calculation of the
+            # width, collapse
+            string = paste(plotObject$labels$title, collapse = ", "),
             stringPointSize = plotObject$theme$plot.title$size,
             maxSize = widthPerPanel * (1 - nCols * panelTitleFactor)
           )
@@ -96,7 +99,7 @@ ExportConfiguration <- R6::R6Class(
         if (!isEmpty(plotObject$patches$plots[[patchIdx]]$theme$plot.title)) {
           plotObject$patches$plots[[patchIdx]]$theme$plot.title$size <-
             private$.calculateTextSize(
-              string = patch$labels$title,
+              string = paste(patch$labels$title, collapse = ", "),
               stringPointSize = patch$theme$plot.title$size,
               maxSize = widthPerPanel * (1 - nCols * panelTitleFactor)
             )
