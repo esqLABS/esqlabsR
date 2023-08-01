@@ -13,6 +13,7 @@
 #'
 #' @param nrOfColors Positive integer defining the number of colors to be generated.
 #'
+#' @import grDevices
 #' @return A list of colors as HEX values.
 #' @export
 esqLABS_colors <- function(nrOfColors) {
@@ -108,7 +109,7 @@ esqLABS_colors <- function(nrOfColors) {
 #'   indicate hue, saturation and value and are named "h", "s", and "v"
 #'   accordingly.
 #' @export
-#' @import ospsuite ospsuite.utils
+#' @import ospsuite ospsuite.utils grDevices
 #'
 #' @examples
 #' col2hsv("yellow")
