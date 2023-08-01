@@ -576,14 +576,14 @@ createPlotsFromExcel <- function(
 #' @param plotObj an object of class ggplot.
 #' @return A list of legend labels
 #' @keywords internal
-.getLegendLabel <- function(plotObj){
+.getLegendLabel <- function(plotObj) {
   validateIsOfType(plotObj, "ggplot")
   # Build the plot to get legend titles
   tmp <- ggplot_build(plotObj)
   leg <- which(sapply(tmp$plot$scales$scales, function(x) x$guide) == "legend")
   # Don't know exactly why, but there are (sometimes?) two entries that are "legend".
   # Both have the same label, whih we need.
-  if(length(leg) > 0) {
+  if (length(leg) > 0) {
     leg <- tmp$plot$scales$scales[[leg[[1]]]]
   } else {
     return(NULL)
