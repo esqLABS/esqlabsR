@@ -81,7 +81,7 @@ value always overrides the \code{height} property.}
 \subsection{Method \code{savePlot()}}{
 Save/Export a plot
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ExportConfiguration$savePlot(plotObject, fileName = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ExportConfiguration$savePlot(plotObject, fileName = NULL, autoscaleText = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -90,6 +90,11 @@ Save/Export a plot
 \item{\code{plotObject}}{A \code{ggplot} object}
 
 \item{\code{fileName}}{character file name of the exported plot}
+
+\item{\code{autoscaleText}}{If \code{TRUE}, title, subtitle, and legend text size will
+be reduced if required to fit into figures size. If \code{FALSE}, specified
+text element size is always applied an text might be cropped. Default is
+\code{TRUE}.}
 }
 \if{html}{\out{</div>}}
 }

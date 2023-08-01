@@ -34,7 +34,6 @@ ExportConfiguration <- R6::R6Class(
     .heightPerRow = NULL,
     .height = NULL,
     .rescaleTextSizes = function(plotObject) {
-      browser()
       # Scaling of the maximal widths is currently determined by trial-and-error.
       # Better solution would be to get the margins/offsets of the respective
       # text elements and subtract them from 'widthPerPanel'.
@@ -44,12 +43,14 @@ ExportConfiguration <- R6::R6Class(
 
       ### Plot grid title
       if (isOfType(plotObject, "patchwork")) {
+        if (!isEmpty(plotObject$patches$annotation$theme$plot.title)){
         plotObject$patches$annotation$theme$plot.title$size <-
           private$.calculateTextSize(
             string = plotObject$patches$annotation$title,
             stringPointSize = plotObject$patches$annotation$theme$plot.title$size,
             maxSize = self$width * plotGridTitleFactor
           )
+        }
       }
 
       ### Process the the panels
@@ -62,15 +63,19 @@ ExportConfiguration <- R6::R6Class(
       widthPerPanel <- self$width / nCols
       # If the plot has only one panel, its properties are directly that of the
       # patchwork object.
+      if (!isEmpty(plotObject$theme$plot.title)){
+
       plotObject$theme$plot.title$size <-
         private$.calculateTextSize(
           string = plotObject$labels$title,
           stringPointSize = plotObject$theme$plot.title$size,
           maxSize = widthPerPanel * (1 - nCols * panelTitleFactor)
         )
+      }
 
       # Legends
       legendLabels <- .getLegendLabel(plotObject)
+      if (!is.null(legendLabels)){
       plotObject$theme$legend.text$size <-
         min(sapply(legendLabels, function(label){
         private$.calculateTextSize(
@@ -79,6 +84,7 @@ ExportConfiguration <- R6::R6Class(
           maxSize = widthPerPanel * (1 - nCols * legendLabelFactor)
         )
         }))
+      }
       # Also change height of the keys
       # plotObject$theme$legend.key.height <-
       #   grid::unit(1, "strheight", legendLabels)
@@ -88,14 +94,17 @@ ExportConfiguration <- R6::R6Class(
       for (patchIdx in seq_along(plotObject$patches$plots)){
         patch <- plotObject$patches$plots[[patchIdx]]
         # Title
+        if(!isEmpty(plotObject$patches$plots[[patchIdx]]$theme$plot.title)){
         plotObject$patches$plots[[patchIdx]]$theme$plot.title$size <-
           private$.calculateTextSize(
             string = patch$labels$title,
             stringPointSize = patch$theme$plot.title$size,
             maxSize = widthPerPanel * (1 - nCols * panelTitleFactor)
           )
+        }
         # Legends
         legendLabels <- .getLegendLabel(patch)
+        if(!is.null(legendLabels)){
         plotObject$patches$plots[[patchIdx]]$theme$legend.text$size <-
           min(sapply(legendLabels, function(label){
             private$.calculateTextSize(
@@ -104,6 +113,7 @@ ExportConfiguration <- R6::R6Class(
               maxSize = widthPerPanel * (1 - nCols * legendLabelFactor)
             )
           }))
+        }
         # Also change height of the keys
         # plotObject$patches$plots[[patchIdx]]$theme$legend.key.height <-
         #   grid::unit(1, "strheight", legendLabels)
