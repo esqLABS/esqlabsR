@@ -318,7 +318,16 @@ createPlotsFromExcel <- function(
     plotConfiguration <- .createConfigurationFromRow(
       defaultConfiguration = defaultPlotConfiguration,
       # Have to exclude all columns that should not be vectorized
-      row[!(names(row) %in% c("plotID", "DataCombinedName", "plotType", "title", "aggregation", "quantiles", "foldDistance"))]
+      row[!(names(row) %in% c("plotID",
+                              "DataCombinedName",
+                              "plotType",
+                              "title",
+                              "subtitle",
+                              "xLabel",
+                              "yLabel",
+                              "aggregation",
+                              "quantiles",
+                              "foldDistance"))]
     )
     if (!is.na(row[["title"]])) {
       plotConfiguration$title <- row[["title"]]
