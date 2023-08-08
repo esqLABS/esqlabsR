@@ -313,13 +313,18 @@ createPlotsFromExcel <- function(
   dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, names(dataCombinedList))
 
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
-  plotConfiguration <- createEsqlabsPlotConfiguration()
-  plotConfigurationList <- apply(
-    dfPlotConfigurations[, !(names(dfPlotConfigurations) %in%
-      c("plotID", "DataCombinedName", "plotType", "aggregation", "quantiles", "foldDistance"))],
-    1, .createConfigurationFromRow,
-    defaultConfiguration = plotConfiguration
-  )
+  defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
+  plotConfigurationList <- apply(dfPlotConfigurations, 1, \(row){
+    plotConfiguration <- .createConfigurationFromRow(
+      defaultConfiguration = defaultPlotConfiguration,
+      # Have to exclude all columns that should not be vectorized
+      row[!(names(row) %in% c("plotID", "DataCombinedName", "plotType", "title", "aggregation", "quantiles", "foldDistance"))]
+    )
+    if (!is.na(row[["title"]])) {
+      plotConfiguration$title <- row[["title"]]
+    }
+    return(plotConfiguration)
+  })
   names(plotConfigurationList) <- dfPlotConfigurations$plotID
 
   # create a list of plots from dataCombinedList and plotConfigurationList
