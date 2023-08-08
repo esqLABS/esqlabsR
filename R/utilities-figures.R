@@ -323,8 +323,8 @@ createPlotsFromExcel <- function(
                               "plotType",
                               "title",
                               "subtitle",
-                              "xLabel",
-                              "yLabel",
+                              "xlabel",
+                              "ylabel",
                               "aggregation",
                               "quantiles",
                               "foldDistance"))]
