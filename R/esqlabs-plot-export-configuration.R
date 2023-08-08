@@ -34,12 +34,13 @@ ExportConfiguration <- R6::R6Class(
     .heightPerRow = NULL,
     .height = NULL,
     .rescaleTextSizes = function(plotObject) {
+      #browser()
       # Scaling of the maximal widths is currently determined by trial-and-error.
       # Better solution would be to get the margins/offsets of the respective
       # text elements and subtract them from 'widthPerPanel'.
       plotGridTitleFactor <- 0.95
       panelTitleFactor <- 0.17
-      legendLabelFactor <- 0.15
+      legendLabelFactor <- 0.25
 
       ### Plot grid title
       if (isOfType(plotObject, "patchwork")) {
