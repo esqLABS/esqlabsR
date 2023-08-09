@@ -34,7 +34,6 @@ ExportConfiguration <- R6::R6Class(
     .heightPerRow = NULL,
     .height = NULL,
     .rescaleTextSizes = function(plotObject) {
-      #browser()
       # Scaling of the maximal widths is currently determined by trial-and-error.
       # Better solution would be to get the margins/offsets of the respective
       # text elements and subtract them from 'widthPerPanel'.
@@ -67,10 +66,7 @@ ExportConfiguration <- R6::R6Class(
       if (!isEmpty(plotObject$theme$plot.title)) {
         plotObject$theme$plot.title$size <-
           private$.calculateTextSize(
-            # For whatever reason, it seems that the title is stored as a list
-            # if string separated by a ",". Therefore, for calculation of the
-            # width, collapse
-            string = paste(plotObject$labels$title, collapse = ", "),
+            string = plotObject$labels$title,
             stringPointSize = plotObject$theme$plot.title$size,
             maxSize = widthPerPanel * (1 - nCols * panelTitleFactor)
           )
