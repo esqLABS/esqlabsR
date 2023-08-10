@@ -17,8 +17,8 @@ the function `plotPopulationTimeProfile()`. Supported values are listed in `osps
 
 - Throw a warning instead of an error if a path specified in `ProjectConfiguration` does not exist. `$outputFolder` existence is not checked anymore.
 
-- When a scenario fails during, `runScenarios()` does not crash any more, but  an
-error is shown with the name of the failed scenario. The returned `outputValues` 
+- When a scenario fails, `runScenarios()` does not crash any more, but a
+warning is shown with the name of the failed scenario. The returned `outputValues` 
 is `NULL`.
 
 ### BUG FIXES
