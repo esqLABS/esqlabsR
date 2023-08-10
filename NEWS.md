@@ -17,6 +17,10 @@ the function `plotPopulationTimeProfile()`. Supported values are listed in `osps
 
 - Throw a warning instead of an error if a path specified in `ProjectConfiguration` does not exist. `$outputFolder` existence is not checked anymore.
 
+- When a scenario fails, `runScenarios()` does not crash any more, but a
+warning is shown with the name of the failed scenario. The returned `outputValues` 
+is `NULL`.
+
 ### BUG FIXES
 - exportParametersToXLS - ignore parameters with NaN https://github.com/esqLABS/esqlabsR/issues/480
 - Show a meaningful error when no time unit is specified for a scenario https://github.com/esqLABS/esqlabsR/issues/483
