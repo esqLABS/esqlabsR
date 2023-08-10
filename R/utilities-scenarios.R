@@ -89,7 +89,7 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
         simulation
       )
     }
-    browser()
+
     # If results could not be calculated, show a warning and return NULL
     if (is.null(results)) {
       warning(messages$missingResultsForScenario(scenarioName))
