@@ -12,50 +12,139 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+library(esqlabsR)
 ```
 
+
 Plotting the simulation results is an integral part of model diagnostics
-and quality control.
+and quality control. `{esqlabsR}` implements an excel-based workflow for figure
+creation directly from simulated scenarios.
 
-`{esqlabsR}` implements an excel-based workflow for creation of figures from simulated 
-scenarios. The figures are defined in the excel file "Plotx.xlsx". The general workflow is:
-
-CREATE A WORKFLOW FIGURE! (multiple) simulation results coming from simulated 
-scenarios plus (multiple) observed data sets are added to `DataCombined` (sheet `DataCombined`).
-From a single `DataCombined`, multiple plots (individual/population time profile, 
-simulated-vs-observed, etc) can be created in `plotConfiguration` sheet. The plots
-with ther plot IDs can be combined to multi-panel figures in the sheet `plotGrids`.
-THIS IS THEN THE FINAL PLOT THAT WILL BE RETURNED. So even for a plot with only one 
-panel, a plot grid must be defined.
-
-Calling function `createPlotsFromExcel()` returns ggplot-objects, one object for 
-each plot grid (all or only specified). By default, if any of the simulated results 
-or observed data specified for the plots is not found, and error is thrown. If setting
-`ignoreIfNotFound = FALSE`, these data are simply ignored and not added to the plots.
-Might be useful if not all scenarios are simulated, but still want to plot at least
-the data.
-
-IF you want to save plots to png during creation, list the plot grids in the 
-sheet `exportConfiguration`.
-
-Describe the most important columns, namely those present in the Plots.xlsx of 
-the example project. Describe that the user can additionally add a column for any 
-property of the respective `configuration` class (example for this).
-
-For properties that accept a list of values (e.g. `xAxisLimits`), the values are 
-separated by a `,`. If an entry itself should contain a `,`, e.g. the name of a plotID
-that is combined to a multi-pannel plot in a plot grid, enclose the entry into parenthesis.
-
-E.g. in column `plotIDs` of the `plotGrids` sheet: 
-
-`"Name of the first plot, which contains a comma", "Name of the secold plot"`.
-
-You can also return the `DataCombined` objects defined in the `DataCombined` sheet
-with the function `createDataCombinedFromExcel()`.
+This process relies on filling a **`Plots.xlsx`** file in order to specify all
+the figures that need to be created. Then, `createPlotsFromExcel()` will 
+translate the information in the excel file into plots ! The workflow that 
+enables this is described in the [Plotting Workflow](#plotting-workflow) section below. 
+It also remain possible to generate plot from simulation result objects while 
+using the esqlabsR default theme. This, is described in the [Generate Single Plot](#generate-single-plot) section.
 
 
-!!! MOVE THE SECTION BELOW TO SOMETHING LIKE "basics of figure creation with ospsuite-r".
 
+## Plotting Workflow
+
+First, `DataCombined` are defined with simulation results coming from simulated 
+scenarios and observed data sets in the **DataCombined** sheet. More information
+in the [Create a Datacombined](#specify-a-datacombined) section.
+
+
+From each `DataCombined`, multiple plots of different types can be defined using
+the **plotConfiguration** sheet. More information in the 
+[Customizing Plots](#customizing-plots) section.
+
+All plots can be combined using their IDs into multi-panel figures (plot grids) 
+in the **plotGrids** sheet. More information in the [Combine Plots](#combine-plots) section.
+
+Plot grids can be exported with specific settings using the 
+**exportConfiguration** sheet. More information in the [Export Plot](#export-plots) section.
+
+Finally, calling the `createPlotsFromExcel()` function will create the plots and
+export them to image files if specified in the **exportConfiguration** sheet. 
+
+![](Figures/plot-workflow.png)
+
+### Specify a `DataCombined`
+
+A `DataCombined` is where the data to plot is stored. It can contain simulated 
+results and/or observed data and links them together.
+
+First, the user needs to define the name of the dataCombined. The name need to 
+be stored in the `DataCombinedName`. Then, for each `DataCombinedName`, the user
+can attach simulated results (set dataType to `simulated`) and observed data
+(set dataType to `observed`) and give them labels. For Simulated results, 
+the user needs to specify the name of the scenario and the output path of the 
+simulation. For observed data, the user needs to specify the name of the dataset
+to use. Finally, both type of data can be linked together if they share the same
+value in the `groups` column.
+
+Other columns available in this sheet are relative to the data transformations that
+can be performed by `dataCombined`. For more information on this, please refer to
+the `{ospsuite}` documentation about it [here](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations).
+
+### Customizing Plots
+
+The default `Plot.xlsx` file already contains the most common columns required
+to customize plots. However, the user can add all the necessary columns that are
+needed to reach the desired result. The list of available variables can be 
+explored in a `defaultPlotConfiguration` object.
+
+Here is a sample of the available plot settings:
+
+```{r, echo=FALSE}
+dpc <- DefaultPlotConfiguration$new()
+sort(names(dpc))[2:20]
+```
+
+You can access the full list by running `DefaultPlotConfiguration$new()`
+
+For instance, if the subtitle needs to be changed, the user can add a column
+named `subtitle` and fill it with the desired value for each plot.
+
+Leaving a cell empty will result in the default value being used.
+
+For properties that accept a list of values (e.g. `xAxisLimits`), the values 
+should be separated by a `,`. If an entry itself contains a `,`, enclose it 
+between parenthesis.
+
+
+### Combine Plots
+
+#TODO
+
+### Export Plots
+
+#TODO
+
+
+<!-- From a single `DataCombined`, multiple plots (individual/population time profile,  -->
+<!-- simulated-vs-observed, etc) can be created in `plotConfiguration` sheet. The plots -->
+<!-- with ther plot IDs can be combined to multi-panel figures in the sheet `plotGrids`. -->
+<!-- THIS IS THEN THE FINAL PLOT THAT WILL BE RETURNED. So even for a plot with only one  -->
+<!-- panel, a plot grid must be defined. -->
+
+<!-- Calling function `createPlotsFromExcel()` returns ggplot-objects, one object for  -->
+<!-- each plot grid (all or only specified). By default, if any of the simulated results  -->
+<!-- or observed data specified for the plots is not found, and error is thrown. If setting -->
+<!-- `ignoreIfNotFound = FALSE`, these data are simply ignored and not added to the plots. -->
+<!-- Might be useful if not all scenarios are simulated, but still want to plot at least -->
+<!-- the data. -->
+
+<!-- IF you want to save plots to png during creation, list the plot grids in the  -->
+<!-- sheet `exportConfiguration`. -->
+
+
+
+<!-- For properties that accept a list of values (e.g. `xAxisLimits`), the values are  -->
+<!-- separated by a `,`. If an entry itself should contain a `,`, e.g. the name of a plotID -->
+<!-- that is combined to a multi-pannel plot in a plot grid, enclose the entry into parenthesis. -->
+
+<!-- E.g. in column `plotIDs` of the `plotGrids` sheet:  -->
+
+<!-- `"Name of the first plot, which contains a comma", "Name of the secold plot"`. -->
+
+<!-- You can also return the `DataCombined` objects defined in the `DataCombined` sheet -->
+<!-- with the function `createDataCombinedFromExcel()`. -->
+
+
+## Generate Single Plot
+
+In some situation, the user needs to quickly draw a plot from a simulation result
+object while wanting to use the default esqlabsR theme.
+
+
+### Basics of figure creation with `{ospsuite}`
+
+#TODO
+
+### Using esqlabsR
 
 Simulated modeling scenarios can be passed to
 plotting functions from the `{ospsuite}` package to create
@@ -72,7 +161,7 @@ For the following examples, we will simulate an example scenario as
 described in `vignette("esqlabsR-design-scenarios")` and load the
 corresponding observed data as described in the [Observed Data](#observed-data) section.
 
-```{r, echo = TRUE, message = FALSE}
+```{r, echo = TRUE, message = FALSE, eval = FALSE}
 library(esqlabsR)
 # Create a project configuration
 projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
@@ -143,7 +232,7 @@ refer to the
 The next example shows how to create a multi-panel figure using the
 default configurations.
 
-```{r plot-time-profile, fig.width=7, fig.height=7}
+```{r plot-time-profile, fig.width=7, fig.height=7, eval = FALSE}
 plotConfig <- createEsqlabsPlotConfiguration()
 gridConfig <- createEsqlabsPlotGridConfiguration()
 
@@ -201,7 +290,7 @@ and Excel files with observed data are present in the
 `projectConfiguration$dataFolder` folder, the following code loads the
 data:
 
-```{r loadObservedData}
+```{r loadObservedData, eval = FALSE}
 projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
 dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(
