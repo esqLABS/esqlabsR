@@ -10,6 +10,10 @@
 #' `results` being `SimulatioResults` object produced by running the simulation,
 #' `outputValues` the output values of the `SimulationResults`, and `population`
 #' the `Population` object if the scenario is a population simulation.
+#' @details
+#' If simulation of a scenario fails, a warning is produced, and the `outputValues`
+#' for this scenario is `NULL`.
+#'
 #' @import ospsuite.parameteridentification
 #' @export
 runScenarios <- function(scenarios, simulationRunOptions = NULL) {
@@ -85,9 +89,16 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
         simulation
       )
     }
-    outputValues <- getOutputValues(results,
-      quantitiesOrPaths = outputQuantities
-    )
+
+    # If results could not be calculated, show a warning and return NULL
+    if (is.null(results)) {
+      warning(messages$missingResultsForScenario(scenarioName))
+      outputValues <- NULL
+    } else {
+      outputValues <- getOutputValues(results,
+        quantitiesOrPaths = outputQuantities
+      )
+    }
     returnList[[idx]] <- list(
       simulation = simulation, results = results,
       outputValues = outputValues,
