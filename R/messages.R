@@ -37,7 +37,7 @@ messages$errorWrongIndividualId <- function(individualId) {
 
 # utilities####
 messages$warningValueWithinThresholdNotExisting <- function(value, threshold, optionalMessage = NULL) {
-  paste(
+  paste0(
     "value `", value, "` not found in the array within the absolute threshold of  ", threshold,
     optionalMessage
   )

@@ -283,7 +283,7 @@ test_that("It trows an error if defined scenario is missing and stopIfNotFound i
         observedData = observedData,
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
-      ), regexp = messages$stopInvalidScenarioName("foo"))
+      ), regexp = messages$warningInvalidScenarioName("foo"))
     }
   )
 })
