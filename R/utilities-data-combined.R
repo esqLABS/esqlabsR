@@ -176,7 +176,7 @@ createDataCombinedFromExcel <- function(
   missingScenarios <- setdiff(setdiff(dfDataCombined$scenario, names(simulatedScenarios)), NA)
   if (length(missingScenarios) != 0) {
     if (stopIfNotFound) {
-      stop(messages$stopInvalidScenarioName(missingScenarios))
+      stop(messages$warningInvalidScenarioName(missingScenarios))
     }
     warning(messages$warningInvalidScenarioName(missingScenarios))
     dfDataCombined <- filter(dfDataCombined, (dataType == "observed") | !(scenario %in% missingScenarios))
