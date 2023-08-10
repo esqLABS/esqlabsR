@@ -476,7 +476,10 @@ createPlotsFromExcel <- function(
       }
       # Special treatment for axis limits, as we know their data type but cannot
       # get it with the proposed generic way since default limits are not set
-      if (colName %in% c("xAxisLimits", "yAxisLimits")) {
+      if (colName %in% c(
+        "xAxisLimits", "yAxisLimits",
+        "xValuesLimits", "yValuesLimits"
+      )) {
         expectedType <- "double"
       }
 

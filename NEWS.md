@@ -2,6 +2,10 @@
 
 - Plots are using new color palette
 - Some modifications to plot configuration files for better plots
+- Plots.xlsx, sheet 'plotConfiguration', now uses `xValuesLimits` and `yValuesLimits`
+to set axis limits of the plots by default. This approach filters data outside of the
+limits. See https://ggplot2.tidyverse.org/reference/coord_cartesian.html#ref-examples for 
+more details. The user can still use `xAxisLimits` and `yAxisLimits`.
 
 - Protein ontogenies can be defined for populations and individuals. To specify ontogenies for 
 proteins in the simulation, list the proteins you want to define ontogenies for 
