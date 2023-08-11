@@ -1,5 +1,14 @@
 # esqlabsR (development version)
 
+# BREAKING CHANGE
+- When importing observed data using the default importer configuration, data 
+set naming is grouped by `StudyId` at the first place.
+Before: `{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+After: `{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+
+This will result in different data set names, and plots specifying the data sets 
+by the old naming will fail.
+
 - `ExportConfiguration` created with `createEsqlabsExportConfiguration()` gets 
 a new argument `autoscaleText` for the method `savePlot()`. If `TRUE`(default),
 sizes of figures tiles and legends text are reduced if required to fit the whole 
