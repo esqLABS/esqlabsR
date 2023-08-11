@@ -590,19 +590,24 @@ createPlotsFromExcel <- function(
 #' Extract Legend labels from a ggplot object
 #' @description Extract legend labels from a ggplot object.
 #' @param plotObj an object of class ggplot.
-#' @return A list of legend labels
+#' @return A list of legend labels. `NULL` if no legend is defined.
 #' @keywords internal
 .getLegendLabel <- function(plotObj) {
   validateIsOfType(plotObj, "ggplot")
   # Build the plot to get legend titles
   tmp <- ggplot_build(plotObj)
+  # Get indexes for scales which are "legend"
   leg <- which(sapply(tmp$plot$scales$scales, function(x) x$guide) == "legend")
-  # Don't know exactly why, but there are (sometimes?) two entries that are "legend".
-  # Both have the same label, whih we need.
+  # Multiple legend entries can be preset in the plot object. Iterate through them
+  # until an entry found that contains label text.
   if (length(leg) > 0) {
-    leg <- tmp$plot$scales$scales[[leg[[1]]]]
-  } else {
-    return(NULL)
+    for (legIdx in leg){
+      leg_label <- tmp$plot$scales$scales[[leg[[legIdx]]]]$get_labels()
+      # If entry with legend text is found, return
+      if (length(leg_label) > 0){
+        return(leg_label)
+      }
+    }
   }
-  return(leg$get_labels())
+    return(NULL)
 }
