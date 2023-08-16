@@ -53,8 +53,8 @@ plotConfigurationDf <- data.frame(list(
   "yUnit" = NA,
   "xAxisScale" = NA,
   "yAxisScale" = NA,
-  "xAxisLimits" = NA,
-  "yAxisLimits" = NA,
+  "xValuesLimits" = NA,
+  "yValuesLimits" = NA,
   "quantiles" = NA,
   "foldDistance" = NA
 ))
