@@ -44,14 +44,14 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
           next
         }
         switch(lloqMode,
-               "LLOQ/2" = {
-                 numVals[[idx]] <- value / 2
-               },
-               "LLOQ" = numVals[[idx]] <- value,
-               # set all data points with lloq to 0
-               "ZERO" = numVals[[idx]] <- 0,
-               # remove data points with lloq
-               "ignore" = numVals[[idx]] <- NA
+          "LLOQ/2" = {
+            numVals[[idx]] <- value / 2
+          },
+          "LLOQ" = numVals[[idx]] <- value,
+          # set all data points with lloq to 0
+          "ZERO" = numVals[[idx]] <- 0,
+          # remove data points with lloq
+          "ignore" = numVals[[idx]] <- NA
         )
       }
 
@@ -65,9 +65,9 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
           next
         }
         switch(uloqMode,
-               "ULOQ" = numVals[[idx]] <- value,
-               # remove data points with lloq
-               "ignore" = numVals[[idx]] <- NA
+          "ULOQ" = numVals[[idx]] <- value,
+          # remove data points with lloq
+          "ignore" = numVals[[idx]] <- NA
         )
       }
     }
@@ -150,15 +150,15 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   # adjust yValues as specified by lloqMode argument
   ind <- !is.na(df$lloq) & df$yValues < df$lloq
   switch(lloqMode,
-         # nothing to do for LLOQ/2
-         "LLOQ/2" = {
-         },
-         # set all data points with lloq that are smaller than it to value of lloq
-         "LLOQ" = df[ind, "yValues"] <- df[ind, "lloq"],
-         # set all data points with lloq to 0
-         "ZERO" = df[ind, "yValues"] <- 0,
-         # remove data points with lloq
-         "ignore" = df <- df[!ind, ]
+    # nothing to do for LLOQ/2
+    "LLOQ/2" = {
+    },
+    # set all data points with lloq that are smaller than it to value of lloq
+    "LLOQ" = df[ind, "yValues"] <- df[ind, "lloq"],
+    # set all data points with lloq to 0
+    "ZERO" = df[ind, "yValues"] <- 0,
+    # remove data points with lloq
+    "ignore" = df <- df[!ind, ]
   )
 
   # meanDataSet$LLOQ = arithmetic mean lloq of all data sets with lloq
@@ -199,18 +199,18 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
 
   # calculate means and standard deviations according to chosen method
   switch(method,
-         arithmetic = {
-           yMeans <- tapply(df[["yValues"]], df[["xValues"]], mean)
-           yError <- tapply(df[["yValues"]], df[["xValues"]], sd)
-           meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
-           meanDataSet$yErrorType <- ospsuite::DataErrorType$ArithmeticStdDev
-         },
-         geometric = {
-           yMeans <- tapply(df[["yValues"]], df[["xValues"]], geomean)
-           yError <- tapply(df[["yValues"]], df[["xValues"]], geosd)
-           meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
-           meanDataSet$yErrorType <- ospsuite::DataErrorType$GeometricStdDev
-         }
+    arithmetic = {
+      yMeans <- tapply(df[["yValues"]], df[["xValues"]], mean)
+      yError <- tapply(df[["yValues"]], df[["xValues"]], sd)
+      meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
+      meanDataSet$yErrorType <- ospsuite::DataErrorType$ArithmeticStdDev
+    },
+    geometric = {
+      yMeans <- tapply(df[["yValues"]], df[["xValues"]], geomean)
+      yError <- tapply(df[["yValues"]], df[["xValues"]], geosd)
+      meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
+      meanDataSet$yErrorType <- ospsuite::DataErrorType$GeometricStdDev
+    }
   )
 
   # add all meta that are equal in every data set
