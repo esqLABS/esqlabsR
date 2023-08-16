@@ -7,8 +7,20 @@ Before: `{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dos
 After: `{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
 
 This will result in different data set names, and plots specifying the data sets 
-by the old naming will fail.
+by the old naming will fail. For compatibility, use custom importer configuration
+with the old naming: 
 
+```
+  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+    configurationFilePath = projectConfiguration$dataImporterConfigurationFile
+  )
+  importerConfiguration$namingPattern <- "{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"
+```
+
+# NEW FUNCTIONALITIES
+
+- `loadObservedData()` gets a new argument `importerConfigurataion`. The user can
+now provide a custom importer configuration for loading the data.
 - `ExportConfiguration` created with `createEsqlabsExportConfiguration()` gets 
 a new argument `autoscaleText` for the method `savePlot()`. If `TRUE`(default),
 sizes of figures tiles and legends text are reduced if required to fit the whole 
