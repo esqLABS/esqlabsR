@@ -145,10 +145,10 @@ createEsqlabsPlotConfiguration <- function() {
 
   # Title
   # Left or center?
-  defaultPlotConfiguration$titleAlign <- "left"
+  defaultPlotConfiguration$titleAlign <- "center"
 
   # Size
-  defaultPlotConfiguration$titleSize <- 12
+  defaultPlotConfiguration$titleSize <- 11
   defaultPlotConfiguration$xLabelSize <- 10
   defaultPlotConfiguration$yLabelSize <- 10
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
@@ -158,6 +158,8 @@ createEsqlabsPlotConfiguration <- function() {
   # Lines size
   defaultPlotConfiguration$linesSize <- 0.5
 
+  # Points size
+  defaultPlotConfiguration$pointsSize <- 2
 
   # Legend appearance
   # defaultPlotConfiguration$legendBorderColor <- "grey10"
@@ -200,7 +202,7 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
 
   plotGridConfiguration$tagLevels <- "a"
   plotGridConfiguration$tagSize <- 10
-  plotGridConfiguration$titleSize <- 12
+  plotGridConfiguration$titleSize <- 11
 
   return(plotGridConfiguration)
 }
