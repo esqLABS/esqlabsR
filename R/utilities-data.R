@@ -251,6 +251,9 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' the necessary information.
 #' @param sheets String or a list of strings defining which sheets to load.
 #' If `NULL` (default), all sheets within the file are loaded.
+#' @param importerConfiguration `DataImporterConfiguration` object used to load
+#' the data. If `NULL` (default), default esqlabs importer configuration as
+#' defined in `projectConfiguration$dataImporterConfigurationFile` will be used.
 #'
 #' @return
 #' A named list of `DataSet` objects, with names being the names of the data sets.
@@ -262,8 +265,8 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' projectConfiguration <- createDefaultProjectConfiguration()
 #' dataSets <- loadObservedData(projectConfiguration)
 #' }
-loadObservedData <- function(projectConfiguration, sheets = NULL) {
-  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+loadObservedData <- function(projectConfiguration, sheets = NULL, importerConfiguration = NULL) {
+  importerConfiguration <- importerConfiguration %||% ospsuite::loadDataImporterConfiguration(
     configurationFilePath = projectConfiguration$dataImporterConfigurationFile
   )
   validateIsString(sheets, nullAllowed = TRUE)

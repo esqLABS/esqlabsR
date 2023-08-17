@@ -46,10 +46,19 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
 
   ########### Load observed data########
   # Which sheets to load
+
+  # For compatibility with projects created with esqlabsR <5.0.1, use old data set
+  # naming pattern.
+  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+    configurationFilePath = projectConfiguration$dataImporterConfigurationFile
+  )
+  importerConfiguration$namingPattern <- "{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"
+
   dataSheets <- c("Laskin 1982.Group A")
   observedData <- esqlabsR::loadObservedData(
     projectConfiguration = projectConfiguration,
-    sheets = dataSheets
+    sheets = dataSheets,
+    importerConfiguration = importerConfiguration
   )
 
   ########## Create figures########

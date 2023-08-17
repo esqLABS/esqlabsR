@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ImporterConfiguration fileName="" namingConventions="{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}" version="15">
+<ImporterConfiguration fileName="" namingConventions="{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}" version="15">
   <Parameters>
     <MappingDataFormatParameter columnName="Time">
       <MappedColumn name="Time">
