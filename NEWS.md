@@ -19,7 +19,7 @@ with the old naming:
 
 # NEW FUNCTIONALITIES
 
-- `loadObservedData()` gets a new argument `importerConfigurataion`. The user can
+- `loadObservedData()` gets a new argument `importerConfiguration`. The user can
 now provide a custom importer configuration for loading the data.
 - Plots are using new color palette
 - Some modifications to plot configuration files for better plots
