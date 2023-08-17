@@ -4,7 +4,11 @@
 \alias{loadObservedData}
 \title{Load data from excel}
 \usage{
-loadObservedData(projectConfiguration, sheets = NULL)
+loadObservedData(
+  projectConfiguration,
+  sheets = NULL,
+  importerConfiguration = NULL
+)
 }
 \arguments{
 \item{projectConfiguration}{Object of class \code{ProjectConfiguration} containing
@@ -12,6 +16,10 @@ the necessary information.}
 
 \item{sheets}{String or a list of strings defining which sheets to load.
 If \code{NULL} (default), all sheets within the file are loaded.}
+
+\item{importerConfiguration}{\code{DataImporterConfiguration} object used to load
+the data. If \code{NULL} (default), default esqlabs importer configuration as
+defined in \code{projectConfiguration$dataImporterConfigurationFile} will be used.}
 }
 \value{
 A named list of \code{DataSet} objects, with names being the names of the data sets.

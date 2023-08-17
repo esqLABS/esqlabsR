@@ -23,3 +23,7 @@ the \code{Population} object if the scenario is a population simulation.
 \description{
 Run a set of scenarios.
 }
+\details{
+If simulation of a scenario fails, a warning is produced, and the \code{outputValues}
+for this scenario is \code{NULL}.
+}
