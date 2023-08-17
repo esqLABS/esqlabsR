@@ -1,5 +1,10 @@
 # esqlabsR (development version)
 
+- `ExportConfiguration` created with `createEsqlabsExportConfiguration()` gets 
+a new argument `autoscaleText` for the method `savePlot()`. If `TRUE`(default),
+sizes of figures tiles and legends text are reduced if required to fit the whole 
+string into the figure. Text size specifications in the plots become therefore 
+the maximal possible size.
 # BREAKING CHANGE
 - When importing observed data using the default importer configuration, data 
 set naming is grouped by `StudyId` at the first place.

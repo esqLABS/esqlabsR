@@ -13,6 +13,7 @@
 #'
 #' @param nrOfColors Positive integer defining the number of colors to be generated.
 #'
+#' @import grDevices
 #' @return A list of colors as HEX values.
 #' @export
 esqLABS_colors <- function(nrOfColors) {
@@ -108,7 +109,7 @@ esqLABS_colors <- function(nrOfColors) {
 #'   indicate hue, saturation and value and are named "h", "s", and "v"
 #'   accordingly.
 #' @export
-#' @import ospsuite ospsuite.utils
+#' @import ospsuite ospsuite.utils grDevices
 #'
 #' @examples
 #' col2hsv("yellow")
@@ -142,20 +143,32 @@ col2hsv <- function(color) {
 createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
+  # Title
+  # Left or center?
+  defaultPlotConfiguration$titleAlign <- "center"
+
   # Size
-  defaultPlotConfiguration$titleSize <- 12
+  defaultPlotConfiguration$titleSize <- 11
   defaultPlotConfiguration$xLabelSize <- 10
   defaultPlotConfiguration$yLabelSize <- 10
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
   defaultPlotConfiguration$yAxisLabelTicksSize <- 8
   defaultPlotConfiguration$legendKeysSize <- 6
 
+  # Lines size
+  defaultPlotConfiguration$linesSize <- 0.5
 
+  # Points size
+  defaultPlotConfiguration$pointsSize <- 1.5
+
+  # Error bars size
+  defaultPlotConfiguration$errorbarsSize <- 0.5
+  defaultPlotConfiguration$errorbarsCapSize <- 2.5
 
   # Legend appearance
   # defaultPlotConfiguration$legendBorderColor <- "grey10"
   # defaultPlotConfiguration$legendBorderType <- 1
-  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
+  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopLeft
 
   # Axis appearance
   defaultPlotConfiguration$yAxisLabelTicksAngle <- 0
@@ -193,7 +206,9 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
 
   plotGridConfiguration$tagLevels <- "a"
   plotGridConfiguration$tagSize <- 10
-  plotGridConfiguration$titleSize <- 12
+  plotGridConfiguration$titleSize <- 11
+
+  plotGridConfiguration$titleHorizontalJustification <- 0.5
 
   return(plotGridConfiguration)
 }
@@ -581,4 +596,29 @@ createPlotsFromExcel <- function(
   }
 
   return(dfExportConfigurations)
+}
+
+#' Extract Legend labels from a ggplot object
+#' @description Extract legend labels from a ggplot object.
+#' @param plotObj an object of class ggplot.
+#' @return A list of legend labels. `NULL` if no legend is defined.
+#' @keywords internal
+.getLegendLabel <- function(plotObj) {
+  validateIsOfType(plotObj, "ggplot")
+  # Build the plot to get legend titles
+  tmp <- ggplot_build(plotObj)
+  # Get indexes for scales which are "legend"
+  leg <- which(sapply(tmp$plot$scales$scales, function(x) x$guide) == "legend")
+  # Multiple legend entries can be preset in the plot object. Iterate through them
+  # until an entry found that contains label text.
+  if (length(leg) > 0) {
+    for (legIdx in leg){
+      leg_label <- tmp$plot$scales$scales[[leg[[legIdx]]]]$get_labels()
+      # If entry with legend text is found, return
+      if (length(leg_label) > 0){
+        return(leg_label)
+      }
+    }
+  }
+    return(NULL)
 }
