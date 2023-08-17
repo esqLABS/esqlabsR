@@ -131,8 +131,13 @@ ExportConfiguration <- R6::R6Class(
       defaultPs <- par()$ps
 
       # Width of the string in cm. strwidth calculates it for defaultPs,
-      # so it might be scaled by the actual text size
-      stringWidth <- strwidth(string, units = "inches") * inchToCm * stringPointSize / defaultPs
+      # so it must be scaled by the actual text size.
+      # As a string can go over multiple lines, it must be split by linebreak
+      # and the width for the biggest line must be returned
+      strings <- unlist(strsplit(string, "\n", fixed = TRUE), use.names = FALSE)
+      stringWidth <- max(sapply(strings, function(substring) {
+        strwidth(substring, units = "inches") * inchToCm * stringPointSize / defaultPs
+      }))
 
       if (stringWidth > maxSize) {
         stringPointSize <- stringPointSize * (maxSize / stringWidth)

@@ -159,7 +159,11 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration$linesSize <- 0.5
 
   # Points size
-  defaultPlotConfiguration$pointsSize <- 2
+  defaultPlotConfiguration$pointsSize <- 1.5
+
+  # Error bars size
+  defaultPlotConfiguration$errorbarsSize <- 0.5
+  defaultPlotConfiguration$errorbarsCapSize <- 2.5
 
   # Legend appearance
   # defaultPlotConfiguration$legendBorderColor <- "grey10"
@@ -203,6 +207,8 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
   plotGridConfiguration$tagLevels <- "a"
   plotGridConfiguration$tagSize <- 10
   plotGridConfiguration$titleSize <- 11
+
+  plotGridConfiguration$titleHorizontalJustification <- 0.5
 
   return(plotGridConfiguration)
 }
