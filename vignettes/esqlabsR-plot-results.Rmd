@@ -12,28 +12,26 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
+defaultClassAttributes <- c("initialize", "clone", "print", ".__enclos_env__")
+
 library(esqlabsR)
 ```
 
 
 Plotting the simulation results is an integral part of model diagnostics
-and quality control. `{esqlabsR}` implements an excel-based workflow for figure
-creation directly from simulated scenarios.
-
-This process relies on filling a **`Plots.xlsx`** file in order to specify all
-the figures that need to be created. Then, `createPlotsFromExcel()` will 
-translate the information in the excel file into plots ! The workflow that 
-enables this is described in the [Plotting Workflow](#plotting-workflow) section below. 
-It also remain possible to generate plot from simulation result objects while 
-using the esqlabsR default theme. This, is described in the [Generate Single Plot](#generate-single-plot) section.
-
+and quality control. `{esqlabsR}` implements an excel-based 
+[Plotting Workflow](#plotting-workflow) for figure creation directly from 
+simulated scenarios. It is also possible to use `{esqlabsR}`'s functions to 
+[plot using R code](#plotting-with-code).
 
 
 ## Plotting Workflow
 
-First, `DataCombined` are defined with simulation results coming from simulated 
-scenarios and observed data sets in the **DataCombined** sheet. More information
-in the [Create a Datacombined](#specify-a-datacombined) section.
+This process relies on filling a **`Plots.xlsx`** file in order to specify all the figures that need to be created. Then, `createPlotsFromExcel()` will 
+translate the information in the excel file into plots !
+
+First, `DataCombined` are defined with simulation results coming from simulated  scenarios and observed data sets in the **DataCombined** sheet. More information in the [Create a Datacombined](#specify-a-datacombined) section.
 
 
 From each `DataCombined`, multiple plots of different types can be defined using
@@ -80,7 +78,7 @@ Here is a sample of the available plot settings:
 
 ```{r, echo=FALSE}
 dpc <- DefaultPlotConfiguration$new()
-sort(names(dpc))[2:20]
+names(dpc)[!(names(dpc) %in% defaultClassAttributes)][1:15]
 ```
 
 You can access the full list by running `DefaultPlotConfiguration$new()`
@@ -95,56 +93,49 @@ should be separated by a `,`. If an entry itself contains a `,`, enclose it
 between parenthesis.
 
 
-### Combine Plots
+### Drawing Plots
 
-#TODO
+`plotGrids` are the objects that will be used to draw the plots. They are defined
+in the **plotGrids** sheet. 
+The user needs to define a name for each plotGrid. For single panel plot, only 
+one plot must be listed in the plotIDs column. `{esqlabsR}`  also provide a 
+simple way to combined several plots in a multi-panel figure, in this case, the
+ user needs to list all the plotIDs to combine in the plotIDs column, separated
+ by a `,`.
+
+To customize the plotGrid, the user can add all the necessary columns that are 
+defined in the `PlotGridConfiguration` class. Here is a sample of the available:
+
+```{r, echo=FALSE}	
+pgc <- PlotGridConfiguration$new()
+names(pgc)[!(names(pgc) %in% defaultClassAttributes)][1:15]
+```
+
 
 ### Export Plots
 
-#TODO
+In order to export plots to image files, the user can use the **exportConfiguration**
+sheet.
+The plotGrids to export must be added in the plotGridName column. Then, the 
+output file name must be specified in the outputName column. The output format
+can be customize using the properties listed in the `ExportConfiguration` class.
+Here is a sample of the available:
+
+```{r, echo=FALSE}  
+ec <- ExportConfiguration$new()
+names(ec)[!(names(ec) %in% defaultClassAttributes)][1:5]
+```
 
 
-<!-- From a single `DataCombined`, multiple plots (individual/population time profile,  -->
-<!-- simulated-vs-observed, etc) can be created in `plotConfiguration` sheet. The plots -->
-<!-- with ther plot IDs can be combined to multi-panel figures in the sheet `plotGrids`. -->
-<!-- THIS IS THEN THE FINAL PLOT THAT WILL BE RETURNED. So even for a plot with only one  -->
-<!-- panel, a plot grid must be defined. -->
-
-<!-- Calling function `createPlotsFromExcel()` returns ggplot-objects, one object for  -->
-<!-- each plot grid (all or only specified). By default, if any of the simulated results  -->
-<!-- or observed data specified for the plots is not found, and error is thrown. If setting -->
-<!-- `ignoreIfNotFound = FALSE`, these data are simply ignored and not added to the plots. -->
-<!-- Might be useful if not all scenarios are simulated, but still want to plot at least -->
-<!-- the data. -->
-
-<!-- IF you want to save plots to png during creation, list the plot grids in the  -->
-<!-- sheet `exportConfiguration`. -->
-
-
-
-<!-- For properties that accept a list of values (e.g. `xAxisLimits`), the values are  -->
-<!-- separated by a `,`. If an entry itself should contain a `,`, e.g. the name of a plotID -->
-<!-- that is combined to a multi-pannel plot in a plot grid, enclose the entry into parenthesis. -->
-
-<!-- E.g. in column `plotIDs` of the `plotGrids` sheet:  -->
-
-<!-- `"Name of the first plot, which contains a comma", "Name of the secold plot"`. -->
-
-<!-- You can also return the `DataCombined` objects defined in the `DataCombined` sheet -->
-<!-- with the function `createDataCombinedFromExcel()`. -->
-
-
-## Generate Single Plot
+## Plotting With Code
 
 In some situation, the user needs to quickly draw a plot from a simulation result
-object while wanting to use the default esqlabsR theme.
+object using code while wanting to use the default esqlabsR theme. `{esqlabsR}`'s
+functions are fully operable by the user and can be used directly to generate
+customized and good looking plots using code only.
 
 
 ### Basics of figure creation with `{ospsuite}`
-
-#TODO
-
-### Using esqlabsR
 
 Simulated modeling scenarios can be passed to
 plotting functions from the `{ospsuite}` package to create
@@ -157,11 +148,15 @@ article. The article [Visualizations with
 covers the basics of creating supported plot types and how to customize
 them.
 
+### Using esqlabsR
+
+#### Example
+
 For the following examples, we will simulate an example scenario as
 described in `vignette("esqlabsR-design-scenarios")` and load the
 corresponding observed data as described in the [Observed Data](#observed-data) section.
 
-```{r, echo = TRUE, message = FALSE, eval = FALSE}
+```{r, echo = TRUE, message = FALSE}
 library(esqlabsR)
 # Create a project configuration
 projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
@@ -181,7 +176,7 @@ dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
 ```
 
-## Create a `DataCombined` object
+#### Create a `DataCombined` object
 
 The simulation results are stored in a list returned by the
 `runScenarios()` function. Plotting and visualization are performed by
@@ -206,7 +201,10 @@ dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
 )
 ```
 
-## Customize and generate plots
+You can also return the `DataCombined` objects defined in the `DataCombined` sheet with the function `createDataCombinedFromExcel()`, read (this section)[#specify-a-datacombined] for more information.
+
+
+#### Customize and generate plots
 
 Customization of the generated figures - specifying title, axes ranges,
 axes units, the position of the legend, etc., are done through *plot
@@ -232,7 +230,7 @@ refer to the
 The next example shows how to create a multi-panel figure using the
 default configurations.
 
-```{r plot-time-profile, fig.width=7, fig.height=7, eval = FALSE}
+```{r plot-time-profile, fig.width=7, fig.height=7}
 plotConfig <- createEsqlabsPlotConfiguration()
 gridConfig <- createEsqlabsPlotGridConfiguration()
 
@@ -254,13 +252,13 @@ gridPlot <- plotGrid(gridConfig)
 gridPlot
 ```
 
-## Save Plots
+#### Save Plots
 
 To save the plot to a `PNG` file, use the
 [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html).
 Make sure that the `fileName` argument ends with `.png`:
 
-```{r saveToPng, eval = FALSE}
+```{r saveToPng}
 exportConfig <- createEsqlabsExportConfiguration(projectConfiguration)
 exportConfig$savePlot(gridPlot, fileName = "All plots.png")
 ```
@@ -270,54 +268,54 @@ in the multi-panel plot and the height defined in `ExportConfiguration$heightPer
 If you want to define a fixed height with the parameter `ExportConfiguration$height`,
 set `ExportConfiguration$heightPerRow = NULL`.
 
-## Details
+<!-- ## Details -->
 
-### Observed Data
+<!-- ### Observed Data -->
 
-The modeling and simulation workflow involves running simulations and
-comparing simulated data against observed data. Functionalities of
-`esqlabsR` require observed data to be present as
-[`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
-objects. Please refer to the article [Observed
-data](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html)
-for information on loading data from Excel or `*.pkml` files.
+<!-- The modeling and simulation workflow involves running simulations and -->
+<!-- comparing simulated data against observed data. Functionalities of -->
+<!-- `esqlabsR` require observed data to be present as -->
+<!-- [`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html) -->
+<!-- objects. Please refer to the article [Observed -->
+<!-- data](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html) -->
+<!-- for information on loading data from Excel or `*.pkml` files. -->
 
-`{esqlabsR}` offers a convenience function `loadObservedData()` that
-facilitates loading data in standard *esqLABS* projects. Assuming the
-standard project folder structure is followed, and a valid
-`ProjectConfiguration` (see [Standard workflow](standard-workflow.html))
-and Excel files with observed data are present in the
-`projectConfiguration$dataFolder` folder, the following code loads the
-data:
+<!-- `{esqlabsR}` offers a convenience function `loadObservedData()` that -->
+<!-- facilitates loading data in standard *esqLABS* projects. Assuming the -->
+<!-- standard project folder structure is followed, and a valid -->
+<!-- `ProjectConfiguration` (see [Standard workflow](standard-workflow.html)) -->
+<!-- and Excel files with observed data are present in the -->
+<!-- `projectConfiguration$dataFolder` folder, the following code loads the -->
+<!-- data: -->
 
-```{r loadObservedData, eval = FALSE}
-projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
-dataSheets <- "Laskin 1982.Group A"
-observedData <- loadObservedData(
-  projectConfiguration = projectConfiguration,
-  sheets = dataSheets
-)
+<!-- ```{r loadObservedData} -->
+<!-- projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration()) -->
+<!-- dataSheets <- "Laskin 1982.Group A" -->
+<!-- observedData <- loadObservedData( -->
+<!--   projectConfiguration = projectConfiguration, -->
+<!--   sheets = dataSheets -->
+<!-- ) -->
 
-print(names(observedData))
-```
+<!-- print(names(observedData)) -->
+<!-- ``` -->
 
-The function loads the data from the file
-`projectConfiguration$dataFile` from the folder
-`projectConfiguration$dataFolder` and returns a list of `DataSet`
-objects. The resulting object will be used later to [plot
-results](example-visualization.html) to compare simulated and observed
-data.
+<!-- The function loads the data from the file -->
+<!-- `projectConfiguration$dataFile` from the folder -->
+<!-- `projectConfiguration$dataFolder` and returns a list of `DataSet` -->
+<!-- objects. The resulting object will be used later to [plot -->
+<!-- results](example-visualization.html) to compare simulated and observed -->
+<!-- data. -->
 
--   The `sheets` argument of the `loadObservedData()` function should be
-    a string or a list of strings. If a specified sheet is not found in
-    the file, it will be omitted with a warning; the `observedData`
-    variable may be an empty named list.
+<!-- -   The `sheets` argument of the `loadObservedData()` function should be -->
+<!--     a string or a list of strings. If a specified sheet is not found in -->
+<!--     the file, it will be omitted with a warning; the `observedData` -->
+<!--     variable may be an empty named list. -->
 
--   If the data file specified in `projectConfiguration$dataFile` is
-    missing in the filesystem, the `loadObservedData()` function will
-    fail with an `Invalid File` message.
+<!-- -   If the data file specified in `projectConfiguration$dataFile` is -->
+<!--     missing in the filesystem, the `loadObservedData()` function will -->
+<!--     fail with an `Invalid File` message. -->
 
-### Troubleshooting
+## Troubleshooting
 
 -   At any time, you can check the groups assigned to the datasets in
     the `DataCombined` object by calling the `DataCombined$groupMap` or
