@@ -53,6 +53,7 @@ ExportConfiguration <- R6::R6Class(
           nrow = plotObject$patches$layout$nrow,
           ncol = plotObject$patches$layout$ncol
         )[[1]]
+        self$height <- self$heightPerRow * nrOfRows
       }
       super$savePlot(plotObject, fileName)
       # Restore the old value
