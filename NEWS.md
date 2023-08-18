@@ -1,7 +1,32 @@
 # esqlabsR (development version)
 
+# BREAKING CHANGE
+- When importing observed data using the default importer configuration, data 
+set naming is grouped by `StudyId` at the first place.
+Before: `{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+After: `{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+
+This will result in different data set names, and plots specifying the data sets 
+by the old naming will fail. For compatibility, use custom importer configuration
+with the old naming: 
+
+```
+  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+    configurationFilePath = projectConfiguration$dataImporterConfigurationFile
+  )
+  importerConfiguration$namingPattern <- "{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"
+```
+
+# NEW FUNCTIONALITIES
+
+- `loadObservedData()` gets a new argument `importerConfiguration`. The user can
+now provide a custom importer configuration for loading the data.
 - Plots are using new color palette
 - Some modifications to plot configuration files for better plots
+- Plots.xlsx, sheet 'plotConfiguration', now uses `xValuesLimits` and `yValuesLimits`
+to set axis limits of the plots by default. This approach filters data outside of the
+limits. See https://ggplot2.tidyverse.org/reference/coord_cartesian.html#ref-examples for 
+more details. The user can still use `xAxisLimits` and `yAxisLimits`.
 
 - Protein ontogenies can be defined for populations and individuals. To specify ontogenies for 
 proteins in the simulation, list the proteins you want to define ontogenies for 
@@ -16,6 +41,10 @@ the function `plotPopulationTimeProfile()`. Supported values are listed in `osps
 - Excel file 'Individuals.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
 
 - Throw a warning instead of an error if a path specified in `ProjectConfiguration` does not exist. `$outputFolder` existence is not checked anymore.
+
+- When a scenario fails, `runScenarios()` does not crash any more, but a
+warning is shown with the name of the failed scenario. The returned `outputValues` 
+is `NULL`.
 
 ### BUG FIXES
 - exportParametersToXLS - ignore parameters with NaN https://github.com/esqLABS/esqlabsR/issues/480
