@@ -43,6 +43,7 @@ Imports:
     stringr
 Suggests: 
     clipr,
+    covr,
     knitr,
     openxlsx,
     reactable,
