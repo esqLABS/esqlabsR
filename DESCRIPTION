@@ -28,7 +28,7 @@ Imports:
     ggplot2,
     grDevices,
     labeling,
-    ospsuite.parameteridentification (>= 1.2.0),
+    ospsuite.parameteridentification (>= 1.3.0),
     ospsuite.utils (>= 1.5.0),
     parallel,
     purrr,
@@ -43,6 +43,7 @@ Imports:
     stringr
 Suggests: 
     clipr,
+    covr,
     knitr,
     openxlsx,
     reactable,
@@ -66,4 +67,4 @@ Remotes:
     Open-Systems-Pharmacology/OSPSuite.RUtils,
     Open-Systems-Pharmacology/TLF-Library,
     Open-Systems-Pharmacology/OSPSuite-R,
-    esqLABS/esqlabs.ParameterIdentification
+    Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
