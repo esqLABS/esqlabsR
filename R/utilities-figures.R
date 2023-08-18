@@ -155,11 +155,11 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration$linesSize <- 0.5
 
   # Points size
-  defaultPlotConfiguration$pointsSize <- 1.5
+  defaultPlotConfiguration$pointsSize <- 1.75
 
   # Error bars size
-  defaultPlotConfiguration$errorbarsSize <- 0.5
-  defaultPlotConfiguration$errorbarsCapSize <- 2.5
+  defaultPlotConfiguration$errorbarsSize <- 0.65
+  defaultPlotConfiguration$errorbarsCapSize <- 2.75
 
   # Legend appearance
   # defaultPlotConfiguration$legendBorderColor <- "grey10"
