@@ -48,7 +48,7 @@ desc::desc_set_remotes(
     "Open-Systems-Pharmacology/OSPSuite.RUtils@88152af44e32e714a1d5c80237c239105ed85120",
     "Open-Systems-Pharmacology/TLF-Library@03e1acfc38c283536e1841b681a04f2eb42e08f9",
     "Open-Systems-Pharmacology/OSPSuite-R@7e08e5603982f11ae72d5c8998f3d998e8a37650",
-    "esqLABS/esqlabs.ParameterIdentification@8559c93d4589c5195298c859b51f90f53d916e11"
+    "Open-Systems-Pharmacology/ospsuite.parameteridentification"
     )
 )
 
@@ -119,7 +119,7 @@ usethis::use_dev_package(package = "ospsuite",
 
 usethis::use_dev_package(package = "ospsuite.parameteridentification",
                          type = "Imports",
-                         remote = "esqLABS/esqlabs.ParameterIdentification")
+                         remote = "Open-Systems-Pharmacology/ospsuite.parameteridentification")
 
 ## Update version to dev (accept commit suggestions)
 usethis::use_dev_version()
