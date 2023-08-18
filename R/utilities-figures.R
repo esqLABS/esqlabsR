@@ -14,12 +14,13 @@
 #' @param nrOfColors Positive integer defining the number of colors to be generated.
 #'
 #' @return A list of colors as HEX values.
+#' @import grDevices
 #' @export
 esqLABS_colors <- function(nrOfColors) {
   # esqLABS colors in HSV model
-  esqRedHSV <- rgb2hsv(234, 94, 94, maxColorValue = 255)
-  esqBlueHSV <- rgb2hsv(74, 189, 203, maxColorValue = 255)
-  esqGreenHSV <- rgb2hsv(118, 187, 96, maxColorValue = 255)
+  esqRedHSV <- grDevices::rgb2hsv(234, 94, 94, maxColorValue = 255)
+  esqBlueHSV <- grDevices::rgb2hsv(74, 189, 203, maxColorValue = 255)
+  esqGreenHSV <- grDevices::rgb2hsv(118, 187, 96, maxColorValue = 255)
   # default color palette.
   esq_palette <- c(
     hsv(esqBlueHSV[1], esqBlueHSV[2], esqBlueHSV[3]),
@@ -108,7 +109,7 @@ esqLABS_colors <- function(nrOfColors) {
 #'   indicate hue, saturation and value and are named "h", "s", and "v"
 #'   accordingly.
 #' @export
-#' @import ospsuite ospsuite.utils
+#' @import ospsuite ospsuite.utils grDevices
 #'
 #' @examples
 #' col2hsv("yellow")
@@ -116,7 +117,7 @@ esqLABS_colors <- function(nrOfColors) {
 col2hsv <- function(color) {
   validateIsString(color)
   rgb <- col2rgb(color)
-  return(rgb2hsv(rgb))
+  return(grDevices::rgb2hsv(rgb))
 }
 
 
