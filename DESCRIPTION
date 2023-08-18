@@ -27,7 +27,7 @@ Imports:
     fs,
     ggplot2,
     labeling,
-    ospsuite.parameteridentification (>= 1.2.0),
+    ospsuite.parameteridentification (>= 1.3.0),
     ospsuite.utils (>= 1.5.0),
     parallel,
     purrr,
