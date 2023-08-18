@@ -16,7 +16,6 @@ environment:
   app_version: 5.0.0.9000
 version: $(app_version)-{build}
 before_build: rake "prepare_for_build[%APPVEYOR_BUILD_VERSION%]"
-cache: C:\RLibrary
 platform: x64
 skip_commits:
   files: '*.md'
@@ -33,8 +32,8 @@ before_test:
 - ps: $env:Path += ";C:\Program Files (x86)\Pandoc\"
 - pandoc -v
 build_script:
-- travis-tool.sh install_deps
 - Rscript install_ext_deps.R
+- travis-tool.sh install_deps
 test_script: travis-tool.sh run_tests
 on_success: Rscript -e "covr::codecov()"
 after_test:
