@@ -4,6 +4,9 @@
   Sys.setenv("_R_CHECK_LENGTH_1_CONDITION_" = "true")
 
   .setEsqlabsColors()
+
+  # Change maximal caption width in figures coming from TLF
+  tlf::setMaxCharacterWidth(75)
 }
 # nocov end
 

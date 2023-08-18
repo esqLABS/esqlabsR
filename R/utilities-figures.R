@@ -13,6 +13,7 @@
 #'
 #' @param nrOfColors Positive integer defining the number of colors to be generated.
 #'
+#' @import grDevices
 #' @return A list of colors as HEX values.
 #' @import grDevices
 #' @export
@@ -144,19 +145,27 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
   # Size
-  defaultPlotConfiguration$titleSize <- 12
+  defaultPlotConfiguration$titleSize <- 11
   defaultPlotConfiguration$xLabelSize <- 10
   defaultPlotConfiguration$yLabelSize <- 10
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
   defaultPlotConfiguration$yAxisLabelTicksSize <- 8
   defaultPlotConfiguration$legendKeysSize <- 6
 
+  # Lines size
+  defaultPlotConfiguration$linesSize <- 0.5
 
+  # Points size
+  defaultPlotConfiguration$pointsSize <- 1.75
+
+  # Error bars size
+  defaultPlotConfiguration$errorbarsSize <- 0.65
+  defaultPlotConfiguration$errorbarsCapSize <- 2.75
 
   # Legend appearance
   # defaultPlotConfiguration$legendBorderColor <- "grey10"
   # defaultPlotConfiguration$legendBorderType <- 1
-  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopRight
+  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopLeft
 
   # Axis appearance
   defaultPlotConfiguration$yAxisLabelTicksAngle <- 0
@@ -194,7 +203,9 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
 
   plotGridConfiguration$tagLevels <- "a"
   plotGridConfiguration$tagSize <- 10
-  plotGridConfiguration$titleSize <- 12
+  plotGridConfiguration$titleSize <- 11
+
+  plotGridConfiguration$titleHorizontalJustification <- 0.5
 
   return(plotGridConfiguration)
 }
