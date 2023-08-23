@@ -46,6 +46,10 @@ the function `plotPopulationTimeProfile()`. Supported values are listed in `osps
 warning is shown with the name of the failed scenario. The returned `outputValues` 
 is `NULL`.
 
+### MINOR CHANGES
+- `stringToNum()` does not show a warning `NAs introduced by coercion` when a value 
+cannot be converted to a numeric any more. For such values, `NA` is silently returned.
+
 ### BUG FIXES
 - exportParametersToXLS - ignore parameters with NaN https://github.com/esqLABS/esqlabsR/issues/480
 - Show a meaningful error when no time unit is specified for a scenario https://github.com/esqLABS/esqlabsR/issues/483
