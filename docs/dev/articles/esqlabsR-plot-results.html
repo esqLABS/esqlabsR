@@ -103,18 +103,215 @@
     
     
 <p>Plotting the simulation results is an integral part of model
-diagnostics and quality control. Simulated modeling scenarios can be
-passed to plotting functions from the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> package to
-create uniformly-looking plots. To get familiar with the
-<code>DataCombined</code> class used to store matching observed and
-simulated data, read the <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined.html" class="external-link">Working
+diagnostics and quality control. <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> implements an
+Excel-based workflow for figure creation from <a href="esqlabsR-run-simulations.html">simulated scenarios</a>.</p>
+<div class="section level2">
+<h2 id="plotting-workflow">Plotting Workflow<a class="anchor" aria-label="anchor" href="#plotting-workflow"></a>
+</h2>
+<p>The process relies on filling the
+<strong><code>Plots.xlsx</code></strong> file in order to specify all
+the figures that need to be created. Then, the function
+<code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> translates the information in the
+Excel file into plots.</p>
+<p>The general workflow is outlined in the figure below.</p>
+<div class="float">
+<img src="Figures/plot-workflow.png" alt="Figure specification workflow."><div class="figcaption">Figure specification workflow.</div>
+</div>
+<p>Simulation results and observed data are combined and assigned to
+groups in <code>DataCombined</code> objects, see <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html" class="external-link">{ospsuite}-documentation</a>.
+The <code>DataCombined</code> objects are defined in the sheet
+<strong>DataCombined</strong>, see the <a href="#specify-a-datacombined">Specify <code>Datacombined</code></a>
+section.</p>
+<p>For each <code>DataCombined</code>, multiple plots of different types
+can be defined using the <strong>plotConfiguration</strong> sheet. More
+information in the <a href="#creating-single-plots">Creating Single
+Plots</a> section.</p>
+<p>The plots are combined into multi-panel figures (plot grids) in the
+<strong>plotGrids</strong> sheet. The combined plots are returned as
+<code>ggplot2</code> objects by the function
+<code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>. More information in the <a href="#create-plot-grids">Combining Single Plots</a> section.</p>
+<p>In addition to returning the plots as function output, plot grids can
+be exported to <code>png</code> with specific settings using the
+<strong>exportConfiguration</strong> sheet. More information in the <a href="#export-plots">Export Plots</a> section.</p>
+<div class="section level3">
+<h3 id="specify-a-datacombined">Specify <code>DataCombined</code><a class="anchor" aria-label="anchor" href="#specify-a-datacombined"></a>
+</h3>
+<p>A <code>DataCombined</code> object stores the data to be plotted. It
+can contain simulated results and/or observed data and groups them
+together.</p>
+<p>First, the user needs to define the name of the
+<code>DataCombined</code> in the column <code>DataCombinedName</code>.
+For each data set (simulated or observed), a separate row must be
+created. Each added data set must have a <code>label</code> unique for
+this <code>DataCombined</code>. The label will be used in figure legends
+if the data set does not belong to any group. A data set can be assigned
+to a <code>group</code>. All data sets that belong to the same group
+will be plotted in the same color and have a common legend entry, with
+the group name as the legend label.</p>
+<p>The added data can be <em>transformed</em> by defining an
+<code>offset</code> or a <code>scaleFactor</code> for the two axes. For
+more details, see the <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations" class="external-link">Transformations</a>
+section of the <code>{ospstute-r}</code> documentation.</p>
+<p>To add a <strong>simulation output</strong> to the object, the user
+must create a row with <code>dataType</code> set to
+<code>simulated</code>, define the <code>scenario</code> that was used
+to generate the results (see <a href="esqlabsR-design-scenarios.html">Desing Scenarios</a>), and specify
+the model output <code>path</code>. Multiple simulated outputs can be
+added to a single <code>DataCombined</code>, and they even can come from
+different scenarios. Currently, only outputs of equal dimensions can be
+combined.</p>
+<p>To add <strong>observed data</strong>, the user must create a row
+with <code>dataType</code> set to <code>observed</code> and specify the
+name of the <code>dataSet</code>. See <a href="#observed-data">Observed
+Data</a> for how to read data as <code>DataSet</code> objects.</p>
+</div>
+<div class="section level3">
+<h3 id="creating-single-plots">Creating Single Plots<a class="anchor" aria-label="anchor" href="#creating-single-plots"></a>
+</h3>
+<p>A single <code>DataCombined</code> object can be used to create
+multiple single-panel plots of different types. To do so, an entry in
+the sheet <strong>plotConfiguration</strong> must be created with the
+following content (all values are optional, if not stated
+otherwise):</p>
+<ul>
+<li><p><strong>plotID</strong>: Unique name of the plot. This ID will be
+used to combine multiple plots to multi-panel plots in the sheet
+<strong>plotGrids</strong>. Mandatory.</p></li>
+<li><p><strong>DataCombinedName</strong>: Name of the
+<code>DataCombined</code> object defined in the sheet
+<strong>DataCombined</strong> that will be used to create the plot.
+Mandatory.</p></li>
+<li><p><strong>plotType</strong>: type of the plot, one of
+<code>individual</code>, <code>population</code>,
+<code>observedVsSimulated</code>, <code>residualsVsSimulated</code>, and
+<code>residualsVsTime</code>. See <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined-plotting.html" class="external-link">Visualizations
+with `DataCombined`</a> for details on different plot types.
+Mandatory.</p></li>
+<li><p><strong>title</strong>: Title of the plot.</p></li>
+<li><p><strong>xUnit</strong>, <strong>yUnit</strong>: Units of the x-
+and y-axis, respectively.</p></li>
+<li><p><strong>xAxisScale</strong>, <strong>yAxisScale</strong>: Scaling
+of the axes, <code>lin</code> for linear scaling or <code>log</code> for
+logarithmic.</p></li>
+<li><p><strong>xValuesLimits</strong>, <strong>yValuesLimits</strong>:
+Limits of x- and y-axis, respectively, in <strong>xUnit</strong> and
+<strong>yUnit</strong>.</p></li>
+<li><p><strong>aggregation</strong>: If <strong>plotType</strong> is
+<code>population</code>, this column defines the type of aggregation
+used for simulated results. Default is <code>quantiles</code>, supported
+values are</p></li>
+</ul>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">ospsuite</span><span class="fu">::</span><span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataAggregationMethods.html" class="external-link">DataAggregationMethods</a></span></span>
+<span><span class="co">#&gt; $quantiles</span></span>
+<span><span class="co">#&gt; [1] "quantiles"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $arithmetic</span></span>
+<span><span class="co">#&gt; [1] "arithmetic"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $geometric</span></span>
+<span><span class="co">#&gt; [1] "geometric"</span></span></code></pre></div>
+<ul>
+<li><p><strong>quantiles</strong>: If <strong>plotType</strong> is
+<code>population</code> and <strong>aggregation</strong> is
+<code>quantiles</code>, a list of three numeric values defining which
+percentiles to draw. Default is <code>0.05, 0.5, 0.95</code>, in which
+case the drawn line represents the median (50th percentile), the lower
+range is the 5%, and the upper range is the 95%.</p></li>
+<li><p><strong>foldDistance</strong>: If <strong>plotType</strong> is
+<code>observedVsSimulated</code>, a vector for plotting lines at
+required fold distances. The vector can include only fold distance
+values <code>&gt;1</code>. An <code>x</code>-fold distance is defined as
+all simulated values within the range between <code>x</code>-fold
+(depicted by the upper fold range line) and <code>1/x</code>-fold
+(depicted by the lower fold range line) of observed values. The identity
+line can be interpreted as the <code>1</code>-fold range.</p></li>
+</ul>
+<p>In addition to the pre-defined columns, the user can add any property
+of a <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DefaultPlotConfiguration.html" class="external-link">Plot
+configuration</a> as a separate column. Here is a sample of the
+available plot settings:</p>
+<pre><code><span><span class="co">#&gt;  [1] "foldLinesLegendDiagonal" "foldLinesLegend"        </span></span>
+<span><span class="co">#&gt;  [3] "lloqDirection"           "displayLLOQ"            </span></span>
+<span><span class="co">#&gt;  [5] "errorbarsAlpha"          "errorbarsLinetype"      </span></span>
+<span><span class="co">#&gt;  [7] "errorbarsCapSize"        "errorbarsSize"          </span></span>
+<span><span class="co">#&gt;  [9] "ribbonsAlpha"            "ribbonsLinetype"        </span></span>
+<span><span class="co">#&gt; [11] "ribbonsSize"             "ribbonsFill"            </span></span>
+<span><span class="co">#&gt; [13] "pointsAlpha"             "pointsSize"             </span></span>
+<span><span class="co">#&gt; [15] "pointsShape"</span></span></code></pre>
+<p>For instance, if the subtitle needs to be changed, the user can add a
+column named <code>subtitle</code> and fill it with the desired value
+for each plot. Leaving a cell empty will result in the default value
+being used.</p>
+<p>For properties that accept a list of values
+(e.g. <code>xAxisLimits</code>), the values should be separated by a
+<code>,</code>. If an entry itself contains a <code>,</code>, enclose it
+between parenthesis.</p>
+</div>
+<div class="section level3">
+<h3 id="create-plot-grids">Combining single Plots<a class="anchor" aria-label="anchor" href="#create-plot-grids"></a>
+</h3>
+<p><code>plotGrids</code> are the objects that will be used to draw the
+plots. They are defined in the <strong>plotGrids</strong> sheet. The
+user needs to define a name for each plotGrid. For single panel plot,
+only one plot must be listed in the plotIDs column.
+<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> also provide a simple way to combined several
+plots in a multi-panel figure, in this case, the user needs to list all
+the plotIDs to combine in the plotIDs column, separated by a
+<code>,</code>.</p>
+<p>To customize the plotGrid, the user can add all the necessary columns
+that are defined in the <code>PlotGridConfiguration</code> class. Here
+is a sample of the available:</p>
+<pre><code><span><span class="co">#&gt;  [1] "tagMargin"                  "tagLineHeight"             </span></span>
+<span><span class="co">#&gt;  [3] "tagAngle"                   "tagVerticalJustification"  </span></span>
+<span><span class="co">#&gt;  [5] "tagHorizontalJustification" "tagFontFamily"             </span></span>
+<span><span class="co">#&gt;  [7] "tagFontFace"                "tagSize"                   </span></span>
+<span><span class="co">#&gt;  [9] "tagColor"                   "tagPosition"               </span></span>
+<span><span class="co">#&gt; [11] "tagSeparator"               "tagSuffix"                 </span></span>
+<span><span class="co">#&gt; [13] "tagPrefix"                  "tagLevels"                 </span></span>
+<span><span class="co">#&gt; [15] "design"</span></span></code></pre>
+</div>
+<div class="section level3">
+<h3 id="export-plots">Export Plots<a class="anchor" aria-label="anchor" href="#export-plots"></a>
+</h3>
+<p>In order to export plots to image files, the user can use the
+<strong>exportConfiguration</strong> sheet. The plotGrids to export must
+be added in the plotGridName column. Then, the output file name must be
+specified in the outputName column. The output format can be customize
+using the properties listed in the <code>ExportConfiguration</code>
+class. Here is a sample of the available:</p>
+<pre><code><span><span class="co">#&gt; [1] "heightPerRow" "dpi"          "units"        "height"       "width"</span></span></code></pre>
+</div>
+</div>
+<div class="section level2">
+<h2 id="plotting-with-code">Plotting With Code<a class="anchor" aria-label="anchor" href="#plotting-with-code"></a>
+</h2>
+<p>In some situation, the user needs to quickly draw a plot from a
+simulation result object using code while wanting to use the default
+esqlabsR theme. <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>’s functions are fully operable
+by the user and can be used directly to generate customized and good
+looking plots using code only.</p>
+<div class="section level3">
+<h3 id="basics-of-figure-creation-with-ospsuite">Basics of figure creation with <code>{ospsuite}</code><a class="anchor" aria-label="anchor" href="#basics-of-figure-creation-with-ospsuite"></a>
+</h3>
+<p>Simulated modeling scenarios can be passed to plotting functions from
+the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> package to create uniformly-looking plots.
+To get familiar with the <code>DataCombined</code> class used to store
+matching observed and simulated data, read the <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined.html" class="external-link">Working
 with <code>DataCombined</code> class</a> article. The article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined-plotting.html" class="external-link">Visualizations
 with <code>DataCombined</code></a> covers the basics of creating
 supported plot types and how to customize them.</p>
+</div>
+<div class="section level3">
+<h3 id="using-esqlabsr">Using esqlabsR<a class="anchor" aria-label="anchor" href="#using-esqlabsr"></a>
+</h3>
+<div class="section level4">
+<h4 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+</h4>
 <p>For the following examples, we will simulate an example scenario as
 described in <code><a href="../articles/esqlabsR-design-scenarios.html">vignette("esqlabsR-design-scenarios")</a></code> and load
 the corresponding observed data as described in the <a href="#observed-data">Observed Data</a> section.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span><span class="co"># Create a project configuration</span></span>
 <span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
@@ -132,9 +329,10 @@ the corresponding observed data as described in the <a href="#observed-data">Obs
 <span><span class="co"># Load observed data</span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
 <span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>, sheets <span class="op">=</span> <span class="va">dataSheets</span><span class="op">)</span></span></code></pre></div>
-<div class="section level2">
-<h2 id="create-a-datacombined-object">Create a <code>DataCombined</code> object<a class="anchor" aria-label="anchor" href="#create-a-datacombined-object"></a>
-</h2>
+</div>
+<div class="section level4">
+<h4 id="create-a-datacombined-object">Create a <code>DataCombined</code> object<a class="anchor" aria-label="anchor" href="#create-a-datacombined-object"></a>
+</h4>
 <p>The simulation results are stored in a list returned by the
 <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function. Plotting and visualization are
 performed by storing these results, matching observed data in a
@@ -148,23 +346,27 @@ methods. Data sets of the same group will then be plotted together when
 calling plotting functions on the <code>DataCombined</code> object.</p>
 <p>Let’s create a <code>DataCombined</code> object and populate it with
 data with the following code:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">dataCombined</span> <span class="op">&lt;-</span> <span class="va">DataCombined</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dataCombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observedData</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
 <span>  names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
 <span>  groups <span class="op">=</span> <span class="st">"Aciclovir"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p>You can also return the <code>DataCombined</code> objects defined in
+the <code>DataCombined</code> sheet with the function
+<code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code>, read (this
+section)[#specify-a-datacombined] for more information.</p>
 </div>
-<div class="section level2">
-<h2 id="customize-and-generate-plots">Customize and generate plots<a class="anchor" aria-label="anchor" href="#customize-and-generate-plots"></a>
-</h2>
+<div class="section level4">
+<h4 id="customize-and-generate-plots">Customize and generate plots<a class="anchor" aria-label="anchor" href="#customize-and-generate-plots"></a>
+</h4>
 <p>Customization of the generated figures - specifying title, axes
 ranges, axes units, the position of the legend, etc., are done through
 <em>plot configurations</em> - objects of the class <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html" class="external-link"><code>DefaultPlotConfiguration</code></a>.
 To combine multiple plots into a multi-panel figure, create a
 <code>PlotGridConfiguration</code> object, add plots to it, and plot
-with the <code>plotGrid()</code> method. Finally, to export a plot to a
+with the <code><a href="https://rdrr.io/pkg/tlf/man/plotGrid.html" class="external-link">plotGrid()</a></code> method. Finally, to export a plot to a
 file (e.g., <code>PNG</code> or <code>PDF</code>), use an
 <code>ExportConfiguration</code> object.</p>
 <p>To use configurations with a similar look and feel in the different
@@ -179,81 +381,81 @@ following functions:</p>
 <code>PlotGirdConfiguration</code>, refer to the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link">reference</a></p>
 <p>The next example shows how to create a multi-panel figure using the
 default configurations.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plotConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">gridConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Time profile"</span></span>
-<span><span class="va">indivPlot</span> <span class="op">&lt;-</span> <span class="fu">plotIndividualTimeProfile</span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: The `limits` argument of `AxisConfiguration()` is deprecated as of tlf 1.5.0.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use the `axisLimits` argument instead.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">R6</span> package.</span></span>
-<span><span class="co">#&gt;   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/r-lib/R6/issues&gt;</span>.</span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
+<span><span class="va">indivPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Observed-vs-simulated"</span></span>
-<span><span class="va">obsVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu">plotObservedVsSimulated</span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">obsVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Res-vs-time"</span></span>
-<span><span class="va">resVsTimePlot</span> <span class="op">&lt;-</span> <span class="fu">plotResidualsVsTime</span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">resVsTimePlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html" class="external-link">plotResidualsVsTime</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Res-vs-simulated"</span></span>
-<span><span class="va">resVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu">plotResidualsVsSimulated</span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">resVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html" class="external-link">plotResidualsVsSimulated</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gridConfig</span><span class="op">$</span><span class="fu">addPlots</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">indivPlot</span>, <span class="va">obsVsSimPlot</span>, <span class="va">resVsTimePlot</span>, <span class="va">resVsSimPlot</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">gridConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"All aciclovir plots"</span></span>
-<span><span class="va">gridPlot</span> <span class="op">&lt;-</span> <span class="fu">plotGrid</span><span class="op">(</span><span class="va">gridConfig</span><span class="op">)</span></span>
+<span><span class="va">gridPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/tlf/man/plotGrid.html" class="external-link">plotGrid</a></span><span class="op">(</span><span class="va">gridConfig</span><span class="op">)</span></span>
 <span><span class="va">gridPlot</span></span></code></pre></div>
 <p><img src="esqlabsR-plot-results_files/figure-html/plot-time-profile-1.png" width="672"></p>
 </div>
-<div class="section level2">
-<h2 id="save-plots">Save Plots<a class="anchor" aria-label="anchor" href="#save-plots"></a>
-</h2>
+<div class="section level4">
+<h4 id="save-plots">Save Plots<a class="anchor" aria-label="anchor" href="#save-plots"></a>
+</h4>
 <p>To save the plot to a <code>PNG</code> file, use the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link"><code>ExportConfiguration</code></a>.
 Make sure that the <code>fileName</code> argument ends with
 <code>.png</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
 <span><span class="va">exportConfig</span><span class="op">$</span><span class="fu">savePlot</span><span class="op">(</span><span class="va">gridPlot</span>, fileName <span class="op">=</span> <span class="st">"All plots.png"</span><span class="op">)</span></span></code></pre></div>
+<p>By default, the height of the output figure is calculated from the
+number of rows in the multi-panel plot and the height defined in
+<code>ExportConfiguration$heightPerRow</code>. If you want to define a
+fixed height with the parameter <code>ExportConfiguration$height</code>,
+set <code>ExportConfiguration$heightPerRow = NULL</code>.</p>
+</div>
+</div>
 </div>
 <div class="section level2">
-<h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a>
+<h2 id="observed-data">Observed Data<a class="anchor" aria-label="anchor" href="#observed-data"></a>
 </h2>
-<div class="section level3">
-<h3 id="observed-data">Observed Data<a class="anchor" aria-label="anchor" href="#observed-data"></a>
-</h3>
-<p>The modeling and simulation workflow involves running simulations and
-comparing simulated data against observed data. Functionalities of
-<code>esqlabsR</code> require observed data to be present as <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html" class="external-link"><code>DataSet</code></a>
+<p>Functionalities of <code>esqlabsR</code> require observed data to be
+present as <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html" class="external-link"><code>DataSet</code></a>
 objects. Please refer to the article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html" class="external-link">Observed
 data</a> for information on loading data from Excel or
-<code>*.pkml</code> files.</p>
-<p><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> offers a convenience function
-<code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> that facilitates loading data in
-standard <em>esqLABS</em> projects. Assuming the standard project folder
+<code>*.pkml</code> files. <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> offers a convenience
+function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> that facilitates loading data
+in <code>esqLABS</code> projects. Assuming the standard project folder
 structure is followed, and a valid <code>ProjectConfiguration</code>
 (see <a href="standard-workflow.html">Standard workflow</a>) and Excel
 files with observed data are present in the
 <code>projectConfiguration$dataFolder</code> folder, the following code
 loads the data:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
+<span></span>
 <span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
+<span></span>
 <span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span></span>
 <span>  sheets <span class="op">=</span> <span class="va">dataSheets</span></span>
+<span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">observedData</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Aciclovir_Laskin 1982.Group A_1_Human_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "Laskin 1982.Group A_Aciclovir_1_Human_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"</span></span></code></pre></div>
 <p>The function loads the data from the file
 <code>projectConfiguration$dataFile</code> from the folder
 <code>projectConfiguration$dataFolder</code> and returns a list of
-<code>DataSet</code> objects. The resulting object will be used later to
-<a href="example-visualization.html">plot results</a> to compare
-simulated and observed data.</p>
+<code>DataSet</code>objects. The resulting object can be used to plot
+results to compare simulated and observed data.</p>
 <ul>
 <li><p>The <code>sheets</code> argument of the
 <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> function should be a string or a list of
@@ -266,15 +468,9 @@ the <code><a href="../reference/loadObservedData.html">loadObservedData()</a></c
 <code>Invalid File</code> message.</p></li>
 </ul>
 </div>
-<div class="section level3">
-<h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
-</h3>
-<ul>
-<li>At any time, you can check the groups assigned to the datasets in
-the <code>DataCombined</code> object by calling the
-<code>DataCombined$groupMap</code> or by examining the output of
-<code>dataCombined$toDataFrame()</code>.</li>
-</ul>
+<div class="section level2">
+<h2 id="external-sources">External sources<a class="anchor" aria-label="anchor" href="#external-sources"></a>
+</h2>
 <p>More detailed information on function signatures can be found in the
 following:</p>
 <ul>
@@ -308,8 +504,6 @@ class</a></li>
 </ul>
 </li>
 </ul>
-<!-- ### Troubleshooting --><!-- More detailed information on function signatures can be found in: --><!-- -   `esqlabsR` documentation on: --><!-- -   [createDefaultProjectConfiguration()](https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html) --><!-- -   [ProjectConfiguration class](https://esqlabs.github.io/esqlabsR/reference/ProjectConfiguration.html) --><!-- -   [loadObservedData()](https://esqlabs.github.io/esqlabsR/reference/loadObservedData.html) --><!-- -   `ospsuite` documentation on: -->
-</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
