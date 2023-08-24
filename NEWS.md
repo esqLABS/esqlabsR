@@ -1,5 +1,7 @@
 # esqlabsR (development version)
 
+- New vignette/article about figure creation.
+
 # BREAKING CHANGE
 - When importing observed data using the default importer configuration, data 
 set naming is grouped by `StudyId` at the first place.
