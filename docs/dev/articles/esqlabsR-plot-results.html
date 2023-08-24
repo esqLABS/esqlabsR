@@ -106,7 +106,7 @@
 diagnostics and quality control. <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> implements an
 Excel-based workflow for figure creation from <a href="esqlabsR-run-simulations.html">simulated scenarios</a>.</p>
 <div class="section level2">
-<h2 id="plotting-workflow">Plotting Workflow<a class="anchor" aria-label="anchor" href="#plotting-workflow"></a>
+<h2 id="plotting-workflow">Plot Definition<a class="anchor" aria-label="anchor" href="#plotting-workflow"></a>
 </h2>
 <p>The process relies on filling the
 <strong><code>Plots.xlsx</code></strong> file in order to specify all
@@ -129,7 +129,7 @@ Plots</a> section.</p>
 <p>The plots are combined into multi-panel figures (plot grids) in the
 <strong>plotGrids</strong> sheet. The combined plots are returned as
 <code>ggplot2</code> objects by the function
-<code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>. More information in the <a href="#create-plot-grids">Combining Single Plots</a> section.</p>
+<code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>. More information in the <a href="#create-plot-grids">Combining Plots</a> section.</p>
 <p>In addition to returning the plots as function output, plot grids can
 be exported to <code>png</code> with specific settings using the
 <strong>exportConfiguration</strong> sheet. More information in the <a href="#export-plots">Export Plots</a> section.</p>
@@ -247,21 +247,24 @@ being used.</p>
 (e.g. <code>xAxisLimits</code>), the values should be separated by a
 <code>,</code>. If an entry itself contains a <code>,</code>, enclose it
 between parenthesis.</p>
+<p><strong>NOTE:</strong> The plots defined in the
+<strong>plotConfiguration</strong> sheet are an intermediate step in the
+workflow and will not be directly returned by the
+<code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> function. They must be further
+encapsulated into plot grids (even if only using one single plot).</p>
 </div>
 <div class="section level3">
-<h3 id="create-plot-grids">Combining single Plots<a class="anchor" aria-label="anchor" href="#create-plot-grids"></a>
+<h3 id="create-plot-grids">Combining Plots<a class="anchor" aria-label="anchor" href="#create-plot-grids"></a>
 </h3>
 <p><code>plotGrids</code> are the objects that will be used to draw the
-plots. They are defined in the <strong>plotGrids</strong> sheet. The
-user needs to define a name for each plotGrid. For single panel plot,
-only one plot must be listed in the plotIDs column.
-<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> also provide a simple way to combined several
-plots in a multi-panel figure, in this case, the user needs to list all
-the plotIDs to combine in the plotIDs column, separated by a
+plots and are defined in the <strong>plotGrids</strong> sheet. The user
+needs to define a name for each <strong>plotGrid</strong>. For a
+single-panel plot, only one plot must be listed in the plotIDs column.
+To combine multiple plots (which can be of different types), the user
+needs to list all the <strong>plotIDs</strong> separated by a
 <code>,</code>.</p>
-<p>To customize the plotGrid, the user can add all the necessary columns
-that are defined in the <code>PlotGridConfiguration</code> class. Here
-is a sample of the available:</p>
+<p>To customize a plot grid, the user can add any property of a <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html" class="external-link"><code>PlotGridConfiguration</code></a>
+as a separate column. Here is a sample of the available properties:</p>
 <pre><code><span><span class="co">#&gt;  [1] "tagMargin"                  "tagLineHeight"             </span></span>
 <span><span class="co">#&gt;  [3] "tagAngle"                   "tagVerticalJustification"  </span></span>
 <span><span class="co">#&gt;  [5] "tagHorizontalJustification" "tagFontFamily"             </span></span>
@@ -275,42 +278,22 @@ is a sample of the available:</p>
 <h3 id="export-plots">Export Plots<a class="anchor" aria-label="anchor" href="#export-plots"></a>
 </h3>
 <p>In order to export plots to image files, the user can use the
-<strong>exportConfiguration</strong> sheet. The plotGrids to export must
-be added in the plotGridName column. Then, the output file name must be
-specified in the outputName column. The output format can be customize
-using the properties listed in the <code>ExportConfiguration</code>
-class. Here is a sample of the available:</p>
+<strong>exportConfiguration</strong> sheet. For each
+<strong>plotGrid</strong> that should be exported during the execution
+of the <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> function, create a new entry.
+It is mandatory to specify the output file name (without file extension
+such as <code>.png</code>). The output can be customized using the
+properties listed in the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link"><code>ExportConfiguration</code></a>
+class. Here is a sample of the available properties:</p>
 <pre><code><span><span class="co">#&gt; [1] "heightPerRow" "dpi"          "units"        "height"       "width"</span></span></code></pre>
 </div>
 </div>
 <div class="section level2">
-<h2 id="plotting-with-code">Plotting With Code<a class="anchor" aria-label="anchor" href="#plotting-with-code"></a>
+<h2 id="creating-plots">Creating plots<a class="anchor" aria-label="anchor" href="#creating-plots"></a>
 </h2>
-<p>In some situation, the user needs to quickly draw a plot from a
-simulation result object using code while wanting to use the default
-esqlabsR theme. <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>’s functions are fully operable
-by the user and can be used directly to generate customized and good
-looking plots using code only.</p>
-<div class="section level3">
-<h3 id="basics-of-figure-creation-with-ospsuite">Basics of figure creation with <code>{ospsuite}</code><a class="anchor" aria-label="anchor" href="#basics-of-figure-creation-with-ospsuite"></a>
-</h3>
-<p>Simulated modeling scenarios can be passed to plotting functions from
-the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> package to create uniformly-looking plots.
-To get familiar with the <code>DataCombined</code> class used to store
-matching observed and simulated data, read the <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined.html" class="external-link">Working
-with <code>DataCombined</code> class</a> article. The article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined-plotting.html" class="external-link">Visualizations
-with <code>DataCombined</code></a> covers the basics of creating
-supported plot types and how to customize them.</p>
-</div>
-<div class="section level3">
-<h3 id="using-esqlabsr">Using esqlabsR<a class="anchor" aria-label="anchor" href="#using-esqlabsr"></a>
-</h3>
-<div class="section level4">
-<h4 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
-</h4>
-<p>For the following examples, we will simulate an example scenario as
-described in <code><a href="../articles/esqlabsR-design-scenarios.html">vignette("esqlabsR-design-scenarios")</a></code> and load
-the corresponding observed data as described in the <a href="#observed-data">Observed Data</a> section.</p>
+<p>After the plots have been defined in the Excel file as described in
+the section <a href="#plotting-workflow">Plot Definition</a>, the user
+must generate simulation results and load observed data:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span><span class="co"># Create a project configuration</span></span>
@@ -329,6 +312,52 @@ the corresponding observed data as described in the <a href="#observed-data">Obs
 <span><span class="co"># Load observed data</span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
 <span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>, sheets <span class="op">=</span> <span class="va">dataSheets</span><span class="op">)</span></span></code></pre></div>
+<p>In the next step, the user calls the function
+<code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>, passing the generated data:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel</a></span><span class="op">(</span>simulatedScenarios <span class="op">=</span> <span class="va">simulatedScenarios</span>,</span>
+<span>                              observedData <span class="op">=</span> <span class="va">observedData</span>,</span>
+<span>                              projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span><span class="op">)</span></span></code></pre></div>
+<p>The function returns a named list of <code>ggplot2</code> objects,
+with names being the names of the plot grids:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Aciclovir" "Aciclovr2"</span></span>
+<span></span>
+<span><span class="va">plots</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
+<p><img src="esqlabsR-plot-results_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<p>By default, the function will try to create all plots defined in the
+<strong>plotGrids</strong> sheet. If any of the simulation results or
+the observed date required by these plots cannot be found, an error is
+thrown. To override this behavior, e.g., to only plot the observed data
+without having the results simulated, change the value of the argument
+<code>stopIfNotFound</code> to <code>FALSE</code>. You can also specify
+which plots to create with the <code>plotGridNames</code> argument.</p>
+</div>
+<div class="section level2">
+<h2 id="plotting-with-code">Custom plots with <code>esqlabsR</code> defaults.<a class="anchor" aria-label="anchor" href="#plotting-with-code"></a>
+</h2>
+<p>In some situations, the user needs to draw custom plots while wanting
+to use the default <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> look and feel.</p>
+<div class="section level3">
+<h3 id="basics-of-figure-creation-with-ospsuite">Basics of figure creation with <code>{ospsuite}</code><a class="anchor" aria-label="anchor" href="#basics-of-figure-creation-with-ospsuite"></a>
+</h3>
+<p>Simulated modeling scenarios can be passed to plotting functions from
+the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> package to create uniformly-looking plots.
+To get familiar with the <code>DataCombined</code> class used to store
+matching observed and simulated data, read the <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined.html" class="external-link">Working
+with <code>DataCombined</code> class</a> article. The article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined-plotting.html" class="external-link">Visualizations
+with <code>DataCombined</code></a> covers the basics of creating
+supported plot types and how to customize them.</p>
+</div>
+<div class="section level3">
+<h3 id="using-esqlabsr">Using esqlabsR<a class="anchor" aria-label="anchor" href="#using-esqlabsr"></a>
+</h3>
+<div class="section level4">
+<h4 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+</h4>
+<p>For the following examples, we will use results created in the
+section above.</p>
 </div>
 <div class="section level4">
 <h4 id="create-a-datacombined-object">Create a <code>DataCombined</code> object<a class="anchor" aria-label="anchor" href="#create-a-datacombined-object"></a>
@@ -346,7 +375,7 @@ methods. Data sets of the same group will then be plotted together when
 calling plotting functions on the <code>DataCombined</code> object.</p>
 <p>Let’s create a <code>DataCombined</code> object and populate it with
 data with the following code:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dataCombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observedData</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
@@ -355,8 +384,7 @@ data with the following code:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <p>You can also return the <code>DataCombined</code> objects defined in
 the <code>DataCombined</code> sheet with the function
-<code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code>, read (this
-section)[#specify-a-datacombined] for more information.</p>
+<code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code>.</p>
 </div>
 <div class="section level4">
 <h4 id="customize-and-generate-plots">Customize and generate plots<a class="anchor" aria-label="anchor" href="#customize-and-generate-plots"></a>
@@ -381,7 +409,7 @@ following functions:</p>
 <code>PlotGirdConfiguration</code>, refer to the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link">reference</a></p>
 <p>The next example shows how to create a multi-panel figure using the
 default configurations.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plotConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">gridConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -409,7 +437,7 @@ default configurations.</p>
 <p>To save the plot to a <code>PNG</code> file, use the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link"><code>ExportConfiguration</code></a>.
 Make sure that the <code>fileName</code> argument ends with
 <code>.png</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
 <span><span class="va">exportConfig</span><span class="op">$</span><span class="fu">savePlot</span><span class="op">(</span><span class="va">gridPlot</span>, fileName <span class="op">=</span> <span class="st">"All plots.png"</span><span class="op">)</span></span></code></pre></div>
 <p>By default, the height of the output figure is calculated from the
@@ -435,7 +463,7 @@ structure is followed, and a valid <code>ProjectConfiguration</code>
 files with observed data are present in the
 <code>projectConfiguration$dataFolder</code> folder, the following code
 loads the data:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
