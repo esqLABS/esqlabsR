@@ -12,23 +12,194 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
+defaultClassAttributes <- c("initialize", "clone", "print", ".__enclos_env__")
+
+library(esqlabsR)
 ```
 
 Plotting the simulation results is an integral part of model diagnostics
-and quality control. Simulated modeling scenarios can be passed to
-plotting functions from the `{ospsuite}` package to create
-uniformly-looking plots. To get familiar with the `DataCombined` class
-used to store matching observed and simulated data, read the [Working
-with `DataCombined`
-class](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined.html)
-article. The article [Visualizations with
-`DataCombined`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined-plotting.html)
-covers the basics of creating supported plot types and how to customize
-them.
+and quality control. `{esqlabsR}` implements an Excel-based workflow for
+figure creation from [simulated
+scenarios](esqlabsR-run-simulations.html).
 
-For the following examples, we will simulate an example scenario as
-described in `vignette("esqlabsR-design-scenarios")` and load the
-corresponding observed data as described in the [Observed Data](#observed-data) section.
+## Plot Definition {#plotting-workflow}
+
+The process relies on filling the **`Plots.xlsx`** file in order to
+specify all the figures that need to be created. Then, the function
+`createPlotsFromExcel()` translates the information in the Excel file
+into plots.
+
+The general workflow is outlined in the figure below.
+
+![Figure specification workflow.](Figures/plot-workflow.png)
+
+Simulation results and observed data are combined and assigned to groups
+in `DataCombined` objects, see
+[{ospsuite}-documentation](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html).
+The `DataCombined` objects are defined in the sheet **DataCombined**,
+see the [Specify `Datacombined`](#specify-a-datacombined) section.
+
+For each `DataCombined`, multiple plots of different types can be
+defined using the **plotConfiguration** sheet. More information in the
+[Creating Single Plots](#creating-single-plots) section.
+
+The plots are combined into multi-panel figures (plot grids) in the
+**plotGrids** sheet. The combined plots are returned as `ggplot2`
+objects by the function `createPlotsFromExcel()`. More information in
+the [Combining Plots](#create-plot-grids) section.
+
+In addition to returning the plots as function output, plot grids can be
+exported to `png` with specific settings using the
+**exportConfiguration** sheet. More information in the [Export
+Plots](#export-plots) section.
+
+### Specify `DataCombined` {#specify-a-datacombined}
+
+A `DataCombined` object stores the data to be plotted. It can contain
+simulated results and/or observed data and groups them together.
+
+First, the user needs to define the name of the `DataCombined` in the
+column `DataCombinedName`. For each data set (simulated or observed), a
+separate row must be created. Each added data set must have a `label`
+unique for this `DataCombined`. The label will be used in figure legends
+if the data set does not belong to any group. A data set can be assigned
+to a `group`. All data sets that belong to the same group will be
+plotted in the same color and have a common legend entry, with the group
+name as the legend label.
+
+The added data can be *transformed* by defining an `offset` or a
+`scaleFactor` for the two axes. For more details, see the
+[Transformations](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations)
+section of the `{ospstute-r}` documentation.
+
+To add a **simulation output** to the object, the user must create a row
+with `dataType` set to `simulated`, define the `scenario` that was used
+to generate the results (see [Desing
+Scenarios](esqlabsR-design-scenarios.html)), and specify the model
+output `path`. Multiple simulated outputs can be added to a single
+`DataCombined`, and they even can come from different scenarios.
+Currently, only outputs of equal dimensions can be combined.
+
+To add **observed data**, the user must create a row with `dataType` set
+to `observed` and specify the name of the `dataSet`. See [Observed
+Data](#observed-data) for how to read data as `DataSet` objects.
+
+### Creating Single Plots {#creating-single-plots}
+
+A single `DataCombined` object can be used to create multiple
+single-panel plots of different types. To do so, an entry in the sheet
+**plotConfiguration** must be created with the following content (all
+values are optional, if not stated otherwise):
+
+-   **plotID**: Unique name of the plot. This ID will be used to combine
+    multiple plots to multi-panel plots in the sheet **plotGrids**.
+    Mandatory.
+
+-   **DataCombinedName**: Name of the `DataCombined` object defined in
+    the sheet **DataCombined** that will be used to create the plot.
+    Mandatory.
+
+-   **plotType**: type of the plot, one of `individual`, `population`,
+    `observedVsSimulated`, `residualsVsSimulated`, and
+    `residualsVsTime`. See [Visualizations with
+    \`DataCombined\`](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined-plotting.html)
+    for details on different plot types. Mandatory.
+
+-   **title**: Title of the plot.
+
+-   **xUnit**, **yUnit**: Units of the x- and y-axis, respectively.
+
+-   **xAxisScale**, **yAxisScale**: Scaling of the axes, `lin` for
+    linear scaling or `log` for logarithmic.
+
+-   **xValuesLimits**, **yValuesLimits**: Limits of x- and y-axis,
+    respectively, in **xUnit** and **yUnit**.
+
+-   **aggregation**: If **plotType** is `population`, this column
+    defines the type of aggregation used for simulated results. Default
+    is `quantiles`, supported values are
+
+```{r}
+ospsuite::DataAggregationMethods
+```
+
+-   **quantiles**: If **plotType** is `population` and **aggregation**
+    is `quantiles`, a list of three numeric values defining which
+    percentiles to draw. Default is `0.05, 0.5, 0.95`, in which case the
+    drawn line represents the median (50th percentile), the lower range
+    is the 5%, and the upper range is the 95%.
+
+-   **foldDistance**: If **plotType** is `observedVsSimulated`, a vector
+    for plotting lines at required fold distances. The vector can
+    include only fold distance values `>1`. An `x`-fold distance is
+    defined as all simulated values within the range between `x`-fold
+    (depicted by the upper fold range line) and `1/x`-fold (depicted by
+    the lower fold range line) of observed values. The identity line can
+    be interpreted as the `1`-fold range.
+
+In addition to the pre-defined columns, the user can add any property of
+a [Plot
+configuration](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DefaultPlotConfiguration.html)
+as a separate column. Here is a sample of the available plot settings:
+
+```{r, echo=FALSE}
+dpc <- DefaultPlotConfiguration$new()
+names(dpc)[!(names(dpc) %in% defaultClassAttributes)][1:15]
+```
+
+For instance, if the subtitle needs to be changed, the user can add a
+column named `subtitle` and fill it with the desired value for each
+plot. Leaving a cell empty will result in the default value being used.
+
+For properties that accept a list of values (e.g. `xAxisLimits`), the
+values should be separated by a `,`. If an entry itself contains a `,`,
+enclose it between parenthesis.
+
+**NOTE:** The plots defined in the **plotConfiguration** sheet are an
+intermediate step in the workflow and will not be directly returned by
+the `createPlotsFromExcel()` function. They must be further encapsulated
+into plot grids (even if only using one single plot).
+
+### Combining Plots {#create-plot-grids}
+
+`plotGrids` are the objects that will be used to draw the plots and are
+defined in the **plotGrids** sheet. The user needs to define a name for
+each **plotGrid**. For a single-panel plot, only one plot must be listed
+in the plotIDs column. To combine multiple plots (which can be of
+different types), the user needs to list all the **plotIDs** separated
+by a `,`.
+
+To customize a plot grid, the user can add any property of a
+[`PlotGridConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
+as a separate column. Here is a sample of the available properties:
+
+```{r, echo=FALSE}
+pgc <- PlotGridConfiguration$new()
+names(pgc)[!(names(pgc) %in% defaultClassAttributes)][1:15]
+```
+
+### Export Plots {#export-plots}
+
+In order to export plots to image files, the user can use the
+**exportConfiguration** sheet. For each **plotGrid** that should be
+exported during the execution of the `createPlotsFromExcel()` function,
+create a new entry. It is mandatory to specify the output file name
+(without file extension such as `.png`). The output can be customized
+using the properties listed in the
+[`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
+class. Here is a sample of the available properties:
+
+```{r, echo=FALSE}
+ec <- ExportConfiguration$new()
+names(ec)[!(names(ec) %in% defaultClassAttributes)][1:5]
+```
+
+## Creating plots
+
+After the plots have been defined in the Excel file as described in the
+section [Plot Definition], the user must generate simulation results and
+load observed data:
 
 ```{r, echo = TRUE, message = FALSE}
 library(esqlabsR)
@@ -50,7 +221,57 @@ dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
 ```
 
-## Create a `DataCombined` object
+In the next step, the user calls the function `createPlotsFromExcel()`,
+passing the generated data:
+
+```{r, echo = TRUE, message = FALSE}
+plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
+                              observedData = observedData,
+                              projectConfiguration = projectConfiguration)
+```
+
+The function returns a named list of `ggplot2` objects, with names being
+the names of the plot grids:
+
+```{r}
+names(plots)
+
+plots[[1]]
+```
+
+By default, the function will try to create all plots defined in the
+**plotGrids** sheet. If any of the simulation results or the observed
+date required by these plots cannot be found, an error is thrown. To
+override this behavior, e.g., to only plot the observed data without
+having the results simulated, change the value of the argument
+`stopIfNotFound` to `FALSE`. You can also specify which plots to create
+with the `plotGridNames` argument.
+
+## Custom plots with `esqlabsR` defaults. {#plotting-with-code}
+
+In some situations, the user needs to draw custom plots while wanting to
+use the default `{esqlabsR}` look and feel.
+
+### Basics of figure creation with `{ospsuite}`
+
+Simulated modeling scenarios can be passed to plotting functions from
+the `{ospsuite}` package to create uniformly-looking plots. To get
+familiar with the `DataCombined` class used to store matching observed
+and simulated data, read the [Working with `DataCombined`
+class](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined.html)
+article. The article [Visualizations with
+`DataCombined`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined-plotting.html)
+covers the basics of creating supported plot types and how to customize
+them.
+
+### Using esqlabsR
+
+#### Example
+
+For the following examples, we will use results created in the section
+above.
+
+#### Create a `DataCombined` object
 
 The simulation results are stored in a list returned by the
 `runScenarios()` function. Plotting and visualization are performed by
@@ -75,7 +296,10 @@ dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
 )
 ```
 
-## Customize and generate plots
+You can also return the `DataCombined` objects defined in the
+`DataCombined` sheet with the function `createDataCombinedFromExcel()`.
+
+#### Customize and generate plots
 
 Customization of the generated figures - specifying title, axes ranges,
 axes units, the position of the legend, etc., are done through *plot
@@ -123,59 +347,60 @@ gridPlot <- plotGrid(gridConfig)
 gridPlot
 ```
 
-## Save Plots
+#### Save Plots
 
 To save the plot to a `PNG` file, use the
 [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html).
 Make sure that the `fileName` argument ends with `.png`:
 
-```{r saveToPng, eval = FALSE}
+```{r saveToPng}
 exportConfig <- createEsqlabsExportConfiguration(projectConfiguration)
 exportConfig$savePlot(gridPlot, fileName = "All plots.png")
 ```
 
-By default, the height of the output figure is calculated from the number of rows 
-in the multi-panel plot and the height defined in `ExportConfiguration$heightPerRow`.
-If you want to define a fixed height with the parameter `ExportConfiguration$height`,
-set `ExportConfiguration$heightPerRow = NULL`.
+By default, the height of the output figure is calculated from the
+number of rows in the multi-panel plot and the height defined in
+`ExportConfiguration$heightPerRow`. If you want to define a fixed height
+with the parameter `ExportConfiguration$height`, set
+`ExportConfiguration$heightPerRow = NULL`.
 
-## Details
+## Observed Data {#observed-data}
 
-### Observed Data
-
-The modeling and simulation workflow involves running simulations and
-comparing simulated data against observed data. Functionalities of
-`esqlabsR` require observed data to be present as
+Functionalities of `esqlabsR` require observed data to be present as
 [`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
 objects. Please refer to the article [Observed
 data](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html)
 for information on loading data from Excel or `*.pkml` files.
-
 `{esqlabsR}` offers a convenience function `loadObservedData()` that
-facilitates loading data in standard *esqLABS* projects. Assuming the
-standard project folder structure is followed, and a valid
-`ProjectConfiguration` (see [Standard workflow](standard-workflow.html))
-and Excel files with observed data are present in the
-`projectConfiguration$dataFolder` folder, the following code loads the
-data:
+facilitates loading data in `esqLABS` projects. Assuming the standard
+project folder structure is followed, and a valid `ProjectConfiguration`
+(see [Standard workflow](standard-workflow.html)) and Excel files with
+observed data are present in the `projectConfiguration$dataFolder`
+folder, the following code loads the data:
 
 ```{r loadObservedData}
+
 projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
+
 dataSheets <- "Laskin 1982.Group A"
+
 observedData <- loadObservedData(
+
   projectConfiguration = projectConfiguration,
+
   sheets = dataSheets
+
 )
 
 print(names(observedData))
+
 ```
 
 The function loads the data from the file
 `projectConfiguration$dataFile` from the folder
-`projectConfiguration$dataFolder` and returns a list of `DataSet`
-objects. The resulting object will be used later to [plot
-results](example-visualization.html) to compare simulated and observed
-data.
+`projectConfiguration$dataFolder` and returns a list of
+`DataSet`objects. The resulting object can be used to plot results to
+compare simulated and observed data.
 
 -   The `sheets` argument of the `loadObservedData()` function should be
     a string or a list of strings. If a specified sheet is not found in
@@ -186,11 +411,7 @@ data.
     missing in the filesystem, the `loadObservedData()` function will
     fail with an `Invalid File` message.
 
-### Troubleshooting
-
--   At any time, you can check the groups assigned to the datasets in
-    the `DataCombined` object by calling the `DataCombined$groupMap` or
-    by examining the output of `dataCombined$toDataFrame()`.
+## External sources
 
 More detailed information on function signatures can be found in the
 following:
@@ -216,17 +437,3 @@ following:
     -   [`PlotGridConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
     -   [`plotGrid()`](https://www.open-systems-pharmacology.org/TLF-Library/reference/plotGrid.html)
     -   [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
-
-<!-- ### Troubleshooting -->
-
-<!-- More detailed information on function signatures can be found in: -->
-
-<!-- -   `esqlabsR` documentation on: -->
-
-<!-- -   [createDefaultProjectConfiguration()](https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html) -->
-
-<!-- -   [ProjectConfiguration class](https://esqlabs.github.io/esqlabsR/reference/ProjectConfiguration.html) -->
-
-<!-- -   [loadObservedData()](https://esqlabs.github.io/esqlabsR/reference/loadObservedData.html) -->
-
-<!-- -   `ospsuite` documentation on: -->
