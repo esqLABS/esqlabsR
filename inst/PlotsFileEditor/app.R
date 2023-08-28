@@ -4,6 +4,7 @@ library(esqlabsR)
 library(shiny)
 library(shinydashboard)
 library(shinydashboardPlus)
+library(rhandsontable)
 
 #---------- User interface ----------#
 ui <- dashboardPage(
@@ -27,6 +28,11 @@ ui <- dashboardPage(
       br(),
       fluidRow(
         column(4, actionButton("saveNew", "Save as new file"))
+      ),
+      br(),
+      fluidRow(
+        column(5, selectInput("sheetsToLoad", label = "Observed data sheets to load:", choices = NULL, multiple = TRUE)),
+        column(3, div(style = "margin-top: 25px;", actionButton("loadDataSets", "Load observed data")))
       )
     ),
     tabBox(
@@ -79,8 +85,8 @@ ui <- dashboardPage(
           column(2, textInput("plotID", label = "plotID")),
           column(2, selectizeInput("PlotDataCombined", label = "DataCombinedName", choices = "")),
           column(2, selectInput("plotType",
-            label = "plotType",
-            choices = c("individual", "population", "observedVsSimulated", "residualsVsSimulated", "residualsVsTime")
+                                label = "plotType",
+                                choices = c("individual", "population", "observedVsSimulated", "residualsVsSimulated", "residualsVsTime")
           )),
           column(2, textInput("plotTitle", label = "title")),
           column(2, selectizeInput("xUnit", label = "xUnit", choices = c("", unname(purrr::list_flatten(ospUnits))))),
@@ -123,8 +129,10 @@ ui <- dashboardPage(
     ),
     box(
       width = 12,
-      div(style = "overflow-x:scroll;",
-          tableOutput("currentSheet"))
+      # div(
+      # style = "overflow-x:scroll;",
+      rHandsontableOutput("currentSheet")
+      # )
     )
   )
 )
@@ -133,6 +141,7 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
   r <- reactiveValues()
   r$projConfigFileMessage <- "No project configuration selected"
+  r$currentTab <- "DataCombined"
 
   ######## FILE IMPORT ###########
 
@@ -143,7 +152,8 @@ server <- function(input, output, session) {
         r$newConfigFile <- file.choose()
       },
       error = function(cond) {
-        r$projConfigFileMessage <- "No project configuration selected"
+        # r$projConfigFileMessage <- "No project configuration selected"
+        showNotification(ui = "No project configuration selected")
         return(NULL)
       }
     )
@@ -156,11 +166,12 @@ server <- function(input, output, session) {
         loadProjectConfiguration(r)
       },
       error = function(cond) {
-        showNotification(ui = paste(cond))
-        return(NULL)
+        showNotification(ui = "Loading project configuration caused an error, no new configuration loaded.", duration = NULL)
+        showNotification(ui = cond$message, duration = NULL)
       },
       warning = function(cond) {
-        showNotification(ui = "Loading project configuration caused a warning, no new configuration loaded.")
+        showNotification(ui = "Loading project configuration caused a warning, no new configuration loaded.", duration = NULL)
+        showNotification(ui = cond$message, duration = NULL)
       }
     )
   })
@@ -181,9 +192,12 @@ server <- function(input, output, session) {
     # Load plotFile
     if (file.exists(r$plotFile)) {
       r$plotsFileMessage <- paste(" Current plotsFile:", r$plotFile)
-      r$dfDataCombined <- readExcel(r$plotFile, sheet = "DataCombined")
-      r$dfPlots <- readExcel(r$plotFile, sheet = "plotConfiguration")
-      r$dfPlotGrids <- readExcel(r$plotFile, sheet = "plotGrids")
+      r$dfDataCombined <- readExcel(r$plotFile, sheet = "DataCombined", col_types = "text")
+      r$dfPlots <- readExcel(r$plotFile, sheet = "plotConfiguration", col_types = "text")
+      r$dfPlotGrids <- readExcel(r$plotFile, sheet = "plotGrids", col_types = "text")
+      # r$dfDataCombined <- rhandsontable(readExcel(r$plotFile, sheet = "DataCombined"))
+      # r$dfPlots <- rhandsontable(readExcel(r$plotFile, sheet = "plotConfiguration"))
+      # r$dfPlotGrids <- rhandsontable(readExcel(r$plotFile, sheet = "plotGrids"))
     } else {
       r$plotsFileMessage <- paste(" No plotsFile defined in current project configuration")
       r$plotFile <- NULL
@@ -202,19 +216,9 @@ server <- function(input, output, session) {
     dataFile <- r$newProjectConfiguration$dataFile
     dataImporterConfigurationFile <- r$newProjectConfiguration$dataImporterConfigurationFile
     if (file.exists(dataFile) & file.exists(dataImporterConfigurationFile)) {
-      tryCatch(
-        {
-          r$datasets <- ospsuite::loadDataSetsFromExcel(
-            xlsFilePath = dataFile,
-            importerConfigurationOrPath = dataImporterConfigurationFile,
-            # currently all sheets will be loaded
-            importAllSheets = TRUE
-          )
-        },
-        error = function(cond) {
-          return()
-        }
-      )
+      # get names of sheets and update input for choosing which to load
+      sheets <- readxl::excel_sheets(dataFile)
+      updateSelectInput(session, inputId = "sheetsToLoad", choices = sheets)
     }
   }
 
@@ -231,19 +235,20 @@ server <- function(input, output, session) {
 
       newRow <- data.frame(
         DataCombinedName = input$DataCombinedName,
-        dataType = input$dataType,
-        label = input$label,
+        dataType = input$dataType, label = input$label,
         scenario = input$scenario,
-        path = input$path, group = input$group
+        path = input$path, group = input$group,
+        xOffsets = input$xOffsets, yOffsets = input$yOffsets,
+        xScaleFactors = input$xScaleFactors, yScaleFactors = input$yScaleFactors
       )
     } else {
       req(input$dataSet)
       newRow <- data.frame(
         DataCombinedName = input$DataCombinedName,
-        dataType = input$dataType,
-        label = input$label,
-        dataSet = input$dataSet,
-        group = input$group
+        dataType = input$dataType, label = input$label,
+        dataSet = input$dataSet, group = input$group,
+        xOffsets = input$xOffsets, yOffsets = input$yOffsets,
+        xScaleFactors = input$xScaleFactors, yScaleFactors = input$yScaleFactors
       )
     }
 
@@ -411,6 +416,18 @@ server <- function(input, output, session) {
   observeEvent(input$save, {
     tryCatch(
       {
+        # save changes in current sheet/rhandsontable first
+        switch(r$currentTab,
+               DataCombined = {
+                 r$dfDataCombined <- hot_to_r(input$currentSheet)
+               },
+               plotConfiguration = {
+                 r$dfPlots <- hot_to_r(input$currentSheet)
+               },
+               plotGrids = {
+                 r$dfPlotGrids <- hot_to_r(input$currentSheet)
+               }
+        )
         writeExcel(list(
           "DataCombined" = r$dfDataCombined,
           "plotConfiguration" = r$dfPlots,
@@ -420,6 +437,7 @@ server <- function(input, output, session) {
       },
       error = function(cond) {
         warning(cond$message)
+        showNotification(ui = cond$message)
         showNotification(ui = "plotsFile could not be saved")
       }
     )
@@ -429,6 +447,18 @@ server <- function(input, output, session) {
   observeEvent(input$saveNew, {
     tryCatch(
       {
+        # save changes in current sheet/rhandsontable first
+        switch(r$currentTab,
+               DataCombined = {
+                 r$dfDataCombined <- hot_to_r(input$currentSheet)
+               },
+               plotConfiguration = {
+                 r$dfPlots <- hot_to_r(input$currentSheet)
+               },
+               plotGrids = {
+                 r$dfPlotGrids <- hot_to_r(input$currentSheet)
+               }
+        )
         writeExcel(list(
           "DataCombined" = r$dfDataCombined %||% data.frame(),
           "plotConfiguration" = r$dfPlots %||% data.frame(),
@@ -438,6 +468,7 @@ server <- function(input, output, session) {
       },
       error = function(cond) {
         warning(cond$message)
+        showNotification(ui = cond$message)
         showNotification(ui = "New file could not be created")
       }
     )
@@ -493,8 +524,33 @@ server <- function(input, output, session) {
     updateSelectizeInput(session, "dataSet", choices = choices, options = list(create = TRUE))
   })
 
+  # load observed data, only chosen sheets
+  observeEvent(input$loadDataSets, {
+    req(r$newProjectConfiguration)
 
-  # Able/Disable some fields depending on dataType input
+    dataImporterConfiguration <- ospsuite::loadDataImporterConfiguration(r$newProjectConfiguration$dataImporterConfigurationFile)
+    dataImporterConfiguration$sheets <- input$sheetsToLoad
+    tryCatch(
+      {
+        r$dataSets <- ospsuite::loadDataSetsFromExcel(
+          xlsFilePath = r$newProjectConfiguration$dataFile,
+          importerConfigurationOrPath = dataImporterConfiguration
+        )
+      },
+      error = function(cond) {
+        warning(cond$message)
+        showNotification(ui = "No data loaded.", duration = NULL)
+        showNotification(ui = HTML(paste(capture.output(cat(cond$message)), collapse = "<br/>")), duration = NULL)
+      },
+      warning = function(cond) {
+        warning(cond$message)
+        showNotification(ui = "No data loaded.", duration = NULL)
+        showNotification(ui = HTML(paste(capture.output(cat(cond$message)), collapse = "<br/>")), duration = NULL)
+      }
+    )
+  })
+
+  # Enable/Disable some fields depending on dataType input
   observeEvent(input$dataType, {
     output$infoAddData <- NULL
     # enable fields 'scenario' and 'path', disable 'dataSet' for simulated data
@@ -553,14 +609,53 @@ server <- function(input, output, session) {
     }
   })
 
+  # when changing tabs: save changes made in the previous sheet/dataframe to
+  # corresponding reactive value
+  observeEvent(input$tabset1, {
+    r$previousTab <- r$currentTab
+    switch(r$previousTab,
+           DataCombined = {
+             r$dfDataCombined <- hot_to_r(input$currentSheet)
+           },
+           plotConfiguration = {
+             r$dfPlots <- hot_to_r(input$currentSheet)
+           },
+           plotGrids = {
+             r$dfPlotGrids <- hot_to_r(input$currentSheet)
+           }
+    )
+    r$currentTab <- input$tabset1
+  })
 
   # OUTPUTS
-  output$currentSheet <- renderTable({
-    switch(input$tabset1,
-      DataCombined = r$dfDataCombined,
-      plotConfiguration = r$dfPlots,
-      plotGrids = r$dfPlotGrids
-    )
+  # render the sheet which is currently edited - DataCombined, plots or plotGrids
+  output$currentSheet <- renderRHandsontable({
+    req(r$currentTab)
+    switch(r$currentTab,
+           DataCombined = {
+             if (!is.null(r$dfDataCombined)) {
+               rhandsontable(r$dfDataCombined, height = 300)
+             } else {
+               return()
+             }
+           },
+           plotConfiguration = {
+             if (!is.null(r$dfPlots)) {
+               rhandsontable(r$dfPlots, height = 300)
+             } else {
+               return()
+             }
+           },
+           plotGrids = {
+             if (!is.null(r$dfPlotGrids)) {
+               rhandsontable(r$dfPlotGrids, height = 300)
+             } else {
+               return()
+             }
+           }
+    ) %>%
+      # enable column sorting, reordering and resizing
+      hot_cols(columnSorting = TRUE, manualColumnMove = TRUE, manualColumnResize = TRUE)
   })
 
   # Display a message describing imported file status
