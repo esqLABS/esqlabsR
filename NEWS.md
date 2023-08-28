@@ -1,6 +1,8 @@
 # esqlabsR (development version)
 
 - New vignette/article about figure creation.
+- Plots are using new color palette.
+- Some modifications to plot configuration files for better plots.
 
 # BREAKING CHANGE
 - When importing observed data using the default importer configuration, data 
@@ -23,32 +25,28 @@ with the old naming:
 
 - `loadObservedData()` gets a new argument `importerConfiguration`. The user can
 now provide a custom importer configuration for loading the data.
-- Plots are using new color palette
-- Some modifications to plot configuration files for better plots
 - Plots.xlsx, sheet 'plotConfiguration', now uses `xValuesLimits` and `yValuesLimits`
 to set axis limits of the plots by default. This approach filters data outside of the
 limits. See https://ggplot2.tidyverse.org/reference/coord_cartesian.html#ref-examples for 
 more details. The user can still use `xAxisLimits` and `yAxisLimits`.
-
-- Protein ontogenies can be defined for populations and individuals. To specify ontogenies for 
-proteins in the simulation, list the proteins you want to define ontogenies for 
-in the column 'Protein' of files 'PopulationParameters.xlsx' or 'Individuals.xlsx', separated by a ','. Speficy the ontogenies available in PK-Sim (see article https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies) in the column 'Ontogenies'. The number of entries in the  both columns must be equal.
 
 - Sheet 'plotConfiguration' in the Excel file 'Plots' gets additional column 'aggregation'. The value is passed to
 the function `plotPopulationTimeProfile()`. Supported values are listed in `ospsuite::DataAggregationMethods`.
   - `arithmetic`: population results are plotted as arithmetic mean +- arithmetic standard deviation
   - `geometric`: population results are plotted as geometric mean +- geometric standard deviation
   - `quantiles` (default): population results are plotted as quantiles defined in the column `quantiles`.
+
+- Protein ontogenies can be defined for populations and individuals. To specify ontogenies for 
+proteins in the simulation, list the proteins you want to define ontogenies for 
+in the column 'Protein' of files 'PopulationParameters.xlsx' or 'Individuals.xlsx', separated by a ','. Speficy the ontogenies available in PK-Sim (see article https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies) in the column 'Ontogenies'. The number of entries in the  both columns must be equal.
 - Excel file 'PopulationParameters.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
 - Excel file 'Individuals.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
 
-- Throw a warning instead of an error if a path specified in `ProjectConfiguration` does not exist. `$outputFolder` existence is not checked anymore.
-
+### MINOR CHANGES
 - When a scenario fails, `runScenarios()` does not crash any more, but a
 warning is shown with the name of the failed scenario. The returned `outputValues` 
 is `NULL`.
-
-### MINOR CHANGES
+- Throw a warning instead of an error if a path specified in `ProjectConfiguration` does not exist. `$outputFolder` existence is not checked anymore.
 - `stringToNum()` does not show a warning `NAs introduced by coercion` when a value 
 cannot be converted to a numeric any more. For such values, `NA` is silently returned.
 
