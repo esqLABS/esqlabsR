@@ -33,23 +33,8 @@ yaml::write_yaml(appveyor_config, file = "appveyor.yml")
 desc::desc_clear_remotes()
 
 desc::desc_set_remotes(
-  # When latest released version of dependencies contains all necessary features, use url::
-
-  # Open the folowing links and copy/paste the url to the .tar.gz files
-  # available in the "Assets" section.
-  #   - https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/latest
-  #   - https://github.com/Open-Systems-Pharmacology/TLF-library/releases/latest
-  #   - https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/latest
-  #   - https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/releases/latest
-
-  # c(
-  #   "url::https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.4.23/ospsuite.utils_1.4.23.tar.gz",
-  #   "url::https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.5.125/tlf_1.5.125.tar.gz",
-  #   "url::https://github.com/Open-Systems-Pharmacology/OSPSuite-R/archive/refs/tags/v11.2.251.tar.gz",
-  #   "url::https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/releases/download/v1.1.0/ospsuite.parameteridentification_1.1.0.9002.tar.gz"
-  # )
-
-  # When necessary features are not available in release versions of dependencies, use commit id
+  # Update the commits id after the `@` in the folowing vector with the latest
+  # commits identifiers that passed checks in main development branches
   c(
     "Open-Systems-Pharmacology/OSPSuite.RUtils@aa497333f5d1c2e7c1ba2787fbc5a4a517008936",
     "Open-Systems-Pharmacology/TLF-Library@d206f8519891df0e3717c91aa4e796903812e3d0",
@@ -57,6 +42,13 @@ desc::desc_set_remotes(
     "Open-Systems-Pharmacology/ospsuite.parameteridentification@c5c6975519afe5cf4d0176bc51301499c546e27e"
   )
 )
+
+# Make sure you install these versions of the dependencies and run the tests using:
+# restart session
+#   devtools::install_local(dependencies = TRUE)
+#   devtools::test()
+# If all tests are ok, you can proceed.
+
 
 gert::git_add(files = "appveyor.yml")
 gert::git_add(files = "release-process.R")
