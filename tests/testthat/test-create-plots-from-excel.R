@@ -27,7 +27,6 @@ simulatedScenarios <- runScenarios(
 importerConfiguration <- ospsuite::loadDataImporterConfiguration(
   configurationFilePath = projectConfiguration$dataImporterConfigurationFile
 )
-importerConfiguration$namingPattern <- "{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"
 
 # Load observed data
 dataSheets <- "Laskin 1982.Group A"
