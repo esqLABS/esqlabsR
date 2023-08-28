@@ -101,7 +101,17 @@ appveyor_config <- yaml::read_yaml(file = "appveyor.yml")
 
 appveyor_config$environment$app_version <- dev_version
 
+# Make sure branches$only is a list so the right format is kept when writing
+# the yml file.
+if (is.character(appveyor_config$branches$only)) {
+  appveyor_config$branches$only <- list(appveyor_config$branches$only)
+}
+
 yaml::write_yaml(appveyor_config, file = "appveyor.yml")
+
+gert::git_add(files = "appveyor.yml")
+gert::git_commit("update version in appveyor config file")
+
 
 # Update DESCRIPTION
 ## Update OSPS dependencies remotes to latest development versions
