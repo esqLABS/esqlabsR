@@ -115,6 +115,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-createConfigurationFromRow.html</loc>
   </url>
   <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-readOntongeniesFromXLS.html</loc>
+  </url>
+  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-setApplicationFromExcel.html</loc>
   </url>
   <url>
@@ -158,6 +161,9 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/executeInParallel.html</loc>
+  </url>
+  <url>
+    <loc>https://esqlabs.github.io/esqlabsR/reference/ExportConfiguration.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/exportParametersToXLS.html</loc>
