@@ -1,4 +1,4 @@
-# esqlabsR (development version)
+# esqlabsR 5.1.0
 
 - New vignette/article about figure creation.
 - Plots are using new color palette.

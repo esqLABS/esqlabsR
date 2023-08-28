@@ -17,6 +17,12 @@ appveyor_config <- yaml::read_yaml(file = "appveyor.yml")
 
 appveyor_config$environment$app_version <- new_version
 
+# Make sure branches$only is a list so the right format is kept when writing
+# the yml file.
+if (is.character(appveyor_config$branches$only)) {
+  appveyor_config$branches$only <- list(appveyor_config$branches$only)
+}
+
 yaml::write_yaml(appveyor_config, file = "appveyor.yml")
 
 
@@ -27,30 +33,26 @@ yaml::write_yaml(appveyor_config, file = "appveyor.yml")
 desc::desc_clear_remotes()
 
 desc::desc_set_remotes(
-  # When latest released version of dependencies contains all necessary features, use url::
-
-  # Open the folowing links and copy/paste the url to the .tar.gz files
-  # available in the "Assets" section.
-  #   - https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/latest
-  #   - https://github.com/Open-Systems-Pharmacology/TLF-library/releases/latest
-  #   - https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases/latest
-  #   - https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/releases/latest
-
-  # c(
-  #   "url::https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils/releases/download/v1.4.23/ospsuite.utils_1.4.23.tar.gz",
-  #   "url::https://github.com/Open-Systems-Pharmacology/TLF-Library/releases/download/v1.5.125/tlf_1.5.125.tar.gz",
-  #   "url::https://github.com/Open-Systems-Pharmacology/OSPSuite-R/archive/refs/tags/v11.2.251.tar.gz",
-  #   "url::https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/releases/download/v1.1.0/ospsuite.parameteridentification_1.1.0.9002.tar.gz"
-  # )
-
-  # When necessary features are not available in release versions of dependencies, use commit id
+  # Update the commits id after the `@` in the folowing vector with the latest
+  # commits identifiers that passed checks in main development branches
   c(
-    "Open-Systems-Pharmacology/OSPSuite.RUtils@88152af44e32e714a1d5c80237c239105ed85120",
-    "Open-Systems-Pharmacology/TLF-Library@03e1acfc38c283536e1841b681a04f2eb42e08f9",
-    "Open-Systems-Pharmacology/OSPSuite-R@7e08e5603982f11ae72d5c8998f3d998e8a37650",
-    "Open-Systems-Pharmacology/ospsuite.parameteridentification"
-    )
+    "Open-Systems-Pharmacology/OSPSuite.RUtils@aa497333f5d1c2e7c1ba2787fbc5a4a517008936",
+    "Open-Systems-Pharmacology/TLF-Library@d206f8519891df0e3717c91aa4e796903812e3d0",
+    "Open-Systems-Pharmacology/OSPSuite-R@b191bc7178285b3b0ac3d0cb5f7956c87e6d96bd",
+    "Open-Systems-Pharmacology/ospsuite.parameteridentification@c5c6975519afe5cf4d0176bc51301499c546e27e"
+  )
 )
+
+# Make sure you install these versions of the dependencies and run the tests using:
+# restart session
+#   devtools::install_local(dependencies = TRUE)
+#   devtools::test()
+# If all tests are ok, you can proceed.
+
+
+gert::git_add(files = "appveyor.yml")
+gert::git_add(files = "release-process.R")
+gert::git_commit("update version in appveyor config and dependencies' commit references")
 
 ## Update Version string (accept commit suggestion)
 usethis::use_version(which = labels(new_version))

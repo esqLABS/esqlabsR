@@ -13,7 +13,7 @@ environment:
   R_ARCH: x64
   KEEP_VIGNETTES: 'true'
   NOT_CRAN: 'true'
-  app_version: 5.0.0.9000
+  app_version: 5.1.0
 version: $(app_version)-{build}
 before_build: rake "prepare_for_build[%APPVEYOR_BUILD_VERSION%]"
 platform: x64

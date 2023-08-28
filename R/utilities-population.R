@@ -210,6 +210,7 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 #' @param data Data from from excel file containing columns 'Protein' and
 #' 'Ontogeny'
 #'
+#' @keywords internal
 #' @return A list of `MoleculeOntogeny` objects
 .readOntongeniesFromXLS <- function(data) {
   # Read columns 'Ontogeny' and 'Protein'
