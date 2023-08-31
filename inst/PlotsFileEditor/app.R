@@ -152,7 +152,6 @@ server <- function(input, output, session) {
         r$newConfigFile <- file.choose()
       },
       error = function(cond) {
-        # r$projConfigFileMessage <- "No project configuration selected"
         showNotification(ui = "No project configuration selected")
         return(NULL)
       }
@@ -195,9 +194,6 @@ server <- function(input, output, session) {
       r$dfDataCombined <- readExcel(r$plotFile, sheet = "DataCombined", col_types = "text")
       r$dfPlots <- readExcel(r$plotFile, sheet = "plotConfiguration", col_types = "text")
       r$dfPlotGrids <- readExcel(r$plotFile, sheet = "plotGrids", col_types = "text")
-      # r$dfDataCombined <- rhandsontable(readExcel(r$plotFile, sheet = "DataCombined"))
-      # r$dfPlots <- rhandsontable(readExcel(r$plotFile, sheet = "plotConfiguration"))
-      # r$dfPlotGrids <- rhandsontable(readExcel(r$plotFile, sheet = "plotGrids"))
     } else {
       r$plotsFileMessage <- paste(" No plotsFile defined in current project configuration")
       r$plotFile <- NULL
