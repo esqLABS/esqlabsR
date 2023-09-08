@@ -10,7 +10,12 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.asp = 0.618,
+  out.width = "100%",
+  message = FALSE,
+  warning = FALSE
 )
 
 defaultClassAttributes <- c("initialize", "clone", "print", ".__enclos_env__")
@@ -201,7 +206,7 @@ After the plots have been defined in the Excel file as described in the
 section [Plot Definition], the user must generate simulation results and
 load observed data:
 
-```{r, echo = TRUE, message = FALSE}
+```{r, echo = TRUE}
 library(esqlabsR)
 # Create a project configuration
 projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
@@ -224,7 +229,7 @@ observedData <- loadObservedData(projectConfiguration = projectConfiguration, sh
 In the next step, the user calls the function `createPlotsFromExcel()`,
 passing the generated data:
 
-```{r, echo = TRUE, message = FALSE}
+```{r, echo = TRUE}
 plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
                               observedData = observedData,
                               projectConfiguration = projectConfiguration)
@@ -235,8 +240,15 @@ the names of the plot grids:
 
 ```{r}
 names(plots)
+```
 
-plots[[1]]
+
+```{r}
+plots$Aciclovir
+```
+
+```{r}
+plots$Aciclovr2
 ```
 
 By default, the function will try to create all plots defined in the
@@ -247,7 +259,7 @@ having the results simulated, change the value of the argument
 `stopIfNotFound` to `FALSE`. You can also specify which plots to create
 with the `plotGridNames` argument.
 
-## Custom plots with `esqlabsR` defaults. {#plotting-with-code}
+## Custom plots with `esqlabsR` defaults {#plotting-with-code}
 
 In some situations, the user needs to draw custom plots while wanting to
 use the default `{esqlabsR}` look and feel.
@@ -325,7 +337,7 @@ refer to the
 The next example shows how to create a multi-panel figure using the
 default configurations.
 
-```{r plot-time-profile, fig.width=7, fig.height=7}
+```{r plot-time-profile, fig.asp=1}
 plotConfig <- createEsqlabsPlotConfiguration()
 gridConfig <- createEsqlabsPlotGridConfiguration()
 

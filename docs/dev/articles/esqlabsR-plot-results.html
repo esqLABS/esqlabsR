@@ -322,10 +322,13 @@ must generate simulation results and load observed data:</p>
 with names being the names of the plot grids:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Aciclovir" "Aciclovr2"</span></span>
-<span></span>
-<span><span class="va">plots</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
-<p><img src="esqlabsR-plot-results_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<span><span class="co">#&gt; [1] "Aciclovir" "Aciclovr2"</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plots</span><span class="op">$</span><span class="va">Aciclovir</span></span></code></pre></div>
+<p><img src="esqlabsR-plot-results_files/figure-html/unnamed-chunk-9-1.png" width="100%"></p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plots</span><span class="op">$</span><span class="va">Aciclovr2</span></span></code></pre></div>
+<p><img src="esqlabsR-plot-results_files/figure-html/unnamed-chunk-10-1.png" width="100%"></p>
 <p>By default, the function will try to create all plots defined in the
 <strong>plotGrids</strong> sheet. If any of the simulation results or
 the observed date required by these plots cannot be found, an error is
@@ -375,8 +378,8 @@ methods. Data sets of the same group will then be plotted together when
 calling plotting functions on the <code>DataCombined</code> object.</p>
 <p>Let’s create a <code>DataCombined</code> object and populate it with
 data with the following code:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">dataCombined</span> <span class="op">&lt;-</span> <span class="va">DataCombined</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dataCombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observedData</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
 <span>  names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
@@ -394,7 +397,7 @@ ranges, axes units, the position of the legend, etc., are done through
 <em>plot configurations</em> - objects of the class <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html" class="external-link"><code>DefaultPlotConfiguration</code></a>.
 To combine multiple plots into a multi-panel figure, create a
 <code>PlotGridConfiguration</code> object, add plots to it, and plot
-with the <code>plotGrid()</code> method. Finally, to export a plot to a
+with the <code><a href="https://rdrr.io/pkg/tlf/man/plotGrid.html" class="external-link">plotGrid()</a></code> method. Finally, to export a plot to a
 file (e.g., <code>PNG</code> or <code>PDF</code>), use an
 <code>ExportConfiguration</code> object.</p>
 <p>To use configurations with a similar look and feel in the different
@@ -409,27 +412,27 @@ following functions:</p>
 <code>PlotGirdConfiguration</code>, refer to the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link">reference</a></p>
 <p>The next example shows how to create a multi-panel figure using the
 default configurations.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plotConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">gridConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Time profile"</span></span>
-<span><span class="va">indivPlot</span> <span class="op">&lt;-</span> <span class="fu">plotIndividualTimeProfile</span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">indivPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Observed-vs-simulated"</span></span>
-<span><span class="va">obsVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu">plotObservedVsSimulated</span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">obsVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Res-vs-time"</span></span>
-<span><span class="va">resVsTimePlot</span> <span class="op">&lt;-</span> <span class="fu">plotResidualsVsTime</span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">resVsTimePlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html" class="external-link">plotResidualsVsTime</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Res-vs-simulated"</span></span>
-<span><span class="va">resVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu">plotResidualsVsSimulated</span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">resVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html" class="external-link">plotResidualsVsSimulated</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gridConfig</span><span class="op">$</span><span class="fu">addPlots</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">indivPlot</span>, <span class="va">obsVsSimPlot</span>, <span class="va">resVsTimePlot</span>, <span class="va">resVsSimPlot</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">gridConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"All aciclovir plots"</span></span>
-<span><span class="va">gridPlot</span> <span class="op">&lt;-</span> <span class="fu">plotGrid</span><span class="op">(</span><span class="va">gridConfig</span><span class="op">)</span></span>
+<span><span class="va">gridPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/tlf/man/plotGrid.html" class="external-link">plotGrid</a></span><span class="op">(</span><span class="va">gridConfig</span><span class="op">)</span></span>
 <span><span class="va">gridPlot</span></span></code></pre></div>
-<p><img src="esqlabsR-plot-results_files/figure-html/plot-time-profile-1.png" width="672"></p>
+<p><img src="esqlabsR-plot-results_files/figure-html/plot-time-profile-1.png" width="100%"></p>
 </div>
 <div class="section level4">
 <h4 id="save-plots">Save Plots<a class="anchor" aria-label="anchor" href="#save-plots"></a>
@@ -437,7 +440,7 @@ default configurations.</p>
 <p>To save the plot to a <code>PNG</code> file, use the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link"><code>ExportConfiguration</code></a>.
 Make sure that the <code>fileName</code> argument ends with
 <code>.png</code>:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
 <span><span class="va">exportConfig</span><span class="op">$</span><span class="fu">savePlot</span><span class="op">(</span><span class="va">gridPlot</span>, fileName <span class="op">=</span> <span class="st">"All plots.png"</span><span class="op">)</span></span></code></pre></div>
 <p>By default, the height of the output figure is calculated from the
@@ -463,7 +466,7 @@ structure is followed, and a valid <code>ProjectConfiguration</code>
 files with observed data are present in the
 <code>projectConfiguration$dataFolder</code> folder, the following code
 loads the data:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
