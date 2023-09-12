@@ -36,9 +36,9 @@ desc::desc_set_remotes(
   # Update the commits id after the `@` in the folowing vector with the latest
   # commits identifiers that passed checks in main development branches
   c(
-    "Open-Systems-Pharmacology/OSPSuite.RUtils@29774ff2de9f9a19eeae3377cab448e69f6f5252",
+    "Open-Systems-Pharmacology/OSPSuite.RUtils@8790585c38ed02710a918738866c164621bc2ce2",
     "Open-Systems-Pharmacology/TLF-Library@bfce0e5bb7bb19db0b114d4bcd408eb2d94197e1",
-    "Open-Systems-Pharmacology/OSPSuite-R@f621ced968a2f7cf83529118eea9f9f088d17da1",
+    "Open-Systems-Pharmacology/OSPSuite-R@55531ffb8d1b9a20fca533fa89909db50cff0b0b",
     "Open-Systems-Pharmacology/ospsuite.parameteridentification@7bd8b45ca02235b61a74c6997bb9ac7031500115"
   )
 )
