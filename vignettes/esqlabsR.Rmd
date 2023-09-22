@@ -94,6 +94,13 @@ Scenario definitions file name: Parameters/Scenarios.xlsx
 Note that the `ProjectConfiguration` stores paths to other files that
 are used in the project.
 
+To create an example `ProjectConfiguration`  and execute the rest of this tutorial,
+run the following:
+
+```{r, warning=FALSE, message = FALSE}
+my_project_configuration <- createDefaultProjectConfiguration(path = example_ProjectConfiguration())
+```
+
 ## Design Scenarios
 
 Now that the project's file structure is ready, the next step is to run
@@ -143,9 +150,6 @@ Once all the scenario properties are set up in the excel files, we can
 import `ScenarioConfiguration` using `readScenarioConfigurationFromExcel()` and create 
 `Scenario` objects with `createScenarios()`:
 
-```{r, echo=FALSE, warning=FALSE, message = FALSE}
-my_project_configuration <- createDefaultProjectConfiguration(path = example_ProjectConfiguration())
-```
 
 ```{r}
 my_scenarios <- createScenarios(

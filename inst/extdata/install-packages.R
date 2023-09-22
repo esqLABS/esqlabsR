@@ -87,7 +87,7 @@ get_esqlabsR <- function(){
                    type = "binary",
                    quiet = TRUE
   )
-  remotes::install_github("esqLABS/esqlabsR",
+  remotes::install_github("esqLABS/esqlabsR@*release",
                  quiet = TRUE,
                  build = TRUE
   )

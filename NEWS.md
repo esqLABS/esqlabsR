@@ -1,5 +1,9 @@
 # esqlabsR (development version)
 
+# esqlabsR 5.1.1
+
+- Update required dependencies versions
+
 # esqlabsR 5.1.0
 
 - New vignette/article about figure creation.
