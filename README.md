@@ -12,29 +12,33 @@ status](https://ci.appveyor.com/api/projects/status/github/esqlabs/esqlabsr?bran
 <!-- badges: end -->
 
 The `{esqlabsR}` package facilitates and standardizes the modeling and
-simulation of physiologically based kinetic (PBK) and quantitative
-systems pharmacology/toxicology (QSP/T) models implemented in the [Open
-Systems Pharmacology
-Software](https://www.open-systems-pharmacology.org/) (OSPS).
+simulation of physiologically based kinetic (PBK) and quantitative systems
+pharmacology/toxicology (QSP/T) models implemented in the [Open Systems
+Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS).
 
-The `{esqlabsR}` package is designed for PBK modelers who use the OSPS
-suite. By using this package, you can streamline your modeling and
-simulation (M&S) workflow and ensure standardized and reproducible
-practices.
+The `{esqlabsR}` package is designed for PBK modelers who use the OSPS suite. By
+using this package, you can streamline your modeling and simulation (M\&S)
+workflow and ensure standardized and reproducible practices.
 
 The package provides functions to:
 
-- Design, import and run Simulations,
-- Generate standardized plots and other reporting materials,
-- Interact with the OSPS features using simple Excel files.
+  - Design, import and run Simulations,
+  - Generate standardized plots and other reporting materials,
+  - Interact with the OSPS features using simple Excel files.
 
 To get started with the esqlabsR package, please read the
 `vignette("esqlabsR")`.
 
+## Prerequisite
+
+In order to use `{esqlabsR}`, an installation of
+[PK-Sim](https://github.com/Open-Systems-Pharmacology/PK-Sim) is required.
+Follow `vignette("install-pksim")` for instructions.
+
 ## Installation
 
-Currently, esqlabsR is available only for Windows system. You can
-install the package by running:
+Currently, `{esqlabsR}` is available only for Windows system. You can install
+the package by running:
 
 ``` r
 # {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on
@@ -55,6 +59,12 @@ Get the latest development version with:
 
 ``` r
 remotes::install_github("esqLABS/esqlabsR")
+```
+
+Get a specific version of esqlabsR (list available [here](https://github.com/esqLABS/esqlabsR/releases)):
+
+``` r
+remotes::install_github("esqLABS/esqlabsR@v5.0.0")
 ```
 
 Note: For projects created for version 3 of `esqlabsR` package, install
@@ -101,41 +111,39 @@ plotIndividualTimeProfile(my_datacombined)
 
 ## Learn More
 
-To get started, first read `vignette("esqlabsR")`. Then read more about
-the specific topics:
+To get started, first read `vignette("esqlabsR")`. Then read more about the
+specific topics:
 
-- Start with `vignette("esqlabsR-workflow-overview")` to learn about the
-  esqlabsR’s streamlined workflow.
-- `vignette("esqlabsR-project-structure")` details the structure and
-  purpose of each component file and directory of an esqlabsR project.
-- `vignette("esqlabsR-design-scenarios")` explains how you can design
-  your own simulations only using excel files.
-- `vignette("esqlabsR-run-simulations")` describes all you need to know
-  to run your customized simulations.
-- `vignette("esqlabsR-plot-results")` explains how to generate
-  visualizations from simulations.
+  - Start with `vignette("esqlabsR-workflow-overview")` to learn about the
+    esqlabsR’s streamlined workflow.
+  - `vignette("esqlabsR-project-structure")` details the structure and purpose
+    of each component file and directory of an esqlabsR project.
+  - `vignette("esqlabsR-design-scenarios")` explains how you can design your own
+    simulations only using excel files.
+  - `vignette("esqlabsR-run-simulations")` describes all you need to know to run
+    your customized simulations.
+  - `vignette("esqlabsR-plot-results")` explains how to generate visualizations
+    from simulations.
 
 ## Related Work
 
-`{esqlabsR}` relies on the following Open Systems Pharmacology R
-packages:
+`{esqlabsR}` relies on the following Open Systems Pharmacology R packages:
 
-- [rClr](https://github.com/Open-Systems-Pharmacology/rClr/)
-- [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
-- [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
-- [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
-- [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
+  - [rClr](https://github.com/Open-Systems-Pharmacology/rClr/)
+  - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
+  - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
+  - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
+  - [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
 
 ## Contributing
 
-- Follow the OSPS-R [coding
-  standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md).
-- Some additional useful information can be found
-  [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's).
+  - Follow the OSPS-R [coding
+    standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md).
+  - Some additional useful information can be found
+    [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's).
 
 ## Code of Conduct
 
-Please note that the esqlabsR project is released with a [Contributor
-Code of
-Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html).
-By contributing to this project, you agree to abide by its terms.
+Please note that the esqlabsR project is released with a [Contributor Code of
+Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html). By
+contributing to this project, you agree to abide by its terms.

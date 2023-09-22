@@ -108,7 +108,8 @@ articles:
   - title: Miscellaneous
     navbar: Miscellaneous
     contents:
-      - esqlabsR-sensitivity
-      - esqlabsR-shiny
-      - esqlabsR-advanced
+      - install-pksim
       - presentations
+      - esqlabsR-sensitivity
+      - esqlabsR-advanced
+      - esqlabsR-shiny
