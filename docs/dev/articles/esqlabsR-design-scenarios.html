@@ -34,7 +34,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.0.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.1.1.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -171,6 +171,19 @@ row in the <code>IndividualBiometrics</code> sheet.</li>
 <li>To define an individual-specific parametrization, create a new sheet
 and name it as the individual’s ID.</li>
 </ol>
+<p>If your model contains proteins (e.g., enzymes or transporters), you
+have to specify their ontongenies in the columns ‘Protein’ and
+‘Ontogeny’. If not specified, age-dependent protein expression will not
+be considered. You can specify a list of protein names in the column
+‘Protein’, separated by a <code>,</code>, and a list of standard
+ontogenies implemented in the PK-Sim database in the column ‘Ontogeny’.
+For example, if your model contains proteins with names
+<code>CYP3A4_alternative</code> and <code>CYP2D6_alternative</code>, you
+can specify their ontogenies by entering
+<code>CYP3A4_alternative, CYP2D6_alternative</code> in the ‘Protein’
+column, and <code>CYP3A4, CYP2D6</code> in the ‘Ontogeny’ column. To see
+the list of supported ontogienes, call
+<code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/StandardOntogeny.html" class="external-link">ospsuite::StandardOntogeny</a></code>.</p>
 </div>
 <div class="section level3">
 <h3 id="population">6. Population<a class="anchor" aria-label="anchor" href="#population"></a>
@@ -186,6 +199,9 @@ will be generated each time!</p>
 value of the <code>ReadPopulationFromCSV</code> column to
 <code>TRUE</code>. The population CSV file must be located in the
 <code>Parameters/Populations</code> folder.</p>
+<p>To apply ontogenies of proteins implemented in PK-Sim data base, you
+have to specify the ontogenies for the proteins in the mode. See Section
+<a href="#individuals">5. Individuals</a> for more information.</p>
 </div>
 <div class="section level3">
 <h3 id="time">7. Time<a class="anchor" aria-label="anchor" href="#time"></a>
@@ -443,8 +459,8 @@ defining a unique identifier for this path in the column
 this:</p>
 <table class="table">
 <colgroup>
-<col width="27%">
-<col width="72%">
+<col width="20%">
+<col width="79%">
 </colgroup>
 <thead><tr class="header">
 <th>OutputPathId</th>

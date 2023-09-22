@@ -49,15 +49,10 @@ ExportConfiguration <- R6::R6Class(
       # If `heightPerRow` is defined, calculate the height of the figure
       if (!is.null(self$heightPerRow)) {
         # Get the number of rows as defined in the plot layout
-        nrOfRows <- plotObject$patches$layout$nrow
-        # If the value was not explicitely defined, it is `NULL`. In this case,
-        # use the the same method to calculate the number of rows for a given
-        # number of figures that is used in ggplot2::facet_wrap()
-        if (is.null(nrOfRows)) {
-          # number of plots + 1, as somehow the lenght of plotObject$patches$plots
-          # is one too short?
-          nrOfRows <- grDevices::n2mfrow(length(plotObject$patches$plots) + 1)[2]
-        }
+        nrOfRows <- ggplot2::wrap_dims(length(plotObject$patches$plots) + 1,
+          nrow = plotObject$patches$layout$nrow,
+          ncol = plotObject$patches$layout$ncol
+        )[[1]]
         self$height <- self$heightPerRow * nrOfRows
       }
       super$savePlot(plotObject, fileName)

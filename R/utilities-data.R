@@ -24,7 +24,7 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
   # Remove all whitespaces
   string <- gsub(" ", "", string, fixed = TRUE)
   # Attempt to convert all passed values to numeric
-  numVals <- as.numeric(string)
+  numVals <- suppressWarnings(as.numeric(string))
 
   # If any values could not be interpreted and were coerced to NA, decide what to do (e.g. LLOQ and ULOQ treatment)
   naVals <- is.na(numVals)
@@ -37,7 +37,7 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
       # CHECK FOR LLOQ
       if (substring(string[[idx]], first = 1, last = 1) == "<") {
         # Transform the value that follow the "<" character
-        value <- as.numeric(substring(string[[idx]], first = 2))
+        value <- suppressWarnings(as.numeric(substring(string[[idx]], first = 2)))
         # If value is NA (could not convert to numeric), continue, as the output
         # should be NA
         if (is.na(value)) {
@@ -58,7 +58,7 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
       # CHECK FOR ULOQ
       if (substring(string[[idx]], first = 1, last = 1) == ">") {
         # Transform the value that follow the "<" character
-        value <- as.numeric(substring(string[[idx]], first = 2))
+        value <- suppressWarnings(as.numeric(substring(string[[idx]], first = 2)))
         # If value is NA (could not convert to numeric), continue, as the output
         # should be NA
         if (is.na(value)) {

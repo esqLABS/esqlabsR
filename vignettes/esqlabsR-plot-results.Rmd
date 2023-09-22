@@ -201,6 +201,7 @@ dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
 )
 ```
 
+
 You can also return the `DataCombined` objects defined in the `DataCombined` sheet with the function `createDataCombinedFromExcel()`, read (this section)[#specify-a-datacombined] for more information.
 
 
@@ -345,17 +346,3 @@ following:
     -   [`PlotGridConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
     -   [`plotGrid()`](https://www.open-systems-pharmacology.org/TLF-Library/reference/plotGrid.html)
     -   [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
-
-<!-- ### Troubleshooting -->
-
-<!-- More detailed information on function signatures can be found in: -->
-
-<!-- -   `esqlabsR` documentation on: -->
-
-<!-- -   [createDefaultProjectConfiguration()](https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.html) -->
-
-<!-- -   [ProjectConfiguration class](https://esqlabs.github.io/esqlabsR/reference/ProjectConfiguration.html) -->
-
-<!-- -   [loadObservedData()](https://esqlabs.github.io/esqlabsR/reference/loadObservedData.html) -->
-
-<!-- -   `ospsuite` documentation on: -->
