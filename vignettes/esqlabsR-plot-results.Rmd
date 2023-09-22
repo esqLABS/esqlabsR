@@ -38,14 +38,17 @@ From each `DataCombined`, multiple plots of different types can be defined using
 the **plotConfiguration** sheet. More information in the 
 [Customizing Plots](#customizing-plots) section.
 
-All plots can be combined using their IDs into multi-panel figures (plot grids) 
-in the **plotGrids** sheet. More information in the [Combine Plots](#combine-plots) section.
+Each plot to draw is defined in a **plotGrid** which is specified in the **plotGrids** sheet.
+A **plotGrid** can contain one or several plots defined in the plotConfiguration 
+sheet and has many options to customize the layout of the plots. 
+More information in the [Drawing Plots](#drawing-plots) section.
 
-Plot grids can be exported with specific settings using the 
-**exportConfiguration** sheet. More information in the [Export Plot](#export-plots) section.
+plotGrids export options like size, quality, file type etc... are available in 
+the **exportConfiguration** sheet. More information in the 
+[Export Plot](#export-plots) section.
 
-Finally, calling the `createPlotsFromExcel()` function will create the plots and
-export them to image files if specified in the **exportConfiguration** sheet. 
+Once all the excel sheets are setup, just call the `createPlotsFromExcel()` function 
+to generate and export the plots. 
 
 ![](Figures/plot-workflow.png)
 
@@ -130,9 +133,10 @@ names(ec)[!(names(ec) %in% defaultClassAttributes)][1:5]
 ## Plotting With Code
 
 In some situation, the user needs to quickly draw a plot from a simulation result
-object using code while wanting to use the default esqlabsR theme. `{esqlabsR}`'s
-functions are fully operable by the user and can be used directly to generate
-customized and good looking plots using code only.
+object using code while wanting to use the default esqlabsR theme. In this situation,
+using the `Plots.xlsx` file is not necessary. Instead, the user can directly use
+`{esqlabsR}`'s and `{ospsuite}`'s plotting functions to create the desired plot 
+while preserving the `{esqlabsR}` theme.
 
 
 ### Basics of figure creation with `{ospsuite}`
@@ -253,7 +257,7 @@ gridPlot <- plotGrid(gridConfig)
 gridPlot
 ```
 
-#### Save Plots
+#### Export Plots
 
 To save the plot to a `PNG` file, use the
 [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html).
