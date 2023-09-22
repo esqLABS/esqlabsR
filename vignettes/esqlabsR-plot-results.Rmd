@@ -11,11 +11,11 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
+  message = FALSE,
+  warning = FALSE,
   fig.width = 7,
   fig.asp = 0.618,
-  out.width = "100%",
-  message = FALSE,
-  warning = FALSE
+  fig.showtext = TRUE
 )
 
 defaultClassAttributes <- c("initialize", "clone", "print", ".__enclos_env__")

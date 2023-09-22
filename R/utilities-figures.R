@@ -146,8 +146,8 @@ createEsqlabsPlotConfiguration <- function() {
 
   # Size
   defaultPlotConfiguration$titleSize <- 11
-  defaultPlotConfiguration$xLabelSize <- 10
-  defaultPlotConfiguration$yLabelSize <- 10
+  defaultPlotConfiguration$xLabelSize <- 9
+  defaultPlotConfiguration$yLabelSize <- 9
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
   defaultPlotConfiguration$yAxisLabelTicksSize <- 8
   defaultPlotConfiguration$legendKeysSize <- 6
