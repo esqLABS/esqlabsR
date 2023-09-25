@@ -855,10 +855,15 @@ test_that("It returns an empty DataCombined when no data is available", {
         "exportConfiguration" = exportConfigurationDfLocal
       ), path = file.path(tempDir, "Plots.xlsx"), )
 
-      dataCombined <- createDataCombinedFromExcel(
-        file = file.path(tempDir, "Plots.xlsx"),
-        stopIfNotFound = FALSE
-      )
+      # Warnings are suppressed because they are expected but not relevant for
+      # this test.
+      suppressWarnings({
+        dataCombined <- createDataCombinedFromExcel(
+          file = file.path(tempDir, "Plots.xlsx"),
+          stopIfNotFound = FALSE
+        )
+      })
+
 
       expect_equal(dataCombined[[1]], DataCombined$new())
     }
