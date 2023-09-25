@@ -360,6 +360,7 @@ createPlotsFromExcel <- function(
       population = {
         aggregation <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$aggregation
         quantiles <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$quantiles
+        nSD <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$nSD
         args <- list()
         args$dataCombined <- dataCombined
         args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
@@ -370,6 +371,10 @@ createPlotsFromExcel <- function(
         # quantiles defined?
         if (!is.null(quantiles) && !is.na(quantiles)) {
           args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
+        }
+        # if nSD is defined, add it to the args
+        if (!is.null(nSD) && !is.na(nSD)) {
+          args$nSD <- as.numeric(nSD)
         }
         do.call(plotPopulationTimeProfile, args)
       },
