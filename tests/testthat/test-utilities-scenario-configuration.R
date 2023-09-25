@@ -135,7 +135,7 @@ test_that("It creates a population scenario", {
   )
   expect_equal(names(scenarioConfigurations), scenarioNames)
   expect_equal(scenarioConfigurations[[scenarioNames[[1]]]]$applicationProtocol, "Aciclovir_iv_250mg")
-  expect_equal(scenarioConfigurations[[scenarioNames[[1]]]]$individualId, "Indiv")
+  expect_equal(scenarioConfigurations[[scenarioNames[[1]]]]$individualId, "Indiv1")
   expect_equal(scenarioConfigurations[[scenarioNames[[1]]]]$populationId, "TestPopulation")
   expect_equal(scenarioConfigurations[[scenarioNames[[1]]]]$modelFile, "Aciclovir.pkml")
   expect_equal(scenarioConfigurations[[scenarioNames[[1]]]]$paramSheets, enum(enumValues = "Global"))
