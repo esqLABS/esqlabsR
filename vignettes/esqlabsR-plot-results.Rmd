@@ -226,6 +226,7 @@ passing the generated data:
 
 ```{r, echo = TRUE, message = FALSE}
 plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
+                              plotGridNames = c("Aciclovir", "Aciclovir2"),
                               observedData = observedData,
                               projectConfiguration = projectConfiguration)
 ```
