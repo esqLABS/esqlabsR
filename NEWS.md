@@ -1,5 +1,10 @@
 # esqlabsR (development version)
 
+### BUG FIXES
+
+- Fixes a bug where scenario results could not be saved or loaded when scenario name
+contains a slash or a backslash (https://github.com/esqLABS/esqlabsR/issues/547)
+
 # esqlabsR 5.1.1
 
 - Update required dependencies versions
