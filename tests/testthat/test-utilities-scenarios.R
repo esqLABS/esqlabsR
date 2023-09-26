@@ -142,5 +142,4 @@ test_that("It saves and loads scenario results for scenario names with forbidden
     },
     tmpdir = tempdir
   )
-}
-)
+})
