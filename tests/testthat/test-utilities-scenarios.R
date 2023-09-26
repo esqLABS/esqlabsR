@@ -102,7 +102,7 @@ test_that("It runs population and individual scenarios", {
 })
 
 
-test_that("It saves and loads scenario results for scenario names with forbidden charachters", {
+test_that("It saves and loads scenario results for scenario names with forbidden characters", {
   # Define which scenarios to run
   scenarioNames <- c("TestScenario")
   # Create `ScenarioConfiguration` objects from excel files
