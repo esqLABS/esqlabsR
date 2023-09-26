@@ -225,9 +225,11 @@ In the next step, the user calls the function `createPlotsFromExcel()`,
 passing the generated data:
 
 ```{r, echo = TRUE, message = FALSE}
-plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
-                              observedData = observedData,
-                              projectConfiguration = projectConfiguration)
+plots <- createPlotsFromExcel(
+  simulatedScenarios = simulatedScenarios,
+  observedData = observedData,
+  projectConfiguration = projectConfiguration
+)
 ```
 
 The function returns a named list of `ggplot2` objects, with names being
@@ -379,21 +381,16 @@ observed data are present in the `projectConfiguration$dataFolder`
 folder, the following code loads the data:
 
 ```{r loadObservedData}
-
 projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
 
 dataSheets <- "Laskin 1982.Group A"
 
 observedData <- loadObservedData(
-
   projectConfiguration = projectConfiguration,
-
   sheets = dataSheets
-
 )
 
 print(names(observedData))
-
 ```
 
 The function loads the data from the file

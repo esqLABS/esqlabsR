@@ -100,3 +100,46 @@ test_that("It runs population and individual scenarios", {
   # Check that the second scenario is population simulation
   expect_equal(length(simulatedScenarios[[scenarioNames[[2]]]]$results$allIndividualIds), 2)
 })
+
+
+test_that("It saves and loads scenario results for scenario names with forbidden characters", {
+  # Define which scenarios to run
+  scenarioNames <- c("TestScenario")
+  # Create `ScenarioConfiguration` objects from excel files
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+
+  simulatedScenarios <- runScenarios(
+    scenarios = scenarios
+  )
+  # Rename simulatedScenarios to include a slash
+  names(simulatedScenarios) <- "TestScenario/with/slash"
+
+  tempdir <- tempdir()
+  withr::with_tempdir(
+    code = {
+      # Save results using temp folder
+      saveScenarioResults(
+        simulatedScenariosResults = simulatedScenarios,
+        projectConfiguration = projectConfiguration,
+        outputFolder = tempdir
+      )
+      # Check that the results are saved
+      expect_true(file.exists(file.path(tempdir, "TestScenario_with_slash.pkml")))
+      expect_true(file.exists(file.path(tempdir, "TestScenario_with_slash.csv")))
+
+      # Load results using temp folder
+      simulatedScenarioResults <- loadScenarioResults(
+        scenarioNames = "TestScenario/with/slash",
+        resultsFolder = tempdir
+      )
+
+      # Check that the results are loaded with correct names
+      expect_equal(names(simulatedScenarioResults), "TestScenario/with/slash")
+    },
+    tmpdir = tempdir
+  )
+})
