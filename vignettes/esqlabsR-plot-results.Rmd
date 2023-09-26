@@ -10,7 +10,10 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.showtext = TRUE,
+  fig.width = 7,
+  fig.asp = 0.618
 )
 
 defaultClassAttributes <- c("initialize", "clone", "print", ".__enclos_env__")
@@ -237,7 +240,11 @@ the names of the plot grids:
 ```{r}
 names(plots)
 
-plots[[1]]
+plots$Aciclovir
+```
+
+```{r}
+plots$Aciclovir2
 ```
 
 By default, the function will try to create all plots defined in the
@@ -326,7 +333,7 @@ refer to the
 The next example shows how to create a multi-panel figure using the
 default configurations.
 
-```{r plot-time-profile, fig.width=7, fig.height=7}
+```{r plot-time-profile, fig.width=7, fig.height=7, fig.asp = 1}
 plotConfig <- createEsqlabsPlotConfiguration()
 gridConfig <- createEsqlabsPlotGridConfiguration()
 

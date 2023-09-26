@@ -14,11 +14,11 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   warning = FALSE,
-  message = FALSE
+  message = FALSE,
+  fig.showtext = TRUE
 )
 library(esqlabsR)
 require(readxl)
-showtext::showtext_opts(dpi = 300)
 ```
 
 ## Introduction

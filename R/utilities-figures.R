@@ -145,12 +145,15 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
   # Size
-  defaultPlotConfiguration$titleSize <- 11
-  defaultPlotConfiguration$xLabelSize <- 10
-  defaultPlotConfiguration$yLabelSize <- 10
+  defaultPlotConfiguration$titleSize <- 10
+  defaultPlotConfiguration$xLabelSize <- 9
+  defaultPlotConfiguration$yLabelSize <- 9
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
   defaultPlotConfiguration$yAxisLabelTicksSize <- 8
   defaultPlotConfiguration$legendKeysSize <- 6
+
+  defaultPlotConfiguration$xLabelMargin <- c(10, 0, 0, 0)
+  defaultPlotConfiguration$yLabelMargin <- c(0, 0, 10, 0)
 
   # Lines size
   defaultPlotConfiguration$linesSize <- 0.5
@@ -202,8 +205,8 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
   plotGridConfiguration <- tlf::PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
-  plotGridConfiguration$tagSize <- 10
-  plotGridConfiguration$titleSize <- 11
+  plotGridConfiguration$tagSize <- 11
+  plotGridConfiguration$titleSize <- 12
 
   plotGridConfiguration$titleHorizontalJustification <- 0.5
 
