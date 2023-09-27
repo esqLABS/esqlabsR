@@ -63,7 +63,7 @@ plotConfigurationDf <- data.frame(list(
   "xValuesLimits" = NA,
   "yValuesLimits" = NA,
   "quantiles" = NA,
-  "nSD" = NA,
+  "nsd" = NA,
   "foldDistance" = NA
 ))
 plotGridsDf <- data.frame(list(

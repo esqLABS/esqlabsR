@@ -343,6 +343,7 @@ createPlotsFromExcel <- function(
         "yLabel",
         "aggregation",
         "quantiles",
+        "nsd",
         "foldDistance"
       ))]
     )
@@ -363,7 +364,7 @@ createPlotsFromExcel <- function(
       population = {
         aggregation <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$aggregation
         quantiles <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$quantiles
-        nSD <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$nSD
+        nsd <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$nsd
         args <- list()
         args$dataCombined <- dataCombined
         args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
@@ -375,9 +376,9 @@ createPlotsFromExcel <- function(
         if (!is.null(quantiles) && !is.na(quantiles)) {
           args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
         }
-        # if nSD is defined, add it to the args
-        if (!is.null(nSD) && !is.na(nSD)) {
-          args$nSD <- as.numeric(nSD)
+        # if nsd is defined, add it to the args
+        if (!is.null(nsd) && !is.na(nsd)) {
+          args$nsd <- as.numeric(nsd)
         }
         do.call(plotPopulationTimeProfile, args)
       },

@@ -1,252 +1,312 @@
 # esqlabsR (development version)
 
+## Minor improvements and bug fixes
+
+  - Fixes a bug where scenario results could not be saved or loaded when
+    scenario name contains a slash or a backslash (\#548, @PavelBal)
+  - Add support for `nsd` argument from `ospsuite::plotPopulationTimeProfile()`
+    aggregation methods. A new column `nsd` was added to the `PlotConfiguration`
+    sheet in the example `Plot.xlsx` (\#544, @Felixmil).
+
 # esqlabsR 5.1.1
 
-- Update required dependencies versions
+  - Update required dependencies versions
 
 # esqlabsR 5.1.0
 
-- New vignette/article about figure creation.
-- Plots are using new color palette.
-- Some modifications to plot configuration files for better plots.
+  - New vignette/article about figure creation.
+  - Plots are using new color palette.
+  - Some modifications to plot configuration files for better plots.
 
 # BREAKING CHANGE
-- When importing observed data using the default importer configuration, data 
-set naming is grouped by `StudyId` at the first place.
-Before: `{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
-After: `{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
 
-This will result in different data set names, and plots specifying the data sets 
-by the old naming will fail. For compatibility, use custom importer configuration
-with the old naming: 
-
-```
-  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-    configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-  )
-  importerConfiguration$namingPattern <- "{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"
-```
+  - When importing observed data using the default importer configuration, data
+    set naming is grouped by `StudyId` at the first place. Before:
+    `{Molecule}_{Study Id}_{Subject
+    Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}` After:
+    `{Study Id}_{Molecule}_{Subject
+    Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}` This will
+    result in different data set names, and plots specifying the data sets by
+    the old naming will fail. For compatibility, use custom importer
+    configuration with the old naming:
+    ``` 
+      importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+        configurationFilePath = projectConfiguration$dataImporterConfigurationFile
+      )
+      importerConfiguration$namingPattern <- "{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"
+    ```
 
 # NEW FUNCTIONALITIES
 
-- `loadObservedData()` gets a new argument `importerConfiguration`. The user can
-now provide a custom importer configuration for loading the data.
-- Plots.xlsx, sheet 'plotConfiguration', now uses `xValuesLimits` and `yValuesLimits`
-to set axis limits of the plots by default. This approach filters data outside of the
-limits. See https://ggplot2.tidyverse.org/reference/coord_cartesian.html#ref-examples for 
-more details. The user can still use `xAxisLimits` and `yAxisLimits`.
+  - `loadObservedData()` gets a new argument `importerConfiguration`. The user
+    can now provide a custom importer configuration for loading the data.
+  - Plots.xlsx, sheet 'plotConfiguration', now uses `xValuesLimits` and
+    `yValuesLimits` to set axis limits of the plots by default. This approach
+    filters data outside of the limits. See
+    <https://ggplot2.tidyverse.org/reference/coord_cartesian.html#ref-examples>
+    for more details. The user can still use `xAxisLimits` and `yAxisLimits`.
 
-- Sheet 'plotConfiguration' in the Excel file 'Plots' gets additional column 'aggregation'. The value is passed to
-the function `plotPopulationTimeProfile()`. Supported values are listed in `ospsuite::DataAggregationMethods`.
-  - `arithmetic`: population results are plotted as arithmetic mean +- arithmetic standard deviation
-  - `geometric`: population results are plotted as geometric mean +- geometric standard deviation
-  - `quantiles` (default): population results are plotted as quantiles defined in the column `quantiles`.
+  - Sheet 'plotConfiguration' in the Excel file 'Plots' gets additional column
+    'aggregation'. The value is passed to the function
+    `plotPopulationTimeProfile()`. Supported values are listed in
+    `ospsuite::DataAggregationMethods`.
+      - `arithmetic`: population results are plotted as arithmetic mean +-
+        arithmetic standard deviation
+      - `geometric`: population results are plotted as geometric mean +-
+        geometric standard deviation
+      - `quantiles` (default): population results are plotted as quantiles
+        defined in the column `quantiles`.
 
-- Protein ontogenies can be defined for populations and individuals. To specify ontogenies for 
-proteins in the simulation, list the proteins you want to define ontogenies for 
-in the column 'Protein' of files 'PopulationParameters.xlsx' or 'Individuals.xlsx', separated by a ','. Speficy the ontogenies available in PK-Sim (see article https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies) in the column 'Ontogenies'. The number of entries in the  both columns must be equal.
-- Excel file 'PopulationParameters.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
-- Excel file 'Individuals.xlsx' gets additional columns 'Protein' and 'Ontogeny'.
+  - Protein ontogenies can be defined for populations and individuals. To
+    specify ontogenies for proteins in the simulation, list the proteins you
+    want to define ontogenies for in the column 'Protein' of files
+    'PopulationParameters.xlsx' or 'Individuals.xlsx', separated by a ','.
+    Speficy the ontogenies available in PK-Sim (see article
+    <https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies>)
+    in the column 'Ontogenies'. The number of entries in the both columns must
+    be equal.
+  - Excel file 'PopulationParameters.xlsx' gets additional columns 'Protein' and
+    'Ontogeny'.
+  - Excel file 'Individuals.xlsx' gets additional columns 'Protein' and
+    'Ontogeny'.
 
 ### MINOR CHANGES
-- When a scenario fails, `runScenarios()` does not crash any more, but a
-warning is shown with the name of the failed scenario. The returned `outputValues` 
-is `NULL`.
-- Throw a warning instead of an error if a path specified in `ProjectConfiguration` does not exist. `$outputFolder` existence is not checked anymore.
-- `stringToNum()` does not show a warning `NAs introduced by coercion` when a value 
-cannot be converted to a numeric any more. For such values, `NA` is silently returned.
+
+  - When a scenario fails, `runScenarios()` does not crash any more, but a
+    warning is shown with the name of the failed scenario. The returned
+    `outputValues` is `NULL`.
+  - Throw a warning instead of an error if a path specified in
+    `ProjectConfiguration` does not exist. `$outputFolder` existence is not
+    checked anymore.
+  - `stringToNum()` does not show a warning `NAs introduced by coercion` when a
+    value cannot be converted to a numeric any more. For such values, `NA` is
+    silently returned.
 
 ### BUG FIXES
-- exportParametersToXLS - ignore parameters with NaN https://github.com/esqLABS/esqlabsR/issues/480
-- Show a meaningful error when no time unit is specified for a scenario https://github.com/esqLABS/esqlabsR/issues/483
+
+  - exportParametersToXLS - ignore parameters with NaN
+    <https://github.com/esqLABS/esqlabsR/issues/480>
+  - Show a meaningful error when no time unit is specified for a scenario
+    <https://github.com/esqLABS/esqlabsR/issues/483>
 
 # esqlabsR 5.0.0
 
 ### New functionalities
-- New function `loadObservedDataFromPKML()` to load data from `*.pkml` located in 
-the "PKML" sub-folder of the "Data" folder.
 
-- New function `createScenarios()` to create `Scenario` objects from `ScenarioConfiguration` objects
+  - New function `loadObservedDataFromPKML()` to load data from `*.pkml` located
+    in the "PKML" sub-folder of the "Data" folder.
 
-- Plots can be created by calling the new function `createPlotsFromExcel()`. It requires as input parameters `simulatedScenarios` (a list of simulated scenarios as returned by `runScenarios()`), `observedData` (a list of `DataSet` objects) and a `ProjectConfiguration` object `projectConfiguration`.
+  - New function `createScenarios()` to create `Scenario` objects from
+    `ScenarioConfiguration` objects
 
-- New function `createDataCombinedFromExcel()` creates `DataCombined` objects as 
-defined in the `Plots.xlsx` file.
+  - Plots can be created by calling the new function `createPlotsFromExcel()`.
+    It requires as input parameters `simulatedScenarios` (a list of simulated
+    scenarios as returned by `runScenarios()`), `observedData` (a list of
+    `DataSet` objects) and a `ProjectConfiguration` object
+    `projectConfiguration`.
 
-- New function `saveScenarioResults()` to save results produced by the `runScenarios()` 
-function to csv files and corresponding simulations to pkml files.
+  - New function `createDataCombinedFromExcel()` creates `DataCombined` objects
+    as defined in the `Plots.xlsx` file.
 
-- New function `loadScenarioResults()` to load results from csv files into a structure
-as produced by the `runScenarios()` function.
+  - New function `saveScenarioResults()` to save results produced by the
+    `runScenarios()` function to csv files and corresponding simulations to pkml
+    files.
 
-- New function `compareSimulation()` to compare two simulations for differences.
+  - New function `loadScenarioResults()` to load results from csv files into a
+    structure as produced by the `runScenarios()` function.
 
-- `runScenarios()` also returns a `Population` object for population simulations.
-- `runScenarios()` gets a new argument `savePopulationToCSV`, with default value `FALSE`.
+  - New function `compareSimulation()` to compare two simulations for
+    differences.
 
-- `eslqbsR` extends the `tlf::ExportConfiguration` class to dynamically calculate 
-the height of the exported figure from the number of rows and the new parameter
-`heightPerRow`.
+  - `runScenarios()` also returns a `Population` object for population
+    simulations.
+  - `runScenarios()` gets a new argument `savePopulationToCSV`, with default
+    value `FALSE`.
+
+  - `eslqbsR` extends the `tlf::ExportConfiguration` class to dynamically
+    calculate the height of the exported figure from the number of rows and the
+    new parameter `heightPerRow`.
 
 ### BREAKING CHANGES
 
-- Field `setTestParameters` removed from `ScenarioConfiguration`
-- Function `initializeScenario()` has been removed
-- Definition of simulation time in the `Scenarios.xlsx` file changed. The new expected format 
-is a triplet of values <StartTime, EndTime, Resolution>, where `Resolution` is the number of 
-simulated points per time unit defined in the column `TimeUnit`.
-- Field `poinstPerMinute` of `ScenarioConfiguration` has been removed.
-- Function `compareSimulationParameters()` has been removed and replaced by `compareSimulations()`
-- `Scenarios` excel file gets additional columns `SteadyStateTime`, `SteadyStateTimeUnit`, 
-`PopulationId`, `OutputPathsIds`.
-- `readScenarioConfigurationFromExcel()` has a new signature and requires a list of 
-`scenarioNames` and a `ProjectConfiguration`. The output is a named list of `ScenarioConfiguration` 
-objects.
-- Output paths are not set from global variable `OutputPaths` any more but 
-from the respective field of `ScenarioConfgiruation`
-- `ProjectConfiguration` does not have field `$outputDevice` any more.
-- `ScenarioConfiguration` does not store `SimulationRunOptions` any more. Simulation run options must be passed to the `runScenarios()` function. Different run options cannot be used within one scenarios run.
-- Enum `GraphicsDevices` has been removed.
-- Function `initializeSimulation()` does not have arguments `simulateSteadyState`, `steadyStateTime` and `simulationRunOptions` any more.
+  - Field `setTestParameters` removed from `ScenarioConfiguration`
+  - Function `initializeScenario()` has been removed
+  - Definition of simulation time in the `Scenarios.xlsx` file changed. The new
+    expected format is a triplet of values \<StartTime, EndTime, Resolution\>,
+    where `Resolution` is the number of simulated points per time unit defined
+    in the column `TimeUnit`.
+  - Field `poinstPerMinute` of `ScenarioConfiguration` has been removed.
+  - Function `compareSimulationParameters()` has been removed and replaced by
+    `compareSimulations()`
+  - `Scenarios` excel file gets additional columns `SteadyStateTime`,
+    `SteadyStateTimeUnit`, `PopulationId`, `OutputPathsIds`.
+  - `readScenarioConfigurationFromExcel()` has a new signature and requires a
+    list of `scenarioNames` and a `ProjectConfiguration`. The output is a named
+    list of `ScenarioConfiguration` objects.
+  - Output paths are not set from global variable `OutputPaths` any more but
+    from the respective field of `ScenarioConfgiruation`
+  - `ProjectConfiguration` does not have field `$outputDevice` any more.
+  - `ScenarioConfiguration` does not store `SimulationRunOptions` any more.
+    Simulation run options must be passed to the `runScenarios()` function.
+    Different run options cannot be used within one scenarios run.
+  - Enum `GraphicsDevices` has been removed.
+  - Function `initializeSimulation()` does not have arguments
+    `simulateSteadyState`, `steadyStateTime` and `simulationRunOptions` any
+    more.
 
 ### MAJOR CHANGES
 
-- New class `Scenario` that represents a scenario created from a `ScenarioConfiguration`
+  - New class `Scenario` that represents a scenario created from a
+    `ScenarioConfiguration`
 
-- `ScenarioConfiguration` gets a new field `outputPaths` which is a list of 
-output paths for which the results will be calculated. If `NULL` (default), 
-outputs as defined in the simulation are used.
+  - `ScenarioConfiguration` gets a new field `outputPaths` which is a list of
+    output paths for which the results will be calculated. If `NULL` (default),
+    outputs as defined in the simulation are used.
 
-- Paths of model outputs are defined in the excel file `Scenarios.xlsx`. In the 
-sheet `OutputPaths`, create an entry for each output. The column `OutputPath` is the full 
-path to the output, while `OutputPathId` is an identifier that conveniently allows 
-to select the correct output.
-In the `Scenarios` sheet, enter the IDs of all paths the outputs should be generated for,
-separated by a `,`, e.g. `Aciclovir_PVB, Aciclovir_fat_cell`. 
+  - Paths of model outputs are defined in the excel file `Scenarios.xlsx`. In
+    the sheet `OutputPaths`, create an entry for each output. The column
+    `OutputPath` is the full path to the output, while `OutputPathId` is an
+    identifier that conveniently allows to select the correct output. In the
+    `Scenarios` sheet, enter the IDs of all paths the outputs should be
+    generated for, separated by a `,`, e.g. `Aciclovir_PVB, Aciclovir_fat_cell`.
 
-If no outputs are specified, the outputs as defined in the simulation `.pkml` file
-will be produced.
+If no outputs are specified, the outputs as defined in the simulation `.pkml`
+file will be produced.
 
-- `ScenarioConfiguration` gets a new field `populationId`, specifying the id of 
-the population as defined in the `PopulationParameters.xlsx` file, sheet `Demographics`.
-If the field is `NULL`, the scenario is simulated as an individual simulation, 
-otherwise a population simulation is performed.
+  - `ScenarioConfiguration` gets a new field `populationId`, specifying the id
+    of the population as defined in the `PopulationParameters.xlsx` file, sheet
+    `Demographics`. If the field is `NULL`, the scenario is simulated as an
+    individual simulation, otherwise a population simulation is performed.
 
-- `ScenarioConfiguration` gets a new field `readPopulationFromCSV`. If `FALSE` (default), 
-a new population is created from defined population demographics. If `TRUE`, a simulation
-will be imported from a csv sheet located in the folder `Parameters/Populations` and 
-named as the `PopulationId`.
+  - `ScenarioConfiguration` gets a new field `readPopulationFromCSV`. If `FALSE`
+    (default), a new population is created from defined population demographics.
+    If `TRUE`, a simulation will be imported from a csv sheet located in the
+    folder `Parameters/Populations` and named as the `PopulationId`.
 
-- `runScenarios()` supports scenario configurations for population simulations
+  - `runScenarios()` supports scenario configurations for population simulations
 
-- Target folder for saving `*.pkml` simulations when `runScenarios(scenarioConfigurations, saveSimulationsToPKML = TRUE)`
-changed from `Models/Simulations/<DateSuffix>` to `Results/SimulationResults/<DateSuffix>`.
+  - Target folder for saving `*.pkml` simulations when
+    `runScenarios(scenarioConfigurations, saveSimulationsToPKML = TRUE)` changed
+    from `Models/Simulations/<DateSuffix>` to
+    `Results/SimulationResults/<DateSuffix>`.
 
-- `sensitivityCalculation()` - fixed bug in wrong calculation of sensitivity values.
-Please be aware that the results produced by earlier versions are wrong.
+  - `sensitivityCalculation()` - fixed bug in wrong calculation of sensitivity
+    values. Please be aware that the results produced by earlier versions are
+    wrong.
 
-* The workflow for running scenarios changed to:  
+  - The workflow for running scenarios changed to:
+      - Create a `ProjectConfiguration` with
+        `createDefaultProjectConfiguration()`
+      - Create `ScenarioConfigurations`, e.g. with
+        `readScenarioConfigurationFromExcel(scenarioNames,
+        projectConfiguration)`
+      - Run scenarios with `runScenarios(scenarioConfigurations)`
+  
+  - Alternatively:
   - Create a `ProjectConfiguration` with `createDefaultProjectConfiguration()`
-  - Create `ScenarioConfigurations`, e.g. with `readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`
-  - Run scenarios with `runScenarios(scenarioConfigurations)`
-  
-  - Alternatively: 
-  - Create a `ProjectConfiguration` with `createDefaultProjectConfiguration()`
-  - Create `ScenarioConfigurations`, e.g. with `readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`
+  - Create `ScenarioConfigurations`, e.g. with
+    `readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`
   
   
-- `ProjectConfiguration` gets a new field `plotsFile`. It is the name of the excel file with plot definitions and must be located in the `paramsFolder`.
+  - `ProjectConfiguration` gets a new field `plotsFile`. It is the name of the
+    excel file with plot definitions and must be located in the `paramsFolder`.
 
-- When defining an individual of other species than human in `ScenarioConfiguration` 
-and applying it to a human model, missing species-specific parameters are applied and the 
-scaling works properly. Supported scalingsa are: Human to rat, human to monkey, 
-human to rabbit.
+  - When defining an individual of other species than human in
+    `ScenarioConfiguration` and applying it to a human model, missing
+    species-specific parameters are applied and the scaling works properly.
+    Supported scalingsa are: Human to rat, human to monkey, human to rabbit.
 
-- `initializeSimulation()` does not perform steady-state run any more. This is done as part of the `runScenarios()` function.
+  - `initializeSimulation()` does not perform steady-state run any more. This is
+    done as part of the `runScenarios()` function.
 
 ### MINOR CHANGES
 
-- Function `stringToNum()` gets additional arguments `lloqMode` and `uloqMode`
-that determine how entries of type "<number" and ">number" will be treated.
+  - Function `stringToNum()` gets additional arguments `lloqMode` and `uloqMode`
+    that determine how entries of type "\<number" and "\>number" will be
+    treated.
 
-- `readScenarioConfigurationFromExcel()` will read all scenarios defined in the 
-`Scenarios.xlsx` file if no scenario names are specified (argument `scenarioNames = NULL`).
+  - `readScenarioConfigurationFromExcel()` will read all scenarios defined in
+    the `Scenarios.xlsx` file if no scenario names are specified (argument
+    `scenarioNames = NULL`).
 
-- Function `setApplications()` is deprecated.
+  - Function `setApplications()` is deprecated.
 
-- Dark grey frame around legends by default.
+  - Dark grey frame around legends by default.
 
-------
+-----
 
 # esqlabsR 4.0.0
 
 MAJOR CHANGES
 
-- Three new functions to create configuration objects needed for data visualization workflows:
+  - Three new functions to create configuration objects needed for data
+    visualization workflows:
   
-  * `createEsqlabsPlotConfiguration()`
-  * `createEsqlabsPlotGridConfiguration()`
-  * `createEsqlabsExportConfiguration()`
+  - `createEsqlabsPlotConfiguration()`
+  - `createEsqlabsPlotGridConfiguration()`
+  - `createEsqlabsExportConfiguration()`
 
-- New function `getAllApplicationParameters()` that returns all parameters of 
-applications in a simulation
-- New function `exportParametersToXLS()` to write parameter information into an 
-excel file that can be loaded in MoBi or R using the `readParametersFromXLS()`
-function.
-- New function `writeExcel()` that is a wrapper for creating a directory 
-(if not present) and writing to excel file using `writexl::write_xlsx()`.
+  - New function `getAllApplicationParameters()` that returns all parameters of
+    applications in a simulation
+  - New function `exportParametersToXLS()` to write parameter information into
+    an excel file that can be loaded in MoBi or R using the
+    `readParametersFromXLS()` function.
+  - New function `writeExcel()` that is a wrapper for creating a directory (if
+    not present) and writing to excel file using `writexl::write_xlsx()`.
 
 BREAKING CHANGES
 
-- The package requires R version >=4.1.
+  - The package requires R version \>=4.1.
 
-- The package gains new dependencies:
+  - The package gains new dependencies:
 
-  * [`{ospsuite.parameteridentification}`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/) 
-  * [`{tlf}`](https://www.open-systems-pharmacology.org/TLF-Library/).
+  - [`{ospsuite.parameteridentification}`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/)
+  - [`{tlf}`](https://www.open-systems-pharmacology.org/TLF-Library/).
 
-- Function `getSteadyState()` has been moved to package `{ospsuite.parameteridentification}`.
+  - Function `getSteadyState()` has been moved to package
+    `{ospsuite.parameteridentification}`.
 
-- Function `loadObservedData()` requires a `ProjectConfiguration` instead of a 
-`ScenarioConfiguration`.
+  - Function `loadObservedData()` requires a `ProjectConfiguration` instead of a
+    `ScenarioConfiguration`.
 
-- `DataMapping`, `DataMappingConfiguration`, `XYData`, `DataConfiguration` and 
-associated functions for creating standard figures are moved to `esqlabsRLegacy` 
-[package](https://esqlabs.github.io/esqlabsRLegacy/).
+  - `DataMapping`, `DataMappingConfiguration`, `XYData`, `DataConfiguration` and
+    associated functions for creating standard figures are moved to
+    `esqlabsRLegacy` [package](https://esqlabs.github.io/esqlabsRLegacy/).
 
-------
+-----
 
 # esqlabsR 3.0.0
 
 NEW FUNCTIONS
 
-- To carry out and visualize sensitivity analysis:
+  - To carry out and visualize sensitivity analysis:
 
- * `sensitivityCalculation()`
- * `sensitivitySpiderPlot()`
- * `sensitivityTimeProfiles()`
+  - `sensitivityCalculation()`
+  - `sensitivitySpiderPlot()`
+  - `sensitivityTimeProfiles()`
 
-- Classes and functions for standard esqLABS simulation workflow:
+  - Classes and functions for standard esqLABS simulation workflow:
 
- * `ProjectConfiguration`
- * `ScenarioConfiguration`
- * `createDefaultProjectConfiguration()`
- * `readScenarioConfigurationFromExcel()`
- * `setApplications()`
- * `initializeScenario()`
+  - `ProjectConfiguration`
+  - `ScenarioConfiguration`
+  - `createDefaultProjectConfiguration()`
+  - `readScenarioConfigurationFromExcel()`
+  - `setApplications()`
+  - `initializeScenario()`
 
-- Maintenance and bug fixes.
+  - Maintenance and bug fixes.
 
-- The package gains a new dependency: [`{ospsuite.utils}`](https://www.open-systems-pharmacology.org/OSPSuite.RUtils/).
+  - The package gains a new dependency:
+    [`{ospsuite.utils}`](https://www.open-systems-pharmacology.org/OSPSuite.RUtils/).
 
-------
+-----
 
 # esqlabsR 2.0.0
 
-- Maintenance and bug fixes.
+  - Maintenance and bug fixes.
 
-------
+-----
 
 # esqlabsR 1.0.0
 
-- Initial release of the package.
+  - Initial release of the package.
