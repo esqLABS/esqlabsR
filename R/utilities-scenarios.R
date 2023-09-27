@@ -191,6 +191,9 @@ saveScenarioResults <- function(
     results <- simulatedScenariosResults[[i]]$results
     scenarioName <- names(simulatedScenariosResults)[[i]]
 
+    # Replace "\" and "/" by "_" so the file name does not result in folders
+    scenarioName <- gsub("[\\\\/]", "_", scenarioName)
+
     outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
     tryCatch(
       {
@@ -266,11 +269,16 @@ saveScenarioResults <- function(
 loadScenarioResults <- function(scenarioNames, resultsFolder) {
   simulatedScenariosResults <- list()
   for (i in seq_along(scenarioNames)) {
-    simulation <- loadSimulation(paste0(resultsFolder, "/", scenarioNames[[i]], ".pkml"))
+    scenarioName <- scenarioNames[[i]]
+    # Replace "\" and "/" by "_" so the file name does not result in folders.
+    # Used only for loading the results, the name of the scenario is not changed.
+    scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
+
+    simulation <- loadSimulation(paste0(resultsFolder, "/", scenarioNameForPath, ".pkml"))
 
     results <- importResultsFromCSV(
       simulation = simulation,
-      filePaths = paste0(resultsFolder, "/", scenarioNames[[i]], ".csv")
+      filePaths = paste0(resultsFolder, "/", scenarioNameForPath, ".csv")
     )
 
     outputValues <- getOutputValues(results,
