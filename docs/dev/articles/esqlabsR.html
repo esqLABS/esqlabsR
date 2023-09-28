@@ -163,6 +163,10 @@ Scenario definitions file name: Parameters/Scenarios.xlsx
 <!-- Output folder: Results  -->
 <p>Note that the <code>ProjectConfiguration</code> stores paths to other
 files that are used in the project.</p>
+<p>To create an example <code>ProjectConfiguration</code> and execute
+the rest of this tutorial, run the following:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="design-scenarios">Design Scenarios<a class="anchor" aria-label="anchor" href="#design-scenarios"></a>
@@ -220,7 +224,7 @@ setup, read <code><a href="../articles/esqlabsR-design-scenarios.html">vignette(
 can import <code>ScenarioConfiguration</code> using
 <code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> and create
 <code>Scenario</code> objects with <code><a href="../reference/createScenarios.html">createScenarios()</a></code>:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarios.html">createScenarios</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
 <span>    scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
@@ -244,12 +248,12 @@ can import <code>ScenarioConfiguration</code> using
 <span><span class="co">#&gt;    Simulate steady-state: FALSE </span></span>
 <span><span class="co">#&gt;    Steady-state time: 1000</span></span></code></pre>
 <p>Then, we run the simulations by passing the scenarios we defined:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">myScenarioResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span><span class="va">my_scenarios</span><span class="op">)</span></span></code></pre></div>
 <p>Simulation results can be saved for later use:
 <code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code> and
 <code><a href="../reference/loadScenarioResults.html">loadScenarioResults()</a></code>.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span><span class="va">myScenarioResults</span>,</span>
 <span>  projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
 <span>  outputFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span></span>
@@ -271,22 +275,22 @@ observed data using the <code>DataCombined</code> class and creating
 figures using functions implemented in the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a>
 package.</p>
 <p>First, a <code>DataCombined</code> object is initialized:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_datacombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Then, simulation result are added to the dataCombined object:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">myScenarioResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
 <span>  names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
 <span>  groups <span class="op">=</span> <span class="st">"Aciclovir"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Finally, the plot is generated:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">my_datacombined</span><span class="op">)</span></span></code></pre></div>
 <p><img src="esqlabsR_files/figure-html/unnamed-chunk-11-1.png" width="80%" style="display: block; margin: auto;"></p>
 <p>In some cases, we also want to plot the observed experimental data
 (stored in <code>Data/</code>). <code>DataCombined</code> also has the
 ability to store observed data for them to be plotted.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">observed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
 <span>  projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
 <span>  sheets <span class="op">=</span> <span class="st">"Laskin 1982.Group A"</span></span>
