@@ -69,7 +69,8 @@
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
-<ul><li>Documentation includes PK-Sim installation instructions (<a href="https://github.com/esqLABS/esqlabsR/issues/537" class="external-link">#537</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>).</li>
+<ul><li>Fixes a bug where scenario results could not be saved or loaded when scenario name contains a slash or a backslash (<a href="https://github.com/esqLABS/esqlabsR/issues/548" class="external-link">#548</a>, <a href="https://github.com/PavelBal" class="external-link">@PavelBal</a>)</li>
+<li>Documentation includes PK-Sim installation instructions (<a href="https://github.com/esqLABS/esqlabsR/issues/537" class="external-link">#537</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>).</li>
 <li>Cleaner NEWS file (<a href="https://github.com/esqLABS/esqlabsR/issues/527" class="external-link">#527</a>).</li>
 </ul></div>
 </div>
@@ -82,12 +83,6 @@
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="5.1.0" id="esqlabsr-510">esqlabsR 5.1.0<a class="anchor" aria-label="anchor" href="#esqlabsr-510"></a></h2>
-<div class="section level3">
-<h3 id="minor-improvements-and-bug-fixes-5-1-0">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-1-0"></a></h3>
-<ul><li><p>New vignette/article about figure creation.</p></li>
-<li><p>Plots are using new color palette.</p></li>
-<li><p>Some modifications to plot configuration files for better plots. (<a href="https://github.com/esqLABS/esqlabsR/issues/456" class="external-link">#456</a>, <a href="https://github.com/PavelBal" class="external-link">@PavelBal</a>)</p></li>
-</ul></div>
 <div class="section level3">
 <h3 id="breaking-changes-5-1-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-5-1-0"></a></h3>
 <ul><li>
@@ -108,7 +103,7 @@
 <ul><li><p><code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> gets a new argument <code>importerConfiguration</code>. The user can now provide a custom importer configuration for loading the data.</p></li>
 <li><p>Plots.xlsx, sheet ‘plotConfiguration’, now uses <code>xValuesLimits</code> and <code>yValuesLimits</code> to set axis limits of the plots by default. This approach filters data outside of the limits. See <a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html#ref-examples" class="external-link uri">https://ggplot2.tidyverse.org/reference/coord_cartesian.html#ref-examples</a> for more details. The user can still use <code>xAxisLimits</code> and <code>yAxisLimits</code>.</p></li>
 <li>
-<p>Sheet ‘plotConfiguration’ in the Excel file ‘Plots’ gets additional column ‘aggregation’. The value is passed to the function <code>plotPopulationTimeProfile()</code>. Supported values are listed in <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataAggregationMethods.html" class="external-link">ospsuite::DataAggregationMethods</a></code>.</p>
+<p>Sheet ‘plotConfiguration’ in the Excel file ‘Plots’ gets additional column ‘aggregation’. The value is passed to the function <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotPopulationTimeProfile.html" class="external-link">plotPopulationTimeProfile()</a></code>. Supported values are listed in <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataAggregationMethods.html" class="external-link">ospsuite::DataAggregationMethods</a></code>.</p>
 <ul><li>
 <code>arithmetic</code>: population results are plotted as arithmetic mean +- arithmetic standard deviation</li>
 <li>
@@ -121,12 +116,15 @@
 <li><p>Excel file ‘Individuals.xlsx’ gets additional columns ‘Protein’ and ‘Ontogeny’.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="minor-improvements-and-bug-fixes-5-1-0-1">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-1-0-1"></a></h3>
+<h3 id="minor-improvements-and-bug-fixes-5-1-0">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-1-0"></a></h3>
 <ul><li><p>When a scenario fails, <code><a href="../reference/runScenarios.html">runScenarios()</a></code> does not crash any more, but a warning is shown with the name of the failed scenario. The returned <code>outputValues</code> is <code>NULL</code>.</p></li>
 <li><p>Throw a warning instead of an error if a path specified in <code>ProjectConfiguration</code> does not exist. <code>$outputFolder</code> existence is not checked anymore.</p></li>
 <li><p><code><a href="../reference/stringToNum.html">stringToNum()</a></code> does not show a warning <code>NAs introduced by coercion</code> when a value cannot be converted to a numeric any more. For such values, <code>NA</code> is silently returned.</p></li>
-<li><p>exportParametersToXLS - ignore parameters with NaN <a href="https://github.com/esqLABS/esqlabsR/issues/480" class="external-link uri">https://github.com/esqLABS/esqlabsR/issues/480</a></p></li>
-<li><p>Show a meaningful error when no time unit is specified for a scenario <a href="https://github.com/esqLABS/esqlabsR/issues/483" class="external-link uri">https://github.com/esqLABS/esqlabsR/issues/483</a></p></li>
+<li><p>exportParametersToXLS - ignore parameters with NaN (<a href="https://github.com/esqLABS/esqlabsR/issues/480" class="external-link">#480</a>)</p></li>
+<li><p>Show a meaningful error when no time unit is specified for a scenario (<a href="https://github.com/esqLABS/esqlabsR/issues/483" class="external-link">#483</a>)</p></li>
+<li><p>New vignette/article about figure creation.</p></li>
+<li><p>Plots are using new color palette.</p></li>
+<li><p>Some modifications to plot configuration files for better plots. (<a href="https://github.com/esqLABS/esqlabsR/issues/456" class="external-link">#456</a>, <a href="https://github.com/PavelBal" class="external-link">@PavelBal</a>)</p></li>
 </ul></div>
 </div>
     <div class="section level2">
