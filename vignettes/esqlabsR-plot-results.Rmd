@@ -179,6 +179,7 @@ the generated data:
 ```{r, echo = TRUE}
 plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
                               observedData = observedData,
+                              plotGridNames = c("Aciclovir", "Aciclovir2"),
                               projectConfiguration = projectConfiguration)
 ```
 
