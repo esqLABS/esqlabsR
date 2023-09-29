@@ -69,18 +69,16 @@
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
-<ul><li>Fixes a bug where scenario results could not be saved or loaded when scenario name contains a slash or a backslash (<a href="https://github.com/esqLABS/esqlabsR/issues/548" class="external-link">#548</a>, <a href="https://github.com/PavelBal" class="external-link">@PavelBal</a>)</li>
+<ul><li>Fixes a bug where scenario results could not be saved or loaded when scenario name contains a slash or a backslash (<a href="https://github.com/esqLABS/esqlabsR/issues/548" class="external-link">#548</a>, 1)</li>
+<li>Add support for <code>nsd</code> argument from <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotPopulationTimeProfile.html" class="external-link">ospsuite::plotPopulationTimeProfile()</a></code> aggregation methods. A new column <code>nsd</code> was added to the <code>PlotConfiguration</code> sheet in the example <code>Plot.xlsx</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/544" class="external-link">#544</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>).</li>
 <li>Documentation includes PK-Sim installation instructions (<a href="https://github.com/esqLABS/esqlabsR/issues/537" class="external-link">#537</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>).</li>
 <li>Cleaner NEWS file (<a href="https://github.com/esqLABS/esqlabsR/issues/527" class="external-link">#527</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="5.1.1" id="esqlabsr-511">esqlabsR 5.1.1<a class="anchor" aria-label="anchor" href="#esqlabsr-511"></a></h2>
-<div class="section level3">
-<h3 id="minor-improvements-and-bug-fixes-5-1-1">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-1-1"></a></h3>
 <ul><li>Update required dependencies versions</li>
 </ul></div>
-</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="5.1.0" id="esqlabsr-510">esqlabsR 5.1.0<a class="anchor" aria-label="anchor" href="#esqlabsr-510"></a></h2>
 <div class="section level3">
@@ -124,7 +122,10 @@
 <li><p>Show a meaningful error when no time unit is specified for a scenario (<a href="https://github.com/esqLABS/esqlabsR/issues/483" class="external-link">#483</a>)</p></li>
 <li><p>New vignette/article about figure creation.</p></li>
 <li><p>Plots are using new color palette.</p></li>
-<li><p>Some modifications to plot configuration files for better plots. (<a href="https://github.com/esqLABS/esqlabsR/issues/456" class="external-link">#456</a>, <a href="https://github.com/PavelBal" class="external-link">@PavelBal</a>)</p></li>
+<li>
+<p>Some modifications to plot configuration files for better plots. (<a href="https://github.com/esqLABS/esqlabsR/issues/456" class="external-link">#456</a>,</p>
+<ol class="example" style="list-style-type: decimal"><li>
+</li></ol></li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -159,8 +160,7 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 <p>The workflow for running scenarios changed to:</p>
 <ul><li>Create a <code>ProjectConfiguration</code> with <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code>
 </li>
-<li>Create <code>ScenarioConfigurations</code>, e.g. with <code>readScenarioConfigurationFromExcel(scenarioNames,     projectConfiguration)`</code>
-</li>
+<li>Create <code>ScenarioConfigurations</code>, e.g. with readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`</li>
 <li>Run scenarios with <code>runScenarios(scenarioConfigurations)</code> Alternatively:</li>
 <li>Create a <code>ProjectConfiguration</code> with <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code>
 </li>

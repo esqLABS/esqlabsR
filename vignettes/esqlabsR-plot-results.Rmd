@@ -179,6 +179,7 @@ the generated data:
 ```{r, echo = TRUE}
 plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
                               observedData = observedData,
+                              plotGridNames = c("Aciclovir", "Aciclovir2"),
                               projectConfiguration = projectConfiguration)
 ```
 
@@ -348,11 +349,45 @@ exportConfig <- createEsqlabsExportConfiguration(projectConfiguration)
 exportConfig$savePlot(gridPlot, fileName = "All plots.png")
 ```
 
-By default, the height of the output figure is calculated from the number of
-rows in the multi-panel plot and the height defined in
-`ExportConfiguration$heightPerRow`.
-If you want to define a fixed height with the parameter `ExportConfiguration$height`,
-set `ExportConfiguration$heightPerRow = NULL`.
+
+By default, the height of the output figure is calculated from the
+number of rows in the multi-panel plot and the height defined in
+`ExportConfiguration$heightPerRow`. If you want to define a fixed height
+with the parameter `ExportConfiguration$height`, set
+`ExportConfiguration$heightPerRow = NULL`.
+
+## Observed Data {#observed-data}
+
+Functionalities of `esqlabsR` require observed data to be present as
+[`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
+objects. Please refer to the article [Observed
+data](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html)
+for information on loading data from Excel or `*.pkml` files.
+`{esqlabsR}` offers a convenience function `loadObservedData()` that
+facilitates loading data in `esqLABS` projects. Assuming the standard
+project folder structure is followed, and a valid `ProjectConfiguration`
+(see [Standard workflow](standard-workflow.html)) and Excel files with
+observed data are present in the `projectConfiguration$dataFolder`
+folder, the following code loads the data:
+
+```{r loadObservedData}
+projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
+
+dataSheets <- "Laskin 1982.Group A"
+
+observedData <- loadObservedData(
+  projectConfiguration = projectConfiguration,
+  sheets = dataSheets
+)
+
+print(names(observedData))
+```
+
+The function loads the data from the file
+`projectConfiguration$dataFile` from the folder
+`projectConfiguration$dataFolder` and returns a list of
+`DataSet`objects. The resulting object can be used to plot results to
+compare simulated and observed data.
 
 
 ## Troubleshooting

@@ -1,14 +1,16 @@
 # esqlabsR (development version)
 
 ## Minor improvements and bug fixes
-  - Fixes a bug where scenario results could not be saved or loaded when scenario name
-  contains a slash or a backslash (#548, @PavelBal)
-  - Documentation includes PK-Sim installation instructions (#537, @Felixmil).
-  - Cleaner NEWS file (#527).
+
+  - Fixes a bug where scenario results could not be saved or loaded when
+    scenario name contains a slash or a backslash (\#548, @PavelBal)
+  - Add support for `nsd` argument from `ospsuite::plotPopulationTimeProfile()`
+    aggregation methods. A new column `nsd` was added to the `PlotConfiguration`
+    sheet in the example `Plot.xlsx` (\#544, @Felixmil).
+  - Documentation includes PK-Sim installation instructions (\#537, @Felixmil).
+  - Cleaner NEWS file (\#527).
 
 # esqlabsR 5.1.1
-
-## Minor improvements and bug fixes
 
   - Update required dependencies versions
 
@@ -83,15 +85,17 @@
     value cannot be converted to a numeric any more. For such values, `NA` is
     silently returned.
     
-  - exportParametersToXLS - ignore parameters with NaN (#480)
+  - exportParametersToXLS - ignore parameters with NaN (\#480)
     
-  - Show a meaningful error when no time unit is specified for a scenario (#483)
+  - Show a meaningful error when no time unit is specified for a scenario
+    (\#483)
 
   - New vignette/article about figure creation.
   
   - Plots are using new color palette.
   
-  - Some modifications to plot configuration files for better plots. (#456, @PavelBal)
+  - Some modifications to plot configuration files for better plots. (\#456,
+    @PavelBal)
 
 # esqlabsR 5.0.0
 
@@ -175,11 +179,9 @@
   - The workflow for running scenarios changed to:
       - Create a `ProjectConfiguration` with
         `createDefaultProjectConfiguration()`
-      - Create `ScenarioConfigurations`, e.g. with 
-        ```
-        readScenarioConfigurationFromExcel(scenarioNames,
-        projectConfiguration)`
-        ```
+      - Create `ScenarioConfigurations`, e.g. with
+            readScenarioConfigurationFromExcel(scenarioNames,
+            projectConfiguration)`
       - Run scenarios with `runScenarios(scenarioConfigurations)` Alternatively:
       - Create a `ProjectConfiguration` with
         `createDefaultProjectConfiguration()`

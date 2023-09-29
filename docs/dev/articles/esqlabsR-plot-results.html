@@ -263,6 +263,7 @@ found <a href="https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/example
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel</a></span><span class="op">(</span>simulatedScenarios <span class="op">=</span> <span class="va">simulatedScenarios</span>,</span>
 <span>                              observedData <span class="op">=</span> <span class="va">observedData</span>,</span>
+<span>                              plotGridNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Aciclovir"</span>, <span class="st">"Aciclovir2"</span><span class="op">)</span>,</span>
 <span>                              projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span><span class="op">)</span></span></code></pre></div>
 <p>The function returns a named list of <code>ggplot2</code> objects,
 with names being the names of the plot grids:</p>
@@ -425,6 +426,39 @@ fixed height with the parameter <code>ExportConfiguration$height</code>,
 set <code>ExportConfiguration$heightPerRow = NULL</code>.</p>
 </div>
 </div>
+</div>
+<div class="section level2">
+<h2 id="observed-data">Observed Data<a class="anchor" aria-label="anchor" href="#observed-data"></a>
+</h2>
+<p>Functionalities of <code>esqlabsR</code> require observed data to be
+present as <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html" class="external-link"><code>DataSet</code></a>
+objects. Please refer to the article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html" class="external-link">Observed
+data</a> for information on loading data from Excel or
+<code>*.pkml</code> files. <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> offers a convenience
+function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> that facilitates loading data
+in <code>esqLABS</code> projects. Assuming the standard project folder
+structure is followed, and a valid <code>ProjectConfiguration</code>
+(see <a href="standard-workflow.html">Standard workflow</a>) and Excel
+files with observed data are present in the
+<code>projectConfiguration$dataFolder</code> folder, the following code
+loads the data:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
+<span></span>
+<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  sheets <span class="op">=</span> <span class="va">dataSheets</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">observedData</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Laskin 1982.Group A_Aciclovir_1_Human_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"</span></span></code></pre></div>
+<p>The function loads the data from the file
+<code>projectConfiguration$dataFile</code> from the folder
+<code>projectConfiguration$dataFolder</code> and returns a list of
+<code>DataSet</code>objects. The resulting object can be used to plot
+results to compare simulated and observed data.</p>
 </div>
 <div class="section level2">
 <h2 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>

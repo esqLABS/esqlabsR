@@ -1,7 +1,7 @@
 projectConfiguration <- createDefaultProjectConfiguration(test_ProjectConfiguration())
 
 # Define which scenarios to run
-scenarioNames <- c("TestScenario")
+scenarioNames <- c("TestScenario", "PopulationScenario")
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 # Create `ScenarioConfiguration` objects from excel files
@@ -40,7 +40,7 @@ dataCombinedDf <- data.frame(list(
   "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
   "dataType" = c("simulated", "observed"),
   "label" = c("Aciclovir simulated", "Aciclovir observed"),
-  "scenario" = c(scenarioNames, NA),
+  "scenario" = c(scenarioNames[1], NA),
   "path" = c(outputPaths, NA),
   "dataSet" = c(NA, names(observedData)),
   "group" = c("Aciclovir PVB", "Aciclovir PVB"),
@@ -63,6 +63,7 @@ plotConfigurationDf <- data.frame(list(
   "xValuesLimits" = NA,
   "yValuesLimits" = NA,
   "quantiles" = NA,
+  "nsd" = NA,
   "foldDistance" = NA
 ))
 plotGridsDf <- data.frame(list(
@@ -305,15 +306,16 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
     code = {
       dataCombinedDfLocal <- dataCombinedDf
       plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$scenario <- c(scenarioNames, "foo")
+      dataCombinedDfLocal$scenario <- c(scenarioNames[1], "foo")
       plotGridsDfLocal <- plotGridsDf
       exportConfigurationDfLocal <- exportConfigurationDf
-      writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+      writeExcel(
+        data = list("DataCombined" = dataCombinedDfLocal,
+                    "plotConfiguration" = plotConfigurationDfLocal,
+                    "plotGrids" = plotGridsDfLocal,
+                    "exportConfiguration" = exportConfigurationDfLocal),
+        path = file.path(tempDir, "Plots.xlsx")
+      )
 
 
       expect_warning(createPlotsFromExcel(
@@ -336,7 +338,7 @@ test_that("It trows an error if defined data set is missing and stopIfNotFound i
     code = {
       dataCombinedDfLocal <- dataCombinedDf
       plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$dataSet <- c(scenarioNames, names(observedData))
+      dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedData))
       plotGridsDfLocal <- plotGridsDf
       exportConfigurationDfLocal <- exportConfigurationDf
       writeExcel(data = list(
@@ -351,7 +353,7 @@ test_that("It trows an error if defined data set is missing and stopIfNotFound i
         observedData = observedData,
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
-      ), regexp = messages$stopInvalidDataSetName(scenarioNames))
+      ), regexp = messages$stopInvalidDataSetName(scenarioNames[1]))
     }
   )
 })
@@ -366,7 +368,7 @@ test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", 
     code = {
       dataCombinedDfLocal <- dataCombinedDf
       plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$dataSet <- c(scenarioNames, names(observedData))
+      dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedData))
       plotGridsDfLocal <- plotGridsDf
       exportConfigurationDfLocal <- exportConfigurationDf
       writeExcel(data = list(
@@ -381,7 +383,7 @@ test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", 
         observedData = observedData,
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = FALSE
-      ), regexp = messages$warningInvalidDataSetName(scenarioNames))
+      ), regexp = messages$warningInvalidDataSetName(scenarioNames[1]))
     }
   )
 })
@@ -520,7 +522,7 @@ test_that("It creates plots for all plot grids when plotGridNames is NULL", {
     projectConfiguration = projectConfiguration,
     stopIfNotFound = TRUE
   )
-  expect_equal(names(plots), c("Aciclovir", "Aciclovir2"))
+  expect_equal(names(plots), c("Aciclovir", "Aciclovir2", "Aciclovir3"))
 })
 
 test_that("It creates plots only for specified plotGrids", {
@@ -853,10 +855,16 @@ test_that("It returns an empty DataCombined when no data is available", {
         "exportConfiguration" = exportConfigurationDfLocal
       ), path = file.path(tempDir, "Plots.xlsx"), )
 
-      dataCombined <- createDataCombinedFromExcel(
-        file = file.path(tempDir, "Plots.xlsx"),
-        stopIfNotFound = FALSE
-      )
+      # Warnings are suppressed because they are expected but not relevant for
+      # this test.
+      suppressWarnings({
+        dataCombined <- createDataCombinedFromExcel(
+          file = file.path(tempDir, "Plots.xlsx"),
+          stopIfNotFound = FALSE
+        )
+      })
+
+
       expect_equal(dataCombined[[1]], DataCombined$new())
     }
   )

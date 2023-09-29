@@ -145,12 +145,15 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
 
   # Size
-  defaultPlotConfiguration$titleSize <- 11
+  defaultPlotConfiguration$titleSize <- 10
   defaultPlotConfiguration$xLabelSize <- 9
   defaultPlotConfiguration$yLabelSize <- 9
   defaultPlotConfiguration$xAxisLabelTicksSize <- 8
   defaultPlotConfiguration$yAxisLabelTicksSize <- 8
   defaultPlotConfiguration$legendKeysSize <- 6
+
+  defaultPlotConfiguration$xLabelMargin <- c(10, 0, 0, 0)
+  defaultPlotConfiguration$yLabelMargin <- c(0, 0, 10, 0)
 
   # Lines size
   defaultPlotConfiguration$linesSize <- 0.5
@@ -202,8 +205,8 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
   plotGridConfiguration <- tlf::PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
-  plotGridConfiguration$tagSize <- 10
-  plotGridConfiguration$titleSize <- 11
+  plotGridConfiguration$tagSize <- 11
+  plotGridConfiguration$titleSize <- 12
 
   plotGridConfiguration$titleHorizontalJustification <- 0.5
 
@@ -340,6 +343,7 @@ createPlotsFromExcel <- function(
         "yLabel",
         "aggregation",
         "quantiles",
+        "nsd",
         "foldDistance"
       ))]
     )
@@ -360,6 +364,7 @@ createPlotsFromExcel <- function(
       population = {
         aggregation <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$aggregation
         quantiles <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$quantiles
+        nsd <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$nsd
         args <- list()
         args$dataCombined <- dataCombined
         args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
@@ -370,6 +375,10 @@ createPlotsFromExcel <- function(
         # quantiles defined?
         if (!is.null(quantiles) && !is.na(quantiles)) {
           args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
+        }
+        # if nsd is defined, add it to the args
+        if (!is.null(nsd) && !is.na(nsd)) {
+          args$nsd <- as.numeric(nsd)
         }
         do.call(plotPopulationTimeProfile, args)
       },
