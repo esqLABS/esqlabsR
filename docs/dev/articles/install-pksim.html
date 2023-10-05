@@ -103,14 +103,31 @@
 
     
     
+<p>The workflows implemented in <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> rely on
+functionalities of the <code>{ospsuite-r}</code> package that require <a href="https://github.com/Open-Systems-Pharmacology/PK-Sim" class="external-link">PK-Sim</a>.
+It is necessary that the version of <code>{ospsuite-r}</code> matches
+the version of PK-Sim. When using the <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R/releases" class="external-link">released
+version</a> of <code>{ospsuite-r}</code>, it is sufficient to install
+the corresponding <a href="https://github.com/Open-Systems-Pharmacology/Suite/releases" class="external-link">OSPS
+release</a>. However, the current version of <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>
+relies on features implemented in the <code>{ospsuite-r}</code> and
+PK-Sim that are still under development and have not been released. This
+document describes how to get the PK-Sim version matching the latest
+<code>{ospsuite-r}</code>.</p>
+<p>It is possible to install PK-Sim globally for the whole system, but
+also locally on a per-project basis. The following sections describe
+both options.</p>
 <div class="section level2">
-<h2 id="download-pk-sim">Download PK-Sim<a class="anchor" aria-label="anchor" href="#download-pk-sim"></a>
+<h2 id="install-pk-sim-globally">Install PK-Sim Globally<a class="anchor" aria-label="anchor" href="#install-pk-sim-globally"></a>
 </h2>
+<div class="section level3">
+<h3 id="download-pk-sim">Download PK-Sim<a class="anchor" aria-label="anchor" href="#download-pk-sim"></a>
+</h3>
 <p>Download the latest portable version of PK-Sim by clicking <a href="https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/pk-sim/artifacts/pk-sim-portable-setup.zip?branch=develop" class="external-link">here</a>.</p>
 </div>
-<div class="section level2">
-<h2 id="enable-using--dll-from-zip">Enable using .dll from zip<a class="anchor" aria-label="anchor" href="#enable-using--dll-from-zip"></a>
-</h2>
+<div class="section level3">
+<h3 id="enable-using--dll-from-zip">Enable using .dll from zip<a class="anchor" aria-label="anchor" href="#enable-using--dll-from-zip"></a>
+</h3>
 <p>Windows Defender prevents applications downloaded from untrusted
 sources from being loaded. Before extracting the downloaded portable
 version, you have to unblock it.</p>
@@ -120,22 +137,47 @@ Windows 11, you have to select “Show more options” first),</li>
 <li>In the Properties-window, select the checkbox “Unblock”.</li>
 </ol>
 </div>
-<div class="section level2">
-<h2 id="restart-r-session">Restart R session<a class="anchor" aria-label="anchor" href="#restart-r-session"></a>
-</h2>
+<div class="section level3">
+<h3 id="restart-r-session">Restart R session<a class="anchor" aria-label="anchor" href="#restart-r-session"></a>
+</h3>
 <p>Make sure that no instance of <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> is loaded. If
 so, restart the R session, as otherwise you might not be able to
 overwrite the existing portable version of PK-Sim.</p>
 </div>
-<div class="section level2">
-<h2 id="extract-pk-sim">Extract PK-Sim<a class="anchor" aria-label="anchor" href="#extract-pk-sim"></a>
-</h2>
+<div class="section level3">
+<h3 id="extract-pk-sim">Extract PK-Sim<a class="anchor" aria-label="anchor" href="#extract-pk-sim"></a>
+</h3>
 <p>Extract the downloaded portable PK-Sim to
 <code>C:/Program Files/Open Systems Pharmacology/PK-Sim 12.0</code>.<br>
 Change the version number in the folder name to match the PK-Sim version
 you downloaded while keeping only the two digits. For example, if you
 downloaded PK-Sim 12.0.1, the folder name should be
 <code>PK-Sim 12.0</code>.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="install-and-use-pk-sim-in-a-project">Install and use PK-Sim in a project<a class="anchor" aria-label="anchor" href="#install-and-use-pk-sim-in-a-project"></a>
+</h2>
+<p>In the project’s folder, run the following code that will download
+the latest PK-Sim “minimal” version and extract it to a folder called
+<code>PKSim</code>.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">"https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-r/artifacts/pksim_minimal.zip"</span>,</span>
+<span>              destfile <span class="op">=</span> <span class="st">"pksim_minimal.zip"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/unzip.html" class="external-link">unzip</a></span><span class="op">(</span><span class="st">"pksim_minimal.zip"</span>, exdir <span class="op">=</span> <span class="st">"PKSim"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.remove</a></span><span class="op">(</span><span class="st">"pksim_minimal.zip"</span><span class="op">)</span></span></code></pre></div>
+<p>Then, include the following code lines at the begining of the
+projects scripts:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">ospsuite</span><span class="fu">::</span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/initPKSim.html" class="external-link">initPKSim</a></span><span class="op">(</span>pksimFolderPath <span class="op">=</span> <span class="st">"PKSim"</span><span class="op">)</span></span></code></pre></div>
+<p>Alternatively, it is possible to add this line to a
+<code>.Rprofile</code> file in the project’s folder. This will ensure
+that the PK-Sim version is initialized when the project is opened in
+RStudio. You can create a <code>.Rprofile</code> file by running the
+following code:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/edit.html" class="external-link">edit_r_profile</a></span><span class="op">(</span>scope <span class="op">=</span> <span class="st">"project"</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
