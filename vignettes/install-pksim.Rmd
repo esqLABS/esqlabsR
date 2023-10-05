@@ -75,7 +75,7 @@ Then, include the following code lines at the begining of the projects scripts:
 ospsuite::initPKSim(pksimFolderPath = "PKSim")
 ```
 
-Alternatively, it is possible to add this line to a `.Rprofile` file in the
+Alternatively, it is possible to add the line above to a `.Rprofile` file in the
 project's folder. This will ensure that the PK-Sim version is initialized when
 the project is opened in RStudio. You can create a `.Rprofile` file by running
 the following code:
