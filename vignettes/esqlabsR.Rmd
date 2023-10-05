@@ -23,15 +23,15 @@ require(readxl)
 
 ## Introduction
 
-`{esqlabsR}` is designed to make life easier for OSPS users. The workflows implemented 
-in this package rely on simple concepts:
+`{esqlabsR}` is designed to make life easier for OSPS users. The workflows
+implemented in this package rely on simple concepts:
 
--   a predefined project folder structure,
--   Excel files for definition of simulation scenarios out outputs.
+  - a predefined project folder structure,
+  - Excel files for definition of simulation scenarios out outputs.
 
 ## Initialize Project
 
-`{esqlabsR}` facilitates modeling and simulation workflows with OSPS relying on 
+`{esqlabsR}` facilitates modeling and simulation workflows with OSPS relying on
 a well defined project structure based on Excel files. These files are organized
 in different folders and their structure must not be altered.
 

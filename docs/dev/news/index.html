@@ -35,10 +35,11 @@
     <a class="dropdown-item" href="../articles/esqlabsR-plot-results.html">4. Plot Results</a>
     <div class="dropdown-divider"></div>
     <h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6>
-    <a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a>
-    <a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a>
-    <a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a>
+    <a class="dropdown-item" href="../articles/install-pksim.html">Install PK-Sim</a>
     <a class="dropdown-item" href="../articles/presentations.html">Presentations</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a>
+    <a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a>
   </div>
 </li>
 <li class="active nav-item">
@@ -68,8 +69,10 @@
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
-<ul><li>Fixes a bug where scenario results could not be saved or loaded when scenario name contains a slash or a backslash (<a href="https://github.com/esqLABS/esqlabsR/issues/548" class="external-link">#548</a>, <a href="https://github.com/PavelBal" class="external-link">@PavelBal</a>)</li>
+<ul><li>Fixes a bug where scenario results could not be saved or loaded when scenario name contains a slash or a backslash (<a href="https://github.com/esqLABS/esqlabsR/issues/548" class="external-link">#548</a>, 1)</li>
 <li>Add support for <code>nsd</code> argument from <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotPopulationTimeProfile.html" class="external-link">ospsuite::plotPopulationTimeProfile()</a></code> aggregation methods. A new column <code>nsd</code> was added to the <code>PlotConfiguration</code> sheet in the example <code>Plot.xlsx</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/544" class="external-link">#544</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>).</li>
+<li>Documentation includes PK-Sim installation instructions (<a href="https://github.com/esqLABS/esqlabsR/issues/537" class="external-link">#537</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>).</li>
+<li>Cleaner NEWS file (<a href="https://github.com/esqLABS/esqlabsR/issues/527" class="external-link">#527</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -78,16 +81,97 @@
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="5.1.0" id="esqlabsr-510">esqlabsR 5.1.0<a class="anchor" aria-label="anchor" href="#esqlabsr-510"></a></h2>
-<ul><li>New vignette/article about figure creation.</li>
-<li>Plots are using new color palette.</li>
-<li>Some modifications to plot configuration files for better plots.</li>
+<div class="section level3">
+<h3 id="breaking-changes-5-1-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-5-1-0"></a></h3>
+<ul><li>
+<p>When importing observed data using the default importer configuration, data set naming is grouped by <code>StudyId</code> at the first place.</p>
+<ul><li>Before: <code>{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>
+</li>
+<li>After: <code>{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>
+</li>
+</ul><p>This will result in different data set names, and plots specifying the data sets by the old naming will fail. For compatibility, use custom importer configuration with the old naming:</p>
+<pre><code><span>  <span class="va">importerConfiguration</span> <span class="op">&lt;-</span> <span class="fu">ospsuite</span><span class="fu">::</span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html" class="external-link">loadDataImporterConfiguration</a></span><span class="op">(</span></span>
+<span>    configurationFilePath <span class="op">=</span> <span class="va">projectConfiguration</span><span class="op">$</span><span class="va">dataImporterConfigurationFile</span></span>
+<span>    <span class="op">)</span></span>
+<span>    <span class="va">importerConfiguration</span><span class="op">$</span><span class="va">namingPattern</span> <span class="op">&lt;-</span> <span class="st">"{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"</span></span></code></pre>
+</li>
 </ul></div>
+<div class="section level3">
+<h3 id="major-changes-5-1-0">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-5-1-0"></a></h3>
+<ul><li><p><code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> gets a new argument <code>importerConfiguration</code>. The user can now provide a custom importer configuration for loading the data.</p></li>
+<li><p>Plots.xlsx, sheet ‘plotConfiguration’, now uses <code>xValuesLimits</code> and <code>yValuesLimits</code> to set axis limits of the plots by default. This approach filters data outside of the limits. See <a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html#ref-examples" class="external-link uri">https://ggplot2.tidyverse.org/reference/coord_cartesian.html#ref-examples</a> for more details. The user can still use <code>xAxisLimits</code> and <code>yAxisLimits</code>.</p></li>
+<li>
+<p>Sheet ‘plotConfiguration’ in the Excel file ‘Plots’ gets additional column ‘aggregation’. The value is passed to the function <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotPopulationTimeProfile.html" class="external-link">plotPopulationTimeProfile()</a></code>. Supported values are listed in <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataAggregationMethods.html" class="external-link">ospsuite::DataAggregationMethods</a></code>.</p>
+<ul><li>
+<code>arithmetic</code>: population results are plotted as arithmetic mean +- arithmetic standard deviation</li>
+<li>
+<code>geometric</code>: population results are plotted as geometric mean +- geometric standard deviation</li>
+<li>
+<code>quantiles</code> (default): population results are plotted as quantiles defined in the column <code>quantiles</code>.</li>
+</ul></li>
+<li><p>Protein ontogenies can be defined for populations and individuals. To specify ontogenies for proteins in the simulation, list the proteins you want to define ontogenies for in the column ‘Protein’ of files ‘PopulationParameters.xlsx’ or ‘Individuals.xlsx’, separated by a ‘,’. Speficy the ontogenies available in PK-Sim (see article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies" class="external-link uri">https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies</a>) in the column ‘Ontogenies’. The number of entries in the both columns must be equal.</p></li>
+<li><p>Excel file ‘PopulationParameters.xlsx’ gets additional columns ‘Protein’ and ‘Ontogeny’.</p></li>
+<li><p>Excel file ‘Individuals.xlsx’ gets additional columns ‘Protein’ and ‘Ontogeny’.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-improvements-and-bug-fixes-5-1-0">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-1-0"></a></h3>
+<ul><li><p>When a scenario fails, <code><a href="../reference/runScenarios.html">runScenarios()</a></code> does not crash any more, but a warning is shown with the name of the failed scenario. The returned <code>outputValues</code> is <code>NULL</code>.</p></li>
+<li><p>Throw a warning instead of an error if a path specified in <code>ProjectConfiguration</code> does not exist. <code>$outputFolder</code> existence is not checked anymore.</p></li>
+<li><p><code><a href="../reference/stringToNum.html">stringToNum()</a></code> does not show a warning <code>NAs introduced by coercion</code> when a value cannot be converted to a numeric any more. For such values, <code>NA</code> is silently returned.</p></li>
+<li><p>exportParametersToXLS - ignore parameters with NaN (<a href="https://github.com/esqLABS/esqlabsR/issues/480" class="external-link">#480</a>)</p></li>
+<li><p>Show a meaningful error when no time unit is specified for a scenario (<a href="https://github.com/esqLABS/esqlabsR/issues/483" class="external-link">#483</a>)</p></li>
+<li><p>New vignette/article about figure creation.</p></li>
+<li><p>Plots are using new color palette.</p></li>
+<li>
+<p>Some modifications to plot configuration files for better plots. (<a href="https://github.com/esqLABS/esqlabsR/issues/456" class="external-link">#456</a>,</p>
+<ol class="example" style="list-style-type: decimal"><li>
+</li></ol></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="5.0.0" id="esqlabsr-500">esqlabsR 5.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-500"></a></h2>
-<div class="section level4">
-<h4 id="new-functionalities-5-0-0">New functionalities<a class="anchor" aria-label="anchor" href="#new-functionalities-5-0-0"></a></h4>
-<ul><li><p>New function <code><a href="../reference/loadObservedDataFromPKML.html">loadObservedDataFromPKML()</a></code> to load data from <code>*.pkml</code> located in the “PKML” sub-folder of the “Data” folder.</p></li>
-<li><p>New function <code><a href="../reference/createScenarios.html">createScenarios()</a></code> to create <code>Scenario</code> objects from <code>ScenarioConfiguration</code> objects</p></li>
+<div class="section level3">
+<h3 id="breaking-changes-5-0-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-5-0-0"></a></h3>
+<ul><li><p>Field <code>setTestParameters</code> removed from <code>ScenarioConfiguration</code></p></li>
+<li><p>Function <code>initializeScenario()</code> has been removed.</p></li>
+<li><p>Definition of simulation time in the <code>Scenarios.xlsx</code> file changed. The new expected format is a triplet of values &lt;StartTime, EndTime, Resolution&gt;, where <code>Resolution</code> is the number of simulated points per time unit defined in the column <code>TimeUnit</code>.</p></li>
+<li><p>Field <code>poinstPerMinute</code> of <code>ScenarioConfiguration</code> has been removed.</p></li>
+<li><p>Function <code>compareSimulationParameters()</code> has been removed and replaced by <code><a href="../reference/compareSimulations.html">compareSimulations()</a></code></p></li>
+<li><p><code>Scenarios</code> excel file gets additional columns <code>SteadyStateTime</code>, <code>SteadyStateTimeUnit</code>, <code>PopulationId</code>, <code>OutputPathsIds</code>.</p></li>
+<li><p><code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> has a new signature and requires a list of <code>scenarioNames</code> and a <code>ProjectConfiguration</code>. The output is a named list of <code>ScenarioConfiguration</code> objects.</p></li>
+<li><p>Output paths are not set from global variable <code>OutputPaths</code> any more but from the respective field of <code>ScenarioConfgiruation</code></p></li>
+<li><p><code>ProjectConfiguration</code> does not have field <code>$outputDevice</code> any more.</p></li>
+<li><p><code>ScenarioConfiguration</code> does not store <code>SimulationRunOptions</code> any more. Simulation run options must be passed to the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function. Different run options cannot be used within one scenarios run.</p></li>
+<li><p>Enum <code>GraphicsDevices</code> has been removed.</p></li>
+<li><p>Function <code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> does not have arguments <code>simulateSteadyState</code>, <code>steadyStateTime</code> and <code>simulationRunOptions</code> any more.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="major-changes-5-0-0">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-5-0-0"></a></h3>
+<ul><li><p>New class <code>Scenario</code> that represents a scenario created from a <code>ScenarioConfiguration</code>.</p></li>
+<li><p><code>ScenarioConfiguration</code> gets a new field <code>outputPaths</code> which is a list of output paths for which the results will be calculated. If <code>NULL</code> (default), outputs as defined in the simulation are used.</p></li>
+<li><p>Paths of model outputs are defined in the excel file <code>Scenarios.xlsx</code>. In the sheet <code>OutputPaths</code>, create an entry for each output. The column <code>OutputPath</code> is the full path to the output, while <code>OutputPathId</code> is an identifier that conveniently allows to select the correct output.<br>
+In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs should be generated for, separated by a <code>,</code>, e.g. <code>Aciclovir_PVB, Aciclovir_fat_cell</code>. If no outputs are specified, the outputs as defined in the simulation <code>.pkml</code> file will be produced.</p></li>
+<li><p><code>ScenarioConfiguration</code> gets a new field <code>populationId</code>, specifying the id of the population as defined in the <code>PopulationParameters.xlsx</code> file, sheet <code>Demographics</code>. If the field is <code>NULL</code>, the scenario is simulated as an individual simulation, otherwise a population simulation is performed.</p></li>
+<li><p><code>ScenarioConfiguration</code> gets a new field <code>readPopulationFromCSV</code>. If <code>FALSE</code> (default), a new population is created from defined population demographics. If <code>TRUE</code>, a simulation will be imported from a csv sheet located in the folder <code>Parameters/Populations</code> and named as the <code>PopulationId</code>.</p></li>
+<li><p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> supports scenario configurations for population simulations.</p></li>
+<li><p>Target folder for saving <code>*.pkml</code> simulations when <code>runScenarios(scenarioConfigurations, saveSimulationsToPKML = TRUE)</code> changed from <code>Models/Simulations/&lt;DateSuffix&gt;</code> to <code>Results/SimulationResults/&lt;DateSuffix&gt;</code>.</p></li>
+<li><p><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> - fixed bug in wrong calculation of sensitivity values. Please be aware that the results produced by earlier versions are wrong.</p></li>
+<li>
+<p>The workflow for running scenarios changed to:</p>
+<ul><li>Create a <code>ProjectConfiguration</code> with <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code>
+</li>
+<li>Create <code>ScenarioConfigurations</code>, e.g. with readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`</li>
+<li>Run scenarios with <code>runScenarios(scenarioConfigurations)</code> Alternatively:</li>
+<li>Create a <code>ProjectConfiguration</code> with <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code>
+</li>
+<li>Create <code>ScenarioConfigurations</code>, e.g. with</li>
+</ul></li>
+</ul><p><code>readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)</code></p>
+<ul><li><p><code>ProjectConfiguration</code> gets a new field <code>plotsFile</code>. It is the name of the excel file with plot definitions and must be located in the <code>paramsFolder</code>.</p></li>
+<li><p>When defining an individual of other species than human in <code>ScenarioConfiguration</code> and applying it to a human model, missing species-specific parameters are applied and the scaling works properly. Supported scalingsa are: Human to rat, human to monkey, human to rabbit.</p></li>
+<li><p><code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> does not perform steady-state run any more. This is done as part of the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function.</p></li>
+<li><p>New function <code><a href="../reference/loadObservedDataFromPKML.html">loadObservedDataFromPKML()</a></code> to load data from <code>*.pkml</code> located in the “PKML” sub-folder of the “Data” folder.</p></li>
+<li><p>New function <code><a href="../reference/createScenarios.html">createScenarios()</a></code> to create <code>Scenario</code> objects from <code>ScenarioConfiguration</code> objects.</p></li>
 <li><p>Plots can be created by calling the new function <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>. It requires as input parameters <code>simulatedScenarios</code> (a list of simulated scenarios as returned by <code><a href="../reference/runScenarios.html">runScenarios()</a></code>), <code>observedData</code> (a list of <code>DataSet</code> objects) and a <code>ProjectConfiguration</code> object <code>projectConfiguration</code>.</p></li>
 <li><p>New function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> creates <code>DataCombined</code> objects as defined in the <code>Plots.xlsx</code> file.</p></li>
 <li><p>New function <code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code> to save results produced by the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function to csv files and corresponding simulations to pkml files.</p></li>
@@ -95,59 +179,10 @@
 <li><p>New function <code>compareSimulation()</code> to compare two simulations for differences.</p></li>
 <li><p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> also returns a <code>Population</code> object for population simulations.</p></li>
 <li><p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> gets a new argument <code>savePopulationToCSV</code>, with default value <code>FALSE</code>.</p></li>
-<li><p><code>eslqbsR</code> extends the <code><a href="https://rdrr.io/pkg/tlf/man/ExportConfiguration.html" class="external-link">tlf::ExportConfiguration</a></code> class to dynamically calculate the height of the exported figure from the number of rows and the new parameter <code>heightPerRow</code>.</p></li>
+<li><p><code>esqlabsR</code> extends the <code><a href="https://rdrr.io/pkg/tlf/man/ExportConfiguration.html" class="external-link">tlf::ExportConfiguration</a></code> class to dynamically calculate the height of the exported figure from the number of rows and the new parameter <code>heightPerRow</code>.</p></li>
 </ul></div>
-<div class="section level4">
-<h4 id="breaking-changes-5-0-0">BREAKING CHANGES<a class="anchor" aria-label="anchor" href="#breaking-changes-5-0-0"></a></h4>
-<ul><li>Field <code>setTestParameters</code> removed from <code>ScenarioConfiguration</code>
-</li>
-<li>Function <code>initializeScenario()</code> has been removed</li>
-<li>Definition of simulation time in the <code>Scenarios.xlsx</code> file changed. The new expected format is a triplet of values &lt;StartTime, EndTime, Resolution&gt;, where <code>Resolution</code> is the number of simulated points per time unit defined in the column <code>TimeUnit</code>.</li>
-<li>Field <code>poinstPerMinute</code> of <code>ScenarioConfiguration</code> has been removed.</li>
-<li>Function <code>compareSimulationParameters()</code> has been removed and replaced by <code><a href="../reference/compareSimulations.html">compareSimulations()</a></code>
-</li>
-<li>
-<code>Scenarios</code> excel file gets additional columns <code>SteadyStateTime</code>, <code>SteadyStateTimeUnit</code>, <code>PopulationId</code>, <code>OutputPathsIds</code>.</li>
-<li>
-<code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> has a new signature and requires a list of <code>scenarioNames</code> and a <code>ProjectConfiguration</code>. The output is a named list of <code>ScenarioConfiguration</code> objects.</li>
-<li>Output paths are not set from global variable <code>OutputPaths</code> any more but from the respective field of <code>ScenarioConfgiruation</code>
-</li>
-<li>
-<code>ProjectConfiguration</code> does not have field <code>$outputDevice</code> any more.</li>
-<li>
-<code>ScenarioConfiguration</code> does not store <code>SimulationRunOptions</code> any more. Simulation run options must be passed to the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function. Different run options cannot be used within one scenarios run.</li>
-<li>Enum <code>GraphicsDevices</code> has been removed.</li>
-<li>Function <code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> does not have arguments <code>simulateSteadyState</code>, <code>steadyStateTime</code> and <code>simulationRunOptions</code> any more.</li>
-</ul></div>
-<div class="section level4">
-<h4 id="major-changes-5-0-0">MAJOR CHANGES<a class="anchor" aria-label="anchor" href="#major-changes-5-0-0"></a></h4>
-<ul><li><p>New class <code>Scenario</code> that represents a scenario created from a <code>ScenarioConfiguration</code></p></li>
-<li><p><code>ScenarioConfiguration</code> gets a new field <code>outputPaths</code> which is a list of output paths for which the results will be calculated. If <code>NULL</code> (default), outputs as defined in the simulation are used.</p></li>
-<li><p>Paths of model outputs are defined in the excel file <code>Scenarios.xlsx</code>. In the sheet <code>OutputPaths</code>, create an entry for each output. The column <code>OutputPath</code> is the full path to the output, while <code>OutputPathId</code> is an identifier that conveniently allows to select the correct output. In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs should be generated for, separated by a <code>,</code>, e.g. <code>Aciclovir_PVB, Aciclovir_fat_cell</code>.</p></li>
-</ul><p>If no outputs are specified, the outputs as defined in the simulation <code>.pkml</code> file will be produced.</p>
-<ul><li><p><code>ScenarioConfiguration</code> gets a new field <code>populationId</code>, specifying the id of the population as defined in the <code>PopulationParameters.xlsx</code> file, sheet <code>Demographics</code>. If the field is <code>NULL</code>, the scenario is simulated as an individual simulation, otherwise a population simulation is performed.</p></li>
-<li><p><code>ScenarioConfiguration</code> gets a new field <code>readPopulationFromCSV</code>. If <code>FALSE</code> (default), a new population is created from defined population demographics. If <code>TRUE</code>, a simulation will be imported from a csv sheet located in the folder <code>Parameters/Populations</code> and named as the <code>PopulationId</code>.</p></li>
-<li><p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> supports scenario configurations for population simulations</p></li>
-<li><p>Target folder for saving <code>*.pkml</code> simulations when <code>runScenarios(scenarioConfigurations, saveSimulationsToPKML = TRUE)</code> changed from <code>Models/Simulations/&lt;DateSuffix&gt;</code> to <code>Results/SimulationResults/&lt;DateSuffix&gt;</code>.</p></li>
-<li><p><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> - fixed bug in wrong calculation of sensitivity values. Please be aware that the results produced by earlier versions are wrong.</p></li>
-<li>
-<p>The workflow for running scenarios changed to:</p>
-<ul><li>Create a <code>ProjectConfiguration</code> with <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code>
-</li>
-<li>Create <code>ScenarioConfigurations</code>, e.g. with <code>readScenarioConfigurationFromExcel(scenarioNames,     projectConfiguration)</code>
-</li>
-<li>Run scenarios with <code>runScenarios(scenarioConfigurations)</code>
-</li>
-</ul></li>
-<li><p>Alternatively:</p></li>
-<li><p>Create a <code>ProjectConfiguration</code> with <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code></p></li>
-<li><p>Create <code>ScenarioConfigurations</code>, e.g. with <code>readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)</code></p></li>
-<li><p><code>ProjectConfiguration</code> gets a new field <code>plotsFile</code>. It is the name of the excel file with plot definitions and must be located in the <code>paramsFolder</code>.</p></li>
-<li><p>When defining an individual of other species than human in <code>ScenarioConfiguration</code> and applying it to a human model, missing species-specific parameters are applied and the scaling works properly. Supported scalingsa are: Human to rat, human to monkey, human to rabbit.</p></li>
-<li><p><code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> does not perform steady-state run any more. This is done as part of the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function.</p></li>
-</ul></div>
-<div class="section level4">
-<h4 id="minor-changes-5-0-0">MINOR CHANGES<a class="anchor" aria-label="anchor" href="#minor-changes-5-0-0"></a></h4>
+<div class="section level3">
+<h3 id="minor-changes-and-bug-fixes-5-0-0">Minor changes and bug fixes<a class="anchor" aria-label="anchor" href="#minor-changes-and-bug-fixes-5-0-0"></a></h3>
 <ul><li><p>Function <code><a href="../reference/stringToNum.html">stringToNum()</a></code> gets additional arguments <code>lloqMode</code> and <code>uloqMode</code> that determine how entries of type “&lt;number” and “&gt;number” will be treated.</p></li>
 <li><p><code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> will read all scenarios defined in the <code>Scenarios.xlsx</code> file if no scenario names are specified (argument <code>scenarioNames = NULL</code>).</p></li>
 <li><p>Function <code><a href="../reference/setApplications.html">setApplications()</a></code> is deprecated.</p></li>
@@ -156,40 +191,55 @@
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="4.0.0" id="esqlabsr-400">esqlabsR 4.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-400"></a></h2>
-<p>MAJOR CHANGES</p>
-<ul><li><p>Three new functions to create configuration objects needed for data visualization workflows:</p></li>
-<li><p><code><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration()</a></code></p></li>
-<li><p><code><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration()</a></code></p></li>
-<li><p><code><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration()</a></code></p></li>
-<li><p>New function <code><a href="../reference/getAllApplicationParameters.html">getAllApplicationParameters()</a></code> that returns all parameters of applications in a simulation</p></li>
-<li><p>New function <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> to write parameter information into an excel file that can be loaded in MoBi or R using the <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function.</p></li>
-<li><p>New function <code><a href="../reference/writeExcel.html">writeExcel()</a></code> that is a wrapper for creating a directory (if not present) and writing to excel file using <code><a href="https://docs.ropensci.org/writexl/reference/write_xlsx.html" class="external-link">writexl::write_xlsx()</a></code>.</p></li>
-</ul><p>BREAKING CHANGES</p>
+<div class="section level3">
+<h3 id="breaking-changes-4-0-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-4-0-0"></a></h3>
 <ul><li><p>The package requires R version &gt;=4.1.</p></li>
-<li><p>The package gains new dependencies:</p></li>
-<li><p><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/" class="external-link"><code>{ospsuite.parameteridentification}</code></a></p></li>
-<li><p><a href="https://www.open-systems-pharmacology.org/TLF-Library/" class="external-link"><code>{tlf}</code></a>.</p></li>
+<li>
+<p>The package gains new dependencies:</p>
+<ul><li><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/" class="external-link"><code>{ospsuite.parameteridentification}</code></a></li>
+<li>
+<a href="https://www.open-systems-pharmacology.org/TLF-Library/" class="external-link"><code>{tlf}</code></a>.</li>
+</ul></li>
 <li><p>Function <code>getSteadyState()</code> has been moved to package <a href="https://github.com/open-systems-pharmacology/ospsuite.parameteridentification" class="external-link">ospsuite.parameteridentification</a>.</p></li>
 <li><p>Function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> requires a <code>ProjectConfiguration</code> instead of a <code>ScenarioConfiguration</code>.</p></li>
 <li><p><code>DataMapping</code>, <code>DataMappingConfiguration</code>, <code>XYData</code>, <code>DataConfiguration</code> and associated functions for creating standard figures are moved to <code>esqlabsRLegacy</code> <a href="https://esqlabs.github.io/esqlabsRLegacy/">package</a>.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="major-changes-4-0-0">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-4-0-0"></a></h3>
+<ul><li>
+<p>Three new functions to create configuration objects needed for data visualization workflows:</p>
+<ul><li><code><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration()</a></code></li>
+<li><code><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration()</a></code></li>
+<li><code><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration()</a></code></li>
+</ul></li>
+<li><p>New function <code><a href="../reference/getAllApplicationParameters.html">getAllApplicationParameters()</a></code> that returns all parameters of applications in a simulation</p></li>
+<li><p>New function <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> to write parameter information into an excel file that can be loaded in MoBi or R using the <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function.</p></li>
+<li><p>New function <code><a href="../reference/writeExcel.html">writeExcel()</a></code> that is a wrapper for creating a directory (if not present) and writing to excel file using <code><a href="https://docs.ropensci.org/writexl/reference/write_xlsx.html" class="external-link">writexl::write_xlsx()</a></code>.</p></li>
 </ul><hr></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="3.0.0" id="esqlabsr-300">esqlabsR 3.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-300"></a></h2>
-<p>NEW FUNCTIONS</p>
-<ul><li><p>To carry out and visualize sensitivity analysis:</p></li>
-<li><p><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code></p></li>
-<li><p><code><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot()</a></code></p></li>
-<li><p><code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code></p></li>
-<li><p>Classes and functions for standard esqLABS simulation workflow:</p></li>
-<li><p><code>ProjectConfiguration</code></p></li>
-<li><p><code>ScenarioConfiguration</code></p></li>
-<li><p><code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code></p></li>
-<li><p><code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code></p></li>
-<li><p><code><a href="../reference/setApplications.html">setApplications()</a></code></p></li>
-<li><p><code>initializeScenario()</code></p></li>
+<div class="section level3">
+<h3 id="major-changes-3-0-0">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-3-0-0"></a></h3>
+<ul><li>
+<p>To carry out and visualize sensitivity analysis:</p>
+<ul><li><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code></li>
+<li><code><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot()</a></code></li>
+<li><code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code></li>
+</ul></li>
+<li>
+<p>Classes and functions for standard esqLABS simulation workflow:</p>
+<ul><li><code>ProjectConfiguration</code></li>
+<li><code>ScenarioConfiguration</code></li>
+<li><code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code></li>
+<li><code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code></li>
+<li><code><a href="../reference/setApplications.html">setApplications()</a></code></li>
+<li><code>initializeScenario()</code></li>
+</ul></li>
 <li><p>Maintenance and bug fixes.</p></li>
 <li><p>The package gains a new dependency: <a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/" class="external-link"><code>{ospsuite.utils}</code></a>.</p></li>
 </ul><hr></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.0" id="esqlabsr-200">esqlabsR 2.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-200"></a></h2>
 <ul><li>Maintenance and bug fixes.</li>
