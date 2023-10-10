@@ -1,5 +1,4 @@
 install_script_deps <- function(install_option) {
-
   # install dependencies required for this script
 
   cat("Install prerequisite dependencies\n")
@@ -7,18 +6,18 @@ install_script_deps <- function(install_option) {
   if (install_option == 1) {
     install.packages("renv")
     require(renv)
-    init(bare = TRUE, restart = FALSE)
+    init(bare = TRUE,
+         restart = FALSE)
   }
 
   # Declare packages
-  packages <- c("cli","remotes","rstudioapi","pkgbuild")
+  packages <- c("cli", "remotes", "rstudioapi", "pkgbuild")
 
   # Loop through each package
   for (package in packages) {
-
     # Install package
     # Note: `installed.packages()` returns a vector of all the installed packages
-    if (!require(package,character.only = T, quietly = T)) {
+    if (!require(package, character.only = T, quietly = T)) {
       # Install it
       install.packages(
         package,
@@ -53,10 +52,8 @@ check_RTools <- function() {
 }
 
 get_PKSim_Minimal <- function(install_option) {
-
   # Only for local installation
   if (install_option == 1) {
-
     cli_progress_step("Get minimal version of PKSim.")
 
     download.file("https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-r/artifacts/pksim_minimal.zip",
@@ -69,16 +66,11 @@ get_PKSim_Minimal <- function(install_option) {
     # test if PK-Sim.R dll can be loaded
     ospsuite::initPKSim(pksimFolderPath = "PKSim")
 
-    snapshot(prompt = FALSE)
-
     cli_progress_done(result = "done")
-
   }
-
-
 }
 
-get_esqlabsR <- function(){
+get_esqlabsR <- function() {
   # package installation
   cli_progress_step("Install esqlabsR and dependencies")
 
@@ -88,14 +80,14 @@ get_esqlabsR <- function(){
                    quiet = TRUE
   )
   remotes::install_github("esqLABS/esqlabsR@*release",
-                 quiet = TRUE,
-                 build = TRUE
+                          build = TRUE,
+                          upgrade = "always"
   )
 
   cli_progress_done(result = "done")
 }
 
-load_esqlabsR <- function(){
+load_esqlabsR <- function() {
   cli_progress_step("Load esqlabsR")
   unloadNamespace(ns = "esqlabsR")
   unloadNamespace(ns = "ospsuite.parameteridentification")
@@ -110,40 +102,41 @@ run_test_simulation <- function() {
 
   cli_progress_step("Run test simulation.")
 
-  tryCatch(expr = {
-    require(esqlabsR)
+  tryCatch(
+    expr = {
+      require(esqlabsR)
 
-    suppressWarnings({
-      projectConfiguration <- createDefaultProjectConfiguration(path = esqlabsR:::test_ProjectConfiguration())
-    })
-    # Define which scenarios to run
-    scenarioNames <- c("TestScenario")
-    # Set scenario names to NULL if you want to simulate all scenarios defined in the
-    # excel file
-    # scenarioNames <- NULL
+      suppressWarnings({
+        projectConfiguration <- createDefaultProjectConfiguration(path = esqlabsR:::test_ProjectConfiguration())
+      })
+      # Define which scenarios to run
+      scenarioNames <- c("TestScenario")
+      # Set scenario names to NULL if you want to simulate all scenarios defined in the
+      # excel file
+      # scenarioNames <- NULL
 
-    # Create `ScenarioConfiguration` objects from excel files
-    scenarioConfigurations <- readScenarioConfigurationFromExcel(
-      scenarioNames = scenarioNames,
-      projectConfiguration = projectConfiguration
-    )
+      # Create `ScenarioConfiguration` objects from excel files
+      scenarioConfigurations <- readScenarioConfigurationFromExcel(
+        scenarioNames = scenarioNames,
+        projectConfiguration = projectConfiguration
+      )
 
-    scenarios <- createScenarios(scenarioConfigurations)
+      scenarios <- createScenarios(scenarioConfigurations)
 
-    simulatedScenarios <- runScenarios(scenarios = scenarios)
+      simulatedScenarios <- runScenarios(scenarios = scenarios)
 
-    cli_progress_done(result = "done")
-    cli_alert_success("Installation successful.")
+      cli_progress_done(result = "done")
+      cli_alert_success("Installation successful.")
 
-  },
-  error = function(error){
-    cli_progress_done(result = "failed")
-    cli_alert_danger(text = paste("Simulation test failed: ", error))
-  })
+    },
+    error = function(error) {
+      cli_progress_done(result = "failed")
+      cli_alert_danger(text = paste("Simulation test failed: ", error))
+    }
+  )
 }
 
-initialize_project <- function(){
-
+initialize_project <- function() {
   initialize_option <- utils::menu(c("Yes", "No"),
                                    title = "Do you want to initialize project folder structure ?"
   )
@@ -154,14 +147,13 @@ initialize_project <- function(){
     update_project_conf()
     cli_progress_done(result = "done")
   }
-
 }
 
-update_project_conf <- function(){
-
+update_project_conf <- function() {
   compoundpropertiesinternal_file <-
     list.files("../Data",
-               pattern = "*_Compound Properties \\(Internal\\).xlsx")[1]
+               pattern = "*_Compound Properties \\(Internal\\).xlsx"
+    )[1]
 
   project_configuration <-
     createDefaultProjectConfiguration(path = "../ProjectConfiguration.xlsx")
@@ -175,31 +167,33 @@ update_project_conf <- function(){
   project_configuration$save()
 }
 
-rename_timevalue_file <- function(){
-
+rename_timevalue_file <- function() {
   proj_name <- get_project_name()
 
   timevalues_file <-
     list.files("../Data",
                pattern = "*TimeValuesData.xlsx",
-               full.names = TRUE)[1]
+               full.names = TRUE
+    )[1]
 
-  new_name <- gsub(basename(timevalues_file),
-                   paste0(proj_name,"_TimeValuesData.xlsx"),
-                   timevalues_file)
+  new_name <- gsub(
+    basename(timevalues_file),
+    paste0(proj_name, "_TimeValuesData.xlsx"),
+    timevalues_file
+  )
 
   file.rename(timevalues_file, new_name)
 
   return(new_name)
-
-
 }
 
-get_project_name <- function(){
+get_project_name <- function() {
   rproj_name <- list.files(pattern = ".Rproj")
-  proj_name <- sub(pattern = "_V.*?.Rproj",
-                   replacement = "",
-                   x = rproj_name)
+  proj_name <- sub(
+    pattern = "_V.*?.Rproj",
+    replacement = "",
+    x = rproj_name
+  )
 
   return(proj_name)
 }
@@ -235,8 +229,9 @@ setup_esqlabsR <- function() {
 
   initialize_project()
 
-  restart_rstudio()
+  renv::snapshot(prompt = FALSE) #snapshot environment
 
+  restart_rstudio()
 }
 
 # Run this function to setup esqlabsR
