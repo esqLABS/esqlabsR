@@ -1,5 +1,19 @@
+verify_long_path_enabled <- function(){
+  reg <- readRegistry("SYSTEM\\CurrentControlSet\\Control\\FileSystem\\",
+                      "HLM")
+
+  if(reg$LongPathsEnabled != 1){
+    stop("Long paths are not enabled. Please enable them and restart R.\r
+To enable long path, follow instructions at this adress: https://www.microfocus.com/documentation/filr/filr-4/filr-desktop/t47bx2ogpfz7.html")
+  }
+}
+
+
 install_script_deps <- function(install_option) {
   # install dependencies required for this script
+
+  # Do not prompt user if packages must be built
+  options(install.packages.compile.from.source = "always")
 
   cat("Install prerequisite dependencies\n")
   # if user chose local installation, install renv and initialize it
@@ -7,7 +21,8 @@ install_script_deps <- function(install_option) {
     install.packages("renv")
     require(renv)
     init(bare = TRUE,
-         restart = FALSE)
+         restart = FALSE,
+         force = TRUE)
   }
 
   # Declare packages
@@ -229,7 +244,9 @@ setup_esqlabsR <- function() {
 
   initialize_project()
 
-  renv::snapshot(prompt = FALSE) #snapshot environment
+  if (install_option == 1) {
+    renv::snapshot(prompt = FALSE) #snapshot environment
+  }
 
   restart_rstudio()
 }
