@@ -1,8 +1,12 @@
-verify_long_path_enabled <- function(){
-  reg <- readRegistry("SYSTEM\\CurrentControlSet\\Control\\FileSystem\\",
-                      "HLM")
+verify_long_path_enabled <- function() {
+  suppressWarnings({
+    reg <- readRegistry(
+      "SYSTEM\\CurrentControlSet\\Control\\FileSystem\\",
+      "HLM"
+    )
+  })
 
-  if(reg$LongPathsEnabled != 1){
+  if (reg$LongPathsEnabled != 1) {
     stop("Long paths are not enabled. Please enable them and restart R.\r
 To enable long path, follow instructions at this adress: https://www.microfocus.com/documentation/filr/filr-4/filr-desktop/t47bx2ogpfz7.html")
   }
@@ -20,9 +24,11 @@ install_script_deps <- function(install_option) {
   if (install_option == 1) {
     install.packages("renv")
     require(renv)
-    init(bare = TRUE,
-         restart = FALSE,
-         force = TRUE)
+    init(
+      bare = TRUE,
+      restart = FALSE,
+      force = TRUE
+    )
   }
 
   # Declare packages
@@ -72,7 +78,7 @@ get_PKSim_Minimal <- function(install_option) {
     cli_progress_step("Get minimal version of PKSim.")
 
     download.file("https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-r/artifacts/pksim_minimal.zip",
-                  destfile = "pksim_minimal.zip"
+      destfile = "pksim_minimal.zip"
     )
     unzip("pksim_minimal.zip", exdir = "PKSim")
     file.remove("pksim_minimal.zip")
@@ -90,13 +96,13 @@ get_esqlabsR <- function() {
   cli_progress_step("Install esqlabsR and dependencies")
 
   install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip",
-                   repos = NULL,
-                   type = "binary",
-                   quiet = TRUE
+    repos = NULL,
+    type = "binary",
+    quiet = TRUE
   )
   remotes::install_github("esqLABS/esqlabsR@*release",
-                          build = TRUE,
-                          upgrade = "always"
+    build = TRUE,
+    upgrade = "always"
   )
 
   cli_progress_done(result = "done")
@@ -142,7 +148,6 @@ run_test_simulation <- function() {
 
       cli_progress_done(result = "done")
       cli_alert_success("Installation successful.")
-
     },
     error = function(error) {
       cli_progress_done(result = "failed")
@@ -153,7 +158,7 @@ run_test_simulation <- function() {
 
 initialize_project <- function() {
   initialize_option <- utils::menu(c("Yes", "No"),
-                                   title = "Do you want to initialize project folder structure ?"
+    title = "Do you want to initialize project folder structure ?"
   )
 
   if (initialize_option == 1) {
@@ -167,7 +172,7 @@ initialize_project <- function() {
 update_project_conf <- function() {
   compoundpropertiesinternal_file <-
     list.files("../Data",
-               pattern = "*_Compound Properties \\(Internal\\).xlsx"
+      pattern = "*_Compound Properties \\(Internal\\).xlsx"
     )[1]
 
   project_configuration <-
@@ -187,8 +192,8 @@ rename_timevalue_file <- function() {
 
   timevalues_file <-
     list.files("../Data",
-               pattern = "*TimeValuesData.xlsx",
-               full.names = TRUE
+      pattern = "*TimeValuesData.xlsx",
+      full.names = TRUE
     )[1]
 
   new_name <- gsub(
@@ -225,9 +230,11 @@ restart_rstudio <- function() {
 }
 
 setup_esqlabsR <- function() {
+  verify_long_path_enabled()
+
   # Display a menu asking if user wants to install packages in local env or  globally
   install_option <- utils::menu(c("In local environment (available for one project)", "In Global environment (available for all projects)"),
-                                title = "Where do you want to install {esqlabsR} and other packages?"
+    title = "Where do you want to install {esqlabsR} and other packages?"
   )
 
   install_script_deps(install_option)
@@ -245,7 +252,7 @@ setup_esqlabsR <- function() {
   initialize_project()
 
   if (install_option == 1) {
-    renv::snapshot(prompt = FALSE) #snapshot environment
+    renv::snapshot(prompt = FALSE) # snapshot environment
   }
 
   restart_rstudio()
