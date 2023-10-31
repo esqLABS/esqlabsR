@@ -1,0 +1,106 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+name: pkgdown
+
+jobs:
+  pkgdown:
+    runs-on: windows-latest
+    # Only restrict concurrency for non-PR jobs
+    concurrency:
+      group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      RCLR_VERSION: 0.9.2
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download latest PK-sim build archive
+        run: |
+          $url = "https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/pk-sim/artifacts/setup.zip?branch=develop"
+          # Define the location where you want to save the zip file
+          $outputPath = "${{ runner.workspace }}/setup.zip"
+          Invoke-WebRequest -Uri $url -OutFile $outputPath
+        shell: powershell
+
+      - name: Unzip PK-sim build archive
+        run: |
+          $zipPath = "${{ runner.workspace }}/setup.zip"
+          $unzipPath = "${{ runner.workspace }}/unzipped"
+          Expand-Archive -Path $zipPath -DestinationPath $unzipPath
+        shell: powershell
+
+      - name: Install PK-sim MSI
+        run: |
+          $msiPath = Get-ChildItem -Path "${{ runner.workspace }}/unzipped" -Filter "*.msi" | Select-Object -First 1
+          if ($msiPath) {
+            Start-Process msiexec -ArgumentList "/i", $msiPath.FullName, "/quiet", "/qn", "/norestart" -Wait
+          } else {
+            Write-Output "No MSI file found in the unzipped directory."
+            exit 1
+          }
+        shell: powershell
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Download rClr
+        run: |
+          RCLR_URL <- "https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v${{ env.RCLR_VERSION }}/rClr_${{ env.RCLR_VERSION }}.zip"
+          download.file(RCLR_URL, "rClr_${{ env.RCLR_VERSION }}.zip")
+        shell: Rscript {0}
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: rClr=local::./rClr_${{ env.RCLR_VERSION }}.zip, any::pkgdown, local::., ospsuite.utils=github::Open-Systems-Pharmacology/OSPSuite.RUtils, tlf=github::Open-Systems-Pharmacology/TLF-Library, ospsuite=github::Open-Systems-Pharmacology/OSPSuite-R, ospsuite.parameteridentification=github::Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
+          needs: website
+
+      - name: Build site
+        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+        shell: Rscript {0}
+
+      - name: Upload Artifacts 🔺 # The project is then uploaded as an artifact named 'site'.
+        uses: actions/upload-artifact@v1
+        with:
+          name: pkgdown
+          path: docs
+
+
+  deploy:
+    concurrency:
+      group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
+    needs: [pkgdown] # The second job must depend on the first one to complete before running and uses ubuntu-latest instead of windows.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+
+      - name: Download Artifacts 🔻 # The built project is downloaded into the 'site' folder.
+        uses: actions/download-artifact@v1
+        with:
+          name: pkgdown
+
+      - name: Deploy to GitHub pages 🚀
+        if: github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          clean: false
+          branch: gh-pages
+          folder: docs
