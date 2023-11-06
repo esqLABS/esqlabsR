@@ -65,7 +65,14 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: rClr=local::./rClr_${{ env.RCLR_VERSION }}.zip, any::pkgdown, local::., ospsuite.utils=github::Open-Systems-Pharmacology/OSPSuite.RUtils, tlf=github::Open-Systems-Pharmacology/TLF-Library, ospsuite=github::Open-Systems-Pharmacology/OSPSuite-R, ospsuite.parameteridentification=github::Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
+          extra-packages: |
+            rClr=local::./rClr_${{ env.RCLR_VERSION }}.zip
+            any::pkgdown
+            local::.
+            ospsuite.utils=github::Open-Systems-Pharmacology/OSPSuite.RUtils
+            tlf=github::Open-Systems-Pharmacology/TLF-Library
+            ospsuite=github::Open-Systems-Pharmacology/OSPSuite-R
+            ospsuite.parameteridentification=github::Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
           needs: website
 
       - name: Build site
