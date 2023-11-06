@@ -69,6 +69,10 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
   paste0("nrOfColors must be positive, value ", nrOfColors, " is not valid!")
 }
 
+messages$PlotIDMustBeUnique <- function(duplicated_plotID = NULL) {
+  paste0("PlotID must be unique in PlotConfiguration, but the following plotIDs are duplicated: ", duplicated_plotID)
+}
+
 # scenario####
 messages$wrongSimulationType <- function() {
   "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"

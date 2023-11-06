@@ -549,7 +549,7 @@ test_that("It trows an error when specified plot grid names are not defined in t
   )
 })
 
-test_that("It trows an error if mandatory field plotIDs is not filled out", {
+test_that("It throws an error if mandatory field plotIDs is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$paramsFolder <- tempDir
@@ -576,6 +576,52 @@ test_that("It trows an error if mandatory field plotIDs is not filled out", {
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
       ), regexp = messages$missingPlotIDs())
+    }
+  )
+})
+
+
+test_that("It throws and error if plotIDs are duplicated", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$outputFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- data.frame(list(
+        "plotID" = c("P1", "P1"),
+        "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
+        "plotType" = c("individual", "individual"),
+        "title" = NA,
+        "xUnit" = NA,
+        "yUnit" = NA,
+        "xAxisScale" = NA,
+        "yAxisScale" = NA,
+        "xValuesLimits" = NA,
+        "yValuesLimits" = NA,
+        "quantiles" = NA,
+        "nsd" = NA,
+        "foldDistance" = NA
+      ))
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- exportConfigurationDf
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      ), regexp = messages$PlotIDMustBeUnique())
     }
   )
 })

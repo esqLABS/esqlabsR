@@ -316,6 +316,12 @@ createPlotsFromExcel <- function(
   dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
   # Filter and validate only used plot configurations
   dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
+  ## throw error if one of the plotID is not unique in dfPlotConfiguration
+  duplicated_plotID <- dfPlotConfigurations$plotID[duplicated(dfPlotConfigurations$plotID)]
+  if (length(duplicated_plotID) > 0) {
+    stop(messages$PlotIDMustBeUnique(duplicated_plotID))
+  }
+
   # Filter and validate only used data combined
   dataCombinedList <- createDataCombinedFromExcel(
     file = projectConfiguration$plotsFile,
