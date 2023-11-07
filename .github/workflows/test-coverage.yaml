@@ -49,6 +49,12 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Download rClr
+        run: |
+          RCLR_URL <- "https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v${{ env.RCLR_VERSION }}/rClr_${{ env.RCLR_VERSION }}.zip"
+          download.file(RCLR_URL, "rClr_${{ env.RCLR_VERSION }}.zip")
+        shell: Rscript {0}
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
