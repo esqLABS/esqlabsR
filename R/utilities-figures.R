@@ -313,6 +313,8 @@ createPlotsFromExcel <- function(
   )
 
   # Pre-process the sheet 'plotGrids'
+  ## Remove rows that are entirely empty
+  dfPlotGrids <-  dplyr::filter(dfPlotGrids, !if_all(everything(), is.na))
   dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
   # Filter and validate only used plot configurations
   dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
@@ -430,6 +432,8 @@ createPlotsFromExcel <- function(
   })
   names(plotGrids) <- dfPlotGrids$name
 
+  ## Remove rows that are entirely empty
+  dfExportConfigurations <-  dplyr::filter(dfExportConfigurations, !if_all(everything(), is.na))
   dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
