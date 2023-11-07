@@ -10,9 +10,10 @@ name: test-coverage
 
 jobs:
   test-coverage:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      RCLR_VERSION: 0.9.2
 
     steps:
       - uses: actions/checkout@v3
