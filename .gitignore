@@ -55,3 +55,4 @@ tests/testthat/Rplots.pdf
 *_.new.png
 .vscode
 *.code-workspace
+docs
