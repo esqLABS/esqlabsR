@@ -310,10 +310,12 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
       plotGridsDfLocal <- plotGridsDf
       exportConfigurationDfLocal <- exportConfigurationDf
       writeExcel(
-        data = list("DataCombined" = dataCombinedDfLocal,
-                    "plotConfiguration" = plotConfigurationDfLocal,
-                    "plotGrids" = plotGridsDfLocal,
-                    "exportConfiguration" = exportConfigurationDfLocal),
+        data = list(
+          "DataCombined" = dataCombinedDfLocal,
+          "plotConfiguration" = plotConfigurationDfLocal,
+          "plotGrids" = plotGridsDfLocal,
+          "exportConfiguration" = exportConfigurationDfLocal
+        ),
         path = file.path(tempDir, "Plots.xlsx")
       )
 
@@ -813,9 +815,9 @@ test_that("It correctly treats empty rows", {
     code = {
       # datacombined with empty row
       dataCombinedDfLocal <- data.frame(list(
-        "DataCombinedName" = c("AciclovirPVB",NA, "AciclovirPVB"),
-        "dataType" = c("simulated",NA, "observed"),
-        "label" = c("Aciclovir simulated",NA, "Aciclovir observed"),
+        "DataCombinedName" = c("AciclovirPVB", NA, "AciclovirPVB"),
+        "dataType" = c("simulated", NA, "observed"),
+        "label" = c("Aciclovir simulated", NA, "Aciclovir observed"),
         "scenario" = c(scenarioNames[1], NA, NA),
         "path" = c(outputPaths, NA, NA),
         "dataSet" = c(NA, NA, names(observedData)),
