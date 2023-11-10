@@ -69,8 +69,12 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
   paste0("nrOfColors must be positive, value ", nrOfColors, " is not valid!")
 }
 
-messages$PlotIDMustBeUnique <- function(duplicated_plotID = NULL) {
-  paste0("PlotID must be unique in PlotConfiguration, but the following plotIDs are duplicated: ", duplicated_plotID)
+messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = NULL) {
+  paste0("PlotID must be unique in PlotConfiguration, but the following plotIDs are duplicated: ", duplicated_plotIDs)
+}
+
+messages$PlotGridsNamesMustBeUnique <- function(duplicated_plotGridsNames = NULL) {
+  paste0("PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated: ", duplicated_plotGridsNames)
 }
 
 # scenario####

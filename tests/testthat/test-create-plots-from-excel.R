@@ -581,7 +581,7 @@ test_that("It throws an error if mandatory field plotIDs is not filled out", {
 })
 
 
-test_that("It throws and error if plotIDs are duplicated", {
+test_that("It throws and error if plotIDs are not unique", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$paramsFolder <- tempDir
@@ -621,7 +621,42 @@ test_that("It throws and error if plotIDs are duplicated", {
         observedData = observedData,
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
-      ), regexp = messages$PlotIDMustBeUnique())
+      ), regexp = messages$PlotIDsMustBeUnique())
+    }
+  )
+})
+
+test_that("It throws and error if plotGrid names are not unique", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$outputFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotGridsDfLocal <- data.frame(list(
+        "name" = c("Aciclovir", "Aciclovir"),
+        "plotIDs" = c("P1", "P2"),
+        "title" = c("Aciclovir PVB", "Aciclovir PVB2")
+      ))
+      exportConfigurationDfLocal <- exportConfigurationDf
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      ), regexp = messages$PlotGridsNamesMustBeUnique())
     }
   )
 })
