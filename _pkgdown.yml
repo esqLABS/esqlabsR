@@ -1,115 +1,92 @@
 url: https://esqlabs.github.io/esqlabsR/
-
 template:
   bootstrap: 5
-
 authors:
   esqLABS GmbH:
-    href: "https://esqlabs.com/"
-    html: "<img src='https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png' style='max-width:33px'>esqLABS"
+    href: https://esqlabs.com/
+    html: <img src='https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png'
+      style='max-width:33px'>esqLABS
   Indrajeet Patil:
     href: https://sites.google.com/site/indrajeetspatilmorality/
   Felix Mil:
     href: https://github.com/Felixmil
-
 development:
   mode: auto
-
 reference:
-
-  - title: Project workflow
-    contents:
-      - contains("Project")
-      - contains("Scenario")
-      - createPlotsFromExcel
-      - init_project
-
-  - title: Helpers for data import, wrangling, and export
-    #desc:
-    contents:
-      - matches("^read")
-      - matches("^extend")
-      - matches("^set")
-      - matches("^write")
-      - matches("^export")
-      - createDataCombinedFromExcel
-
-  - title: Helpers for modeling and simulation
-    #desc:
-    contents:
-      - matches("^compare")
-      - matches("^calculate")
-      - contains("Simulation")
-      - ends_with("Function")
-      - contains("Quantiles")
-      - matches("^geo")
-      - sampleRandomValue
-      - applyIndividualParameters
-      - Distributions
-      - LLOQMode
-      - ULOQMode
-      - loadObservedData
-      - loadObservedDataFromPKML
-
-  - title: Helpers for plotting
-    #desc:
-    contents:
-      - matches("^plot")
-      - matches("^col")
-      - contains("color")
-      - has_concept("create-plotting-configurations")
-      - createDataCombinedFromExcel
-
-  - title: Input validation
-    #desc:
-    contents:
-      - matches("^valid")
-      - matches("^is")
-      - stringToNum
-      - GenderInt
-      - contains("Types")
-      - escapeForRegex
-
-  - title: Sensitivity analysis
-    #desc:
-    contents:
-      - starts_with("sensitivity")
-
-  - title: Shiny applications
-    #desc:
-    contents:
-      - matches("^start")
-
-  - title: Miscellaneous
-    #desc:
-    contents:
-      - matches("^enum")
-      - matches("^get")
-      - executeInParallel
-      - pathFromClipboard
-      - removeFromList
-      - sourceAll
-      - esqlabsRSettingNames
-
-  - title: Inherited classes
-    #desc:
-    contents:
-      - ExportConfiguration
-
+- title: Project workflow
+  contents:
+  - contains("Project")
+  - contains("Scenario")
+  - createPlotsFromExcel
+  - init_project
+- title: Helpers for data import, wrangling, and export
+  contents:
+  - matches("^read")
+  - matches("^extend")
+  - matches("^set")
+  - matches("^write")
+  - matches("^export")
+  - createDataCombinedFromExcel
+- title: Helpers for modeling and simulation
+  contents:
+  - matches("^compare")
+  - matches("^calculate")
+  - contains("Simulation")
+  - ends_with("Function")
+  - contains("Quantiles")
+  - matches("^geo")
+  - sampleRandomValue
+  - applyIndividualParameters
+  - Distributions
+  - LLOQMode
+  - ULOQMode
+  - loadObservedData
+  - loadObservedDataFromPKML
+- title: Helpers for plotting
+  contents:
+  - matches("^plot")
+  - matches("^col")
+  - contains("color")
+  - has_concept("create-plotting-configurations")
+  - createDataCombinedFromExcel
+- title: Input validation
+  contents:
+  - matches("^valid")
+  - matches("^is")
+  - stringToNum
+  - GenderInt
+  - contains("Types")
+  - escapeForRegex
+- title: Sensitivity analysis
+  contents: starts_with("sensitivity")
+- title: Shiny applications
+  contents: matches("^start")
+- title: Miscellaneous
+  contents:
+  - matches("^enum")
+  - matches("^get")
+  - executeInParallel
+  - pathFromClipboard
+  - removeFromList
+  - sourceAll
+  - esqlabsRSettingNames
+- title: Inherited classes
+  contents: ExportConfiguration
 articles:
-  - title: esqlabsR Workflow
-    navbar: esqlabsR Workflow
-    contents:
-      - esqlabsR-workflow-overview
-      - esqlabsR-project-structure
-      - esqlabsR-design-scenarios
-      - esqlabsR-run-simulations
-      - esqlabsR-plot-results
-  - title: Miscellaneous
-    navbar: Miscellaneous
-    contents:
-      - install-pksim
-      - presentations
-      - esqlabsR-sensitivity
-      - esqlabsR-advanced
-      - esqlabsR-shiny
+- title: esqlabsR Workflow
+  navbar: esqlabsR Workflow
+  contents:
+  - esqlabsR-workflow-overview
+  - esqlabsR-project-structure
+  - esqlabsR-design-scenarios
+  - esqlabsR-run-simulations
+  - esqlabsR-plot-results
+- title: Miscellaneous
+  navbar: Miscellaneous
+  contents:
+  - install-pksim
+  - presentations
+  - esqlabsR-sensitivity
+  - esqlabsR-advanced
+  - esqlabsR-shiny
+
