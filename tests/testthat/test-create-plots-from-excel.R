@@ -310,10 +310,12 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
       plotGridsDfLocal <- plotGridsDf
       exportConfigurationDfLocal <- exportConfigurationDf
       writeExcel(
-        data = list("DataCombined" = dataCombinedDfLocal,
-                    "plotConfiguration" = plotConfigurationDfLocal,
-                    "plotGrids" = plotGridsDfLocal,
-                    "exportConfiguration" = exportConfigurationDfLocal),
+        data = list(
+          "DataCombined" = dataCombinedDfLocal,
+          "plotConfiguration" = plotConfigurationDfLocal,
+          "plotGrids" = plotGridsDfLocal,
+          "exportConfiguration" = exportConfigurationDfLocal
+        ),
         path = file.path(tempDir, "Plots.xlsx")
       )
 
@@ -549,7 +551,7 @@ test_that("It trows an error when specified plot grid names are not defined in t
   )
 })
 
-test_that("It trows an error if mandatory field plotIDs is not filled out", {
+test_that("It throws an error if mandatory field plotIDs is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$paramsFolder <- tempDir
@@ -576,6 +578,87 @@ test_that("It trows an error if mandatory field plotIDs is not filled out", {
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
       ), regexp = messages$missingPlotIDs())
+    }
+  )
+})
+
+
+test_that("It throws and error if plotIDs are not unique", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$outputFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- data.frame(list(
+        "plotID" = c("P1", "P1"),
+        "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
+        "plotType" = c("individual", "individual"),
+        "title" = NA,
+        "xUnit" = NA,
+        "yUnit" = NA,
+        "xAxisScale" = NA,
+        "yAxisScale" = NA,
+        "xValuesLimits" = NA,
+        "yValuesLimits" = NA,
+        "quantiles" = NA,
+        "nsd" = NA,
+        "foldDistance" = NA
+      ))
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- exportConfigurationDf
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      ), regexp = messages$PlotIDsMustBeUnique())
+    }
+  )
+})
+
+test_that("It throws and error if plotGrid names are not unique", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$outputFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotGridsDfLocal <- data.frame(list(
+        "name" = c("Aciclovir", "Aciclovir"),
+        "plotIDs" = c("P1", "P2"),
+        "title" = c("Aciclovir PVB", "Aciclovir PVB2")
+      ))
+      exportConfigurationDfLocal <- exportConfigurationDf
+      writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE
+      ), regexp = messages$PlotGridsNamesMustBeUnique())
     }
   )
 })
@@ -732,9 +815,9 @@ test_that("It correctly treats empty rows", {
     code = {
       # datacombined with empty row
       dataCombinedDfLocal <- data.frame(list(
-        "DataCombinedName" = c("AciclovirPVB",NA, "AciclovirPVB"),
-        "dataType" = c("simulated",NA, "observed"),
-        "label" = c("Aciclovir simulated",NA, "Aciclovir observed"),
+        "DataCombinedName" = c("AciclovirPVB", NA, "AciclovirPVB"),
+        "dataType" = c("simulated", NA, "observed"),
+        "label" = c("Aciclovir simulated", NA, "Aciclovir observed"),
         "scenario" = c(scenarioNames[1], NA, NA),
         "path" = c(outputPaths, NA, NA),
         "dataSet" = c(NA, NA, names(observedData)),

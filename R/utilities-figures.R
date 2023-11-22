@@ -312,12 +312,13 @@ createPlotsFromExcel <- function(
     sheet = "plotConfiguration"
   )
 
-  # Pre-process the sheet 'plotGrids'
-  ## Remove rows that are entirely empty
-  dfPlotGrids <-  dplyr::filter(dfPlotGrids, !if_all(everything(), is.na))
+  # Filter and validate plotGrids
+  dfPlotGrids <- dplyr::filter(dfPlotGrids, !if_all(everything(), is.na))
   dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
+
   # Filter and validate only used plot configurations
   dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
+
   # Filter and validate only used data combined
   dataCombinedList <- createDataCombinedFromExcel(
     file = projectConfiguration$plotsFile,
@@ -327,6 +328,7 @@ createPlotsFromExcel <- function(
     observedData = observedData,
     stopIfNotFound = stopIfNotFound
   )
+
   dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, names(dataCombinedList))
 
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
@@ -433,7 +435,7 @@ createPlotsFromExcel <- function(
   names(plotGrids) <- dfPlotGrids$name
 
   ## Remove rows that are entirely empty
-  dfExportConfigurations <-  dplyr::filter(dfExportConfigurations, !if_all(everything(), is.na))
+  dfExportConfigurations <- dplyr::filter(dfExportConfigurations, !if_all(everything(), is.na))
   dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
@@ -534,6 +536,12 @@ createPlotsFromExcel <- function(
     stop(messages$missingDataCombinedName())
   }
 
+  # plotIDs must be unique
+  duplicated_plotIDs <- dfPlotConfigurations$plotID[duplicated(dfPlotConfigurations$plotID)]
+  if (length(duplicated_plotIDs) > 0) {
+    stop(messages$PlotIDsMustBeUnique(duplicated_plotIDs))
+  }
+
   # mandatory column plotType is empty - throw error
   missingLabel <- sum(is.na(dfPlotConfigurations$plotType))
   if (missingLabel > 0) {
@@ -561,6 +569,12 @@ createPlotsFromExcel <- function(
   missingLabel <- sum(is.na(dfPlotGrids$plotIDs))
   if (missingLabel > 0) {
     stop(messages$missingPlotIDs())
+  }
+
+  # plotGrids names must be unique
+  duplicated_PlotGridsNames <- dfPlotGrids$name[duplicated(dfPlotGrids$name)]
+  if (length(duplicated_PlotGridsNames) > 0) {
+    stop(messages$PlotGridsNamesMustBeUnique(duplicated_PlotGridsNames))
   }
 
   # The values can be enclosed in "" in case the title should contain a ','.
