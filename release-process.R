@@ -39,7 +39,7 @@ desc::desc_set_remotes(
     "Open-Systems-Pharmacology/OSPSuite.RUtils@8790585",
     "Open-Systems-Pharmacology/TLF-Library@033b7f7",
     "Open-Systems-Pharmacology/OSPSuite-R@4ed57da",
-    "Open-Systems-Pharmacology/ospsuite.parameteridentification@0f675cc5"
+    "Open-Systems-Pharmacology/ospsuite.parameteridentification@0f675cc"
   )
 )
 
