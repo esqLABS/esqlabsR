@@ -66,12 +66,6 @@ devtools::document()
 gert::git_add(files = "man")
 gert::git_commit("devtools::document()")
 
-## Build pkgdown site
-pkgdown::build_site(devel = FALSE)
-
-## Commit and push docs
-gert::git_add(files = "docs")
-gert::git_commit("pkgdown::build_site(devel = FALSE)")
 
 ## Push branch to remote
 usethis::pr_push()
@@ -144,13 +138,6 @@ devtools::document()
 ## Commit and push docs
 gert::git_add(files = "man")
 gert::git_commit("devtools::document()")
-
-## Build pkgdown site
-pkgdown::build_site(devel = TRUE)
-
-## Commit and push docs
-gert::git_add(files = "docs/dev")
-gert::git_commit("pkgdown::build_site(devel = TRUE)")
 
 ## Push to main branch directly
 usethis::pr_push()
