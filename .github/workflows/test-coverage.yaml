@@ -72,7 +72,7 @@ jobs:
           covr::codecov(
             quiet = FALSE,
             clean = FALSE,
-            install_path = file.path(Sys.getenv("RUNNER_TEMP"), "package")
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
           )
         shell: Rscript {0}
 
@@ -80,7 +80,7 @@ jobs:
         if: always()
         run: |
           ## --------------------------------------------------------------------
-          find ${{ runner.temp }}/package -name 'testthat.Rout*' -exec cat '{}' \; || true
+          find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
 
       - name: Upload test results
