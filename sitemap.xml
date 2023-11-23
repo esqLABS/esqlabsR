@@ -4,9 +4,6 @@
     <loc>https://esqlabs.github.io/esqlabsR/404.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/articles/data-handling.html</loc>
-  </url>
-  <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/esqlabsR-advanced.html</loc>
   </url>
   <url>
@@ -37,22 +34,13 @@
     <loc>https://esqlabs.github.io/esqlabsR/articles/index.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/articles/introduction-esqlabsr.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/articles/install-pksim.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/presentations/introduction-to-esqlabsR.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/articles/presentations.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/articles/shiny-apps.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/articles/standard-workflow.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/articles/visualization-and-reporting.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/authors.html</loc>
@@ -77,9 +65,6 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/col2hsv.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/compareSimulationParameters.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/compareSimulations.html</loc>
@@ -116,9 +101,6 @@
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-readOntongeniesFromXLS.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/dot-setApplicationFromExcel.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateClassHasField.html</loc>
@@ -205,16 +187,10 @@
     <loc>https://esqlabs.github.io/esqlabsR/reference/getMoleculeNameFromQuantity.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/GraphicsDevices.html</loc>
-  </url>
-  <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/hillFunction.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://esqlabs.github.io/esqlabsR/reference/initializeScenario.html</loc>
   </url>
   <url>
     <loc>https://esqlabs.github.io/esqlabsR/reference/initializeSimulation.html</loc>
