@@ -58,6 +58,7 @@ Suggests:
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3
+Config/rcmdcheck/ignore-inconsequential-notes: true
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
