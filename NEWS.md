@@ -1,4 +1,4 @@
-# esqlabsR (development version)
+# esqlabsR 5.1.2
 
 ## Minor improvements and bug fixes
 
@@ -8,6 +8,8 @@
     aggregation methods. A new column `nsd` was added to the `PlotConfiguration`
     sheet in the example `Plot.xlsx` (\#544, @Felixmil).
   - Documentation includes PK-Sim installation instructions (\#537, @Felixmil).
+  - Better error message if some ids are not uniques in the excel configuration files (\#568, @Felixmil)    
+  - Handles better empty rows in the excel configuration files (\#569, @Felixmil)
   - Cleaner NEWS file (\#527).
 
 # esqlabsR 5.1.1
