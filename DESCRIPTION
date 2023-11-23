@@ -1,7 +1,7 @@
 Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
-Version: 5.1.1.9000
+Version: 5.1.2
 Authors@R: c(
     person("esqLABS GmbH", role = c("cph", "fnd")),
     person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
@@ -62,8 +62,8 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-Remotes:
-    github::Open-Systems-Pharmacology/OSPSuite.RUtils,
-    github::Open-Systems-Pharmacology/TLF-Library,
-    github::Open-Systems-Pharmacology/OSPSuite-R,
-    github::Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
+Remotes: 
+    Open-Systems-Pharmacology/OSPSuite.RUtils@8790585,
+    Open-Systems-Pharmacology/TLF-Library@033b7f7,
+    Open-Systems-Pharmacology/OSPSuite-R@4ed57da,
+    Open-Systems-Pharmacology/ospsuite.parameteridentification@0f675cc5
