@@ -76,6 +76,11 @@ jobs:
           devtools::build(binary = TRUE, path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "esqlabsR"))
         shell: Rscript {0}
 
+      - name: list files
+        run: |
+          list.files(file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "esqlabsR"))
+        shell: Rscript {0}
+
       - uses: actions/upload-artifact@v3
         with:
-          path: ${{ runner.temp }}/esqlabsR/esqlabsR_*.zip
+          path: '${{ runner.temp }}/esqlabsR/esqlabsR_*.zip'
