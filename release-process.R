@@ -10,7 +10,7 @@ require(yaml)
 new_version <- usethis:::choose_version("What should the new version be?")
 
 # Open a new PR with new version
-usethis::pr_init(branch = paste("release", new_version, sep="-"))
+usethis::pr_init(branch = paste("release", new_version, sep = "-"))
 
 # Update version in Appveyor
 appveyor_config <- yaml::read_yaml(file = "appveyor.yml")
@@ -84,10 +84,9 @@ usethis::use_github_release()
 ###### Release -> Dev ######
 
 
-
 dev_version <- usethis:::choose_version(which = "dev")
 
-usethis::pr_init(branch = paste0("switch-to-dev-",dev_version))
+usethis::pr_init(branch = paste0("switch-to-dev-", dev_version))
 
 
 # Update version in Appveyor
@@ -111,21 +110,29 @@ gert::git_commit("update version in appveyor config file")
 ## Update OSPS dependencies remotes to latest development versions
 desc::desc_clear_remotes()
 
-usethis::use_dev_package(package = "ospsuite.utils",
-                         type = "Imports",
-                         remote = "Open-Systems-Pharmacology/OSPSuite.RUtils")
+usethis::use_dev_package(
+  package = "ospsuite.utils",
+  type = "Imports",
+  remote = "Open-Systems-Pharmacology/OSPSuite.RUtils"
+)
 
-usethis::use_dev_package(package = "tlf",
-                         type = "Imports",
-                         remote = "Open-Systems-Pharmacology/TLF-Library")
+usethis::use_dev_package(
+  package = "tlf",
+  type = "Imports",
+  remote = "Open-Systems-Pharmacology/TLF-Library"
+)
 
-usethis::use_dev_package(package = "ospsuite",
-                         type = "Depends",
-                         remote = "Open-Systems-Pharmacology/OSPSuite-R")
+usethis::use_dev_package(
+  package = "ospsuite",
+  type = "Depends",
+  remote = "Open-Systems-Pharmacology/OSPSuite-R"
+)
 
-usethis::use_dev_package(package = "ospsuite.parameteridentification",
-                         type = "Imports",
-                         remote = "Open-Systems-Pharmacology/ospsuite.parameteridentification")
+usethis::use_dev_package(
+  package = "ospsuite.parameteridentification",
+  type = "Imports",
+  remote = "Open-Systems-Pharmacology/ospsuite.parameteridentification"
+)
 
 ## Update version to dev (accept commit suggestions)
 usethis::use_dev_version()

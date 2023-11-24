@@ -1,7 +1,7 @@
 Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
-Version: 5.1.2
+Version: 5.1.2.9000
 Authors@R: c(
     person("esqLABS GmbH", role = c("cph", "fnd")),
     person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
@@ -64,7 +64,7 @@ Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Remotes: 
-    Open-Systems-Pharmacology/OSPSuite.RUtils@8790585,
-    Open-Systems-Pharmacology/TLF-Library@033b7f7,
-    Open-Systems-Pharmacology/OSPSuite-R@4ed57da,
-    Open-Systems-Pharmacology/ospsuite.parameteridentification@0f675cc
+    Open-Systems-Pharmacology/OSPSuite.RUtils,
+    Open-Systems-Pharmacology/TLF-Library,
+    Open-Systems-Pharmacology/OSPSuite-R,
+    Open-Systems-Pharmacology/ospsuite.parameteridentification
