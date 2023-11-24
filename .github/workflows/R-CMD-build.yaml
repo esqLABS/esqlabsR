@@ -9,7 +9,7 @@ on:
 name: R-CMD-check
 
 jobs:
-  R-CMD-check:
+  R-CMD-build:
     runs-on: windows-latest
 
     env:
@@ -74,6 +74,7 @@ jobs:
       - name: build package
         run: |
           devtools::build(binary = TRUE)
+        shell: Rscript {0}
 
       - uses: actions/upload-artifact@v3
         with:
