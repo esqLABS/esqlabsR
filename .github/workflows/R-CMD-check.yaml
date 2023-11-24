@@ -82,6 +82,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Upload built package
+        if: ${{ success() }}
         uses: actions/upload-artifact@v3
         with:
           name: built_package
