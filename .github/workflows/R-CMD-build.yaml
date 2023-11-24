@@ -73,10 +73,21 @@ jobs:
 
       - name: build package
         run: |
-          devtools::build(binary = TRUE, path = "./built_package/")
+          devtools::build(binary = TRUE, path = "built_package/")
           list.files("./built_package/", pattern = "esqlabsR_.*\\.zip", full.names = TRUE)
         shell: Rscript {0}
 
-      - uses: actions/upload-artifact@v3
+      - name: create test file
+        run: |
+          file.create("built_package/test.txt")
+        shell: Rscript {0}
+
+      - name: upload built package
+        uses: actions/upload-artifact@v3
         with:
           path: D:/a/esqlabsR/built_package/esqlabsR_*.zip
+
+      - name: upload test file
+        uses: actions/upload-artifact@v3
+        with:
+          path: D:/a/esqlabsR/built_package/test.txt
