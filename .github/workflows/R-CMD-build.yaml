@@ -73,11 +73,10 @@ jobs:
 
       - name: build package
         run: |
-          output_dir <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "esqlabsR")
-          devtools::build(binary = TRUE, path = output_dir)
-          list.files(output_dir, pattern = "esqlabsR_.*\\.zip", full.names = TRUE)
+          devtools::build(binary = TRUE, path = "./built_package/")
+          list.files("./built_package/", pattern = "esqlabsR_.*\\.zip", full.names = TRUE)
         shell: Rscript {0}
 
       - uses: actions/upload-artifact@v3
         with:
-          path: D:/a/_temp/esqlabsR/esqlabsR_*.zip
+          path: D:/a/esqlabsR/built_package/esqlabsR_*.zip
