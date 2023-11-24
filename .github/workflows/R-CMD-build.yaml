@@ -73,21 +73,19 @@ jobs:
 
       - name: build package
         run: |
-          devtools::build(binary = TRUE, path = "built_package/")
-          list.files("./built_package/", pattern = "esqlabsR_.*\\.zip", full.names = TRUE)
-        shell: Rscript {0}
-
-      - name: create test file
-        run: |
-          file.create("built_package/test.txt")
+          output_dir <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "built_package")
+          dir.create(output_dir)
+          devtools::build(binary = TRUE, path = output_dir)
+          file.create(file.path(output_dir, "test.txt"))
+          list.files(output_dir, full.names = TRUE)
         shell: Rscript {0}
 
       - name: upload built package
         uses: actions/upload-artifact@v3
         with:
-          path: D:/a/esqlabsR/built_package/esqlabsR_*.zip
+          path: ${{ runner.temp }}/built_package/esqlabsR_*.zip
 
       - name: upload test file
         uses: actions/upload-artifact@v3
         with:
-          path: D:/a/esqlabsR/built_package/test.txt
+          path: ${{ runner.temp }}/built_package/test.txt
