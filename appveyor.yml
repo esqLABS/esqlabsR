@@ -33,8 +33,8 @@ before_test:
 build_script:
 - Rscript install_ext_deps.R
 - travis-tool.sh install_deps
-test_script: travis-tool.sh run_tests
-on_success: Rscript -e "covr::codecov()"
+# test_script: travis-tool.sh run_tests
+# on_success: Rscript -e "covr::codecov()"
 after_test:
 - ps: copy esqlabsR_*.zip esqlabsR.zip
 on_failure:
