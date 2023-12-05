@@ -10,7 +10,7 @@ require(yaml)
 new_version <- usethis:::choose_version("What should the new version be?")
 
 # Open a new PR with new version
-usethis::pr_init(branch = paste("release", new_version, sep="-"))
+usethis::pr_init(branch = paste("release", new_version, sep = "-"))
 
 # Update version in Appveyor
 appveyor_config <- yaml::read_yaml(file = "appveyor.yml")
@@ -36,10 +36,10 @@ desc::desc_set_remotes(
   # Update the commits id after the `@` in the folowing vector with the latest
   # commits identifiers that passed checks in main development branches
   c(
-    "Open-Systems-Pharmacology/OSPSuite.RUtils@8790585c38ed02710a918738866c164621bc2ce2",
-    "Open-Systems-Pharmacology/TLF-Library@bfce0e5bb7bb19db0b114d4bcd408eb2d94197e1",
-    "Open-Systems-Pharmacology/OSPSuite-R@55531ffb8d1b9a20fca533fa89909db50cff0b0b",
-    "Open-Systems-Pharmacology/ospsuite.parameteridentification@7bd8b45ca02235b61a74c6997bb9ac7031500115"
+    "Open-Systems-Pharmacology/OSPSuite.RUtils@8790585",
+    "Open-Systems-Pharmacology/TLF-Library@033b7f7",
+    "Open-Systems-Pharmacology/OSPSuite-R@4ed57da",
+    "Open-Systems-Pharmacology/ospsuite.parameteridentification@0f675cc"
   )
 )
 
@@ -66,12 +66,6 @@ devtools::document()
 gert::git_add(files = "man")
 gert::git_commit("devtools::document()")
 
-## Build pkgdown site
-pkgdown::build_site(devel = FALSE)
-
-## Commit and push docs
-gert::git_add(files = "docs")
-gert::git_commit("pkgdown::build_site(devel = FALSE)")
 
 ## Push branch to remote
 usethis::pr_push()
@@ -90,10 +84,9 @@ usethis::use_github_release()
 ###### Release -> Dev ######
 
 
-
 dev_version <- usethis:::choose_version(which = "dev")
 
-usethis::pr_init(branch = paste0("switch-to-dev-",dev_version))
+usethis::pr_init(branch = paste0("switch-to-dev-", dev_version))
 
 
 # Update version in Appveyor
@@ -117,21 +110,29 @@ gert::git_commit("update version in appveyor config file")
 ## Update OSPS dependencies remotes to latest development versions
 desc::desc_clear_remotes()
 
-usethis::use_dev_package(package = "ospsuite.utils",
-                         type = "Imports",
-                         remote = "Open-Systems-Pharmacology/OSPSuite.RUtils")
+usethis::use_dev_package(
+  package = "ospsuite.utils",
+  type = "Imports",
+  remote = "Open-Systems-Pharmacology/OSPSuite.RUtils"
+)
 
-usethis::use_dev_package(package = "tlf",
-                         type = "Imports",
-                         remote = "Open-Systems-Pharmacology/TLF-Library")
+usethis::use_dev_package(
+  package = "tlf",
+  type = "Imports",
+  remote = "Open-Systems-Pharmacology/TLF-Library"
+)
 
-usethis::use_dev_package(package = "ospsuite",
-                         type = "Depends",
-                         remote = "Open-Systems-Pharmacology/OSPSuite-R")
+usethis::use_dev_package(
+  package = "ospsuite",
+  type = "Depends",
+  remote = "Open-Systems-Pharmacology/OSPSuite-R"
+)
 
-usethis::use_dev_package(package = "ospsuite.parameteridentification",
-                         type = "Imports",
-                         remote = "Open-Systems-Pharmacology/ospsuite.parameteridentification")
+usethis::use_dev_package(
+  package = "ospsuite.parameteridentification",
+  type = "Imports",
+  remote = "Open-Systems-Pharmacology/ospsuite.parameteridentification"
+)
 
 ## Update version to dev (accept commit suggestions)
 usethis::use_dev_version()
@@ -144,13 +145,6 @@ devtools::document()
 ## Commit and push docs
 gert::git_add(files = "man")
 gert::git_commit("devtools::document()")
-
-## Build pkgdown site
-pkgdown::build_site(devel = TRUE)
-
-## Commit and push docs
-gert::git_add(files = "docs/dev")
-gert::git_commit("pkgdown::build_site(devel = TRUE)")
 
 ## Push to main branch directly
 usethis::pr_push()
