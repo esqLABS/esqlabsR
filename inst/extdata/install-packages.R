@@ -87,6 +87,11 @@ get_PKSim_Minimal <- function(install_option) {
     # test if PK-Sim.R dll can be loaded
     ospsuite::initPKSim(pksimFolderPath = "PKSim")
 
+    cat('ospsuite::initPKSim(pksimFolderPath = "PKSim")',
+      file = ".Rprofile",
+      append = TRUE
+    )
+
     cli_progress_done(result = "done")
   }
 }
@@ -252,7 +257,7 @@ setup_esqlabsR <- function() {
   initialize_project()
 
   if (install_option == 1) {
-    renv::snapshot(prompt = FALSE) # snapshot environment
+    renv::snapshot(prompt = FALSE, force = TRUE) # snapshot environment
   }
 
   restart_rstudio()
