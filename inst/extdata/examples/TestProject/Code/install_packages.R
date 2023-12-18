@@ -249,8 +249,6 @@ setup_esqlabsR <- function() {
 
   run_test_simulation()
 
-  initialize_project()
-
   if (install_option == 1) {
     renv::snapshot(prompt = FALSE) # snapshot environment
   }
