@@ -49,3 +49,4 @@ references.bib
 ^rakefile\.rb$
 _\.new\.png$
 release-process.R
+install_ext_deps.R

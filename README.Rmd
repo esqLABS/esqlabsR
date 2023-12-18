@@ -22,10 +22,8 @@ library(dplyr)
 # esqlabsR <a href="https://esqlabs.github.io/esqlabsR"><img src="man/figures/logo.png" align="right" width="120" /></a>
 
 <!-- badges: start -->
-
-[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/esqlabs/esqlabsr?branch=develop&svg=true)](https://ci.appveyor.com/project/StephanSchaller/esqlabsr/branch/develop)
-[![codecov](https://codecov.io/gh/esqlabs/esqlabsr/branch/develop/graph/badge.svg)](https://codecov.io/gh/esqlabs/esqlabsr)
-
+[![R-CMD-check](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
 <!-- badges: end -->
 
 
