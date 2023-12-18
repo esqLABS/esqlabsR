@@ -6,7 +6,7 @@
   .setEsqlabsColors()
 
   # Change maximal caption width in figures coming from TLF
-  tlf::setMaxCharacterWidth(75)
+  tlf::setDefaultMaxCharacterWidth(75)
 }
 # nocov end
 
