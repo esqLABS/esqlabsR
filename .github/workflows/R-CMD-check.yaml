@@ -58,6 +58,7 @@ jobs:
           extra-packages: |
             rClr=local::./rClr_${{ env.RCLR_VERSION }}.zip
             any::rcmdcheck
+            any::devtools
             local::.
             ospsuite.utils=github::Open-Systems-Pharmacology/OSPSuite.RUtils
             tlf=github::Open-Systems-Pharmacology/TLF-Library
