@@ -1,25 +1,86 @@
 ---
 title: "template"
-format: html
+subtitle: ""
+author: ""
+format: 
+  esqlabs-html
 ---
 
-## Quarto
+<!-- MAKE SURE TO INSTALL ALL REQUIRED PACKAGES BEFORE RUNNING THIS -->
+<!-- USE THE install_packages.R SCRIPT AVAILABLE IN THE CODE FOLDER -->
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
-## Running Code
+# Preparation
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this 
+## Load Libraries
 
 ```{r}
-#| echo: false
-2 * 2
+library(esqlabsR)
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+## Load Project Configuration
+
+```{r}
+projectConfiguration <- createDefaultProjectConfiguration("projectConfiguration.xlsx")
+```
+
+
+## Load Scenarios
+
+```{r}
+my_scenarios <- 
+  createScenarios(
+    readScenarioConfigurationFromExcel( # Read scenarios from excel file
+      scenarioNames = "TestScenario", # Import the scenario defined as "TestScenario" 
+                                      # in the excel file
+      projectConfiguration = projectConfiguration
+    )
+  )
+```
+
+
+## Run Simulations
+
+```{r}
+my_simulation <- runScenarios(
+  scenarios = my_scenarios
+)
+```
+
+
+## Generate Plots
+
+```{r}
+dataSheets <- "Laskin 1982.Group A"
+observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+
+plots <- createPlotsFromExcel(simulatedScenarios = my_simulation,
+                              observedData = observedData,
+                              plotGridNames = c("Aciclovir", "Aciclovir2"),
+                              projectConfiguration = projectConfiguration)
+
+```
+
+# Results
+
+## Simulation Results
+
+```{r}
+simulationResultsToTibble(my_simulation$TestScenario$results)
+```
+
+
+## Plots
+
+
+```{r}
+plots$Aciclovir
+```
+
+```{r}
+plots$Aciclovir2
+```
+
+
+
+
