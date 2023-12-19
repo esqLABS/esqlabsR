@@ -25,7 +25,6 @@ install_script_deps <- function(install_option) {
     install.packages("renv")
     require(renv)
     init(
-      bare = TRUE,
       restart = FALSE,
       force = TRUE
     )
@@ -78,7 +77,7 @@ get_PKSim_Minimal <- function(install_option) {
     cli_progress_step("Get minimal version of PKSim.")
 
     download.file("https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/ospsuite-r/artifacts/pksim_minimal.zip",
-                  destfile = "pksim_minimal.zip"
+      destfile = "pksim_minimal.zip"
     )
     unzip("pksim_minimal.zip", exdir = "PKSim")
     file.remove("pksim_minimal.zip")
@@ -96,14 +95,16 @@ get_esqlabsR <- function() {
   cli_progress_step("Install esqlabsR and dependencies")
 
   install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip",
-                   repos = NULL,
-                   type = "binary",
-                   quiet = TRUE
+    repos = NULL,
+    type = "binary",
+    quiet = TRUE
   )
-  remotes::install_github("esqLABS/esqlabsR@*release",
-                          build = TRUE,
-                          upgrade = "always"
+  remotes::install_github("esqLABS/esqlabsR",
+    build = TRUE,
+    upgrade = "always"
   )
+
+  install.packages("showtext", quiet = TRUE)
 
   cli_progress_done(result = "done")
 }
@@ -130,15 +131,9 @@ run_test_simulation <- function() {
       suppressWarnings({
         projectConfiguration <- createDefaultProjectConfiguration(path = esqlabsR:::test_ProjectConfiguration())
       })
-      # Define which scenarios to run
-      scenarioNames <- c("TestScenario")
-      # Set scenario names to NULL if you want to simulate all scenarios defined in the
-      # excel file
-      # scenarioNames <- NULL
 
-      # Create `ScenarioConfiguration` objects from excel files
       scenarioConfigurations <- readScenarioConfigurationFromExcel(
-        scenarioNames = scenarioNames,
+        scenarioNames = "TestScenario",
         projectConfiguration = projectConfiguration
       )
 
@@ -156,23 +151,11 @@ run_test_simulation <- function() {
   )
 }
 
-initialize_project <- function() {
-  initialize_option <- utils::menu(c("Yes", "No"),
-                                   title = "Do you want to initialize project folder structure ?"
-  )
-
-  if (initialize_option == 1) {
-    cli_progress_step("Initialize project structure")
-    init_project(destination = "../")
-    update_project_conf()
-    cli_progress_done(result = "done")
-  }
-}
 
 update_project_conf <- function() {
   compoundpropertiesinternal_file <-
     list.files("../Data",
-               pattern = "*_Compound Properties \\(Internal\\).xlsx"
+      pattern = "*_Compound Properties \\(Internal\\).xlsx"
     )[1]
 
   project_configuration <-
@@ -192,8 +175,8 @@ rename_timevalue_file <- function() {
 
   timevalues_file <-
     list.files("../Data",
-               pattern = "*TimeValuesData.xlsx",
-               full.names = TRUE
+      pattern = "*TimeValuesData.xlsx",
+      full.names = TRUE
     )[1]
 
   new_name <- gsub(
@@ -234,7 +217,7 @@ setup_esqlabsR <- function() {
 
   # Display a menu asking if user wants to install packages in local env or  globally
   install_option <- utils::menu(c("In local environment (available for one project)", "In Global environment (available for all projects)"),
-                                title = "Where do you want to install {esqlabsR} and other packages?"
+    title = "Where do you want to install {esqlabsR} and other packages?"
   )
 
   install_script_deps(install_option)
@@ -250,7 +233,7 @@ setup_esqlabsR <- function() {
   run_test_simulation()
 
   if (install_option == 1) {
-    renv::snapshot(prompt = FALSE) # snapshot environment
+    renv::snapshot(force = TRUE, prompt = FALSE) # snapshot environment
   }
 
   restart_rstudio()
