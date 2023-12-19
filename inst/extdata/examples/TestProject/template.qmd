@@ -4,10 +4,14 @@ subtitle: ""
 author: ""
 format: 
   esqlabs-html
+params:
+  setTestParameters: false
+  loadPreSimulatedResults: false
+  resultsSubFolder: "2024-01-01"
 ---
 
 <!-- MAKE SURE TO INSTALL ALL REQUIRED PACKAGES BEFORE RUNNING THIS -->
-<!-- USE THE install_packages.R SCRIPT AVAILABLE IN THE CODE FOLDER -->
+<!-- USE THE install_packages.R SCRIPT -->
 
 
 # Preparation
@@ -17,6 +21,11 @@ format:
 ```{r}
 library(esqlabsR)
 ```
+## Load Functions
+
+```{r}
+sourceAll("Code")
+```
 
 ## Load Project Configuration
 
@@ -25,36 +34,89 @@ projectConfiguration <- createDefaultProjectConfiguration("projectConfiguration.
 ```
 
 
+
 ## Load Scenarios
 
 ```{r}
-my_scenarios <- 
-  createScenarios(
-    readScenarioConfigurationFromExcel( # Read scenarios from excel file
-      scenarioNames = "TestScenario", # Import the scenario defined as "TestScenario" 
-                                      # in the excel file
-      projectConfiguration = projectConfiguration
-    )
-  )
+scenarioNames <- c("TestScenario")
+
+
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = scenarioNames,
+  projectConfiguration = projectConfiguration
+)
 ```
 
+## Configure Simulation Run Options
+
+```{r}
+# Adjust simulation run options, if necessary.
+# E.g. disable check for negative values if required
+  simulationRunOptions <- SimulationRunOptions$new()
+  simulationRunOptions$checkForNegativeValues <- FALSE
+```
+
+## Apply Test parameters
+
+```{r}
+# Parameters can be changed in the header of this file
+setTestParameters <- params$setTestParameters
+
+customParams <- NULL
+# Apply parameters defined in "InputCoode/TestParameters.R"
+if (setTestParameters) {
+  customParams <- getTestParameters(customParams)
+}
+```
 
 ## Run Simulations
 
 ```{r}
-my_simulation <- runScenarios(
-  scenarios = my_scenarios
-)
+loadPreSimulatedResults <- params$loadPreSimulatedResults
+resultsSubFolder <- params$resultsSubFolder
+
+# Run or load scenarios
+if (loadPreSimulatedResults) {
+  simulatedScenariosResults <- loadScenarioResults(
+    names(scenarioConfigurations),
+    file.path(projectConfiguration$outputFolder, "SimulationResults", resultsSubFolder)
+  )
+} else {
+  # Create scenarios
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, customParams = customParams)
+
+  simulatedScenariosResults <- runScenarios(
+    scenarios = scenarios,
+    simulationRunOptions = simulationRunOptions
+  )
+  saveScenarioResults(simulatedScenariosResults, outputFolder = file.path(projectConfiguration$outputFolder, "SimulationResults", resultsSubFolder))
+}
 ```
 
+## Import Observed Data
+
+```{r}
+importerConfiguration <- NULL
+# For compatibility with projects created with esqlabsR <5.0.1, use old data set
+# naming pattern.
+# importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+#   configurationFilePath = projectConfiguration$dataImporterConfigurationFile
+# )
+# importerConfiguration$namingPattern <- "{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"
+
+dataSheets <- c("Laskin 1982.Group A")
+observedData <- esqlabsR::loadObservedData(
+  projectConfiguration = projectConfiguration,
+  sheets = dataSheets,
+  importerConfiguration = importerConfiguration
+)
+```
 
 ## Generate Plots
 
 ```{r}
-dataSheets <- "Laskin 1982.Group A"
-observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
-
-plots <- createPlotsFromExcel(simulatedScenarios = my_simulation,
+plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenariosResults,
                               observedData = observedData,
                               plotGridNames = c("Aciclovir", "Aciclovir2"),
                               projectConfiguration = projectConfiguration)
@@ -66,7 +128,7 @@ plots <- createPlotsFromExcel(simulatedScenarios = my_simulation,
 ## Simulation Results
 
 ```{r}
-simulationResultsToTibble(my_simulation$TestScenario$results)
+simulationResultsToTibble(simulatedScenariosResults$TestScenario$results)
 ```
 
 
@@ -74,6 +136,7 @@ simulationResultsToTibble(my_simulation$TestScenario$results)
 
 
 ```{r}
+#| fig.asp = 0.4, fig.width = 10
 plots$Aciclovir
 ```
 

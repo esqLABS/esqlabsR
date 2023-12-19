@@ -1,1 +1,1 @@
-R studio project and all associated code files
+All functions used in this project should be stored in this folder.

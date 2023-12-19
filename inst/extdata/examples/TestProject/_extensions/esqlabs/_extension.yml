@@ -32,3 +32,7 @@ contributes:
           fig.showtext: true
           fig.align: "center"
           echo: true
+      filters:
+         - lightbox
+      lightbox: auto
+
