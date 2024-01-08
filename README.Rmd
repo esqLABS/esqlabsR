@@ -24,6 +24,7 @@ library(dplyr)
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yaml)
 [![Codecov test coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
+[![pkgdown](https://github.com/esqLABS/esqlabsR/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/pkgdown.yaml)
 <!-- badges: end -->
 
 
