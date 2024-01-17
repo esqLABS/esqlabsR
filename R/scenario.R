@@ -143,8 +143,7 @@ Scenario <- R6::R6Class(
       ), loadFromCache = FALSE)
       # Set the outputs, if new were specified
       if (!is.null(scenarioConfiguration$outputPaths)) {
-        clearOutputs(simulation)
-        addOutputs(quantitiesOrPaths = scenarioConfiguration$outputPaths, simulation = simulation)
+        setOutputs(quantitiesOrPaths = scenarioConfiguration$outputPaths, simulation = simulation)
       }
       # Set simulation time if defined by the user.
       if (!is.null(scenarioConfiguration$simulationTime)) {
