@@ -81,8 +81,7 @@ sensitivityCalculation <- function(simulation,
 
   # Store old simulation outputs and set user defined
   oldOutputSelections <- simulation$outputSelections$allOutputs
-  clearOutputs(simulation = simulation)
-  addOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
+  setOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
 
   # Create as few simulation batches as possible.
   # All constant parameters can be simulated in one batch. Each formula
