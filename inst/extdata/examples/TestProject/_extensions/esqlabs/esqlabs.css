@@ -1,0 +1,26 @@
+/*-- scss:defaults --*/
+
+// fonts
+
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
+
+
+// Colors
+$black: rgb(44, 50, 63);
+$white: white;
+$body-color: $black !default;
+$body-bg: $white !default;
+$code-block-bg: #f1f3f4 !default;
+$blue: #26B042 !default;
+$green: #0C87D1 !default;
+$red: #EB1733 !default;
+
+
+// Fonts
+$font-family-base: 'Open Sans', sans-serif !default;
+$font-family-monospace: 'Fira Code', monospace !default;
+
+
+/*-- scss:rules --*/
