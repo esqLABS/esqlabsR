@@ -11,6 +11,7 @@ jobs:
     with:
       install-pksim: true
       install-rClr: true
+      rClr-version: '0.9.2'
       extra-packages: |
         ospsuite.utils=github::Open-Systems-Pharmacology/OSPSuite.RUtils
         tlf=github::Open-Systems-Pharmacology/TLF-Library
