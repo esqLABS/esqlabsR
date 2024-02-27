@@ -15,3 +15,4 @@ jobs:
         ospsuite.utils=github::Open-Systems-Pharmacology/OSPSuite.RUtils
         tlf=github::Open-Systems-Pharmacology/TLF-Library
         ospsuite=github::Open-Systems-Pharmacology/OSPSuite-R
+        ospsuite.parameteridentification=github::Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
