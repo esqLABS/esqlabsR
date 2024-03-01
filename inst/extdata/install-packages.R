@@ -252,7 +252,7 @@ setup_esqlabsR <- function() {
   initialize_project()
 
   if (install_option == 1) {
-    renv::snapshot(prompt = FALSE) # snapshot environment
+    renv::snapshot(prompt = FALSE, force = TRUE) # snapshot environment
   }
 
   restart_rstudio()

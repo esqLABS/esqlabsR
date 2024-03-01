@@ -1,90 +1,21 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+name: R-CMD-check-build
+
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main, master]
-
-name: R-CMD-check
+    branches: [main, master, develop]
+  workflow_dispatch:
 
 jobs:
-  R-CMD-check:
-    runs-on: windows-latest
-
-    env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      RCLR_VERSION: 0.9.2
-      R_KEEP_PKG_SOURCE: yes
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install PKSIM
-        run: |
-          $url = "https://ci.appveyor.com/api/projects/open-systems-pharmacology-ci/pk-sim/artifacts/setup.zip?branch=develop"
-          # Define the location where you want to save the zip file
-          $outputPath = "${{ runner.workspace }}/setup.zip"
-          Invoke-WebRequest -Uri $url -OutFile $outputPath
-          $zipPath = "${{ runner.workspace }}/setup.zip"
-          $unzipPath = "${{ runner.workspace }}/unzipped"
-          Expand-Archive -Path $zipPath -DestinationPath $unzipPath
-          $msiPath = Get-ChildItem -Path "${{ runner.workspace }}/unzipped" -Filter "*.msi" | Select-Object -First 1
-          if ($msiPath) {
-            Start-Process msiexec -ArgumentList "/i", $msiPath.FullName, "/quiet", "/qn", "/norestart" -Wait
-          } else {
-            Write-Output "No MSI file found in the unzipped directory."
-            exit 1
-          }
-        shell: powershell
-
-      - name: Setup Pandoc
-        uses: r-lib/actions/setup-pandoc@v2
-
-      - name: Setup R
-        uses: r-lib/actions/setup-r@v2
-        with:
-          use-public-rspm: true
-
-      - name: Download rClr
-        run: |
-          RCLR_URL <- "https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v${{ env.RCLR_VERSION }}/rClr_${{ env.RCLR_VERSION }}.zip"
-          download.file(RCLR_URL, "rClr_${{ env.RCLR_VERSION }}.zip")
-        shell: Rscript {0}
-
-      - name: Install dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: |
-            rClr=local::./rClr_${{ env.RCLR_VERSION }}.zip
-            any::rcmdcheck
-            any::devtools
-            local::.
-            ospsuite.utils=github::Open-Systems-Pharmacology/OSPSuite.RUtils
-            tlf=github::Open-Systems-Pharmacology/TLF-Library
-            ospsuite=github::Open-Systems-Pharmacology/OSPSuite-R
-            ospsuite.parameteridentification=github::Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
-          needs: check
-
-      - name: Check Package
-        uses: r-lib/actions/check-r-package@v2
-        with:
-          upload-snapshots: true
-          args: 'c("--no-manual", "--no-stop-on-test-error")'
-          build_args: 'c("--no-manual")'
-          error-on: 'c("error")'
-
-      - name: Build esqlabsR
-        if: ${{ success() }}
-        run: |
-          output_dir <- file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "built_package")
-          dir.create(output_dir)
-          devtools::build(binary = TRUE, path = output_dir)
-        shell: Rscript {0}
-
-      - name: Upload built package
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: built_package
-          path: ${{ runner.temp }}/built_package/esqlabsR_*.zip
+  R-CMD-check-build:
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
+    with:
+      install-pksim: true
+      install-rClr: true
+      rClr-version: '0.9.2'
+      extra-packages: |
+        ospsuite.utils=github::Open-Systems-Pharmacology/OSPSuite.RUtils
+        tlf=github::Open-Systems-Pharmacology/TLF-Library
+        ospsuite=github::Open-Systems-Pharmacology/OSPSuite-R
+        ospsuite.parameteridentification=github::Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
