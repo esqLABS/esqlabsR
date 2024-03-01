@@ -56,3 +56,4 @@ tests/testthat/Rplots.pdf
 .vscode
 *.code-workspace
 docs
+pkgdown
