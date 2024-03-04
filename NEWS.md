@@ -1,5 +1,10 @@
 # esqlabsR 5.1.3
 
+## Minor improvements and bug fixes
+
+- Continuous Integration/Continuous Deployment pipeline improvements (#590, #592, #601, @Felixmil)
+- Several bug fixes (#581, #585, #594, #600, @PavelBal)
+
 # esqlabsR 5.1.2
 
 ## Minor improvements and bug fixes
