@@ -7,7 +7,7 @@ on:
 
 jobs:
   pkgdown:
-    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/pkgdown.yaml@main
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/pkgdown.yml@main
     with:
       install-pksim: true
       install-rClr: true
