@@ -9,11 +9,10 @@ on:
 
 jobs:
   R-CMD-check-build:
-    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yml@main
     with:
       install-pksim: true
       install-rClr: true
-      rClr-version: '0.9.2'
       extra-packages: |
         ospsuite.utils=github::Open-Systems-Pharmacology/OSPSuite.RUtils
         tlf=github::Open-Systems-Pharmacology/TLF-Library
