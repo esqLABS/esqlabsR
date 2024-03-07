@@ -5,12 +5,12 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
-[![pkgdown](https://github.com/esqLABS/esqlabsR/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/pkgdown.yaml)
+[![pkgdown](https://github.com/esqLABS/esqlabsR/actions/workflows/pkgdown.yml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/pkgdown.yml)
 [![Download Latest
-Build](https://custom-icon-badges.demolab.com/badge/-Download-blue?style=for-the-badge&logo=download&logoColor=white "Download Latest Build")](https://nightly.link/esqLABS/esqlabsR/workflows/R-CMD-check.yaml/main/built_package.zip)
+Build](https://custom-icon-badges.demolab.com/badge/-Download-blue?style=for-the-badge&logo=download&logoColor=white "Download Latest Build")](https://nightly.link/esqLABS/esqlabsR/workflows/R-CMD-check.yml/main/built_package.zip)
 <!-- badges: end -->
 
 The `{esqlabsR}` package facilitates and standardizes the modeling and
