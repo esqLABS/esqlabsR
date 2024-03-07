@@ -1,15 +1,16 @@
 library(hexSticker)
 library(magick)
 library(showtext)
+library(usethis)
 
 # Loading Google fonts (http://www.google.com/fonts)
-google_font_name <- "Rubik"
+google_font_name <- "Comfortaa"
 font_add_google(google_font_name)
 
 # Automatically use showtext to render text for future devices
 showtext_auto()
 
-company <- image_read("hextools/esqlabs.jpg")
+company <- image_read("hextools/circles.png")
 
 sticker(
   company,
@@ -31,3 +32,7 @@ sticker(
   u_color = "grey",
   dpi = 600
 )
+
+usethis::use_logo("hextools/esqlabsR-logo.png")
+
+file.copy("hextools/circles.png", "man/figures/circles.png", overwrite = TRUE)

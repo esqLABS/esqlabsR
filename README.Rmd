@@ -19,7 +19,7 @@ library(tidyr)
 library(dplyr)
 ```
 
-# esqlabsR <a href="https://esqlabs.github.io/esqlabsR"><img src="man/figures/logo.png" align="right" width="120" /></a>
+# esqlabsR <a href="https://esqlabs.github.io/esqlabsR/"><img src="man/figures/logo.png" align="right" height="139" alt="esqlabsR website" /></a>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yaml)

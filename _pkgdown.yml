@@ -4,7 +4,7 @@ template:
 authors:
   esqLABS GmbH:
     href: https://esqlabs.com/
-    html: <img src='https://esqlabs.github.io/esqlabsR/reference/figures/esqlabs.png'
+    html: <img src='https://esqlabs.github.io/esqlabsR/reference/figures/circles.png'
       style='max-width:33px'>esqLABS
   Indrajeet Patil:
     href: https://sites.google.com/site/indrajeetspatilmorality/
