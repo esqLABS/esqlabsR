@@ -6,7 +6,7 @@ defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Periphera
 test_that("It stops with an error if the excel file defines a parameter that is
           not present", {
   # Define which scenarios to run
-  scenarioNames <- c("TestScenario")
+  scenarioNames <- c("TestScenario_missingParam")
   # Create `ScenarioConfiguration` objects from excel files
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
     scenarioNames = scenarioNames,
@@ -17,7 +17,7 @@ test_that("It stops with an error if the excel file defines a parameter that is
 
 test_that("It runs one scenario without specifying output paths", {
   # Define which scenarios to run
-  scenarioNames <- c("TestScenario")
+  scenarioNames <- c("TestScenario_missingParam")
   # Create `ScenarioConfiguration` objects from excel files
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
     scenarioNames = scenarioNames,
@@ -51,7 +51,7 @@ test_that("It runs one scenario with specifying output paths", {
     scenarioConfiguration$outputPaths <- enumValues(OutputPaths)
   }
 
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = FALSE)
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
 
   simulatedScenarios <- runScenarios(
     scenarios = scenarios
@@ -75,7 +75,7 @@ test_that("It runs two scenarios", {
   # Disable steady-state for second config
   scenarioConfigurations[[2]]$simulateSteadyState <- FALSE
 
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = FALSE)
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
 
   simulatedScenarios <- runScenarios(
     scenarios = scenarios
@@ -101,7 +101,7 @@ test_that("It runs population and individual scenarios", {
     scenarioNames = scenarioNames,
     projectConfiguration = projectConfiguration
   )
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = FALSE)
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
   simulatedScenarios <- runScenarios(
     scenarios = scenarios
   )
@@ -122,7 +122,7 @@ test_that("It saves and loads scenario results for scenario names with forbidden
     scenarioNames = scenarioNames,
     projectConfiguration = projectConfiguration
   )
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = FALSE)
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
 
   simulatedScenarios <- runScenarios(
     scenarios = scenarios
