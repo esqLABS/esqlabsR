@@ -50,7 +50,11 @@ Simulation object. Read-only
 Initialize a new instance of the class. Initializes the scenario from
 \code{ScenarioConfiguration} object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Scenario$new(scenarioConfiguration, customParams = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Scenario$new(
+  scenarioConfiguration,
+  customParams = NULL,
+  stopIfParameterNotFound = TRUE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -62,6 +66,10 @@ Initialize a new instance of the class. Initializes the scenario from
 A list containing vectors 'paths' with the full paths to the
 parameters, 'values' the values of the parameters, and 'units' with the
 units the values are in.}
+
+\item{\code{stopIfParameterNotFound}}{Logical. If \code{TRUE} (default), an error is
+thrown if any of the custom defined parameter does not exist. If \code{FALSE},
+non-existent parameters are  ignored.}
 }
 \if{html}{\out{</div>}}
 }
