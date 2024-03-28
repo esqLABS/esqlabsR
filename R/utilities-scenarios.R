@@ -129,10 +129,12 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 #' @param customParams A list containing vectors 'paths' with the full paths to the
 #' parameters, 'values' the values of the parameters, and 'units' with the
 #' units the values are in. The values to be applied to the model.
+#' @param stopIfParameterNotFound Boolean. If `TRUE` (default) and a custom parameter is not found, an error is thrown. If `FALSE`, non-existing parameters
+#' are ignored.
 #'
 #' @return Named list of `Scenario` objects.
 #' @export
-createScenarios <- function(scenarioConfigurations, customParams = NULL) {
+createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfParameterNotFound = TRUE) {
   .validateScenarioConfigurations(scenarioConfigurations)
   .validateParametersStructure(
     parameterStructure = customParams,
@@ -140,7 +142,7 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL) {
     nullAllowed = TRUE
   )
 
-  scenarios <- purrr::map(scenarioConfigurations, ~ Scenario$new(.x, customParams = customParams)) %>%
+  scenarios <- purrr::map(scenarioConfigurations, ~ Scenario$new(.x, customParams = customParams, stopIfParameterNotFound = stopIfParameterNotFound)) %>%
     purrr::set_names(purrr::map(scenarioConfigurations, ~ .x$scenarioName))
 
   return(scenarios)
