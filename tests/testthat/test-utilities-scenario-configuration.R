@@ -158,7 +158,7 @@ test_that("It creates all scenarios if no name is defined", {
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
     projectConfiguration = projectConfiguration
   )
-  expect_equal(names(scenarioConfigurations), c("TestScenario", "TestScenario2", "PopulationScenario", "PopulationScenarioFromCSV"))
+  expect_equal(names(scenarioConfigurations), c("TestScenario", "TestScenario2", "PopulationScenario", "PopulationScenarioFromCSV", "TestScenario_missingParam"))
 })
 
 
