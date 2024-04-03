@@ -40,9 +40,10 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 
   # Simulate steady-state concurrently
   if (length(steadyStateSimulations) > 0) {
-    initialValues <- ospsuite.parameteridentification::getSteadyState(
+    initialValues <- ospsuite::getSteadyState(
       simulations = steadyStateSimulations,
-      steadyStateTime = steadyStateTimes, ignoreIfFormula = TRUE,
+      steadyStateTime = steadyStateTimes,
+      ignoreIfFormula = TRUE,
       simulationRunOptions = simulationRunOptions
     )
   }

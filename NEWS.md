@@ -1,5 +1,9 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+- Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
+
 # esqlabsR 5.1.3
 
 ## Minor improvements and bug fixes

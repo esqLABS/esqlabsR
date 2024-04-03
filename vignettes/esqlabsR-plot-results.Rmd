@@ -177,10 +177,12 @@ In the next step, the user calls the function `createPlotsFromExcel()`, passing
 the generated data:
 
 ```{r, echo = TRUE}
-plots <- createPlotsFromExcel(simulatedScenarios = simulatedScenarios,
-                              observedData = observedData,
-                              plotGridNames = c("Aciclovir", "Aciclovir2"),
-                              projectConfiguration = projectConfiguration)
+plots <- createPlotsFromExcel(
+  simulatedScenarios = simulatedScenarios,
+  observedData = observedData,
+  plotGridNames = c("Aciclovir", "Aciclovir2"),
+  projectConfiguration = projectConfiguration
+)
 ```
 
 The function returns a named list of `ggplot2` objects, with names being
