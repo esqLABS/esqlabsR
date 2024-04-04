@@ -121,7 +121,11 @@ parameters specified by the user through the <code>customParams</code> argument 
 <p>Initialize a new instance of the class. Initializes the scenario from
 <code>ScenarioConfiguration</code> object.</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/Scenario.html">Scenario</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">scenarioConfiguration</span>, customParams <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/Scenario.html">Scenario</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  <span class="va">scenarioConfiguration</span>,</span>
+<span>  customParams <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  stopIfParameterNotFound <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -135,6 +139,12 @@ parameters specified by the user through the <code>customParams</code> argument 
 A list containing vectors 'paths' with the full paths to the
 parameters, 'values' the values of the parameters, and 'units' with the
 units the values are in.</p></dd>
+
+
+<dt><code>stopIfParameterNotFound</code></dt>
+<dd><p>Logical. If <code>TRUE</code> (default), an error is
+thrown if any of the custom defined parameter does not exist. If <code>FALSE</code>,
+non-existent parameters are  ignored.</p></dd>
 
 
 </dl><p></p></div>
