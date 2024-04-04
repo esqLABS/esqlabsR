@@ -1,5 +1,14 @@
 # esqlabsR (development version)
 
+## Minor improvements and bug fixes
+
+- Function `createScenarios` gets a new argument `stopIfParameterNotFound`.
+If `TRUE` (default), a scenario will not be created and an error is thrown if 
+any user-defined parameter (e.g., provided in Excel files) is not found in the
+simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
+
+- Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
+
 ## Breaking changes
 
 - Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)

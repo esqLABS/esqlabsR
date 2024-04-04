@@ -4,7 +4,11 @@
 \alias{createScenarios}
 \title{Create \code{Scenario} objects from \code{ScenarioConfiguration} objects}
 \usage{
-createScenarios(scenarioConfigurations, customParams = NULL)
+createScenarios(
+  scenarioConfigurations,
+  customParams = NULL,
+  stopIfParameterNotFound = TRUE
+)
 }
 \arguments{
 \item{scenarioConfigurations}{List of \code{ScenarioConfiguration} objects to be
@@ -13,6 +17,9 @@ simulated.}
 \item{customParams}{A list containing vectors 'paths' with the full paths to the
 parameters, 'values' the values of the parameters, and 'units' with the
 units the values are in. The values to be applied to the model.}
+
+\item{stopIfParameterNotFound}{Boolean. If \code{TRUE} (default) and a custom parameter is not found, an error is thrown. If \code{FALSE}, non-existing parameters
+are ignored.}
 }
 \value{
 Named list of \code{Scenario} objects.

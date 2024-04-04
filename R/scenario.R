@@ -69,7 +69,7 @@ Scenario <- R6::R6Class(
     .population = NA,
 
     # Private function for initialization of the scenario from the configuration
-    .initializeFromConfiguration = function(customParams = NULL) {
+    .initializeFromConfiguration = function(customParams = NULL, stopIfParameterNotFound = TRUE) {
       scenarioConfiguration <- private$.scenarioConfiguration
       # Read parameters from the parameters file
       params <- readParametersFromXLS(
@@ -175,7 +175,8 @@ Scenario <- R6::R6Class(
       initializeSimulation(
         simulation = simulation,
         individualCharacteristics = individualCharacteristics,
-        additionalParams = params
+        additionalParams = params,
+        stopIfParameterNotFound = stopIfParameterNotFound
       )
 
       return(simulation)
@@ -219,10 +220,13 @@ Scenario <- R6::R6Class(
     #'  A list containing vectors 'paths' with the full paths to the
     #' parameters, 'values' the values of the parameters, and 'units' with the
     #' units the values are in.
+    #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
+    #'   thrown if any of the custom defined parameter does not exist. If `FALSE`,
+    #'   non-existent parameters are  ignored.
     #' @return A new `Scenario` object.
-    initialize = function(scenarioConfiguration, customParams = NULL) {
+    initialize = function(scenarioConfiguration, customParams = NULL, stopIfParameterNotFound = TRUE) {
       private$.scenarioConfiguration <- scenarioConfiguration
-      private$.simulation <- private$.initializeFromConfiguration(customParams = customParams)
+      private$.simulation <- private$.initializeFromConfiguration(customParams = customParams, stopIfParameterNotFound = stopIfParameterNotFound)
       private$.initializePopulationFromConfiguration()
     },
     #' @description
