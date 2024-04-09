@@ -199,7 +199,7 @@ Scenario <- R6::R6Class(
           population <- loadPopulation(populationPath)
         } else {
           popCharacteristics <- readPopulationCharacteristicsFromXLS(
-            XLSpath = scenarioConfiguration$projectConfiguration$populationParamsFile,
+            XLSpath = scenarioConfiguration$projectConfiguration$populationsFile,
             populationName = scenarioConfiguration$populationId,
             sheet = "Demographics"
           )
