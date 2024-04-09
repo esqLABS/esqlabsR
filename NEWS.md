@@ -10,7 +10,7 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 - Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
 
 - Function `createPlotsFromExcel` supports `NULL` for arguments `simulatedScenarios`
-and `observedData` of no simulation results or observed data are required for 
+and `observedData` if no simulation results or observed data are required for 
 plot generation.
 
 ## Breaking changes
