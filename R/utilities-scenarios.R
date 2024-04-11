@@ -166,6 +166,8 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfP
 #'
 #' @export
 #'
+#' @return `outputFolder` or the created output folder path, if no `outputFolder` was provided.
+#'
 #' @examples \dontrun{
 #' projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
 #' scenarioConfigurations <- readScenarioConfigurationFromExcel(
@@ -231,6 +233,7 @@ saveScenarioResults <- function(
       }
     )
   }
+  return(outputFolder)
 }
 
 #' Load simulated scenarios from csv and pkml.
