@@ -34,7 +34,7 @@ Must be located in the "paramsFolder".}
 individual-specific model parameterization.
 Must be located in the "paramsFolder"}
 
-\item{\code{populationParamsFile}}{Name of the excel file with population
+\item{\code{populationsFile}}{Name of the excel file with population
 information.
 Must be located in the "paramsFolder".}
 

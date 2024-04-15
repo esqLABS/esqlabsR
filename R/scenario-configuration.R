@@ -87,7 +87,7 @@ a parameter sheet from the list"
     },
     #' @field simulationType Type of the simulation - "Individual" or
     #'   "Population". If "Population", population characteristics are created
-    #'   based on information stored in `populationParamsFile`. Default is
+    #'   based on information stored in `populationsFile`. Default is
     #'   "Individual"
     simulationType = function(value) {
       if (missing(value)) {
@@ -142,7 +142,7 @@ a parameter sheet from the list"
     #' @field individualId Id of the individual as specified in "IndividualParameters.xlsx".
     #' If `NULL` (default), the individual as defined in the simulation file will be simulated.
     individualId = NULL,
-    #' @field populationId Id of the population as specified in "PopulationParameters.xlsx",
+    #' @field populationId Id of the population as specified in "Populations.xlsx",
     #' sheet "Demographics". If `ScenarioConfguration$simulationType` is `population`,
     #' a population will be created a the scenario will be simulated as a population
     #' simulation.
