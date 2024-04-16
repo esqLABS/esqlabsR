@@ -63,7 +63,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   outputPaths = NULL,
                                   parameterPaths = NULL,
                                   pkParameters = NULL,
-                                  yAxisType  = "percent",
+                                  yAxisType = "percent",
                                   xAxisScale = "log",
                                   yAxisScale = "lin",
                                   yAxisFacetScales = "fixed",
@@ -121,26 +121,29 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .createSpiderPlot <- function(data,
-                              yAxisType  = "percent",
+                              yAxisType = "percent",
                               xAxisScale = "log",
                               yAxisScale = "lin",
                               yAxisFacetScales = "fixed",
                               defaultPlotConfiguration) {
-
   # override default configuration with settings for spider plot
   spiderPlotConfiguration <- list(
-    title          = unique(data$OutputPath),
     legendPosition = "bottom",
+    legendTitle    = "Parameter",
     linesSize      = 1.4,
-    pointsSize     = 2,
     pointsShape    = 21,
     pointsSize     = 2,
+    title          = unique(data$OutputPath),
+    titleSize      = 20L,
     xAxisScale     = xAxisScale,
+    xLabel         = "Input parameter value [% of reference]",
     yAxisScale     = yAxisScale,
-    yAxisTicks     = 10L
+    yAxisTicks     = 10L,
+    yLabel         = NULL
   )
   plotConfiguration <- .updatePlotConfiguration(
-    defaultPlotConfiguration, spiderPlotConfiguration)
+    defaultPlotConfiguration, spiderPlotConfiguration
+  )
 
   # getting the scales right
   data <- dplyr::mutate(data,
@@ -148,37 +151,56 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     PercentChangePK = PercentChangePK + 100
   )
 
+  if (yAxisType == "percent") {
+    yColumn <- sym("PercentChangePK")
+    data$Unit <- "% of reference"
+  } else {
+    yColumn <- sym("PKParameterValue")
+  }
+
+  # filter according to value limits
+  if (!is.null(plotConfiguration$yValuesLimits)) {
+    data <- dplyr::filter(data, !!yColumn >= plotConfiguration$yValuesLimits[1])
+    data <- dplyr::filter(data, !!yColumn <= plotConfiguration$yValuesLimits[2])
+  }
+  if (!is.null(plotConfiguration$xValuesLimits)) {
+    data <- dplyr::filter(data, ParameterFactor >= plotConfiguration$xValuesLimits[1])
+    data <- dplyr::filter(data, ParameterFactor <= plotConfiguration$xValuesLimits[2])
+  }
+
+  # create plots for each PK parameter
   plotList <- purrr::map(
     unique(data$PKParameter),
     ~ {
       dataSubset <- dplyr::filter(data, PKParameter == .x)
       baseDataSubset <- dplyr::filter(dataSubset, ParameterFactor == 100)
 
-      if(yAxisType == "percent") {
-        yColumn <- sym("PercentChangePK")
-        dataSubset$Unit <- "% of reference"
-      } else {
-        yColumn <- sym("PKParameterValue")
-      }
-
       if (isTRUE(yAxisFacetScales == "fixed")) {
-        if (yAxisType == "percent") {
-          plotConfiguration$yLabel <- "PK-Parameter value [% of reference]"
-        } else {
-          plotConfiguration$yLabel <- "PK-Parameter value"
+        if (is.null(plotConfiguration$yLabel)) {
+          plotConfiguration$yLabel <- switch(yAxisType,
+            "percent"  = "PK-Parameter value [% of reference]",
+            "absolute" = "PK-Parameter value",
+            "PK-Parameter value"
+          )
         }
         pBreaks <- .calculateBreaks(data[, yColumn],
-                                    m = plotConfiguration$yAxisTicks,
-                                    Q = c(100, 200, 300))
+          m = plotConfiguration$yAxisTicks,
+          Q = c(0, 100, 200, 300)
+        )
         pLimits <- .calculateLimits(data[, yColumn])
-
       } else {
         plotConfiguration$yLabel <- paste0(
-          dataSubset$PKParameter[1], " [", dataSubset$Unit[1], "]")
-        pBreaks <- .calculateBreaks(values = dataSubset[, yColumn],
-                                    m = plotConfiguration$yAxisTicks,
-                                    Q = c(100, 200, 300))
+          dataSubset$PKParameter[1], " [", dataSubset$Unit[1], "]"
+        )
+        pBreaks <- .calculateBreaks(
+          values = dataSubset[, yColumn],
+          m = plotConfiguration$yAxisTicks
+        )
         pLimits <- NULL
+      }
+
+      if (!is.null(plotConfiguration$yAxisLimits)) {
+        pLimits <- plotConfiguration$yAxisLimits
       }
 
       plot <- ggplot(
@@ -192,20 +214,22 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           na.rm = TRUE
         ) +
         geom_point(
-          size = plotConfiguration$pointsSize,
+          size  = plotConfiguration$pointsSize,
           shape = plotConfiguration$pointsShape[1],
-          na.rm = TRUE)
+          na.rm = TRUE
+        )
 
       if (isTRUE(plotConfiguration$xAxisScale == "log")) {
         plot <- plot + scale_x_log10()
       }
 
       if (isTRUE(plotConfiguration$yAxisScale == "log")) {
-        plot <- plot + scale_y_log10(
-          limits = pLimits,
-          breaks = pBreaks,
-          minor_breaks = pBreaks
-        )
+        plot <- plot +
+          scale_y_log10(
+            limits = pLimits,
+            breaks = pBreaks,
+            minor_breaks = pBreaks
+          )
       } else {
         plot <- plot +
           scale_y_continuous(
@@ -233,22 +257,29 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         )
 
       plot <- plot +
-        facet_wrap(~PKParameter, scales = yAxisFacetScales) + #free_y
+        facet_wrap(~PKParameter, scales = yAxisFacetScales) +
         labs(
           x = plotConfiguration$xLabel,
           y = plotConfiguration$yLabel,
-          title = plotConfiguration$title,
-          group = "Parameter",
-          color = "Parameter"
+          title = NULL,
+          color = plotConfiguration$legendTitle
         ) +
         theme_bw(base_size = 14) +
         theme(
           legend.position = plotConfiguration$legendPosition,
           panel.grid.minor = element_blank(),
-          text = element_text(size = 16) #,  family="mono"
+          text = element_text(size = 16)
         ) +
-        guides(col = guide_legend(nrow = 3, title.position = "top")) +
-        scale_color_brewer(palette = "Dark2")
+        guides(col = guide_legend(
+          nrow = length(unique(data$PKParameter)),
+          title.position = "top"
+        ))
+
+      if (is.null(plotConfiguration$linesColor)) {
+        plot <- plot + scale_color_brewer(palette = "Dark2")
+      } else {
+        plot <- plot + scale_color_manual(values = plotConfiguration$linesColor)
+      }
 
       return(plot)
     }
@@ -257,7 +288,11 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
       title = plotConfiguration$title,
-      theme = theme(plot.title = element_text(size = 20))) +
+      subtitle = defaultPlotConfiguration$subtitle,
+      theme = theme(
+        plot.title = element_text(size = plotConfiguration$titleSize)
+      )
+    ) +
     patchwork::plot_layout(
       guide = "collect", axes = "collect", ncol = length(plotList)
     ) &
@@ -269,14 +304,13 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .updatePlotConfiguration <- function(plotConfiguration, plotOverrideConfig) {
-
   defaultValues <- esqlabsR::createEsqlabsPlotConfiguration()
 
   for (name in names(plotOverrideConfig)) {
     print(name)
     if (name %in% names(plotConfiguration)) {
       if (is.null(defaultValues[[name]]) ||
-          all(plotConfiguration[[name]] == defaultValues[[name]])) {
+        all(plotConfiguration[[name]] == defaultValues[[name]])) {
         plotConfiguration[[name]] <- plotOverrideConfig[[name]]
       }
     } else {
@@ -290,7 +324,6 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .calculateBreaks <- function(values, ...) {
-
   args <- list(...)
 
   args$dmin <- min(na.omit(values))
@@ -304,9 +337,10 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .calculateLimits <- function(x) {
-  limits <- c((if (min(x, na.rm = TRUE) < 0) 1.01 else 0.99) * min(x),
-              (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x))
+  limits <- c(
+    (if (min(x, na.rm = TRUE) < 0) 1.01 else 0.99) * min(x),
+    (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x)
+  )
 
   return(limits)
 }
-
