@@ -83,11 +83,10 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   .validateCharVectors(parameterPaths)
   .validateCharVectors(pkParameters)
 
-  #validate these!!
-  #yAxisType
-  #xAxisScale
-  #yAxisScale
-  #yAxisFacetScales
+  ospsuite.utils::validateIsIncluded(yAxisType, c("percent", "absolute"))
+  ospsuite.utils::validateIsIncluded(xAxisScale, c("lin", "log"))
+  ospsuite.utils::validateIsIncluded(yAxisScale, c("lin", "log"))
+  ospsuite.utils::validateIsIncluded(yAxisFacetScales, c("fixed", "free"))
 
   # extract and filter data ----------------
 
