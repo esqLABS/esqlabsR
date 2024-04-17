@@ -1,5 +1,5 @@
 #' @name sensitivitySpiderPlot
-#' @title Sensitivity spider plot for PK parameters
+#' @title Sensitivity Spider Plot for Pharmacokinetic Parameters
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
 #'   `sensitivityCalculation()`.
@@ -8,55 +8,77 @@
 #'   respectively. If `NULL`, all included paths and parameters present in the
 #'   supplied `SensitivityCalculation` object will be displayed in the
 #'   visualization.
-#' @param yAxisType Character, either "percent" or "absolute", specifying the
-#' type of data for the y-axis.
-#' @param xAxisScale Character, either "log" or "lin", specifying whether to set
-#' the x-axis scale logarithmically or linearly.
-#' @param yAxisScale Character, either "log" or "lin", specifying whether to set
-#' the y-axis scale logarithmically or linearly.
-#' @param yAxisFacetScales Character, either "fixed" or "free", managing scaling
-#' across different facets for the y-axis.
+#' @param yAxisType Character string, either "percent" (percentage change) or
+#'   "absolute" (absolute values), for y-axis data normalization. Default is "percent".
+#' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
+#'   (linear scale), to set the x-axis scale. Default is "log".
+#' @param yAxisScale Character string, either "log" or "lin", sets the y-axis scale
+#'   similarly to `xAxisScale`. Default is "lin".
+#' @param yAxisFacetScales Character string, either "fixed" or "free", determines
+#'   the scaling across y-axes of different facets. Default is "fixed".
+#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
+#' used to customize plot aesthetics.
+#'
+#'   Supported parameters include:
+#'   - `legendPosition`: Position of the legend on the plot.
+#'   - `legendTitle`: Title displayed for the legend.
+#'   - `linesAlpha`: Alpha transparency for line elements.
+#'   - `linesColor`: Color of the line elements.
+#'   - `linesSize`: Thickness of the line elements.
+#'   - `pointsShape`: Shape of the point elements.
+#'   - `pointsSize`: Size of the point elements.
+#'   - `subtitle`: Subtitle text for the plot.
+#'   - `title`: Main title text for the plot.
+#'   - `titleSize`: Font size of the plot title.
+#'   - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
+#'   - `xLabel`: Label text for the x-axis.
+#'   - `xValuesLimits`: Numeric vector specifying the limits for x-values.
+#'   - `yAxisLimits`: Numeric vector specifying the limits for y-values.
+#'   - `yAxisScale`: Scale type for the y-axis (`"log"` or `"lin"`).
+#'   - `yAxisTicks`: Number of ticks on the y-axis.
+#'   - `yLabel`: Label text for the y-axis.
+#'   - `yValuesLimits`: Numeric vector specifying the limits for y-values.
+#'
+#'   Default values are set to provide a standardized look, but each parameter
+#'   can be tailored to fit specific visual needs. Modifying these parameters
+#'   will directly affect the aesthetics of the output plots.
 #'
 #' @import ggplot2
 #'
 #' @family sensitivity-calculation
 #'
-#' @return
-#'
-#' A single `ggplot` object if a single output path is specified.
-#'
-#' A list of `ggplot` objects if multiple output paths are specified.
+#' @return A `patchwork` object containing the combined ggplot objects if a
+#'   single output path is specified, or a list of `patchwork` objects for
+#'   multiple output paths.
 #'
 #' @examples
 #' \dontrun{
-#' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-#' simulation <- loadSimulation(simPath)
-#' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-#' parameterPaths <- c(
-#'   "Aciclovir|Lipophilicity",
-#'   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
-#' )
-#'
-#' # extract the results into a list of dataframes
-#' results <- sensitivityCalculation(
-#'   simulation = simulation,
-#'   outputPaths = outputPaths,
-#'   parameterPaths = parameterPaths
-#' )
-#'
-#' # print plots
-#' sensitivitySpiderPlot(results)
-#'
-#' # print and save plots
-#' if (FALSE) {
-#'   sensitivitySpiderPlot(
-#'     results,
-#'     savePlots = TRUE,
-#'     height = 6,
-#'     width = 12
+#'   simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+#'   simulation <- loadSimulation(simPath)
+#'   outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+#'   parameterPaths <- c(
+#'     "Aciclovir|Lipophilicity",
+#'     "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'     "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 #'   )
-#' }
+#'
+#'   results <- sensitivityCalculation(
+#'     simulation = simulation,
+#'     outputPaths = outputPaths,
+#'     parameterPaths = parameterPaths
+#'   )
+#'
+#'   # Print plots with default settings
+#'   sensitivitySpiderPlot(results)
+#'
+#'   # Print plots with absolute y-axis values
+#'   sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
+#'
+#'   # Print plots with custom configuration settings
+#'   myPlotConfiguration <- createEsqlabsPlotConfiguration()
+#'   myPlotConfiguration$pointsShape <- 22
+#'   myPlotConfiguration$subtitle <- "Custom settings"
+#'   sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
 #' }
 #' @export
 sensitivitySpiderPlot <- function(sensitivityCalculation,
