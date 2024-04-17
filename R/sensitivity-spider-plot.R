@@ -133,7 +133,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     pointsShape    = 21,
     pointsSize     = 2,
     title          = unique(data$OutputPath),
-    titleSize      = 20L,
+    titleSize      = 14L,
     xAxisScale     = xAxisScale,
     xLabel         = "Input parameter value [% of reference]",
     yAxisScale     = yAxisScale,
@@ -263,11 +263,11 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           title = NULL,
           color = plotConfiguration$legendTitle
         ) +
-        theme_bw(base_size = 14) +
+        theme_bw(base_size = 11) +
         theme(
           legend.position = plotConfiguration$legendPosition,
           panel.grid.minor = element_blank(),
-          text = element_text(size = 16)
+          text = element_text(size = 11)
         ) +
         guides(col = guide_legend(
           nrow = length(unique(data$PKParameter)),
@@ -306,7 +306,6 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   defaultValues <- esqlabsR::createEsqlabsPlotConfiguration()
 
   for (name in names(plotOverrideConfig)) {
-    print(name)
     if (name %in% names(plotConfiguration)) {
       if (is.null(defaultValues[[name]]) ||
         all(plotConfiguration[[name]] == defaultValues[[name]])) {
