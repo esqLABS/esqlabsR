@@ -129,7 +129,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     geom_line(
       data = dplyr::filter(data, ParameterFactor != 1.0),
       aes(Time, Concentration, group = ParameterFactor, color = ParameterFactor),
-      size = 1.4,
+      linewidth = 1.4,
       alpha = 0.7,
       na.rm = TRUE
     ) +
@@ -142,7 +142,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       data = dplyr::filter(data, ParameterFactor == 1.0),
       aes(Time, Concentration),
       color = "black",
-      size = 1.4,
+      linewidth = 1.4,
       alpha = 0.7,
       na.rm = TRUE
     ) +

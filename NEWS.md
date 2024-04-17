@@ -17,6 +17,8 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 
 - Function `saveScenarioResults` returns the path where the results were saved.
 
+- Loading the package does not set `options(warnPartialMatchDollar = TRUE)` any more.
+
 ## Breaking changes
 
 - Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
