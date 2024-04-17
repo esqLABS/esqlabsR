@@ -391,7 +391,7 @@ test_that("sensitivitySpiderPlot default plots are as expected", {
 
 # parameterized plots ---------------------------------
 
-n <- 'Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)'
+n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("sensitivitySpiderPlot correctly applies free y-axis facets scaling", {
   set.seed(123)
