@@ -3,7 +3,7 @@
 test_that("`initializeSimulation()` loads a simulation at the minimum", {
   simulation <- loadSimulation(system.file("extdata", "simple.pkml", package = "ospsuite"))
   initializeSimulation(simulation)
-  simulationResults <- runSimulation(simulation)
+  simulationResults <- runSimulations(simulation)
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
@@ -16,7 +16,7 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
   params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
 
   initializeSimulation(simulation, additionalParams = params)
-  simulationResults <- runSimulation(simulation)
+  simulationResults <- runSimulations(simulation)
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
