@@ -12,7 +12,7 @@ createScenarios(
 }
 \arguments{
 \item{scenarioConfigurations}{List of \code{ScenarioConfiguration} objects to be
-simulated.}
+simulated. See \code{\link[=createScenarios]{createScenarios()}} for details.}
 
 \item{customParams}{A list containing vectors 'paths' with the full paths to the
 parameters, 'values' the values of the parameters, and 'units' with the
