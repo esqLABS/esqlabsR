@@ -147,7 +147,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   ) +
     geom_line(
       aes(group = ParameterPath, color = as.factor(ParameterPath)),
-      size = 1.4,
+      linewidth = 1.4,
       alpha = 0.7,
       na.rm = TRUE
     ) +
@@ -180,14 +180,14 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       yintercept = 100,
       linetype = "dotted",
       color = "black",
-      size = 0.5,
+      linewidth = 0.5,
       na.rm = TRUE
     ) +
     geom_vline(
       xintercept = 100,
       linetype = "dotted",
       color = "black",
-      size = 0.5,
+      linewidth = 0.5,
       na.rm = TRUE
     ) +
     facet_wrap(~PKParameter, scales = "free_y") +

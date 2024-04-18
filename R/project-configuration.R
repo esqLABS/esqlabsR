@@ -67,14 +67,14 @@ ProjectConfiguration <- R6::R6Class(
       private$.individualsFile <- value
       private$.clean_path(value, self$paramsFolder)
     },
-    #' @field populationParamsFile Name of the excel file with population
+    #' @field populationsFile Name of the excel file with population
     #' information.
     #' Must be located in the "paramsFolder".
-    populationParamsFile = function(value) {
+    populationsFile = function(value) {
       if (missing(value)) {
-        value <- private$.populationParamsFile
+        value <- private$.populationsFile
       }
-      private$.populationParamsFile <- value
+      private$.populationsFile <- value
       private$.clean_path(value, self$paramsFolder)
     },
     #' @field scenarioDefinitionFile Name of the excel file with scenario
@@ -161,7 +161,7 @@ ProjectConfiguration <- R6::R6Class(
     .paramsFolder = NULL,
     .paramsFile = NULL,
     .individualsFile = NULL,
-    .populationParamsFile = NULL,
+    .populationsFile = NULL,
     .scenarioDefinitionFile = NULL,
     .scenarioApplicationsFile = NULL,
     .plotsFile = NULL,
@@ -225,7 +225,7 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Parameters folder", fs::path_rel(as.character(self$paramsFolder)))
       private$printLine("Parameters file name", fs::path_rel(as.character(self$paramsFile)))
       private$printLine("Individual parameters file name", fs::path_rel(as.character(self$individualsFile)))
-      private$printLine("Population parameters file name", fs::path_rel(as.character(self$populationParamsFile)))
+      private$printLine("Population parameters file name", fs::path_rel(as.character(self$populationsFile)))
       private$printLine("Scenario definitions file name", fs::path_rel(as.character(self$scenarioDefinitionFile)))
       private$printLine("Scenario applications definitions file name", fs::path_rel(as.character(self$scenarioApplicationsFile)))
       private$printLine("Plot definitions file name", fs::path_rel(as.character(self$plotsFile)))

@@ -1,5 +1,11 @@
 # esqlabsR (development version)
 
+## Major improvements and new features
+
+- `createPlotsFromExcel` gets a new argument `outputFolder`. If provided, the plots 
+are saved in the specified folder. If `NULL`, default results folder as defined 
+in the `ProjectConfiguration` is used (#495, @PavelBal).
+
 ## Minor improvements and bug fixes
 
 - Function `createScenarios` gets a new argument `stopIfParameterNotFound`.
@@ -9,6 +15,10 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 
 - Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
 
+- Function `saveScenarioResults` returns the path where the results were saved.
+
+- Loading the package does not set `options(warnPartialMatchDollar = TRUE)` any more.
+
 - Function `createPlotsFromExcel` supports `NULL` for arguments `simulatedScenarios`
 and `observedData` if no simulation results or observed data are required for 
 plot generation.
@@ -16,6 +26,14 @@ plot generation.
 ## Breaking changes
 
 - Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
+
+- Function `createEsqlabsExportConfiguration` requires a new argument `outputFolder` 
+instead of `projectConfiguration`.
+
+- Default excel file for population definitions has been renamed from `PopulationParameters.xlsx`
+to `Populations.xlsx` (#554, @PavelBal)
+
+- Field `populationParamsFile` of the `ProjectConfiguration` class has been renamed to `populationsFile` (#554, @PavelBal)
 
 # esqlabsR 5.1.3
 

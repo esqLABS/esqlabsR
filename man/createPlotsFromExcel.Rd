@@ -9,6 +9,7 @@ createPlotsFromExcel(
   simulatedScenarios = NULL,
   observedData = NULL,
   projectConfiguration,
+  outputFolder = NULL,
   stopIfNotFound = TRUE
 )
 }
@@ -27,6 +28,10 @@ data is required for the plots.}
 \item{projectConfiguration}{Object of class \code{ProjectConfiguration}
 that contains information about the output paths and the excel file
 where plots are defined.}
+
+\item{outputFolder}{Optional - path to the folder where the results will be
+stored. If \code{NULL} (default), \code{projectConfiguration$outputFolder} is used. Only
+relevant for plots specified for export in the \code{exportConfiguration} sheet.}
 
 \item{stopIfNotFound}{If TRUE (default), the function stops if any of the
 simulated results or observed data are not found. If FALSE a warning is printed.}
