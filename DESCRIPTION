@@ -28,6 +28,7 @@ Imports:
     ggplot2,
     grDevices,
     labeling,
+    lifecycle,
     ospsuite.parameteridentification (>= 1.3.0),
     ospsuite.utils (>= 1.5.0),
     parallel,

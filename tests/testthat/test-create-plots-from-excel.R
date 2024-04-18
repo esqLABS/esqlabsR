@@ -1,4 +1,4 @@
-projectConfiguration <- createDefaultProjectConfiguration(test_ProjectConfiguration())
+projectConfiguration <- createProjectConfiguration(test_ProjectConfiguration())
 
 # Define which scenarios to run
 scenarioNames <- c("TestScenario", "PopulationScenario")

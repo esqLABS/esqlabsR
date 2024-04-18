@@ -1,6 +1,6 @@
 ## context("readScenarioConfigurationFromExcel")
 # Create a project configuration
-projectConfiguration <- createDefaultProjectConfiguration(test_ProjectConfiguration())
+projectConfiguration <- createProjectConfiguration(test_ProjectConfiguration())
 
 # Template scenario configuration for testing
 scenariosDf <- data.frame(list(
