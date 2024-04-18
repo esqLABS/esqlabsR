@@ -106,7 +106,7 @@ test_that("It creates multiple correct scenarios", {
 test_that("It does not fail on empty rows", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Scenarios.xlsx",
     tmpdir = tempDir,
@@ -186,7 +186,7 @@ test_that("It throws an error when reading wrong file structure for scenario con
   )
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Scenarios.xlsx",
     tmpdir = tempDir,

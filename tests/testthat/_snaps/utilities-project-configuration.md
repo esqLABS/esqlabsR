@@ -5,15 +5,15 @@
     Output
       ProjectConfiguration: 
          Relative path from working directory: C:/Users/Felix/Code/esqlabsR/tests/testthat 
-         Project Configuration File: ../../inst/extdata/examples/TestProject/projectConfiguration.xlsx 
+         Project Configuration File: ../../inst/extdata/examples/TestProject/ProjectConfiguration.xlsx 
          Model folder: ../../inst/extdata/examples/TestProject/Models/Simulations 
-         Parameters folder: ../../inst/extdata/examples/TestProject/Parameters 
-         Model Parameters: ../../inst/extdata/examples/TestProject/Parameters/ModelParameters.xlsx 
-         Individuals: ../../inst/extdata/examples/TestProject/Parameters/Individuals.xlsx 
-         Populations: ../../inst/extdata/examples/TestProject/Parameters/Populations.xlsx 
-         Scenarios: ../../inst/extdata/examples/TestProject/Parameters/Scenarios.xlsx 
-         Applications: ../../inst/extdata/examples/TestProject/Parameters/Applications.xlsx 
-         Plots: ../../inst/extdata/examples/TestProject/Parameters/Plots.xlsx 
+         Configurations folder: ../../inst/extdata/examples/TestProject/Configurations 
+         Model Parameters: ../../inst/extdata/examples/TestProject/Configurations/ModelParameters.xlsx 
+         Individuals: ../../inst/extdata/examples/TestProject/Configurations/Individuals.xlsx 
+         Populations: ../../inst/extdata/examples/TestProject/Configurations/Populations.xlsx 
+         Scenarios: ../../inst/extdata/examples/TestProject/Configurations/Scenarios.xlsx 
+         Applications: ../../inst/extdata/examples/TestProject/Configurations/Applications.xlsx 
+         Plots: ../../inst/extdata/examples/TestProject/Configurations/Plots.xlsx 
          Data folder: ../../inst/extdata/examples/TestProject/Data 
          Data file: ../../inst/extdata/examples/TestProject/Data/TestProject_TimeValuesData.xlsx 
          Data importer configuration: ../../inst/extdata/examples/TestProject/Data/esqlabs_dataImporter_configuration.xml 

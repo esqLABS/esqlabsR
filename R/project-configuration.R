@@ -38,73 +38,73 @@ ProjectConfiguration <- R6::R6Class(
       private$.modelFolder <- value
       private$.clean_path(value, self$projectConfigurationDirPath)
     },
-    #' @field paramsFolder Path to the folder containing excel files with model
+    #' @field configurationsFolder Path to the folder containing excel files with model
     #' parameterization;
-    paramsFolder = function(value) {
+    configurationsFolder = function(value) {
       if (missing(value)) {
-        value <- private$.paramsFolder
+        value <- private$.configurationsFolder
       }
-      private$.paramsFolder <- value
+      private$.configurationsFolder <- value
       private$.clean_path(value, self$projectConfigurationDirPath)
     },
     #' @field modelParamsFile Name of the excel file with global model
     #' parameterization.
-    #' Must be located in the "paramsFolder".
+    #' Must be located in the "configurationsFolder".
     modelParamsFile = function(value) {
       if (missing(value)) {
         value <- private$.modelParamsFile
       }
       private$.modelParamsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(value, self$configurationsFolder)
     },
     #' @field individualsFile Name of the excel file with
     #' individual-specific model parameterization.
-    #' Must be located in the "paramsFolder"
+    #' Must be located in the "configurationsFolder"
     individualsFile = function(value) {
       if (missing(value)) {
         value <- private$.individualsFile
       }
       private$.individualsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(value, self$configurationsFolder)
     },
     #' @field populationsFile Name of the excel file with population
     #' information.
-    #' Must be located in the "paramsFolder".
+    #' Must be located in the "configurationsFolder".
     populationsFile = function(value) {
       if (missing(value)) {
         value <- private$.populationsFile
       }
       private$.populationsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(value, self$configurationsFolder)
     },
     #' @field scenariosFile Name of the excel file with scenario
     #' definitions.
-    #' Must be located in the "paramsFolder".
+    #' Must be located in the "configurationsFolder".
     scenariosFile = function(value) {
       if (missing(value)) {
         value <- private$.scenariosFile
       }
       private$.scenariosFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(value, self$configurationsFolder)
     },
     #' @field applicationsFile Name of the excel file scenario-specific
     #'  parameters such as application protocol parameters.
-    #'  Must be located in the "paramsFolder".
+    #'  Must be located in the "configurationsFolder".
     applicationsFile = function(value) {
       if (missing(value)) {
         value <- private$.applicationsFile
       }
       private$.applicationsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(value, self$configurationsFolder)
     },
     #' @field plotsFile Name of the excel file with plot definitions.
-    #' Must be located in the "paramsFolder".
+    #' Must be located in the "configurationsFolder".
     plotsFile = function(value) {
       if (missing(value)) {
         value <- private$.plotsFile
       }
       private$.plotsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(value, self$configurationsFolder)
     },
     #' @field dataFolder Path to the folder where experimental data files are
     #' located.
@@ -158,7 +158,7 @@ ProjectConfiguration <- R6::R6Class(
     .projectConfigurationFilePath = NULL,
     .projectConfigurationDirPath = NULL,
     .modelFolder = NULL,
-    .paramsFolder = NULL,
+    .configurationsFolder = NULL,
     .modelParamsFile = NULL,
     .individualsFile = NULL,
     .populationsFile = NULL,
@@ -222,7 +222,7 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Relative path from working directory", getwd())
       private$printLine("Project Configuration File", fs::path_rel(as.character(self$projectConfigurationFilePath)))
       private$printLine("Model folder", fs::path_rel(as.character(self$modelFolder)))
-      private$printLine("Parameters folder", fs::path_rel(as.character(self$paramsFolder)))
+      private$printLine("Configurations folder", fs::path_rel(as.character(self$configurationsFolder)))
       private$printLine("Model Parameters", fs::path_rel(as.character(self$modelParamsFile)))
       private$printLine("Individuals", fs::path_rel(as.character(self$individualsFile)))
       private$printLine("Populations", fs::path_rel(as.character(self$populationsFile)))

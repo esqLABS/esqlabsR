@@ -192,7 +192,7 @@ Scenario <- R6::R6Class(
       if (scenarioConfiguration$simulationType == "Population") {
         if (scenarioConfiguration$readPopulationFromCSV) {
           populationPath <- paste0(file.path(
-            scenarioConfiguration$projectConfiguration$paramsFolder,
+            scenarioConfiguration$projectConfiguration$configurationsFolder,
             "Populations",
             scenarioConfiguration$populationId
           ), ".csv")
