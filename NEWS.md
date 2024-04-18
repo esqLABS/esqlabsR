@@ -26,6 +26,11 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 - Function `createEsqlabsExportConfiguration` requires a new argument `outputFolder` 
 instead of `projectConfiguration`.
 
+- Default excel file for population definitions has been renamed from `PopulationParameters.xlsx`
+to `Populations.xlsx` (#554, @PavelBal)
+
+- Field `populationParamsFile` of the `ProjectConfiguration` class has been renamed to `populationsFile` (#554, @PavelBal)
+
 # esqlabsR 5.1.3
 
 ## Minor improvements and bug fixes
