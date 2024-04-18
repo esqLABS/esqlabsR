@@ -1,37 +1,51 @@
 # esqlabsR (development version)
 
-## Minor improvements and bug fixes
-
-- Function `createScenarios` gets a new argument `stopIfParameterNotFound`.
-If `TRUE` (default), a scenario will not be created and an error is thrown if 
-any user-defined parameter (e.g., provided in Excel files) is not found in the
-simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
-
-- Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
-
 ## Breaking changes
 
-- Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
+  - Function `exportSteadyStateToXLS` has been removed in favor of
+    `ospsuite::exportSteadyStateToXLS` (\#616)
+  - `{esqlabsR}` project structure changed: (\#635)
+      - `Parameters` folder has been renamed to `Configurations`,
+      - Configuration Excel files have been renamed to be more homogeneous,
+      - `ProjectConfiguration` elements names have been changed according to the
+        new Excel files names.
+  
+## Major changes
+
+  - `createDefaultProjectConfiguration` is now soft-deprecated in favor of
+    `createProjectConfiguration`.
+
+## Minor improvements and bug fixes
+
+  - Function `createScenarios` gets a new argument `stopIfParameterNotFound`. If
+    `TRUE` (default), a scenario will not be created and an error is thrown if
+    any user-defined parameter (e.g., provided in Excel files) is not found in
+    the simulation. If `FALSE`, non-existing parameters are ignored. (\#615)
+  - Constructor of a `Scenario` class gets a new argument
+    `stopIfParameterNotFound`.
+
 
 # esqlabsR 5.1.3
 
 ## Minor improvements and bug fixes
 
-- Continuous Integration/Continuous Deployment pipeline improvements (#590, #592, #601, @Felixmil)
-- Several bug fixes (#581, #585, #594, #600, @PavelBal)
+  - Continuous Integration/Continuous Deployment pipeline improvements (\#590,
+    \#592, \#601)
+  - Several bug fixes (\#581, \#585, \#594, \#600)
 
 # esqlabsR 5.1.2
 
 ## Minor improvements and bug fixes
 
   - Fixes a bug where scenario results could not be saved or loaded when
-    scenario name contains a slash or a backslash (\#548, @PavelBal)
+    scenario name contains a slash or a backslash (\#548)
   - Add support for `nsd` argument from `ospsuite::plotPopulationTimeProfile()`
     aggregation methods. A new column `nsd` was added to the `PlotConfiguration`
-    sheet in the example `Plot.xlsx` (\#544, @Felixmil).
-  - Documentation includes PK-Sim installation instructions (\#537, @Felixmil).
-  - Better error message if some ids are not uniques in the excel configuration files (\#568, @Felixmil)    
-  - Handles better empty rows in the excel configuration files (\#569, @Felixmil)
+    sheet in the example `Plot.xlsx` (\#544).
+  - Documentation includes PK-Sim installation instructions (\#537).
+  - Better error message if some ids are not uniques in the excel configuration
+    files (\#568)
+  - Handles better empty rows in the excel configuration files (\#569)
   - Cleaner NEWS file (\#527).
 
 # esqlabsR 5.1.1
@@ -44,8 +58,10 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 
   - When importing observed data using the default importer configuration, data
     set naming is grouped by `StudyId` at the first place.
-      - Before: `{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
-      - After: `{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+      - Before: `{Molecule}_{Study Id}_{Subject
+        Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+      - After: `{Study Id}_{Molecule}_{Subject
+        Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
         
     This will result in different data set names, and plots specifying the
     data sets by the old naming will fail. For compatibility, use custom
@@ -118,8 +134,7 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
   
   - Plots are using new color palette.
   
-  - Some modifications to plot configuration files for better plots. (\#456,
-    @PavelBal)
+  - Some modifications to plot configuration files for better plots. (\#456)
 
 # esqlabsR 5.0.0
 
@@ -204,8 +219,8 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
       - Create a `ProjectConfiguration` with
         `createDefaultProjectConfiguration()`
       - Create `ScenarioConfigurations`, e.g. with
-            readScenarioConfigurationFromExcel(scenarioNames,
-            projectConfiguration)`
+        readScenarioConfigurationFromExcel(scenarioNames,
+        projectConfiguration)\`
       - Run scenarios with `runScenarios(scenarioConfigurations)` Alternatively:
       - Create a `ProjectConfiguration` with
         `createDefaultProjectConfiguration()`
