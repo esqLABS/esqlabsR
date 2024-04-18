@@ -47,14 +47,14 @@ ProjectConfiguration <- R6::R6Class(
       private$.paramsFolder <- value
       private$.clean_path(value, self$projectConfigurationDirPath)
     },
-    #' @field paramsFile Name of the excel file with global model
+    #' @field modelParamsFile Name of the excel file with global model
     #' parameterization.
     #' Must be located in the "paramsFolder".
-    paramsFile = function(value) {
+    modelParamsFile = function(value) {
       if (missing(value)) {
-        value <- private$.paramsFile
+        value <- private$.modelParamsFile
       }
-      private$.paramsFile <- value
+      private$.modelParamsFile <- value
       private$.clean_path(value, self$paramsFolder)
     },
     #' @field individualsFile Name of the excel file with
@@ -67,34 +67,34 @@ ProjectConfiguration <- R6::R6Class(
       private$.individualsFile <- value
       private$.clean_path(value, self$paramsFolder)
     },
-    #' @field populationParamsFile Name of the excel file with population
+    #' @field populationsFile Name of the excel file with population
     #' information.
     #' Must be located in the "paramsFolder".
-    populationParamsFile = function(value) {
+    populationsFile = function(value) {
       if (missing(value)) {
-        value <- private$.populationParamsFile
+        value <- private$.populationsFile
       }
-      private$.populationParamsFile <- value
+      private$.populationsFile <- value
       private$.clean_path(value, self$paramsFolder)
     },
-    #' @field scenarioDefinitionFile Name of the excel file with scenario
+    #' @field scenariosFile Name of the excel file with scenario
     #' definitions.
     #' Must be located in the "paramsFolder".
-    scenarioDefinitionFile = function(value) {
+    scenariosFile = function(value) {
       if (missing(value)) {
-        value <- private$.scenarioDefinitionFile
+        value <- private$.scenariosFile
       }
-      private$.scenarioDefinitionFile <- value
+      private$.scenariosFile <- value
       private$.clean_path(value, self$paramsFolder)
     },
-    #' @field scenarioApplicationsFile Name of the excel file scenario-specific
+    #' @field applicationsFile Name of the excel file scenario-specific
     #'  parameters such as application protocol parameters.
     #'  Must be located in the "paramsFolder".
-    scenarioApplicationsFile = function(value) {
+    applicationsFile = function(value) {
       if (missing(value)) {
-        value <- private$.scenarioApplicationsFile
+        value <- private$.applicationsFile
       }
-      private$.scenarioApplicationsFile <- value
+      private$.applicationsFile <- value
       private$.clean_path(value, self$paramsFolder)
     },
     #' @field plotsFile Name of the excel file with plot definitions.
@@ -159,11 +159,11 @@ ProjectConfiguration <- R6::R6Class(
     .projectConfigurationDirPath = NULL,
     .modelFolder = NULL,
     .paramsFolder = NULL,
-    .paramsFile = NULL,
+    .modelParamsFile = NULL,
     .individualsFile = NULL,
-    .populationParamsFile = NULL,
-    .scenarioDefinitionFile = NULL,
-    .scenarioApplicationsFile = NULL,
+    .populationsFile = NULL,
+    .scenariosFile = NULL,
+    .applicationsFile = NULL,
     .plotsFile = NULL,
     .dataFolder = NULL,
     .dataFile = NULL,
@@ -223,14 +223,14 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Project Configuration File", fs::path_rel(as.character(self$projectConfigurationFilePath)))
       private$printLine("Model folder", fs::path_rel(as.character(self$modelFolder)))
       private$printLine("Parameters folder", fs::path_rel(as.character(self$paramsFolder)))
-      private$printLine("Parameters file name", fs::path_rel(as.character(self$paramsFile)))
-      private$printLine("Individual parameters file name", fs::path_rel(as.character(self$individualsFile)))
-      private$printLine("Population parameters file name", fs::path_rel(as.character(self$populationParamsFile)))
-      private$printLine("Scenario definitions file name", fs::path_rel(as.character(self$scenarioDefinitionFile)))
-      private$printLine("Scenario applications definitions file name", fs::path_rel(as.character(self$scenarioApplicationsFile)))
-      private$printLine("Plot definitions file name", fs::path_rel(as.character(self$plotsFile)))
-      private$printLine("Experimental data folder", fs::path_rel(as.character(self$dataFolder)))
-      private$printLine("Experimental data file", fs::path_rel(as.character(self$dataFile)))
+      private$printLine("Model Parameters", fs::path_rel(as.character(self$modelParamsFile)))
+      private$printLine("Individuals", fs::path_rel(as.character(self$individualsFile)))
+      private$printLine("Populations", fs::path_rel(as.character(self$populationsFile)))
+      private$printLine("Scenarios", fs::path_rel(as.character(self$scenariosFile)))
+      private$printLine("Applications", fs::path_rel(as.character(self$applicationsFile)))
+      private$printLine("Plots", fs::path_rel(as.character(self$plotsFile)))
+      private$printLine("Data folder", fs::path_rel(as.character(self$dataFolder)))
+      private$printLine("Data file", fs::path_rel(as.character(self$dataFile)))
       private$printLine("Data importer configuration", fs::path_rel(as.character(self$dataImporterConfigurationFile)))
       private$printLine("Compound Properties File", fs::path_rel(as.character(self$compoundPropertiesFile)))
       private$printLine("Output folder", fs::path_rel(as.character(self$outputFolder)))

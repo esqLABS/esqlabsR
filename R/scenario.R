@@ -73,7 +73,7 @@ Scenario <- R6::R6Class(
       scenarioConfiguration <- private$.scenarioConfiguration
       # Read parameters from the parameters file
       params <- readParametersFromXLS(
-        scenarioConfiguration$projectConfiguration$paramsFile,
+        scenarioConfiguration$projectConfiguration$modelParamsFile,
         scenarioConfiguration$paramSheets
       )
 
@@ -124,7 +124,7 @@ Scenario <- R6::R6Class(
       }
 
       # Set administration protocols
-      excelFilePath <- scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
+      excelFilePath <- scenarioConfiguration$projectConfiguration$applicationsFile
       # Checking for 'NA' if administration protocol is not set in excel file.
       if (!is.na(scenarioConfiguration$applicationProtocol) && any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
         applicationParams <- readParametersFromXLS(excelFilePath, scenarioConfiguration$applicationProtocol)
@@ -199,7 +199,7 @@ Scenario <- R6::R6Class(
           population <- loadPopulation(populationPath)
         } else {
           popCharacteristics <- readPopulationCharacteristicsFromXLS(
-            XLSpath = scenarioConfiguration$projectConfiguration$populationParamsFile,
+            XLSpath = scenarioConfiguration$projectConfiguration$populationsFile,
             populationName = scenarioConfiguration$populationId,
             sheet = "Demographics"
           )

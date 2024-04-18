@@ -87,7 +87,7 @@ a parameter sheet from the list"
     },
     #' @field simulationType Type of the simulation - "Individual" or
     #'   "Population". If "Population", population characteristics are created
-    #'   based on information stored in `populationParamsFile`. Default is
+    #'   based on information stored in `populationsFile`. Default is
     #'   "Individual"
     simulationType = function(value) {
       if (missing(value)) {

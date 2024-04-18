@@ -197,7 +197,7 @@ test_that("It throws an error when reading wrong file structure for scenario con
       ), path = file.path(tempDir, "Scenarios.xlsx"), )
       expect_error(readScenarioConfigurationFromExcel(projectConfiguration = projectConfigurationLocal),
         regexp = messages$errorWrongXLSStructure(
-          filePath = projectConfigurationLocal$scenarioDefinitionFile,
+          filePath = projectConfigurationLocal$scenariosFile,
           expectedColNames = expectedColumns
         ), fixed = TRUE
       )
