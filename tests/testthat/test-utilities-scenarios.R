@@ -1,6 +1,6 @@
 ##  context("runScenarios")
 # Create a project configuration
-projectConfiguration <- createProjectConfiguration(test_ProjectConfiguration())
+projectConfiguration <- testProjectConfiguration()
 defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("It stops with an error if the excel file defines a parameter that is
