@@ -2,7 +2,6 @@
 old <- options()
 
 options(
-  warnPartialMatchDollar = FALSE,
   tibble.width = Inf,
   pillar.min_title_chars = Inf,
   pillar.sigfig = 4,
