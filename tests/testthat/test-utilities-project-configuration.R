@@ -1,11 +1,4 @@
-test_that("`createDefaultProjectConfiguration()` works as expected", {
-  myConfig <- testProjectConfiguration()
-  expect_true(isOfType(myConfig, "ProjectConfiguration"))
-
-  expect_snapshot(myConfig)
-})
-
-test_that("`createDefaultProjectConfiguration()` with specified path works as expected", {
+test_that("`createProjectConfiguration()` works as expected", {
   myConfig <- testProjectConfiguration()
   expect_true(isOfType(myConfig, "ProjectConfiguration"))
 })
