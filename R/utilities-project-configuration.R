@@ -23,8 +23,6 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 #'
 #' @return Object of type `ProjectConfiguration`
 #' @export
-#'
-#' @examples
 createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
   projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = path)
   return(projectConfiguration)

@@ -23,31 +23,31 @@ paths.}
 
 \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
 
-\item{\code{paramsFolder}}{Path to the folder containing excel files with model
+\item{\code{configurationsFolder}}{Path to the folder containing excel files with model
 parameterization;}
 
-\item{\code{paramsFile}}{Name of the excel file with global model
+\item{\code{modelParamsFile}}{Name of the excel file with global model
 parameterization.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
 \item{\code{individualsFile}}{Name of the excel file with
 individual-specific model parameterization.
-Must be located in the "paramsFolder"}
+Must be located in the "configurationsFolder"}
 
-\item{\code{populationParamsFile}}{Name of the excel file with population
+\item{\code{populationsFile}}{Name of the excel file with population
 information.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
-\item{\code{scenarioDefinitionFile}}{Name of the excel file with scenario
+\item{\code{scenariosFile}}{Name of the excel file with scenario
 definitions.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
-\item{\code{scenarioApplicationsFile}}{Name of the excel file scenario-specific
+\item{\code{applicationsFile}}{Name of the excel file scenario-specific
 parameters such as application protocol parameters.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
 \item{\code{plotsFile}}{Name of the excel file with plot definitions.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
 \item{\code{dataFolder}}{Path to the folder where experimental data files are
 located.}
