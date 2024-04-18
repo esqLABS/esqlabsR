@@ -134,7 +134,7 @@ test_that("It saves and loads scenario results for scenario names with forbidden
   withr::with_tempdir(
     code = {
       # Save results using temp folder
-      saveScenarioResults(
+      outputFolder <- saveScenarioResults(
         simulatedScenariosResults = simulatedScenarios,
         projectConfiguration = projectConfiguration,
         outputFolder = tempdir
@@ -142,6 +142,9 @@ test_that("It saves and loads scenario results for scenario names with forbidden
       # Check that the results are saved
       expect_true(file.exists(file.path(tempdir, "TestScenario_with_slash.pkml")))
       expect_true(file.exists(file.path(tempdir, "TestScenario_with_slash.csv")))
+
+      # Check that the correted output folder path is returned
+      expect_equal(outputFolder, tempdir)
 
       # Load results using temp folder
       simulatedScenarioResults <- loadScenarioResults(

@@ -9,11 +9,32 @@
       - Configuration Excel files have been renamed to be more homogeneous,
       - `ProjectConfiguration` elements names have been changed according to the
         new Excel files names.
-  
-## Major changes
+        
+## Major improvements and new features
 
+  - `createPlotsFromExcel` gets a new argument `outputFolder`. If provided, the
+    plots are saved in the specified folder. If `NULL`, default results folder
+    as defined in the `ProjectConfiguration` is used (\#495).
   - `createDefaultProjectConfiguration` is now soft-deprecated in favor of
     `createProjectConfiguration`.
+
+## Minor improvements and bug fixes
+
+  - Function `createScenarios` gets a new argument `stopIfParameterNotFound`. If
+    `TRUE` (default), a scenario will not be created and an error is thrown if
+    any user-defined parameter (e.g., provided in Excel files) is not found in
+    the simulation. If `FALSE`, non-existing parameters are ignored. (\#559,
+    @PavelBal)
+  - Constructor of a `Scenario` class gets a new argument
+    `stopIfParameterNotFound`.
+  - Function `saveScenarioResults` returns the path where the results were
+    saved.
+  - Loading the package does not set `options(warnPartialMatchDollar = TRUE)`
+    any more.
+  - Function `createEsqlabsExportConfiguration` requires a new argument
+    `outputFolder` instead of `projectConfiguration`.
+
+  
 
 ## Minor improvements and bug fixes
 
@@ -288,7 +309,6 @@
   
   - Dark grey frame around legends by default.
 
------
 
 # esqlabsR 4.0.0
 
@@ -330,7 +350,6 @@
     not present) and writing to excel file using `writexl::write_xlsx()`.
 
 
------
 
 # esqlabsR 3.0.0
 
@@ -354,13 +373,11 @@
   - The package gains a new dependency:
     [`{ospsuite.utils}`](https://www.open-systems-pharmacology.org/OSPSuite.RUtils/).
 
------
 
 # esqlabsR 2.0.0
 
   - Maintenance and bug fixes.
 
------
 
 # esqlabsR 1.0.0
 
