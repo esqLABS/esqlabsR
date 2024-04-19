@@ -23,8 +23,7 @@
   - Function `createScenarios` gets a new argument `stopIfParameterNotFound`. If
     `TRUE` (default), a scenario will not be created and an error is thrown if
     any user-defined parameter (e.g., provided in Excel files) is not found in
-    the simulation. If `FALSE`, non-existing parameters are ignored. (\#559,
-    @PavelBal)
+    the simulation. If `FALSE`, non-existing parameters are ignored. (\#615)
   - Constructor of a `Scenario` class gets a new argument
     `stopIfParameterNotFound`.
   - Function `saveScenarioResults` returns the path where the results were
@@ -33,17 +32,9 @@
     any more.
   - Function `createEsqlabsExportConfiguration` requires a new argument
     `outputFolder` instead of `projectConfiguration`.
-
-  
-
-## Minor improvements and bug fixes
-
-  - Function `createScenarios` gets a new argument `stopIfParameterNotFound`. If
-    `TRUE` (default), a scenario will not be created and an error is thrown if
-    any user-defined parameter (e.g., provided in Excel files) is not found in
-    the simulation. If `FALSE`, non-existing parameters are ignored. (\#615)
-  - Constructor of a `Scenario` class gets a new argument
-    `stopIfParameterNotFound`.
+      - Function `createPlotsFromExcel` supports `NULL` for arguments
+        `simulatedScenarios` and `observedData` if no simulation results or
+        observed data are required for plot generation.
 
 
 # esqlabsR 5.1.3

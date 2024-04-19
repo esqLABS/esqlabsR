@@ -254,8 +254,10 @@ createEsqlabsExportConfiguration <- function(outputFolder) { # nolint: object_le
 
 #' Generate plots as defined in excel file `projectConfiguration$plotsFile`
 #'
-#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`
-#' @param observedData A list of `DataSet` objects
+#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`.
+#' Can be `NULL` if no simulated data is required for the plots.
+#' @param observedData A list of `DataSet` objects. Can be `NULL` if no observed
+#' data is required for the plots.
 #' @param projectConfiguration Object of class `ProjectConfiguration`
 #' that contains information about the output paths and the excel file
 #' where plots are defined.
@@ -278,8 +280,8 @@ createEsqlabsExportConfiguration <- function(outputFolder) { # nolint: object_le
 #' @export
 createPlotsFromExcel <- function(
     plotGridNames = NULL,
-    simulatedScenarios,
-    observedData,
+    simulatedScenarios = NULL,
+    observedData = NULL,
     projectConfiguration,
     outputFolder = NULL,
     stopIfNotFound = TRUE) {

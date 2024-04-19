@@ -6,8 +6,8 @@
 \usage{
 createPlotsFromExcel(
   plotGridNames = NULL,
-  simulatedScenarios,
-  observedData,
+  simulatedScenarios = NULL,
+  observedData = NULL,
   projectConfiguration,
   outputFolder = NULL,
   stopIfNotFound = TRUE
@@ -19,9 +19,11 @@ for which the figures will be created. If \code{NULL} (default), all plot grids
 specified in the excel sheet will be created. If a plot grid with a given name
 does not exist, an error is thrown.}
 
-\item{simulatedScenarios}{A list of simulated scenarios as returned by \code{runScenarios()}}
+\item{simulatedScenarios}{A list of simulated scenarios as returned by \code{runScenarios()}.
+Can be \code{NULL} if no simulated data is required for the plots.}
 
-\item{observedData}{A list of \code{DataSet} objects}
+\item{observedData}{A list of \code{DataSet} objects. Can be \code{NULL} if no observed
+data is required for the plots.}
 
 \item{projectConfiguration}{Object of class \code{ProjectConfiguration}
 that contains information about the output paths and the excel file
