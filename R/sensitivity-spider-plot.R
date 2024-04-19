@@ -1,6 +1,16 @@
 #' @name sensitivitySpiderPlot
 #' @title Sensitivity Spider Plot for Pharmacokinetic Parameters
 #'
+#' @description
+#' Creates spider plots for sensitivity calculation. A spider plot is a
+#' visualization technique that displays the sensitivity of a model output to
+#' changes in model parameters. Each plot displays the sensitivity of a set of
+#' PK parameters for a single output path to changes in model parameters. The x-axis
+#' represents the value of model parameters (absolute or percent from default value),
+#' and the y-axis represents the sensitivity of the output to changes in the model
+#' parameter.
+#'
+#'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
 #'   `sensitivityCalculation()`.
 #' @param outputPaths,parameterPaths,pkParameters A single or a vector of the
@@ -8,14 +18,21 @@
 #'   respectively. If `NULL`, all included paths and parameters present in the
 #'   supplied `SensitivityCalculation` object will be displayed in the
 #'   visualization.
+#'   A separate plot will be generated for each output path. Each plot will
+#'   contain a spider plot panel for each PK parameter, and the sensitivities
+#'   for each parameter will be displayed as lines.
 #' @param yAxisType Character string, either "percent" (percentage change) or
-#'   "absolute" (absolute values), for y-axis data normalization. Default is "percent".
+#'   "absolute" (absolute values) for PK parameter values, for y-axis data normalization. Default is "percent".
 #' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
 #'   (linear scale), to set the x-axis scale. Default is "log".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis scale
 #'   similarly to `xAxisScale`. Default is "lin".
 #' @param yAxisFacetScales Character string, either "fixed" or "free", determines
 #'   the scaling across y-axes of different facets. Default is "fixed".
+#'   If "fixed", all facetes within one plot will have the same range, which allows
+#'   for easier comparison between different PK parameters. If "free", each facet will
+#'   have its own range, which allows for better visualization of the single PK parameters
+#'   sensitivity.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics.
 #'
