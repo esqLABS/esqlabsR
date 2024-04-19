@@ -39,7 +39,9 @@ similarly to \code{xAxisScale}. Default is "lin".}
 the scaling across y-axes of different facets. Default is "fixed".}
 
 \item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
-used to customize plot aesthetics.
+used to customize plot aesthetics. Modifications in \code{defaultPlotConfiguration},
+such as \code{xAxisScale}, will take precedence over any plot-specific settings
+provided directly to the function.
 
 Supported parameters include:
 \itemize{
@@ -77,36 +79,36 @@ Sensitivity Spider Plot for Pharmacokinetic Parameters
 }
 \examples{
 \dontrun{
-  simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-  simulation <- loadSimulation(simPath)
-  outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-  parameterPaths <- c(
-    "Aciclovir|Lipophilicity",
-    "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-    "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
-  )
+simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+simulation <- loadSimulation(simPath)
+outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+parameterPaths <- c(
+  "Aciclovir|Lipophilicity",
+  "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+)
 
-  results <- sensitivityCalculation(
-    simulation = simulation,
-    outputPaths = outputPaths,
-    parameterPaths = parameterPaths
-  )
+results <- sensitivityCalculation(
+  simulation = simulation,
+  outputPaths = outputPaths,
+  parameterPaths = parameterPaths
+)
 
-  # Print plots with default settings
-  sensitivitySpiderPlot(results)
+# Print plots with default settings
+sensitivitySpiderPlot(results)
 
-  # Print plots with absolute y-axis values
-  sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
+# Print plots with absolute y-axis values
+sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
 
-  # Print plots with custom configuration settings
-  myPlotConfiguration <- createEsqlabsPlotConfiguration()
-  myPlotConfiguration$pointsShape <- 22
-  myPlotConfiguration$subtitle <- "Custom settings"
-  sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
+# Print plots with custom configuration settings
+myPlotConfiguration <- createEsqlabsPlotConfiguration()
+myPlotConfiguration$pointsShape <- 22
+myPlotConfiguration$subtitle <- "Custom settings"
+sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
 }
 }
 \seealso{
-Other sensitivity-calculation: 
+Other sensitivity-calculation:
 \code{\link{sensitivityCalculation}()},
 \code{\link{sensitivityTimeProfiles}()}
 }

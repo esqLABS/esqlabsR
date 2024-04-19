@@ -2,54 +2,56 @@
 #' @title Sensitivity Spider Plot for Pharmacokinetic Parameters
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
-#'   `sensitivityCalculation()`.
+#' `sensitivityCalculation()`.
 #' @param outputPaths,parameterPaths,pkParameters A single or a vector of the
-#'   output path(s), parameter path(s), and PK parameters to be displayed,
-#'   respectively. If `NULL`, all included paths and parameters present in the
-#'   supplied `SensitivityCalculation` object will be displayed in the
-#'   visualization.
+#' output path(s), parameter path(s), and PK parameters to be displayed,
+#' respectively. If `NULL`, all included paths and parameters present in the
+#' supplied `SensitivityCalculation` object will be displayed in the
+#' visualization.
 #' @param yAxisType Character string, either "percent" (percentage change) or
-#'   "absolute" (absolute values), for y-axis data normalization. Default is "percent".
+#' "absolute" (absolute values), for y-axis data normalization. Default is "percent".
 #' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
-#'   (linear scale), to set the x-axis scale. Default is "log".
+#' (linear scale), to set the x-axis scale. Default is "log".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis scale
-#'   similarly to `xAxisScale`. Default is "lin".
+#' similarly to `xAxisScale`. Default is "lin".
 #' @param yAxisFacetScales Character string, either "fixed" or "free", determines
-#'   the scaling across y-axes of different facets. Default is "fixed".
+#' the scaling across y-axes of different facets. Default is "fixed".
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#' used to customize plot aesthetics.
+#' used to customize plot aesthetics. Modifications in `defaultPlotConfiguration`,
+#' such as `xAxisScale`, will take precedence over any plot-specific settings
+#' provided directly to the function.
 #'
-#'   Supported parameters include:
-#'   - `legendPosition`: Position of the legend on the plot.
-#'   - `legendTitle`: Title displayed for the legend.
-#'   - `linesAlpha`: Alpha transparency for line elements.
-#'   - `linesColor`: Color of the line elements.
-#'   - `linesSize`: Thickness of the line elements.
-#'   - `pointsShape`: Shape of the point elements.
-#'   - `pointsSize`: Size of the point elements.
-#'   - `subtitle`: Subtitle text for the plot.
-#'   - `title`: Main title text for the plot.
-#'   - `titleSize`: Font size of the plot title.
-#'   - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
-#'   - `xLabel`: Label text for the x-axis.
-#'   - `xValuesLimits`: Numeric vector specifying the limits for x-values.
-#'   - `yAxisLimits`: Numeric vector specifying the limits for y-values.
-#'   - `yAxisScale`: Scale type for the y-axis (`"log"` or `"lin"`).
-#'   - `yAxisTicks`: Number of ticks on the y-axis.
-#'   - `yLabel`: Label text for the y-axis.
-#'   - `yValuesLimits`: Numeric vector specifying the limits for y-values.
+#' Supported parameters include:
+#' - `legendPosition`: Position of the legend on the plot.
+#' - `legendTitle`: Title displayed for the legend.
+#' - `linesAlpha`: Alpha transparency for line elements.
+#' - `linesColor`: Color of the line elements.
+#' - `linesSize`: Thickness of the line elements.
+#' - `pointsShape`: Shape of the point elements.
+#' - `pointsSize`: Size of the point elements.
+#' - `subtitle`: Subtitle text for the plot.
+#' - `title`: Main title text for the plot.
+#' - `titleSize`: Font size of the plot title.
+#' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
+#' - `xLabel`: Label text for the x-axis.
+#' - `xValuesLimits`: Numeric vector specifying the limits for x-values.
+#' - `yAxisLimits`: Numeric vector specifying the limits for y-values.
+#' - `yAxisScale`: Scale type for the y-axis (`"log"` or `"lin"`).
+#' - `yAxisTicks`: Number of ticks on the y-axis.
+#' - `yLabel`: Label text for the y-axis.
+#' - `yValuesLimits`: Numeric vector specifying the limits for y-values.
 #'
-#'   Default values are set to provide a standardized look, but each parameter
-#'   can be tailored to fit specific visual needs. Modifying these parameters
-#'   will directly affect the aesthetics of the output plots.
+#' Default values are set to provide a standardized look, but each parameter
+#' can be tailored to fit specific visual needs. Modifying these parameters
+#' will directly affect the aesthetics of the output plots.
 #'
 #' @import ggplot2
 #'
 #' @family sensitivity-calculation
 #'
 #' @return A `patchwork` object containing the combined ggplot objects if a
-#'   single output path is specified, or a list of `patchwork` objects for
-#'   multiple output paths.
+#' single output path is specified, or a list of `patchwork` objects for
+#' multiple output paths.
 #'
 #' @examples
 #' \dontrun{
