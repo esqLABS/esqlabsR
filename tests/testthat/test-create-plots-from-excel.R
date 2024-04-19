@@ -583,7 +583,7 @@ test_that("It throws an error if mandatory field plotIDs is not filled out", {
 })
 
 
-test_that("It throws and error if plotIDs are not unique", {
+test_that("It throws an error if plotIDs are not unique", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -628,7 +628,7 @@ test_that("It throws and error if plotIDs are not unique", {
   )
 })
 
-test_that("It throws and error if plotGrid names are not unique", {
+test_that("It throws an error if plotGrid names are not unique", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir

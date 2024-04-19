@@ -85,7 +85,7 @@ test_that("It creates multiple correct scenarios", {
 
   # Second scenario
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$applicationProtocol, "Aciclovir_iv_250mg")
-  expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$individualId, "Indiv")
+  expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$individualId, "Indiv1")
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$modelFile, "Aciclovir.pkml")
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$paramSheets, enum(enumValues = "Global"))
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$scenarioName, "TestScenario2")
