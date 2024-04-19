@@ -19,6 +19,10 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 
 - Loading the package does not set `options(warnPartialMatchDollar = TRUE)` any more.
 
+- Function `createPlotsFromExcel` supports `NULL` for arguments `simulatedScenarios`
+and `observedData` if no simulation results or observed data are required for 
+plot generation.
+
 ## Breaking changes
 
 - Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
