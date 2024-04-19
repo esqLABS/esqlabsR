@@ -38,6 +38,9 @@ Must be located in the "configurationsFolder"}
 information.
 Must be located in the "configurationsFolder".}
 
+\item{\code{populationsCSV}}{Name of the folder containing population defined through csv files
+Must be located in the "configurationsFolder".}
+
 \item{\code{scenariosFile}}{Name of the excel file with scenario
 definitions.
 Must be located in the "configurationsFolder".}

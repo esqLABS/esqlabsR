@@ -32,9 +32,9 @@
     any more.
   - Function `createEsqlabsExportConfiguration` requires a new argument
     `outputFolder` instead of `projectConfiguration`.
-      - Function `createPlotsFromExcel` supports `NULL` for arguments
-        `simulatedScenarios` and `observedData` if no simulation results or
-        observed data are required for plot generation.
+  - Function `createPlotsFromExcel` supports `NULL` for arguments
+    `simulatedScenarios` and `observedData` if no simulation results or observed
+    data are required for plot generation.
 
 
 # esqlabsR 5.1.3
