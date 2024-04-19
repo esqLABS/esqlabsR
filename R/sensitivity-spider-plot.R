@@ -53,32 +53,32 @@
 #'
 #' @examples
 #' \dontrun{
-#'   simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-#'   simulation <- loadSimulation(simPath)
-#'   outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-#'   parameterPaths <- c(
-#'     "Aciclovir|Lipophilicity",
-#'     "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'     "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
-#'   )
+#' simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+#' simulation <- loadSimulation(simPath)
+#' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+#' parameterPaths <- c(
+#'   "Aciclovir|Lipophilicity",
+#'   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#' )
 #'
-#'   results <- sensitivityCalculation(
-#'     simulation = simulation,
-#'     outputPaths = outputPaths,
-#'     parameterPaths = parameterPaths
-#'   )
+#' results <- sensitivityCalculation(
+#'   simulation = simulation,
+#'   outputPaths = outputPaths,
+#'   parameterPaths = parameterPaths
+#' )
 #'
-#'   # Print plots with default settings
-#'   sensitivitySpiderPlot(results)
+#' # Print plots with default settings
+#' sensitivitySpiderPlot(results)
 #'
-#'   # Print plots with absolute y-axis values
-#'   sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
+#' # Print plots with absolute y-axis values
+#' sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
 #'
-#'   # Print plots with custom configuration settings
-#'   myPlotConfiguration <- createEsqlabsPlotConfiguration()
-#'   myPlotConfiguration$pointsShape <- 22
-#'   myPlotConfiguration$subtitle <- "Custom settings"
-#'   sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
+#' # Print plots with custom configuration settings
+#' myPlotConfiguration <- createEsqlabsPlotConfiguration()
+#' myPlotConfiguration$pointsShape <- 22
+#' myPlotConfiguration$subtitle <- "Custom settings"
+#' sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
 #' }
 #' @export
 sensitivitySpiderPlot <- function(sensitivityCalculation,
@@ -95,7 +95,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   if (is.null(defaultPlotConfiguration)) {
-    defaultPlotConfiguration <- esqlabsR::createEsqlabsPlotConfiguration()
+    defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
   } else {
     validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
   }
@@ -315,7 +315,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       )
     ) +
     patchwork::plot_layout(
-      guide = "collect", axes = "collect", ncol = length(plotList)
+      guides = "collect", axes = "collect", ncol = length(plotList)
     ) &
     theme(legend.position = plotConfiguration$legendPosition)
 
