@@ -96,7 +96,6 @@ test_that("sensitivityCalculation fails early with incorrect `parameterPaths` ar
     "Only values of `character` type are allowed in `parameterPaths` argument."
   )
 
-
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -404,6 +403,13 @@ test_that("sensitivitySpiderPlot correctly applies free y-axis facets scaling", 
 test_that("sensitivitySpiderPlot correctly applies absolute y-axis values", {
   set.seed(123)
   p <- sensitivitySpiderPlot(results, yAxisType = "absolute")
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivitySpiderPlot works as expected with absolute y-values",
+    fig = suppressWarnings(p)
+  )
+
   pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
   plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)
 
@@ -421,7 +427,6 @@ test_that("sensitivitySpiderPlot correctly applies free scaling with absolute y-
 
   expect_snapshot(unlist(plotParams))
 })
-
 
 # saving plots: default ---------------------------------------
 
