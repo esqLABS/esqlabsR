@@ -365,7 +365,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .updatePlotConfiguration <- function(plotConfiguration, plotOverrideConfig) {
-  defaultValues <- esqlabsR::createEsqlabsPlotConfiguration()
+  defaultValues <- createEsqlabsPlotConfiguration()
 
   for (name in names(plotOverrideConfig)) {
     if (name %in% names(plotConfiguration)) {
@@ -374,7 +374,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         plotConfiguration[[name]] <- plotOverrideConfig[[name]]
       }
     } else {
-      messages$UnknownPlotConfiguration(name)
+      warning(messages$UnknownPlotConfiguration(name))
     }
   }
 

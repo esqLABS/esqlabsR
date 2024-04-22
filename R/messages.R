@@ -77,6 +77,10 @@ messages$PlotGridsNamesMustBeUnique <- function(duplicated_plotGridsNames = NULL
   paste0("PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated: ", duplicated_plotGridsNames)
 }
 
+messages$UnknownPlotConfiguration <- function(name) {
+  paste("Unknown plot configuration option:", name)
+}
+
 # scenario####
 messages$wrongSimulationType <- function() {
   "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"
