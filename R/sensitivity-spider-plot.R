@@ -22,7 +22,8 @@
 #' contain a spider plot panel for each PK parameter, and the sensitivities
 #' for each parameter will be displayed as lines.
 #' @param yAxisType Character string, either "percent" (percentage change) or
-#' "absolute" (absolute values) for PK parameter values, for y-axis data normalization. Default is "percent".
+#' "absolute" (absolute values) for PK parameter values, for y-axis data normalization.
+#' Default is "percent".
 #' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
 #' (linear scale), to set the x-axis scale. Default is "log".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis scale
@@ -30,9 +31,9 @@
 #' @param yAxisFacetScales Character string, either "fixed" or "free", determines
 #' the scaling across y-axes of different facets. Default is "fixed".
 #' If "fixed", all facetes within one plot will have the same range, which allows
-#' for easier comparison between different PK parameters. If "free", each facet will
-#' have its own range, which allows for better visualization of the single PK parameters
-#' sensitivity.
+#' for easier comparison between different PK parameters. If "free", each facet
+#' will have its own range, which allows for better visualization of the single
+#' PK parameters sensitivity.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics. Modifications in `defaultPlotConfiguration`,
 #' such as `xAxisScale`, will take precedence over any plot-specific settings
@@ -109,7 +110,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   yAxisScale = "lin",
                                   yAxisFacetScales = "fixed",
                                   defaultPlotConfiguration = NULL) {
-  # input validation ------------------------
+  # input validation -------------------------
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -129,7 +130,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   ospsuite.utils::validateIsIncluded(yAxisScale, c("lin", "log"))
   ospsuite.utils::validateIsIncluded(yAxisFacetScales, c("fixed", "free"))
 
-  # extract and filter data ----------------
+  # extract and filter data ------------------
 
   data <- sensitivityCalculation$pkData
   data <- .filterPlottingData(
@@ -139,7 +140,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     pkParameters = pkParameters
   )
 
-  # list of plots ------------------------
+  # list of plots ----------------------------
 
   # create plot for each output path
   lsPlots <- purrr::map(
@@ -166,7 +167,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                               yAxisScale = "lin",
                               yAxisFacetScales = "fixed",
                               defaultPlotConfiguration) {
-  # default configuration for spider plot
+  # default configuration for spider plot ----
+
   spiderPlotConfiguration <- list(
     legendPosition = "bottom",
     legendTitle    = "Parameter",
@@ -192,7 +194,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     PercentChangePK = PercentChangePK + 100
   )
 
-  # select appropriate column for y-axis
+  # select percent or absolute column for y-axis
   if (yAxisType == "percent") {
     yColumn <- sym("PercentChangePK")
     data$Unit <- "% of reference"
@@ -200,7 +202,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     yColumn <- sym("PKParameterValue")
   }
 
-  # filter according to value limits
+  # filter according to value limits ---------
+
   if (!is.null(plotConfiguration$yValuesLimits)) {
     data <- dplyr::filter(data, !!yColumn >= plotConfiguration$yValuesLimits[1])
     data <- dplyr::filter(data, !!yColumn <= plotConfiguration$yValuesLimits[2])
@@ -210,15 +213,19 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     data <- dplyr::filter(data, ParameterFactor <= plotConfiguration$xValuesLimits[2])
   }
 
-  # map each PK parameter to its own plot
+  # map each PK parameter to its own plot ----
+
   plotList <- purrr::map(
     unique(data$PKParameter),
     ~ {
       dataSubset <- dplyr::filter(data, PKParameter == .x)
       baseDataSubset <- dplyr::filter(dataSubset, ParameterFactor == 100)
 
-      # calculate y-axis breaks and limits for fixed or free scaling
+      # calculate y-axis breaks and limits -------
+
       if (isTRUE(yAxisFacetScales == "fixed")) {
+        # fixed y-axis scale
+        #   same label for all plots based on yAxisType
         if (is.null(plotConfiguration$yLabel)) {
           plotConfiguration$yLabel <- switch(yAxisType,
             "percent"  = "PK-Parameter value [% of reference]",
@@ -226,15 +233,19 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
             "PK-Parameter value"
           )
         }
+        #  breaks and limits based on entire data
         pBreaks <- .calculateBreaks(data[, yColumn],
           m = plotConfiguration$yAxisTicks,
           Q = c(0, 100, 200, 300)
         )
         pLimits <- .calculateLimits(data[, yColumn])
       } else {
+        # free y-axis scale
+        #   use PK parameter name with it's unit
         plotConfiguration$yLabel <- paste0(
           dataSubset$PKParameter[1], " [", dataSubset$Unit[1], "]"
         )
+        #   calculate breaks and limits using PK parameter data subset
         pBreaks <- .calculateBreaks(
           values = dataSubset[, yColumn],
           m = plotConfiguration$yAxisTicks
@@ -242,12 +253,13 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         pLimits <- NULL
       }
 
-      # configure y-axis limits if specified in the configuration
+      # override y-axis limits if specified in configuration
       if (!is.null(plotConfiguration$yAxisLimits)) {
         pLimits <- plotConfiguration$yAxisLimits
       }
 
-      # basic plot setup
+      # basic plot setup -------------------------
+
       plot <- ggplot(
         dataSubset,
         aes(x = ParameterFactor, y = !!sym(yColumn), group = ParameterPath)
@@ -285,7 +297,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           )
       }
 
-      # initial parameter value reference lines
+      # initial parameter value reference marker ----
+
       plot <- plot +
         geom_hline(
           data = baseDataSubset,
@@ -303,8 +316,9 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           na.rm = TRUE
         )
 
-      # finalize plot
-      # note: facet applied to single plot to obtain facet titles
+      # finalize plot ----------------------------
+
+      # note: facet wrap on unique PK parameter to obtain facet titles
       plot <- plot +
         facet_wrap(~PKParameter, scales = yAxisFacetScales) +
         labs(
@@ -335,7 +349,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     }
   )
 
-  # compile individual plots
+  # compile individual plots -----------------
+
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
       title = plotConfiguration$title,
