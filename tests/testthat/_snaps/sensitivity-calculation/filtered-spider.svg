@@ -59,7 +59,7 @@
 <polyline points='58.05,462.35 58.05,45.62 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
 <polyline points='200.08,462.35 200.08,45.62 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
 <polyline points='355.74,462.35 355.74,45.62 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='58.05,424.81 266.12,247.53 355.74,86.55 ' style='stroke-width: 2.99; stroke: #1B9E77; stroke-opacity: 0.75; stroke-linecap: butt;' />
+<polyline points='58.05,424.81 266.12,247.53 355.74,86.55 ' style='stroke-width: 2.99; stroke: #4ABDCB; stroke-opacity: 0.75; stroke-linecap: butt;' />
 <circle cx='58.05' cy='424.81' r='2.49' style='stroke-width: 0.71;' />
 <circle cx='266.12' cy='247.53' r='2.49' style='stroke-width: 0.71;' />
 <circle cx='355.74' cy='86.55' r='2.49' style='stroke-width: 0.71;' />
@@ -198,7 +198,7 @@
 <polyline points='396.47,462.35 396.47,45.62 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
 <polyline points='538.50,462.35 538.50,45.62 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
 <polyline points='694.16,462.35 694.16,45.62 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='396.47,424.81 604.54,424.81 694.16,424.81 ' style='stroke-width: 2.99; stroke: #1B9E77; stroke-opacity: 0.75; stroke-linecap: butt;' />
+<polyline points='396.47,424.81 604.54,424.81 694.16,424.81 ' style='stroke-width: 2.99; stroke: #4ABDCB; stroke-opacity: 0.75; stroke-linecap: butt;' />
 <circle cx='396.47' cy='424.81' r='2.49' style='stroke-width: 0.71;' />
 <circle cx='604.54' cy='424.81' r='2.49' style='stroke-width: 0.71;' />
 <circle cx='694.16' cy='424.81' r='2.49' style='stroke-width: 0.71;' />
@@ -300,7 +300,7 @@
 <g clip-path='url(#cpMzE4Ljk3fDQzMy4yM3w0OTguNzF8NTY1LjA0)'>
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
-<line x1='326.18' y1='528.16' x2='340.01' y2='528.16' style='stroke-width: 2.99; stroke: #1B9E77; stroke-opacity: 0.75; stroke-linecap: butt;' />
+<line x1='326.18' y1='528.16' x2='340.01' y2='528.16' style='stroke-width: 2.99; stroke: #4ABDCB; stroke-opacity: 0.75; stroke-linecap: butt;' />
 </g>
 <g clip-path='url(#cpMzE4Ljk3fDQzMy4yM3w0OTguNzF8NTY1LjA0)'>
 </g>
