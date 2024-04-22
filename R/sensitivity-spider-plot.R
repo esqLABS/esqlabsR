@@ -166,7 +166,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                               yAxisScale = "lin",
                               yAxisFacetScales = "fixed",
                               defaultPlotConfiguration) {
-  # override default configuration with settings for spider plot
+  # default configuration for spider plot
   spiderPlotConfiguration <- list(
     legendPosition = "bottom",
     legendTitle    = "Parameter",
@@ -181,6 +181,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     yAxisTicks     = 10L,
     yLabel         = NULL
   )
+  # override default configuration with settings for spider plot
   plotConfiguration <- .updatePlotConfiguration(
     defaultPlotConfiguration, spiderPlotConfiguration
   )
@@ -191,6 +192,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     PercentChangePK = PercentChangePK + 100
   )
 
+  # select appropriate column for y-axis
   if (yAxisType == "percent") {
     yColumn <- sym("PercentChangePK")
     data$Unit <- "% of reference"
@@ -208,13 +210,14 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     data <- dplyr::filter(data, ParameterFactor <= plotConfiguration$xValuesLimits[2])
   }
 
-  # create plots for each PK parameter
+  # map each PK parameter to its own plot
   plotList <- purrr::map(
     unique(data$PKParameter),
     ~ {
       dataSubset <- dplyr::filter(data, PKParameter == .x)
       baseDataSubset <- dplyr::filter(dataSubset, ParameterFactor == 100)
 
+      # calculate y-axis breaks and limits for fixed or free scaling
       if (isTRUE(yAxisFacetScales == "fixed")) {
         if (is.null(plotConfiguration$yLabel)) {
           plotConfiguration$yLabel <- switch(yAxisType,
@@ -239,10 +242,12 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         pLimits <- NULL
       }
 
+      # configure y-axis limits if specified in the configuration
       if (!is.null(plotConfiguration$yAxisLimits)) {
         pLimits <- plotConfiguration$yAxisLimits
       }
 
+      # basic plot setup
       plot <- ggplot(
         dataSubset,
         aes(x = ParameterFactor, y = !!sym(yColumn), group = ParameterPath)
@@ -259,6 +264,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           na.rm = TRUE
         )
 
+      # adjusting axis scales
       if (isTRUE(plotConfiguration$xAxisScale == "log")) {
         plot <- plot + scale_x_log10()
       }
@@ -279,6 +285,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           )
       }
 
+      # initial parameter value reference lines
       plot <- plot +
         geom_hline(
           data = baseDataSubset,
@@ -296,6 +303,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           na.rm = TRUE
         )
 
+      # finalize plot
+      # note: facet applied to single plot to obtain facet titles
       plot <- plot +
         facet_wrap(~PKParameter, scales = yAxisFacetScales) +
         labs(
@@ -315,6 +324,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           title.position = "top"
         ))
 
+      # apply color scales
       if (is.null(plotConfiguration$linesColor)) {
         plot <- plot + scale_color_brewer(palette = "Dark2")
       } else {
@@ -325,6 +335,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     }
   )
 
+  # compile individual plots
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
       title = plotConfiguration$title,
@@ -341,6 +352,16 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   return(plotPatchwork)
 }
 
+#' Update Plot Configuration with Overrides
+#'
+#' Updates a plot configuration object `plotConfiguration` with explicitly
+#' defined overrides from `plotOverrideConfig` list. It retains any custom
+#' settings in `plotConfiguration` that deviate from the defaults
+#'
+#' @param plotConfiguration A plot configuration object.
+#' @param plotOverrideConfig A list with new configuration settings to apply.
+#'
+#'
 #' @keywords internal
 #' @noRd
 .updatePlotConfiguration <- function(plotConfiguration, plotOverrideConfig) {
@@ -353,7 +374,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         plotConfiguration[[name]] <- plotOverrideConfig[[name]]
       }
     } else {
-      warning(paste("Unknown configuration option:", name))
+      messages$UnknownPlotConfiguration(name)
     }
   }
 
