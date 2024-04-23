@@ -13,6 +13,11 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 
 - Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
 
+- Function `sensitivitySpiderPlot` overhauled with new parameters. `yAxisType` to toggle between `percent`and
+  `absolute` values. `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. `yAxisFacetScales`
+  to choose between `free` and `fixed` scales for y-axis. Further plot customization options through
+  `defaultPlotConfiguration` (\#632, @rengelke).
+
 # esqlabsR 5.1.3
 
 ## Minor improvements and bug fixes

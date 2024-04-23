@@ -96,7 +96,6 @@ test_that("sensitivityCalculation fails early with incorrect `parameterPaths` ar
     "Only values of `character` type are allowed in `parameterPaths` argument."
   )
 
-
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -377,8 +376,7 @@ test_that("sensitivityTimeProfiles plots are as expected", {
   expect_snapshot(pb$plot$labels)
 })
 
-test_that("sensitivitySpiderPlot plots are as expected", {
-  # make sure a plot is returned
+test_that("sensitivitySpiderPlot default plots are as expected", {
   set.seed(123)
   p <- sensitivitySpiderPlot(results)
 
@@ -387,6 +385,47 @@ test_that("sensitivitySpiderPlot plots are as expected", {
     title = "sensitivitySpiderPlot works as expected",
     fig = suppressWarnings(p)
   )
+})
+
+# parameterized plots ---------------------------------
+
+n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+
+test_that("sensitivitySpiderPlot correctly applies free y-axis facets scaling", {
+  set.seed(123)
+  p <- sensitivitySpiderPlot(results, yAxisFacetScales = "free")
+  pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
+  plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)
+
+  expect_snapshot(unlist(plotParams))
+})
+
+test_that("sensitivitySpiderPlot correctly applies absolute y-axis values", {
+  set.seed(123)
+  p <- sensitivitySpiderPlot(results, yAxisType = "absolute")
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivitySpiderPlot works as expected with absolute y-values",
+    fig = suppressWarnings(p)
+  )
+
+  pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
+  plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)
+
+  expect_snapshot(unlist(plotParams))
+})
+
+test_that("sensitivitySpiderPlot correctly applies free scaling with absolute y-values", {
+  set.seed(123)
+  p <- sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
+  pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
+  plotParams <- list(
+    unlist(plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)),
+    unlist(plotParams <- purrr::map(pbs, ~ .x$plot$labels$y))
+  )
+
+  expect_snapshot(unlist(plotParams))
 })
 
 # saving plots: default ---------------------------------------
@@ -401,16 +440,6 @@ test_that("sensitivityTimeProfiles saves plot file", {
   on.exit(unlink(path))
 })
 
-test_that("sensitivitySpiderPlot saves plot file", {
-  path <- "Spider_OutputPath1.png"
-
-  p <- sensitivitySpiderPlot(results, savePlots = TRUE)
-
-  expect_true(file.exists(path))
-
-  on.exit(unlink(path))
-})
-
 # saving plots: folder ---------------------------------------
 
 test_that("sensitivityTimeProfiles saves plot file to a specified folder", {
@@ -418,17 +447,6 @@ test_that("sensitivityTimeProfiles saves plot file to a specified folder", {
   path <- "newFolder/Profile_OutputPath1.png"
 
   p <- suppressWarnings(sensitivityTimeProfiles(results, outputFolder = "newFolder/", savePlots = TRUE))
-
-  expect_true(file.exists(path))
-
-  on.exit(unlink("newFolder", recursive = TRUE))
-})
-
-test_that("sensitivitySpiderPlot saves plot file to a specified folder", {
-  dir.create("newFolder")
-  path <- "newFolder/Spider_OutputPath1.png"
-
-  p <- sensitivitySpiderPlot(results, outputFolder = "newFolder/", savePlots = TRUE)
 
   expect_true(file.exists(path))
 

@@ -2,20 +2,18 @@
 % Please edit documentation in R/sensitivity-spider-plot.R
 \name{sensitivitySpiderPlot}
 \alias{sensitivitySpiderPlot}
-\title{Sensitivity spider plot for PK parameters}
+\title{Sensitivity Spider Plot for Pharmacokinetic Parameters}
 \usage{
 sensitivitySpiderPlot(
   sensitivityCalculation,
   outputPaths = NULL,
   parameterPaths = NULL,
   pkParameters = NULL,
-  xAxisLog = TRUE,
-  yAxisLog = FALSE,
-  savePlots = FALSE,
-  outputFolder = "",
-  width = 16,
-  height = 9,
-  dpi = 300
+  yAxisType = "percent",
+  xAxisScale = "log",
+  yAxisScale = "lin",
+  yAxisFacetScales = "fixed",
+  defaultPlotConfiguration = NULL
 )
 }
 \arguments{
@@ -26,35 +24,71 @@ sensitivitySpiderPlot(
 output path(s), parameter path(s), and PK parameters to be displayed,
 respectively. If \code{NULL}, all included paths and parameters present in the
 supplied \code{SensitivityCalculation} object will be displayed in the
-visualization.}
+visualization.
+A separate plot will be generated for each output path. Each plot will
+contain a spider plot panel for each PK parameter, and the sensitivities
+for each parameter will be displayed as lines.}
 
-\item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
-logarithmic scale.}
+\item{yAxisType}{Character string, either "percent" (percentage change) or
+"absolute" (absolute values) for PK parameter values, for y-axis data normalization. Default is "percent".}
 
-\item{savePlots}{Logical that decides whether you wish to save created
-plot(s). They are not saved by default. Note that if there are multiple
-output paths in your model, there will be multiple plots that will be
-saved.}
+\item{xAxisScale}{Character string, either "log" (logarithmic scale) or "lin"
+(linear scale), to set the x-axis scale. Default is "log".}
 
-\item{outputFolder}{A character string describing path folder where plots
-need to be saved. The path must be relative to the current working
-directory. By default (\code{""}), the plots will be saved in the current
-working directory (which can be found using \code{getwd()} function). This
-parameter is relevant only if \code{savePlots} is set to \code{TRUE}.}
+\item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis scale
+similarly to \code{xAxisScale}. Default is "lin".}
 
-\item{width, height}{Plot size in inches. If not supplied, uses the size of
-current graphics device.}
+\item{yAxisFacetScales}{Character string, either "fixed" or "free", determines
+the scaling across y-axes of different facets. Default is "fixed".
+If "fixed", all facetes within one plot will have the same range, which allows
+for easier comparison between different PK parameters. If "free", each facet will
+have its own range, which allows for better visualization of the single PK parameters
+sensitivity.}
 
-\item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),
-"print" (300), or "screen" (72). Applies only to raster output types.}
+\item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
+used to customize plot aesthetics. Modifications in \code{defaultPlotConfiguration},
+such as \code{xAxisScale}, will take precedence over any plot-specific settings
+provided directly to the function.
+
+Supported parameters include:
+\itemize{
+\item \code{legendPosition}: Position of the legend on the plot.
+\item \code{legendTitle}: Title displayed for the legend.
+\item \code{linesAlpha}: Alpha transparency for line elements.
+\item \code{linesColor}: Color of the line elements.
+\item \code{linesSize}: Thickness of the line elements.
+\item \code{pointsShape}: Shape of the point elements.
+\item \code{pointsSize}: Size of the point elements.
+\item \code{subtitle}: Subtitle text for the plot.
+\item \code{title}: Main title text for the plot.
+\item \code{titleSize}: Font size of the plot title.
+\item \code{xAxisScale}: Scale type for the x-axis (\code{"log"} or \code{"lin"}).
+\item \code{xLabel}: Label text for the x-axis.
+\item \code{xValuesLimits}: Numeric vector specifying the limits for x-values.
+\item \code{yAxisLimits}: Numeric vector specifying the limits for y-values.
+\item \code{yAxisScale}: Scale type for the y-axis (\code{"log"} or \code{"lin"}).
+\item \code{yAxisTicks}: Number of ticks on the y-axis.
+\item \code{yLabel}: Label text for the y-axis.
+\item \code{yValuesLimits}: Numeric vector specifying the limits for y-values.
+}
+
+Default values are set to provide a standardized look, but each parameter
+can be tailored to fit specific visual needs. Modifying these parameters
+will directly affect the aesthetics of the output plots.}
 }
 \value{
-A single \code{ggplot} object if a single output path is specified.
-
-A list of \code{ggplot} objects if multiple output paths are specified.
+A \code{patchwork} object containing the combined ggplot objects if a
+single output path is specified, or a list of \code{patchwork} objects for
+multiple output paths.
 }
 \description{
-Sensitivity spider plot for PK parameters
+Creates spider plots for sensitivity calculation. A spider plot is a
+visualization technique that displays the sensitivity of a model output to
+changes in model parameters. Each plot displays the sensitivity of a set of
+PK parameters for a single output path to changes in model parameters. The x-axis
+represents the value of model parameters (absolute or percent from default value),
+and the y-axis represents the sensitivity of the output to changes in the model
+parameter.
 }
 \examples{
 \dontrun{
@@ -67,25 +101,23 @@ parameterPaths <- c(
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
 
-# extract the results into a list of dataframes
 results <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths
 )
 
-# print plots
+# Print plots with default settings
 sensitivitySpiderPlot(results)
 
-# print and save plots
-if (FALSE) {
-  sensitivitySpiderPlot(
-    results,
-    savePlots = TRUE,
-    height = 6,
-    width = 12
-  )
-}
+# Print plots with absolute y-axis values
+sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
+
+# Print plots with custom configuration settings
+myPlotConfiguration <- createEsqlabsPlotConfiguration()
+myPlotConfiguration$pointsShape <- 22
+myPlotConfiguration$subtitle <- "Custom settings"
+sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
 }
 }
 \seealso{
