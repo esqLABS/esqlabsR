@@ -1,5 +1,5 @@
 pandoc: 3.1.11
-pkgdown: 2.0.7
+pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
   esqlabsR-advanced: esqlabsR-advanced.html
@@ -13,7 +13,7 @@ articles:
   esqlabsR: esqlabsR.html
   install-pksim: install-pksim.html
   presentations: presentations.html
-last_built: 2024-04-04T12:41Z
+last_built: 2024-04-24T07:11Z
 urls:
   reference: https://esqlabs.github.io/esqlabsR/reference
   article: https://esqlabs.github.io/esqlabsR/articles
