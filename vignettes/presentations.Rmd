@@ -2,7 +2,7 @@
 title: "Presentations"
 output: rmarkdown::html_vignette
 resource_files: 
-  - presentations/introduction-to-esqlabsR.html
+  - presentations/_introduction-to-esqlabsR.html
 vignette: >
   %\VignetteIndexEntry{presentations}
   %\VignetteEngine{knitr::rmarkdown}
@@ -19,7 +19,7 @@ vignette: >
 
 <div class="bordered">
 
-[![Introduction to esqlabsR](presentations/introduction-to-esqlabsR-miniature.png)](presentations/introduction-to-esqlabsR.html)
+[![Introduction to esqlabsR](presentations/introduction-to-esqlabsR-miniature.png)](presentations/_introduction-to-esqlabsR.html)
 
 </div>
 
