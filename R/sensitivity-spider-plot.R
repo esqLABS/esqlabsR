@@ -105,10 +105,10 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   outputPaths = NULL,
                                   parameterPaths = NULL,
                                   pkParameters = NULL,
-                                  yAxisType = "percent",
-                                  xAxisScale = "log",
-                                  yAxisScale = "lin",
+                                  xAxisScale = NULL,
+                                  yAxisScale = NULL,
                                   yAxisFacetScales = "fixed",
+                                  yAxisType = "percent",
                                   defaultPlotConfiguration = NULL) {
   # input validation -------------------------
 
@@ -125,12 +125,45 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   .validateCharVectors(parameterPaths)
   .validateCharVectors(pkParameters)
 
-  ospsuite.utils::validateIsIncluded(yAxisType, c("percent", "absolute"))
-  ospsuite.utils::validateIsIncluded(xAxisScale, c("lin", "log"))
-  ospsuite.utils::validateIsIncluded(yAxisScale, c("lin", "log"))
-  ospsuite.utils::validateIsIncluded(yAxisFacetScales, c("fixed", "free"))
+  # default spider plot configuration setup ----
 
-  # extract and filter data ------------------
+  spiderPlotConfiguration <- list(
+    legendPosition = "bottom",
+    legendTitle    = "Parameter",
+    linesSize      = 1.4,
+    pointsShape    = 21L,
+    pointsSize     = 2,
+    title          = NULL,
+    titleSize      = 14,
+    xAxisScale     = "log",
+    xLabel         = "Input parameter value [% of reference]",
+    yAxisScale     = "lin",
+    yAxisTicks     = 10L,
+    yLabel         = NULL
+  )
+  # override default plot configuration with function parameters
+  customPlotConfiguration <- defaultPlotConfiguration$clone()
+  if (!is.null(xAxisScale)) customPlotConfiguration$xAxisScale <- xAxisScale
+  if (!is.null(yAxisScale)) customPlotConfiguration$yAxisScale <- yAxisScale
+
+  # override only default configuration values with settings for spider plot
+  customPlotConfiguration <- .updatePlotConfiguration(
+    customPlotConfiguration, spiderPlotConfiguration
+  )
+
+  # validate plot configuration for valid options
+  plotConfigurationList <- purrr::map(
+    purrr::set_names(names(customPlotConfiguration)),
+    ~ customPlotConfiguration[[.]]
+  )
+  plotConfigurationList$yAxisFacetScales <- yAxisFacetScales
+  plotConfigurationList$yAxisType <- yAxisType
+  ospsuite.utils::validateIsOption(
+    plotConfigurationList,
+    .getPlotConfigurationOptions()
+  )
+
+  # extract and prepare data -----------------
 
   data <- sensitivityCalculation$pkData
   data <- .filterPlottingData(
@@ -138,6 +171,12 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     outputPaths = outputPaths,
     parameterPaths = parameterPaths,
     pkParameters = pkParameters
+  )
+
+  # getting the scales right
+  data <- dplyr::mutate(data,
+    ParameterFactor = ParameterFactor * 100,
+    PercentChangePK = PercentChangePK + 100
   )
 
   # list of plots ----------------------------
@@ -148,10 +187,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     .f = ~ .createSpiderPlot(
       .x,
       yAxisType = yAxisType,
-      xAxisScale = xAxisScale,
-      yAxisScale = yAxisScale,
       yAxisFacetScales = yAxisFacetScales,
-      defaultPlotConfiguration = defaultPlotConfiguration
+      defaultPlotConfiguration = customPlotConfiguration
     )
   )
 
@@ -163,37 +200,16 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 #' @noRd
 .createSpiderPlot <- function(data,
                               yAxisType = "percent",
-                              xAxisScale = "log",
-                              yAxisScale = "lin",
                               yAxisFacetScales = "fixed",
                               defaultPlotConfiguration) {
-  # default configuration for spider plot ----
-
-  spiderPlotConfiguration <- list(
-    legendPosition = "bottom",
-    legendTitle    = "Parameter",
-    linesSize      = 1.4,
-    pointsShape    = 21,
-    pointsSize     = 2,
-    title          = unique(data$OutputPath),
-    titleSize      = 14L,
-    xAxisScale     = xAxisScale,
-    xLabel         = "Input parameter value [% of reference]",
-    yAxisScale     = yAxisScale,
-    yAxisTicks     = 10L,
-    yLabel         = NULL
-  )
-  # override default configuration with settings for spider plot
+  # update data dependent plot configuration
+  plotConfiguration <- defaultPlotConfiguration$clone()
   plotConfiguration <- .updatePlotConfiguration(
-    defaultPlotConfiguration, spiderPlotConfiguration
+    plotConfiguration,
+    list(title = unique(data$OutputPath))
   )
-
-  # getting the scales right
-  data <- dplyr::mutate(data,
-    ParameterFactor = ParameterFactor * 100,
-    PercentChangePK = PercentChangePK + 100
-  )
-
+  print(plotConfiguration$xAxisScale)
+  print(plotConfiguration$yAxisScale)
   # select percent or absolute column for y-axis
   if (yAxisType == "percent") {
     yColumn <- sym("PercentChangePK")
