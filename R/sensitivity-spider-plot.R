@@ -383,18 +383,23 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   defaultValues <- createEsqlabsPlotConfiguration()
 
   for (name in names(plotOverrideConfig)) {
-    if (name %in% names(plotConfiguration)) {
-      if (is.null(defaultValues[[name]]) ||
-        all(plotConfiguration[[name]] == defaultValues[[name]])) {
+    if (!name %in% names(plotConfiguration)) {
+      warning(messages$UnknownPlotConfiguration(name))
+      next
+    }
+
+    if (is.null(defaultValues[[name]]) && is.null(plotConfiguration[[name]])) {
+      plotConfiguration[[name]] <- plotOverrideConfig[[name]]
+    } else if (!is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])) {
+      if (all(plotConfiguration[[name]] == defaultValues[[name]])) {
         plotConfiguration[[name]] <- plotOverrideConfig[[name]]
       }
-    } else {
-      warning(messages$UnknownPlotConfiguration(name))
     }
   }
 
   return(plotConfiguration)
 }
+
 
 #' @keywords internal
 #' @noRd
