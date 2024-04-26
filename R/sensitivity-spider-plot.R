@@ -35,9 +35,9 @@
 #' will have its own range, which allows for better visualization of the single
 #' PK parameters sensitivity.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#' used to customize plot aesthetics. Modifications in `defaultPlotConfiguration`,
-#' such as `xAxisScale`, will take precedence over any plot-specific settings
-#' provided directly to the function.
+#' used to customize plot aesthetics. Plot-specific settings provided directly
+#' to the function, such as `xAxisScale`, will take precedence over any
+#' modifications in `defaultPlotConfiguration`.
 #'
 #' Supported parameters include:
 #' - `legendPosition`: Position of the legend on the plot.
@@ -208,8 +208,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     plotConfiguration,
     list(title = unique(data$OutputPath))
   )
-  print(plotConfiguration$xAxisScale)
-  print(plotConfiguration$yAxisScale)
+
   # select percent or absolute column for y-axis
   if (yAxisType == "percent") {
     yColumn <- sym("PercentChangePK")

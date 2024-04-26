@@ -9,10 +9,10 @@ sensitivitySpiderPlot(
   outputPaths = NULL,
   parameterPaths = NULL,
   pkParameters = NULL,
-  yAxisType = "percent",
-  xAxisScale = "log",
-  yAxisScale = "lin",
+  xAxisScale = NULL,
+  yAxisScale = NULL,
   yAxisFacetScales = "fixed",
+  yAxisType = "percent",
   defaultPlotConfiguration = NULL
 )
 }
@@ -29,9 +29,6 @@ A separate plot will be generated for each output path. Each plot will
 contain a spider plot panel for each PK parameter, and the sensitivities
 for each parameter will be displayed as lines.}
 
-\item{yAxisType}{Character string, either "percent" (percentage change) or
-"absolute" (absolute values) for PK parameter values, for y-axis data normalization. Default is "percent".}
-
 \item{xAxisScale}{Character string, either "log" (logarithmic scale) or "lin"
 (linear scale), to set the x-axis scale. Default is "log".}
 
@@ -41,14 +38,18 @@ similarly to \code{xAxisScale}. Default is "lin".}
 \item{yAxisFacetScales}{Character string, either "fixed" or "free", determines
 the scaling across y-axes of different facets. Default is "fixed".
 If "fixed", all facetes within one plot will have the same range, which allows
-for easier comparison between different PK parameters. If "free", each facet will
-have its own range, which allows for better visualization of the single PK parameters
-sensitivity.}
+for easier comparison between different PK parameters. If "free", each facet
+will have its own range, which allows for better visualization of the single
+PK parameters sensitivity.}
+
+\item{yAxisType}{Character string, either "percent" (percentage change) or
+"absolute" (absolute values) for PK parameter values, for y-axis data normalization.
+Default is "percent".}
 
 \item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
-used to customize plot aesthetics. Modifications in \code{defaultPlotConfiguration},
-such as \code{xAxisScale}, will take precedence over any plot-specific settings
-provided directly to the function.
+used to customize plot aesthetics. Plot-specific settings provided directly
+to the function, such as \code{xAxisScale}, will take precedence over any
+modifications in \code{defaultPlotConfiguration}.
 
 Supported parameters include:
 \itemize{

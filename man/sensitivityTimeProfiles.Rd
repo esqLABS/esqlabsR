@@ -28,27 +28,7 @@ sensitivity will be analyzed.}
 \item{parameterPaths}{A single or a vector of the parameter path(s) to be
 varied.}
 
-\item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
-logarithmic scale.}
-
 \item{palette}{The name of the palette to be used. Run \code{hcl_palettes(type = "qualitative")} for available options.}
-
-\item{savePlots}{Logical that decides whether you wish to save created
-plot(s). They are not saved by default. Note that if there are multiple
-output paths in your model, there will be multiple plots that will be
-saved.}
-
-\item{outputFolder}{A character string describing path folder where plots
-need to be saved. The path must be relative to the current working
-directory. By default (\code{""}), the plots will be saved in the current
-working directory (which can be found using \code{getwd()} function). This
-parameter is relevant only if \code{savePlots} is set to \code{TRUE}.}
-
-\item{width, height}{Plot size in inches. If not supplied, uses the size of
-current graphics device.}
-
-\item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),
-"print" (300), or "screen" (72). Applies only to raster output types.}
 }
 \value{
 A single \code{ggplot} object if a single output path is specified.
