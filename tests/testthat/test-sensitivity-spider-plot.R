@@ -93,6 +93,38 @@ test_that("sensitivitySpiderPlot correctly applies free scaling with absolute y-
   expect_snapshot(unlist(plotParams))
 })
 
+
+# plot configuration -----------------------------------------
+
+n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+
+test_that("sensitivitySpiderPlot uses defaultPlotConfiguration axis scales", {
+  myPlotConfiguration <- createEsqlabsPlotConfiguration()
+  myPlotConfiguration$xAxisScale <- "lin"
+  myPlotConfiguration$yAxisScale <- "log"
+
+  p <- sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
+  pb <- ggplot2::ggplot_build(p[[n]][[1]])
+
+  expect_equal(pb$layout$panel_scales_x[[1]]$trans$name, "identity")
+  expect_equal(pb$layout$panel_scales_y[[1]]$trans$name, "log-10")
+})
+
+test_that("sensitivitySpiderPlot signature overrides defaultPlotConfiguration", {
+  myPlotConfiguration <- createEsqlabsPlotConfiguration()
+  myPlotConfiguration$xAxisScale <- "lin" # to be overridden
+  myPlotConfiguration$yAxisScale <- "log" # to be overridden
+
+  p <- sensitivitySpiderPlot(results,
+    defaultPlotConfiguration = myPlotConfiguration,
+    xAxisScale = "log", yAxisScale = "lin"
+  )
+  pb <- ggplot2::ggplot_build(p[[n]][[1]])
+
+  expect_equal(pb$layout$panel_scales_x[[1]]$trans$name, "log-10")
+  expect_equal(pb$layout$panel_scales_y[[1]]$trans$name, "identity")
+})
+
 # multiple output paths -------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
