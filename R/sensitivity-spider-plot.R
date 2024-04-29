@@ -156,7 +156,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   )
 
   # print plots without producing warnings
-  suppressWarnings(purrr::walk2(lsPlots, names(lsPlots), ~ .printPlot(.x, .y)))
+  suppressWarnings(purrr::map(lsPlots, ~ print(.x)))
 }
 
 #' @keywords internal
