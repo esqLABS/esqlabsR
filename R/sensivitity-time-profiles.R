@@ -176,10 +176,3 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       draw.llim = FALSE
     ))
 }
-
-#' @keywords internal
-#' @noRd
-.printPlot <- function(plot, pathName) {
-  print(paste0("Creating plot for path: ", pathName))
-  print(plot)
-}
