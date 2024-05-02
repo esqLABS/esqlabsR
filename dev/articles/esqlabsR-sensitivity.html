@@ -171,17 +171,21 @@ concentration (<code>C_max</code>), and time when the maximum
 concentration is reached (<code>t_max</code>).</li>
 </ul>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Creating plot for path: Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span></code></pre></div>
 <p><img src="esqlabsR-sensitivity_files/figure-html/spider-plot-1.png" width="672"></p>
+<pre><code><span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre>
+<p><img src="esqlabsR-sensitivity_files/figure-html/spider-plot-2.png" width="672"></p>
 <ul>
 <li>the <code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> function plots the
 concentration profile for each of the input parameter values:</li>
 </ul>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Creating plot for path: Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span></code></pre></div>
 <p><img src="esqlabsR-sensitivity_files/figure-html/time-profile-1.png" width="672"></p>
+<pre><code><span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span>
+<span><span class="co">#&gt; Warning in scale_y_log10(): <span style="color: #00BB00;">log-10</span> transformation introduced infinite values.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">log-10</span> transformation introduced infinite values.</span></span></code></pre>
+<p><img src="esqlabsR-sensitivity_files/figure-html/time-profile-2.png" width="672"></p>
 </div>
 <div class="section level3">
 <h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
