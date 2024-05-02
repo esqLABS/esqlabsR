@@ -115,7 +115,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   # print plots without producing warnings
-  suppressWarnings(purrr::walk2(lsPlots, names(lsPlots), ~ .printPlot(.x, .y)))
+  suppressWarnings(purrr::map(lsPlots, ~ print(.x)))
 }
 
 
@@ -175,11 +175,4 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       draw.ulim = FALSE,
       draw.llim = FALSE
     ))
-}
-
-#' @keywords internal
-#' @noRd
-.printPlot <- function(plot, pathName) {
-  print(paste0("Creating plot for path: ", pathName))
-  print(plot)
 }
