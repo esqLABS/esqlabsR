@@ -621,3 +621,84 @@ createPlotsFromExcel <- function(
 
   return(dfExportConfigurations)
 }
+
+#' Get valid plot configuration options
+#'
+#' Generates a list of valid configuration options for plotting.
+#' Each configuration option specifies constraints, including data type,
+#' allowable values, and value ranges, formatted to facilitate validation with
+#' `ospsuite::validateIsOption` function.
+#'
+#' @return A list of lists, each containing type specifications and constraints
+#'         for a plot configuration parameter.
+#' @keywords internal
+#' @noRd
+.getPlotConfigurationOptions <- function() {
+  plotConfigurationOptions <- list(
+    legendPosition = list(
+      type = "character",
+      allowedValues = c("left", "right", "bottom", "top", "none")
+    ),
+    legendTitle = list(
+      type = "character",
+      nullAllowed = TRUE
+    ),
+    linesAlpha = list(
+      type = "numeric",
+      valueRange = c(0, 1)
+    ),
+    linesSize = list(
+      type = "numeric",
+      valueRange = c(0.1, 10)
+    ),
+    pointsShape = list(
+      type = "integer",
+      valueRange = c(0L, 25L)
+    ),
+    pointsSize = list(
+      type = "numeric",
+      valueRange = c(0.1, 10)
+    ),
+    subtitle = list(
+      type = "character",
+      nullAllowed = TRUE
+    ),
+    title = list(
+      type = "character",
+      nullAllowed = TRUE
+    ),
+    titleSize = list(
+      type = "numeric"
+    ),
+    xAxisScale = list(
+      type = "character",
+      allowedValues = c("log", "lin")
+    ),
+    xLabel = list(
+      type = "character",
+      nullAllowed = TRUE
+    ),
+    yAxisFacetScales = list(
+      type = "character",
+      allowedValues = c("fixed", "free")
+    ),
+    yAxisScale = list(
+      type = "character",
+      allowedValues = c("log", "lin")
+    ),
+    yAxisTicks = list(
+      type = "integer",
+      valueRange = c(1L, 20L)
+    ),
+    yAxisType = list(
+      type = "character",
+      allowedValues = c("percent", "absolute")
+    ),
+    yLabel = list(
+      type = "character",
+      nullAllowed = TRUE
+    )
+  )
+
+  return(plotConfigurationOptions)
+}
