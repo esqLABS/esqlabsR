@@ -9,7 +9,7 @@ on:
 
 jobs:
   test-pkg-and-coverage:
-   uses: Felixmil/Workflows/.github/workflows/test-pkg-and-coverage.yml@add-codecov-token-input
+   uses: Open-Systems-Pharmacology/Workflows/.github/workflows/test-pkg-and-coverage.yml@main
    with:
      install-pksim: true
      install-rClr: true
@@ -19,4 +19,4 @@ jobs:
        ospsuite=github::Open-Systems-Pharmacology/OSPSuite-R
        ospsuite.parameteridentification=github::Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
    secrets:
-     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN}}
+     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
