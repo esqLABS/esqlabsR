@@ -95,10 +95,10 @@ parameter.</p>
 <span>  outputPaths <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  parameterPaths <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pkParameters <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  yAxisType <span class="op">=</span> <span class="st">"percent"</span>,</span>
-<span>  xAxisScale <span class="op">=</span> <span class="st">"log"</span>,</span>
-<span>  yAxisScale <span class="op">=</span> <span class="st">"lin"</span>,</span>
+<span>  xAxisScale <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  yAxisScale <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  yAxisFacetScales <span class="op">=</span> <span class="st">"fixed"</span>,</span>
+<span>  yAxisType <span class="op">=</span> <span class="st">"percent"</span>,</span>
 <span>  defaultPlotConfiguration <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -121,11 +121,6 @@ contain a spider plot panel for each PK parameter, and the sensitivities
 for each parameter will be displayed as lines.</p></dd>
 
 
-<dt>yAxisType</dt>
-<dd><p>Character string, either "percent" (percentage change) or
-"absolute" (absolute values) for PK parameter values, for y-axis data normalization. Default is "percent".</p></dd>
-
-
 <dt>xAxisScale</dt>
 <dd><p>Character string, either "log" (logarithmic scale) or "lin"
 (linear scale), to set the x-axis scale. Default is "log".</p></dd>
@@ -140,16 +135,22 @@ similarly to <code>xAxisScale</code>. Default is "lin".</p></dd>
 <dd><p>Character string, either "fixed" or "free", determines
 the scaling across y-axes of different facets. Default is "fixed".
 If "fixed", all facetes within one plot will have the same range, which allows
-for easier comparison between different PK parameters. If "free", each facet will
-have its own range, which allows for better visualization of the single PK parameters
-sensitivity.</p></dd>
+for easier comparison between different PK parameters. If "free", each facet
+will have its own range, which allows for better visualization of the single
+PK parameters sensitivity.</p></dd>
+
+
+<dt>yAxisType</dt>
+<dd><p>Character string, either "percent" (percentage change) or
+"absolute" (absolute values) for PK parameter values, for y-axis data normalization.
+Default is "percent".</p></dd>
 
 
 <dt>defaultPlotConfiguration</dt>
 <dd><p>An object of class <code>DefaultPlotConfiguration</code>
-used to customize plot aesthetics. Modifications in <code>defaultPlotConfiguration</code>,
-such as <code>xAxisScale</code>, will take precedence over any plot-specific settings
-provided directly to the function.</p>
+used to customize plot aesthetics. Plot-specific settings provided directly
+to the function, such as <code>xAxisScale</code>, will take precedence over any
+modifications in <code>defaultPlotConfiguration</code>.</p>
 <p>Supported parameters include:</p><ul><li><p><code>legendPosition</code>: Position of the legend on the plot.</p></li>
 <li><p><code>legendTitle</code>: Title displayed for the legend.</p></li>
 <li><p><code>linesAlpha</code>: Alpha transparency for line elements.</p></li>
