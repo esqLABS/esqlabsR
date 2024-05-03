@@ -193,7 +193,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   )
 
   # print plots without producing warnings
-  suppressWarnings(purrr::map(lsPlots, ~ print(.x)))
+  suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
 }
 
 #' @keywords internal
@@ -369,7 +369,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
       title = plotConfiguration$title,
-      subtitle = defaultPlotConfiguration$subtitle,
+      subtitle = plotConfiguration$subtitle,
       theme = theme(
         plot.title = element_text(size = plotConfiguration$titleSize)
       )
