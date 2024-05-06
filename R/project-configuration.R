@@ -77,13 +77,13 @@ ProjectConfiguration <- R6::R6Class(
       private$.populationsFile <- value
       private$.clean_path(value, self$configurationsFolder)
     },
-    #' @field populationsCSV Name of the folder containing population defined through csv files
+    #' @field populationsFolder Name of the folder containing population defined through csv files
     #' Must be located in the "configurationsFolder".
-    populationsCSV = function(value) {
+    populationsFolder = function(value) {
       if (missing(value)) {
-        value <- private$.populationsCSV
+        value <- private$.populationsFolder
       }
-      private$.populationsCSV <- value
+      private$.populationsFolder <- value
       private$.clean_path(value, self$configurationsFolder)
     },
     #' @field scenariosFile Name of the excel file with scenario
@@ -171,7 +171,7 @@ ProjectConfiguration <- R6::R6Class(
     .modelParamsFile = NULL,
     .individualsFile = NULL,
     .populationsFile = NULL,
-    .populationsCSV = NULL,
+    .populationsFolder = NULL,
     .scenariosFile = NULL,
     .applicationsFile = NULL,
     .plotsFile = NULL,
@@ -236,7 +236,7 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Model Parameters", fs::path_rel(as.character(self$modelParamsFile)))
       private$printLine("Individuals", fs::path_rel(as.character(self$individualsFile)))
       private$printLine("Populations", fs::path_rel(as.character(self$populationsFile)))
-      private$printLine("PopulationsCSV", fs::path_rel(as.character(self$populationsCSV)))
+      private$printLine("populations Folder", fs::path_rel(as.character(self$populationsFolder)))
       private$printLine("Scenarios", fs::path_rel(as.character(self$scenariosFile)))
       private$printLine("Applications", fs::path_rel(as.character(self$applicationsFile)))
       private$printLine("Plots", fs::path_rel(as.character(self$plotsFile)))
