@@ -141,7 +141,14 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfP
     nullAllowed = TRUE
   )
 
-  scenarios <- purrr::map(scenarioConfigurations, ~ Scenario$new(.x, customParams = customParams, stopIfParameterNotFound = stopIfParameterNotFound)) %>%
+  scenarios <- purrr::map(
+    scenarioConfigurations,
+    ~ Scenario$new(.x,
+      customParams = customParams,
+      stopIfParameterNotFound = stopIfParameterNotFound
+    ),
+    .progress = TRUE
+  ) %>%
     purrr::set_names(purrr::map(scenarioConfigurations, ~ .x$scenarioName))
 
   return(scenarios)
