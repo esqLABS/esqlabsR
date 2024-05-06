@@ -76,7 +76,7 @@ Project <-
         }
 
         if (!missing(value)) {
-          private$.configurations <- modifyList(private$.configurations, value)
+          private$.configurations <- value
           private$.newConfigurations <- TRUE
         }
 
@@ -85,6 +85,7 @@ Project <-
       scenarios = function(value) {
         if (identical(private$.scenarios, list()) || private$.newConfigurations) {
           private$.initializeScenarios()
+          private$.newConfigurations <- FALSE
         }
 
         if (!missing(value)) {
@@ -120,11 +121,14 @@ Project <-
         private$.configurations <- Configuration$new(self)
       },
       .initializeScenarios = function() {
-        private$.scenarios <- list()
+        if (is.null(private$.scenarios)) {
+          private$.scenarios <- list()
+        }
         for (scenario in private$.availableScenarios) {
           private$.scenarios[[scenario]] <- Scenario2$new(
             project = self,
-            scenarioConfigurationData = self$configurations$scenarios[[scenario]]
+            scenarioConfigurationData = self$configurations$scenarios[[scenario]],
+            status = if(private$.scenarios[[scenario]]$status == "inactive") "inactive" else NULL
           )
         }
       }

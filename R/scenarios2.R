@@ -10,11 +10,11 @@ Scenario2 <- R6::R6Class(
     status = NULL,
     type = NULL,
     steadyState = NULL,
-    initialize = function(project, scenarioConfigurationData) {
+    initialize = function(project, scenarioConfigurationData, status = NULL) {
       private$.project <- project
       private$.scenarioConfigurationData <- scenarioConfigurationData
       self$name <- private$.scenarioConfigurationData$id
-      self$status <- "active"
+      self$status <- status %||% "active"
       self$type <- ifelse(!is.na(scenarioConfigurationData$population), "population", "individual")
       self$steadyState <-  private$.scenarioConfigurationData$steadyState
     },
