@@ -143,16 +143,6 @@ ProjectConfiguration <- R6::R6Class(
       private$.dataImporterConfigurationFile <- value
       private$.clean_path(value, self$dataFolder)
     },
-    #' @field compoundPropertiesFile Path to the excel file containing
-    #' information about all compounds in the model.
-    #' Must be located in the "dataFolder"
-    compoundPropertiesFile = function(value) {
-      if (missing(value)) {
-        value <- private$.compoundPropertiesFile
-      }
-      private$.compoundPropertiesFile <- value
-      private$.clean_path(value, self$dataFolder, must_work = FALSE)
-    },
     #' @field outputFolder Path to the folder where the results should be
     #' saved to; relative to the "Code" folder
     outputFolder = function(value) {
@@ -178,7 +168,6 @@ ProjectConfiguration <- R6::R6Class(
     .dataFolder = NULL,
     .dataFile = NULL,
     .dataImporterConfigurationFile = NULL,
-    .compoundPropertiesFile = NULL,
     .outputFolder = NULL,
     .read_config = function(file_path) {
       path <- private$.clean_path(file_path)
@@ -243,7 +232,6 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Data folder", fs::path_rel(as.character(self$dataFolder)))
       private$printLine("Data file", fs::path_rel(as.character(self$dataFile)))
       private$printLine("Data importer configuration", fs::path_rel(as.character(self$dataImporterConfigurationFile)))
-      private$printLine("Compound Properties File", fs::path_rel(as.character(self$compoundPropertiesFile)))
       private$printLine("Output folder", fs::path_rel(as.character(self$outputFolder)))
       invisible(self)
     },
