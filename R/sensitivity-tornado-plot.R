@@ -107,7 +107,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   data <- sensitivityCalculation$pkData
 
   # validate data contains required parameterFactor results
-  parameterFactors <- c(parameterFactor, 1/parameterFactor)
+  parameterFactors <- c(parameterFactor, 1 / parameterFactor)
   if (!all(parameterFactors %in% data$ParameterFactor)) {
     stop(messages$noParameterFactor(data, parameterFactor))
   }
@@ -154,10 +154,15 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     OutputPath, ParameterPath, PKParameter, ParameterFactor
   )
   data <- dplyr::mutate(
-    data, MeanPercentChangePK = mean(PercentChangePK, na.rm = TRUE)
+    data,
+    MeanPercentChangePK = mean(PercentChangePK, na.rm = TRUE)
   )
   data <- dplyr::ungroup(data)
   data <- dplyr::arrange(data, dplyr::desc(abs(MeanPercentChangePK)))
+  data <- dplyr::mutate(
+    data,
+    ParameterPath = purrr::map_chr(ParameterPath, .splitParameterName)
+  )
   data$ParameterPath <- factor(data$ParameterPath,
     levels = rev(unique(data$ParameterPath))
   )
@@ -282,4 +287,18 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     theme(legend.position = plotConfiguration$legendPosition)
 
   return(plotPatchwork)
+}
+
+#' @keywords internal
+#' @noRd
+.splitParameterName <- function(x) {
+  xBreak <- x
+  if (!is.null(x)) {
+    n <- stringr::str_count(x, stringr::fixed("|"))
+    if (n >= 3) {
+      xBreak <- sub("((?:[^|]*\\|){2}[^|]*)\\|", "\\1|\n", x)
+    }
+  }
+
+  return(xBreak)
 }

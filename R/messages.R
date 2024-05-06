@@ -137,7 +137,7 @@ messages$noPKDataToWrite <- function() {
 # sensitivity analysis plotting
 messages$noParameterFactor <- function(data, parameterFactor) {
   paste0(
-    "'parameterFactor' values of ", parameterFactor, " and ", 1/parameterFactor,
+    "'parameterFactor' values of ", parameterFactor, " and ", 1 / parameterFactor,
     " are not included in the sensitivity analysis results. Current values: ",
     paste(sort(unique(data$ParameterFactor)), collapse = ", "), ". ",
     "Please rerun the sensitivity analysis with the required values."
