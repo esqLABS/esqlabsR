@@ -1,3 +1,41 @@
+getIndividualsConfigurations <- function(individualsPath) {
+  individualsCharacteristicsRaw <- readExcel(individualsPath, sheet = 1)
+
+  individuals <- list()
+
+  for (i in 1:nrow(individualsCharacteristicsRaw)) {
+    individualData <- individualsCharacteristicsRaw[i, ]
+    individuals[[individualData$IndividualId]] <-
+      list(
+        characteristics = list(
+          # ospsuite::createIndividualCharacteristics(
+          species = individualData$Species,
+          population = individualData$Population,
+          gender = individualData$Gender,
+          weight = individualData$`Weight [kg]`,
+          height = individualData$`Height [cm]`,
+          age = individualData$`Age [year(s)]`,
+          moleculeOntogenies = individualData$Ontogeny
+          # .readOntongeniesFromXLS(individualsCharacteristicsRaw[i, ])
+        ),
+        parameters = getIndividualParameters(individualsPath, individualData$IndividualId)
+      )
+  }
+  return(individuals)
+}
+
+
+getIndividualParameters <- function(individualsPath, individualId) {
+  individualParameters <- NULL
+
+  if (individualId %in% readxl::excel_sheets(individualsPath)) {
+    individualParameters <- getParametersInSheet(individualsPath, individualId)
+  }
+
+  return(individualParameters)
+}
+
+
 #' Create a parameter set describing an individual and write it to the Excel file
 #'
 #' @param individualCharacteristics An `IndividualCharacteristics` object
@@ -105,7 +143,8 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_lengt
 
   # Create the IndividualCharacteristics object
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
-    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]],
+    species = data$Species[[rowIdx]],
+    population = data$Population[[rowIdx]],
     gender = data$Gender[[rowIdx]],
     weight = data$`Weight [kg]`[[rowIdx]],
     height = data$`Height [cm]`[[rowIdx]],

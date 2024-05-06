@@ -10,46 +10,9 @@ R6 class defining properties for saving a \code{ggplot} object
 \section{Super class}{
 \code{\link[tlf:ExportConfiguration]{tlf::ExportConfiguration}} -> \code{ExportConfiguration}
 }
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{name}}{character defining the name of the file to be saved (without extension)}
-
-\item{\code{path}}{Path of the directory to save plot to: path and filename are
-combined to create the fully qualified file name. Defaults to the working directory.}
-
-\item{\code{format}}{character defining the format of the file to be saved}
-
-\item{\code{width}}{numeric values defining the width in \code{units} of the plot dimensions after saving}
-
-\item{\code{height}}{numeric values defining the height in \code{units} of the plot dimensions after saving.
-Only used if \code{heightPerRow} is \code{NULL}.}
-
-\item{\code{units}}{character defining the unit of the saving dimension}
-
-\item{\code{dpi}}{(dots per inch) numeric value defining plot resolution}
-}
-\if{html}{\out{</div>}}
-}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{name}}{character defining the name of the file to be saved (without extension)}
-
-\item{\code{path}}{Path of the directory to save plot to: path and filename are
-combined to create the fully qualified file name. Defaults to the working directory.}
-
-\item{\code{format}}{character defining the format of the file to be saved}
-
-\item{\code{width}}{numeric values defining the width in \code{units} of the plot dimensions after saving}
-
-\item{\code{height}}{numeric values defining the height in \code{units} of the plot dimensions after saving.
-Only used if \code{heightPerRow} is \code{NULL}.}
-
-\item{\code{units}}{character defining the unit of the saving dimension}
-
-\item{\code{dpi}}{(dots per inch) numeric value defining plot resolution}
-
 \item{\code{heightPerRow}}{The height of the plot dimensions for a row in a multi
 pannel plot. The final height of the figure will be 'heightPerRow' times
 the number of rows.

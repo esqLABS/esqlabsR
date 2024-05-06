@@ -137,9 +137,9 @@ a parameter sheet from the list"
     #' extension ".pkml"). Must be located in the "modelFolder".
     modelFile = NULL,
     #' @field applicationProtocol Name of the application protocol to be applied. Defined
-    #' in the excel file "ApplicationParameters.xlsx"
+    #' in the excel file "Applications.xlsx"
     applicationProtocol = NULL,
-    #' @field individualId Id of the individual as specified in "IndividualParameters.xlsx".
+    #' @field individualId Id of the individual as specified in "Individuals.xlsx".
     #' If `NULL` (default), the individual as defined in the simulation file will be simulated.
     individualId = NULL,
     #' @field populationId Id of the population as specified in "Populations.xlsx",

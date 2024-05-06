@@ -1,3 +1,6 @@
+#' @import cli
+NULL
+
 # nocov start
 .onLoad <- function(...) {
   Sys.setenv("_R_CHECK_LENGTH_1_CONDITION_" = "true")

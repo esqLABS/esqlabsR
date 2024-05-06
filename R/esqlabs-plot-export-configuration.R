@@ -1,14 +1,5 @@
 #' @title ExportConfiguration
 #' @description R6 class defining properties for saving a `ggplot` object
-#' @field name character defining the name of the file to be saved (without extension)
-#' @field path Path of the directory to save plot to: path and filename are
-#' combined to create the fully qualified file name. Defaults to the working directory.
-#' @field format character defining the format of the file to be saved
-#' @field width numeric values defining the width in `units` of the plot dimensions after saving
-#' @field height numeric values defining the height in `units` of the plot dimensions after saving.
-#' Only used if `heightPerRow` is `NULL`.
-#' @field units character defining the unit of the saving dimension
-#' @field dpi (dots per inch) numeric value defining plot resolution
 #' @export
 #' @import ggplot2
 #' @family PlotConfiguration classes

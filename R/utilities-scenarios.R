@@ -141,7 +141,14 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfP
     nullAllowed = TRUE
   )
 
-  scenarios <- purrr::map(scenarioConfigurations, ~ Scenario$new(.x, customParams = customParams, stopIfParameterNotFound = stopIfParameterNotFound)) %>%
+  scenarios <- purrr::map(
+    scenarioConfigurations,
+    ~ Scenario$new(.x,
+      customParams = customParams,
+      stopIfParameterNotFound = stopIfParameterNotFound
+    ),
+    .progress = TRUE
+  ) %>%
     purrr::set_names(purrr::map(scenarioConfigurations, ~ .x$scenarioName))
 
   return(scenarios)
@@ -167,7 +174,7 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfP
 #' @return `outputFolder` or the created output folder path, if no `outputFolder` was provided.
 #'
 #' @examples \dontrun{
-#' projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
+#' projectConfiguration <- esqlabsR::createProjectConfiguration()
 #' scenarioConfigurations <- readScenarioConfigurationFromExcel(
 #'   projectConfiguration = projectConfiguration
 #' )
@@ -253,7 +260,7 @@ saveScenarioResults <- function(
 #'
 #' @examples \dontrun{
 #' # First simulate scenarios and save the results
-#' projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
+#' projectConfiguration <- esqlabsR::createProjectConfiguration()
 #' scenarioConfigurations <- readScenarioConfigurationFromExcel(
 #'   projectConfiguration = projectConfiguration
 #' )

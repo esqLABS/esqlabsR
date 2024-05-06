@@ -1,59 +1,63 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+  - Function `exportSteadyStateToXLS` has been removed in favor of
+    `ospsuite::exportSteadyStateToXLS` (\#616)
+  - `{esqlabsR}` project structure changed: (\#635)
+      - `Parameters` folder has been renamed to `Configurations`,
+      - Configuration Excel files have been renamed to be more homogeneous,
+      - `ProjectConfiguration` elements names have been changed according to the
+        new Excel files names.
+        
 ## Major improvements and new features
 
-- `createPlotsFromExcel` gets a new argument `outputFolder`. If provided, the plots 
-are saved in the specified folder. If `NULL`, default results folder as defined 
-in the `ProjectConfiguration` is used (#495, @PavelBal).
+  - `createPlotsFromExcel` gets a new argument `outputFolder`. If provided, the
+    plots are saved in the specified folder. If `NULL`, default results folder
+    as defined in the `ProjectConfiguration` is used (\#495).
+  - `createDefaultProjectConfiguration` is now soft-deprecated in favor of
+    `createProjectConfiguration`.
 
 ## Minor improvements and bug fixes
 
-- Function `createScenarios` gets a new argument `stopIfParameterNotFound`.
-If `TRUE` (default), a scenario will not be created and an error is thrown if 
-any user-defined parameter (e.g., provided in Excel files) is not found in the
-simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
+  - Function `createScenarios` gets a new argument `stopIfParameterNotFound`. If
+    `TRUE` (default), a scenario will not be created and an error is thrown if
+    any user-defined parameter (e.g., provided in Excel files) is not found in
+    the simulation. If `FALSE`, non-existing parameters are ignored. (\#615)
+  - Constructor of a `Scenario` class gets a new argument
+    `stopIfParameterNotFound`.
+  - Function `saveScenarioResults` returns the path where the results were
+    saved.
+  - Loading the package does not set `options(warnPartialMatchDollar = TRUE)`
+    any more.
+  - Function `createEsqlabsExportConfiguration` requires a new argument
+    `outputFolder` instead of `projectConfiguration`.
+  - Function `createPlotsFromExcel` supports `NULL` for arguments
+    `simulatedScenarios` and `observedData` if no simulation results or observed
+    data are required for plot generation.
 
-- Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
-
-- Function `saveScenarioResults` returns the path where the results were saved.
-
-- Loading the package does not set `options(warnPartialMatchDollar = TRUE)` any more.
-
-- Function `createPlotsFromExcel` supports `NULL` for arguments `simulatedScenarios`
-and `observedData` if no simulation results or observed data are required for 
-plot generation.
-
-## Breaking changes
-
-- Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
-
-- Function `createEsqlabsExportConfiguration` requires a new argument `outputFolder` 
-instead of `projectConfiguration`.
-
-- Default excel file for population definitions has been renamed from `PopulationParameters.xlsx`
-to `Populations.xlsx` (#554, @PavelBal)
-
-- Field `populationParamsFile` of the `ProjectConfiguration` class has been renamed to `populationsFile` (#554, @PavelBal)
 
 # esqlabsR 5.1.3
 
 ## Minor improvements and bug fixes
 
-- Continuous Integration/Continuous Deployment pipeline improvements (#590, #592, #601, @Felixmil)
-- Several bug fixes (#581, #585, #594, #600, @PavelBal)
+  - Continuous Integration/Continuous Deployment pipeline improvements (\#590,
+    \#592, \#601)
+  - Several bug fixes (\#581, \#585, \#594, \#600)
 
 # esqlabsR 5.1.2
 
 ## Minor improvements and bug fixes
 
   - Fixes a bug where scenario results could not be saved or loaded when
-    scenario name contains a slash or a backslash (\#548, @PavelBal)
+    scenario name contains a slash or a backslash (\#548)
   - Add support for `nsd` argument from `ospsuite::plotPopulationTimeProfile()`
     aggregation methods. A new column `nsd` was added to the `PlotConfiguration`
-    sheet in the example `Plot.xlsx` (\#544, @Felixmil).
-  - Documentation includes PK-Sim installation instructions (\#537, @Felixmil).
-  - Better error message if some ids are not uniques in the excel configuration files (\#568, @Felixmil)    
-  - Handles better empty rows in the excel configuration files (\#569, @Felixmil)
+    sheet in the example `Plot.xlsx` (\#544).
+  - Documentation includes PK-Sim installation instructions (\#537).
+  - Better error message if some ids are not uniques in the excel configuration
+    files (\#568)
+  - Handles better empty rows in the excel configuration files (\#569)
   - Cleaner NEWS file (\#527).
 
 # esqlabsR 5.1.1
@@ -66,8 +70,10 @@ to `Populations.xlsx` (#554, @PavelBal)
 
   - When importing observed data using the default importer configuration, data
     set naming is grouped by `StudyId` at the first place.
-      - Before: `{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
-      - After: `{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+      - Before: `{Molecule}_{Study Id}_{Subject
+        Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+      - After: `{Study Id}_{Molecule}_{Subject
+        Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
         
     This will result in different data set names, and plots specifying the
     data sets by the old naming will fail. For compatibility, use custom
@@ -140,8 +146,7 @@ to `Populations.xlsx` (#554, @PavelBal)
   
   - Plots are using new color palette.
   
-  - Some modifications to plot configuration files for better plots. (\#456,
-    @PavelBal)
+  - Some modifications to plot configuration files for better plots. (\#456)
 
 # esqlabsR 5.0.0
 
@@ -226,8 +231,8 @@ to `Populations.xlsx` (#554, @PavelBal)
       - Create a `ProjectConfiguration` with
         `createDefaultProjectConfiguration()`
       - Create `ScenarioConfigurations`, e.g. with
-            readScenarioConfigurationFromExcel(scenarioNames,
-            projectConfiguration)`
+        readScenarioConfigurationFromExcel(scenarioNames,
+        projectConfiguration)\`
       - Run scenarios with `runScenarios(scenarioConfigurations)` Alternatively:
       - Create a `ProjectConfiguration` with
         `createDefaultProjectConfiguration()`
@@ -295,7 +300,6 @@ to `Populations.xlsx` (#554, @PavelBal)
   
   - Dark grey frame around legends by default.
 
------
 
 # esqlabsR 4.0.0
 
@@ -337,7 +341,6 @@ to `Populations.xlsx` (#554, @PavelBal)
     not present) and writing to excel file using `writexl::write_xlsx()`.
 
 
------
 
 # esqlabsR 3.0.0
 
@@ -361,13 +364,11 @@ to `Populations.xlsx` (#554, @PavelBal)
   - The package gains a new dependency:
     [`{ospsuite.utils}`](https://www.open-systems-pharmacology.org/OSPSuite.RUtils/).
 
------
 
 # esqlabsR 2.0.0
 
   - Maintenance and bug fixes.
 
------
 
 # esqlabsR 1.0.0
 
