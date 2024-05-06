@@ -6,7 +6,6 @@
 #' @export
 ProjectConfiguration <- R6::R6Class(
   "ProjectConfiguration",
-  inherit = ospsuite.utils::Printable,
   cloneable = TRUE,
   active = list(
     #' @field projectConfigurationFilePath Path to the file that serve as base
@@ -228,24 +227,24 @@ ProjectConfiguration <- R6::R6Class(
     #' Print
     #' @description print prints a summary of the Project Configuration.
     print = function() {
-      private$printClass()
-      private$printLine("Relative path from working directory", getwd())
-      private$printLine("Project Configuration File", fs::path_rel(as.character(self$projectConfigurationFilePath)))
-      private$printLine("Model folder", fs::path_rel(as.character(self$modelFolder)))
-      private$printLine("Configurations folder", fs::path_rel(as.character(self$configurationsFolder)))
-      private$printLine("Model Parameters", fs::path_rel(as.character(self$modelParamsFile)))
-      private$printLine("Individuals", fs::path_rel(as.character(self$individualsFile)))
-      private$printLine("Populations", fs::path_rel(as.character(self$populationsFile)))
-      private$printLine("PopulationsCSV", fs::path_rel(as.character(self$populationsCSV)))
-      private$printLine("Scenarios", fs::path_rel(as.character(self$scenariosFile)))
-      private$printLine("Applications", fs::path_rel(as.character(self$applicationsFile)))
-      private$printLine("Plots", fs::path_rel(as.character(self$plotsFile)))
-      private$printLine("Data folder", fs::path_rel(as.character(self$dataFolder)))
-      private$printLine("Data file", fs::path_rel(as.character(self$dataFile)))
-      private$printLine("Data importer configuration", fs::path_rel(as.character(self$dataImporterConfigurationFile)))
-      private$printLine("Compound Properties File", fs::path_rel(as.character(self$compoundPropertiesFile)))
-      private$printLine("Output folder", fs::path_rel(as.character(self$outputFolder)))
-      invisible(self)
+      cli_h1("Project Configuration")
+      cli_ul()
+      cli_li("Project Configuration: {fs::path_rel(as.character(self$projectConfigurationFilePath))}")
+      cli_li("Model folder: {fs::path_rel(as.character(self$modelFolder))}")
+      cli_li("Configurations folder: {fs::path_rel(as.character(self$configurationsFolder))}")
+      cli_li("Model Parameters: {fs::path_rel(as.character(self$modelParamsFile))}")
+      cli_li("Individuals: {fs::path_rel(as.character(self$individualsFile))}")
+      cli_li("Populations: {fs::path_rel(as.character(self$populationsFile))}")
+      cli_li("PopulationsCSV: {fs::path_rel(as.character(self$populationsCSV))}")
+      cli_li("Scenarios: {fs::path_rel(as.character(self$scenariosFile))}")
+      cli_li("Applications: {fs::path_rel(as.character(self$applicationsFile))}")
+      cli_li("Plots: {fs::path_rel(as.character(self$plotsFile))}")
+      cli_li("Data folder: {fs::path_rel(as.character(self$dataFolder))}")
+      cli_li("Data file: {fs::path_rel(as.character(self$dataFile))}")
+      cli_li("Data importer configuration: {fs::path_rel(as.character(self$dataImporterConfigurationFile))}")
+      cli_li("Compound Properties File: {fs::path_rel(as.character(self$compoundPropertiesFile))}")
+      cli_li("Output folder: {fs::path_rel(as.character(self$outputFolder))}")
+      cli_end()
     },
     #' @description Export ProjectConfiguration object to ProjectConfiguration.xlsx
     #'
