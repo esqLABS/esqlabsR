@@ -26,7 +26,18 @@ ExportConfiguration <- R6::R6Class(
     .height = NULL
   ),
   public = list(
-
+    #' @description Create a new instance of the `ExportConfiguration` class
+    #' @param path,name,format,width,height,units,dpi See [tlf::ExportConfiguration]
+    #' @return An instance of the `ExportConfiguration` class
+    initialize = function(path = NULL,
+                          name = NULL,
+                          format = NULL,
+                          width = NULL,
+                          height = NULL,
+                          units = NULL,
+                          dpi = NULL) {
+      super$initialize(path, name, format, width, height, units, dpi)
+    },
     #' @description Save/Export a plot
     #' @param plotObject A `ggplot` object
     #' @param fileName character file name of the exported plot
