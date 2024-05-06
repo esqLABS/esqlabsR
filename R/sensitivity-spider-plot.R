@@ -160,7 +160,9 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   plotConfigurationList$yAxisType <- yAxisType
   ospsuite.utils::validateIsOption(
     plotConfigurationList,
-    .getPlotConfigurationOptions()
+    .getPlotConfigurationOptions(
+      c(names(spiderPlotConfiguration), "yAxisFacetScales", "yAxisType")
+    )
   )
 
   # extract and prepare data -----------------
