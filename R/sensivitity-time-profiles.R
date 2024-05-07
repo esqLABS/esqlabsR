@@ -115,7 +115,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   data <- dplyr::mutate(
     data,
-    ParameterPath = purrr::map_chr(ParameterPath, .splitParameterName)
+    ParameterPath = purrr::map_chr(
+      ParameterPath, .splitParameterName,
+      equalLines = TRUE
+    )
   )
 
   # filter out data not needed for plotting

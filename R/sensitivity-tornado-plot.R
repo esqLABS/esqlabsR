@@ -291,12 +291,14 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 
 #' @keywords internal
 #' @noRd
-.splitParameterName <- function(x) {
+.splitParameterName <- function(x, equalLines = FALSE) {
   xBreak <- x
   if (!is.null(x)) {
     n <- stringr::str_count(x, stringr::fixed("|"))
-    if (n >= 3) {
+    if (isTRUE(n >= 3)) {
       xBreak <- sub("((?:[^|]*\\|){2}[^|]*)\\|", "\\1|\n", x)
+    } else if (equalLines) {
+      xBreak <- paste0(xBreak, "\n")
     }
   }
 
