@@ -176,6 +176,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     ~ {
       dataSubset <- dplyr::filter(data, ParameterPath == .x)
 
+      # basic plot setup -------------------------
+
       plot <- ggplot() +
         geom_line(
           data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
@@ -194,14 +196,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           size = plotConfiguration$linesSize,
           alpha = plotConfiguration$linesAlpha,
           na.rm = TRUE
-        ) +
-        facet_wrap(~ParameterPath, scales = "free") +
-        theme_bw(base_size = 11) +
-        labs(
-          x = plotConfiguration$xLabel,
-          y = plotConfiguration$yLabel,
-          title = NULL,
-          color = plotConfiguration$legendTitle
         )
 
       # adjusting axis scales
@@ -216,18 +210,33 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           )
       }
 
+      # finalize plot ----------------------------
+
+      # note: facet wrap on unique PK parameter to obtain facet titles
       plot <- plot +
+        facet_wrap(~ParameterPath) +
+        labs(
+          x = plotConfiguration$xLabel,
+          y = plotConfiguration$yLabel,
+          title = NULL,
+          color = plotConfiguration$legendTitle
+        ) +
+        theme_bw(base_size = 11) +
         theme(
           legend.position = plotConfiguration$legendPosition,
-          panel.grid.minor = element_blank()
+          panel.grid.minor = element_blank(),
+          text = element_text(size = 11)
         ) +
-        guides(colour = guide_colourbar(
-          ticks = TRUE,
-          ticks.linewidth = 0.8,
-          ticks.colour = "black",
-          draw.ulim = FALSE,
-          draw.llim = FALSE
-        ))
+        guides(
+          colour = guide_colourbar(
+            ticks = TRUE,
+            ticks.linewidth = 0.8,
+            ticks.color = "black",
+            draw.ulim = FALSE,
+            draw.llim = FALSE
+            ),
+          title.position = "top"
+        )
 
       return(plot)
     }
