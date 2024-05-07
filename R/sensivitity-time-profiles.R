@@ -141,7 +141,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
 }
 
-
 #' @keywords internal
 #' @noRd
 .createTimeProfiles <- function(data,
@@ -163,52 +162,89 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                        unique(data$Unit), "]")
   }
 
-  plot <- ggplot() +
-    geom_line(
-      data = dplyr::filter(data, ParameterFactor != 1.0),
-      aes(x = Time,
-          y = Concentration,
-          group = ParameterFactor,
-          color = ParameterFactor),
-      size = plotConfiguration$linesSize,
-      alpha = plotConfiguration$linesAlpha,
-      na.rm = TRUE
-    ) +
-    geom_line(
-      data = dplyr::filter(data, ParameterFactor == 1.0),
-      aes(Time, Concentration),
-      color = "black",
-      size = plotConfiguration$linesSize,
-      alpha = plotConfiguration$linesAlpha,
-      na.rm = TRUE
-    ) +
-    facet_wrap(~ParameterPath, scales = "free") +
-    theme_bw(base_size = 11) +
-    labs(
-      x = plotConfiguration$xLabel,
-      y = plotConfiguration$yLabel,
-      title = NULL,
-      color = plotConfiguration$legendTitle
-    )
+  # calculate y-axis breaks and limits -------
+  pLimits <- .calculateLimits(data$Concentration)
+  pBreaks <- .calculateBreaks(data$Concentration, m = 5, Q = c(0, 100, 1000))
 
-  # adjusting axis scales
-  if (isTRUE(plotConfiguration$xAxisScale == "log")) {
-    plot <- plot + scale_x_log10()
-  }
-  if (isTRUE(plotConfiguration$yAxisScale == "log")) {
-    plot <- plot + scale_y_log10()
-  }
+  # map each parameter path to its own plot ----
 
-  plot +
-    theme(
-      legend.position = plotConfiguration$legendPosition,
-      panel.grid.minor = element_blank()
+  plotList <- purrr::map(
+    unique(data$ParameterPath),
+    ~ {
+      dataSubset <- dplyr::filter(data, ParameterPath == .x)
+
+      plot <- ggplot() +
+        geom_line(
+          data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
+          aes(x = Time,
+              y = Concentration,
+              group = ParameterFactor,
+              color = ParameterFactor),
+          size = plotConfiguration$linesSize,
+          alpha = plotConfiguration$linesAlpha,
+          na.rm = TRUE
+        ) +
+        geom_line(
+          data = dplyr::filter(dataSubset, ParameterFactor == 1.0),
+          aes(Time, Concentration),
+          color = "black",
+          size = plotConfiguration$linesSize,
+          alpha = plotConfiguration$linesAlpha,
+          na.rm = TRUE
+        ) +
+        facet_wrap(~ParameterPath, scales = "free") +
+        theme_bw(base_size = 11) +
+        labs(
+          x = plotConfiguration$xLabel,
+          y = plotConfiguration$yLabel,
+          title = NULL,
+          color = plotConfiguration$legendTitle
+        )
+
+      # adjusting axis scales
+      if (isTRUE(plotConfiguration$xAxisScale == "log")) {
+        plot <- plot + scale_x_log10()
+      }
+      if (isTRUE(plotConfiguration$yAxisScale == "log")) {
+        plot <- plot +
+          scale_y_log10(
+            limits = (pLimits + 1),
+            breaks = pBreaks
+          )
+      }
+
+      plot <- plot +
+        theme(
+          legend.position = plotConfiguration$legendPosition,
+          panel.grid.minor = element_blank()
+        ) +
+        guides(colour = guide_colourbar(
+          ticks = TRUE,
+          ticks.linewidth = 0.8,
+          ticks.colour = "black",
+          draw.ulim = FALSE,
+          draw.llim = FALSE
+        ))
+
+      return(plot)
+    }
+  )
+
+  # compile individual plots -----------------
+
+  plotPatchwork <- patchwork::wrap_plots(plotList) +
+    patchwork::plot_annotation(
+      title = plotConfiguration$title,
+      subtitle = plotConfiguration$subtitle,
+      theme = theme(
+        plot.title = element_text(size = plotConfiguration$titleSize)
+      )
     ) +
-    guides(colour = guide_colourbar(
-      ticks = TRUE,
-      ticks.linewidth = 0.8,
-      ticks.colour = "black",
-      draw.ulim = FALSE,
-      draw.llim = FALSE
-    ))
+    patchwork::plot_layout(
+      guides = "collect", axes = "collect", ncol = length(plotList)
+    ) &
+    theme(legend.position = plotConfiguration$legendPosition)
+
+  return(plotPatchwork)
+
 }
