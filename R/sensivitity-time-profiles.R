@@ -52,31 +52,70 @@
 sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     outputPaths = NULL,
                                     parameterPaths = NULL,
-                                    xAxisLog = FALSE,
-                                    yAxisLog = TRUE,
-                                    palette = "Cold",
-                                    savePlots = FALSE,
-                                    outputFolder = "",
-                                    width = 16,
-                                    height = 9,
-                                    dpi = 300) {
+                                    xAxisScale = NULL,
+                                    yAxisScale = NULL,
+                                    # observedData = NULL,
+                                    defaultPlotConfiguration = NULL) {
   # input validation ------------------------
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  validateIsCharacter(outputFolder, nullAllowed = FALSE)
+  if (is.null(defaultPlotConfiguration)) {
+    defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
+  } else {
+    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
+  }
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
 
-  # filter data ------------------------
+  # default time profiles plot configuration setup ----
+
+  timeProfilesConfiguration <- list(
+    xAxisScale = "lin",
+    xLabel = NULL,
+    yLabel = NULL,
+    yAxisScale = "log",
+    legendPosition = "right",
+    legendTitle    = "Parameter factor",
+    linesSize      = 1.4,
+    linesAlpha     = 0.7,
+    title          = NULL,
+    titleSize      = 14
+  )
+  # override default plot configuration with function parameters
+  customPlotConfiguration <- defaultPlotConfiguration$clone()
+  if (!is.null(xAxisScale)) customPlotConfiguration$xAxisScale <- xAxisScale
+  if (!is.null(yAxisScale)) customPlotConfiguration$yAxisScale <- yAxisScale
+
+  # override only default configuration values with settings for spider plot
+  customPlotConfiguration <- .updatePlotConfiguration(
+    customPlotConfiguration, timeProfilesConfiguration
+  )
+
+  # validate plot configuration for valid options
+  plotConfigurationList <- purrr::map(
+    purrr::set_names(names(customPlotConfiguration)),
+    ~ customPlotConfiguration[[.]]
+  )
+  ospsuite.utils::validateIsOption(
+    plotConfigurationList,
+    .getPlotConfigurationOptions(names(timeProfilesConfiguration))
+  )
+
+  # prepare data ------------------------
 
   # extract the needed dataframe from the object
   data <- .simulationResultsBatchToTimeSeriesDataFrame(
     simulationResultsBatch = sensitivityCalculation$simulationResults,
     parameterPaths         = sensitivityCalculation$parameterPaths,
     outputPaths            = sensitivityCalculation$outputPaths
+  )
+
+  data <- dplyr::mutate(
+    data,
+    ParameterPath = purrr::map_chr(ParameterPath, .splitParameterName)
   )
 
   # filter out data not needed for plotting
@@ -94,78 +133,75 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     .x = data %>% split(.$OutputPath),
     .f = ~ .createTimeProfiles(
       .x,
-      xAxisLog = xAxisLog,
-      yAxisLog = yAxisLog,
-      palette = palette
+      defaultPlotConfiguration = customPlotConfiguration
     )
   )
 
-  # if needed, save plots with given specs
-  if (savePlots) {
-    .savePlotList(
-      lsPlots,
-      plot.type = "Profile_",
-      outputFolder = outputFolder,
-      height = height,
-      width = width,
-      dpi = dpi
-    )
-
-    return(invisible())
-  }
-
   # print plots without producing warnings
-  suppressWarnings(purrr::map(lsPlots, ~ print(.x)))
+  suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
 }
 
 
 #' @keywords internal
 #' @noRd
 .createTimeProfiles <- function(data,
-                                xAxisLog = FALSE,
-                                yAxisLog = TRUE,
-                                palette = NULL) {
+                                defaultPlotConfiguration) {
+  # update data dependent plot configuration
+  plotConfiguration <- defaultPlotConfiguration$clone()
+  plotConfiguration <- .updatePlotConfiguration(
+    plotConfiguration,
+    list(title = unique(data$OutputPath))
+  )
+
+  # create axis labels
+  if (is.null(plotConfiguration$xLabel)) {
+    plotConfiguration$xLabel <- paste0(unique(data$TimeDimension), " [",
+                                       unique(data$TimeUnit), "]")
+  }
+  if (is.null(plotConfiguration$yLabel)) {
+    plotConfiguration$yLabel <- paste0(unique(data$Dimension), " [",
+                                       unique(data$Unit), "]")
+  }
+
   plot <- ggplot() +
     geom_line(
       data = dplyr::filter(data, ParameterFactor != 1.0),
-      aes(Time, Concentration, group = ParameterFactor, color = ParameterFactor),
-      size = 1.4,
-      alpha = 0.7,
+      aes(x = Time,
+          y = Concentration,
+          group = ParameterFactor,
+          color = ParameterFactor),
+      size = plotConfiguration$linesSize,
+      alpha = plotConfiguration$linesAlpha,
       na.rm = TRUE
-    ) +
-    colorspace::scale_color_continuous_qualitative(
-      palette = palette,
-      breaks = c(min(data$ParameterFactor), 1, max(data$ParameterFactor)),
-      limits = c(min(data$ParameterFactor), max(data$ParameterFactor))
     ) +
     geom_line(
       data = dplyr::filter(data, ParameterFactor == 1.0),
       aes(Time, Concentration),
       color = "black",
-      size = 1.4,
-      alpha = 0.7,
+      size = plotConfiguration$linesSize,
+      alpha = plotConfiguration$linesAlpha,
       na.rm = TRUE
     ) +
-    facet_wrap(~ParameterPath, labeller = label_wrap_gen(width = 0)) +
-    theme_bw(base_size = 9) +
+    facet_wrap(~ParameterPath, scales = "free") +
+    theme_bw(base_size = 11) +
     labs(
-      x = paste0(unique(data$TimeDimension), " [", unique(data$TimeUnit), "]"),
-      y = paste0(unique(data$Dimension), " [", unique(data$Unit), "]"),
-      title = unique(data$OutputPath),
-      color = "Parameter factor"
+      x = plotConfiguration$xLabel,
+      y = plotConfiguration$yLabel,
+      title = NULL,
+      color = plotConfiguration$legendTitle
     )
 
-  if (xAxisLog) {
+  # adjusting axis scales
+  if (isTRUE(plotConfiguration$xAxisScale == "log")) {
     plot <- plot + scale_x_log10()
   }
-
-  if (yAxisLog) {
+  if (isTRUE(plotConfiguration$yAxisScale == "log")) {
     plot <- plot + scale_y_log10()
   }
 
   plot +
     theme(
-      legend.position = "bottom",
+      legend.position = plotConfiguration$legendPosition,
       panel.grid.minor = element_blank()
     ) +
     guides(colour = guide_colourbar(
