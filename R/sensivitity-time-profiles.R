@@ -168,6 +168,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # calculate y-axis breaks and limits -------
   pLimits <- .calculateLimits(data$Concentration)
   pBreaks <- .calculateBreaks(data$Concentration, m = 5, Q = c(0, 100, 1000))
+  cBreaks <- c(1, data$ParameterFactor)
+  cBreaks <- unique(ifelse(cBreaks == 0 | is.na(cBreaks), 1, cBreaks))
 
   # map each parameter path to its own plot ----
 
@@ -237,6 +239,32 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
             ),
           title.position = "top"
         )
+
+      # apply color scales
+      if (is.null(plotConfiguration$linesColor)) {
+        plot <- plot +
+          colorspace::scale_color_continuous_diverging(
+            palette = "Blue-Yellow 2",
+            mid = log10(1),
+            transform = "log",
+            breaks = cBreaks
+          )
+      } else {
+        plot <- plot +
+          scale_color_gradient2(
+            name = plotConfiguration$legendTitle,
+            low = colorspace::darken(
+              plotConfiguration$linesColor[1], amount = 0.2
+            ),
+            mid = "white",
+            high = colorspace::darken(
+              plotConfiguration$linesColor[2], amount = 0.2
+            ),
+            transform = "log",
+            midpoint = 1,
+            breaks = cBreaks
+          )
+      }
 
       return(plot)
     }
