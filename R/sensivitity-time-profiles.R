@@ -1,21 +1,52 @@
 #' @name sensitivityTimeProfiles
-#' @title Create a concentration-time profile plot
+#' @title Sensitivity Time Profiles for Pharmacokinetic Parameters
 #'
-#' @inheritParams sensitivitySpiderPlot
-#' @inheritParams sensitivityCalculation
-#' @inheritParams colorspace::scale_color_continuous_qualitative
+#' #' @description
+#' Generates time profiles for pharmacokinetic parameters under various
+#' sensitivity scenarios. This function plots concentration-time profiles
+#' for each scaled parameter specified, illustrating the dynamics of
+#' pharmacokinetic responses to parameter variations.
+#'
+#' @param sensitivityCalculation The `SensitivityCalculation` object returned by
+#' `sensitivityCalculation()`.
+#' @param outputPaths,parameterPaths,pkParameters A single or a vector of the
+#' output path(s), parameter path(s), and PK parameters to be displayed,
+#' respectively. If `NULL`, all included paths and parameters present in the
+#' supplied `SensitivityCalculation` object will be displayed in the
+#' visualization.
+#' A separate plot will be generated for each output path. Each plot will
+#' contain a spider plot panel for each PK parameter, and the sensitivities
+#' for each parameter will be displayed as lines.
+#' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
+#' (linear scale), to set the x-axis scale. Default is "log".
+#' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
+#' scale similarly to `xAxisScale`. Default is "lin".
+#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
+#' used to customize plot aesthetics. Plot-specific settings provided directly
+#' to the function, such as `xAxisScale`, will take precedence over any
+#' modifications in `defaultPlotConfiguration`. If not provided, default
+#' settings are applied.
+#'
+#' Supported parameters for `defaultPlotConfiguration` include:
+#' - `legendPosition`: Specifies the position of the plot legend.
+#' - `legendTitle`: Sets the title displayed for the legend.
+#' - `linesAlpha`: Alpha transparency for the line elements.
+#' - `linesColor`: Color of the line elements.
+#' - `linesSize`: Thickness of the line elements.
+#' - `title`: Main title text for the plot.
+#' - `titleSize`: Font size of the plot title.
+#' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
+#' - `xLabel`: Label text for the x-axis.
+#' - `yAxisScale`: Scale type for the y-axis (`"log"` or `"lin"`).
+#' - `yLabel`: Label text for the y-axis.
 #'
 #' @import ggplot2
-#' @import dplyr
-#' @import colorspace
 #'
 #' @family sensitivity-calculation
 #'
-#' @return
-#'
-#' A single `ggplot` object if a single output path is specified.
-#'
-#' A list of `ggplot` objects if multiple output paths are specified.
+#' @return A `patchwork` object containing the combined ggplot objects if a
+#' single output path is specified, or a list of `patchwork` objects for
+#' multiple output paths.
 #'
 #' @examples
 #' \dontrun{
@@ -28,25 +59,23 @@
 #'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 #' )
 #'
-#' # extract the results into a list of dataframes
 #' results <- sensitivityCalculation(
 #'   simulation = simulation,
 #'   outputPaths = outputPaths,
 #'   parameterPaths = parameterPaths
 #' )
 #'
-#' # print plots
+#' # Print plots with default settings
 #' sensitivityTimeProfiles(results)
 #'
-#' # print and save plots
-#' if (FALSE) {
-#'   sensitivityTimeProfiles(
-#'     results,
-#'     savePlots = TRUE,
-#'     height = 6,
-#'     width = 12
-#'   )
-#' }
+#' # Print plots with logarithmically transformed y-axis values
+#' sensitivityTimeProfiles(results, yAxisScale = "log")
+#'
+#' # Print plots with custom configuration settings
+#' myPlotConfiguration <- createEsqlabsPlotConfiguration()
+#' myPlotConfiguration$linesColor <- c("#4D8076", "#C34A36")
+#' myPlotConfiguration$subtitle <- "Custom settings"
+#' sensitivityTimeProfiles(results, defaultPlotConfiguration = myPlotConfiguration)
 #' }
 #' @export
 sensitivityTimeProfiles <- function(sensitivityCalculation,
@@ -73,16 +102,16 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # default time profiles plot configuration setup ----
 
   timeProfilesConfiguration <- list(
+    legendPosition = "right",
+    legendTitle = "Parameter factor",
+    linesAlpha = 0.7,
+    linesSize = 1.4,
+    title = NULL,
+    titleSize = 14,
     xAxisScale = "lin",
     xLabel = NULL,
-    yLabel = NULL,
     yAxisScale = "log",
-    legendPosition = "right",
-    legendTitle    = "Parameter factor",
-    linesSize      = 1.4,
-    linesAlpha     = 0.7,
-    title          = NULL,
-    titleSize      = 14
+    yLabel = NULL
   )
   # override default plot configuration with function parameters
   customPlotConfiguration <- defaultPlotConfiguration$clone()
