@@ -236,7 +236,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       if (isTRUE(plotConfiguration$yAxisScale == "log")) {
         plot <- plot +
           scale_y_log10(
-            limits = (pLimits + 1),
+            limits = replace(pLimits, pLimits == 0, 0.001),
             breaks = pBreaks
           )
       }
