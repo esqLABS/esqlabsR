@@ -251,15 +251,16 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           y = plotConfiguration$yLabel,
           title = NULL,
           color = plotConfiguration$legendTitle
-        ) +
+        )
+
+      # theme adjustments
+      plot <- plot +
         theme_bw(base_size = 11) +
         theme(
           legend.position = plotConfiguration$legendPosition,
           panel.grid.minor = element_blank(),
           text = element_text(size = 11)
-        )
-
-      plot <- plot +
+        ) +
         guides(
           color = guide_colorbar(
             title = plotConfiguration$legendTitle,
@@ -295,8 +296,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
             breaks = cBreaks
           )
       }
-
-
 
       return(plot)
     }
