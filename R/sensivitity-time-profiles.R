@@ -102,7 +102,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # default time profiles plot configuration setup ----
 
   timeProfilesConfiguration <- list(
-    legendPosition = "right",
+    legendPosition = "bottom",
     legendTitle = "Parameter factor",
     linesAlpha = 0.7,
     linesSize = 1.4,
@@ -257,16 +257,17 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           legend.position = plotConfiguration$legendPosition,
           panel.grid.minor = element_blank(),
           text = element_text(size = 11)
-        ) +
+        )
+
+      plot <- plot +
         guides(
-          colour = guide_colourbar(
-            ticks = TRUE,
-            ticks.linewidth = 0.8,
-            ticks.color = "black",
+          color = guide_colorbar(
+            title = plotConfiguration$legendTitle,
+            ticks = FALSE,
             draw.ulim = FALSE,
-            draw.llim = FALSE
-            ),
-          title.position = "top"
+            draw.llim = FALSE,
+            title.position = "top"
+          )
         )
 
       # apply color scales
@@ -294,6 +295,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
             breaks = cBreaks
           )
       }
+
+
 
       return(plot)
     }
