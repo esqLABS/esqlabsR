@@ -240,6 +240,11 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
             limits = replace(pLimits, pLimits == 0, 0.001),
             breaks = pBreaks
           )
+      } else {
+        plot <- plot +
+          scale_y_continuous(
+            limits = pLimits,
+            breaks = pBreaks)
       }
 
       # finalize plot ----------------------------
