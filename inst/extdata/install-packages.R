@@ -128,7 +128,7 @@ run_test_simulation <- function() {
       require(esqlabsR)
 
       suppressWarnings({
-        projectConfiguration <- createDefaultProjectConfiguration(path = esqlabsR:::test_ProjectConfiguration())
+        projectConfiguration <- createProjectConfiguration(path = esqlabsR::example_ProjectConfiguration())
       })
       # Define which scenarios to run
       scenarioNames <- c("TestScenario")
@@ -176,7 +176,7 @@ update_project_conf <- function() {
     )[1]
 
   project_configuration <-
-    createDefaultProjectConfiguration(path = "../ProjectConfiguration.xlsx")
+    createProjectConfiguration(path = "../ProjectConfiguration.xlsx")
 
   new_timevalue_name <- rename_timevalue_file()
 

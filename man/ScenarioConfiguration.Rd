@@ -19,9 +19,9 @@ An object storing configuration of a specific scenario
 extension ".pkml"). Must be located in the "modelFolder".}
 
 \item{\code{applicationProtocol}}{Name of the application protocol to be applied. Defined
-in the excel file "ApplicationParameters.xlsx"}
+in the excel file "Applications.xlsx"}
 
-\item{\code{individualId}}{Id of the individual as specified in "IndividualParameters.xlsx".
+\item{\code{individualId}}{Id of the individual as specified in "Individuals.xlsx".
 If \code{NULL} (default), the individual as defined in the simulation file will be simulated.}
 
 \item{\code{populationId}}{Id of the population as specified in "Populations.xlsx",

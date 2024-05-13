@@ -1,41 +1,34 @@
 #' @title ExportConfiguration
 #' @description R6 class defining properties for saving a `ggplot` object
-#' @field name character defining the name of the file to be saved (without extension)
-#' @field path Path of the directory to save plot to: path and filename are
-#' combined to create the fully qualified file name. Defaults to the working directory.
-#' @field format character defining the format of the file to be saved
-#' @field width numeric values defining the width in `units` of the plot dimensions after saving
-#' @field height numeric values defining the height in `units` of the plot dimensions after saving.
-#' Only used if `heightPerRow` is `NULL`.
-#' @field units character defining the unit of the saving dimension
-#' @field dpi (dots per inch) numeric value defining plot resolution
 #' @export
 #' @import ggplot2
 #' @family PlotConfiguration classes
 ExportConfiguration <- R6::R6Class(
   "ExportConfiguration",
   inherit = tlf::ExportConfiguration,
-  active = list(
-    #' @field heightPerRow The height of the plot dimensions for a row in a multi
-    #' pannel plot. The final height of the figure will be 'heightPerRow' times
-    #' the number of rows.
-    #' If `NULL` (default), value used in `height` is used. If not `NULL`, this
-    #' value always overrides the `height` property.
-    heightPerRow = function(value) {
-      if (missing(value)) {
-        private$.heightPerRow
-      } else {
-        validateIsNumeric(value)
-        private$.heightPerRow <- value
-      }
-    }
-  ),
-  private = list(
-    .heightPerRow = NULL,
-    .height = NULL
-  ),
   public = list(
+    #' @field heightPerRow The export configuration height per row.
+    heightPerRow = NULL,
+    #' @description Create a new instance of the `ExportConfiguration` class
+    #' @param path,name,format,width,height,units,dpi See [tlf::ExportConfiguration]
+    #' @param heightPerRow The height of a row in a multi-panel plot. The final
+    #' height of the figure will be 'heightPerRow' times the number of rows. If
+    #' `NULL` (default), value used in `height` is used for the total height of
+    #' the figure, regardless of the number of rows.
+    #' @return An instance of the `ExportConfiguration` class
+    initialize = function(path = NULL,
+                          name = NULL,
+                          format = NULL,
+                          width = NULL,
+                          height = NULL,
+                          units = NULL,
+                          dpi = NULL,
+                          heightPerRow = NULL) {
+      super$initialize(path, name, format, width, height, units, dpi)
 
+      validateIsNumeric(heightPerRow, nullAllowed = T)
+      self$heightPerRow <- heightPerRow
+    },
     #' @description Save/Export a plot
     #' @param plotObject A `ggplot` object
     #' @param fileName character file name of the exported plot

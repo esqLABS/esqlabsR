@@ -23,31 +23,34 @@ paths.}
 
 \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
 
-\item{\code{paramsFolder}}{Path to the folder containing excel files with model
+\item{\code{configurationsFolder}}{Path to the folder containing excel files with model
 parameterization;}
 
-\item{\code{paramsFile}}{Name of the excel file with global model
+\item{\code{modelParamsFile}}{Name of the excel file with global model
 parameterization.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
 \item{\code{individualsFile}}{Name of the excel file with
 individual-specific model parameterization.
-Must be located in the "paramsFolder"}
+Must be located in the "configurationsFolder"}
 
 \item{\code{populationsFile}}{Name of the excel file with population
 information.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
-\item{\code{scenarioDefinitionFile}}{Name of the excel file with scenario
+\item{\code{populationsFolder}}{Name of the folder containing population defined through csv files
+Must be located in the "configurationsFolder".}
+
+\item{\code{scenariosFile}}{Name of the excel file with scenario
 definitions.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
-\item{\code{scenarioApplicationsFile}}{Name of the excel file scenario-specific
+\item{\code{applicationsFile}}{Name of the excel file scenario-specific
 parameters such as application protocol parameters.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
 \item{\code{plotsFile}}{Name of the excel file with plot definitions.
-Must be located in the "paramsFolder".}
+Must be located in the "configurationsFolder".}
 
 \item{\code{dataFolder}}{Path to the folder where experimental data files are
 located.}
@@ -57,10 +60,6 @@ Must be located in the "dataFolder"}
 
 \item{\code{dataImporterConfigurationFile}}{Name of data importer configuration
 file in xml format used to load the data.
-Must be located in the "dataFolder"}
-
-\item{\code{compoundPropertiesFile}}{Path to the excel file containing
-information about all compounds in the model.
 Must be located in the "dataFolder"}
 
 \item{\code{outputFolder}}{Path to the folder where the results should be

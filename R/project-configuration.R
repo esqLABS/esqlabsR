@@ -32,154 +32,228 @@ ProjectConfiguration <- R6::R6Class(
     },
     #' @field modelFolder Path to the folder containing pkml simulation files.
     modelFolder = function(value) {
-      if (missing(value)) {
-        value <- private$.modelFolder
+      if (!missing(value)) {
+        private$.projectConfigurationData$modelFolder$value <- value
       }
-      private$.modelFolder <- value
-      private$.clean_path(value, self$projectConfigurationDirPath)
+      private$.clean_path(
+        private$.projectConfigurationData$modelFolder$value,
+        self$projectConfigurationDirPath
+      )
     },
-    #' @field paramsFolder Path to the folder containing excel files with model
+    #' @field configurationsFolder Path to the folder containing excel files with model
     #' parameterization;
-    paramsFolder = function(value) {
-      if (missing(value)) {
-        value <- private$.paramsFolder
+    configurationsFolder = function(value) {
+      if (!missing(value)) {
+        private$.projectConfigurationData$configurationsFolder$value <- value
       }
-      private$.paramsFolder <- value
-      private$.clean_path(value, self$projectConfigurationDirPath)
+      private$.clean_path(
+        private$.projectConfigurationData$configurationsFolder$value,
+        self$projectConfigurationDirPath
+      )
     },
-    #' @field paramsFile Name of the excel file with global model
+    #' @field modelParamsFile Name of the excel file with global model
     #' parameterization.
-    #' Must be located in the "paramsFolder".
-    paramsFile = function(value) {
-      if (missing(value)) {
-        value <- private$.paramsFile
+    #' Must be located in the "configurationsFolder".
+    modelParamsFile = function(value) {
+      if (!missing(value)) {
+        private$.projectConfigurationData$modelParamsFil$valuee <- value
       }
-      private$.paramsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(
+        private$.projectConfigurationData$modelParamsFile$value,
+        self$configurationsFolder
+      )
     },
     #' @field individualsFile Name of the excel file with
     #' individual-specific model parameterization.
-    #' Must be located in the "paramsFolder"
+    #' Must be located in the "configurationsFolder"
     individualsFile = function(value) {
-      if (missing(value)) {
-        value <- private$.individualsFile
+      if (!missing(value)) {
+        private$.projectConfigurationData$individualsFile$value <- value
       }
-      private$.individualsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(
+        private$.projectConfigurationData$individualsFile$value,
+        self$configurationsFolder
+      )
     },
     #' @field populationsFile Name of the excel file with population
     #' information.
-    #' Must be located in the "paramsFolder".
+    #' Must be located in the "configurationsFolder".
     populationsFile = function(value) {
-      if (missing(value)) {
-        value <- private$.populationsFile
+      if (!missing(value)) {
+        private$.projectConfigurationData$populationsFile$value <- value
       }
-      private$.populationsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(
+        private$.projectConfigurationData$populationsFile$value,
+        self$configurationsFolder
+      )
     },
-    #' @field scenarioDefinitionFile Name of the excel file with scenario
+    #' @field populationsFolder Name of the folder containing population defined through csv files
+    #' Must be located in the "configurationsFolder".
+    populationsFolder = function(value) {
+      if (!missing(value)) {
+        private$.projectConfigurationData$populationsFolder$value <- value
+      }
+      private$.clean_path(
+        private$.projectConfigurationData$populationsFolder$value,
+        self$configurationsFolder
+      )
+    },
+    #' @field scenariosFile Name of the excel file with scenario
     #' definitions.
-    #' Must be located in the "paramsFolder".
-    scenarioDefinitionFile = function(value) {
-      if (missing(value)) {
-        value <- private$.scenarioDefinitionFile
+    #' Must be located in the "configurationsFolder".
+    scenariosFile = function(value) {
+      if (!missing(value)) {
+        private$.projectConfigurationData$scenariosFile$value <- value
       }
-      private$.scenarioDefinitionFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(
+        private$.projectConfigurationData$scenariosFile$value,
+        self$configurationsFolder
+      )
     },
-    #' @field scenarioApplicationsFile Name of the excel file scenario-specific
+    #' @field applicationsFile Name of the excel file scenario-specific
     #'  parameters such as application protocol parameters.
-    #'  Must be located in the "paramsFolder".
-    scenarioApplicationsFile = function(value) {
-      if (missing(value)) {
-        value <- private$.scenarioApplicationsFile
+    #'  Must be located in the "configurationsFolder".
+    applicationsFile = function(value) {
+      if (!missing(value)) {
+        private$.projectConfigurationData$applicationsFile$value <- value
       }
-      private$.scenarioApplicationsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(
+        private$.projectConfigurationData$applicationsFile$value,
+        self$configurationsFolder
+      )
     },
     #' @field plotsFile Name of the excel file with plot definitions.
-    #' Must be located in the "paramsFolder".
+    #' Must be located in the "configurationsFolder".
     plotsFile = function(value) {
-      if (missing(value)) {
-        value <- private$.plotsFile
+      if (!missing(value)) {
+        private$.projectConfigurationData$plotsFile$value <- value
       }
-      private$.plotsFile <- value
-      private$.clean_path(value, self$paramsFolder)
+      private$.clean_path(
+        private$.projectConfigurationData$plotsFile$value,
+        self$configurationsFolder
+      )
     },
     #' @field dataFolder Path to the folder where experimental data files are
     #' located.
     dataFolder = function(value) {
-      if (missing(value)) {
-        value <- private$.dataFolder
+      if (!missing(value)) {
+        private$.projectConfigurationData$dataFolder$value <- value
       }
-      private$.dataFolder <- value
-      private$.clean_path(value, self$projectConfigurationDirPath)
+      private$.clean_path(
+        private$.projectConfigurationData$dataFolder$value,
+        self$projectConfigurationDirPath
+      )
     },
     #' @field dataFile Name of the excel file with experimental data.
     #' Must be located in the "dataFolder"
     dataFile = function(value) {
-      if (missing(value)) {
-        value <- private$.dataFile
+      if (!missing(value)) {
+        private$.projectConfigurationData$dataFile$value <- value
       }
-      private$.dataFile <- value
-      private$.clean_path(value, self$dataFolder)
+      private$.clean_path(
+        private$.projectConfigurationData$dataFile$value,
+        self$dataFolder
+      )
     },
     #' @field dataImporterConfigurationFile Name of data importer configuration
     #' file in xml format used to load the data.
     #' Must be located in the "dataFolder"
     dataImporterConfigurationFile = function(value) {
-      if (missing(value)) {
-        value <- private$.dataImporterConfigurationFile
+      if (!missing(value)) {
+        private$.projectConfigurationData$dataImporterConfigurationFile$value <- value
       }
-      private$.dataImporterConfigurationFile <- value
-      private$.clean_path(value, self$dataFolder)
-    },
-    #' @field compoundPropertiesFile Path to the excel file containing
-    #' information about all compounds in the model.
-    #' Must be located in the "dataFolder"
-    compoundPropertiesFile = function(value) {
-      if (missing(value)) {
-        value <- private$.compoundPropertiesFile
-      }
-      private$.compoundPropertiesFile <- value
-      private$.clean_path(value, self$dataFolder, must_work = FALSE)
+      private$.clean_path(
+        private$.projectConfigurationData$dataImporterConfigurationFile$value,
+        self$dataFolder
+      )
     },
     #' @field outputFolder Path to the folder where the results should be
     #' saved to; relative to the "Code" folder
     outputFolder = function(value) {
-      if (missing(value)) {
-        value <- private$.outputFolder
+      if (!missing(value)) {
+        private$.projectConfigurationData$outputFolder$value <- value
       }
-      private$.outputFolder <- value
-      private$.clean_path(value, self$projectConfigurationDirPath, must_work = FALSE)
+      private$.clean_path(private$.projectConfigurationData$outputFolder$value,
+        self$projectConfigurationDirPath,
+        must_work = FALSE
+      )
     }
   ),
   private = list(
+    .projectConfigurationData = NULL,
     .projectConfigurationFilePath = NULL,
     .projectConfigurationDirPath = NULL,
-    .modelFolder = NULL,
-    .paramsFolder = NULL,
-    .paramsFile = NULL,
-    .individualsFile = NULL,
-    .populationsFile = NULL,
-    .scenarioDefinitionFile = NULL,
-    .scenarioApplicationsFile = NULL,
-    .plotsFile = NULL,
-    .dataFolder = NULL,
-    .dataFile = NULL,
-    .dataImporterConfigurationFile = NULL,
-    .compoundPropertiesFile = NULL,
-    .outputFolder = NULL,
+    .checkProjectConfigurationFile = function() {
+      data <- private$.projectConfigurationData
+
+      # Check if read data is from V5, if yes, load and rename the objects to
+      # make it compatible with v6.
+      if (all(c(
+        "paramsFolder",
+        "paramsFile",
+        "individualsFile",
+        "populationParamsFile",
+        "scenarioDefinitionFile",
+        "scenarioApplicationsFile",
+        "plotsFile",
+        "dataFolder",
+        "dataFile",
+        "dataImporterConfigurationFile",
+        "compoundPropertiesFile",
+        "outputFolder"
+      ) %in% names(data))) {
+        cli::cli_warn(c(
+          "!" = "The project configuration file layout used is from an older version of the package.",
+          "i" = "This version is still supported and will be loaded but it is recommended to update the project configuration file.
+                           To do so, use the {.code $save} method of the project configuration object."
+        ))
+
+
+        data$configurationsFolder <- data$paramsFolder
+        data$modelParamsFile <- data$paramsFile
+        data$populationsFile <- data$populationParamsFile
+        data$scenariosFile <- data$scenarioDefinitionFile
+        data$applicationsFile <- data$scenarioApplicationsFile
+        data$populationsFolder <- list(value = NA, description = "Name of the folder containing population defined in files")
+
+        data$paramsFolder <- NULL
+        data$paramsFile <- NULL
+        data$populationParamsFile <- NULL
+        data$scenarioDefinitionFile <- NULL
+        data$scenarioApplicationsFile <- NULL
+        data$compoundPropertiesFile <- NULL
+      }
+
+      # If one of the excel configuration is not expected, return an error.
+      for (property in names(data)) {
+        if (!(property %in% names(self))) {
+          cli::cli_abort(c("x" = "Property {property} is not a valid configuration property for {self$projectConfigurationFilePath}"))
+        }
+      }
+      private$.projectConfigurationData <- data
+    },
     .read_config = function(file_path) {
       path <- private$.clean_path(file_path)
       # Update private values
       private$.projectConfigurationFilePath <- path
       private$.projectConfigurationDirPath <- dirname(path)
 
-      data <- readExcel(path = path)
-      for (property in data$Property) {
+      inputData <- readExcel(path = path)
+
+      .projectConfigurationData <- list()
+
+      for (property in inputData$Property) {
+        private$.projectConfigurationData[[property]] <- list(
+          value = inputData$Value[inputData$Property == property],
+          description = inputData$Description[inputData$Property == property]
+        )
+      }
+
+      private$.checkProjectConfigurationFile()
+
+      for (property in colnames(private$.projectConfigurationData)) {
         # Update each private property
-        self[[property]] <- data[data$Property == property, ]$Value
+        self[[property]] <- private$.projectConfigurationData[[property]]$value
       }
     },
     .clean_path = function(path, parent = NULL, must_work = TRUE) {
@@ -222,17 +296,17 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Relative path from working directory", getwd())
       private$printLine("Project Configuration File", fs::path_rel(as.character(self$projectConfigurationFilePath)))
       private$printLine("Model folder", fs::path_rel(as.character(self$modelFolder)))
-      private$printLine("Parameters folder", fs::path_rel(as.character(self$paramsFolder)))
-      private$printLine("Parameters file name", fs::path_rel(as.character(self$paramsFile)))
-      private$printLine("Individual parameters file name", fs::path_rel(as.character(self$individualsFile)))
-      private$printLine("Population parameters file name", fs::path_rel(as.character(self$populationsFile)))
-      private$printLine("Scenario definitions file name", fs::path_rel(as.character(self$scenarioDefinitionFile)))
-      private$printLine("Scenario applications definitions file name", fs::path_rel(as.character(self$scenarioApplicationsFile)))
-      private$printLine("Plot definitions file name", fs::path_rel(as.character(self$plotsFile)))
-      private$printLine("Experimental data folder", fs::path_rel(as.character(self$dataFolder)))
-      private$printLine("Experimental data file", fs::path_rel(as.character(self$dataFile)))
+      private$printLine("Configurations folder", fs::path_rel(as.character(self$configurationsFolder)))
+      private$printLine("Model Parameters", fs::path_rel(as.character(self$modelParamsFile)))
+      private$printLine("Individuals", fs::path_rel(as.character(self$individualsFile)))
+      private$printLine("Populations", fs::path_rel(as.character(self$populationsFile)))
+      private$printLine("Populations Folder", fs::path_rel(as.character(self$populationsFolder)))
+      private$printLine("Scenarios", fs::path_rel(as.character(self$scenariosFile)))
+      private$printLine("Applications", fs::path_rel(as.character(self$applicationsFile)))
+      private$printLine("Plots", fs::path_rel(as.character(self$plotsFile)))
+      private$printLine("Data folder", fs::path_rel(as.character(self$dataFolder)))
+      private$printLine("Data file", fs::path_rel(as.character(self$dataFile)))
       private$printLine("Data importer configuration", fs::path_rel(as.character(self$dataImporterConfigurationFile)))
-      private$printLine("Compound Properties File", fs::path_rel(as.character(self$compoundPropertiesFile)))
       private$printLine("Output folder", fs::path_rel(as.character(self$outputFolder)))
       invisible(self)
     },
@@ -240,27 +314,14 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @export
     save = function() {
-      excel_file <- readExcel(path = self$projectConfigurationFilePath)
 
-      for (prop in excel_file$Property) {
-        path <- ""
+      outputData <- data.frame(
+        "Property" = names(private$.projectConfigurationData),
+        "Value" = unlist(purrr::map(private$.projectConfigurationData, "value")),
+        "Description" = unlist(purrr::map(private$.projectConfigurationData, "description"))
+      )
 
-        if (!is.null(self[[prop]])) {
-          if (fs::is_dir(self[[prop]])) {
-            # if property is a directory, save relative path from ProjectConf dir
-            path <- fs::path_rel(
-              path = self[[prop]],
-              start = self$projectConfigurationDirPath
-            )
-          } else if (fs::is_file(self[[prop]])) {
-            # if property is a file, then save only its name
-            path <- basename(self[[prop]])
-          }
-        }
-
-        excel_file[excel_file$Property == prop, ]$Value <- path
-      }
-      writeExcel(excel_file, path = self$projectConfigurationFilePath)
+      writeExcel(outputData, path = self$projectConfigurationFilePath)
     }
   )
 )

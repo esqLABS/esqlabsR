@@ -30,7 +30,7 @@ test_that("`sampleRandomValue()` generates needed distribution", {
 })
 
 test_that("It creates population characteristics with ontogenies from excel", {
-  excelPath <- system.file("extdata", "examples", "TestProject", "Parameters", "Populations.xlsx", package = "esqlabsR")
+  excelPath <-  testConfigurationsPath("Populations.xlsx")
 
   populationCharachterstics <- readPopulationCharacteristicsFromXLS(
     XLSpath = excelPath,
@@ -63,7 +63,7 @@ test_that("It creates population characteristics with ontogenies from excel", {
 })
 
 test_that("It creates population characteristics without ontogenies from excel", {
-  excelPath <- system.file("extdata", "examples", "TestProject", "Parameters", "Populations.xlsx", package = "esqlabsR")
+  excelPath <- testConfigurationsPath("Populations.xlsx")
 
   populationCharachterstics <- readPopulationCharacteristicsFromXLS(
     XLSpath = excelPath,

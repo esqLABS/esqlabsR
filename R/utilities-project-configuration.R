@@ -8,9 +8,27 @@
 #' @return Object of type `ProjectConfiguration`
 #' @export
 createDefaultProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
+  lifecycle::deprecate_soft(what = "createDefaultProjectConfiguration()",
+                            with = "createProjectConfiguration()",
+                            when = "5.1.4")
+  return(createProjectConfiguration(path))
+}
+
+
+#' #' Create a `ProjectConfiguration`
+#'
+#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx` file located in the working directory.
+#'
+#' @details Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
+#'
+#' @return Object of type `ProjectConfiguration`
+#' @export
+createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
   projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = path)
   return(projectConfiguration)
 }
+
+
 
 #' Initialize esqlabsR Project Folder
 #'
@@ -58,16 +76,6 @@ init_project <- function(destination = ".", overwrite = FALSE) {
 #' @examples
 #' example_ProjectConfiguration()
 example_ProjectConfiguration <- function() {
-  # for now it targets TestProject as it is both an example and a test project
-  file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
-}
-
-#' Get the path to tests' ProjectConfiguration.xlsx
-#'
-#' @return a string representing the path to the ProjectConfiguration.xlsx file
-#' used as test.
-#' @keywords internal
-test_ProjectConfiguration <- function() {
   # for now it targets TestProject as it is both an example and a test project
   file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
 }
