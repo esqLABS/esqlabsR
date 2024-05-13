@@ -197,7 +197,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   # calculate y-axis breaks and limits -------
   pLimits <- .calculateLimits(data$Concentration)
-  pBreaks <- .calculateBreaks(data$Concentration, m = 5, Q = c(0, 100, 1000))
+  pBreaks <- .calculateBreaks(data$Concentration, m = 4, Q = c(0.01, 0.1, 100))
   cBreaks <- c(min(data$ParameterFactor, na.rm = TRUE), 1,
                max(data$ParameterFactor, na.rm = TRUE))
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
@@ -239,13 +239,16 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         plot <- plot +
           scale_y_log10(
             limits = replace(pLimits, pLimits == 0, 0.001),
-            breaks = pBreaks
+            breaks = replace(pBreaks, pBreaks == 0, 0.01),
+            labels = scales::label_number()
           )
       } else {
         plot <- plot +
           scale_y_continuous(
             limits = pLimits,
-            breaks = pBreaks)
+            breaks = pBreaks,
+            labels = scales::label_number()
+          )
       }
 
       # finalize plot ----------------------------
