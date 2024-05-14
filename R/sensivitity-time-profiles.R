@@ -187,19 +187,25 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   # create axis labels
   if (is.null(plotConfiguration$xLabel)) {
-    plotConfiguration$xLabel <- paste0(unique(data$TimeDimension), " [",
-                                       unique(data$TimeUnit), "]")
+    plotConfiguration$xLabel <- paste0(
+      unique(data$TimeDimension), " [",
+      unique(data$TimeUnit), "]"
+    )
   }
   if (is.null(plotConfiguration$yLabel)) {
-    plotConfiguration$yLabel <- paste0(unique(data$Dimension), " [",
-                                       unique(data$Unit), "]")
+    plotConfiguration$yLabel <- paste0(
+      unique(data$Dimension), " [",
+      unique(data$Unit), "]"
+    )
   }
 
   # calculate y-axis breaks and limits -------
   pLimits <- .calculateLimits(data$Concentration)
   pBreaks <- .calculateBreaks(data$Concentration, m = 4, Q = c(0.01, 0.1, 100))
-  cBreaks <- c(min(data$ParameterFactor, na.rm = TRUE), 1,
-               max(data$ParameterFactor, na.rm = TRUE))
+  cBreaks <- c(
+    min(data$ParameterFactor, na.rm = TRUE), 1,
+    max(data$ParameterFactor, na.rm = TRUE)
+  )
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
 
   # map each parameter path to its own plot ----
@@ -214,10 +220,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       plot <- ggplot() +
         geom_line(
           data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
-          aes(x = Time,
-              y = Concentration,
-              group = ParameterFactor,
-              color = ParameterFactor),
+          aes(
+            x = Time,
+            y = Concentration,
+            group = ParameterFactor,
+            color = ParameterFactor
+          ),
           size = plotConfiguration$linesSize,
           alpha = plotConfiguration$linesAlpha,
           na.rm = TRUE
@@ -295,11 +303,13 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           scale_color_gradient2(
             name = plotConfiguration$legendTitle,
             low = colorspace::darken(
-              plotConfiguration$linesColor[1], amount = 0.15
+              plotConfiguration$linesColor[1],
+              amount = 0.15
             ),
             mid = "black",
             high = colorspace::darken(
-              plotConfiguration$linesColor[2], amount = 0.15
+              plotConfiguration$linesColor[2],
+              amount = 0.15
             ),
             transform = "log",
             midpoint = 1,
@@ -327,5 +337,4 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     theme(legend.position = plotConfiguration$legendPosition)
 
   return(plotPatchwork)
-
 }
