@@ -13,7 +13,7 @@
       [1] "Parameter factor"
       
       $title
-      [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+      NULL
       
       $group
       [1] "ParameterFactor"
@@ -21,4 +21,11 @@
       $alt
       [1] ""
       
+
+# sensitivityTimeProfiles correctly applies linear y-axis scaling
+
+    Code
+      unlist(plotParams)
+    Output
+      [1]  -50.76 1065.86  -50.76 1065.86  -50.76 1065.86
 
