@@ -1,7 +1,7 @@
 #' @name sensitivityTimeProfiles
 #' @title Sensitivity Time Profiles for Pharmacokinetic Parameters
 #'
-#' #' @description
+#' @description
 #' Generates time profiles for pharmacokinetic parameters under various
 #' sensitivity scenarios. This function plots concentration-time profiles
 #' for each scaled parameter specified, illustrating the dynamics of
@@ -18,9 +18,9 @@
 #' contain a spider plot panel for each PK parameter, and the sensitivities
 #' for each parameter will be displayed as lines.
 #' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
-#' (linear scale), to set the x-axis scale. Default is "log".
+#' (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
-#' scale similarly to `xAxisScale`. Default is "lin".
+#' scale similarly to `xAxisScale`. Default is "log".
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics. Plot-specific settings provided directly
 #' to the function, such as `xAxisScale`, will take precedence over any

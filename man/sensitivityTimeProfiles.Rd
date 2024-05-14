@@ -2,13 +2,7 @@
 % Please edit documentation in R/sensivitity-time-profiles.R
 \name{sensitivityTimeProfiles}
 \alias{sensitivityTimeProfiles}
-\title{Sensitivity Time Profiles for Pharmacokinetic Parameters
-
-#' @description
-Generates time profiles for pharmacokinetic parameters under various
-sensitivity scenarios. This function plots concentration-time profiles
-for each scaled parameter specified, illustrating the dynamics of
-pharmacokinetic responses to parameter variations.}
+\title{Sensitivity Time Profiles for Pharmacokinetic Parameters}
 \usage{
 sensitivityTimeProfiles(
   sensitivityCalculation,
@@ -33,10 +27,10 @@ contain a spider plot panel for each PK parameter, and the sensitivities
 for each parameter will be displayed as lines.}
 
 \item{xAxisScale}{Character string, either "log" (logarithmic scale) or "lin"
-(linear scale), to set the x-axis scale. Default is "log".}
+(linear scale), to set the x-axis scale. Default is "lin".}
 
 \item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis
-scale similarly to \code{xAxisScale}. Default is "lin".}
+scale similarly to \code{xAxisScale}. Default is "log".}
 
 \item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
 used to customize plot aesthetics. Plot-specific settings provided directly
@@ -65,9 +59,6 @@ single output path is specified, or a list of \code{patchwork} objects for
 multiple output paths.
 }
 \description{
-Sensitivity Time Profiles for Pharmacokinetic Parameters
-
-#' @description
 Generates time profiles for pharmacokinetic parameters under various
 sensitivity scenarios. This function plots concentration-time profiles
 for each scaled parameter specified, illustrating the dynamics of
