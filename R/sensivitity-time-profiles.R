@@ -167,6 +167,13 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   )
 
+  # add observed data to time series data frame
+  if (!is.null(observedData)) {
+    observedDataFrame <- .dataSetsToTimeSeriesDataFrame(observedData, data)
+  } else {
+    observedDataFrame <- NULL
+  }
+
   # list of plots ------------------------
 
   # create plot for each output path
@@ -174,6 +181,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     .x = data %>% split(.$OutputPath),
     .f = ~ .createTimeProfiles(
       .x,
+      observedDataFrame = observedDataFrame,
       defaultPlotConfiguration = customPlotConfiguration
     )
   )
