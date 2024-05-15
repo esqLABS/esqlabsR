@@ -338,3 +338,97 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   return(plotPatchwork)
 }
+
+#' Batch convert `DataSet` objects to time-series dataframes
+#'
+#' Converts each `DataSet` in a list to a dataframe using a specified reference
+#' for unit conversions.
+#'
+#' @param dataSetList List of `DataSet` R6 objects to be converted.
+#' @param timeSeriesDataFrame Reference `data.frame` for unit conversion with
+#' columns `TimeUnit` and `Unit`.
+#'
+#' @return A single `data.frame` combining all the converted data sets.
+#'
+#' @keywords internal
+#' @noRd
+.dataSetsToTimeSeriesDataFrame <- function(dataSetList,
+                                           timeSeriesDataFrame) {
+  purrr::map2(
+    .x = dataSetList,
+    .y = names(dataSetList),
+    .f = ~ .dataSetToTimeSeriesDataFrame(.x, .y, timeSeriesDataFrame)
+  ) %>%
+    purrr::list_rbind()
+}
+
+#' Extract time-series dataframe from a `DataSet` object
+#'
+#' This function converts the observed data stored in a `DataSet` object into a
+#' dataframe that aligns with a given reference `timeSeriesDataFrame` created
+#' using `.simulationResultsBatchToTimeSeriesDataFrame()` by matching
+#' units and renaming column names. It also adds an entry at time zero.
+#'
+#' @param dataSet A `DataSet` R6 object that needs to be converted.
+#' @param dataSetName A character string representing the name of the dataset to
+#' be added to the dataframe as column `dataSet`. If not specified, defaults to
+#' `NA`.
+#' @param timeSeriesDataFrame A `data.frame` containing the time series, used as
+#' a reference for unit conversion. Must include `TimeUnit` and `Unit` columns
+#' for time and concentration units, respectively.
+#'
+#' @return A `data.frame` object that contains the time series data from the
+#' `dataSet` object with units converted to match those in `timeSeriesDataFrame`,
+#' and includes the dataset name in column `$dataSet`when provided.
+#'
+#' @keywords internal
+#' @noRd
+.dataSetToTimeSeriesDataFrame <- function(dataSet,
+                                          dataSetName = NA,
+                                          timeSeriesDataFrame) {
+  validateIsOfType(dataSet, "DataSet")
+
+  # convert observed data to a DataFrame
+  obsData <- ospsuite::dataSetToDataFrame(dataSet)
+
+  # extract, validate and convert units to match timeSeriesDataFrame
+  timeSeriesDataFrame <- timeSeriesDataFrame %>%
+    dplyr::filter(grepl("Concentration", Dimension))
+  timeUnit <- unique(timeSeriesDataFrame$TimeUnit)
+  concentrationUnit <- unique(timeSeriesDataFrame$Unit)
+  ospsuite.utils::validateEnumValue(timeUnit, ospUnits$Time)
+  ospsuite.utils::validateEnumValue(
+    concentrationUnit,
+    ospUnits$`Concentration [molar]`
+  )
+
+  obsDataConverted <- ospsuite:::.unitConverter(
+    obsData,
+    xUnit = timeUnit,
+    yUnit = concentrationUnit
+  )
+
+  # rename and select columns
+  obsDataConverted <- obsDataConverted %>%
+    dplyr::rename(
+      Time = xValues,
+      Concentration = yValues,
+      TimeUnit = xUnit,
+      Unit = yUnit
+    )
+  obsDataConverted <- obsDataConverted %>%
+    dplyr::select(
+      intersect(names(obsDataConverted), names(timeSeriesDataFrame))
+    )
+
+
+  obsDataConverted <- obsDataConverted %>%
+    dplyr::add_row(
+      Time = 0, Concentration = 0,
+      TimeUnit = timeUnit, Unit = concentrationUnit
+    )
+
+  obsDataConverted <- obsDataConverted %>%
+    dplyr::mutate(dataSet = dataSetName)
+
+  return(obsDataConverted)
