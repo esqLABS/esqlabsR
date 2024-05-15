@@ -10,20 +10,17 @@ R6 class defining properties for saving a \code{ggplot} object
 \section{Super class}{
 \code{\link[tlf:ExportConfiguration]{tlf::ExportConfiguration}} -> \code{ExportConfiguration}
 }
-\section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{heightPerRow}}{The height of the plot dimensions for a row in a multi
-pannel plot. The final height of the figure will be 'heightPerRow' times
-the number of rows.
-If \code{NULL} (default), value used in \code{height} is used. If not \code{NULL}, this
-value always overrides the \code{height} property.}
+\item{\code{heightPerRow}}{The export configuration height per row.}
 }
 \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-ExportConfiguration-new}{\code{ExportConfiguration$new()}}
 \item \href{#method-ExportConfiguration-savePlot}{\code{ExportConfiguration$savePlot()}}
 \item \href{#method-ExportConfiguration-clone}{\code{ExportConfiguration$clone()}}
 }
@@ -33,11 +30,44 @@ value always overrides the \code{height} property.}
 <ul>
 <li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="convertPixels"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-convertPixels'><code>tlf::ExportConfiguration$convertPixels()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="getFileName"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-getFileName'><code>tlf::ExportConfiguration$getFileName()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="initialize"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-initialize'><code>tlf::ExportConfiguration$initialize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="print"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-print'><code>tlf::ExportConfiguration$print()</code></a></span></li>
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ExportConfiguration-new"></a>}}
+\if{latex}{\out{\hypertarget{method-ExportConfiguration-new}{}}}
+\subsection{Method \code{new()}}{
+Create a new instance of the \code{ExportConfiguration} class
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ExportConfiguration$new(
+  path = NULL,
+  name = NULL,
+  format = NULL,
+  width = NULL,
+  height = NULL,
+  units = NULL,
+  dpi = NULL,
+  heightPerRow = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{path, name, format, width, height, units, dpi}}{See \link[tlf:ExportConfiguration]{tlf::ExportConfiguration}}
+
+\item{\code{heightPerRow}}{The height of a row in a multi-panel plot. The final
+height of the figure will be 'heightPerRow' times the number of rows. If
+\code{NULL} (default), value used in \code{height} is used for the total height of
+the figure, regardless of the number of rows.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+An instance of the \code{ExportConfiguration} class
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ExportConfiguration-savePlot"></a>}}
 \if{latex}{\out{\hypertarget{method-ExportConfiguration-savePlot}{}}}

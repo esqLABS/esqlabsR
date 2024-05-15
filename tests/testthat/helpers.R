@@ -25,22 +25,12 @@ testProjectConfigurationPath <- function() {
   file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
 }
 
-testProjectConfiguration <- function() {
+
+testProjectConfiguration <- function(){
   createProjectConfiguration(testProjectConfigurationPath())
 }
 
-testConfigurationsPath <- function(...) {
+testConfigurationsPath <- function(...){
   normalizePath(file.path(example_directory("TestProject"), "Configurations", ...), mustWork = T)
 }
 
-getTestProject <- function() {
-  .testProject <- NULL
-  function() {
-    if (is.null(.testProject)) {
-      .testProject <- Project$new(projectConfiguration = testProjectConfiguration())
-    }
-    return(.testProject)
-  }
-}
-
-testProject <- getTestProject()

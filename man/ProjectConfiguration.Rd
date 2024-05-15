@@ -7,9 +7,6 @@
 \description{
 An object storing configuration used project-wide
 }
-\section{Super class}{
-\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{ProjectConfiguration}
-}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
@@ -38,7 +35,7 @@ Must be located in the "configurationsFolder"}
 information.
 Must be located in the "configurationsFolder".}
 
-\item{\code{populationsCSV}}{Name of the folder containing population defined through csv files
+\item{\code{populationsFolder}}{Name of the folder containing population defined through csv files
 Must be located in the "configurationsFolder".}
 
 \item{\code{scenariosFile}}{Name of the excel file with scenario
@@ -60,10 +57,6 @@ Must be located in the "dataFolder"}
 
 \item{\code{dataImporterConfigurationFile}}{Name of data importer configuration
 file in xml format used to load the data.
-Must be located in the "dataFolder"}
-
-\item{\code{compoundPropertiesFile}}{Path to the excel file containing
-information about all compounds in the model.
 Must be located in the "dataFolder"}
 
 \item{\code{outputFolder}}{Path to the folder where the results should be
