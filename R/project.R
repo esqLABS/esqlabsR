@@ -93,9 +93,9 @@ Project <-
         }
         return(private$.scenarios)
       },
-      simulationResults = function(value) {
+      simulationResults = function() {
         if (!missing(value)) {
-          private$.simulationResults <- modifyList(private$.simulationResults, value)
+          cli::cli_abort("Simulation Results cannot be altered.")
         }
 
         if (identical(private$.simulationResults, list())) {
@@ -128,7 +128,7 @@ Project <-
           private$.scenarios[[scenario]] <- Scenario2$new(
             project = self,
             scenarioConfigurationData = self$configurations$scenarios[[scenario]],
-            status = if(private$.scenarios[[scenario]]$status == "inactive") "inactive" else NULL
+            status = if(!is.null(private$.scenarios[[scenario]]$status) && private$.scenarios[[scenario]]$status == "inactive") "inactive" else NULL
           )
         }
       }
