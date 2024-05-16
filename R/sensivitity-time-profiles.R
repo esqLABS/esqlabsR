@@ -185,6 +185,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .createTimeProfiles <- function(data,
+                                observedDataFrame,
                                 defaultPlotConfiguration) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration$clone()
@@ -223,6 +224,21 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     ~ {
       dataSubset <- dplyr::filter(data, ParameterPath == .x)
 
+      # combine original data subset with observed data
+      # add observed data if not-null and output path is concentration
+      addObeservedData <- !is.null(observedDataFrame) &&
+        all(grepl("Concentration", dataSubset$Dimension))
+      if (addObeservedData) {
+        dataSubset <- dplyr::bind_rows(
+          list(
+            simulated = dataSubset,
+            observed = observedDataFrame %>%
+              dplyr::mutate(ParameterPath = .x)
+          ),
+          .id = "dataType"
+        )
+      }
+
       # basic plot setup -------------------------
 
       plot <- ggplot() +
@@ -246,6 +262,22 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           alpha = plotConfiguration$linesAlpha,
           na.rm = TRUE
         )
+
+      # add line for observed data
+      if (addObeservedData) {
+        plot <- plot +
+          geom_line(
+            data = dplyr::filter(dataSubset, dataType == "observed"),
+            aes(Time, Concentration, linetype = dataSet)
+          ) +
+          scale_linetype_manual(
+            values = rep(
+              c("dashed", "dotted", "dotdash", "longdash", "twodash"),
+              length.out = length(unique(dataSubset$dataSet))
+            ),
+            name = "Observed data"
+          )
+      }
 
       # adjusting axis scales
       if (isTRUE(plotConfiguration$xAxisScale == "log")) {
@@ -296,6 +328,16 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
             title.position = "top"
           )
         )
+
+      if (addObeservedData) {
+        plot <- plot +
+          guides(
+            linetype = guide_legend(
+              title.position = "top",
+              nrow = length(unique(dataSubset$dataType))
+            )
+          )
+      }
 
       # apply color scales
       if (is.null(plotConfiguration$linesColor)) {
