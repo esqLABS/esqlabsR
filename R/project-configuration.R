@@ -315,7 +315,7 @@ ProjectConfiguration <- R6::R6Class(
     #' @description Export ProjectConfiguration object to ProjectConfiguration.xlsx
     #'
     #' @export
-    save = function() {
+    save = function(path = NULL) {
 
       outputData <- data.frame(
         "Property" = names(private$.projectConfigurationData),
@@ -323,7 +323,7 @@ ProjectConfiguration <- R6::R6Class(
         "Description" = unlist(purrr::map(private$.projectConfigurationData, "description"))
       )
 
-      writeExcel(outputData, path = self$projectConfigurationFilePath)
+      writeExcel(outputData, path = ifelse(is.null(path), self$projectConfigurationFilePath, path))
     }
   )
 )

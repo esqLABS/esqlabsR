@@ -17,5 +17,17 @@ test_that("`createDefaultProjectConfiguration()` is deprecated", {
 
 
 test_that("Project Configuration can be created from V5 project configuration file but raises a warning", {
-  expect_warning(createProjectConfiguration(test_path("..","data", "ProjectConfiguration-V5.xlsx")))
+  expect_warning(createProjectConfiguration(test_path("..", "data", "ProjectConfiguration-V5.xlsx")))
+})
+
+
+test_that("Project Configuration can be exported and reimported", {
+  myConfig <- testProjectConfiguration()
+
+  temp <- file_temp(pattern = "exportedProjectConfiguration", ext = ".xlsx")
+  myConfig$save(path = temp)
+
+  expect_no_error(
+    createProjectConfiguration(path = temp)
+  )
 })
