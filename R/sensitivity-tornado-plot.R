@@ -224,6 +224,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       ) +
         geom_col(
           color = "grey",
+          width = 0.9,
           na.rm = TRUE
         ) +
         coord_flip()
