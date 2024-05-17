@@ -120,8 +120,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     subtitle = NULL,
     title = NULL,
     titleSize = 14,
-    xLabel = "Parameter",
-    yLabel = "Input parameter value [% of reference]"
+    yLabel = "Parameter",
+    xLabel = "Input parameter value [% of reference]"
   )
   # override only default configuration values with settings for tornado plot
   customPlotConfiguration <- defaultPlotConfiguration$clone()
@@ -240,8 +240,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       plot <- plot +
         facet_wrap(~PKParameter, scales = "fixed") +
         labs(
-          x = plotConfiguration$xLabel,
-          y = plotConfiguration$yLabel,
+          x = plotConfiguration$yLabel, #x/y label swap because of coord-flip()
+          y = plotConfiguration$xLabel,
           title = NULL,
           fill = plotConfiguration$legendTitle
         ) +
