@@ -230,6 +230,13 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
         coord_flip()
 
       plot <- plot +
+        geom_hline(
+          yintercept = 0,
+          color = "grey",
+          size = 1
+        )
+
+      plot <- plot +
         scale_y_continuous(
           limits = pLimits,
           breaks = pBreaks
@@ -241,7 +248,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       plot <- plot +
         facet_wrap(~PKParameter, scales = "fixed") +
         labs(
-          x = plotConfiguration$yLabel, #x/y label swap because of coord-flip()
+          x = plotConfiguration$yLabel, # x/y label swap because of coord-flip()
           y = plotConfiguration$xLabel,
           title = NULL,
           fill = plotConfiguration$legendTitle
