@@ -200,8 +200,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 
   # calculate x-axis breaks and limits -------
   pLimits <- .calculateLimits(data$PercentChangePK)
-  if (isTRUE(pLimits[1] > 0.5)) pLimits[1] <- 0.5
-  if (isTRUE(pLimits[2] < 1.5)) pLimits[2] <- 1.5
+  pLimits[1] <- -1 * max(abs(pLimits))
+  pLimits[2] <- max(abs(pLimits))
 
   pBreaks <- .calculateBreaks(data$PercentChangePK, m = 5)
 
