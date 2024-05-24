@@ -160,7 +160,9 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   plotConfigurationList$yAxisType <- yAxisType
   ospsuite.utils::validateIsOption(
     plotConfigurationList,
-    .getPlotConfigurationOptions()
+    .getPlotConfigurationOptions(
+      c(names(spiderPlotConfiguration), "yAxisFacetScales", "yAxisType")
+    )
   )
 
   # extract and prepare data -----------------
@@ -433,8 +435,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 #' @noRd
 .calculateLimits <- function(x) {
   limits <- c(
-    (if (min(x, na.rm = TRUE) < 0) 1.01 else 0.99) * min(x),
-    (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x)
+    (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
+    (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
   )
 
   return(limits)

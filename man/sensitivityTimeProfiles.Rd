@@ -73,6 +73,7 @@ if (FALSE) {
 \seealso{
 Other sensitivity-calculation: 
 \code{\link{sensitivityCalculation}()},
-\code{\link{sensitivitySpiderPlot}()}
+\code{\link{sensitivitySpiderPlot}()},
+\code{\link{sensitivityTornadoPlot}()}
 }
 \concept{sensitivity-calculation}

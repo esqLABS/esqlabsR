@@ -18,6 +18,14 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
   to choose between `free` and `fixed` scales for y-axis. Further plot customization options through
   `defaultPlotConfiguration` (\#632, @rengelke).
 
+## Major Changes
+
+- New `sensitivityTornadoPlot` function for generating tornado plots that evaluate 
+the impact of parameter changes on sensitivity analysis outcomes. It utilizes `parameterFactor` 
+to depict the scaling effects of parameter modifications. Provides plot customization options 
+through `defaultPlotConfiguration` (\#652, @rengelke).
+
+
 # esqlabsR 5.1.3
 
 ## Minor improvements and bug fixes

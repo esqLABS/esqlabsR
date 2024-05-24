@@ -76,6 +76,7 @@ sensitivityCalculation(
 \seealso{
 Other sensitivity-calculation: 
 \code{\link{sensitivitySpiderPlot}()},
-\code{\link{sensitivityTimeProfiles}()}
+\code{\link{sensitivityTimeProfiles}()},
+\code{\link{sensitivityTornadoPlot}()}
 }
 \concept{sensitivity-calculation}

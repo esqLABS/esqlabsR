@@ -124,6 +124,7 @@ sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
 \seealso{
 Other sensitivity-calculation: 
 \code{\link{sensitivityCalculation}()},
-\code{\link{sensitivityTimeProfiles}()}
+\code{\link{sensitivityTimeProfiles}()},
+\code{\link{sensitivityTornadoPlot}()}
 }
 \concept{sensitivity-calculation}

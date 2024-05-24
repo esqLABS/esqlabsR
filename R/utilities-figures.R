@@ -633,7 +633,7 @@ createPlotsFromExcel <- function(
 #'         for a plot configuration parameter.
 #' @keywords internal
 #' @noRd
-.getPlotConfigurationOptions <- function() {
+.getPlotConfigurationOptions <- function(names) {
   plotConfigurationOptions <- list(
     legendPosition = list(
       type = "character",
@@ -650,6 +650,10 @@ createPlotsFromExcel <- function(
     linesSize = list(
       type = "numeric",
       valueRange = c(0.1, 10)
+    ),
+    parameterFactor = list(
+      type = "numeric",
+      valueRange = c(1e-16, 1e16)
     ),
     pointsShape = list(
       type = "integer",
@@ -700,5 +704,5 @@ createPlotsFromExcel <- function(
     )
   )
 
-  return(plotConfigurationOptions)
+  return(plotConfigurationOptions[names])
 }

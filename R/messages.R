@@ -134,6 +134,16 @@ messages$noPKDataToWrite <- function() {
   "`pkDataFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
 }
 
+# sensitivity analysis plotting
+messages$noParameterFactor <- function(data, parameterFactor) {
+  paste0(
+    "'parameterFactor' values of ", parameterFactor, " and ", 1 / parameterFactor,
+    " are not included in the sensitivity analysis results. Current values: ",
+    paste(sort(unique(data$ParameterFactor)), collapse = ", "), ". ",
+    "Please rerun the sensitivity analysis with the required values."
+  )
+}
+
 # utilities-quantity####
 messages$cannotGetMoleculeFromQuantity <- function(quantityPath, optionalMessage = NULL) {
   paste0("Could not retrieve molecule name for the quantity with the path '", quantityPath, "'. ", optionalMessage)
