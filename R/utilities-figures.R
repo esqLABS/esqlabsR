@@ -653,7 +653,7 @@ createPlotsFromExcel <- function(
     ),
     parameterFactor = list(
       type = "numeric",
-      valueRange = c(0.01, 0.99)
+      valueRange = c(1e-16, 1e16)
     ),
     pointsShape = list(
       type = "integer",
