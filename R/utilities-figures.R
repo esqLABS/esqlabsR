@@ -624,6 +624,79 @@ createPlotsFromExcel <- function(
   return(dfExportConfigurations)
 }
 
+#' Update Plot Configuration with Overrides
+#'
+#' Updates a plot configuration object `plotConfiguration` with explicitly
+#' defined overrides from `plotOverrideConfig` list. It retains any custom
+#' settings in `plotConfiguration` that deviate from the defaults
+#'
+#' @param plotConfiguration A plot configuration object.
+#' @param plotOverrideConfig A list with new configuration settings to apply.
+#'
+#' @keywords internal
+#' @noRd
+.updatePlotConfiguration <- function(plotConfiguration, plotOverrideConfig) {
+  defaultValues <- createEsqlabsPlotConfiguration()
+
+  for (name in names(plotOverrideConfig)) {
+    if (!name %in% names(plotConfiguration)) {
+      warning(messages$UnknownPlotConfiguration(name))
+      next
+    }
+
+    if (is.null(defaultValues[[name]]) && is.null(plotConfiguration[[name]])) {
+      plotConfiguration[[name]] <- plotOverrideConfig[[name]]
+    } else if (!is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])) {
+      if (all(plotConfiguration[[name]] == defaultValues[[name]])) {
+        plotConfiguration[[name]] <- plotOverrideConfig[[name]]
+      }
+    }
+  }
+
+  return(plotConfiguration)
+}
+
+#' Calculate breaks for axis ticks
+#'
+#' This function determines axis tick breaks, with an optional logarithmic
+#' transformation. It serves as a wrapper around `labeling::extended`.
+#'
+#' @param x Numeric vector for which breaks are calculated.
+#' @param scaling Character string indicating scaling type ("log" for logarithmic).
+#' Default is `NULL`.
+#' @param ... Additional arguments passed to `labeling::extended`.
+#'
+#' @keywords internal
+#' @noRd
+.calculateBreaks <- function(x, ...) {
+  args <- list(...)
+
+  args$dmin <- min(na.omit(x))
+  args$dmax <- max(na.omit(x))
+  breaks <- do.call(labeling::extended, args)
+  breaks <- round(breaks, 2)
+
+  return(breaks)
+}
+
+#' Calculate axis limits
+#'
+#' This function calculates axis limits based on minimum and maximum values.
+#'
+#' @param x Numeric vector for which limits are calculated.
+#'
+#' @keywords internal
+#' @noRd
+.calculateLimits <- function(x) {
+
+  limits <- c(
+    (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
+    (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
+  )
+
+  return(limits)
+}
+
 #' Get valid plot configuration options
 #'
 #' Generates a list of valid configuration options for plotting.
