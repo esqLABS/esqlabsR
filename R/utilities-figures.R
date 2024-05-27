@@ -668,12 +668,21 @@ createPlotsFromExcel <- function(
 #'
 #' @keywords internal
 #' @noRd
-.calculateBreaks <- function(x, ...) {
+.calculateBreaks <- function(x, scaling = NULL, ...) {
   args <- list(...)
+
+  if (!is.null(scaling) && scaling == "log") {
+    x <- ospsuite.utils::logSafe(x, base = 10, epsilon = 1e-2)
+  }
 
   args$dmin <- min(na.omit(x))
   args$dmax <- max(na.omit(x))
   breaks <- do.call(labeling::extended, args)
+
+  if (!is.null(scaling) && scaling == "log") {
+    breaks <- 10^breaks
+  }
+
   breaks <- round(breaks, 2)
 
   return(breaks)
@@ -688,7 +697,6 @@ createPlotsFromExcel <- function(
 #' @keywords internal
 #' @noRd
 .calculateLimits <- function(x) {
-
   limits <- c(
     (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
     (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
