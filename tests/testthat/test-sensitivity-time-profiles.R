@@ -64,6 +64,14 @@ test_that("sensitivityTimeProfiles correctly applies linear y-axis scaling", {
   set.seed(123)
   p <- sensitivityTimeProfiles(results, yAxisScale = "lin")
 
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivityTimeProfiles linear y-axis",
+      fig = p
+    )
+  )
+
   pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
   plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)
 
