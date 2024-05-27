@@ -121,7 +121,6 @@ col2hsv <- function(color) {
   return(grDevices::rgb2hsv(rgb))
 }
 
-
 #' @title Create an instance of `DefaultPlotConfiguration` R6 class
 #' @rdname createEsqlabsPlotConfiguration
 #'
@@ -290,7 +289,7 @@ createPlotsFromExcel <- function(
   dfExportConfigurations <- readExcel(projectConfiguration$plotsFile,
     sheet = "exportConfiguration"
   ) %>%
-    rename(name = outputName)
+    dplyr::rename(name = outputName)
   # Filter for only specified plot grids
   if (!is.null(plotGridNames)) {
     # Throw an error if a plot grid name that is passed is not defined in the excel file
@@ -313,7 +312,9 @@ createPlotsFromExcel <- function(
   )
 
   # Filter and validate plotGrids
-  dfPlotGrids <- dplyr::filter(dfPlotGrids, !if_all(everything(), is.na))
+  dfPlotGrids <- dplyr::filter(
+    dfPlotGrids, !dplyr::if_all(dplyr::everything(), is.na)
+  )
   dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
 
   # Filter and validate only used plot configurations
@@ -435,7 +436,9 @@ createPlotsFromExcel <- function(
   names(plotGrids) <- dfPlotGrids$name
 
   ## Remove rows that are entirely empty
-  dfExportConfigurations <- dplyr::filter(dfExportConfigurations, !if_all(everything(), is.na))
+  dfExportConfigurations <- dplyr::filter(
+    dfExportConfigurations, !dplyr::if_all(dplyr::everything(), is.na)
+  )
   dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
@@ -520,7 +523,6 @@ createPlotsFromExcel <- function(
 
   return(newConfiguration)
 }
-
 
 #' Validate and process the 'plotConfiguration' sheet
 #'
