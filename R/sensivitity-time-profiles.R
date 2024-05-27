@@ -83,7 +83,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     parameterPaths = NULL,
                                     xAxisScale = NULL,
                                     yAxisScale = NULL,
-                                    # observedData = NULL,
                                     defaultPlotConfiguration = NULL) {
   # input validation ------------------------
 
