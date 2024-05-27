@@ -17,6 +17,11 @@
     as defined in the `ProjectConfiguration` is used (\#495).
   - `createDefaultProjectConfiguration` is now soft-deprecated in favor of
     `createProjectConfiguration`.
+  - New function `writeParameterStructureToXLS` to write a list of parameter paths,
+  values, and units (e.g., imported using the `readParametersFromXLS()` function)
+    to an Excel file. In contrast to `exportParametersToXLS()`, which writes 
+    and excel file for a list of `Parameter` objects, this function 
+    expects the parameter structure as used thorughout the package.
 
 ## Minor improvements and bug fixes
 

@@ -15,12 +15,13 @@ test_that("It stops with an error if the excel file defines a parameter that is
   expect_error(createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = TRUE))
 })
 
-test_that("All working scenarios in testProject can be created without errors",{
+test_that("All working scenarios in testProject can be created without errors", {
   # Define which scenarios to run
-  scenarioNames <- c("TestScenario",
-                     "TestScenario2",
-                     "PopulationScenario",
-                     "PopulationScenarioFromCSV"
+  scenarioNames <- c(
+    "TestScenario",
+    "TestScenario2",
+    "PopulationScenario",
+    "PopulationScenarioFromCSV"
   )
   # Create `ScenarioConfiguration` objects from excel files
   scenarioConfigurations <- readScenarioConfigurationFromExcel(

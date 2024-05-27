@@ -194,3 +194,32 @@ test_that("It writes the excel file with two parameters provided
     }
   )
 })
+
+test_that("It writes the excel file with two parameters provided
+          and specified sheet", {
+  withr::with_tempdir(
+    code = {
+      xlsPath <- "tmp.xlsx"
+      sheet <- "newSheet"
+      params <- list(
+        paths = c("Container1|Path1", "Container|Second|Third|Path2"), values = c(1, 2),
+        units = c("", "µmol")
+      )
+      writeParameterStructureToXLS(
+        parameterStructure = params, paramsXLSpath = xlsPath,
+        sheet = sheet
+      )
+
+      # Load from xls and compare
+      paramsRead <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet)
+
+      expect_equal(paramsRead$paths[[1]], params$paths[[1]])
+      expect_equal(paramsRead$values[[1]], params$values[[1]])
+      expect_equal(paramsRead$units[[1]], params$units[[1]])
+
+      expect_equal(paramsRead$paths[[2]], params$paths[[2]])
+      expect_equal(paramsRead$values[[2]], params$values[[2]])
+      expect_equal(paramsRead$units[[2]], params$units[[2]])
+    }
+  )
+})
