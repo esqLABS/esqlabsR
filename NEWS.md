@@ -18,7 +18,7 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
   to choose between `free` and `fixed` scales for y-axis. Further plot customization options through
   `defaultPlotConfiguration` (\#632, @rengelke).
   
-- Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling and legend colors. (\#654, @rengelke).
+- Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling and legend colors. (\#669, @rengelke).
 
 ## Major Changes
 
