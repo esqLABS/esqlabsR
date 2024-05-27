@@ -229,7 +229,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
             group = ParameterFactor,
             color = ParameterFactor
           ),
-          size = plotConfiguration$linesSize,
+          linewidth = plotConfiguration$linesSize,
           alpha = plotConfiguration$linesAlpha,
           na.rm = TRUE
         ) +
@@ -237,7 +237,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           data = dplyr::filter(dataSubset, ParameterFactor == 1.0),
           aes(Time, Concentration),
           color = "black",
-          size = plotConfiguration$linesSize,
+          linewidth = plotConfiguration$linesSize,
           alpha = plotConfiguration$linesAlpha,
           na.rm = TRUE
         )
