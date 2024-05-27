@@ -25,6 +25,12 @@ the impact of parameter changes on sensitivity analysis outcomes. It utilizes `p
 to depict the scaling effects of parameter modifications. Provides plot customization options 
 through `defaultPlotConfiguration` (\#652, @rengelke).
 
+- New function `writeParameterStructureToXLS` to write a list of parameter paths,
+values, and units (e.g., imported using the `readParametersFromXLS()` function)
+to an Excel file. In contrast to `exportParametersToXLS()`, which writes 
+and excel file for a list of `Parameter` objects, this function 
+expects the parameter structure as used thorughout the package.
+
 
 # esqlabsR 5.1.3
 
