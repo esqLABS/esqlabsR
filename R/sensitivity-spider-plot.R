@@ -264,7 +264,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         )
         #   calculate breaks and limits using PK parameter data subset
         pBreaks <- .calculateBreaks(
-          values = dataSubset[, yColumn],
+          x = dataSubset[, yColumn],
           m = plotConfiguration$yAxisTicks
         )
         pLimits <- NULL

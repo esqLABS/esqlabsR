@@ -233,7 +233,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
         geom_hline(
           yintercept = 0,
           color = "grey",
-          size = 1
+          linewidth = 1
         )
 
       plot <- plot +
