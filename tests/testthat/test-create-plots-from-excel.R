@@ -887,7 +887,6 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
     new = "Plots.xlsx",
     tmpdir = tempDir,
     code = {
-
       # Test xOffsets
 
       dataCombinedDfLocal <- dataCombinedDf
@@ -980,7 +979,6 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
           stopIfNotFound = TRUE
         )
       )
-
     }
   )
 })

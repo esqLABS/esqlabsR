@@ -81,8 +81,9 @@ createDataCombinedFromExcel <- function(
 
       # Check if x/yOffsetsUnits are defined when x/yOffsets are non empty.
       if ((!is.na(row[["xOffsets"]]) & is.na(row[["xOffsetsUnits"]])) | (!is.na(row[["yOffsets"]]) & is.na(row[["yOffsetsUnits"]]))) {
-       cli::cli_abort(c("x" = "If x/yOffsets are defined, x/yOffsetsUnits must be defined as well. "))
+        cli::cli_abort(c("x" = "If x/yOffsets are defined, x/yOffsetsUnits must be defined as well. "))
       }
+
       # If offsets are defined, convert them to the default unit of the data
       # Extract the base unit of the data (or simulation result) and the unit
       # defined for the offset.
