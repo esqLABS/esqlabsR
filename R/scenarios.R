@@ -1,15 +1,27 @@
-#' @title Scenario
-#' @docType class
-#' @description Simulation scenario
-#' @format NULL
-#' @export
-Scenario2 <- R6::R6Class(
-  "Scenario2",
+#' @title Scenario Object
+#' @description A class representing a simulation scenario. Contains all the
+#' parameters that defines a scenario: Its configuration, the base pkml model,
+#' the simulation parameters and the resulting simulation object.
+Scenario <- R6::R6Class(
+  "Scenario",
   public = list(
+    #' @field name The name of the scenario
     name = NULL,
+    #' @field status Scenario status can be:
+    #' - active: The scenario is ready to be loaded
+    #' - inactive: The scenario is not active and will not be loaded/run
+    #' - loaded: The scenario is loaded and ready to be run
+    #' - warning: #TODO
+    #' - error: #TODO
     status = NULL,
+    #' @field type Whether it is a population or individual simulation scenario
     type = NULL,
+    #' @field steadyState Whether the scenario is a steady state simulation
     steadyState = NULL,
+    #' @description Creates a new scenario object
+    #' @param project The project in which the scenario is created
+    #' @param scenarioConfigurationData a `ScenarioConfiguration` object
+    #' @param status The initial status of the scenario to set
     initialize = function(project, scenarioConfigurationData, status = NULL) {
       private$.project <- project
       private$.scenarioConfigurationData <- scenarioConfigurationData
@@ -18,8 +30,12 @@ Scenario2 <- R6::R6Class(
       self$type <- ifelse(!is.na(scenarioConfigurationData$population), "population", "individual")
       self$steadyState <-  private$.scenarioConfigurationData$steadyState
     },
+    #' @description Prints the scenario object
+    #' @param lod The level of detail to print
+    #' - 1: Print only the scenario name and its status
+    #' - 2 (default): Print all scenario parameters.
     print = function(lod = 2) {
-      scenarioState <- if (self$status == "active") {
+      scenarioStatus <- if (self$status == "active") {
         "\U02705"
       } else if (self$status == "inactive") {
         "\U023F8"
@@ -29,13 +45,13 @@ Scenario2 <- R6::R6Class(
 
       if (lod == 1) {
         cli_ul()
-        cli_li(paste(scenarioState, self$name))
+        cli_li(paste(scenarioStatus, self$name))
         cli_end()
       }
 
       if (lod >= 2) {
         cli_ul()
-        cli_li("Status: {scenarioState} {self$status}")
+        cli_li("Status: {scenarioStatus} {self$status}")
         cli_li("Type: {self$type}")
         cli_li("simulateSteadyTime: {self$simulateSteadyTime}")
         cli_li("Configurations:")
@@ -53,6 +69,8 @@ Scenario2 <- R6::R6Class(
         cli_end(configurations)
       }
     },
+    #' @description If status is "active", load the scenario. Loading the
+    #' scenario means applying all configuration parameters to the model.
     load = function() {
       if (self$status == "active"){
         # Model Parameters
@@ -75,6 +93,8 @@ Scenario2 <- R6::R6Class(
     }
   ),
   active = list(
+    #' @field configuration Retrieve all the  parameters corresponding the the
+    #' scenario configuration.
     configuration = function(value) {
       if (!missing(value)) {
         stop("Configuration cannot be set, modify scenario configuration by accessing project$configurations$scenarios")
@@ -100,6 +120,7 @@ Scenario2 <- R6::R6Class(
 
       return(private$.configuration)
     },
+    #' @field model path of the scenario's pkml model file.
     model = function() {
       if (is.null(private$.model)) {
         private$.model <- file.path(
@@ -109,12 +130,14 @@ Scenario2 <- R6::R6Class(
       }
       return(private$.model)
     },
+    #' @field simulation Loaded simulation for the scenario.
     simulation = function() {
       if (is.null(private$.simulation)) {
         private$.simulation <- ospsuite::loadSimulation(self$model)
       }
       return(private$.simulation)
     },
+    #' @field modelParameters Model parameters to apply to the scenario.
     modelParameters = function() {
       if (is.null(private$.modelParameters)) {
         private$.modelParameters <-
@@ -124,12 +147,14 @@ Scenario2 <- R6::R6Class(
       }
       return(private$.modelParameters)
     },
+    #' @field individual Individual parameters to apply to the scenario.
     individual = function() {
       if (is.null(private$.individual)) {
         private$.individual <- self$configuration$individual[[1]]$individualObject
       }
       return(private$.individual)
     },
+    #' @field applications Applications parameters to apply to the scenario.
     applications = function(){
       if (is.null(private$.applications)) {
         private$.applications <-

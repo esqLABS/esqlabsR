@@ -1,14 +1,28 @@
+#' @title Project Object
+#'
+#' @description
+#' Project Class that contains all workflow component of an {ESQlabsR} project:
+#' - Project Configuration
+#' - Configurations
+#' - Scenarios
+#' - Simulation Results
 Project <-
   R6::R6Class(
     classname = "Project",
     public = list(
+      #' @field projectConfiguration Representation of the project configurations
+      #' as defined in the `ProjectConfiguration.xlsx` file.
       projectConfiguration = NULL,
-      #' @param projectConfiguration A projectConfiguration object
+      #' @description Creates a new `Project` object.
+      #'
+      #' @param projectConfiguration A ProjectConfiguration object created by
+      #' `createProjectConfiguration()`
       initialize = function(projectConfiguration) {
         self$projectConfiguration <- projectConfiguration
         private$.availableScenarios <- private$.getAvailableScenarios()
         private$.initializeScenarios()
       },
+      #' @description Print the project object
       print = function() {
         cli_ul()
         print(self$projectConfiguration)
@@ -19,16 +33,27 @@ Project <-
         cli_ul()
         purrr::map(names(self$simulationResults), ~ cli_li(.x))
       },
+      #' @description Reset the loaded configurations by reading the
+      #' Configurations files.
       reloadConfigurations = function() {
         private$.configurations <- NULL
       },
+      #' @description Activate only some of the available scenarios.
+      #' Only activated scenarios will be loaded and run.
+      #'
+      #' @param scenarios A character vector of scenario names to activate.
+      #' If `NULL`, will activate all scenarios.
+      #'
+      #' @examples
+      #' project <- exampleProject()
+      #' project$selectScenarios(c("TestScenario", "TestScenario2"))
       selectScenarios = function(scenarios = NULL) {
         if (is.null(scenarios)) {
           for (scenario in self$scenarios) {
             scenarios$status <- "active"
           }
         } else {
-          ospsuite.utils::validateVectorValues(scenarios, type = "character", allowedValues = private$.availableScenarios)
+          rlang::arg_match(arg = scenarios, values = private$.availableScenarios, multiple = TRUE)
           for (scenario in names(self$scenarios)) {
             if (scenario %in% scenarios) {
               self$scenarios[[scenario]]$status <- "active"
@@ -37,11 +62,26 @@ Project <-
             }
           }
         }
+        invisible(self)
       },
+      #' @description Load all active scenarios.
+      #'
+      #' @examples
+      #' project <- exampleProject()
+      #' project$loadScenarios()
       loadScenarios = function() {
         purrr::map(self$scenarios, ~ .x$load(), .progress = "Loading Scenarios")
         invisible(self)
       },
+      #' @description run all active scenarios.
+      #'
+      #' @note If the active scenarios are not already loaded, will load them
+      #' and then run the simulations.
+      #' @examples
+      #' \dontrun{
+      #' project <- exampleProject()
+      #' project$runScenarios()
+      #' }
       runScenarios = function() {
         self$loadScenarios()
 
@@ -70,6 +110,8 @@ Project <-
       }
     ),
     active = list(
+      #' @field configurations Configurations as defined in the Configurations
+      #' Excel files.
       configurations = function(value) {
         if (is.null(private$.configurations)) {
           private$.initializeConfigurations()
@@ -82,6 +124,7 @@ Project <-
 
         return(private$.configurations)
       },
+      #' @field scenarios Scenarios as defined in the Scenarios Excel file.
       scenarios = function(value) {
         if (identical(private$.scenarios, list()) || private$.newConfigurations) {
           private$.initializeScenarios()
@@ -91,8 +134,9 @@ Project <-
         if (!missing(value)) {
           private$.scenarios <- modifyList(private$.scenarios, value)
         }
-        return(private$.scenarios)
+        invisible(private$.scenarios)
       },
+      #' @field simulationResults Simulation results from the run simulations.
       simulationResults = function() {
         if (!missing(value)) {
           cli::cli_abort("Simulation Results cannot be altered.")
@@ -125,10 +169,10 @@ Project <-
           private$.scenarios <- list()
         }
         for (scenario in private$.availableScenarios) {
-          private$.scenarios[[scenario]] <- Scenario2$new(
+          private$.scenarios[[scenario]] <- Scenario$new(
             project = self,
             scenarioConfigurationData = self$configurations$scenarios[[scenario]],
-            status = if(!is.null(private$.scenarios[[scenario]]$status) && private$.scenarios[[scenario]]$status == "inactive") "inactive" else NULL
+            status = if (!is.null(private$.scenarios[[scenario]]$status) && private$.scenarios[[scenario]]$status == "inactive") "inactive" else NULL
           )
         }
       }

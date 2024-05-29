@@ -1,6 +1,5 @@
 Individual <- R6::R6Class(
   classname = "Individual",
-  # inherit = Configuration,
   public = list(
     initialize = function(project,
                           individualCharacteristicsData,

@@ -1,9 +1,24 @@
+#' @title Configuration Object
+#' @description A class representing all configurations files living in a project.
+#' This includes:
+#' - Scenario Configurations
+#' - Models
+#' - Model Parameters
+#' - Individuals Parameters
+#' - Applications Parameters
+#' - Population Parameters (#TODO)
 Configuration <- R6::R6Class(
   "Configuration",
   public = list(
+    #' @description Creates a new instance of Configuration
+    #' @param project A Project in which the configurations are defined.
     initialize = function(project) {
       private$.project <- project
     },
+    #' @description Prints the configurations
+    #' @param lod Level of detail to print.
+    #' - 1: Print only the number of configurations per category.
+    #' - 2 (default): For each category, list all available configurations.
     print = function(lod = 2) {
       cli_h1("Configurations")
 
@@ -50,6 +65,7 @@ Configuration <- R6::R6Class(
     .applications = NULL
   ),
   active = list(
+    #' @field scenarios all the scenario configurations defined in the project
     scenarios = function(value) {
       if (is.null(private$.scenarios)) {
         private$.scenarios <- createScenariosConfigurations(private$.project)
@@ -59,6 +75,7 @@ Configuration <- R6::R6Class(
       }
       return(private$.scenarios)
     },
+    #' @field models all the model files (.pkml files) available in the project
     models = function(value) {
       if (is.null(private$.models)) {
         private$.models <- list.files(
@@ -71,6 +88,7 @@ Configuration <- R6::R6Class(
       }
       return(private$.models)
     },
+    #' @field modelParameters all the model parameters configurations defined in the project
     modelParameters = function(value) {
       if (is.null(private$.modelParameters)) {
         private$.modelParameters <- createModelParametersConfigurations(private$.project)
@@ -80,6 +98,7 @@ Configuration <- R6::R6Class(
       }
       return(private$.modelParameters)
     },
+    #' @field individuals all the individuals configurations defined in the project
     individuals = function(value) {
       if (is.null(private$.individuals)) {
         private$.individuals <- createIndividualsConfigurations(private$.project)
@@ -89,6 +108,7 @@ Configuration <- R6::R6Class(
       }
       return(private$.individuals)
     },
+    #' @field applications all the applications configurations defined in the project
     applications = function(value) {
       if (is.null(private$.applications)) {
         private$.applications <- createApplicationsConfigurations(private$.project)
@@ -101,6 +121,7 @@ Configuration <- R6::R6Class(
   )
 )
 
+
 createScenariosConfigurations <- function(project) {
   scenariosConfigurationData <- readExcel(
     path = project$projectConfiguration$scenariosFile,
@@ -112,12 +133,11 @@ createScenariosConfigurations <- function(project) {
     data = scenariosConfigurationData
   )
 
-
   scenarios <- list()
 
   for (i in 1:nrow(scenariosConfigurationData)) {
     scenarioConfigurationData <- scenariosConfigurationData[i, ]
-    scenarios[[scenarioConfigurationData$Scenario_name]] <- ScenarioConfiguration2$new(project, scenarioConfigurationData)
+    scenarios[[scenarioConfigurationData$Scenario_name]] <- ScenarioConfiguration$new(project, scenarioConfigurationData)
   }
 
   return(scenarios)
