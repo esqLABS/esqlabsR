@@ -9,6 +9,8 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 
 - Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
 
+- More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is defined.
+
 ## Breaking changes
 
 - Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
