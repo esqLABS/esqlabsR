@@ -1,42 +1,49 @@
+#' @title Scenario Configuration Object
+#' @description A class holding all the configuration data for a single scenario.
 ScenarioConfiguration <-
   R6::R6Class(
     classname = "ScenarioConfiguration",
     public = list(
+      #' @description Creates a new scenario object
+      #' @param project The project in which the scenario is created
+      #' @param scenarioConfigurationData a row from the scenario configuration data frame
       initialize = function(project, scenarioConfigurationData) {
         private$.project <- project
         private$.scenarioConfigurationData$id <- scenarioConfigurationData$Scenario_name
         self$individual <- scenarioConfigurationData$IndividualId
         self$population <- scenarioConfigurationData$PopulationId
         self$populationFromCSV <- scenarioConfigurationData$ReadPopulationFromCSV
-        self$modelParameters <- scenarioConfigurationData$ModelParameterSheets
-        self$applications <- scenarioConfigurationData$ApplicationProtocol
-        self$time <- scenarioConfigurationData$SimulationTime
-        self$timeUnit <- scenarioConfigurationData$SimulationTimeUnit
+        self$modelParameters <- splitCellValues(scenarioConfigurationData$ModelParameterSheets)
+        self$applications <- splitCellValues(scenarioConfigurationData$ApplicationProtocol)
+        self$time <- splitCellValues(scenarioConfigurationData$SimulationTime, ";")
+        self$timeUnit <- splitCellValues(scenarioConfigurationData$SimulationTimeUnit, ";")
         self$steadyState <- scenarioConfigurationData$SteadyState
         self$steadyStateTime <- scenarioConfigurationData$SteadyStateTime
         self$steadyStateTimeUnit <- scenarioConfigurationData$SteadyStateTimeUnit
         self$model <- scenarioConfigurationData$ModelFile
-        self$outputPaths <- scenarioConfigurationData$OutputPathsIds
+        self$outputPaths <- splitCellValues(scenarioConfigurationData$OutputPathsIds)
       },
+      #' @description Prints the scenario configuration object
       print = function() {
         print(private$.scenarioConfigurationData)
       },
+      #' @description Converts the scenario configuration object to a data frame
       toDataFrame = function(){
         return(
           tibble::tibble(
-            Scenario_name = list$id,
-            IndividualId = list$individual,
-            PopulationId = list$population,
-            ReadPopulationFromCSV = list$populationFromCSV,
-            ModelParameterSheets = list$modelParameters,
-            ApplicationProtocol = list$applications,
-            SimulationTime = list$time,
-            SimulationTimeUnit = list$timeUnit,
-            SteadyState = list$steadyState,
-            SteadyStateTime = list$steadyStateTime,
-            SteadyStateTimeUnit = list$steadyStateTimeUnit,
-            ModelFile = list$model,
-            OutputPathsIds = list$outputPaths
+            Scenario_name = self$id,
+            IndividualId = self$individual,
+            PopulationId = self$population,
+            ReadPopulationFromCSV = self$populationFromCSV,
+            ModelParameterSheets = mergeCellValues(self$modelParameters),
+            ApplicationProtocol = mergeCellValues(self$applications),
+            SimulationTime = mergeCellValues(self$time, ";"),
+            SimulationTimeUnit = mergeCellValues(self$timeUnit, ";"),
+            SteadyState = self$steadyState,
+            SteadyStateTime = self$steadyStateTime,
+            SteadyStateTimeUnit = self$steadyStateTimeUnit,
+            ModelFile = self$model,
+            OutputPathsIds = mergeCellValues(self$outputPaths)
           )
         )
       }
@@ -46,55 +53,63 @@ ScenarioConfiguration <-
       .scenarioConfigurationData = list()
     ),
     active = list(
+      #' @field id Scenario name
       id = function(value) {
         if (!missing(value)) {
           stop("id is read-only.")
         }
         return(private$.scenarioConfigurationData$id)
       },
+      #' @field individual Individual ID used for the scenario
       individual = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$individual <- value
         }
         return(private$.scenarioConfigurationData$individual)
       },
+      #' @field population Population ID used for the scenario
       population = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$population <- value
         }
         return(private$.scenarioConfigurationData$population)
       },
+      #' @field populationFromCSV Flag indicating if the population should be read from a CSV file
       populationFromCSV = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$populationFromCSV <- value
         }
-        return(private$.scenarioConfigurationData$populationFromCSV
-        )
+        return(private$.scenarioConfigurationData$populationFromCSV)
       },
+      #' @field modelParameters Model parameters ID used for the scenario
       modelParameters = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$modelParameters <- value
         }
         return(private$.scenarioConfigurationData$modelParameters)
       },
+      #' @field applications Application protocol ID used for the scenario
       applications = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$applications <- value
         }
         return(private$.scenarioConfigurationData$applications)
       },
+      #' @field time Simulation time
       time = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$time <- value
         }
         return(private$.scenarioConfigurationData$time)
       },
+      #' @field timeUnit Simulation time unit
       timeUnit = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$timeUnit <- value
         }
         return(private$.scenarioConfigurationData$timeUnit)
       },
+      #' @field steadyState Flag indicating if the simulation should run in steady state
       steadyState = function(value) {
         if (!missing(value)) {
           if (is.na(value)){
@@ -104,24 +119,28 @@ ScenarioConfiguration <-
         }
         return(private$.scenarioConfigurationData$steadyState)
       },
+      #' @field steadyStateTime Steady state time
       steadyStateTime = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$steadyStateTime <- value
         }
         return(private$.scenarioConfigurationData$steadyStateTime)
       },
+      #' @field steadyStateTimeUnit Steady state time unit
       steadyStateTimeUnit = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$steadyStateTimeUnit <- value
         }
         return(private$.scenarioConfigurationData$steadyStateTimeUnit)
       },
+      #' @field model Model file
       model = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$model <- value
         }
         return(private$.scenarioConfigurationData$model)
       },
+      #' @field outputPaths Simulation output paths
       outputPaths = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$outputPaths <- value
@@ -132,25 +151,6 @@ ScenarioConfiguration <-
   )
 
 
-ScenarioConfigurationDataFrameToList <- function(dataframe) {
-  return(
-    list(
-      id = dataframe$Scenario_name,
-      individual = dataframe$IndividualId,
-      population = dataframe$PopulationId,
-      populationFromCSV = dataframe$ReadPopulationFromCSV,
-      modelParameters = splitCellValues(dataframe$ModelParameterSheets),
-      applications = splitCellValues(dataframe$ApplicationProtocol),
-      time = splitCellValues(dataframe$SimulationTime, ";"),
-      timeUnit = dataframe$SimulationTimeUnit,
-      steadyState = dataframe$SteadyState,
-      steadyStateTime = dataframe$SteadyStateTime,
-      steadyStateTimeUnit = dataframe$SteadyStateTimeUnit,
-      model = dataframe$ModelFile,
-      outputPaths = splitCellValues(dataframe$OutputPathsIds)
-    )
-  )
-}
 
 splitCellValues <- function(cellValues, separator = ","){
   if (is.null(cellValues) || is.na(cellValues)) {
@@ -163,3 +163,11 @@ splitCellValues <- function(cellValues, separator = ","){
     )
   )
 }
+
+mergeCellValues <- function(cellValues, separator = ","){
+  if (all(is.null(cellValues)) || all(is.na(cellValues))) {
+    return(NULL)
+  }
+  paste(cellValues, collapse = separator)
+}
+
