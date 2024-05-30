@@ -31,7 +31,12 @@ Project <-
         purrr::map(self$scenarios, ~ print(.x, lod = 1))
         cli_h1("Simulation Results")
         cli_ul()
-        purrr::map(names(self$simulationResults), ~ cli_li(.x))
+        if (identical(private$.simulationResults, list())) {
+          cli_alert_danger("No Simulation Results available.")
+        } else {
+          purrr::map(names(self$simulationResults), ~ cli_li(.x))
+        }
+
       },
       #' @description Reset the loaded configurations by reading the
       #' Configurations files.
@@ -137,16 +142,12 @@ Project <-
         invisible(private$.scenarios)
       },
       #' @field simulationResults Simulation results from the run simulations.
-      simulationResults = function() {
+      simulationResults = function(value) {
         if (!missing(value)) {
           cli::cli_abort("Simulation Results cannot be altered.")
         }
-
-        if (identical(private$.simulationResults, list())) {
-          message("No Simulation Results available.")
-        } else {
           return(private$.simulationResults)
-        }
+
       }
     ),
     private = list(
