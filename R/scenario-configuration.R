@@ -15,8 +15,8 @@ ScenarioConfiguration <-
         self$populationFromCSV <- scenarioConfigurationData$ReadPopulationFromCSV
         self$modelParameters <- splitCellValues(scenarioConfigurationData$ModelParameterSheets)
         self$applications <- splitCellValues(scenarioConfigurationData$ApplicationProtocol)
-        self$time <- splitCellValues(scenarioConfigurationData$SimulationTime, ";")
-        self$timeUnit <- splitCellValues(scenarioConfigurationData$SimulationTimeUnit, ";")
+        self$simulationTime <- splitCellValues(scenarioConfigurationData$SimulationTime, ";")
+        self$simulationTimeUnit <- splitCellValues(scenarioConfigurationData$SimulationTimeUnit, ";")
         self$steadyState <- scenarioConfigurationData$SteadyState
         self$steadyStateTime <- scenarioConfigurationData$SteadyStateTime
         self$steadyStateTimeUnit <- scenarioConfigurationData$SteadyStateTimeUnit
@@ -37,8 +37,8 @@ ScenarioConfiguration <-
             ReadPopulationFromCSV = self$populationFromCSV,
             ModelParameterSheets = mergeCellValues(self$modelParameters),
             ApplicationProtocol = mergeCellValues(self$applications),
-            SimulationTime = mergeCellValues(self$time, ";"),
-            SimulationTimeUnit = mergeCellValues(self$timeUnit, ";"),
+            SimulationTime = mergeCellValues(self$SimulationTime, ";"),
+            SimulationTimeUnit = mergeCellValues(self$SimulationTimeUnit, ";"),
             SteadyState = self$steadyState,
             SteadyStateTime = self$steadyStateTime,
             SteadyStateTimeUnit = self$steadyStateTimeUnit,
@@ -96,18 +96,18 @@ ScenarioConfiguration <-
         return(private$.scenarioConfigurationData$applications)
       },
       #' @field time Simulation time
-      time = function(value) {
+      simulationTime = function(value) {
         if (!missing(value)) {
-          private$.scenarioConfigurationData$time <- value
+          private$.scenarioConfigurationData$simulationTime <- value
         }
-        return(private$.scenarioConfigurationData$time)
+        return(private$.scenarioConfigurationData$simulationTime)
       },
       #' @field timeUnit Simulation time unit
-      timeUnit = function(value) {
+      simulationTimeUnit = function(value) {
         if (!missing(value)) {
-          private$.scenarioConfigurationData$timeUnit <- value
+          private$.scenarioConfigurationData$simulationTimeUnit <- value
         }
-        return(private$.scenarioConfigurationData$timeUnit)
+        return(private$.scenarioConfigurationData$simulationTimeUnit)
       },
       #' @field steadyState Flag indicating if the simulation should run in steady state
       steadyState = function(value) {

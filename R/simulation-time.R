@@ -29,12 +29,22 @@ SimulationTime <- R6::R6Class(
       # Check if the simulation time unit is valid
       rlang::arg_match(simulationTimeUnit, as.character(ospUnits$Time))
       self$unit <- simulationTimeUnit
+    },
+    print = function() {
+      cli_ul()
+      cli_inform(self$summary)
     }
   ),
   active = list(
     #' @field timePoints a vector of time points from the start time to the end time with the resolution defined in the simulation time.
     timePoints = function() {
       seq(from = self$startTime, to = self$endTime, by = 1 / self$resolution)
+    },
+    timePointsNumber = function() {
+      length(self$timePoints)
+    },
+    summary = function(){
+      glue::glue("{self$startTime}{self$unit} to {self$endTime}{self$unit} with resolution of {self$resolution} pts/{self$unit} (total: {self$timePointsNumber} points).")
     }
   ),
   private = list(
