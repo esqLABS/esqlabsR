@@ -98,7 +98,7 @@ parameterPaths <- c(
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
 
-results_multiple <- sensitivityCalculation(
+resultsMultiple <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths,
@@ -107,13 +107,13 @@ results_multiple <- sensitivityCalculation(
 
 test_that("sensitivityTimeProfiles plots are as expected for multiple output paths", {
   set.seed(123)
-  p_list <- sensitivityTimeProfiles(results_multiple)
+  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple)
 
   set.seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles",
-      fig = suppressWarnings(p_list)
+      fig = plotsMultiple
     )
   )
 })
@@ -125,8 +125,8 @@ parameterPathsFilter <- "Aciclovir|Lipophilicity"
 
 test_that("sensitivityTimeProfiles plots are as expected with filters", {
   set.seed(123)
-  profile_plot_filtered <- sensitivityTimeProfiles(
-    results_multiple,
+  plotFiltered <- sensitivityTimeProfiles(
+    resultsMultiple,
     outputPaths = outputPathsFilter,
     parameterPaths = parameterPathsFilter
   )
@@ -135,7 +135,7 @@ test_that("sensitivityTimeProfiles plots are as expected with filters", {
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "filtered profile",
-      fig = suppressWarnings(profile_plot_filtered)
+      fig = plotFiltered
     )
   )
 })
