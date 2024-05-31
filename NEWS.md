@@ -9,7 +9,7 @@
   to choose between `free` and `fixed` scales for y-axis. Further plot customization options through
   `defaultPlotConfiguration` (\#632, @rengelke).
   
-- Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling and legend colors (\#669, @rengelke).
+- Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`, and `observedData` to include observed data in the plots. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling, and legend colors. (\#669, \#674 @rengelke).
 
 - Function `sensitivityTimeProfiles` updated. Observed data (single or multiple `DataSet` objects) can now be added to the plots and will be included automatically in the `outputPath` if the dimensions are convertible (\#674, @rengelke).
 
@@ -38,7 +38,6 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 - Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
 
 - More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is defined.
-
 
 # esqlabsR 5.1.3
 
