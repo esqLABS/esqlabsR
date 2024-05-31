@@ -22,13 +22,13 @@ Scenario <- R6::R6Class(
     #' @param project The project in which the scenario is created
     #' @param scenarioConfigurationData a `ScenarioConfiguration` object
     #' @param status The initial status of the scenario to set
-    initialize = function(project, scenarioConfigurationData, status = NULL) {
+    initialize = function(project, scenarioConfiguration, status = NULL) {
       private$.project <- project
-      private$.scenarioConfigurationData <- scenarioConfigurationData
-      self$name <- private$.scenarioConfigurationData$id
+      private$.configuration <- scenarioConfiguration
+      self$name <- private$.configuration$id
       self$status <- status %||% "active"
-      self$type <- ifelse(!is.na(scenarioConfigurationData$population), "population", "individual")
-      self$steadyState <-  private$.scenarioConfigurationData$steadyState
+      self$type <- ifelse(!is.na(private$.configuration$population), "population", "individual")
+      self$steadyState <- private$.configuration$steadyState
     },
     #' @description Prints the scenario object
     #' @param lod The level of detail to print
@@ -53,6 +53,10 @@ Scenario <- R6::R6Class(
         cli_ul()
         cli_li("Status: {scenarioStatus} {self$status}")
         cli_li("Type: {self$type}")
+        cli_li("Simulation Time:")
+        simulationTimes <- cli_ul()
+        purrr::map(self$simulationTime, ~ cli_li(.x$summary))
+        cli_end(simulationTimes)
         cli_li("simulateSteadyTime: {self$simulateSteadyTime}")
         cli_li("Configurations:")
         configurations <- cli_ul()
@@ -72,7 +76,7 @@ Scenario <- R6::R6Class(
     #' @description If status is "active", load the scenario. Loading the
     #' scenario means applying all configuration parameters to the model.
     load = function() {
-      if (self$status == "active"){
+      if (self$status == "active") {
         # Model Parameters
         private$.applyModelParameters()
 
@@ -87,6 +91,9 @@ Scenario <- R6::R6Class(
         # Set output paths
 
         # Set simulation Time
+        private$.applySimulationTime()
+
+
         self$status <- "loaded"
       }
       invisible(self)
@@ -100,25 +107,8 @@ Scenario <- R6::R6Class(
         stop("Configuration cannot be set, modify scenario configuration by accessing project$configurations$scenarios")
       }
 
-      if (is.null(private$.configuration)) {
-        private$.configuration <- list()
-        private$.configuration$model <- private$.scenarioConfigurationData$model
-
-        private$.configuration$modelParameters <- list()
-
-        for (modelParameter in private$.scenarioConfigurationData$modelParameters) {
-          private$.configuration$modelParameters[[modelParameter]] <- private$.project$configurations$modelParameters[[modelParameter]]
-        }
-
-        private$.configuration$individual <- private$.project$configurations$individuals[private$.scenarioConfigurationData$individual]
-
-        private$.configuration$applications <- list()
-        for (application in private$.scenarioConfigurationData$applications) {
-          private$.configuration$applications[[application]] <- private$.project$configurations$applications[[application]]
-        }
-      }
-
       return(private$.configuration)
+
     },
     #' @field model path of the scenario's pkml model file.
     model = function() {
@@ -140,29 +130,43 @@ Scenario <- R6::R6Class(
     #' @field modelParameters Model parameters to apply to the scenario.
     modelParameters = function() {
       if (is.null(private$.modelParameters)) {
-        private$.modelParameters <-
-          purrr::flatten(self$configuration$modelParameters) %>%
-          purrr::map(~ .x$parameterObject) %>%
-          flattenParameterObjects()
+        private$.modelParameters <- list()
+
+        for (modelParameter in self$configuration$modelParameters) {
+          private$.modelParameters[[modelParameter]] <- private$.project$configurations$modelParameters[[modelParameter]]
+        }
       }
       return(private$.modelParameters)
     },
     #' @field individual Individual parameters to apply to the scenario.
     individual = function() {
       if (is.null(private$.individual)) {
-        private$.individual <- self$configuration$individual[[1]]$individualObject
+        private$.individual <- private$.project$configurations$individuals[self$configuration$individual]
       }
       return(private$.individual)
     },
     #' @field applications Applications parameters to apply to the scenario.
-    applications = function(){
+    applications = function() {
       if (is.null(private$.applications)) {
-        private$.applications <-
-          purrr::flatten(self$configuration$applications) %>%
-          purrr::map(~ .x$parameterObject) %>%
-          flattenParameterObjects()
+        private$.applications <- list()
+        for (application in self$configuration$applications) {
+          private$.applications[[application]] <- private$.project$configurations$applications[[application]]
+        }
       }
       return(private$.applications)
+    },
+    #' @field simulationTime SimulationTime to run the scenario
+    simulationTime = function() {
+      if (is.null(private$.simulationTime)) {
+        private$.simulationTime <- purrr::map(
+          self$configuration$simulationTime,
+          ~ SimulationTime$new(
+            simulationTime = .x,
+            simulationTimeUnit = self$configuration$simulationTimeUnit
+          )
+        )
+      }
+      return(private$.simulationTime)
     }
   ),
   private = list(
@@ -174,17 +178,25 @@ Scenario <- R6::R6Class(
     .applications = NULL,
     .simulation = NULL,
     .individual = NULL,
+    .simulationTime = NULL,
     .applyModelParameters = function() {
+      allModelParameters <-
+        purrr::flatten(self$modelParameters) %>%
+        purrr::map(~ .x$parameterObject) %>%
+        flattenParameterObjects()
+
       ospsuite::setParameterValuesByPath(
         simulation = self$simulation,
-        parameterPaths = self$modelParameters$paths,
-        values = self$modelParameters$values,
-        units = self$modelParameters$units,
+        parameterPaths = allModelParameters$paths,
+        values = allModelParameters$values,
+        units = allModelParameters$units,
         stopIfNotFound = FALSE
       )
     },
     .applyIndividualParameters = function() {
-      individual <- self$individual$characteristics
+      individualObject <- self$configuration$individual[[1]]$individualObject
+
+      individual <- individualObject$characteristics
 
       # For human species, only set distributed parameters
       allParamPaths <- individual$distributedParameters$paths
@@ -210,20 +222,53 @@ Scenario <- R6::R6Class(
       # Apply individual parameters
       ospsuite::setParameterValuesByPath(
         simulation = self$simulation,
-        parameterPaths = self$individual$parameters$paths,
-        values = self$individual$parameters$values,
-        units = self$individual$parameters$units,
+        parameterPaths = individualObject$parameters$paths,
+        values = individualObject$parameters$values,
+        units = individualObject$parameters$units,
         stopIfNotFound = FALSE
       )
     },
-    .applyApplicationsParameters = function(){
+    .applyApplicationsParameters = function() {
+
+      allApplications <-
+        purrr::flatten(self$applications) %>%
+        purrr::map(~ .x$parameterObject) %>%
+        flattenParameterObjects()
+
       ospsuite::setParameterValuesByPath(
         simulation = self$simulation,
-        parameterPaths = self$applications$paths,
-        values = self$applications$values,
-        units = self$applications$units,
+        parameterPaths = allApplications$paths,
+        values = allApplications$values,
+        units = allApplications$units,
         stopIfNotFound = FALSE
       )
+    },
+    .applySimulationTime = function() {
+      if (!is.null(self$simulationTime)) {
+        # clear output intervals
+        clearOutputIntervals(self$simulation)
+        # Iterate through all output intervals and add them to simulation
+        for (simulationTime in self$simulationTime) {
+          addOutputInterval(
+            simulation = simulation,
+            startTime = toBaseUnit(
+              quantityOrDimension = ospsuite::ospDimensions$Time,
+              values = simulationTime$startTime,
+              unit = simulationTime$simulationTimeUnit
+            ),
+            endTime = toBaseUnit(
+              quantityOrDimension = ospsuite::ospDimensions$Time,
+              values = simulationTime$endTime,
+              unit = scenarioConfiguration$simulationTimeUnit
+            ),
+            resolution =  simulationTime$resolution / toBaseUnit(
+              quantityOrDimension = ospsuite::ospDimensions$Time,
+              values = 1,
+              unit = scenarioConfiguration$simulationTimeUnit
+            )
+          )
+        }
+      }
     }
   )
 )

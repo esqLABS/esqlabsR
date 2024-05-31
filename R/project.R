@@ -172,7 +172,7 @@ Project <-
         for (scenario in private$.availableScenarios) {
           private$.scenarios[[scenario]] <- Scenario$new(
             project = self,
-            scenarioConfigurationData = self$configurations$scenarios[[scenario]],
+            scenarioConfiguration = self$configurations$scenarios[[scenario]],
             status = if (!is.null(private$.scenarios[[scenario]]$status) && private$.scenarios[[scenario]]$status == "inactive") "inactive" else NULL
           )
         }
