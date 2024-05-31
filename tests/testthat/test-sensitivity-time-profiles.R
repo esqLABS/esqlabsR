@@ -107,7 +107,7 @@ results_multiple <- sensitivityCalculation(
 
 test_that("sensitivityTimeProfiles plots are as expected for multiple output paths", {
   set.seed(123)
-  p_list <- sensitivityTimeProfiles(results)
+  p_list <- sensitivityTimeProfiles(results_multiple)
 
   set.seed(123)
   suppressWarnings(
