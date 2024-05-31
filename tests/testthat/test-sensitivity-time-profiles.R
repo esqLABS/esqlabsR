@@ -30,6 +30,16 @@ results <- sensitivityCalculation(
   variationRange = variationRange
 )
 
+# load observed data
+filePath <- testthat::test_path("../data/AciclovirLaskinData.xlsx")
+dataConfiguration <- createImporterConfigurationForFile(filePath = filePath)
+dataConfiguration$sheets <- "Laskin 1982.Group A"
+dataConfiguration$namingPattern <- "{Source}.{Sheet}"
+obsData <<- loadDataSetsFromExcel(
+  xlsFilePath = filePath,
+  importerConfigurationOrPath = dataConfiguration
+)
+
 # validating plotting arguments -------------------------
 
 test_that("sensitivityTimeProfiles fails with incorrect input objects", {
@@ -83,6 +93,19 @@ test_that("sensitivityTimeProfiles correctly applies linear y-axis scaling", {
   expect_snapshot(unlist(plotParams))
 })
 
+test_that("sensitivityTimeProfiles plots correctly with inclusion of observed data", {
+  set.seed(123)
+  p <- sensitivityTimeProfiles(results, observedData = obsData)
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivityTimeProfiles works with observed data",
+      fig = p
+    )
+  )
+})
+
 # multiple output paths -------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
@@ -113,6 +136,19 @@ test_that("sensitivityTimeProfiles plots are as expected for multiple output pat
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles",
+      fig = plotsMultiple
+    )
+  )
+})
+
+test_that("sensitivityTimeProfiles plots correctly for multiple outputs with observed data", {
+  set.seed(123)
+  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple, observedData = obsData)
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path profiles with observed data",
       fig = plotsMultiple
     )
   )
