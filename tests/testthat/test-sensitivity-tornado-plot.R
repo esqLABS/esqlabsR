@@ -41,7 +41,7 @@ test_that("sensitivityTornadoPlot fails with incorrect input objects", {
 
 test_that("sensitivityTornadoPlot fails with incorrect parameterFactor input", {
   expect_error(
-    sensitivityTornadoPlot(results, parameterFactor = 100),
+    sensitivityTornadoPlot(results, parameterFactor = 0),
     "parameterFactor error"
   )
 })

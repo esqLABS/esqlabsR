@@ -43,16 +43,21 @@ test_that("sensitivityTimeProfiles fails with incorrect input objects", {
 
 test_that("sensitivityTimeProfiles plots are as expected", {
   set.seed(123)
-  p <- suppressWarnings(sensitivityTimeProfiles(results))
+  p <- sensitivityTimeProfiles(results)
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "sensitivityTimeProfiles works as expected",
-    fig = suppressWarnings(p)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivityTimeProfiles works as expected",
+      fig = p
+    )
   )
 
-  pb <- suppressWarnings(ggplot_build(p$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`))
-
+  pb <- suppressWarnings(
+    ggplot_build(
+      p$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
+    )
+  )
   expect_snapshot(pb$plot$labels)
 })
 
@@ -63,6 +68,14 @@ n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 test_that("sensitivityTimeProfiles correctly applies linear y-axis scaling", {
   set.seed(123)
   p <- sensitivityTimeProfiles(results, yAxisScale = "lin")
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivityTimeProfiles linear y-axis",
+      fig = p
+    )
+  )
 
   pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
   plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)
@@ -94,12 +107,14 @@ results_multiple <- sensitivityCalculation(
 
 test_that("sensitivityTimeProfiles plots are as expected for multiple output paths", {
   set.seed(123)
-  p_list <- suppressWarnings(sensitivityTimeProfiles(results))
+  p_list <- sensitivityTimeProfiles(results)
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "multiple output path profiles",
-    fig = suppressWarnings(p_list)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path profiles",
+      fig = suppressWarnings(p_list)
+    )
   )
 })
 
@@ -117,9 +132,11 @@ test_that("sensitivityTimeProfiles plots are as expected with filters", {
   )
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "filtered profile",
-    fig = suppressWarnings(profile_plot_filtered)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "filtered profile",
+      fig = suppressWarnings(profile_plot_filtered)
+    )
   )
 })
 

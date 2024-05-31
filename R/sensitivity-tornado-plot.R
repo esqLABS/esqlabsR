@@ -120,8 +120,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     subtitle = NULL,
     title = NULL,
     titleSize = 14,
-    xLabel = "Parameter",
-    yLabel = "Input parameter value [% of reference]"
+    yLabel = "Parameter",
+    xLabel = "Input parameter value [% of reference]"
   )
   # override only default configuration values with settings for tornado plot
   customPlotConfiguration <- defaultPlotConfiguration$clone()
@@ -200,8 +200,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 
   # calculate x-axis breaks and limits -------
   pLimits <- .calculateLimits(data$PercentChangePK)
-  if (isTRUE(pLimits[1] > 0.5)) pLimits[1] <- 0.5
-  if (isTRUE(pLimits[2] < 1.5)) pLimits[2] <- 1.5
+  pLimits[1] <- -1 * max(abs(pLimits))
+  pLimits[2] <- max(abs(pLimits))
 
   pBreaks <- .calculateBreaks(data$PercentChangePK, m = 5)
 
@@ -224,9 +224,17 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       ) +
         geom_col(
           color = "grey",
+          width = 0.9,
           na.rm = TRUE
         ) +
         coord_flip()
+
+      plot <- plot +
+        geom_hline(
+          yintercept = 0,
+          color = "grey",
+          linewidth = 1
+        )
 
       plot <- plot +
         scale_y_continuous(
@@ -240,8 +248,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       plot <- plot +
         facet_wrap(~PKParameter, scales = "fixed") +
         labs(
-          x = plotConfiguration$xLabel,
-          y = plotConfiguration$yLabel,
+          x = plotConfiguration$yLabel, # x/y label swap because of coord-flip()
+          y = plotConfiguration$xLabel,
           title = NULL,
           fill = plotConfiguration$legendTitle
         ) +

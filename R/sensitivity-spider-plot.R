@@ -264,7 +264,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         )
         #   calculate breaks and limits using PK parameter data subset
         pBreaks <- .calculateBreaks(
-          values = dataSubset[, yColumn],
+          x = dataSubset[, yColumn],
           m = plotConfiguration$yAxisTicks
         )
         pLimits <- NULL
@@ -382,62 +382,4 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     theme(legend.position = plotConfiguration$legendPosition)
 
   return(plotPatchwork)
-}
-
-#' Update Plot Configuration with Overrides
-#'
-#' Updates a plot configuration object `plotConfiguration` with explicitly
-#' defined overrides from `plotOverrideConfig` list. It retains any custom
-#' settings in `plotConfiguration` that deviate from the defaults
-#'
-#' @param plotConfiguration A plot configuration object.
-#' @param plotOverrideConfig A list with new configuration settings to apply.
-#'
-#'
-#' @keywords internal
-#' @noRd
-.updatePlotConfiguration <- function(plotConfiguration, plotOverrideConfig) {
-  defaultValues <- createEsqlabsPlotConfiguration()
-
-  for (name in names(plotOverrideConfig)) {
-    if (!name %in% names(plotConfiguration)) {
-      warning(messages$UnknownPlotConfiguration(name))
-      next
-    }
-
-    if (is.null(defaultValues[[name]]) && is.null(plotConfiguration[[name]])) {
-      plotConfiguration[[name]] <- plotOverrideConfig[[name]]
-    } else if (!is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])) {
-      if (all(plotConfiguration[[name]] == defaultValues[[name]])) {
-        plotConfiguration[[name]] <- plotOverrideConfig[[name]]
-      }
-    }
-  }
-
-  return(plotConfiguration)
-}
-
-
-#' @keywords internal
-#' @noRd
-.calculateBreaks <- function(values, ...) {
-  args <- list(...)
-
-  args$dmin <- min(na.omit(values))
-  args$dmax <- max(na.omit(values))
-  breaks <- do.call(labeling::extended, args)
-  breaks <- round(breaks, 2)
-
-  return(breaks)
-}
-
-#' @keywords internal
-#' @noRd
-.calculateLimits <- function(x) {
-  limits <- c(
-    (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
-    (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
-  )
-
-  return(limits)
 }

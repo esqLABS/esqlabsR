@@ -9,6 +9,8 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 
 - Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
 
+- More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is defined.
+
 ## Breaking changes
 
 - Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
@@ -17,6 +19,8 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
   `absolute` values. `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. `yAxisFacetScales`
   to choose between `free` and `fixed` scales for y-axis. Further plot customization options through
   `defaultPlotConfiguration` (\#632, @rengelke).
+  
+- Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling and legend colors. (\#669, @rengelke).
 
 ## Major Changes
 
