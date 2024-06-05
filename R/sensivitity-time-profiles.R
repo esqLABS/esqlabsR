@@ -37,6 +37,7 @@
 #' - `linesAlpha`: Alpha transparency for the line elements.
 #' - `linesColor`: Color of the line elements.
 #' - `linesSize`: Thickness of the line elements.
+#' - `pointsShape`: Shape of the point elements for observed data.
 #' - `title`: Main title text for the plot.
 #' - `titleSize`: Font size of the plot title.
 #' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
@@ -104,12 +105,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   .validateCharVectors(parameterPaths)
 
   # default time profiles plot configuration setup ----
-
   timeProfilesConfiguration <- list(
     legendPosition = "bottom",
     legendTitle = "Parameter factor",
     linesAlpha = 0.7,
     linesSize = 1.4,
+    pointsShape = 16L,
     title = NULL,
     titleSize = 14,
     xAxisScale = "lin",
@@ -117,6 +118,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     yAxisScale = "log",
     yLabel = NULL
   )
+
   # override default plot configuration with function parameters
   customPlotConfiguration <- defaultPlotConfiguration$clone()
   if (!is.null(xAxisScale)) customPlotConfiguration$xAxisScale <- xAxisScale
@@ -274,13 +276,13 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       # add line for observed data
       if (addObeservedData) {
         plot <- plot +
-          geom_line(
+          geom_point(
             data = dplyr::filter(dataSubset, dataType == "observed"),
-            aes(Time, Concentration, linetype = dataSet)
+            aes(Time, Concentration, shape = dataSet)
           ) +
-          scale_linetype_manual(
+          scale_shape_manual(
             values = rep(
-              c("dashed", "dotted", "dotdash", "longdash", "twodash"),
+              plotConfiguration$pointsShape,
               length.out = length(unique(dataSubset$dataSet))
             ),
             name = "Observed data"
@@ -340,7 +342,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       if (addObeservedData) {
         plot <- plot +
           guides(
-            linetype = guide_legend(
+            shape = guide_legend(
               title.position = "top",
               nrow = length(unique(dataSubset$dataType))
             )
