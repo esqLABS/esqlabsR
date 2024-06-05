@@ -21,9 +21,9 @@
 #' (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #' scale similarly to `xAxisScale`. Default is "log".
-#' @param observedData Optional. A named set of `DataSet` objects containing
-#' observed data. If provided, observed data will be included in the plot. This
-#' allows for direct comparison between observed and simulated data within the
+#' @param observedData Optional. A set of `DataSet` objects containing observed
+#' data. If provided, observed data will be included in the plot. This allows
+#' for direct comparison between observed and simulated data within the
 #' visualizations.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics. Plot-specific settings provided directly
@@ -94,6 +94,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  validateIsOfType(observedData, DataSet, nullAllowed = TRUE)
   if (is.null(defaultPlotConfiguration)) {
     defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
   } else {
