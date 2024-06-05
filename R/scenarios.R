@@ -58,17 +58,21 @@ Scenario <- R6::R6Class(
         purrr::map(self$simulationTime, ~ cli_li(.x$summary))
         cli_end(simulationTimes)
         cli_li("simulateSteadyTime: {self$simulateSteadyTime}")
+        cli_li("Output Paths:")
+        outputPaths <- cli_ul()
+        purrr::imap(self$outputPaths, ~ cli_li("{.y}"))
+        cli_end(outputPaths)
         cli_li("Configurations:")
         configurations <- cli_ul()
         cli_li("Model: {self$configuration$model}")
         cli_li("Model Parameters:")
         model_parameters <- cli_ul()
-        purrr::map(names(self$configuration$modelParameters), ~ cli_li(.x))
+        purrr::map(self$configuration$modelParameters, ~ cli_li(.x))
         cli_end(model_parameters)
-        cli_li(paste("Individual:", names(self$configuration$individual)))
+        cli_li("Individual: {self$configuration$individual}")
         cli_li("Applications:")
         applications_parameters <- cli_ul()
-        purrr::map(names(self$configuration$applications), ~ cli_li(.x))
+        purrr::map(self$configuration$applications, ~ cli_li(.x))
         cli_end(applications_parameters)
         cli_end(configurations)
       }
@@ -108,7 +112,6 @@ Scenario <- R6::R6Class(
       }
 
       return(private$.configuration)
-
     },
     #' @field model path of the scenario's pkml model file.
     model = function() {
@@ -126,6 +129,16 @@ Scenario <- R6::R6Class(
         private$.simulation <- ospsuite::loadSimulation(self$model)
       }
       return(private$.simulation)
+    },
+    #' @field outputPaths Output paths for the scenario.
+    outputPaths = function() {
+      if (is.null(private$.outputPaths)) {
+        private$.outputPaths <- list()
+        for (outputPath in self$configuration$outputPaths) {
+          private$.outputPaths[[outputPath]] <- private$.project$configurations$outputPaths[[outputPath]]
+        }
+      }
+      return(private$.outputPaths)
     },
     #' @field modelParameters Model parameters to apply to the scenario.
     modelParameters = function() {
@@ -174,6 +187,7 @@ Scenario <- R6::R6Class(
     .configuration = NULL,
     .project = NULL,
     .model = NULL,
+    .outputPaths = NULL,
     .modelParameters = NULL,
     .applications = NULL,
     .simulation = NULL,

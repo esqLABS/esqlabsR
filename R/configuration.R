@@ -28,6 +28,8 @@ Configuration <- R6::R6Class(
         cli_li("Models: {length(self$models)}")
         cli_li("Model Parameters: {length(self$modelParameters)}")
         cli_li("Individuals: {length(self$individuals)}")
+        cli_li("Applications: {length(self$applications)}")
+        cli_li("OutputPaths: {length(self$outputPaths)}")
         cli_end()
       }
 
@@ -37,21 +39,25 @@ Configuration <- R6::R6Class(
         scenarios <- cli_ul()
         purrr::map(names(self$scenarios), ~ cli_li(.x))
         cli_end(scenarios)
+        cli_li("OutputPaths:")
+        outpuPaths <- cli_ul()
+        purrr::imap(self$outputPaths, ~ cli_li(.y))
+        cli_end(outpuPaths)
         cli_li("Models:")
         models <- cli_ul()
         purrr::map(self$models, ~ cli_li(.x))
         cli_end(models)
         cli_li("Model Parameters:")
         modelParameters <- cli_ul()
-        purrr::map(names(self$modelParameters), ~ cli_li(.x))
+        purrr::imap(self$modelParameters, ~ cli_li(.y))
         cli_end(modelParameters)
         cli_li("Individuals:")
         individuals <- cli_ul()
-        purrr::map(names(self$individuals), ~ cli_li(.x))
+        purrr::imap(self$individuals, ~ cli_li(.y))
         cli_end(individuals)
         cli_li("Applications:")
         applications <- cli_ul()
-        purrr::map(names(self$applications), ~ cli_li(.x))
+        purrr::imap(self$applications, ~ cli_li(.y))
         cli_end(applications)
       }
     }
@@ -62,7 +68,8 @@ Configuration <- R6::R6Class(
     .models = NULL,
     .modelParameters = NULL,
     .individuals = NULL,
-    .applications = NULL
+    .applications = NULL,
+    .outputPaths = NULL
   ),
   active = list(
     #' @field scenarios all the scenario configurations defined in the project
@@ -117,6 +124,15 @@ Configuration <- R6::R6Class(
         private$.applications <- modifyList(private$.applications, value)
       }
       return(private$.applications)
+    },
+    outputPaths = function(value) {
+      if (is.null(private$.outputPaths)) {
+        private$.outputPaths <- createOutputPaths(private$.project)
+      }
+      if (!missing(value)) {
+        private$.outputPaths <- modifyList(private$.outputPaths, value)
+      }
+      return(private$.outputPaths)
     }
   )
 )
@@ -190,6 +206,22 @@ createApplicationsConfigurations <- function(project) {
       project$projectConfiguration$applicationsFile
     )
   )
+}
+
+createOutputPaths <- function(project) {
+  outputPathsData <- readExcel(
+    path = project$projectConfiguration$scenariosFile,
+    sheet = "OutputPaths"
+  )
+
+  outputPaths <- list()
+
+  for (i in 1:nrow(outputPathsData)) {
+    outputPathData <- outputPathsData[i, ]
+    outputPaths[[outputPathData$OutputPathId]] <- outputPathData$OutputPath
+  }
+
+  return(outputPaths)
 }
 
 
