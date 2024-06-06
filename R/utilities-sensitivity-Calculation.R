@@ -28,27 +28,47 @@
 .simulationResultsToTimeSeriesDataFrame <- function(simulationResults,
                                                     parameterPath,
                                                     outputPaths) {
-  purrr::map_dfr(
+  # Convert simulation results to data frames
+  timeSeriesDataFrame <- purrr::map_dfr(
     .x  = simulationResults,
     .f  = ~ simulationResultsToDataFrame(.x, quantitiesOrPaths = outputPaths),
     .id = "ParameterFactor"
-  ) %>%
-    dplyr::rename(
-      Concentration = simulationValues,
-      OutputPath    = paths,
-      Dimension     = dimension,
-      Unit          = unit
-    ) %>%
-    .addParameterColumns(simulationResults, parameterPath) %>%
-    dplyr::select(
-      "OutputPath",
-      dplyr::starts_with("Parameter"),
-      Time, Concentration,
-      dplyr::everything(),
-      -c("IndividualId")
-    ) %>%
-    dplyr::arrange(ParameterPath, ParameterFactor)
+  )
+
+  # Rename columns
+  timeSeriesDataFrame <- dplyr::rename(
+    timeSeriesDataFrame,
+    Concentration = simulationValues,
+    OutputPath    = paths,
+    Dimension     = dimension,
+    Unit          = unit
+  )
+
+  # Add parameter columns
+  timeSeriesDataFrame <- .addParameterColumns(
+    timeSeriesDataFrame, simulationResults, parameterPath
+  )
+
+  # Select and arrange columns
+  timeSeriesDataFrame <- dplyr::select(
+    timeSeriesDataFrame,
+    OutputPath,
+    dplyr::starts_with("Parameter"),
+    Time,
+    Concentration,
+    dplyr::everything(),
+    -IndividualId
+  )
+
+  timeSeriesDataFrame <- dplyr::arrange(
+    timeSeriesDataFrame,
+    ParameterPath,
+    ParameterFactor
+  )
+
+  return(timeSeriesDataFrame)
 }
+
 
 #' Extract PK parameters dataframe from a list of `SimulationResults` objects
 #'
