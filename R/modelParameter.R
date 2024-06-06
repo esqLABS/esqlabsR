@@ -67,7 +67,7 @@ ModelParameter <- R6::R6Class(
 )
 
 
-checkParametersFileStructure <- function(filePath, data) {
+validateParametersFileStructure <- function(filePath, data) {
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
 
   if (!all(columnNames %in% names(data))) {
@@ -86,7 +86,7 @@ createParametersFromFile <- function(project, filePath) {
 
 createParametersFromSheet <- function(project, filePath, sheet) {
   sheetModelParametersData <- readExcel(filePath, sheet = sheet)
-  checkParametersFileStructure(
+  validateParametersFileStructure(
     filePath = filePath,
     data = sheetModelParametersData
   )
