@@ -17,7 +17,7 @@ Scenario <- R6::R6Class(
     #' @field type Whether it is a population or individual simulation scenario
     type = NULL,
     #' @field steadyState Whether the scenario is a steady state simulation
-    steadyState = NULL,
+    simulateSteadyState = NULL,
     #' @description Creates a new scenario object
     #' @param project The project in which the scenario is created
     #' @param scenarioConfigurationData a `ScenarioConfiguration` object
@@ -28,7 +28,7 @@ Scenario <- R6::R6Class(
       self$name <- private$.configuration$id
       self$status <- status %||% "active"
       self$type <- ifelse(!is.na(private$.configuration$population), "population", "individual")
-      self$steadyState <- private$.configuration$steadyState
+      self$simulateSteadyState <- private$.configuration$steadyState
     },
     #' @description Prints the scenario object
     #' @param lod The level of detail to print
@@ -57,7 +57,12 @@ Scenario <- R6::R6Class(
         simulationTimes <- cli_ul()
         purrr::map(self$simulationTime, ~ cli_li(.x$summary))
         cli_end(simulationTimes)
-        cli_li("simulateSteadyTime: {self$simulateSteadyTime}")
+        cli_li("Simulate steady state: {self$simulateSteadyState %||% FALSE}")
+        if (self$simulateSteadyState) {
+          steadyStateTime <- cli_ul()
+          cli_li("Steady State Time: {self$steadyStateTime$time} {self$steadyStateTime$timeUnit}")
+          cli_end(steadyStateTime)
+        }
         cli_li("Output Paths:")
         outputPaths <- cli_ul()
         purrr::imap(self$outputPaths, ~ cli_li("{.y}"))
@@ -85,7 +90,7 @@ Scenario <- R6::R6Class(
         private$.applyModelParameters()
 
         # Individual Parameters
-        private$.applyIndividualParameters()
+        # private$.applyIndividualParameters()
 
         # Applications parameters
         private$.applyApplicationsParameters()
@@ -93,6 +98,7 @@ Scenario <- R6::R6Class(
         # Population parameters
 
         # Set output paths
+        private$.applyOutputPaths()
 
         # Set simulation Time
         private$.applySimulationTime()
@@ -180,6 +186,15 @@ Scenario <- R6::R6Class(
         )
       }
       return(private$.simulationTime)
+    },
+    steadyStateTime = function() {
+      if (is.null(private$.steadyStateTime)) {
+        private$.steadyStateTime <- SteadyStateTime$new(
+          steadyStateTime = self$configuration$steadyStateTime,
+          steadyStateTimeUnit = self$configuration$steadyStateTimeUnit
+        )
+      }
+      return(private$.steadyStateTime)
     }
   ),
   private = list(
@@ -193,6 +208,7 @@ Scenario <- R6::R6Class(
     .simulation = NULL,
     .individual = NULL,
     .simulationTime = NULL,
+    .steadyStateTime = NULL,
     .applyModelParameters = function() {
       allModelParameters <-
         purrr::flatten(self$modelParameters) %>%
@@ -208,7 +224,8 @@ Scenario <- R6::R6Class(
       )
     },
     .applyIndividualParameters = function() {
-      individualObject <- self$configuration$individual[[1]]$individualObject
+
+      individualObject <- self$individual[[1]]$individualObject
 
       individual <- individualObject$characteristics
 
@@ -243,7 +260,6 @@ Scenario <- R6::R6Class(
       )
     },
     .applyApplicationsParameters = function() {
-
       allApplications <-
         purrr::flatten(self$applications) %>%
         purrr::map(~ .x$parameterObject) %>%
@@ -264,7 +280,7 @@ Scenario <- R6::R6Class(
         # Iterate through all output intervals and add them to simulation
         for (simulationTime in self$simulationTime) {
           addOutputInterval(
-            simulation = simulation,
+            simulation = self$simulation,
             startTime = toBaseUnit(
               quantityOrDimension = ospsuite::ospDimensions$Time,
               values = simulationTime$startTime,
@@ -273,15 +289,22 @@ Scenario <- R6::R6Class(
             endTime = toBaseUnit(
               quantityOrDimension = ospsuite::ospDimensions$Time,
               values = simulationTime$endTime,
-              unit = scenarioConfiguration$simulationTimeUnit
+              unit = simulationTime$simulationTimeUnit
             ),
-            resolution =  simulationTime$resolution / toBaseUnit(
+
+
+            resolution = simulationTime$resolution / toBaseUnit(
               quantityOrDimension = ospsuite::ospDimensions$Time,
               values = 1,
-              unit = scenarioConfiguration$simulationTimeUnit
+              unit = simulationTime$simulationTimeUnit
             )
           )
         }
+      }
+    },
+    .applyOutputPaths = function() {
+      if (!is.null(self$outputPaths)) {
+        setOutputs(quantitiesOrPaths = self$outputPaths, simulation = self$simulation)
       }
     }
   )

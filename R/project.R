@@ -36,7 +36,6 @@ Project <-
         } else {
           purrr::map(names(self$simulationResults), ~ cli_li(.x))
         }
-
       },
       #' @description Reset the loaded configurations by reading the
       #' Configurations files.
@@ -75,7 +74,9 @@ Project <-
       #' project <- exampleProject()
       #' project$loadScenarios()
       loadScenarios = function() {
-        purrr::map(self$scenarios, ~ .x$load(), .progress = "Loading Scenarios")
+        purrr::map(self$scenarios, ~ .x$load(),
+          .progress = "Loading Scenarios"
+        )
         invisible(self)
       },
       #' @description run all active scenarios.
@@ -87,12 +88,30 @@ Project <-
       #' project <- exampleProject()
       #' project$runScenarios()
       #' }
-      runScenarios = function() {
+      runScenarios = function(simulationRunOptions = NULL) {
         self$loadScenarios()
 
-        # steadyStateScenarios <-
-        #   purrr::keep(self$scenarios, ~ .x$status == "loaded" && .x$steadyState) %>%
-        #   purrr::map(~ list(simulation = .x$simulation, steadyState = .x$steadyStateTime)))
+        steadyStateScenarios <-
+          purrr::keep(self$scenarios, ~ .x$status == "loaded" && .x$simulateSteadyState) %>%
+          purrr::map(~ list(simulation = .x$simulation, time = .x$steadyStateTime$timeBaseUnit))
+
+        # Simulate steady-state concurrently
+        if (length(steadyStateScenarios) > 0) {
+          initialValues <- ospsuite::getSteadyState(
+            simulations = purrr::map(steadyStateScenarios,  "simulation"),
+            steadyStateTime =  purrr::map(steadyStateScenarios,  ~.x$time),
+            ignoreIfFormula = TRUE,
+            simulationRunOptions = simulationRunOptions
+          )
+        }
+
+        # Set initial values for steady-state simulations
+        for (simulation in steadyStateSimulations) {
+          ospsuite::setQuantityValuesByPath(
+            quantityPaths = initialValues[[simulation$id]]$paths,
+            values = initialValues[[simulation$id]]$values, simulation = simulation
+          )
+        }
 
 
         individualScenarios <-
@@ -146,8 +165,7 @@ Project <-
         if (!missing(value)) {
           cli::cli_abort("Simulation Results cannot be altered.")
         }
-          return(private$.simulationResults)
-
+        return(private$.simulationResults)
       }
     ),
     private = list(
