@@ -9,8 +9,24 @@ Individual <- R6::R6Class(
       private$.parameters <- individualParameters
     },
     print = function() {
-      print(self$characteristics)
-      print(self$parameters)
+      cli_li("Individual ID: {self$characteristics$id}")
+      individual <- cli_ul()
+      cli_li("Characteristics:")
+      characteristics <- cli_ul()
+      cli_li("Specy: {self$characteristics$specy}")
+      cli_li("Population: {self$characteristics$population}")
+      cli_li("Gender: {self$characteristics$gender}")
+      cli_li("Weight: {self$characteristics$weight}")
+      cli_li("Height: {self$characteristics$height}")
+      cli_li("Age: {self$characteristics$age}")
+      cli_li("Protein: {self$characteristics$protein}")
+      cli_li("Ontogeny: {self$characteristics$ontogeny}")
+      cli_end(characteristics)
+      cli_li("Parameters:")
+      parameters <- cli_ul()
+      purrr::imap(self$parameters, ~ cli_li(.y))
+      cli_end(parameters)
+      cli_end(individual)
     },
     toDataFrame = function() {
       return(
