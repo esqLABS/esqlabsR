@@ -20,14 +20,11 @@ SimulationTime <- R6::R6Class(
       simulationTimeValues <- as.numeric(unlist(strsplit(simulationTime, ",")))
 
       validateSimulationTimeValues(simulationTimeValues)
+      validateSimulationTimeUnit(simulationTimeUnit)
 
       self$startTime <- simulationTimeValues[1]
       self$endTime <- simulationTimeValues[2]
       self$resolution <- simulationTimeValues[3]
-
-
-      # Check if the simulation time unit is valid
-      rlang::arg_match(simulationTimeUnit, as.character(ospUnits$Time))
       self$unit <- simulationTimeUnit
     },
     print = function() {
@@ -43,7 +40,7 @@ SimulationTime <- R6::R6Class(
     timePointsNumber = function() {
       length(self$timePoints)
     },
-    summary = function(){
+    summary = function() {
       glue::glue("{self$startTime}{self$unit} to {self$endTime}{self$unit} with resolution of {self$resolution} pts/{self$unit} (total: {self$timePointsNumber} points).")
     }
   ),
@@ -70,5 +67,11 @@ validateSimulationTimeValues <- function(simulationTimeValues) {
   # Validate all start values are smaller than end values
   if (simulationTimeValues[1] >= simulationTimeValues[2]) {
     cli_abort("The start time must be smaller than the end time.")
+  }
+}
+
+validateSimulationTimeUnit <- function(simulationTimeUnit) {
+  if (!simulationTimeUnit %in% as.character(ospUnits$Time)) {
+    cli_abort("The simulation time unit must be a valid unit of time as defined in `ospsuite::ospUnits$Time`.")
   }
 }
