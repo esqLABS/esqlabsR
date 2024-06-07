@@ -537,3 +537,41 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     return(dimB)
   }
 }
+
+#' Convert a dataframe's units if dimensions match
+#'
+#' Converts the units of a dataframe containing observed data using
+#' `ospsuite:::.unitConverter` if the dimensions match. Returns the converted
+#' dataframe or NULL if dimensions don't match and are not convertible to each
+#' other.
+#'
+#' @param data `data.frame` with observed data created using
+#' `ospsuite::dataSetToDataFrame()`.
+#' @param dim1 y-dimension to convert from.
+#' @param dim2 y-dimension to convert to.
+#' @param timeUnit Unit of time to convert to.
+#' @param dimensionUnit Unit of dimension to convert to.
+#'
+#' @return A converted `data.frame` or NULL if dimensions don't match.
+#'
+#' @keywords internal
+#' @noRd
+.convertDataFrame <- function(data, dim1, dim2, timeUnit, dimensionUnit) {
+  validateIsOfType(data, "data.frame")
+  ospsuite.utils::validateEnumValue(timeUnit, ospUnits$Time)
+
+  toDimension <- .matchDimension(dim1, dim2)
+
+  if (!is.null(toDimension)) {
+    ospsuite.utils::validateEnumValue(dimensionUnit, ospUnits[[toDimension]])
+    dataConverted <- ospsuite:::.unitConverter(
+      data,
+      xUnit = timeUnit,
+      yUnit = dimensionUnit
+    )
+  } else {
+    dataConverted <- NULL
+  }
+
+  return(dataConverted)
+}
