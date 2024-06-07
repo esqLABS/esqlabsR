@@ -504,3 +504,36 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   return(combinedDf)
 }
+
+#' Compare dimensions passed as character strings
+#'
+#' Compares two dimension strings and applies specific equivalency rules for
+#' concentration dimensions (mass and molar).
+#'
+#'
+#' @param dimA Character string representing a dimension.
+#' @param dimB Character string representing a dimension.
+#'
+#' @return The matched dimension if equivalent, otherwise `NULL`.
+#'
+#' @keywords internal
+#' @noRd
+.matchDimension <- function(dimA, dimB) {
+  # specific rule for concentration dimension
+  if ((dimA == "Concentration (mass)" && dimB == "Concentration (molar)") ||
+      (dimA == "Concentration (molar)" && dimB == "Concentration (mass)")) {
+    equalDimension <- TRUE
+    dimB <- dimB %>%
+      stringr::str_replace(., "\\(", "\\[") %>%
+      stringr::str_replace(., "\\)", "\\]")
+    # general comparison
+  } else {
+    equalDimension <- identical(dimA, dimB)
+  }
+
+  if (!equalDimension) {
+    return(NULL)
+  } else {
+    return(dimB)
+  }
+}
