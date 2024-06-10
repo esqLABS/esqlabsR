@@ -400,99 +400,150 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   return(plotPatchwork)
 }
 
-#' Batch convert `DataSet` objects to time-series dataframes
+#' Convert a list of `DataSet` objects to a combined time-series dataframe
 #'
-#' Converts each `DataSet` in a list to a dataframe using a specified reference
-#' for unit conversions.
+#' Converts a list of `DataSet` objects containing observed data to time-series
+#' dataframes. Uses simulation results to extract metadata for all quantity paths
+#' as a reference for alignment with the `OutputPath` dimensions.
 #'
-#' @param dataSetList List of `DataSet` R6 objects to be converted.
-#' @param timeSeriesDataFrame Reference `data.frame` for unit conversion with
-#' columns `TimeUnit` and `Unit`.
+#' @param dataSetList List of `DataSet` R6 objects containing observed data.
+#' @param simulationResults Simulation results or simulationResultsBatch used to
+#' extract reference metadata for all output paths defined in the results.
 #'
-#' @return A single `data.frame` combining all the converted data sets.
+#' @return A single `data.frame` combining all the converted data sets with the
+#' reference metadata.
 #'
 #' @keywords internal
 #' @noRd
 .dataSetsToTimeSeriesDataFrame <- function(dataSetList,
-                                           timeSeriesDataFrame) {
-  purrr::map2(
-    .x = dataSetList,
-    .y = names(dataSetList),
-    .f = ~ .dataSetToTimeSeriesDataFrame(.x, .y, timeSeriesDataFrame)
-  ) %>%
-    purrr::list_rbind()
+                                           simulationResults) {
+  # extract metadata for all output paths from simulation results
+  # for mapping observed data
+  simulationResultsMetaData <- .getMetaData(simulationResults)
+
+  # convert DataSets to time-series dataframes
+  timeSeriesDataFrameList <- purrr::map(
+    dataSetList,
+    .f = ~ .dataSetToTimeSeriesDataFrame(.x, simulationResultsMetaData)
+  )
+
+  timeSeriesDataFrameCombined <-
+    purrr::list_rbind(timeSeriesDataFrameList)
+
+  return(timeSeriesDataFrameCombined)
 }
 
-#' Extract time-series dataframe from a `DataSet` object
+#' Convert observed data from a `DataSet` to a time-series dataframe
 #'
-#' This function converts the observed data stored in a `DataSet` object into a
-#' dataframe that aligns with a given reference `timeSeriesDataFrame` created
-#' using `.simulationResultsBatchToTimeSeriesDataFrame()` by matching
-#' units and renaming column names. It also adds an entry at time zero.
+#' Converts observed data stored in a `DataSet` object to a time-series dataframe.
+#' Uses simulation results metadata for alignment with the `OutputPath` dimension
+#' and adjusts dimension units.
 #'
-#' @param dataSet A `DataSet` R6 object that needs to be converted.
-#' @param dataSetName A character string representing the name of the dataset to
-#' be added to the dataframe as column `dataSet`. If not specified, defaults to
-#' `NA`.
-#' @param timeSeriesDataFrame A `data.frame` containing the time series, used as
-#' a reference for unit conversion. Must include `TimeUnit` and `Unit` columns
-#' for time and concentration units, respectively.
+#' @param dataSet `DataSet` R6 object containing observed data.
+#' @param referenceMetaData List with reference metadata retrieved from simulation
+#' results using `getOutputValues()$metaData`.
 #'
-#' @return A `data.frame` object that contains the time series data from the
-#' `dataSet` object with units converted to match those in `timeSeriesDataFrame`,
-#' and includes the dataset name in column `$dataSet`when provided.
+#' @return A `data.frame` combining the converted observed data with time series
+#' data and adding an `OutputPath` column for linking simulation results to
+#' observed data based on matched dimensions.
 #'
 #' @keywords internal
 #' @noRd
 .dataSetToTimeSeriesDataFrame <- function(dataSet,
-                                          dataSetName = NA,
-                                          timeSeriesDataFrame) {
+                                          referenceMetaData) {
   validateIsOfType(dataSet, "DataSet")
+  validateIsOfType(referenceMetaData, "list")
 
-  # convert observed data to a DataFrame
-  obsData <- ospsuite::dataSetToDataFrame(dataSet)
+  # convert DataSet with observed data  to a dataframe
+  data <- ospsuite::dataSetToDataFrame(dataSet)
 
-  # extract, validate and convert units to match timeSeriesDataFrame
-  timeSeriesDataFrame <- timeSeriesDataFrame %>%
-    dplyr::filter(grepl("Concentration", Dimension))
-  timeUnit <- unique(timeSeriesDataFrame$TimeUnit)
-  concentrationUnit <- unique(timeSeriesDataFrame$Unit)
-  ospsuite.utils::validateEnumValue(timeUnit, ospUnits$Time)
-  ospsuite.utils::validateEnumValue(
-    concentrationUnit,
-    ospUnits$`Concentration [molar]`
+  # gather dimensions and units from output paths in reference metadata
+  referencePaths <- purrr::map_dfr(
+    referenceMetaData,
+    ~ purrr::map_dfr(
+      .x,
+      tibble::as_tibble,
+      .id = "OutputPath"
+    ),
+    .id = "ParameterPath"
   )
 
-  obsDataConverted <- ospsuite:::.unitConverter(
-    obsData,
-    xUnit = timeUnit,
-    yUnit = concentrationUnit
+  dataDimension <- unique(data$yDimension)
+  timeUnit <- dplyr::filter(referencePaths, dimension == "Time")
+  timeUnit <- dplyr::pull(timeUnit, unit)[1]
+
+  referencePaths <- dplyr::filter(
+    referencePaths, OutputPath != "Time" & !duplicated(OutputPath)
   )
 
-  # rename and select columns
-  obsDataConverted <- obsDataConverted %>%
-    dplyr::rename(
-      Time = xValues,
-      Concentration = yValues,
-      TimeUnit = xUnit,
-      Unit = yUnit
-    )
-  obsDataConverted <- obsDataConverted %>%
-    dplyr::select(
-      intersect(names(obsDataConverted), names(timeSeriesDataFrame))
-    )
+  # iterate over dimension including units for all output paths and
+  # return adjusted observed data when dimensions match
+  unitConvertedDataList <- purrr::pmap(
+    referencePaths,
+    function(ParameterPath, OutputPath, unit, dimension) {
+      df <- .convertDataFrame(
+        data = data,
+        dim1 = dataDimension,
+        dim2 = dimension,
+        timeUnit = timeUnit,
+        dimensionUnit = unit
+      )
+      if (!is.null(df)) {
+        # observed data is labelled when mapped to output path
+        df <- dplyr::mutate(df, OutputPath = OutputPath, yDimension = dimension)
+      }
 
+      return(df)
+    }
+  )
+  unitConvertedData <- dplyr::bind_rows(unitConvertedDataList)
 
-  obsDataConverted <- obsDataConverted %>%
-    dplyr::add_row(
-      Time = 0, Concentration = 0,
-      TimeUnit = timeUnit, Unit = concentrationUnit
-    )
+  # convert to time-series dataframe
+  timeSeriesDataFrame <- dplyr::rename(
+    unitConvertedData,
+    Time = xValues,
+    Concentration = yValues,
+    TimeDimension = xDimension,
+    TimeUnit = xUnit,
+    Dimension = yDimension,
+    Unit = yUnit,
+    dataSetName = name
+  )
 
-  obsDataConverted <- obsDataConverted %>%
-    dplyr::mutate(dataSet = dataSetName)
+  timeSeriesDataFrame <- dplyr::select(
+    timeSeriesDataFrame,
+    OutputPath, Time, Concentration, TimeDimension,
+    TimeUnit, Dimension, Unit, dataSetName
+  )
 
-  return(obsDataConverted)
+  timeSeriesDataFrame <- bind_rows(
+    timeSeriesDataFrame[1, ] %>% mutate(Time = 0, Concentration = 0),
+    timeSeriesDataFrame
+  )
+
+  timeSeriesDataFrame <- dplyr::arrange(
+    timeSeriesDataFrame,
+    OutputPath,
+    Time
+  )
+
+  return(timeSeriesDataFrame)
+}
+
+#' Get metadata from simulation results
+#'
+#' @keywords internal
+#' @noRd
+.getMetaData <- function(simulationResults) {
+  resultOutputList <- purrr::map(
+    names(simulationResults),
+    ~ simulationResults[[.x]]
+  ) %>% purrr::map(., ~ .x[[1]])
+  names(resultOutputList) <- names(simulationResults)
+
+  resultOutputValues <- lapply(resultOutputList, getOutputValues)
+
+  resultsMetaData <- purrr::map(resultOutputValues, ~ .x$metaData)
 }
 
 #' Compare dimensions passed as character strings
@@ -511,7 +562,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 .matchDimension <- function(dimA, dimB) {
   # specific rule for concentration dimension
   if ((dimA == "Concentration (mass)" && dimB == "Concentration (molar)") ||
-      (dimA == "Concentration (molar)" && dimB == "Concentration (mass)")) {
+    (dimA == "Concentration (molar)" && dimB == "Concentration (mass)")) {
     equalDimension <- TRUE
     dimB <- dimB %>%
       stringr::str_replace(., "\\(", "\\[") %>%
