@@ -22,9 +22,8 @@
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #' scale similarly to `xAxisScale`. Default is "log".
 #' @param observedData Optional. A set of `DataSet` objects containing observed
-#' data. If provided, observed data will be included in the plot. This allows
-#' for direct comparison between observed and simulated data within the
-#' visualizations.
+#' data. If provided, observed data will be integrated with the simulated data
+#' based on `OutputPath` dimension for direct comparison within the visualizations.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics. Plot-specific settings provided directly
 #' to the function, such as `xAxisScale`, will take precedence over any
@@ -149,6 +148,19 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     outputPaths            = sensitivityCalculation$outputPaths
   )
 
+  # add observed data to time series data frame
+  if (!is.null(observedData)) {
+    dataObs <- .dataSetsToTimeSeriesDataFrame(
+      dataSetList            = observedData,
+      simulationResults      = sensitivityCalculation$simulationResults
+    )
+    data <- dplyr::bind_rows(
+      dplyr::mutate(data, DataType = "simulated"),
+      dplyr::mutate(dataObs, DataType = "observed")
+    ) %>%
+      dplyr::arrange(OutputPath, ParameterPath, DataType)
+  }
+
   # filter out data not needed for plotting
   data <- .filterPlottingData(
     data,
@@ -160,18 +172,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # split long parameter path names for plotting
   data <- dplyr::mutate(
     data,
-    ParameterPath = purrr::map_chr(
-      ParameterPath, .splitParameterName,
-      equalLines = TRUE
+    ParameterPath = dplyr::if_else(
+      is.na(ParameterPath),
+      ParameterPath,
+      purrr::map_chr(ParameterPath, .splitParameterName, equalLines = TRUE)
     )
   )
-
-  # add observed data to time series data frame
-  if (!is.null(observedData)) {
-    observedDataFrame <- .dataSetsToTimeSeriesDataFrame(observedData, data)
-  } else {
-    observedDataFrame <- NULL
-  }
 
   # list of plots ------------------------
 
@@ -180,7 +186,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     .x = data %>% split(.$OutputPath),
     .f = ~ .createTimeProfiles(
       .x,
-      observedDataFrame = observedDataFrame,
       defaultPlotConfiguration = customPlotConfiguration
     )
   )
@@ -192,7 +197,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .createTimeProfiles <- function(data,
-                                observedDataFrame,
                                 defaultPlotConfiguration) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration$clone()
@@ -229,25 +233,19 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
 
   # map each parameter path to its own plot ----
-
   plotList <- purrr::map(
-    unique(data$ParameterPath),
+    unique(data$ParameterPath) %>% .[!is.na(.)],
     ~ {
       dataSubset <- dplyr::filter(data, ParameterPath == .x)
 
       # combine original data subset with observed data
       # add observed data if not-null and output path is concentration
-      addObeservedData <- !is.null(observedDataFrame) &&
-        all(grepl("Concentration", dataSubset$Dimension))
-      if (addObeservedData) {
-        dataSubset <- dplyr::bind_rows(
-          list(
-            simulated = dataSubset,
-            observed = observedDataFrame %>%
-              dplyr::mutate(ParameterPath = .x)
-          ),
-          .id = "dataType"
-        )
+      if ("DataType" %in% colnames(data)) {
+        observedData <- dplyr::filter(data, DataType == "observed") %>%
+          dplyr::select(-ParameterPath)
+        hasObservedData <- isTRUE(nrow(observedData) != 0)
+      } else {
+        hasObservedData <- FALSE
       }
 
       # basic plot setup -------------------------
@@ -275,16 +273,16 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         )
 
       # add line for observed data
-      if (addObeservedData) {
+      if (hasObservedData) {
         plot <- plot +
           geom_point(
-            data = dplyr::filter(dataSubset, dataType == "observed"),
-            aes(Time, Concentration, shape = dataSet)
+            data = observedData,
+            aes(Time, Concentration, shape = dataSetName)
           ) +
           scale_shape_manual(
             values = rep(
               plotConfiguration$pointsShape,
-              length.out = length(unique(dataSubset$dataSet))
+              length.out = length(unique(observedData$dataSetName))
             ),
             name = "Observed data"
           )
@@ -336,16 +334,18 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
             ticks = FALSE,
             draw.ulim = FALSE,
             draw.llim = FALSE,
-            title.position = "top"
-          )
+            title.position = "top",
+            order = 1
+          ),
+          shape = guide_legend(order = 2)
         )
 
-      if (addObeservedData) {
+      if (hasObservedData) {
         plot <- plot +
           guides(
             shape = guide_legend(
               title.position = "top",
-              nrow = length(unique(dataSubset$dataType))
+              nrow = length(unique(observedData$DataType))
             )
           )
       }
@@ -383,7 +383,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   )
 
   # compile individual plots -----------------
-
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
       title = plotConfiguration$title,
