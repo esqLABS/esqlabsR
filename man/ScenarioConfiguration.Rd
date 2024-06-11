@@ -21,9 +21,9 @@ A class holding all the configuration data for a single scenario.
 
 \item{\code{applications}}{Application protocol ID used for the scenario}
 
-\item{\code{time}}{Simulation time}
+\item{\code{simulationTime}}{Simulation time}
 
-\item{\code{timeUnit}}{Simulation time unit}
+\item{\code{simulationTimeUnit}}{Simulation time unit}
 
 \item{\code{steadyState}}{Flag indicating if the simulation should run in steady state}
 

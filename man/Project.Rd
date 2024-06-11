@@ -58,6 +58,8 @@ Excel files.}
 \item{\code{scenarios}}{Scenarios as defined in the Scenarios Excel file.}
 
 \item{\code{simulationResults}}{Simulation results from the run simulations.}
+
+\item{\code{activeScenarios}}{Active scenarios to be loaded and run.}
 }
 \if{html}{\out{</div>}}
 }
@@ -165,9 +167,17 @@ project$loadScenarios()
 \subsection{Method \code{runScenarios()}}{
 run all active scenarios.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Project$runScenarios()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Project$runScenarios(simulationRunOptions = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{simulationRunOptions}}{Object of type \code{SimulationRunOptions} that will be passed
+to simulation runs. If \code{NULL}, default options are used. description}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\dontrun{

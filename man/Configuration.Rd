@@ -2,7 +2,7 @@
 % Please edit documentation in R/configuration.R
 \name{Configuration}
 \alias{Configuration}
-\title{Configuration Object}
+\title{Configuration}
 \description{
 A class representing all configurations files living in a project.
 This includes:
@@ -26,7 +26,11 @@ This includes:
 
 \item{\code{individuals}}{all the individuals configurations defined in the project}
 
+\item{\code{populations}}{all the populations configurations defined in the project}
+
 \item{\code{applications}}{all the applications configurations defined in the project}
+
+\item{\code{outputPaths}}{all the output paths configurations defined in the project}
 }
 \if{html}{\out{</div>}}
 }
@@ -59,6 +63,9 @@ Creates a new instance of Configuration
 \if{html}{\out{<a id="method-Configuration-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Configuration-print}{}}}
 \subsection{Method \code{print()}}{
+Creates a new instance of Configuration
+
+
 Prints the configurations
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Configuration$print(lod = 2)}\if{html}{\out{</div>}}
@@ -72,6 +79,8 @@ Prints the configurations
 \item 1: Print only the number of configurations per category.
 \item 2 (default): For each category, list all available configurations.
 }}
+
+\item{\code{project}}{A Project in which the configurations are defined.}
 }
 \if{html}{\out{</div>}}
 }

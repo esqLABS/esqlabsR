@@ -24,7 +24,9 @@ the simulation parameters and the resulting simulation object.
 
 \item{\code{type}}{Whether it is a population or individual simulation scenario}
 
-\item{\code{steadyState}}{Whether the scenario is a steady state simulation}
+\item{\code{simulateSteadyState}}{Whether the scenario is a steady state simulation}
+
+\item{\code{readPopulationFromCSV}}{Whether the population is read from a CSV file}
 }
 \if{html}{\out{</div>}}
 }
@@ -38,11 +40,19 @@ scenario configuration.}
 
 \item{\code{simulation}}{Loaded simulation for the scenario.}
 
+\item{\code{outputPaths}}{Output paths for the scenario.}
+
 \item{\code{modelParameters}}{Model parameters to apply to the scenario.}
 
 \item{\code{individual}}{Individual parameters to apply to the scenario.}
 
+\item{\code{population}}{Population parameters to apply to the scenario.}
+
 \item{\code{applications}}{Applications parameters to apply to the scenario.}
+
+\item{\code{simulationTime}}{SimulationTime to run the scenario}
+
+\item{\code{steadyStateTime}}{SteadyStateTime to run the scenario}
 }
 \if{html}{\out{</div>}}
 }
@@ -51,6 +61,7 @@ scenario configuration.}
 \itemize{
 \item \href{#method-Scenario-new}{\code{Scenario$new()}}
 \item \href{#method-Scenario-print}{\code{Scenario$print()}}
+\item \href{#method-Scenario-addParameters}{\code{Scenario$addParameters()}}
 \item \href{#method-Scenario-load}{\code{Scenario$load()}}
 \item \href{#method-Scenario-clone}{\code{Scenario$clone()}}
 }
@@ -61,7 +72,7 @@ scenario configuration.}
 \subsection{Method \code{new()}}{
 Creates a new scenario object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Scenario$new(project, scenarioConfigurationData, status = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Scenario$new(project, scenarioConfiguration, status = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -69,7 +80,7 @@ Creates a new scenario object
 \describe{
 \item{\code{project}}{The project in which the scenario is created}
 
-\item{\code{scenarioConfigurationData}}{a \code{ScenarioConfiguration} object}
+\item{\code{scenarioConfiguration}}{a \code{scenarioConfiguration} object}
 
 \item{\code{status}}{The initial status of the scenario to set}
 }
@@ -93,6 +104,24 @@ Prints the scenario object
 \item 1: Print only the scenario name and its status
 \item 2 (default): Print all scenario parameters.
 }}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Scenario-addParameters"></a>}}
+\if{latex}{\out{\hypertarget{method-Scenario-addParameters}{}}}
+\subsection{Method \code{addParameters()}}{
+Add additional parameters to the scenario to apply to the simulation
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Scenario$addParameters(parameters)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{parameters}}{Optional named list with lists 'paths', 'values', and
+'units'.}
 }
 \if{html}{\out{</div>}}
 }

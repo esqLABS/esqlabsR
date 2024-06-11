@@ -23,6 +23,10 @@ A class representing the simulation time of a scenario.
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
 \item{\code{timePoints}}{a vector of time points from the start time to the end time with the resolution defined in the simulation time.}
+
+\item{\code{timePointsNumber}}{Number of time points in the simulation time.}
+
+\item{\code{summary}}{A summary of the simulation time.}
 }
 \if{html}{\out{</div>}}
 }
@@ -30,6 +34,7 @@ A class representing the simulation time of a scenario.
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-SimulationTime-new}{\code{SimulationTime$new()}}
+\item \href{#method-SimulationTime-print}{\code{SimulationTime$print()}}
 \item \href{#method-SimulationTime-clone}{\code{SimulationTime$clone()}}
 }
 }
@@ -52,6 +57,16 @@ simulated points per time unit  (defined by the \code{simulationTimeUnit} argume
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SimulationTime-print"></a>}}
+\if{latex}{\out{\hypertarget{method-SimulationTime-print}{}}}
+\subsection{Method \code{print()}}{
+Prints a summary of the simulation time.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SimulationTime$print()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SimulationTime-clone"></a>}}
