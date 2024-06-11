@@ -27,6 +27,7 @@ SimulationTime <- R6::R6Class(
       self$resolution <- simulationTimeValues[3]
       self$unit <- simulationTimeUnit
     },
+    #' @description Prints a summary of the simulation time.
     print = function() {
       cli_ul()
       cli_inform(self$summary)
@@ -37,9 +38,11 @@ SimulationTime <- R6::R6Class(
     timePoints = function() {
       seq(from = self$startTime, to = self$endTime, by = 1 / self$resolution)
     },
+    #' @field timePointsNumber Number of time points in the simulation time.
     timePointsNumber = function() {
       length(self$timePoints)
     },
+    #' @field summary A summary of the simulation time.
     summary = function() {
       glue::glue("{self$startTime}{self$unit} to {self$endTime}{self$unit} with resolution of {self$resolution} pts/{self$unit} (total: {self$timePointsNumber} points).")
     }

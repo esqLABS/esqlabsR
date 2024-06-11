@@ -1,66 +1,69 @@
-#' Read an excel file containing information about population and create a
-#' `PopulationCharacteristics` object
-#'
-#' @param XLSpath Path to the excel file
-#' @param populationName Name of the population, as defined in the "PopulationName"
-#' column
-#' @param sheet Name or the index of the sheet in the excel file.
-#' If `NULL`, the first sheet in the file is used.
-#'
-#' @return A `PopulationCharacteristics` object based on the information
-#' in the excel file.
-#' @import readxl
-#' @export
-readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) {
-  columnNames <- c(
-    "PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax",
-    "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein", "Ontogeny"
+#' @title Population
+#' @description A class representing a population of individuals.
+Population <- R6::R6Class(
+  classname = "Population",
+  public = list(
+    #' @description Creates a new instance of Configuration
+    #' @param project A Project in which the configurations are defined.
+    #' @param populationCharacteristicsData A data frame containing the population characteristics.
+    #' @param userDefinedVariabilityData A data frame containing the user-defined variability.
+    #' @param CSVFile A string representing the path to the CSV file containing the population data. If not NULL (default), the population is loaded from the CSV file instead of being created from the populationCharacteristicsData.
+    initialize = function(project = project,
+                          populationCharacteristicsData = NULL,
+                          userDefinedVariabilityData = NULL,
+                          CSVFile = NULL) {
+      private$.project <- project
+      private$.populationCharacteristicsData <- populationCharacteristicsData
+      private$.userDefinedVariabilityData <- userDefinedVariabilityData
+      private$.CSVFile <- CSVFile
+
+      if (!is.null(CSVFile)) {
+        private$.population <- loadPopulation(CSVFile)
+      } else {
+        populationCharacteristicsArguments <-
+          as.list(private$.populationCharacteristicsData) %>%
+          purrr::keep(~ !is.na(.x)) %>%
+          purrr::keep_at(formalArgs(ospsuite::createPopulationCharacteristics))
+
+        populationCharacteristicsArguments[["moleculeOntogenies"]] <-
+          createOntogenies(
+            data.frame(
+              Protein = private$.populationCharacteristicsData$Protein,
+              Ontogeny = private$.populationCharacteristicsData$Ontogeny
+            )
+          )
+
+        populationCharacteristics <- do.call(ospsuite::createPopulationCharacteristics, populationCharacteristicsArguments)
+
+        private$.population <- ospsuite::createPopulation(populationCharacteristics)$population
+      }
+    },
+    #' @description Prints the population characteristics.
+    print = function() {
+      print(self$population)
+    }
+  ),
+  active = list(
+    #' @field population Return the population object created from ospsuite::createPopulation.
+    population = function() {
+      return(private$.population)
+    }
+  ),
+  private = list(
+    .project = NULL,
+    .populationCharacteristicsData = NULL,
+    .userDefinedVariabilityData = NULL,
+    .CSVFile = NULL,
+    .population = NULL
   )
+)
 
-  validateIsString(c(XLSpath, populationName))
-  validateIsString(sheet, nullAllowed = TRUE)
 
-  if (is.null(sheet)) {
-    sheet <- 1
-  }
-  data <- readExcel(path = XLSpath, sheet = sheet)
 
-  if (!all(columnNames %in% names(data))) {
-    stop(messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
-  }
-  # Find the row with the given population name
-  rowIdx <- which(data$PopulationName == populationName)
-  if (length(rowIdx) == 0) {
-    stop(messages$errorWrongPopulationName(populationName))
-  }
 
-  # Parse the information about population.
-  # We only want to use arguments that have a value in the xls-file
-  arguments <- list()
-  # Starting to iterate by 2 as the first entry is "PopulationName" and
-  # is not an argument
-  for (i in 2:length(data[rowIdx, ])) {
-    value <- data[[rowIdx, i]]
-    # Skip column, if no value defined
-    if (is.na(value)) {
-      next
-    }
-    columnName <- names(data[rowIdx, ][i])
-    # skip columns 'Ontogeny' and 'Protein' as they will be processed separately
-    if (any(columnName == c("Ontogeny", "Protein"))) {
-      next
-    }
-    arguments[[columnName]] <- value
-  }
+# Legacy code -------------------------------------------------------------
 
-  # Create ontogenies for the proteins
-  arguments[["moleculeOntogenies"]] <- .readOntongeniesFromXLS(data[rowIdx, ])
-
-  # Using do.call to call the method with arguments in a list
-  populationCharacterstics <- do.call(createPopulationCharacteristics, arguments)
-
-  return(populationCharacterstics)
-}
+# The functions below are defined but not directly used in the workflow.
 
 #' Possible gender entries as integer values
 #'
@@ -70,6 +73,7 @@ GenderInt <- enum(list(
   FEMALE = 2,
   UNKNOWN = 3
 ))
+
 
 #' Add user defined variability on parameters to a population.
 #'
@@ -203,47 +207,4 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
     return(vals)
   }
   return(NULL)
-}
-
-#' Read ontogeny mapping from excel
-#'
-#' @param data Data from from excel file containing columns 'Protein' and
-#' 'Ontogeny'
-#'
-#' @keywords internal
-#' @return A list of `MoleculeOntogeny` objects
-.readOntongeniesFromXLS <- function(data) {
-  # Read columns 'Ontogeny' and 'Protein'
-  ontogenies <- data$Ontogeny
-  # calling 'as.character' as sometimes empty cells in Excel are not recognized as
-  # chr NA, but some other NA, and strsplit fails.
-  ontogenies <- as.character(ontogenies)
-  # Proteins/ontogenies are separated by a ','
-  ontogenies <- unlist(strsplit(x = ontogenies, split = ",", fixed = TRUE))
-  # Remove whitespaces
-  ontogenies <- trimws(ontogenies)
-  proteins <- data$Protein
-  proteins <- as.character(proteins)
-  proteins <- unlist(strsplit(x = proteins, split = ",", fixed = TRUE))
-  proteins <- trimws(proteins)
-
-  # For each protein, an ontogeny must be specified
-  validateIsSameLength(proteins, ontogenies)
-  # Return 'NULL' if no ontogenies are specified. Not returning earlier to catch
-  # a case where e.g. protein names are specified but not the ontogenies (lenghts
-  # are not equal)
-  if (anyNA(proteins)) {
-    return(NULL)
-  }
-  moleculeOntogenies <- vector("list", length(proteins))
-  for (i in seq_along(proteins)) {
-    ontogeny <- ontogenies[[i]]
-    validateEnumValue(value = ontogeny, enum = ospsuite::StandardOntogeny)
-    moleculeOntogenies[[i]] <- ospsuite::MoleculeOntogeny$new(
-      molecule = proteins[[i]],
-      ontogeny = ospsuite::StandardOntogeny[[ontogeny]]
-    )
-  }
-
-  return(moleculeOntogenies)
 }

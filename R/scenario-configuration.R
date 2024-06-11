@@ -95,14 +95,14 @@ ScenarioConfiguration <-
         }
         return(private$.scenarioConfigurationData$applications)
       },
-      #' @field time Simulation time
+      #' @field simulationTime Simulation time
       simulationTime = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$simulationTime <- value
         }
         return(private$.scenarioConfigurationData$simulationTime)
       },
-      #' @field timeUnit Simulation time unit
+      #' @field simulationTimeUnit Simulation time unit
       simulationTimeUnit = function(value) {
         if (!missing(value)) {
           private$.scenarioConfigurationData$simulationTimeUnit <- value

@@ -81,6 +81,9 @@ Project <-
       },
       #' @description run all active scenarios.
       #'
+      #' @param simulationRunOptions Object of type `SimulationRunOptions` that will be passed
+      #' to simulation runs. If `NULL`, default options are used. description
+      #'
       #' @note If the active scenarios are not already loaded, will load them
       #' and then run the simulations.
       #' @examples
@@ -98,37 +101,47 @@ Project <-
         # Simulate steady-state concurrently
         if (length(steadyStateScenarios) > 0) {
           initialValues <- ospsuite::getSteadyState(
-            simulations = purrr::map(steadyStateScenarios,  "simulation"),
-            steadyStateTime =  purrr::map(steadyStateScenarios,  ~.x$time),
+            simulations = purrr::map(steadyStateScenarios, "simulation"),
+            steadyStateTime = purrr::map(steadyStateScenarios, ~ .x$time),
             ignoreIfFormula = TRUE,
             simulationRunOptions = simulationRunOptions
           )
         }
 
         # Set initial values for steady-state simulations
-        for (simulation in steadyStateSimulations) {
-          ospsuite::setQuantityValuesByPath(
-            quantityPaths = initialValues[[simulation$id]]$paths,
-            values = initialValues[[simulation$id]]$values, simulation = simulation
+        purrr::imap(
+          steadyStateScenarios,
+          ~ ospsuite::setQuantityValuesByPath(
+            quantityPaths = initialValues[[.y]]$paths,
+            values = initialValues[[.y]]$values,
+            simulation = .x$simulation
           )
-        }
+        )
 
 
         individualScenarios <-
           purrr::keep(self$scenarios, ~ .x$status == "loaded" && .x$type == "individual") %>%
           purrr::map(~ .x$simulation)
 
-        self$simulationResults <- ospsuite::runSimulations(individualScenarios)
+
+        individualSimulationResults <- ospsuite::runSimulations(individualScenarios,
+                                                                simulationRunOptions = simulationRunOptions)
 
         populationScenarios <-
           purrr::keep(self$scenarios, ~ .x$status == "loaded" && .x$type == "population") %>%
           purrr::map(~ list(simulation = .x$simulation, population = .x$population))
 
-        for (populationScenario in populationScenarios) {
-          self$simulationResults[[populationScenarios$name]] <- ospsuite::runSimulations(populationScenario$simulation,
-            population = populationScenario$population
+        populationSimulationResults <-
+          purrr::map(
+            populationScenarios,
+            ~ ospsuite::runSimulations(.x$simulation,
+                                       population = .x$population,
+                                       simulationRunOptions = simulationRunOptions)[[1]]
           )
-        }
+
+        allSimulationResults <- c(individualSimulationResults, populationSimulationResults)
+
+        private$.simulationResults <- allSimulationResults[names(self$activeScenarios)]
 
         invisible(self)
       }
@@ -166,6 +179,13 @@ Project <-
           cli::cli_abort("Simulation Results cannot be altered.")
         }
         return(private$.simulationResults)
+      },
+      #' @field activeScenarios Active scenarios to be loaded and run.
+      activeScenarios = function(value) {
+        if (!missing(value)) {
+          cli::cli_abort("Active Scenarios cannot be altered, use `selectScenarios` instead.")
+        }
+        return(purrr::keep(self$scenarios, ~ .x$status == "active" | .x$status == "loaded"))
       }
     ),
     private = list(

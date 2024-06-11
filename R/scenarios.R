@@ -16,11 +16,13 @@ Scenario <- R6::R6Class(
     status = NULL,
     #' @field type Whether it is a population or individual simulation scenario
     type = NULL,
-    #' @field steadyState Whether the scenario is a steady state simulation
+    #' @field simulateSteadyState Whether the scenario is a steady state simulation
     simulateSteadyState = NULL,
+    #' @field readPopulationFromCSV Whether the population is read from a CSV file
+    readPopulationFromCSV = NULL,
     #' @description Creates a new scenario object
     #' @param project The project in which the scenario is created
-    #' @param scenarioConfigurationData a `ScenarioConfiguration` object
+    #' @param scenarioConfiguration a `scenarioConfiguration` object
     #' @param status The initial status of the scenario to set
     initialize = function(project, scenarioConfiguration, status = NULL) {
       private$.project <- project
@@ -28,6 +30,7 @@ Scenario <- R6::R6Class(
       self$name <- private$.configuration$id
       self$status <- status %||% "active"
       self$type <- ifelse(!is.na(private$.configuration$population), "population", "individual")
+      self$readPopulationFromCSV <- as.logical(private$.configuration$populationFromCSV)
       self$simulateSteadyState <- private$.configuration$steadyState
     },
     #' @description Prints the scenario object
@@ -74,13 +77,26 @@ Scenario <- R6::R6Class(
         model_parameters <- cli_ul()
         purrr::map(self$configuration$modelParameters, ~ cli_li(.x))
         cli_end(model_parameters)
-        cli_li("Individual: {self$configuration$individual}")
+        if(self$type == "population") {
+          cli_li("Population: {self$configuration$population}")
+        } else {
+          cli_li("Individual: {self$configuration$individual}")
+        }
         cli_li("Applications:")
         applications_parameters <- cli_ul()
         purrr::map(self$configuration$applications, ~ cli_li(.x))
         cli_end(applications_parameters)
         cli_end(configurations)
       }
+    },
+    #' @description
+    #' Add additional parameters to the scenario to apply to the simulation
+    #' @param parameters Optional named list with lists 'paths', 'values', and
+    #'   'units'.
+    addParameters = function(parameters) {
+      .validateParametersStructure(parameters)
+
+      private$.additionalParameters <- parameters
     },
     #' @description If status is "active", load the scenario. Loading the
     #' scenario means applying all configuration parameters to the model.
@@ -90,18 +106,20 @@ Scenario <- R6::R6Class(
         private$.applyModelParameters()
 
         # Individual Parameters
-        # private$.applyIndividualParameters()
+        private$.applyIndividualParameters()
 
         # Applications parameters
         private$.applyApplicationsParameters()
 
-        # Population parameters
 
         # Set output paths
         private$.applyOutputPaths()
 
         # Set simulation Time
         private$.applySimulationTime()
+
+        # Apply Additional Parameters
+        private$.applyAdditionalParameters()
 
 
         self$status <- "loaded"
@@ -138,7 +156,7 @@ Scenario <- R6::R6Class(
     },
     #' @field outputPaths Output paths for the scenario.
     outputPaths = function() {
-      if (is.null(private$.outputPaths)) {
+      if (is.null(private$.outputPaths) & !is.null(self$configuration$outputPaths)) {
         private$.outputPaths <- list()
         for (outputPath in self$configuration$outputPaths) {
           private$.outputPaths[[outputPath]] <- private$.project$configurations$outputPaths[[outputPath]]
@@ -148,7 +166,7 @@ Scenario <- R6::R6Class(
     },
     #' @field modelParameters Model parameters to apply to the scenario.
     modelParameters = function() {
-      if (is.null(private$.modelParameters)) {
+      if (is.null(private$.modelParameters) & !is.null(self$configuration$modelParameters)) {
         private$.modelParameters <- list()
 
         for (modelParameter in self$configuration$modelParameters) {
@@ -159,14 +177,26 @@ Scenario <- R6::R6Class(
     },
     #' @field individual Individual parameters to apply to the scenario.
     individual = function() {
-      if (is.null(private$.individual)) {
+      if (is.null(private$.individual) & !is.null(self$configuration$individual)) {
         private$.individual <- private$.project$configurations$individuals[self$configuration$individual]
       }
       return(private$.individual)
     },
+    #'@field population Population parameters to apply to the scenario.
+    population = function() {
+      if (is.null(private$.population) & !is.null(self$configuration$population) & !is.na(self$configuration$population)) {
+        if (self$readPopulationFromCSV) {
+          private$.population <- private$.project$configurations$populations$fromCSV[self$configuration$population]
+        } else {
+          private$.population <- private$.project$configurations$populations$fromConfiguration[self$configuration$population]
+        }
+
+        return(private$.population)
+      }
+    },
     #' @field applications Applications parameters to apply to the scenario.
     applications = function() {
-      if (is.null(private$.applications)) {
+      if (is.null(private$.applications) & !is.null(self$configuration$applications)) {
         private$.applications <- list()
         for (application in self$configuration$applications) {
           private$.applications[[application]] <- private$.project$configurations$applications[[application]]
@@ -187,6 +217,7 @@ Scenario <- R6::R6Class(
       }
       return(private$.simulationTime)
     },
+    #' @field steadyStateTime SteadyStateTime to run the scenario
     steadyStateTime = function() {
       if (is.null(private$.steadyStateTime)) {
         private$.steadyStateTime <- SteadyStateTime$new(
@@ -204,9 +235,11 @@ Scenario <- R6::R6Class(
     .model = NULL,
     .outputPaths = NULL,
     .modelParameters = NULL,
+    .additionalParameters = NULL,
     .applications = NULL,
     .simulation = NULL,
     .individual = NULL,
+    .population = NULL,
     .simulationTime = NULL,
     .steadyStateTime = NULL,
     .applyModelParameters = function() {
@@ -223,8 +256,10 @@ Scenario <- R6::R6Class(
         stopIfNotFound = FALSE
       )
     },
+    # @description Apply an individual to the simulation.
+    # For human species, only parameters that do not override formulas are applied.
+    # For other species, all parameters returned by `createIndividual` are applied.
     .applyIndividualParameters = function() {
-
       individualObject <- self$individual[[1]]$individualObject
 
       individual <- individualObject$characteristics
@@ -235,7 +270,7 @@ Scenario <- R6::R6Class(
       allParamUnits <- individual$distributedParameters$units
 
       # For other species, also add derived parameters
-      if (self$configuration$individual[[1]]$characteristics$specy != ospsuite::Species$Human) {
+      if (self$individual[[1]]$characteristics$specy != ospsuite::Species$Human) {
         allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
         allParamValues <- c(allParamValues, individual$derivedParameters$values)
         allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
@@ -259,6 +294,7 @@ Scenario <- R6::R6Class(
         stopIfNotFound = FALSE
       )
     },
+    # @description Apply application protocols to the simulation.
     .applyApplicationsParameters = function() {
       allApplications <-
         purrr::flatten(self$applications) %>%
@@ -273,6 +309,7 @@ Scenario <- R6::R6Class(
         stopIfNotFound = FALSE
       )
     },
+    # @description Apply output intervals (simulation time) to the simulation
     .applySimulationTime = function() {
       if (!is.null(self$simulationTime)) {
         # clear output intervals
@@ -291,8 +328,6 @@ Scenario <- R6::R6Class(
               values = simulationTime$endTime,
               unit = simulationTime$simulationTimeUnit
             ),
-
-
             resolution = simulationTime$resolution / toBaseUnit(
               quantityOrDimension = ospsuite::ospDimensions$Time,
               values = 1,
@@ -302,10 +337,180 @@ Scenario <- R6::R6Class(
         }
       }
     },
+    # @description Apply outputpaths to the simulation
     .applyOutputPaths = function() {
       if (!is.null(self$outputPaths)) {
         setOutputs(quantitiesOrPaths = self$outputPaths, simulation = self$simulation)
       }
+    },
+    # @description Apply additional parameters
+    .applyAdditionalParameters = function(){
+      # Apply additional parameters
+      if (!is.null(private$.additionalParameters)) {
+        # Skip if the correct structure is supplied, but no parameters are defined
+        if (!isEmpty(private$.additionalParameters$paths)) {
+          ospsuite::setParameterValuesByPath(
+            parameterPaths = private$.additionalParameters$paths,
+            values = private$.additionalParameters$values,
+            simulation = self$simulation,
+            units = private$.additionalParameters$units
+          )
+        }
+      }
     }
   )
 )
+
+
+
+# Legacy Code -------------------------------------------------------------
+
+
+
+#' Save results of scenario simulations to csv.
+#'
+#' @param simulatedScenariosResults Named list with `simulation`, `results`, `outputValues`,
+#' and `population` as produced by `runScenarios()`.
+#' @param projectConfiguration An instance of `ProjectConfiguration`
+#' @param outputFolder Optional - path to the folder where the results will be
+#' stored. If `NULL` (default), a sub-folder in
+#' `ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>`.
+#' @param saveSimulationsToPKML If `TRUE` (default), simulations corresponding to
+#' the results are saved to PKML along with the results.
+#'
+#' @details For each scenario, a separate csv file will be created. If the scenario
+#' is a population simulation, a population is stored along with the results with
+#' the file name suffix `_population`. Results can be read with the `loadScenarioResults()` function.
+#'
+#' @export
+#'
+#' @return `outputFolder` or the created output folder path, if no `outputFolder` was provided.
+#'
+#' @examples \dontrun{
+#' projectConfiguration <- esqlabsR::createProjectConfiguration()
+#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
+#'   projectConfiguration = projectConfiguration
+#' )
+#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+#' simulatedScenariosResults <- runScenarios(
+#'   scenarios = scenarios
+#' )
+#' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
+#' }
+saveScenarioResults <- function(
+    simulatedScenariosResults,
+    projectConfiguration,
+    outputFolder = NULL,
+    saveSimulationsToPKML = TRUE) {
+  validateIsLogical(saveSimulationsToPKML)
+
+  outputFolder <- outputFolder %||% file.path(
+    projectConfiguration$outputFolder,
+    "SimulationResults",
+    format(Sys.time(), "%F %H-%M")
+  )
+
+  for (i in seq_along(simulatedScenariosResults)) {
+    results <- simulatedScenariosResults[[i]]$results
+    scenarioName <- names(simulatedScenariosResults)[[i]]
+
+    # Replace "\" and "/" by "_" so the file name does not result in folders
+    scenarioName <- gsub("[\\\\/]", "_", scenarioName)
+
+    outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
+    tryCatch(
+      {
+        # Create a new folder if it does not exist
+        if (!dir.exists(paths = outputFolder)) {
+          dir.create(path = outputFolder, recursive = TRUE)
+        }
+        # Save results
+        ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
+        # Save simulations
+        if (saveSimulationsToPKML) {
+          outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
+          ospsuite::saveSimulation(
+            simulation = simulatedScenariosResults[[i]]$simulation,
+            filePath = outputPathSim
+          )
+        }
+        # Save population
+        if (isOfType(simulatedScenariosResults[[i]]$population, "Population")) {
+          ospsuite::exportPopulationToCSV(simulatedScenariosResults[[i]]$population,
+                                          filePath = file.path(outputFolder, paste0(scenarioName, "_population.csv"))
+          )
+        }
+      },
+      error = function(cond) {
+        warning(paste0("Cannot save to path '", outputFolder, "'"))
+        message("Original error message:")
+        message(cond)
+      },
+      warning = function(cond) {
+        warning(cond)
+      }
+    )
+  }
+  return(outputFolder)
+}
+
+#' Load simulated scenarios from csv and pkml.
+#'
+#' @param scenarioNames Names of simulated scenarios
+#' @param resultsFolder Path to the folder where simulation results as scv and
+#' the corresponding simulations as pkml are located.
+#'
+#' @details This function requires simulation results AND the corresponding
+#' simulation files being located in the same folder (`resultsFolder`) and have
+#' the names of the scenarios.
+#'
+#' @return A named list, where the names are scenario names, and the values are
+#' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
+#' `results` being `SimulatioResults` object produced by running the simulation,
+#' and `outputValues` the output values of the `SimulationResults`.
+#'
+#' @export
+#'
+#' @examples \dontrun{
+#' # First simulate scenarios and save the results
+#' projectConfiguration <- esqlabsR::createProjectConfiguration()
+#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
+#'   projectConfiguration = projectConfiguration
+#' )
+#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+#' simulatedScenariosResults <- runScenarios(
+#'   scenarios = scenarios
+#' )
+#' saveResults(simulatedScenariosResults, projectConfiguration)
+#'
+#' # Now load the results
+#' scnarioNames <- names(scenarios)
+#' simulatedScenariosResults <- loadScenarioResults(
+#'   scnarioNames = scnarioNames,
+#'   resultsFolder = pathToTheFolder
+#' )
+#' }
+loadScenarioResults <- function(scenarioNames, resultsFolder) {
+  simulatedScenariosResults <- list()
+  for (i in seq_along(scenarioNames)) {
+    scenarioName <- scenarioNames[[i]]
+    # Replace "\" and "/" by "_" so the file name does not result in folders.
+    # Used only for loading the results, the name of the scenario is not changed.
+    scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
+
+    simulation <- loadSimulation(paste0(resultsFolder, "/", scenarioNameForPath, ".pkml"))
+
+    results <- importResultsFromCSV(
+      simulation = simulation,
+      filePaths = paste0(resultsFolder, "/", scenarioNameForPath, ".csv")
+    )
+
+    outputValues <- getOutputValues(results,
+                                    quantitiesOrPaths = results$allQuantityPaths
+    )
+    simulatedScenariosResults[[scenarioNames[[i]]]] <-
+      list(simulation = simulation, results = results, outputValues = outputValues)
+  }
+
+  return(simulatedScenariosResults)
+}

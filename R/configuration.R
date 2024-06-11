@@ -1,4 +1,4 @@
-#' @title Configuration Object
+#' @title Configuration
 #' @description A class representing all configurations files living in a project.
 #' This includes:
 #' - Scenario Configurations
@@ -13,6 +13,8 @@ Configuration <- R6::R6Class(
     #' @description Creates a new instance of Configuration
     #' @param project A Project in which the configurations are defined.
     initialize = function(project) {
+      #' @description Creates a new instance of Configuration
+      #' @param project A Project in which the configurations are defined.
       private$.project <- project
     },
     #' @description Prints the configurations
@@ -62,20 +64,11 @@ Configuration <- R6::R6Class(
       }
     }
   ),
-  private = list(
-    .project = NULL,
-    .scenarios = NULL,
-    .models = NULL,
-    .modelParameters = NULL,
-    .individuals = NULL,
-    .applications = NULL,
-    .outputPaths = NULL
-  ),
   active = list(
     #' @field scenarios all the scenario configurations defined in the project
     scenarios = function(value) {
       if (is.null(private$.scenarios)) {
-        private$.scenarios <- createScenariosConfigurations(private$.project)
+        private$.scenarios <- private$.createScenariosConfigurations()
       }
       if (!missing(value)) {
         private$.scenarios <- value
@@ -98,7 +91,7 @@ Configuration <- R6::R6Class(
     #' @field modelParameters all the model parameters configurations defined in the project
     modelParameters = function(value) {
       if (is.null(private$.modelParameters)) {
-        private$.modelParameters <- createModelParametersConfigurations(private$.project)
+        private$.modelParameters <- private$.createModelParametersConfigurations()
       }
       if (!missing(value)) {
         private$.modelParameters <- modifyList(private$.modelParameters, value)
@@ -108,124 +101,181 @@ Configuration <- R6::R6Class(
     #' @field individuals all the individuals configurations defined in the project
     individuals = function(value) {
       if (is.null(private$.individuals)) {
-        private$.individuals <- createIndividualsConfigurations(private$.project)
+        private$.individuals <- private$.createIndividualsConfigurations()
       }
       if (!missing(value)) {
         private$.individuals <- modifyList(private$.individuals, value)
       }
       return(private$.individuals)
     },
+    #' @field populations all the populations configurations defined in the project
+    populations = function(value) {
+      if (is.null(private$.populations)) {
+        private$.populations <- private$.createPopulationsConfigurations()
+      }
+      if (!missing(value)) {
+        private$.populations <- modifyList(private$.populations, value)
+      }
+      return(private$.populations)
+    },
     #' @field applications all the applications configurations defined in the project
     applications = function(value) {
       if (is.null(private$.applications)) {
-        private$.applications <- createApplicationsConfigurations(private$.project)
+        private$.applications <- private$.createApplicationsConfigurations()
       }
       if (!missing(value)) {
         private$.applications <- modifyList(private$.applications, value)
       }
       return(private$.applications)
     },
+    #' @field outputPaths all the output paths configurations defined in the project
     outputPaths = function(value) {
       if (is.null(private$.outputPaths)) {
-        private$.outputPaths <- createOutputPaths(private$.project)
+        private$.outputPaths <- private$.createOutputPaths()
       }
       if (!missing(value)) {
         private$.outputPaths <- modifyList(private$.outputPaths, value)
       }
       return(private$.outputPaths)
     }
+  ),
+  private = list(
+    .project = NULL,
+    .scenarios = NULL,
+    .models = NULL,
+    .modelParameters = NULL,
+    .individuals = NULL,
+    .populations = NULL,
+    .applications = NULL,
+    .outputPaths = NULL,
+    .createScenariosConfigurations = function() {
+      scenariosConfigurationData <- readExcel(
+        path = private$.project$projectConfiguration$scenariosFile,
+        sheet = "Scenarios"
+      )
+
+      validateScenariosFileStructure(
+        filePath = private$.project$projectConfiguration$scenariosFile,
+        data = scenariosConfigurationData
+      )
+
+      scenarios <- list()
+
+      for (i in 1:nrow(scenariosConfigurationData)) {
+        scenarioConfigurationData <- scenariosConfigurationData[i, ]
+        scenarios[[scenarioConfigurationData$Scenario_name]] <- ScenarioConfiguration$new(private$.project, scenarioConfigurationData)
+      }
+
+      return(scenarios)
+    },
+    .createIndividualsConfigurations = function() {
+      individualFilePath <- private$.project$projectConfiguration$individualsFile
+      individualsSheets <- readxl::excel_sheets(individualFilePath)
+      individualsCharacteristicsData <- readExcel(individualFilePath, sheet = 1)
+
+      validateIndividualsFileStructure(
+        filePath = individualFilePath,
+        data = individualsCharacteristicsData
+      )
+
+      individuals <- list()
+
+      for (i in 1:nrow(individualsCharacteristicsData)) {
+        individualCharacteristicsData <- individualsCharacteristicsData[i, ]
+        individualId <- individualCharacteristicsData$IndividualId
+
+        if (individualId %in% individualsSheets) {
+          individualParameters <- createParametersFromSheet(private$.project, individualFilePath, individualId)
+        }
+
+        individuals[[individualId]] <-
+          Individual$new(
+            project = private$.project,
+            individualCharacteristicsData = individualCharacteristicsData,
+            individualParameters = individualParameters %||% NULL
+          )
+      }
+      return(individuals)
+    },
+    .createPopulationsConfigurations = function() {
+      populationsFilePath <- private$.project$projectConfiguration$populationsFile
+      populationsCharacteristicsData <- readExcel(populationsFilePath, sheet = 1)
+      userDefinedVariabilityData <- readExcel(populationsFilePath, sheet = 2)
+
+      validatePopulationsFileStructure(
+        filePath = populationsFilePath,
+        data = populationsCharacteristicsData
+      )
+
+      populations <- list(
+        fromConfiguration = list(),
+        fromCSV = list()
+      )
+
+      for (i in 1:nrow(populationsCharacteristicsData)) {
+        populationCharacteristicsData <- populationsCharacteristicsData[i, ]
+        populationId <- populationCharacteristicsData$PopulationName
+
+        populations$fromConfiguration[[populationId]] <- Population$new(
+          project = private$.project,
+          populationCharacteristicsData = populationCharacteristicsData,
+          userDefinedVariabilityData = userDefinedVariabilityData,
+          CSVFile = NULL
+        )
+      }
+
+
+      for (file in list.files(private$.project$projectConfiguration$populationsFolder,
+        full.names = TRUE,
+        pattern = ".csv"
+      )) {
+        populationId <- tools::file_path_sans_ext(basename(file))
+
+        populations$fromCSV[[populationId]] <- Population$new(
+          project = private$.project,
+          populationCharacteristicsData = NULL,
+          userDefinedVariabilityData = userDefinedVariabilityData,
+          CSVFile = file
+        )
+      }
+      return(populations)
+    },
+    .createModelParametersConfigurations = function() {
+      return(
+        createParametersFromFile(
+          private$.project,
+          private$.project$projectConfiguration$modelParamsFile
+        )
+      )
+    },
+    .createApplicationsConfigurations = function() {
+      return(
+        createParametersFromFile(
+          private$.project,
+          private$.project$projectConfiguration$applicationsFile
+        )
+      )
+    },
+    .createOutputPaths = function() {
+      outputPathsData <- readExcel(
+        path = private$.project$projectConfiguration$scenariosFile,
+        sheet = "OutputPaths"
+      )
+
+      outputPaths <- list()
+
+      for (i in 1:nrow(outputPathsData)) {
+        outputPathData <- outputPathsData[i, ]
+        outputPaths[[outputPathData$OutputPathId]] <- outputPathData$OutputPath
+      }
+
+      return(outputPaths)
+    }
   )
 )
 
 
-createScenariosConfigurations <- function(project) {
-  scenariosConfigurationData <- readExcel(
-    path = project$projectConfiguration$scenariosFile,
-    sheet = "Scenarios"
-  )
-
-  checkScenariosFileStructure(
-    filePath = project$projectConfiguration$scenariosFile,
-    data = scenariosConfigurationData
-  )
-
-  scenarios <- list()
-
-  for (i in 1:nrow(scenariosConfigurationData)) {
-    scenarioConfigurationData <- scenariosConfigurationData[i, ]
-    scenarios[[scenarioConfigurationData$Scenario_name]] <- ScenarioConfiguration$new(project, scenarioConfigurationData)
-  }
-
-  return(scenarios)
-}
-
-createIndividualsConfigurations <- function(project) {
-  individualFilePath <- project$projectConfiguration$individualsFile
-  individualsSheets <- readxl::excel_sheets(individualFilePath)
-  individualsCharacteristicsData <- readExcel(individualFilePath, sheet = 1)
-
-  checkIndividualsFileStructure(
-    filePath = individualFilePath,
-    data = individualsCharacteristicsData
-  )
-
-  individuals <- list()
-
-  for (i in 1:nrow(individualsCharacteristicsData)) {
-    individualCharacteristicsData <- individualsCharacteristicsData[i, ]
-    individualId <- individualCharacteristicsData$IndividualId
-
-    if (individualId %in% individualsSheets) {
-      individualParameters <- createParametersFromSheet(project, individualFilePath, individualId)
-    }
-
-    individuals[[individualId]] <-
-      Individual$new(
-        project = project,
-        individualCharacteristicsData = individualCharacteristicsData,
-        individualParameters = individualParameters %||% NULL
-      )
-  }
-  return(individuals)
-}
-
-
-createModelParametersConfigurations <- function(project) {
-  return(
-    createParametersFromFile(
-      project,
-      project$projectConfiguration$modelParamsFile
-    )
-  )
-}
-
-createApplicationsConfigurations <- function(project) {
-  return(
-    createParametersFromFile(
-      project,
-      project$projectConfiguration$applicationsFile
-    )
-  )
-}
-
-createOutputPaths <- function(project) {
-  outputPathsData <- readExcel(
-    path = project$projectConfiguration$scenariosFile,
-    sheet = "OutputPaths"
-  )
-
-  outputPaths <- list()
-
-  for (i in 1:nrow(outputPathsData)) {
-    outputPathData <- outputPathsData[i, ]
-    outputPaths[[outputPathData$OutputPathId]] <- outputPathData$OutputPath
-  }
-
-  return(outputPaths)
-}
-
-
-checkScenariosFileStructure <- function(filePath, data) {
+validateScenariosFileStructure <- function(filePath, data) {
   columnNames <- c(
     "Scenario_name",
     "IndividualId",
@@ -246,6 +296,36 @@ checkScenariosFileStructure <- function(filePath, data) {
     stop(messages$errorWrongXLSStructure(filePath, expectedColNames = columnNames))
   }
 }
+
+validateIndividualsFileStructure <- function(filePath, data) {
+  columnNames <- c(
+    "IndividualId",
+    "Species",
+    "Population",
+    "Gender",
+    "Weight [kg]",
+    "Height [cm]",
+    "Age [year(s)]",
+    "Protein",
+    "Ontogeny"
+  )
+
+  if (!all(columnNames %in% names(data))) {
+    stop(messages$errorWrongXLSStructure(filePath, expectedColNames = columnNames))
+  }
+}
+validatePopulationsFileStructure <- function(filePath, data) {
+  columnNames <- c(
+    "PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax",
+    "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein", "Ontogeny"
+  )
+
+  if (!all(columnNames %in% names(data))) {
+    stop(messages$errorWrongXLSStructure(filePath, expectedColNames = columnNames))
+  }
+}
+
+
 
 checkExists <- function(type, names) {
   notFound <- c()
