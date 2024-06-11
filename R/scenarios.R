@@ -5,8 +5,8 @@
 Scenario <- R6::R6Class(
   "Scenario",
   public = list(
-    #' @field name The name of the scenario
-    name = NULL,
+    #' @field id The name of the scenario
+    id = NULL,
     #' @field status Scenario status can be:
     #' - active: The scenario is ready to be loaded
     #' - inactive: The scenario is not active and will not be loaded/run
@@ -27,7 +27,7 @@ Scenario <- R6::R6Class(
     initialize = function(project, scenarioConfiguration, status = NULL) {
       private$.project <- project
       private$.configuration <- scenarioConfiguration
-      self$name <- private$.configuration$id
+      self$id <- private$.configuration$id
       self$status <- status %||% "active"
       self$type <- ifelse(!is.na(private$.configuration$population), "population", "individual")
       self$readPopulationFromCSV <- as.logical(private$.configuration$populationFromCSV)
@@ -35,7 +35,7 @@ Scenario <- R6::R6Class(
     },
     #' @description Prints the scenario object
     #' @param lod The level of detail to print
-    #' - 1: Print only the scenario name and its status
+    #' - 1: Print only the scenario id and its status
     #' - 2 (default): Print all scenario parameters.
     print = function(lod = 2) {
       scenarioStatus <- if (self$status == "active") {
@@ -48,7 +48,7 @@ Scenario <- R6::R6Class(
 
       if (lod == 1) {
         cli_ul()
-        cli_li(paste(scenarioStatus, self$name))
+        cli_li(paste(scenarioStatus, self$id))
         cli_end()
       }
 
@@ -77,7 +77,7 @@ Scenario <- R6::R6Class(
         model_parameters <- cli_ul()
         purrr::map(self$configuration$modelParameters, ~ cli_li(.x))
         cli_end(model_parameters)
-        if(self$type == "population") {
+        if (self$type == "population") {
           cli_li("Population: {self$configuration$population}")
         } else {
           cli_li("Individual: {self$configuration$individual}")
@@ -88,6 +88,8 @@ Scenario <- R6::R6Class(
         cli_end(applications_parameters)
         cli_end(configurations)
       }
+
+      invisible(self)
     },
     #' @description
     #' Add additional parameters to the scenario to apply to the simulation
@@ -97,6 +99,8 @@ Scenario <- R6::R6Class(
       .validateParametersStructure(parameters)
 
       private$.additionalParameters <- parameters
+
+      invisible(self)
     },
     #' @description If status is "active", load the scenario. Loading the
     #' scenario means applying all configuration parameters to the model.
@@ -156,7 +160,7 @@ Scenario <- R6::R6Class(
     },
     #' @field outputPaths Output paths for the scenario.
     outputPaths = function() {
-      if (is.null(private$.outputPaths) & !is.null(self$configuration$outputPaths)) {
+      if (is.null(private$.outputPaths) & !all(is.na(self$configuration$outputPaths))) {
         private$.outputPaths <- list()
         for (outputPath in self$configuration$outputPaths) {
           private$.outputPaths[[outputPath]] <- private$.project$configurations$outputPaths[[outputPath]]
@@ -166,7 +170,7 @@ Scenario <- R6::R6Class(
     },
     #' @field modelParameters Model parameters to apply to the scenario.
     modelParameters = function() {
-      if (is.null(private$.modelParameters) & !is.null(self$configuration$modelParameters)) {
+      if (is.null(private$.modelParameters) & !all(is.na(self$configuration$modelParameters))) {
         private$.modelParameters <- list()
 
         for (modelParameter in self$configuration$modelParameters) {
@@ -177,26 +181,25 @@ Scenario <- R6::R6Class(
     },
     #' @field individual Individual parameters to apply to the scenario.
     individual = function() {
-      if (is.null(private$.individual) & !is.null(self$configuration$individual)) {
-        private$.individual <- private$.project$configurations$individuals[self$configuration$individual]
+      if (is.null(private$.individual) & !all(is.na(self$configuration$individual))) {
+        private$.individual <- private$.project$configurations$individuals[[self$configuration$individual]]
       }
       return(private$.individual)
     },
-    #'@field population Population parameters to apply to the scenario.
+    #' @field population Population parameters to apply to the scenario.
     population = function() {
-      if (is.null(private$.population) & !is.null(self$configuration$population) & !is.na(self$configuration$population)) {
+      if (is.null(private$.population) & !is.na(self$configuration$population)) {
         if (self$readPopulationFromCSV) {
-          private$.population <- private$.project$configurations$populations$fromCSV[self$configuration$population]
+          private$.population <- private$.project$configurations$populations$fromCSV[[self$configuration$population]]
         } else {
-          private$.population <- private$.project$configurations$populations$fromConfiguration[self$configuration$population]
+          private$.population <- private$.project$configurations$populations$fromConfiguration[[self$configuration$population]]
         }
-
-        return(private$.population)
       }
+      return(private$.population)
     },
     #' @field applications Applications parameters to apply to the scenario.
     applications = function() {
-      if (is.null(private$.applications) & !is.null(self$configuration$applications)) {
+      if (is.null(private$.applications) & !all(is.na(self$configuration$applications))) {
         private$.applications <- list()
         for (application in self$configuration$applications) {
           private$.applications[[application]] <- private$.project$configurations$applications[[application]]
@@ -206,7 +209,7 @@ Scenario <- R6::R6Class(
     },
     #' @field simulationTime SimulationTime to run the scenario
     simulationTime = function() {
-      if (is.null(private$.simulationTime)) {
+      if (is.null(private$.simulationTime) & !all(is.na(self$configuration$simulationTime))) {
         private$.simulationTime <- purrr::map(
           self$configuration$simulationTime,
           ~ SimulationTime$new(
@@ -219,11 +222,22 @@ Scenario <- R6::R6Class(
     },
     #' @field steadyStateTime SteadyStateTime to run the scenario
     steadyStateTime = function() {
-      if (is.null(private$.steadyStateTime)) {
-        private$.steadyStateTime <- SteadyStateTime$new(
-          steadyStateTime = self$configuration$steadyStateTime,
-          steadyStateTimeUnit = self$configuration$steadyStateTimeUnit
-        )
+      if (is.null(private$.steadyStateTime) & isTRUE(self$configuration$steadyState)) {
+        steadyStateTime <-
+          private$.steadyStateTime <- SteadyStateTime$new(
+            steadyStateTime =
+              if (is.na(self$configuration$steadyStateTime)) {
+                NULL
+              } else {
+                self$configuration$steadyStateTime
+              },
+            steadyStateTimeUnit =
+              if (is.na(self$configuration$steadyStateTimeUnit)) {
+                NULL
+              } else {
+                self$configuration$steadyStateTimeUnit
+              }
+          )
       }
       return(private$.steadyStateTime)
     }
@@ -260,7 +274,7 @@ Scenario <- R6::R6Class(
     # For human species, only parameters that do not override formulas are applied.
     # For other species, all parameters returned by `createIndividual` are applied.
     .applyIndividualParameters = function() {
-      individualObject <- self$individual[[1]]$individualObject
+      individualObject <- self$individual$individualObject
 
       individual <- individualObject$characteristics
 
@@ -270,7 +284,7 @@ Scenario <- R6::R6Class(
       allParamUnits <- individual$distributedParameters$units
 
       # For other species, also add derived parameters
-      if (self$individual[[1]]$characteristics$specy != ospsuite::Species$Human) {
+      if (self$individual$characteristics$specy != ospsuite::Species$Human) {
         allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
         allParamValues <- c(allParamValues, individual$derivedParameters$values)
         allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
@@ -344,7 +358,7 @@ Scenario <- R6::R6Class(
       }
     },
     # @description Apply additional parameters
-    .applyAdditionalParameters = function(){
+    .applyAdditionalParameters = function() {
       # Apply additional parameters
       if (!is.null(private$.additionalParameters)) {
         # Skip if the correct structure is supplied, but no parameters are defined
@@ -437,7 +451,7 @@ saveScenarioResults <- function(
         # Save population
         if (isOfType(simulatedScenariosResults[[i]]$population, "Population")) {
           ospsuite::exportPopulationToCSV(simulatedScenariosResults[[i]]$population,
-                                          filePath = file.path(outputFolder, paste0(scenarioName, "_population.csv"))
+            filePath = file.path(outputFolder, paste0(scenarioName, "_population.csv"))
           )
         }
       },
@@ -506,7 +520,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
     )
 
     outputValues <- getOutputValues(results,
-                                    quantitiesOrPaths = results$allQuantityPaths
+      quantitiesOrPaths = results$allQuantityPaths
     )
     simulatedScenariosResults[[scenarioNames[[i]]]] <-
       list(simulation = simulation, results = results, outputValues = outputValues)

@@ -125,18 +125,20 @@ Project <-
 
 
         individualSimulationResults <- ospsuite::runSimulations(individualScenarios,
-                                                                simulationRunOptions = simulationRunOptions)
+          simulationRunOptions = simulationRunOptions
+        )
 
         populationScenarios <-
           purrr::keep(self$scenarios, ~ .x$status == "loaded" && .x$type == "population") %>%
-          purrr::map(~ list(simulation = .x$simulation, population = .x$population))
+          purrr::map(~ list(simulation = .x$simulation, population = .x$population$populationObject))
 
         populationSimulationResults <-
           purrr::map(
             populationScenarios,
             ~ ospsuite::runSimulations(.x$simulation,
-                                       population = .x$population,
-                                       simulationRunOptions = simulationRunOptions)[[1]]
+              population = .x$population,
+              simulationRunOptions = simulationRunOptions
+            )[[1]]
           )
 
         allSimulationResults <- c(individualSimulationResults, populationSimulationResults)

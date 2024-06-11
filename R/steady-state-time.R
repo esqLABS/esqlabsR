@@ -12,15 +12,16 @@ SteadyStateTime <- R6::R6Class(
     #' @description Initializes the SteadyStateTime object
     #' @param steadyStateTime The steady state time value (default to 1000 minutes)
     #' @param steadyStateTimeUnit The steady state time unit (default to minutes)
-    initialize = function(steadyStateTime = 1000, steadyStateTimeUnit = ospUnits$Time$min) {
-      private$.validateSteadyStateTimeValue(steadyStateTime)
-      private$.validateSteadyStateTimeUnit(steadyStateTimeUnit)
-
+    initialize = function(steadyStateTime = 1000, steadyStateTimeUnit = ospsuite::ospUnits$Time$min) {
       self$time <- steadyStateTime
       self$timeUnit <- steadyStateTimeUnit
 
+      private$.validateSteadyStateTimeValue()
+      private$.validateSteadyStateTimeUnit()
+
+
       self$timeBaseUnit <- ospsuite::toBaseUnit(
-        quantityOrDimension = ospDimensions$Time,
+        quantityOrDimension = ospsuite::ospDimensions$Time,
         values = self$time,
         unit = self$timeUnit
       )
@@ -28,16 +29,16 @@ SteadyStateTime <- R6::R6Class(
   ),
   active = list(),
   private = list(
-    .validateSteadyStateTimeValue = function(steadyStateTime) {
+    .validateSteadyStateTimeValue = function() {
       # Check that value is positive
-      if (any(steadyStateTime < 0)) {
+      if (any(self$time < 0)) {
         cli_abort("Steady State Time must be positive.")
       }
     },
 
-    .validateSteadyStateTimeUnit = function(steadyStateTimeUnit) {
+    .validateSteadyStateTimeUnit = function() {
       # Check that is a valid unit
-      if (!steadyStateTimeUnit %in% as.character(ospUnits$Time)) {
+      if (!self$timeUnit %in% as.character(ospUnits$Time)) {
         cli_abort("The steady state time unit must be a valid unit of time as defined in `ospsuite::ospUnits$Time`.")
       }
     }

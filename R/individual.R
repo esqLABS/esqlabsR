@@ -5,11 +5,14 @@ Individual <- R6::R6Class(
   public = list(
     #' @description Creates a new instance of Configuration
     #' @param project A Project in which the individual is defined.
+    #' @param id The individual identifier.
     #' @param individualCharacteristicsData A data frame containing the individual characteristics.
     #' @param individualParameters A list of simulation parameters for the individual.
     initialize = function(project,
+                          id,
                           individualCharacteristicsData,
                           individualParameters) {
+      private$.id <- id
       private$.project <- project
       private$.characteristics <- list(
         id = individualCharacteristicsData$IndividualId,
@@ -26,7 +29,7 @@ Individual <- R6::R6Class(
     },
     #' @description Prints the individual characteristics and parameters.
     print = function() {
-      cli_li("Individual ID: {self$characteristics$id}")
+      cli_li("Individual ID: { self$id}")
       individual <- cli_ul()
       cli_li("Characteristics:")
       characteristics <- cli_ul()
@@ -51,7 +54,7 @@ Individual <- R6::R6Class(
         list(
           characteristics =
             tibble::tibble(
-              IndividualId = self$characteristics$id,
+              IndividualId = self$id,
               Species = self$characteristics$specy,
               Population = self$characteristics$population,
               Gender = self$characteristics$gender,
@@ -68,6 +71,7 @@ Individual <- R6::R6Class(
   ),
   private = list(
     .project = NULL,
+    .id = NULL,
     .individualData = NULL,
     .characteristics = NULL,
     .parameters = NULL,
@@ -85,6 +89,10 @@ Individual <- R6::R6Class(
     }
   ),
   active = list(
+    #' @field id Return the individual identifier.
+    id = function() {
+      return(private$.id)
+    },
     #' @field characteristics Return the characteristics of the individual.
     characteristics = function(value) {
       if (!missing(value)) {

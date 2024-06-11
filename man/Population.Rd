@@ -9,7 +9,9 @@ A class representing a population of individuals.
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{population}}{Return the population object created from ospsuite::createPopulation.}
+\item{\code{id}}{The population identifier}
+
+\item{\code{populationObject}}{Return the population object created from ospsuite::createPopulation.}
 }
 \if{html}{\out{</div>}}
 }
@@ -29,6 +31,7 @@ Creates a new instance of Configuration
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Population$new(
   project = project,
+  id,
   populationCharacteristicsData = NULL,
   userDefinedVariabilityData = NULL,
   CSVFile = NULL
@@ -39,6 +42,8 @@ Creates a new instance of Configuration
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{project}}{A Project in which the configurations are defined.}
+
+\item{\code{id}}{The population identifier.}
 
 \item{\code{populationCharacteristicsData}}{A data frame containing the population characteristics.}
 

@@ -62,6 +62,8 @@ Configuration <- R6::R6Class(
         purrr::imap(self$applications, ~ cli_li(.y))
         cli_end(applications)
       }
+
+      invisible(self)
     }
   ),
   active = list(
@@ -191,6 +193,7 @@ Configuration <- R6::R6Class(
         individuals[[individualId]] <-
           Individual$new(
             project = private$.project,
+            id = individualId,
             individualCharacteristicsData = individualCharacteristicsData,
             individualParameters = individualParameters %||% NULL
           )
@@ -218,6 +221,7 @@ Configuration <- R6::R6Class(
 
         populations$fromConfiguration[[populationId]] <- Population$new(
           project = private$.project,
+          id = populationId,
           populationCharacteristicsData = populationCharacteristicsData,
           userDefinedVariabilityData = userDefinedVariabilityData,
           CSVFile = NULL
@@ -233,6 +237,7 @@ Configuration <- R6::R6Class(
 
         populations$fromCSV[[populationId]] <- Population$new(
           project = private$.project,
+          id = populationId,
           populationCharacteristicsData = NULL,
           userDefinedVariabilityData = userDefinedVariabilityData,
           CSVFile = file

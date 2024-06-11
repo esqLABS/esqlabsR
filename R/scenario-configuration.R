@@ -154,7 +154,7 @@ ScenarioConfiguration <-
 
 splitCellValues <- function(cellValues, separator = ","){
   if (is.null(cellValues) || is.na(cellValues)) {
-    return(NULL)
+    return(NA)
   }
   trimws(
     stringr::str_split_1(
@@ -166,7 +166,7 @@ splitCellValues <- function(cellValues, separator = ","){
 
 mergeCellValues <- function(cellValues, separator = ","){
   if (all(is.null(cellValues)) || all(is.na(cellValues))) {
-    return(NULL)
+    return(NA)
   }
   paste(cellValues, collapse = separator)
 }

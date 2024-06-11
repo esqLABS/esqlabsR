@@ -32,7 +32,7 @@ Initializes the SteadyStateTime object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SteadyStateTime$new(
   steadyStateTime = 1000,
-  steadyStateTimeUnit = ospUnits$Time$min
+  steadyStateTimeUnit = ospsuite::ospUnits$Time$min
 )}\if{html}{\out{</div>}}
 }
 

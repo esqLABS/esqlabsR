@@ -11,7 +11,7 @@ the simulation parameters and the resulting simulation object.
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{name}}{The name of the scenario}
+\item{\code{id}}{The name of the scenario}
 
 \item{\code{status}}{Scenario status can be:
 \itemize{
@@ -101,7 +101,7 @@ Prints the scenario object
 \describe{
 \item{\code{lod}}{The level of detail to print
 \itemize{
-\item 1: Print only the scenario name and its status
+\item 1: Print only the scenario id and its status
 \item 2 (default): Print all scenario parameters.
 }}
 }

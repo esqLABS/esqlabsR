@@ -5,52 +5,63 @@ Population <- R6::R6Class(
   public = list(
     #' @description Creates a new instance of Configuration
     #' @param project A Project in which the configurations are defined.
+    #' @param id The population identifier.
     #' @param populationCharacteristicsData A data frame containing the population characteristics.
     #' @param userDefinedVariabilityData A data frame containing the user-defined variability.
     #' @param CSVFile A string representing the path to the CSV file containing the population data. If not NULL (default), the population is loaded from the CSV file instead of being created from the populationCharacteristicsData.
     initialize = function(project = project,
+                          id,
                           populationCharacteristicsData = NULL,
                           userDefinedVariabilityData = NULL,
                           CSVFile = NULL) {
       private$.project <- project
+      private$.id <- id
       private$.populationCharacteristicsData <- populationCharacteristicsData
       private$.userDefinedVariabilityData <- userDefinedVariabilityData
       private$.CSVFile <- CSVFile
-
-      if (!is.null(CSVFile)) {
-        private$.population <- loadPopulation(CSVFile)
-      } else {
-        populationCharacteristicsArguments <-
-          as.list(private$.populationCharacteristicsData) %>%
-          purrr::keep(~ !is.na(.x)) %>%
-          purrr::keep_at(formalArgs(ospsuite::createPopulationCharacteristics))
-
-        populationCharacteristicsArguments[["moleculeOntogenies"]] <-
-          createOntogenies(
-            data.frame(
-              Protein = private$.populationCharacteristicsData$Protein,
-              Ontogeny = private$.populationCharacteristicsData$Ontogeny
-            )
-          )
-
-        populationCharacteristics <- do.call(ospsuite::createPopulationCharacteristics, populationCharacteristicsArguments)
-
-        private$.population <- ospsuite::createPopulation(populationCharacteristics)$population
-      }
     },
     #' @description Prints the population characteristics.
     print = function() {
-      print(self$population)
+
+      cli_li("Population ID: {self$id}")
+      invisible(self)
     }
   ),
   active = list(
-    #' @field population Return the population object created from ospsuite::createPopulation.
-    population = function() {
+    #' @field id The population identifier
+    id = function() {
+      return(private$.id)
+    },
+    #' @field populationObject Return the population object created from ospsuite::createPopulation.
+    populationObject = function() {
+      if (is.null(private$.population)) {
+        if (!is.null(private$.CSVFile)) {
+          private$.population <- loadPopulation(private$.CSVFile)
+        } else {
+          populationCharacteristicsArguments <-
+            as.list(private$.populationCharacteristicsData) %>%
+            purrr::keep(~ !is.na(.x)) %>%
+            purrr::keep_at(formalArgs(ospsuite::createPopulationCharacteristics))
+
+          populationCharacteristicsArguments[["moleculeOntogenies"]] <-
+            createOntogenies(
+              data.frame(
+                Protein = private$.populationCharacteristicsData$Protein,
+                Ontogeny = private$.populationCharacteristicsData$Ontogeny
+              )
+            )
+
+          populationCharacteristics <- do.call(ospsuite::createPopulationCharacteristics, populationCharacteristicsArguments)
+
+          private$.population <- ospsuite::createPopulation(populationCharacteristics)$population
+        }
+      }
       return(private$.population)
     }
   ),
   private = list(
     .project = NULL,
+    .id = NULL,
     .populationCharacteristicsData = NULL,
     .userDefinedVariabilityData = NULL,
     .CSVFile = NULL,
