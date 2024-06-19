@@ -22,6 +22,9 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
   
 - Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling and legend colors. (\#669, @rengelke).
 
+- Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`, and `observedData` to include observed data in the plots. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling, and legend colors. (\#669, \#674 @rengelke).
+
+
 ## Major Changes
 
 - New `sensitivityTornadoPlot` function for generating tornado plots that evaluate 

@@ -21,6 +21,9 @@
 #' (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #' scale similarly to `xAxisScale`. Default is "log".
+#' @param observedData Optional. A set of `DataSet` objects containing observed
+#' data. If provided, observed data will be integrated with the simulated data
+#' based on `OutputPath` dimension for direct comparison within the visualizations.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics. Plot-specific settings provided directly
 #' to the function, such as `xAxisScale`, will take precedence over any
@@ -33,6 +36,7 @@
 #' - `linesAlpha`: Alpha transparency for the line elements.
 #' - `linesColor`: Color of the line elements.
 #' - `linesSize`: Thickness of the line elements.
+#' - `pointsShape`: Shape of the point elements for observed data.
 #' - `title`: Main title text for the plot.
 #' - `titleSize`: Font size of the plot title.
 #' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
@@ -68,8 +72,8 @@
 #' # Print plots with default settings
 #' sensitivityTimeProfiles(results)
 #'
-#' # Print plots with logarithmically transformed y-axis values
-#' sensitivityTimeProfiles(results, yAxisScale = "log")
+#' # Print plots with linear y-axis values
+#' sensitivityTimeProfiles(results, yAxisScale = "lin")
 #'
 #' # Print plots with custom configuration settings
 #' myPlotConfiguration <- createEsqlabsPlotConfiguration()
@@ -83,11 +87,13 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     parameterPaths = NULL,
                                     xAxisScale = NULL,
                                     yAxisScale = NULL,
+                                    observedData = NULL,
                                     defaultPlotConfiguration = NULL) {
   # input validation ------------------------
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  validateIsOfType(observedData, DataSet, nullAllowed = TRUE)
   if (is.null(defaultPlotConfiguration)) {
     defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
   } else {
@@ -99,12 +105,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   .validateCharVectors(parameterPaths)
 
   # default time profiles plot configuration setup ----
-
   timeProfilesConfiguration <- list(
     legendPosition = "bottom",
     legendTitle = "Parameter factor",
     linesAlpha = 0.7,
     linesSize = 1.4,
+    pointsShape = 16L,
     title = NULL,
     titleSize = 14,
     xAxisScale = "lin",
@@ -112,6 +118,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     yAxisScale = "log",
     yLabel = NULL
   )
+
   # override default plot configuration with function parameters
   customPlotConfiguration <- defaultPlotConfiguration$clone()
   if (!is.null(xAxisScale)) customPlotConfiguration$xAxisScale <- xAxisScale
@@ -141,6 +148,19 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     outputPaths            = sensitivityCalculation$outputPaths
   )
 
+  # add observed data to time series data frame
+  if (!is.null(observedData)) {
+    dataObs <- .dataSetsToTimeSeriesDataFrame(
+      dataSetList            = observedData,
+      simulationResults      = sensitivityCalculation$simulationResults
+    )
+    data <- dplyr::bind_rows(
+      dplyr::mutate(data, DataType = "simulated"),
+      dplyr::mutate(dataObs, DataType = "observed")
+    ) %>%
+      dplyr::arrange(OutputPath, ParameterPath, DataType)
+  }
+
   # filter out data not needed for plotting
   data <- .filterPlottingData(
     data,
@@ -152,9 +172,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # split long parameter path names for plotting
   data <- dplyr::mutate(
     data,
-    ParameterPath = purrr::map_chr(
-      ParameterPath, .splitParameterName,
-      equalLines = TRUE
+    ParameterPath = dplyr::if_else(
+      is.na(ParameterPath),
+      ParameterPath,
+      purrr::map_chr(ParameterPath, .splitParameterName, equalLines = TRUE)
     )
   )
 
@@ -212,11 +233,20 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
 
   # map each parameter path to its own plot ----
-
   plotList <- purrr::map(
-    unique(data$ParameterPath),
+    unique(data$ParameterPath) %>% .[!is.na(.)],
     ~ {
       dataSubset <- dplyr::filter(data, ParameterPath == .x)
+
+      # combine original data subset with observed data
+      # add observed data if not-null and output path is concentration
+      if ("DataType" %in% colnames(data)) {
+        observedData <- dplyr::filter(data, DataType == "observed") %>%
+          dplyr::select(-ParameterPath)
+        hasObservedData <- isTRUE(nrow(observedData) != 0)
+      } else {
+        hasObservedData <- FALSE
+      }
 
       # basic plot setup -------------------------
 
@@ -241,6 +271,22 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           alpha = plotConfiguration$linesAlpha,
           na.rm = TRUE
         )
+
+      # add line for observed data
+      if (hasObservedData) {
+        plot <- plot +
+          geom_point(
+            data = observedData,
+            aes(Time, Concentration, shape = dataSetName)
+          ) +
+          scale_shape_manual(
+            values = rep(
+              plotConfiguration$pointsShape,
+              length.out = length(unique(observedData$dataSetName))
+            ),
+            name = "Observed data"
+          )
+      }
 
       # adjusting axis scales
       if (isTRUE(plotConfiguration$xAxisScale == "log")) {
@@ -288,9 +334,21 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
             ticks = FALSE,
             draw.ulim = FALSE,
             draw.llim = FALSE,
-            title.position = "top"
-          )
+            title.position = "top",
+            order = 1
+          ),
+          shape = guide_legend(order = 2)
         )
+
+      if (hasObservedData) {
+        plot <- plot +
+          guides(
+            shape = guide_legend(
+              title.position = "top",
+              nrow = length(unique(observedData$DataType))
+            )
+          )
+      }
 
       # apply color scales
       if (is.null(plotConfiguration$linesColor)) {
@@ -325,7 +383,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   )
 
   # compile individual plots -----------------
-
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
       title = plotConfiguration$title,
@@ -340,4 +397,221 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     theme(legend.position = plotConfiguration$legendPosition)
 
   return(plotPatchwork)
+}
+
+#' Convert a list of `DataSet` objects to a combined time-series dataframe
+#'
+#' Converts a list of `DataSet` objects containing observed data to time-series
+#' dataframes. Uses simulation results to extract metadata for all quantity paths
+#' as a reference for alignment with the `OutputPath` dimensions.
+#'
+#' @param dataSetList List of `DataSet` R6 objects containing observed data.
+#' @param simulationResults Simulation results or simulationResultsBatch used to
+#' extract reference metadata for all output paths defined in the results.
+#'
+#' @return A single `data.frame` combining all the converted data sets with the
+#' reference metadata.
+#'
+#' @keywords internal
+#' @noRd
+.dataSetsToTimeSeriesDataFrame <- function(dataSetList,
+                                           simulationResults) {
+  # extract metadata for all output paths from simulation results
+  # for mapping observed data
+  simulationResultsMetaData <- .getMetaData(simulationResults)
+
+  # convert DataSets to time-series dataframes
+  timeSeriesDataFrameList <- purrr::map(
+    dataSetList,
+    .f = ~ .dataSetToTimeSeriesDataFrame(.x, simulationResultsMetaData)
+  )
+
+  timeSeriesDataFrameCombined <-
+    purrr::list_rbind(timeSeriesDataFrameList)
+
+  return(timeSeriesDataFrameCombined)
+}
+
+#' Convert observed data from a `DataSet` to a time-series dataframe
+#'
+#' Converts observed data stored in a `DataSet` object to a time-series dataframe.
+#' Uses simulation results metadata for alignment with the `OutputPath` dimension
+#' and adjusts dimension units.
+#'
+#' @param dataSet `DataSet` R6 object containing observed data.
+#' @param referenceMetaData List with reference metadata retrieved from simulation
+#' results using `getOutputValues()$metaData`.
+#'
+#' @return A `data.frame` combining the converted observed data with time series
+#' data and adding an `OutputPath` column for linking simulation results to
+#' observed data based on matched dimensions.
+#'
+#' @keywords internal
+#' @noRd
+.dataSetToTimeSeriesDataFrame <- function(dataSet,
+                                          referenceMetaData) {
+  validateIsOfType(dataSet, "DataSet")
+  validateIsOfType(referenceMetaData, "list")
+
+  # convert DataSet with observed data  to a dataframe
+  data <- ospsuite::dataSetToDataFrame(dataSet)
+
+  # gather dimensions and units from output paths in reference metadata
+  referencePaths <- purrr::map_dfr(
+    referenceMetaData,
+    ~ purrr::map_dfr(
+      .x,
+      tibble::as_tibble,
+      .id = "OutputPath"
+    ),
+    .id = "ParameterPath"
+  )
+
+  dataDimension <- unique(data$yDimension)
+  timeUnit <- dplyr::filter(referencePaths, dimension == "Time")
+  timeUnit <- dplyr::pull(timeUnit, unit)[1]
+
+  referencePaths <- dplyr::filter(
+    referencePaths, OutputPath != "Time" & !duplicated(OutputPath)
+  )
+
+  # iterate over dimension including units for all output paths and
+  # return adjusted observed data when dimensions match
+  unitConvertedDataList <- purrr::pmap(
+    referencePaths,
+    function(ParameterPath, OutputPath, unit, dimension) {
+      df <- .convertDataFrame(
+        data = data,
+        dim1 = dataDimension,
+        dim2 = dimension,
+        timeUnit = timeUnit,
+        dimensionUnit = unit
+      )
+      if (!is.null(df)) {
+        # observed data is labelled when mapped to output path
+        df <- dplyr::mutate(df, OutputPath = OutputPath, yDimension = dimension)
+      }
+
+      return(df)
+    }
+  )
+  unitConvertedData <- dplyr::bind_rows(unitConvertedDataList)
+
+  # convert to time-series dataframe
+  timeSeriesDataFrame <- dplyr::rename(
+    unitConvertedData,
+    Time = xValues,
+    Concentration = yValues,
+    TimeDimension = xDimension,
+    TimeUnit = xUnit,
+    Dimension = yDimension,
+    Unit = yUnit,
+    dataSetName = name
+  )
+
+  timeSeriesDataFrame <- dplyr::select(
+    timeSeriesDataFrame,
+    OutputPath, Time, Concentration, TimeDimension,
+    TimeUnit, Dimension, Unit, dataSetName
+  )
+
+  timeSeriesDataFrame <- bind_rows(
+    timeSeriesDataFrame[1, ] %>% mutate(Time = 0, Concentration = 0),
+    timeSeriesDataFrame
+  )
+
+  timeSeriesDataFrame <- dplyr::arrange(
+    timeSeriesDataFrame,
+    OutputPath,
+    Time
+  )
+
+  return(timeSeriesDataFrame)
+}
+
+#' Get metadata from simulation results
+#'
+#' @keywords internal
+#' @noRd
+.getMetaData <- function(simulationResults) {
+  resultOutputList <- purrr::map(
+    names(simulationResults),
+    ~ simulationResults[[.x]]
+  ) %>% purrr::map(., ~ .x[[1]])
+  names(resultOutputList) <- names(simulationResults)
+
+  resultOutputValues <- lapply(resultOutputList, getOutputValues)
+
+  resultsMetaData <- purrr::map(resultOutputValues, ~ .x$metaData)
+}
+
+#' Compare dimensions passed as character strings
+#'
+#' Compares two dimension strings and applies specific equivalency rules for
+#' concentration dimensions (mass and molar).
+#'
+#'
+#' @param dimA Character string representing a dimension.
+#' @param dimB Character string representing a dimension.
+#'
+#' @return The matched dimension if equivalent, otherwise `NULL`.
+#'
+#' @keywords internal
+#' @noRd
+.matchDimension <- function(dimA, dimB) {
+  # specific rule for concentration dimension
+  if ((dimA == "Concentration (mass)" && dimB == "Concentration (molar)") ||
+    (dimA == "Concentration (molar)" && dimB == "Concentration (mass)")) {
+    equalDimension <- TRUE
+    dimB <- dimB %>%
+      stringr::str_replace(., "\\(", "\\[") %>%
+      stringr::str_replace(., "\\)", "\\]")
+    # general comparison
+  } else {
+    equalDimension <- identical(dimA, dimB)
+  }
+
+  if (!equalDimension) {
+    return(NULL)
+  } else {
+    return(dimB)
+  }
+}
+
+#' Convert a dataframe's units if dimensions match
+#'
+#' Converts the units of a dataframe containing observed data using
+#' `ospsuite:::.unitConverter` if the dimensions match. Returns the converted
+#' dataframe or NULL if dimensions don't match and are not convertible to each
+#' other.
+#'
+#' @param data `data.frame` with observed data created using
+#' `ospsuite::dataSetToDataFrame()`.
+#' @param dim1 y-dimension to convert from.
+#' @param dim2 y-dimension to convert to.
+#' @param timeUnit Unit of time to convert to.
+#' @param dimensionUnit Unit of dimension to convert to.
+#'
+#' @return A converted `data.frame` or NULL if dimensions don't match.
+#'
+#' @keywords internal
+#' @noRd
+.convertDataFrame <- function(data, dim1, dim2, timeUnit, dimensionUnit) {
+  validateIsOfType(data, "data.frame")
+  ospsuite.utils::validateEnumValue(timeUnit, ospUnits$Time)
+
+  toDimension <- .matchDimension(dim1, dim2)
+
+  if (!is.null(toDimension)) {
+    ospsuite.utils::validateEnumValue(dimensionUnit, ospUnits[[toDimension]])
+    dataConverted <- ospsuite:::.unitConverter(
+      data,
+      xUnit = timeUnit,
+      yUnit = dimensionUnit
+    )
+  } else {
+    dataConverted <- NULL
+  }
+
+  return(dataConverted)
 }

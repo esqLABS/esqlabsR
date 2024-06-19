@@ -10,6 +10,7 @@ sensitivityTimeProfiles(
   parameterPaths = NULL,
   xAxisScale = NULL,
   yAxisScale = NULL,
+  observedData = NULL,
   defaultPlotConfiguration = NULL
 )
 }
@@ -31,6 +32,11 @@ for each parameter will be displayed as lines.}
 
 \item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis
 scale similarly to \code{xAxisScale}. Default is "log".}
+
+\item{observedData}{Optional. A named set of \code{DataSet} objects containing
+observed data. If provided, observed data will be included in the plot. This
+allows for direct comparison between observed and simulated data within the
+visualizations.}
 
 \item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
 used to customize plot aesthetics. Plot-specific settings provided directly
@@ -84,8 +90,8 @@ results <- sensitivityCalculation(
 # Print plots with default settings
 sensitivityTimeProfiles(results)
 
-# Print plots with logarithmically transformed y-axis values
-sensitivityTimeProfiles(results, yAxisScale = "log")
+# Print plots with linear y-axis values
+sensitivityTimeProfiles(results, yAxisScale = "lin")
 
 # Print plots with custom configuration settings
 myPlotConfiguration <- createEsqlabsPlotConfiguration()
