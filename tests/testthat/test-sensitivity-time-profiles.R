@@ -125,7 +125,7 @@ resultsMultiple <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths,
-  variationRange = c(1, 5, 10)
+  variationRange = c(0.2, 1, 5, 10)
 )
 
 test_that("sensitivityTimeProfiles plots are as expected for multiple output paths", {
