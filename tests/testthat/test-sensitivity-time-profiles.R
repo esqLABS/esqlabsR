@@ -154,6 +154,52 @@ test_that("sensitivityTimeProfiles plots correctly for multiple outputs with obs
   )
 })
 
+
+# multiple output paths with multiple observed data
+obsData1 <<- loadDataSetsFromExcel(
+  xlsFilePath = filePath,
+  importerConfigurationOrPath = dataConfiguration
+)
+obsData2 <<- loadDataSetsFromExcel(
+  xlsFilePath = filePath,
+  importerConfigurationOrPath = dataConfiguration
+)
+# create mock observed data with "Amount" dimension
+obsDataMultiple <- c(obsData1, obsData2)
+names(obsDataMultiple)[2] <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
+obsDataMultiple[[2]]$name <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
+obsDataMultiple[[2]]$yDimension <- "Amount"
+obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
+
+resultsMultiple <- sensitivityCalculation(
+  simulation = simulation,
+  outputPaths = outputPaths,
+  parameterPaths = parameterPaths,
+  variationRange = c(0.2, 1, 5, 10)
+)
+
+test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data", {
+  set.seed(123)
+  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
+    observedData = obsDataMultiple
+  )
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path profiles with 2 observed data - amount",
+      fig = plotsMultiple[[2]]
+    )
+  )
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path profiles with 2 observed data - concentration",
+      fig = plotsMultiple[[3]]
+    )
+  )
+})
+
 # filter data to be plotted -------------------------------------
 
 outputPathsFilter <- "Organism|ArterialBlood|Plasma|Aciclovir"
