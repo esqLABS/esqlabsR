@@ -92,7 +92,7 @@ writeParameterStructureToXLS <- function(parameterStructure, paramsXLSpath, shee
   if (!is.null(sheet)) {
     names(data) <- sheet
   }
-  writeExcel(data = data, path = paramsXLSpath)
+  .writeExcel(data = data, path = paramsXLSpath)
 }
 
 #' Export simulation parameters to excel
@@ -158,7 +158,7 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
   if (!is.null(sheet)) {
     names(data) <- sheet
   }
-  writeExcel(data = data, path = paramsXLSpath)
+  .writeExcel(data = data, path = paramsXLSpath)
 }
 
 #' Extend parameters structure with new entries
