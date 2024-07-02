@@ -8,7 +8,7 @@ writeParameterStructureToXLS(
   parameterStructure,
   paramsXLSpath,
   sheet = NULL,
-  extend = FALSE
+  append = FALSE
 )
 }
 \arguments{
@@ -19,7 +19,7 @@ writeParameterStructureToXLS(
 
 \item{sheet}{(Optional) name of the excel sheet}
 
-\item{extend}{If TRUE, the existing excel file will be extended with the new
+\item{append}{If TRUE, the existing excel file/sheet will be appended with the new
 parameter structure. If FALSE (default), the existing file will be
 overwritten.}
 }
