@@ -46,7 +46,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #'
 #' @param paramsXLSpath Path to the excel file
 #' @param sheet (Optional) name of the excel sheet
-#' @param extend If TRUE, the existing excel file will be extended with the new
+#' @param append If TRUE, the existing excel file/sheet will be appended with the new
 #'  parameter structure. If FALSE (default), the existing file will be
 #'  overwritten.
 #'
@@ -59,7 +59,14 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' writeParameterStructureToXLS(params, "test.xlsx")
 #' }
 #'
-writeParameterStructureToXLS <- function(parameterStructure, paramsXLSpath, sheet = NULL, extend = FALSE) {
+writeParameterStructureToXLS <- function(parameterStructure, paramsXLSpath, sheet = NULL, append = FALSE) {
+  if (isTRUE(append)) {
+    existingData <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheet)
+    parameterStructure$paths <- c(existingData$paths, parameterStructure$paths)
+    parameterStructure$values <- c(existingData$values, parameterStructure$values)
+    parameterStructure$units <- c(existingData$units, parameterStructure$units)
+  }
+
   .validateParametersStructure(parameterStructure, "parameterStructure")
   # Split full parameter paths into container path and parameter name
   containerPaths <- unlist(lapply(parameterStructure$paths, \(x){
