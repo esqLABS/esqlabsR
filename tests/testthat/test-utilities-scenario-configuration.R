@@ -115,7 +115,7 @@ test_that("It does not fail on empty rows", {
       scenariosDfLocal[3, ] <- scenariosDfLocal[2, ]
       scenariosDfLocal[2, ] <- scenariosDfLocal[4, ]
       scenariosDfLocal[3, ]$Scenario_name <- "TestScenario2"
-      writeExcel(data = list(
+      .writeExcel(data = list(
         "Scenarios" = scenariosDfLocal,
         "OutputPaths" = data.frame()
       ), path = file.path(tempDir, "Scenarios.xlsx"), )
@@ -192,7 +192,7 @@ test_that("It throws an error when reading wrong file structure for scenario con
     tmpdir = tempDir,
     code = {
       scenariosDfLocal <- scenariosDf[3:12]
-      writeExcel(data = list(
+      .writeExcel(data = list(
         "Scenarios" = scenariosDfLocal
       ), path = file.path(tempDir, "Scenarios.xlsx"), )
       expect_error(readScenarioConfigurationFromExcel(projectConfiguration = projectConfigurationLocal),

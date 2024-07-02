@@ -39,6 +39,62 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }
 
+#' Write parameter structure to excel that can be loaded in MoBi
+#'
+#' @param parameterStructure A list containing vectors 'paths' with the full paths to the parameters,
+#' 'values' the values of the parameters, and 'units' with the units the values are in.
+#'
+#' @param paramsXLSpath Path to the excel file
+#' @param sheet (Optional) name of the excel sheet
+#' @param append If TRUE, the existing excel file/sheet will be appended with the new
+#'  parameter structure. If FALSE (default), the existing file will be
+#'  overwritten.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' params <- list(paths = c("Container1|Path1", "Container|Second|Third|Path2"), values = c(1, 2), units = c("", "µmol"))
+#'
+#' writeParameterStructureToXLS(params, "test.xlsx")
+#' }
+#'
+writeParameterStructureToXLS <- function(parameterStructure, paramsXLSpath, sheet = NULL, append = FALSE) {
+  if (isTRUE(append)) {
+    existingData <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheet)
+    parameterStructure$paths <- c(existingData$paths, parameterStructure$paths)
+    parameterStructure$values <- c(existingData$values, parameterStructure$values)
+    parameterStructure$units <- c(existingData$units, parameterStructure$units)
+  }
+
+  .validateParametersStructure(parameterStructure, "parameterStructure")
+  # Split full parameter paths into container path and parameter name
+  containerPaths <- unlist(lapply(parameterStructure$paths, \(x){
+    .splitParameterPathIntoContainerAndName(x)$containerPath
+  }), use.names = FALSE)
+  parameterNames <- unlist(lapply(parameterStructure$paths, \(x){
+    .splitParameterPathIntoContainerAndName(x)$parameterName
+  }), use.names = FALSE)
+
+  # Create a data frame with the parameter structure
+  output <- data.frame(
+    "Container Path" = containerPaths,
+    "Parameter Name" = parameterNames,
+    Value = parameterStructure$values,
+    Units = parameterStructure$units,
+    check.names = FALSE
+  )
+
+  # Write the results into an excel file.
+  # Wrap the output data frame into a list and name the list if sheet name
+  # has been provided
+  data <- list(output)
+  if (!is.null(sheet)) {
+    names(data) <- sheet
+  }
+  .writeExcel(data = data, path = paramsXLSpath)
+}
+
 #' Export simulation parameters to excel
 #'
 #' @description Creates an excel file with information from the passed
@@ -102,7 +158,7 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
   if (!is.null(sheet)) {
     names(data) <- sheet
   }
-  writeExcel(data = data, path = paramsXLSpath)
+  .writeExcel(data = data, path = paramsXLSpath)
 }
 
 #' Extend parameters structure with new entries
@@ -332,4 +388,20 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, # nolint: obje
       )
     }
   }
+}
+
+#' Split parameter path into container path and parameter name
+#'
+#' @param parameterPath Full path to the parameter, with path elements separated
+#' by '|'
+#'
+#' @return A list with elements 'containerPath' and 'parameterName'
+#' @keywords internal
+#' @noRd
+.splitParameterPathIntoContainerAndName <- function(parameterPath) {
+  fullPathParts <- strsplit(parameterPath, split = "|", fixed = TRUE)[[1]]
+
+  containerPath <- paste(fullPathParts[seq_along(fullPathParts) - 1], collapse = "|")
+  paramName <- fullPathParts[[length(fullPathParts)]]
+  return(list(containerPath = containerPath, parameterName = paramName))
 }

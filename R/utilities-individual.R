@@ -31,12 +31,10 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   units <- vector("character", length(individual$distributedParameters$paths))
 
   for (i in seq_along(individual$distributedParameters$paths)) {
-    fullPathParts <- strsplit(individual$distributedParameters$paths[[i]], split = "|", fixed = TRUE)[[1]]
-    containerPath <- paste(fullPathParts[seq_along(fullPathParts) - 1], collapse = "|")
-    paramName <- fullPathParts[[length(fullPathParts)]]
+    splittedPath <- .splitParameterPathIntoContainerAndName(individual$distributedParameters$paths[[i]])
 
-    containerPaths[i] <- containerPath
-    paramNames[i] <- paramName
+    containerPaths[i] <- splittedPath$containerPath
+    paramNames[i] <- splittedPath$parameterName
     values[i] <- individual$distributedParameters$values[[i]]
     units[i] <- individual$distributedParameters$units[[i]]
   }
@@ -49,7 +47,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   )
   colnames(output) <- columnNames
 
-  writeExcel(data = output, path = outputXLSPath)
+  .writeExcel(data = output, path = outputXLSPath)
 }
 
 #' Read individual characteristics from file
