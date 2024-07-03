@@ -260,7 +260,7 @@ ProjectConfiguration <- R6::R6Class(
 
         excel_file[excel_file$Property == prop, ]$Value <- path
       }
-      writeExcel(excel_file, path = self$projectConfigurationFilePath)
+      .writeExcel(excel_file, path = self$projectConfigurationFilePath)
     }
   )
 )
