@@ -292,9 +292,9 @@
     <loc>https://esqlabs.github.io/esqlabsR/dev/reference/ULOQMode.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/writeExcel.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/writeIndividualToXLS.html</loc>
   </url>
   <url>
-    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/writeIndividualToXLS.html</loc>
+    <loc>https://esqlabs.github.io/esqlabsR/dev/reference/writeParameterStructureToXLS.html</loc>
   </url>
 </urlset>

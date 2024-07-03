@@ -68,20 +68,22 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
 <div class="section level3">
-<h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
-<ul><li><p>Function <code>createScenarios</code> gets a new argument <code>stopIfParameterNotFound</code>. If <code>TRUE</code> (default), a scenario will not be created and an error is thrown if any user-defined parameter (e.g., provided in Excel files) is not found in the simulation. If <code>FALSE</code>, non-existing parameters are ignored. (<a href="https://github.com/esqLABS/esqlabsR/issues/559" class="external-link">#559</a>, 1)</p></li>
-<li><p>Constructor of a <code>Scenario</code> class gets a new argument <code>stopIfParameterNotFound</code>.</p></li>
-<li><p>More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is defined.</p></li>
-</ul></div>
-<div class="section level3">
 <h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
 <ul><li><p>Function <code>exportSteadyStateToXLS</code> has been removed in favor of <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/exportSteadyStateToXLS.html" class="external-link">ospsuite::exportSteadyStateToXLS</a></code> (<a href="https://github.com/esqLABS/esqlabsR/issues/598" class="external-link">#598</a>, 1)</p></li>
 <li><p>Function <code>sensitivitySpiderPlot</code> overhauled with new parameters. <code>yAxisType</code> to toggle between <code>percent</code>and <code>absolute</code> values. <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. <code>yAxisFacetScales</code> to choose between <code>free</code> and <code>fixed</code> scales for y-axis. Further plot customization options through <code>defaultPlotConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/632" class="external-link">#632</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
 <li><p>Function <code>sensitivityTimeProfiles</code> with new signature. Introduced parameters <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. More plot customization options through <code>defaultPlotConfiguration</code> as described in the documentation. Plots have improved color palette, scaling and legend colors. (<a href="https://github.com/esqLABS/esqlabsR/issues/669" class="external-link">#669</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
+<li><p>Function <code>writeExcel()</code> is no longer exported. (<a href="https://github.com/esqLABS/esqlabsR/issues/672" class="external-link">#672</a>)</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="major-changes-development-version">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-development-version"></a></h3>
-<ul><li>New <code>sensitivityTornadoPlot</code> function for generating tornado plots that evaluate the impact of parameter changes on sensitivity analysis outcomes. It utilizes <code>parameterFactor</code> to depict the scaling effects of parameter modifications. Provides plot customization options through <code>defaultPlotConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/652" class="external-link">#652</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</li>
+<ul><li><p>New <code>sensitivityTornadoPlot</code> function for generating tornado plots that evaluate the impact of parameter changes on sensitivity analysis outcomes. It utilizes <code>parameterFactor</code> to depict the scaling effects of parameter modifications. Provides plot customization options through <code>defaultPlotConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/652" class="external-link">#652</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
+<li><p>New function <code>writeParameterStructureToXLS</code> to write a list of parameter paths, values, and units (e.g., imported using the <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function) to an Excel file. In contrast to <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code>, which writes an excel file for a list of <code>Parameter</code> objects, this function expects the parameter structure as used thorughout the package.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
+<ul><li><p>Function <code>createScenarios</code> gets a new argument <code>stopIfParameterNotFound</code>. If <code>TRUE</code> (default), a scenario will not be created and an error is thrown if any user-defined parameter (e.g., provided in Excel files) is not found in the simulation. If <code>FALSE</code>, non-existing parameters are ignored. (<a href="https://github.com/esqLABS/esqlabsR/issues/559" class="external-link">#559</a>, 1)</p></li>
+<li><p>Constructor of a <code>Scenario</code> class gets a new argument <code>stopIfParameterNotFound</code>.</p></li>
+<li><p>More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is defined.</p></li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -243,7 +245,7 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 </ul></li>
 <li><p>New function <code><a href="../reference/getAllApplicationParameters.html">getAllApplicationParameters()</a></code> that returns all parameters of applications in a simulation</p></li>
 <li><p>New function <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> to write parameter information into an excel file that can be loaded in MoBi or R using the <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function.</p></li>
-<li><p>New function <code><a href="../reference/writeExcel.html">writeExcel()</a></code> that is a wrapper for creating a directory (if not present) and writing to excel file using <code><a href="https://docs.ropensci.org/writexl/reference/write_xlsx.html" class="external-link">writexl::write_xlsx()</a></code>.</p></li>
+<li><p>New function <code>writeExcel()</code> that is a wrapper for creating a directory (if not present) and writing to excel file using <code><a href="https://docs.ropensci.org/writexl/reference/write_xlsx.html" class="external-link">writexl::write_xlsx()</a></code>.</p></li>
 </ul><hr></div>
 </div>
     <div class="section level2">
