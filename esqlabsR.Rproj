@@ -21,7 +21,7 @@ PackageInstallArgs: --no-multiarch --with-keep.source
 PackageRoxygenize: rd,collate,namespace
 
 QuitChildProcessesOnExit: Yes
-DisableExecuteRprofile: Yes
+DisableExecuteRprofile: No
 
 MarkdownWrap: Column
 MarkdownWrapAtColumn: 72
