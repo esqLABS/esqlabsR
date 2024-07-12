@@ -260,7 +260,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           na.rm = TRUE
         )
 
-      # add line for observed data
+      # add symbols for observed data
       if (hasObservedData) {
         plot <- plot +
           geom_point(
@@ -470,7 +470,9 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       outputPathList[[outputPath]] <- convertUnits(dataCombined)
     }
     parameterPathList[[parameterPath]] <- dplyr::bind_rows(
-      outputPathList, .id = "OutputPath")
+      outputPathList,
+      .id = "OutputPath"
+    )
   }
 
   combinedDf <- dplyr::bind_rows(parameterPathList, .id = "ParameterPath")
