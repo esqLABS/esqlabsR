@@ -1,16 +1,5 @@
 # esqlabsR (development version)
 
-## Minor improvements and bug fixes
-
-- Function `createScenarios` gets a new argument `stopIfParameterNotFound`.
-If `TRUE` (default), a scenario will not be created and an error is thrown if 
-any user-defined parameter (e.g., provided in Excel files) is not found in the
-simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
-
-- Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
-
-- More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is defined.
-
 ## Breaking changes
 
 - Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
@@ -22,8 +11,7 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
   
 - Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling and legend colors. (\#669, @rengelke).
 
-- Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`, and `observedData` to include observed data in the plots. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling, and legend colors. (\#669, \#674 @rengelke).
-
+- Function `writeExcel()` is no longer exported. (\#672)
 
 ## Major Changes
 
@@ -31,6 +19,23 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 the impact of parameter changes on sensitivity analysis outcomes. It utilizes `parameterFactor` 
 to depict the scaling effects of parameter modifications. Provides plot customization options 
 through `defaultPlotConfiguration` (\#652, @rengelke).
+
+- New function `writeParameterStructureToXLS` to write a list of parameter paths,
+values, and units (e.g., imported using the `readParametersFromXLS()` function)
+to an Excel file. In contrast to `exportParametersToXLS()`, which writes 
+an excel file for a list of `Parameter` objects, this function 
+expects the parameter structure as used thorughout the package.
+
+## Minor improvements and bug fixes
+
+- Function `createScenarios` gets a new argument `stopIfParameterNotFound`.
+If `TRUE` (default), a scenario will not be created and an error is thrown if 
+any user-defined parameter (e.g., provided in Excel files) is not found in the
+simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
+
+- Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
+
+- More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is defined.
 
 
 # esqlabsR 5.1.3
