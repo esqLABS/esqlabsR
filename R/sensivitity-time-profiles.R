@@ -142,24 +142,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # prepare data ------------------------
 
   # extract the needed dataframe from the object
-  data <- .simulationResultsBatchToTimeSeriesDataFrame(
-    simulationResultsBatch = sensitivityCalculation$simulationResults,
+  data <- .aggregateSimulationAndObservedData(
+    simulationResults      = sensitivityCalculation$simulationResults,
+    dataSets               = observedData,
     parameterPaths         = sensitivityCalculation$parameterPaths,
     outputPaths            = sensitivityCalculation$outputPaths
   )
-
-  # add observed data to time series data frame
-  if (!is.null(observedData)) {
-    dataObs <- .dataSetsToTimeSeriesDataFrame(
-      dataSetList            = observedData,
-      simulationResults      = sensitivityCalculation$simulationResults
-    )
-    data <- dplyr::bind_rows(
-      dplyr::mutate(data, DataType = "simulated"),
-      dplyr::mutate(dataObs, DataType = "observed")
-    ) %>%
-      dplyr::arrange(OutputPath, ParameterPath, DataType)
-  }
 
   # filter out data not needed for plotting
   data <- .filterPlottingData(
@@ -208,21 +196,21 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # create axis labels
   if (is.null(plotConfiguration$xLabel)) {
     plotConfiguration$xLabel <- paste0(
-      unique(data$TimeDimension), " [",
-      unique(data$TimeUnit), "]"
+      unique(data$xDimension), " [",
+      unique(data$xUnit), "]"
     )
   }
   if (is.null(plotConfiguration$yLabel)) {
     plotConfiguration$yLabel <- paste0(
-      unique(data$Dimension), " [",
-      unique(data$Unit), "]"
+      unique(data$yDimension), " [",
+      unique(data$yUnit), "]"
     )
   }
 
   # calculate y-axis breaks and limits -------
-  pLimits <- .calculateLimits(data$Concentration)
+  pLimits <- .calculateLimits(data$yValues)
   pBreaks <- .calculateBreaks(
-    data$Concentration,
+    data$yValues,
     m = 4, Q = c(0.01, 0.1, 100, 1000),
     scaling = plotConfiguration$yAxisScale
   )
@@ -239,9 +227,9 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       dataSubset <- dplyr::filter(data, ParameterPath == .x)
 
       # combine original data subset with observed data
-      # add observed data if not-null and output path is concentration
-      if ("DataType" %in% colnames(data)) {
-        observedData <- dplyr::filter(data, DataType == "observed") %>%
+      # add observed data if not-null
+      if ("observed" %in% data$dataType) {
+        observedData <- dplyr::filter(data, dataType == "observed") %>%
           dplyr::select(-ParameterPath)
         hasObservedData <- isTRUE(nrow(observedData) != 0)
       } else {
@@ -254,8 +242,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         geom_line(
           data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
           aes(
-            x = Time,
-            y = Concentration,
+            x = xValues,
+            y = yValues,
             group = ParameterFactor,
             color = ParameterFactor
           ),
@@ -265,7 +253,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         ) +
         geom_line(
           data = dplyr::filter(dataSubset, ParameterFactor == 1.0),
-          aes(Time, Concentration),
+          aes(xValues, yValues),
           color = "black",
           linewidth = plotConfiguration$linesSize,
           alpha = plotConfiguration$linesAlpha,
@@ -277,12 +265,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         plot <- plot +
           geom_point(
             data = observedData,
-            aes(Time, Concentration, shape = dataSetName)
+            aes(xValues, yValues, shape = `Study Id`)
           ) +
           scale_shape_manual(
             values = rep(
               plotConfiguration$pointsShape,
-              length.out = length(unique(observedData$dataSetName))
+              length.out = length(unique(observedData$`Study Id`))
             ),
             name = "Observed data"
           )
@@ -345,7 +333,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           guides(
             shape = guide_legend(
               title.position = "top",
-              nrow = length(unique(observedData$DataType))
+              nrow = length(unique(observedData$dataType))
             )
           )
       }
@@ -399,219 +387,111 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   return(plotPatchwork)
 }
 
-#' Convert a list of `DataSet` objects to a combined time-series dataframe
-#'
-#' Converts a list of `DataSet` objects containing observed data to time-series
-#' dataframes. Uses simulation results to extract metadata for all quantity paths
-#' as a reference for alignment with the `OutputPath` dimensions.
-#'
-#' @param dataSetList List of `DataSet` R6 objects containing observed data.
-#' @param simulationResults Simulation results or simulationResultsBatch used to
-#' extract reference metadata for all output paths defined in the results.
-#'
-#' @return A single `data.frame` combining all the converted data sets with the
-#' reference metadata.
-#'
-#' @keywords internal
-#' @noRd
-.dataSetsToTimeSeriesDataFrame <- function(dataSetList,
-                                           simulationResults) {
-  # extract metadata for all output paths from simulation results
-  # for mapping observed data
-  simulationResultsMetaData <- .getMetaData(simulationResults)
 
-  # convert DataSets to time-series dataframes
-  timeSeriesDataFrameList <- purrr::map(
-    dataSetList,
-    .f = ~ .dataSetToTimeSeriesDataFrame(.x, simulationResultsMetaData)
-  )
-
-  timeSeriesDataFrameCombined <-
-    purrr::list_rbind(timeSeriesDataFrameList)
-
-  return(timeSeriesDataFrameCombined)
-}
-
-#' Convert observed data from a `DataSet` to a time-series dataframe
+#' Aggregate simulation results and observed data into a combined dataframe
 #'
-#' Converts observed data stored in a `DataSet` object to a time-series dataframe.
-#' Uses simulation results metadata for alignment with the `OutputPath` dimension
-#' and adjusts dimension units.
+#' This function performs aggregation from a list of `SimulationResults` objects
+#' as returned by `sensitivityCalculation()` and a list of `DataSet` objects.
+#' `DataSets` are added to each quantity path (`outputPaths`) when the `yDimension`
+#' from `DataSet` can be converted to the x- and y-Dimensions of `SimulationResults`.
 #'
-#' @param dataSet `DataSet` R6 object containing observed data.
-#' @param referenceMetaData List with reference metadata retrieved from simulation
-#' results using `getOutputValues()$metaData`.
+#' @param simulationResults A list of `SimulationResults` objects returned by
+#' `sensitivityCalculation()`.
+#' @param dataSets A list of `DataSet` objects containing observed data.
+#' @param parameterPaths A character vector of parameter paths.
+#' @param outputPaths A character vector of output paths.
 #'
-#' @return A `data.frame` combining the converted observed data with time series
-#' data and adding an `OutputPath` column for linking simulation results to
-#' observed data based on matched dimensions.
+#' @return A combined `data.frame` containing both simulation results and
+#' observed data.
 #'
 #' @keywords internal
 #' @noRd
-.dataSetToTimeSeriesDataFrame <- function(dataSet,
-                                          referenceMetaData) {
-  validateIsOfType(dataSet, "DataSet")
-  validateIsOfType(referenceMetaData, "list")
+.aggregateSimulationAndObservedData <- function(simulationResults,
+                                                dataSets,
+                                                parameterPaths,
+                                                outputPaths) {
+  if (!identical(names(simulationResults), parameterPaths)) {
+    stop("The names of the simulationResults and parameterPaths must be the same")
+  }
+  validateIsOfType(simulationResults, "list")
 
-  # convert DataSet with observed data  to a dataframe
-  data <- ospsuite::dataSetToDataFrame(dataSet)
-
-  # gather dimensions and units from output paths in reference metadata
-  referencePaths <- purrr::map_dfr(
-    referenceMetaData,
-    ~ purrr::map_dfr(
-      .x,
-      tibble::as_tibble,
-      .id = "OutputPath"
-    ),
-    .id = "ParameterPath"
+  parameterPathList <- setNames(
+    vector("list", length(parameterPaths)),
+    parameterPaths
   )
+  # iterate over each `parameterPath`, combine `simulationResults` for each
+  # `parameterFactor` and add `DataSets` by `outputPath`
+  for (parameterPath in names(simulationResults)) {
+    simulationResultsPath <- simulationResults[[parameterPath]]
+    parameterFactor <- as.list(names(simulationResultsPath))
 
-  dataDimension <- unique(data$yDimension)
-  timeUnit <- dplyr::filter(referencePaths, dimension == "Time")
-  timeUnit <- dplyr::pull(timeUnit, unit)[1]
+    outputPathList <- setNames(
+      vector("list", length(outputPaths)),
+      outputPaths
+    )
 
-  referencePaths <- dplyr::filter(
-    referencePaths, OutputPath != "Time" & !duplicated(OutputPath)
-  )
+    for (outputPath in outputPaths) {
+      dataCombined <- DataCombined$new()
 
-  # iterate over dimension including units for all output paths and
-  # return adjusted observed data when dimensions match
-  unitConvertedDataList <- purrr::pmap(
-    referencePaths,
-    function(ParameterPath, OutputPath, unit, dimension) {
-      df <- .convertDataFrame(
-        data = data,
-        dim1 = dataDimension,
-        dim2 = dimension,
-        timeUnit = timeUnit,
-        dimensionUnit = unit
-      )
-      if (!is.null(df)) {
-        # observed data is labelled when mapped to output path
-        df <- dplyr::mutate(df, OutputPath = OutputPath, yDimension = dimension)
+      # add multiple simulation results to dataCombined
+      # uses parameterFactor from sensitivity analysis as name
+      for (i in seq_along(parameterFactor)) {
+        dataCombined$addSimulationResults(
+          simulationResultsPath[[i]],
+          quantitiesOrPaths = outputPath,
+          names = parameterFactor[i],
+          groups = parameterPath
+        )
       }
 
-      return(df)
+      if (!is.null(dataSets)) {
+        validateIsOfType(dataSets, "list")
+
+        for (j in seq_along(dataSets)) {
+          dataCombinedClone <- dataCombined$clone()
+          unitsConvertable <- TRUE
+
+          tryCatch(
+            {
+              # try to add data sets and convert units
+              dataCombinedClone$addDataSets(dataSets[[j]])
+              convertUnits(dataCombinedClone)
+            },
+            error = function(e) {
+              unitsConvertable <<- FALSE
+            }
+          )
+
+          if (unitsConvertable) {
+            dataCombined$addDataSets(dataSets[[j]])
+          }
+        }
+      }
+      outputPathList[[outputPath]] <- convertUnits(dataCombined)
     }
-  )
-  unitConvertedData <- dplyr::bind_rows(unitConvertedDataList)
+    parameterPathList[[parameterPath]] <- dplyr::bind_rows(
+      outputPathList, .id = "OutputPath")
+  }
 
-  # convert to time-series dataframe
-  timeSeriesDataFrame <- dplyr::rename(
-    unitConvertedData,
-    Time = xValues,
-    Concentration = yValues,
-    TimeDimension = xDimension,
-    TimeUnit = xUnit,
-    Dimension = yDimension,
-    Unit = yUnit,
-    dataSetName = name
-  )
+  combinedDf <- dplyr::bind_rows(parameterPathList, .id = "ParameterPath")
+  # use names derived from parameterFactor to create a numeric column
+  combinedDf <- dplyr::rowwise(combinedDf) %>%
+    dplyr::mutate(
+      ParameterFactor = if (dataType == "simulated") as.numeric(name) else NA_real_
+    ) %>%
+    dplyr::ungroup()
 
-  timeSeriesDataFrame <- dplyr::select(
-    timeSeriesDataFrame,
-    OutputPath, Time, Concentration, TimeDimension,
-    TimeUnit, Dimension, Unit, dataSetName
-  )
-
-  timeSeriesDataFrame <- bind_rows(
-    timeSeriesDataFrame[1, ] %>% mutate(Time = 0, Concentration = 0),
-    timeSeriesDataFrame
-  )
-
-  timeSeriesDataFrame <- dplyr::arrange(
-    timeSeriesDataFrame,
+  # select and arrange columns
+  combinedDf <- dplyr::select(
+    combinedDf,
     OutputPath,
-    Time
+    dplyr::starts_with("Parameter"),
+    xValues,
+    yValues,
+    dplyr::everything(),
+    -IndividualId,
+    -name
   )
 
-  return(timeSeriesDataFrame)
-}
-
-#' Get metadata from simulation results
-#'
-#' @keywords internal
-#' @noRd
-.getMetaData <- function(simulationResults) {
-  resultOutputList <- purrr::map(
-    names(simulationResults),
-    ~ simulationResults[[.x]]
-  ) %>% purrr::map(., ~ .x[[1]])
-  names(resultOutputList) <- names(simulationResults)
-
-  resultOutputValues <- lapply(resultOutputList, getOutputValues)
-
-  resultsMetaData <- purrr::map(resultOutputValues, ~ .x$metaData)
-}
-
-#' Compare dimensions passed as character strings
-#'
-#' Compares two dimension strings and applies specific equivalency rules for
-#' concentration dimensions (mass and molar).
-#'
-#'
-#' @param dimA Character string representing a dimension.
-#' @param dimB Character string representing a dimension.
-#'
-#' @return The matched dimension if equivalent, otherwise `NULL`.
-#'
-#' @keywords internal
-#' @noRd
-.matchDimension <- function(dimA, dimB) {
-  # specific rule for concentration dimension
-  if ((dimA == "Concentration (mass)" && dimB == "Concentration (molar)") ||
-    (dimA == "Concentration (molar)" && dimB == "Concentration (mass)")) {
-    equalDimension <- TRUE
-    dimB <- dimB %>%
-      stringr::str_replace(., "\\(", "\\[") %>%
-      stringr::str_replace(., "\\)", "\\]")
-    # general comparison
-  } else {
-    equalDimension <- identical(dimA, dimB)
-  }
-
-  if (!equalDimension) {
-    return(NULL)
-  } else {
-    return(dimB)
-  }
-}
-
-#' Convert a dataframe's units if dimensions match
-#'
-#' Converts the units of a dataframe containing observed data using
-#' `ospsuite:::.unitConverter` if the dimensions match. Returns the converted
-#' dataframe or NULL if dimensions don't match and are not convertible to each
-#' other.
-#'
-#' @param data `data.frame` with observed data created using
-#' `ospsuite::dataSetToDataFrame()`.
-#' @param dim1 y-dimension to convert from.
-#' @param dim2 y-dimension to convert to.
-#' @param timeUnit Unit of time to convert to.
-#' @param dimensionUnit Unit of dimension to convert to.
-#'
-#' @return A converted `data.frame` or NULL if dimensions don't match.
-#'
-#' @keywords internal
-#' @noRd
-.convertDataFrame <- function(data, dim1, dim2, timeUnit, dimensionUnit) {
-  validateIsOfType(data, "data.frame")
-  ospsuite.utils::validateEnumValue(timeUnit, ospUnits$Time)
-
-  toDimension <- .matchDimension(dim1, dim2)
-
-  if (!is.null(toDimension)) {
-    ospsuite.utils::validateEnumValue(dimensionUnit, ospUnits[[toDimension]])
-    dataConverted <- ospsuite:::.unitConverter(
-      data,
-      xUnit = timeUnit,
-      yUnit = dimensionUnit
-    )
-  } else {
-    dataConverted <- NULL
-  }
-
-  return(dataConverted)
+  return(combinedDf)
 }

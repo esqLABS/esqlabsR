@@ -33,10 +33,9 @@ for each parameter will be displayed as lines.}
 \item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis
 scale similarly to \code{xAxisScale}. Default is "log".}
 
-\item{observedData}{Optional. A named set of \code{DataSet} objects containing
-observed data. If provided, observed data will be included in the plot. This
-allows for direct comparison between observed and simulated data within the
-visualizations.}
+\item{observedData}{Optional. A set of \code{DataSet} objects containing observed
+data. If provided, observed data will be integrated with the simulated data
+based on \code{OutputPath} dimension for direct comparison within the visualizations.}
 
 \item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
 used to customize plot aesthetics. Plot-specific settings provided directly
@@ -51,6 +50,7 @@ Supported parameters for \code{defaultPlotConfiguration} include:
 \item \code{linesAlpha}: Alpha transparency for the line elements.
 \item \code{linesColor}: Color of the line elements.
 \item \code{linesSize}: Thickness of the line elements.
+\item \code{pointsShape}: Shape of the point elements for observed data.
 \item \code{title}: Main title text for the plot.
 \item \code{titleSize}: Font size of the plot title.
 \item \code{xAxisScale}: Scale type for the x-axis (\code{"log"} or \code{"lin"}).
