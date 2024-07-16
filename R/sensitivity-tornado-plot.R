@@ -89,11 +89,6 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  if (is.null(defaultPlotConfiguration)) {
-    defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  } else {
-    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
-  }
   ospsuite.utils::validateIsOption(
     list(parameterFactor = parameterFactor),
     .getPlotConfigurationOptions("parameterFactor")
@@ -112,8 +107,9 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     stop(messages$noParameterFactor(data, parameterFactor))
   }
 
-  # default tornado plot configuration setup ----
+  # plot configuration setup ------------
 
+  # default tornado plot configuration
   tornadoPlotConfiguration <- list(
     legendPosition = "right",
     legendTitle = "Parameter Factor",
@@ -123,20 +119,11 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     yLabel = "Parameter",
     xLabel = "Input parameter value [% of reference]"
   )
-  # override only default configuration values with settings for tornado plot
-  customPlotConfiguration <- defaultPlotConfiguration$clone()
-  customPlotConfiguration <- .updatePlotConfiguration(
-    customPlotConfiguration, tornadoPlotConfiguration
-  )
 
-  # validate plot configuration for valid options
-  plotConfigurationList <- purrr::map(
-    purrr::set_names(names(customPlotConfiguration)),
-    ~ customPlotConfiguration[[.]]
-  )
-  ospsuite.utils::validateIsOption(
-    plotConfigurationList,
-    .getPlotConfigurationOptions(names(tornadoPlotConfiguration))
+  # apply configuration overrides and validate
+  customPlotConfiguration <- .applyPlotConfiguration(
+    defaultPlotConfiguration = defaultPlotConfiguration,
+    plotOverrideConfig       = tornadoPlotConfiguration
   )
 
   # extract and prepare data -----------------
