@@ -20,6 +20,16 @@
 #' (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #' scale similarly to `xAxisScale`. Default is "log".
+#' @param xUnits A single unit or a vector of units for the x-axis. If a single
+#' unit is provided, it will be applied to all `outputPaths` if conversion is
+#' possible. If multiple units are provided, the units vector should correspond
+#' to the `outputPaths`, and units conversion will be applied accordingly. If
+#' `NULL`, default units from the simulation results will be used.
+#' @param yUnits A single unit or a vector of units for the y-axis. If a single
+#' unit is provided, it will be applied to all `outputPaths` if conversion is
+#' possible. If multiple units are provided, the units vector should correspond
+#' to the `outputPaths`, and units conversion will be applied accordingly. If
+#' `NULL`, default units from the simulation results will be used.
 #' @param observedData Optional. A set of `DataSet` objects containing observed
 #' data. If provided, observed data will be plotted together with the simulated data
 #' based on `OutputPath` dimension for direct comparison within the visualizations.
@@ -87,6 +97,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     parameterPaths = NULL,
                                     xAxisScale = NULL,
                                     yAxisScale = NULL,
+                                    xUnits = NULL,
+                                    yUnits = NULL,
                                     observedData = NULL,
                                     defaultPlotConfiguration = NULL) {
   # input validation ------------------------
@@ -98,6 +110,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
+  .validateCharVectors(xUnits)
+  .validateCharVectors(yUnits)
 
   # plot configuration setup ------------
 
@@ -128,10 +142,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   # extract the needed dataframe from the object
   data <- .aggregateSimulationAndObservedData(
-    simulationResults      = sensitivityCalculation$simulationResults,
-    dataSets               = observedData,
-    parameterPaths         = sensitivityCalculation$parameterPaths,
-    outputPaths            = sensitivityCalculation$outputPaths
+    simulationResults        = sensitivityCalculation$simulationResults,
+    dataSets                 = observedData,
+    parameterPaths           = sensitivityCalculation$parameterPaths,
+    outputPaths              = sensitivityCalculation$outputPaths,
+    xUnits                   = xUnits,
+    yUnits                   = yUnits
   )
 
   # filter out data not needed for plotting
