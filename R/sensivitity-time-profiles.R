@@ -481,3 +481,80 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   return(combinedDf)
 }
+
+#' Test if unit conversion is possible in `DataCombined` objects.
+#'
+#' @param dataCombined `DataCombined` object to test.
+#' @param xUnit Optional unit for the x-dimension.
+#' @param yUnit Optional unit for the y-dimension.
+#'
+#' @return TRUE if conversion is possible, otherwise FALSE.
+#'
+#' @keywords internal
+#' @noRd
+.isConvertableUnit <- function(dataCombined, xUnit = NULL, yUnit = NULL) {
+  unitsConvertable <- TRUE
+
+  tryCatch(
+    {
+      convertUnits(dataCombined, xUnit = xUnit, yUnit = yUnit)
+    },
+    error = function(e) {
+      unitsConvertable <<- FALSE
+    }
+  )
+
+  return(unitsConvertable)
+}
+
+#' Validate if unit is valid for any dimension in `ospUnits`
+#'
+#' Checks if a given unit is valid across all dimensions in `ospUnits`.
+#'
+#' @keywords internal
+#' @noRd
+.validateUnitInOspUnits <- function(unit, nullAllowed = FALSE) {
+  unitDimensions <- names(ospUnits)
+
+  for (dimension in unitDimensions) {
+    tryCatch(
+      {
+        ospsuite.utils::validateEnumValue(
+          unit, ospUnits[[dimension]],
+          nullAllowed = nullAllowed
+        )
+        return(NULL)
+      },
+      error = function(e) {
+        # do nothing, continue to the next dimension
+      }
+    )
+  }
+
+  # error if unit is not valid in any dimension
+  stop(ospsuite.utils::messages$errorValueNotInEnum(ospUnits, unit))
+}
+
+#' Adjust units to match the length of outputPaths
+#'
+#' Validate and adjust the units to match the length of `outputPaths`.
+#'
+#' @keywords internal
+#' @noRd
+.adjustUnits <- function(units, outputPaths) {
+  # validate if units are valid in any dimension
+  lapply(units, .validateUnitInOspUnits, TRUE)
+
+  # convert units to a list to handle NULL fields
+  units <- sapply(units, toList)
+
+  # check the lengths and adjust accordingly
+  if (length(units) == 1) {
+    units <- rep(units, length(outputPaths))
+  } else if (length(units) < length(outputPaths)) {
+    units <- c(units, rep(list(NULL), length(outputPaths) - length(units)))
+  }
+
+  names(units) <- outputPaths
+
+  return(units)
