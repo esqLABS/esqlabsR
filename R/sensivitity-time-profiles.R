@@ -393,11 +393,21 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 .aggregateSimulationAndObservedData <- function(simulationResults,
                                                 dataSets,
                                                 parameterPaths,
-                                                outputPaths) {
+                                                outputPaths,
+                                                xUnits,
+                                                yUnits) {
   if (!identical(names(simulationResults), parameterPaths)) {
     stop("The names of the simulationResults and parameterPaths must be the same")
   }
   validateIsOfType(simulationResults, "list")
+
+  # validate if xUnits are valid unit for time dimension
+  # general unit validation inside .adjustUnits
+  lapply(xUnits, validateEnumValue, ospUnits$Time, TRUE)
+
+  # prepare units to be applied to outputPaths
+  xUnits <- .adjustUnits(xUnits, outputPaths)
+  yUnits <- .adjustUnits(yUnits, outputPaths)
 
   parameterPathList <- setNames(
     vector("list", length(parameterPaths)),
@@ -428,30 +438,37 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         )
       }
 
+      # add dataSets when units are convertable for `outputPath`
       if (!is.null(dataSets)) {
         validateIsOfType(dataSets, "list")
-
         for (j in seq_along(dataSets)) {
           dataCombinedClone <- dataCombined$clone()
-          unitsConvertable <- TRUE
 
-          tryCatch(
-            {
-              # try to add data sets and convert units
-              dataCombinedClone$addDataSets(dataSets[[j]])
-              convertUnits(dataCombinedClone)
-            },
-            error = function(e) {
-              unitsConvertable <<- FALSE
-            }
-          )
-
-          if (unitsConvertable) {
+          if (.isConvertableUnit(
+            dataCombinedClone$addDataSets(dataSets[[j]])
+          )) {
             dataCombined$addDataSets(dataSets[[j]])
           }
         }
       }
-      outputPathList[[outputPath]] <- convertUnits(dataCombined)
+
+      # clone the combined data to check for specified unit conversion
+      dataCombinedSpecifiedClone <- dataCombined$clone()
+
+      if (.isConvertableUnit(
+        dataCombinedSpecifiedClone,
+        xUnit = xUnits[[outputPath]],
+        yUnit = yUnits[[outputPath]]
+      )
+      ) {
+        outputPathList[[outputPath]] <- convertUnits(
+          dataCombinedSpecifiedClone,
+          xUnit = xUnits[[outputPath]],
+          yUnit = yUnits[[outputPath]]
+        )
+      } else {
+        outputPathList[[outputPath]] <- convertUnits(dataCombined)
+      }
     }
     parameterPathList[[parameterPath]] <- dplyr::bind_rows(
       outputPathList,
