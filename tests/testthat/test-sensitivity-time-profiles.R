@@ -154,29 +154,41 @@ test_that("sensitivityTimeProfiles plots correctly for multiple outputs with obs
 
 
 # multiple output paths with multiple observed data
-obsData1 <<- loadDataSetsFromExcel(
+obsData1 <- loadDataSetsFromExcel(
   xlsFilePath = filePath,
   importerConfigurationOrPath = dataConfiguration
 )
-obsData2 <<- loadDataSetsFromExcel(
+obsData2 <- loadDataSetsFromExcel(
   xlsFilePath = filePath,
   importerConfigurationOrPath = dataConfiguration
 )
-# create mock observed data with "Amount" dimension
+
 obsDataMultiple <- c(obsData1, obsData2)
+# Rename one of the data sets and shift its values
 names(obsDataMultiple)[2] <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
 obsDataMultiple[[2]]$name <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
+obsDataMultiple[[2]]$setValues(obsDataMultiple[[2]]$xValues, obsDataMultiple[[2]]$yValues + 0.1)
+
+test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data with same dimension", {
+  set.seed(123)
+  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
+                                           observedData = obsDataMultiple
+  )
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path profiles with 2 observed data same dimension - concentration",
+      fig = plotsMultiple[[3]]
+    )
+  )
+})
+
+# create mock observed data with "Amount" dimension
 obsDataMultiple[[2]]$yDimension <- "Amount"
 obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
 
-resultsMultiple <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = c(0.2, 1, 5, 10)
-)
-
-test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data", {
+test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data with different dimensions", {
   set.seed(123)
   plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
     observedData = obsDataMultiple

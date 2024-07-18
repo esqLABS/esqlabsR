@@ -23,6 +23,7 @@
 #' @param observedData Optional. A set of `DataSet` objects containing observed
 #' data. If provided, observed data will be plotted together with the simulated data
 #' based on `OutputPath` dimension for direct comparison within the visualizations.
+#' Will be added only to plots with matching y dimension.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics. Plot-specific settings provided directly
 #' to the function, such as `xAxisScale`, will take precedence over any
