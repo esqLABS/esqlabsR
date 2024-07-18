@@ -1,28 +1,27 @@
 #' @name sensitivityTimeProfiles
-#' @title Sensitivity Time Profiles for Pharmacokinetic Parameters
+#' @title Time Profile plots for Sensitivity Analysis
 #'
 #' @description
-#' Generates time profiles for pharmacokinetic parameters under various
-#' sensitivity scenarios. This function plots concentration-time profiles
-#' for each scaled parameter specified, illustrating the dynamics of
-#' pharmacokinetic responses to parameter variations.
+#' Creates time profiles for selected outputs generated in a sensitivity analysis.
+#' This function plots time profiles for each specified output path,
+#' illustrating the dynamics of model outputs to parameter variations.
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
 #' `sensitivityCalculation()`.
-#' @param outputPaths,parameterPaths,pkParameters A single or a vector of the
-#' output path(s), parameter path(s), and PK parameters to be displayed,
+#' @param outputPaths,parameterPaths A single or a vector of the
+#' output path(s) to be plotted for parameter path(s) which impact is analyzed,
 #' respectively. If `NULL`, all included paths and parameters present in the
 #' supplied `SensitivityCalculation` object will be displayed in the
 #' visualization.
-#' A separate plot will be generated for each output path. Each plot will
-#' contain a spider plot panel for each PK parameter, and the sensitivities
-#' for each parameter will be displayed as lines.
+#' A separate plot will be generated for each output path, and a separate curve
+#' will be generated for each parameter variation. A separate panel is created
+#' for each varied parameter.
 #' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
 #' (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #' scale similarly to `xAxisScale`. Default is "log".
 #' @param observedData Optional. A set of `DataSet` objects containing observed
-#' data. If provided, observed data will be integrated with the simulated data
+#' data. If provided, observed data will be plotted together with the simulated data
 #' based on `OutputPath` dimension for direct comparison within the visualizations.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics. Plot-specific settings provided directly
