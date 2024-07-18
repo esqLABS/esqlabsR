@@ -176,9 +176,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       defaultPlotConfiguration = customPlotConfiguration
     )
   )
-
-  # print plots without producing warnings
-  suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
 }
 
 #' @keywords internal
