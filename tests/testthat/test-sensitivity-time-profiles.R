@@ -108,8 +108,6 @@ test_that("sensitivityTimeProfiles plots correctly with inclusion of observed da
 
 # multiple output paths -------------------------------------
 
-simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
 outputPaths <- c(
   "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
   "Organism|Age",
