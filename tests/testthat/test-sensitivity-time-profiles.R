@@ -167,6 +167,7 @@ obsDataMultiple <- c(obsData1, obsData2)
 # Rename one of the data sets and shift its values
 names(obsDataMultiple)[2] <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
 obsDataMultiple[[2]]$name <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
+obsDataMultiple[[2]]$addMetaData("Study Id", "Laskin 1982.Group A - Mock")
 obsDataMultiple[[2]]$setValues(obsDataMultiple[[2]]$xValues, obsDataMultiple[[2]]$yValues + 0.1)
 
 test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data with same dimension", {

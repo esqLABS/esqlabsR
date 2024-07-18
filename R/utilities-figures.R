@@ -160,6 +160,9 @@ createEsqlabsPlotConfiguration <- function() {
   # Points size
   defaultPlotConfiguration$pointsSize <- 1.75
 
+  # Points shape
+  defaultPlotConfiguration$pointsShape <- scales::shape_pal()(6)
+
   # Error bars size
   defaultPlotConfiguration$errorbarsSize <- 0.65
   defaultPlotConfiguration$errorbarsCapSize <- 2.75
