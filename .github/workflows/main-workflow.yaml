@@ -1,0 +1,29 @@
+name: Main-Workflow
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+
+jobs:
+  bump-dev-version: # only do that when actually merging in main/develop branch
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/bump-dev-version.yaml
+    secrets: inherit
+
+  R-CMD-Check:
+    if: ${{ !cancelled() }}
+    needs: [update-core-files]
+    uses: ./.github/workflows/R-CMD-check.yaml
+
+  test-coverage:
+    if: ${{ !cancelled() }}
+    needs: [update-core-files]
+    uses: ./.github/workflows/test-coverage.yaml
+
+
+  pkgdown:
+    if: ${{ !cancelled() }}
+    needs: [update-core-files]
+    uses: ./.github/workflows/pkgdown.yaml
