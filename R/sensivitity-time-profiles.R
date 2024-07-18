@@ -176,6 +176,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       defaultPlotConfiguration = customPlotConfiguration
     )
   )
+
+  return(lsPlots)
 }
 
 #' @keywords internal
