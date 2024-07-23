@@ -233,6 +233,58 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
   )
 })
 
+# validate `customOutputFunctions` ------------------
+
+test_that("sensitivityCalculation fails early with incorrect `customOutputFunctions` arguments", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = "invalid"
+    ),
+    "argument 'customOutputFunctions' is of type 'character', but expected 'list'!"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list("invalid" = "function")
+    ),
+    "argument 'customOutputFunctions' is of type 'list', but expected 'function'!"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list(
+        "funA"= function(x) x, function (y) y, "funC"= function(x) x^2
+      )
+    ),
+    "argument 'names\\(customOutputFunctions\\)' has empty strings"
+  )
+})
+
+test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list("invalid" = function (x, y, z) {x / y * z})
+    ),
+    "The user-defined function must have either 'x', 'y', or both 'x' and 'y'"
+  )
+})
+
 # checking `SensitivityCalculation`  object ------------------
 
 test_that("sensitivityCalculation returns the correct object", {
@@ -256,7 +308,7 @@ test_that("sensitivityCalculation returns the correct object", {
 
 # checking PK tidy data ------------------
 
-test_that("sensitivityCalculation PK parameters tidy datafram column names and order as expected", {
+test_that("sensitivityCalculation PK parameters tidy dataframe column names and order as expected", {
   expect_equal(
     names(results$pkData),
     c(
