@@ -36,7 +36,7 @@ the following parameters will be considered: \code{"C_max"}, \code{"t_max"},
 \code{"AUC_inf"}. If \code{NULL}, all available PK-parameters will be calculated. You
 can also specify custom PK parameters.}
 
-\item{customOutputFunctions}{@param customOutputFunctions A named list with
+\item{customOutputFunctions}{A named list with
 custom function(s) for PK parameter calculation. User-defined functions should
 have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
 x-Dimension (time) or y-Dimension values from simulation results.}
@@ -46,7 +46,8 @@ PK-parameter data should be saved. If a file already exists, it will be
 overwritten. Default is \code{NULL}, meaning the data will not be saved to a
 spreadsheet.}
 
-\item{simulationRunOptions}{Optional instance of a \code{SimulationRunOptions} used during the simulation run}
+\item{simulationRunOptions}{Optional instance of a \code{SimulationRunOptions} used
+during the simulation run}
 
 \item{...}{Additional parameters passed to the function.}
 }

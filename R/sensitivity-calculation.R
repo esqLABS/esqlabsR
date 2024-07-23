@@ -16,7 +16,7 @@
 #'   the following parameters will be considered: `"C_max"`, `"t_max"`,
 #'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated. You
 #'   can also specify custom PK parameters.
-#' @param customOutputFunctions @param customOutputFunctions A named list with
+#' @param customOutputFunctions A named list with
 #' custom function(s) for PK parameter calculation. User-defined functions should
 #' have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
 #' x-Dimension (time) or y-Dimension values from simulation results.
