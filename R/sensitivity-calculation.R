@@ -78,6 +78,9 @@ sensitivityCalculation <- function(simulation,
   # Validate customOutputFunctions
   validateIsOfType(customOutputFunctions, "list", nullAllowed = TRUE)
   validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+  if (!is.null(customOutputFunctions)) {
+    validateHasOnlyNonEmptyStrings(names(customOutputFunctions))
+  }
 
   # Check provided variation range using custom function.
   # This also makes sure that there is always `1.0` present in this vector.

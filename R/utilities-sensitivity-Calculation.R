@@ -170,6 +170,11 @@
 #' @keywords internal
 #' @noRd
 .calculateCustomPK <- function(simulationResults, customOutputFunctions) {
+  # validate customOutputFunctions
+  validateIsOfType(customOutputFunctions, "list", nullAllowed = TRUE)
+  validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+  validateHasOnlyNonEmptyStrings(names(customOutputFunctions))
+
   # extract all output paths
   outputPaths <- simulationResults$allQuantityPaths
 
