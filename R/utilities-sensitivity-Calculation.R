@@ -52,16 +52,26 @@
 
 #' Extract PK parameters dataframe from a list of `SimulationResults` objects
 #'
-#' @inheritParams .simulationResultsBatchToTimeSeriesDataFrame
+#' This function processes simulation result batches by parameterPath and
+#' extracts PK parameters into a dataframe.
+#'
+#' @param simulationResultsBatch List of simulation result batches.
+#' @param parameterPaths List of parameter paths corresponding to the simulation
+#' results.
+#' @param customOutputFunctions Optional list of custom output functions for
+#' user-defined PK analyses.
+#'
+#' @return A dataframe containing the PK parameters from all simulation results.
 #'
 #' @keywords internal
 #' @noRd
 .simulationResultsBatchToPKDataFrame <- function(simulationResultsBatch,
-                                                 parameterPaths) {
+                                                 parameterPaths,
+                                                 customOutputFunctions) {
   purrr::map2_dfr(
     .x = simulationResultsBatch,
     .y = parameterPaths,
-    .f = ~ .simulationResultsToPKDataFrame(.x, .y)
+    .f = ~ .simulationResultsToPKDataFrame(.x, .y, customOutputFunctions)
   )
 }
 
