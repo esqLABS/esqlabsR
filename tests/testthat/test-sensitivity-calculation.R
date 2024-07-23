@@ -336,6 +336,56 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
   expect_snapshot(df3_pk)
 })
 
+
+# test customOutputFunctions ------------------
+
+
+test_that("sensitivityCalculation returns expected results with single custom function", {
+  # list with custom function using only `y` parameter
+  customFunctions <- list("minmax" = function(y) min(y[y != 0]) / max(y))
+
+  results <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFunctions,
+    variationRange = variationRange
+  )
+
+  customPKData <- dplyr::filter(
+    results$pkData,
+    PKParameter %in% names(customFunctions)
+  )
+  expect_snapshot(customPKData)
+})
+
+test_that("sensitivityCalculation returns expected results with multiple custom functions", {
+  # list with multiple custom functions using `x`and `y` parameter
+  customFunctions <- list(
+    "minmax" = function(y) max(y) / min(y[y != 0]),
+    "max_slope" = function(x, y) {
+      slopes <- diff(y) / diff(x)
+      max(slopes)
+    }
+  )
+
+  # Perform the sensitivity calculation
+  results <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFunctions,
+    variationRange = variationRange
+  )
+
+  # Filter the custom PK data
+  customPKData <- results$pkData %>% dplyr::filter(PKParameter %in% names(customFunctions))
+
+  # Expect snapshot
+  expect_snapshot(customPKData)
+})
+
+
 # checking PK wide data ------------------
 
 set.seed(123)
@@ -353,7 +403,7 @@ test_that("sensitivityCalculation PK parameters dataframe dimensions are as expe
   expect_equal(dim(pkDataWide), c(12L, 56L))
 })
 
-test_that("sensitivityCalculation PK parameters wide datafram column names and order as expected", {
+test_that("sensitivityCalculation PK parameters wide dataframe column names and order as expected", {
   expect_equal(
     names(pkDataWide),
     c(

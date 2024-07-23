@@ -116,6 +116,125 @@
       5   -0.004785    0.00      3         
       
 
+# sensitivityCalculation returns expected results with single custom function
+
+    Code
+      customPKData
+    Output
+      # A tibble: 12 x 9
+         OutputPath                                                               
+         <chr>                                                                    
+       1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       2 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       3 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       4 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       5 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       6 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       7 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       8 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       9 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+      10 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+      11 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+      12 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+         ParameterPath                                                                
+         <chr>                                                                        
+       1 Aciclovir|Lipophilicity                                                      
+       2 Aciclovir|Lipophilicity                                                      
+       3 Aciclovir|Lipophilicity                                                      
+       4 Aciclovir|Lipophilicity                                                      
+       5 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose            
+       6 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose            
+       7 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose            
+       8 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose            
+       9 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR f~
+      10 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR f~
+      11 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR f~
+      12 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR f~
+         ParameterFactor ParameterValue PKParameter PKParameterValue Unit 
+                   <dbl>          <dbl> <chr>                  <dbl> <chr>
+       1             0.1      -0.0097   minmax            0.0006992  <NA> 
+       2             1        -0.097    minmax            0.0006476  <NA> 
+       3             2        -0.194    minmax            0.0006206  <NA> 
+       4            20        -1.94     minmax            0.0008589  <NA> 
+       5             0.1       0.000025 minmax            0.0006475  <NA> 
+       6             1         0.00025  minmax            0.0006476  <NA> 
+       7             2         0.0005   minmax            0.0006476  <NA> 
+       8            20         0.005    minmax            0.0006476  <NA> 
+       9             0.1       0.1      minmax            0.001230   <NA> 
+      10             1         1        minmax            0.0006476  <NA> 
+      11             2         2        minmax            0.0003805  <NA> 
+      12            20        20        minmax            0.00005314 <NA> 
+         PercentChangePK SensitivityPKParameter
+                   <dbl>                  <dbl>
+       1      7.968                   -8.854e-2
+       2      0                      NaN       
+       3     -4.157                   -4.157e-2
+       4     32.64                     1.718e-2
+       5     -0.01035                  1.149e-4
+       6      0                      NaN       
+       7     -0.00002663              -2.663e-7
+       8     -0.00002665              -1.403e-8
+       9     89.87                    -9.985e-1
+      10      0                      NaN       
+      11    -41.24                    -4.124e-1
+      12    -91.79                    -4.831e-2
+
+# sensitivityCalculation returns expected results with multiple custom functions
+
+    Code
+      customPKData
+    Output
+      # A tibble: 24 x 9
+         OutputPath                                                               
+         <chr>                                                                    
+       1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       2 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       3 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       4 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       5 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       6 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       7 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       8 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       9 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+      10 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+         ParameterPath                                                    
+         <chr>                                                            
+       1 Aciclovir|Lipophilicity                                          
+       2 Aciclovir|Lipophilicity                                          
+       3 Aciclovir|Lipophilicity                                          
+       4 Aciclovir|Lipophilicity                                          
+       5 Aciclovir|Lipophilicity                                          
+       6 Aciclovir|Lipophilicity                                          
+       7 Aciclovir|Lipophilicity                                          
+       8 Aciclovir|Lipophilicity                                          
+       9 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
+      10 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
+         ParameterFactor ParameterValue PKParameter PKParameterValue Unit 
+                   <dbl>          <dbl> <chr>                  <dbl> <chr>
+       1             0.1      -0.0097   max_slope             5.847  <NA> 
+       2             1        -0.097    max_slope             5.916  <NA> 
+       3             2        -0.194    max_slope             5.979  <NA> 
+       4            20        -1.94     max_slope             7.418  <NA> 
+       5             0.1      -0.0097   minmax             1430.     <NA> 
+       6             1        -0.097    minmax             1544.     <NA> 
+       7             2        -0.194    minmax             1611.     <NA> 
+       8            20        -1.94     minmax             1164.     <NA> 
+       9             0.1       0.000025 max_slope             0.5916 <NA> 
+      10             1         0.00025  max_slope             5.916  <NA> 
+         PercentChangePK SensitivityPKParameter
+                   <dbl>                  <dbl>
+       1          -1.167                0.01297
+       2           0                  NaN      
+       3           1.057                0.01057
+       4          25.38                 0.01336
+       5          -7.380                0.08200
+       6           0                  NaN      
+       7           4.338                0.04338
+       8         -24.61                -0.01295
+       9         -90.00                 1.000  
+      10           0                  NaN      
+      # i 14 more rows
+
 # sensitivityCalculation time series dataframe is as expected
 
     Code
