@@ -65,36 +65,84 @@
   )
 }
 
-#' Extract PK parameters dataframe from `Parameter` object
+#' Calculate PK parameters dataframe from simulation results
 #'
-#' @inheritParams .simulationResultsToTimeSeriesDataFrame
+#' This function calculates standard PK analyses from simulation results and
+#' converts them into a dataframe. If custom output functions are provided,
+#' it calculates user-defined PK analyses and integrates them with the standard
+#' PK data.
+#'
+#' @param simulationResults List of simulation results from which PK analyses
+#' are to be calculated.
+#' @param parameterPath Path to the parameter in the simulation results.
+#' @param customOutputFunctions Optional list of custom output functions for
+#' user-defined PK analyses.
+#'
+#' @return A dataframe containing the combined standard and user-defined PK data.
 #'
 #' @keywords internal
 #' @noRd
-.simulationResultsToPKDataFrame <- function(simulationResults, parameterPath) {
-  purrr::map_dfr(
-    .x  = simulationResults,
-    .f  = ~ pkAnalysesToDataFrame(calculatePKAnalyses(.x)),
-    .id = "ParameterFactor"
-  ) %>%
-    dplyr::rename(
-      OutputPath       = QuantityPath,
-      PKParameter      = Parameter,
-      PKParameterValue = Value
-    ) %>%
-    .addParameterColumns(simulationResults, parameterPath) %>%
-    dplyr::group_by(ParameterPath, PKParameter) %>%
+.simulationResultsToPKDataFrame <- function(simulationResults,
+                                            parameterPath,
+                                            customOutputFunctions = NULL) {
+  # calculate standard pkAnalyses
+  pkDataList <- userPKDataList <-
+    setNames(
+      vector("list", length(simulationResults)),
+      names(simulationResults)
+    )
+  for (simResult in names(simulationResults)) {
+    pkDataFrame <- pkAnalysesToDataFrame(
+      calculatePKAnalyses(
+        simulationResults[[simResult]]
+      )
+    )
+    pkDataList[[simResult]] <- pkDataFrame
+  }
+  pkData <- dplyr::bind_rows(pkDataList, .id = "ParameterFactor")
+
+  # calculate user-defined pkAnalyses
+  if (!is.null(customOutputFunctions)) {
+    for (simResult in names(simulationResults)) {
+      userPKDataFrame <- .calculateCustomPK(
+        simulationResults[[simResult]],
+        customOutputFunctions
+      )
+      userPKDataList[[simResult]] <- userPKDataFrame
+    }
+    userPKData <- dplyr::bind_rows(userPKDataList, .id = "ParameterFactor")
+  } else {
+    userPKData <- data.frame()
+  }
+
+  # combine standard and user-defined PK data
+  pkData <- dplyr::bind_rows(pkData, userPKData)
+
+  # modify and format data
+  pkData <- dplyr::rename(
+    pkData,
+    OutputPath       = QuantityPath,
+    PKParameter      = Parameter,
+    PKParameterValue = Value
+  )
+
+  pkData <- .addParameterColumns(pkData, simulationResults, parameterPath)
+  pkData <- dplyr::group_by(pkData, ParameterPath, PKParameter) %>%
     dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(
-      "OutputPath",
-      dplyr::starts_with("Parameter"),
-      dplyr::starts_with("PK"),
-      Unit, PercentChangePK,
-      dplyr::everything(),
-      -c("IndividualId")
-    ) %>%
+    dplyr::ungroup()
+
+  pkData <- dplyr::select(
+    pkData,
+    "OutputPath",
+    dplyr::starts_with("Parameter"),
+    dplyr::starts_with("PK"),
+    Unit, PercentChangePK,
+    dplyr::everything(),
+    -c("IndividualId")
+  ) %>%
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
+
+  return(pkData)
 }
 
 #' Calculate custom PK values
