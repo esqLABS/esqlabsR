@@ -97,6 +97,83 @@
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 }
 
+#' Calculate custom PK values
+#'
+#' This function calculates user-defined PK values from simulation results using
+#' custom output functions.
+#'
+#' @param simulationResults `SimulationResults` object containing the simulation
+#' data.
+#' @param customOutputFunctions Named list of custom output functions to calculate
+#' PK values.
+#'
+#' @return A dataframe containing the custom PK values.
+#'
+#' @keywords internal
+#' @noRd
+.calculateCustomPK <- function(simulationResults, customOutputFunctions) {
+  # extract all output paths
+  outputPaths <- simulationResults$allQuantityPaths
+
+  # extract simulation result values
+  simulationResultsDf <- simulationResultsToDataFrame(simulationResults)
+
+  userPKValuePathList <- setNames(
+    vector("list", length(outputPaths)),
+    outputPaths
+  )
+
+  for (outputPath in outputPaths) {
+    # filter the data frame for the current output path
+    outputData <- dplyr::filter(simulationResultsDf, paths == outputPath)
+    x <- outputData$Time
+    y <- outputData$simulationValues
+
+    userPKValueList <- setNames(
+      vector("list", length(customOutputFunctions)),
+      names(customOutputFunctions)
+    )
+
+    # calculate user-defined PK values using user-defined functions
+    for (customFunctionName in names(customOutputFunctions)) {
+      customOutputFunction <- customOutputFunctions[[customFunctionName]]
+      formalNames <- names(formals(customOutputFunction))
+
+      # user-defined functions should have either 'x', 'y',
+      # or both 'x' and 'y' as parameters
+      # here checks a performed to ensure that correct parameters are passed
+      if (setequal(formalNames, c("x", "y"))) {
+        userPKValue <- customOutputFunction(x = x, y = y)
+      } else if (setequal(formalNames, "x")) {
+        userPKValue <- customOutputFunction(x = x)
+      } else if (setequal(formalNames, "y")) {
+        userPKValue <- customOutputFunction(y = y)
+      } else {
+        stop(messages$invalidCustomFunctionParameters(formalNames))
+      }
+
+      userPKValueList[[customFunctionName]] <- data.frame(
+        Parameter = customFunctionName,
+        Value = userPKValue,
+        IndividualId = simulationResults$allIndividualIds[1],
+        QuantityPath = outputPath,
+        Unit = NA
+      )
+    }
+    userPKValuePathList[[outputPath]] <- dplyr::bind_rows(userPKValueList)
+  }
+
+  # combined and prepare PK data to match calculatePKAnalyses() output
+  userPKDataFrame <- dplyr::bind_rows(userPKValuePathList)
+  userPKDataFrame <- dplyr::select(
+    userPKDataFrame,
+    IndividualId, QuantityPath, Parameter, Value, Unit
+  )
+
+  return(userPKDataFrame)
+}
+
+
 # dataframe modification helpers ------------------------------
 
 #' @title Percent change in PK parameters
