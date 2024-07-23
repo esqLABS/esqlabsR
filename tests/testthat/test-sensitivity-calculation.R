@@ -474,6 +474,25 @@ test_that("sensitivityCalculation extracts data correctly for multiple output pa
   expect_equal(unique(results_multiple$pkData$OutputPath), outputPaths)
 })
 
+test_that("sensitivityCalculation applies custom PK parameter function correctly with multiple output paths", {
+  # list with custom function using only `y` parameter
+  customFunctions <- list("minmax" = function(y) min(y[y != 0]) / max(y))
+
+  results_multiple <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFunctions,
+    variationRange = c(1, 5, 10)
+  )
+
+  customPKDataMultiple <- dplyr::filter(
+    results_multiple$pkData,
+    PKParameter %in% names(customFunctions)
+  )
+  expect_snapshot(customPKDataMultiple)
+})
+
 test_that("sensitivityCalculation saves PK data to xlsx file for multiple output paths", {
   path <- "mydata.xlsx"
 

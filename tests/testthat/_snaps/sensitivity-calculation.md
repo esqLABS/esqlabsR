@@ -337,3 +337,59 @@
       5  225.21    
       
 
+# sensitivityCalculation applies custom PK parameter function correctly with multiple output paths
+
+    Code
+      customPKDataMultiple
+    Output
+      # A tibble: 27 x 9
+         OutputPath                                                               
+         <chr>                                                                    
+       1 Organism|ArterialBlood|Plasma|Aciclovir                                  
+       2 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       3 Organism|Age                                                             
+       4 Organism|ArterialBlood|Plasma|Aciclovir                                  
+       5 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       6 Organism|Age                                                             
+       7 Organism|ArterialBlood|Plasma|Aciclovir                                  
+       8 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+       9 Organism|Age                                                             
+      10 Organism|ArterialBlood|Plasma|Aciclovir                                  
+         ParameterPath                                                    
+         <chr>                                                            
+       1 Aciclovir|Lipophilicity                                          
+       2 Aciclovir|Lipophilicity                                          
+       3 Aciclovir|Lipophilicity                                          
+       4 Aciclovir|Lipophilicity                                          
+       5 Aciclovir|Lipophilicity                                          
+       6 Aciclovir|Lipophilicity                                          
+       7 Aciclovir|Lipophilicity                                          
+       8 Aciclovir|Lipophilicity                                          
+       9 Aciclovir|Lipophilicity                                          
+      10 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
+         ParameterFactor ParameterValue PKParameter PKParameterValue Unit 
+                   <dbl>          <dbl> <chr>                  <dbl> <chr>
+       1               1       -0.097   minmax             0.0003409 <NA> 
+       2               1       -0.097   minmax             0.0006476 <NA> 
+       3               1       -0.097   minmax             1         <NA> 
+       4               5       -0.485   minmax             0.0002932 <NA> 
+       5               5       -0.485   minmax             0.0005992 <NA> 
+       6               5       -0.485   minmax             1         <NA> 
+       7              10       -0.97    minmax             0.0005275 <NA> 
+       8              10       -0.97    minmax             0.0009463 <NA> 
+       9              10       -0.97    minmax             1         <NA> 
+      10               1        0.00025 minmax             0.0003409 <NA> 
+         PercentChangePK SensitivityPKParameter
+                   <dbl>                  <dbl>
+       1           0                  NaN      
+       2           0                  NaN      
+       3           0                  NaN      
+       4         -14.01                -0.03501
+       5          -7.474               -0.01868
+       6           0                    0      
+       7          54.72                 0.06080
+       8          46.13                 0.05126
+       9           0                    0      
+      10           0                  NaN      
+      # i 17 more rows
+
