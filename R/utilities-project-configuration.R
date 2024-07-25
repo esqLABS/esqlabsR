@@ -69,5 +69,5 @@ example_ProjectConfiguration <- function() {
 #' @keywords internal
 test_ProjectConfiguration <- function() {
   # for now it targets TestProject as it is both an example and a test project
-  file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
+  file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
 }
