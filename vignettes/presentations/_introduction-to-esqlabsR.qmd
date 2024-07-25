@@ -272,7 +272,7 @@ my_project_configuration
 
 ```
 ProjectConfiguration: 
-Project Configuration File: TestProject/Code/projectConfiguration.xlsx 
+Project Configuration File: TestProject/Code/ProjectConfiguration.xlsx 
 Model folder: TestProject/Models/Simulations 
 Parameters folder: TestProject/Parameters 
 Parameters file name: TestProject/Parameters/ModelParameters.xlsx 
