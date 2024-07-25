@@ -19,7 +19,7 @@ License: GPL-2
 URL: https://github.com/esqLABS/esqlabsR, https://esqlabs.github.io/esqlabsR/
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
-    ospsuite (>= 12.0.0),
+    ospsuite (>= 12.1.0),
     R (>= 4.1)
 Imports:
     colorspace,
