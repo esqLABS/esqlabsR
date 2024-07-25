@@ -29,6 +29,7 @@ Imports:
     grDevices,
     labeling,
     ospsuite.parameteridentification (>= 1.3.0),
+    ospsuite.utils (>= 1.5.0),
     parallel,
     patchwork,
     purrr,
@@ -37,6 +38,7 @@ Imports:
     scales,
     stringr,
     tidyr,
+    tlf (>= 1.5.0),
     tools,
     vctrs,
     writexl
@@ -64,5 +66,7 @@ Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Remotes: 
+    ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
+    tlf=Open-Systems-Pharmacology/TLF-Library,
     ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
     Open-Systems-Pharmacology/ospsuite.parameteridentification
