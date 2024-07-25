@@ -45,6 +45,7 @@ Imports:
 Suggests: 
     clipr,
     covr,
+    devtools,
     knitr,
     openxlsx,
     reactable,
