@@ -3,7 +3,7 @@
 ## Breaking changes
 
   - `{esqlabsR}` now requires `{ospsuite}` version 12.1.0 or higher to benefit from
-    embeded PK-Sim core files.
+    embedded PK-Sim core files.
 
   - Function `exportSteadyStateToXLS` has been removed in favor of
     `ospsuite::exportSteadyStateToXLS` (\#598)
@@ -39,7 +39,7 @@
     paths, values, and units (e.g., imported using the `readParametersFromXLS()`
     function) to an Excel file. In contrast to `exportParametersToXLS()`, which
     writes an excel file for a list of `Parameter` objects, this function
-    expects the parameter structure as used thorughout the package.
+    expects the parameter structure as used throughout the package.
 
 ## Minor improvements and bug fixes
 
@@ -73,7 +73,7 @@
     aggregation methods. A new column `nsd` was added to the `PlotConfiguration`
     sheet in the example `Plot.xlsx` (\#544).
   - Documentation includes PK-Sim installation instructions (\#537).
-  - Better error message if some ids are not uniques in the excel configuration
+  - Better error message if some ids are not unique in the excel configuration
     files (\#568)
   - Handles better empty rows in the excel configuration files (\#569)
   - Cleaner NEWS file (\#527).
@@ -130,7 +130,7 @@
     specify ontogenies for proteins in the simulation, list the proteins you
     want to define ontogenies for in the column 'Protein' of files
     'PopulationParameters.xlsx' or 'Individuals.xlsx', separated by a ','.
-    Speficy the ontogenies available in PK-Sim (see article
+    Specify the ontogenies available in PK-Sim (see article
     <https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies>)
     in the column 'Ontogenies'. The number of entries in the both columns must
     be equal.
@@ -264,7 +264,7 @@
   - When defining an individual of other species than human in
     `ScenarioConfiguration` and applying it to a human model, missing
     species-specific parameters are applied and the scaling works properly.
-    Supported scalingsa are: Human to rat, human to monkey, human to rabbit.
+    Supported scalings are: Human to rat, human to monkey, human to rabbit.
     
   - `initializeSimulation()` does not perform steady-state run any more. This is
     done as part of the `runScenarios()` function.
@@ -316,7 +316,7 @@
     
   - Function `setApplications()` is deprecated.
   
-  - Dark grey frame around legends by default.
+  - Dark gray frame around legends by default.
 
 
 # esqlabsR 4.0.0
