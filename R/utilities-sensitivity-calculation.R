@@ -1,55 +1,5 @@
 # dataframe extraction helpers ------------------------------
 
-#' Extract time-series dataframe from a list of `SimulationResults` objects
-#'
-#' @param simulationResultsBatch A **list** of `SimulationResults` R6 objects.
-#' @inheritParams sensitivityCalculation
-#'
-#' @keywords internal
-#' @noRd
-.simulationResultsBatchToTimeSeriesDataFrame <- function(simulationResultsBatch,
-                                                         parameterPaths,
-                                                         outputPaths) {
-  purrr::map2_dfr(
-    .x = simulationResultsBatch,
-    .y = parameterPaths,
-    .f = ~ .simulationResultsToTimeSeriesDataFrame(.x, .y, outputPaths = outputPaths)
-  )
-}
-
-#' Extract time-series dataframe from `SimulationResults` object
-#'
-#' @param simulationResults A **single** instance of `SimulationResults` R6 object.
-#' @param parameterPath A **single** parameter path.
-#' @inheritParams sensitivityCalculation
-#'
-#' @keywords internal
-#' @noRd
-.simulationResultsToTimeSeriesDataFrame <- function(simulationResults,
-                                                    parameterPath,
-                                                    outputPaths) {
-  purrr::map_dfr(
-    .x  = simulationResults,
-    .f  = ~ simulationResultsToDataFrame(.x, quantitiesOrPaths = outputPaths),
-    .id = "ParameterFactor"
-  ) %>%
-    dplyr::rename(
-      Concentration = simulationValues,
-      OutputPath    = paths,
-      Dimension     = dimension,
-      Unit          = unit
-    ) %>%
-    .addParameterColumns(simulationResults, parameterPath) %>%
-    dplyr::select(
-      "OutputPath",
-      dplyr::starts_with("Parameter"),
-      Time, Concentration,
-      dplyr::everything(),
-      -c("IndividualId")
-    ) %>%
-    dplyr::arrange(ParameterPath, ParameterFactor)
-}
-
 #' Extract PK parameters dataframe from a list of `SimulationResults` objects
 #'
 #' @inheritParams .simulationResultsBatchToTimeSeriesDataFrame
@@ -97,38 +47,6 @@
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 }
 
-# dataframe modification helpers ------------------------------
-
-#' @title Percent change in PK parameters
-#'
-#' @description Compute %change in PK parameters and their sensitivity
-#'
-#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
-#'   columns renamed to follow `UpperCamel` case.
-#'
-#' @keywords internal
-#' @noRd
-.computePercentChange <- function(data) {
-  # baseline values with a scaling of 1, i.e. no scaling
-  baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
-
-  # baseline values for parameters of interest
-  ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
-  PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
-
-  # add columns with %change and sensitivity
-  # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
-  data %>%
-    dplyr::mutate(
-      PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
-      SensitivityPKParameter =
-      # delta PK / PK
-        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
-          # p / delta p
-          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
-    )
-}
-
 #' @title Add columns with details about parameter paths
 #'
 #' @description
@@ -159,6 +77,38 @@
       ParameterFactor = as.numeric(ParameterFactor)
     ) %>%
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
+}
+
+# dataframe modification helpers ------------------------------
+
+#' @title Percent change in PK parameters
+#'
+#' @description Compute %change in PK parameters and their sensitivity
+#'
+#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
+#'   columns renamed to follow `UpperCamel` case.
+#'
+#' @keywords internal
+#' @noRd
+.computePercentChange <- function(data) {
+  # baseline values with a scaling of 1, i.e. no scaling
+  baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
+
+  # baseline values for parameters of interest
+  ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
+  PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
+
+  # add columns with %change and sensitivity
+  # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
+  data %>%
+    dplyr::mutate(
+      PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
+      SensitivityPKParameter =
+      # delta PK / PK
+        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
+          # p / delta p
+          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
+    )
 }
 
 #' @keywords internal

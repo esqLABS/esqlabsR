@@ -324,27 +324,6 @@ test_that("sensitivityCalculation PK parameters wide datafram column names and o
   )
 })
 
-test_that("sensitivityCalculation time series dataframe is as expected", {
-  # also extract and add time series data for testing
-  results$tsData <- esqlabsR:::.simulationResultsBatchToTimeSeriesDataFrame(
-    simulationResultsBatch = results$simulationResults,
-    parameterPaths = results$parameterPaths,
-    outputPaths = results$outputPaths
-  )
-
-  set.seed(123)
-  df1_ts <- summarizer(results$tsData, parameterPaths[1])
-  expect_snapshot(df1_ts)
-
-  set.seed(123)
-  df2_ts <- summarizer(results$tsData, parameterPaths[2])
-  expect_snapshot(df2_ts)
-
-  set.seed(123)
-  df3_ts <- summarizer(results$tsData, parameterPaths[3])
-  expect_snapshot(df3_ts)
-})
-
 # multiple output paths -------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")

@@ -1,26 +1,29 @@
 #' @name sensitivityTimeProfiles
-#' @title Sensitivity Time Profiles for Pharmacokinetic Parameters
+#' @title Time Profile plots for Sensitivity Analysis
 #'
 #' @description
-#' Generates time profiles for pharmacokinetic parameters under various
-#' sensitivity scenarios. This function plots concentration-time profiles
-#' for each scaled parameter specified, illustrating the dynamics of
-#' pharmacokinetic responses to parameter variations.
+#' Creates time profiles for selected outputs generated in a sensitivity analysis.
+#' This function plots time profiles for each specified output path,
+#' illustrating the dynamics of model outputs to parameter variations.
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
 #' `sensitivityCalculation()`.
-#' @param outputPaths,parameterPaths,pkParameters A single or a vector of the
-#' output path(s), parameter path(s), and PK parameters to be displayed,
+#' @param outputPaths,parameterPaths A single or a vector of the
+#' output path(s) to be plotted for parameter path(s) which impact is analyzed,
 #' respectively. If `NULL`, all included paths and parameters present in the
 #' supplied `SensitivityCalculation` object will be displayed in the
 #' visualization.
-#' A separate plot will be generated for each output path. Each plot will
-#' contain a spider plot panel for each PK parameter, and the sensitivities
-#' for each parameter will be displayed as lines.
+#' A separate plot will be generated for each output path, and a separate curve
+#' will be generated for each parameter variation. A separate panel is created
+#' for each varied parameter.
 #' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
 #' (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #' scale similarly to `xAxisScale`. Default is "log".
+#' @param observedData Optional. A set of `DataSet` objects containing observed
+#' data. If provided, observed data will be plotted together with the simulated data
+#' based on `OutputPath` dimension for direct comparison within the visualizations.
+#' Will be added only to plots with matching y dimension.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics. Plot-specific settings provided directly
 #' to the function, such as `xAxisScale`, will take precedence over any
@@ -33,6 +36,7 @@
 #' - `linesAlpha`: Alpha transparency for the line elements.
 #' - `linesColor`: Color of the line elements.
 #' - `linesSize`: Thickness of the line elements.
+#' - `pointsShape`: Shape of the point elements for observed data.
 #' - `title`: Main title text for the plot.
 #' - `titleSize`: Font size of the plot title.
 #' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
@@ -68,8 +72,8 @@
 #' # Print plots with default settings
 #' sensitivityTimeProfiles(results)
 #'
-#' # Print plots with logarithmically transformed y-axis values
-#' sensitivityTimeProfiles(results, yAxisScale = "log")
+#' # Print plots with linear y-axis values
+#' sensitivityTimeProfiles(results, yAxisScale = "lin")
 #'
 #' # Print plots with custom configuration settings
 #' myPlotConfiguration <- createEsqlabsPlotConfiguration()
@@ -83,11 +87,13 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     parameterPaths = NULL,
                                     xAxisScale = NULL,
                                     yAxisScale = NULL,
+                                    observedData = NULL,
                                     defaultPlotConfiguration = NULL) {
   # input validation ------------------------
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  validateIsOfType(observedData, DataSet, nullAllowed = TRUE)
   if (is.null(defaultPlotConfiguration)) {
     defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
   } else {
@@ -99,12 +105,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   .validateCharVectors(parameterPaths)
 
   # default time profiles plot configuration setup ----
-
   timeProfilesConfiguration <- list(
     legendPosition = "bottom",
     legendTitle = "Parameter factor",
     linesAlpha = 0.7,
     linesSize = 1.4,
+    # pointsShape = NULL,
     title = NULL,
     titleSize = 14,
     xAxisScale = "lin",
@@ -112,6 +118,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     yAxisScale = "log",
     yLabel = NULL
   )
+
   # override default plot configuration with function parameters
   customPlotConfiguration <- defaultPlotConfiguration$clone()
   if (!is.null(xAxisScale)) customPlotConfiguration$xAxisScale <- xAxisScale
@@ -135,8 +142,9 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # prepare data ------------------------
 
   # extract the needed dataframe from the object
-  data <- .simulationResultsBatchToTimeSeriesDataFrame(
-    simulationResultsBatch = sensitivityCalculation$simulationResults,
+  data <- .aggregateSimulationAndObservedData(
+    simulationResults      = sensitivityCalculation$simulationResults,
+    dataSets               = observedData,
     parameterPaths         = sensitivityCalculation$parameterPaths,
     outputPaths            = sensitivityCalculation$outputPaths
   )
@@ -152,9 +160,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # split long parameter path names for plotting
   data <- dplyr::mutate(
     data,
-    ParameterPath = purrr::map_chr(
-      ParameterPath, .splitParameterName,
-      equalLines = TRUE
+    ParameterPath = dplyr::if_else(
+      is.na(ParameterPath),
+      ParameterPath,
+      purrr::map_chr(ParameterPath, .splitParameterName, equalLines = TRUE)
     )
   )
 
@@ -169,8 +178,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   )
 
-  # print plots without producing warnings
-  suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
+  return(lsPlots)
 }
 
 #' @keywords internal
@@ -187,21 +195,21 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # create axis labels
   if (is.null(plotConfiguration$xLabel)) {
     plotConfiguration$xLabel <- paste0(
-      unique(data$TimeDimension), " [",
-      unique(data$TimeUnit), "]"
+      unique(data$xDimension), " [",
+      unique(data$xUnit), "]"
     )
   }
   if (is.null(plotConfiguration$yLabel)) {
     plotConfiguration$yLabel <- paste0(
-      unique(data$Dimension), " [",
-      unique(data$Unit), "]"
+      unique(data$yDimension), " [",
+      unique(data$yUnit), "]"
     )
   }
 
   # calculate y-axis breaks and limits -------
-  pLimits <- .calculateLimits(data$Concentration)
+  pLimits <- .calculateLimits(data$yValues)
   pBreaks <- .calculateBreaks(
-    data$Concentration,
+    data$yValues,
     m = 4, Q = c(0.01, 0.1, 100, 1000),
     scaling = plotConfiguration$yAxisScale
   )
@@ -212,11 +220,20 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
 
   # map each parameter path to its own plot ----
-
   plotList <- purrr::map(
-    unique(data$ParameterPath),
+    unique(data$ParameterPath) %>% .[!is.na(.)],
     ~ {
       dataSubset <- dplyr::filter(data, ParameterPath == .x)
+
+      # combine original data subset with observed data
+      # add observed data if not-null
+      if ("observed" %in% data$dataType) {
+        observedData <- dplyr::filter(data, dataType == "observed") %>%
+          dplyr::select(-ParameterPath)
+        hasObservedData <- isTRUE(nrow(observedData) != 0)
+      } else {
+        hasObservedData <- FALSE
+      }
 
       # basic plot setup -------------------------
 
@@ -224,8 +241,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         geom_line(
           data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
           aes(
-            x = Time,
-            y = Concentration,
+            x = xValues,
+            y = yValues,
             group = ParameterFactor,
             color = ParameterFactor
           ),
@@ -235,12 +252,28 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         ) +
         geom_line(
           data = dplyr::filter(dataSubset, ParameterFactor == 1.0),
-          aes(Time, Concentration),
+          aes(xValues, yValues),
           color = "black",
           linewidth = plotConfiguration$linesSize,
           alpha = plotConfiguration$linesAlpha,
           na.rm = TRUE
         )
+
+      # add symbols for observed data
+      if (hasObservedData) {
+        plot <- plot +
+          geom_point(
+            data = observedData,
+            aes(xValues, yValues, shape = `Study Id`)
+          ) +
+          scale_shape_manual(
+            values = rep(
+              plotConfiguration$pointsShape,
+              length.out = length(unique(observedData$`Study Id`))
+            ),
+            name = "Observed data"
+          )
+      }
 
       # adjusting axis scales
       if (isTRUE(plotConfiguration$xAxisScale == "log")) {
@@ -288,9 +321,21 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
             ticks = FALSE,
             draw.ulim = FALSE,
             draw.llim = FALSE,
-            title.position = "top"
-          )
+            title.position = "top",
+            order = 1
+          ),
+          shape = guide_legend(order = 2)
         )
+
+      if (hasObservedData) {
+        plot <- plot +
+          guides(
+            shape = guide_legend(
+              title.position = "top",
+              nrow = length(unique(observedData$dataType))
+            )
+          )
+      }
 
       # apply color scales
       if (is.null(plotConfiguration$linesColor)) {
@@ -325,7 +370,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   )
 
   # compile individual plots -----------------
-
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
       title = plotConfiguration$title,
@@ -340,4 +384,115 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     theme(legend.position = plotConfiguration$legendPosition)
 
   return(plotPatchwork)
+}
+
+
+#' Aggregate simulation results and observed data into a combined dataframe
+#'
+#' This function performs aggregation from a list of `SimulationResults` objects
+#' as returned by `sensitivityCalculation()` and a list of `DataSet` objects.
+#' `DataSets` are added to each quantity path (`outputPaths`) when the `yDimension`
+#' from `DataSet` can be converted to the x- and y-Dimensions of `SimulationResults`.
+#'
+#' @param simulationResults A list of `SimulationResults` objects returned by
+#' `sensitivityCalculation()`.
+#' @param dataSets A list of `DataSet` objects containing observed data.
+#' @param parameterPaths A character vector of parameter paths.
+#' @param outputPaths A character vector of output paths.
+#'
+#' @return A combined `data.frame` containing both simulation results and
+#' observed data.
+#'
+#' @keywords internal
+#' @noRd
+.aggregateSimulationAndObservedData <- function(simulationResults,
+                                                dataSets,
+                                                parameterPaths,
+                                                outputPaths) {
+  if (!identical(names(simulationResults), parameterPaths)) {
+    stop("The names of the simulationResults and parameterPaths must be the same")
+  }
+  validateIsOfType(simulationResults, "list")
+
+  parameterPathList <- setNames(
+    vector("list", length(parameterPaths)),
+    parameterPaths
+  )
+  # iterate over each `parameterPath`, combine `simulationResults` for each
+  # `parameterFactor` and add `DataSets` by `outputPath`
+  for (parameterPath in names(simulationResults)) {
+    simulationResultsPath <- simulationResults[[parameterPath]]
+    parameterFactor <- as.list(names(simulationResultsPath))
+
+    outputPathList <- setNames(
+      vector("list", length(outputPaths)),
+      outputPaths
+    )
+
+    for (outputPath in outputPaths) {
+      dataCombined <- DataCombined$new()
+
+      # add multiple simulation results to dataCombined
+      # uses parameterFactor from sensitivity analysis as name
+      for (i in seq_along(parameterFactor)) {
+        dataCombined$addSimulationResults(
+          simulationResultsPath[[i]],
+          quantitiesOrPaths = outputPath,
+          names = parameterFactor[i],
+          groups = parameterPath
+        )
+      }
+
+      if (!is.null(dataSets)) {
+        validateIsOfType(dataSets, "list")
+
+        for (j in seq_along(dataSets)) {
+          dataCombinedClone <- dataCombined$clone()
+          unitsConvertable <- TRUE
+
+          tryCatch(
+            {
+              # try to add data sets and convert units
+              dataCombinedClone$addDataSets(dataSets[[j]])
+              convertUnits(dataCombinedClone)
+            },
+            error = function(e) {
+              unitsConvertable <<- FALSE
+            }
+          )
+
+          if (unitsConvertable) {
+            dataCombined$addDataSets(dataSets[[j]])
+          }
+        }
+      }
+      outputPathList[[outputPath]] <- convertUnits(dataCombined)
+    }
+    parameterPathList[[parameterPath]] <- dplyr::bind_rows(
+      outputPathList,
+      .id = "OutputPath"
+    )
+  }
+
+  combinedDf <- dplyr::bind_rows(parameterPathList, .id = "ParameterPath")
+  # use names derived from parameterFactor to create a numeric column
+  combinedDf <- dplyr::rowwise(combinedDf) %>%
+    dplyr::mutate(
+      ParameterFactor = if (dataType == "simulated") as.numeric(name) else NA_real_
+    ) %>%
+    dplyr::ungroup()
+
+  # select and arrange columns
+  combinedDf <- dplyr::select(
+    combinedDf,
+    OutputPath,
+    dplyr::starts_with("Parameter"),
+    xValues,
+    yValues,
+    dplyr::everything(),
+    -IndividualId,
+    -name
+  )
+
+  return(combinedDf)
 }
