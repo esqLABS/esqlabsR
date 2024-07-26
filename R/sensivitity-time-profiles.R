@@ -591,3 +591,4 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   names(units) <- outputPaths
 
   return(units)
+}
