@@ -13,7 +13,7 @@ pharmacokinetic responses to parameter variations."><meta property="og:image" co
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.1.3.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.1.3.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,6 +70,7 @@ pharmacokinetic responses to parameter variations.</p>
 <span>  parameterPaths <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  xAxisScale <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  yAxisScale <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  observedData <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  defaultPlotConfiguration <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -104,6 +105,12 @@ for each parameter will be displayed as lines.</p></dd>
 scale similarly to <code>xAxisScale</code>. Default is "log".</p></dd>
 
 
+<dt id="arg-observeddata">observedData<a class="anchor" aria-label="anchor" href="#arg-observeddata"></a></dt>
+<dd><p>Optional. A set of <code>DataSet</code> objects containing observed
+data. If provided, observed data will be integrated with the simulated data
+based on <code>OutputPath</code> dimension for direct comparison within the visualizations.</p></dd>
+
+
 <dt id="arg-defaultplotconfiguration">defaultPlotConfiguration<a class="anchor" aria-label="anchor" href="#arg-defaultplotconfiguration"></a></dt>
 <dd><p>An object of class <code>DefaultPlotConfiguration</code>
 used to customize plot aesthetics. Plot-specific settings provided directly
@@ -115,6 +122,7 @@ settings are applied.</p>
 <li><p><code>linesAlpha</code>: Alpha transparency for the line elements.</p></li>
 <li><p><code>linesColor</code>: Color of the line elements.</p></li>
 <li><p><code>linesSize</code>: Thickness of the line elements.</p></li>
+<li><p><code>pointsShape</code>: Shape of the point elements for observed data.</p></li>
 <li><p><code>title</code>: Main title text for the plot.</p></li>
 <li><p><code>titleSize</code>: Font size of the plot title.</p></li>
 <li><p><code>xAxisScale</code>: Scale type for the x-axis (<code>"log"</code> or <code>"lin"</code>).</p></li>
@@ -159,8 +167,8 @@ multiple output paths.</p>
 <span class="r-in"><span><span class="co"># Print plots with default settings</span></span></span>
 <span class="r-in"><span><span class="fu">sensitivityTimeProfiles</span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Print plots with logarithmically transformed y-axis values</span></span></span>
-<span class="r-in"><span><span class="fu">sensitivityTimeProfiles</span><span class="op">(</span><span class="va">results</span>, yAxisScale <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Print plots with linear y-axis values</span></span></span>
+<span class="r-in"><span><span class="fu">sensitivityTimeProfiles</span><span class="op">(</span><span class="va">results</span>, yAxisScale <span class="op">=</span> <span class="st">"lin"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Print plots with custom configuration settings</span></span></span>
 <span class="r-in"><span><span class="va">myPlotConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration</a></span><span class="op">(</span><span class="op">)</span></span></span>

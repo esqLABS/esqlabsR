@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.1.3.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.1.3.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,8 @@
 <h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
 <ul><li><p>Function <code>exportSteadyStateToXLS</code> has been removed in favor of <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/exportSteadyStateToXLS.html" class="external-link">ospsuite::exportSteadyStateToXLS</a></code> (<a href="https://github.com/esqLABS/esqlabsR/issues/598" class="external-link">#598</a>, 1)</p></li>
 <li><p>Function <code>sensitivitySpiderPlot</code> overhauled with new parameters. <code>yAxisType</code> to toggle between <code>percent</code>and <code>absolute</code> values. <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. <code>yAxisFacetScales</code> to choose between <code>free</code> and <code>fixed</code> scales for y-axis. Further plot customization options through <code>defaultPlotConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/632" class="external-link">#632</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
-<li><p>Function <code>sensitivityTimeProfiles</code> with new signature. Introduced parameters <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. More plot customization options through <code>defaultPlotConfiguration</code> as described in the documentation. Plots have improved color palette, scaling and legend colors. (<a href="https://github.com/esqLABS/esqlabsR/issues/669" class="external-link">#669</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
+<li><p>Function <code>sensitivityTimeProfiles</code> with new signature. Introduced parameters <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. More plot customization options through <code>defaultPlotConfiguration</code> as described in the documentation. Plots have improved color palette, scaling and legend colors (<a href="https://github.com/esqLABS/esqlabsR/issues/669" class="external-link">#669</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
+<li><p>Function <code>sensitivityTimeProfiles</code> updated. Observed data (single or multiple <code>DataSet</code> objects) can now be added to the plots and will be included automatically in the <code>outputPath</code> if the dimensions are convertible (<a href="https://github.com/esqLABS/esqlabsR/issues/674" class="external-link">#674</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
 <li><p>Function <code>writeExcel()</code> is no longer exported. (<a href="https://github.com/esqLABS/esqlabsR/issues/672" class="external-link">#672</a>)</p></li>
 </ul></div>
 <div class="section level3">
