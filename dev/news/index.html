@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.1.3.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.1.3.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,20 +52,21 @@
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
 <div class="section level3">
 <h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
-<ul><li><p>Function <code>exportSteadyStateToXLS</code> has been removed in favor of <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/exportSteadyStateToXLS.html" class="external-link">ospsuite::exportSteadyStateToXLS</a></code> (<a href="https://github.com/esqLABS/esqlabsR/issues/598" class="external-link">#598</a>, 1)</p></li>
-<li><p>Function <code>sensitivitySpiderPlot</code> overhauled with new parameters. <code>yAxisType</code> to toggle between <code>percent</code>and <code>absolute</code> values. <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. <code>yAxisFacetScales</code> to choose between <code>free</code> and <code>fixed</code> scales for y-axis. Further plot customization options through <code>defaultPlotConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/632" class="external-link">#632</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
-<li><p>Function <code>sensitivityTimeProfiles</code> with new signature. Introduced parameters <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. More plot customization options through <code>defaultPlotConfiguration</code> as described in the documentation. Plots have improved color palette, scaling and legend colors (<a href="https://github.com/esqLABS/esqlabsR/issues/669" class="external-link">#669</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
-<li><p>Function <code>sensitivityTimeProfiles</code> updated. Observed data (single or multiple <code>DataSet</code> objects) can now be added to the plots and will be included automatically in the <code>outputPath</code> if the dimensions are convertible (<a href="https://github.com/esqLABS/esqlabsR/issues/674" class="external-link">#674</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
+<ul><li><p><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> now requires <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a> version 12.1.0 or higher to benefit from embedded PK-Sim core files.</p></li>
+<li><p>Function <code>exportSteadyStateToXLS</code> has been removed in favor of <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/exportSteadyStateToXLS.html" class="external-link">ospsuite::exportSteadyStateToXLS</a></code> (<a href="https://github.com/esqLABS/esqlabsR/issues/598" class="external-link">#598</a>)</p></li>
+<li><p>Function <code>sensitivitySpiderPlot</code> overhauled with new parameters. <code>yAxisType</code> to toggle between <code>percent</code>and <code>absolute</code> values. <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. <code>yAxisFacetScales</code> to choose between <code>free</code> and <code>fixed</code> scales for y-axis. Further plot customization options through <code>defaultPlotConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/632" class="external-link">#632</a>).</p></li>
+<li><p>Function <code>sensitivityTimeProfiles</code> with new signature. Introduced parameters <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. More plot customization options through <code>defaultPlotConfiguration</code> as described in the documentation. Plots have improved color palette, scaling and legend colors (<a href="https://github.com/esqLABS/esqlabsR/issues/669" class="external-link">#669</a>).</p></li>
+<li><p>Function <code>sensitivityTimeProfiles</code> updated. Observed data (single or multiple <code>DataSet</code> objects) can now be added to the plots and will be included automatically in the <code>outputPath</code> if the dimensions are convertible (<a href="https://github.com/esqLABS/esqlabsR/issues/674" class="external-link">#674</a>).</p></li>
 <li><p>Function <code>writeExcel()</code> is no longer exported. (<a href="https://github.com/esqLABS/esqlabsR/issues/672" class="external-link">#672</a>)</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="major-changes-development-version">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-development-version"></a></h3>
-<ul><li><p>New <code>sensitivityTornadoPlot</code> function for generating tornado plots that evaluate the impact of parameter changes on sensitivity analysis outcomes. It utilizes <code>parameterFactor</code> to depict the scaling effects of parameter modifications. Provides plot customization options through <code>defaultPlotConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/652" class="external-link">#652</a>, <a href="https://github.com/rengelke" class="external-link">@rengelke</a>).</p></li>
-<li><p>New function <code>writeParameterStructureToXLS</code> to write a list of parameter paths, values, and units (e.g., imported using the <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function) to an Excel file. In contrast to <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code>, which writes an excel file for a list of <code>Parameter</code> objects, this function expects the parameter structure as used thorughout the package.</p></li>
+<ul><li><p>New <code>sensitivityTornadoPlot</code> function for generating tornado plots that evaluate the impact of parameter changes on sensitivity analysis outcomes. It utilizes <code>parameterFactor</code> to depict the scaling effects of parameter modifications. Provides plot customization options through <code>defaultPlotConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/652" class="external-link">#652</a>).</p></li>
+<li><p>New function <code>writeParameterStructureToXLS</code> to write a list of parameter paths, values, and units (e.g., imported using the <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function) to an Excel file. In contrast to <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code>, which writes an excel file for a list of <code>Parameter</code> objects, this function expects the parameter structure as used throughout the package.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
-<ul><li><p>Function <code>createScenarios</code> gets a new argument <code>stopIfParameterNotFound</code>. If <code>TRUE</code> (default), a scenario will not be created and an error is thrown if any user-defined parameter (e.g., provided in Excel files) is not found in the simulation. If <code>FALSE</code>, non-existing parameters are ignored. (<a href="https://github.com/esqLABS/esqlabsR/issues/559" class="external-link">#559</a>, 1)</p></li>
+<ul><li><p>Function <code>createScenarios</code> gets a new argument <code>stopIfParameterNotFound</code>. If <code>TRUE</code> (default), a scenario will not be created and an error is thrown if any user-defined parameter (e.g., provided in Excel files) is not found in the simulation. If <code>FALSE</code>, non-existing parameters are ignored. (<a href="https://github.com/esqLABS/esqlabsR/issues/559" class="external-link">#559</a>)</p></li>
 <li><p>Constructor of a <code>Scenario</code> class gets a new argument <code>stopIfParameterNotFound</code>.</p></li>
 <li><p>More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is defined.</p></li>
 </ul></div>
@@ -74,19 +75,19 @@
 <h2 class="pkg-version" data-toc-text="5.1.3" id="esqlabsr-513">esqlabsR 5.1.3<a class="anchor" aria-label="anchor" href="#esqlabsr-513"></a></h2>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-5-1-3">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-1-3"></a></h3>
-<ul><li>Continuous Integration/Continuous Deployment pipeline improvements (<a href="https://github.com/esqLABS/esqlabsR/issues/590" class="external-link">#590</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/592" class="external-link">#592</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/601" class="external-link">#601</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>)</li>
-<li>Several bug fixes (<a href="https://github.com/esqLABS/esqlabsR/issues/581" class="external-link">#581</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/585" class="external-link">#585</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/594" class="external-link">#594</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/600" class="external-link">#600</a>, 1)</li>
+<ul><li>Continuous Integration/Continuous Deployment pipeline improvements (<a href="https://github.com/esqLABS/esqlabsR/issues/590" class="external-link">#590</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/592" class="external-link">#592</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/601" class="external-link">#601</a>)</li>
+<li>Several bug fixes (<a href="https://github.com/esqLABS/esqlabsR/issues/581" class="external-link">#581</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/585" class="external-link">#585</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/594" class="external-link">#594</a>, <a href="https://github.com/esqLABS/esqlabsR/issues/600" class="external-link">#600</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="5.1.2" id="esqlabsr-512">esqlabsR 5.1.2<a class="anchor" aria-label="anchor" href="#esqlabsr-512"></a></h2>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-5-1-2">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-1-2"></a></h3>
-<ul><li>Fixes a bug where scenario results could not be saved or loaded when scenario name contains a slash or a backslash (<a href="https://github.com/esqLABS/esqlabsR/issues/548" class="external-link">#548</a>, 1)</li>
-<li>Add support for <code>nsd</code> argument from <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotPopulationTimeProfile.html" class="external-link">ospsuite::plotPopulationTimeProfile()</a></code> aggregation methods. A new column <code>nsd</code> was added to the <code>PlotConfiguration</code> sheet in the example <code>Plot.xlsx</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/544" class="external-link">#544</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>).</li>
-<li>Documentation includes PK-Sim installation instructions (<a href="https://github.com/esqLABS/esqlabsR/issues/537" class="external-link">#537</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>).</li>
-<li>Better error message if some ids are not uniques in the excel configuration files (<a href="https://github.com/esqLABS/esqlabsR/issues/568" class="external-link">#568</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>)<br></li>
-<li>Handles better empty rows in the excel configuration files (<a href="https://github.com/esqLABS/esqlabsR/issues/569" class="external-link">#569</a>, <a href="https://github.com/Felixmil" class="external-link">@Felixmil</a>)</li>
+<ul><li>Fixes a bug where scenario results could not be saved or loaded when scenario name contains a slash or a backslash (<a href="https://github.com/esqLABS/esqlabsR/issues/548" class="external-link">#548</a>)</li>
+<li>Add support for <code>nsd</code> argument from <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotPopulationTimeProfile.html" class="external-link">ospsuite::plotPopulationTimeProfile()</a></code> aggregation methods. A new column <code>nsd</code> was added to the <code>PlotConfiguration</code> sheet in the example <code>Plot.xlsx</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/544" class="external-link">#544</a>).</li>
+<li>Documentation includes PK-Sim installation instructions (<a href="https://github.com/esqLABS/esqlabsR/issues/537" class="external-link">#537</a>).</li>
+<li>Better error message if some ids are not unique in the excel configuration files (<a href="https://github.com/esqLABS/esqlabsR/issues/568" class="external-link">#568</a>)</li>
+<li>Handles better empty rows in the excel configuration files (<a href="https://github.com/esqLABS/esqlabsR/issues/569" class="external-link">#569</a>)</li>
 <li>Cleaner NEWS file (<a href="https://github.com/esqLABS/esqlabsR/issues/527" class="external-link">#527</a>).</li>
 </ul></div>
 </div>
@@ -100,9 +101,9 @@
 <h3 id="breaking-changes-5-1-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-5-1-0"></a></h3>
 <ul><li>
 <p>When importing observed data using the default importer configuration, data set naming is grouped by <code>StudyId</code> at the first place.</p>
-<ul><li>Before: <code>{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>
+<ul><li>Before: <code>{Molecule}_{Study Id}_{Subject     Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>
 </li>
-<li>After: <code>{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>
+<li>After: <code>{Study Id}_{Molecule}_{Subject     Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>
 </li>
 </ul><p>This will result in different data set names, and plots specifying the data sets by the old naming will fail. For compatibility, use custom importer configuration with the old naming:</p>
 <pre><code><span>  <span class="va">importerConfiguration</span> <span class="op">&lt;-</span> <span class="fu">ospsuite</span><span class="fu">::</span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html" class="external-link">loadDataImporterConfiguration</a></span><span class="op">(</span></span>
@@ -124,7 +125,7 @@
 <li>
 <code>quantiles</code> (default): population results are plotted as quantiles defined in the column <code>quantiles</code>.</li>
 </ul></li>
-<li><p>Protein ontogenies can be defined for populations and individuals. To specify ontogenies for proteins in the simulation, list the proteins you want to define ontogenies for in the column ‘Protein’ of files ‘PopulationParameters.xlsx’ or ‘Individuals.xlsx’, separated by a ‘,’. Speficy the ontogenies available in PK-Sim (see article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies" class="external-link uri">https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies</a>) in the column ‘Ontogenies’. The number of entries in the both columns must be equal.</p></li>
+<li><p>Protein ontogenies can be defined for populations and individuals. To specify ontogenies for proteins in the simulation, list the proteins you want to define ontogenies for in the column ‘Protein’ of files ‘PopulationParameters.xlsx’ or ‘Individuals.xlsx’, separated by a ‘,’. Specify the ontogenies available in PK-Sim (see article <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies" class="external-link uri">https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies</a>) in the column ‘Ontogenies’. The number of entries in the both columns must be equal.</p></li>
 <li><p>Excel file ‘PopulationParameters.xlsx’ gets additional columns ‘Protein’ and ‘Ontogeny’.</p></li>
 <li><p>Excel file ‘Individuals.xlsx’ gets additional columns ‘Protein’ and ‘Ontogeny’.</p></li>
 </ul></div>
@@ -137,10 +138,7 @@
 <li><p>Show a meaningful error when no time unit is specified for a scenario (<a href="https://github.com/esqLABS/esqlabsR/issues/483" class="external-link">#483</a>)</p></li>
 <li><p>New vignette/article about figure creation.</p></li>
 <li><p>Plots are using new color palette.</p></li>
-<li>
-<p>Some modifications to plot configuration files for better plots. (<a href="https://github.com/esqLABS/esqlabsR/issues/456" class="external-link">#456</a>,</p>
-<ol class="example" style="list-style-type: decimal"><li>
-</li></ol></li>
+<li><p>Some modifications to plot configuration files for better plots. (<a href="https://github.com/esqLABS/esqlabsR/issues/456" class="external-link">#456</a>)</p></li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -183,7 +181,7 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 </ul></li>
 </ul><p><code>readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)</code></p>
 <ul><li><p><code>ProjectConfiguration</code> gets a new field <code>plotsFile</code>. It is the name of the excel file with plot definitions and must be located in the <code>paramsFolder</code>.</p></li>
-<li><p>When defining an individual of other species than human in <code>ScenarioConfiguration</code> and applying it to a human model, missing species-specific parameters are applied and the scaling works properly. Supported scalingsa are: Human to rat, human to monkey, human to rabbit.</p></li>
+<li><p>When defining an individual of other species than human in <code>ScenarioConfiguration</code> and applying it to a human model, missing species-specific parameters are applied and the scaling works properly. Supported scalings are: Human to rat, human to monkey, human to rabbit.</p></li>
 <li><p><code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> does not perform steady-state run any more. This is done as part of the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function.</p></li>
 <li><p>New function <code><a href="../reference/loadObservedDataFromPKML.html">loadObservedDataFromPKML()</a></code> to load data from <code>*.pkml</code> located in the “PKML” sub-folder of the “Data” folder.</p></li>
 <li><p>New function <code><a href="../reference/createScenarios.html">createScenarios()</a></code> to create <code>Scenario</code> objects from <code>ScenarioConfiguration</code> objects.</p></li>
@@ -201,8 +199,8 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 <ul><li><p>Function <code><a href="../reference/stringToNum.html">stringToNum()</a></code> gets additional arguments <code>lloqMode</code> and <code>uloqMode</code> that determine how entries of type “&lt;number” and “&gt;number” will be treated.</p></li>
 <li><p><code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> will read all scenarios defined in the <code>Scenarios.xlsx</code> file if no scenario names are specified (argument <code>scenarioNames = NULL</code>).</p></li>
 <li><p>Function <code><a href="../reference/setApplications.html">setApplications()</a></code> is deprecated.</p></li>
-<li><p>Dark grey frame around legends by default.</p></li>
-</ul><hr></div>
+<li><p>Dark gray frame around legends by default.</p></li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="4.0.0" id="esqlabsr-400">esqlabsR 4.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-400"></a></h2>
@@ -230,7 +228,7 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 <li><p>New function <code><a href="../reference/getAllApplicationParameters.html">getAllApplicationParameters()</a></code> that returns all parameters of applications in a simulation</p></li>
 <li><p>New function <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> to write parameter information into an excel file that can be loaded in MoBi or R using the <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function.</p></li>
 <li><p>New function <code>writeExcel()</code> that is a wrapper for creating a directory (if not present) and writing to excel file using <code><a href="https://docs.ropensci.org/writexl/reference/write_xlsx.html" class="external-link">writexl::write_xlsx()</a></code>.</p></li>
-</ul><hr></div>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="3.0.0" id="esqlabsr-300">esqlabsR 3.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-300"></a></h2>
@@ -253,12 +251,12 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 </ul></li>
 <li><p>Maintenance and bug fixes.</p></li>
 <li><p>The package gains a new dependency: <a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/" class="external-link"><code>{ospsuite.utils}</code></a>.</p></li>
-</ul><hr></div>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.0" id="esqlabsr-200">esqlabsR 2.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-200"></a></h2>
 <ul><li>Maintenance and bug fixes.</li>
-</ul><hr></div>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="esqlabsr-100">esqlabsR 1.0.0<a class="anchor" aria-label="anchor" href="#esqlabsr-100"></a></h2>
 <ul><li>Initial release of the package.</li>
