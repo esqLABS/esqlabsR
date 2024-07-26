@@ -39,24 +39,14 @@ Currently, esqlabsR is available only for Windows system. You can
 install the package by running:
 
 ``` r
-# {esqlabsR} and its Open Systems Pharmacology Suite's dependencies relies on
-# {rClr} (https://github.com/Open-Systems-Pharmacology/rClr) which is not
-# available on CRAN.
-# Therefore, these must be installed from github using `{remotes}`.
-
-install.packages("remotes")
-install.packages("https://github.com/Open-Systems-Pharmacology/rClr/releases/download/v0.9.2/rClr_0.9.2.zip",
-  repos = NULL,
-  type = "binary"
-)
-
-remotes::install_github("esqLABS/esqlabsR@*release")
+install.packages("pak")
+pak::pak("esqLABS/esqlabsR@*release")
 ```
 
 Get the latest development version with:
 
 ``` r
-remotes::install_github("esqLABS/esqlabsR")
+pak::pak("esqLABS/esqlabsR")
 ```
 
 Note: For projects created for version 3 of `esqlabsR` package, install
@@ -123,7 +113,7 @@ the specific topics:
 `{esqlabsR}` relies on the following Open Systems Pharmacology R
 packages:
 
-- [rClr](https://github.com/Open-Systems-Pharmacology/rClr/)
+- [rSharp](https://github.com/Open-Systems-Pharmacology/rSharp/)
 - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
 - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
 - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
