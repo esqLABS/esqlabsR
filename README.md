@@ -5,12 +5,9 @@
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/R-CMD-check.yaml)
+[![](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/main-workflow.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/main-workflow.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
-[![pkgdown](https://github.com/esqLABS/esqlabsR/actions/workflows/pkgdown.yml/badge.svg)](https://github.com/esqLABS/esqlabsR/actions/workflows/pkgdown.yml)
-[![Download Latest
-Build](https://custom-icon-badges.demolab.com/badge/-Download-blue?style=for-the-badge&logo=download&logoColor=white "Download Latest Build")](https://nightly.link/esqLABS/esqlabsR/workflows/R-CMD-check.yml/main/built_package.zip)
 <!-- badges: end -->
 
 The `{esqlabsR}` package facilitates and standardizes the modeling and
@@ -122,9 +119,9 @@ packages:
 ## Contributing
 
 - Follow the OSPS-R [coding
-  standards](https://github.com/Open-Systems-Pharmacology/Suite/blob/develop/CODING_STANDARDS_R.md).
-- Some additional useful information can be found
-  [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R/wiki/Developer-How-To's).
+  standards](https://dev.open-systems-pharmacology.org/r-development-resources/coding_standards_r).
+- Our contribution guide can be found
+  [here](https://dev.open-systems-pharmacology.org/r-development-resources/collaboration_guide).
 
 ## Code of Conduct
 
