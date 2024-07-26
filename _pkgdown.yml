@@ -84,7 +84,6 @@ articles:
 - title: Miscellaneous
   navbar: Miscellaneous
   contents:
-  - install-pksim
   - presentations
   - esqlabsR-sensitivity
   - esqlabsR-advanced
