@@ -2,63 +2,80 @@
 
 ## Breaking changes
 
-- Function `exportSteadyStateToXLS` has been removed in favor of `ospsuite::exportSteadyStateToXLS` (#598, @PavelBal)
+  - `{esqlabsR}` now requires `{ospsuite}` version 12.1.0 or higher to benefit from
+    embeded PK-Sim core files.
 
-- Function `sensitivitySpiderPlot` overhauled with new parameters. `yAxisType` to toggle between `percent`and
-  `absolute` values. `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. `yAxisFacetScales`
-  to choose between `free` and `fixed` scales for y-axis. Further plot customization options through
-  `defaultPlotConfiguration` (\#632, @rengelke).
+  - Function `exportSteadyStateToXLS` has been removed in favor of
+    `ospsuite::exportSteadyStateToXLS` (\#598)
+
+  - Function `sensitivitySpiderPlot` overhauled with new parameters. `yAxisType`
+    to toggle between `percent`and `absolute` values. `xAxisScale` and
+    `yAxisScale` to set axis scales to `log` or `lin`. `yAxisFacetScales` to
+    choose between `free` and `fixed` scales for y-axis. Further plot
+    customization options through `defaultPlotConfiguration` (\#632).
   
-- Function `sensitivityTimeProfiles` with new signature. Introduced parameters `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More plot customization options through `defaultPlotConfiguration` as described in the documentation. Plots have improved color palette, scaling and legend colors (\#669, @rengelke).
+  - Function `sensitivityTimeProfiles` with new signature. Introduced parameters
+    `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More
+    plot customization options through `defaultPlotConfiguration` as described
+    in the documentation. Plots have improved color palette, scaling and legend
+    colors (\#669).
 
-- Function `sensitivityTimeProfiles` updated. Observed data (single or multiple `DataSet` objects) can now be added to the plots and will be included automatically in the `outputPath` if the dimensions are convertible (\#674, @rengelke).
+  - Function `sensitivityTimeProfiles` updated. Observed data (single or
+    multiple `DataSet` objects) can now be added to the plots and will be
+    included automatically in the `outputPath` if the dimensions are convertible
+    (\#674).
 
-- Function `writeExcel()` is no longer exported. (\#672)
+  - Function `writeExcel()` is no longer exported. (\#672)
 
 ## Major Changes
 
-- New `sensitivityTornadoPlot` function for generating tornado plots that evaluate 
-the impact of parameter changes on sensitivity analysis outcomes. It utilizes `parameterFactor` 
-to depict the scaling effects of parameter modifications. Provides plot customization options 
-through `defaultPlotConfiguration` (\#652, @rengelke).
+  - New `sensitivityTornadoPlot` function for generating tornado plots that
+    evaluate the impact of parameter changes on sensitivity analysis outcomes.
+    It utilizes `parameterFactor` to depict the scaling effects of parameter
+    modifications. Provides plot customization options through
+    `defaultPlotConfiguration` (\#652).
 
-- New function `writeParameterStructureToXLS` to write a list of parameter paths,
-values, and units (e.g., imported using the `readParametersFromXLS()` function)
-to an Excel file. In contrast to `exportParametersToXLS()`, which writes 
-an excel file for a list of `Parameter` objects, this function 
-expects the parameter structure as used thorughout the package.
+  - New function `writeParameterStructureToXLS` to write a list of parameter
+    paths, values, and units (e.g., imported using the `readParametersFromXLS()`
+    function) to an Excel file. In contrast to `exportParametersToXLS()`, which
+    writes an excel file for a list of `Parameter` objects, this function
+    expects the parameter structure as used thorughout the package.
 
 ## Minor improvements and bug fixes
 
-- Function `createScenarios` gets a new argument `stopIfParameterNotFound`.
-If `TRUE` (default), a scenario will not be created and an error is thrown if 
-any user-defined parameter (e.g., provided in Excel files) is not found in the
-simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
+  - Function `createScenarios` gets a new argument `stopIfParameterNotFound`. If
+    `TRUE` (default), a scenario will not be created and an error is thrown if
+    any user-defined parameter (e.g., provided in Excel files) is not found in
+    the simulation. If `FALSE`, non-existing parameters are ignored. (\#559)
 
-- Constructor of a `Scenario` class gets a new argument `stopIfParameterNotFound`.
+  - Constructor of a `Scenario` class gets a new argument
+    `stopIfParameterNotFound`.
 
-- More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is defined.
+  - More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is
+    defined.
 
 
 # esqlabsR 5.1.3
 
 ## Minor improvements and bug fixes
 
-- Continuous Integration/Continuous Deployment pipeline improvements (#590, #592, #601, @Felixmil)
-- Several bug fixes (#581, #585, #594, #600, @PavelBal)
+  - Continuous Integration/Continuous Deployment pipeline improvements (\#590,
+    \#592, \#601)
+  - Several bug fixes (\#581, \#585, \#594, \#600)
 
 # esqlabsR 5.1.2
 
 ## Minor improvements and bug fixes
 
   - Fixes a bug where scenario results could not be saved or loaded when
-    scenario name contains a slash or a backslash (\#548, @PavelBal)
+    scenario name contains a slash or a backslash (\#548)
   - Add support for `nsd` argument from `ospsuite::plotPopulationTimeProfile()`
     aggregation methods. A new column `nsd` was added to the `PlotConfiguration`
-    sheet in the example `Plot.xlsx` (\#544, @Felixmil).
-  - Documentation includes PK-Sim installation instructions (\#537, @Felixmil).
-  - Better error message if some ids are not uniques in the excel configuration files (\#568, @Felixmil)    
-  - Handles better empty rows in the excel configuration files (\#569, @Felixmil)
+    sheet in the example `Plot.xlsx` (\#544).
+  - Documentation includes PK-Sim installation instructions (\#537).
+  - Better error message if some ids are not uniques in the excel configuration
+    files (\#568)
+  - Handles better empty rows in the excel configuration files (\#569)
   - Cleaner NEWS file (\#527).
 
 # esqlabsR 5.1.1
@@ -71,8 +88,10 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
 
   - When importing observed data using the default importer configuration, data
     set naming is grouped by `StudyId` at the first place.
-      - Before: `{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
-      - After: `{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+      - Before: `{Molecule}_{Study Id}_{Subject
+        Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
+      - After: `{Study Id}_{Molecule}_{Subject
+        Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
         
     This will result in different data set names, and plots specifying the
     data sets by the old naming will fail. For compatibility, use custom
@@ -145,8 +164,7 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
   
   - Plots are using new color palette.
   
-  - Some modifications to plot configuration files for better plots. (\#456,
-    @PavelBal)
+  - Some modifications to plot configuration files for better plots. (\#456)
 
 # esqlabsR 5.0.0
 
@@ -231,8 +249,8 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
       - Create a `ProjectConfiguration` with
         `createDefaultProjectConfiguration()`
       - Create `ScenarioConfigurations`, e.g. with
-            readScenarioConfigurationFromExcel(scenarioNames,
-            projectConfiguration)`
+        readScenarioConfigurationFromExcel(scenarioNames,
+        projectConfiguration)\`
       - Run scenarios with `runScenarios(scenarioConfigurations)` Alternatively:
       - Create a `ProjectConfiguration` with
         `createDefaultProjectConfiguration()`
@@ -300,7 +318,6 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
   
   - Dark grey frame around legends by default.
 
------
 
 # esqlabsR 4.0.0
 
@@ -342,7 +359,6 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
     not present) and writing to excel file using `writexl::write_xlsx()`.
 
 
------
 
 # esqlabsR 3.0.0
 
@@ -366,13 +382,10 @@ simulation. If `FALSE`, non-existing parameters are ignored. (#559, @PavelBal)
   - The package gains a new dependency:
     [`{ospsuite.utils}`](https://www.open-systems-pharmacology.org/OSPSuite.RUtils/).
 
------
 
 # esqlabsR 2.0.0
 
   - Maintenance and bug fixes.
-
------
 
 # esqlabsR 1.0.0
 
