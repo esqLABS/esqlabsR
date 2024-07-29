@@ -235,108 +235,6 @@
       10           0                  NaN      
       # i 14 more rows
 
-# sensitivityCalculation time series dataframe is as expected
-
-    Code
-      df1_ts
-    Output
-      $charColumnSummary
-      # A tibble: 1 x 6
-        OutputPath                                                               
-        <chr>                                                                    
-      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-        ParameterPath           TimeDimension TimeUnit Dimension             Unit  
-        <chr>                   <chr>         <chr>    <chr>                 <chr> 
-      1 Aciclovir|Lipophilicity Time          min      Concentration (molar) µmol/l
-      
-      $numericColumnSummary
-      # A tibble: 5 x 7
-        column          Min.        `1st Qu.`   Median      Mean        `3rd Qu.`  
-        <chr>           <table[1d]> <table[1d]> <table[1d]> <table[1d]> <table[1d]>
-      1 ParameterFactor   0.10        0.7750      1.5000      5.7750       6.50000 
-      2 ParameterValue   -1.94       -0.6305     -0.1455     -0.5602      -0.07518 
-      3 Time              0.00      336.0000    705.0000    705.4888    1074.00000 
-      4 Concentration     0.00        0.1159      0.4693      3.4824       2.79714 
-      5 molWeight       225.21      225.2100    225.2100    225.2100     225.21000 
-        Max.       
-        <table[1d]>
-      1   20.0000  
-      2   -0.0097  
-      3 1440.0000  
-      4   69.1507  
-      5  225.2100  
-      
-
----
-
-    Code
-      df2_ts
-    Output
-      $charColumnSummary
-      # A tibble: 1 x 6
-        OutputPath                                                               
-        <chr>                                                                    
-      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-        ParameterPath                                                    
-        <chr>                                                            
-      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
-        TimeDimension TimeUnit Dimension             Unit  
-        <chr>         <chr>    <chr>                 <chr> 
-      1 Time          min      Concentration (molar) µmol/l
-      
-      $numericColumnSummary
-      # A tibble: 5 x 7
-        column          Min.        `1st Qu.`   Median      Mean        `3rd Qu.`  
-        <chr>           <table[1d]> <table[1d]> <table[1d]> <table[1d]> <table[1d]>
-      1 ParameterFactor   0.100000    0.7750000   1.500000    5.775000     6.500000
-      2 ParameterValue    0.000025    0.0001937   0.000375    0.001444     0.001625
-      3 Time              0.000000  336.0000000 705.000000  705.488798  1074.000000
-      4 Concentration     0.000000    0.1381199   0.981653   19.741239     6.778747
-      5 molWeight       225.210000  225.2100000 225.210000  225.210000   225.210000
-        Max.       
-        <table[1d]>
-      1   20.000   
-      2    0.005   
-      3 1440.000   
-      4 1005.055   
-      5  225.210   
-      
-
----
-
-    Code
-      df3_ts
-    Output
-      $charColumnSummary
-      # A tibble: 1 x 6
-        OutputPath                                                               
-        <chr>                                                                    
-      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-        ParameterPath                                                                 
-        <chr>                                                                         
-      1 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fr~
-        TimeDimension TimeUnit Dimension             Unit  
-        <chr>         <chr>    <chr>                 <chr> 
-      1 Time          min      Concentration (molar) µmol/l
-      
-      $numericColumnSummary
-      # A tibble: 5 x 7
-        column          Min.        `1st Qu.`   Median      Mean        `3rd Qu.`  
-        <chr>           <table[1d]> <table[1d]> <table[1d]> <table[1d]> <table[1d]>
-      1 ParameterFactor   0.1         0.775       1.5000      5.775        6.500   
-      2 ParameterValue    0.1         0.775       1.5000      5.775        6.500   
-      3 Time              0.0       336.000     705.0000    705.489     1074.000   
-      4 Concentration     0.0         0.083       0.4509      3.065        2.758   
-      5 molWeight       225.2       225.210     225.2100    225.210      225.210   
-        Max.       
-        <table[1d]>
-      1   20.00    
-      2   20.00    
-      3 1440.00    
-      4   51.26    
-      5  225.21    
-      
-
 # sensitivityCalculation applies custom PK parameter function correctly with multiple output paths
 
     Code
@@ -392,3 +290,4 @@
        9           0                    0      
       10           0                  NaN      
       # i 17 more rows
+
