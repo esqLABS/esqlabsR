@@ -236,7 +236,7 @@ saveScenarioResults <- function(
 #' Load simulated scenarios from csv and pkml.
 #'
 #' @param scenarioNames Names of simulated scenarios
-#' @param resultsFolder Path to the folder where simulation results as scv and
+#' @param resultsFolder Path to the folder where simulation results as csv and
 #' the corresponding simulations as pkml are located.
 #'
 #' @details This function requires simulation results AND the corresponding
