@@ -46,9 +46,11 @@ test_that("sensitivitySpiderPlot default plots are as expected", {
   p <- sensitivitySpiderPlot(results)
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "sensitivitySpiderPlot works as expected",
-    fig = suppressWarnings(p)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivitySpiderPlot works as expected",
+      fig = p
+    )
   )
 })
 
@@ -93,9 +95,11 @@ test_that("sensitivitySpiderPlot correctly applies absolute y-axis values", {
   p <- sensitivitySpiderPlot(results, yAxisType = "absolute")
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "sensitivitySpiderPlot works as expected with absolute y-values",
-    fig = suppressWarnings(p)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivitySpiderPlot works as expected with absolute y-values",
+      fig = p
+    )
   )
 
   pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
@@ -162,7 +166,7 @@ parameterPaths <- c(
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
 
-results_multiple <- sensitivityCalculation(
+resultsMultiple <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths,
@@ -171,12 +175,14 @@ results_multiple <- sensitivityCalculation(
 
 test_that("sensitivitySpiderPlot plots are as expected for multiple output paths", {
   set.seed(123)
-  plots_multiple <- sensitivitySpiderPlot(results_multiple)
+  plotsMultiple <- sensitivitySpiderPlot(resultsMultiple)
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "multiple output path spiders",
-    fig = suppressWarnings(plots_multiple)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path spiders",
+      fig = plotsMultiple
+    )
   )
 })
 
@@ -188,17 +194,19 @@ pkParametersFilter <- c("C_max", "t_max")
 
 test_that("sensitivitySpiderPlot plots are as expected with filters", {
   set.seed(123)
-  spider_plot_filtered <- sensitivitySpiderPlot(
-    results_multiple,
+  plotFiltered <- sensitivitySpiderPlot(
+    resultsMultiple,
     outputPaths = outputPathsFilter,
     parameterPaths = parameterPathsFilter,
     pkParameters = pkParametersFilter
   )
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "filtered spider",
-    fig = suppressWarnings(spider_plot_filtered)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "filtered spider",
+      fig = plotFiltered
+    )
   )
 })
 

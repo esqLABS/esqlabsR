@@ -60,9 +60,11 @@ test_that("sensitivityTornadoPlot default plots are as expected", {
   p <- sensitivityTornadoPlot(results)
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "sensitivityTornadoPlot works as expected",
-    fig = suppressWarnings(p)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivityTornadoPlot works as expected",
+      fig = p
+    )
   )
 })
 
@@ -116,9 +118,11 @@ test_that("sensitivityTornadoPlot plots are as expected for multiple output path
   plotsMultiple <- sensitivityTornadoPlot(resultsMultiple)
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "multiple output path tornado",
-    fig = suppressWarnings(plotsMultiple)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path tornado",
+      fig = plotsMultiple
+    )
   )
 })
 
@@ -130,7 +134,7 @@ pkParametersFilter <- c("AUC_inf", "C_max")
 
 test_that("sensitivityTornadoPlot plots are as expected with filters", {
   set.seed(123)
-  tornadoPlotFiltered <- sensitivityTornadoPlot(
+  plotFiltered <- sensitivityTornadoPlot(
     resultsMultiple,
     outputPaths = outputPathsFilter,
     parameterPaths = parameterPathsFilter,
@@ -138,9 +142,11 @@ test_that("sensitivityTornadoPlot plots are as expected with filters", {
   )
 
   set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "filtered tornado",
-    fig = suppressWarnings(tornadoPlotFiltered)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "filtered tornado",
+      fig = plotFiltered
+    )
   )
 })
 

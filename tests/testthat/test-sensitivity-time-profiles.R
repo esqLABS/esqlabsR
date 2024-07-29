@@ -30,6 +30,16 @@ results <- sensitivityCalculation(
   variationRange = variationRange
 )
 
+# load observed data
+filePath <- testthat::test_path("../data/AciclovirLaskinData.xlsx")
+dataConfiguration <- createImporterConfigurationForFile(filePath = filePath)
+dataConfiguration$sheets <- "Laskin 1982.Group A"
+dataConfiguration$namingPattern <- "{Source}.{Sheet}"
+obsData <<- loadDataSetsFromExcel(
+  xlsFilePath = filePath,
+  importerConfigurationOrPath = dataConfiguration
+)
+
 # validating plotting arguments -------------------------
 
 test_that("sensitivityTimeProfiles fails with incorrect input objects", {
@@ -83,10 +93,21 @@ test_that("sensitivityTimeProfiles correctly applies linear y-axis scaling", {
   expect_snapshot(unlist(plotParams))
 })
 
+test_that("sensitivityTimeProfiles plots correctly with inclusion of observed data", {
+  set.seed(123)
+  p <- sensitivityTimeProfiles(results, observedData = obsData)
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivityTimeProfiles works with observed data",
+      fig = p
+    )
+  )
+})
+
 # multiple output paths -------------------------------------
 
-simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
 outputPaths <- c(
   "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
   "Organism|Age",
@@ -98,22 +119,94 @@ parameterPaths <- c(
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
 
-results_multiple <- sensitivityCalculation(
+resultsMultiple <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths,
-  variationRange = c(1, 5, 10)
+  variationRange = c(0.2, 1, 5, 10)
 )
 
 test_that("sensitivityTimeProfiles plots are as expected for multiple output paths", {
   set.seed(123)
-  p_list <- sensitivityTimeProfiles(results)
+  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple)
 
   set.seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles",
-      fig = suppressWarnings(p_list)
+      fig = plotsMultiple
+    )
+  )
+})
+
+test_that("sensitivityTimeProfiles plots correctly for multiple outputs with observed data", {
+  set.seed(123)
+  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple, observedData = obsData)
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path profiles with observed data",
+      fig = plotsMultiple
+    )
+  )
+})
+
+
+# multiple output paths with multiple observed data
+obsData1 <- loadDataSetsFromExcel(
+  xlsFilePath = filePath,
+  importerConfigurationOrPath = dataConfiguration
+)
+obsData2 <- loadDataSetsFromExcel(
+  xlsFilePath = filePath,
+  importerConfigurationOrPath = dataConfiguration
+)
+
+obsDataMultiple <- c(obsData1, obsData2)
+# Rename one of the data sets and shift its values
+names(obsDataMultiple)[2] <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
+obsDataMultiple[[2]]$name <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
+obsDataMultiple[[2]]$addMetaData("Study Id", "Laskin 1982.Group A - Mock")
+obsDataMultiple[[2]]$setValues(obsDataMultiple[[2]]$xValues, obsDataMultiple[[2]]$yValues + 0.1)
+
+test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data with same dimension", {
+  set.seed(123)
+  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
+    observedData = obsDataMultiple
+  )
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path profiles with 2 observed data same dimension - concentration",
+      fig = plotsMultiple[[3]]
+    )
+  )
+})
+
+# create mock observed data with "Amount" dimension
+obsDataMultiple[[2]]$yDimension <- "Amount"
+obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
+
+test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data with different dimensions", {
+  set.seed(123)
+  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
+    observedData = obsDataMultiple
+  )
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path profiles with 2 observed data - amount",
+      fig = plotsMultiple[[2]]
+    )
+  )
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "multiple output path profiles with 2 observed data - concentration",
+      fig = plotsMultiple[[3]]
     )
   )
 })
@@ -125,8 +218,8 @@ parameterPathsFilter <- "Aciclovir|Lipophilicity"
 
 test_that("sensitivityTimeProfiles plots are as expected with filters", {
   set.seed(123)
-  profile_plot_filtered <- sensitivityTimeProfiles(
-    results_multiple,
+  plotFiltered <- sensitivityTimeProfiles(
+    resultsMultiple,
     outputPaths = outputPathsFilter,
     parameterPaths = parameterPathsFilter
   )
@@ -135,7 +228,7 @@ test_that("sensitivityTimeProfiles plots are as expected with filters", {
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "filtered profile",
-      fig = suppressWarnings(profile_plot_filtered)
+      fig = plotFiltered
     )
   )
 })

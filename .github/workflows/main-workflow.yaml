@@ -1,0 +1,35 @@
+name: Main-Workflow
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions: write-all
+
+jobs:
+  bump-dev-version: # only do that when actually merging in main/develop branch
+    if: github.event_name != 'pull_request'
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/bump_dev_version_tag_branch.yaml@main
+    with:
+      app-id: ${{ vars.ACTIONS_MANAGER_APPID }}
+    secrets:
+      private-key: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
+
+
+  R-CMD-Check:
+    if: ${{ !cancelled() }}
+    needs: [bump-dev-version]
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
+
+  test-coverage:
+    if: ${{ !cancelled() }}
+    needs: [bump-dev-version]
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/test-coverage.yaml@main
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  pkgdown:
+    if: ${{ !cancelled() }}
+    needs: [bump-dev-version]
+    uses:  Open-Systems-Pharmacology/Workflows/.github/workflows/pkgdown.yaml@main

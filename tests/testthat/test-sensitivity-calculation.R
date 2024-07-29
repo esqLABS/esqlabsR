@@ -265,7 +265,7 @@ test_that("sensitivityCalculation fails early with incorrect `customOutputFuncti
       parameterPaths = parameterPaths,
       variationRange = c(0.1, 2, 20),
       customOutputFunctions = list(
-        "funA"= function(x) x, function (y) y, "funC"= function(x) x^2
+        "funA" = function(x) x, function(y) y, "funC" = function(x) x^2
       )
     ),
     "argument 'names\\(customOutputFunctions\\)' has empty strings"
@@ -279,7 +279,9 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
       outputPaths = outputPaths,
       parameterPaths = parameterPaths,
       variationRange = c(0.1, 2, 20),
-      customOutputFunctions = list("invalid" = function (x, y, z) {x / y * z})
+      customOutputFunctions = list("invalid" = function(x, y, z) {
+        x / y * z
+      })
     ),
     "The user-defined function must have either 'x', 'y', or both 'x' and 'y'"
   )
@@ -424,27 +426,6 @@ test_that("sensitivityCalculation PK parameters wide dataframe column names and 
       "Vd_PercentChange", "Vd_Sensitivity"
     )
   )
-})
-
-test_that("sensitivityCalculation time series dataframe is as expected", {
-  # also extract and add time series data for testing
-  results$tsData <- esqlabsR:::.simulationResultsBatchToTimeSeriesDataFrame(
-    simulationResultsBatch = results$simulationResults,
-    parameterPaths = results$parameterPaths,
-    outputPaths = results$outputPaths
-  )
-
-  set.seed(123)
-  df1_ts <- summarizer(results$tsData, parameterPaths[1])
-  expect_snapshot(df1_ts)
-
-  set.seed(123)
-  df2_ts <- summarizer(results$tsData, parameterPaths[2])
-  expect_snapshot(df2_ts)
-
-  set.seed(123)
-  df3_ts <- summarizer(results$tsData, parameterPaths[3])
-  expect_snapshot(df3_ts)
 })
 
 # multiple output paths -------------------------------------

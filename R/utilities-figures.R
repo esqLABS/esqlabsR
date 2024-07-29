@@ -160,6 +160,9 @@ createEsqlabsPlotConfiguration <- function() {
   # Points size
   defaultPlotConfiguration$pointsSize <- 1.75
 
+  # Points shape
+  defaultPlotConfiguration$pointsShape <- scales::shape_pal()(6)
+
   # Error bars size
   defaultPlotConfiguration$errorbarsSize <- 0.65
   defaultPlotConfiguration$errorbarsCapSize <- 2.75
@@ -243,7 +246,7 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: o
   # NULL is not supported by ExportConfiguration, so we should assign here
   # something useful. NULL in the ProjectConfiguration currently means "do not
   # export".
-  exportConfiguration$format <- "PNG"
+  exportConfiguration$format <- "png"
   exportConfiguration$width <- 18
   # exportConfiguration$height <- 18
   exportConfiguration$heightPerRow <- 12
