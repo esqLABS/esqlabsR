@@ -26,6 +26,9 @@
     multiple `DataSet` objects) can now be added to the plots and will be
     included automatically in the `outputPath` if the dimensions are convertible
     (\#674).
+    
+  - Function `sensitivityCalculation()` supports new parameter `customOutputFunctions`, 
+    allowing user-defined functions for PK parameter calculation (\#685).
 
   - Function `writeExcel()` is no longer exported. (\#672)
 
