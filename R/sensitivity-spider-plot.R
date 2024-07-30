@@ -239,22 +239,13 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
             "PK-Parameter value"
           )
         }
-        #  breaks and limits based on entire data
-        pBreaks <- .calculateBreaks(data[, yColumn],
-          m = plotConfiguration$yAxisTicks,
-          Q = c(0, 100, 200, 300)
-        )
-        pLimits <- .calculateLimits(data[, yColumn])
+        # limits based on entire data
+        pLimits <- .calculateLimits(unlist(data[, yColumn]))
       } else {
         # free y-axis scale
         #   use PK parameter name with it's unit
         plotConfiguration$yLabel <- paste0(
           dataSubset$PKParameter[1], " [", dataSubset$Unit[1], "]"
-        )
-        #   calculate breaks and limits using PK parameter data subset
-        pBreaks <- .calculateBreaks(
-          x = dataSubset[, yColumn],
-          m = plotConfiguration$yAxisTicks
         )
         pLimits <- NULL
       }
@@ -291,15 +282,20 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         plot <- plot +
           scale_y_log10(
             limits = pLimits,
-            breaks = pBreaks,
-            minor_breaks = pBreaks
+            expand = expansion(mult = c(0.01, 0.1)),
+            breaks = scales::breaks_log(
+              n = plotConfiguration$yAxisTicks
+            ),
+            labels = scales::label_log()
           )
       } else {
         plot <- plot +
           scale_y_continuous(
             limits = pLimits,
-            breaks = pBreaks,
-            minor_breaks = pBreaks
+            breaks = scales::breaks_extended(
+              n = plotConfiguration$yAxisTicks
+            ),
+            labels = scales::label_number_auto()
           )
       }
 

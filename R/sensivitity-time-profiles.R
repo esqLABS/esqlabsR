@@ -207,11 +207,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   }
 
-  # calculate y-axis breaks and limits -------
-  pLimits <- .calculateLimits(data$yValues)
-  pBreaks <- .calculateBreaks(
-    data$yValues,
-    m = 4, Q = c(0.01, 0.1, 100, 1000),
+  # calculate y-axis limits and color legend breaks -----
+  pLimits <- .calculateLimits(data$yValues,
     scaling = plotConfiguration$yAxisScale
   )
   cBreaks <- c(
@@ -225,6 +222,11 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     unique(data$ParameterPath) %>% .[!is.na(.)],
     ~ {
       dataSubset <- dplyr::filter(data, ParameterPath == .x)
+
+      # replace zeros dynamically to avoid warning when log transform
+      dataSubset$yValues <- ifelse(dataSubset$yValues <= 0,
+        pLimits[1], dataSubset$yValues
+      )
 
       # combine original data subset with observed data
       # add observed data if not-null
@@ -283,16 +285,17 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       if (isTRUE(plotConfiguration$yAxisScale == "log")) {
         plot <- plot +
           scale_y_log10(
-            limits = replace(pLimits, pLimits == 0, 0.001),
-            breaks = pBreaks,
-            labels = scales::label_number()
+            limits = pLimits,
+            expand = expansion(mult = c(0.01, 0.1)),
+            breaks = scales::breaks_log(),
+            labels = scales::label_log()
           )
       } else {
         plot <- plot +
           scale_y_continuous(
             limits = pLimits,
-            breaks = pBreaks,
-            labels = scales::label_number()
+            breaks = scales::breaks_extended(),
+            labels = scales::label_number_auto()
           )
       }
 
