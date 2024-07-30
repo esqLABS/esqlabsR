@@ -21,13 +21,13 @@ test_that("A warning is (not) displayed if path/file does not exist", {
 })
 
 
-test_that("Example ProjectConfiguration.xlsx exists and can be imported",{
+test_that("Example ProjectConfiguration.xlsx exists and can be imported", {
   expect_true(file.exists(example_ProjectConfiguration()))
   expect_true(isOfType(createDefaultProjectConfiguration(example_ProjectConfiguration()), "ProjectConfiguration"))
 })
 
 
-test_that("Test ProjectConfiguration.xlsx exists and can be imported",{
+test_that("Test ProjectConfiguration.xlsx exists and can be imported", {
   expect_true(file.exists(test_ProjectConfiguration()))
   expect_true(isOfType(createDefaultProjectConfiguration(test_ProjectConfiguration()), "ProjectConfiguration"))
 })

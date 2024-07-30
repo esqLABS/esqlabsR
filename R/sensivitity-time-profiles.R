@@ -208,7 +208,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   # calculate y-axis breaks and limits -------
   pLimits <- .calculateLimits(data$yValues,
-                              scaling = plotConfiguration$yAxisScale)
+    scaling = plotConfiguration$yAxisScale
+  )
   pBreaks <- .calculateBreaks(
     data$yValues,
     m = 5, Q = c(0.01, 0.1, 100, 1000),
@@ -228,7 +229,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
       # replace zeros dynamically to avoid warning when log transform
       dataSubset$yValues <- ifelse(dataSubset$yValues <= 0,
-                                   pLimits[1], dataSubset$yValues)
+        pLimits[1], dataSubset$yValues
+      )
 
       # combine original data subset with observed data
       # add observed data if not-null

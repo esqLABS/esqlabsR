@@ -704,7 +704,6 @@ createPlotsFromExcel <- function(
 #' @keywords internal
 #' @noRd
 .calculateLimits <- function(x, scaling = NULL) {
-
   if (!is.null(scaling) && scaling == "log") {
     limits <- c(
       min(x[x > 0], na.rm = TRUE) * 0.9,
