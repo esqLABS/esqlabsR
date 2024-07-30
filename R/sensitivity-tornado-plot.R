@@ -204,6 +204,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   pLimits[2] <- max(abs(pLimits))
 
   pBreaks <- .calculateBreaks(data$PercentChangePK, m = 5)
+  pBreaks <- unique(c(-1 * pBreaks, pBreaks))
 
   # map each PK parameter to its own plot ----
 
