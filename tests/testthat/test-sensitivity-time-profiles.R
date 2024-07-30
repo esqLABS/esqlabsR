@@ -87,10 +87,7 @@ test_that("sensitivityTimeProfiles correctly applies linear y-axis scaling", {
     )
   )
 
-  pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
-  plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)
-
-  expect_snapshot(unlist(plotParams))
+  expect_snapshot(extractAxisRange(p))
 })
 
 test_that("sensitivityTimeProfiles plots correctly with inclusion of observed data", {
@@ -103,6 +100,56 @@ test_that("sensitivityTimeProfiles plots correctly with inclusion of observed da
       title = "sensitivityTimeProfiles works with observed data",
       fig = p
     )
+  )
+})
+
+
+# unit conversion --------------------------------------------
+
+test_that("sensitivityTimeProfiles throws an error for non-list units", {
+  expect_error(
+    sensitivityTimeProfiles(results, xUnits = "h"),
+    "argument 'xUnits' is of type 'character', but expected 'list'"
+  )
+  expect_error(
+    sensitivityTimeProfiles(results, yUnits = "mol/l"),
+    "argument 'yUnits' is of type 'character', but expected 'list'"
+  )
+})
+
+test_that("sensitivityTimeProfiles throws an error if unit is not valid", {
+  # invalid unit
+  expect_error(
+    sensitivityTimeProfiles(results, yUnits = list("mol/kg")),
+    "Value 'mol/kg' is not in defined enumeration values"
+  )
+  # invalid x-axis unit
+  expect_error(
+    sensitivityTimeProfiles(results, xUnits = list("mol/l")),
+    "Value 'mol/l' is not in defined enumeration values"
+  )
+})
+
+test_that("sensitivityTimeProfiles plots correctly apply unit conversion", {
+  set.seed(123)
+  p <- sensitivityTimeProfiles(results, xUnits = list("h"), yUnits = list("mol/l"))
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivityTimeProfiles unit conversion",
+      fig = p
+    )
+  )
+})
+
+test_that("sensitivityTimeProfiles plots handle y-unit conversion correctly when dimensions are not convertible", {
+  p1 <- sensitivityTimeProfiles(results) # default
+  p2 <- sensitivityTimeProfiles(results, yUnits = list("mol")) # no conversion
+
+  expect_identical(
+    extractAxisRange(p1),
+    extractAxisRange(p2)
   )
 })
 
@@ -149,6 +196,45 @@ test_that("sensitivityTimeProfiles plots correctly for multiple outputs with obs
       title = "multiple output path profiles with observed data",
       fig = plotsMultiple
     )
+  )
+})
+
+
+# multiple output paths unit conversion
+
+test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths", {
+  p <- sensitivityTimeProfiles(resultsMultiple,
+    yUnits = list("mol/l", "month(s)", "nmol")
+  )
+
+  expect_snapshot(extractAxisRange(p))
+})
+
+test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths with `NULL`", {
+  p <- sensitivityTimeProfiles(resultsMultiple,
+    yUnits = list("mol/l", NULL, "mol")
+  )
+
+  expect_snapshot(extractAxisRange(p))
+})
+
+test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths with single unit", {
+  p <- sensitivityTimeProfiles(resultsMultiple,
+    yUnits = list("mg/ml")
+  )
+
+  expect_snapshot(extractAxisRange(p))
+})
+
+test_that("sensitivityTimeProfiles plots handle y-unit conversion correctly for multiple paths when dimensions are not convertible", {
+  p1 <- sensitivityTimeProfiles(resultsMultiple) # default
+  p2 <- sensitivityTimeProfiles(resultsMultiple, # not converted
+    yUnits = list("mol", "kg", "µmol/h")
+  )
+
+  expect_identical(
+    extractAxisRange(p1),
+    extractAxisRange(p2)
   )
 })
 
@@ -210,6 +296,7 @@ test_that("sensitivityTimeProfiles plots correctly for multiple outputs with mul
     )
   )
 })
+
 
 # filter data to be plotted -------------------------------------
 
