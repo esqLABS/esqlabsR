@@ -35,17 +35,12 @@ for each varied parameter.}
 \item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis
 scale similarly to \code{xAxisScale}. Default is "log".}
 
-\item{xUnits}{A single unit or a vector of units for the x-axis. If a single
-unit is provided, it will be applied to all \code{outputPaths} if conversion is
-possible. If multiple units are provided, the units vector should correspond
-to the \code{outputPaths}, and units conversion will be applied accordingly. If
-\code{NULL}, default units from the simulation results will be used.}
-
-\item{yUnits}{A single unit or a vector of units for the y-axis. If a single
-unit is provided, it will be applied to all \code{outputPaths} if conversion is
-possible. If multiple units are provided, the units vector should correspond
-to the \code{outputPaths}, and units conversion will be applied accordingly. If
-\code{NULL}, default units from the simulation results will be used.}
+\item{xUnits, yUnits}{Lists of units for the x-axis and y-axis, respectively.
+If a list of length one is provided, it will be applied to all \code{outputPaths}
+if conversion is possible. If a list of multiple units is provided, the units
+list should correspond to the \code{outputPaths}, and units conversion will be
+applied accordingly. If \code{NULL}, default units from the simulation results
+will be used.}
 
 \item{observedData}{Optional. A set of \code{DataSet} objects containing observed
 data. If provided, observed data will be plotted together with the simulated data
@@ -115,7 +110,7 @@ sensitivityTimeProfiles(results, defaultPlotConfiguration = myPlotConfiguration)
 }
 }
 \seealso{
-Other sensitivity-calculation: 
+Other sensitivity-calculation:
 \code{\link{sensitivityCalculation}()},
 \code{\link{sensitivitySpiderPlot}()},
 \code{\link{sensitivityTornadoPlot}()}

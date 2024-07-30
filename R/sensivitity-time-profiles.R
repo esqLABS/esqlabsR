@@ -20,7 +20,7 @@
 #' (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #' scale similarly to `xAxisScale`. Default is "log".
-#' @param xUnits, yUnits Lists of units for the x-axis and y-axis, respectively.
+#' @param xUnits,yUnits Lists of units for the x-axis and y-axis, respectively.
 #' If a list of length one is provided, it will be applied to all `outputPaths`
 #' if conversion is possible. If a list of multiple units is provided, the units
 #' list should correspond to the `outputPaths`, and units conversion will be
