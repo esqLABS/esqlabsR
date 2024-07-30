@@ -674,8 +674,12 @@ createPlotsFromExcel <- function(
 .calculateBreaks <- function(x, scaling = NULL, ...) {
   args <- list(...)
 
+  x <- x[is.finite(x)]
+
+  # allows to create evenly spaced breaks for log-scaled axis
   if (!is.null(scaling) && scaling == "log") {
-    x <- ospsuite.utils::logSafe(x, base = 10, epsilon = 1e-2)
+    epsilon <- min(x[x != 0], na.rm = TRUE)
+    x <- ospsuite.utils::logSafe(x, base = 10, epsilon = epsilon)
   }
 
   args$dmin <- min(na.omit(x))
@@ -686,7 +690,7 @@ createPlotsFromExcel <- function(
     breaks <- 10^breaks
   }
 
-  breaks <- round(breaks, 2)
+  breaks <- unique(breaks)
 
   return(breaks)
 }
