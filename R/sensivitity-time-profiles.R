@@ -206,13 +206,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   }
 
-  # calculate y-axis breaks and limits -------
+  # calculate y-axis limits and color legend breaks -----
   pLimits <- .calculateLimits(data$yValues,
-    scaling = plotConfiguration$yAxisScale
-  )
-  pBreaks <- .calculateBreaks(
-    data$yValues,
-    m = 5, Q = c(0.01, 0.1, 100, 1000),
     scaling = plotConfiguration$yAxisScale
   )
   cBreaks <- c(
@@ -290,15 +285,16 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         plot <- plot +
           scale_y_log10(
             limits = pLimits,
-            breaks = pBreaks,
-            labels = formatC(pBreaks)
+            expand = expansion(mult = c(0.01, 0.1)),
+            breaks = scales::breaks_log(),
+            labels = scales::label_log()
           )
       } else {
         plot <- plot +
           scale_y_continuous(
             limits = pLimits,
-            breaks = pBreaks,
-            labels = formatC(pBreaks)
+            breaks = scales::breaks_extended(),
+            labels = scales::label_number_auto()
           )
       }
 

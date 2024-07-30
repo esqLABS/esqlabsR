@@ -659,42 +659,6 @@ createPlotsFromExcel <- function(
   return(plotConfiguration)
 }
 
-#' Calculate breaks for axis ticks
-#'
-#' This function determines axis tick breaks, with an optional logarithmic
-#' transformation. It serves as a wrapper around `labeling::extended`.
-#'
-#' @param x Numeric vector for which breaks are calculated.
-#' @param scaling Character string indicating scaling type ("log" for logarithmic).
-#' Default is `NULL`.
-#' @param ... Additional arguments passed to `labeling::extended`.
-#'
-#' @keywords internal
-#' @noRd
-.calculateBreaks <- function(x, scaling = NULL, ...) {
-  args <- list(...)
-
-  x <- x[is.finite(x)]
-
-  # allows to create evenly spaced breaks for log-scaled axis
-  if (!is.null(scaling) && scaling == "log") {
-    epsilon <- min(x[x != 0], na.rm = TRUE)
-    x <- ospsuite.utils::logSafe(x, base = 10, epsilon = epsilon)
-  }
-
-  args$dmin <- min(na.omit(x))
-  args$dmax <- max(na.omit(x))
-  breaks <- do.call(labeling::extended, args)
-
-  if (!is.null(scaling) && scaling == "log") {
-    breaks <- 10^breaks
-  }
-
-  breaks <- unique(breaks)
-
-  return(breaks)
-}
-
 #' Calculate axis limits
 #'
 #' This function calculates axis limits based on minimum and maximum values.
