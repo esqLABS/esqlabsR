@@ -20,16 +20,12 @@
 #' (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #' scale similarly to `xAxisScale`. Default is "log".
-#' @param xUnits A single unit or a vector of units for the x-axis. If a single
-#' unit is provided, it will be applied to all `outputPaths` if conversion is
-#' possible. If multiple units are provided, the units vector should correspond
-#' to the `outputPaths`, and units conversion will be applied accordingly. If
-#' `NULL`, default units from the simulation results will be used.
-#' @param yUnits A single unit or a vector of units for the y-axis. If a single
-#' unit is provided, it will be applied to all `outputPaths` if conversion is
-#' possible. If multiple units are provided, the units vector should correspond
-#' to the `outputPaths`, and units conversion will be applied accordingly. If
-#' `NULL`, default units from the simulation results will be used.
+#' @param xUnits, yUnits Lists of units for the x-axis and y-axis, respectively.
+#' If a list of length one is provided, it will be applied to all `outputPaths`
+#' if conversion is possible. If a list of multiple units is provided, the units
+#' list should correspond to the `outputPaths`, and units conversion will be
+#' applied accordingly. If `NULL`, default units from the simulation results
+#' will be used.
 #' @param observedData Optional. A set of `DataSet` objects containing observed
 #' data. If provided, observed data will be plotted together with the simulated data
 #' based on `OutputPath` dimension for direct comparison within the visualizations.
@@ -106,6 +102,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   validateIsOfType(observedData, DataSet, nullAllowed = TRUE)
+  validateIsOfType(xUnits, "list", nullAllowed = TRUE)
+  validateIsOfType(yUnits, "list", nullAllowed = TRUE)
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
@@ -571,20 +569,21 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   stop(ospsuite.utils::messages$errorValueNotInEnum(ospUnits, unit))
 }
 
-#' Adjust units to match the length of outputPaths
+#' Normalize units to match the length of outputPaths
 #'
-#' Validate and adjust the units to match the length of `outputPaths`.
+#' Validate and normalize the units to ensure they match the length of
+#' `outputPaths`.
 #'
 #' @keywords internal
 #' @noRd
 .adjustUnits <- function(units, outputPaths) {
+  if (is.null(units)) {
+    return(rep(list(NULL), length(outputPaths)))
+  }
   # validate if units are valid in any dimension
   lapply(units, .validateUnitInOspUnits, TRUE)
 
-  # convert units to a list to handle NULL fields
-  units <- sapply(units, toList)
-
-  # check the lengths and adjust accordingly
+  # check the lengths and extend or add NULL
   if (length(units) == 1) {
     units <- rep(units, length(outputPaths))
   } else if (length(units) < length(outputPaths)) {
