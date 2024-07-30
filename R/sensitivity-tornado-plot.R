@@ -240,7 +240,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       plot <- plot +
         scale_y_continuous(
           limits = pLimits,
-          breaks = pBreaks
+          breaks = pBreaks,
+          labels = formatC(pBreaks)
         )
 
       # finalize plot ----------------------------

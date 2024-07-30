@@ -303,14 +303,14 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           scale_y_log10(
             limits = pLimits,
             breaks = pBreaks,
-            minor_breaks = pBreaks
+            labels = formatC(pBreaks)
           )
       } else {
         plot <- plot +
           scale_y_continuous(
             limits = pLimits,
             breaks = pBreaks,
-            minor_breaks = pBreaks
+            labels = formatC(pBreaks)
           )
       }
 

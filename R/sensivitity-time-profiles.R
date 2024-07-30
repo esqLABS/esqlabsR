@@ -289,14 +289,14 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
           scale_y_log10(
             limits = pLimits,
             breaks = pBreaks,
-            labels = scales::label_number()
+            labels = formatC(pBreaks)
           )
       } else {
         plot <- plot +
           scale_y_continuous(
             limits = pLimits,
             breaks = pBreaks,
-            labels = scales::label_number()
+            labels = formatC(pBreaks)
           )
       }
 
