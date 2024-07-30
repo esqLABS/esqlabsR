@@ -986,6 +986,111 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
 test_that("It throws a warning when trying to export non-existent plot grid to file", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$outputFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      # Test xOffsets
+
+      dataCombinedDfLocal <- dataCombinedDf
+
+      dataCombinedDfLocal$xOffsets <- c(1, NA)
+      dataCombinedDfLocal$xOffsetsUnits <- c(NA, NA)
+
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDf,
+        "plotGrids" = plotGridsDf,
+        "exportConfiguration" = exportConfigurationDf
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+
+
+      dataCombinedDfLocal <- dataCombinedDf
+
+      dataCombinedDfLocal$xOffsets <- c(1, NA)
+      dataCombinedDfLocal$xOffsetsUnits <- c("min", NA)
+
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDf,
+        "plotGrids" = plotGridsDf,
+        "exportConfiguration" = exportConfigurationDf
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_no_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+
+      # test yOffsets
+      dataCombinedDfLocal <- dataCombinedDf
+
+      dataCombinedDfLocal$yOffsets <- c(1, NA)
+      dataCombinedDfLocal$yOffsetsUnits <- c(NA, NA)
+
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDf,
+        "plotGrids" = plotGridsDf,
+        "exportConfiguration" = exportConfigurationDf
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+
+
+      dataCombinedDfLocal <- dataCombinedDf
+
+      dataCombinedDfLocal$yOffsets <- c(1, NA)
+      dataCombinedDfLocal$yOffsetsUnits <- c("µM", NA)
+
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDf,
+        "plotGrids" = plotGridsDf,
+        "exportConfiguration" = exportConfigurationDf
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_no_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+    }
+  )
+})
+
+test_that("It throws a warning when trying to export non-existent plot grid to file", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
