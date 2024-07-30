@@ -264,3 +264,13 @@ messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
     paste0(outputPathIds, collapse = ",\n")
   )
 }
+
+messages$invalidSimulationResultNames <- function(simulationResultNames,
+                                                  parameterPaths) {
+  paste(
+    "The names of the simulationResults and parameterPaths must be the same.\n",
+    "SimulationResults names: ", paste(simulationResultNames, collapse = ", "),
+    "\n",
+    "ParameterPaths names: ", paste(parameterPaths, collapse = ", ")
+  )
+}

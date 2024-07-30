@@ -414,7 +414,9 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                                 xUnits,
                                                 yUnits) {
   if (!identical(names(simulationResults), parameterPaths)) {
-    stop("The names of the simulationResults and parameterPaths must be the same")
+    stop(messages$invalidSimulationResultNames(
+      names(simulationResults), parameterPaths
+    ))
   }
   validateIsOfType(simulationResults, "list")
 
