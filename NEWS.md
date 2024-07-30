@@ -55,6 +55,9 @@
 
   - More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is
     defined.
+    
+  - Plotting functions have improved dynamic axis breaks, limits calculation, and 
+    labeling (\#691).
 
 
 # esqlabsR 5.1.3

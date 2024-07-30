@@ -173,7 +173,7 @@ obsDataMultiple[[2]]$setValues(obsDataMultiple[[2]]$xValues, obsDataMultiple[[2]
 test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data with same dimension", {
   set.seed(123)
   plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
-                                           observedData = obsDataMultiple
+    observedData = obsDataMultiple
   )
 
   set.seed(123)

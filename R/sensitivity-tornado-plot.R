@@ -198,12 +198,10 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     list(title = unique(data$OutputPath))
   )
 
-  # calculate x-axis breaks and limits -------
+  # calculate x-axis limits  -------
   pLimits <- .calculateLimits(data$PercentChangePK)
   pLimits[1] <- -1 * max(abs(pLimits))
   pLimits[2] <- max(abs(pLimits))
-
-  pBreaks <- .calculateBreaks(data$PercentChangePK, m = 5)
 
   # map each PK parameter to its own plot ----
 
@@ -239,7 +237,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       plot <- plot +
         scale_y_continuous(
           limits = pLimits,
-          breaks = pBreaks
+          breaks = scales::breaks_extended(),
+          labels = scales::label_number_auto()
         )
 
       # finalize plot ----------------------------
