@@ -226,6 +226,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     ~ {
       dataSubset <- dplyr::filter(data, ParameterPath == .x)
 
+      # replace zeros dynamically to avoid warning when log transform
+      dataSubset$yValues <- ifelse(dataSubset$yValues <= 0,
+                                   pLimits[1], dataSubset$yValues)
+
       # combine original data subset with observed data
       # add observed data if not-null
       if ("observed" %in% data$dataType) {
