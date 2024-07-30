@@ -108,8 +108,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
-  .validateCharVectors(xUnits)
-  .validateCharVectors(yUnits)
 
   # plot configuration setup ------------
 
