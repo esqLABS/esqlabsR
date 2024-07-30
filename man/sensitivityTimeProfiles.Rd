@@ -2,61 +2,73 @@
 % Please edit documentation in R/sensivitity-time-profiles.R
 \name{sensitivityTimeProfiles}
 \alias{sensitivityTimeProfiles}
-\title{Create a concentration-time profile plot}
+\title{Sensitivity Time Profiles for Pharmacokinetic Parameters}
 \usage{
 sensitivityTimeProfiles(
   sensitivityCalculation,
   outputPaths = NULL,
   parameterPaths = NULL,
-  xAxisLog = FALSE,
-  yAxisLog = TRUE,
-  palette = "Cold",
-  savePlots = FALSE,
-  outputFolder = "",
-  width = 16,
-  height = 9,
-  dpi = 300
+  xAxisScale = NULL,
+  yAxisScale = NULL,
+  observedData = NULL,
+  defaultPlotConfiguration = NULL
 )
 }
 \arguments{
 \item{sensitivityCalculation}{The \code{SensitivityCalculation} object returned by
 \code{sensitivityCalculation()}.}
 
-\item{outputPaths}{Path (or a vector of paths) to the output(s) for which the
-sensitivity will be analyzed.}
+\item{outputPaths, parameterPaths, pkParameters}{A single or a vector of the
+output path(s), parameter path(s), and PK parameters to be displayed,
+respectively. If \code{NULL}, all included paths and parameters present in the
+supplied \code{SensitivityCalculation} object will be displayed in the
+visualization.
+A separate plot will be generated for each output path. Each plot will
+contain a spider plot panel for each PK parameter, and the sensitivities
+for each parameter will be displayed as lines.}
 
-\item{parameterPaths}{A single or a vector of the parameter path(s) to be
-varied.}
+\item{xAxisScale}{Character string, either "log" (logarithmic scale) or "lin"
+(linear scale), to set the x-axis scale. Default is "lin".}
 
-\item{xAxisLog, yAxisLog}{Logical that decides whether to display the axis on
-logarithmic scale.}
+\item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis
+scale similarly to \code{xAxisScale}. Default is "log".}
 
-\item{palette}{The name of the palette to be used. Run \code{hcl_palettes(type = "qualitative")} for available options.}
+\item{observedData}{Optional. A set of \code{DataSet} objects containing observed
+data. If provided, observed data will be integrated with the simulated data
+based on \code{OutputPath} dimension for direct comparison within the visualizations.}
 
-\item{savePlots}{Logical that decides whether you wish to save created
-plot(s). They are not saved by default. Note that if there are multiple
-output paths in your model, there will be multiple plots that will be
-saved.}
+\item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
+used to customize plot aesthetics. Plot-specific settings provided directly
+to the function, such as \code{xAxisScale}, will take precedence over any
+modifications in \code{defaultPlotConfiguration}. If not provided, default
+settings are applied.
 
-\item{outputFolder}{A character string describing path folder where plots
-need to be saved. The path must be relative to the current working
-directory. By default (\code{""}), the plots will be saved in the current
-working directory (which can be found using \code{getwd()} function). This
-parameter is relevant only if \code{savePlots} is set to \code{TRUE}.}
-
-\item{width, height}{Plot size in inches. If not supplied, uses the size of
-current graphics device.}
-
-\item{dpi}{Plot resolution. Also accepts a string input: "retina" (320),
-"print" (300), or "screen" (72). Applies only to raster output types.}
+Supported parameters for \code{defaultPlotConfiguration} include:
+\itemize{
+\item \code{legendPosition}: Specifies the position of the plot legend.
+\item \code{legendTitle}: Sets the title displayed for the legend.
+\item \code{linesAlpha}: Alpha transparency for the line elements.
+\item \code{linesColor}: Color of the line elements.
+\item \code{linesSize}: Thickness of the line elements.
+\item \code{pointsShape}: Shape of the point elements for observed data.
+\item \code{title}: Main title text for the plot.
+\item \code{titleSize}: Font size of the plot title.
+\item \code{xAxisScale}: Scale type for the x-axis (\code{"log"} or \code{"lin"}).
+\item \code{xLabel}: Label text for the x-axis.
+\item \code{yAxisScale}: Scale type for the y-axis (\code{"log"} or \code{"lin"}).
+\item \code{yLabel}: Label text for the y-axis.
+}}
 }
 \value{
-A single \code{ggplot} object if a single output path is specified.
-
-A list of \code{ggplot} objects if multiple output paths are specified.
+A \code{patchwork} object containing the combined ggplot objects if a
+single output path is specified, or a list of \code{patchwork} objects for
+multiple output paths.
 }
 \description{
-Create a concentration-time profile plot
+Generates time profiles for pharmacokinetic parameters under various
+sensitivity scenarios. This function plots concentration-time profiles
+for each scaled parameter specified, illustrating the dynamics of
+pharmacokinetic responses to parameter variations.
 }
 \examples{
 \dontrun{
@@ -69,30 +81,29 @@ parameterPaths <- c(
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
 
-# extract the results into a list of dataframes
 results <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths
 )
 
-# print plots
+# Print plots with default settings
 sensitivityTimeProfiles(results)
 
-# print and save plots
-if (FALSE) {
-  sensitivityTimeProfiles(
-    results,
-    savePlots = TRUE,
-    height = 6,
-    width = 12
-  )
-}
+# Print plots with linear y-axis values
+sensitivityTimeProfiles(results, yAxisScale = "lin")
+
+# Print plots with custom configuration settings
+myPlotConfiguration <- createEsqlabsPlotConfiguration()
+myPlotConfiguration$linesColor <- c("#4D8076", "#C34A36")
+myPlotConfiguration$subtitle <- "Custom settings"
+sensitivityTimeProfiles(results, defaultPlotConfiguration = myPlotConfiguration)
 }
 }
 \seealso{
 Other sensitivity-calculation: 
 \code{\link{sensitivityCalculation}()},
-\code{\link{sensitivitySpiderPlot}()}
+\code{\link{sensitivitySpiderPlot}()},
+\code{\link{sensitivityTornadoPlot}()}
 }
 \concept{sensitivity-calculation}

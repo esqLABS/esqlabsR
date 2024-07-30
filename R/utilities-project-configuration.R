@@ -75,5 +75,15 @@ init_project <- function(destination = ".", overwrite = FALSE) {
 #' example_ProjectConfiguration()
 example_ProjectConfiguration <- function() {
   # for now it targets TestProject as it is both an example and a test project
-  file.path(example_directory("TestProject"), "projectConfiguration.xlsx")
+  file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
+}
+
+#' Get the path to tests' ProjectConfiguration.xlsx
+#'
+#' @return a string representing the path to the ProjectConfiguration.xlsx file
+#' used as test.
+#' @keywords internal
+test_ProjectConfiguration <- function() {
+  # for now it targets TestProject as it is both an example and a test project
+  file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
 }

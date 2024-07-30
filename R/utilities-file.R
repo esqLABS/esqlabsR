@@ -66,8 +66,9 @@ readExcel <- function(path, sheet = NULL, ...) {
 #' @param data Data frame or named list of data frames that will be sheets in
 #' the xlsx
 #' @inheritParams writexl::write_xlsx
-#' @export
-writeExcel <- function(data, path, col_names = TRUE) {
+#' @keywords internal
+#' @noRd
+.writeExcel <- function(data, path, col_names = TRUE) {
   # If the provided path to the output file targets a non-existent directory,
   # try to create the directory
   resultsDir <- dirname(path)

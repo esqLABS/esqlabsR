@@ -77,6 +77,10 @@ messages$PlotGridsNamesMustBeUnique <- function(duplicated_plotGridsNames = NULL
   paste0("PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated: ", duplicated_plotGridsNames)
 }
 
+messages$UnknownPlotConfiguration <- function(name) {
+  paste("Unknown plot configuration option:", name)
+}
+
 # scenario####
 messages$wrongSimulationType <- function() {
   "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"
@@ -128,6 +132,16 @@ messages$missingResultsForScenario <- function(scenarioName) {
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function() {
   "`pkDataFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
+}
+
+# sensitivity analysis plotting
+messages$noParameterFactor <- function(data, parameterFactor) {
+  paste0(
+    "'parameterFactor' values of ", parameterFactor, " and ", 1 / parameterFactor,
+    " are not included in the sensitivity analysis results. Current values: ",
+    paste(sort(unique(data$ParameterFactor)), collapse = ", "), ". ",
+    "Please rerun the sensitivity analysis with the required values."
+  )
 }
 
 # utilities-quantity####
