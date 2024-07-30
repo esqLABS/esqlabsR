@@ -211,7 +211,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                               scaling = plotConfiguration$yAxisScale)
   pBreaks <- .calculateBreaks(
     data$yValues,
-    m = 4, Q = c(0.01, 0.1, 100, 1000),
+    m = 5, Q = c(0.01, 0.1, 100, 1000),
     scaling = plotConfiguration$yAxisScale
   )
   cBreaks <- c(
