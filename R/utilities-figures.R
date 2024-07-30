@@ -699,11 +699,19 @@ createPlotsFromExcel <- function(
 #'
 #' @keywords internal
 #' @noRd
-.calculateLimits <- function(x) {
-  limits <- c(
-    (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
-    (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
-  )
+.calculateLimits <- function(x, scaling = NULL) {
+
+  if (!is.null(scaling) && scaling == "log") {
+    limits <- c(
+      min(x[x > 0], na.rm = TRUE) * 0.9,
+      max(x[x > 0], na.rm = TRUE) * 1.1
+    )
+  } else {
+    limits <- c(
+      (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
+      (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
+    )
+  }
 
   return(limits)
 }

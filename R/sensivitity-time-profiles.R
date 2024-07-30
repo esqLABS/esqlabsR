@@ -207,7 +207,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   # calculate y-axis breaks and limits -------
-  pLimits <- .calculateLimits(data$yValues)
+  pLimits <- .calculateLimits(data$yValues,
+                              scaling = plotConfiguration$yAxisScale)
   pBreaks <- .calculateBreaks(
     data$yValues,
     m = 4, Q = c(0.01, 0.1, 100, 1000),
