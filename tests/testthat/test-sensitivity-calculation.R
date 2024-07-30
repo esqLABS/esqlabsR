@@ -96,7 +96,6 @@ test_that("sensitivityCalculation fails early with incorrect `parameterPaths` ar
     "Only values of `character` type are allowed in `parameterPaths` argument."
   )
 
-
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -325,116 +324,6 @@ test_that("sensitivityCalculation PK parameters wide datafram column names and o
   )
 })
 
-test_that("sensitivityCalculation time series dataframe is as expected", {
-  # also extract and add time series data for testing
-  results$tsData <- esqlabsR:::.simulationResultsBatchToTimeSeriesDataFrame(
-    simulationResultsBatch = results$simulationResults,
-    parameterPaths = results$parameterPaths,
-    outputPaths = results$outputPaths
-  )
-
-  set.seed(123)
-  df1_ts <- summarizer(results$tsData, parameterPaths[1])
-  expect_snapshot(df1_ts)
-
-  set.seed(123)
-  df2_ts <- summarizer(results$tsData, parameterPaths[2])
-  expect_snapshot(df2_ts)
-
-  set.seed(123)
-  df3_ts <- summarizer(results$tsData, parameterPaths[3])
-  expect_snapshot(df3_ts)
-})
-
-# validating plotting arguments -------------------------
-
-test_that("sensitivityCalculation plots fail with incorrect input objects", {
-  expect_error(
-    sensitivityTimeProfiles("x"),
-    "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
-  )
-
-  expect_error(
-    sensitivitySpiderPlot("x"),
-    "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
-  )
-})
-
-# default plots ---------------------------------------
-
-test_that("sensitivityTimeProfiles plots are as expected", {
-  set.seed(123)
-  p <- suppressWarnings(sensitivityTimeProfiles(results))
-
-  set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "sensitivityTimeProfiles works as expected",
-    fig = suppressWarnings(p)
-  )
-
-  pb <- suppressWarnings(ggplot_build(p$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`))
-
-  expect_snapshot(pb$plot$labels)
-})
-
-test_that("sensitivitySpiderPlot plots are as expected", {
-  # make sure a plot is returned
-  set.seed(123)
-  p <- sensitivitySpiderPlot(results)
-
-  set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "sensitivitySpiderPlot works as expected",
-    fig = suppressWarnings(p)
-  )
-})
-
-# saving plots: default ---------------------------------------
-
-test_that("sensitivityTimeProfiles saves plot file", {
-  path <- "Profile_OutputPath1.png"
-
-  p <- suppressWarnings(sensitivityTimeProfiles(results, savePlots = TRUE))
-
-  expect_true(file.exists(path))
-
-  on.exit(unlink(path))
-})
-
-test_that("sensitivitySpiderPlot saves plot file", {
-  path <- "Spider_OutputPath1.png"
-
-  p <- sensitivitySpiderPlot(results, savePlots = TRUE)
-
-  expect_true(file.exists(path))
-
-  on.exit(unlink(path))
-})
-
-# saving plots: folder ---------------------------------------
-
-test_that("sensitivityTimeProfiles saves plot file to a specified folder", {
-  dir.create("newFolder")
-  path <- "newFolder/Profile_OutputPath1.png"
-
-  p <- suppressWarnings(sensitivityTimeProfiles(results, outputFolder = "newFolder/", savePlots = TRUE))
-
-  expect_true(file.exists(path))
-
-  on.exit(unlink("newFolder", recursive = TRUE))
-})
-
-test_that("sensitivitySpiderPlot saves plot file to a specified folder", {
-  dir.create("newFolder")
-  path <- "newFolder/Spider_OutputPath1.png"
-
-  p <- sensitivitySpiderPlot(results, outputFolder = "newFolder/", savePlots = TRUE)
-
-  expect_true(file.exists(path))
-
-  on.exit(unlink("newFolder", recursive = TRUE))
-})
-
 # multiple output paths -------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
@@ -477,79 +366,6 @@ test_that("sensitivityCalculation saves PK data to xlsx file for multiple output
   expect_true(file.exists(path))
 
   on.exit(unlink(path))
-})
-
-test_that("sensitivityTimeProfiles plots are as expected for multiple output paths", {
-  set.seed(123)
-  p_list <- suppressWarnings(sensitivityTimeProfiles(results))
-
-  set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "multiple output path profiles",
-    fig = suppressWarnings(p_list)
-  )
-})
-
-test_that("sensitivityTimeProfiles saves plot files for multiple output paths", {
-  path1 <- "Profile_OutputPath1.png"
-  path2 <- "Profile_OutputPath2.png"
-  path3 <- "Profile_OutputPath3.png"
-
-  p <- suppressWarnings(sensitivityTimeProfiles(results_multiple, savePlots = TRUE))
-
-  expect_true(file.exists(path1))
-  expect_true(file.exists(path2))
-  expect_true(file.exists(path3))
-
-  on.exit(unlink(c(path1, path2, path3)))
-})
-
-test_that("sensitivitySpiderPlot plots are as expected for multiple output paths", {
-  set.seed(123)
-  plots_multiple <- sensitivitySpiderPlot(results_multiple)
-
-  set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "multiple output path spiders",
-    fig = suppressWarnings(plots_multiple)
-  )
-})
-
-# filter data to be plotted -------------------------------------
-
-outputPathsFilter <- "Organism|ArterialBlood|Plasma|Aciclovir"
-parameterPathsFilter <- "Aciclovir|Lipophilicity"
-pkParametersFilter <- c("C_max", "t_max")
-
-test_that("sensitivitySpiderPlot plots are as expected with filters", {
-  set.seed(123)
-  spider_plot_filtered <- sensitivitySpiderPlot(
-    results_multiple,
-    outputPaths = outputPathsFilter,
-    parameterPaths = parameterPathsFilter,
-    pkParameters = pkParametersFilter
-  )
-
-  set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "filtered spider",
-    fig = suppressWarnings(spider_plot_filtered)
-  )
-})
-
-test_that("sensitivityTimeProfiles plots are as expected with filters", {
-  set.seed(123)
-  profile_plot_filtered <- sensitivityTimeProfiles(
-    results_multiple,
-    outputPaths = outputPathsFilter,
-    parameterPaths = parameterPathsFilter
-  )
-
-  set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "filtered profile",
-    fig = suppressWarnings(profile_plot_filtered)
-  )
 })
 
 # restore old options

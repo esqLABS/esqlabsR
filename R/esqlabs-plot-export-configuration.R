@@ -6,6 +6,25 @@
 ExportConfiguration <- R6::R6Class(
   "ExportConfiguration",
   inherit = tlf::ExportConfiguration,
+  active = list(
+    #' @field heightPerRow The height of the plot dimensions for a row in a multi
+    #' panel plot. The final height of the figure will be 'heightPerRow' times
+    #' the number of rows.
+    #' If `NULL` (default), value used in `height` is used. If not `NULL`, this
+    #' value always overrides the `height` property.
+    heightPerRow = function(value) {
+      if (missing(value)) {
+        private$.heightPerRow
+      } else {
+        validateIsNumeric(value)
+        private$.heightPerRow <- value
+      }
+    }
+  ),
+  private = list(
+    .heightPerRow = NULL,
+    .height = NULL
+  ),
   public = list(
     #' @field heightPerRow The export configuration height per row.
     heightPerRow = NULL,

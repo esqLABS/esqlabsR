@@ -316,15 +316,28 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @param path A string representing the path where to save the file.
     #' @export
-    save = function(path = NULL) {
+    save = function() {
+      excel_file <- readExcel(path = self$projectConfigurationFilePath)
 
-      outputData <- data.frame(
-        "Property" = names(private$.projectConfigurationData),
-        "Value" = unlist(purrr::map(private$.projectConfigurationData, "value")),
-        "Description" = unlist(purrr::map(private$.projectConfigurationData, "description"))
-      )
+      for (prop in excel_file$Property) {
+        path <- ""
 
-      writeExcel(outputData, path = ifelse(is.null(path), self$projectConfigurationFilePath, path))
+        if (!is.null(self[[prop]])) {
+          if (fs::is_dir(self[[prop]])) {
+            # if property is a directory, save relative path from ProjectConf dir
+            path <- fs::path_rel(
+              path = self[[prop]],
+              start = self$projectConfigurationDirPath
+            )
+          } else if (fs::is_file(self[[prop]])) {
+            # if property is a file, then save only its name
+            path <- basename(self[[prop]])
+          }
+        }
+
+        excel_file[excel_file$Property == prop, ]$Value <- path
+      }
+      .writeExcel(excel_file, path = self$projectConfigurationFilePath)
     }
   )
 )

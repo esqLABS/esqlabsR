@@ -212,7 +212,7 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
   if (!is.null(sheet)) {
     names(data) <- sheet
   }
-  writeExcel(data = data, path = paramsXLSpath)
+  .writeExcel(data = data, path = paramsXLSpath)
 }
 
 #' Extend parameters structure with new entries
@@ -442,4 +442,20 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, # nolint: obje
       )
     }
   }
+}
+
+#' Split parameter path into container path and parameter name
+#'
+#' @param parameterPath Full path to the parameter, with path elements separated
+#' by '|'
+#'
+#' @return A list with elements 'containerPath' and 'parameterName'
+#' @keywords internal
+#' @noRd
+.splitParameterPathIntoContainerAndName <- function(parameterPath) {
+  fullPathParts <- strsplit(parameterPath, split = "|", fixed = TRUE)[[1]]
+
+  containerPath <- paste(fullPathParts[seq_along(fullPathParts) - 1], collapse = "|")
+  paramName <- fullPathParts[[length(fullPathParts)]]
+  return(list(containerPath = containerPath, parameterName = paramName))
 }

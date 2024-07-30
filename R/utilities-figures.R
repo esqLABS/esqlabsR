@@ -121,7 +121,6 @@ col2hsv <- function(color) {
   return(grDevices::rgb2hsv(rgb))
 }
 
-
 #' @title Create an instance of `DefaultPlotConfiguration` R6 class
 #' @rdname createEsqlabsPlotConfiguration
 #'
@@ -160,6 +159,9 @@ createEsqlabsPlotConfiguration <- function() {
 
   # Points size
   defaultPlotConfiguration$pointsSize <- 1.75
+
+  # Points shape
+  defaultPlotConfiguration$pointsShape <- scales::shape_pal()(6)
 
   # Error bars size
   defaultPlotConfiguration$errorbarsSize <- 0.65
@@ -244,7 +246,7 @@ createEsqlabsExportConfiguration <- function(outputFolder) { # nolint: object_le
   # NULL is not supported by ExportConfiguration, so we should assign here
   # something useful. NULL in the ProjectConfiguration currently means "do not
   # export".
-  exportConfiguration$format <- "PNG"
+  exportConfiguration$format <- "png"
   exportConfiguration$width <- 18
   # exportConfiguration$height <- 18
   exportConfiguration$heightPerRow <- 12
@@ -297,7 +299,7 @@ createPlotsFromExcel <- function(
   dfExportConfigurations <- readExcel(projectConfiguration$plotsFile,
     sheet = "exportConfiguration"
   ) %>%
-    rename(name = outputName)
+    dplyr::rename(name = outputName)
   # Filter for only specified plot grids
   if (!is.null(plotGridNames)) {
     # Throw an error if a plot grid name that is passed is not defined in the excel file
@@ -320,7 +322,9 @@ createPlotsFromExcel <- function(
   )
 
   # Filter and validate plotGrids
-  dfPlotGrids <- dplyr::filter(dfPlotGrids, !if_all(everything(), is.na))
+  dfPlotGrids <- dplyr::filter(
+    dfPlotGrids, !dplyr::if_all(dplyr::everything(), is.na)
+  )
   dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
 
   # Filter and validate only used plot configurations
@@ -442,7 +446,9 @@ createPlotsFromExcel <- function(
   names(plotGrids) <- dfPlotGrids$name
 
   ## Remove rows that are entirely empty
-  dfExportConfigurations <- dplyr::filter(dfExportConfigurations, !if_all(everything(), is.na))
+  dfExportConfigurations <- dplyr::filter(
+    dfExportConfigurations, !dplyr::if_all(dplyr::everything(), is.na)
+  )
   dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
@@ -528,7 +534,6 @@ createPlotsFromExcel <- function(
 
   return(newConfiguration)
 }
-
 
 #' Validate and process the 'plotConfiguration' sheet
 #'
@@ -628,4 +633,170 @@ createPlotsFromExcel <- function(
   }
 
   return(dfExportConfigurations)
+}
+
+#' Update Plot Configuration with Overrides
+#'
+#' Updates a plot configuration object `plotConfiguration` with explicitly
+#' defined overrides from `plotOverrideConfig` list. It retains any custom
+#' settings in `plotConfiguration` that deviate from the defaults
+#'
+#' @param plotConfiguration A plot configuration object.
+#' @param plotOverrideConfig A list with new configuration settings to apply.
+#'
+#' @keywords internal
+#' @noRd
+.updatePlotConfiguration <- function(plotConfiguration, plotOverrideConfig) {
+  defaultValues <- createEsqlabsPlotConfiguration()
+
+  for (name in names(plotOverrideConfig)) {
+    if (!name %in% names(plotConfiguration)) {
+      warning(messages$UnknownPlotConfiguration(name))
+      next
+    }
+
+    if (is.null(defaultValues[[name]]) && is.null(plotConfiguration[[name]])) {
+      plotConfiguration[[name]] <- plotOverrideConfig[[name]]
+    } else if (!is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])) {
+      if (all(plotConfiguration[[name]] == defaultValues[[name]])) {
+        plotConfiguration[[name]] <- plotOverrideConfig[[name]]
+      }
+    }
+  }
+
+  return(plotConfiguration)
+}
+
+#' Calculate breaks for axis ticks
+#'
+#' This function determines axis tick breaks, with an optional logarithmic
+#' transformation. It serves as a wrapper around `labeling::extended`.
+#'
+#' @param x Numeric vector for which breaks are calculated.
+#' @param scaling Character string indicating scaling type ("log" for logarithmic).
+#' Default is `NULL`.
+#' @param ... Additional arguments passed to `labeling::extended`.
+#'
+#' @keywords internal
+#' @noRd
+.calculateBreaks <- function(x, scaling = NULL, ...) {
+  args <- list(...)
+
+  if (!is.null(scaling) && scaling == "log") {
+    x <- ospsuite.utils::logSafe(x, base = 10, epsilon = 1e-2)
+  }
+
+  args$dmin <- min(na.omit(x))
+  args$dmax <- max(na.omit(x))
+  breaks <- do.call(labeling::extended, args)
+
+  if (!is.null(scaling) && scaling == "log") {
+    breaks <- 10^breaks
+  }
+
+  breaks <- round(breaks, 2)
+
+  return(breaks)
+}
+
+#' Calculate axis limits
+#'
+#' This function calculates axis limits based on minimum and maximum values.
+#'
+#' @param x Numeric vector for which limits are calculated.
+#'
+#' @keywords internal
+#' @noRd
+.calculateLimits <- function(x) {
+  limits <- c(
+    (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
+    (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
+  )
+
+  return(limits)
+}
+
+#' Get valid plot configuration options
+#'
+#' Generates a list of valid configuration options for plotting.
+#' Each configuration option specifies constraints, including data type,
+#' allowable values, and value ranges, formatted to facilitate validation with
+#' `ospsuite::validateIsOption` function.
+#'
+#' @return A list of lists, each containing type specifications and constraints
+#'         for a plot configuration parameter.
+#' @keywords internal
+#' @noRd
+.getPlotConfigurationOptions <- function(names) {
+  plotConfigurationOptions <- list(
+    legendPosition = list(
+      type = "character",
+      allowedValues = c("left", "right", "bottom", "top", "none")
+    ),
+    legendTitle = list(
+      type = "character",
+      nullAllowed = TRUE
+    ),
+    linesAlpha = list(
+      type = "numeric",
+      valueRange = c(0, 1)
+    ),
+    linesSize = list(
+      type = "numeric",
+      valueRange = c(0.1, 10)
+    ),
+    parameterFactor = list(
+      type = "numeric",
+      valueRange = c(1e-16, 1e16)
+    ),
+    pointsShape = list(
+      type = "integer",
+      valueRange = c(0L, 25L)
+    ),
+    pointsSize = list(
+      type = "numeric",
+      valueRange = c(0.1, 10)
+    ),
+    subtitle = list(
+      type = "character",
+      nullAllowed = TRUE
+    ),
+    title = list(
+      type = "character",
+      nullAllowed = TRUE
+    ),
+    titleSize = list(
+      type = "numeric"
+    ),
+    xAxisScale = list(
+      type = "character",
+      allowedValues = c("log", "lin")
+    ),
+    xLabel = list(
+      type = "character",
+      nullAllowed = TRUE
+    ),
+    yAxisFacetScales = list(
+      type = "character",
+      allowedValues = c("fixed", "free")
+    ),
+    yAxisScale = list(
+      type = "character",
+      allowedValues = c("log", "lin")
+    ),
+    yAxisTicks = list(
+      type = "integer",
+      valueRange = c(1L, 20L)
+    ),
+    yAxisType = list(
+      type = "character",
+      allowedValues = c("percent", "absolute")
+    ),
+    yLabel = list(
+      type = "character",
+      nullAllowed = TRUE
+    )
+  )
+
+  return(plotConfigurationOptions[names])
 }

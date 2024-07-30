@@ -17,16 +17,18 @@
 #' @export
 createDataCombinedFromExcel <- function(
     file,
-    sheet = NULL, dataCombinedNames = NULL,
+    sheet = NULL,
+    dataCombinedNames = NULL,
     simulatedScenarios = NULL,
     observedData = NULL,
     stopIfNotFound = TRUE) {
+
   validateIsString(file)
   validateIsString(sheet, nullAllowed = TRUE)
 
   dfDataCombined <- readExcel(path = file, sheet = sheet %||% 1)
   if (!is.null(dataCombinedNames)) {
-    dfDataCombined <- filter(dfDataCombined, DataCombinedName %in% dataCombinedNames)
+    dfDataCombined <- dplyr::filter(dfDataCombined, DataCombinedName %in% dataCombinedNames)
   }
 
   dfDataCombined <- .validateDataCombinedFromExcel(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound)
@@ -36,7 +38,7 @@ createDataCombinedFromExcel <- function(
     dataCombined <- DataCombined$new()
     # add data to DataCombined object
     # add simulated data
-    simulated <- filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
+    simulated <- dplyr::filter(dfDataCombined, DataCombinedName == name, dataType == "simulated")
     if (nrow(simulated) > 0) {
       for (j in seq_len(nrow(simulated))) {
         # Check if the output has been simulated
@@ -58,7 +60,7 @@ createDataCombinedFromExcel <- function(
     }
 
     # add observed data
-    observed <- filter(dfDataCombined, DataCombinedName == name, dataType == "observed")
+    observed <- dplyr::filter(dfDataCombined, DataCombinedName == name, dataType == "observed")
     if (nrow(observed) > 0) {
       dataSets <- observedData[observed$dataSet]
       dataCombined$addDataSets(dataSets, names = observed$label, groups = observed$group)
@@ -68,7 +70,7 @@ createDataCombinedFromExcel <- function(
   names(dataCombinedList) <- unique(dfDataCombined$DataCombinedName)
 
   # apply data transformations
-  dfTransform <- filter(dfDataCombined, !is.na(xOffsets) |
+  dfTransform <- dplyr::filter(dfDataCombined, !is.na(xOffsets) |
     !is.na(yOffsets) |
     !is.na(xScaleFactors) |
     !is.na(yScaleFactors))
@@ -78,6 +80,11 @@ createDataCombinedFromExcel <- function(
       # Get the data frame of the Data combined to retrieve units and MW
       dataCombinedDf <- dataCombinedList[[row[["DataCombinedName"]]]]$toDataFrame()
       singleRow <- dataCombinedDf[dataCombinedDf$name == row[["label"]], ][1, ]
+
+      # Check if x/yOffsetsUnits are defined when x/yOffsets are non empty.
+      if ((!is.na(row[["xOffsets"]]) & is.na(row[["xOffsetsUnits"]])) | (!is.na(row[["yOffsets"]]) & is.na(row[["yOffsetsUnits"]]))) {
+        cli::cli_abort(c("x" = "Error in DataCombined {row[['DataCombinedName']]}: If x/yOffsets is set, then x/yOffsetsUnits must be defined as well. "))
+      }
 
       # If offsets are defined, convert them to the default unit of the data
       # Extract the base unit of the data (or simulation result) and the unit
@@ -179,7 +186,7 @@ createDataCombinedFromExcel <- function(
       stop(messages$warningInvalidScenarioName(missingScenarios))
     }
     warning(messages$warningInvalidScenarioName(missingScenarios))
-    dfDataCombined <- filter(dfDataCombined, (dataType == "observed") | !(scenario %in% missingScenarios))
+    dfDataCombined <- dplyr::filter(dfDataCombined, (dataType == "observed") | !(scenario %in% missingScenarios))
   }
   # data set name not present in observedData
   missingDataSets <- setdiff(setdiff(dfDataCombined$dataSet, names(observedData)), NA)

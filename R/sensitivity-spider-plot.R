@@ -1,37 +1,75 @@
 #' @name sensitivitySpiderPlot
-#' @title Sensitivity spider plot for PK parameters
+#' @title Sensitivity Spider Plot for Pharmacokinetic Parameters
+#'
+#' @description
+#' Creates spider plots for sensitivity calculation. A spider plot is a
+#' visualization technique that displays the sensitivity of a model output to
+#' changes in model parameters. Each plot displays the sensitivity of a set of
+#' PK parameters for a single output path to changes in model parameters. The x-axis
+#' represents the value of model parameters (absolute or percent from default value),
+#' and the y-axis represents the sensitivity of the output to changes in the model
+#' parameter.
+#'
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
-#'   `sensitivityCalculation()`.
+#' `sensitivityCalculation()`.
 #' @param outputPaths,parameterPaths,pkParameters A single or a vector of the
-#'   output path(s), parameter path(s), and PK parameters to be displayed,
-#'   respectively. If `NULL`, all included paths and parameters present in the
-#'   supplied `SensitivityCalculation` object will be displayed in the
-#'   visualization.
-#' @param xAxisLog,yAxisLog Logical that decides whether to display the axis on
-#'   logarithmic scale.
-#' @param savePlots Logical that decides whether you wish to save created
-#'   plot(s). They are not saved by default. Note that if there are multiple
-#'   output paths in your model, there will be multiple plots that will be
-#'   saved.
-#' @param outputFolder A character string describing path folder where plots
-#'   need to be saved. The path must be relative to the current working
-#'   directory. By default (`""`), the plots will be saved in the current
-#'   working directory (which can be found using `getwd()` function). This
-#'   parameter is relevant only if `savePlots` is set to `TRUE`.
-#' @param width,height Plot size in inches. If not supplied, uses the size of
-#'   current graphics device.
-#' @inheritParams ggplot2::ggsave
+#' output path(s), parameter path(s), and PK parameters to be displayed,
+#' respectively. If `NULL`, all included paths and parameters present in the
+#' supplied `SensitivityCalculation` object will be displayed in the
+#' visualization.
+#' A separate plot will be generated for each output path. Each plot will
+#' contain a spider plot panel for each PK parameter, and the sensitivities
+#' for each parameter will be displayed as lines.
+#' @param yAxisType Character string, either "percent" (percentage change) or
+#' "absolute" (absolute values) for PK parameter values, for y-axis data normalization.
+#' Default is "percent".
+#' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
+#' (linear scale), to set the x-axis scale. Default is "log".
+#' @param yAxisScale Character string, either "log" or "lin", sets the y-axis scale
+#' similarly to `xAxisScale`. Default is "lin".
+#' @param yAxisFacetScales Character string, either "fixed" or "free", determines
+#' the scaling across y-axes of different facets. Default is "fixed".
+#' If "fixed", all facetes within one plot will have the same range, which allows
+#' for easier comparison between different PK parameters. If "free", each facet
+#' will have its own range, which allows for better visualization of the single
+#' PK parameters sensitivity.
+#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
+#' used to customize plot aesthetics. Plot-specific settings provided directly
+#' to the function, such as `xAxisScale`, will take precedence over any
+#' modifications in `defaultPlotConfiguration`.
+#'
+#' Supported parameters include:
+#' - `legendPosition`: Position of the legend on the plot.
+#' - `legendTitle`: Title displayed for the legend.
+#' - `linesAlpha`: Alpha transparency for line elements.
+#' - `linesColor`: Color of the line elements.
+#' - `linesSize`: Thickness of the line elements.
+#' - `pointsShape`: Shape of the point elements.
+#' - `pointsSize`: Size of the point elements.
+#' - `subtitle`: Subtitle text for the plot.
+#' - `title`: Main title text for the plot.
+#' - `titleSize`: Font size of the plot title.
+#' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
+#' - `xLabel`: Label text for the x-axis.
+#' - `xValuesLimits`: Numeric vector specifying the limits for x-values.
+#' - `yAxisLimits`: Numeric vector specifying the limits for y-values.
+#' - `yAxisScale`: Scale type for the y-axis (`"log"` or `"lin"`).
+#' - `yAxisTicks`: Number of ticks on the y-axis.
+#' - `yLabel`: Label text for the y-axis.
+#' - `yValuesLimits`: Numeric vector specifying the limits for y-values.
+#'
+#' Default values are set to provide a standardized look, but each parameter
+#' can be tailored to fit specific visual needs. Modifying these parameters
+#' will directly affect the aesthetics of the output plots.
 #'
 #' @import ggplot2
 #'
 #' @family sensitivity-calculation
 #'
-#' @return
-#'
-#' A single `ggplot` object if a single output path is specified.
-#'
-#' A list of `ggplot` objects if multiple output paths are specified.
+#' @return A `patchwork` object containing the combined ggplot objects if a
+#' single output path is specified, or a list of `patchwork` objects for
+#' multiple output paths.
 #'
 #' @examples
 #' \dontrun{
@@ -44,55 +82,92 @@
 #'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 #' )
 #'
-#' # extract the results into a list of dataframes
 #' results <- sensitivityCalculation(
 #'   simulation = simulation,
 #'   outputPaths = outputPaths,
 #'   parameterPaths = parameterPaths
 #' )
 #'
-#' # print plots
+#' # Print plots with default settings
 #' sensitivitySpiderPlot(results)
 #'
-#' # print and save plots
-#' if (FALSE) {
-#'   sensitivitySpiderPlot(
-#'     results,
-#'     savePlots = TRUE,
-#'     height = 6,
-#'     width = 12
-#'   )
-#' }
+#' # Print plots with absolute y-axis values
+#' sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
+#'
+#' # Print plots with custom configuration settings
+#' myPlotConfiguration <- createEsqlabsPlotConfiguration()
+#' myPlotConfiguration$pointsShape <- 22
+#' myPlotConfiguration$subtitle <- "Custom settings"
+#' sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
 #' }
 #' @export
 sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   outputPaths = NULL,
                                   parameterPaths = NULL,
                                   pkParameters = NULL,
-                                  xAxisLog = TRUE,
-                                  yAxisLog = FALSE,
-                                  savePlots = FALSE,
-                                  outputFolder = "",
-                                  width = 16,
-                                  height = 9,
-                                  dpi = 300) {
-  # input validation ------------------------
+                                  xAxisScale = NULL,
+                                  yAxisScale = NULL,
+                                  yAxisFacetScales = "fixed",
+                                  yAxisType = "percent",
+                                  defaultPlotConfiguration = NULL) {
+  # input validation -------------------------
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  validateIsCharacter(outputFolder, nullAllowed = FALSE)
+  if (is.null(defaultPlotConfiguration)) {
+    defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
+  } else {
+    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
+  }
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
   .validateCharVectors(pkParameters)
 
-  # filter data ------------------------
+  # default spider plot configuration setup ----
 
-  # extrat the needed dataframe from the object
+  spiderPlotConfiguration <- list(
+    legendPosition = "bottom",
+    legendTitle    = "Parameter",
+    linesSize      = 1.4,
+    pointsShape    = 21L,
+    pointsSize     = 2,
+    title          = NULL,
+    titleSize      = 14,
+    xAxisScale     = "log",
+    xLabel         = "Input parameter value [% of reference]",
+    yAxisScale     = "lin",
+    yAxisTicks     = 10L,
+    yLabel         = NULL
+  )
+  # override default plot configuration with function parameters
+  customPlotConfiguration <- defaultPlotConfiguration$clone()
+  if (!is.null(xAxisScale)) customPlotConfiguration$xAxisScale <- xAxisScale
+  if (!is.null(yAxisScale)) customPlotConfiguration$yAxisScale <- yAxisScale
+
+  # override only default configuration values with settings for spider plot
+  customPlotConfiguration <- .updatePlotConfiguration(
+    customPlotConfiguration, spiderPlotConfiguration
+  )
+
+  # validate plot configuration for valid options
+  plotConfigurationList <- purrr::map(
+    purrr::set_names(names(customPlotConfiguration)),
+    ~ customPlotConfiguration[[.]]
+  )
+  plotConfigurationList$yAxisFacetScales <- yAxisFacetScales
+  plotConfigurationList$yAxisType <- yAxisType
+  ospsuite.utils::validateIsOption(
+    plotConfigurationList,
+    .getPlotConfigurationOptions(
+      c(names(spiderPlotConfiguration), "yAxisFacetScales", "yAxisType")
+    )
+  )
+
+  # extract and prepare data -----------------
+
   data <- sensitivityCalculation$pkData
-
-  # filter out data not needed for plotting
   data <- .filterPlottingData(
     data,
     outputPaths = outputPaths,
@@ -100,111 +175,211 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     pkParameters = pkParameters
   )
 
-  # list of plots ------------------------
-
-  # create plot for each output path
-  lsPlots <- purrr::map(
-    .x = data %>% split(.$OutputPath),
-    .f = ~ .createSpiderPlot(
-      .x,
-      xAxisLog = xAxisLog,
-      yAxisLog = yAxisLog
-    )
-  )
-
-  # if needed, save plots with given specs
-  if (savePlots) {
-    .savePlotList(
-      lsPlots,
-      plot.type = "Spider_",
-      outputFolder = outputFolder,
-      height = height,
-      width = width,
-      dpi = dpi
-    )
-
-    return(invisible())
-  }
-
-  # print plots without producing warnings
-  suppressWarnings(purrr::walk2(lsPlots, names(lsPlots), ~ .printPlot(.x, .y)))
-}
-
-#' @keywords internal
-#' @noRd
-.createSpiderPlot <- function(data,
-                              xAxisLog = TRUE,
-                              yAxisLog = FALSE) {
   # getting the scales right
   data <- dplyr::mutate(data,
     ParameterFactor = ParameterFactor * 100,
     PercentChangePK = PercentChangePK + 100
   )
 
-  plot <- ggplot(
-    data,
-    aes(x = ParameterFactor, y = PercentChangePK, group = ParameterPath)
-  ) +
-    geom_line(
-      aes(group = ParameterPath, color = as.factor(ParameterPath)),
-      linewidth = 1.4,
-      alpha = 0.7,
-      na.rm = TRUE
-    ) +
-    geom_point(size = 2, shape = 21, na.rm = TRUE)
+  # list of plots ----------------------------
 
-  if (xAxisLog) {
-    plot <- plot + scale_x_log10()
-  }
-
-  if (yAxisLog) {
-    plot <- plot + scale_y_log10()
-  } else {
-    # how many labels on the Y-axis?
-    nBreaks <- labeling::extended(
-      min(na.omit(data$PercentChangePK)),
-      max(na.omit(data$PercentChangePK)),
-      m = 10L
+  # create plot for each output path
+  lsPlots <- purrr::map(
+    .x = data %>% split(.$OutputPath),
+    .f = ~ .createSpiderPlot(
+      .x,
+      yAxisType = yAxisType,
+      yAxisFacetScales = yAxisFacetScales,
+      defaultPlotConfiguration = customPlotConfiguration
     )
+  )
 
-    # there always needs to be a label at `y = 100`
-    plot <- plot +
-      scale_y_continuous(
-        breaks = c(100, nBreaks),
-        minor_breaks = nBreaks
-      )
+  # print plots without producing warnings
+  suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
+}
+
+#' @keywords internal
+#' @noRd
+.createSpiderPlot <- function(data,
+                              yAxisType = "percent",
+                              yAxisFacetScales = "fixed",
+                              defaultPlotConfiguration) {
+  # update data dependent plot configuration
+  plotConfiguration <- defaultPlotConfiguration$clone()
+  plotConfiguration <- .updatePlotConfiguration(
+    plotConfiguration,
+    list(title = unique(data$OutputPath))
+  )
+
+  # select percent or absolute column for y-axis
+  if (yAxisType == "percent") {
+    yColumn <- sym("PercentChangePK")
+    data$Unit <- "% of reference"
+  } else {
+    yColumn <- sym("PKParameterValue")
   }
 
-  plot <- plot +
-    geom_hline(
-      yintercept = 100,
-      linetype = "dotted",
-      color = "black",
-      linewidth = 0.5,
-      na.rm = TRUE
-    ) +
-    geom_vline(
-      xintercept = 100,
-      linetype = "dotted",
-      color = "black",
-      linewidth = 0.5,
-      na.rm = TRUE
-    ) +
-    facet_wrap(~PKParameter, scales = "free_y") +
-    labs(
-      x = "Input parameter value [% of reference]",
-      y = paste0("PK-parameter value [% of reference]"),
-      title = unique(data$OutputPath),
-      group = "Parameter",
-      color = "Parameter"
-    ) +
-    theme_bw(base_size = 10) +
-    theme(
-      legend.position = "bottom",
-      panel.grid.minor = element_blank()
-    ) +
-    guides(col = guide_legend(nrow = 3)) +
-    scale_color_brewer(palette = "Dark2")
+  # filter according to value limits ---------
 
-  plot
+  if (!is.null(plotConfiguration$yValuesLimits)) {
+    data <- dplyr::filter(data, !!yColumn >= plotConfiguration$yValuesLimits[1])
+    data <- dplyr::filter(data, !!yColumn <= plotConfiguration$yValuesLimits[2])
+  }
+  if (!is.null(plotConfiguration$xValuesLimits)) {
+    data <- dplyr::filter(data, ParameterFactor >= plotConfiguration$xValuesLimits[1])
+    data <- dplyr::filter(data, ParameterFactor <= plotConfiguration$xValuesLimits[2])
+  }
+
+  # map each PK parameter to its own plot ----
+
+  plotList <- purrr::map(
+    unique(data$PKParameter),
+    ~ {
+      dataSubset <- dplyr::filter(data, PKParameter == .x)
+      baseDataSubset <- dplyr::filter(dataSubset, ParameterFactor == 100)
+
+      # calculate y-axis breaks and limits -------
+
+      if (isTRUE(yAxisFacetScales == "fixed")) {
+        # fixed y-axis scale
+        #   same label for all plots based on yAxisType
+        if (is.null(plotConfiguration$yLabel)) {
+          plotConfiguration$yLabel <- switch(yAxisType,
+            "percent"  = "PK-Parameter value [% of reference]",
+            "absolute" = "PK-Parameter value",
+            "PK-Parameter value"
+          )
+        }
+        #  breaks and limits based on entire data
+        pBreaks <- .calculateBreaks(data[, yColumn],
+          m = plotConfiguration$yAxisTicks,
+          Q = c(0, 100, 200, 300)
+        )
+        pLimits <- .calculateLimits(data[, yColumn])
+      } else {
+        # free y-axis scale
+        #   use PK parameter name with it's unit
+        plotConfiguration$yLabel <- paste0(
+          dataSubset$PKParameter[1], " [", dataSubset$Unit[1], "]"
+        )
+        #   calculate breaks and limits using PK parameter data subset
+        pBreaks <- .calculateBreaks(
+          x = dataSubset[, yColumn],
+          m = plotConfiguration$yAxisTicks
+        )
+        pLimits <- NULL
+      }
+
+      # override y-axis limits if specified in configuration
+      if (!is.null(plotConfiguration$yAxisLimits)) {
+        pLimits <- plotConfiguration$yAxisLimits
+      }
+
+      # basic plot setup -------------------------
+
+      plot <- ggplot(
+        dataSubset,
+        aes(x = ParameterFactor, y = !!sym(yColumn), group = ParameterPath)
+      ) +
+        geom_line(
+          aes(group = ParameterPath, color = as.factor(ParameterPath)),
+          linewidth = plotConfiguration$linesSize,
+          alpha = plotConfiguration$linesAlpha,
+          na.rm = TRUE
+        ) +
+        geom_point(
+          size  = plotConfiguration$pointsSize,
+          shape = plotConfiguration$pointsShape[1],
+          na.rm = TRUE
+        )
+
+      # adjusting axis scales
+      if (isTRUE(plotConfiguration$xAxisScale == "log")) {
+        plot <- plot + scale_x_log10()
+      }
+
+      if (isTRUE(plotConfiguration$yAxisScale == "log")) {
+        plot <- plot +
+          scale_y_log10(
+            limits = pLimits,
+            breaks = pBreaks,
+            minor_breaks = pBreaks
+          )
+      } else {
+        plot <- plot +
+          scale_y_continuous(
+            limits = pLimits,
+            breaks = pBreaks,
+            minor_breaks = pBreaks
+          )
+      }
+
+      # initial parameter value reference marker ----
+
+      plot <- plot +
+        geom_hline(
+          data = baseDataSubset,
+          aes(yintercept = !!sym(yColumn)),
+          linetype = "dotted",
+          linewidth = 0.5,
+          color = "black",
+          na.rm = TRUE
+        ) +
+        geom_vline(
+          xintercept = 100,
+          linetype = "dotted",
+          linewidth = 0.5,
+          color = "black",
+          na.rm = TRUE
+        )
+
+      # finalize plot ----------------------------
+
+      # note: facet wrap on unique PK parameter to obtain facet titles
+      plot <- plot +
+        facet_wrap(~PKParameter, scales = yAxisFacetScales) +
+        labs(
+          x = plotConfiguration$xLabel,
+          y = plotConfiguration$yLabel,
+          title = NULL,
+          color = plotConfiguration$legendTitle
+        ) +
+        theme_bw(base_size = 11) +
+        theme(
+          legend.position = plotConfiguration$legendPosition,
+          panel.grid.minor = element_blank(),
+          text = element_text(size = 11)
+        ) +
+        guides(col = guide_legend(
+          nrow = length(unique(data$PKParameter)),
+          title.position = "top"
+        ))
+
+      # apply color scales
+      if (is.null(plotConfiguration$linesColor)) {
+        plot <- plot + scale_color_brewer(palette = "Dark2")
+      } else {
+        plot <- plot + scale_color_manual(values = plotConfiguration$linesColor)
+      }
+
+      return(plot)
+    }
+  )
+
+  # compile individual plots -----------------
+
+  plotPatchwork <- patchwork::wrap_plots(plotList) +
+    patchwork::plot_annotation(
+      title = plotConfiguration$title,
+      subtitle = plotConfiguration$subtitle,
+      theme = theme(
+        plot.title = element_text(size = plotConfiguration$titleSize)
+      )
+    ) +
+    patchwork::plot_layout(
+      guides = "collect", axes = "collect", ncol = length(plotList)
+    ) &
+    theme(legend.position = plotConfiguration$legendPosition)
+
+  return(plotPatchwork)
 }

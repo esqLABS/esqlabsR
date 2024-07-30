@@ -1,40 +1,60 @@
 # esqlabsR (development version)
 
+# esqlabsR 5.2.0
+
 ## Breaking changes
 
-  - Function `exportSteadyStateToXLS` has been removed in favor of
-    `ospsuite::exportSteadyStateToXLS` (\#616)
-  - `{esqlabsR}` project structure changed: (\#635)
-      - `Parameters` folder has been renamed to `Configurations`,
-      - Configuration Excel files have been renamed to be more homogeneous,
-      - `ProjectConfiguration` elements names have been changed according to the
-        new Excel files names.
-        
-## Major improvements and new features
+  - `{esqlabsR}` now requires `{ospsuite}` version 12.1.0 or higher to benefit from
+    embedded PK-Sim core files.
 
-  - `createPlotsFromExcel` gets a new argument `outputFolder`. If provided, the
-    plots are saved in the specified folder. If `NULL`, default results folder
-    as defined in the `ProjectConfiguration` is used (\#495).
-  - `createDefaultProjectConfiguration` is now soft-deprecated in favor of
-    `createProjectConfiguration`.
+  - Function `exportSteadyStateToXLS` has been removed in favor of
+    `ospsuite::exportSteadyStateToXLS` (\#598)
+
+  - Function `sensitivitySpiderPlot` overhauled with new parameters. `yAxisType`
+    to toggle between `percent`and `absolute` values. `xAxisScale` and
+    `yAxisScale` to set axis scales to `log` or `lin`. `yAxisFacetScales` to
+    choose between `free` and `fixed` scales for y-axis. Further plot
+    customization options through `defaultPlotConfiguration` (\#632).
+  
+  - Function `sensitivityTimeProfiles` with new signature. Introduced parameters
+    `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More
+    plot customization options through `defaultPlotConfiguration` as described
+    in the documentation. Plots have improved color palette, scaling and legend
+    colors (\#669).
+
+  - Function `sensitivityTimeProfiles` updated. Observed data (single or
+    multiple `DataSet` objects) can now be added to the plots and will be
+    included automatically in the `outputPath` if the dimensions are convertible
+    (\#674).
+
+  - Function `writeExcel()` is no longer exported. (\#672)
+
+## Major Changes
+
+  - New `sensitivityTornadoPlot` function for generating tornado plots that
+    evaluate the impact of parameter changes on sensitivity analysis outcomes.
+    It utilizes `parameterFactor` to depict the scaling effects of parameter
+    modifications. Provides plot customization options through
+    `defaultPlotConfiguration` (\#652).
+
+  - New function `writeParameterStructureToXLS` to write a list of parameter
+    paths, values, and units (e.g., imported using the `readParametersFromXLS()`
+    function) to an Excel file. In contrast to `exportParametersToXLS()`, which
+    writes an excel file for a list of `Parameter` objects, this function
+    expects the parameter structure as used throughout the package.
 
 ## Minor improvements and bug fixes
 
   - Function `createScenarios` gets a new argument `stopIfParameterNotFound`. If
     `TRUE` (default), a scenario will not be created and an error is thrown if
     any user-defined parameter (e.g., provided in Excel files) is not found in
-    the simulation. If `FALSE`, non-existing parameters are ignored. (\#615)
+    the simulation. If `FALSE`, non-existing parameters are ignored. (\#559)
+
   - Constructor of a `Scenario` class gets a new argument
     `stopIfParameterNotFound`.
-  - Function `saveScenarioResults` returns the path where the results were
-    saved.
-  - Loading the package does not set `options(warnPartialMatchDollar = TRUE)`
-    any more.
-  - Function `createEsqlabsExportConfiguration` requires a new argument
-    `outputFolder` instead of `projectConfiguration`.
-  - Function `createPlotsFromExcel` supports `NULL` for arguments
-    `simulatedScenarios` and `observedData` if no simulation results or observed
-    data are required for plot generation.
+
+  - More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is
+    defined.
 
 
 # esqlabsR 5.1.3
@@ -55,7 +75,7 @@
     aggregation methods. A new column `nsd` was added to the `PlotConfiguration`
     sheet in the example `Plot.xlsx` (\#544).
   - Documentation includes PK-Sim installation instructions (\#537).
-  - Better error message if some ids are not uniques in the excel configuration
+  - Better error message if some ids are not unique in the excel configuration
     files (\#568)
   - Handles better empty rows in the excel configuration files (\#569)
   - Cleaner NEWS file (\#527).
@@ -112,7 +132,7 @@
     specify ontogenies for proteins in the simulation, list the proteins you
     want to define ontogenies for in the column 'Protein' of files
     'PopulationParameters.xlsx' or 'Individuals.xlsx', separated by a ','.
-    Speficy the ontogenies available in PK-Sim (see article
+    Specify the ontogenies available in PK-Sim (see article
     <https://www.open-systems-pharmacology.org/OSPSuite-R/articles/create-individual.html#adding-enzyme-ontogenies>)
     in the column 'Ontogenies'. The number of entries in the both columns must
     be equal.
@@ -246,7 +266,7 @@
   - When defining an individual of other species than human in
     `ScenarioConfiguration` and applying it to a human model, missing
     species-specific parameters are applied and the scaling works properly.
-    Supported scalingsa are: Human to rat, human to monkey, human to rabbit.
+    Supported scalings are: Human to rat, human to monkey, human to rabbit.
     
   - `initializeSimulation()` does not perform steady-state run any more. This is
     done as part of the `runScenarios()` function.
@@ -298,7 +318,7 @@
     
   - Function `setApplications()` is deprecated.
   
-  - Dark grey frame around legends by default.
+  - Dark gray frame around legends by default.
 
 
 # esqlabsR 4.0.0
@@ -368,7 +388,6 @@
 # esqlabsR 2.0.0
 
   - Maintenance and bug fixes.
-
 
 # esqlabsR 1.0.0
 
