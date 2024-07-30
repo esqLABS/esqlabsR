@@ -16,17 +16,14 @@
     choose between `free` and `fixed` scales for y-axis. Further plot
     customization options through `defaultPlotConfiguration` (\#632).
   
-  - Function `sensitivityTimeProfiles` with new signature. Introduced parameters
-    `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More
-    plot customization options through `defaultPlotConfiguration` as described
-    in the documentation. Plots have improved color palette, scaling and legend
-    colors (\#669).
-
-  - Function `sensitivityTimeProfiles` updated. Observed data (single or
-    multiple `DataSet` objects) can now be added to the plots and will be
-    included automatically in the `outputPath` if the dimensions are convertible
-    (\#674).
-
+  - Function `sensitivityTimeProfiles` with new signature and enhanced visuals:
+    - `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin` (\#669).
+    - `xUnits` and `yUnits` to change units in the plot (\#688).
+    - Enhanced plot customization options through `defaultPlotConfiguration` as
+      described in the documentation (\#669).
+    - Support for adding `observedData` (single or multiple `DataSet` objects) 
+      to the plots (\#674).
+      
   - Function `writeExcel()` is no longer exported. (\#672)
 
 ## Major Changes
