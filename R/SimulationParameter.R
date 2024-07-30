@@ -1,99 +1,153 @@
-#' Read parameter values from a structured Excel file.
-#' Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
-#' 'Value', and 'Units'
-#'
-#' @param paramsXLSpath Path to the excel file
-#' @param sheets Names of the excel sheets containing the information about the
-#'   parameters. Multiple sheets can be processed. If no sheets are provided,
-#'   the first one in the Excel file is used.
-#'
-#' @return A list containing vectors 'paths' with the full paths to the
-#'   parameters, 'values' the values of the parameters, and 'units' with the
-#'   units the values are in.
-#' @export
-readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
-  columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
-  validateIsString(paramsXLSpath)
-  validateIsString(sheets, nullAllowed = TRUE)
-
-  if (is.null(sheets)) {
-    sheets <- c(1)
-  }
-
-  pathsValuesVector <- vector(mode = "numeric")
-  pathsUnitsVector <- vector(mode = "character")
-
-  for (sheet in sheets) {
-    data <- readExcel(path = paramsXLSpath, sheet = sheet)
-
-    if (!all(columnNames %in% names(data))) {
-      stop(messages$errorWrongXLSStructure(filePath = paramsXLSpath, expectedColNames = columnNames))
+#' @title Model Parameter
+#' @description A class representing a parameter that can be applied to a simulation.
+SimulationParameter <- R6::R6Class(
+  classname = "SimulationParameter",
+  public = list(
+    #' @description Creates a new instance of SimulationParameter
+    #' @param project A Project in which the parameter is defined.
+    #' @param modelParameterData A data frame row containing the parameter data with the columns: "Container Path", "Parameter Name", "Value", "Units".
+    initialize = function(project, modelParameterData) {
+      private$.project <- project
+      self$containerPath <- modelParameterData$`Container Path`
+      self$parameterName <- modelParameterData$`Parameter Name`
+      self$value <- modelParameterData$Value
+      self$units <- modelParameterData$Units
+    },
+    #' @description Prints the parameter.
+    print = function() {
+      print(private$.parameter)
+    },
+    #' @description Converts the parameter to a data frame.
+    toDataFrame = function() {
+      return(
+        tibble::tibble(
+          `Container Path` = self$containerPath,
+          `Parameter Name` = self$parameterName,
+          Value = self$value,
+          Units = self$units
+        )
+      )
     }
-
-    fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]], sep = "|")
-    pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
-
-    pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = as.character(data[["Units"]]), replace = "")
-  }
-
-  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
-}
-
-#' Write parameter structure to excel that can be loaded in MoBi
-#'
-#' @param parameterStructure A list containing vectors 'paths' with the full paths to the parameters,
-#' 'values' the values of the parameters, and 'units' with the units the values are in.
-#'
-#' @param paramsXLSpath Path to the excel file
-#' @param sheet (Optional) name of the excel sheet
-#' @param append If TRUE, the existing excel file/sheet will be appended with the new
-#'  parameter structure. If FALSE (default), the existing file will be
-#'  overwritten.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' params <- list(paths = c("Container1|Path1", "Container|Second|Third|Path2"), values = c(1, 2), units = c("", "µmol"))
-#'
-#' writeParameterStructureToXLS(params, "test.xlsx")
-#' }
-#'
-writeParameterStructureToXLS <- function(parameterStructure, paramsXLSpath, sheet = NULL, append = FALSE) {
-  if (isTRUE(append)) {
-    existingData <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheet)
-    parameterStructure$paths <- c(existingData$paths, parameterStructure$paths)
-    parameterStructure$values <- c(existingData$values, parameterStructure$values)
-    parameterStructure$units <- c(existingData$units, parameterStructure$units)
-  }
-
-  .validateParametersStructure(parameterStructure, "parameterStructure")
-  # Split full parameter paths into container path and parameter name
-  containerPaths <- unlist(lapply(parameterStructure$paths, \(x){
-    .splitParameterPathIntoContainerAndName(x)$containerPath
-  }), use.names = FALSE)
-  parameterNames <- unlist(lapply(parameterStructure$paths, \(x){
-    .splitParameterPathIntoContainerAndName(x)$parameterName
-  }), use.names = FALSE)
-
-  # Create a data frame with the parameter structure
-  output <- data.frame(
-    "Container Path" = containerPaths,
-    "Parameter Name" = parameterNames,
-    Value = parameterStructure$values,
-    Units = parameterStructure$units,
-    check.names = FALSE
+  ),
+  active = list(
+    #' @field containerPath The container path of the parameter.
+    containerPath = function(value) {
+      if (!missing(value)) {
+        private$.parameter$containerPath <- value
+      }
+      return(private$.parameter$containerPath)
+    },
+    #' @field parameterName The name of the parameter.
+    parameterName = function(value) {
+      if (!missing(value)) {
+        private$.parameter$parameterName <- value
+      }
+      return(private$.parameter$parameterName)
+    },
+    #' @field value The value of the parameter.
+    value = function(value) {
+      if (!missing(value)) {
+        private$.parameter$value <- value
+      }
+      return(private$.parameter$value)
+    },
+    #' @field units The units of the parameter.
+    units = function(value) {
+      if (!missing(value)) {
+        if (is.na(value)){
+          value <- ""
+        }
+        private$.parameter$units <- value
+      }
+      return(private$.parameter$units)
+    },
+    #' @field parameterObject Returns the parameter as a `{ospsuite}` compatible list.
+    parameterObject = function() {
+      return(
+        list(
+          paths = paste(self$containerPath, self$parameterName, sep = "|"),
+          values = self$value,
+          units = self$units
+        )
+      )
+    }
+  ),
+  private = list(
+    .project = NULL,
+    .parameter = list()
   )
+)
 
-  # Write the results into an excel file.
-  # Wrap the output data frame into a list and name the list if sheet name
-  # has been provided
-  data <- list(output)
-  if (!is.null(sheet)) {
-    names(data) <- sheet
-  }
-  .writeExcel(data = data, path = paramsXLSpath)
+#' @title flattenParametersObjects
+#' Transform a set of `SimulationParameter` objects into one list of parameters.
+#'
+#' @param simulationParameters list of `SimulationParameter`
+#'
+flattenParameterObjects <- function(simulationParameters) {
+  list(
+    paths = purrr::map(simulationParameters, ~ purrr::pluck(.x, "paths")) %>% purrr::flatten_chr(),
+    values = purrr::map(simulationParameters, ~ purrr::pluck(.x, "values")) %>% purrr::flatten_dbl(),
+    units = purrr::map(simulationParameters, ~ purrr::pluck(.x, "units")) %>% purrr::flatten_chr()
+  )
 }
+
+validateParametersFileStructure <- function(filePath, data) {
+  columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
+
+  if (!all(columnNames %in% names(data))) {
+    stop(messages$errorWrongXLSStructure(filePath = filePath, expectedColNames = columnNames))
+  }
+}
+
+createParametersFromFile <- function(project, filePath) {
+  fileModelParameters <- list()
+  sheets <- readxl::excel_sheets(filePath)
+  for (sheet in sheets) {
+    fileModelParameters[[sheet]] <- createParametersFromSheet(project = project, filePath = filePath, sheet = sheet)
+  }
+  return(fileModelParameters)
+}
+
+createParametersFromSheet <- function(project, filePath, sheet) {
+  sheetModelParametersData <- readExcel(filePath, sheet = sheet)
+  validateParametersFileStructure(
+    filePath = filePath,
+    data = sheetModelParametersData
+  )
+  sheetModelParameters <- list()
+  for (i in 1:nrow(sheetModelParametersData)) {
+    parameterData <- sheetModelParametersData[i, ]
+    parameterID <- parameterData$`Parameter Name`
+
+    i <- 0
+    while (parameterID %in% names(sheetModelParameters)) {
+      parameterID <- parameterData$`Parameter Name`
+      parameterID <- paste(
+        stringr::str_replace_all(
+          stringr::str_extract(
+            parameterData$`Container Path`,
+            paste0(paste(rep("[^\\|]*", i), collapse = "\\|"), "[^\\|]*$")
+          ), "\\|", "_"
+        ),
+        parameterID,
+        sep = "_"
+      )
+      i <- i + 1
+    }
+    sheetModelParameters[[parameterID]] <-
+      SimulationParameter$new(
+        project = project,
+        modelParameterData = parameterData
+      )
+  }
+  return(sheetModelParameters)
+}
+
+
+
+
+
+# Legacy code -------------------------------------------------------------
 
 #' Export simulation parameters to excel
 #'
@@ -278,7 +332,7 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
   # Check for formula type equality
   if (!all(
     c(formula1$isConstant, formula1$isDistributed, formula1$isExplicit, formula1$isTable) ==
-      c(formula2$isConstant, formula2$isDistributed, formula2$isExplicit, formula2$isTable)
+    c(formula2$isConstant, formula2$isDistributed, formula2$isExplicit, formula2$isTable)
   )) {
     return(FALSE)
   }

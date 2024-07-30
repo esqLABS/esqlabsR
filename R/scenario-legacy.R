@@ -1,10 +1,10 @@
-#' @title Scenario
+#' @title ScenarioLegacy
 #' @docType class
 #' @description Simulation scenario
 #' @format NULL
 #' @export
-Scenario <- R6::R6Class(
-  "Scenario",
+ScenarioLegacy <- R6::R6Class(
+  "ScenarioLegacy",
   inherit = ospsuite.utils::Printable,
   cloneable = FALSE,
   active = list(
