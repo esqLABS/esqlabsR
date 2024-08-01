@@ -324,6 +324,44 @@ test_that("sensitivityCalculation PK parameters wide datafram column names and o
   )
 })
 
+# check `SensitivityCalculation` when simulation fails ----------
+
+test_that("sensitivityCalculation handles simulation failure", {
+
+  expect_warning(
+    resultsSimFailure <- sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(-1, 2, 10)
+    ),
+    "Simulation run failed"
+  )
+
+  expect_true(isOfType(resultsSimFailure, "SensitivityCalculation"))
+
+  expect_equal(
+    length(resultsSimFailure$simulationResults),
+    length(parameterPaths)
+  )
+
+  expect_equal(
+    length(resultsSimFailure$simulationResults[[1]]),
+    length(variationRange)+ 1L
+  )
+
+  expect_equal(
+    # path with failed simulation
+    length(resultsSimFailure$simulationResults[[2]]),
+    length(variationRange)
+  )
+
+  expect_equal(
+    length(resultsSimFailure$parameterPaths),
+    length(parameterPaths)
+  )
+})
+
 # multiple output paths -------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
@@ -366,6 +404,20 @@ test_that("sensitivityCalculation saves PK data to xlsx file for multiple output
   expect_true(file.exists(path))
 
   on.exit(unlink(path))
+})
+
+test_that("sensitivityCalculation extracts data correctly for multiple output paths upon simulation failure", {
+  expect_warning(
+    resultsMultipleSimFailure <- sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(-1, 2, 10)
+    ),
+    "Simulation run failed"
+  )
+  expect_identical(nrow(resultsMultipleSimFailure$pkData), 99L)
+  expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
 })
 
 # restore old options
