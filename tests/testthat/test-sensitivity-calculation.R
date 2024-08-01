@@ -329,13 +329,15 @@ test_that("sensitivityCalculation PK parameters wide datafram column names and o
 test_that("sensitivityCalculation handles simulation failure", {
 
   expect_warning(
-    resultsSimFailure <- sensitivityCalculation(
-      simulation = simulation,
-      outputPaths = outputPaths,
-      parameterPaths = parameterPaths,
-      variationRange = c(-1, 2, 10)
-    ),
-    "Simulation run failed"
+    expect_warning(
+      resultsSimFailure <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = c(-1, 2, 10)
+      ),
+      "Simulation run failed"
+    )
   )
 
   expect_true(isOfType(resultsSimFailure, "SensitivityCalculation"))
@@ -408,14 +410,17 @@ test_that("sensitivityCalculation saves PK data to xlsx file for multiple output
 
 test_that("sensitivityCalculation extracts data correctly for multiple output paths upon simulation failure", {
   expect_warning(
-    resultsMultipleSimFailure <- sensitivityCalculation(
-      simulation = simulation,
-      outputPaths = outputPaths,
-      parameterPaths = parameterPaths,
-      variationRange = c(-1, 2, 10)
-    ),
-    "Simulation run failed"
+    expect_warning(
+      resultsMultipleSimFailure <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = c(-1, 2, 10)
+      ),
+      "Simulation run failed"
+    )
   )
+
   expect_identical(nrow(resultsMultipleSimFailure$pkData), 99L)
   expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
 })

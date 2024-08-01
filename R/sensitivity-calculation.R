@@ -192,8 +192,16 @@ sensitivityCalculation <- function(simulation,
   for (parameterPath in names(batchResultsIdMap)) {
     for (parameterFactor in names(batchResultsIdMap[[parameterPath]])) {
       resultId <- batchResultsIdMap[[parameterPath]][[parameterFactor]]
-      simulationResultsBatch[[parameterPath]][[parameterFactor]] <-
-        purrr::pluck(simulationBatchesResults, resultId) %||% NULL
+      resultSim <- purrr::pluck(simulationBatchesResults, resultId)
+      if (!is.null(resultSim)) {
+        simulationResultsBatch[[parameterPath]][[parameterFactor]] <-
+          purrr::pluck(simulationBatchesResults, resultId)
+      } else {
+        simulationResultsBatch[[parameterPath]][[parameterFactor]] <- NULL
+        warning(
+          messages$sensitivityAnalysisSimulationFailure(parameterPath, parameterFactor)
+        )
+      }
     }
   }
 

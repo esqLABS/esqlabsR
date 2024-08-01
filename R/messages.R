@@ -264,3 +264,13 @@ messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
     paste0(outputPathIds, collapse = ",\n")
   )
 }
+
+messages$sensitivityAnalysisSimulationFailure <- function(parameterPath, parameterFactor) {
+  cat(
+    paste0(
+      "Simulation for `", parameterPath, "`\n",
+      "with variation factor `", parameterFactor, "` failed!\n",
+      "The results will not be included in the sensitivity calculation.\n"
+    )
+  )
+}
