@@ -347,7 +347,7 @@ To save the plot to a `PNG` file, use the
 Make sure that the `fileName` argument ends with `.png`:
 
 ```{r saveToPng}
-exportConfig <- createEsqlabsExportConfiguration(projectConfiguration)
+exportConfig <- createEsqlabsExportConfiguration(projectConfiguration$outputFolder)
 exportConfig$savePlot(gridPlot, fileName = "All plots.png")
 ```
 

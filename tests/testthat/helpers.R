@@ -19,3 +19,17 @@ executeWithTestFile <- function(actionWithFile) {
   actionWithFile(newFile)
   file.remove(newFile)
 }
+
+testProjectConfigurationPath <- function() {
+  # for now it targets TestProject as it is both an example and a test project
+  file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
+}
+
+testProjectConfiguration <- function(){
+  createProjectConfiguration(testProjectConfigurationPath())
+}
+
+testConfigurationsPath <- function(...){
+  normalizePath(file.path(example_directory("TestProject"), "Configurations", ...), mustWork = T)
+}
+

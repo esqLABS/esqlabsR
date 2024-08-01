@@ -24,6 +24,9 @@ stored. If \code{NULL} (default), a sub-folder in
 \item{saveSimulationsToPKML}{If \code{TRUE} (default), simulations corresponding to
 the results are saved to PKML along with the results.}
 }
+\value{
+\code{outputFolder} or the created output folder path, if no \code{outputFolder} was provided.
+}
 \description{
 Save results of scenario simulations to csv.
 }
@@ -34,7 +37,7 @@ the file name suffix \verb{_population}. Results can be read with the \code{load
 }
 \examples{
 \dontrun{
-projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
+projectConfiguration <- esqlabsR::createProjectConfiguration()
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   projectConfiguration = projectConfiguration
 )

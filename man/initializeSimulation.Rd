@@ -40,6 +40,6 @@ humanIndividualCharacteristics <- createIndividualCharacteristics(
 )
 userParams <- readParametersFromXLS(parameterXLSPath)
 initializeSimulation(simulation, humanIndividualCharacteristics, userParams)
-simulationResults <- runSimulation(simulation = simulation)
+simulationResults <- runSimulations(simulation = simulation)
 }
 }
