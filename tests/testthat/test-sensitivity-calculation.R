@@ -285,6 +285,17 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
     ),
     "The user-defined function must have either 'x', 'y', or both 'x' and 'y'"
   )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list("invalid" = \(x, y, z) x / y * z)
+    ),
+    "The user-defined function must have either 'x', 'y', or both 'x' and 'y'"
+  )
 })
 
 # checking `SensitivityCalculation`  object ------------------
@@ -345,6 +356,7 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
 test_that("sensitivityCalculation returns expected results with single custom function", {
   # list with custom function using only `y` parameter
   customFunctions <- list("minmax" = function(y) min(y[y != 0]) / max(y))
+  customFunctionsLambda <- list("minmax" = \(y) min(y[y != 0]) / max(y))
 
   results <- sensitivityCalculation(
     simulation = simulation,
@@ -353,6 +365,16 @@ test_that("sensitivityCalculation returns expected results with single custom fu
     customOutputFunctions = customFunctions,
     variationRange = variationRange
   )
+
+  resultsLambda <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFunctionsLambda,
+    variationRange = variationRange
+  )
+
+  expect_equal(results$pkData, resultsLambda$pkData)
 
   customPKData <- dplyr::filter(
     results$pkData,
@@ -364,7 +386,9 @@ test_that("sensitivityCalculation returns expected results with single custom fu
 test_that("sensitivityCalculation returns expected results with multiple custom functions", {
   # list with multiple custom functions using `x`and `y` parameter
   customFunctions <- list(
-    "minmax" = function(y) max(y) / min(y[y != 0]),
+    "minmax" = function(y) {
+      max(y) / min(y[y != 0])
+    },
     "max_slope" = function(x, y) {
       slopes <- diff(y) / diff(x)
       max(slopes)
@@ -381,7 +405,8 @@ test_that("sensitivityCalculation returns expected results with multiple custom 
   )
 
   # Filter the custom PK data
-  customPKData <- results$pkData %>% dplyr::filter(PKParameter %in% names(customFunctions))
+  customPKData <- results$pkData %>%
+    dplyr::filter(PKParameter %in% names(customFunctions))
 
   # Expect snapshot
   expect_snapshot(customPKData)
