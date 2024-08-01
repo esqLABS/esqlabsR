@@ -1,5 +1,13 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+## Major Changes
+
+## Minor improvements and bug fixes
+
+  - Handle simulation failures in `sensitivityCalculation` (\#694).
+
 # esqlabsR 5.2.0
 
 ## Breaking changes
@@ -58,7 +66,6 @@
     
   - Plotting functions have improved dynamic axis breaks, limits calculation, and 
     labeling (\#691).
-
 
 # esqlabsR 5.1.3
 
