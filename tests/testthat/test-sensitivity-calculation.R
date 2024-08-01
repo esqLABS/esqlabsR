@@ -37,9 +37,9 @@ summarizer <- function(data, path) {
   data <- dplyr::filter(data, ParameterPath %in% path)
 
   list(
-    "charColumnSummary" = select(data, where(is.character)) %>%
+    "charColumnSummary" = dplyr::select(data, where(is.character)) %>%
       purrr::map_dfr(unique),
-    "numericColumnSummary" = select(data, where(is.numeric)) %>%
+    "numericColumnSummary" = dplyr::select(data, where(is.numeric)) %>%
       purrr::map_df(summary, .id = "column")
   )
 }
@@ -233,7 +233,7 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
   )
 })
 
-# checking `SensitivityCalculation`  object ------------------
+# check `SensitivityCalculation` object ------------------
 
 test_that("sensitivityCalculation returns the correct object", {
   expect_true(isOfType(results, "SensitivityCalculation"))
@@ -254,7 +254,7 @@ test_that("sensitivityCalculation returns the correct object", {
   )
 })
 
-# checking PK tidy data ------------------
+# check PK tidy data -----------------------
 
 test_that("sensitivityCalculation PK parameters tidy datafram column names and order as expected", {
   expect_equal(
@@ -284,7 +284,7 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
   expect_snapshot(df3_pk)
 })
 
-# checking PK wide data ------------------
+# check PK wide data -----------------------
 
 set.seed(123)
 results2 <- sensitivityCalculation(
@@ -339,27 +339,27 @@ parameterPaths <- c(
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
 
-results_multiple <- sensitivityCalculation(
+resultsMultiple <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths,
-  variationRange = c(1, 5, 10)
+  variationRange = c(0.1, 5, 10)
 )
 
 test_that("sensitivityCalculation extracts data correctly for multiple output paths", {
-  expect_identical(nrow(results_multiple$pkData), 81L)
-  expect_equal(unique(results_multiple$pkData$OutputPath), outputPaths)
+  expect_identical(nrow(resultsMultiple$pkData), 108L)
+  expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
 })
 
 test_that("sensitivityCalculation saves PK data to xlsx file for multiple output paths", {
   path <- "mydata.xlsx"
 
   set.seed(123)
-  results_multiple <- sensitivityCalculation(
+  resultsMultiple <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
     parameterPaths = parameterPaths,
-    variationRange = c(1, 5, 10),
+    variationRange = c(0.1, 5, 10),
     pkDataFilePath = path
   )
 
