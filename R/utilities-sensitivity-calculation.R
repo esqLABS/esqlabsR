@@ -154,16 +154,13 @@
 
       # user-defined functions should have either 'x', 'y',
       # or both 'x' and 'y' as parameters
-      # here checks a performed to ensure that correct parameters are passed
-      if (setequal(formalNames, c("x", "y"))) {
-        userPKValue <- customOutputFunction(x = x, y = y)
-      } else if (setequal(formalNames, "x")) {
-        userPKValue <- customOutputFunction(x = x)
-      } else if (setequal(formalNames, "y")) {
-        userPKValue <- customOutputFunction(y = y)
-      } else {
+      userPKValue <- switch(
+        paste(sort(formalNames), collapse = ","),
+        "x,y" = customOutputFunction(x = x, y = y),
+        "x" = customOutputFunction(x = x),
+        "y" = customOutputFunction(y = y),
         stop(messages$invalidCustomFunctionParameters(formalNames))
-      }
+      )
 
       userPKValueList[[customFunctionName]] <- data.frame(
         Parameter = customFunctionName,
