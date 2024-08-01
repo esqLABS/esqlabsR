@@ -154,8 +154,7 @@
 
       # user-defined functions should have either 'x', 'y',
       # or both 'x' and 'y' as parameters
-      userPKValue <- switch(
-        paste(sort(formalNames), collapse = ","),
+      userPKValue <- switch(paste(sort(formalNames), collapse = ","),
         "x,y" = customOutputFunction(x = x, y = y),
         "x" = customOutputFunction(x = x),
         "y" = customOutputFunction(y = y),
