@@ -189,10 +189,11 @@ sensitivityCalculation <- function(simulation,
   # value of parameter factor.
   simulationResultsBatch <- batchResultsIdMap
 
-  for (parameterPath in seq_along(simulationResultsBatch)) {
-    for (parameterFactor in seq_along(simulationResultsBatch[[parameterPath]])) {
+  for (parameterPath in names(batchResultsIdMap)) {
+    for (parameterFactor in names(batchResultsIdMap[[parameterPath]])) {
+      resultId <- batchResultsIdMap[[parameterPath]][[parameterFactor]]
       simulationResultsBatch[[parameterPath]][[parameterFactor]] <-
-        purrr::pluck(simulationBatchesResults, batchResultsIdMap[[parameterPath]][[parameterFactor]])
+        purrr::pluck(simulationBatchesResults, resultId) %||% NULL
     }
   }
 
