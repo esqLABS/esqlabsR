@@ -178,7 +178,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   # getting the scales right
   data <- dplyr::mutate(data,
     ParameterFactor = ParameterFactor * 100,
-    PercentChangePK = PercentChangePK + 100
+    PKPercentChange = PKPercentChange + 100
   )
 
   # list of plots ----------------------------

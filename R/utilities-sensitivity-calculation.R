@@ -40,7 +40,7 @@
       "OutputPath",
       dplyr::starts_with("Parameter"),
       dplyr::starts_with("PK"),
-      Unit, PercentChangePK,
+      Unit,
       dplyr::everything(),
       -c("IndividualId")
     ) %>%
@@ -74,6 +74,7 @@
     dplyr::mutate(
       ParameterPath   = purrr::pluck(parameter[[1]], "path"),
       ParameterValue  = purrr::pluck(parameter[[1]], "value"),
+      ParameterUnit  = purrr::pluck(parameter[[1]], "unit"),
       ParameterFactor = as.numeric(ParameterFactor)
     ) %>%
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
@@ -102,7 +103,7 @@
   # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
   data %>%
     dplyr::mutate(
-      PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
+      PKPercentChange = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
       SensitivityPKParameter =
       # delta PK / PK
         ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
@@ -117,7 +118,7 @@
   data %>%
     tidyr::pivot_wider(
       names_from  = PKParameter,
-      values_from = c(PKParameterValue, Unit, PercentChangePK, SensitivityPKParameter),
+      values_from = c(PKParameterValue, Unit, PKPercentChange, SensitivityPKParameter),
       names_glue  = "{PKParameter}_{.value}"
     ) %>%
     dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")) %>%
