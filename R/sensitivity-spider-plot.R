@@ -108,6 +108,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   xAxisScale = NULL,
                                   yAxisScale = NULL,
                                   yAxisFacetScales = "fixed",
+                                  xAxisType = "percent",
                                   yAxisType = "percent",
                                   defaultPlotConfiguration = NULL) {
   # input validation -------------------------
@@ -136,7 +137,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     title          = NULL,
     titleSize      = 14,
     xAxisScale     = "log",
-    xLabel         = "Input parameter value [% of reference]",
+    xLabel         = NULL,
     yAxisScale     = "lin",
     yAxisTicks     = 10L,
     yLabel         = NULL
@@ -158,10 +159,12 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   )
   plotConfigurationList$yAxisFacetScales <- yAxisFacetScales
   plotConfigurationList$yAxisType <- yAxisType
+  plotConfigurationList$xAxisType <- xAxisType
   ospsuite.utils::validateIsOption(
     plotConfigurationList,
     .getPlotConfigurationOptions(
-      c(names(spiderPlotConfiguration), "yAxisFacetScales", "yAxisType")
+      c(names(spiderPlotConfiguration),
+        "yAxisFacetScales", "xAxisType", "yAxisType")
     )
   )
 
@@ -188,6 +191,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     .x = data %>% split(.$OutputPath),
     .f = ~ .createSpiderPlot(
       .x,
+      xAxisType = xAxisType,
       yAxisType = yAxisType,
       yAxisFacetScales = yAxisFacetScales,
       defaultPlotConfiguration = customPlotConfiguration
@@ -201,6 +205,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .createSpiderPlot <- function(data,
+                              xAxisType = "percent",
                               yAxisType = "percent",
                               yAxisFacetScales = "fixed",
                               defaultPlotConfiguration) {
@@ -212,8 +217,13 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   )
 
   # select percent or absolute column for y-axis
+  if (xAxisType == "percent") {
+    xColumn <- sym("ParameterFactor")
+  } else {
+    xColumn <- sym("ParameterValue")
+  }
   if (yAxisType == "percent") {
-    yColumn <- sym("PercentChangePK")
+    yColumn <- sym("PKPercentChange")
     data$Unit <- "% of reference"
   } else {
     yColumn <- sym("PKParameterValue")
@@ -238,13 +248,14 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       dataSubset <- dplyr::filter(data, PKParameter == .x)
       baseDataSubset <- dplyr::filter(dataSubset, ParameterFactor == 100)
 
-      # calculate y-axis breaks and limits -------
+      # set axis limits and labels ---------------
 
       if (isTRUE(yAxisFacetScales == "fixed")) {
         # fixed y-axis scale
         #   same label for all plots based on yAxisType
         if (is.null(plotConfiguration$yLabel)) {
-          plotConfiguration$yLabel <- switch(yAxisType,
+          plotConfiguration$yLabel <- switch(
+            yAxisType,
             "percent"  = "PK-Parameter value [% of reference]",
             "absolute" = "PK-Parameter value",
             "PK-Parameter value"
@@ -261,6 +272,15 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         pLimits <- NULL
       }
 
+      # x-axis label based on xAxisType
+      plotConfiguration$xLabel <- plotConfiguration$xLabel %||%
+        switch(
+          xAxisType,
+          "percent"  = "Input Parameter value [% of reference]",
+          "absolute" = "Input Parameter value",
+          "PK-Parameter value"
+        )
+
       # override y-axis limits if specified in configuration
       if (!is.null(plotConfiguration$yAxisLimits)) {
         pLimits <- plotConfiguration$yAxisLimits
@@ -270,7 +290,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
       plot <- ggplot(
         dataSubset,
-        aes(x = ParameterFactor, y = !!sym(yColumn), group = ParameterPath)
+        aes(x = !!sym(xColumn), y = !!sym(yColumn), group = ParameterPath)
       ) +
         geom_line(
           aes(group = ParameterPath, color = as.factor(ParameterPath)),
@@ -320,14 +340,19 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
           linewidth = 0.5,
           color = "black",
           na.rm = TRUE
-        ) +
-        geom_vline(
-          xintercept = 100,
-          linetype = "dotted",
-          linewidth = 0.5,
-          color = "black",
-          na.rm = TRUE
         )
+
+      # vertical line only for percent x-axis at 100
+      if (xAxisType == "percent") {
+        plot <- plot +
+          geom_vline(
+            xintercept = 100,
+            linetype = "dotted",
+            linewidth = 0.5,
+            color = "black",
+            na.rm = TRUE
+          )
+      }
 
       # finalize plot ----------------------------
 
