@@ -276,8 +276,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       plotConfiguration$xLabel <- plotConfiguration$xLabel %||%
         switch(
           xAxisType,
-          "percent"  = "Input Parameter value [% of reference]",
-          "absolute" = "Input Parameter value",
+          "percent"  = "Input parameter value [% of reference]",
+          "absolute" = "Input parameter value",
           "PK-Parameter value"
         )
 
