@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,6 +61,7 @@
 <span>  <span class="va">parameterPaths</span>,</span>
 <span>  variationRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">1</span>, by <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">10</span>, by <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  pkParameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"C_max"</span>, <span class="st">"t_max"</span>, <span class="st">"AUC_inf"</span><span class="op">)</span>,</span>
+<span>  customOutputFunctions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pkDataFilePath <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  simulationRunOptions <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -100,6 +101,13 @@ the following parameters will be considered: <code>"C_max"</code>, <code>"t_max"
 can also specify custom PK parameters.</p></dd>
 
 
+<dt id="arg-customoutputfunctions">customOutputFunctions<a class="anchor" aria-label="anchor" href="#arg-customoutputfunctions"></a></dt>
+<dd><p>A named list with
+custom function(s) for PK parameter calculation. User-defined functions should
+have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
+x-Dimension (time) or y-Dimension values from simulation results.</p></dd>
+
+
 <dt id="arg-pkdatafilepath">pkDataFilePath<a class="anchor" aria-label="anchor" href="#arg-pkdatafilepath"></a></dt>
 <dd><p>Path to excel file in which
 PK-parameter data should be saved. If a file already exists, it will be
@@ -108,7 +116,12 @@ spreadsheet.</p></dd>
 
 
 <dt id="arg-simulationrunoptions">simulationRunOptions<a class="anchor" aria-label="anchor" href="#arg-simulationrunoptions"></a></dt>
-<dd><p>Optional instance of a <code>SimulationRunOptions</code> used during the simulation run</p></dd>
+<dd><p>Optional instance of a <code>SimulationRunOptions</code> used
+during the simulation run</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Additional parameters passed to the function.</p></dd>
 
 </dl></div>
     <div class="section level2">
