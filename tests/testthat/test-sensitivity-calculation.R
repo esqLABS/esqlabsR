@@ -233,6 +233,84 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
   )
 })
 
+# validate `customOutputFunctions` ------------------
+
+test_that("sensitivityCalculation fails early with incorrect `customOutputFunctions` arguments", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = "invalid"
+    ),
+    "argument 'customOutputFunctions' is of type 'character', but expected 'list'!"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list("invalid" = "function")
+    ),
+    "argument 'customOutputFunctions' is of type 'list', but expected 'function'!"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list(
+        function(x) x, function(y) y
+      )
+    ),
+    "argument 'customOutputFunctions' is not a named list!"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list(
+        "funA" = function(x) x, function(y) y, "funC" = function(x) x^2
+      )
+    ),
+    "argument 'customOutputFunctions' is not a named list!"
+  )
+})
+
+test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list("invalid" = function(x, y, z) {
+        x / y * z
+      })
+    ),
+    "The user-defined function must have either 'x', 'y', or both 'x' and 'y'"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list("invalid" = \(x, y, z) x / y * z)
+    ),
+    "The user-defined function must have either 'x', 'y', or both 'x' and 'y'"
+  )
+})
+
 # checking `SensitivityCalculation`  object ------------------
 
 test_that("sensitivityCalculation returns the correct object", {
@@ -256,7 +334,7 @@ test_that("sensitivityCalculation returns the correct object", {
 
 # checking PK tidy data ------------------
 
-test_that("sensitivityCalculation PK parameters tidy datafram column names and order as expected", {
+test_that("sensitivityCalculation PK parameters tidy dataframe column names and order as expected", {
   expect_equal(
     names(results$pkData),
     c(
@@ -284,6 +362,70 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
   expect_snapshot(df3_pk)
 })
 
+
+# test customOutputFunctions ------------------
+
+
+test_that("sensitivityCalculation returns expected results with single custom function", {
+  # list with custom function using only `y` parameter
+  customFunctions <- list("minmax" = function(y) min(y[y != 0]) / max(y))
+  customFunctionsLambda <- list("minmax" = \(y) min(y[y != 0]) / max(y))
+
+  results <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFunctions,
+    variationRange = variationRange
+  )
+
+  resultsLambda <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFunctionsLambda,
+    variationRange = variationRange
+  )
+
+  expect_equal(results$pkData, resultsLambda$pkData)
+
+  customPKData <- dplyr::filter(
+    results$pkData,
+    PKParameter %in% names(customFunctions)
+  )
+  expect_snapshot(customPKData)
+})
+
+test_that("sensitivityCalculation returns expected results with multiple custom functions", {
+  # list with multiple custom functions using `x`and `y` parameter
+  customFunctions <- list(
+    "minmax" = function(y) {
+      max(y) / min(y[y != 0])
+    },
+    "max_slope" = function(x, y) {
+      slopes <- diff(y) / diff(x)
+      max(slopes)
+    }
+  )
+
+  # Perform the sensitivity calculation
+  results <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFunctions,
+    variationRange = variationRange
+  )
+
+  # Filter the custom PK data
+  customPKData <- results$pkData %>%
+    dplyr::filter(PKParameter %in% names(customFunctions))
+
+  # Expect snapshot
+  expect_snapshot(customPKData)
+})
+
+
 # checking PK wide data ------------------
 
 set.seed(123)
@@ -301,7 +443,7 @@ test_that("sensitivityCalculation PK parameters dataframe dimensions are as expe
   expect_equal(dim(pkDataWide), c(12L, 56L))
 })
 
-test_that("sensitivityCalculation PK parameters wide datafram column names and order as expected", {
+test_that("sensitivityCalculation PK parameters wide dataframe column names and order as expected", {
   expect_equal(
     names(pkDataWide),
     c(
@@ -349,6 +491,25 @@ results_multiple <- sensitivityCalculation(
 test_that("sensitivityCalculation extracts data correctly for multiple output paths", {
   expect_identical(nrow(results_multiple$pkData), 81L)
   expect_equal(unique(results_multiple$pkData$OutputPath), outputPaths)
+})
+
+test_that("sensitivityCalculation applies custom PK parameter function correctly with multiple output paths", {
+  # list with custom function using only `y` parameter
+  customFunctions <- list("minmax" = function(y) min(y[y != 0]) / max(y))
+
+  results_multiple <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFunctions,
+    variationRange = c(1, 5, 10)
+  )
+
+  customPKDataMultiple <- dplyr::filter(
+    results_multiple$pkData,
+    PKParameter %in% names(customFunctions)
+  )
+  expect_snapshot(customPKDataMultiple)
 })
 
 test_that("sensitivityCalculation saves PK data to xlsx file for multiple output paths", {

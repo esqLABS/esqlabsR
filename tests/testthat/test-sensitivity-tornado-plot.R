@@ -68,6 +68,29 @@ test_that("sensitivityTornadoPlot default plots are as expected", {
   )
 })
 
+# default plot with custom PK parameter ---------------
+
+test_that("sensitivityTornadoPlot default plots are as expected with custom PK Parameter", {
+  customFun <- list("y_max" = function(y) max(y, na.rm = TRUE))
+
+  resultsCustomPK <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFun,
+    variationRange = variationRange
+  )
+
+  set.seed(123)
+  p <- sensitivityTornadoPlot(resultsCustomPK)
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivityTornadoPlot custom PK Parameter",
+    fig = suppressWarnings(p)
+  )
+})
+
 # multiple output paths -------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")

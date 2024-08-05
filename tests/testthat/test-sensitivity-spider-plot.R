@@ -54,6 +54,29 @@ test_that("sensitivitySpiderPlot default plots are as expected", {
   )
 })
 
+# default plot with custom PK parameter ---------------
+
+test_that("sensitivitySpiderPlot default plots are as expected with custom PK Parameter", {
+  customFun <- list("minmax" = function(y) max(y) / min(y[y != 0]))
+
+  resultsCustomPK <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFun,
+    variationRange = variationRange
+  )
+
+  set.seed(123)
+  p <- sensitivitySpiderPlot(resultsCustomPK)
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivitySpiderPlot custom PK Parameter",
+    fig = suppressWarnings(p)
+  )
+})
+
 # parameterized plots ---------------------------------
 
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -96,7 +119,6 @@ test_that("sensitivitySpiderPlot correctly applies free scaling with absolute y-
 
   expect_snapshot(unlist(plotParams))
 })
-
 
 # plot configuration -----------------------------------------
 
