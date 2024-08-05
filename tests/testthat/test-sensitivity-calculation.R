@@ -265,10 +265,23 @@ test_that("sensitivityCalculation fails early with incorrect `customOutputFuncti
       parameterPaths = parameterPaths,
       variationRange = c(0.1, 2, 20),
       customOutputFunctions = list(
+        function(x) x, function(y) y
+      )
+    ),
+    "argument 'customOutputFunctions' is not a named list!"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      customOutputFunctions = list(
         "funA" = function(x) x, function(y) y, "funC" = function(x) x^2
       )
     ),
-    "argument 'names\\(customOutputFunctions\\)' has empty strings"
+    "argument 'customOutputFunctions' is not a named list!"
   )
 })
 

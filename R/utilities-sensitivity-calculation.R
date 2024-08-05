@@ -121,9 +121,8 @@
 #' @noRd
 .calculateCustomPK <- function(simulationResults, customOutputFunctions) {
   # validate customOutputFunctions
-  validateIsOfType(customOutputFunctions, "list", nullAllowed = TRUE)
+  .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
   validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
-  validateHasOnlyNonEmptyStrings(names(customOutputFunctions))
 
   # extract all output paths
   outputPaths <- simulationResults$allQuantityPaths
@@ -383,6 +382,26 @@
       "Following non-standard PK parameters will not be calculated:\n",
       paste0(nsPKNames, collapse = "\n")
     )
+  }
+}
+
+#' Validate Named List
+#'
+#' Check if the object is a named list. Allows NULL if `nullAllowed` is TRUE.
+#'
+#' @param object The object to validate.
+#' @param nullAllowed Logical. If TRUE, allows NULL. Default is FALSE.
+#' @keywords internal
+#' @noRd
+.validateIsNamedList <- function(object, nullAllowed = FALSE) {
+  validateIsOfType(object, "list", nullAllowed = nullAllowed)
+
+  if (!is.null(object)) {
+    listNames <- names(object)
+    argName <- deparse(substitute(object))
+    if (hasEmptyStrings(listNames)) {
+      stop(messages$errorNotNamedList(argName))
+    }
   }
 }
 

@@ -271,3 +271,11 @@ messages$invalidCustomFunctionParameters <- function(providedParams) {
     "Provided parameters are: ", paste0(providedParams, collapse = ", ")
   )
 }
+
+messages$errorNotNamedList <- function(objectName, optionalMessage = NULL) {
+  callingFunction <- ospsuite.utils:::.getCallingFunctionName()
+  paste0(
+    callingFunction, ": argument '", objectName, "' is not a named list!",
+    optionalMessage
+  )
+}
