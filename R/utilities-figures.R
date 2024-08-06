@@ -755,6 +755,10 @@ createPlotsFromExcel <- function(
       type = "integer",
       valueRange = c(1L, 20L)
     ),
+    xAxisType = list(
+      type = "character",
+      allowedValues = c("percent", "absolute")
+    ),
     yAxisType = list(
       type = "character",
       allowedValues = c("percent", "absolute")
