@@ -1,5 +1,12 @@
 # esqlabsR (development version)
 
+  - Function `sensitivityCalculation()` supports new parameter `customOutputFunctions`, 
+    allowing user-defined functions for PK parameter calculation (\#685).
+
+  - Function `sensitivitySpiderPlot` now supports `xAxisType` and `yAxisType` options 
+    for switching between percent and absolute values (#695).
+
+    
 # esqlabsR 5.2.0
 
 ## Breaking changes
@@ -26,9 +33,6 @@
     multiple `DataSet` objects) can now be added to the plots and will be
     included automatically in the `outputPath` if the dimensions are convertible
     (\#674).
-    
-  - Function `sensitivityCalculation()` supports new parameter `customOutputFunctions`, 
-    allowing user-defined functions for PK parameter calculation (\#685).
 
   - Function `writeExcel()` is no longer exported. (\#672)
 
