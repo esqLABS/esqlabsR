@@ -163,8 +163,10 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   ospsuite.utils::validateIsOption(
     plotConfigurationList,
     .getPlotConfigurationOptions(
-      c(names(spiderPlotConfiguration),
-        "yAxisFacetScales", "xAxisType", "yAxisType")
+      c(
+        names(spiderPlotConfiguration),
+        "yAxisFacetScales", "xAxisType", "yAxisType"
+      )
     )
   )
 
@@ -254,8 +256,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         # fixed y-axis scale
         #   same label for all plots based on yAxisType
         if (is.null(plotConfiguration$yLabel)) {
-          plotConfiguration$yLabel <- switch(
-            yAxisType,
+          plotConfiguration$yLabel <- switch(yAxisType,
             "percent"  = "PK-Parameter value [% of reference]",
             "absolute" = "PK-Parameter value",
             "PK-Parameter value"
@@ -274,8 +275,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
       # x-axis label based on xAxisType
       plotConfiguration$xLabel <- plotConfiguration$xLabel %||%
-        switch(
-          xAxisType,
+        switch(xAxisType,
           "percent"  = "Input parameter value [% of reference]",
           "absolute" = "Input parameter value",
           "PK-Parameter value"

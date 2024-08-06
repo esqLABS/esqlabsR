@@ -347,9 +347,9 @@
 
   data %>%
     dplyr::mutate(
-      ParameterPath   = purrr::pluck(parameter[[1]], "path"),
-      ParameterValue  = purrr::pluck(parameter[[1]], "value"),
-      ParameterUnit  = purrr::pluck(parameter[[1]], "unit"),
+      ParameterPath = purrr::pluck(parameter[[1]], "path"),
+      ParameterValue = purrr::pluck(parameter[[1]], "value"),
+      ParameterUnit = purrr::pluck(parameter[[1]], "unit"),
       ParameterFactor = as.numeric(ParameterFactor)
     ) %>%
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
