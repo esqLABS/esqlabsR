@@ -89,16 +89,16 @@
   pkData <- .addParameterColumns(pkData, simulationResults, parameterPath)
   pkData <- dplyr::group_by(pkData, ParameterPath, PKParameter) %>%
     dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(
-      "OutputPath",
-      dplyr::starts_with("Parameter"),
-      dplyr::starts_with("PK"),
-      Unit,
-      dplyr::everything(),
-      -c("IndividualId")
-    ) %>%
+    dplyr::ungroup()
 
+  pkData <- dplyr::select(
+    pkData,
+    "OutputPath",
+    dplyr::starts_with("Parameter"),
+    dplyr::starts_with("PK"),
+    Unit,
+    -dplyr::any_of("IndividualId")
+  ) %>%
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 
   return(pkData)
