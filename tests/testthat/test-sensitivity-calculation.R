@@ -336,11 +336,11 @@ test_that("sensitivityCalculation returns the correct object", {
 
 test_that("sensitivityCalculation PK parameters tidy dataframe column names and order as expected", {
   expect_equal(
-    names(results$pkData),
+    colnames(results$pkData),
     c(
       "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue",
-      "PKParameter", "PKParameterValue", "Unit", "PercentChangePK",
-      "SensitivityPKParameter"
+      "ParameterUnit", "PKParameter", "PKParameterValue", "PKPercentChange",
+      "Unit", "SensitivityPKParameter"
     )
   )
 })
@@ -438,28 +438,28 @@ results2 <- sensitivityCalculation(
 pkDataWide <- esqlabsR:::.convertToWide(results2$pkData)
 
 test_that("sensitivityCalculation PK parameters dataframe dimensions are as expected", {
-  expect_equal(dim(pkDataWide), c(12L, 56L))
+  expect_equal(dim(pkDataWide), c(12L, 57L))
 })
 
 test_that("sensitivityCalculation PK parameters wide dataframe column names and order as expected", {
   expect_equal(
-    names(pkDataWide),
+    colnames(pkDataWide),
     c(
-      "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue",
-      "C_max", "C_max_norm", "C_max_Unit", "C_max_norm_Unit", "C_max_PercentChange",
-      "C_max_norm_PercentChange", "C_max_Sensitivity", "C_max_norm_Sensitivity",
-      "t_max", "t_max_Unit", "t_max_PercentChange", "t_max_Sensitivity",
+      "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue", "ParameterUnit",
+      "C_max", "C_max_norm", "C_max_Unit", "C_max_norm_Unit", "C_max_PKPercentChange",
+      "C_max_norm_PKPercentChange", "C_max_Sensitivity", "C_max_norm_Sensitivity",
+      "t_max", "t_max_Unit", "t_max_PKPercentChange", "t_max_Sensitivity",
       "AUC_tEnd", "AUC_tEnd_norm", "AUC_tEnd_Unit", "AUC_tEnd_norm_Unit",
-      "AUC_tEnd_PercentChange", "AUC_tEnd_norm_PercentChange", "AUC_tEnd_Sensitivity",
+      "AUC_tEnd_PKPercentChange", "AUC_tEnd_norm_PKPercentChange", "AUC_tEnd_Sensitivity",
       "AUC_tEnd_norm_Sensitivity", "AUC_inf", "AUC_inf_norm", "AUC_inf_Unit",
-      "AUC_inf_norm_Unit", "AUC_inf_PercentChange", "AUC_inf_norm_PercentChange",
+      "AUC_inf_norm_Unit", "AUC_inf_PKPercentChange", "AUC_inf_norm_PKPercentChange",
       "AUC_inf_Sensitivity", "AUC_inf_norm_Sensitivity", "CL", "FractionAucLastToInf",
-      "CL_Unit", "FractionAucLastToInf_Unit", "CL_PercentChange", "FractionAucLastToInf_PercentChange",
+      "CL_Unit", "FractionAucLastToInf_Unit", "CL_PKPercentChange", "FractionAucLastToInf_PKPercentChange",
       "CL_Sensitivity", "FractionAucLastToInf_Sensitivity", "MRT",
-      "MRT_Unit", "MRT_PercentChange", "MRT_Sensitivity", "Thalf",
-      "Thalf_Unit", "Thalf_PercentChange", "Thalf_Sensitivity", "Vss",
-      "Vss_Unit", "Vss_PercentChange", "Vss_Sensitivity", "Vd", "Vd_Unit",
-      "Vd_PercentChange", "Vd_Sensitivity"
+      "MRT_Unit", "MRT_PKPercentChange", "MRT_Sensitivity", "Thalf",
+      "Thalf_Unit", "Thalf_PKPercentChange", "Thalf_Sensitivity", "Vss",
+      "Vss_Unit", "Vss_PKPercentChange", "Vss_Sensitivity", "Vd", "Vd_Unit",
+      "Vd_PKPercentChange", "Vd_Sensitivity"
     )
   )
 })

@@ -155,10 +155,10 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   )
   data <- dplyr::mutate(
     data,
-    MeanPercentChangePK = mean(PercentChangePK, na.rm = TRUE)
+    PKMeanPercentChange = mean(PKPercentChange, na.rm = TRUE)
   )
   data <- dplyr::ungroup(data)
-  data <- dplyr::arrange(data, dplyr::desc(abs(MeanPercentChangePK)))
+  data <- dplyr::arrange(data, dplyr::desc(abs(PKMeanPercentChange)))
   data <- dplyr::mutate(
     data,
     ParameterPath = purrr::map_chr(ParameterPath, .splitParameterName)
@@ -199,7 +199,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   )
 
   # calculate x-axis limits  -------
-  pLimits <- .calculateLimits(data$PercentChangePK)
+  pLimits <- .calculateLimits(data$PKPercentChange)
   pLimits[1] <- -1 * max(abs(pLimits))
   pLimits[2] <- max(abs(pLimits))
 
@@ -216,7 +216,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
         dataSubset,
         aes(
           x = ParameterPath,
-          y = PercentChangePK,
+          y = PKPercentChange,
           fill = as.factor(ParameterFactor)
         )
       ) +

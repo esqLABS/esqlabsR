@@ -19,3 +19,21 @@ executeWithTestFile <- function(actionWithFile) {
   actionWithFile(newFile)
   file.remove(newFile)
 }
+
+# function to extract axis range from plots
+extractAxisRange <- function(p) {
+  pn <- names(p)
+
+  axisRanges <- purrr::map(pn, function(n) {
+    pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
+    xRanges <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$x.range)
+    yRanges <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)
+    list(
+      xRange = unlist(xRanges),
+      yRange = unlist(yRanges)
+    )
+  })
+  names(axisRanges) <- pn
+
+  return(axisRanges)
+}

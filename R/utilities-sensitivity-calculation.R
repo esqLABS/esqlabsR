@@ -91,18 +91,126 @@
     dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
     dplyr::ungroup()
 
-  pkData <- dplyr::select(
+  pkData <- dplyr::select(pkData, -dplyr::any_of("IndividualId"))
+  pkData <- dplyr::relocate(
     pkData,
     "OutputPath",
     dplyr::starts_with("Parameter"),
     dplyr::starts_with("PK"),
-    Unit, PercentChangePK,
-    dplyr::everything(),
-    -c("IndividualId")
+    Unit
   ) %>%
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 
   return(pkData)
+}
+
+#' Calculate custom PK values
+#'
+#' This function calculates user-defined PK values from simulation results using
+#' custom output functions.
+#'
+#' @param simulationResults `SimulationResults` object containing the simulation
+#' data.
+#' @param customOutputFunctions Named list of custom output functions to calculate
+#' PK values.
+#'
+#' @return A dataframe containing the custom PK values.
+#'
+#' @keywords internal
+#' @noRd
+.calculateCustomPK <- function(simulationResults, customOutputFunctions) {
+  # validate customOutputFunctions
+  .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
+  validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+
+  # extract all output paths
+  outputPaths <- simulationResults$allQuantityPaths
+
+  # extract simulation result values
+  simulationResultsDf <- simulationResultsToDataFrame(simulationResults)
+
+  userPKValuePathList <- setNames(
+    vector("list", length(outputPaths)),
+    outputPaths
+  )
+
+  for (outputPath in outputPaths) {
+    # filter the data frame for the current output path
+    outputData <- dplyr::filter(simulationResultsDf, paths == outputPath)
+    x <- outputData$Time
+    y <- outputData$simulationValues
+
+    userPKValueList <- setNames(
+      vector("list", length(customOutputFunctions)),
+      names(customOutputFunctions)
+    )
+
+    # calculate user-defined PK values using user-defined functions
+    for (customFunctionName in names(customOutputFunctions)) {
+      customOutputFunction <- customOutputFunctions[[customFunctionName]]
+      formalNames <- names(formals(customOutputFunction))
+
+      # user-defined functions should have either 'x', 'y',
+      # or both 'x' and 'y' as parameters
+      userPKValue <- switch(paste(sort(formalNames), collapse = ","),
+        "x,y" = customOutputFunction(x = x, y = y),
+        "x" = customOutputFunction(x = x),
+        "y" = customOutputFunction(y = y),
+        stop(messages$invalidCustomFunctionParameters(formalNames))
+      )
+
+      userPKValueList[[customFunctionName]] <- data.frame(
+        Parameter = customFunctionName,
+        Value = userPKValue,
+        IndividualId = simulationResults$allIndividualIds[1],
+        QuantityPath = outputPath,
+        Unit = NA
+      )
+    }
+    userPKValuePathList[[outputPath]] <- dplyr::bind_rows(userPKValueList)
+  }
+
+  # combined and prepare PK data to match calculatePKAnalyses() output
+  userPKDataFrame <- dplyr::bind_rows(userPKValuePathList)
+  userPKDataFrame <- dplyr::select(
+    userPKDataFrame,
+    IndividualId, QuantityPath, Parameter, Value, Unit
+  )
+
+  return(userPKDataFrame)
+}
+
+
+# dataframe modification helpers ------------------------------
+
+#' @title Percent change in PK parameters
+#'
+#' @description Compute %change in PK parameters and their sensitivity
+#'
+#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
+#'   columns renamed to follow `UpperCamel` case.
+#'
+#' @keywords internal
+#' @noRd
+.computePercentChange <- function(data) {
+  # baseline values with a scaling of 1, i.e. no scaling
+  baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
+
+  # baseline values for parameters of interest
+  ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
+  PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
+
+  # add columns with %change and sensitivity
+  # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
+  data %>%
+    dplyr::mutate(
+      PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
+      SensitivityPKParameter =
+      # delta PK / PK
+        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
+          # p / delta p
+          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
+    )
 }
 
 #' Calculate custom PK values
@@ -239,8 +347,9 @@
 
   data %>%
     dplyr::mutate(
-      ParameterPath   = purrr::pluck(parameter[[1]], "path"),
-      ParameterValue  = purrr::pluck(parameter[[1]], "value"),
+      ParameterPath = purrr::pluck(parameter[[1]], "path"),
+      ParameterValue = purrr::pluck(parameter[[1]], "value"),
+      ParameterUnit = purrr::pluck(parameter[[1]], "unit"),
       ParameterFactor = as.numeric(ParameterFactor)
     ) %>%
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
@@ -269,7 +378,7 @@
   # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
   data %>%
     dplyr::mutate(
-      PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
+      PKPercentChange = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
       SensitivityPKParameter =
       # delta PK / PK
         ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
@@ -284,7 +393,7 @@
   data %>%
     tidyr::pivot_wider(
       names_from  = PKParameter,
-      values_from = c(PKParameterValue, Unit, PercentChangePK, SensitivityPKParameter),
+      values_from = c(PKParameterValue, Unit, PKPercentChange, SensitivityPKParameter),
       names_glue  = "{PKParameter}_{.value}"
     ) %>%
     dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")) %>%

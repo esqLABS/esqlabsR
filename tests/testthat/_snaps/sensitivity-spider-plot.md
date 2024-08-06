@@ -12,6 +12,59 @@
     Output
       [1] -4113 86380 -4113 86380 -4113 86380
 
+# sensitivitySpiderPlot correctly applies absolute x-axis and y-axis values
+
+    Code
+      extractAxisRange(p1)
+    Condition
+      Warning in `transformation$transform()`:
+      NaNs produced
+      Warning in `scale_x_log10()`:
+      log-10 transformation introduced infinite values.
+      Warning in `transformation$transform()`:
+      NaNs produced
+      Warning in `scale_x_log10()`:
+      log-10 transformation introduced infinite values.
+      Warning in `transformation$transform()`:
+      NaNs produced
+      Warning in `scale_x_log10()`:
+      log-10 transformation introduced infinite values.
+      Warning in `transformation$transform()`:
+      NaNs produced
+      Warning in `scale_x_log10()`:
+      log-10 transformation introduced infinite values.
+      Warning in `transformation$transform()`:
+      NaNs produced
+      Warning in `scale_x_log10()`:
+      log-10 transformation introduced infinite values.
+      Warning in `transformation$transform()`:
+      NaNs produced
+      Warning in `scale_x_log10()`:
+      log-10 transformation introduced infinite values.
+    Output
+      $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
+      $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`$xRange
+      [1] -4.897  1.596 -4.897  1.596 -4.897  1.596
+      
+      $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`$yRange
+      [1] -4113 86380 -4113 86380 -4113 86380
+      
+      
+
+---
+
+    Code
+      extractAxisRange(p2)
+    Output
+      $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
+      $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`$xRange
+      [1] -3.037 21.097 -3.037 21.097 -3.037 21.097
+      
+      $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`$yRange
+      [1] -0.8395  5.4850 -0.8395  5.4850 -0.8395  5.4850
+      
+      
+
 # sensitivitySpiderPlot correctly applies free scaling with absolute y-values
 
     Code
