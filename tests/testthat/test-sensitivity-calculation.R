@@ -362,12 +362,7 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
   expect_snapshot(df3_pk)
 })
 
-<<<<<<< HEAD
-# check PK wide data -----------------------
-=======
-
 # test customOutputFunctions ------------------
-
 
 test_that("sensitivityCalculation returns expected results with single custom function", {
   # list with custom function using only `y` parameter
@@ -430,7 +425,6 @@ test_that("sensitivityCalculation returns expected results with multiple custom 
 
 
 # checking PK wide data ------------------
->>>>>>> main
 
 set.seed(123)
 results2 <- sensitivityCalculation(
