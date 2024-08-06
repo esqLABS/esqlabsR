@@ -236,8 +236,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     data <- dplyr::filter(data, !!yColumn <= plotConfiguration$yValuesLimits[2])
   }
   if (!is.null(plotConfiguration$xValuesLimits)) {
-    data <- dplyr::filter(data, ParameterFactor >= plotConfiguration$xValuesLimits[1])
-    data <- dplyr::filter(data, ParameterFactor <= plotConfiguration$xValuesLimits[2])
+    data <- dplyr::filter(data, !!xColumn >= plotConfiguration$xValuesLimits[1])
+    data <- dplyr::filter(data, !!xColumn <= plotConfiguration$xValuesLimits[2])
   }
 
   # map each PK parameter to its own plot ----
@@ -290,7 +290,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
       plot <- ggplot(
         dataSubset,
-        aes(x = !!sym(xColumn), y = !!sym(yColumn), group = ParameterPath)
+        aes(x = .data[[xColumn]], y = .data[[yColumn]], group = ParameterPath)
       ) +
         geom_line(
           aes(group = ParameterPath, color = as.factor(ParameterPath)),
@@ -335,7 +335,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       plot <- plot +
         geom_hline(
           data = baseDataSubset,
-          aes(yintercept = !!sym(yColumn)),
+          aes(yintercept = .data[[yColumn]]),
           linetype = "dotted",
           linewidth = 0.5,
           color = "black",
