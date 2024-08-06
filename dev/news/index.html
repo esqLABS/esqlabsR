@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
-</div>
+<ul><li><p>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> supports new parameter <code>customOutputFunctions</code>, allowing user-defined functions for PK parameter calculation (<a href="https://github.com/esqLABS/esqlabsR/issues/685" class="external-link">#685</a>).</p></li>
+<li><p>Function <code>sensitivitySpiderPlot</code> now supports <code>xAxisType</code> and <code>yAxisType</code> options for switching between percent and absolute values (<a href="https://github.com/esqLABS/esqlabsR/issues/695" class="external-link">#695</a>).</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="5.2.0" id="esqlabsr-520">esqlabsR 5.2.0<a class="anchor" aria-label="anchor" href="#esqlabsr-520"></a></h2>
 <div class="section level3">
@@ -60,7 +62,6 @@
 <li><p>Function <code>sensitivitySpiderPlot</code> overhauled with new parameters. <code>yAxisType</code> to toggle between <code>percent</code>and <code>absolute</code> values. <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. <code>yAxisFacetScales</code> to choose between <code>free</code> and <code>fixed</code> scales for y-axis. Further plot customization options through <code>defaultPlotConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/632" class="external-link">#632</a>).</p></li>
 <li><p>Function <code>sensitivityTimeProfiles</code> with new signature. Introduced parameters <code>xAxisScale</code> and <code>yAxisScale</code> to set axis scales to <code>log</code> or <code>lin</code>. More plot customization options through <code>defaultPlotConfiguration</code> as described in the documentation. Plots have improved color palette, scaling and legend colors (<a href="https://github.com/esqLABS/esqlabsR/issues/669" class="external-link">#669</a>).</p></li>
 <li><p>Function <code>sensitivityTimeProfiles</code> updated. Observed data (single or multiple <code>DataSet</code> objects) can now be added to the plots and will be included automatically in the <code>outputPath</code> if the dimensions are convertible (<a href="https://github.com/esqLABS/esqlabsR/issues/674" class="external-link">#674</a>).</p></li>
-<li><p>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> supports new parameter <code>customOutputFunctions</code>, allowing user-defined functions for PK parameter calculation (<a href="https://github.com/esqLABS/esqlabsR/issues/685" class="external-link">#685</a>).</p></li>
 <li><p>Function <code>writeExcel()</code> is no longer exported. (<a href="https://github.com/esqLABS/esqlabsR/issues/672" class="external-link">#672</a>)</p></li>
 </ul></div>
 <div class="section level3">

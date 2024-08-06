@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,17 +112,17 @@ input parameter values.</p>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivityCalculation.html">sensitivityCalculation</a></span><span class="op">(</span><span class="va">simulation</span>, <span class="va">OutputPaths</span>, parameterPaths <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">pkData</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
-<span><span class="co">#&gt;   OutputPath            ParameterPath ParameterFactor ParameterValue PKParameter</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|PeripheralV… Aciclovir|Li…             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Organism|PeripheralV… Aciclovir|Li…             0.2        -<span style="color: #BB0000;">0.019</span><span style="color: #BB0000; text-decoration: underline;">4</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Organism|PeripheralV… Aciclovir|Li…             0.3        -<span style="color: #BB0000;">0.029</span><span style="color: #BB0000; text-decoration: underline;">1</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|PeripheralV… Aciclovir|Li…             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|PeripheralV… Aciclovir|Li…             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|PeripheralV… Aciclovir|Li…             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4 more variables: PKParameterValue &lt;dbl&gt;, Unit &lt;chr&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   PercentChangePK &lt;dbl&gt;, SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 10</span></span></span>
+<span><span class="co">#&gt;   OutputPath          ParameterPath ParameterFactor ParameterValue ParameterUnit</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|Periphera… Aciclovir|Li…             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Organism|Periphera… Aciclovir|Li…             0.2        -<span style="color: #BB0000;">0.019</span><span style="color: #BB0000; text-decoration: underline;">4</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Organism|Periphera… Aciclovir|Li…             0.3        -<span style="color: #BB0000;">0.029</span><span style="color: #BB0000; text-decoration: underline;">1</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|Periphera… Aciclovir|Li…             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|Periphera… Aciclovir|Li…             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|Periphera… Aciclovir|Li…             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 5 more variables: PKParameter &lt;chr&gt;, PKParameterValue &lt;dbl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   PKPercentChange &lt;dbl&gt;, Unit &lt;chr&gt;, SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
 <p>In the aciclovir example case, the default value of lipophilicity is
 -0.097 log units, corresponding to the area under the curve (AUC) of
 3915.87 µmol×min/L. Increasing the lipophilicity to -0.0097 log units
