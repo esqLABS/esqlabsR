@@ -91,14 +91,13 @@
     dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
     dplyr::ungroup()
 
-  pkData <- dplyr::select(
+  pkData <- dplyr::select(pkData, -dplyr::any_of("IndividualId"))
+  pkData <- dplyr::relocate(
     pkData,
     "OutputPath",
     dplyr::starts_with("Parameter"),
     dplyr::starts_with("PK"),
-    Unit,
-    dplyr::everything(),
-    -dplyr::any_of("IndividualId")
+    Unit
   ) %>%
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 
