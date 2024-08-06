@@ -16,11 +16,17 @@
 #'   the following parameters will be considered: `"C_max"`, `"t_max"`,
 #'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated. You
 #'   can also specify custom PK parameters.
+#' @param customOutputFunctions A named list with
+#' custom function(s) for PK parameter calculation. User-defined functions should
+#' have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
+#' x-Dimension (time) or y-Dimension values from simulation results.
+#' @param ... Additional parameters passed to the function.
 #' @param pkDataFilePath Path to excel file in which
 #'   PK-parameter data should be saved. If a file already exists, it will be
 #'   overwritten. Default is `NULL`, meaning the data will not be saved to a
 #'   spreadsheet.
-#' @param simulationRunOptions Optional instance of a `SimulationRunOptions` used during the simulation run
+#' @param simulationRunOptions Optional instance of a `SimulationRunOptions` used
+#' during the simulation run
 #'
 #' @family sensitivity-calculation
 #'
@@ -56,6 +62,7 @@ sensitivityCalculation <- function(simulation,
                                    parameterPaths,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
+                                   customOutputFunctions = NULL,
                                    pkDataFilePath = NULL,
                                    simulationRunOptions = NULL) {
   # input validation ------------------------
@@ -67,6 +74,10 @@ sensitivityCalculation <- function(simulation,
 
   # Check for non-standard PK parameters
   .validatePKParameters(pkParameters)
+
+  # Validate customOutputFunctions
+  .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
+  validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
 
   # Check provided variation range using custom function.
   # This also makes sure that there is always `1.0` present in this vector.
@@ -199,11 +210,22 @@ sensitivityCalculation <- function(simulation,
   # extract and save data frames ------------------------
 
   # Extract data frame for PK parameters
-  pkData <- .simulationResultsBatchToPKDataFrame(simulationResultsBatch, parameterPaths)
+  pkData <- .simulationResultsBatchToPKDataFrame(
+    simulationResultsBatch, parameterPaths, customOutputFunctions
+  )
 
   # Filter out unneeded PK parameters
-  if (!is.null(pkParameters)) {
-    pkData <- dplyr::filter(pkData, PKParameter %in% pkParameters)
+  if (!is.null(pkParameters) || !is.null(customOutputFunctions)) {
+    filterValues <- c()
+
+    if (!is.null(pkParameters)) {
+      filterValues <- c(filterValues, pkParameters)
+    }
+    if (!is.null(customOutputFunctions)) {
+      filterValues <- c(filterValues, names(customOutputFunctions))
+    }
+
+    pkData <- dplyr::filter(pkData, PKParameter %in% filterValues)
   }
 
   # Write each data frame in a list to a separate sheet in Excel
