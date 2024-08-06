@@ -97,6 +97,7 @@
     dplyr::starts_with("Parameter"),
     dplyr::starts_with("PK"),
     Unit,
+    dplyr::everything(),
     -dplyr::any_of("IndividualId")
   ) %>%
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
