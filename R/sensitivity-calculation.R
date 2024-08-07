@@ -224,16 +224,8 @@ sensitivityCalculation <- function(simulation,
   )
 
   # Filter out unneeded PK parameters
-  if (!is.null(pkParameters) || !is.null(customOutputFunctions)) {
-    filterValues <- c()
-
-    if (!is.null(pkParameters)) {
-      filterValues <- c(filterValues, pkParameters)
-    }
-    if (!is.null(customOutputFunctions)) {
-      filterValues <- c(filterValues, names(customOutputFunctions))
-    }
-
+  if (!is.null(pkParameters)) {
+    filterValues <- c(pkParameters, names(customOutputFunctions))
     pkData <- dplyr::filter(pkData, PKParameter %in% filterValues)
   }
 
