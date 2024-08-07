@@ -200,10 +200,19 @@ sensitivityCalculation <- function(simulation,
   # value of parameter factor.
   simulationResultsBatch <- batchResultsIdMap
 
-  for (parameterPath in seq_along(simulationResultsBatch)) {
-    for (parameterFactor in seq_along(simulationResultsBatch[[parameterPath]])) {
-      simulationResultsBatch[[parameterPath]][[parameterFactor]] <-
-        purrr::pluck(simulationBatchesResults, batchResultsIdMap[[parameterPath]][[parameterFactor]])
+  for (parameterPath in names(batchResultsIdMap)) {
+    for (parameterFactor in names(batchResultsIdMap[[parameterPath]])) {
+      resultId <- batchResultsIdMap[[parameterPath]][[parameterFactor]]
+      resultSim <- purrr::pluck(simulationBatchesResults, resultId)
+      if (!is.null(resultSim)) {
+        simulationResultsBatch[[parameterPath]][[parameterFactor]] <-
+          purrr::pluck(simulationBatchesResults, resultId)
+      } else {
+        simulationResultsBatch[[parameterPath]][[parameterFactor]] <- NULL
+        warning(
+          messages$sensitivityAnalysisSimulationFailure(parameterPath, parameterFactor)
+        )
+      }
     }
   }
 

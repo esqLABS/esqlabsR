@@ -265,6 +265,16 @@ messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
   )
 }
 
+messages$sensitivityAnalysisSimulationFailure <- function(parameterPath, parameterFactor) {
+  cat(
+    paste0(
+      "Simulation for `", parameterPath, "`\n",
+      "with variation factor `", parameterFactor, "` failed!\n",
+      "The results will not be included in the sensitivity calculation.\n"
+    )
+  )
+}
+
 messages$invalidCustomFunctionParameters <- function(providedParams) {
   paste(
     "The user-defined function must have either 'x', 'y', or both 'x' and 'y' as parameters.",

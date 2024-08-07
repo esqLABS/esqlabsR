@@ -1,12 +1,19 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+## Major Changes
+
+## Minor improvements and bug fixes
+
+  - Handle simulation failures in `sensitivityCalculation` (\#694).
+
   - Function `sensitivityCalculation()` supports new parameter `customOutputFunctions`, 
     allowing user-defined functions for PK parameter calculation (\#685).
 
   - Function `sensitivitySpiderPlot` now supports `xAxisType` and `yAxisType` options 
     for switching between percent and absolute values (#695).
 
-    
 # esqlabsR 5.2.0
 
 ## Breaking changes
@@ -65,7 +72,6 @@
     
   - Plotting functions have improved dynamic axis breaks, limits calculation, and 
     labeling (\#691).
-
 
 # esqlabsR 5.1.3
 

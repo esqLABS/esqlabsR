@@ -37,9 +37,9 @@ summarizer <- function(data, path) {
   data <- dplyr::filter(data, ParameterPath %in% path)
 
   list(
-    "charColumnSummary" = select(data, where(is.character)) %>%
+    "charColumnSummary" = dplyr::select(data, where(is.character)) %>%
       purrr::map_dfr(unique),
-    "numericColumnSummary" = select(data, where(is.numeric)) %>%
+    "numericColumnSummary" = dplyr::select(data, where(is.numeric)) %>%
       purrr::map_df(summary, .id = "column")
   )
 }
@@ -332,7 +332,7 @@ test_that("sensitivityCalculation returns the correct object", {
   )
 })
 
-# checking PK tidy data ------------------
+# check PK tidy data -----------------------
 
 test_that("sensitivityCalculation PK parameters tidy dataframe column names and order as expected", {
   expect_equal(
@@ -362,9 +362,7 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
   expect_snapshot(df3_pk)
 })
 
-
 # test customOutputFunctions ------------------
-
 
 test_that("sensitivityCalculation returns expected results with single custom function", {
   # list with custom function using only `y` parameter
@@ -466,6 +464,46 @@ test_that("sensitivityCalculation PK parameters wide dataframe column names and 
   )
 })
 
+# check `SensitivityCalculation` when simulation fails ----------
+
+test_that("sensitivityCalculation handles simulation failure", {
+
+  expect_warning(
+    expect_warning(
+      resultsSimFailure <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = c(-1, 2, 10)
+      ),
+      "Simulation run failed"
+    )
+  )
+
+  expect_true(isOfType(resultsSimFailure, "SensitivityCalculation"))
+
+  expect_equal(
+    length(resultsSimFailure$simulationResults),
+    length(parameterPaths)
+  )
+
+  expect_equal(
+    length(resultsSimFailure$simulationResults[[1]]),
+    length(variationRange)+ 1L
+  )
+
+  expect_equal(
+    # path with failed simulation
+    length(resultsSimFailure$simulationResults[[2]]),
+    length(variationRange)
+  )
+
+  expect_equal(
+    length(resultsSimFailure$parameterPaths),
+    length(parameterPaths)
+  )
+})
+
 # multiple output paths -------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
@@ -481,16 +519,16 @@ parameterPaths <- c(
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
 
-results_multiple <- sensitivityCalculation(
+resultsMultiple <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths,
-  variationRange = c(1, 5, 10)
+  variationRange = c(0.1, 5, 10)
 )
 
 test_that("sensitivityCalculation extracts data correctly for multiple output paths", {
-  expect_identical(nrow(results_multiple$pkData), 81L)
-  expect_equal(unique(results_multiple$pkData$OutputPath), outputPaths)
+  expect_identical(nrow(resultsMultiple$pkData), 108L)
+  expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
 })
 
 test_that("sensitivityCalculation applies custom PK parameter function correctly with multiple output paths", {
@@ -516,17 +554,34 @@ test_that("sensitivityCalculation saves PK data to xlsx file for multiple output
   path <- "mydata.xlsx"
 
   set.seed(123)
-  results_multiple <- sensitivityCalculation(
+  resultsMultiple <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
     parameterPaths = parameterPaths,
-    variationRange = c(1, 5, 10),
+    variationRange = c(0.1, 5, 10),
     pkDataFilePath = path
   )
 
   expect_true(file.exists(path))
 
   on.exit(unlink(path))
+})
+
+test_that("sensitivityCalculation extracts data correctly for multiple output paths upon simulation failure", {
+  expect_warning(
+    expect_warning(
+      resultsMultipleSimFailure <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = c(-1, 2, 10)
+      ),
+      "Simulation run failed"
+    )
+  )
+
+  expect_identical(nrow(resultsMultipleSimFailure$pkData), 99L)
+  expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
 })
 
 # restore old options
