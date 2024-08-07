@@ -460,13 +460,43 @@ test_that("sensitivityCalculation converts output to wide format as expected", {
   expect_equal(colnames(pkDataWide), pkDataWideColumns)
 })
 
+test_that("sensitivityCalculation converts output to wide format as expected with `customOutputFunctions`", {
+  customFunctions <- list(
+    "minmax" = function(y) {
+      max(y) / min(y[y != 0])
+    },
+    "max_slope" = function(x, y) {
+      slopes <- diff(y) / diff(x)
+      max(slopes)
+    }
   )
+  pkDataWideColumns <- c(pkDataWideColumns,"minmax", "minmax_Unit",
+                         "minmax_PKPercentChange", "minmax_Sensitivity",
+                         "max_slope", "max_slope_Unit", "max_slope_PKPercentChange",
+                         "max_slope_Sensitivity")
+
+  set.seed(123)
+  results2 <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = c(0.1, 2, 20),
+    customOutputFunctions = customFunctions,
+    pkParameters = NULL
+  )
+  pkParameterNames <- c(
+    names(ospsuite::StandardPKParameter),
+    names(customFunctions)
+  )
+  pkDataWide <- esqlabsR:::.convertToWide(results2$pkData, pkParameterNames)
+
+  expect_equal(dim(pkDataWide), c(12L, 65L))
+  expect_equal(colnames(pkDataWide), pkDataWideColumns)
 })
 
 # check `SensitivityCalculation` when simulation fails ----------
 
 test_that("sensitivityCalculation handles simulation failure", {
-
   expect_warning(
     expect_warning(
       resultsSimFailure <- sensitivityCalculation(
