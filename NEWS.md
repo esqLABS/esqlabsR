@@ -2,6 +2,9 @@
 
 ## Breaking changes
 
+  - Function `sensitivityCalculation()` with renamed parameter `pkDataFilePath` 
+    to `saOutputFilePath` and updated output files to include PK parameter units (\#696).
+
 ## Major Changes
 
 ## Minor improvements and bug fixes
