@@ -21,7 +21,7 @@
 #' have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
 #' x-Dimension (time) or y-Dimension values from simulation results.
 #' @param ... Additional parameters passed to the function.
-#' @param pkDataFilePath Path to excel file in which
+#' @param saOutputFilePath Path to excel file in which
 #'   PK-parameter data should be saved. If a file already exists, it will be
 #'   overwritten. Default is `NULL`, meaning the data will not be saved to a
 #'   spreadsheet.
@@ -63,7 +63,7 @@ sensitivityCalculation <- function(simulation,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
                                    customOutputFunctions = NULL,
-                                   pkDataFilePath = NULL,
+                                   saOutputFilePath = NULL,
                                    simulationRunOptions = NULL) {
   # input validation ------------------------
 
@@ -84,8 +84,8 @@ sensitivityCalculation <- function(simulation,
   variationRange <- .validateVariationRange(variationRange)
 
   # Fail early to avoid costly failure after analysis is already carried out.
-  if (!is.null(pkDataFilePath)) {
-    validateIsFileExtension(pkDataFilePath, "xlsx")
+  if (!is.null(saOutputFilePath)) {
+    validateIsFileExtension(saOutputFilePath, "xlsx")
   }
 
   # creating `SimulationResults` batch ------------------------
@@ -238,7 +238,7 @@ sensitivityCalculation <- function(simulation,
   }
 
   # Write each data frame in a list to a separate sheet in Excel
-  if (!is.null(pkDataFilePath)) {
+  if (!is.null(saOutputFilePath)) {
     # If there is no data to write to Excel sheet, inform the user and do nothing.
     if (nrow(pkData) == 0L) {
       warning(messages$noPKDataToWrite())
@@ -254,7 +254,7 @@ sensitivityCalculation <- function(simulation,
       names(pkDataWideList) <- paste0("OutputPath", seq(seq_along(unique(pkData$OutputPath))))
 
       # Write to a spreadsheet with one sheet per output path.
-      .writeExcel(data = pkDataWideList, path = pkDataFilePath)
+      .writeExcel(data = pkDataWideList, path = saOutputFilePath)
     }
   }
 

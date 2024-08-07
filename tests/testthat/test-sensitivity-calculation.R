@@ -209,7 +209,7 @@ test_that("sensitivityCalculation saves PK data to xlsx file", {
     outputPaths = outputPaths,
     parameterPaths = parameterPaths,
     variationRange = c(0.1, 2, 20),
-    pkDataFilePath = path
+    saOutputFilePath = path
   )
 
   expect_true(file.exists(path))
@@ -227,7 +227,7 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
       outputPaths = outputPaths,
       parameterPaths = parameterPaths,
       variationRange = c(0.1, 2, 20),
-      pkDataFilePath = path
+      saOutputFilePath = path
     ),
     "Provided file has extension 'csv', while 'xlsx' was expected instead."
   )
@@ -311,7 +311,7 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
   )
 })
 
-# checking `SensitivityCalculation`  object ------------------
+# check `SensitivityCalculation`  object ------------------
 
 test_that("sensitivityCalculation returns the correct object", {
   expect_true(isOfType(results, "SensitivityCalculation"))
@@ -362,7 +362,7 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
   expect_snapshot(df3_pk)
 })
 
-# test customOutputFunctions ------------------
+# test `customOutputFunctions` ------------------
 
 test_that("sensitivityCalculation returns expected results with single custom function", {
   # list with custom function using only `y` parameter
@@ -424,7 +424,7 @@ test_that("sensitivityCalculation returns expected results with multiple custom 
 })
 
 
-# checking PK wide data ------------------
+# check PK wide data -----------------------
 
 set.seed(123)
 results2 <- sensitivityCalculation(
@@ -559,7 +559,7 @@ test_that("sensitivityCalculation saves PK data to xlsx file for multiple output
     outputPaths = outputPaths,
     parameterPaths = parameterPaths,
     variationRange = c(0.1, 5, 10),
-    pkDataFilePath = path
+    saOutputFilePath = path
   )
 
   expect_true(file.exists(path))
