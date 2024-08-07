@@ -235,18 +235,15 @@ sensitivityCalculation <- function(simulation,
     if (nrow(pkData) == 0L) {
       warning(messages$noPKDataToWrite())
     } else {
-      # Convert tidy data to wide format for each output path
-      pkDataWideList <- purrr::map(
-        .x = pkData %>% split(.$OutputPath),
-        .f = ~ .convertToWide(.x)
+      # Convert tidy data to wide format
+      pkParameterNames <- c(
+        names(ospsuite::StandardPKParameter),
+        names(customOutputFunctions)
       )
-
-      # The output paths can be quite long and don't make for good sheet names, so
-      # use `OutputPathXXX` naming pattern for sheets instead.
-      names(pkDataWideList) <- paste0("OutputPath", seq(seq_along(unique(pkData$OutputPath))))
+      pkDataWide <-.convertToWide(pkData, pkParameterNames)
 
       # Write to a spreadsheet with one sheet per output path.
-      .writeExcel(data = pkDataWideList, path = saOutputFilePath)
+      .writeExcel(data = pkDataWide, path = saOutputFilePath)
     }
   }
 
