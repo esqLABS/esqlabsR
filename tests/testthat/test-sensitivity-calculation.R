@@ -200,39 +200,6 @@ test_that("sensitivityCalculation fails early with incorrect `variationRange` ar
   )
 })
 
-test_that("sensitivityCalculation saves PK data to xlsx file", {
-  path <- "mydata.xlsx"
-
-  set.seed(123)
-  results <- sensitivityCalculation(
-    simulation = simulation,
-    outputPaths = outputPaths,
-    parameterPaths = parameterPaths,
-    variationRange = c(0.1, 2, 20),
-    saOutputFilePath = path
-  )
-
-  expect_true(file.exists(path))
-
-  on.exit(unlink(path))
-})
-
-test_that("sensitivityCalculation errors if file extension is incorrect", {
-  path <- "mydata.csv"
-
-  set.seed(123)
-  expect_error(
-    sensitivityCalculation(
-      simulation = simulation,
-      outputPaths = outputPaths,
-      parameterPaths = parameterPaths,
-      variationRange = c(0.1, 2, 20),
-      saOutputFilePath = path
-    ),
-    "Provided file has extension 'csv', while 'xlsx' was expected instead."
-  )
-})
-
 # validate `customOutputFunctions` ------------------
 
 test_that("sensitivityCalculation fails early with incorrect `customOutputFunctions` arguments", {
@@ -423,44 +390,76 @@ test_that("sensitivityCalculation returns expected results with multiple custom 
   expect_snapshot(customPKData)
 })
 
+# test `saOutputFilePath` ------------------
+
+test_that("sensitivityCalculation saves PK data to xlsx file", {
+  path <- "mydata.xlsx"
+
+  set.seed(123)
+  results <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = c(0.1, 2, 20),
+    saOutputFilePath = path
+  )
+
+  expect_true(file.exists(path))
+
+  on.exit(unlink(path))
+})
+
+test_that("sensitivityCalculation errors if file extension is incorrect", {
+  path <- "mydata.csv"
+
+  set.seed(123)
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = c(0.1, 2, 20),
+      saOutputFilePath = path
+    ),
+    "Provided file has extension 'csv', while 'xlsx' was expected instead."
+  )
+})
 
 # check PK wide data -----------------------
 
-set.seed(123)
-results2 <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = c(0.1, 2, 20),
-  pkParameters = NULL
+pkDataWideColumns <- c(
+  "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue", "ParameterUnit",
+  "C_max", "C_max_norm", "C_max_Unit", "C_max_norm_Unit", "C_max_PKPercentChange",
+  "C_max_norm_PKPercentChange", "C_max_Sensitivity", "C_max_norm_Sensitivity",
+  "t_max", "t_max_Unit", "t_max_PKPercentChange", "t_max_Sensitivity",
+  "AUC_tEnd", "AUC_tEnd_norm", "AUC_tEnd_Unit", "AUC_tEnd_norm_Unit",
+  "AUC_tEnd_PKPercentChange", "AUC_tEnd_norm_PKPercentChange", "AUC_tEnd_Sensitivity",
+  "AUC_tEnd_norm_Sensitivity", "AUC_inf", "AUC_inf_norm", "AUC_inf_Unit",
+  "AUC_inf_norm_Unit", "AUC_inf_PKPercentChange", "AUC_inf_norm_PKPercentChange",
+  "AUC_inf_Sensitivity", "AUC_inf_norm_Sensitivity", "CL", "FractionAucLastToInf",
+  "CL_Unit", "FractionAucLastToInf_Unit", "CL_PKPercentChange", "FractionAucLastToInf_PKPercentChange",
+  "CL_Sensitivity", "FractionAucLastToInf_Sensitivity", "MRT",
+  "MRT_Unit", "MRT_PKPercentChange", "MRT_Sensitivity", "Thalf",
+  "Thalf_Unit", "Thalf_PKPercentChange", "Thalf_Sensitivity", "Vss",
+  "Vss_Unit", "Vss_PKPercentChange", "Vss_Sensitivity", "Vd", "Vd_Unit",
+  "Vd_PKPercentChange", "Vd_Sensitivity"
 )
 
-pkDataWide <- esqlabsR:::.convertToWide(results2$pkData)
+test_that("sensitivityCalculation converts output to wide format as expected", {
+  set.seed(123)
+  results2 <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = c(0.1, 2, 20),
+    pkParameters = NULL
+  )
+  pkDataWide <- esqlabsR:::.convertToWide(results2$pkData)
 
-test_that("sensitivityCalculation PK parameters dataframe dimensions are as expected", {
   expect_equal(dim(pkDataWide), c(12L, 57L))
+  expect_equal(colnames(pkDataWide), pkDataWideColumns)
 })
 
-test_that("sensitivityCalculation PK parameters wide dataframe column names and order as expected", {
-  expect_equal(
-    colnames(pkDataWide),
-    c(
-      "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue", "ParameterUnit",
-      "C_max", "C_max_norm", "C_max_Unit", "C_max_norm_Unit", "C_max_PKPercentChange",
-      "C_max_norm_PKPercentChange", "C_max_Sensitivity", "C_max_norm_Sensitivity",
-      "t_max", "t_max_Unit", "t_max_PKPercentChange", "t_max_Sensitivity",
-      "AUC_tEnd", "AUC_tEnd_norm", "AUC_tEnd_Unit", "AUC_tEnd_norm_Unit",
-      "AUC_tEnd_PKPercentChange", "AUC_tEnd_norm_PKPercentChange", "AUC_tEnd_Sensitivity",
-      "AUC_tEnd_norm_Sensitivity", "AUC_inf", "AUC_inf_norm", "AUC_inf_Unit",
-      "AUC_inf_norm_Unit", "AUC_inf_PKPercentChange", "AUC_inf_norm_PKPercentChange",
-      "AUC_inf_Sensitivity", "AUC_inf_norm_Sensitivity", "CL", "FractionAucLastToInf",
-      "CL_Unit", "FractionAucLastToInf_Unit", "CL_PKPercentChange", "FractionAucLastToInf_PKPercentChange",
-      "CL_Sensitivity", "FractionAucLastToInf_Sensitivity", "MRT",
-      "MRT_Unit", "MRT_PKPercentChange", "MRT_Sensitivity", "Thalf",
-      "Thalf_Unit", "Thalf_PKPercentChange", "Thalf_Sensitivity", "Vss",
-      "Vss_Unit", "Vss_PKPercentChange", "Vss_Sensitivity", "Vd", "Vd_Unit",
-      "Vd_PKPercentChange", "Vd_Sensitivity"
-    )
   )
 })
 
@@ -489,7 +488,7 @@ test_that("sensitivityCalculation handles simulation failure", {
 
   expect_equal(
     length(resultsSimFailure$simulationResults[[1]]),
-    length(variationRange)+ 1L
+    length(variationRange) + 1L
   )
 
   expect_equal(
