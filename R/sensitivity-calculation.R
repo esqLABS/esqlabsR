@@ -240,7 +240,7 @@ sensitivityCalculation <- function(simulation,
         names(ospsuite::StandardPKParameter),
         names(customOutputFunctions)
       )
-      pkDataWide <-.convertToWide(pkData, pkParameterNames)
+      pkDataWide <- .convertToWide(pkData, pkParameterNames)
 
       # Write to a spreadsheet with one sheet per output path.
       .writeExcel(data = pkDataWide, path = saOutputFilePath)
