@@ -219,22 +219,36 @@ test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for m
 })
 
 test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths with single unit", {
-  p <- sensitivityTimeProfiles(resultsMultiple,
+  p1 <- sensitivityTimeProfiles(resultsMultiple,
     yUnits = list("mg/ml")
   )
+  p2 <- sensitivityTimeProfiles(resultsMultiple,
+    yUnits = list("mg/ml", NULL)
+  )
 
-  expect_snapshot(extractAxisRange(p))
+  expect_snapshot(extractAxisRange(p1))
+  expect_identical(
+    extractAxisRange(p1),
+    extractAxisRange(p2)
+  )
 })
 
 test_that("sensitivityTimeProfiles plots handle y-unit conversion correctly for multiple paths when dimensions are not convertible", {
   p1 <- sensitivityTimeProfiles(resultsMultiple) # default
-  p2 <- sensitivityTimeProfiles(resultsMultiple, # not converted
+  p2 <- sensitivityTimeProfiles(resultsMultiple, # not converted: all wrong units
     yUnits = list("mol", "kg", "µmol/h")
+  )
+  p3 <- sensitivityTimeProfiles(resultsMultiple, # not converted: correct unit wrong path
+    yUnits = list("mol", "mol")
   )
 
   expect_identical(
     extractAxisRange(p1),
     extractAxisRange(p2)
+  )
+  expect_identical(
+    extractAxisRange(p1),
+    extractAxisRange(p3)
   )
 })
 

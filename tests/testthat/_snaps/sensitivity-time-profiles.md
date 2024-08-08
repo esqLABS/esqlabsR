@@ -99,7 +99,7 @@
 # sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths with single unit
 
     Code
-      extractAxisRange(p)
+      extractAxisRange(p1)
     Output
       $`Organism|Age`
       $`Organism|Age`$xRange
