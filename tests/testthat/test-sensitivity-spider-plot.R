@@ -54,6 +54,29 @@ test_that("sensitivitySpiderPlot default plots are as expected", {
   )
 })
 
+# default plot with custom PK parameter ---------------
+
+test_that("sensitivitySpiderPlot default plots are as expected with custom PK Parameter", {
+  customFun <- list("minmax" = function(y) max(y) / min(y[y != 0]))
+
+  resultsCustomPK <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    customOutputFunctions = customFun,
+    variationRange = variationRange
+  )
+
+  set.seed(123)
+  p <- sensitivitySpiderPlot(resultsCustomPK)
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "sensitivitySpiderPlot custom PK Parameter",
+    fig = suppressWarnings(p)
+  )
+})
+
 # parameterized plots ---------------------------------
 
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -85,6 +108,38 @@ test_that("sensitivitySpiderPlot correctly applies absolute y-axis values", {
   expect_snapshot(unlist(plotParams))
 })
 
+test_that("sensitivitySpiderPlot correctly applies absolute x-axis values", {
+  set.seed(123)
+  p <- sensitivitySpiderPlot(results,
+    xAxisType = "absolute",
+    # select parameter paths with non-negative values
+    parameterPaths = parameterPaths[2:3]
+  )
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivitySpiderPlot works as expected with absolute x-values",
+      fig = p
+    )
+  )
+})
+
+test_that("sensitivitySpiderPlot correctly applies absolute x-axis and y-axis values", {
+  set.seed(123)
+  p1 <- sensitivitySpiderPlot(results,
+    xAxisType = "absolute", yAxisType = "absolute",
+    xAxisScale = "log", yAxisScale = "lin"
+  ) # default scales
+  p2 <- sensitivitySpiderPlot(results,
+    xAxisType = "absolute", yAxisType = "absolute",
+    xAxisScale = "lin", yAxisScale = "log"
+  )
+
+  expect_snapshot(extractAxisRange(p1))
+  expect_snapshot(extractAxisRange(p2))
+})
+
 test_that("sensitivitySpiderPlot correctly applies free scaling with absolute y-values", {
   set.seed(123)
   p <- sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
@@ -96,7 +151,6 @@ test_that("sensitivitySpiderPlot correctly applies free scaling with absolute y-
 
   expect_snapshot(unlist(plotParams))
 })
-
 
 # plot configuration -----------------------------------------
 

@@ -131,7 +131,7 @@ messages$missingResultsForScenario <- function(scenarioName) {
 }
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function() {
-  "`pkDataFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
+  "`saOutputFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
 }
 
 # sensitivity analysis plotting
@@ -272,5 +272,30 @@ messages$invalidSimulationResultNames <- function(simulationResultNames,
     "SimulationResults names: ", paste(simulationResultNames, collapse = ", "),
     "\n",
     "ParameterPaths names: ", paste(parameterPaths, collapse = ", ")
+  )
+}
+
+messages$sensitivityAnalysisSimulationFailure <- function(parameterPath, parameterFactor) {
+  cat(
+    paste0(
+      "Simulation for `", parameterPath, "`\n",
+      "with variation factor `", parameterFactor, "` failed!\n",
+      "The results will not be included in the sensitivity calculation.\n"
+    )
+  )
+}
+
+messages$invalidCustomFunctionParameters <- function(providedParams) {
+  paste(
+    "The user-defined function must have either 'x', 'y', or both 'x' and 'y' as parameters.",
+    "Provided parameters are: ", paste0(providedParams, collapse = ", ")
+  )
+}
+
+messages$errorNotNamedList <- function(objectName, optionalMessage = NULL) {
+  callingFunction <- ospsuite.utils:::.getCallingFunctionName()
+  paste0(
+    callingFunction, ": argument '", objectName, "' is not a named list!",
+    optionalMessage
   )
 }

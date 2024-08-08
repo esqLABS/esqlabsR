@@ -16,11 +16,17 @@
 #'   the following parameters will be considered: `"C_max"`, `"t_max"`,
 #'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated. You
 #'   can also specify custom PK parameters.
-#' @param pkDataFilePath Path to excel file in which
+#' @param customOutputFunctions A named list with
+#' custom function(s) for PK parameter calculation. User-defined functions should
+#' have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
+#' x-Dimension (time) or y-Dimension values from simulation results.
+#' @param ... Additional parameters passed to the function.
+#' @param saOutputFilePath Path to excel file in which
 #'   PK-parameter data should be saved. If a file already exists, it will be
 #'   overwritten. Default is `NULL`, meaning the data will not be saved to a
 #'   spreadsheet.
-#' @param simulationRunOptions Optional instance of a `SimulationRunOptions` used during the simulation run
+#' @param simulationRunOptions Optional instance of a `SimulationRunOptions` used
+#' during the simulation run
 #'
 #' @family sensitivity-calculation
 #'
@@ -56,7 +62,8 @@ sensitivityCalculation <- function(simulation,
                                    parameterPaths,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
-                                   pkDataFilePath = NULL,
+                                   customOutputFunctions = NULL,
+                                   saOutputFilePath = NULL,
                                    simulationRunOptions = NULL) {
   # input validation ------------------------
 
@@ -68,13 +75,17 @@ sensitivityCalculation <- function(simulation,
   # Check for non-standard PK parameters
   .validatePKParameters(pkParameters)
 
+  # Validate customOutputFunctions
+  .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
+  validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+
   # Check provided variation range using custom function.
   # This also makes sure that there is always `1.0` present in this vector.
   variationRange <- .validateVariationRange(variationRange)
 
   # Fail early to avoid costly failure after analysis is already carried out.
-  if (!is.null(pkDataFilePath)) {
-    validateIsFileExtension(pkDataFilePath, "xlsx")
+  if (!is.null(saOutputFilePath)) {
+    validateIsFileExtension(saOutputFilePath, "xlsx")
   }
 
   # creating `SimulationResults` batch ------------------------
@@ -189,41 +200,50 @@ sensitivityCalculation <- function(simulation,
   # value of parameter factor.
   simulationResultsBatch <- batchResultsIdMap
 
-  for (parameterPath in seq_along(simulationResultsBatch)) {
-    for (parameterFactor in seq_along(simulationResultsBatch[[parameterPath]])) {
-      simulationResultsBatch[[parameterPath]][[parameterFactor]] <-
-        purrr::pluck(simulationBatchesResults, batchResultsIdMap[[parameterPath]][[parameterFactor]])
+  for (parameterPath in names(batchResultsIdMap)) {
+    for (parameterFactor in names(batchResultsIdMap[[parameterPath]])) {
+      resultId <- batchResultsIdMap[[parameterPath]][[parameterFactor]]
+      resultSim <- purrr::pluck(simulationBatchesResults, resultId)
+      if (!is.null(resultSim)) {
+        simulationResultsBatch[[parameterPath]][[parameterFactor]] <-
+          purrr::pluck(simulationBatchesResults, resultId)
+      } else {
+        simulationResultsBatch[[parameterPath]][[parameterFactor]] <- NULL
+        warning(
+          messages$sensitivityAnalysisSimulationFailure(parameterPath, parameterFactor)
+        )
+      }
     }
   }
 
   # extract and save data frames ------------------------
 
   # Extract data frame for PK parameters
-  pkData <- .simulationResultsBatchToPKDataFrame(simulationResultsBatch, parameterPaths)
+  pkData <- .simulationResultsBatchToPKDataFrame(
+    simulationResultsBatch, parameterPaths, customOutputFunctions
+  )
 
   # Filter out unneeded PK parameters
   if (!is.null(pkParameters)) {
-    pkData <- dplyr::filter(pkData, PKParameter %in% pkParameters)
+    filterValues <- c(pkParameters, names(customOutputFunctions))
+    pkData <- dplyr::filter(pkData, PKParameter %in% filterValues)
   }
 
   # Write each data frame in a list to a separate sheet in Excel
-  if (!is.null(pkDataFilePath)) {
+  if (!is.null(saOutputFilePath)) {
     # If there is no data to write to Excel sheet, inform the user and do nothing.
     if (nrow(pkData) == 0L) {
       warning(messages$noPKDataToWrite())
     } else {
-      # Convert tidy data to wide format for each output path
-      pkDataWideList <- purrr::map(
-        .x = pkData %>% split(.$OutputPath),
-        .f = ~ .convertToWide(.x)
+      # Convert tidy data to wide format
+      pkParameterNames <- c(
+        names(ospsuite::StandardPKParameter),
+        names(customOutputFunctions)
       )
-
-      # The output paths can be quite long and don't make for good sheet names, so
-      # use `OutputPathXXX` naming pattern for sheets instead.
-      names(pkDataWideList) <- paste0("OutputPath", seq(seq_along(unique(pkData$OutputPath))))
+      pkDataWide <-.convertToWide(pkData, pkParameterNames)
 
       # Write to a spreadsheet with one sheet per output path.
-      .writeExcel(data = pkDataWideList, path = pkDataFilePath)
+      .writeExcel(data = pkDataWide, path = saOutputFilePath)
     }
   }
 
