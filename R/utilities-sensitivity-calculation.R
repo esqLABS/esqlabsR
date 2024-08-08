@@ -389,19 +389,23 @@
 
 #' @keywords internal
 #' @noRd
-.convertToWide <- function(data) {
-  data %>%
-    tidyr::pivot_wider(
-      names_from  = PKParameter,
-      values_from = c(PKParameterValue, Unit, PKPercentChange, SensitivityPKParameter),
-      names_glue  = "{PKParameter}_{.value}"
-    ) %>%
+.convertToWide <- function(data,
+                           pkParameterNames = names(ospsuite::StandardPKParameter)) {
+  dataWide <- tidyr::pivot_wider(
+    data,
+    names_from  = PKParameter,
+    values_from = c(PKParameterValue, Unit, PKPercentChange, SensitivityPKParameter),
+    names_glue  = "{PKParameter}_{.value}"
+  ) %>%
     dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")) %>%
-    # all metrics for each parameter should live together
+    # metrics for each parameter are grouped together
     dplyr::select(
       dplyr::matches("Output|^Parameter"),
-      dplyr::matches(names(ospsuite::StandardPKParameter))
-    )
+      dplyr::matches(pkParameterNames)
+    ) %>%
+    dplyr::arrange(OutputPath)
+
+  return(dataWide)
 }
 
 # validation helpers ------------------------------

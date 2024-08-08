@@ -21,7 +21,7 @@
 #' have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
 #' x-Dimension (time) or y-Dimension values from simulation results.
 #' @param ... Additional parameters passed to the function.
-#' @param pkDataFilePath Path to excel file in which
+#' @param saOutputFilePath Path to excel file in which
 #'   PK-parameter data should be saved. If a file already exists, it will be
 #'   overwritten. Default is `NULL`, meaning the data will not be saved to a
 #'   spreadsheet.
@@ -63,7 +63,7 @@ sensitivityCalculation <- function(simulation,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
                                    customOutputFunctions = NULL,
-                                   pkDataFilePath = NULL,
+                                   saOutputFilePath = NULL,
                                    simulationRunOptions = NULL) {
   # input validation ------------------------
 
@@ -84,8 +84,8 @@ sensitivityCalculation <- function(simulation,
   variationRange <- .validateVariationRange(variationRange)
 
   # Fail early to avoid costly failure after analysis is already carried out.
-  if (!is.null(pkDataFilePath)) {
-    validateIsFileExtension(pkDataFilePath, "xlsx")
+  if (!is.null(saOutputFilePath)) {
+    validateIsFileExtension(saOutputFilePath, "xlsx")
   }
 
   # creating `SimulationResults` batch ------------------------
@@ -224,37 +224,26 @@ sensitivityCalculation <- function(simulation,
   )
 
   # Filter out unneeded PK parameters
-  if (!is.null(pkParameters) || !is.null(customOutputFunctions)) {
-    filterValues <- c()
-
-    if (!is.null(pkParameters)) {
-      filterValues <- c(filterValues, pkParameters)
-    }
-    if (!is.null(customOutputFunctions)) {
-      filterValues <- c(filterValues, names(customOutputFunctions))
-    }
-
+  if (!is.null(pkParameters)) {
+    filterValues <- c(pkParameters, names(customOutputFunctions))
     pkData <- dplyr::filter(pkData, PKParameter %in% filterValues)
   }
 
   # Write each data frame in a list to a separate sheet in Excel
-  if (!is.null(pkDataFilePath)) {
+  if (!is.null(saOutputFilePath)) {
     # If there is no data to write to Excel sheet, inform the user and do nothing.
     if (nrow(pkData) == 0L) {
       warning(messages$noPKDataToWrite())
     } else {
-      # Convert tidy data to wide format for each output path
-      pkDataWideList <- purrr::map(
-        .x = pkData %>% split(.$OutputPath),
-        .f = ~ .convertToWide(.x)
+      # Convert tidy data to wide format
+      pkParameterNames <- c(
+        names(ospsuite::StandardPKParameter),
+        names(customOutputFunctions)
       )
-
-      # The output paths can be quite long and don't make for good sheet names, so
-      # use `OutputPathXXX` naming pattern for sheets instead.
-      names(pkDataWideList) <- paste0("OutputPath", seq(seq_along(unique(pkData$OutputPath))))
+      pkDataWide <-.convertToWide(pkData, pkParameterNames)
 
       # Write to a spreadsheet with one sheet per output path.
-      .writeExcel(data = pkDataWideList, path = pkDataFilePath)
+      .writeExcel(data = pkDataWide, path = saOutputFilePath)
     }
   }
 

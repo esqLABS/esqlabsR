@@ -131,7 +131,7 @@ messages$missingResultsForScenario <- function(scenarioName) {
 }
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function() {
-  "`pkDataFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
+  "`saOutputFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
 }
 
 # sensitivity analysis plotting
