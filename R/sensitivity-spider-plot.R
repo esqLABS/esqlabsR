@@ -115,19 +115,15 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  if (is.null(defaultPlotConfiguration)) {
-    defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  } else {
-    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
-  }
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
   .validateCharVectors(pkParameters)
 
-  # default spider plot configuration setup ----
+  # plot configuration setup ------------
 
+  # default spider plot configuration
   spiderPlotConfiguration <- list(
     legendPosition = "bottom",
     legendTitle    = "Parameter",
@@ -142,42 +138,33 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     yAxisTicks     = 10L,
     yLabel         = NULL
   )
-  # override default plot configuration with function parameters
-  customPlotConfiguration <- defaultPlotConfiguration$clone()
-  if (!is.null(xAxisScale)) customPlotConfiguration$xAxisScale <- xAxisScale
-  if (!is.null(yAxisScale)) customPlotConfiguration$yAxisScale <- yAxisScale
 
-  # override only default configuration values with settings for spider plot
-  customPlotConfiguration <- .updatePlotConfiguration(
-    customPlotConfiguration, spiderPlotConfiguration
+  # apply configuration overrides and validate
+  customPlotConfiguration <- .applyPlotConfiguration(
+    defaultPlotConfiguration = defaultPlotConfiguration,
+    plotOverrideConfig       = spiderPlotConfiguration,
+    xAxisScale               = xAxisScale,
+    yAxisScale               = yAxisScale
   )
 
-  # validate plot configuration for valid options
-  plotConfigurationList <- purrr::map(
-    purrr::set_names(names(customPlotConfiguration)),
-    ~ customPlotConfiguration[[.]]
-  )
-  plotConfigurationList$yAxisFacetScales <- yAxisFacetScales
-  plotConfigurationList$yAxisType <- yAxisType
-  plotConfigurationList$xAxisType <- xAxisType
-  ospsuite.utils::validateIsOption(
-    plotConfigurationList,
-    .getPlotConfigurationOptions(
-      c(
-        names(spiderPlotConfiguration),
-        "yAxisFacetScales", "xAxisType", "yAxisType"
-      )
-    )
+  # validate separately as not supported by `DefaultPlotConfiguration`
+  validateIsOption(
+    list(
+      yAxisFacetScales = yAxisFacetScales,
+      xAxisType        = xAxisType,
+      yAxisType        = yAxisType
+    ),
+    .getPlotConfigurationOptions(c("yAxisFacetScales", "xAxisType", "yAxisType"))
   )
 
   # extract and prepare data -----------------
 
   data <- sensitivityCalculation$pkData
   data <- .filterPlottingData(
-    data,
-    outputPaths = outputPaths,
-    parameterPaths = parameterPaths,
-    pkParameters = pkParameters
+    data              = data,
+    outputPaths       = outputPaths,
+    parameterPaths    = parameterPaths,
+    pkParameters      = pkParameters
   )
 
   # getting the scales right

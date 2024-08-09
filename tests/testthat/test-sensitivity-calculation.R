@@ -470,10 +470,12 @@ test_that("sensitivityCalculation converts output to wide format as expected wit
       max(slopes)
     }
   )
-  pkDataWideColumns <- c(pkDataWideColumns,"minmax", "minmax_Unit",
-                         "minmax_PKPercentChange", "minmax_Sensitivity",
-                         "max_slope", "max_slope_Unit", "max_slope_PKPercentChange",
-                         "max_slope_Sensitivity")
+  pkDataWideColumns <- c(
+    pkDataWideColumns, "minmax", "minmax_Unit",
+    "minmax_PKPercentChange", "minmax_Sensitivity",
+    "max_slope", "max_slope_Unit", "max_slope_PKPercentChange",
+    "max_slope_Sensitivity"
+  )
 
   set.seed(123)
   results2 <- sensitivityCalculation(

@@ -20,6 +20,12 @@
 #' (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #' scale similarly to `xAxisScale`. Default is "log".
+#' @param xUnits,yUnits Lists of units for the x-axis and y-axis, respectively.
+#' If a list of length one is provided, it will be applied to all `outputPaths`
+#' if conversion is possible. If a list of multiple units is provided, the units
+#' list should correspond to the `outputPaths`, and units conversion will be
+#' applied accordingly. If `NULL`, default units from the simulation results
+#' will be used.
 #' @param observedData Optional. A set of `DataSet` objects containing observed
 #' data. If provided, observed data will be plotted together with the simulated data
 #' based on `OutputPath` dimension for direct comparison within the visualizations.
@@ -87,6 +93,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     parameterPaths = NULL,
                                     xAxisScale = NULL,
                                     yAxisScale = NULL,
+                                    xUnits = NULL,
+                                    yUnits = NULL,
                                     observedData = NULL,
                                     defaultPlotConfiguration = NULL) {
   # input validation ------------------------
@@ -94,17 +102,16 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   validateIsOfType(observedData, DataSet, nullAllowed = TRUE)
-  if (is.null(defaultPlotConfiguration)) {
-    defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  } else {
-    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
-  }
+  validateIsOfType(xUnits, "list", nullAllowed = TRUE)
+  validateIsOfType(yUnits, "list", nullAllowed = TRUE)
 
   # validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
 
-  # default time profiles plot configuration setup ----
+  # plot configuration setup ------------
+
+  # default time profiles plot configuration
   timeProfilesConfiguration <- list(
     legendPosition = "bottom",
     legendTitle = "Parameter factor",
@@ -119,34 +126,24 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     yLabel = NULL
   )
 
-  # override default plot configuration with function parameters
-  customPlotConfiguration <- defaultPlotConfiguration$clone()
-  if (!is.null(xAxisScale)) customPlotConfiguration$xAxisScale <- xAxisScale
-  if (!is.null(yAxisScale)) customPlotConfiguration$yAxisScale <- yAxisScale
-
-  # override only default configuration values with settings for spider plot
-  customPlotConfiguration <- .updatePlotConfiguration(
-    customPlotConfiguration, timeProfilesConfiguration
-  )
-
-  # validate plot configuration for valid options
-  plotConfigurationList <- purrr::map(
-    purrr::set_names(names(customPlotConfiguration)),
-    ~ customPlotConfiguration[[.]]
-  )
-  ospsuite.utils::validateIsOption(
-    plotConfigurationList,
-    .getPlotConfigurationOptions(names(timeProfilesConfiguration))
+  # apply configuration overrides and validate
+  customPlotConfiguration <- .applyPlotConfiguration(
+    defaultPlotConfiguration = defaultPlotConfiguration,
+    plotOverrideConfig       = timeProfilesConfiguration,
+    xAxisScale               = xAxisScale,
+    yAxisScale               = yAxisScale
   )
 
   # prepare data ------------------------
 
   # extract the needed dataframe from the object
   data <- .aggregateSimulationAndObservedData(
-    simulationResults      = sensitivityCalculation$simulationResults,
-    dataSets               = observedData,
-    parameterPaths         = sensitivityCalculation$parameterPaths,
-    outputPaths            = sensitivityCalculation$outputPaths
+    simulationResults        = sensitivityCalculation$simulationResults,
+    dataSets                 = observedData,
+    parameterPaths           = sensitivityCalculation$parameterPaths,
+    outputPaths              = sensitivityCalculation$outputPaths,
+    xUnits                   = xUnits,
+    yUnits                   = yUnits
   )
 
   # filter out data not needed for plotting
@@ -411,11 +408,23 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 .aggregateSimulationAndObservedData <- function(simulationResults,
                                                 dataSets,
                                                 parameterPaths,
-                                                outputPaths) {
+                                                outputPaths,
+                                                xUnits,
+                                                yUnits) {
   if (!identical(names(simulationResults), parameterPaths)) {
-    stop("The names of the simulationResults and parameterPaths must be the same")
+    stop(messages$invalidSimulationResultNames(
+      names(simulationResults), parameterPaths
+    ))
   }
   validateIsOfType(simulationResults, "list")
+
+  # validate if xUnits are valid unit for time dimension
+  # general unit validation inside .adjustUnits
+  lapply(xUnits, validateEnumValue, ospUnits$Time, TRUE)
+
+  # prepare units to be applied to outputPaths
+  xUnits <- .adjustUnits(xUnits, outputPaths)
+  yUnits <- .adjustUnits(yUnits, outputPaths)
 
   parameterPathList <- setNames(
     vector("list", length(parameterPaths)),
@@ -446,30 +455,37 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         )
       }
 
+      # add dataSets when units are convertable for `outputPath`
       if (!is.null(dataSets)) {
         validateIsOfType(dataSets, "list")
-
         for (j in seq_along(dataSets)) {
           dataCombinedClone <- dataCombined$clone()
-          unitsConvertable <- TRUE
 
-          tryCatch(
-            {
-              # try to add data sets and convert units
-              dataCombinedClone$addDataSets(dataSets[[j]])
-              convertUnits(dataCombinedClone)
-            },
-            error = function(e) {
-              unitsConvertable <<- FALSE
-            }
-          )
-
-          if (unitsConvertable) {
+          if (.isConvertableUnit(
+            dataCombinedClone$addDataSets(dataSets[[j]])
+          )) {
             dataCombined$addDataSets(dataSets[[j]])
           }
         }
       }
-      outputPathList[[outputPath]] <- convertUnits(dataCombined)
+
+      # clone the combined data to check for specified unit conversion
+      dataCombinedSpecifiedClone <- dataCombined$clone()
+
+      if (.isConvertableUnit(
+        dataCombinedSpecifiedClone,
+        xUnit = xUnits[[outputPath]],
+        yUnit = yUnits[[outputPath]]
+      )
+      ) {
+        outputPathList[[outputPath]] <- convertUnits(
+          dataCombinedSpecifiedClone,
+          xUnit = xUnits[[outputPath]],
+          yUnit = yUnits[[outputPath]]
+        )
+      } else {
+        outputPathList[[outputPath]] <- convertUnits(dataCombined)
+      }
     }
     parameterPathList[[parameterPath]] <- dplyr::bind_rows(
       outputPathList,
@@ -498,4 +514,83 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   )
 
   return(combinedDf)
+}
+
+#' Test if unit conversion is possible in `DataCombined` objects.
+#'
+#' @param dataCombined `DataCombined` object to test.
+#' @param xUnit Optional unit for the x-dimension.
+#' @param yUnit Optional unit for the y-dimension.
+#'
+#' @return TRUE if conversion is possible, otherwise FALSE.
+#'
+#' @keywords internal
+#' @noRd
+.isConvertableUnit <- function(dataCombined, xUnit = NULL, yUnit = NULL) {
+  unitsConvertable <- TRUE
+
+  tryCatch(
+    {
+      convertUnits(dataCombined, xUnit = xUnit, yUnit = yUnit)
+    },
+    error = function(e) {
+      unitsConvertable <<- FALSE
+    }
+  )
+
+  return(unitsConvertable)
+}
+
+#' Validate if unit is valid for any dimension in `ospUnits`
+#'
+#' Checks if a given unit is valid across all dimensions in `ospUnits`.
+#'
+#' @keywords internal
+#' @noRd
+.validateUnitInOspUnits <- function(unit, nullAllowed = FALSE) {
+  unitDimensions <- names(ospUnits)
+
+  for (dimension in unitDimensions) {
+    tryCatch(
+      {
+        ospsuite.utils::validateEnumValue(
+          unit, ospUnits[[dimension]],
+          nullAllowed = nullAllowed
+        )
+        return(NULL)
+      },
+      error = function(e) {
+        # do nothing, continue to the next dimension
+      }
+    )
+  }
+
+  # error if unit is not valid in any dimension
+  stop(ospsuite.utils::messages$errorValueNotInEnum(ospUnits, unit))
+}
+
+#' Normalize units to match the length of outputPaths
+#'
+#' Validate and normalize the units to ensure they match the length of
+#' `outputPaths`.
+#'
+#' @keywords internal
+#' @noRd
+.adjustUnits <- function(units, outputPaths) {
+  if (is.null(units)) {
+    return(rep(list(NULL), length(outputPaths)))
+  }
+  # validate if units are valid in any dimension
+  lapply(units, .validateUnitInOspUnits, TRUE)
+
+  # check the lengths and extend or add NULL
+  if (length(units) == 1) {
+    units <- rep(units, length(outputPaths))
+  } else if (length(units) < length(outputPaths)) {
+    units <- c(units, rep(list(NULL), length(outputPaths) - length(units)))
+  }
+
+  names(units) <- outputPaths
+
+  return(units)
 }

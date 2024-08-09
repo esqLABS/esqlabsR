@@ -659,6 +659,70 @@ createPlotsFromExcel <- function(
   return(plotConfiguration)
 }
 
+#' Apply Specific Configuration Overrides to Default Plot Configuration
+#'
+#' This function applies specific configuration overrides to the default plot
+#' configuration. It first applies any additional parameters provided via `...`,
+#' then updates the default configuration with overrides from the `plotOverrideConfig`
+#' list, but only if the corresponding values have not already been set by the
+#' additional parameters. Finally, it validates the final configuration to ensure
+#' all options are valid.
+#'
+#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
+#' or a list of such objects.
+#' @param plotOverrideConfig A list with new configuration settings to apply.
+#' @param ... Additional parameters to override specific configuration settings
+#' dynamically.
+#'
+#' @keywords internal
+#' @noRd
+.applyPlotConfiguration <- function(defaultPlotConfiguration = NULL,
+                                    plotOverrideConfig = NULL,
+                                    ...) {
+  # validate input defaultPlotConfiguration
+  if (is.null(defaultPlotConfiguration)) {
+    defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
+  } else {
+    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
+  }
+
+  # Clone the `DefaultPlotConfiguration` object
+  # If a list of configurations is passed, clone only the first configuration
+  # in the list. List processing not supported yet.
+  if (inherits(defaultPlotConfiguration, "list")) {
+    customPlotConfiguration <- defaultPlotConfiguration[[1]]$clone()
+  } else {
+    customPlotConfiguration <- defaultPlotConfiguration$clone()
+  }
+
+  # Capture additional parameters passed through ... and override
+  additionalParams <- list(...)
+  for (param in names(additionalParams)) {
+    if (!is.null(additionalParams[[param]])) {
+      customPlotConfiguration[[param]] <- additionalParams[[param]]
+    }
+  }
+
+  # override only default configuration values with settings in plotOverrideConfig
+  customPlotConfiguration <- .updatePlotConfiguration(
+    customPlotConfiguration, plotOverrideConfig
+  )
+
+  # convert to list and validate final plot configuration
+  plotConfigurationList <- purrr::map(
+    purrr::set_names(names(customPlotConfiguration)),
+    ~ customPlotConfiguration[[.]]
+  )
+  optionNames <- unique(c(names(plotOverrideConfig), names(additionalParams)))
+  ospsuite.utils::validateIsOption(
+    plotConfigurationList,
+    .getPlotConfigurationOptions(optionNames)
+  )
+
+  return(customPlotConfiguration)
+}
+
+
 #' Calculate axis limits
 #'
 #' This function calculates axis limits based on minimum and maximum values.
