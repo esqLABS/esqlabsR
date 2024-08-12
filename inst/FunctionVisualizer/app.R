@@ -100,7 +100,7 @@ server <- function(input, output, session) {
         grep("[^[:digit:]*.?[:digit:]+]",
           unlist(strsplit(
             gsub("[[:blank:]]", "", input$equation),
-            "[-+*/(){}]|(%%)|(%/%)"
+            "[-+*/^(){}]|(%%)|(%/%)"
           )),
           value = TRUE
         ),
