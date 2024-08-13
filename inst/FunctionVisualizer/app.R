@@ -93,18 +93,11 @@ server <- function(input, output, session) {
 
     isolate({
       v$equation <- input$equation
-      # variable names: remove all blanks from equation (gsub),
-      # split equation string at all arithmetic operators (strsplit),
-      # remove numeric values as they are not variables (grep)
-      v$varnames <- setdiff(
-        grep("[^[:digit:]*.?[:digit:]+]",
-          unlist(strsplit(
-            gsub("[[:blank:]]", "", input$equation),
-            "[-+*/^(){}]|(%%)|(%/%)"
-          )),
-          value = TRUE
-        ),
-        mathexpressions
+      v$varnames <- extract_variable_names(input$equation, mathexpressions)
+
+      # export variable names for testing
+      exportTestValues(
+        varnames = { v$varnames }
       )
 
       # safe IDs of dynamically added UI elements
@@ -189,7 +182,7 @@ server <- function(input, output, session) {
 
     x_values <- seq(x_min, x_max, stepsize)
     # insert space before and after arithmetic operators in equation string
-    eq <- paste0(gsub("([-+*/(){}]|(%%)|(%/%))", " \\1 ", v$equation), " ")
+    eq <- paste0(gsub("([-+*/()^{}]|(%%)|(%/%))", " \\1 ", v$equation), " ")
 
     colname <<- ""
 
