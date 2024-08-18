@@ -11,16 +11,20 @@
 #' @return A character vector of variable names extracted from the equation.
 #'
 #' @examples
-#' extract_variable_names("a * (b + 5) / c - sqrt(d)")
+#' .extractVariableNames("a * (b + 5) / c - sqrt(d)")
 #' # Returns: "a" "b" "c" "d"
 #'
-#' extract_variable_names("x^2 + y - log(z)", c("exp", "log", "sin", "cos", "tan", "sqrt", "floor", "ceiling", "pi"))
+#' .extractVariableNames("x^2 + y - log(z)", c("exp", "log", "sin", "cos", "tan", "sqrt", "floor", "ceiling", "pi"))
 #' # Returns: "x" "y" "z"
-extract_variable_names <- function(equation,
-                                   mathexpressions = c("exp", "log", "sin", "cos", "tan", "sqrt", "floor", "ceiling", "pi")) {
+#' @keywords internal
+#' @noRd
+.extractVariableNames <- function(equation,
+                                  mathexpressions = c("exp", "log", "sin", "cos", "tan", "sqrt", "floor", "ceiling", "pi"),
+                                  operatorTokenRegex = "[-+*/^(){}]|(%%)|(%/%)"
+                                  ) {
   # Check input types
-  if (!is.character(equation) || !is.character(mathexpressions)) {
-    stop("Both 'equation' and 'mathexpressions' must be character vectors.")
+  if (!is.character(equation) || !is.character(mathexpressions) || !is.character(operatorTokenRegex)) {
+    stop("Both 'equation', 'mathexpressions' and 'operatorTokenRegex' must be character vectors.")
   }
 
   # Remove all blanks from the equation
@@ -29,8 +33,9 @@ extract_variable_names <- function(equation,
   # Split the equation string at arithmetic operators and parentheses
   split_eq <- unlist(strsplit(
     cleaned_eq,
-    "[-+*/^(){}]|(%%)|(%/%)"
+    operatorTokenRegex
   ))
+
 
   # Remove numeric values and predefined mathematical expressions to get variable names
   varnames <- setdiff(
@@ -40,10 +45,3 @@ extract_variable_names <- function(equation,
 
   return(varnames)
 }
-
-##' Tests
-# print(extract_variable_names("a * (b + 5) / c - sqrt(d)"))
-# # Expected output: "a" "b" "c" "d"
-#
-# print(extract_variable_names("x^2 + y - log(z)", c("exp", "log", "sin", "cos", "tan", "sqrt", "floor", "ceiling", "pi")))
-# # Expected output: "x" "y" "z"
