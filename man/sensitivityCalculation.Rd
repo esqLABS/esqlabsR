@@ -11,7 +11,7 @@ sensitivityCalculation(
   variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
   pkParameters = c("C_max", "t_max", "AUC_inf"),
   customOutputFunctions = NULL,
-  pkDataFilePath = NULL,
+  saOutputFilePath = NULL,
   simulationRunOptions = NULL
 )
 }
@@ -41,7 +41,7 @@ custom function(s) for PK parameter calculation. User-defined functions should
 have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
 x-Dimension (time) or y-Dimension values from simulation results.}
 
-\item{pkDataFilePath}{Path to excel file in which
+\item{saOutputFilePath}{Path to excel file in which
 PK-parameter data should be saved. If a file already exists, it will be
 overwritten. Default is \code{NULL}, meaning the data will not be saved to a
 spreadsheet.}
