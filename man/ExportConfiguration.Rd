@@ -51,7 +51,7 @@ Only used if \code{heightPerRow} is \code{NULL}.}
 \item{\code{dpi}}{(dots per inch) numeric value defining plot resolution}
 
 \item{\code{heightPerRow}}{The height of the plot dimensions for a row in a multi
-pannel plot. The final height of the figure will be 'heightPerRow' times
+panel plot. The final height of the figure will be 'heightPerRow' times
 the number of rows.
 If \code{NULL} (default), value used in \code{height} is used. If not \code{NULL}, this
 value always overrides the \code{height} property.}

@@ -110,7 +110,7 @@ sensitivityTimeProfiles(results, defaultPlotConfiguration = myPlotConfiguration)
 }
 }
 \seealso{
-Other sensitivity-calculation:
+Other sensitivity-calculation: 
 \code{\link{sensitivityCalculation}()},
 \code{\link{sensitivitySpiderPlot}()},
 \code{\link{sensitivityTornadoPlot}()}
