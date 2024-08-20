@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@
 <span>  variationRange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">1</span>, by <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">10</span>, by <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  pkParameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"C_max"</span>, <span class="st">"t_max"</span>, <span class="st">"AUC_inf"</span><span class="op">)</span>,</span>
 <span>  customOutputFunctions <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  pkDataFilePath <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  saOutputFilePath <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  simulationRunOptions <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -108,7 +108,7 @@ have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
 x-Dimension (time) or y-Dimension values from simulation results.</p></dd>
 
 
-<dt id="arg-pkdatafilepath">pkDataFilePath<a class="anchor" aria-label="anchor" href="#arg-pkdatafilepath"></a></dt>
+<dt id="arg-saoutputfilepath">saOutputFilePath<a class="anchor" aria-label="anchor" href="#arg-saoutputfilepath"></a></dt>
 <dd><p>Path to excel file in which
 PK-parameter data should be saved. If a file already exists, it will be
 overwritten. Default is <code>NULL</code>, meaning the data will not be saved to a
