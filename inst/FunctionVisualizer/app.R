@@ -62,7 +62,7 @@ server <- function(input, output, session) {
     update = TRUE, varnames = NULL, equation = NULL,
     mins = NULL, maxs = NULL, current = NULL, x = NULL,
     y = NULL, snapshots = NULL, points_x = NULL, points_y = NULL,
-    observedData = data.frame()
+    observedData = data.frame(), operator_token_regex = "[-+*/^(){}]|(%%)|(%/%)"
   )
 
   observeEvent(input$updatevars, {
@@ -93,18 +93,15 @@ server <- function(input, output, session) {
 
     isolate({
       v$equation <- input$equation
-      # variable names: remove all blanks from equation (gsub),
-      # split equation string at all arithmetic operators (strsplit),
-      # remove numeric values as they are not variables (grep)
-      v$varnames <- setdiff(
-        grep("[^[:digit:]*.?[:digit:]+]",
-          unlist(strsplit(
-            gsub("[[:blank:]]", "", input$equation),
-            "[-+*/(){}]|(%%)|(%/%)"
-          )),
-          value = TRUE
-        ),
-        mathexpressions
+      v$varnames <- .extractVariableNames(
+                      equation = input$equation,
+                      mathexpressions = mathexpressions,
+                      operatorTokenRegex = v$operator_token_regex
+                    )
+
+      # export variable names for testing
+      exportTestValues(
+        varnames = { v$varnames }
       )
 
       # safe IDs of dynamically added UI elements
@@ -189,7 +186,7 @@ server <- function(input, output, session) {
 
     x_values <- seq(x_min, x_max, stepsize)
     # insert space before and after arithmetic operators in equation string
-    eq <- paste0(gsub("([-+*/(){}]|(%%)|(%/%))", " \\1 ", v$equation), " ")
+    eq <- paste0(gsub(paste0("(", v$operator_token_regex ,")"), " \\1 ", v$equation), " ")
 
     colname <<- ""
 

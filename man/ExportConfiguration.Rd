@@ -10,10 +10,14 @@ R6 class defining properties for saving a \code{ggplot} object
 \section{Super class}{
 \code{\link[tlf:ExportConfiguration]{tlf::ExportConfiguration}} -> \code{ExportConfiguration}
 }
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
+\section{Active bindings}{
+\if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{heightPerRow}}{The export configuration height per row.}
+\item{\code{heightPerRow}}{The height of the plot dimensions for a row in a multi
+panel plot. The final height of the figure will be 'heightPerRow' times
+the number of rows.
+If \code{NULL} (default), value used in \code{height} is used. If not \code{NULL}, this
+value always overrides the \code{height} property.}
 }
 \if{html}{\out{</div>}}
 }

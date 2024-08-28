@@ -54,7 +54,6 @@ ProjectConfiguration <- R6::R6Class(
     #' parameterization.
     #' Must be located in the "configurationsFolder".
     modelParamsFile = function(value) {
-
       if (!missing(value)) {
         private$.projectConfigurationData$modelParamsFil$valuee <- value
       }
@@ -74,7 +73,6 @@ ProjectConfiguration <- R6::R6Class(
         private$.projectConfigurationData$individualsFile$value,
         self$configurationsFolder
       )
-
     },
     #' @field populationsFile Name of the excel file with population
     #' information.
@@ -316,8 +314,9 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @param path A string representing the path where to save the file.
     #' @export
-    save = function() {
+    save = function(path) {
       excel_file <- readExcel(path = self$projectConfigurationFilePath)
+      export_path <- path
 
       for (prop in excel_file$Property) {
         path <- ""
@@ -337,7 +336,7 @@ ProjectConfiguration <- R6::R6Class(
 
         excel_file[excel_file$Property == prop, ]$Value <- path
       }
-      .writeExcel(excel_file, path = self$projectConfigurationFilePath)
+      .writeExcel(excel_file, path = export_path %||% self$projectConfigurationFilePath)
     }
   )
 )

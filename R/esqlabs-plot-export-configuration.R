@@ -26,8 +26,6 @@ ExportConfiguration <- R6::R6Class(
     .height = NULL
   ),
   public = list(
-    #' @field heightPerRow The export configuration height per row.
-    heightPerRow = NULL,
     #' @description Create a new instance of the `ExportConfiguration` class
     #' @param path,name,format,width,height,units,dpi See [tlf::ExportConfiguration]
     #' @param heightPerRow The height of a row in a multi-panel plot. The final

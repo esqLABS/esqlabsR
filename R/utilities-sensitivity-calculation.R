@@ -2,82 +2,184 @@
 
 #' Extract PK parameters dataframe from a list of `SimulationResults` objects
 #'
-#' @inheritParams .simulationResultsBatchToTimeSeriesDataFrame
+#' This function processes simulation result batches by parameterPath and
+#' extracts PK parameters into a dataframe.
+#'
+#' @param simulationResultsBatch List of simulation result batches.
+#' @param parameterPaths List of parameter paths corresponding to the simulation
+#' results.
+#' @param customOutputFunctions Optional list of custom output functions for
+#' user-defined PK analyses.
+#'
+#' @return A dataframe containing the PK parameters from all simulation results.
 #'
 #' @keywords internal
 #' @noRd
 .simulationResultsBatchToPKDataFrame <- function(simulationResultsBatch,
-                                                 parameterPaths) {
+                                                 parameterPaths,
+                                                 customOutputFunctions) {
   purrr::map2_dfr(
     .x = simulationResultsBatch,
     .y = parameterPaths,
-    .f = ~ .simulationResultsToPKDataFrame(.x, .y)
+    .f = ~ .simulationResultsToPKDataFrame(.x, .y, customOutputFunctions)
   )
 }
 
-#' Extract PK parameters dataframe from `Parameter` object
+#' Calculate PK parameters dataframe from simulation results
 #'
-#' @inheritParams .simulationResultsToTimeSeriesDataFrame
+#' This function calculates standard PK analyses from simulation results and
+#' converts them into a dataframe. If custom output functions are provided,
+#' it calculates user-defined PK analyses and integrates them with the standard
+#' PK data.
+#'
+#' @param simulationResults List of simulation results from which PK analyses
+#' are to be calculated.
+#' @param parameterPath Path to the parameter in the simulation results.
+#' @param customOutputFunctions Optional list of custom output functions for
+#' user-defined PK analyses.
+#'
+#' @return A dataframe containing the combined standard and user-defined PK data.
 #'
 #' @keywords internal
 #' @noRd
-.simulationResultsToPKDataFrame <- function(simulationResults, parameterPath) {
-  purrr::map_dfr(
-    .x  = simulationResults,
-    .f  = ~ pkAnalysesToDataFrame(calculatePKAnalyses(.x)),
-    .id = "ParameterFactor"
-  ) %>%
-    dplyr::rename(
-      OutputPath       = QuantityPath,
-      PKParameter      = Parameter,
-      PKParameterValue = Value
-    ) %>%
-    .addParameterColumns(simulationResults, parameterPath) %>%
-    dplyr::group_by(ParameterPath, PKParameter) %>%
+.simulationResultsToPKDataFrame <- function(simulationResults,
+                                            parameterPath,
+                                            customOutputFunctions = NULL) {
+  # calculate standard pkAnalyses
+  pkDataList <- userPKDataList <-
+    setNames(
+      vector("list", length(simulationResults)),
+      names(simulationResults)
+    )
+  for (simResult in names(simulationResults)) {
+    pkDataFrame <- pkAnalysesToDataFrame(
+      calculatePKAnalyses(
+        simulationResults[[simResult]]
+      )
+    )
+    pkDataList[[simResult]] <- pkDataFrame
+  }
+  pkData <- dplyr::bind_rows(pkDataList, .id = "ParameterFactor")
+
+  # calculate user-defined pkAnalyses
+  if (!is.null(customOutputFunctions)) {
+    for (simResult in names(simulationResults)) {
+      userPKDataFrame <- .calculateCustomPK(
+        simulationResults[[simResult]],
+        customOutputFunctions
+      )
+      userPKDataList[[simResult]] <- userPKDataFrame
+    }
+    userPKData <- dplyr::bind_rows(userPKDataList, .id = "ParameterFactor")
+  } else {
+    userPKData <- data.frame()
+  }
+
+  # combine standard and user-defined PK data
+  pkData <- dplyr::bind_rows(pkData, userPKData)
+
+  # modify and format data
+  pkData <- dplyr::rename(
+    pkData,
+    OutputPath       = QuantityPath,
+    PKParameter      = Parameter,
+    PKParameterValue = Value
+  )
+
+  pkData <- .addParameterColumns(pkData, simulationResults, parameterPath)
+  pkData <- dplyr::group_by(pkData, ParameterPath, PKParameter) %>%
     dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(
-      "OutputPath",
-      dplyr::starts_with("Parameter"),
-      dplyr::starts_with("PK"),
-      Unit, PercentChangePK,
-      dplyr::everything(),
-      -c("IndividualId")
-    ) %>%
+    dplyr::ungroup()
+
+  pkData <- dplyr::select(pkData, -dplyr::any_of("IndividualId"))
+  pkData <- dplyr::relocate(
+    pkData,
+    "OutputPath",
+    dplyr::starts_with("Parameter"),
+    dplyr::starts_with("PK"),
+    Unit
+  ) %>%
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
+
+  return(pkData)
 }
 
-#' @title Add columns with details about parameter paths
+#' Calculate custom PK values
 #'
-#' @description
+#' This function calculates user-defined PK values from simulation results using
+#' custom output functions.
 #'
-#' Adds columns with additional details about parameter paths:
-#' - name,
-#' - reference values
-#' - scaled values
+#' @param simulationResults `SimulationResults` object containing the simulation
+#' data.
+#' @param customOutputFunctions Named list of custom output functions to calculate
+#' PK values.
 #'
-#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` or by
-#'  `simulationResultsToDataFrame()`.
-#'  @inheritParams .simulationResultsToTimeSeriesDataFrame
-#'
-#' @note Note that the function will work only with a single parameter path.
+#' @return A dataframe containing the custom PK values.
 #'
 #' @keywords internal
 #' @noRd
-.addParameterColumns <- function(data, simulationResults, parameterPath) {
-  parameter <- getAllParametersMatching(
-    parameterPath,
-    purrr::pluck(simulationResults, 1L, "simulation")
+.calculateCustomPK <- function(simulationResults, customOutputFunctions) {
+  # validate customOutputFunctions
+  .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
+  validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+
+  # extract all output paths
+  outputPaths <- simulationResults$allQuantityPaths
+
+  # extract simulation result values
+  simulationResultsDf <- simulationResultsToDataFrame(simulationResults)
+
+  userPKValuePathList <- setNames(
+    vector("list", length(outputPaths)),
+    outputPaths
   )
 
-  data %>%
-    dplyr::mutate(
-      ParameterPath   = purrr::pluck(parameter[[1]], "path"),
-      ParameterValue  = purrr::pluck(parameter[[1]], "value"),
-      ParameterFactor = as.numeric(ParameterFactor)
-    ) %>%
-    dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
+  for (outputPath in outputPaths) {
+    # filter the data frame for the current output path
+    outputData <- dplyr::filter(simulationResultsDf, paths == outputPath)
+    x <- outputData$Time
+    y <- outputData$simulationValues
+
+    userPKValueList <- setNames(
+      vector("list", length(customOutputFunctions)),
+      names(customOutputFunctions)
+    )
+
+    # calculate user-defined PK values using user-defined functions
+    for (customFunctionName in names(customOutputFunctions)) {
+      customOutputFunction <- customOutputFunctions[[customFunctionName]]
+      formalNames <- names(formals(customOutputFunction))
+
+      # user-defined functions should have either 'x', 'y',
+      # or both 'x' and 'y' as parameters
+      userPKValue <- switch(paste(sort(formalNames), collapse = ","),
+        "x,y" = customOutputFunction(x = x, y = y),
+        "x" = customOutputFunction(x = x),
+        "y" = customOutputFunction(y = y),
+        stop(messages$invalidCustomFunctionParameters(formalNames))
+      )
+
+      userPKValueList[[customFunctionName]] <- data.frame(
+        Parameter = customFunctionName,
+        Value = userPKValue,
+        IndividualId = simulationResults$allIndividualIds[1],
+        QuantityPath = outputPath,
+        Unit = NA
+      )
+    }
+    userPKValuePathList[[outputPath]] <- dplyr::bind_rows(userPKValueList)
+  }
+
+  # combined and prepare PK data to match calculatePKAnalyses() output
+  userPKDataFrame <- dplyr::bind_rows(userPKValuePathList)
+  userPKDataFrame <- dplyr::select(
+    userPKDataFrame,
+    IndividualId, QuantityPath, Parameter, Value, Unit
+  )
+
+  return(userPKDataFrame)
 }
+
 
 # dataframe modification helpers ------------------------------
 
@@ -111,21 +213,199 @@
     )
 }
 
+#' Calculate custom PK values
+#'
+#' This function calculates user-defined PK values from simulation results using
+#' custom output functions.
+#'
+#' @param simulationResults `SimulationResults` object containing the simulation
+#' data.
+#' @param customOutputFunctions Named list of custom output functions to calculate
+#' PK values.
+#'
+#' @return A dataframe containing the custom PK values.
+#'
 #' @keywords internal
 #' @noRd
-.convertToWide <- function(data) {
+.calculateCustomPK <- function(simulationResults, customOutputFunctions) {
+  # validate customOutputFunctions
+  .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
+  validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+
+  # extract all output paths
+  outputPaths <- simulationResults$allQuantityPaths
+
+  # extract simulation result values
+  simulationResultsDf <- simulationResultsToDataFrame(simulationResults)
+
+  userPKValuePathList <- setNames(
+    vector("list", length(outputPaths)),
+    outputPaths
+  )
+
+  for (outputPath in outputPaths) {
+    # filter the data frame for the current output path
+    outputData <- dplyr::filter(simulationResultsDf, paths == outputPath)
+    x <- outputData$Time
+    y <- outputData$simulationValues
+
+    userPKValueList <- setNames(
+      vector("list", length(customOutputFunctions)),
+      names(customOutputFunctions)
+    )
+
+    # calculate user-defined PK values using user-defined functions
+    for (customFunctionName in names(customOutputFunctions)) {
+      customOutputFunction <- customOutputFunctions[[customFunctionName]]
+      formalNames <- names(formals(customOutputFunction))
+
+      # user-defined functions should have either 'x', 'y',
+      # or both 'x' and 'y' as parameters
+      userPKValue <- switch(paste(sort(formalNames), collapse = ","),
+        "x,y" = customOutputFunction(x = x, y = y),
+        "x" = customOutputFunction(x = x),
+        "y" = customOutputFunction(y = y),
+        stop(messages$invalidCustomFunctionParameters(formalNames))
+      )
+
+      userPKValueList[[customFunctionName]] <- data.frame(
+        Parameter = customFunctionName,
+        Value = userPKValue,
+        IndividualId = simulationResults$allIndividualIds[1],
+        QuantityPath = outputPath,
+        Unit = NA
+      )
+    }
+    userPKValuePathList[[outputPath]] <- dplyr::bind_rows(userPKValueList)
+  }
+
+  # combined and prepare PK data to match calculatePKAnalyses() output
+  userPKDataFrame <- dplyr::bind_rows(userPKValuePathList)
+  userPKDataFrame <- dplyr::select(
+    userPKDataFrame,
+    IndividualId, QuantityPath, Parameter, Value, Unit
+  )
+
+  return(userPKDataFrame)
+}
+
+
+# dataframe modification helpers ------------------------------
+
+#' @title Percent change in PK parameters
+#'
+#' @description Compute %change in PK parameters and their sensitivity
+#'
+#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
+#'   columns renamed to follow `UpperCamel` case.
+#'
+#' @keywords internal
+#' @noRd
+.computePercentChange <- function(data) {
+  # baseline values with a scaling of 1, i.e. no scaling
+  baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
+
+  # baseline values for parameters of interest
+  ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
+  PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
+
+  # add columns with %change and sensitivity
+  # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
   data %>%
-    tidyr::pivot_wider(
-      names_from  = PKParameter,
-      values_from = c(PKParameterValue, Unit, PercentChangePK, SensitivityPKParameter),
-      names_glue  = "{PKParameter}_{.value}"
+    dplyr::mutate(
+      PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
+      SensitivityPKParameter =
+      # delta PK / PK
+        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
+          # p / delta p
+          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
+    )
+}
+
+#' @title Add columns with details about parameter paths
+#'
+#' @description
+#'
+#' Adds columns with additional details about parameter paths:
+#' - name,
+#' - reference values
+#' - scaled values
+#'
+#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` or by
+#'  `simulationResultsToDataFrame()`.
+#'  @inheritParams .simulationResultsToTimeSeriesDataFrame
+#'
+#' @note Note that the function will work only with a single parameter path.
+#'
+#' @keywords internal
+#' @noRd
+.addParameterColumns <- function(data, simulationResults, parameterPath) {
+  parameter <- getAllParametersMatching(
+    parameterPath,
+    purrr::pluck(simulationResults, 1L, "simulation")
+  )
+
+  data %>%
+    dplyr::mutate(
+      ParameterPath = purrr::pluck(parameter[[1]], "path"),
+      ParameterValue = purrr::pluck(parameter[[1]], "value"),
+      ParameterUnit = purrr::pluck(parameter[[1]], "unit"),
+      ParameterFactor = as.numeric(ParameterFactor)
     ) %>%
+    dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
+}
+
+# dataframe modification helpers ------------------------------
+
+#' @title Percent change in PK parameters
+#'
+#' @description Compute %change in PK parameters and their sensitivity
+#'
+#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
+#'   columns renamed to follow `UpperCamel` case.
+#'
+#' @keywords internal
+#' @noRd
+.computePercentChange <- function(data) {
+  # baseline values with a scaling of 1, i.e. no scaling
+  baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
+
+  # baseline values for parameters of interest
+  ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
+  PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
+
+  # add columns with %change and sensitivity
+  # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
+  data %>%
+    dplyr::mutate(
+      PKPercentChange = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
+      SensitivityPKParameter =
+      # delta PK / PK
+        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
+          # p / delta p
+          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
+    )
+}
+
+#' @keywords internal
+#' @noRd
+.convertToWide <- function(data,
+                           pkParameterNames = names(ospsuite::StandardPKParameter)) {
+  dataWide <- tidyr::pivot_wider(
+    data,
+    names_from  = PKParameter,
+    values_from = c(PKParameterValue, Unit, PKPercentChange, SensitivityPKParameter),
+    names_glue  = "{PKParameter}_{.value}"
+  ) %>%
     dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")) %>%
-    # all metrics for each parameter should live together
+    # metrics for each parameter are grouped together
     dplyr::select(
       dplyr::matches("Output|^Parameter"),
-      dplyr::matches(names(ospsuite::StandardPKParameter))
-    )
+      dplyr::matches(pkParameterNames)
+    ) %>%
+    dplyr::arrange(OutputPath)
+
+  return(dataWide)
 }
 
 # validation helpers ------------------------------
@@ -215,6 +495,26 @@
       "Following non-standard PK parameters will not be calculated:\n",
       paste0(nsPKNames, collapse = "\n")
     )
+  }
+}
+
+#' Validate Named List
+#'
+#' Check if the object is a named list. Allows NULL if `nullAllowed` is TRUE.
+#'
+#' @param object The object to validate.
+#' @param nullAllowed Logical. If TRUE, allows NULL. Default is FALSE.
+#' @keywords internal
+#' @noRd
+.validateIsNamedList <- function(object, nullAllowed = FALSE) {
+  validateIsOfType(object, "list", nullAllowed = nullAllowed)
+
+  if (!is.null(object)) {
+    listNames <- names(object)
+    argName <- deparse(substitute(object))
+    if (hasEmptyStrings(listNames)) {
+      stop(messages$errorNotNamedList(argName))
+    }
   }
 }
 

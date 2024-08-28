@@ -108,7 +108,7 @@ print prints a summary of the Project Configuration.
 \subsection{Method \code{save()}}{
 Export ProjectConfiguration object to ProjectConfiguration.xlsx
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$save(path = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$save(path)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

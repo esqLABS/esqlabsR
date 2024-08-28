@@ -13,5 +13,8 @@ createProjectConfiguration(path = file.path("ProjectConfiguration.xlsx"))
 Object of type \code{ProjectConfiguration}
 }
 \description{
+#' Create a \code{ProjectConfiguration}
+}
+\details{
 Create a \code{ProjectConfiguration} based on the \code{"ProjectConfiguration.xlsx"}
 }
