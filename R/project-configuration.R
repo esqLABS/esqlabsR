@@ -313,28 +313,29 @@ ProjectConfiguration <- R6::R6Class(
     #' @description Export ProjectConfiguration object to ProjectConfiguration.xlsx
     #'
     #' @export
-    save = function() {
-      outputData <- data.frame(
-        "Property" = names(private$.projectConfigurationData),
-        "Value" = unlist(purrr::map(private$.projectConfigurationData, "value")),
-        "Description" = unlist(purrr::map(private$.projectConfigurationData, "description"))
-      )
+    save = function(path) {
+      excel_file <- readExcel(path = self$projectConfigurationFilePath)
+      export_path <- path
 
-      if (!is.null(self[[prop]])) {
-        if (fs::is_dir(self[[prop]])) {
-          # if property is a directory, save relative path from ProjectConf dir
-          path <- fs::path_rel(
-            path = self[[prop]],
-            start = self$projectConfigurationDirPath
-          )
-        } else if (fs::is_file(self[[prop]])) {
-          # if property is a file, then save only its name
-          path <- basename(self[[prop]])
+      for (prop in excel_file$Property) {
+        path <- ""
+
+        if (!is.null(self[[prop]])) {
+          if (fs::is_dir(self[[prop]])) {
+            # if property is a directory, save relative path from ProjectConf dir
+            path <- fs::path_rel(
+              path = self[[prop]],
+              start = self$projectConfigurationDirPath
+            )
+          } else if (fs::is_file(self[[prop]])) {
+            # if property is a file, then save only its name
+            path <- basename(self[[prop]])
+          }
         }
-      }
 
-      excel_file[excel_file$Property == prop, ]$Value <- path
-      .writeExcel(excel_file, path = self$projectConfigurationFilePath)
+        excel_file[excel_file$Property == prop, ]$Value <- path
+      }
+      .writeExcel(excel_file, path = export_path %||% self$projectConfigurationFilePath)
     }
   )
 )
