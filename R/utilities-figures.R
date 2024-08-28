@@ -160,9 +160,6 @@ createEsqlabsPlotConfiguration <- function() {
   # Points size
   defaultPlotConfiguration$pointsSize <- 1.75
 
-  # Points shape
-  defaultPlotConfiguration$pointsShape <- scales::shape_pal()(6)
-
   # Error bars size
   defaultPlotConfiguration$errorbarsSize <- 0.65
   defaultPlotConfiguration$errorbarsCapSize <- 2.75
@@ -667,37 +664,69 @@ createPlotsFromExcel <- function(
   return(plotConfiguration)
 }
 
-#' Calculate breaks for axis ticks
+#' Apply Specific Configuration Overrides to Default Plot Configuration
 #'
-#' This function determines axis tick breaks, with an optional logarithmic
-#' transformation. It serves as a wrapper around `labeling::extended`.
+#' This function applies specific configuration overrides to the default plot
+#' configuration. It first applies any additional parameters provided via `...`,
+#' then updates the default configuration with overrides from the `plotOverrideConfig`
+#' list, but only if the corresponding values have not already been set by the
+#' additional parameters. Finally, it validates the final configuration to ensure
+#' all options are valid.
 #'
-#' @param x Numeric vector for which breaks are calculated.
-#' @param scaling Character string indicating scaling type ("log" for logarithmic).
-#' Default is `NULL`.
-#' @param ... Additional arguments passed to `labeling::extended`.
+#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
+#' or a list of such objects.
+#' @param plotOverrideConfig A list with new configuration settings to apply.
+#' @param ... Additional parameters to override specific configuration settings
+#' dynamically.
 #'
 #' @keywords internal
 #' @noRd
-.calculateBreaks <- function(x, scaling = NULL, ...) {
-  args <- list(...)
-
-  if (!is.null(scaling) && scaling == "log") {
-    x <- ospsuite.utils::logSafe(x, base = 10, epsilon = 1e-2)
+.applyPlotConfiguration <- function(defaultPlotConfiguration = NULL,
+                                    plotOverrideConfig = NULL,
+                                    ...) {
+  # validate input defaultPlotConfiguration
+  if (is.null(defaultPlotConfiguration)) {
+    defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
+  } else {
+    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
   }
 
-  args$dmin <- min(na.omit(x))
-  args$dmax <- max(na.omit(x))
-  breaks <- do.call(labeling::extended, args)
-
-  if (!is.null(scaling) && scaling == "log") {
-    breaks <- 10^breaks
+  # Clone the `DefaultPlotConfiguration` object
+  # If a list of configurations is passed, clone only the first configuration
+  # in the list. List processing not supported yet.
+  if (inherits(defaultPlotConfiguration, "list")) {
+    customPlotConfiguration <- defaultPlotConfiguration[[1]]$clone()
+  } else {
+    customPlotConfiguration <- defaultPlotConfiguration$clone()
   }
 
-  breaks <- round(breaks, 2)
+  # Capture additional parameters passed through ... and override
+  additionalParams <- list(...)
+  for (param in names(additionalParams)) {
+    if (!is.null(additionalParams[[param]])) {
+      customPlotConfiguration[[param]] <- additionalParams[[param]]
+    }
+  }
 
-  return(breaks)
+  # override only default configuration values with settings in plotOverrideConfig
+  customPlotConfiguration <- .updatePlotConfiguration(
+    customPlotConfiguration, plotOverrideConfig
+  )
+
+  # convert to list and validate final plot configuration
+  plotConfigurationList <- purrr::map(
+    purrr::set_names(names(customPlotConfiguration)),
+    ~ customPlotConfiguration[[.]]
+  )
+  optionNames <- unique(c(names(plotOverrideConfig), names(additionalParams)))
+  ospsuite.utils::validateIsOption(
+    plotConfigurationList,
+    .getPlotConfigurationOptions(optionNames)
+  )
+
+  return(customPlotConfiguration)
 }
+
 
 #' Calculate axis limits
 #'
@@ -707,11 +736,18 @@ createPlotsFromExcel <- function(
 #'
 #' @keywords internal
 #' @noRd
-.calculateLimits <- function(x) {
-  limits <- c(
-    (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
-    (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
-  )
+.calculateLimits <- function(x, scaling = NULL) {
+  if (!is.null(scaling) && scaling == "log") {
+    limits <- c(
+      min(x[x > 0], na.rm = TRUE) * 0.9,
+      max(x[x > 0], na.rm = TRUE) * 1.1
+    )
+  } else {
+    limits <- c(
+      (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
+      (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
+    )
+  }
 
   return(limits)
 }
@@ -787,6 +823,10 @@ createPlotsFromExcel <- function(
     yAxisTicks = list(
       type = "integer",
       valueRange = c(1L, 20L)
+    ),
+    xAxisType = list(
+      type = "character",
+      allowedValues = c("percent", "absolute")
     ),
     yAxisType = list(
       type = "character",

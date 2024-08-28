@@ -1,5 +1,22 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+  - Function `sensitivityCalculation()` with renamed parameter `pkDataFilePath` 
+    to `saOutputFilePath` and updated output files to include PK parameter units (\#696).
+
+## Major Changes
+
+## Minor improvements and bug fixes
+
+  - Handle simulation failures in `sensitivityCalculation` (\#694).
+
+  - Function `sensitivityCalculation()` supports new parameter `customOutputFunctions`, 
+    allowing user-defined functions for PK parameter calculation (\#685).
+
+  - Function `sensitivitySpiderPlot` now supports `xAxisType` and `yAxisType` options 
+    for switching between percent and absolute values (#695).
+
 # esqlabsR 5.2.0
 
 ## Breaking changes
@@ -16,17 +33,14 @@
     choose between `free` and `fixed` scales for y-axis. Further plot
     customization options through `defaultPlotConfiguration` (\#632).
   
-  - Function `sensitivityTimeProfiles` with new signature. Introduced parameters
-    `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`. More
-    plot customization options through `defaultPlotConfiguration` as described
-    in the documentation. Plots have improved color palette, scaling and legend
-    colors (\#669).
-
-  - Function `sensitivityTimeProfiles` updated. Observed data (single or
-    multiple `DataSet` objects) can now be added to the plots and will be
-    included automatically in the `outputPath` if the dimensions are convertible
-    (\#674).
-
+  - Function `sensitivityTimeProfiles` with new signature and enhanced visuals:
+    - `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin` (\#669).
+    - `xUnits` and `yUnits` to change units in the plot (\#688).
+    - Enhanced plot customization options through `defaultPlotConfiguration` as
+      described in the documentation (\#669).
+    - Support for adding `observedData` (single or multiple `DataSet` objects) 
+      to the plots (\#674).
+      
   - Function `writeExcel()` is no longer exported. (\#672)
 
 ## Major Changes
@@ -55,7 +69,9 @@
 
   - More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is
     defined.
-
+    
+  - Plotting functions have improved dynamic axis breaks, limits calculation, and 
+    labeling (\#691).
 
 # esqlabsR 5.1.3
 

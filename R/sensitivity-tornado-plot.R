@@ -89,11 +89,6 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 
   # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  if (is.null(defaultPlotConfiguration)) {
-    defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  } else {
-    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
-  }
   ospsuite.utils::validateIsOption(
     list(parameterFactor = parameterFactor),
     .getPlotConfigurationOptions("parameterFactor")
@@ -112,8 +107,9 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     stop(messages$noParameterFactor(data, parameterFactor))
   }
 
-  # default tornado plot configuration setup ----
+  # plot configuration setup ------------
 
+  # default tornado plot configuration
   tornadoPlotConfiguration <- list(
     legendPosition = "right",
     legendTitle = "Parameter Factor",
@@ -123,20 +119,11 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     yLabel = "Parameter",
     xLabel = "Input parameter value [% of reference]"
   )
-  # override only default configuration values with settings for tornado plot
-  customPlotConfiguration <- defaultPlotConfiguration$clone()
-  customPlotConfiguration <- .updatePlotConfiguration(
-    customPlotConfiguration, tornadoPlotConfiguration
-  )
 
-  # validate plot configuration for valid options
-  plotConfigurationList <- purrr::map(
-    purrr::set_names(names(customPlotConfiguration)),
-    ~ customPlotConfiguration[[.]]
-  )
-  ospsuite.utils::validateIsOption(
-    plotConfigurationList,
-    .getPlotConfigurationOptions(names(tornadoPlotConfiguration))
+  # apply configuration overrides and validate
+  customPlotConfiguration <- .applyPlotConfiguration(
+    defaultPlotConfiguration = defaultPlotConfiguration,
+    plotOverrideConfig       = tornadoPlotConfiguration
   )
 
   # extract and prepare data -----------------
@@ -155,10 +142,10 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   )
   data <- dplyr::mutate(
     data,
-    MeanPercentChangePK = mean(PercentChangePK, na.rm = TRUE)
+    PKMeanPercentChange = mean(PKPercentChange, na.rm = TRUE)
   )
   data <- dplyr::ungroup(data)
-  data <- dplyr::arrange(data, dplyr::desc(abs(MeanPercentChangePK)))
+  data <- dplyr::arrange(data, dplyr::desc(abs(PKMeanPercentChange)))
   data <- dplyr::mutate(
     data,
     ParameterPath = purrr::map_chr(ParameterPath, .splitParameterName)
@@ -198,12 +185,10 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     list(title = unique(data$OutputPath))
   )
 
-  # calculate x-axis breaks and limits -------
-  pLimits <- .calculateLimits(data$PercentChangePK)
+  # calculate x-axis limits  -------
+  pLimits <- .calculateLimits(data$PKPercentChange)
   pLimits[1] <- -1 * max(abs(pLimits))
   pLimits[2] <- max(abs(pLimits))
-
-  pBreaks <- .calculateBreaks(data$PercentChangePK, m = 5)
 
   # map each PK parameter to its own plot ----
 
@@ -218,7 +203,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
         dataSubset,
         aes(
           x = ParameterPath,
-          y = PercentChangePK,
+          y = PKPercentChange,
           fill = as.factor(ParameterFactor)
         )
       ) +
@@ -239,7 +224,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       plot <- plot +
         scale_y_continuous(
           limits = pLimits,
-          breaks = pBreaks
+          breaks = scales::breaks_extended(),
+          labels = scales::label_number_auto()
         )
 
       # finalize plot ----------------------------

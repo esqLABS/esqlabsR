@@ -9,7 +9,7 @@ loadScenarioResults(scenarioNames, resultsFolder)
 \arguments{
 \item{scenarioNames}{Names of simulated scenarios}
 
-\item{resultsFolder}{Path to the folder where simulation results as scv and
+\item{resultsFolder}{Path to the folder where simulation results as csv and
 the corresponding simulations as pkml are located.}
 }
 \value{

@@ -22,7 +22,6 @@ createDataCombinedFromExcel <- function(
     simulatedScenarios = NULL,
     observedData = NULL,
     stopIfNotFound = TRUE) {
-
   validateIsString(file)
   validateIsString(sheet, nullAllowed = TRUE)
 

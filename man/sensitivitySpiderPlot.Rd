@@ -12,6 +12,7 @@ sensitivitySpiderPlot(
   xAxisScale = NULL,
   yAxisScale = NULL,
   yAxisFacetScales = "fixed",
+  xAxisType = "percent",
   yAxisType = "percent",
   defaultPlotConfiguration = NULL
 )
