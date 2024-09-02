@@ -120,7 +120,6 @@ To get started, first read `vignette("esqlabsR")`. Then read more about the spec
   - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
   - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
   - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
-  - [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
 
 
 ## Contributing
