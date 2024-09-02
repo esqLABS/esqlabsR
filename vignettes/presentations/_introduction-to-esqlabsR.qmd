@@ -180,7 +180,7 @@ my_project
 │   ├── ModelParameters.xlsx
 │   ├── Plots.xlsx
 │   ├── Populations.xlsx
-│   ├── Populations
+│   ├── PopulationsCSV
 │   │   └── PopulationScenario_population.csv
 │   └── Scenarios.xlsx
 └── Results
@@ -205,8 +205,8 @@ my_project
 │   ├── Individuals.xlsx
 │   ├── ModelParameters.xlsx
 │   ├── Plots.xlsx
-│   ├── Population.xlsx
-│   ├── Populations
+│   ├── Populations.xlsx
+│   ├── PopulationsCSV
 │   │   └── PopulationScenario_population.csv
 │   └── Scenarios.xlsx
 └── Results
