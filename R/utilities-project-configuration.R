@@ -7,9 +7,11 @@
 #' @return Object of type `ProjectConfiguration`
 #' @export
 createDefaultProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
-  lifecycle::deprecate_soft(what = "createDefaultProjectConfiguration()",
-                            with = "createProjectConfiguration()",
-                            when = "5.1.4")
+  lifecycle::deprecate_soft(
+    what = "createDefaultProjectConfiguration()",
+    with = "createProjectConfiguration()",
+    when = "5.3.0"
+  )
   return(createProjectConfiguration(path))
 }
 

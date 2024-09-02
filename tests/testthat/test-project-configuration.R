@@ -17,7 +17,5 @@ test_that("`createDefaultProjectConfiguration()` is deprecated", {
 
 
 test_that("Project Configuration can be created from V5 project configuration file but raises a warning", {
-  expect_warning(createProjectConfiguration(test_path("..","data", "ProjectConfiguration-V5.xlsx")))
+  expect_warning(createProjectConfiguration(test_path("..", "data", "ProjectConfiguration-V5.xlsx")))
 })
-
-
