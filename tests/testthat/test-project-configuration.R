@@ -24,6 +24,19 @@ test_that("Project Configuration can be customized but throws warning if path ar
   myConfig <- testProjectConfiguration()
 
   expect_warning({myConfig$configurationsFolder <- "Wrong/Folder"})
-  expect_warning({myConfig$modelFolder <- "Folder/that/do/not/exists"})
 
+  myConfig <- testProjectConfiguration()
+  expect_warning({myConfig$dataFolder <- "folder/that/does/not/exist"})
+  expect_warning({myConfig$modelFolder <- "folder/that/does/not/exist"})
+  expect_warning({myConfig$populationsFolder <- "folder/that/does/not/exist"})
+
+  myConfig <- testProjectConfiguration()
+  expect_warning({myConfig$modelParamsFile <- "donotexist.xslx"})
+  expect_warning({myConfig$individualsFile <- "donotexist.xslx"})
+  expect_warning({myConfig$populationsFile <- "donotexist.xslx"})
+  expect_warning({myConfig$scenariosFile <- "donotexist.xslx"})
+  expect_warning({myConfig$applicationsFile <- "donotexist.xslx"})
+  expect_warning({myConfig$plotsFile <- "donotexist.xslx"})
+  expect_warning({myConfig$dataFile <- "donotexist.xslx"})
+  expect_warning({myConfig$dataImporterConfigurationFile <- "donotexist.xslx"})
 })

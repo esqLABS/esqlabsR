@@ -56,7 +56,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder".
     modelParamsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$modelParamsFil$valuee <- value
+        private$.projectConfigurationData$modelParamsFile$value <- value
       }
       private$.clean_path(
         private$.projectConfigurationData$modelParamsFile$value,
