@@ -32,6 +32,14 @@ To get started with the esqlabsR package, please read the
 
 ## Installation
 
+### Prerequisites
+
+As `{esqlabsR}` relies on the `{ospsuite}` package, please installed the
+`{ospsuite}` dependencies as described
+[here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R?tab=readme-ov-file#pre-requisites).
+
+### Package installation
+
 Currently, esqlabsR is available only for Windows system. You can
 install the package by running:
 
@@ -57,7 +65,7 @@ library(esqlabsR)
 
 # Load excel-based configuration
 my_project_configuration <-
-  createDefaultProjectConfiguration(example_ProjectConfiguration())
+  createProjectConfiguration(example_ProjectConfiguration())
 
 
 # Setup simulation scenarios
@@ -114,7 +122,6 @@ packages:
 - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
 - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
 - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
-- [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
 
 ## Contributing
 
