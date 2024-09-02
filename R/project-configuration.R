@@ -87,14 +87,14 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field PopulationsFolder Name of the folder containing population defined through csv files
+    #' @field populationsFolder Name of the folder containing population defined through csv files
     #' Must be located in the "configurationsFolder".
     populationsFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$PopulationsFolder$value <- value
+        private$.projectConfigurationData$populationsFolder$value <- value
       }
       private$.clean_path(
-        private$.projectConfigurationData$PopulationsFolder$value,
+        private$.projectConfigurationData$populationsFolder$value,
         self$configurationsFolder
       )
     },
@@ -300,7 +300,7 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Model Parameters", fs::path_rel(as.character(self$modelParamsFile)))
       private$printLine("Individuals", fs::path_rel(as.character(self$individualsFile)))
       private$printLine("Populations", fs::path_rel(as.character(self$populationsFile)))
-      private$printLine("Populations Folder", fs::path_rel(as.character(self$PopulationsFolder)))
+      private$printLine("Populations Folder", fs::path_rel(as.character(self$populationsFolder)))
       private$printLine("Scenarios", fs::path_rel(as.character(self$scenariosFile)))
       private$printLine("Applications", fs::path_rel(as.character(self$applicationsFile)))
       private$printLine("Plots", fs::path_rel(as.character(self$plotsFile)))
