@@ -19,3 +19,11 @@ test_that("`createDefaultProjectConfiguration()` is deprecated", {
 test_that("Project Configuration can be created from V5 project configuration file but raises a warning", {
   expect_warning(createProjectConfiguration(test_path("..", "data", "ProjectConfiguration-V5.xlsx")))
 })
+
+test_that("Project Configuration can be customized but throws warning if path are wrong", {
+  myConfig <- testProjectConfiguration()
+
+  expect_warning({myConfig$configurationsFolder <- "Wrong/Folder"})
+  expect_warning({myConfig$modelFolder <- "Folder/that/do/not/exists"})
+
+})
