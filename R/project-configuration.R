@@ -87,14 +87,14 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field populationsCSV Name of the folder containing population defined through csv files
+    #' @field PopulationsFolder Name of the folder containing population defined through csv files
     #' Must be located in the "configurationsFolder".
-    populationsCSV = function(value) {
+    populationsFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$populationsCSV$value <- value
+        private$.projectConfigurationData$PopulationsFolder$value <- value
       }
       private$.clean_path(
-        private$.projectConfigurationData$populationsCSV$value,
+        private$.projectConfigurationData$PopulationsFolder$value,
         self$configurationsFolder
       )
     },
@@ -214,7 +214,7 @@ ProjectConfiguration <- R6::R6Class(
         data$populationsFile <- data$populationParamsFile
         data$scenariosFile <- data$scenarioDefinitionFile
         data$applicationsFile <- data$scenarioApplicationsFile
-        data$populationsCSV <- list(value = NA, description = "Name of the folder containing population defined in files")
+        data$populationsFolder <- list(value = NA, description = "Name of the folder containing population defined in files")
 
         data$paramsFolder <- NULL
         data$paramsFile <- NULL
@@ -300,7 +300,7 @@ ProjectConfiguration <- R6::R6Class(
       private$printLine("Model Parameters", fs::path_rel(as.character(self$modelParamsFile)))
       private$printLine("Individuals", fs::path_rel(as.character(self$individualsFile)))
       private$printLine("Populations", fs::path_rel(as.character(self$populationsFile)))
-      private$printLine("Populations Folder", fs::path_rel(as.character(self$populationsCSV)))
+      private$printLine("Populations Folder", fs::path_rel(as.character(self$PopulationsFolder)))
       private$printLine("Scenarios", fs::path_rel(as.character(self$scenariosFile)))
       private$printLine("Applications", fs::path_rel(as.character(self$applicationsFile)))
       private$printLine("Plots", fs::path_rel(as.character(self$plotsFile)))
