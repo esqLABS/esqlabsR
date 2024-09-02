@@ -881,7 +881,7 @@ test_that("It correctly treats empty rows", {
 test_that("It checks if OffsetsUnits are not empty if xOffsets", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
@@ -986,7 +986,7 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
 test_that("It throws a warning when trying to export non-existent plot grid to file", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
