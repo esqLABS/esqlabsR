@@ -90,3 +90,23 @@ test_that("It creates population characteristics without ontogenies from excel",
     )
   )
 })
+
+test_that("extendPopulationByUserDefinedParams works", {
+
+  set.seed(42)
+
+  population <- ospsuite::loadPopulation(system.file("extdata", "SimResults_pop.csv", package = "ospsuite"))
+
+  esqlabsR::extendPopulationByUserDefinedParams(
+    population = population,
+    parameterPaths = c("Organism|Kidney|GFR"),
+    meanValues = 0.12,
+    sdValues = 0.001,
+    distributions = "Normal"
+  )
+
+  expect_snapshot(
+    population$getParameterValuesForIndividual(4)
+  )
+
+})
