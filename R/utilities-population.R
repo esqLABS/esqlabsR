@@ -93,7 +93,7 @@ extendPopulationByUserDefinedParams <- function(population, # nolint: object_len
                                                 distributions = Distributions$Normal) {
   validateIsOfType(population, "Population")
   validateIsString(parameterPaths)
-  validateIsNumeric(meanValues, sdValues)
+  validateIsNumeric(c(meanValues, sdValues))
   distributions <- distributions %||% rep(Distributions$Normal, length(parameterPaths))
   validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
 
