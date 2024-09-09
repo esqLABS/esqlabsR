@@ -147,6 +147,8 @@ test_that("extendPopulationFromXLS throws an error if the sheet has wrong struct
     new = "PopulationParameters",
     fileext = ".xlsx",
     code = {
+      population <- ospsuite::loadPopulation(system.file("extdata", "SimResults_pop.csv", package = "ospsuite"))
+
       .writeExcel(
         path = PopulationParameters,
         data = list("UserDefinedVariability" = data.frame(
@@ -159,12 +161,31 @@ test_that("extendPopulationFromXLS throws an error if the sheet has wrong struct
         ))
       )
 
-      population <- ospsuite::loadPopulation(system.file("extdata", "SimResults_pop.csv", package = "ospsuite"))
 
       expect_error(
         extendPopulationFromXLS(population,
           PopulationParameters,
           sheet = "UserDefinedVariability"
+        ),
+        regexp = "has wrong structure"
+      )
+
+      .writeExcel(
+        path = PopulationParameters,
+        data = list("UserDefinedVariability" = data.frame(
+          "Container.Path" = character(), # column name is wrong
+          `Parameter Name` = character(),
+          "Mean" = numeric(),
+          "SD" = numeric(),
+          "Distribution" = character(),
+          check.names = F
+        ))
+      )
+
+      expect_error(
+        extendPopulationFromXLS(population,
+                                PopulationParameters,
+                                sheet = "UserDefinedVariability"
         ),
         regexp = "has wrong structure"
       )
