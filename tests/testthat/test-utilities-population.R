@@ -32,22 +32,22 @@ test_that("`sampleRandomValue()` generates needed distribution", {
 test_that("It creates population characteristics with ontogenies from excel", {
   excelPath <- system.file("extdata", "examples", "TestProject", "Parameters", "PopulationParameters.xlsx", package = "esqlabsR")
 
-  populationCharachterstics <- readPopulationCharacteristicsFromXLS(
+  populationCharacteristics <- readPopulationCharacteristicsFromXLS(
     XLSpath = excelPath,
     populationName = "TestPopulation"
   )
 
   expect_equal(
     c(
-      populationCharachterstics$species,
-      populationCharachterstics$population,
-      populationCharachterstics$numberOfIndividuals,
-      populationCharachterstics$proportionOfFemales,
-      populationCharachterstics$age$min,
-      populationCharachterstics$age$max,
+      populationCharacteristics$species,
+      populationCharacteristics$population,
+      populationCharacteristics$numberOfIndividuals,
+      populationCharacteristics$proportionOfFemales,
+      populationCharacteristics$age$min,
+      populationCharacteristics$age$max,
       c(
-        populationCharachterstics$allMoleculeOntogenies[[1]]$molecule,
-        populationCharachterstics$allMoleculeOntogenies[[2]]$molecule
+        populationCharacteristics$allMoleculeOntogenies[[1]]$molecule,
+        populationCharacteristics$allMoleculeOntogenies[[2]]$molecule
       )
     ),
     c(
@@ -88,5 +88,156 @@ test_that("It creates population characteristics without ontogenies from excel",
       41,
       NULL
     )
+  )
+})
+
+test_that("extendPopulationByUserDefinedParams works", {
+  set.seed(42)
+
+  population <- ospsuite::loadPopulation(system.file("extdata", "SimResults_pop.csv", package = "ospsuite"))
+
+  esqlabsR::extendPopulationByUserDefinedParams(
+    population = population,
+    parameterPaths = c("Organism|Kidney|GFR"),
+    meanValues = 0.12,
+    sdValues = 0.001,
+    distributions = "Normal"
+  )
+
+  expect_snapshot(
+    population$getParameterValuesForIndividual(4)
+  )
+})
+
+test_that("extendPopulationFromXLS works", {
+  withr::with_tempfile(
+    new = "PopulationParameters",
+    fileext = ".xlsx",
+    code = {
+      .writeExcel(
+        path = PopulationParameters,
+        data = list("UserDefinedVariability" = data.frame(
+          `Container Path` = "Organism|Kidney",
+          `Parameter Name` = "GFR",
+          "Mean" = 0.12,
+          "SD" = 0.001,
+          "Distribution" = "Normal",
+          check.names = F
+        ))
+      )
+
+      population <- ospsuite::loadPopulation(system.file("extdata", "SimResults_pop.csv", package = "ospsuite"))
+
+      set.seed(42)
+
+      extendPopulationFromXLS(population,
+        PopulationParameters,
+        sheet = "UserDefinedVariability"
+      )
+
+      expect_snapshot(
+        population$getParameterValuesForIndividual(4)
+      )
+    }
+  )
+})
+
+test_that("extendPopulationFromXLS throws an error if the sheet has wrong structure", {
+  withr::with_tempfile(
+    new = "PopulationParameters",
+    fileext = ".xlsx",
+    code = {
+      population <- ospsuite::loadPopulation(system.file("extdata", "SimResults_pop.csv", package = "ospsuite"))
+
+      .writeExcel(
+        path = PopulationParameters,
+        data = list("UserDefinedVariability" = data.frame(
+          `Container Path` = character(),
+          `Parameter Name` = character(),
+          "Mean" = numeric(),
+          "SD" = numeric(),
+          # "Distribution" = character(),  # Distribution column is missing
+          check.names = F
+        ))
+      )
+
+
+      expect_error(
+        extendPopulationFromXLS(population,
+          PopulationParameters,
+          sheet = "UserDefinedVariability"
+        ),
+        regexp = "has wrong structure"
+      )
+
+      .writeExcel(
+        path = PopulationParameters,
+        data = list("UserDefinedVariability" = data.frame(
+          "Container.Path" = character(), # column name is wrong
+          `Parameter Name` = character(),
+          "Mean" = numeric(),
+          "SD" = numeric(),
+          "Distribution" = character(),
+          check.names = F
+        ))
+      )
+
+      expect_error(
+        extendPopulationFromXLS(population,
+                                PopulationParameters,
+                                sheet = "UserDefinedVariability"
+        ),
+        regexp = "has wrong structure"
+      )
+    }
+  )
+})
+
+test_that("extendPopulationFromXLS throws an error if specified sheet is empty or data is missing", {
+  withr::with_tempfile(
+    new = "PopulationParameters",
+    fileext = ".xlsx",
+    code = {
+      .writeExcel(
+        path = PopulationParameters,
+        data = list("UserDefinedVariability" = data.frame(
+          `Container Path` = character(),
+          `Parameter Name` = character(),
+          "Mean" = numeric(),
+          "SD" = numeric(),
+          "Distribution" = character(), # Distribution column is missing
+          check.names = F
+        ))
+      )
+
+      population <- ospsuite::loadPopulation(system.file("extdata", "SimResults_pop.csv", package = "ospsuite"))
+
+      expect_error(
+        extendPopulationFromXLS(population,
+          PopulationParameters,
+          sheet = "UserDefinedVariability"
+        ),
+        regexp = "does not contain any rows with data"
+      )
+
+      .writeExcel(
+        path = PopulationParameters,
+        data = list("UserDefinedVariability" = data.frame(
+          `Container Path` = "Organism|Kidney",
+          `Parameter Name` = "GFR",
+          "Mean" = 0.12,
+          "SD" = 0.001,
+          "Distribution" = NA,
+          check.names = F
+        ))
+      )
+
+      expect_snapshot(error = TRUE,
+          extendPopulationFromXLS(population,
+            PopulationParameters,
+            sheet = "UserDefinedVariability"
+          )
+      )
+    }
   )
 })

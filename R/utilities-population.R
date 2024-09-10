@@ -93,7 +93,7 @@ extendPopulationByUserDefinedParams <- function(population, # nolint: object_len
                                                 distributions = Distributions$Normal) {
   validateIsOfType(population, "Population")
   validateIsString(parameterPaths)
-  validateIsNumeric(meanValues, sdValues)
+  validateIsNumeric(c(meanValues, sdValues))
   distributions <- distributions %||% rep(Distributions$Normal, length(parameterPaths))
   validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
 
@@ -121,8 +121,8 @@ extendPopulationByUserDefinedParams <- function(population, # nolint: object_len
 #'
 #' @param population Object of type `Population`
 #' @param XLSpath Path to the excel file that stores the information of
-#'   parameters. The file must have the columns "Container.Path",
-#'   "Parameter.Name", "Mean", "SD", "Units", and "Distribution". Mean and SD
+#'   parameters. The file must have the columns "Container Path",
+#'   "Parameter Name", "Mean", "SD", "Units", and "Distribution". Mean and SD
 #'   values must be in the base units of the parameters.
 #' @param sheet Name or the index of the sheet in the excel file.
 #' If `NULL`, the first sheet in the file is used.
@@ -145,28 +145,45 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
     "SD", "Distribution"
   )
 
-  data <- readExcel(path = XLSpath, sheet = sheet)
+  columnTypes <- c("text", "text", "numeric", "numeric", "text")
+
+  tryCatch({
+    data <- readExcel(path = XLSpath, sheet = sheet, col_types = columnTypes)
+  }, error = function(e) {
+    cli::cli_abort(message = messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames), call = rlang::caller_env(4))
+  })
+
   if (!all(columnNames %in% names(data))) {
-    stop(messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
+    cli::cli_abort(message = messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
   }
 
-  paramPaths <- c(dim(data)[[1]])
-  meanVals <- c(dim(data)[[1]])
-  sdVals <- c(dim(data)[[1]])
-  distributions <- c(dim(data)[[1]])
-
-  for (i in seq_along(data$Container.Path)) {
-    paramPath <- paste(data[["Container.Path"]][[i]], data[["Parameter.Name"]][[i]], sep = "|")
-    paramPaths[[i]] <- paramPath
-    meanVals[[i]] <- as.numeric(data[["Mean"]][[i]])
-    sdVals[[i]] <- as.numeric(data[["SD"]][[i]])
-    distributions[[i]] <- data[["Distribution"]][[i]]
+  if(nrow(data) == 0){
+    cli::cli_abort(message = c("x" = "The specified excel sheet does not contain any rows with data.",
+                               "*" = "Please check the excel sheet name and content and try again."))
   }
+
+  complete_data <-
+    data %>%
+    dplyr::filter(!dplyr::if_any(dplyr::everything(), ~is.na(.)))
+
+
+  if(nrow(complete_data) < nrow(data)){
+    cli::cli_warn(message = c("x" = "The specified excel sheet contains uncomplete row(s)",
+                               "i" = "Using only complete rows to define population parameters"))
+  }
+
+  if(nrow(complete_data) == 0){
+    cli::cli_abort(message = c("x" = "The specified excel sheet does not contain any complete row",
+                               "*" = "Please fill all the columns and try again."))
+  }
+
 
   extendPopulationByUserDefinedParams(
-    population = population, parameterPaths = paramPaths,
-    meanValues = meanVals, sdValues = sdVals,
-    distributions = distributions
+    population = population,
+    parameterPaths = paste(complete_data$`Container Path`, complete_data$`Parameter Name`),
+    meanValues = complete_data$Mean,
+    sdValues = complete_data$SD,
+    distributions = complete_data$Distribution
   )
 }
 
