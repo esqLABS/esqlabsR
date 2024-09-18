@@ -72,19 +72,19 @@ Scenario <- R6::R6Class(
         cli_end(outputPaths)
         cli_li("Configurations:")
         configurations <- cli_ul()
-        cli_li("Model: {self$configuration$model}")
+        cli_li("Model: {private$.configuration$model}")
         cli_li("Model Parameters:")
         model_parameters <- cli_ul()
-        purrr::map(self$configuration$modelParameters, ~ cli_li(.x))
+        purrr::map(private$.configuration$modelParameters, ~ cli_li(.x))
         cli_end(model_parameters)
         if (self$type == "population") {
-          cli_li("Population: {self$configuration$population}")
+          cli_li("Population: {private$.configuration$population}")
         } else {
-          cli_li("Individual: {self$configuration$individual}")
+          cli_li("Individual: {private$.configuration$individual}")
         }
         cli_li("Applications:")
         applications_parameters <- cli_ul()
-        purrr::map(self$configuration$applications, ~ cli_li(.x))
+        purrr::map(private$.configuration$applications, ~ cli_li(.x))
         cli_end(applications_parameters)
         cli_end(configurations)
       }
@@ -132,110 +132,136 @@ Scenario <- R6::R6Class(
     }
   ),
   active = list(
-    #' @field configuration Retrieve all the  parameters corresponding the the
-    #' scenario configuration.
-    configuration = function(value) {
-      if (!missing(value)) {
-        stop("Configuration cannot be set, modify scenario configuration by accessing project$configurations$scenarios")
-      }
-
-      return(private$.configuration)
-    },
     #' @field model path of the scenario's pkml model file.
-    model = function() {
+    model = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+      }
       if (is.null(private$.model)) {
         private$.model <- file.path(
           private$.project$projectConfiguration$modelFolder,
-          self$configuration$model
+          private$.configuration$model
         )
       }
       return(private$.model)
     },
     #' @field simulation Loaded simulation for the scenario.
-    simulation = function() {
+    simulation = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+      }
+
       if (is.null(private$.simulation)) {
         private$.simulation <- ospsuite::loadSimulation(self$model)
       }
       return(private$.simulation)
     },
     #' @field outputPaths Output paths for the scenario.
-    outputPaths = function() {
-      if (is.null(private$.outputPaths) & !all(is.na(self$configuration$outputPaths))) {
+    outputPaths = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+      }
+
+      if (is.null(private$.outputPaths) & !all(is.na(private$.configuration$outputPaths))) {
         private$.outputPaths <- list()
-        for (outputPath in self$configuration$outputPaths) {
+        for (outputPath in private$.configuration$outputPaths) {
           private$.outputPaths[[outputPath]] <- private$.project$configurations$outputPaths[[outputPath]]
         }
       }
       return(private$.outputPaths)
     },
     #' @field modelParameters Model parameters to apply to the scenario.
-    modelParameters = function() {
-      if (is.null(private$.modelParameters) & !all(is.na(self$configuration$modelParameters))) {
+    modelParameters = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+      }
+
+      if (is.null(private$.modelParameters) & !all(is.na(private$.configuration$modelParameters))) {
         private$.modelParameters <- list()
 
-        for (modelParameter in self$configuration$modelParameters) {
+        for (modelParameter in private$.configuration$modelParameters) {
           private$.modelParameters[[modelParameter]] <- private$.project$configurations$modelParameters[[modelParameter]]
         }
       }
       return(private$.modelParameters)
     },
     #' @field individual Individual parameters to apply to the scenario.
-    individual = function() {
-      if (is.null(private$.individual) & !all(is.na(self$configuration$individual))) {
-        private$.individual <- private$.project$configurations$individuals[[self$configuration$individual]]
+    individual = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+      }
+
+      if (is.null(private$.individual) & !all(is.na(private$.configuration$individual))) {
+        private$.individual <- private$.project$configurations$individuals[[private$.configuration$individual]]
       }
       return(private$.individual)
     },
     #' @field population Population parameters to apply to the scenario.
-    population = function() {
-      if (is.null(private$.population) & !is.na(self$configuration$population)) {
+    population = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+      }
+
+      if (is.null(private$.population) & !is.na(private$.configuration$population)) {
         if (self$readPopulationFromCSV) {
-          private$.population <- private$.project$configurations$populations$fromCSV[[self$configuration$population]]
+          private$.population <- private$.project$configurations$populations$fromCSV[[private$.configuration$population]]
         } else {
-          private$.population <- private$.project$configurations$populations$fromConfiguration[[self$configuration$population]]
+          private$.population <- private$.project$configurations$populations$fromConfiguration[[private$.configuration$population]]
         }
       }
       return(private$.population)
     },
     #' @field applications Applications parameters to apply to the scenario.
-    applications = function() {
-      if (is.null(private$.applications) & !all(is.na(self$configuration$applications))) {
+    applications = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+      }
+
+      if (is.null(private$.applications) & !all(is.na(private$.configuration$applications))) {
         private$.applications <- list()
-        for (application in self$configuration$applications) {
+        for (application in private$.configuration$applications) {
           private$.applications[[application]] <- private$.project$configurations$applications[[application]]
         }
       }
       return(private$.applications)
     },
     #' @field simulationTime SimulationTime to run the scenario
-    simulationTime = function() {
-      if (is.null(private$.simulationTime) & !all(is.na(self$configuration$simulationTime))) {
+    simulationTime = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+      }
+
+      if (is.null(private$.simulationTime) & !all(is.na(private$.configuration$simulationTime))) {
         private$.simulationTime <- purrr::map(
-          self$configuration$simulationTime,
+          private$.configuration$simulationTime,
           ~ SimulationTime$new(
             simulationTime = .x,
-            simulationTimeUnit = self$configuration$simulationTimeUnit
+            simulationTimeUnit = private$.configuration$simulationTimeUnit
           )
         )
       }
       return(private$.simulationTime)
     },
     #' @field steadyStateTime SteadyStateTime to run the scenario
-    steadyStateTime = function() {
-      if (is.null(private$.steadyStateTime) & isTRUE(self$configuration$steadyState)) {
+    steadyStateTime = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+      }
+
+      if (is.null(private$.steadyStateTime) & isTRUE(private$.configuration$steadyState)) {
         steadyStateTime <-
           private$.steadyStateTime <- SteadyStateTime$new(
             steadyStateTime =
-              if (is.na(self$configuration$steadyStateTime)) {
+              if (is.na(private$.configuration$steadyStateTime)) {
                 NULL
               } else {
-                self$configuration$steadyStateTime
+                private$.configuration$steadyStateTime
               },
             steadyStateTimeUnit =
-              if (is.na(self$configuration$steadyStateTimeUnit)) {
+              if (is.na(private$.configuration$steadyStateTimeUnit)) {
                 NULL
               } else {
-                self$configuration$steadyStateTimeUnit
+                private$.configuration$steadyStateTimeUnit
               }
           )
       }

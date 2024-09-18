@@ -53,16 +53,16 @@ Project <-
       #' project$selectScenarios(c("TestScenario", "TestScenario2"))
       selectScenarios = function(scenarios = NULL) {
         if (is.null(scenarios)) {
-          for (scenario in self$scenarios) {
-            scenarios$status <- "active"
+          for (scenario in names(self$scenarios)) {
+            private$.scenarios[[scenario]]$status <- "active"
           }
         } else {
           rlang::arg_match(arg = scenarios, values = private$.availableScenarios, multiple = TRUE)
           for (scenario in names(self$scenarios)) {
             if (scenario %in% scenarios) {
-              self$scenarios[[scenario]]$status <- "active"
+              private$.scenarios[[scenario]]$status <- "active"
             } else {
-              self$scenarios[[scenario]]$status <- "inactive"
+              private$.scenarios[[scenario]]$status <- "inactive"
             }
           }
         }
@@ -171,8 +171,9 @@ Project <-
         }
 
         if (!missing(value)) {
-          private$.scenarios <- modifyList(private$.scenarios, value)
+          cli::cli_abort("Scenarios cannot be modified directly. Please configure in project$configurations$scenarios")
         }
+
         invisible(private$.scenarios)
       },
       #' @field simulationResults Simulation results from the run simulations.
