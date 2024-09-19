@@ -171,7 +171,7 @@ Project <-
         }
 
         if (!missing(value)) {
-          cli::cli_abort("Scenarios cannot be modified directly. Please configure in project$configurations$scenarios")
+          cli::cli_abort(messages$LockedScenarios())
         }
 
         invisible(private$.scenarios)

@@ -135,7 +135,7 @@ Scenario <- R6::R6Class(
     #' @field model path of the scenario's pkml model file.
     model = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+        cli::cli_abort(messages$LockedScenarios(self$id))
       }
       if (is.null(private$.model)) {
         private$.model <- file.path(
@@ -148,7 +148,7 @@ Scenario <- R6::R6Class(
     #' @field simulation Loaded simulation for the scenario.
     simulation = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+        cli::cli_abort(messages$LockedScenarios(self$id))
       }
 
       if (is.null(private$.simulation)) {
@@ -159,7 +159,7 @@ Scenario <- R6::R6Class(
     #' @field outputPaths Output paths for the scenario.
     outputPaths = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+        cli::cli_abort(messages$LockedScenarios(self$id))
       }
 
       if (is.null(private$.outputPaths) & !all(is.na(private$.configuration$outputPaths))) {
@@ -173,7 +173,7 @@ Scenario <- R6::R6Class(
     #' @field modelParameters Model parameters to apply to the scenario.
     modelParameters = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+        cli::cli_abort(messages$LockedScenarios(self$id))
       }
 
       if (is.null(private$.modelParameters) & !all(is.na(private$.configuration$modelParameters))) {
@@ -188,7 +188,7 @@ Scenario <- R6::R6Class(
     #' @field individual Individual parameters to apply to the scenario.
     individual = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+        cli::cli_abort(messages$LockedScenarios(self$id))
       }
 
       if (is.null(private$.individual) & !all(is.na(private$.configuration$individual))) {
@@ -199,7 +199,7 @@ Scenario <- R6::R6Class(
     #' @field population Population parameters to apply to the scenario.
     population = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+        cli::cli_abort(messages$LockedScenarios(self$id))
       }
 
       if (is.null(private$.population) & !is.na(private$.configuration$population)) {
@@ -214,7 +214,7 @@ Scenario <- R6::R6Class(
     #' @field applications Applications parameters to apply to the scenario.
     applications = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+        cli::cli_abort(messages$LockedScenarios(self$id))
       }
 
       if (is.null(private$.applications) & !all(is.na(private$.configuration$applications))) {
@@ -228,7 +228,7 @@ Scenario <- R6::R6Class(
     #' @field simulationTime SimulationTime to run the scenario
     simulationTime = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+        cli::cli_abort(messages$LockedScenarios(self$id))
       }
 
       if (is.null(private$.simulationTime) & !all(is.na(private$.configuration$simulationTime))) {
@@ -245,7 +245,7 @@ Scenario <- R6::R6Class(
     #' @field steadyStateTime SteadyStateTime to run the scenario
     steadyStateTime = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${self$id}")
+        cli::cli_abort(messages$LockedScenarios(self$id))
       }
 
       if (is.null(private$.steadyStateTime) & isTRUE(private$.configuration$steadyState)) {
