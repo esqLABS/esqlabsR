@@ -70,7 +70,7 @@ sensitivityCalculation <- function(simulation,
   # Validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
-  .validateCharVectors(pkParameters)
+  .validateCharVectors(pkParameters, nullAllowed = TRUE)
 
   # Check for non-standard PK parameters
   .validatePKParameters(pkParameters)
