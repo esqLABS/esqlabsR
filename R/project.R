@@ -52,57 +52,6 @@ WarningManager <- R6::R6Class(
 )
 
 
-
-ScenarioValidator <- R6::R6Class(
-  "ScenarioValidator",
-
-  public = list(
-    configurations = NULL,
-    warning_manager = NULL,
-
-    #' @description Initialize the validator with project configurations and a WarningManager.
-    #' @param configurations A list of configurations to be validated.
-    #' @param warning_manager An instance of WarningManager.
-    initialize = function(configurations, warning_manager) {
-      self$configurations <- configurations
-      self$warning_manager <- warning_manager
-    },
-
-    #' @description Validate a specific scenario's individual.
-    #' This method will check if the individual referenced in a scenario exists.
-    #' @param scenario_name The name of the scenario to validate.
-    validate_scenario = function(scenario_name) {
-      scenarios <- self$configurations$scenarios
-      individuals <- self$configurations$individuals |> names()
-      individual <- scenarios[[scenario_name]]$individual
-
-      # Check if individual exists in the individuals file
-      if (!(individual %in% individuals)) {
-        self$warning_manager$add_warning(
-          scenario_name,
-          "INDIVIDUAL_NOT_FOUND",
-          paste0("The individual '", individual, "' does not exist in the individuals configuration for scenario '", scenario_name, "'")
-        )
-      } else {
-        # Remove warning if individual is now valid
-        self$warning_manager$remove_warning(scenario_name, "INDIVIDUAL_NOT_FOUND")
-      }
-    },
-
-    validate_scenarios = function() {
-      scenario_names <- names(self$configurations$scenarios)
-      purrr::walk(scenario_names, ~ self$validate_scenario(.x))
-    },
-    #' @description Retrieve all warnings.
-    #' @return A list of warnings.
-    get_warnings = function() {
-      return(self$warning_manager$get_warnings())
-    }
-  )
-)
-
-
-
 #' @title Project Object
 #'
 #' @description
@@ -256,33 +205,10 @@ Project <-
       },
       #' @description Validate the project configuration.
       #' This method will check if all references in scenarios are valid and print warnings if any.
-      validate = function() {
-        validator <- ScenarioValidator$new(self$configurations, private$.warningManager)  # Use private$.warningManager
-        validator$validate_scenarios()
+      status = function() {
+
+        purrr::walk(self$configurations$scenarios, ~ .x$validate())
         warnings <- private$.warningManager$get_warnings()
-
-
-        if (length(warnings) > 0) {
-          cli::cli_alert_info("Warnings:")
-          cli::cli_ul()
-          for (scenario_name in names(warnings)) {
-            for (code in names(warnings[[scenario_name]])) {
-              cli::cli_alert_warning(paste0("Scenario: ", scenario_name, " - ", warnings[[scenario_name]][[code]]))
-            }
-          }
-          cli::cli_end()
-        } else {
-          cli::cli_alert_success("No warnings found.")
-        }
-      },
-
-      #' @description Validate a specific scenario.
-      #' This method will check if a specific scenario has valid individuals.
-      #' @param scenario_name The name of the scenario to validate.
-      validate_scenario = function(scenario_name) {
-        validator <- ScenarioValidator$new(self$configurations, WarningManager$new())
-        validator$validate_scenario(scenario_name)
-        warnings <- validator$get_warnings()
 
         if (length(warnings) > 0) {
           cli::cli_alert_info("Warnings:")
@@ -315,6 +241,9 @@ Project <-
         if (!missing(value)) {
           private$.configurations <- value
           private$.newConfigurations <- TRUE
+
+          # Trigger validation after configurations are altered
+          self$status()
         }
 
         return(private$.configurations)
