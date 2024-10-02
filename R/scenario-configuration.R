@@ -30,14 +30,13 @@ ScenarioConfiguration <-
 
         # Validate individual
         individuals <- private$.project$configurations$individuals |> names()
-        if (!is.na(self$individual) && !(self$individual %in% individuals)) {
+        if (!all(is.na(self$individual)) && !all(self$individual %in% individuals)) {
           private$.project$get_warning_manager()$add_warning(
             self$id,
             "INDIVIDUAL_NOT_FOUND",
             paste0("The individual '", self$individual, "' does not exist in the individuals configuration.")
           )
         } else {
-          # Remove warning if individual is valid
           private$.project$get_warning_manager()$remove_warning(self$id, "INDIVIDUAL_NOT_FOUND")
         }
 
@@ -71,15 +70,26 @@ ScenarioConfiguration <-
 
         # Validate model
         models <- private$.project$configurations$models
-        if (!is.na(self$model) && !(self$model %in% models)) {
+        if (!all(is.na(self$model)) && !all(self$model %in% models)) {
           private$.project$get_warning_manager()$add_warning(
             self$id,
             "MODEL_NOT_FOUND",
             paste0("The model '", self$model, "' does not exist in the models configuration.")
           )
         } else {
-          # Remove warning if individual is valid
           private$.project$get_warning_manager()$remove_warning(self$id, "MODEL_NOT_FOUND")
+        }
+
+        # Validate output path
+        outputPaths <- private$.project$configurations$outputPaths |> names()
+        if (!all(is.na(self$outputPaths)) && !all(self$outputPaths %in% outputPaths)) {
+          private$.project$get_warning_manager()$add_warning(
+            self$id,
+            "OUTPUTPATH_NOT_FOUND",
+            paste0("The output path '", self$outputPaths, "' does not exist in the output folders configuration.")
+          )
+        } else {
+          private$.project$get_warning_manager()$remove_warning(self$id, "OUTPUTPATH_NOT_FOUND")
         }
 
 

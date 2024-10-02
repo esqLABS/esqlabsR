@@ -205,7 +205,7 @@ Project <-
       },
       #' @description Validate the project configuration.
       #' This method will check if all references in scenarios are valid and print warnings if any.
-      status = function() {
+      status = function(explicit = TRUE) {
 
         purrr::walk(self$configurations$scenarios, ~ .x$validate())
         warnings <- private$.warningManager$get_warnings()
@@ -220,7 +220,9 @@ Project <-
           }
           cli::cli_end()
         } else {
-          cli::cli_alert_success("No warnings found.")
+          if (explicit) {
+            cli::cli_alert_success("No warnings found.")
+          }
         }
       },
 
@@ -243,7 +245,7 @@ Project <-
           private$.newConfigurations <- TRUE
 
           # Trigger validation after configurations are altered
-          self$status()
+          self$status(explicit = FALSE)
         }
 
         return(private$.configurations)
@@ -256,17 +258,7 @@ Project <-
         }
 
         if (!missing(value)) {
-          updated_scenarios <- names(value)
-
-          # Update scenarios
           private$.scenarios <- modifyList(private$.scenarios, value)
-
-          purrr::walk(updated_scenarios, ~ {
-            self$validate_scenario(.x)
-            # Add a message indicating the validation process
-            cli::cli_alert_info(paste("Validated scenario:", .x))
-          })
-
         }
         invisible(private$.scenarios)
       },
