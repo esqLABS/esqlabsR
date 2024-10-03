@@ -176,7 +176,6 @@ Project <-
         return(private$.warningManager)  # Return the WarningManager instance
       }
 
-
     ),
     active = list(
       #' @field configurations Configurations as defined in the Configurations
