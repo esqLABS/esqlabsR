@@ -64,7 +64,22 @@ Configuration <- R6::R6Class(
       }
 
       invisible(self)
+    },
+    #' @description Converts all configurations to a deeply nested list, excluding specified fields like pointers.
+    #' @return A list containing all configurations with full details, excluding specified fields.
+    toList = function() {
+      # Convert each top-level configuration component to a list
+      list(
+        scenarios = toListRecursive(self$scenarios),
+        models = toListRecursive(self$models),
+        modelParameters = toListRecursive(self$modelParameters),
+        individuals = toListRecursive(self$individuals),
+        populations = toListRecursive(self$populations),
+        applications = toListRecursive(self$applications),
+        outputPaths = self$outputPaths
+      )
     }
+
   ),
   active = list(
     #' @field scenarios all the scenario configurations defined in the project

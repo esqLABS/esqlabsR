@@ -172,6 +172,41 @@ Project <-
         }
       },
 
+      #' @description Export the entire project to a JSON file
+      #' @param filePath The file path where the JSON will be saved
+      #' @return NULL
+      exportToJSON = function() {
+
+        # Prompt for the directory path
+        dirPath <- readline(prompt = "Please enter the directory path where to save the file: ")
+
+        # Validate directory path
+        if (!dir.exists(dirPath)) {
+          cli::cli_alert_danger("Invalid directory path. Export aborted.")
+          return(invisible(NULL))
+        }
+
+        # Prompt for the file name
+        fileName <- readline(prompt = "Please enter the file name (without extension): ")
+
+        # Construct the full file path by combining the directory path and file name
+        filePath <- file.path(dirPath, paste0(fileName, ".json"))
+
+        # Convert the project configuration and scenarios to a list format
+        projectData <- list(
+          projectConfiguration = self$projectConfiguration$toList(),
+          configurations = self$configurations$toList(),
+          scenarios = purrr::map(self$scenarios, ~ .x$toList()),  # Convert each scenario to a list
+          simulationResults = private$.simulationResults  # Add simulation results
+        )
+
+        # Use jsonlite to serialize the list to JSON and save it to a file
+        jsonlite::write_json(projectData, path = filePath, pretty = TRUE, auto_unbox = TRUE)
+
+        cli::cli_alert_success(paste("Project successfully exported to", filePath))
+        invisible(NULL)
+      },
+
       get_warning_manager = function() {
         return(private$.warningManager)  # Return the WarningManager instance
       }
