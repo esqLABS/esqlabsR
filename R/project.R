@@ -17,10 +17,22 @@ Project <-
       #'
       #' @param projectConfiguration A ProjectConfiguration object created by
       #' `createProjectConfiguration()`
-      initialize = function(projectConfiguration) {
-        self$projectConfiguration <- projectConfiguration
-        private$.availableScenarios <- private$.getAvailableScenarios()
-        private$.initializeScenarios()
+      initialize = function(projectConfiguration, importJSON = FALSE) {
+
+        if (importJSON) {
+          # If jsonFilePath is provided, import the project from JSON
+          importedProject <- private$.importFromJSON(projectConfiguration)
+          self$projectConfiguration <- importedProject$projectConfiguration
+          private$.availableScenarios <- importedProject$availableScenarios
+          private$.scenarios <- importedProject$scenarios
+          private$.simulationResults <- importedProject$simulationResults
+        } else {
+          # Standard initialization process
+          self$projectConfiguration <- projectConfiguration
+          private$.availableScenarios <- private$.getAvailableScenarios()
+          private$.initializeScenarios()
+        }
+
         private$.warningManager <- WarningManager$new()  # Initialize WarningManager
 
       },
@@ -273,6 +285,26 @@ Project <-
       },
       .initializeConfigurations = function() {
         private$.configurations <- Configuration$new(self)
+      },
+      #' @description Import the project from a JSON file (private method)
+      #' @param filePath The file path where the JSON is located
+      #' @return A new `Project` object based on the data in the JSON file
+      .importFromJSON = function(filePath) {
+        # Check if file exists
+        if (!file.exists(filePath)) {
+          cli::cli_alert_danger("File does not exist.")
+          return(invisible(NULL))
+        }
+
+        # Read JSON data
+        projectData <- jsonlite::read_json(filePath)
+        # Recreate the ProjectConfiguration object from the JSON data
+        projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = projectData$projectConfiguration$`Project Configuration`)
+        # Create a new Project object
+        project <- Project$new(projectConfiguration = projectConfiguration)
+
+        cli::cli_alert_success("Project successfully imported from {filePath}")
+        return(project)
       },
       .initializeScenarios = function() {
         if (is.null(private$.scenarios)) {
