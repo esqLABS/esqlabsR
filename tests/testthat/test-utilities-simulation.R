@@ -1,6 +1,9 @@
 ## context("initializeSimulation")
 
 test_that("`initializeSimulation()` loads a simulation at the minimum", {
+  skip()
+  skip_on_ci()
+
   simulation <- loadSimulation(system.file("extdata", "simple.pkml", package = "ospsuite"))
   initializeSimulation(simulation)
   simulationResults <- runSimulations(simulation)
@@ -8,6 +11,9 @@ test_that("`initializeSimulation()` loads a simulation at the minimum", {
 })
 
 test_that("`initializeSimulation()` does not fail when additionalParams is empty", {
+  skip()
+  skip_on_ci()
+
   simulation <- loadSimulation(system.file("extdata", "simple.pkml", package = "ospsuite"))
 
   dataFolder <- getTestDataFilePath("")

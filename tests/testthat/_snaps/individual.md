@@ -2,48 +2,19 @@
 
     Code
       project$configurations$individuals$Indiv1
-    Output
-      $id
-      [1] "Indiv1"
-      
-      $specy
-      [1] "Human"
-      
-      $population
-      [1] "European_ICRP_2002"
-      
-      $gender
-      [1] "MALE"
-      
-      $weight
-      [1] 73
-      
-      $height
-      [1] 176
-      
-      $age
-      [1] 30
-      
-      $protein
-      [1] NA
-      
-      $ontogeny
-      [1] NA
-      
-      $GFR
-      $containerPath
-      [1] "Organism|Kidney"
-      
-      $parameterName
-      [1] "GFR"
-      
-      $value
-      [1] 90
-      
-      $units
-      [1] "ml/min"
-      
-      
+    Message
+      * Individual ID: Indiv1
+        * Characteristics:
+          * Specy: Human
+          * Population: European_ICRP_2002
+          * Gender: MALE
+          * Weight: 73
+          * Height: 176
+          * Age: 30
+          * Protein: NA
+          * Ontogeny: NA
+        * Parameters:
+          * GFR
 
 # Individual can be exported as dataFrame
 

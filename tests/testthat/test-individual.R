@@ -26,21 +26,23 @@ test_that("Individual can be exported as dataFrame", {
 test_that("Individual object can be created", {
   project <- testProject()
 
-  expect_no_condition(project$configurations$individuals$Indiv1$individualObject)
+  expect_silent(
+    (project$configurations$individuals$Indiv1$individualObject)
+  )
 })
 
 
 test_that("Individual object is recreated if individual configuration is changed", {
   project <- testProject()
 
-  original_seed <- project$configurations$individuals$Indiv1$individualObject$seed
+  original_seed <- project$configurations$individuals$Indiv1$individualObject$characteristics$seed
 
   project$configurations$individuals$Indiv1$characteristics$age <- 35
-  new_seed <- project$configurations$individuals$Indiv1$individualObject$seed
+  new_seed <- project$configurations$individuals$Indiv1$individualObject$characteristics$seed
   expect_true(original_seed != new_seed)
 
   project$configurations$individuals$Indiv1$parameters$GFR$value <- 80
-  new_seed2 <- project$configurations$individuals$Indiv1$individualObject$seed
+  new_seed2 <- project$configurations$individuals$Indiv1$individualObject$characteristics$seed
   expect_true(new_seed != new_seed2)
 
 })

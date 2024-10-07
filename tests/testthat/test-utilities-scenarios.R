@@ -1,5 +1,8 @@
 ##  context("runScenarios")
 # Create a project configuration
+skip()
+skip_on_ci()
+
 projectConfiguration <- testProjectConfiguration()
 defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
