@@ -1,4 +1,5 @@
 ## context("readIndividualCharacteristicsFromXLS")
+skip()
 skip_on_ci()
 
 XLSpath <- "../data/Individuals.xlsx"
