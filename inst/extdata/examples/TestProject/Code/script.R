@@ -1,7 +1,3 @@
-pkSimPath <- "PKSim"
-# For local testing, if required
-
-initPKSim(pkSimPath)
 sourceAll(file.path(getwd(), "utils"))
 sourceAll(file.path(getwd(), "InputCode"))
 sourceAll(file.path(getwd(), "Scenarios"))
