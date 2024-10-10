@@ -30,7 +30,7 @@ library(showtext)
 showtext::showtext_opts(dpi = 300)
 
 my_project_configuration <-
-  createDefaultProjectConfiguration(path = test_ProjectConfiguration())
+  createProjectConfiguration(path = test_ProjectConfiguration())
 ```
 
 ```{css, echo = FALSE}
@@ -244,7 +244,7 @@ I Initialize Project
 <br>
 
 :::{.center}
-`createDefaultProjectConfiguration(path)`
+`createProjectConfiguration(path)`
 :::
 
 - targets `ProjectConfiguration.xlsx` file,
@@ -255,7 +255,7 @@ I Initialize Project
 
 ```{r, eval = FALSE}
 my_project_configuration <-
-  createDefaultProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
+  createProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
 ```
 
 ::: footer

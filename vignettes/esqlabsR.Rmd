@@ -61,35 +61,21 @@ Loading the project configuration is the first step in any workflow using
 `{esqlabsR}`.
 
 ```{r, eval=FALSE}
-my_project_configuration <- createDefaultProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
+my_project_configuration <- createProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
 ```
 
 ```         
 ProjectConfiguration: 
-Relative path from working directory: C:/[path]/TestProject
-Project Configuration File: Code/ProjectConfiguration.xlsx 
-Model folder: Models/Simulations 
-Parameters folder: Parameters 
-Parameters file name: Parameters/ModelParameters.xlsx 
-Individual parameters file name: Parameters/Individuals.xlsx 
-Population parameters file name: Parameters/PopulationParameters.xlsx
-Scenario definitions file name: Parameters/Scenarios.xlsx
+   ...
+   Model folder: Models/Simulations 
+   Configurations folder: Configurations 
+   Model Parameters: Configurations/ModelParameters.xlsx 
+   Individuals: Configurations/Individuals.xlsx 
+   Populations: Configurations/Populations.xlsx 
+   Populations Folder: Configurations/PopulationsCSV 
+   Scenarios: Configurations/Scenarios.xlsx 
 ...
 ```
-
-<!-- Scenario applications definitions file name: Parameters/ApplicationParameters.xlsx  -->
-
-<!-- Plot definitions file name: Parameters/Plots.xlsx  -->
-
-<!-- Experimental data folder: Data  -->
-
-<!-- Experimental data file: Data/TestProject_TimeValuesData.xlsx  -->
-
-<!-- Data importer configuration: Data/esqlabs_dataImporter_configuration.xml  -->
-
-<!-- Compound Properties File: Data/Compound Properties.xlsx  -->
-
-<!-- Output folder: Results  -->
 
 Note that the `ProjectConfiguration` stores paths to other files that
 are used in the project.
@@ -98,7 +84,7 @@ To create an example `ProjectConfiguration`  and execute the rest of this tutori
 run the following:
 
 ```{r, warning=FALSE, message = FALSE}
-my_project_configuration <- createDefaultProjectConfiguration(path = example_ProjectConfiguration())
+my_project_configuration <- createProjectConfiguration(path = example_ProjectConfiguration())
 ```
 
 ## Design Scenarios
