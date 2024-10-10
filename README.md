@@ -27,8 +27,8 @@ The package provides functions to:
 - Generate standardized plots and other reporting materials,
 - Interact with the OSPS features using simple Excel files.
 
-To get started with the esqlabsR package, please read the
-`vignette("esqlabsR")`.
+To get started with the esqlabsR package, please follow the [Get Started
+tutorial](articles/esqlabsR.html).
 
 ## Installation
 
