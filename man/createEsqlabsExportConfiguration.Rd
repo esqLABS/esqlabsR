@@ -4,11 +4,11 @@
 \alias{createEsqlabsExportConfiguration}
 \title{Create an instance of \code{ExportConfiguration} R6 class}
 \usage{
-createEsqlabsExportConfiguration(projectConfiguration)
+createEsqlabsExportConfiguration(outputFolder)
 }
 \arguments{
-\item{projectConfiguration}{Object of class \code{ProjectConfiguration}
-that contains information about the output paths.}
+\item{outputFolder}{Path to the folder where the results will be
+stored.}
 }
 \value{
 An instance of \code{ExportConfiguration} R6 class.
@@ -22,7 +22,7 @@ standards adopted by esqLABS GmbH.
 }
 \examples{
 myProjConfig <- ProjectConfiguration$new()
-createEsqlabsExportConfiguration(myProjConfig)
+createEsqlabsExportConfiguration(myProjConfig$outputFolder)
 
 }
 \seealso{

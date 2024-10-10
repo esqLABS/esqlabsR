@@ -29,9 +29,10 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
   resultsSubFolder <- "DateAndTimeSuffixForTheSubfolder"
   # Run or load scenarios
   if (loadPreSimulatedResults) {
+    outputFolder <- file.path(projectConfiguration$outputFolder, "SimulationResults", resultsSubFolder)
     simulatedScenariosResults <- loadScenarioResults(
       names(scenarioConfigurations),
-      file.path(projectConfiguration$outputFolder, "SimulationResults", resultsSubFolder)
+      outputFolder
     )
   } else {
     # Create scenarios
@@ -41,7 +42,8 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
       scenarios = scenarios,
       simulationRunOptions = simulationRunOptions
     )
-    saveScenarioResults(simulatedScenariosResults, projectConfiguration)
+    # Save results and store the path to the results for later re-use
+    outputFolder <- saveScenarioResults(simulatedScenariosResults, projectConfiguration)
   }
 
   ########### Load observed data########
@@ -71,6 +73,7 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
     simulatedScenarios = simulatedScenariosResults,
     observedData = observedData,
     projectConfiguration = projectConfiguration,
+    outputFolder = outputFolder,
     stopIfNotFound = TRUE
   )
 

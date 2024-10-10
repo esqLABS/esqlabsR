@@ -262,7 +262,7 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' @examples
 #' \dontrun{
 #' # Create default project configuration
-#' projectConfiguration <- createDefaultProjectConfiguration()
+#' projectConfiguration <- createProjectConfiguration()
 #' dataSets <- loadObservedData(projectConfiguration)
 #' }
 loadObservedData <- function(projectConfiguration, sheets = NULL, importerConfiguration = NULL) {
@@ -306,7 +306,7 @@ loadObservedData <- function(projectConfiguration, sheets = NULL, importerConfig
 #' @examples
 #' \dontrun{
 #' # Create default project configuration
-#' projectConfiguration <- createDefaultProjectConfiguration()
+#' projectConfiguration <- createProjectConfiguration()
 #' dataSets <- loadObservedData(projectConfiguration)
 #' }
 loadObservedDataFromPKML <- function(projectConfiguration, obsDataNames = NULL) {

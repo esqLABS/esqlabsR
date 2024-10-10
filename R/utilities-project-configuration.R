@@ -1,16 +1,34 @@
 #' Create a default `ProjectConfiguration`
 #'
-#' @inheritParams readExcel
+#' @description  Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
 #'
-#' @details Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
-#' located in the "Code" folder.
+#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx` file located in the working directory.
 #'
 #' @return Object of type `ProjectConfiguration`
 #' @export
 createDefaultProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
+  lifecycle::deprecate_soft(
+    what = "createDefaultProjectConfiguration()",
+    with = "createProjectConfiguration()",
+    when = "5.3.0"
+  )
+  return(createProjectConfiguration(path))
+}
+
+
+#' #' Create a `ProjectConfiguration`
+#'
+#' @description  Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
+#'
+#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx` file located in the working directory.
+#'
+#' @return Object of type `ProjectConfiguration`
+#' @export
+createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
   projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = path)
   return(projectConfiguration)
 }
+
 
 #' Initialize esqlabsR Project Folder
 #'
