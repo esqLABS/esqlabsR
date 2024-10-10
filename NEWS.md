@@ -18,8 +18,8 @@
     improved (\#692)
       - `Parameters` folder is now `Configurations`
       - `Populations` folder is now `PopulationsCSV`
-      - `ApplicationParameters.xslx` file is now `Application.xlsx`
-      - `PopulationParameters.xslx` file is now `Population.xlsx`
+      - `ApplicationParameters.xslx` file is now `Applications.xlsx`
+      - `PopulationParameters.xslx` file is now `Populations.xlsx`
       - Previous directory structure is still supported but deprecated.
     
   - `{ospsuite.parameteridentification}` is not longer a dependency of
