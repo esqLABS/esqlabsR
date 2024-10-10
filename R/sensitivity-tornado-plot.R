@@ -95,9 +95,9 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   )
 
   # validate vector arguments of character type
-  .validateCharVectors(outputPaths)
-  .validateCharVectors(parameterPaths)
-  .validateCharVectors(pkParameters)
+  .validateCharVectors(outputPaths, nullAllowed = TRUE)
+  .validateCharVectors(parameterPaths, nullAllowed = TRUE)
+  .validateCharVectors(pkParameters, nullAllowed = TRUE)
 
   data <- sensitivityCalculation$pkData
 
