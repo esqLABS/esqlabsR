@@ -443,6 +443,8 @@
 #' Validate vector arguments of `character` type
 #'
 #' @param argVector A vector of `character` type.
+#' @param nullAllowed Boolean flag if `NULL` is accepted for the object. Default
+#' is `FALSE`.
 #'
 #' @description
 #'
@@ -467,21 +469,42 @@
 #'
 #' @keywords internal
 #' @noRd
-.validateCharVectors <- function(argVector) {
+.validateCharVectors <- function(argVector, nullAllowed = FALSE) {
   argName <- deparse(substitute(argVector))
 
-  if (!isOfType(argVector, "character", nullAllowed = TRUE)) {
-    stop(paste0("Only values of `character` type are allowed in `", argName, "` argument."))
+  # Handle NULL cases based on nullAllowed
+  if (is.null(argVector) && !nullAllowed) {
+    cli::cli_abort("The argument `{argName}` cannot be NULL.")
   }
 
+  # Skip further checks if NULL is allowed and the argument is NULL
+  if (is.null(argVector)) return()
+
+  # Check if the argument is of type character
+  if (!isOfType(argVector, "character")) {
+    cli::cli_abort(c(
+      "x" = "The argument `{argName}` must be of type {.val character}.",
+      "i" = "Ensure that the provided value is a character vector."
+    ))
+  }
+
+  # Ensure all values are distinct
   if (!hasOnlyDistinctValues(argVector)) {
-    stop(paste0("Only distinct values are allowed in `", argName, "` argument."))
+    cli::cli_abort(c(
+      "x" = "The argument `{argName}` must contain only distinct values.",
+      "i" = "Remove any duplicate entries from the `{argName}`."
+    ))
   }
 
+  # Check for empty string values
   if (any(nchar(argVector) == 0L)) {
-    stop(paste0("Values in `", argName, "` argument can't be an empty string."))
+    cli::cli_abort(c(
+      "x" = "The argument `{argName}` contains empty strings.",
+      "i" = "Ensure that `{argName}` does not have any empty entries."
+    ))
   }
 }
+
 
 #' Inform user if any non-standard PK parameters have been specified
 #'

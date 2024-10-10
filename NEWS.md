@@ -32,10 +32,12 @@
   - Function `sensitivityCalculation()` supports new parameter
     `customOutputFunctions`, allowing user-defined functions for PK parameter
     calculation (\#685).
-
+ 
   - Function `sensitivitySpiderPlot` now supports `xAxisType` and `yAxisType`
     options for switching between percent and absolute values (\#695).
     
+  - Function `sensitivityCalculation()` will throw more informative messages when
+    `outputPaths` or `parameterPaths` is not a character vector or NULL (\#712).
 
 # esqlabsR 5.2.0
 
