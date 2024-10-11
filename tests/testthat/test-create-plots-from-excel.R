@@ -1,26 +1,20 @@
-projectConfiguration <- testProjectConfiguration()
+p <- testProject()
 
-# Define which scenarios to run
+projectConfiguration <- p$projectConfiguration
+
 scenarioNames <- c("TestScenario", "PopulationScenario")
-outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+outputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = scenarioNames,
-  projectConfiguration = projectConfiguration
-)
+p$selectScenarios(scenarioNames)
 
-# Set output paths for each scenario
-for (scenarioConfiguration in scenarioConfigurations) {
-  scenarioConfiguration$outputPaths <- outputPaths
+for (sc in scenarioNames) {
+  p$configurations$scenarios[[sc]]$outputPaths <- "Aciclovir_PVB"
 }
 
-# Run scenarios
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
 
-simulatedScenarios <- runScenarios(
-  scenarios = scenarios
-)
+p$runScenarios()
+
+simulatedScenarios <- p$simulationResults
 
 # For compatibility with projects created with esqlabsR <5.0.1, use old data set
 # naming pattern.
@@ -41,7 +35,7 @@ dataCombinedDf <- data.frame(list(
   "dataType" = c("simulated", "observed"),
   "label" = c("Aciclovir simulated", "Aciclovir observed"),
   "scenario" = c(scenarioNames[1], NA),
-  "path" = c(outputPaths, NA),
+  "path" = c(outputPath, NA),
   "dataSet" = c(NA, names(observedData)),
   "group" = c("Aciclovir PVB", "Aciclovir PVB"),
   "xOffsets" = c(NA, NA),
@@ -320,7 +314,8 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
       )
 
 
-      expect_warning(createPlotsFromExcel(
+      expect_warning(
+        createPlotsFromExcel(
         simulatedScenarios = simulatedScenarios,
         observedData = observedData,
         projectConfiguration = projectConfigurationLocal,
@@ -696,7 +691,7 @@ test_that("It trows an error if a plot grid requires a plot id that is not defin
 test_that("It exports plot grids as defined in sheet `exportConfiguration`", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
+  projectConfigurationLocal$plotsFile <- file.path(tempDir, "Plots.xlsx")
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
@@ -819,7 +814,7 @@ test_that("It correctly treats empty rows", {
         "dataType" = c("simulated", NA, "observed"),
         "label" = c("Aciclovir simulated", NA, "Aciclovir observed"),
         "scenario" = c(scenarioNames[1], NA, NA),
-        "path" = c(outputPaths, NA, NA),
+        "path" = c(outputPath, NA, NA),
         "dataSet" = c(NA, NA, names(observedData)),
         "group" = c("Aciclovir PVB", NA, "Aciclovir PVB"),
         "xOffsets" = NA,
@@ -881,7 +876,7 @@ test_that("It correctly treats empty rows", {
 test_that("It checks if OffsetsUnits are not empty if xOffsets", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
@@ -986,7 +981,7 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
 test_that("It throws a warning when trying to export non-existent plot grid to file", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
