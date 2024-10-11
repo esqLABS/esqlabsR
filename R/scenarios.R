@@ -546,7 +546,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
     )
 
     outputValues <- getOutputValues(results,
-      quantitiesOrPaths = results$allQuantityPaths
+      quantitiesOrPaths = allQuantityPaths
     )
     simulatedScenariosResults[[scenarioNames[[i]]]] <-
       list(simulation = simulation, results = results, outputValues = outputValues)
