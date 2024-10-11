@@ -48,7 +48,7 @@ test_that("It runs one scenario without specifying output paths", {
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
-  expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths, defaultOutputPath)
+  expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$allQuantityPaths, defaultOutputPath)
 })
 
 test_that("It runs one scenario with specifying output paths", {
@@ -76,7 +76,7 @@ test_that("It runs one scenario with specifying output paths", {
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
-  expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths, enumValues(OutputPaths))
+  expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$allQuantityPaths, enumValues(OutputPaths))
 })
 
 test_that("It runs two scenarios", {
@@ -100,9 +100,9 @@ test_that("It runs two scenarios", {
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
-  expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths, defaultOutputPath)
+  expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$allQuantityPaths, defaultOutputPath)
 
-  expect_equal(simulatedScenarios[[scenarioNames[[2]]]]$results$allQuantityPaths, c(
+  expect_equal(simulatedScenarios[[scenarioNames[[2]]]]$allQuantityPaths, c(
     "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
     "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
   ))

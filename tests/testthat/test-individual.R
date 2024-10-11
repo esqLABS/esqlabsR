@@ -33,14 +33,37 @@ test_that("Individual object can be created", {
 test_that("Individual object is recreated if individual configuration is changed", {
   project <- testProject()
 
-  original_seed <- project$configurations$individuals$Indiv1$individualObject$seed
+  original_seed <- project$configurations$individuals$Indiv1$individualObject$characteristics$seed
 
   project$configurations$individuals$Indiv1$characteristics$age <- 35
-  new_seed <- project$configurations$individuals$Indiv1$individualObject$seed
+  new_seed <- project$configurations$individuals$Indiv1$individualObject$characteristics$seed
   expect_true(original_seed != new_seed)
 
   project$configurations$individuals$Indiv1$parameters$GFR$value <- 80
-  new_seed2 <- project$configurations$individuals$Indiv1$individualObject$seed
+  new_seed2 <- project$configurations$individuals$Indiv1$individualObject$characteristics$seed
   expect_true(new_seed != new_seed2)
 
 })
+
+test_that("It returns NULL if the specified individual Id cannot be found in
+          the file and nullIfNotFound is TRUE", {
+            individualId <- "notPresent"
+
+          })
+
+test_that("It throws an error if the specified individual Id cannot be found in
+          the file and nullIfNotFound is FALSE", {
+            individualId <- "notPresent"
+
+
+          })
+
+test_that("It create IndividualCharacteristics with the correct values", {
+
+})
+
+test_that("It create IndividualCharacteristics when numerical values are empty", {
+
+})
+
+

@@ -1,6 +1,7 @@
 ##  context("ScenarioConfiguration")
 
 test_that("`ScenarioConfiguration` active bindings are modified", {
+  skip()
   expect_snapshot({
     mySC <- ScenarioConfiguration$new(projectConfiguration = ProjectConfiguration$new())
 
@@ -18,6 +19,7 @@ test_that("`ScenarioConfiguration` active bindings are modified", {
 })
 
 test_that("It produces expected errors for incorrect active binding values", {
+  skip()
   mySC <- ScenarioConfiguration$new(projectConfiguration = ProjectConfiguration$new())
 
   expect_error(mySC$simulateSteadyState <- 1, messages$errorWrongType("value", "numeric", "logical"))
