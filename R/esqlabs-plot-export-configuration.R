@@ -43,9 +43,6 @@ ExportConfiguration <- R6::R6Class(
                           heightPerRow = NULL) {
       super$initialize(path, name, format, width, height, units, dpi)
 
-      validateIsNumeric(heightPerRow, nullAllowed = T)
-      self$heightPerRow <- heightPerRow
-    },
     #' @description Save/Export a plot
     #' @param plotObject A `ggplot` object
     #' @param fileName character file name of the exported plot
@@ -60,8 +57,8 @@ ExportConfiguration <- R6::R6Class(
       if (!is.null(self$heightPerRow)) {
         # Get the number of rows as defined in the plot layout
         nrOfRows <- ggplot2::wrap_dims(length(plotObject$patches$plots) + 1,
-          nrow = plotObject$patches$layout$nrow,
-          ncol = plotObject$patches$layout$ncol
+                                       nrow = plotObject$patches$layout$nrow,
+                                       ncol = plotObject$patches$layout$ncol
         )[[1]]
         self$height <- self$heightPerRow * nrOfRows
       }
