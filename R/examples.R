@@ -55,4 +55,10 @@ getExampleProject <- function() {
   }
 }
 
+#' Example Project shiped with esqlabsR
+#'
+#' @return a ready to run esqlabsR project
+#' @export
+#' @examples
+#' project <- exampleProject()
 exampleProject <- getExampleProject()
