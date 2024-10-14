@@ -2,15 +2,15 @@
 % Please edit documentation in R/examples.R
 \name{exampleProject}
 \alias{exampleProject}
-\title{Example Project shiped with esqlabsR}
+\title{Get the example Project object}
 \usage{
 exampleProject()
 }
 \value{
-a ready to run esqlabsR project
+a Project object with the content of the example.
 }
 \description{
-Example Project shiped with esqlabsR
+Get the example Project object
 }
 \examples{
 project <- exampleProject()
