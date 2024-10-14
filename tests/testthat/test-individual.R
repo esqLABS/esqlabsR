@@ -26,7 +26,9 @@ test_that("Individual can be exported as dataFrame", {
 test_that("Individual object can be created", {
   project <- testProject()
 
-  expect_no_condition(project$configurations$individuals$Indiv1$individualObject)
+  expect_silent(
+    (project$configurations$individuals$Indiv1$individualObject)
+  )
 })
 
 

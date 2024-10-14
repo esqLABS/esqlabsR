@@ -18,9 +18,7 @@ simulatedScenarios <- p$simulationResults
 
 # For compatibility with projects created with esqlabsR <5.0.1, use old data set
 # naming pattern.
-importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-  configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-)
+importerConfiguration <- ospsuite::loadDataImporterConfiguration(configurationFilePath = projectConfiguration$dataImporterConfigurationFile)
 
 # Load observed data
 dataSheets <- "Laskin 1982.Group A"
@@ -66,252 +64,291 @@ plotGridsDf <- data.frame(list(
   "title" = "Aciclovir PVB"
 ))
 
-exportConfigurationDf <- data.frame(list("plotGridName" = character(0), "outputName" = character(0)))
+exportConfigurationDf <-
+  data.frame(list("plotGridName" = character(0), "outputName" = character(0)))
 
 # Validation DataCombined
 test_that("It trows an error if mandatory field dataType is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      dataCombinedDfLocal$dataType <- NA
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         plotGridsDfLocal <- plotGridsDf
+                         dataCombinedDfLocal$dataType <- NA
+                         exportConfigurationDfLocal <- exportConfigurationDf
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$missingDataType())
-    }
-  )
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           ),
+                           regexp = messages$missingDataType()
+                         )
+                       })
 })
 
 test_that("It trows an error if mandatory field label is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$label <- NA
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         dataCombinedDfLocal$label <- NA
+                         plotGridsDfLocal <- plotGridsDf
+                         exportConfigurationDfLocal <- exportConfigurationDf
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$missingLabel())
-    }
-  )
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           ),
+                           regexp = messages$missingLabel()
+                         )
+                       })
 })
 
 test_that("It trows an error if no scenario is specified for a simulated data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$scenario <- NA
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         dataCombinedDfLocal$scenario <- NA
+                         plotGridsDfLocal <- plotGridsDf
+                         exportConfigurationDfLocal <- exportConfigurationDf
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$missingScenarioName())
-    }
-  )
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           ),
+                           regexp = messages$missingScenarioName()
+                         )
+                       })
 })
 
-test_that("It trows an error if no output path is specified for a simulated data", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$path <- NA
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+test_that("It trows an error if no output path is specified for a simulated data",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   dataCombinedDfLocal$path <- NA
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- exportConfigurationDf
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
+
+                                   )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$stopNoPathProvided("AciclovirPVB"))
-    }
-  )
-})
+                                   expect_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     ),
+                                     regexp = messages$stopNoPathProvided("AciclovirPVB")
+                                   )
+                                 })
+          })
 
-test_that("It trows an error if wrong output path is specified for a simulated data", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$path <- "foo"
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+test_that("It trows an error if wrong output path is specified for a simulated data",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   dataCombinedDfLocal$path <- "foo"
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- exportConfigurationDf
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
+
+                                   )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$stopWrongOutputPath(
-        dataCombinedName = dataCombinedDfLocal$DataCombinedName[[1]],
-        scenarioName = dataCombinedDfLocal$scenario[[1]],
-        path = dataCombinedDfLocal$path[[1]]
-      ))
-    }
-  )
-})
+                                   expect_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     ),
+                                     regexp = messages$stopWrongOutputPath(
+                                       dataCombinedName = dataCombinedDfLocal$DataCombinedName[[1]],
+                                       scenarioName = dataCombinedDfLocal$scenario[[1]],
+                                       path = dataCombinedDfLocal$path[[1]]
+                                     )
+                                   )
+                                 })
+          })
 
 test_that("It trows an error if no data set is specified for observed data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$dataSet <- NA
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         dataCombinedDfLocal$dataSet <- NA
+                         plotGridsDfLocal <- plotGridsDf
+                         exportConfigurationDfLocal <- exportConfigurationDf
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$stopNoDataSetProvided("AciclovirPVB"))
-    }
-  )
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           ),
+                           regexp = messages$stopNoDataSetProvided("AciclovirPVB")
+                         )
+                       })
 })
 
-test_that("It trows an error if defined scenario is missing and stopIfNotFound is TRUE", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$scenario <- c("TestScenario", "foo")
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+test_that("It trows an error if defined scenario is missing and stopIfNotFound is TRUE",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   dataCombinedDfLocal$scenario <- c("TestScenario", "foo")
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- exportConfigurationDf
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
+
+                                   )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$warningInvalidScenarioName("foo"))
-    }
-  )
-})
+                                   expect_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     ),
+                                     regexp = messages$warningInvalidScenarioName("foo")
+                                   )
+                                 })
+          })
 
-test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$scenario <- c(scenarioNames[1], "foo")
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(
-        data = list(
-          "DataCombined" = dataCombinedDfLocal,
-          "plotConfiguration" = plotConfigurationDfLocal,
-          "plotGrids" = plotGridsDfLocal,
-          "exportConfiguration" = exportConfigurationDfLocal
-        ),
-        path = file.path(tempDir, "Plots.xlsx")
-      )
+test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   dataCombinedDfLocal$scenario <- c(scenarioNames[1], "foo")
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- exportConfigurationDf
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx")
+                                   )
 
 
       expect_warning(
@@ -325,191 +362,224 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
   )
 })
 
-test_that("It trows an error if defined data set is missing and stopIfNotFound is TRUE", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedData))
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+test_that("It trows an error if defined data set is missing and stopIfNotFound is TRUE",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   dataCombinedDfLocal$dataSet <-
+                                     c(scenarioNames[1], names(observedData))
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- exportConfigurationDf
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$stopInvalidDataSetName(scenarioNames[1]))
-    }
-  )
-})
+                                   )
 
-test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedData))
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                                   expect_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     ),
+                                     regexp = messages$stopInvalidDataSetName(scenarioNames[1])
+                                   )
+                                 })
+          })
 
-      expect_warning(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = FALSE
-      ), regexp = messages$warningInvalidDataSetName(scenarioNames[1]))
-    }
-  )
-})
+test_that("It shows a warning for missing data set if stopIfNotFound is FALSE",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   dataCombinedDfLocal$dataSet <-
+                                     c(scenarioNames[1], names(observedData))
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- exportConfigurationDf
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
 
-test_that("It trows an error if mandatory field DataCombinedName is not filled out", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotConfigurationDfLocal$DataCombinedName <- NA
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                                   )
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$missingDataCombinedName())
-    }
-  )
-})
+                                   expect_warning(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = FALSE
+                                     ),
+                                     regexp = messages$warningInvalidDataSetName(scenarioNames[1])
+                                   )
+                                 })
+          })
+
+test_that("It trows an error if mandatory field DataCombinedName is not filled out",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   plotConfigurationDfLocal$DataCombinedName <- NA
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- exportConfigurationDf
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
+
+                                   )
+
+                                   expect_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     ),
+                                     regexp = messages$missingDataCombinedName()
+                                   )
+                                 })
+          })
 
 test_that("It trows an error if mandatory field plotType is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotConfigurationDfLocal$plotType <- NA
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         plotConfigurationDfLocal$plotType <- NA
+                         plotGridsDfLocal <- plotGridsDf
+                         exportConfigurationDfLocal <- exportConfigurationDf
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$missingPlotType())
-    }
-  )
+                         )
+
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           ),
+                           regexp = messages$missingPlotType()
+                         )
+                       })
 })
 
-test_that("It trows an error if a plot requires a DataCombined that is not defined", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotConfigurationDfLocal$DataCombinedName <- "foo"
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+test_that("It trows an error if a plot requires a DataCombined that is not defined",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   plotConfigurationDfLocal$DataCombinedName <- "foo"
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- exportConfigurationDf
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$stopInvalidDataCombinedName("foo"))
-    }
-  )
-})
+                                   )
+
+                                   expect_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     ),
+                                     regexp = messages$stopInvalidDataCombinedName("foo")
+                                   )
+                                 })
+          })
 
 # Validation plotGrids
 test_that("It returns NULL if no plotGrids are defined in the excel sheet", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      plotGridsDfLocal <- data.frame(list(
-        "name" = NA,
-        "plotIDs" = NA,
-        "title" = NA
-      ))
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         plotGridsDfLocal <- plotGridsDf
+                         plotGridsDfLocal <- data.frame(list(
+                           "name" = NA,
+                           "plotIDs" = NA,
+                           "title" = NA
+                         ))
+                         exportConfigurationDfLocal <- exportConfigurationDf
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      plots <- createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      )
-      expect_null(plots)
-    }
-  )
+                         plots <- createPlotsFromExcel(
+                           simulatedScenarios = simulatedScenarios,
+                           observedData = observedData,
+                           projectConfiguration = projectConfigurationLocal,
+                           stopIfNotFound = TRUE
+                         )
+                         expect_null(plots)
+                       })
 })
 
 test_that("It creates plots for all plot grids when plotGridNames is NULL", {
@@ -533,48 +603,54 @@ test_that("It creates plots only for specified plotGrids", {
   expect_equal(names(plots), c("Aciclovir"))
 })
 
-test_that("It trows an error when specified plot grid names are not defined in the sheet", {
-  expect_error(
-    createPlotsFromExcel(
-      plotGridNames = c("foo", "Aciclovir", "bar"),
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
-      projectConfiguration = projectConfiguration,
-      stopIfNotFound = TRUE
-    ),
-    messages$invalidPlotGridNames(c("foo", "bar"))
-  )
-})
+test_that("It trows an error when specified plot grid names are not defined in the sheet",
+          {
+            expect_error(
+              createPlotsFromExcel(
+                plotGridNames = c("foo", "Aciclovir", "bar"),
+                simulatedScenarios = simulatedScenarios,
+                observedData = observedData,
+                projectConfiguration = projectConfiguration,
+                stopIfNotFound = TRUE
+              ),
+              messages$invalidPlotGridNames(c("foo", "bar"))
+            )
+          })
 
 test_that("It throws an error if mandatory field plotIDs is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      plotGridsDfLocal$plotIDs <- NA
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         plotGridsDfLocal <- plotGridsDf
+                         plotGridsDfLocal$plotIDs <- NA
+                         exportConfigurationDfLocal <- exportConfigurationDf
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$missingPlotIDs())
-    }
-  )
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           ),
+                           regexp = messages$missingPlotIDs()
+                         )
+                       })
 })
 
 
@@ -583,44 +659,51 @@ test_that("It throws an error if plotIDs are not unique", {
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- data.frame(list(
-        "plotID" = c("P1", "P1"),
-        "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
-        "plotType" = c("individual", "individual"),
-        "title" = NA,
-        "xUnit" = NA,
-        "yUnit" = NA,
-        "xAxisScale" = NA,
-        "yAxisScale" = NA,
-        "xValuesLimits" = NA,
-        "yValuesLimits" = NA,
-        "quantiles" = NA,
-        "nsd" = NA,
-        "foldDistance" = NA
-      ))
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- data.frame(
+                           list(
+                             "plotID" = c("P1", "P1"),
+                             "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
+                             "plotType" = c("individual", "individual"),
+                             "title" = NA,
+                             "xUnit" = NA,
+                             "yUnit" = NA,
+                             "xAxisScale" = NA,
+                             "yAxisScale" = NA,
+                             "xValuesLimits" = NA,
+                             "yValuesLimits" = NA,
+                             "quantiles" = NA,
+                             "nsd" = NA,
+                             "foldDistance" = NA
+                           )
+                         )
+                         plotGridsDfLocal <- plotGridsDf
+                         exportConfigurationDfLocal <- exportConfigurationDf
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$PlotIDsMustBeUnique())
-    }
-  )
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           ),
+                           regexp = messages$PlotIDsMustBeUnique()
+                         )
+                       })
 })
 
 test_that("It throws an error if plotGrid names are not unique", {
@@ -628,65 +711,64 @@ test_that("It throws an error if plotGrid names are not unique", {
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- data.frame(list(
-        "name" = c("Aciclovir", "Aciclovir"),
-        "plotIDs" = c("P1", "P2"),
-        "title" = c("Aciclovir PVB", "Aciclovir PVB2")
-      ))
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         plotGridsDfLocal <- data.frame(list(
+                           "name" = c("Aciclovir", "Aciclovir"),
+                           "plotIDs" = c("P1", "P2"),
+                           "title" = c("Aciclovir PVB", "Aciclovir PVB2")
+                         ))
+                         exportConfigurationDfLocal <- exportConfigurationDf
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$PlotGridsNamesMustBeUnique())
-    }
-  )
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           ),
+                           regexp = messages$PlotGridsNamesMustBeUnique()
+                         )
+                       })
 })
 
-test_that("It trows an error if a plot grid requires a plot id that is not defined", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      plotGridsDfLocal$plotIDs <- "foo"
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+test_that("It trows an error if a plot grid requires a plot id that is not defined",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   plotGridsDfLocal <- plotGridsDf
+                                   plotGridsDfLocal$plotIDs <- "foo"
+                                   exportConfigurationDfLocal <- exportConfigurationDf
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$errorInvalidPlotID("foo"))
-    }
-  )
-})
+                                   )
 
 test_that("It exports plot grids as defined in sheet `exportConfiguration`", {
   tempDir <- tempdir()
@@ -713,89 +795,96 @@ test_that("It exports plot grids as defined in sheet `exportConfiguration`", {
       ), path = file.path(tempDir, "Plots.xlsx"), )
 
 
-      createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      )
-      expect_true(file.exists(file.path(tempDir, "Aciclovir1.png")))
-      expect_true(file.exists(file.path(tempDir, "Aciclovir2.png")))
-    }
-  )
-})
+                                   createPlotsFromExcel(
+                                     simulatedScenarios = simulatedScenarios,
+                                     observedData = observedData,
+                                     projectConfiguration = projectConfigurationLocal,
+                                     stopIfNotFound = TRUE
+                                   )
+                                   expect_true(file.exists(file.path(tempDir, "Aciclovir1.png")))
+                                   expect_true(file.exists(file.path(tempDir, "Aciclovir2.png")))
+                                 })
+          })
 
-test_that("It throws an error when trying to set a property that is not supported by the configuration", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotConfigurationDfLocal$"blabla" <- "1,2,3"
+test_that(
+  "It throws an error when trying to set a property that is not supported by the configuration",
+  {
+    tempDir <- tempdir()
+    projectConfigurationLocal <- projectConfiguration$clone()
+    projectConfigurationLocal$configurationsFolder <- tempDir
+    withr::with_tempfile(new = "Plots.xlsx",
+                         tmpdir = tempDir,
+                         code = {
+                           dataCombinedDfLocal <- dataCombinedDf
+                           plotConfigurationDfLocal <- plotConfigurationDf
+                           plotConfigurationDfLocal$"blabla" <- "1,2,3"
 
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                           plotGridsDfLocal <- plotGridsDf
+                           exportConfigurationDfLocal <- exportConfigurationDf
+                           .writeExcel(
+                             data = list(
+                               "DataCombined" = dataCombinedDfLocal,
+                               "plotConfiguration" = plotConfigurationDfLocal,
+                               "plotGrids" = plotGridsDfLocal,
+                               "exportConfiguration" = exportConfigurationDfLocal
+                             ),
+                             path = file.path(tempDir, "Plots.xlsx"),
 
-      expect_error(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$invalidConfigurationPropertyFromExcel(
-        propertyName = "blabla",
-        configurationType = "DefaultPlotConfiguration"
-      ))
-    }
-  )
-})
+                           )
+
+                           expect_error(
+                             createPlotsFromExcel(
+                               simulatedScenarios = simulatedScenarios,
+                               observedData = observedData,
+                               projectConfiguration = projectConfigurationLocal,
+                               stopIfNotFound = TRUE
+                             ),
+                             regexp = messages$invalidConfigurationPropertyFromExcel(propertyName = "blabla",
+                                                                                     configurationType = "DefaultPlotConfiguration")
+                           )
+                         })
+  }
+)
 
 test_that("It correctly treats names with underscores", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotConfigurationDfLocal$plotID <- "P_1"
-      plotGridsDfLocal <- plotGridsDf
-      plotGridsDfLocal$plotIDs <- "P_1"
-      exportConfigurationDfLocal <- data.frame(
-        plotGridName = rep("Aciclovir", 2),
-        outputName = c("Aciclovir1", "Aciclovir2"),
-        height = c(10, NA)
-      )
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         plotConfigurationDfLocal$plotID <- "P_1"
+                         plotGridsDfLocal <- plotGridsDf
+                         plotGridsDfLocal$plotIDs <- "P_1"
+                         exportConfigurationDfLocal <- data.frame(
+                           plotGridName = rep("Aciclovir", 2),
+                           outputName = c("Aciclovir1", "Aciclovir2"),
+                           height = c(10, NA)
+                         )
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      )
-      expect_true(file.exists(file.path(tempDir, "Aciclovir1.png")))
-      expect_true(file.exists(file.path(tempDir, "Aciclovir2.png")))
-    }
-  )
+                         createPlotsFromExcel(
+                           simulatedScenarios = simulatedScenarios,
+                           observedData = observedData,
+                           projectConfiguration = projectConfigurationLocal,
+                           stopIfNotFound = TRUE
+                         )
+                         expect_true(file.exists(file.path(tempDir, "Aciclovir1.png")))
+                         expect_true(file.exists(file.path(tempDir, "Aciclovir2.png")))
+                       })
 })
 
 
@@ -860,16 +949,15 @@ test_that("It correctly treats empty rows", {
       ), path = file.path(tempDir, "Plots.xlsx"), )
 
 
-      expect_no_error(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
-        )
-      )
-    }
-  )
+                         expect_no_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           )
+                         )
+                       })
 })
 
 
@@ -878,104 +966,118 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      # Test xOffsets
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         # Test xOffsets
 
-      dataCombinedDfLocal <- dataCombinedDf
+                         dataCombinedDfLocal <- dataCombinedDf
 
-      dataCombinedDfLocal$xOffsets <- c(1, NA)
-      dataCombinedDfLocal$xOffsetsUnits <- c(NA, NA)
+                         dataCombinedDfLocal$xOffsets <- c(1, NA)
+                         dataCombinedDfLocal$xOffsetsUnits <- c(NA, NA)
 
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDf,
-        "plotGrids" = plotGridsDf,
-        "exportConfiguration" = exportConfigurationDf
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDf,
+                             "plotGrids" = plotGridsDf,
+                             "exportConfiguration" = exportConfigurationDf
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
 
-
-      expect_error(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
-        )
-      )
+                         )
 
 
-      dataCombinedDfLocal <- dataCombinedDf
-
-      dataCombinedDfLocal$xOffsets <- c(1, NA)
-      dataCombinedDfLocal$xOffsetsUnits <- c("min", NA)
-
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDf,
-        "plotGrids" = plotGridsDf,
-        "exportConfiguration" = exportConfigurationDf
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           )
+                         )
 
 
-      expect_no_error(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
-        )
-      )
+                         dataCombinedDfLocal <- dataCombinedDf
 
-      # test yOffsets
-      dataCombinedDfLocal <- dataCombinedDf
+                         dataCombinedDfLocal$xOffsets <- c(1, NA)
+                         dataCombinedDfLocal$xOffsetsUnits <- c("min", NA)
 
-      dataCombinedDfLocal$yOffsets <- c(1, NA)
-      dataCombinedDfLocal$yOffsetsUnits <- c(NA, NA)
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDf,
+                             "plotGrids" = plotGridsDf,
+                             "exportConfiguration" = exportConfigurationDf
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
 
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDf,
-        "plotGrids" = plotGridsDf,
-        "exportConfiguration" = exportConfigurationDf
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                         )
 
 
-      expect_error(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
-        )
-      )
+                         expect_no_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           )
+                         )
+
+                         # test yOffsets
+                         dataCombinedDfLocal <- dataCombinedDf
+
+                         dataCombinedDfLocal$yOffsets <- c(1, NA)
+                         dataCombinedDfLocal$yOffsetsUnits <- c(NA, NA)
+
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDf,
+                             "plotGrids" = plotGridsDf,
+                             "exportConfiguration" = exportConfigurationDf
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
 
 
-      dataCombinedDfLocal <- dataCombinedDf
-
-      dataCombinedDfLocal$yOffsets <- c(1, NA)
-      dataCombinedDfLocal$yOffsetsUnits <- c("µM", NA)
-
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDf,
-        "plotGrids" = plotGridsDf,
-        "exportConfiguration" = exportConfigurationDf
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                         expect_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           )
+                         )
 
 
-      expect_no_error(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
-        )
-      )
-    }
-  )
+                         dataCombinedDfLocal <- dataCombinedDf
+
+                         dataCombinedDfLocal$yOffsets <- c(1, NA)
+                         dataCombinedDfLocal$yOffsetsUnits <- c("µM", NA)
+
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDf,
+                             "plotGrids" = plotGridsDf,
+                             "exportConfiguration" = exportConfigurationDf
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
+
+                         )
+
+
+                         expect_no_error(
+                           createPlotsFromExcel(
+                             simulatedScenarios = simulatedScenarios,
+                             observedData = observedData,
+                             projectConfiguration = projectConfigurationLocal,
+                             stopIfNotFound = TRUE
+                           )
+                         )
+                       })
 })
 
 test_that("It throws a warning when trying to export non-existent plot grid to file", {
@@ -989,246 +1091,267 @@ test_that("It throws a warning when trying to export non-existent plot grid to f
     code = {
       # Test xOffsets
 
-      dataCombinedDfLocal <- dataCombinedDf
+                                   dataCombinedDfLocal <- dataCombinedDf
 
-      dataCombinedDfLocal$xOffsets <- c(1, NA)
-      dataCombinedDfLocal$xOffsetsUnits <- c(NA, NA)
+                                   dataCombinedDfLocal$xOffsets <- c(1, NA)
+                                   dataCombinedDfLocal$xOffsetsUnits <- c(NA, NA)
 
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDf,
-        "plotGrids" = plotGridsDf,
-        "exportConfiguration" = exportConfigurationDf
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDf,
+                                       "plotGrids" = plotGridsDf,
+                                       "exportConfiguration" = exportConfigurationDf
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
 
-
-      expect_error(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
-        )
-      )
+                                   )
 
 
-      dataCombinedDfLocal <- dataCombinedDf
-
-      dataCombinedDfLocal$xOffsets <- c(1, NA)
-      dataCombinedDfLocal$xOffsetsUnits <- c("min", NA)
-
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDf,
-        "plotGrids" = plotGridsDf,
-        "exportConfiguration" = exportConfigurationDf
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                                   expect_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     )
+                                   )
 
 
-      expect_no_error(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
-        )
-      )
+                                   dataCombinedDfLocal <- dataCombinedDf
 
-      # test yOffsets
-      dataCombinedDfLocal <- dataCombinedDf
+                                   dataCombinedDfLocal$xOffsets <- c(1, NA)
+                                   dataCombinedDfLocal$xOffsetsUnits <- c("min", NA)
 
-      dataCombinedDfLocal$yOffsets <- c(1, NA)
-      dataCombinedDfLocal$yOffsetsUnits <- c(NA, NA)
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDf,
+                                       "plotGrids" = plotGridsDf,
+                                       "exportConfiguration" = exportConfigurationDf
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
 
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDf,
-        "plotGrids" = plotGridsDf,
-        "exportConfiguration" = exportConfigurationDf
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                                   )
 
 
-      expect_error(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
-        )
-      )
+                                   expect_no_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     )
+                                   )
+
+                                   # test yOffsets
+                                   dataCombinedDfLocal <- dataCombinedDf
+
+                                   dataCombinedDfLocal$yOffsets <- c(1, NA)
+                                   dataCombinedDfLocal$yOffsetsUnits <- c(NA, NA)
+
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDf,
+                                       "plotGrids" = plotGridsDf,
+                                       "exportConfiguration" = exportConfigurationDf
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
+
+                                   )
 
 
-      dataCombinedDfLocal <- dataCombinedDf
-
-      dataCombinedDfLocal$yOffsets <- c(1, NA)
-      dataCombinedDfLocal$yOffsetsUnits <- c("µM", NA)
-
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDf,
-        "plotGrids" = plotGridsDf,
-        "exportConfiguration" = exportConfigurationDf
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                                   expect_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     )
+                                   )
 
 
-      expect_no_error(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
-        )
-      )
-    }
-  )
-})
+                                   dataCombinedDfLocal <- dataCombinedDf
 
-test_that("It throws a warning when trying to export non-existent plot grid to file", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- data.frame(
-        plotGridName = "invalidPlotGridName",
-        outputName = "Aciclovir1"
-      )
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                                   dataCombinedDfLocal$yOffsets <- c(1, NA)
+                                   dataCombinedDfLocal$yOffsetsUnits <- c("µM", NA)
 
-      expect_warning(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$missingPlotGrids(missingPlotGrids = "invalidPlotGridName"))
-    }
-  )
-})
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDf,
+                                       "plotGrids" = plotGridsDf,
+                                       "exportConfiguration" = exportConfigurationDf
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
 
-test_that("It throws a warning when outputName is missing in sheet 'exportConfiguration'", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- data.frame(
-        plotGridName = "Aciclovir",
-        outputName = NA
-      )
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                                   )
 
-      expect_warning(createPlotsFromExcel(
-        simulatedScenarios = simulatedScenarios,
-        observedData = observedData,
-        projectConfiguration = projectConfigurationLocal,
-        stopIfNotFound = TRUE
-      ), regexp = messages$missingOutputFileName())
-    }
-  )
-})
 
-test_that(".createConfigurationFromRow correctly reads values in quotes", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
+                                   expect_no_error(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     )
+                                   )
+                                 })
+          })
 
-  inputValues <- c(
-    "Test without quotes",
-    "Test, separated",
-    "Test with \"quotes\"",
-    "Test with \"quotes\" and, comma",
-    "Test with \"quotes, comma\"",
-    "Test with, \"quotes, comma\" and, comma"
-  )
+test_that("It throws a warning when trying to export non-existent plot grid to file",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- data.frame(plotGridName = "invalidPlotGridName",
+                                                                            outputName = "Aciclovir1")
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
 
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      plotGridsDfLocal <- as.data.frame(lapply(plotGridsDf, rep, 6))
-      plotGridsDfLocal$tagSuffix <- inputValues
-      .writeExcel(data = list(
-        "plotGrids" = plotGridsDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+                                   )
 
-      plotGridsDfFromExcel <- readExcel(file.path(tempDir, "Plots.xlsx"), sheet = "plotGrids")
+                                   expect_warning(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     ),
+                                     regexp = messages$missingPlotGrids(missingPlotGrids = "invalidPlotGridName")
+                                   )
+                                 })
+          })
 
-      defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
-      parsedValues <- apply(plotGridsDfLocal, 1, \(row) {
-        plotGridConfiguration <- .createConfigurationFromRow(
-          defaultConfiguration = defaultPlotGridConfig,
-          row[!(names(row) %in% c("name", "plotIDs"))]
-        )
-        return(plotGridConfiguration$tagSuffix)
-      })
+test_that("It throws a warning when outputName is missing in sheet 'exportConfiguration'",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   dataCombinedDfLocal <- dataCombinedDf
+                                   plotConfigurationDfLocal <- plotConfigurationDf
+                                   plotGridsDfLocal <- plotGridsDf
+                                   exportConfigurationDfLocal <- data.frame(plotGridName = "Aciclovir",
+                                                                            outputName = NA)
+                                   .writeExcel(
+                                     data = list(
+                                       "DataCombined" = dataCombinedDfLocal,
+                                       "plotConfiguration" = plotConfigurationDfLocal,
+                                       "plotGrids" = plotGridsDfLocal,
+                                       "exportConfiguration" = exportConfigurationDfLocal
+                                     ),
+                                     path = file.path(tempDir, "Plots.xlsx"),
 
-      expectedValues <- list(
-        c("Test without quotes"),
-        c("Test", "separated"),
-        c("Test with quotes"),
-        c("Test with quotes and", "comma"),
-        "Test with quotes, comma",
-        c("Test with", "quotes, comma and", "comma")
-      )
-      expect_equal(parsedValues, expectedValues)
-    }
-  )
-})
+                                   )
+
+                                   expect_warning(
+                                     createPlotsFromExcel(
+                                       simulatedScenarios = simulatedScenarios,
+                                       observedData = observedData,
+                                       projectConfiguration = projectConfigurationLocal,
+                                       stopIfNotFound = TRUE
+                                     ),
+                                     regexp = messages$missingOutputFileName()
+                                   )
+                                 })
+          })
+
+test_that(".createConfigurationFromRow correctly reads values in quotes",
+          {
+            tempDir <- tempdir()
+            projectConfigurationLocal <- projectConfiguration$clone()
+            projectConfigurationLocal$configurationsFolder <- tempDir
+
+            inputValues <- c(
+              "Test without quotes",
+              "Test, separated",
+              "Test with \"quotes\"",
+              "Test with \"quotes\" and, comma",
+              "Test with \"quotes, comma\"",
+              "Test with, \"quotes, comma\" and, comma"
+            )
+
+            withr::with_tempfile(new = "Plots.xlsx",
+                                 tmpdir = tempDir,
+                                 code = {
+                                   plotGridsDfLocal <- as.data.frame(lapply(plotGridsDf, rep, 6))
+                                   plotGridsDfLocal$tagSuffix <- inputValues
+                                   .writeExcel(
+                                     data = list("plotGrids" = plotGridsDfLocal),
+                                     path = file.path(tempDir, "Plots.xlsx"),
+
+                                   )
+
+                                   plotGridsDfFromExcel <-
+                                     readExcel(file.path(tempDir, "Plots.xlsx"), sheet = "plotGrids")
+
+                                   defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
+                                   parsedValues <- apply(plotGridsDfLocal, 1, \(row) {
+                                     plotGridConfiguration <- .createConfigurationFromRow(defaultConfiguration = defaultPlotGridConfig,
+                                                                                          row[!(names(row) %in% c("name", "plotIDs"))])
+                                     return(plotGridConfiguration$tagSuffix)
+                                   })
+
+                                   expectedValues <- list(
+                                     c("Test without quotes"),
+                                     c("Test", "separated"),
+                                     c("Test with quotes"),
+                                     c("Test with quotes and", "comma"),
+                                     "Test with quotes, comma",
+                                     c("Test with", "quotes, comma and", "comma")
+                                   )
+                                   expect_equal(parsedValues, expectedValues)
+                                 })
+          })
 
 # It returns an empty data combined when no data set is found
 test_that("It returns an empty DataCombined when no data is available", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- data.frame(
-        plotGridName = c(NA),
-        outputName = c(NA)
-      )
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
+  withr::with_tempfile(new = "Plots.xlsx",
+                       tmpdir = tempDir,
+                       code = {
+                         dataCombinedDfLocal <- dataCombinedDf
+                         plotConfigurationDfLocal <- plotConfigurationDf
+                         plotGridsDfLocal <- plotGridsDf
+                         exportConfigurationDfLocal <- data.frame(plotGridName = c(NA),
+                                                                  outputName = c(NA))
+                         .writeExcel(
+                           data = list(
+                             "DataCombined" = dataCombinedDfLocal,
+                             "plotConfiguration" = plotConfigurationDfLocal,
+                             "plotGrids" = plotGridsDfLocal,
+                             "exportConfiguration" = exportConfigurationDfLocal
+                           ),
+                           path = file.path(tempDir, "Plots.xlsx"),
 
-      # Warnings are suppressed because they are expected but not relevant for
-      # this test.
-      suppressWarnings({
-        dataCombined <- createDataCombinedFromExcel(
-          file = file.path(tempDir, "Plots.xlsx"),
-          stopIfNotFound = FALSE
-        )
-      })
+                         )
+
+                         # Warnings are suppressed because they are expected but not relevant for
+                         # this test.
+                         suppressWarnings({
+                           dataCombined <- createDataCombinedFromExcel(file = file.path(tempDir, "Plots.xlsx"),
+                                                                       stopIfNotFound = FALSE)
+                         })
 
 
-      expect_equal(dataCombined[[1]], DataCombined$new())
-    }
-  )
+                         expect_equal(dataCombined[[1]], DataCombined$new())
+                       })
 })

@@ -285,7 +285,7 @@ test_that("sensitivityTimeProfiles plots correctly for multiple outputs with mul
   )
 })
 
-# create mock observed data with "Amount" dimension
+# # create mock observed data with "Amount" dimension
 obsDataMultiple[[2]]$yDimension <- "Amount"
 obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
 
