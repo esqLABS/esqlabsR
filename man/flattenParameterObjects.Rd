@@ -14,3 +14,4 @@ flattenParameterObjects(simulationParameters)
 flattenParametersObjects
 Transform a set of \code{SimulationParameter} objects into one list of parameters.
 }
+\keyword{internal}

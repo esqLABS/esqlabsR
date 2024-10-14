@@ -37,13 +37,8 @@ exampleProjectConfiguration <- function(){
   createProjectConfiguration(exampleProjectConfigurationFile())
 }
 
-#' Get the example Project object
-#'
-#' @return a Project object with the content of the example.
-#' @export
-#' @examples
-#' project <- exampleProject()
-exampleProject <- function() {
+
+getExampleProject <- function() {
   .exampleProject <- NULL
 
   function() {
@@ -54,3 +49,12 @@ exampleProject <- function() {
     return(.exampleProject)
   }
 }
+
+
+#' Get the example Project object
+#'
+#' @return a Project object with the content of the example.
+#' @export
+#' @examples
+#' project <- exampleProject()
+exampleProject <- getExampleProject()
