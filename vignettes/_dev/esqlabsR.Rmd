@@ -84,7 +84,7 @@ To create an example `ProjectConfiguration`  and execute the rest of this tutori
 run the following:
 
 ```{r, warning=FALSE, message = FALSE}
-my_project_configuration <- createProjectConfiguration(path = example_ProjectConfiguration())
+my_project_configuration <- createProjectConfiguration(path = exampleProjectConfiguration())
 ```
 
 ## Design Scenarios
