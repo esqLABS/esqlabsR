@@ -23,7 +23,7 @@ exampleDirectory <- function(name = NULL) {
 #' exampleProjectConfigurationFile()
 exampleProjectConfigurationFile <- function() {
   # for now it targets TestProject as it is both an example and a test project
-  file.path(exampleDirectory("TestProject"), "projectConfiguration.xlsx")
+  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
 }
 
 #' Get an example ProjectConfiguration object
@@ -43,7 +43,7 @@ exampleProjectConfiguration <- function(){
 #' @export
 #' @examples
 #' project <- exampleProject()
-getExampleProject <- function() {
+exampleProject <- function() {
   .exampleProject <- NULL
 
   function() {
@@ -54,11 +54,3 @@ getExampleProject <- function() {
     return(.exampleProject)
   }
 }
-
-#' Example Project shiped with esqlabsR
-#'
-#' @return a ready to run esqlabsR project
-#' @export
-#' @examples
-#' project <- exampleProject()
-exampleProject <- getExampleProject()
