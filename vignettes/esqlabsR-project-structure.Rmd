@@ -44,7 +44,7 @@ By printing the `ProjectConfiguration`, we can see the locations of all files
 used in the workflows:
 
 ```{r, eval = TRUE}
-my_project_configuration <- createDefaultProjectConfiguration(path = example_ProjectConfiguration())
+my_project_configuration <- createProjectConfiguration(path = example_ProjectConfiguration())
 ```
 
 Now that the project structure is initialized and the `ProjectConfiguration` is 
