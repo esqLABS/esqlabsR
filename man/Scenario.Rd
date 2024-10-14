@@ -33,9 +33,6 @@ the simulation parameters and the resulting simulation object.
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{configuration}}{Retrieve all the  parameters corresponding the the
-scenario configuration.}
-
 \item{\code{model}}{path of the scenario's pkml model file.}
 
 \item{\code{simulation}}{Loaded simulation for the scenario.}

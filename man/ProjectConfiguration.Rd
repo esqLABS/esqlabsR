@@ -114,6 +114,8 @@ Export ProjectConfiguration object to ProjectConfiguration.xlsx
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{path}}{A string representing the path to the exported file.}
+
 \item{\code{path}}{A string representing the path where to save the file.}
 }
 \if{html}{\out{</div>}}

@@ -147,7 +147,7 @@ For the following examples, we will simulate an example scenario as described in
 ```{r, echo = TRUE}
 library(esqlabsR)
 # Create a project configuration
-projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
+projectConfiguration <- createProjectConfiguration(example_ProjectConfiguration())
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   scenarioNames = "TestScenario",
@@ -240,7 +240,7 @@ For the following examples, we will use the same scenario as described in the
 ```{r}
 library(esqlabsR)
 # Create a project configuration
-projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
+projectConfiguration <- createProjectConfiguration(example_ProjectConfiguration())
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   scenarioNames = "TestScenario",
@@ -373,7 +373,7 @@ observed data are present in the `projectConfiguration$dataFolder`
 folder, the following code loads the data:
 
 ```{r loadObservedData}
-projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
+projectConfiguration <- createProjectConfiguration(example_ProjectConfiguration())
 
 dataSheets <- "Laskin 1982.Group A"
 

@@ -3,4 +3,3 @@ test_that("Configuration object can be initialized", {
 
   expect_no_condition(Configuration$new(project = project))
 })
-

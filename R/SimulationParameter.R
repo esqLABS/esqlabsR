@@ -85,9 +85,9 @@ SimulationParameter <- R6::R6Class(
 #'
 flattenParameterObjects <- function(simulationParameters) {
   list(
-    paths = purrr::map(simulationParameters, ~ purrr::pluck(.x, "paths")) %>% purrr::flatten_chr(),
-    values = purrr::map(simulationParameters, ~ purrr::pluck(.x, "values")) %>% purrr::flatten_dbl(),
-    units = purrr::map(simulationParameters, ~ purrr::pluck(.x, "units")) %>% purrr::flatten_chr()
+    paths = purrr::map(simulationParameters, ~ purrr::pluck(.x, "paths")) %>% purrr::list_c(),
+    values = purrr::map(simulationParameters, ~ purrr::pluck(.x, "values")) %>% purrr::list_c(),
+    units = purrr::map(simulationParameters, ~ purrr::pluck(.x, "units")) %>% purrr::list_c()
   )
 }
 

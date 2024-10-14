@@ -1,6 +1,3 @@
-skip()
-skip_on_ci()
-
 test_that("`createDefaultProjectConfiguration()` works as expected", {
   # current wd to restore at the end of the test
   oldWd <- getwd()
