@@ -21,8 +21,6 @@ Project <-
         self$projectConfiguration <- projectConfiguration
         private$.availableScenarios <- private$.getAvailableScenarios()
         private$.initializeScenarios()
-        private$.warningManager <- WarningManager$new()  # Initialize WarningManager
-
       },
       #' @description Print the project object
       print = function() {
@@ -148,34 +146,7 @@ Project <-
         private$.simulationResults <- allSimulationResults[names(self$activeScenarios)]
 
         invisible(self)
-      },
-      #' @description Validate the project configuration.
-      #' This method will check if all references in scenarios are valid and print warnings if any.
-      status = function(explicit = TRUE) {
-
-        purrr::walk(self$configurations$scenarios, ~ .x$validate())
-        warnings <- private$.warningManager$get_warnings()
-
-        if (length(warnings) > 0) {
-          cli::cli_alert_info("Warnings:")
-          cli::cli_ul()
-          for (scenario_name in names(warnings)) {
-            for (code in names(warnings[[scenario_name]])) {
-              cli::cli_alert_warning(paste0("Scenario: ", scenario_name, " - ", warnings[[scenario_name]][[code]]))
-            }
-          }
-          cli::cli_end()
-        } else {
-          if (explicit) {
-            cli::cli_alert_success("No warnings found.")
-          }
-        }
-      },
-
-      get_warning_manager = function() {
-        return(private$.warningManager)  # Return the WarningManager instance
       }
-
     ),
     active = list(
       #' @field configurations Configurations as defined in the Configurations
@@ -188,9 +159,6 @@ Project <-
         if (!missing(value)) {
           private$.configurations <- value
           private$.newConfigurations <- TRUE
-
-          # Trigger validation after configurations are altered
-          self$status(explicit = FALSE)
         }
 
         return(private$.configurations)
@@ -229,8 +197,6 @@ Project <-
       .availableScenarios = NULL,
       .scenarios = list(),
       .simulationResults = list(),
-      # Initialize warningManager as NULL initially
-      .warningManager = NULL,
       .getAvailableScenarios = function() {
         readExcel(
           path = self$projectConfiguration$scenariosFile,

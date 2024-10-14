@@ -1,8 +1,5 @@
 ## context("readScenarioConfigurationFromExcel")
 # Create a project configuration
-skip()
-skip_on_ci()
-
 projectConfiguration <- testProjectConfiguration()
 
 # Template scenario configuration for testing
