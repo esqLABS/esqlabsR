@@ -17,10 +17,24 @@ Project <-
       #'
       #' @param projectConfiguration A ProjectConfiguration object created by
       #' `createProjectConfiguration()`
-      initialize = function(projectConfiguration) {
-        self$projectConfiguration <- projectConfiguration
-        private$.availableScenarios <- private$.getAvailableScenarios()
-        private$.initializeScenarios()
+      initialize = function(projectConfiguration, importJSON = FALSE) {
+
+        if (importJSON) {
+          # If jsonFilePath is provided, import the project from JSON
+          importedProject <- private$.importFromJSON(projectConfiguration)
+          self$projectConfiguration <- importedProject$projectConfiguration
+          private$.availableScenarios <- importedProject$availableScenarios
+          private$.scenarios <- importedProject$scenarios
+          private$.simulationResults <- importedProject$simulationResults
+        } else {
+          # Standard initialization process
+          self$projectConfiguration <- projectConfiguration
+          private$.availableScenarios <- private$.getAvailableScenarios()
+          private$.initializeScenarios()
+        }
+
+        private$.warningManager <- WarningManager$new()  # Initialize WarningManager
+
       },
       #' @description Print the project object
       print = function() {
@@ -146,6 +160,67 @@ Project <-
         private$.simulationResults <- allSimulationResults[names(self$activeScenarios)]
 
         invisible(self)
+
+      },
+      #' @description Validate the project configuration.
+      #' This method will check if all references in scenarios are valid and print warnings if any.
+      status = function(explicit = TRUE) {
+
+        purrr::walk(self$configurations$scenarios, ~ .x$validate())
+        warnings <- private$.warningManager$get_warnings()
+
+        if (length(warnings) > 0) {
+          cli::cli_alert_info("Warnings:")
+          cli::cli_ul()
+          for (scenario_name in names(warnings)) {
+            for (code in names(warnings[[scenario_name]])) {
+              cli::cli_alert_warning(paste0("Scenario: ", scenario_name, " - ", warnings[[scenario_name]][[code]]))
+            }
+          }
+          cli::cli_end()
+        } else {
+          if (explicit) {
+            cli::cli_alert_success("No warnings found.")
+          }
+        }
+      },
+      #' @description Export the entire project to a JSON file
+      #' @param filePath The file path where the JSON will be saved
+      #' @return NULL
+      exportToJSON = function() {
+
+        # Prompt for the directory path
+        dirPath <- readline(prompt = "Please enter the directory path where to save the file: ")
+
+        # Validate directory path
+        if (!dir.exists(dirPath)) {
+          cli::cli_alert_danger("Invalid directory path. Export aborted.")
+          return(invisible(NULL))
+        }
+
+        # Prompt for the file name
+        fileName <- readline(prompt = "Please enter the file name (without extension): ")
+
+        # Construct the full file path by combining the directory path and file name
+        filePath <- file.path(dirPath, paste0(fileName, ".json"))
+
+        # Convert the project configuration and scenarios to a list format
+        projectData <- list(
+          projectConfiguration = self$projectConfiguration$toList(),
+          configurations = self$configurations$toList(),
+          scenarios = purrr::map(self$scenarios, ~ .x$toList()),  # Convert each scenario to a list
+          simulationResults = private$.simulationResults  # Add simulation results
+        )
+
+        # Use jsonlite to serialize the list to JSON and save it to a file
+        jsonlite::write_json(projectData, path = filePath, pretty = TRUE, auto_unbox = TRUE)
+
+        cli::cli_alert_success(paste("Project successfully exported to", filePath))
+        invisible(NULL)
+      },
+
+      get_warning_manager = function() {
+        return(private$.warningManager)  # Return the WarningManager instance
       }
     ),
     active = list(
@@ -205,6 +280,26 @@ Project <-
       },
       .initializeConfigurations = function() {
         private$.configurations <- Configuration$new(self)
+      },
+      #' @description Import the project from a JSON file (private method)
+      #' @param filePath The file path where the JSON is located
+      #' @return A new `Project` object based on the data in the JSON file
+      .importFromJSON = function(filePath) {
+        # Check if file exists
+        if (!file.exists(filePath)) {
+          cli::cli_alert_danger("File does not exist.")
+          return(invisible(NULL))
+        }
+
+        # Read JSON data
+        projectData <- jsonlite::read_json(filePath)
+        # Recreate the ProjectConfiguration object from the JSON data
+        projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = projectData$projectConfiguration$`Project Configuration`)
+        # Create a new Project object
+        project <- Project$new(projectConfiguration = projectConfiguration)
+
+        cli::cli_alert_success("Project successfully imported from {filePath}")
+        return(project)
       },
       .initializeScenarios = function() {
         if (is.null(private$.scenarios)) {
