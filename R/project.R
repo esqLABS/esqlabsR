@@ -34,7 +34,6 @@ Project <-
         }
 
         private$.warningManager <- WarningManager$new()  # Initialize WarningManager
-
       },
       #' @description Print the project object
       print = function() {
@@ -160,7 +159,6 @@ Project <-
         private$.simulationResults <- allSimulationResults[names(self$activeScenarios)]
 
         invisible(self)
-
       },
       #' @description Validate the project configuration.
       #' This method will check if all references in scenarios are valid and print warnings if any.
