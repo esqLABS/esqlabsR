@@ -17,6 +17,10 @@ reference:
   contents:
   - contains("Project")
   - contains("Scenario")
+  - Configuration
+  # - Individual
+  # - Populations
+  # - SteadyStateTime
   - createPlotsFromExcel
   - init_project
 - title: Helpers for data import, wrangling, and export
@@ -36,7 +40,6 @@ reference:
   - contains("Quantiles")
   - matches("^geo")
   - sampleRandomValue
-  - applyIndividualParameters
   - Distributions
   - LLOQMode
   - ULOQMode

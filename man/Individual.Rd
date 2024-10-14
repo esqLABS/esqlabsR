@@ -6,6 +6,7 @@
 \description{
 A Class representing an individual through its biological characteristics and specific simulation parameters.
 }
+\keyword{internal}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{

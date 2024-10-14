@@ -1,5 +1,6 @@
 #' @title Individual
 #' @description A Class representing an individual through its biological characteristics and specific simulation parameters.
+#' @keywords internal
 Individual <- R6::R6Class(
   classname = "Individual",
   public = list(
