@@ -15,7 +15,7 @@ test_that("Wrong simumationTimeUnit returns an error", {
         simulationTimeUnit = "µM"
       )
     },
-    regexp = 'The simulation time unit must be a valid unit of time as defined in'
+    regexp = '`simulationTimeUnit` must be one of "s", "min".*'
   )
 })
 
