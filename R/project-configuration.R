@@ -6,7 +6,6 @@
 #' @export
 ProjectConfiguration <- R6::R6Class(
   "ProjectConfiguration",
-  inherit = ospsuite.utils::Printable,
   cloneable = TRUE,
   active = list(
     #' @field projectConfigurationFilePath Path to the file that serve as base
@@ -82,6 +81,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$populationsFile$value <- value
       }
+
       private$.clean_path(
         private$.projectConfigurationData$populationsFile$value,
         self$configurationsFolder
@@ -292,27 +292,28 @@ ProjectConfiguration <- R6::R6Class(
     #' Print
     #' @description print prints a summary of the Project Configuration.
     print = function() {
-      private$printClass()
-      private$printLine("Relative path from working directory", getwd())
-      private$printLine("Project Configuration File", fs::path_rel(as.character(self$projectConfigurationFilePath)))
-      private$printLine("Model folder", fs::path_rel(as.character(self$modelFolder)))
-      private$printLine("Configurations folder", fs::path_rel(as.character(self$configurationsFolder)))
-      private$printLine("Model Parameters", fs::path_rel(as.character(self$modelParamsFile)))
-      private$printLine("Individuals", fs::path_rel(as.character(self$individualsFile)))
-      private$printLine("Populations", fs::path_rel(as.character(self$populationsFile)))
-      private$printLine("Populations Folder", fs::path_rel(as.character(self$populationsFolder)))
-      private$printLine("Scenarios", fs::path_rel(as.character(self$scenariosFile)))
-      private$printLine("Applications", fs::path_rel(as.character(self$applicationsFile)))
-      private$printLine("Plots", fs::path_rel(as.character(self$plotsFile)))
-      private$printLine("Data folder", fs::path_rel(as.character(self$dataFolder)))
-      private$printLine("Data file", fs::path_rel(as.character(self$dataFile)))
-      private$printLine("Data importer configuration", fs::path_rel(as.character(self$dataImporterConfigurationFile)))
-      private$printLine("Output folder", fs::path_rel(as.character(self$outputFolder)))
-      invisible(self)
+      cli_h1("Project Configuration")
+      cli_ul()
+      cli_li("Project Configuration: {fs::path_rel(as.character(self$projectConfigurationFilePath))}")
+      cli_li("Model folder: {fs::path_rel(as.character(self$modelFolder))}")
+      cli_li("Configurations folder: {fs::path_rel(as.character(self$configurationsFolder))}")
+      cli_li("Model Parameters: {fs::path_rel(as.character(self$modelParamsFile))}")
+      cli_li("Individuals: {fs::path_rel(as.character(self$individualsFile))}")
+      cli_li("Populations: {fs::path_rel(as.character(self$populationsFile))}")
+      cli_li("PopulationsFolder: {fs::path_rel(as.character(self$populationsFolder))}")
+      cli_li("Scenarios: {fs::path_rel(as.character(self$scenariosFile))}")
+      cli_li("Applications: {fs::path_rel(as.character(self$applicationsFile))}")
+      cli_li("Plots: {fs::path_rel(as.character(self$plotsFile))}")
+      cli_li("Data folder: {fs::path_rel(as.character(self$dataFolder))}")
+      cli_li("Data file: {fs::path_rel(as.character(self$dataFile))}")
+      cli_li("Data importer configuration: {fs::path_rel(as.character(self$dataImporterConfigurationFile))}")
+      cli_li("Output folder: {fs::path_rel(as.character(self$outputFolder))}")
+      cli_end()
     },
     #' @description Export ProjectConfiguration object to ProjectConfiguration.xlsx
     #' @param path A string representing the path to the exported file.
     #'
+    #' @param path A string representing the path where to save the file.
     #' @export
     save = function(path) {
       excel_file <- readExcel(path = self$projectConfigurationFilePath)
@@ -340,3 +341,35 @@ ProjectConfiguration <- R6::R6Class(
     }
   )
 )
+
+#' Create a default `ProjectConfiguration`
+#'
+#' @inheritParams readExcel
+#'
+#' @details Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
+#' located in the "Code" folder.
+#'
+#' @return Object of type `ProjectConfiguration`
+#' @export
+createDefaultProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
+  lifecycle::deprecate_soft(
+    what = "createDefaultProjectConfiguration()",
+    with = "createProjectConfiguration()",
+    when = "5.1.4"
+  )
+  return(createProjectConfiguration(path))
+}
+
+
+#' #' Create a `ProjectConfiguration`
+#'
+#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx` file located in the working directory.
+#'
+#' @details Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
+#'
+#' @return Object of type `ProjectConfiguration`
+#' @export
+createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
+  projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = path)
+  return(projectConfiguration)
+}

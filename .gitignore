@@ -57,3 +57,4 @@ tests/testthat/Rplots.pdf
 *.code-workspace
 docs
 pkgdown
+**/~\$*\.xlsx

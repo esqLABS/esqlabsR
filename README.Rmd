@@ -77,7 +77,7 @@ library(esqlabsR)
 
 # Load excel-based configuration
 my_project_configuration <-
-  createProjectConfiguration(example_ProjectConfiguration())
+  createProjectConfiguration(exampleProjectConfiguration())
 
 
 # Setup simulation scenarios

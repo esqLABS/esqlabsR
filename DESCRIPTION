@@ -22,6 +22,7 @@ Depends:
     ospsuite (>= 12.1.0),
     R (>= 4.1)
 Imports:
+    cli,
     colorspace,
     dplyr,
     fs,
