@@ -1,5 +1,6 @@
 #' @title SteadyStateTime
 #' @description A class representing the simulation time of a scenario.
+#' @keywords internal
 SteadyStateTime <- R6::R6Class(
   classname = "SteadyStateTime",
   public = list(

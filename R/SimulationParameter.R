@@ -83,6 +83,7 @@ SimulationParameter <- R6::R6Class(
 #'
 #' @param simulationParameters list of `SimulationParameter`
 #'
+#' @keywords internal
 flattenParameterObjects <- function(simulationParameters) {
   list(
     paths = purrr::map(simulationParameters, ~ purrr::pluck(.x, "paths")) %>% purrr::list_c(),

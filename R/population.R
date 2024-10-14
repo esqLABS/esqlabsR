@@ -1,5 +1,6 @@
 #' @title Population
 #' @description A class representing a population of individuals.
+#' @keywords internal
 Population <- R6::R6Class(
   classname = "Population",
   public = list(
