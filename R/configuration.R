@@ -30,6 +30,7 @@ Configuration <- R6::R6Class(
         cli_li("Models: {length(self$models)}")
         cli_li("Model Parameters: {length(self$modelParameters)}")
         cli_li("Individuals: {length(self$individuals)}")
+        cli_li("Plots: {length(self$plots)}")
         cli_li("Applications: {length(self$applications)}")
         cli_li("OutputPaths: {length(self$outputPaths)}")
         cli_end()
@@ -57,6 +58,10 @@ Configuration <- R6::R6Class(
         individuals <- cli_ul()
         purrr::imap(self$individuals, ~ cli_li(.y))
         cli_end(individuals)
+        cli_li("Plots:")
+        plots <- cli_ul()
+        purrr::imap(self$plots, ~ cli_li(.y))
+        cli_end(plots)
         cli_li("Applications:")
         applications <- cli_ul()
         purrr::imap(self$applications, ~ cli_li(.y))
@@ -110,6 +115,16 @@ Configuration <- R6::R6Class(
       }
       return(private$.individuals)
     },
+    #' @field plots all the plots configurations defined in the project
+    plots = function(value) {
+      if (is.null(private$.plots)) {
+        private$.plots <- private$.createPlotsConfigurations()
+      }
+      if (!missing(value)) {
+        private$.plots <- modifyList(private$.plots, value)
+      }
+      return(private$.plots)
+    },
     #' @field populations all the populations configurations defined in the project
     populations = function(value) {
       if (is.null(private$.populations)) {
@@ -148,6 +163,7 @@ Configuration <- R6::R6Class(
     .modelParameters = NULL,
     .individuals = NULL,
     .populations = NULL,
+    .plots = NULL,
     .applications = NULL,
     .outputPaths = NULL,
     .createScenariosConfigurations = function() {
@@ -245,6 +261,39 @@ Configuration <- R6::R6Class(
       }
       return(populations)
     },
+    .createPlotsConfigurations = function() {
+      plotFilePath <- private$.project$projectConfiguration$plotsFile
+      plotsSheets <- readxl::excel_sheets(plotFilePath)
+      plotsCharacteristicsData <- readExcel(plotFilePath, sheet = 2)
+      validatePlotsFileStructure(
+        filePath = plotFilePath,
+        data = plotsCharacteristicsData
+      )
+      plots <- list()
+      for (i in 1:nrow(plotsCharacteristicsData)) {
+        plotCharacteristicsData <- plotsCharacteristicsData[i, ]
+        plotId <- plotCharacteristicsData$plotID
+        if (plotId %in% plotsSheets) {
+          plotParameters <- createParametersFromSheet(private$.project, plotFilePath, plotId)
+        }
+        plots[[plotId]] <- list(
+          DataCombinedName = plotCharacteristicsData$DataCombinedName,
+          plotType = plotCharacteristicsData$plotType,
+          title = plotCharacteristicsData$title,
+          xUnit = plotCharacteristicsData$xUnit,
+          yUnit = plotCharacteristicsData$yUnit,
+          xAxisScale = plotCharacteristicsData$xAxisScale,
+          yAxisScale = plotCharacteristicsData$yAxisScale,
+          xValuesLimits = plotCharacteristicsData$xValuesLimits,
+          yValuesLimits = plotCharacteristicsData$yValuesLimits,
+          aggregation = plotCharacteristicsData$aggregation,
+          quantiles = plotCharacteristicsData$quantiles,
+          nsd = plotCharacteristicsData$nsd,
+          foldDistance = plotCharacteristicsData$foldDistance
+        )
+      }
+      return(plots)
+    },
     .createModelParametersConfigurations = function() {
       return(
         createParametersFromFile(
@@ -325,6 +374,26 @@ validatePopulationsFileStructure <- function(filePath, data) {
     "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein", "Ontogeny"
   )
 
+  if (!all(columnNames %in% names(data))) {
+    stop(messages$errorWrongXLSStructure(filePath, expectedColNames = columnNames))
+  }
+}
+validatePlotsFileStructure <- function(filePath, data) {
+  columnNames <- c(
+    "plotID",
+    "DataCombinedName",
+    "plotType",
+    "xUnit",
+    "yUnit",
+    "xAxisScale",
+    "yAxisScale",
+    "xValuesLimits",
+    "yValuesLimits",
+    "aggregation",
+    "quantiles",
+    "nsd",
+    "foldDistance"
+  )
   if (!all(columnNames %in% names(data))) {
     stop(messages$errorWrongXLSStructure(filePath, expectedColNames = columnNames))
   }
