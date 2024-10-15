@@ -185,19 +185,33 @@ Project <-
       #' @description Export the entire project to a JSON file
       #' @param filePath The file path where the JSON will be saved
       #' @return NULL
-      exportToJSON = function() {
+      exportToJSON = function(interactiveInput = TRUE, dirPath = NULL, fileName = NULL) {
 
-        # Prompt for the directory path
-        dirPath <- readline(prompt = "Please enter the directory path where to save the file: ")
+        if (interactiveInput) {
+          # Prompt for the directory path
+          dirPath <- readline(prompt = "Please enter the directory path where to save the file: ")
 
-        # Validate directory path
-        if (!dir.exists(dirPath)) {
-          cli::cli_alert_danger("Invalid directory path. Export aborted.")
-          return(invisible(NULL))
+          # Validate directory path
+          if (!dir.exists(dirPath)) {
+            cli::cli_alert_danger("Invalid directory path. Export aborted.")
+            return(invisible(NULL))
+          }
+
+          # Prompt for the file name
+          fileName <- readline(prompt = "Please enter the file name (without extension): ")
+        } else {
+          # Ensure both parameters are provided if interactiveInput is FALSE
+          if (is.null(dirPath) || is.null(fileName)) {
+            cli::cli_alert_danger("Both 'dirPath' and 'fileName' must be provided when 'interactiveInput' is FALSE.")
+            return(invisible(NULL))
+          }
+
+          # Validate directory path
+          if (!dir.exists(dirPath)) {
+            cli::cli_alert_danger("Invalid directory path. Export aborted.")
+            return(invisible(NULL))
+          }
         }
-
-        # Prompt for the file name
-        fileName <- readline(prompt = "Please enter the file name (without extension): ")
 
         # Construct the full file path by combining the directory path and file name
         filePath <- file.path(dirPath, paste0(fileName, ".json"))

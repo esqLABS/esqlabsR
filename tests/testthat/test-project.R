@@ -126,3 +126,44 @@ test_that("Model is not defined", {
     "MODEL_NOT_FOUND"
   )
 })
+
+
+# Project export test ----------------------------------------------------------
+test_that("exportToJSON(), missed export parameters", {
+  p <- testProject()
+  result <- p$exportToJSON(interactiveInput = FALSE)
+
+  expect_null(result)
+})
+
+
+test_that("Export aborts with invalid directory in non-interactive mode", {
+  p <- testProject()
+  # Capture cli output using testthat::expect_message()
+  expect_message(
+    p$exportToJSON(interactiveInput = FALSE, dirPath = "invalid_path", fileName = "test"),
+    "Invalid directory path. Export aborted."
+  )
+})
+
+test_that("Interactive mode prompts correctly", {
+  skip()
+  skip_on_ci()
+
+  p <- testProject()
+  # Mock the readline inputs to simulate user input
+  with_mock(
+    `readline` = function(prompt) if (grepl("directory", prompt)) tempdir() else "test_project",
+    {
+      p$exportToJSON(interactiveInput = TRUE)
+
+      # Check that the JSON file exists
+      json_file <- file.path(tempdir(), "test_project.json")
+      expect_true(file.exists(json_file))
+
+      # Clean up by removing the JSON file
+      file.remove(json_file)
+    }
+  )
+})
+
