@@ -46,6 +46,75 @@ ScenarioConfiguration <-
             OutputPathsIds = mergeCellValues(self$outputPaths)
           )
         )
+      },
+      #' @description Validate the scenario configuration object
+      validate = function() {
+
+        # Validate individual
+        individuals <- private$.project$configurations$individuals |> names()
+        if (!all(is.na(self$individual)) && !all(self$individual %in% individuals)) {
+          private$.project$get_warning_manager()$add_warning(
+            self$id,
+            "INDIVIDUAL_NOT_FOUND",
+            paste0("The individual '", self$individual, "' does not exist in the individuals configuration.")
+          )
+        } else {
+          private$.project$get_warning_manager()$remove_warning(self$id, "INDIVIDUAL_NOT_FOUND")
+        }
+
+        # Validate model parameters
+        model_parameters <- private$.project$configurations$modelParameters |> names()
+        for (mp in self$modelParameters) {
+          if (!(mp %in% model_parameters)) {
+            private$.project$get_warning_manager()$add_warning(
+              self$id,
+              "MODEL_PARAMETER_NOT_FOUND",
+              paste0("The model parameter '", mp, "' does not exist in the model parameters configuration.")
+            )
+          } else {
+            private$.project$get_warning_manager()$remove_warning(self$id, "MODEL_PARAMETER_NOT_FOUND")
+          }
+        }
+
+        # Validate applications
+        applications <- private$.project$configurations$applications |> names()
+        for (app in self$applications) {
+          if (!(app %in% applications)) {
+            private$.project$get_warning_manager()$add_warning(
+              self$id,
+              "APPLICATION_NOT_FOUND",
+              paste0("The application '", app, "' does not exist in the applications configuration.")
+            )
+          } else {
+            private$.project$get_warning_manager()$remove_warning(self$id, "APPLICATION_NOT_FOUND")
+          }
+        }
+
+        # Validate model
+        models <- private$.project$configurations$models
+        if (!all(is.na(self$model)) && !all(self$model %in% models)) {
+          private$.project$get_warning_manager()$add_warning(
+            self$id,
+            "MODEL_NOT_FOUND",
+            paste0("The model '", self$model, "' does not exist in the models configuration.")
+          )
+        } else {
+          private$.project$get_warning_manager()$remove_warning(self$id, "MODEL_NOT_FOUND")
+        }
+
+        # Validate output path
+        outputPaths <- private$.project$configurations$outputPaths |> names()
+        if (!all(is.na(self$outputPaths)) && !all(self$outputPaths %in% outputPaths)) {
+          private$.project$get_warning_manager()$add_warning(
+            self$id,
+            "OUTPUTPATH_NOT_FOUND",
+            paste0("The output path '", self$outputPaths, "' does not exist in the output folders configuration.")
+          )
+        } else {
+          private$.project$get_warning_manager()$remove_warning(self$id, "OUTPUTPATH_NOT_FOUND")
+        }
+
+
       }
     ),
     private = list(

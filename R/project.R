@@ -232,6 +232,9 @@ Project <-
         if (!missing(value)) {
           private$.configurations <- value
           private$.newConfigurations <- TRUE
+
+          # Trigger validation after configurations are altered
+          self$status(explicit = FALSE)
         }
 
         return(private$.configurations)
@@ -270,6 +273,8 @@ Project <-
       .availableScenarios = NULL,
       .scenarios = list(),
       .simulationResults = list(),
+      # Initialize warningManager as NULL initially
+      .warningManager = NULL,
       .getAvailableScenarios = function() {
         readExcel(
           path = self$projectConfiguration$scenariosFile,

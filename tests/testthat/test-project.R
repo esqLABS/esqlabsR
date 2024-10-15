@@ -106,3 +106,23 @@ test_that("Scenario can be run", {
 })
 
 
+test_that("No warnings during validation", {
+  project <- testProject()
+  expect_equal(project$get_warning_manager()$get_warnings(), list())
+})
+test_that("Individual is not defined", {
+  project <- testProject()
+  project$configurations$scenarios$TestScenario$individual <- "Non-declared individual"
+  expect_equal(
+    ls(project$get_warning_manager()$get_warnings()$TestScenario),
+    "INDIVIDUAL_NOT_FOUND"
+  )
+})
+test_that("Model is not defined", {
+  project <- testProject()
+  project$configurations$scenarios$TestScenario$model <- "Non-declared model"
+  expect_equal(
+    ls(project$get_warning_manager()$get_warnings()$TestScenario),
+    "MODEL_NOT_FOUND"
+  )
+})
