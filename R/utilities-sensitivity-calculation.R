@@ -410,7 +410,7 @@
 
 # validation helpers ------------------------------
 
-#' @title Validate variation range
+#' @title Validate variation range vector
 #'
 #' @description
 #'
@@ -420,7 +420,7 @@
 #' - are all unique
 #' - include base scaling (i.e. a scaling of 1.0)
 #'
-#' @inheritParams sensitivityCalculation
+#' @param variationRange A numeric vector of values representing scaling factors.
 #'
 #' @keywords internal
 #' @noRd
@@ -437,7 +437,59 @@
   }
 
   # return sorted vector of scaling values
-  sort(variationRange)
+  return(sort(variationRange))
+}
+
+#' Normalize variation range to a list
+#'
+#' Ensures that `variationRange` is normalized to a list, either by converting
+#' a vector or validating that a provided list is of the correct length matching
+#' `parameterPaths`.
+#'
+#' @param variationRange A vector or list of variation values.
+#' @param parameterPaths A single or a vector of the parameter path(s) to be
+#' varied.
+#' @return A named list of `variationRange` values.
+#'
+#' @keywords internal
+#' @noRd
+.normalizeVariationRange <- function(variationRange, parameterPaths) {
+  variationRange <- toList(variationRange)
+
+  if (length(variationRange) == 1) {
+    variationRange <- rep(variationRange, length(parameterPaths))
+  }
+  # Ensure the lengths of variationRange and parameterPath are equal
+  else if (length(variationRange) != length(parameterPaths)) {
+    cli::cli_abort(
+      "variationRange must be either a vector or a list equal to the length of parameterPaths."
+    )
+  }
+
+  names(variationRange) <- parameterPaths
+
+  return(variationRange)
+}
+
+#' Transform variation range from absolute to relative
+#'
+#' This function transforms absolute values in `variationRange` to relative
+#' values based on `initialValues` when `variationType` is set to "absolute".
+#'
+#' @param variationRange A named list of variation values (absolute or relative).
+#' @param initialValues A named list of initial parameter values.
+#' @param variationType A string specifying the variation type ("absolute" or "relative").
+#' @return A list of transformed variationRange values.
+#'
+#' @keywords internal
+#' @noRd
+.transformVariationRange <- function(variationRange, initialValues, variationType) {
+
+  if (variationType == "absolute") {
+    variationRange <- purrr::map2(variationRange, initialValues, ~ .x / .y)
+  }
+
+  return(variationRange)  #
 }
 
 #' Validate vector arguments of `character` type

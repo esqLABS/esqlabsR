@@ -61,6 +61,7 @@ sensitivityCalculation <- function(simulation,
                                    outputPaths,
                                    parameterPaths,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
+                                   variationType = c("percent"),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
                                    customOutputFunctions = NULL,
                                    saOutputFilePath = NULL,
@@ -70,6 +71,7 @@ sensitivityCalculation <- function(simulation,
   # Validate vector arguments of character type
   .validateCharVectors(outputPaths)
   .validateCharVectors(parameterPaths)
+  .validateCharVectors(variationType)
   .validateCharVectors(pkParameters, nullAllowed = TRUE)
 
   # Check for non-standard PK parameters
@@ -81,7 +83,7 @@ sensitivityCalculation <- function(simulation,
 
   # Check provided variation range using custom function.
   # This also makes sure that there is always `1.0` present in this vector.
-  variationRange <- .validateVariationRange(variationRange)
+  # variationRange <- .validateVariationRange(variationRange)
 
   # Fail early to avoid costly failure after analysis is already carried out.
   if (!is.null(saOutputFilePath)) {
@@ -104,6 +106,14 @@ sensitivityCalculation <- function(simulation,
   initialValues <- vector("double", length(parameterPaths))
   names(initialValues) <- parameterPaths
 
+  # Convert variationRange
+  variationRange <- .normalizeVariationRange(variationRange, parameterPaths)
+  # Transform and validate variationRange
+  variationRange <- .transformVariationRange(
+    variationRange, initialValues, variationType
+  )
+  variationRange <- lapply(variationRange, .validateVariationRange)
+
   # Each simulation batch result has an ID.
   # Create a map of IDs to varied parameter paths and scale factors
   # (alternatively, values of the parameters could be used as keys).
@@ -112,8 +122,10 @@ sensitivityCalculation <- function(simulation,
 
   for (parameterPath in parameterPaths) {
     # Initialize `batchResultsIdMap` for the current parameter
-    batchResultsIdMap[[parameterPath]] <- vector("list", length(variationRange))
-    names(batchResultsIdMap[[parameterPath]]) <- variationRange
+    batchResultsIdMap[[parameterPath]] <- vector(
+      "list", length(variationRange[[parameterPath]])
+    )
+    names(batchResultsIdMap[[parameterPath]]) <- variationRange[[parameterPath]]
     # Check if the parameter is given by an explicit formula
     isExplicitFormulaByPath <- ospsuite::isExplicitFormulaByPath(
       path = parameterPath,
@@ -146,10 +158,12 @@ sensitivityCalculation <- function(simulation,
     # Add run values. While varying one parameter, the values of remaining
     # constant parameters remain at their initial values.
     for (constantParamPath in constantParamPaths) {
-      for (scaleFactorIdx in seq_along(variationRange)) {
+      for (scaleFactorIdx in seq_along(variationRange[[constantParamPath]])) {
         # Change the value of the varied parameter
         runValues <- initialValues[constantParamPaths]
-        runValues[[constantParamPath]] <- variationRange[[scaleFactorIdx]] * runValues[[constantParamPath]]
+        runValues[[constantParamPath]] <-
+          variationRange[[constantParamPath]][[scaleFactorIdx]] *
+          runValues[[constantParamPath]]
 
         # Add run values and store the ID in the `batchResultsIdMap`
         batchResultsIdMap[[constantParamPath]][[scaleFactorIdx]] <-
@@ -168,9 +182,11 @@ sensitivityCalculation <- function(simulation,
     )
 
     # Add run values.
-    for (scaleFactorIdx in seq_along(variationRange)) {
+    for (scaleFactorIdx in seq_along(variationRange[[formulaParamPath]])) {
       batchResultsIdMap[[formulaParamPath]][[scaleFactorIdx]] <-
-        formulaBatch$addRunValues(parameterValues = variationRange[[scaleFactorIdx]] * initialValues[[formulaParamPath]])
+        formulaBatch$addRunValues(
+          parameterValues = variationRange[[formulaParamPath]][[scaleFactorIdx]] *
+            initialValues[[formulaParamPath]])
     }
 
     simulationBatches <- c(simulationBatches, formulaBatch)
