@@ -81,10 +81,6 @@ sensitivityCalculation <- function(simulation,
   .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
   validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
 
-  # Check provided variation range using custom function.
-  # This also makes sure that there is always `1.0` present in this vector.
-  # variationRange <- .validateVariationRange(variationRange)
-
   # Fail early to avoid costly failure after analysis is already carried out.
   if (!is.null(saOutputFilePath)) {
     validateIsFileExtension(saOutputFilePath, "xlsx")
@@ -92,55 +88,59 @@ sensitivityCalculation <- function(simulation,
 
   # creating `SimulationResults` batch ------------------------
 
+  # Normalize variationRange
+  variationRange <- .normalizeVariationRange(variationRange, parameterPaths)
+
   # Store old simulation outputs and set user defined
   oldOutputSelections <- simulation$outputSelections$allOutputs
   setOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
 
-  # Create as few simulation batches as possible.
-  # All constant parameters can be simulated in one batch. Each formula
-  # parameter must be a separate batch.
-  constantParamPaths <- list()
-  formulaParamPaths <- list()
-
-  # Store initial values of the parameters, i.e., where scale factor is 1.
+  # Store initial value for each parameter
   initialValues <- vector("double", length(parameterPaths))
   names(initialValues) <- parameterPaths
 
-  # Convert variationRange
-  variationRange <- .normalizeVariationRange(variationRange, parameterPaths)
-  # Transform and validate variationRange
-  variationRange <- .transformVariationRange(
-    variationRange, initialValues, variationType
-  )
-  variationRange <- lapply(variationRange, .validateVariationRange)
-
-  # Each simulation batch result has an ID.
-  # Create a map of IDs to varied parameter paths and scale factors
-  # (alternatively, values of the parameters could be used as keys).
-  batchResultsIdMap <- vector("list", length(parameterPaths))
-  names(batchResultsIdMap) <- parameterPaths
+  # Classify parameters and retrieve initial values
+  constantParamPaths <- list()
+  formulaParamPaths <- list()
 
   for (parameterPath in parameterPaths) {
-    # Initialize `batchResultsIdMap` for the current parameter
-    batchResultsIdMap[[parameterPath]] <- vector(
-      "list", length(variationRange[[parameterPath]])
-    )
-    names(batchResultsIdMap[[parameterPath]]) <- variationRange[[parameterPath]]
+
     # Check if the parameter is given by an explicit formula
     isExplicitFormulaByPath <- ospsuite::isExplicitFormulaByPath(
       path = parameterPath,
       simulation = simulation
     )
+
+    # Classify as formula or constant parameter
     if (isExplicitFormulaByPath) {
       formulaParamPaths <- c(formulaParamPaths, parameterPath)
     } else {
       constantParamPaths <- c(constantParamPaths, parameterPath)
     }
 
+    # Store the initial values for this parameter
     initialValues[[parameterPath]] <- ospsuite::getQuantityValuesByPath(
       quantityPaths = parameterPath,
       simulation = simulation
     )
+  }
+
+  # Transform and validate variationRange
+  variationRange <- .transformVariationRange(
+    variationRange, initialValues, variationType
+  )
+  variationRange <- lapply(variationRange, .validateVariationRange)
+
+  # Initialize batchResultsIdMap
+  batchResultsIdMap <- vector("list", length(parameterPaths))
+  names(batchResultsIdMap) <- parameterPaths
+
+  for (parameterPath in parameterPaths) {
+    # Initialize batchResultsIdMap for the current parameter
+    batchResultsIdMap[[parameterPath]] <- vector(
+      "list", length(variationRange[[parameterPath]])
+    )
+    names(batchResultsIdMap[[parameterPath]]) <- variationRange[[parameterPath]]
   }
 
   constantParamPaths <- unlist(constantParamPaths, use.names = FALSE)
