@@ -206,7 +206,7 @@ xyz
 
 # validate `variationRange` ------------------------
 
-test_that("sensitivityCalculation fails early with incorrect `variationRange` arguments", {
+test_that("sensitivityCalculation fails with incorrect `variationRange` arguments", {
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -215,6 +215,26 @@ test_that("sensitivityCalculation fails early with incorrect `variationRange` ar
       variationRange = c("x", "y", "z")
     ),
     "argument 'variationRange' is of type 'character', but expected 'numeric, or integer'!"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = list(c(0.1, 1, 10), c("x", "y", "z"), c(0.1, 1, 10)),
+    ),
+    "argument 'variationRange' is of type 'character', but expected 'numeric, or integer'!"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = list(c(0.1, 1, 10), c(0.1, 1, 10)),
+    ),
+    "`variationRange` must be either a vector or a list equal to the length of `parameterPaths`"
   )
 })
 
@@ -315,6 +335,28 @@ test_that("sensitivityCalculation returns the correct object", {
     length(results$parameterPaths),
     length(parameterPaths)
   )
+})
+
+
+# check `variationRange` --------------------------------------------------
+
+test_that("sensitivityCalculation works with absolute values of `variationRange`", {
+  variationRangeAbs <- list(
+    -0.097 * variationRange,
+    0.00025 * variationRange,
+    1 * variationRange
+  )
+
+  set.seed(123)
+  resultsAbs <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = variationRangeAbs,
+    variationType = "absolute"
+  )
+
+  expect_equal(results$pkData, resultsAbs$pkData)
 })
 
 # check PK tidy data -----------------------
@@ -567,17 +609,37 @@ parameterPaths <- c(
   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
+variationRange <- c(0.1, 5, 10)
 
 resultsMultiple <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths,
-  variationRange = c(0.1, 5, 10)
+  variationRange = variationRange
 )
 
 test_that("sensitivityCalculation extracts data correctly for multiple output paths", {
   expect_identical(nrow(resultsMultiple$pkData), 108L)
   expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
+})
+
+test_that("sensitivityCalculation correctly applies absolute `variationRange` with multiple paths", {
+  variationRangeAbs <- list(
+    -0.097 * variationRange,
+    0.00025 * variationRange,
+    1 * variationRange
+  )
+
+  set.seed(123)
+  resultsMultipleAbs <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = variationRangeAbs,
+    variationType = "absolute"
+  )
+
+  expect_equal(resultsMultiple$pkData, resultsMultipleAbs$pkData)
 })
 
 test_that("sensitivityCalculation applies custom PK parameter function correctly with multiple output paths", {
