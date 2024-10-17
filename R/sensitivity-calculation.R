@@ -72,7 +72,7 @@ sensitivityCalculation <- function(simulation,
                                    customOutputFunctions = NULL,
                                    saOutputFilePath = NULL,
                                    simulationRunOptions = NULL) {
-  # input validation ------------------------
+  # Input validation ------------------------------------------------------
 
   # Validate vector arguments of character type
   .validateCharVectors(outputPaths)
@@ -92,7 +92,7 @@ sensitivityCalculation <- function(simulation,
     validateIsFileExtension(saOutputFilePath, "xlsx")
   }
 
-  # creating `SimulationResults` batch ------------------------
+  # Creating SimulationResults batches ------------------------------------
 
   # Normalize variationRange
   variationRange <- .normalizeVariationRange(variationRange, parameterPaths)
@@ -110,7 +110,6 @@ sensitivityCalculation <- function(simulation,
   formulaParamPaths <- list()
 
   for (parameterPath in parameterPaths) {
-
     # Check if the parameter is given by an explicit formula
     isExplicitFormulaByPath <- ospsuite::isExplicitFormulaByPath(
       path = parameterPath,
@@ -169,7 +168,7 @@ sensitivityCalculation <- function(simulation,
         runValues <- initialValues[constantParamPaths]
         runValues[[constantParamPath]] <-
           variationRange[[constantParamPath]][[scaleFactorIdx]] *
-          runValues[[constantParamPath]]
+            runValues[[constantParamPath]]
 
         # Add run values and store the ID in the `batchResultsIdMap`
         batchResultsIdMap[[constantParamPath]][[scaleFactorIdx]] <-
@@ -192,7 +191,8 @@ sensitivityCalculation <- function(simulation,
       batchResultsIdMap[[formulaParamPath]][[scaleFactorIdx]] <-
         formulaBatch$addRunValues(
           parameterValues = variationRange[[formulaParamPath]][[scaleFactorIdx]] *
-            initialValues[[formulaParamPath]])
+            initialValues[[formulaParamPath]]
+        )
     }
 
     simulationBatches <- c(simulationBatches, formulaBatch)
@@ -207,19 +207,13 @@ sensitivityCalculation <- function(simulation,
   # Call gc() on .NET
   ospsuite::clearMemory()
 
-  # `runSimulationBatches()` returns a list with one entry per simulation batch.
-  # First remove the names of the upper level of the list to get all result in
-  # one flat list in the next step but maintain the IDs of the runs
+  # Remove top-level names to flatten the list in the next step
   names(simulationBatchesResults) <- NULL
 
-  # Unlist so all results are in one list. The names of the results are the IDs
-  # of the runs. Using `batchResultsIdMap`, results for a certain
-  # parameter/scale factor combination can be filtered out.
+  # Unlist to gather all results, using batchResultsIdMap to filter by parameter/scale factor
   simulationBatchesResults <- unlist(simulationBatchesResults)
 
-  # Create a nested list of simulation batch results.
-  # Outer list indexes each parameter path, while inner list corresponds to each
-  # value of parameter factor.
+  # Nest simulation results by parameter path and factor values
   simulationResultsBatch <- batchResultsIdMap
 
   for (parameterPath in names(batchResultsIdMap)) {
@@ -232,13 +226,15 @@ sensitivityCalculation <- function(simulation,
       } else {
         simulationResultsBatch[[parameterPath]][[parameterFactor]] <- NULL
         warning(
-          messages$sensitivityAnalysisSimulationFailure(parameterPath, parameterFactor)
+          messages$sensitivityAnalysisSimulationFailure(
+            parameterPath, parameterFactor
+          )
         )
       }
     }
   }
 
-  # extract and save data frames ------------------------
+  # Extract and save data frames ------------------------------------------
 
   # Extract data frame for PK parameters
   pkData <- .simulationResultsBatchToPKDataFrame(
@@ -269,7 +265,7 @@ sensitivityCalculation <- function(simulation,
     }
   }
 
-  # return `SensitivityCalculation` ------------------------
+  # Return sensitivity calculation results --------------------------------
 
   # Final list with needed objects and data frames for plotting functions.
   results <- list(
@@ -284,7 +280,9 @@ sensitivityCalculation <- function(simulation,
   clearOutputs(simulation = simulation)
 
   for (outputSelection in oldOutputSelections) {
-    ospsuite::addOutputs(quantitiesOrPaths = outputSelection$path, simulation = simulation)
+    ospsuite::addOutputs(
+      quantitiesOrPaths = outputSelection$path, simulation = simulation
+    )
   }
 
   # Add additional `S3` class attribute.

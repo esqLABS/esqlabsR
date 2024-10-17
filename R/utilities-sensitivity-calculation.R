@@ -408,7 +408,7 @@
   return(dataWide)
 }
 
-# validation helpers ------------------------------
+# variationRange handlers -------------------------------------------------
 
 #' @title Validate variation range vector
 #'
@@ -484,13 +484,14 @@
 #' @keywords internal
 #' @noRd
 .transformVariationRange <- function(variationRange, initialValues, variationType) {
-
   if (variationType == "absolute") {
     variationRange <- purrr::map2(variationRange, initialValues, ~ .x / .y)
   }
 
-  return(variationRange)  #
+  return(variationRange)
 }
+
+# validation helpers ------------------------------
 
 #' Validate vector arguments of `character` type
 #'
@@ -530,7 +531,9 @@
   }
 
   # Skip further checks if NULL is allowed and the argument is NULL
-  if (is.null(argVector)) return()
+  if (is.null(argVector)) {
+    return()
+  }
 
   # Check if the argument is of type character
   if (!isOfType(argVector, "character")) {

@@ -37,3 +37,15 @@ extractAxisRange <- function(p) {
 
   return(axisRanges)
 }
+
+# Helper function to extract sensitivityCalculation summary data
+summarizer <- function(data, path) {
+  data <- dplyr::filter(data, ParameterPath %in% path)
+
+  list(
+    "charColumnSummary" = dplyr::select(data, where(is.character)) %>%
+      purrr::map_dfr(unique),
+    "numericColumnSummary" = dplyr::select(data, where(is.numeric)) %>%
+      purrr::map_df(summary, .id = "column")
+  )
+}
