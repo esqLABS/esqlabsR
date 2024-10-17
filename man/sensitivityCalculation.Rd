@@ -9,6 +9,7 @@ sensitivityCalculation(
   outputPaths,
   parameterPaths,
   variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
+  variationType = c("relative"),
   pkParameters = c("C_max", "t_max", "AUC_inf"),
   customOutputFunctions = NULL,
   saOutputFilePath = NULL,
@@ -24,27 +25,34 @@ sensitivity will be analyzed.}
 \item{parameterPaths}{A single or a vector of the parameter path(s) to be
 varied.}
 
-\item{variationRange}{Optional numeric vector defining the scaling of the
-parameters. The same variation range is applied to all specified
-parameters. If not specified, the following vector will be used: c(0.1,
-0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5,  6, 7, 8, 9, 10).}
+\item{variationRange}{Optional numeric vector or list defining the scaling of
+the parameters. The same variation range is applied to all specified parameters
+unless a list is provided, in which case the length of the list must match
+the length of \code{parameterPaths}, allowing individual variation for each parameter.
+If not specified, the following vector will be used: c(0.1, 0.2, 0.3, 0.4,
+0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10).}
+
+\item{variationType}{A string specifying whether the values in \code{variationRange}
+are applied as \code{"absolute"} or \code{"relative"} scaling. When set to \code{"absolute"},
+the values are interpreted as absolute parameter values. When set to \code{"relative"},
+the values are interpreted as scaling factors relative to the initial parameter
+values. Default is \code{"relative"}.}
 
 \item{pkParameters}{A vector of names of PK parameters for which the
 sensitivities will be calculated. For a full set of available standard PK
 parameters, run \code{names(ospsuite::StandardPKParameter)}. By default, only
-the following parameters will be considered: \code{"C_max"}, \code{"t_max"},
-\code{"AUC_inf"}. If \code{NULL}, all available PK-parameters will be calculated. You
-can also specify custom PK parameters.}
+the following parameters will be considered: \code{"C_max"}, \code{"t_max"}, \code{"AUC_inf"}.
+If \code{NULL}, all available PK-parameters will be calculated. You can also
+specify custom PK parameters.}
 
 \item{customOutputFunctions}{A named list with
 custom function(s) for PK parameter calculation. User-defined functions should
 have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
 x-Dimension (time) or y-Dimension values from simulation results.}
 
-\item{saOutputFilePath}{Path to excel file in which
-PK-parameter data should be saved. If a file already exists, it will be
-overwritten. Default is \code{NULL}, meaning the data will not be saved to a
-spreadsheet.}
+\item{saOutputFilePath}{Path to excel file in which PK-parameter data should
+be saved. If a file already exists, it will be overwritten. Default is \code{NULL},
+meaning the data will not be saved to a spreadsheet.}
 
 \item{simulationRunOptions}{Optional instance of a \code{SimulationRunOptions} used
 during the simulation run}
