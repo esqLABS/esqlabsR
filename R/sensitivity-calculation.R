@@ -3,28 +3,34 @@
 #'
 #' @param simulation An object of type `Simulation`.
 #' @param outputPaths Path (or a vector of paths) to the output(s) for which the
-#'   sensitivity will be analyzed.
+#' sensitivity will be analyzed.
 #' @param parameterPaths A single or a vector of the parameter path(s) to be
-#'   varied.
-#' @param variationRange Optional numeric vector defining the scaling of the
-#'   parameters. The same variation range is applied to all specified
-#'   parameters. If not specified, the following vector will be used: c(0.1,
-#'   0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5,  6, 7, 8, 9, 10).
+#' varied.
+#' @param variationRange Optional numeric vector or list defining the scaling of
+#' the parameters. The same variation range is applied to all specified parameters
+#' unless a list is provided, in which case the length of the list must match
+#' the length of `parameterPaths`, allowing individual variation for each parameter.
+#' If not specified, the following vector will be used: c(0.1, 0.2, 0.3, 0.4,
+#' 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10).
+#' @param variationType A string specifying whether the values in `variationRange`
+#' are applied as `"absolute"` or `"relative"` scaling. When set to `"absolute"`,
+#' the values are interpreted as absolute parameter values. When set to `"relative"`,
+#' the values are interpreted as scaling factors relative to the initial parameter
+#' values. Default is `"relative"`.
 #' @param pkParameters A vector of names of PK parameters for which the
-#'   sensitivities will be calculated. For a full set of available standard PK
-#'   parameters, run `names(ospsuite::StandardPKParameter)`. By default, only
-#'   the following parameters will be considered: `"C_max"`, `"t_max"`,
-#'   `"AUC_inf"`. If `NULL`, all available PK-parameters will be calculated. You
-#'   can also specify custom PK parameters.
+#' sensitivities will be calculated. For a full set of available standard PK
+#' parameters, run `names(ospsuite::StandardPKParameter)`. By default, only
+#' the following parameters will be considered: `"C_max"`, `"t_max"`, `"AUC_inf"`.
+#' If `NULL`, all available PK-parameters will be calculated. You can also
+#' specify custom PK parameters.
 #' @param customOutputFunctions A named list with
 #' custom function(s) for PK parameter calculation. User-defined functions should
 #' have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
 #' x-Dimension (time) or y-Dimension values from simulation results.
 #' @param ... Additional parameters passed to the function.
-#' @param saOutputFilePath Path to excel file in which
-#'   PK-parameter data should be saved. If a file already exists, it will be
-#'   overwritten. Default is `NULL`, meaning the data will not be saved to a
-#'   spreadsheet.
+#' @param saOutputFilePath Path to excel file in which PK-parameter data should
+#' be saved. If a file already exists, it will be overwritten. Default is `NULL`,
+#' meaning the data will not be saved to a spreadsheet.
 #' @param simulationRunOptions Optional instance of a `SimulationRunOptions` used
 #' during the simulation run
 #'
@@ -61,7 +67,7 @@ sensitivityCalculation <- function(simulation,
                                    outputPaths,
                                    parameterPaths,
                                    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
-                                   variationType = c("percent"),
+                                   variationType = c("relative"),
                                    pkParameters = c("C_max", "t_max", "AUC_inf"),
                                    customOutputFunctions = NULL,
                                    saOutputFilePath = NULL,
