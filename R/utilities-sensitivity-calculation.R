@@ -462,7 +462,7 @@
   # Ensure the lengths of variationRange and parameterPath are equal
   else if (length(variationRange) != length(parameterPaths)) {
     cli::cli_abort(
-      "variationRange must be either a vector or a list equal to the length of parameterPaths."
+      messages$invalidVariationRangeLength()
     )
   }
 
