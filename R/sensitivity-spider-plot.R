@@ -175,17 +175,23 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
   # list of plots ----------------------------
 
+  splitData <- split(data, data$OutputPath)
+  lsPlots <- setNames(
+    vector("list", length(names(splitData))), names(splitData)
+  )
+
   # create plot for each output path
-  lsPlots <- purrr::map(
-    .x = data %>% split(.$OutputPath),
-    .f = ~ .createSpiderPlot(
-      .x,
+  for (outputPath in names(splitData)) {
+    subsetData <- splitData[[outputPath]]
+
+    lsPlots[[outputPath]] <- .createSpiderPlot(
+      subsetData,
       xAxisType = xAxisType,
       yAxisType = yAxisType,
       yAxisFacetScales = yAxisFacetScales,
       defaultPlotConfiguration = customPlotConfiguration
     )
-  )
+  }
 
   # print plots without producing warnings
   suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
