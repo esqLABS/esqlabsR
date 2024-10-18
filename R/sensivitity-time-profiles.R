@@ -97,21 +97,18 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     yUnits = NULL,
                                     observedData = NULL,
                                     defaultPlotConfiguration = NULL) {
-  # input validation ------------------------
+  # Input validation -------------------------------------
 
-  # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   validateIsOfType(observedData, DataSet, nullAllowed = TRUE)
   validateIsOfType(xUnits, "list", nullAllowed = TRUE)
   validateIsOfType(yUnits, "list", nullAllowed = TRUE)
 
-  # validate vector arguments of character type
   .validateCharVectors(outputPaths, nullAllowed = TRUE)
   .validateCharVectors(parameterPaths, nullAllowed = TRUE)
 
-  # plot configuration setup ------------
+  # Plot configuration setup -----------------------------
 
-  # default time profiles plot configuration
   timeProfilesConfiguration <- list(
     legendPosition = "bottom",
     legendTitle = "Parameter factor",
@@ -134,9 +131,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     yAxisScale               = yAxisScale
   )
 
-  # prepare data ------------------------
+  # Prepare data -----------------------------------------
 
-  # extract the needed dataframe from the object
   data <- .aggregateSimulationAndObservedData(
     simulationResults        = sensitivityCalculation$simulationResults,
     dataSets                 = observedData,
@@ -154,7 +150,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     pkParameters = NULL # not relevant
   )
 
-  # split long parameter path names for plotting
+  # modify long parameter path names for plotting
   data <- dplyr::mutate(
     data,
     ParameterPath = dplyr::if_else(
@@ -164,7 +160,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   )
 
-  # list of plots ------------------------
+  # Create list of plots ---------------------------------
 
   splitData <- split(data, data$OutputPath)
   lsPlots <- setNames(
@@ -209,7 +205,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   }
 
-  # calculate y-axis limits and color legend breaks -----
+  # calculate y-axis limits and color legend breaks
   pLimits <- .calculateLimits(data$yValues,
     scaling = plotConfiguration$yAxisScale
   )
@@ -219,7 +215,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   )
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
 
-  # Loop through each unique PKParameter -------------------
+  # Loop through unique ParameterPath
   paramPaths <- unique(data$ParameterPath)
   paramPaths <- paramPaths[!is.na(paramPaths)]
   plotList <- setNames(vector("list", length(paramPaths)), paramPaths)
@@ -233,7 +229,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
 
     # combine original data subset with observed data
-    # add observed data if not-null
     if ("observed" %in% data$dataType) {
       observedData <- dplyr::filter(data, dataType == "observed") %>%
         dplyr::select(-ParameterPath)
@@ -242,7 +237,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       hasObservedData <- FALSE
     }
 
-    # basic plot setup -------------------------
+    # Basic plot setup -----------------------------------
 
     plot <- ggplot() +
       geom_line(
@@ -282,7 +277,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         )
     }
 
-    # adjusting axis scales
+    # adjust axis scales
     if (isTRUE(plotConfiguration$xAxisScale == "log")) {
       plot <- plot + scale_x_log10()
     }
@@ -303,9 +298,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         )
     }
 
-    # finalize plot ----------------------------
+    # Finalize plot --------------------------------------
 
-    # note: facet wrap on unique PK parameter to obtain facet titles
     plot <- plot +
       facet_wrap(~ParameterPath) +
       labs(
@@ -315,7 +309,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         color = plotConfiguration$legendTitle
       )
 
-    # theme adjustments
     plot <- plot +
       theme_bw(base_size = 11) +
       theme(
@@ -376,7 +369,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     plotList[[paramPath]] <- plot
   }
 
-  # compile individual plots -----------------
+  # Compile individual plots -----------------------------
+
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
       title = plotConfiguration$title,
@@ -426,10 +420,9 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   validateIsOfType(simulationResults, "list")
 
   # validate if xUnits are valid unit for time dimension
-  # general unit validation inside .adjustUnits
   lapply(xUnits, validateEnumValue, ospUnits$Time, TRUE)
 
-  # prepare units to be applied to outputPaths
+  # prepare and validate units to be applied to outputPaths
   xUnits <- .adjustUnits(xUnits, outputPaths)
   yUnits <- .adjustUnits(yUnits, outputPaths)
 
@@ -437,8 +430,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     vector("list", length(parameterPaths)),
     parameterPaths
   )
-  # iterate over each `parameterPath`, combine `simulationResults` for each
-  # `parameterFactor` and add `DataSets` by `outputPath`
+  # iterate over parameterPaths, combine simulation results and datasets by outputPath
   for (parameterPath in names(simulationResults)) {
     simulationResultsPath <- simulationResults[[parameterPath]]
     parameterFactor <- as.list(names(simulationResultsPath))
@@ -452,7 +444,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       dataCombined <- DataCombined$new()
 
       # add multiple simulation results to dataCombined
-      # uses parameterFactor from sensitivity analysis as name
       for (i in seq_along(parameterFactor)) {
         dataCombined$addSimulationResults(
           simulationResultsPath[[i]],
@@ -462,7 +453,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         )
       }
 
-      # add dataSets when units are convertable for `outputPath`
+      # add dataSets when units are convertable for outputPath
       if (!is.null(dataSets)) {
         validateIsOfType(dataSets, "list")
         for (j in seq_along(dataSets)) {
@@ -501,7 +492,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   combinedDf <- dplyr::bind_rows(parameterPathList, .id = "ParameterPath")
-  # use names derived from parameterFactor to create a numeric column
+  # cConvert parameterFactor to numeric for simulated data
   combinedDf <- dplyr::rowwise(combinedDf) %>%
     dplyr::mutate(
       ParameterFactor = if (dataType == "simulated") as.numeric(name) else NA_real_

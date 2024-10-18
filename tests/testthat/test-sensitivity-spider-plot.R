@@ -1,5 +1,5 @@
-# save old options
-old <- options()
+# Save old options
+old_opts <- options()
 
 options(
   tibble.width = Inf,
@@ -9,9 +9,8 @@ options(
   scipen = 999
 )
 
-# single output path -------------------------------------
+# Single output path ------------------------------------------------------
 
-# run time-consuming simulations just once
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -30,18 +29,18 @@ results <- sensitivityCalculation(
   variationRange = variationRange
 )
 
-# validating plotting arguments -------------------------
+# Validate plotting arguments ---------------------------------------------
 
-test_that("sensitivitySpiderPlot fails with incorrect input objects", {
+test_that("sensitivitySpiderPlot fails with invalid input", {
   expect_error(
     sensitivitySpiderPlot("x"),
     "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
   )
 })
 
-# default plots ---------------------------------------
+# Default plot ------------------------------------------------------------
 
-test_that("sensitivitySpiderPlot default plots are as expected", {
+test_that("sensitivitySpiderPlot creates expected default plot", {
   set.seed(123)
   p <- sensitivitySpiderPlot(results)
 
@@ -54,9 +53,9 @@ test_that("sensitivitySpiderPlot default plots are as expected", {
   )
 })
 
-# default plot with custom PK parameter ---------------
+# Default plot with custom PK parameter -----------------------------------
 
-test_that("sensitivitySpiderPlot default plots are as expected with custom PK Parameter", {
+test_that("sensitivitySpiderPlot handles custom PK parameters", {
   customFun <- list("minmax" = function(y) max(y) / min(y[y != 0]))
 
   resultsCustomPK <- sensitivityCalculation(
@@ -77,11 +76,11 @@ test_that("sensitivitySpiderPlot default plots are as expected with custom PK Pa
   )
 })
 
-# parameterized plots ---------------------------------
+# Parameterized plots -----------------------------------------------------
 
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
-test_that("sensitivitySpiderPlot correctly applies free y-axis facets scaling", {
+test_that("sensitivitySpiderPlot applies free y-axis scaling correctly", {
   set.seed(123)
   p <- sensitivitySpiderPlot(results, yAxisFacetScales = "free")
   pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
@@ -90,7 +89,7 @@ test_that("sensitivitySpiderPlot correctly applies free y-axis facets scaling", 
   expect_snapshot(unlist(plotParams))
 })
 
-test_that("sensitivitySpiderPlot correctly applies absolute y-axis values", {
+test_that("sensitivitySpiderPlot correctly applies absolute y-axis values correctly", {
   set.seed(123)
   p <- sensitivitySpiderPlot(results, yAxisType = "absolute")
 
@@ -108,7 +107,7 @@ test_that("sensitivitySpiderPlot correctly applies absolute y-axis values", {
   expect_snapshot(unlist(plotParams))
 })
 
-test_that("sensitivitySpiderPlot correctly applies absolute x-axis values", {
+test_that("sensitivitySpiderPlot applies absolute x-axis values correctly", {
   set.seed(123)
   p <- sensitivitySpiderPlot(results,
     xAxisType = "absolute",
@@ -125,7 +124,7 @@ test_that("sensitivitySpiderPlot correctly applies absolute x-axis values", {
   )
 })
 
-test_that("sensitivitySpiderPlot correctly applies absolute x-axis and y-axis values", {
+test_that("sensitivitySpiderPlot applies absolute x- and y-axis values correctly", {
   set.seed(123)
   p1 <- sensitivitySpiderPlot(results,
     xAxisType = "absolute", yAxisType = "absolute",
@@ -140,7 +139,7 @@ test_that("sensitivitySpiderPlot correctly applies absolute x-axis and y-axis va
   expect_snapshot(extractAxisRange(p2))
 })
 
-test_that("sensitivitySpiderPlot correctly applies free scaling with absolute y-values", {
+test_that("sensitivitySpiderPlot applies free scaling with absolute y-values", {
   set.seed(123)
   p <- sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
   pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
@@ -152,11 +151,11 @@ test_that("sensitivitySpiderPlot correctly applies free scaling with absolute y-
   expect_snapshot(unlist(plotParams))
 })
 
-# plot configuration -----------------------------------------
+# Plot configuration ------------------------------------------------------
 
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
-test_that("sensitivitySpiderPlot uses defaultPlotConfiguration axis scales", {
+test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
   myPlotConfiguration <- createEsqlabsPlotConfiguration()
   myPlotConfiguration$xAxisScale <- "lin"
   myPlotConfiguration$yAxisScale <- "log"
@@ -183,7 +182,7 @@ test_that("sensitivitySpiderPlot signature overrides defaultPlotConfiguration", 
   expect_equal(pb$layout$panel_scales_y[[1]]$trans$name, "identity")
 })
 
-# multiple output paths -------------------------------------
+# Multiple output paths ---------------------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
@@ -205,7 +204,7 @@ resultsMultiple <- sensitivityCalculation(
   variationRange = c(1, 5, 10)
 )
 
-test_that("sensitivitySpiderPlot plots are as expected for multiple output paths", {
+test_that("sensitivitySpiderPlot handles multiple output paths correctly", {
   set.seed(123)
   plotsMultiple <- sensitivitySpiderPlot(resultsMultiple)
 
@@ -218,13 +217,13 @@ test_that("sensitivitySpiderPlot plots are as expected for multiple output paths
   )
 })
 
-# filter data to be plotted -------------------------------------
+# Filter data to be plotted -----------------------------------------------
 
 outputPathsFilter <- "Organism|ArterialBlood|Plasma|Aciclovir"
 parameterPathsFilter <- "Aciclovir|Lipophilicity"
 pkParametersFilter <- c("C_max", "t_max")
 
-test_that("sensitivitySpiderPlot plots are as expected with filters", {
+test_that("sensitivitySpiderPlot plots as expected with filters", {
   set.seed(123)
   plotFiltered <- sensitivitySpiderPlot(
     resultsMultiple,
@@ -242,5 +241,5 @@ test_that("sensitivitySpiderPlot plots are as expected with filters", {
   )
 })
 
-# restore old options
-options(old)
+# Restore old options
+on.exit(options(old_opts), add = TRUE)

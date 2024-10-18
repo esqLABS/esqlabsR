@@ -85,16 +85,14 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
                                    pkParameters = NULL,
                                    parameterFactor = 0.1,
                                    defaultPlotConfiguration = NULL) {
-  # input validation -------------------------
+  # Input validation -------------------------------------
 
-  # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   ospsuite.utils::validateIsOption(
     list(parameterFactor = parameterFactor),
     .getPlotConfigurationOptions("parameterFactor")
   )
 
-  # validate vector arguments of character type
   .validateCharVectors(outputPaths, nullAllowed = TRUE)
   .validateCharVectors(parameterPaths, nullAllowed = TRUE)
   .validateCharVectors(pkParameters, nullAllowed = TRUE)
@@ -107,9 +105,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     stop(messages$noParameterFactor(data, parameterFactor))
   }
 
-  # plot configuration setup ------------
+  # Plot configuration setup -----------------------------
 
-  # default tornado plot configuration
   tornadoPlotConfiguration <- list(
     legendPosition = "right",
     legendTitle = "Parameter Factor",
@@ -126,7 +123,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     plotOverrideConfig       = tornadoPlotConfiguration
   )
 
-  # extract and prepare data -----------------
+  # Prepare data -----------------------------------------
 
   data <- .filterPlottingData(
     data,
@@ -135,7 +132,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     pkParameters = pkParameters
   )
 
-  # ordered levels for parameter plotting
+  # set ordered levels for parameter plotting
   data <- dplyr::group_by(
     data,
     OutputPath, ParameterPath, PKParameter, ParameterFactor
@@ -159,7 +156,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     ParameterFactor %in% c(parameterFactor, 1 / parameterFactor)
   )
 
-  # list of plots ----------------------------
+  # Create list of plots ---------------------------------
 
   splitData <- split(data, data$OutputPath)
   lsPlots <- setNames(
@@ -188,19 +185,19 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     list(title = unique(data$OutputPath))
   )
 
-  # calculate x-axis limits  -------
+  # calculate x-axis limits
   pLimits <- .calculateLimits(data$PKPercentChange)
   pLimits[1] <- -1 * max(abs(pLimits))
   pLimits[2] <- max(abs(pLimits))
 
-  # Loop through each unique PKParameter -------------------
+  # loop through unique PKParameters
   pkParams <- unique(data$PKParameter)
   plotList <- setNames(vector("list", length(pkParams)), pkParams)
 
   for (param in pkParams) {
     dataSubset <- dplyr::filter(data, PKParameter == param)
 
-    # basic plot setup -------------------------
+    # Basic plot setup -----------------------------------
 
     plot <- ggplot(
       dataSubset,
@@ -231,13 +228,12 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
         labels = scales::label_number_auto()
       )
 
-    # finalize plot ----------------------------
+    # Finalize plot --------------------------------------
 
-    # note: facet wrap on unique PK parameter to obtain facet titles
     plot <- plot +
       facet_wrap(~PKParameter, scales = "fixed") +
       labs(
-        x = plotConfiguration$yLabel, # x/y label swap because of coord-flip()
+        x = plotConfiguration$yLabel,
         y = plotConfiguration$xLabel,
         title = NULL,
         fill = plotConfiguration$legendTitle
@@ -268,7 +264,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   }
 
 
-  # compile individual plots -----------------
+  # Compile individual plots -----------------------------
 
   plotPatchwork <- patchwork::wrap_plots(plotList, ncol = 1) +
     patchwork::plot_annotation(
