@@ -213,161 +213,162 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   )
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
 
-  # map each parameter path to its own plot ----
-  plotList <- purrr::map(
-    unique(data$ParameterPath) %>% .[!is.na(.)],
-    ~ {
-      dataSubset <- dplyr::filter(data, ParameterPath == .x)
+  # Loop through each unique PKParameter -------------------
+  paramPaths <- unique(data$ParameterPath)
+  paramPaths <- paramPaths[!is.na(paramPaths)]
+  plotList <- setNames(vector("list", length(paramPaths)), paramPaths)
 
-      # replace zeros dynamically to avoid warning when log transform
-      dataSubset$yValues <- ifelse(dataSubset$yValues <= 0,
-        pLimits[1], dataSubset$yValues
+  for (paramPath in paramPaths) {
+    dataSubset <- dplyr::filter(data, ParameterPath == paramPath)
+
+    # replace zeros dynamically to avoid warning when log transform
+    dataSubset$yValues <- ifelse(dataSubset$yValues <= 0,
+      pLimits[1], dataSubset$yValues
+    )
+
+    # combine original data subset with observed data
+    # add observed data if not-null
+    if ("observed" %in% data$dataType) {
+      observedData <- dplyr::filter(data, dataType == "observed") %>%
+        dplyr::select(-ParameterPath)
+      hasObservedData <- isTRUE(nrow(observedData) != 0)
+    } else {
+      hasObservedData <- FALSE
+    }
+
+    # basic plot setup -------------------------
+
+    plot <- ggplot() +
+      geom_line(
+        data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
+        aes(
+          x = xValues,
+          y = yValues,
+          group = ParameterFactor,
+          color = ParameterFactor
+        ),
+        linewidth = plotConfiguration$linesSize,
+        alpha = plotConfiguration$linesAlpha,
+        na.rm = TRUE
+      ) +
+      geom_line(
+        data = dplyr::filter(dataSubset, ParameterFactor == 1.0),
+        aes(xValues, yValues),
+        color = "black",
+        linewidth = plotConfiguration$linesSize,
+        alpha = plotConfiguration$linesAlpha,
+        na.rm = TRUE
       )
 
-      # combine original data subset with observed data
-      # add observed data if not-null
-      if ("observed" %in% data$dataType) {
-        observedData <- dplyr::filter(data, dataType == "observed") %>%
-          dplyr::select(-ParameterPath)
-        hasObservedData <- isTRUE(nrow(observedData) != 0)
-      } else {
-        hasObservedData <- FALSE
-      }
-
-      # basic plot setup -------------------------
-
-      plot <- ggplot() +
-        geom_line(
-          data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
-          aes(
-            x = xValues,
-            y = yValues,
-            group = ParameterFactor,
-            color = ParameterFactor
-          ),
-          linewidth = plotConfiguration$linesSize,
-          alpha = plotConfiguration$linesAlpha,
-          na.rm = TRUE
-        ) +
-        geom_line(
-          data = dplyr::filter(dataSubset, ParameterFactor == 1.0),
-          aes(xValues, yValues),
-          color = "black",
-          linewidth = plotConfiguration$linesSize,
-          alpha = plotConfiguration$linesAlpha,
-          na.rm = TRUE
-        )
-
-      # add symbols for observed data
-      if (hasObservedData) {
-        plot <- plot +
-          geom_point(
-            data = observedData,
-            aes(xValues, yValues, shape = `Study Id`)
-          ) +
-          scale_shape_manual(
-            values = rep(
-              plotConfiguration$pointsShape,
-              length.out = length(unique(observedData$`Study Id`))
-            ),
-            name = "Observed data"
-          )
-      }
-
-      # adjusting axis scales
-      if (isTRUE(plotConfiguration$xAxisScale == "log")) {
-        plot <- plot + scale_x_log10()
-      }
-      if (isTRUE(plotConfiguration$yAxisScale == "log")) {
-        plot <- plot +
-          scale_y_log10(
-            limits = pLimits,
-            expand = expansion(mult = c(0.01, 0.1)),
-            breaks = scales::breaks_log(),
-            labels = scales::label_log()
-          )
-      } else {
-        plot <- plot +
-          scale_y_continuous(
-            limits = pLimits,
-            breaks = scales::breaks_extended(),
-            labels = scales::label_number_auto()
-          )
-      }
-
-      # finalize plot ----------------------------
-
-      # note: facet wrap on unique PK parameter to obtain facet titles
+    # add symbols for observed data
+    if (hasObservedData) {
       plot <- plot +
-        facet_wrap(~ParameterPath) +
-        labs(
-          x = plotConfiguration$xLabel,
-          y = plotConfiguration$yLabel,
-          title = NULL,
-          color = plotConfiguration$legendTitle
-        )
-
-      # theme adjustments
-      plot <- plot +
-        theme_bw(base_size = 11) +
-        theme(
-          legend.position = plotConfiguration$legendPosition,
-          panel.grid.minor = element_blank(),
-          text = element_text(size = 11)
+        geom_point(
+          data = observedData,
+          aes(xValues, yValues, shape = `Study Id`)
         ) +
-        guides(
-          color = guide_colorbar(
-            title = plotConfiguration$legendTitle,
-            ticks = FALSE,
-            draw.ulim = FALSE,
-            draw.llim = FALSE,
-            title.position = "top",
-            order = 1
+        scale_shape_manual(
+          values = rep(
+            plotConfiguration$pointsShape,
+            length.out = length(unique(observedData$`Study Id`))
           ),
-          shape = guide_legend(order = 2)
+          name = "Observed data"
         )
-
-      if (hasObservedData) {
-        plot <- plot +
-          guides(
-            shape = guide_legend(
-              title.position = "top",
-              nrow = length(unique(observedData$dataType))
-            )
-          )
-      }
-
-      # apply color scales
-      if (is.null(plotConfiguration$linesColor)) {
-        plot <- plot +
-          colorspace::scale_color_continuous_diverging(
-            palette = "Berlin",
-            mid = log10(1),
-            transform = "log",
-            breaks = cBreaks
-          )
-      } else {
-        plot <- plot +
-          scale_color_gradient2(
-            name = plotConfiguration$legendTitle,
-            low = colorspace::darken(
-              plotConfiguration$linesColor[1],
-              amount = 0.15
-            ),
-            mid = "black",
-            high = colorspace::darken(
-              plotConfiguration$linesColor[2],
-              amount = 0.15
-            ),
-            transform = "log",
-            midpoint = 1,
-            breaks = cBreaks
-          )
-      }
-
-      return(plot)
     }
-  )
+
+    # adjusting axis scales
+    if (isTRUE(plotConfiguration$xAxisScale == "log")) {
+      plot <- plot + scale_x_log10()
+    }
+    if (isTRUE(plotConfiguration$yAxisScale == "log")) {
+      plot <- plot +
+        scale_y_log10(
+          limits = pLimits,
+          expand = expansion(mult = c(0.01, 0.1)),
+          breaks = scales::breaks_log(),
+          labels = scales::label_log()
+        )
+    } else {
+      plot <- plot +
+        scale_y_continuous(
+          limits = pLimits,
+          breaks = scales::breaks_extended(),
+          labels = scales::label_number_auto()
+        )
+    }
+
+    # finalize plot ----------------------------
+
+    # note: facet wrap on unique PK parameter to obtain facet titles
+    plot <- plot +
+      facet_wrap(~ParameterPath) +
+      labs(
+        x = plotConfiguration$xLabel,
+        y = plotConfiguration$yLabel,
+        title = NULL,
+        color = plotConfiguration$legendTitle
+      )
+
+    # theme adjustments
+    plot <- plot +
+      theme_bw(base_size = 11) +
+      theme(
+        legend.position = plotConfiguration$legendPosition,
+        panel.grid.minor = element_blank(),
+        text = element_text(size = 11)
+      ) +
+      guides(
+        color = guide_colorbar(
+          title = plotConfiguration$legendTitle,
+          ticks = FALSE,
+          draw.ulim = FALSE,
+          draw.llim = FALSE,
+          title.position = "top",
+          order = 1
+        ),
+        shape = guide_legend(order = 2)
+      )
+
+    if (hasObservedData) {
+      plot <- plot +
+        guides(
+          shape = guide_legend(
+            title.position = "top",
+            nrow = length(unique(observedData$dataType))
+          )
+        )
+    }
+
+    # apply color scales
+    if (is.null(plotConfiguration$linesColor)) {
+      plot <- plot +
+        colorspace::scale_color_continuous_diverging(
+          palette = "Berlin",
+          mid = log10(1),
+          transform = "log",
+          breaks = cBreaks
+        )
+    } else {
+      plot <- plot +
+        scale_color_gradient2(
+          name = plotConfiguration$legendTitle,
+          low = colorspace::darken(
+            plotConfiguration$linesColor[1],
+            amount = 0.15
+          ),
+          mid = "black",
+          high = colorspace::darken(
+            plotConfiguration$linesColor[2],
+            amount = 0.15
+          ),
+          transform = "log",
+          midpoint = 1,
+          breaks = cBreaks
+        )
+    }
+
+    plotList[[paramPath]] <- plot
+  }
 
   # compile individual plots -----------------
   plotPatchwork <- patchwork::wrap_plots(plotList) +
