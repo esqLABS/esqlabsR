@@ -174,8 +174,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     )
   }
 
-  # print plots without producing warnings
-  suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
+  return(lsPlots)
 }
 
 #' @keywords internal
