@@ -161,14 +161,18 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 
   # list of plots ----------------------------
 
+  splitData <- split(data, data$OutputPath)
+  lsPlots <- setNames(
+    vector("list", length(names(splitData))), names(splitData)
+  )
+
   # create plot for each output path
-  lsPlots <- purrr::map(
-    .x = data %>% split(.$OutputPath),
-    .f = ~ .createTornadoPlot(
-      .x,
+  for (outputPath in names(splitData)) {
+    lsPlots[[outputPath]] <- .createTornadoPlot(
+      splitData[[outputPath]],
       defaultPlotConfiguration = customPlotConfiguration
     )
-  )
+  }
 
   # print plots without producing warnings
   suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
