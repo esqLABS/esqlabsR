@@ -1,5 +1,5 @@
-# save old options
-old <- options()
+# Save old options
+old_opts <- options()
 
 options(
   tibble.width = Inf,
@@ -9,9 +9,8 @@ options(
   scipen = 999
 )
 
-# single output path -------------------------------------
+# Single output path ------------------------------------------------------
 
-# run time-consuming simulations just once
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -40,18 +39,18 @@ obsData <<- loadDataSetsFromExcel(
   importerConfigurationOrPath = dataConfiguration
 )
 
-# validating plotting arguments -------------------------
+# Validate plotting arguments ---------------------------------------------
 
-test_that("sensitivityTimeProfiles fails with incorrect input objects", {
+test_that("sensitivityTimeProfiles fails with invalid input", {
   expect_error(
     sensitivityTimeProfiles("x"),
     "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
   )
 })
 
-# default plot -----------------------------------------------
+# Default plot ------------------------------------------------------------
 
-test_that("sensitivityTimeProfiles plots are as expected", {
+test_that("sensitivityTimeProfiles creates expected default plot", {
   set.seed(123)
   p <- sensitivityTimeProfiles(results)
 
@@ -71,11 +70,11 @@ test_that("sensitivityTimeProfiles plots are as expected", {
   expect_snapshot(pb$plot$labels)
 })
 
-# parameterized plots ---------------------------------
+# Parameterized plots -----------------------------------------------------
 
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
-test_that("sensitivityTimeProfiles correctly applies linear y-axis scaling", {
+test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
   set.seed(123)
   p <- sensitivityTimeProfiles(results, yAxisScale = "lin")
 
@@ -90,7 +89,7 @@ test_that("sensitivityTimeProfiles correctly applies linear y-axis scaling", {
   expect_snapshot(extractAxisRange(p))
 })
 
-test_that("sensitivityTimeProfiles plots correctly with inclusion of observed data", {
+test_that("sensitivityTimeProfiles works with observed data", {
   set.seed(123)
   p <- sensitivityTimeProfiles(results, observedData = obsData)
 
@@ -103,10 +102,9 @@ test_that("sensitivityTimeProfiles plots correctly with inclusion of observed da
   )
 })
 
+# Unit conversion ---------------------------------------------------------
 
-# unit conversion --------------------------------------------
-
-test_that("sensitivityTimeProfiles throws an error for non-list units", {
+test_that("sensitivityTimeProfiles errors for non-list units", {
   expect_error(
     sensitivityTimeProfiles(results, xUnits = "h"),
     "argument 'xUnits' is of type 'character', but expected 'list'"
@@ -117,7 +115,7 @@ test_that("sensitivityTimeProfiles throws an error for non-list units", {
   )
 })
 
-test_that("sensitivityTimeProfiles throws an error if unit is not valid", {
+test_that("sensitivityTimeProfiles errors on invalid units", {
   # invalid unit
   expect_error(
     sensitivityTimeProfiles(results, yUnits = list("mol/kg")),
@@ -130,7 +128,7 @@ test_that("sensitivityTimeProfiles throws an error if unit is not valid", {
   )
 })
 
-test_that("sensitivityTimeProfiles plots correctly apply unit conversion", {
+test_that("sensitivityTimeProfiles applies unit conversion", {
   set.seed(123)
   p <- sensitivityTimeProfiles(results, xUnits = list("h"), yUnits = list("mol/l"))
 
@@ -143,7 +141,7 @@ test_that("sensitivityTimeProfiles plots correctly apply unit conversion", {
   )
 })
 
-test_that("sensitivityTimeProfiles plots handle y-unit conversion correctly when dimensions are not convertible", {
+test_that("sensitivityTimeProfiles handles non-convertible y-units", {
   p1 <- sensitivityTimeProfiles(results) # default
   p2 <- sensitivityTimeProfiles(results, yUnits = list("mol")) # no conversion
 
@@ -153,7 +151,7 @@ test_that("sensitivityTimeProfiles plots handle y-unit conversion correctly when
   )
 })
 
-# multiple output paths -------------------------------------
+# Multiple output paths ---------------------------------------------------
 
 outputPaths <- c(
   "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
@@ -173,7 +171,7 @@ resultsMultiple <- sensitivityCalculation(
   variationRange = c(0.2, 1, 5, 10)
 )
 
-test_that("sensitivityTimeProfiles plots are as expected for multiple output paths", {
+test_that("sensitivityTimeProfiles plots are correct for multiple output paths", {
   set.seed(123)
   plotsMultiple <- sensitivityTimeProfiles(resultsMultiple)
 
@@ -186,7 +184,7 @@ test_that("sensitivityTimeProfiles plots are as expected for multiple output pat
   )
 })
 
-test_that("sensitivityTimeProfiles plots correctly for multiple outputs with observed data", {
+test_that("sensitivityTimeProfiles works with multiple outputs and observed data", {
   set.seed(123)
   plotsMultiple <- sensitivityTimeProfiles(resultsMultiple, observedData = obsData)
 
@@ -199,10 +197,9 @@ test_that("sensitivityTimeProfiles plots correctly for multiple outputs with obs
   )
 })
 
-
 # multiple output paths unit conversion
 
-test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths", {
+test_that("sensitivityTimeProfiles applies y-unit conversion for multiple paths", {
   p <- sensitivityTimeProfiles(resultsMultiple,
     yUnits = list("mol/l", "month(s)", "nmol")
   )
@@ -210,7 +207,7 @@ test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for m
   expect_snapshot(extractAxisRange(p))
 })
 
-test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths with `NULL`", {
+test_that("sensitivityTimeProfiles handles y-unit conversion with `NULL` for multiple paths", {
   p <- sensitivityTimeProfiles(resultsMultiple,
     yUnits = list("mol/l", NULL, "mol")
   )
@@ -218,7 +215,7 @@ test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for m
   expect_snapshot(extractAxisRange(p))
 })
 
-test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths with single unit", {
+test_that("sensitivityTimeProfiles applies y-unit conversion with a single unit for multiple paths", {
   p1 <- sensitivityTimeProfiles(resultsMultiple,
     yUnits = list("mg/ml")
   )
@@ -233,7 +230,7 @@ test_that("sensitivityTimeProfiles plots correctly apply y-unit conversion for m
   )
 })
 
-test_that("sensitivityTimeProfiles plots handle y-unit conversion correctly for multiple paths when dimensions are not convertible", {
+test_that("sensitivityTimeProfiles handles non-convertible y-units for multiple paths", {
   p1 <- sensitivityTimeProfiles(resultsMultiple) # default
   p2 <- sensitivityTimeProfiles(resultsMultiple, # not converted: all wrong units
     yUnits = list("mol", "kg", "µmol/h")
@@ -252,7 +249,6 @@ test_that("sensitivityTimeProfiles plots handle y-unit conversion correctly for 
   )
 })
 
-
 # multiple output paths with multiple observed data
 obsData1 <- loadDataSetsFromExcel(
   xlsFilePath = filePath,
@@ -270,7 +266,7 @@ obsDataMultiple[[2]]$name <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
 obsDataMultiple[[2]]$addMetaData("Study Id", "Laskin 1982.Group A - Mock")
 obsDataMultiple[[2]]$setValues(obsDataMultiple[[2]]$xValues, obsDataMultiple[[2]]$yValues + 0.1)
 
-test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data with same dimension", {
+test_that("sensitivityTimeProfiles works with multiple observed data with same dimension", {
   set.seed(123)
   plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
     observedData = obsDataMultiple
@@ -289,7 +285,7 @@ test_that("sensitivityTimeProfiles plots correctly for multiple outputs with mul
 obsDataMultiple[[2]]$yDimension <- "Amount"
 obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
 
-test_that("sensitivityTimeProfiles plots correctly for multiple outputs with multiple observed data with different dimensions", {
+test_that("sensitivityTimeProfiles works with multiple observed data with different dimensions", {
   set.seed(123)
   plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
     observedData = obsDataMultiple
@@ -311,8 +307,7 @@ test_that("sensitivityTimeProfiles plots correctly for multiple outputs with mul
   )
 })
 
-
-# filter data to be plotted -------------------------------------
+# Filter data to be plotted -----------------------------------------------
 
 outputPathsFilter <- "Organism|ArterialBlood|Plasma|Aciclovir"
 parameterPathsFilter <- "Aciclovir|Lipophilicity"
@@ -334,5 +329,5 @@ test_that("sensitivityTimeProfiles plots are as expected with filters", {
   )
 })
 
-# restore old options
-options(old)
+# Restore old options
+on.exit(options(old_opts), add = TRUE)

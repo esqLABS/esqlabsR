@@ -85,16 +85,14 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
                                    pkParameters = NULL,
                                    parameterFactor = 0.1,
                                    defaultPlotConfiguration = NULL) {
-  # input validation -------------------------
+  # Input validation -------------------------------------
 
-  # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   ospsuite.utils::validateIsOption(
     list(parameterFactor = parameterFactor),
     .getPlotConfigurationOptions("parameterFactor")
   )
 
-  # validate vector arguments of character type
   .validateCharVectors(outputPaths, nullAllowed = TRUE)
   .validateCharVectors(parameterPaths, nullAllowed = TRUE)
   .validateCharVectors(pkParameters, nullAllowed = TRUE)
@@ -107,9 +105,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     stop(messages$noParameterFactor(data, parameterFactor))
   }
 
-  # plot configuration setup ------------
+  # Plot configuration setup -----------------------------
 
-  # default tornado plot configuration
   tornadoPlotConfiguration <- list(
     legendPosition = "right",
     legendTitle = "Parameter Factor",
@@ -126,7 +123,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     plotOverrideConfig       = tornadoPlotConfiguration
   )
 
-  # extract and prepare data -----------------
+  # Prepare data -----------------------------------------
 
   data <- .filterPlottingData(
     data,
@@ -135,7 +132,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     pkParameters = pkParameters
   )
 
-  # ordered levels for parameter plotting
+  # set ordered levels for parameter plotting
   data <- dplyr::group_by(
     data,
     OutputPath, ParameterPath, PKParameter, ParameterFactor
@@ -159,19 +156,22 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     ParameterFactor %in% c(parameterFactor, 1 / parameterFactor)
   )
 
-  # list of plots ----------------------------
+  # Create list of plots ---------------------------------
 
-  # create plot for each output path
-  lsPlots <- purrr::map(
-    .x = data %>% split(.$OutputPath),
-    .f = ~ .createTornadoPlot(
-      .x,
-      defaultPlotConfiguration = customPlotConfiguration
-    )
+  splitData <- split(data, data$OutputPath)
+  lsPlots <- setNames(
+    vector("list", length(names(splitData))), names(splitData)
   )
 
-  # print plots without producing warnings
-  suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
+  # create plot for each output path
+  for (outputPath in names(splitData)) {
+    lsPlots[[outputPath]] <- .createTornadoPlot(
+      splitData[[outputPath]],
+      defaultPlotConfiguration = customPlotConfiguration
+    )
+  }
+
+  return(lsPlots)
 }
 
 #' @keywords internal
@@ -185,87 +185,86 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     list(title = unique(data$OutputPath))
   )
 
-  # calculate x-axis limits  -------
+  # calculate x-axis limits
   pLimits <- .calculateLimits(data$PKPercentChange)
   pLimits[1] <- -1 * max(abs(pLimits))
   pLimits[2] <- max(abs(pLimits))
 
-  # map each PK parameter to its own plot ----
+  # loop through unique PKParameters
+  pkParams <- unique(data$PKParameter)
+  plotList <- setNames(vector("list", length(pkParams)), pkParams)
 
-  plotList <- purrr::map(
-    unique(data$PKParameter),
-    ~ {
-      dataSubset <- dplyr::filter(data, PKParameter == .x)
+  for (param in pkParams) {
+    dataSubset <- dplyr::filter(data, PKParameter == param)
 
-      # basic plot setup -------------------------
+    # Basic plot setup -----------------------------------
 
-      plot <- ggplot(
-        dataSubset,
-        aes(
-          x = ParameterPath,
-          y = PKPercentChange,
-          fill = as.factor(ParameterFactor)
-        )
+    plot <- ggplot(
+      dataSubset,
+      aes(
+        x = ParameterPath,
+        y = PKPercentChange,
+        fill = as.factor(ParameterFactor)
+      )
+    ) +
+      geom_col(
+        color = "grey",
+        width = 0.9,
+        na.rm = TRUE
       ) +
-        geom_col(
-          color = "grey",
-          width = 0.9,
-          na.rm = TRUE
-        ) +
-        coord_flip()
+      coord_flip()
 
-      plot <- plot +
-        geom_hline(
-          yintercept = 0,
-          color = "grey",
-          linewidth = 1
-        )
+    plot <- plot +
+      geom_hline(
+        yintercept = 0,
+        color = "grey",
+        linewidth = 1
+      )
 
-      plot <- plot +
-        scale_y_continuous(
-          limits = pLimits,
-          breaks = scales::breaks_extended(),
-          labels = scales::label_number_auto()
-        )
+    plot <- plot +
+      scale_y_continuous(
+        limits = pLimits,
+        breaks = scales::breaks_extended(),
+        labels = scales::label_number_auto()
+      )
 
-      # finalize plot ----------------------------
+    # Finalize plot --------------------------------------
 
-      # note: facet wrap on unique PK parameter to obtain facet titles
-      plot <- plot +
-        facet_wrap(~PKParameter, scales = "fixed") +
-        labs(
-          x = plotConfiguration$yLabel, # x/y label swap because of coord-flip()
-          y = plotConfiguration$xLabel,
-          title = NULL,
-          fill = plotConfiguration$legendTitle
-        ) +
-        theme_light(
-          base_size = 11
-        ) +
-        theme(
-          legend.position = plotConfiguration$legendPosition,
-          panel.grid.minor = element_blank(),
-          text = element_text(size = 11),
-          axis.text.y = element_text(margin = margin(l = 20, unit = "pt"))
-        )
+    plot <- plot +
+      facet_wrap(~PKParameter, scales = "fixed") +
+      labs(
+        x = plotConfiguration$yLabel,
+        y = plotConfiguration$xLabel,
+        title = NULL,
+        fill = plotConfiguration$legendTitle
+      ) +
+      theme_light(
+        base_size = 11
+      ) +
+      theme(
+        legend.position = plotConfiguration$legendPosition,
+        panel.grid.minor = element_blank(),
+        text = element_text(size = 11),
+        axis.text.y = element_text(margin = margin(l = 20, unit = "pt"))
+      )
 
-      # apply color scales
-      if (is.null(plotConfiguration$linesColor)) {
-        plot <- plot + scale_fill_brewer(palette = "Set2")
-      } else {
-        pLevels <- levels(as.factor(data$ParameterFactor))
-        pColor <- plotConfiguration$linesColor[1:length(pLevels)]
-        names(pColor) <- pLevels
-        plot <- plot + scale_fill_manual(
-          values = colorspace::lighten(pColor, amount = 0.2)
-        )
-      }
-
-      return(plot)
+    # apply color scales
+    if (is.null(plotConfiguration$linesColor)) {
+      plot <- plot + scale_fill_brewer(palette = "Set2")
+    } else {
+      pLevels <- levels(as.factor(data$ParameterFactor))
+      pColor <- plotConfiguration$linesColor[1:length(pLevels)]
+      names(pColor) <- pLevels
+      plot <- plot + scale_fill_manual(
+        values = colorspace::lighten(pColor, amount = 0.2)
+      )
     }
-  )
 
-  # compile individual plots -----------------
+    plotList[[param]] <- plot
+  }
+
+
+  # Compile individual plots -----------------------------
 
   plotPatchwork <- patchwork::wrap_plots(plotList, ncol = 1) +
     patchwork::plot_annotation(

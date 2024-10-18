@@ -1,18 +1,18 @@
-# sensitivitySpiderPlot correctly applies free y-axis facets scaling
+# sensitivitySpiderPlot applies free y-axis scaling correctly
 
     Code
       unlist(plotParams)
     Output
       [1]  -89.50 2099.50  -89.50 2099.50   90.45  100.45
 
-# sensitivitySpiderPlot correctly applies absolute y-axis values
+# sensitivitySpiderPlot correctly applies absolute y-axis values correctly
 
     Code
       unlist(plotParams)
     Output
       [1] -4113 86380 -4113 86380 -4113 86380
 
-# sensitivitySpiderPlot correctly applies absolute x-axis and y-axis values
+# sensitivitySpiderPlot applies absolute x- and y-axis values correctly
 
     Code
       extractAxisRange(p1)
@@ -65,7 +65,7 @@
       
       
 
-# sensitivitySpiderPlot correctly applies free scaling with absolute y-values
+# sensitivitySpiderPlot applies free scaling with absolute y-values
 
     Code
       unlist(plotParams)

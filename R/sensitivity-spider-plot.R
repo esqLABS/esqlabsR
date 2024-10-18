@@ -111,19 +111,16 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   xAxisType = "percent",
                                   yAxisType = "percent",
                                   defaultPlotConfiguration = NULL) {
-  # input validation -------------------------
+  # Input validation -------------------------------------
 
-  # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
 
-  # validate vector arguments of character type
   .validateCharVectors(outputPaths, nullAllowed = TRUE)
   .validateCharVectors(parameterPaths, nullAllowed = TRUE)
   .validateCharVectors(pkParameters, nullAllowed = TRUE)
 
-  # plot configuration setup ------------
+  # Plot configuration setup -----------------------------
 
-  # default spider plot configuration
   spiderPlotConfiguration <- list(
     legendPosition = "bottom",
     legendTitle    = "Parameter",
@@ -147,7 +144,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     yAxisScale               = yAxisScale
   )
 
-  # validate separately as not supported by `DefaultPlotConfiguration`
+  # validate separately as not supported by DefaultPlotConfiguration
   validateIsOption(
     list(
       yAxisFacetScales = yAxisFacetScales,
@@ -157,7 +154,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     .getPlotConfigurationOptions(c("yAxisFacetScales", "xAxisType", "yAxisType"))
   )
 
-  # extract and prepare data -----------------
+  # Prepare data -----------------------------------------
 
   data <- sensitivityCalculation$pkData
   data <- .filterPlottingData(
@@ -173,22 +170,25 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     PKPercentChange = PKPercentChange + 100
   )
 
-  # list of plots ----------------------------
+  # Create list of plots ---------------------------------
+
+  splitData <- split(data, data$OutputPath)
+  lsPlots <- setNames(
+    vector("list", length(names(splitData))), names(splitData)
+  )
 
   # create plot for each output path
-  lsPlots <- purrr::map(
-    .x = data %>% split(.$OutputPath),
-    .f = ~ .createSpiderPlot(
-      .x,
+  for (outputPath in names(splitData)) {
+    lsPlots[[outputPath]] <- .createSpiderPlot(
+      splitData[[outputPath]],
       xAxisType = xAxisType,
       yAxisType = yAxisType,
       yAxisFacetScales = yAxisFacetScales,
       defaultPlotConfiguration = customPlotConfiguration
     )
-  )
+  }
 
-  # print plots without producing warnings
-  suppressWarnings(purrr::walk(lsPlots, ~ print(.x)))
+  return(lsPlots)
 }
 
 #' @keywords internal
@@ -218,8 +218,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     yColumn <- sym("PKParameterValue")
   }
 
-  # filter according to value limits ---------
-
+  # filter according to axis value limits
   if (!is.null(plotConfiguration$yValuesLimits)) {
     data <- dplyr::filter(data, !!yColumn >= plotConfiguration$yValuesLimits[1])
     data <- dplyr::filter(data, !!yColumn <= plotConfiguration$yValuesLimits[2])
@@ -229,152 +228,146 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     data <- dplyr::filter(data, !!xColumn <= plotConfiguration$xValuesLimits[2])
   }
 
-  # map each PK parameter to its own plot ----
+  # loop through unique PKParameters
+  pkParams <- unique(data$PKParameter)
+  plotList <- setNames(vector("list", length(pkParams)), pkParams)
 
-  plotList <- purrr::map(
-    unique(data$PKParameter),
-    ~ {
-      dataSubset <- dplyr::filter(data, PKParameter == .x)
-      baseDataSubset <- dplyr::filter(dataSubset, ParameterFactor == 100)
+  for (param in pkParams) {
+    dataSubset <- dplyr::filter(data, PKParameter == param)
+    baseDataSubset <- dplyr::filter(dataSubset, ParameterFactor == 100)
 
-      # set axis limits and labels ---------------
+    # Set axis limits and labels -------------------------
 
-      if (isTRUE(yAxisFacetScales == "fixed")) {
-        # fixed y-axis scale
-        #   same label for all plots based on yAxisType
-        if (is.null(plotConfiguration$yLabel)) {
-          plotConfiguration$yLabel <- switch(yAxisType,
-            "percent"  = "PK-Parameter value [% of reference]",
-            "absolute" = "PK-Parameter value",
-            "PK-Parameter value"
-          )
-        }
-        # limits based on entire data
-        pLimits <- .calculateLimits(unlist(data[, yColumn]))
-      } else {
-        # free y-axis scale
-        #   use PK parameter name with it's unit
-        plotConfiguration$yLabel <- paste0(
-          dataSubset$PKParameter[1], " [", dataSubset$Unit[1], "]"
-        )
-        pLimits <- NULL
-      }
-
-      # x-axis label based on xAxisType
-      plotConfiguration$xLabel <- plotConfiguration$xLabel %||%
-        switch(xAxisType,
-          "percent"  = "Input parameter value [% of reference]",
-          "absolute" = "Input parameter value",
+    if (isTRUE(yAxisFacetScales == "fixed")) {
+      # same label for all plots based on yAxisType
+      if (is.null(plotConfiguration$yLabel)) {
+        plotConfiguration$yLabel <- switch(yAxisType,
+          "percent"  = "PK-Parameter value [% of reference]",
+          "absolute" = "PK-Parameter value",
           "PK-Parameter value"
         )
-
-      # override y-axis limits if specified in configuration
-      if (!is.null(plotConfiguration$yAxisLimits)) {
-        pLimits <- plotConfiguration$yAxisLimits
       }
+      # limits based on entire data
+      pLimits <- .calculateLimits(unlist(data[, yColumn]))
+    } else { # free y-axis scale
+      plotConfiguration$yLabel <- paste0(
+        dataSubset$PKParameter[1], " [", dataSubset$Unit[1], "]"
+      )
+      pLimits <- NULL
+    }
 
-      # basic plot setup -------------------------
+    # x-axis label based on xAxisType
+    plotConfiguration$xLabel <- plotConfiguration$xLabel %||%
+      switch(xAxisType,
+        "percent"  = "Input parameter value [% of reference]",
+        "absolute" = "Input parameter value",
+        "PK-Parameter value"
+      )
 
-      plot <- ggplot(
-        dataSubset,
-        aes(x = .data[[xColumn]], y = .data[[yColumn]], group = ParameterPath)
+    # override y-axis limits if specified in configuration
+    if (!is.null(plotConfiguration$yAxisLimits)) {
+      pLimits <- plotConfiguration$yAxisLimits
+    }
+
+    # Basic plot setup -----------------------------------
+
+    plot <- ggplot(
+      dataSubset,
+      aes(x = .data[[xColumn]], y = .data[[yColumn]], group = ParameterPath)
+    ) +
+      geom_line(
+        aes(group = ParameterPath, color = as.factor(ParameterPath)),
+        linewidth = plotConfiguration$linesSize,
+        alpha = plotConfiguration$linesAlpha,
+        na.rm = TRUE
       ) +
-        geom_line(
-          aes(group = ParameterPath, color = as.factor(ParameterPath)),
-          linewidth = plotConfiguration$linesSize,
-          alpha = plotConfiguration$linesAlpha,
-          na.rm = TRUE
-        ) +
-        geom_point(
-          size  = plotConfiguration$pointsSize,
-          shape = plotConfiguration$pointsShape[1],
-          na.rm = TRUE
-        )
+      geom_point(
+        size  = plotConfiguration$pointsSize,
+        shape = plotConfiguration$pointsShape[1],
+        na.rm = TRUE
+      )
 
-      # adjusting axis scales
-      if (isTRUE(plotConfiguration$xAxisScale == "log")) {
-        plot <- plot + scale_x_log10()
-      }
+    # adjusting axis scales
+    if (isTRUE(plotConfiguration$xAxisScale == "log")) {
+      plot <- plot + scale_x_log10()
+    }
 
-      if (isTRUE(plotConfiguration$yAxisScale == "log")) {
-        plot <- plot +
-          scale_y_log10(
-            limits = pLimits,
-            expand = expansion(mult = c(0.01, 0.1)),
-            breaks = scales::breaks_log(
-              n = plotConfiguration$yAxisTicks
-            ),
-            labels = scales::label_log()
-          )
-      } else {
-        plot <- plot +
-          scale_y_continuous(
-            limits = pLimits,
-            breaks = scales::breaks_extended(
-              n = plotConfiguration$yAxisTicks
-            ),
-            labels = scales::label_number_auto()
-          )
-      }
-
-      # initial parameter value reference marker ----
-
+    if (isTRUE(plotConfiguration$yAxisScale == "log")) {
       plot <- plot +
-        geom_hline(
-          data = baseDataSubset,
-          aes(yintercept = .data[[yColumn]]),
+        scale_y_log10(
+          limits = pLimits,
+          expand = expansion(mult = c(0.01, 0.1)),
+          breaks = scales::breaks_log(
+            n = plotConfiguration$yAxisTicks
+          ),
+          labels = scales::label_log()
+        )
+    } else {
+      plot <- plot +
+        scale_y_continuous(
+          limits = pLimits,
+          breaks = scales::breaks_extended(
+            n = plotConfiguration$yAxisTicks
+          ),
+          labels = scales::label_number_auto()
+        )
+    }
+
+    # initial parameter value reference marker
+    plot <- plot +
+      geom_hline(
+        data = baseDataSubset,
+        aes(yintercept = .data[[yColumn]]),
+        linetype = "dotted",
+        linewidth = 0.5,
+        color = "black",
+        na.rm = TRUE
+      )
+
+    # vertical line only for percent x-axis at 100
+    if (xAxisType == "percent") {
+      plot <- plot +
+        geom_vline(
+          xintercept = 100,
           linetype = "dotted",
           linewidth = 0.5,
           color = "black",
           na.rm = TRUE
         )
-
-      # vertical line only for percent x-axis at 100
-      if (xAxisType == "percent") {
-        plot <- plot +
-          geom_vline(
-            xintercept = 100,
-            linetype = "dotted",
-            linewidth = 0.5,
-            color = "black",
-            na.rm = TRUE
-          )
-      }
-
-      # finalize plot ----------------------------
-
-      # note: facet wrap on unique PK parameter to obtain facet titles
-      plot <- plot +
-        facet_wrap(~PKParameter, scales = yAxisFacetScales) +
-        labs(
-          x = plotConfiguration$xLabel,
-          y = plotConfiguration$yLabel,
-          title = NULL,
-          color = plotConfiguration$legendTitle
-        ) +
-        theme_bw(base_size = 11) +
-        theme(
-          legend.position = plotConfiguration$legendPosition,
-          panel.grid.minor = element_blank(),
-          text = element_text(size = 11)
-        ) +
-        guides(col = guide_legend(
-          nrow = length(unique(data$PKParameter)),
-          title.position = "top"
-        ))
-
-      # apply color scales
-      if (is.null(plotConfiguration$linesColor)) {
-        plot <- plot + scale_color_brewer(palette = "Dark2")
-      } else {
-        plot <- plot + scale_color_manual(values = plotConfiguration$linesColor)
-      }
-
-      return(plot)
     }
-  )
 
-  # compile individual plots -----------------
+    # Finalize plot --------------------------------------
+
+    plot <- plot +
+      facet_wrap(~PKParameter, scales = yAxisFacetScales) +
+      labs(
+        x = plotConfiguration$xLabel,
+        y = plotConfiguration$yLabel,
+        title = NULL,
+        color = plotConfiguration$legendTitle
+      ) +
+      theme_bw(base_size = 11) +
+      theme(
+        legend.position = plotConfiguration$legendPosition,
+        panel.grid.minor = element_blank(),
+        text = element_text(size = 11)
+      ) +
+      guides(col = guide_legend(
+        nrow = length(unique(data$PKParameter)),
+        title.position = "top"
+      ))
+
+    # apply color scales
+    if (is.null(plotConfiguration$linesColor)) {
+      plot <- plot + scale_color_brewer(palette = "Dark2")
+    } else {
+      plot <- plot + scale_color_manual(values = plotConfiguration$linesColor)
+    }
+
+    plotList[[param]] <- plot
+  }
+
+  # Compile individual plots -----------------------------
 
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
