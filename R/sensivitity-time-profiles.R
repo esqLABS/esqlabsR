@@ -166,14 +166,20 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   # list of plots ------------------------
 
+  splitData <- split(data, data$OutputPath)
+  lsPlots <- setNames(
+    vector("list", length(names(splitData))), names(splitData)
+  )
+
   # create plot for each output path
-  lsPlots <- purrr::map(
-    .x = data %>% split(.$OutputPath),
-    .f = ~ .createTimeProfiles(
-      .x,
+  for (outputPath in names(splitData)) {
+    subsetData <- splitData[[outputPath]]
+
+    lsPlots[[outputPath]] <- .createTimeProfiles(
+      splitData[[outputPath]],
       defaultPlotConfiguration = customPlotConfiguration
     )
-  )
+  }
 
   return(lsPlots)
 }
