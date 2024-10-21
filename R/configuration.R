@@ -262,37 +262,11 @@ Configuration <- R6::R6Class(
       return(populations)
     },
     .createPlotsConfigurations = function() {
-      plotFilePath <- private$.project$projectConfiguration$plotsFile
-      plotsSheets <- readxl::excel_sheets(plotFilePath)
-      plotsCharacteristicsData <- readExcel(plotFilePath, sheet = 2)
-      validatePlotsFileStructure(
-        filePath = plotFilePath,
-        data = plotsCharacteristicsData
-      )
-      plots <- list()
-      for (i in 1:nrow(plotsCharacteristicsData)) {
-        plotCharacteristicsData <- plotsCharacteristicsData[i, ]
-        plotId <- plotCharacteristicsData$plotID
-        if (plotId %in% plotsSheets) {
-          plotParameters <- createParametersFromSheet(private$.project, plotFilePath, plotId)
-        }
-        plots[[plotId]] <- list(
-          DataCombinedName = plotCharacteristicsData$DataCombinedName,
-          plotType = plotCharacteristicsData$plotType,
-          title = plotCharacteristicsData$title,
-          xUnit = plotCharacteristicsData$xUnit,
-          yUnit = plotCharacteristicsData$yUnit,
-          xAxisScale = plotCharacteristicsData$xAxisScale,
-          yAxisScale = plotCharacteristicsData$yAxisScale,
-          xValuesLimits = plotCharacteristicsData$xValuesLimits,
-          yValuesLimits = plotCharacteristicsData$yValuesLimits,
-          aggregation = plotCharacteristicsData$aggregation,
-          quantiles = plotCharacteristicsData$quantiles,
-          nsd = plotCharacteristicsData$nsd,
-          foldDistance = plotCharacteristicsData$foldDistance
-        )
-      }
-      return(plots)
+      validateSheetsFileNames(private$.project$projectConfiguration$plotsFile)
+      plotConfig <- PlotConfiguration$new(filePath = private$.project$projectConfiguration$plotsFile)
+      plotConfig <- plotConfig$getPlotConfig()
+
+      return(plotConfig)
     },
     .createModelParametersConfigurations = function() {
       return(
