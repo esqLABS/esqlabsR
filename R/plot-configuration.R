@@ -11,7 +11,7 @@
 #'
 #' @export
 #' PlotConfiguration Class
-PlotConfiguration <- R6Class(
+PlotConfiguration <- R6::R6Class(
   "PlotConfiguration",
   private = list(
     # Private fields
@@ -189,7 +189,6 @@ PlotConfiguration <- R6Class(
       private$.filePath <- filePath
       config <- private$.initializePlotConfiguration()
     },
-
     #' @description Retrieves the full plot configuration list.
     #'
     #' @return A list containing all configurations (DataCombined, PlotConfiguration, PlotGrids, ExportConfiguration).
