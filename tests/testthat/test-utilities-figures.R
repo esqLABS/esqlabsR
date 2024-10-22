@@ -1,4 +1,4 @@
-## context("esqLABS_colors")
+# esqLABS_colors ----------------------------------------------------------
 
 test_that("esqLABS_colors input validation works as expected", {
   expect_error(esqLABS_colors(-1), messages$nrOfColorsShouldBePositive(-1))
@@ -24,7 +24,7 @@ test_that("esqLABS_colors returns ten colors", {
   expect_length(esqLABS_colors(10), 10)
 })
 
-## context("col2hsv")
+# col2hsv -----------------------------------------------------------------
 
 test_that("col2hsv returns expected HSV values for a given R color name", {
   expect_equal(
@@ -44,9 +44,7 @@ test_that("col2hsv returns expected HSV values for a given R color name", {
   )
 })
 
-
-
-## context("createEsqlabsPlotConfiguration")
+# createEsqlabsPlotConfiguration ------------------------------------------
 
 test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults", {
   myPC <- createEsqlabsPlotConfiguration()
@@ -54,19 +52,40 @@ test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults"
   expect_equal(myPC$titleSize, 10)
 })
 
-## context("createEsqlabsPlotGridConfiguration")
-
 test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defaults", {
   myPGC <- createEsqlabsPlotGridConfiguration()
   expect_true(isOfType(myPGC, "PlotGridConfiguration"))
   expect_equal(myPGC$tagLevels, "a")
 })
 
-## context("createEsqlabsExportConfiguration")
-
 test_that("createEsqlabsExportConfiguration() creates object with chosen defaults", {
   myProjConfig <- ProjectConfiguration$new()
   myEC <- createEsqlabsExportConfiguration(myProjConfig)
   expect_true(isOfType(myEC, "ExportConfiguration"))
   expect_equal(myEC$units, "cm")
+})
+
+
+test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
+  defaultConfig <- ospsuite::DefaultPlotConfiguration$new()
+  esqlabsConfig <- createEsqlabsPlotConfiguration()
+
+  # Check if all fields from DefaultPlotConfiguration are present in esqLabs configuration
+  defaultFields <- names(defaultConfig)
+  esqlabsFields <- names(esqlabsConfig)
+
+  missingFields <- setdiff(defaultFields, esqlabsFields)
+  expect_true(length(missingFields) == 0,
+              info = paste("Missing fields:", paste(missingFields, collapse = ", ")))
+
+  # Only override fields where differences are intentional
+  # and backward compatibility with `ospsuite` plotting functions was verified
+  esqlabsConfig$linesColor <- NULL
+  esqlabsConfig$legendPosition <- NULL
+
+  # Check if the types of the remaining fields are the same between both configurations
+  for (field in defaultFields) {
+    expect_equal(class(esqlabsConfig[[field]]), class(defaultConfig[[field]]),
+                 info = paste("Field", field, "has different types"))
+  }
 })
