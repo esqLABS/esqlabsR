@@ -1,4 +1,4 @@
-# sensitivityTimeProfiles plots are as expected
+# sensitivityTimeProfiles creates expected default plot
 
     Code
       pb$plot$labels
@@ -22,7 +22,7 @@
       [1] ""
       
 
-# sensitivityTimeProfiles correctly applies linear y-axis scaling
+# sensitivityTimeProfiles applies linear y-axis scaling correctly
 
     Code
       extractAxisRange(p)
@@ -36,7 +36,7 @@
       
       
 
-# sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths
+# sensitivityTimeProfiles applies y-unit conversion for multiple paths
 
     Code
       extractAxisRange(p)
@@ -66,7 +66,7 @@
       
       
 
-# sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths with `NULL`
+# sensitivityTimeProfiles handles y-unit conversion with `NULL` for multiple paths
 
     Code
       extractAxisRange(p)
@@ -96,7 +96,7 @@
       
       
 
-# sensitivityTimeProfiles plots correctly apply y-unit conversion for multiple paths with single unit
+# sensitivityTimeProfiles applies y-unit conversion with a single unit for multiple paths
 
     Code
       extractAxisRange(p1)
