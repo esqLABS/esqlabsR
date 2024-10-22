@@ -299,3 +299,7 @@ messages$errorNotNamedList <- function(objectName, optionalMessage = NULL) {
     optionalMessage
   )
 }
+
+messages$invalidVariationRangeLength <- function() {
+  "`variationRange` must be either a vector or a list equal to the length of `parameterPaths`."
+}
