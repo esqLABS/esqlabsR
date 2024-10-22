@@ -9,7 +9,6 @@ options(
   scipen = 999
 )
 
-
 # Single output path ------------------------------------------------------
 
 # Load simulation and set paths for tests
