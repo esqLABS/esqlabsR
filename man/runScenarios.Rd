@@ -7,11 +7,10 @@
 runScenarios(scenarios, simulationRunOptions = NULL)
 }
 \arguments{
+\item{scenarios}{List of \code{Scenario} objects to be simulated.}
+
 \item{simulationRunOptions}{Object of type \code{SimulationRunOptions} that will be passed
 to simulation runs. If \code{NULL}, default options are used.}
-
-\item{scenarioConfigurations}{List of \code{ScenarioConfiguration} objects to be
-simulated.}
 }
 \value{
 A named list, where the names are scenario names, and the values are

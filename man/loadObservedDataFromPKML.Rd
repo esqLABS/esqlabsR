@@ -25,7 +25,7 @@ and be named \code{projectConfiguration$dataFile}.
 \examples{
 \dontrun{
 # Create default project configuration
-projectConfiguration <- createDefaultProjectConfiguration()
+projectConfiguration <- createProjectConfiguration()
 dataSets <- loadObservedData(projectConfiguration)
 }
 }
