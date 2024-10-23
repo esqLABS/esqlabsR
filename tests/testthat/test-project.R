@@ -106,3 +106,74 @@ test_that("Scenario can be run", {
 })
 
 
+test_that("No warnings during validation", {
+  project <- testProject()
+  expect_equal(project$get_warning_manager()$get_warnings(), list())
+})
+test_that("Individual is not defined", {
+  project <- testProject()
+  project$configurations$scenarios$TestScenario$individual <- "Non-declared individual"
+  expect_equal(
+    ls(project$get_warning_manager()$get_warnings()$TestScenario),
+    "INDIVIDUAL_NOT_FOUND"
+  )
+})
+test_that("Model is not defined", {
+  project <- testProject()
+  project$configurations$scenarios$TestScenario$model <- "Non-declared model"
+  expect_equal(
+    ls(project$get_warning_manager()$get_warnings()$TestScenario),
+    "MODEL_NOT_FOUND"
+  )
+})
+
+
+# Project export test ----------------------------------------------------------
+test_that("exportToJSON(), missed export parameters", {
+  p <- testProject()
+
+  expect_error(
+    p$exportToJSON(interactiveInput = FALSE),
+    "Both 'dirPath' and 'fileName' must be provided when 'interactiveInput' is FALSE."
+  )
+
+})
+
+
+test_that("Export aborts with invalid directory in non-interactive mode", {
+  p <- testProject()
+  # Capture cli output using testthat::expect_error()
+  expect_error(
+    p$exportToJSON(interactiveInput = FALSE, dirPath = "invalid_path", fileName = "test"),
+    "Invalid directory path. Export aborted."
+  )
+})
+
+test_that("Interactive mode prompts correctly", {
+  skip()
+  skip_on_ci()
+
+  p <- testProject()
+  # Mock the readline inputs to simulate user input
+  with_mock(
+    `readline` = function(prompt) if (grepl("directory", prompt)) tempdir() else "test_project",
+    {
+      p$exportToJSON(interactiveInput = TRUE)
+
+      # Check that the JSON file exists
+      json_file <- file.path(tempdir(), "test_project.json")
+      expect_true(file.exists(json_file))
+
+      # Clean up by removing the JSON file
+      file.remove(json_file)
+    }
+  )
+})
+
+test_that("Test import project configuarion from JSON", {
+  expect_error(
+    Project$new(projectConfiguration = 'non-exist.json', importJSON = TRUE),
+    "File does not exist."
+  )
+})
+
