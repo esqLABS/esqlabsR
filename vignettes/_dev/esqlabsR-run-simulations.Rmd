@@ -1,0 +1,120 @@
+---
+title: "3. Run Simulations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{esqlabsR-run-simulations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE, warning = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.showtext = TRUE
+)
+
+library(esqlabsR)
+
+projectConfiguration <- createProjectConfiguration(exampleProjectConfiguration())
+```
+
+Running scenarios can be divided into three steps:
+
+1.  Creating the `ScenarioConfiguration` objects,
+2.  Creating the `Scenario` objects from configurations,
+3.  Running the scenarios.
+
+### Creating `ScenarioConfiguration` objects
+
+A `ScenarioConfiguration` object holds all information about a scenario
+that is defined in the Excel files. Though it is possible to create an
+empty `ScenarioConfiguration` and populate it by hand, we usually want
+to create scenario configurations from the Excel files by calling the
+`readScenarioConfigurationFromExcel()` function. A
+`ScenarioConfiguration` is based on the `ProjectConfiguration`, which
+has to be provided as an argument to the function. To create the
+configuration for the *'TestScenario'* scenario defined in the
+`Scenarios.xlsx` file, we call:
+
+```{r createScenarioConfigurations}
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = "TestScenario",
+  projectConfiguration = projectConfiguration
+)
+```
+
+```{r, echo = FALSE}
+scenarioConfigurations$TestScenario$print(projectConfiguration = FALSE)
+```
+
+Alternatively, we can create configurations for all scenarios defined in
+the `Scenarios.xlsx` by calling
+`readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)`
+without specifying the scenarios' names.
+
+### Creating `Scenario` objects from configurations
+
+Once all scenario configurations are set up, `Scenario` objects can be
+created from them. A `Scenario` object contains the fully parametrized
+simulation, the `Population` object in case of a population simulation,
+the underlying `ScenarioConfiguration` object, and the list of all
+user-defined parameters.
+
+During the model development/fitting phase, you might want to test
+parameter values before storing them in the `Parameters` Excel files.
+You can define the paths of the test parameters, their values, and the
+units in the `TestParameters` file and pass them as `customParams`
+argument to the `createScenarios()` function.
+
+```{r createScenarios}
+# Create `Scenario` objects from `ScenarioConfiguration` objects
+scenarios <- createScenarios(scenarioConfigurations)
+```
+
+You can view the final parametrization that is applied to the simulation
+by calling the `finalCustomParams` property:
+
+```{r}
+scenarios$TestScenario$finalCustomParams
+```
+
+### Running scenarios
+
+Once the `Scenario` objects are created, they can be simulated by
+calling the `runScenarios()` function. The output of this function is a
+named list, where the names are scenario names, and the values are the
+lists of simulations, `SimulatioResults` produced by running the
+simulation, the output values of the `SimulationResults`, and the
+population if the scenario is a population simulation.
+
+```{r runScenarios, results='hold'}
+simulatedScenariosResults <- runScenarios(
+  scenarios = scenarios
+)
+
+# Each simulation is stored separately inside the simulatedScenariosResults
+names(simulatedScenariosResults)
+
+# Each simulation can be accessed using its name
+simulatedScenariosResults$TestScenario$simulation
+
+# Of course, it contains simulated results as dataframe
+head(simulatedScenariosResults$TestScenario$outputValues$data)
+
+# It also contains dataframe's metadata
+head(simulatedScenariosResults$TestScenario$outputValues$metaData)
+```
+
+It is a good idea to store simulation results as `*.csv` along with
+simulations as `.*pkml` and, optionally, the applied population as
+`*.csv` file and load them for further processing to avoid re-simulating
+every time, e.g., a change to a figure showing the simulation results is
+required. The convenient function for saving the results of a scenario
+run is `saveScenarioResults`. Then, you will be able to restore the
+results using `loadScenarioResults`.
+
+Now that the results have been generated, you can proceed to the next
+step in the `vignette("esqlabsR-plot-results")`.
+<!-- Read the following sections to learn more about the options for running simulations. -->

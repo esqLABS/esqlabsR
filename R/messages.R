@@ -299,3 +299,7 @@ messages$errorNotNamedList <- function(objectName, optionalMessage = NULL) {
     optionalMessage
   )
 }
+
+messages$LockedScenarios <- function(scenarioID){
+  glue::glue("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${scenarioID}")
+}

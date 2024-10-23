@@ -102,7 +102,7 @@ run_test_simulation <- function() {
       require(esqlabsR)
 
       suppressWarnings({
-        projectConfiguration <- createProjectConfiguration(path = esqlabsR::example_ProjectConfiguration())
+        projectConfiguration <- createProjectConfiguration(path = esqlabsR::exampleProjectConfigurationFile())
       })
       # Define which scenarios to run
       scenarioNames <- c("TestScenario")

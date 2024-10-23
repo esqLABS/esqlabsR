@@ -11,7 +11,7 @@ test_that("A warning is (not) displayed if path/file does not exist", {
 
 
 test_that("`createDefaultProjectConfiguration()` is deprecated", {
-  expect_warning(createDefaultProjectConfiguration(path = example_ProjectConfiguration()))
+  expect_warning(createDefaultProjectConfiguration(path = exampleProjectConfigurationFile()))
 })
 
 
@@ -39,4 +39,16 @@ test_that("Project Configuration can be customized but throws warning if path ar
   expect_warning({myConfig$plotsFile <- "donotexist.xslx"})
   expect_warning({myConfig$dataFile <- "donotexist.xslx"})
   expect_warning({myConfig$dataImporterConfigurationFile <- "donotexist.xslx"})
+
+})
+
+test_that("Project Configuration can be exported and reimported", {
+  myConfig <- testProjectConfiguration()
+
+  temp <- file_temp(pattern = "exportedProjectConfiguration", ext = ".xlsx")
+  myConfig$save(path = temp)
+
+  expect_no_error(
+    createProjectConfiguration(path = temp)
+  )
 })

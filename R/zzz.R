@@ -1,3 +1,6 @@
+#' @import cli
+NULL
+
 # nocov start
 esqlabsEnv$colorPalette <- .getEsqlabsColors()
 

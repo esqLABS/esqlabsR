@@ -7,9 +7,6 @@
 \description{
 An object storing configuration used project-wide
 }
-\section{Super class}{
-\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{ProjectConfiguration}
-}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
@@ -118,6 +115,8 @@ Export ProjectConfiguration object to ProjectConfiguration.xlsx
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{path}}{A string representing the path to the exported file.}
+
+\item{\code{path}}{A string representing the path where to save the file.}
 }
 \if{html}{\out{</div>}}
 }
