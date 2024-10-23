@@ -303,3 +303,12 @@ messages$errorNotNamedList <- function(objectName, optionalMessage = NULL) {
 messages$LockedScenarios <- function(scenarioID){
   glue::glue("Scenario cannot be modified directly. Configure by accessing project$configurations$scenarios${scenarioID}")
 }
+
+messages$errorWrongXLSFileSchema <- function(filePath, expectedSheetNames, optionalMessage = NULL) {
+  paste0(
+    "Loading from XLS failed, the file '", filePath, "' has wrong schema!
+    The file should contain sheets '", paste0(expectedSheetNames, collapse = ", "), "'",
+    optionalMessage
+  )
+}
+
