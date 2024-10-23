@@ -131,16 +131,19 @@ test_that("Model is not defined", {
 # Project export test ----------------------------------------------------------
 test_that("exportToJSON(), missed export parameters", {
   p <- testProject()
-  result <- p$exportToJSON(interactiveInput = FALSE)
 
-  expect_null(result)
+  expect_error(
+    p$exportToJSON(interactiveInput = FALSE),
+    "Both 'dirPath' and 'fileName' must be provided when 'interactiveInput' is FALSE."
+  )
+
 })
 
 
 test_that("Export aborts with invalid directory in non-interactive mode", {
   p <- testProject()
-  # Capture cli output using testthat::expect_message()
-  expect_message(
+  # Capture cli output using testthat::expect_error()
+  expect_error(
     p$exportToJSON(interactiveInput = FALSE, dirPath = "invalid_path", fileName = "test"),
     "Invalid directory path. Export aborted."
   )
@@ -164,6 +167,13 @@ test_that("Interactive mode prompts correctly", {
       # Clean up by removing the JSON file
       file.remove(json_file)
     }
+  )
+})
+
+test_that("Test import project configuarion from JSON", {
+  expect_error(
+    Project$new(projectConfiguration = 'non-exist.json', importJSON = TRUE),
+    "File does not exist."
   )
 })
 

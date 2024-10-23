@@ -193,8 +193,7 @@ Project <-
 
           # Validate directory path
           if (!dir.exists(dirPath)) {
-            cli::cli_alert_danger("Invalid directory path. Export aborted.")
-            return(invisible(NULL))
+            cli::cli_abort("Invalid directory path. Export aborted.")
           }
 
           # Prompt for the file name
@@ -202,14 +201,12 @@ Project <-
         } else {
           # Ensure both parameters are provided if interactiveInput is FALSE
           if (is.null(dirPath) || is.null(fileName)) {
-            cli::cli_alert_danger("Both 'dirPath' and 'fileName' must be provided when 'interactiveInput' is FALSE.")
-            return(invisible(NULL))
+            cli::cli_abort("Both 'dirPath' and 'fileName' must be provided when 'interactiveInput' is FALSE.")
           }
 
           # Validate directory path
           if (!dir.exists(dirPath)) {
-            cli::cli_alert_danger("Invalid directory path. Export aborted.")
-            return(invisible(NULL))
+            cli::cli_abort("Invalid directory path. Export aborted.")
           }
         }
 
@@ -230,7 +227,17 @@ Project <-
         cli::cli_alert_success(paste("Project successfully exported to", filePath))
         invisible(NULL)
       },
-
+      #' @description Export the entire project
+      #' @param json boolean to indicate if the project should be exported to a JSON file
+      #' @param xlsx boolean to indicate if the project should be exported to an XLSX file
+      export = function(json = TRUE, xlsx = TRUE) {
+        if (!json && !xlsx) {
+          cli::cli_abort("At least one of 'json' or 'xlsx' must be TRUE.")
+        }
+        if (json) {
+          self$exportToJSON()
+        }
+      },
       get_warning_manager = function() {
         return(private$.warningManager)  # Return the WarningManager instance
       }
@@ -304,8 +311,7 @@ Project <-
       .importFromJSON = function(filePath) {
         # Check if file exists
         if (!file.exists(filePath)) {
-          cli::cli_alert_danger("File does not exist.")
-          return(invisible(NULL))
+          cli::cli_abort("File does not exist.")
         }
 
         # Read JSON data
