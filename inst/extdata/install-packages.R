@@ -80,6 +80,10 @@ get_esqlabsR <- function() {
     upgrade = "always"
   )
 
+  remotes::install_github("Open-Systems-Pharmacology/OSPSuite.ParameterIdentification@*release",
+                          upgrade = "never"
+  )
+
   cli::cli_progress_done(result = "done")
 }
 
