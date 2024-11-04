@@ -19,6 +19,8 @@
     
   - Function `sensitivityCalculation()` will throw more informative messages when
     `outputPaths` or `parameterPaths` is not a character vector or NULL (\#712).
+    
+  - Embedded Shiny Application were removed. (\#736)
 
 # esqlabsR 5.2.0
 
