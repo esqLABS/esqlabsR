@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 library(esqlabsR)
 
-projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration())
+projectConfiguration <- createProjectConfiguration(example_ProjectConfiguration())
 ```
 
 Running scenarios can be divided into three steps:

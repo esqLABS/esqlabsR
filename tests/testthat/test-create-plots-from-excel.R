@@ -1,4 +1,4 @@
-projectConfiguration <- createDefaultProjectConfiguration(test_ProjectConfiguration())
+projectConfiguration <- testProjectConfiguration()
 
 # Define which scenarios to run
 scenarioNames <- c("TestScenario", "PopulationScenario")
@@ -78,7 +78,7 @@ exportConfigurationDf <- data.frame(list("plotGridName" = character(0), "outputN
 test_that("It trows an error if mandatory field dataType is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -109,7 +109,7 @@ test_that("It trows an error if mandatory field dataType is not filled out", {
 test_that("It trows an error if mandatory field label is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -140,7 +140,7 @@ test_that("It trows an error if mandatory field label is not filled out", {
 test_that("It trows an error if no scenario is specified for a simulated data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -171,7 +171,7 @@ test_that("It trows an error if no scenario is specified for a simulated data", 
 test_that("It trows an error if no output path is specified for a simulated data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -202,7 +202,7 @@ test_that("It trows an error if no output path is specified for a simulated data
 test_that("It trows an error if wrong output path is specified for a simulated data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -237,7 +237,7 @@ test_that("It trows an error if wrong output path is specified for a simulated d
 test_that("It trows an error if no data set is specified for observed data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -268,7 +268,7 @@ test_that("It trows an error if no data set is specified for observed data", {
 test_that("It trows an error if defined scenario is missing and stopIfNotFound is TRUE", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -299,7 +299,7 @@ test_that("It trows an error if defined scenario is missing and stopIfNotFound i
 test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -333,7 +333,7 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
 test_that("It trows an error if defined data set is missing and stopIfNotFound is TRUE", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -363,7 +363,7 @@ test_that("It trows an error if defined data set is missing and stopIfNotFound i
 test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -393,7 +393,7 @@ test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", 
 test_that("It trows an error if mandatory field DataCombinedName is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -423,7 +423,7 @@ test_that("It trows an error if mandatory field DataCombinedName is not filled o
 test_that("It trows an error if mandatory field plotType is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -453,7 +453,7 @@ test_that("It trows an error if mandatory field plotType is not filled out", {
 test_that("It trows an error if a plot requires a DataCombined that is not defined", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -484,7 +484,7 @@ test_that("It trows an error if a plot requires a DataCombined that is not defin
 test_that("It returns NULL if no plotGrids are defined in the excel sheet", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -554,7 +554,7 @@ test_that("It trows an error when specified plot grid names are not defined in t
 test_that("It throws an error if mandatory field plotIDs is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -583,10 +583,10 @@ test_that("It throws an error if mandatory field plotIDs is not filled out", {
 })
 
 
-test_that("It throws and error if plotIDs are not unique", {
+test_that("It throws an error if plotIDs are not unique", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
@@ -628,10 +628,10 @@ test_that("It throws and error if plotIDs are not unique", {
   )
 })
 
-test_that("It throws and error if plotGrid names are not unique", {
+test_that("It throws an error if plotGrid names are not unique", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
@@ -666,7 +666,7 @@ test_that("It throws and error if plotGrid names are not unique", {
 test_that("It trows an error if a plot grid requires a plot id that is not defined", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -696,7 +696,7 @@ test_that("It trows an error if a plot grid requires a plot id that is not defin
 test_that("It exports plot grids as defined in sheet `exportConfiguration`", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
@@ -733,7 +733,7 @@ test_that("It exports plot grids as defined in sheet `exportConfiguration`", {
 test_that("It throws an error when trying to set a property that is not supported by the configuration", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -767,7 +767,7 @@ test_that("It throws an error when trying to set a property that is not supporte
 test_that("It correctly treats names with underscores", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
@@ -807,7 +807,7 @@ test_that("It correctly treats names with underscores", {
 test_that("It correctly treats empty rows", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
@@ -881,7 +881,7 @@ test_that("It correctly treats empty rows", {
 test_that("It checks if OffsetsUnits are not empty if xOffsets", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   projectConfigurationLocal$outputFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
@@ -986,7 +986,112 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
 test_that("It throws a warning when trying to export non-existent plot grid to file", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  projectConfigurationLocal$outputFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      # Test xOffsets
+
+      dataCombinedDfLocal <- dataCombinedDf
+
+      dataCombinedDfLocal$xOffsets <- c(1, NA)
+      dataCombinedDfLocal$xOffsetsUnits <- c(NA, NA)
+
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDf,
+        "plotGrids" = plotGridsDf,
+        "exportConfiguration" = exportConfigurationDf
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+
+
+      dataCombinedDfLocal <- dataCombinedDf
+
+      dataCombinedDfLocal$xOffsets <- c(1, NA)
+      dataCombinedDfLocal$xOffsetsUnits <- c("min", NA)
+
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDf,
+        "plotGrids" = plotGridsDf,
+        "exportConfiguration" = exportConfigurationDf
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_no_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+
+      # test yOffsets
+      dataCombinedDfLocal <- dataCombinedDf
+
+      dataCombinedDfLocal$yOffsets <- c(1, NA)
+      dataCombinedDfLocal$yOffsetsUnits <- c(NA, NA)
+
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDf,
+        "plotGrids" = plotGridsDf,
+        "exportConfiguration" = exportConfigurationDf
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+
+
+      dataCombinedDfLocal <- dataCombinedDf
+
+      dataCombinedDfLocal$yOffsets <- c(1, NA)
+      dataCombinedDfLocal$yOffsetsUnits <- c("µM", NA)
+
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDf,
+        "plotGrids" = plotGridsDf,
+        "exportConfiguration" = exportConfigurationDf
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      expect_no_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+    }
+  )
+})
+
+test_that("It throws a warning when trying to export non-existent plot grid to file", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -1018,7 +1123,7 @@ test_that("It throws a warning when trying to export non-existent plot grid to f
 test_that("It throws a warning when outputName is missing in sheet 'exportConfiguration'", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,
@@ -1050,7 +1155,7 @@ test_that("It throws a warning when outputName is missing in sheet 'exportConfig
 test_that(".createConfigurationFromRow correctly reads values in quotes", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
 
   inputValues <- c(
     "Test without quotes",
@@ -1099,7 +1204,7 @@ test_that(".createConfigurationFromRow correctly reads values in quotes", {
 test_that("It returns an empty DataCombined when no data is available", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Plots.xlsx",
     tmpdir = tempDir,

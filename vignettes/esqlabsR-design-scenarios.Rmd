@@ -331,6 +331,6 @@ parameters are applied.
 
 <!-- ```{r, warning = FALSE} -->
 
-<!-- projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration()) -->
+<!-- projectConfiguration <- createProjectConfiguration(example_ProjectConfiguration()) -->
 
 <!-- ``` -->
