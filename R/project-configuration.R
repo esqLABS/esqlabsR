@@ -216,6 +216,7 @@ ProjectConfiguration <- R6::R6Class(
         data$applicationsFile <- data$scenarioApplicationsFile
         data$populationsFolder <- list(value = NA, description = "Name of the folder containing population defined in files")
 
+        # Delete previous properties
         data$paramsFolder <- NULL
         data$paramsFile <- NULL
         data$populationParamsFile <- NULL
@@ -315,28 +316,33 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @export
     save = function(path) {
-      excel_file <- readExcel(path = self$projectConfigurationFilePath)
-      export_path <- path
-
-      for (prop in excel_file$Property) {
-        path <- ""
-
-        if (!is.null(self[[prop]])) {
-          if (fs::is_dir(self[[prop]])) {
-            # if property is a directory, save relative path from ProjectConf dir
-            path <- fs::path_rel(
-              path = self[[prop]],
-              start = self$projectConfigurationDirPath
-            )
-          } else if (fs::is_file(self[[prop]])) {
-            # if property is a file, then save only its name
-            path <- basename(self[[prop]])
-          }
-        }
-
-        excel_file[excel_file$Property == prop, ]$Value <- path
+      df <- data.frame(Property = character(), Value = character(), Description = character(), stringsAsFactors = FALSE)
+      for (prop in c(
+        "modelFolder",
+        "configurationsFolder",
+        "modelParamsFile",
+        "individualsFile",
+        "populationsFile",
+        "populationsFolder",
+        "scenariosFile",
+        "applicationsFile",
+        "plotsFile",
+        "dataFolder",
+        "dataFile",
+        "dataImporterConfigurationFile",
+        "outputFolder"
+      )) {
+        df <- rbind(
+          df,
+          data.frame(
+            Property = prop,
+            Value = private$.projectConfigurationData[[prop]]$value,
+            Description = private$.projectConfigurationData[[prop]]$description
+          )
+        )
       }
-      .writeExcel(excel_file, path = export_path %||% self$projectConfigurationFilePath)
+
+      .writeExcel(df, path = path %||% self$projectConfigurationFilePath)
     }
   )
 )
