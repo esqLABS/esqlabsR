@@ -312,7 +312,7 @@ ProjectConfiguration <- R6::R6Class(
       invisible(self)
     },
     #' @description Export ProjectConfiguration object to ProjectConfiguration.xlsx
-    #' @param path a string representing the path or file name where to save the file. Can be absolute or relative.
+    #' @param path a string representing the path or file name where to save the file. Can be absolute or relative (to working directory).
     #'
     #' @export
     save = function(path) {
