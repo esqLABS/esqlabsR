@@ -12,7 +12,7 @@ To enable long path, follow instructions at this adress: https://www.microfocus.
   }
 }
 
-install_script_deps <- function(install_option) {
+install_script_deps <- function() {
   # install dependencies required for this script
 
   # Do not prompt user if packages must be built
@@ -20,15 +20,14 @@ install_script_deps <- function(install_option) {
 
   cat("Install prerequisite dependencies\n")
   # if user chose local installation, install renv and initialize it
-  if (install_option == 1) {
-    install.packages("renv")
-    require(renv)
-    init(
-      bare = TRUE,
-      restart = FALSE,
-      force = TRUE
-    )
-  }
+  install.packages("renv")
+  require(renv)
+  init(
+    bare = TRUE,
+    restart = FALSE,
+    force = TRUE
+  )
+
 
   # Declare packages
   packages <- c("cli", "remotes", "rstudioapi", "pkgbuild")
@@ -81,7 +80,7 @@ get_esqlabsR <- function() {
   )
 
   remotes::install_github("Open-Systems-Pharmacology/OSPSuite.ParameterIdentification@*release",
-                          upgrade = "never"
+    upgrade = "never"
   )
 
   cli::cli_progress_done(result = "done")
@@ -210,12 +209,7 @@ restart_rstudio <- function() {
 setup_esqlabsR <- function() {
   verify_long_path_enabled()
 
-  # Display a menu asking if user wants to install packages in local env or  globally
-  install_option <- utils::menu(c("In local environment (available for one project)", "In Global environment (available for all projects)"),
-    title = "Where do you want to install {esqlabsR} and other packages?"
-  )
-
-  install_script_deps(install_option)
+  install_script_deps()
 
   check_RTools()
 
@@ -227,9 +221,7 @@ setup_esqlabsR <- function() {
 
   initialize_project()
 
-  if (install_option == 1) {
-    renv::snapshot(prompt = FALSE, force = TRUE) # snapshot environment
-  }
+  renv::snapshot(prompt = FALSE, force = TRUE) # snapshot environment
 
   restart_rstudio()
 }
