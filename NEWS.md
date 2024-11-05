@@ -29,6 +29,9 @@
     `Unit Converter` is available as a RStudio Addin
     [here](https://github.com/Open-Systems-Pharmacology/OSPSuite.Addins).
 
+  - Test ospsuite plotting functions are compatible with `esqlabsPlotConfiguration`
+    (\#733).
+
 # esqlabsR 5.2.0
 
 ## Breaking changes
