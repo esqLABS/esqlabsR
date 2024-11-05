@@ -89,3 +89,16 @@ test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
                  info = paste("Field", field, "has different types"))
   }
 })
+
+# single observed and simulated datasets
+oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
+
+test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualTimeProfile", {
+  esqlabsConfig <- createEsqlabsPlotConfiguration()
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "time profile - esqlabsPlotConfiguration",
+    fig = plotIndividualTimeProfile(oneObsSimDC, esqlabsConfig)
+  )
+})
