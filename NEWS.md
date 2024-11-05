@@ -2,8 +2,9 @@
 
 ## Breaking changes
 
-  - Function `sensitivityCalculation()` with renamed parameter `pkDataFilePath` 
-    to `saOutputFilePath` and updated output files to include PK parameter units (\#696).
+  - Function `sensitivityCalculation()` with renamed parameter `pkDataFilePath`
+    to `saOutputFilePath` and updated output files to include PK parameter units
+    (\#696).
 
 ## Major Changes
 
@@ -11,21 +12,29 @@
 
   - Handle simulation failures in `sensitivityCalculation` (\#694).
 
-  - Function `sensitivityCalculation()` supports new parameter `customOutputFunctions`, 
-    allowing user-defined functions for PK parameter calculation (\#685).
+  - Function `sensitivityCalculation()` supports new parameter
+    `customOutputFunctions`, allowing user-defined functions for PK parameter
+    calculation (\#685).
 
-  - Function `sensitivitySpiderPlot` now supports `xAxisType` and `yAxisType` options 
-    for switching between percent and absolute values (\#695).
+  - Function `sensitivitySpiderPlot` now supports `xAxisType` and `yAxisType`
+    options for switching between percent and absolute values (\#695).
     
-  - Function `sensitivityCalculation()` will throw more informative messages when
-    `outputPaths` or `parameterPaths` is not a character vector or NULL (\#712).
+  - Function `sensitivityCalculation()` will throw more informative messages
+    when `outputPaths` or `parameterPaths` is not a character vector or NULL
+    (\#712).
+    
+  - Embedded Shiny Application were removed. (\#736). `Function Visualizer` can
+    be found [in its dedicated
+    repository](https://github.com/esqLABS/esqlabsR.FunctionVisualizer) while
+    `Unit Converter` is available as a RStudio Addin
+    [here](https://github.com/Open-Systems-Pharmacology/OSPSuite.Addins).
 
 # esqlabsR 5.2.0
 
 ## Breaking changes
 
-  - `{esqlabsR}` now requires `{ospsuite}` version 12.1.0 or higher to benefit from
-    embedded PK-Sim core files.
+  - `{esqlabsR}` now requires `{ospsuite}` version 12.1.0 or higher to benefit
+    from embedded PK-Sim core files.
 
   - Function `exportSteadyStateToXLS` has been removed in favor of
     `ospsuite::exportSteadyStateToXLS` (\#598)
@@ -37,12 +46,13 @@
     customization options through `defaultPlotConfiguration` (\#632).
   
   - Function `sensitivityTimeProfiles` with new signature and enhanced visuals:
-    - `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin` (\#669).
-    - `xUnits` and `yUnits` to change units in the plot (\#688).
-    - Enhanced plot customization options through `defaultPlotConfiguration` as
-      described in the documentation (\#669).
-    - Support for adding `observedData` (single or multiple `DataSet` objects) 
-      to the plots (\#674).
+      - `xAxisScale` and `yAxisScale` to set axis scales to `log` or `lin`
+        (\#669).
+      - `xUnits` and `yUnits` to change units in the plot (\#688).
+      - Enhanced plot customization options through `defaultPlotConfiguration`
+        as described in the documentation (\#669).
+      - Support for adding `observedData` (single or multiple `DataSet` objects)
+        to the plots (\#674).
       
   - Function `writeExcel()` is no longer exported. (\#672)
 
@@ -73,8 +83,8 @@
   - More explicit error is shown if x/yOffsetsUnit is not set when x/yOffset is
     defined.
     
-  - Plotting functions have improved dynamic axis breaks, limits calculation, and 
-    labeling (\#691).
+  - Plotting functions have improved dynamic axis breaks, limits calculation,
+    and labeling (\#691).
 
 # esqlabsR 5.1.3
 
