@@ -7,7 +7,6 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-project-structure.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-run-simulations.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-sensitivity.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-shiny.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-workflow-overview.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/index.html</loc></url>
@@ -91,8 +90,6 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/setParameterValuesByPathWithCondition.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sineFunction.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sourceAll.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/startFunctionVisualizer.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/startUnitConverter.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/stringToNum.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/test_ProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/writeIndividualToXLS.html</loc></url>
