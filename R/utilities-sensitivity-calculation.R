@@ -485,7 +485,9 @@
   }
 
   # Skip further checks if NULL is allowed and the argument is NULL
-  if (is.null(argVector)) return()
+  if (is.null(argVector)) {
+    return()
+  }
 
   # Check if the argument is of type character
   if (!isOfType(argVector, "character")) {
