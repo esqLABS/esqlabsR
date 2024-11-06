@@ -74,7 +74,7 @@ messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = NULL) {
 }
 
 messages$PlotGridsNamesMustBeUnique <- function(duplicated_plotGridsNames = NULL) {
-  paste0("PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated: ", duplicated_plotGridsNames)
+  paste0("PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated:\n", paste(duplicated_plotGridsNames, collapse = "\n"))
 }
 
 messages$UnknownPlotConfiguration <- function(name) {
