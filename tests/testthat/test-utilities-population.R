@@ -184,8 +184,8 @@ test_that("extendPopulationFromXLS throws an error if the sheet has wrong struct
 
       expect_error(
         extendPopulationFromXLS(population,
-                                PopulationParameters,
-                                sheet = "UserDefinedVariability"
+          PopulationParameters,
+          sheet = "UserDefinedVariability"
         ),
         regexp = "has wrong structure"
       )
@@ -232,11 +232,12 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
         ))
       )
 
-      expect_snapshot(error = TRUE,
-          extendPopulationFromXLS(population,
-            PopulationParameters,
-            sheet = "UserDefinedVariability"
-          )
+      expect_snapshot(
+        error = TRUE,
+        extendPopulationFromXLS(population,
+          PopulationParameters,
+          sheet = "UserDefinedVariability"
+        )
       )
     }
   )

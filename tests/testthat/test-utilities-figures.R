@@ -76,7 +76,8 @@ test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
 
   missingFields <- setdiff(defaultFields, esqlabsFields)
   expect_true(length(missingFields) == 0,
-              info = paste("Missing fields:", paste(missingFields, collapse = ", ")))
+    info = paste("Missing fields:", paste(missingFields, collapse = ", "))
+  )
 
   # Only override fields where differences are intentional
   # and backward compatibility with `ospsuite` plotting functions was verified
@@ -86,7 +87,8 @@ test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
   # Check if the types of the remaining fields are the same between both configurations
   for (field in defaultFields) {
     expect_equal(class(esqlabsConfig[[field]]), class(defaultConfig[[field]]),
-                 info = paste("Field", field, "has different types"))
+      info = paste("Field", field, "has different types")
+    )
   }
 })
 
