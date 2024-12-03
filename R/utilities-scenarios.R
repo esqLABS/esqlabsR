@@ -204,8 +204,6 @@ saveScenarioResults <- function(
         if (!dir.exists(paths = outputFolder)) {
           dir.create(path = outputFolder, recursive = TRUE)
         }
-        # Save results
-        ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
         # Save simulations
         if (saveSimulationsToPKML) {
           outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
@@ -220,6 +218,8 @@ saveScenarioResults <- function(
             filePath = file.path(outputFolder, paste0(scenarioName, "_population.csv"))
           )
         }
+        # Save results
+        ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
       },
       error = function(cond) {
         warning(paste0("Cannot save to path '", outputFolder, "'"))
