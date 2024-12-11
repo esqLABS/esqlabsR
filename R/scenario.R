@@ -89,8 +89,10 @@ Scenario <- R6::R6Class(
         )
 
         if (is.null(individualCharacteristics)) {
-          warning(messages$warningNoIndividualCharacteristics(scenarioName = scenarioConfiguration$scenarioName,
-                                                              individualId = scenarioConfiguration$individualId))
+          warning(messages$warningNoIndividualCharacteristics(
+            scenarioName = scenarioConfiguration$scenarioName,
+            individualId = scenarioConfiguration$individualId
+          ))
         }
 
         # Find individual-specific model parameters
@@ -107,8 +109,10 @@ Scenario <- R6::R6Class(
             newParameters = indivModelParams
           )
         } else {
-          warning(messages$warningNoIndividualModelParameters(scenarioName = scenarioConfiguration$scenarioName,
-                                                              individualId = scenarioConfiguration$individualId))
+          warning(messages$warningNoIndividualModelParameters(
+            scenarioName = scenarioConfiguration$scenarioName,
+            individualId = scenarioConfiguration$individualId
+          ))
         }
       }
 
