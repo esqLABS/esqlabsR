@@ -98,6 +98,20 @@ messages$warningInvalidScenarioName <- function(scenarioNames) {
   )
 }
 
+messages$warningNoIndividualCharacteristics <- function(scenarioName, individualId) {
+  paste0(
+    "Scenario ", scenarioName, ": No individual characteristics for individual id '",
+    individualId, "' found."
+  )
+}
+
+messages$warningNoIndividualSpecificModelParameters <- function(scenarioName, individualId) {
+  paste0(
+    "Scenario ", scenarioName, ": No individual specific model parameters for individual id '",
+    individualId, "' found."
+  )
+}
+
 messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   paste0("Simulation type of the scenario with scenario name '", scenarioName, "' is set to
          'Population', but the field `populationId` is not set! Every population
