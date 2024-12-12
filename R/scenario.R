@@ -126,7 +126,13 @@ Scenario <- R6::R6Class(
       # Set administration protocols
       excelFilePath <- scenarioConfiguration$projectConfiguration$applicationsFile
       # Checking for 'NA' if administration protocol is not set in excel file.
-      if (!is.na(scenarioConfiguration$applicationProtocol) && any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
+      if (!is.na(scenarioConfiguration$applicationProtocol)) {
+        if (!any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
+          stop(messages$errorApplicationProtocolNotFound(
+            scenarioName = scenarioConfiguration$scenarioName,
+            applicationProtocol = scenarioConfiguration$applicationProtocol
+          ))
+        }
         applicationParams <- readParametersFromXLS(excelFilePath, scenarioConfiguration$applicationProtocol)
         params <- extendParameterStructure(
           parameters = params,
