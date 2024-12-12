@@ -54,7 +54,8 @@ Suggests:
     showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
-    withr
+    withr,
+    reactable
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3
