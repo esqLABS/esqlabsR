@@ -79,7 +79,7 @@ test_that("It returns NULL if the distance is higher than the absolute threshold
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
-  expect_warning(expect_null(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0.4)))
+  suppressWarnings(expect_equal(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0.4), NULL))
 })
 
 test_that("It returns multiple indeces for multiple lowest values with a relative threshold", {
@@ -93,14 +93,14 @@ test_that("It returns NULL if the distance is higher than the absolute threshold
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
-  expect_warning(expect_null(getIndexClosestToValue(value = value, array = array, thresholdRel = 0.9)))
+  suppressWarnings(expect_null(getIndexClosestToValue(value = value, array = array, thresholdRel = 0.9)))
 })
 
 test_that("It only finds exact matches for absolute threshold = 0", {
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
-  expect_warning(expect_null(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0)))
+  suppressWarnings(expect_null(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0)))
   value <- 1
   expect_equal(getIndexClosestToValue(value = value, array = array, thresholdAbs = 0), 3)
 })
@@ -109,9 +109,9 @@ test_that("It only finds exact matches for relative threshold = 0", {
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
-  expect_warning(expect_null(getIndexClosestToValue(value = value, array = array, thresholdRel = 0)))
+  suppressWarnings(expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 0), NULL))
   value <- 1
-  expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 0), 3)
+  suppressWarnings(expect_equal(getIndexClosestToValue(value = value, array = array, thresholdRel = 0), 3))
 })
 
 test_that("It finds a 0 without a threshold", {

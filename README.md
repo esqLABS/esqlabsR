@@ -32,16 +32,18 @@ tutorial](articles/esqlabsR.html).
 
 ## Installation
 
-### Prerequisites
+### Pre-requisites
 
-As `{esqlabsR}` relies on the `{ospsuite}` package, please installed the
-`{ospsuite}` dependencies as described
-[here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R?tab=readme-ov-file#pre-requisites).
+<!-- As `{esqlabsR}` relies indirectly on  `{rSharp}`, it requires its its external dependencies (Visual C++ Redistributable and .NET 8). Install them by following these instructions: -->
 
-### Package installation
+- [For
+  Windows](https://github.com/Open-Systems-Pharmacology/rSharp?tab=readme-ov-file#prerequisites)
+- [For
+  Linux](https://github.com/Open-Systems-Pharmacology/rSharp?tab=readme-ov-file#ubuntu)
 
-Currently, esqlabsR is available only for Windows system. You can
-install the package by running:
+### Install the package
+
+You can install the package by running:
 
 ``` r
 install.packages("pak")
@@ -58,6 +60,9 @@ Note: For projects created for version 3 of `esqlabsR` package, install
 [`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
 
 ## Usage
+
+You can start with the “Get Started” vignette: `vignette("esqlabsR")`.
+Below is a simple example of how to work with the package:
 
 ``` r
 # load esqlabsR
@@ -99,8 +104,7 @@ plotIndividualTimeProfile(my_datacombined)
 
 ## Learn More
 
-To get started, first read `vignette("esqlabsR")`. Then read more about
-the specific topics:
+You can find more information on specific topics in dedicated vignettes:
 
 - Start with `vignette("esqlabsR-workflow-overview")` to learn about the
   esqlabsR’s streamlined workflow.

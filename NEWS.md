@@ -32,12 +32,22 @@
   - Function `sensitivityCalculation()` supports new parameter
     `customOutputFunctions`, allowing user-defined functions for PK parameter
     calculation (\#685).
- 
+
   - Function `sensitivitySpiderPlot` now supports `xAxisType` and `yAxisType`
     options for switching between percent and absolute values (\#695).
     
-  - Function `sensitivityCalculation()` will throw more informative messages when
-    `outputPaths` or `parameterPaths` is not a character vector or NULL (\#712).
+  - Function `sensitivityCalculation()` will throw more informative messages
+    when `outputPaths` or `parameterPaths` is not a character vector or NULL
+    (\#712).
+    
+  - Embedded Shiny Application were removed. (\#736). `Function Visualizer` can
+    be found [in its dedicated
+    repository](https://github.com/esqLABS/esqlabsR.FunctionVisualizer) while
+    `Unit Converter` is available as a RStudio Addin
+    [here](https://github.com/Open-Systems-Pharmacology/OSPSuite.Addins).
+
+  - Test ospsuite plotting functions are compatible with `esqlabsPlotConfiguration`
+    (\#733).
 
 # esqlabsR 5.2.0
 

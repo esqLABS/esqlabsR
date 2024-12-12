@@ -44,13 +44,19 @@ To get started with the esqlabsR package, please follow the [Get Started tutoria
 
 ## Installation
 
-### Prerequisites
+### Pre-requisites
 
-As `{esqlabsR}` relies on the `{ospsuite}` package, please installe the `{ospsuite}` dependencies as described [here](https://github.com/Open-Systems-Pharmacology/OSPSuite-R?tab=readme-ov-file#pre-requisites).
+<!-- As `{esqlabsR}` relies indirectly on  `{rSharp}`, it requires its its external dependencies (Visual C++ Redistributable and .NET 8). Install them by following these instructions: -->
 
-### Package installation
+- [For
+  Windows](https://github.com/Open-Systems-Pharmacology/rSharp?tab=readme-ov-file#prerequisites)
+- [For
+  Linux](https://github.com/Open-Systems-Pharmacology/rSharp?tab=readme-ov-file#ubuntu)
 
-You can install the package directly from GitHub by running:
+### Install the package
+
+You can install the package by running:
+
 
 ```{r, eval=FALSE}
 install.packages("pak")
@@ -70,6 +76,9 @@ Note: For projects created for version 3 of `esqlabsR` package, refer to [`esqla
 ```{r, include=FALSE}
 showtext::showtext_opts(dpi = 300)
 ```
+
+You can start with the "Get Started" vignette: `vignette("esqlabsR")`. 
+Below is a simple example of how to work with the package:
 
 ```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
 # load esqlabsR
@@ -109,7 +118,7 @@ plotIndividualTimeProfile(my_datacombined)
 
 ## Learn More
 
-To get started, first read `vignette("esqlabsR")`. Then read more about the specific topics:
+You can find more information on specific topics in dedicated vignettes:
 
   - Start with `vignette("esqlabsR-workflow-overview")` to learn about the esqlabsR's streamlined workflow.
   - `vignette("esqlabsR-project-structure")` details the structure and purpose of each component file and directory of an esqlabsR project.

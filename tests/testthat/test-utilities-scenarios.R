@@ -91,6 +91,8 @@ test_that("It runs two scenarios", {
   )
   # Disable steady-state for second config
   scenarioConfigurations[[2]]$simulateSteadyState <- FALSE
+  # Prevent warning because Indiv not found by replacing with existing IndividualId
+  scenarioConfigurations[[2]]$individualId <- "Indiv1"
 
   scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
 
