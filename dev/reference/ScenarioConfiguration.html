@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9018</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,16 +70,16 @@ extension ".pkml"). Must be located in the "modelFolder".</p></dd>
 
 <dt><code>applicationProtocol</code></dt>
 <dd><p>Name of the application protocol to be applied. Defined
-in the excel file "ApplicationParameters.xlsx"</p></dd>
+in the excel file "Applications.xlsx"</p></dd>
 
 
 <dt><code>individualId</code></dt>
-<dd><p>Id of the individual as specified in "IndividualParameters.xlsx".
+<dd><p>Id of the individual as specified in "Individuals.xlsx".
 If <code>NULL</code> (default), the individual as defined in the simulation file will be simulated.</p></dd>
 
 
 <dt><code>populationId</code></dt>
-<dd><p>Id of the population as specified in "PopulationParameters.xlsx",
+<dd><p>Id of the population as specified in "Populations.xlsx",
 sheet "Demographics". If <code>ScenarioConfguration$simulationType</code> is <code>population</code>,
 a population will be created a the scenario will be simulated as a population
 simulation.</p></dd>
@@ -130,7 +130,7 @@ that will be applied to the simulation</p></dd>
 <dt><code>simulationType</code></dt>
 <dd><p>Type of the simulation - "Individual" or
 "Population". If "Population", population characteristics are created
-based on information stored in <code>populationParamsFile</code>. Default is
+based on information stored in <code>populationsFile</code>. Default is
 "Individual"</p></dd>
 
 

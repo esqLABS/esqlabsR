@@ -13,7 +13,7 @@ standards adopted by esqLABS GmbH."><meta property="og:image" content="https://e
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9018</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,16 +63,16 @@ standards adopted by esqLABS GmbH.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">createEsqlabsExportConfiguration</span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">createEsqlabsExportConfiguration</span><span class="op">(</span><span class="va">outputFolder</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-projectconfiguration">projectConfiguration<a class="anchor" aria-label="anchor" href="#arg-projectconfiguration"></a></dt>
-<dd><p>Object of class <code>ProjectConfiguration</code>
-that contains information about the output paths.</p></dd>
+<dl><dt id="arg-outputfolder">outputFolder<a class="anchor" aria-label="anchor" href="#arg-outputfolder"></a></dt>
+<dd><p>Path to the folder where the results will be
+stored.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -89,7 +89,7 @@ that contains information about the output paths.</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">myProjConfig</span> <span class="op">&lt;-</span> <span class="va"><a href="ProjectConfiguration.html">ProjectConfiguration</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">createEsqlabsExportConfiguration</span><span class="op">(</span><span class="va">myProjConfig</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">createEsqlabsExportConfiguration</span><span class="op">(</span><span class="va">myProjConfig</span><span class="op">$</span><span class="va">outputFolder</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Format: png</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Width: 18 cm</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Height: 9 cm</span>

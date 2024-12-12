@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9018</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,26 @@
 </ul></div>
 <div class="section level3">
 <h3 id="major-changes-development-version">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-development-version"></a></h3>
-</div>
+<ul><li><p><code>createDefaultProjectConfiguration</code> is now soft-deprecated in favor of <code>createProjectConfiguration</code>. (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</p></li>
+<li><p><code>ProjectConfiguration</code> fields have been renamed to be more consistant and easier to understand. (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</p></li>
+<li>
+<p>Files and folders names in project directory have been harmonized and improved (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</p>
+<ul><li>
+<code>Parameters</code> folder is now <code>Configurations</code>
+</li>
+<li>
+<code>Populations</code> folder is now <code>PopulationsCSV</code>
+</li>
+<li>
+<code>ApplicationParameters.xslx</code> file is now <code>Applications.xlsx</code>
+</li>
+<li>
+<code>PopulationParameters.xslx</code> file is now <code>Populations.xlsx</code>
+</li>
+<li>Previous directory structure is still supported but deprecated.</li>
+</ul></li>
+<li><p><a href="https://github.com/open-systems-pharmacology/ospsuite.parameteridentification" class="external-link">ospsuite.parameteridentification</a> is not longer a dependency of <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</p></li>
+</ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
 <ul><li><p>Handle simulation failures in <code>sensitivityCalculation</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/694" class="external-link">#694</a>).</p></li>

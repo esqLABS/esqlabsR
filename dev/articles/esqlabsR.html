@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9018</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,30 +118,23 @@ location.</p>
 <p>Loading the project configuration is the first step in any workflow
 using <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"path/to/ProjectConfiguration.xlsx"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"path/to/ProjectConfiguration.xlsx"</span><span class="op">)</span></span></code></pre></div>
 <pre><code>ProjectConfiguration: 
-Relative path from working directory: C:/[path]/TestProject
-Project Configuration File: Code/ProjectConfiguration.xlsx 
-Model folder: Models/Simulations 
-Parameters folder: Parameters 
-Parameters file name: Parameters/ModelParameters.xlsx 
-Individual parameters file name: Parameters/Individuals.xlsx 
-Population parameters file name: Parameters/PopulationParameters.xlsx
-Scenario definitions file name: Parameters/Scenarios.xlsx
+   ...
+   Model folder: Models/Simulations 
+   Configurations folder: Configurations 
+   Model Parameters: Configurations/ModelParameters.xlsx 
+   Individuals: Configurations/Individuals.xlsx 
+   Populations: Configurations/Populations.xlsx 
+   Populations Folder: Configurations/PopulationsCSV 
+   Scenarios: Configurations/Scenarios.xlsx 
 ...</code></pre>
-<!-- Scenario applications definitions file name: Parameters/ApplicationParameters.xlsx  -->
-<!-- Plot definitions file name: Parameters/Plots.xlsx  -->
-<!-- Experimental data folder: Data  -->
-<!-- Experimental data file: Data/TestProject_TimeValuesData.xlsx  -->
-<!-- Data importer configuration: Data/esqlabs_dataImporter_configuration.xml  -->
-<!-- Compound Properties File: Data/Compound Properties.xlsx  -->
-<!-- Output folder: Results  -->
 <p>Note that the <code>ProjectConfiguration</code> stores paths to other
 files that are used in the project.</p>
 <p>To create an example <code>ProjectConfiguration</code> and execute
 the rest of this tutorial, run the following:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="design-scenarios">Design Scenarios<a class="anchor" aria-label="anchor" href="#design-scenarios"></a>
