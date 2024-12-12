@@ -39,8 +39,7 @@ The package provides functions to:
   - Interact with the OSPS features using simple Excel files.
 
 
-To get started with the esqlabsR package, please read the `vignette("esqlabsR")`.
-
+To get started with the esqlabsR package, please follow the [Get Started tutorial](articles/esqlabsR.html).
 
 
 ## Installation
@@ -64,13 +63,13 @@ install.packages("pak")
 pak::pak("esqLABS/esqlabsR@*release")
 ```
 
-Get the latest development version with:
+The latest development version of the package can also be installed with:
 
 ```{r, eval=FALSE}
 pak::pak("esqLABS/esqlabsR")
 ```
 
-Note: For projects created for version 3 of `esqlabsR` package, install [`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
+Note: For projects created for version 3 of `esqlabsR` package, refer to [`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
 
 ## Usage
 
@@ -87,7 +86,7 @@ library(esqlabsR)
 
 # Load excel-based configuration
 my_project_configuration <-
-  createDefaultProjectConfiguration(example_ProjectConfiguration())
+  createProjectConfiguration(example_ProjectConfiguration())
 
 
 # Setup simulation scenarios
@@ -135,7 +134,6 @@ You can find more information on specific topics in dedicated vignettes:
   - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
   - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
   - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
-  - [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
 
 
 ## Contributing

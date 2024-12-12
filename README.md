@@ -27,8 +27,8 @@ The package provides functions to:
 - Generate standardized plots and other reporting materials,
 - Interact with the OSPS features using simple Excel files.
 
-To get started with the esqlabsR package, please read the
-`vignette("esqlabsR")`.
+To get started with the esqlabsR package, please follow the [Get Started
+tutorial](articles/esqlabsR.html).
 
 ## Installation
 
@@ -70,7 +70,7 @@ library(esqlabsR)
 
 # Load excel-based configuration
 my_project_configuration <-
-  createDefaultProjectConfiguration(example_ProjectConfiguration())
+  createProjectConfiguration(example_ProjectConfiguration())
 
 
 # Setup simulation scenarios
@@ -126,7 +126,6 @@ packages:
 - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
 - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
 - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
-- [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
 
 ## Contributing
 

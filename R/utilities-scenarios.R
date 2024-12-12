@@ -1,9 +1,8 @@
 #' Run a set of scenarios.
 #'
-#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to be
-#' simulated.
 #' @param simulationRunOptions Object of type `SimulationRunOptions` that will be passed
 #' to simulation runs. If `NULL`, default options are used.
+#' @param scenarios List of `Scenario` objects to be simulated.
 #'
 #' @return A named list, where the names are scenario names, and the values are
 #' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
@@ -14,7 +13,6 @@
 #' If simulation of a scenario fails, a warning is produced, and the `outputValues`
 #' for this scenario is `NULL`.
 #'
-#' @import ospsuite.parameteridentification
 #' @export
 runScenarios <- function(scenarios, simulationRunOptions = NULL) {
   # List of individiaul simulations
@@ -126,7 +124,7 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 #' Create population
 #'
 #' @param scenarioConfigurations List of `ScenarioConfiguration` objects to be
-#' simulated.
+#' simulated. See [createScenarios()] for details.
 #' @param customParams A list containing vectors 'paths' with the full paths to the
 #' parameters, 'values' the values of the parameters, and 'units' with the
 #' units the values are in. The values to be applied to the model.
@@ -166,8 +164,10 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfP
 #'
 #' @export
 #'
+#' @return `outputFolder` or the created output folder path, if no `outputFolder` was provided.
+#'
 #' @examples \dontrun{
-#' projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
+#' projectConfiguration <- esqlabsR::createProjectConfiguration()
 #' scenarioConfigurations <- readScenarioConfigurationFromExcel(
 #'   projectConfiguration = projectConfiguration
 #' )
@@ -231,6 +231,7 @@ saveScenarioResults <- function(
       }
     )
   }
+  return(outputFolder)
 }
 
 #' Load simulated scenarios from csv and pkml.
@@ -252,7 +253,7 @@ saveScenarioResults <- function(
 #'
 #' @examples \dontrun{
 #' # First simulate scenarios and save the results
-#' projectConfiguration <- esqlabsR::createDefaultProjectConfiguration()
+#' projectConfiguration <- esqlabsR::createProjectConfiguration()
 #' scenarioConfigurations <- readScenarioConfigurationFromExcel(
 #'   projectConfiguration = projectConfiguration
 #' )

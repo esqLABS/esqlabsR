@@ -8,6 +8,23 @@
 
 ## Major Changes
 
+  - `createDefaultProjectConfiguration` is now soft-deprecated in favor of
+    `createProjectConfiguration`. (\#692)
+    
+  - `ProjectConfiguration` fields have been renamed to be more consistant and
+    easier to understand. (\#692)
+    
+  - Files and folders names in project directory have been harmonized and
+    improved (\#692)
+      - `Parameters` folder is now `Configurations`
+      - `Populations` folder is now `PopulationsCSV`
+      - `ApplicationParameters.xslx` file is now `Applications.xlsx`
+      - `PopulationParameters.xslx` file is now `Populations.xlsx`
+      - Previous directory structure is still supported but deprecated.
+    
+  - `{ospsuite.parameteridentification}` is not longer a dependency of
+    `{esqlabsR}`.
+
 ## Minor improvements and bug fixes
 
   - Handle simulation failures in `sensitivityCalculation` (\#694).

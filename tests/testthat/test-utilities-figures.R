@@ -60,7 +60,7 @@ test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defau
 
 test_that("createEsqlabsExportConfiguration() creates object with chosen defaults", {
   myProjConfig <- ProjectConfiguration$new()
-  myEC <- createEsqlabsExportConfiguration(myProjConfig)
+  myEC <- createEsqlabsExportConfiguration(myProjConfig$outputFolder)
   expect_true(isOfType(myEC, "ExportConfiguration"))
   expect_equal(myEC$units, "cm")
 })

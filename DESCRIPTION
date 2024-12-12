@@ -28,7 +28,7 @@ Imports:
     ggplot2,
     grDevices,
     labeling,
-    ospsuite.parameteridentification (>= 1.3.0),
+    lifecycle,
     ospsuite.utils (>= 1.5.0),
     parallel,
     patchwork,
@@ -54,7 +54,8 @@ Suggests:
     showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
-    withr
+    withr,
+    reactable
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3
@@ -66,5 +67,4 @@ RoxygenNote: 7.3.2
 Remotes: 
     ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
     tlf=Open-Systems-Pharmacology/TLF-Library,
-    ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
-    Open-Systems-Pharmacology/ospsuite.parameteridentification
+    ospsuite=Open-Systems-Pharmacology/OSPSuite-R
