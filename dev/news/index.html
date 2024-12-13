@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9019</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.2.0.9020</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +77,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
-<ul><li><p>Handle simulation failures in <code>sensitivityCalculation</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/694" class="external-link">#694</a>).</p></li>
+<ul><li><p>When an application protocol defined for a scenario is not found in the excel file, an error is thrown.</p></li>
+<li><p>Handle simulation failures in <code>sensitivityCalculation</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/694" class="external-link">#694</a>).</p></li>
 <li><p>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> supports new parameter <code>customOutputFunctions</code>, allowing user-defined functions for PK parameter calculation (<a href="https://github.com/esqLABS/esqlabsR/issues/685" class="external-link">#685</a>).</p></li>
 <li><p>Function <code>sensitivitySpiderPlot</code> now supports <code>xAxisType</code> and <code>yAxisType</code> options for switching between percent and absolute values (<a href="https://github.com/esqLABS/esqlabsR/issues/695" class="external-link">#695</a>).</p></li>
 <li><p>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> will throw more informative messages when <code>outputPaths</code> or <code>parameterPaths</code> is not a character vector or NULL (<a href="https://github.com/esqLABS/esqlabsR/issues/712" class="external-link">#712</a>).</p></li>
