@@ -82,6 +82,9 @@ messages$UnknownPlotConfiguration <- function(name) {
 }
 
 # scenario####
+messages$errorApplicationProtocolNotFound <- function(scenarioName, applicationProtocol) {
+  paste0("Application protocol '", applicationProtocol, "' defined in scenario '", scenarioName, "' not found in the excel file 'ApplicationParameters.xlsx'")
+}
 messages$wrongSimulationType <- function() {
   "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"
 }

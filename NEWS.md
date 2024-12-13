@@ -27,6 +27,9 @@
 
 ## Minor improvements and bug fixes
 
+  - When an application protocol defined for a scenario is not found in the excel
+  file, an error is thrown.
+  
   - Handle simulation failures in `sensitivityCalculation` (\#694).
 
   - Function `sensitivityCalculation()` supports new parameter
