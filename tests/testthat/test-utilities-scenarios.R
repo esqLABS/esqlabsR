@@ -1,6 +1,6 @@
 ##  context("runScenarios")
 # Create a project configuration
-projectConfiguration <- createDefaultProjectConfiguration(test_ProjectConfiguration())
+projectConfiguration <- testProjectConfiguration()
 defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("It stops with an error if the excel file defines a parameter that is
@@ -13,6 +13,23 @@ test_that("It stops with an error if the excel file defines a parameter that is
     projectConfiguration = projectConfiguration
   )
   expect_error(createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = TRUE))
+})
+
+test_that("All working scenarios in testProject can be created without errors", {
+  # Define which scenarios to run
+  scenarioNames <- c(
+    "TestScenario",
+    "TestScenario2",
+    "PopulationScenario",
+    "PopulationScenarioFromCSV"
+  )
+  # Create `ScenarioConfiguration` objects from excel files
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+
+  expect_no_error(createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = FALSE))
 })
 
 test_that("It runs one scenario without specifying output paths", {
@@ -74,6 +91,8 @@ test_that("It runs two scenarios", {
   )
   # Disable steady-state for second config
   scenarioConfigurations[[2]]$simulateSteadyState <- FALSE
+  # Prevent warning because Indiv not found by replacing with existing IndividualId
+  scenarioConfigurations[[2]]$individualId <- "Indiv1"
 
   scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
 
@@ -114,6 +133,7 @@ test_that("It runs population and individual scenarios", {
 })
 
 
+
 test_that("It saves and loads scenario results for scenario names with forbidden characters", {
   # Define which scenarios to run
   scenarioNames <- c("TestScenario")
@@ -134,7 +154,7 @@ test_that("It saves and loads scenario results for scenario names with forbidden
   withr::with_tempdir(
     code = {
       # Save results using temp folder
-      saveScenarioResults(
+      outputFolder <- saveScenarioResults(
         simulatedScenariosResults = simulatedScenarios,
         projectConfiguration = projectConfiguration,
         outputFolder = tempdir
@@ -142,6 +162,9 @@ test_that("It saves and loads scenario results for scenario names with forbidden
       # Check that the results are saved
       expect_true(file.exists(file.path(tempdir, "TestScenario_with_slash.pkml")))
       expect_true(file.exists(file.path(tempdir, "TestScenario_with_slash.csv")))
+
+      # Check that the correted output folder path is returned
+      expect_equal(outputFolder, tempdir)
 
       # Load results using temp folder
       simulatedScenarioResults <- loadScenarioResults(

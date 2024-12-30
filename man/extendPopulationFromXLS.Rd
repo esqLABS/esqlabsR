@@ -10,8 +10,8 @@ extendPopulationFromXLS(population, XLSpath, sheet = NULL)
 \item{population}{Object of type \code{Population}}
 
 \item{XLSpath}{Path to the excel file that stores the information of
-parameters. The file must have the columns "Container.Path",
-"Parameter.Name", "Mean", "SD", "Units", and "Distribution". Mean and SD
+parameters. The file must have the columns "Container Path",
+"Parameter Name", "Mean", "SD", "Units", and "Distribution". Mean and SD
 values must be in the base units of the parameters.}
 
 \item{sheet}{Name or the index of the sheet in the excel file.

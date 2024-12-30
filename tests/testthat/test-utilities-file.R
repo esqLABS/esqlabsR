@@ -22,6 +22,9 @@ test_that("`pathFromClipboard()` converts paths as expected", {
   # This will work only in interactive mode, i.e. with
   # `devtools::test_active_file()` or `devtools::test()`, but not during R CMD
   # Check on CRAN or AppVeyor where the system clipboard is not available
+
+  skip_on_ci()
+
   if (clipr::clipr_available()) {
     path <- "C:\\Users\\Documents"
     clipr::write_clip(path, allow_non_interactive = TRUE)

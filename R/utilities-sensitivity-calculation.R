@@ -18,11 +18,18 @@
 .simulationResultsBatchToPKDataFrame <- function(simulationResultsBatch,
                                                  parameterPaths,
                                                  customOutputFunctions) {
-  purrr::map2_dfr(
-    .x = simulationResultsBatch,
-    .y = parameterPaths,
-    .f = ~ .simulationResultsToPKDataFrame(.x, .y, customOutputFunctions)
-  )
+  batchResultsList <- list()
+
+  for (i in seq_along(simulationResultsBatch)) {
+    batchResultsList[[i]] <- .simulationResultsToPKDataFrame(
+      simulationResultsBatch[[i]],
+      parameterPaths[[i]],
+      customOutputFunctions
+    )
+  }
+  pkDataFrame <- dplyr::bind_rows(batchResultsList)
+
+  return(pkDataFrame)
 }
 
 #' Calculate PK parameters dataframe from simulation results
@@ -478,7 +485,9 @@
   }
 
   # Skip further checks if NULL is allowed and the argument is NULL
-  if (is.null(argVector)) return()
+  if (is.null(argVector)) {
+    return()
+  }
 
   # Check if the argument is of type character
   if (!isOfType(argVector, "character")) {

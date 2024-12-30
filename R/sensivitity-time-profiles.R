@@ -97,21 +97,18 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     yUnits = NULL,
                                     observedData = NULL,
                                     defaultPlotConfiguration = NULL) {
-  # input validation ------------------------
+  # Input validation -------------------------------------
 
-  # fail early if the object is of wrong type
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   validateIsOfType(observedData, DataSet, nullAllowed = TRUE)
   validateIsOfType(xUnits, "list", nullAllowed = TRUE)
   validateIsOfType(yUnits, "list", nullAllowed = TRUE)
 
-  # validate vector arguments of character type
   .validateCharVectors(outputPaths, nullAllowed = TRUE)
   .validateCharVectors(parameterPaths, nullAllowed = TRUE)
 
-  # plot configuration setup ------------
+  # Plot configuration setup -----------------------------
 
-  # default time profiles plot configuration
   timeProfilesConfiguration <- list(
     legendPosition = "bottom",
     legendTitle = "Parameter factor",
@@ -134,9 +131,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     yAxisScale               = yAxisScale
   )
 
-  # prepare data ------------------------
+  # Prepare data -----------------------------------------
 
-  # extract the needed dataframe from the object
   data <- .aggregateSimulationAndObservedData(
     simulationResults        = sensitivityCalculation$simulationResults,
     dataSets                 = observedData,
@@ -154,7 +150,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     pkParameters = NULL # not relevant
   )
 
-  # split long parameter path names for plotting
+  # modify long parameter path names for plotting
   data <- dplyr::mutate(
     data,
     ParameterPath = dplyr::if_else(
@@ -164,16 +160,22 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   )
 
-  # list of plots ------------------------
+  # Create list of plots ---------------------------------
+
+  splitData <- split(data, data$OutputPath)
+  lsPlots <- setNames(
+    vector("list", length(names(splitData))), names(splitData)
+  )
 
   # create plot for each output path
-  lsPlots <- purrr::map(
-    .x = data %>% split(.$OutputPath),
-    .f = ~ .createTimeProfiles(
-      .x,
+  for (outputPath in names(splitData)) {
+    subsetData <- splitData[[outputPath]]
+
+    lsPlots[[outputPath]] <- .createTimeProfiles(
+      splitData[[outputPath]],
       defaultPlotConfiguration = customPlotConfiguration
     )
-  )
+  }
 
   return(lsPlots)
 }
@@ -203,7 +205,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     )
   }
 
-  # calculate y-axis limits and color legend breaks -----
+  # calculate y-axis limits and color legend breaks
   pLimits <- .calculateLimits(data$yValues,
     scaling = plotConfiguration$yAxisScale
   )
@@ -213,163 +215,162 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   )
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
 
-  # map each parameter path to its own plot ----
-  plotList <- purrr::map(
-    unique(data$ParameterPath) %>% .[!is.na(.)],
-    ~ {
-      dataSubset <- dplyr::filter(data, ParameterPath == .x)
+  # Loop through unique ParameterPath
+  paramPaths <- unique(data$ParameterPath)
+  paramPaths <- paramPaths[!is.na(paramPaths)]
+  plotList <- setNames(vector("list", length(paramPaths)), paramPaths)
 
-      # replace zeros dynamically to avoid warning when log transform
-      dataSubset$yValues <- ifelse(dataSubset$yValues <= 0,
-        pLimits[1], dataSubset$yValues
+  for (paramPath in paramPaths) {
+    dataSubset <- dplyr::filter(data, ParameterPath == paramPath)
+
+    # replace zeros dynamically to avoid warning when log transform
+    dataSubset$yValues <- ifelse(dataSubset$yValues <= 0,
+      pLimits[1], dataSubset$yValues
+    )
+
+    # combine original data subset with observed data
+    if ("observed" %in% data$dataType) {
+      observedData <- dplyr::filter(data, dataType == "observed") %>%
+        dplyr::select(-ParameterPath)
+      hasObservedData <- isTRUE(nrow(observedData) != 0)
+    } else {
+      hasObservedData <- FALSE
+    }
+
+    # Basic plot setup -----------------------------------
+
+    plot <- ggplot() +
+      geom_line(
+        data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
+        aes(
+          x = xValues,
+          y = yValues,
+          group = ParameterFactor,
+          color = ParameterFactor
+        ),
+        linewidth = plotConfiguration$linesSize,
+        alpha = plotConfiguration$linesAlpha,
+        na.rm = TRUE
+      ) +
+      geom_line(
+        data = dplyr::filter(dataSubset, ParameterFactor == 1.0),
+        aes(xValues, yValues),
+        color = "black",
+        linewidth = plotConfiguration$linesSize,
+        alpha = plotConfiguration$linesAlpha,
+        na.rm = TRUE
       )
 
-      # combine original data subset with observed data
-      # add observed data if not-null
-      if ("observed" %in% data$dataType) {
-        observedData <- dplyr::filter(data, dataType == "observed") %>%
-          dplyr::select(-ParameterPath)
-        hasObservedData <- isTRUE(nrow(observedData) != 0)
-      } else {
-        hasObservedData <- FALSE
-      }
-
-      # basic plot setup -------------------------
-
-      plot <- ggplot() +
-        geom_line(
-          data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
-          aes(
-            x = xValues,
-            y = yValues,
-            group = ParameterFactor,
-            color = ParameterFactor
-          ),
-          linewidth = plotConfiguration$linesSize,
-          alpha = plotConfiguration$linesAlpha,
-          na.rm = TRUE
-        ) +
-        geom_line(
-          data = dplyr::filter(dataSubset, ParameterFactor == 1.0),
-          aes(xValues, yValues),
-          color = "black",
-          linewidth = plotConfiguration$linesSize,
-          alpha = plotConfiguration$linesAlpha,
-          na.rm = TRUE
-        )
-
-      # add symbols for observed data
-      if (hasObservedData) {
-        plot <- plot +
-          geom_point(
-            data = observedData,
-            aes(xValues, yValues, shape = `Study Id`)
-          ) +
-          scale_shape_manual(
-            values = rep(
-              plotConfiguration$pointsShape,
-              length.out = length(unique(observedData$`Study Id`))
-            ),
-            name = "Observed data"
-          )
-      }
-
-      # adjusting axis scales
-      if (isTRUE(plotConfiguration$xAxisScale == "log")) {
-        plot <- plot + scale_x_log10()
-      }
-      if (isTRUE(plotConfiguration$yAxisScale == "log")) {
-        plot <- plot +
-          scale_y_log10(
-            limits = pLimits,
-            expand = expansion(mult = c(0.01, 0.1)),
-            breaks = scales::breaks_log(),
-            labels = scales::label_log()
-          )
-      } else {
-        plot <- plot +
-          scale_y_continuous(
-            limits = pLimits,
-            breaks = scales::breaks_extended(),
-            labels = scales::label_number_auto()
-          )
-      }
-
-      # finalize plot ----------------------------
-
-      # note: facet wrap on unique PK parameter to obtain facet titles
+    # add symbols for observed data
+    if (hasObservedData) {
       plot <- plot +
-        facet_wrap(~ParameterPath) +
-        labs(
-          x = plotConfiguration$xLabel,
-          y = plotConfiguration$yLabel,
-          title = NULL,
-          color = plotConfiguration$legendTitle
-        )
-
-      # theme adjustments
-      plot <- plot +
-        theme_bw(base_size = 11) +
-        theme(
-          legend.position = plotConfiguration$legendPosition,
-          panel.grid.minor = element_blank(),
-          text = element_text(size = 11)
+        geom_point(
+          data = observedData,
+          aes(xValues, yValues, shape = `Study Id`)
         ) +
-        guides(
-          color = guide_colorbar(
-            title = plotConfiguration$legendTitle,
-            ticks = FALSE,
-            draw.ulim = FALSE,
-            draw.llim = FALSE,
-            title.position = "top",
-            order = 1
+        scale_shape_manual(
+          values = rep(
+            plotConfiguration$pointsShape,
+            length.out = length(unique(observedData$`Study Id`))
           ),
-          shape = guide_legend(order = 2)
+          name = "Observed data"
         )
-
-      if (hasObservedData) {
-        plot <- plot +
-          guides(
-            shape = guide_legend(
-              title.position = "top",
-              nrow = length(unique(observedData$dataType))
-            )
-          )
-      }
-
-      # apply color scales
-      if (is.null(plotConfiguration$linesColor)) {
-        plot <- plot +
-          colorspace::scale_color_continuous_diverging(
-            palette = "Berlin",
-            mid = log10(1),
-            transform = "log",
-            breaks = cBreaks
-          )
-      } else {
-        plot <- plot +
-          scale_color_gradient2(
-            name = plotConfiguration$legendTitle,
-            low = colorspace::darken(
-              plotConfiguration$linesColor[1],
-              amount = 0.15
-            ),
-            mid = "black",
-            high = colorspace::darken(
-              plotConfiguration$linesColor[2],
-              amount = 0.15
-            ),
-            transform = "log",
-            midpoint = 1,
-            breaks = cBreaks
-          )
-      }
-
-      return(plot)
     }
-  )
 
-  # compile individual plots -----------------
+    # adjust axis scales
+    if (isTRUE(plotConfiguration$xAxisScale == "log")) {
+      plot <- plot + scale_x_log10()
+    }
+    if (isTRUE(plotConfiguration$yAxisScale == "log")) {
+      plot <- plot +
+        scale_y_log10(
+          limits = pLimits,
+          expand = expansion(mult = c(0.01, 0.1)),
+          breaks = scales::breaks_log(),
+          labels = scales::label_log()
+        )
+    } else {
+      plot <- plot +
+        scale_y_continuous(
+          limits = pLimits,
+          breaks = scales::breaks_extended(),
+          labels = scales::label_number_auto()
+        )
+    }
+
+    # Finalize plot --------------------------------------
+
+    plot <- plot +
+      facet_wrap(~ParameterPath) +
+      labs(
+        x = plotConfiguration$xLabel,
+        y = plotConfiguration$yLabel,
+        title = NULL,
+        color = plotConfiguration$legendTitle
+      )
+
+    plot <- plot +
+      theme_bw(base_size = 11) +
+      theme(
+        legend.position = plotConfiguration$legendPosition,
+        panel.grid.minor = element_blank(),
+        text = element_text(size = 11)
+      ) +
+      guides(
+        color = guide_colorbar(
+          title = plotConfiguration$legendTitle,
+          ticks = FALSE,
+          draw.ulim = FALSE,
+          draw.llim = FALSE,
+          title.position = "top",
+          order = 1
+        ),
+        shape = guide_legend(order = 2)
+      )
+
+    if (hasObservedData) {
+      plot <- plot +
+        guides(
+          shape = guide_legend(
+            title.position = "top",
+            nrow = length(unique(observedData$dataType))
+          )
+        )
+    }
+
+    # apply color scales
+    if (is.null(plotConfiguration$linesColor)) {
+      plot <- plot +
+        colorspace::scale_color_continuous_diverging(
+          palette = "Berlin",
+          mid = log10(1),
+          transform = "log",
+          breaks = cBreaks
+        )
+    } else {
+      plot <- plot +
+        scale_color_gradient2(
+          name = plotConfiguration$legendTitle,
+          low = colorspace::darken(
+            plotConfiguration$linesColor[1],
+            amount = 0.15
+          ),
+          mid = "black",
+          high = colorspace::darken(
+            plotConfiguration$linesColor[2],
+            amount = 0.15
+          ),
+          transform = "log",
+          midpoint = 1,
+          breaks = cBreaks
+        )
+    }
+
+    plotList[[paramPath]] <- plot
+  }
+
+  # Compile individual plots -----------------------------
+
   plotPatchwork <- patchwork::wrap_plots(plotList) +
     patchwork::plot_annotation(
       title = plotConfiguration$title,
@@ -419,10 +420,9 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   validateIsOfType(simulationResults, "list")
 
   # validate if xUnits are valid unit for time dimension
-  # general unit validation inside .adjustUnits
   lapply(xUnits, validateEnumValue, ospUnits$Time, TRUE)
 
-  # prepare units to be applied to outputPaths
+  # prepare and validate units to be applied to outputPaths
   xUnits <- .adjustUnits(xUnits, outputPaths)
   yUnits <- .adjustUnits(yUnits, outputPaths)
 
@@ -430,8 +430,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     vector("list", length(parameterPaths)),
     parameterPaths
   )
-  # iterate over each `parameterPath`, combine `simulationResults` for each
-  # `parameterFactor` and add `DataSets` by `outputPath`
+  # iterate over parameterPaths, combine simulation results and datasets by outputPath
   for (parameterPath in names(simulationResults)) {
     simulationResultsPath <- simulationResults[[parameterPath]]
     parameterFactor <- as.list(names(simulationResultsPath))
@@ -445,7 +444,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       dataCombined <- DataCombined$new()
 
       # add multiple simulation results to dataCombined
-      # uses parameterFactor from sensitivity analysis as name
       for (i in seq_along(parameterFactor)) {
         dataCombined$addSimulationResults(
           simulationResultsPath[[i]],
@@ -455,7 +453,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         )
       }
 
-      # add dataSets when units are convertable for `outputPath`
+      # add dataSets when units are convertable for outputPath
       if (!is.null(dataSets)) {
         validateIsOfType(dataSets, "list")
         for (j in seq_along(dataSets)) {
@@ -494,7 +492,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   combinedDf <- dplyr::bind_rows(parameterPathList, .id = "ParameterPath")
-  # use names derived from parameterFactor to create a numeric column
+  # cConvert parameterFactor to numeric for simulated data
   combinedDf <- dplyr::rowwise(combinedDf) %>%
     dplyr::mutate(
       ParameterFactor = if (dataType == "simulated") as.numeric(name) else NA_real_

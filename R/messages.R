@@ -74,7 +74,7 @@ messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = NULL) {
 }
 
 messages$PlotGridsNamesMustBeUnique <- function(duplicated_plotGridsNames = NULL) {
-  paste0("PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated: ", duplicated_plotGridsNames)
+  paste0("PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated:\n", paste(duplicated_plotGridsNames, collapse = "\n"))
 }
 
 messages$UnknownPlotConfiguration <- function(name) {
@@ -82,6 +82,9 @@ messages$UnknownPlotConfiguration <- function(name) {
 }
 
 # scenario####
+messages$errorApplicationProtocolNotFound <- function(scenarioName, applicationProtocol) {
+  paste0("Application protocol '", applicationProtocol, "' defined in scenario '", scenarioName, "' not found in the excel file 'ApplicationParameters.xlsx'")
+}
 messages$wrongSimulationType <- function() {
   "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"
 }
@@ -95,6 +98,20 @@ messages$warningInvalidScenarioName <- function(scenarioNames) {
     "The following scenarios are not present in `simulatedScenarios`: ",
     paste(scenarioNames, collapse = ",\n"),
     ". Data can not be added to `DataCombined` object."
+  )
+}
+
+messages$warningNoIndividualCharacteristics <- function(scenarioName, individualId) {
+  paste0(
+    "Scenario ", scenarioName, ": No individual characteristics for individual id '",
+    individualId, "' found."
+  )
+}
+
+messages$warningNoIndividualSpecificModelParameters <- function(scenarioName, individualId) {
+  paste0(
+    "Scenario ", scenarioName, ": No individual specific model parameters for individual id '",
+    individualId, "' found."
   )
 }
 
