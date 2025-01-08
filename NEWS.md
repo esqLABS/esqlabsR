@@ -2,9 +2,13 @@
 
 ## Breaking changes
 
-  - Function `sensitivityCalculation()` with renamed parameter `pkDataFilePath`
-    to `saOutputFilePath` and updated output files to include PK parameter units
-    (\#696).
+  - Function `sensitivityCalculation()` with renamed parameter `pkDataFilePath` 
+    to `saOutputFilePath` and updated output files to include PK parameter units (\#696).
+    
+  - Function `sensitivityCalculation()` now accepts `variationRange` as both `absolute` 
+    and `relative` values, specified by the `variationType` parameter. Added support 
+    for passing `variationRange` as a list, allowing individual variations for 
+    each parameter in `parameterPaths` (\#731). 
 
 ## Major Changes
 
