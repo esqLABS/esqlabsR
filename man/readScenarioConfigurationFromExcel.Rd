@@ -30,7 +30,7 @@ file, an error is thrown.
 \examples{
 \dontrun{
 # Create default ProjectConfiguration
-projectConfiguration <- createDefaultProjectConfiguration()
+projectConfiguration <- createProjectConfiguration()
 scenarioName <- "MyScenario"
 # Read scenario definition from excel
 scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)[[scenarioName]]

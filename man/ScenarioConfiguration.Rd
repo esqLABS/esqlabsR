@@ -19,12 +19,12 @@ An object storing configuration of a specific scenario
 extension ".pkml"). Must be located in the "modelFolder".}
 
 \item{\code{applicationProtocol}}{Name of the application protocol to be applied. Defined
-in the excel file "ApplicationParameters.xlsx"}
+in the excel file "Applications.xlsx"}
 
-\item{\code{individualId}}{Id of the individual as specified in "IndividualParameters.xlsx".
+\item{\code{individualId}}{Id of the individual as specified in "Individuals.xlsx".
 If \code{NULL} (default), the individual as defined in the simulation file will be simulated.}
 
-\item{\code{populationId}}{Id of the population as specified in "PopulationParameters.xlsx",
+\item{\code{populationId}}{Id of the population as specified in "Populations.xlsx",
 sheet "Demographics". If \code{ScenarioConfguration$simulationType} is \code{population},
 a population will be created a the scenario will be simulated as a population
 simulation.}
@@ -60,7 +60,7 @@ that will be applied to the simulation}
 
 \item{\code{simulationType}}{Type of the simulation - "Individual" or
 "Population". If "Population", population characteristics are created
-based on information stored in \code{populationParamsFile}. Default is
+based on information stored in \code{populationsFile}. Default is
 "Individual"}
 
 \item{\code{projectConfiguration}}{\code{ProjectConfiguration} that will be used in scenarios.
