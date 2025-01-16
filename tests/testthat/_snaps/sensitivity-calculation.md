@@ -235,7 +235,7 @@
       10           0     <NA>               NaN      
       # i 14 more rows
 
-# sensitivityCalculation applies custom PK parameter function correctly with multiple output paths
+# sensitivityCalculation applies custom PK function with multiple output paths
 
     Code
       customPKDataMultiple

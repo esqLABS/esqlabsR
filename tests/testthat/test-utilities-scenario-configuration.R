@@ -1,6 +1,6 @@
 ## context("readScenarioConfigurationFromExcel")
 # Create a project configuration
-projectConfiguration <- createDefaultProjectConfiguration(test_ProjectConfiguration())
+projectConfiguration <- testProjectConfiguration()
 
 # Template scenario configuration for testing
 scenariosDf <- data.frame(list(
@@ -85,7 +85,7 @@ test_that("It creates multiple correct scenarios", {
 
   # Second scenario
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$applicationProtocol, "Aciclovir_iv_250mg")
-  expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$individualId, "Indiv")
+  expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$individualId, "Indiv1")
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$modelFile, "Aciclovir.pkml")
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$paramSheets, enum(enumValues = "Global"))
   expect_equal(scenarioConfigurations[[scenarioNames[[2]]]]$scenarioName, "TestScenario2")
@@ -106,7 +106,7 @@ test_that("It creates multiple correct scenarios", {
 test_that("It does not fail on empty rows", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Scenarios.xlsx",
     tmpdir = tempDir,
@@ -186,7 +186,7 @@ test_that("It throws an error when reading wrong file structure for scenario con
   )
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$paramsFolder <- tempDir
+  projectConfigurationLocal$configurationsFolder <- tempDir
   withr::with_tempfile(
     new = "Scenarios.xlsx",
     tmpdir = tempDir,
@@ -197,7 +197,7 @@ test_that("It throws an error when reading wrong file structure for scenario con
       ), path = file.path(tempDir, "Scenarios.xlsx"), )
       expect_error(readScenarioConfigurationFromExcel(projectConfiguration = projectConfigurationLocal),
         regexp = messages$errorWrongXLSStructure(
-          filePath = projectConfigurationLocal$scenarioDefinitionFile,
+          filePath = projectConfigurationLocal$scenariosFile,
           expectedColNames = expectedColumns
         ), fixed = TRUE
       )

@@ -27,13 +27,23 @@ The package provides functions to:
 - Generate standardized plots and other reporting materials,
 - Interact with the OSPS features using simple Excel files.
 
-To get started with the esqlabsR package, please read the
-`vignette("esqlabsR")`.
+To get started with the esqlabsR package, please follow the [Get Started
+tutorial](articles/esqlabsR.html).
 
 ## Installation
 
-Currently, esqlabsR is available only for Windows system. You can
-install the package by running:
+### Pre-requisites
+
+<!-- As `{esqlabsR}` relies indirectly on  `{rSharp}`, it requires its its external dependencies (Visual C++ Redistributable and .NET 8). Install them by following these instructions: -->
+
+- [For
+  Windows](https://github.com/Open-Systems-Pharmacology/rSharp?tab=readme-ov-file#prerequisites)
+- [For
+  Linux](https://github.com/Open-Systems-Pharmacology/rSharp?tab=readme-ov-file#ubuntu)
+
+### Install the package
+
+You can install the package by running:
 
 ``` r
 install.packages("pak")
@@ -51,13 +61,16 @@ Note: For projects created for version 3 of `esqlabsR` package, install
 
 ## Usage
 
+You can start with the “Get Started” vignette: `vignette("esqlabsR")`.
+Below is a simple example of how to work with the package:
+
 ``` r
 # load esqlabsR
 library(esqlabsR)
 
 # Load excel-based configuration
 my_project_configuration <-
-  createDefaultProjectConfiguration(example_ProjectConfiguration())
+  createProjectConfiguration(example_ProjectConfiguration())
 
 
 # Setup simulation scenarios
@@ -91,8 +104,7 @@ plotIndividualTimeProfile(my_datacombined)
 
 ## Learn More
 
-To get started, first read `vignette("esqlabsR")`. Then read more about
-the specific topics:
+You can find more information on specific topics in dedicated vignettes:
 
 - Start with `vignette("esqlabsR-workflow-overview")` to learn about the
   esqlabsR’s streamlined workflow.
@@ -114,7 +126,6 @@ packages:
 - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
 - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
 - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
-- [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
 
 ## Contributing
 

@@ -212,8 +212,8 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
   return(plotGridConfiguration)
 }
 
-#' @param projectConfiguration Object of class `ProjectConfiguration`
-#' that contains information about the output paths.
+#' @param outputFolder Path to the folder where the results will be
+#' stored.
 #'
 #' @title Create an instance of `ExportConfiguration` R6 class
 #' @rdname createEsqlabsExportConfiguration
@@ -230,15 +230,15 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
 #'
 #' @examples
 #' myProjConfig <- ProjectConfiguration$new()
-#' createEsqlabsExportConfiguration(myProjConfig)
+#' createEsqlabsExportConfiguration(myProjConfig$outputFolder)
 #'
 #' @family create-plotting-configurations
 #'
 #' @export
-createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: object_length_linter.
+createEsqlabsExportConfiguration <- function(outputFolder) { # nolint: object_length_linter.
   exportConfiguration <- esqlabsR::ExportConfiguration$new()
 
-  exportConfiguration$path <- projectConfiguration$outputFolder
+  exportConfiguration$path <- outputFolder
   exportConfiguration$dpi <- 300
   # NULL is not supported by ExportConfiguration, so we should assign here
   # something useful. NULL in the ProjectConfiguration currently means "do not
@@ -253,8 +253,10 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: o
 
 #' Generate plots as defined in excel file `projectConfiguration$plotsFile`
 #'
-#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`
-#' @param observedData A list of `DataSet` objects
+#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`.
+#' Can be `NULL` if no simulated data is required for the plots.
+#' @param observedData A list of `DataSet` objects. Can be `NULL` if no observed
+#' data is required for the plots.
 #' @param projectConfiguration Object of class `ProjectConfiguration`
 #' that contains information about the output paths and the excel file
 #' where plots are defined.
@@ -266,6 +268,10 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: o
 #' specified in the excel sheet will be created. If a plot grid with a given name
 #' does not exist, an error is thrown.
 #'
+#' @param outputFolder Optional - path to the folder where the results will be
+#' stored. If `NULL` (default), `projectConfiguration$outputFolder` is used. Only
+#' relevant for plots specified for export in the `exportConfiguration` sheet.
+#'
 #' @return A list of `ggplot` objects
 #'
 #' @import tidyr
@@ -273,9 +279,10 @@ createEsqlabsExportConfiguration <- function(projectConfiguration) { # nolint: o
 #' @export
 createPlotsFromExcel <- function(
     plotGridNames = NULL,
-    simulatedScenarios,
-    observedData,
+    simulatedScenarios = NULL,
+    observedData = NULL,
     projectConfiguration,
+    outputFolder = NULL,
     stopIfNotFound = TRUE) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
@@ -442,7 +449,8 @@ createPlotsFromExcel <- function(
   dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
-    defaultExportConfiguration <- createEsqlabsExportConfiguration(projectConfiguration)
+    outputFolder <- outputFolder %||% projectConfiguration$outputFolder
+    defaultExportConfiguration <- createEsqlabsExportConfiguration(outputFolder)
     exportConfigurations <- apply(dfExportConfigurations, 1, \(row){
       exportConfiguration <- .createConfigurationFromRow(
         defaultConfiguration = defaultExportConfiguration,

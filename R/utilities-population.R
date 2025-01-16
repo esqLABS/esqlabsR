@@ -147,34 +147,43 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
 
   columnTypes <- c("text", "text", "numeric", "numeric", "text")
 
-  tryCatch({
-    data <- readExcel(path = XLSpath, sheet = sheet, col_types = columnTypes)
-  }, error = function(e) {
-    cli::cli_abort(message = messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames), call = rlang::caller_env(4))
-  })
+  tryCatch(
+    {
+      data <- readExcel(path = XLSpath, sheet = sheet, col_types = columnTypes)
+    },
+    error = function(e) {
+      cli::cli_abort(message = messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames), call = rlang::caller_env(4))
+    }
+  )
 
   if (!all(columnNames %in% names(data))) {
     cli::cli_abort(message = messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
   }
 
-  if(nrow(data) == 0){
-    cli::cli_abort(message = c("x" = "The specified excel sheet does not contain any rows with data.",
-                               "*" = "Please check the excel sheet name and content and try again."))
+  if (nrow(data) == 0) {
+    cli::cli_abort(message = c(
+      "x" = "The specified excel sheet does not contain any rows with data.",
+      "*" = "Please check the excel sheet name and content and try again."
+    ))
   }
 
   complete_data <-
     data %>%
-    dplyr::filter(!dplyr::if_any(dplyr::everything(), ~is.na(.)))
+    dplyr::filter(!dplyr::if_any(dplyr::everything(), ~ is.na(.)))
 
 
-  if(nrow(complete_data) < nrow(data)){
-    cli::cli_warn(message = c("x" = "The specified excel sheet contains uncomplete row(s)",
-                               "i" = "Using only complete rows to define population parameters"))
+  if (nrow(complete_data) < nrow(data)) {
+    cli::cli_warn(message = c(
+      "x" = "The specified excel sheet contains uncomplete row(s)",
+      "i" = "Using only complete rows to define population parameters"
+    ))
   }
 
-  if(nrow(complete_data) == 0){
-    cli::cli_abort(message = c("x" = "The specified excel sheet does not contain any complete row",
-                               "*" = "Please fill all the columns and try again."))
+  if (nrow(complete_data) == 0) {
+    cli::cli_abort(message = c(
+      "x" = "The specified excel sheet does not contain any complete row",
+      "*" = "Please fill all the columns and try again."
+    ))
   }
 
 

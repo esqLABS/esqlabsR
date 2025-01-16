@@ -25,7 +25,7 @@
 #' )
 #' userParams <- readParametersFromXLS(parameterXLSPath)
 #' initializeSimulation(simulation, humanIndividualCharacteristics, userParams)
-#' simulationResults <- runSimulation(simulation = simulation)
+#' simulationResults <- runSimulations(simulation = simulation)
 #' }
 initializeSimulation <- function(simulation,
                                  individualCharacteristics = NULL,

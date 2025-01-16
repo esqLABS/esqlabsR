@@ -1,5 +1,5 @@
-# save old options
-old <- options()
+# Save old options
+old_opts <- options()
 
 options(
   tibble.width = Inf,
@@ -9,7 +9,7 @@ options(
   scipen = 999
 )
 
-# single output path -------------------------------------
+# Single output path ------------------------------------------------------
 
 # run time-consuming simulations just once
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
@@ -30,32 +30,32 @@ results <- sensitivityCalculation(
   variationRange = variationRange
 )
 
-# validating plotting arguments -------------------------
+# Validate plotting arguments ---------------------------------------------
 
-test_that("sensitivityTornadoPlot fails with incorrect input objects", {
+test_that("sensitivityTornadoPlot fails with incorrect input", {
   expect_error(
     sensitivityTornadoPlot("x"),
     "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
   )
 })
 
-test_that("sensitivityTornadoPlot fails with incorrect parameterFactor input", {
+test_that("sensitivityTornadoPlot fails with invalid parameterFactor", {
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0),
     "parameterFactor error"
   )
 })
 
-test_that("sensitivityTornadoPlot errors if parameterFactor is missing in sensitivityCalculation", {
+test_that("sensitivityTornadoPlot errors if parameterFactor is missing in sensitivity calculation results", {
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0.2),
     "values of 0.2 and 5 are not included in the sensitivity analysis results"
   )
 })
 
-# default plots ---------------------------------------
+# Default plot ------------------------------------------------------------
 
-test_that("sensitivityTornadoPlot default plots are as expected", {
+test_that("sensitivityTornadoPlot creates default plot", {
   set.seed(123)
   p <- sensitivityTornadoPlot(results)
 
@@ -68,9 +68,9 @@ test_that("sensitivityTornadoPlot default plots are as expected", {
   )
 })
 
-# default plot with custom PK parameter ---------------
+# Default plot with custom PK parameter -----------------------------------
 
-test_that("sensitivityTornadoPlot default plots are as expected with custom PK Parameter", {
+test_that("sensitivityTornadoPlot works with custom PK parameter", {
   customFun <- list("y_max" = function(y) max(y, na.rm = TRUE))
 
   resultsCustomPK <- sensitivityCalculation(
@@ -91,7 +91,7 @@ test_that("sensitivityTornadoPlot default plots are as expected with custom PK P
   )
 })
 
-# multiple output paths -------------------------------------
+# Multiple output paths ---------------------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
@@ -113,7 +113,7 @@ resultsMultiple <- sensitivityCalculation(
   variationRange = c(0.1, 10)
 )
 
-test_that("sensitivityTornadoPlot plots are as expected for multiple output paths", {
+test_that("sensitivityTornadoPlot handles multiple output paths", {
   set.seed(123)
   plotsMultiple <- sensitivityTornadoPlot(resultsMultiple)
 
@@ -126,7 +126,7 @@ test_that("sensitivityTornadoPlot plots are as expected for multiple output path
   )
 })
 
-# filter data to be plotted -------------------------------------
+# Filter data to be plotted -----------------------------------------------
 
 outputPathsFilter <- "Organism|ArterialBlood|Plasma|Aciclovir"
 parameterPathsFilter <- "Aciclovir|Lipophilicity"
@@ -150,5 +150,5 @@ test_that("sensitivityTornadoPlot plots are as expected with filters", {
   )
 })
 
-# restore old options
-options(old)
+# Restore old options
+on.exit(options(old_opts), add = TRUE)

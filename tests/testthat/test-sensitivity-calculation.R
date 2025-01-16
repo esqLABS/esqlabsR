@@ -1,5 +1,5 @@
-# save old options
-old <- options()
+# Save old options
+old_opts <- options()
 
 options(
   tibble.width = Inf,
@@ -9,9 +9,9 @@ options(
   scipen = 999
 )
 
-# single output path -------------------------------------
+# Single output path ------------------------------------------------------
 
-# run time-consuming simulations just once
+# Load simulation and set paths for tests
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -30,23 +30,9 @@ results <- sensitivityCalculation(
   variationRange = variationRange
 )
 
-library(dplyr, warn.conflicts = FALSE)
+# Validate outputPaths ----------------------------------------------------
 
-# custom function to extract summary data
-summarizer <- function(data, path) {
-  data <- dplyr::filter(data, ParameterPath %in% path)
-
-  list(
-    "charColumnSummary" = dplyr::select(data, where(is.character)) %>%
-      purrr::map_dfr(unique),
-    "numericColumnSummary" = dplyr::select(data, where(is.numeric)) %>%
-      purrr::map_df(summary, .id = "column")
-  )
-}
-
-# validate `outputPaths` ------------------------
-
-test_that("sensitivityCalculation fails early with incorrect `outputPaths` arguments", {
+test_that("sensitivityCalculation fails with invalid `outputPaths`", {
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -93,9 +79,9 @@ test_that("sensitivityCalculation fails early with incorrect `outputPaths` argum
   )
 })
 
-# validate `parameterPaths` ------------------------
+# Validate parameterPaths -------------------------------------------------
 
-test_that("sensitivityCalculation fails early with incorrect `parameterPaths` arguments", {
+test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -146,9 +132,9 @@ test_that("sensitivityCalculation fails early with incorrect `parameterPaths` ar
   )
 })
 
-# validate `pkParameters` ------------------------
+# Validate pkParameters ---------------------------------------------------
 
-test_that("sensitivityCalculation fails early with incorrect `pkParameters` arguments", {
+test_that("sensitivityCalculation fails with invalid `pkParameters`", {
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -196,17 +182,14 @@ test_that("sensitivityCalculation fails early with incorrect `pkParameters` argu
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = parameterPaths
     ),
-    "Following non-standard PK parameters will not be calculated:
-abc
-xyz
-",
+    "Following non-standard PK parameters will not be calculated:\nabc\nxyz\n",
     fixed = TRUE
   )
 })
 
-# validate `variationRange` ------------------------
+# Validate variationRange -------------------------------------------------
 
-test_that("sensitivityCalculation fails early with incorrect `variationRange` arguments", {
+test_that("sensitivityCalculation fails with invalid `variationRange`", {
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -216,11 +199,31 @@ test_that("sensitivityCalculation fails early with incorrect `variationRange` ar
     ),
     "argument 'variationRange' is of type 'character', but expected 'numeric, or integer'!"
   )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = list(c(0.1, 1, 10), c("x", "y", "z"), c(0.1, 1, 10)),
+    ),
+    "argument 'variationRange' is of type 'character', but expected 'numeric, or integer'!"
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationRange = list(c(0.1, 1, 10), c(0.1, 1, 10)),
+    ),
+    "`variationRange` must be either a vector or a list equal to the length of `parameterPaths`"
+  )
 })
 
-# validate `customOutputFunctions` ------------------
+# Validate customOutputFunctions ------------------------------------------
 
-test_that("sensitivityCalculation fails early with incorrect `customOutputFunctions` arguments", {
+test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -268,9 +271,7 @@ test_that("sensitivityCalculation fails early with incorrect `customOutputFuncti
     ),
     "argument 'customOutputFunctions' is not a named list!"
   )
-})
 
-test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -296,30 +297,48 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
   )
 })
 
-# check `SensitivityCalculation`  object ------------------
+# Check SensitivityCalculation object -------------------------------------
 
-test_that("sensitivityCalculation returns the correct object", {
+test_that("sensitivityCalculation returns a valid `SensitivityCalculation` object", {
   expect_true(isOfType(results, "SensitivityCalculation"))
 
   expect_equal(
-    length(results$simulationResults),
-    length(parameterPaths)
+    length(results$simulationResults), length(parameterPaths)
   )
 
   expect_equal(
-    length(results$simulationResults[[1]]),
-    length(variationRange) + 1L
+    length(results$simulationResults[[1]]), length(variationRange) + 1L
   )
 
   expect_equal(
-    length(results$parameterPaths),
-    length(parameterPaths)
+    length(results$parameterPaths), length(parameterPaths)
   )
 })
 
-# check PK tidy data -----------------------
+# Test variationRange -----------------------------------------------------
 
-test_that("sensitivityCalculation PK parameters tidy dataframe column names and order as expected", {
+test_that("sensitivityCalculation works with absolute values of `variationRange`", {
+  variationRangeAbs <- list(
+    -0.097 * variationRange,
+    0.00025 * variationRange,
+    1 * variationRange
+  )
+
+  set.seed(123)
+  resultsAbs <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = variationRangeAbs,
+    variationType = "absolute"
+  )
+
+  expect_equal(results$pkData, resultsAbs$pkData)
+})
+
+# Check PK tidy data ------------------------------------------------------
+
+test_that("sensitivityCalculation returns correct PK parameters dataframe", {
   expect_equal(
     colnames(results$pkData),
     c(
@@ -347,7 +366,7 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
   expect_snapshot(df3_pk)
 })
 
-# test `customOutputFunctions` ------------------
+# Test customOutputFunctions ----------------------------------------------
 
 test_that("sensitivityCalculation returns expected results with single custom function", {
   # list with custom function using only `y` parameter
@@ -380,7 +399,7 @@ test_that("sensitivityCalculation returns expected results with single custom fu
 })
 
 test_that("sensitivityCalculation returns expected results with multiple custom functions", {
-  # list with multiple custom functions using `x`and `y` parameter
+  # List with multiple custom functions using `x` and `y` parameter
   customFunctions <- list(
     "minmax" = function(y) {
       max(y) / min(y[y != 0])
@@ -408,7 +427,7 @@ test_that("sensitivityCalculation returns expected results with multiple custom 
   expect_snapshot(customPKData)
 })
 
-# test `saOutputFilePath` ------------------
+# Test saving to xlsx file ------------------------------------------------
 
 test_that("sensitivityCalculation saves PK data to xlsx file", {
   path <- "mydata.xlsx"
@@ -443,7 +462,7 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
   )
 })
 
-# check PK wide data -----------------------
+# Check PK wide data ------------------------------------------------------
 
 pkDataWideColumns <- c(
   "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue", "ParameterUnit",
@@ -514,7 +533,7 @@ test_that("sensitivityCalculation converts output to wide format as expected wit
   expect_equal(colnames(pkDataWide), pkDataWideColumns)
 })
 
-# check `SensitivityCalculation` when simulation fails ----------
+# Test sensitivityCalculation when simulation fails -----------------------
 
 test_that("sensitivityCalculation handles simulation failure", {
   expect_warning(
@@ -553,7 +572,7 @@ test_that("sensitivityCalculation handles simulation failure", {
   )
 })
 
-# multiple output paths -------------------------------------
+# Multiple output paths ---------------------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
 simulation <- loadSimulation(simPath)
@@ -567,20 +586,40 @@ parameterPaths <- c(
   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
+variationRange <- c(0.1, 5, 10)
 
 resultsMultiple <- sensitivityCalculation(
   simulation = simulation,
   outputPaths = outputPaths,
   parameterPaths = parameterPaths,
-  variationRange = c(0.1, 5, 10)
+  variationRange = variationRange
 )
 
-test_that("sensitivityCalculation extracts data correctly for multiple output paths", {
+test_that("sensitivityCalculation extracts data for multiple output paths", {
   expect_identical(nrow(resultsMultiple$pkData), 108L)
   expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
 })
 
-test_that("sensitivityCalculation applies custom PK parameter function correctly with multiple output paths", {
+test_that("sensitivityCalculation applies absolute `variationRange` for multiple paths", {
+  variationRangeAbs <- list(
+    -0.097 * variationRange,
+    0.00025 * variationRange,
+    1 * variationRange
+  )
+
+  set.seed(123)
+  resultsMultipleAbs <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = variationRangeAbs,
+    variationType = "absolute"
+  )
+
+  expect_equal(resultsMultiple$pkData, resultsMultipleAbs$pkData)
+})
+
+test_that("sensitivityCalculation applies custom PK function with multiple output paths", {
   # list with custom function using only `y` parameter
   customFunctions <- list("minmax" = function(y) min(y[y != 0]) / max(y))
 
@@ -599,7 +638,7 @@ test_that("sensitivityCalculation applies custom PK parameter function correctly
   expect_snapshot(customPKDataMultiple)
 })
 
-test_that("sensitivityCalculation saves PK data to xlsx file for multiple output paths", {
+test_that("sensitivityCalculation saves PK data to xlsx for multiple output paths", {
   path <- "mydata.xlsx"
 
   set.seed(123)
@@ -616,7 +655,7 @@ test_that("sensitivityCalculation saves PK data to xlsx file for multiple output
   on.exit(unlink(path))
 })
 
-test_that("sensitivityCalculation extracts data correctly for multiple output paths upon simulation failure", {
+test_that("sensitivityCalculation handles simulation failure for multiple output paths", {
   expect_warning(
     expect_warning(
       resultsMultipleSimFailure <- sensitivityCalculation(
@@ -633,5 +672,5 @@ test_that("sensitivityCalculation extracts data correctly for multiple output pa
   expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
 })
 
-# restore old options
-options(old)
+# Restore old options
+on.exit(options(old_opts), add = TRUE)

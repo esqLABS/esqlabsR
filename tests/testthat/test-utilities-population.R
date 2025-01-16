@@ -30,7 +30,7 @@ test_that("`sampleRandomValue()` generates needed distribution", {
 })
 
 test_that("It creates population characteristics with ontogenies from excel", {
-  excelPath <- system.file("extdata", "examples", "TestProject", "Parameters", "PopulationParameters.xlsx", package = "esqlabsR")
+  excelPath <- testConfigurationsPath("Populations.xlsx")
 
   populationCharacteristics <- readPopulationCharacteristicsFromXLS(
     XLSpath = excelPath,
@@ -63,7 +63,7 @@ test_that("It creates population characteristics with ontogenies from excel", {
 })
 
 test_that("It creates population characteristics without ontogenies from excel", {
-  excelPath <- system.file("extdata", "examples", "TestProject", "Parameters", "PopulationParameters.xlsx", package = "esqlabsR")
+  excelPath <- testConfigurationsPath("Populations.xlsx")
 
   populationCharachterstics <- readPopulationCharacteristicsFromXLS(
     XLSpath = excelPath,
@@ -184,8 +184,8 @@ test_that("extendPopulationFromXLS throws an error if the sheet has wrong struct
 
       expect_error(
         extendPopulationFromXLS(population,
-                                PopulationParameters,
-                                sheet = "UserDefinedVariability"
+          PopulationParameters,
+          sheet = "UserDefinedVariability"
         ),
         regexp = "has wrong structure"
       )
@@ -232,11 +232,12 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
         ))
       )
 
-      expect_snapshot(error = TRUE,
-          extendPopulationFromXLS(population,
-            PopulationParameters,
-            sheet = "UserDefinedVariability"
-          )
+      expect_snapshot(
+        error = TRUE,
+        extendPopulationFromXLS(population,
+          PopulationParameters,
+          sheet = "UserDefinedVariability"
+        )
       )
     }
   )

@@ -73,7 +73,7 @@ Scenario <- R6::R6Class(
       scenarioConfiguration <- private$.scenarioConfiguration
       # Read parameters from the parameters file
       params <- readParametersFromXLS(
-        scenarioConfiguration$projectConfiguration$paramsFile,
+        scenarioConfiguration$projectConfiguration$modelParamsFile,
         scenarioConfiguration$paramSheets
       )
 
@@ -89,9 +89,9 @@ Scenario <- R6::R6Class(
         )
 
         if (is.null(individualCharacteristics)) {
-          warning(paste0(
-            "No individual characteristics for individual id '",
-            scenarioConfiguration$individualId, "' found."
+          warning(messages$warningNoIndividualCharacteristics(
+            scenarioName = scenarioConfiguration$scenarioName,
+            individualId = scenarioConfiguration$individualId
           ))
         }
 
@@ -109,9 +109,9 @@ Scenario <- R6::R6Class(
             newParameters = indivModelParams
           )
         } else {
-          warning(paste0(
-            "No individual specific model parameters for individual id '",
-            scenarioConfiguration$individualId, "' found."
+          warning(messages$warningNoIndividualModelParameters(
+            scenarioName = scenarioConfiguration$scenarioName,
+            individualId = scenarioConfiguration$individualId
           ))
         }
       }
@@ -124,9 +124,15 @@ Scenario <- R6::R6Class(
       }
 
       # Set administration protocols
-      excelFilePath <- scenarioConfiguration$projectConfiguration$scenarioApplicationsFile
+      excelFilePath <- scenarioConfiguration$projectConfiguration$applicationsFile
       # Checking for 'NA' if administration protocol is not set in excel file.
-      if (!is.na(scenarioConfiguration$applicationProtocol) && any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
+      if (!is.na(scenarioConfiguration$applicationProtocol)) {
+        if (!any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
+          stop(messages$errorApplicationProtocolNotFound(
+            scenarioName = scenarioConfiguration$scenarioName,
+            applicationProtocol = scenarioConfiguration$applicationProtocol
+          ))
+        }
         applicationParams <- readParametersFromXLS(excelFilePath, scenarioConfiguration$applicationProtocol)
         params <- extendParameterStructure(
           parameters = params,
@@ -192,14 +198,13 @@ Scenario <- R6::R6Class(
       if (scenarioConfiguration$simulationType == "Population") {
         if (scenarioConfiguration$readPopulationFromCSV) {
           populationPath <- paste0(file.path(
-            scenarioConfiguration$projectConfiguration$paramsFolder,
-            "Populations",
+            scenarioConfiguration$projectConfiguration$populationsFolder,
             scenarioConfiguration$populationId
           ), ".csv")
           population <- loadPopulation(populationPath)
         } else {
           popCharacteristics <- readPopulationCharacteristicsFromXLS(
-            XLSpath = scenarioConfiguration$projectConfiguration$populationParamsFile,
+            XLSpath = scenarioConfiguration$projectConfiguration$populationsFile,
             populationName = scenarioConfiguration$populationId,
             sheet = "Demographics"
           )

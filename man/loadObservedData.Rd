@@ -34,7 +34,7 @@ Importer configuration file must be located in the same folder and named
 \examples{
 \dontrun{
 # Create default project configuration
-projectConfiguration <- createDefaultProjectConfiguration()
+projectConfiguration <- createProjectConfiguration()
 dataSets <- loadObservedData(projectConfiguration)
 }
 }
