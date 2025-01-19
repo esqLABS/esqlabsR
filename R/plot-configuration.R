@@ -31,13 +31,13 @@ PlotConfiguration <- R6::R6Class(
       dataCombined <- private$.validateAndCreateEmptyConfiguration(dataCombinedData, dataCombinedDefaultColumns)
 
       if (nrow(dataCombinedData) > 0) {
-        # Process non-empty data and organize it by type
-        for (type in unique(dataCombinedData$dataType)) {
-          dataCombinedDataFilteredByType <- dataCombinedData[dataCombinedData$dataType == type, ]
-          for (i in 1:nrow(dataCombinedDataFilteredByType)) {
-            dataCombinedRecord <- dataCombinedDataFilteredByType[i, ]
-            for (column in dataCombinedDefaultColumns[-2]) {
-              dataCombined[[dataCombinedRecord$DataCombinedName]][[type]][[column]] <- dataCombinedRecord[[column]]
+        # Process non-empty data and organize it by label
+        for (label in unique(dataCombinedData$label)) {
+          dataCombinedDataFilteredByLabel <- dataCombinedData[dataCombinedData$label == label, ]
+          for (i in 1:nrow(dataCombinedDataFilteredByLabel)) {
+            dataCombinedRecord <- dataCombinedDataFilteredByLabel[i, ]
+            for (column in dataCombinedDefaultColumns[-3]) {
+              dataCombined[[dataCombinedRecord$DataCombinedName]][[label]][[column]] <- dataCombinedRecord[[column]]
             }
           }
         }
