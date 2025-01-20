@@ -129,3 +129,33 @@ compareWithNA <- function(v1, v2) {
 escapeForRegex <- function(string) {
   paste0("\\Q", string, "\\E")
 }
+
+#' @description Helper function to recursively convert R6 objects to lists
+#' @param obj Object to be converted
+#' @param excluded_fields Fields to be excluded from the conversion
+#' @export
+toListRecursive <- function(obj, excluded_fields = c("pointer")) {
+  if (inherits(obj, "R6")) {
+    # If the object is an R6 instance, get its public fields
+    fields <- names(obj)
+    result <- list()
+    for (field in fields) {
+      # Exclude methods (functions) and specified fields
+      if (
+        !startsWith(field, ".") &&          # Exclude private/protected fields
+        !is.function(obj[[field]]) &&       # Exclude methods
+        !(field %in% excluded_fields)       # Exclude specified fields
+      ) {
+        result[[field]] <- toListRecursive(obj[[field]])
+      }
+    }
+    return(result)
+  } else if (is.list(obj)) {
+    # If it's a list, recurse into each element
+    return(lapply(obj, toListRecursive))
+  } else {
+    # Return the object itself
+    return(obj)
+  }
+}
+

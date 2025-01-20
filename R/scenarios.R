@@ -102,6 +102,14 @@ Scenario <- R6::R6Class(
 
       invisible(self)
     },
+    #' @description Converts the Scenario object to a deeply nested list,
+    #' excluding specified fields like pointers.
+    #' @return A list representation of the Scenario object.
+    toList = function() {
+      # Convert the Scenario object to a list
+      scenario_list <- toListRecursive(self)
+      return(scenario_list)
+    },
     #' @description If status is "active", load the scenario. Loading the
     #' scenario means applying all configuration parameters to the model.
     load = function() {
