@@ -1,7 +1,7 @@
 #' @title Project Object
 #'
 #' @description
-#' Project Class that contains all workflow component of an {ESQlabsR} project:
+#' Project Class that contains all workflow component of an ESQlabsR project:
 #' - Project Configuration
 #' - Configurations
 #' - Scenarios
