@@ -338,7 +338,40 @@ ProjectConfiguration <- R6::R6Class(
         excel_file[excel_file$Property == prop, ]$Value <- path
       }
       .writeExcel(excel_file, path = export_path %||% self$projectConfigurationFilePath)
+    },
+    #' @description
+    #' The `toList` method returns a named list representation of the Project Configuration,
+    #' where each element corresponds to a component with its relative path.
+    #'
+    #' @return A named list containing the Project Configuration components with relative paths.
+    toList = function() {
+      # Define a named vector of the components to include
+      components <- list(
+        "Project Configuration" = self$projectConfigurationFilePath,
+        "Model folder" = self$modelFolder,
+        "Configurations folder" = self$configurationsFolder,
+        "Model Parameters" = self$modelParamsFile,
+        "Individuals" = self$individualsFile,
+        "Populations" = self$populationsFile,
+        "PopulationsFolder" = self$populationsFolder,
+        "Scenarios" = self$scenariosFile,
+        "Applications" = self$applicationsFile,
+        "Plots" = self$plotsFile,
+        "Data folder" = self$dataFolder,
+        "Data file" = self$dataFile,
+        "Data importer configuration" = self$dataImporterConfigurationFile,
+        "Output folder" = self$outputFolder
+      )
+
+      # Convert each component to a relative path
+      result <- lapply(components, function(x) fs::path_rel(as.character(x)))
+
+      # Set the names of the list to maintain the labels
+      names(result) <- names(components)
+
+      return(result)
     }
+
   )
 )
 
