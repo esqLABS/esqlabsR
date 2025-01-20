@@ -6,6 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>esqLABS utilities package • esqlabsR</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
@@ -23,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +55,6 @@
     <li><a class="dropdown-item" href="articles/presentations.html">Presentations</a></li>
     <li><a class="dropdown-item" href="articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a></li>
     <li><a class="dropdown-item" href="articles/esqlabsR-advanced.html">Advanced Topics</a></li>
-    <li><a class="dropdown-item" href="articles/esqlabsR-shiny.html">esqlabsR Applications</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -82,11 +87,23 @@
 <li>Generate standardized plots and other reporting materials,</li>
 <li>Interact with the OSPS features using simple Excel files.</li>
 </ul>
-<p>To get started with the esqlabsR package, please read the <code><a href="articles/esqlabsR.html">vignette("esqlabsR")</a></code>.</p>
+<p>To get started with the esqlabsR package, please follow the <a href="articles/esqlabsR.html">Get Started tutorial</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Currently, esqlabsR is available only for Windows system. You can install the package by running:</p>
+<div class="section level3">
+<h3 id="pre-requisites">Pre-requisites<a class="anchor" aria-label="anchor" href="#pre-requisites"></a>
+</h3>
+<!-- As `{esqlabsR}` relies indirectly on  `{rSharp}`, it requires its its external dependencies (Visual C++ Redistributable and .NET 8). Install them by following these instructions: -->
+<ul>
+<li><a href="https://github.com/Open-Systems-Pharmacology/rSharp?tab=readme-ov-file#prerequisites" class="external-link">For Windows</a></li>
+<li><a href="https://github.com/Open-Systems-Pharmacology/rSharp?tab=readme-ov-file#ubuntu" class="external-link">For Linux</a></li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="install-the-package">Install the package<a class="anchor" aria-label="anchor" href="#install-the-package"></a>
+</h3>
+<p>You can install the package by running:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"esqLABS/esqlabsR@*release"</span><span class="op">)</span></span></code></pre></div>
@@ -95,16 +112,18 @@
 <code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"esqLABS/esqlabsR"</span><span class="op">)</span></span></code></pre></div>
 <p>Note: For projects created for version 3 of <code>esqlabsR</code> package, install <a href="https://github.com/esqLABS/esqlabsRLegacy" class="external-link"><code>esqlabsRLegacy</code></a>.</p>
 </div>
+</div>
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
+<p>You can start with the “Get Started” vignette: <code><a href="articles/esqlabsR.html">vignette("esqlabsR")</a></code>. Below is a simple example of how to work with the package:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># load esqlabsR</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load excel-based configuration</span></span>
 <span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu"><a href="reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span></span>
 <span><span class="co"># Setup simulation scenarios</span></span>
@@ -137,7 +156,7 @@
 <div class="section level2">
 <h2 id="learn-more">Learn More<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
-<p>To get started, first read <code><a href="articles/esqlabsR.html">vignette("esqlabsR")</a></code>. Then read more about the specific topics:</p>
+<p>You can find more information on specific topics in dedicated vignettes:</p>
 <ul>
 <li>Start with <code><a href="articles/esqlabsR-workflow-overview.html">vignette("esqlabsR-workflow-overview")</a></code> to learn about the esqlabsR’s streamlined workflow.</li>
 <li>
@@ -159,7 +178,6 @@
 <li><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a></li>
 <li><a href="https://github.com/Open-Systems-Pharmacology/TLF-Library" class="external-link">tlf</a></li>
 <li><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite-R" class="external-link">ospsuite</a></li>
-<li><a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification" class="external-link">ospsuite.parameteridentification</a></li>
 </ul>
 </div>
 <div class="section level2">
@@ -233,7 +251,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>

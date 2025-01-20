@@ -6,6 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>4. Plot Results • esqlabsR</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +52,6 @@
     <li><a class="dropdown-item" href="../articles/presentations.html">Presentations</a></li>
     <li><a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a></li>
     <li><a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -71,7 +76,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>4. Plot Results</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/main/vignettes/esqlabsR-plot-results.Rmd" class="external-link"><code>vignettes/esqlabsR-plot-results.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/HEAD/vignettes/esqlabsR-plot-results.Rmd" class="external-link"><code>vignettes/esqlabsR-plot-results.Rmd</code></a></small>
       <div class="d-none name"><code>esqlabsR-plot-results.Rmd</code></div>
     </div>
 
@@ -109,7 +114,7 @@ information in the <a href="#export-plots">Export Plot</a> section.</p>
 <p>Once all the excel sheets are setup, just call the
 <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> function to generate and export the
 plots.</p>
-<p><img src="Figures/plot-workflow.png"></p>
+<p><img src="Figures%2Fplot-workflow.png"></p>
 <div class="section level3">
 <h3 id="specify-a-datacombined">Specify a <code>DataCombined</code><a class="anchor" aria-label="anchor" href="#specify-a-datacombined"></a>
 </h3>
@@ -205,7 +210,7 @@ corresponding observed data.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span><span class="co"># Create a project configuration</span></span>
-<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
 <span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
 <span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
@@ -293,7 +298,7 @@ described in the <a href="#example">Example</a> above.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span><span class="co"># Create a project configuration</span></span>
-<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
 <span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
 <span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
@@ -393,7 +398,7 @@ default configurations.</p>
 Make sure that the <code>fileName</code> argument ends with
 <code>.png</code>:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">outputFolder</span><span class="op">)</span></span>
 <span><span class="va">exportConfig</span><span class="op">$</span><span class="fu">savePlot</span><span class="op">(</span><span class="va">gridPlot</span>, fileName <span class="op">=</span> <span class="st">"All plots.png"</span><span class="op">)</span></span></code></pre></div>
 <p>By default, the height of the output figure is calculated from the
 number of rows in the multi-panel plot and the height defined in
@@ -419,7 +424,7 @@ files with observed data are present in the
 <code>projectConfiguration$dataFolder</code> folder, the following code
 loads the data:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/example_ProjectConfiguration.html">example_ProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
 <span></span>
@@ -490,7 +495,7 @@ class</a></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>

@@ -6,6 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>2. Design Scenarios • esqlabsR</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +52,6 @@
     <li><a class="dropdown-item" href="../articles/presentations.html">Presentations</a></li>
     <li><a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a></li>
     <li><a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -71,7 +76,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>2. Design Scenarios</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/main/vignettes/esqlabsR-design-scenarios.Rmd" class="external-link"><code>vignettes/esqlabsR-design-scenarios.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/HEAD/vignettes/esqlabsR-design-scenarios.Rmd" class="external-link"><code>vignettes/esqlabsR-design-scenarios.Rmd</code></a></small>
       <div class="d-none name"><code>esqlabsR-design-scenarios.Rmd</code></div>
     </div>
 
@@ -88,7 +93,7 @@ defined structure.</p>
 shown in Figure 1; a detailed description of the Excel file structures
 and <code>R</code> code are given in the <a href="#files-structure">Configuration files structure</a> section.</p>
 <div class="float">
-<img src="Figures/ScenarioWorkflow.png" alt="Figure 1: Workflow of scenario setup"><div class="figcaption">Figure 1: Workflow of scenario setup</div>
+<img src="Figures%2FScenarioWorkflow.png" alt="Figure 1: Workflow of scenario setup"><div class="figcaption">Figure 1: Workflow of scenario setup</div>
 </div>
 <div class="section level2">
 <h2 id="add-a-new-scenario">Add a new scenario<a class="anchor" aria-label="anchor" href="#add-a-new-scenario"></a>
@@ -465,7 +470,7 @@ outputs should be generated for, separated by a comma, e.g.,
 steps defined at various levels, as described in the section above. The
 following figure summarizes the hierarchy of the parameterization.</p>
 <div class="float">
-<img src="Figures/ParametrizationHierarchy.png" alt="Parametrization sequence"><div class="figcaption">Parametrization sequence</div>
+<img src="Figures%2FParametrizationHierarchy.png" alt="Parametrization sequence"><div class="figcaption">Parametrization sequence</div>
 </div>
 <p>If a parameter path is defined in multiple steps, its value will be
 overwritten by the subsequent steps. That means individual parameter
@@ -478,7 +483,7 @@ defined in the <strong>ModelParameterSheets</strong> column defines the
 order in which the parameters are applied.</p>
 <!-- For demonstrating the simulation design process, we will use the example included in the package (which can be accessed using `example_ProjectConfiguration`). It models the administration of a single dose of 250 mg aciclovir intravenously to an individual with a 90 ml/min estimated glomerular filtration rate. -->
 <!-- ```{r, warning = FALSE} -->
-<!-- projectConfiguration <- createDefaultProjectConfiguration(example_ProjectConfiguration()) -->
+<!-- projectConfiguration <- createProjectConfiguration(example_ProjectConfiguration()) -->
 <!-- ``` -->
 </div>
 </div>
@@ -493,7 +498,7 @@ order in which the parameters are applied.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>

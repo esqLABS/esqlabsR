@@ -6,6 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Sensitivity Analysis • esqlabsR</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +52,6 @@
     <li><a class="dropdown-item" href="../articles/presentations.html">Presentations</a></li>
     <li><a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a></li>
     <li><a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-shiny.html">esqlabsR Applications</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -71,7 +76,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Sensitivity Analysis</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/main/vignettes/esqlabsR-sensitivity.Rmd" class="external-link"><code>vignettes/esqlabsR-sensitivity.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/HEAD/vignettes/esqlabsR-sensitivity.Rmd" class="external-link"><code>vignettes/esqlabsR-sensitivity.Rmd</code></a></small>
       <div class="d-none name"><code>esqlabsR-sensitivity.Rmd</code></div>
     </div>
 
@@ -111,17 +116,17 @@ input parameter values.</p>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivityCalculation.html">sensitivityCalculation</a></span><span class="op">(</span><span class="va">simulation</span>, <span class="va">OutputPaths</span>, parameterPaths <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">pkData</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
-<span><span class="co">#&gt;   OutputPath            ParameterPath ParameterFactor ParameterValue PKParameter</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|PeripheralV… Aciclovir|Li…             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Organism|PeripheralV… Aciclovir|Li…             0.2        -<span style="color: #BB0000;">0.019</span><span style="color: #BB0000; text-decoration: underline;">4</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Organism|PeripheralV… Aciclovir|Li…             0.3        -<span style="color: #BB0000;">0.029</span><span style="color: #BB0000; text-decoration: underline;">1</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|PeripheralV… Aciclovir|Li…             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|PeripheralV… Aciclovir|Li…             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|PeripheralV… Aciclovir|Li…             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> AUC_inf    </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4 more variables: PKParameterValue &lt;dbl&gt;, Unit &lt;chr&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   PercentChangePK &lt;dbl&gt;, SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 10</span></span></span>
+<span><span class="co">#&gt;   OutputPath          ParameterPath ParameterFactor ParameterValue ParameterUnit</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|Periphera… Aciclovir|Li…             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Organism|Periphera… Aciclovir|Li…             0.2        -<span style="color: #BB0000;">0.019</span><span style="color: #BB0000; text-decoration: underline;">4</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Organism|Periphera… Aciclovir|Li…             0.3        -<span style="color: #BB0000;">0.029</span><span style="color: #BB0000; text-decoration: underline;">1</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|Periphera… Aciclovir|Li…             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|Periphera… Aciclovir|Li…             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|Periphera… Aciclovir|Li…             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 5 more variables: PKParameter &lt;chr&gt;, PKParameterValue &lt;dbl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   PKPercentChange &lt;dbl&gt;, Unit &lt;chr&gt;, SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
 <p>In the aciclovir example case, the default value of lipophilicity is
 -0.097 log units, corresponding to the area under the curve (AUC) of
 3915.87 µmol×min/L. Increasing the lipophilicity to -0.0097 log units
@@ -129,7 +134,7 @@ leads to a decrease of AUC to 3895.43 µmol×min/L (a change of -0.52%),
 while decreasing the lipophilicity to -0.97 log units leads to an
 increase of AUC to 4015.73 µmol×min/L (a change of 2.55%). The
 sensitivity of AUC to 10-fold increase of lipophilicity is calculated as
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><mi>Δ</mi><mi>A</mi><mi>U</mi><mi>C</mi></mrow><mrow><mi>Δ</mi><mi>l</mi><mi>i</mi><mi>p</mi><mi>o</mi><mi>p</mi><mi>h</mi><mi>i</mi><mi>l</mi><mi>i</mi><mi>c</mi><mi>i</mi><mi>t</mi><mi>y</mi></mrow></mfrac><mo>×</mo><mfrac><mrow><mi>l</mi><mi>i</mi><mi>p</mi><mi>o</mi><mi>p</mi><mi>h</mi><mi>i</mi><mi>l</mi><mi>i</mi><mi>c</mi><mi>i</mi><mi>t</mi><mi>y</mi></mrow><mrow><mi>A</mi><mi>U</mi><mi>C</mi></mrow></mfrac><mo>=</mo><mfrac><mrow><mn>4015.73</mn><mo>−</mo><mn>3915.87</mn></mrow><mrow><mo>−</mo><mn>0.97</mn><mo>−</mo><mo>−</mo><mn>0.097</mn></mrow></mfrac><mo>×</mo><mfrac><mrow><mo>−</mo><mn>0.97</mn></mrow><mn>4015.73</mn></mfrac><mo>=</mo><mn>0.027</mn></mrow><annotation encoding="application/x-tex">\frac{\Delta AUC}{\Delta lipophilicity} \times \frac{lipophilicity}{AUC}=\frac{4015.73-3915.87}{-0.97--0.097} \times \frac{-0.97}{4015.73}=0.027</annotation></semantics></math></p>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><mi>Δ</mi><mi>A</mi><mi>U</mi><mi>C</mi></mrow><mrow><mi>Δ</mi><mi>l</mi><mi>i</mi><mi>p</mi><mi>o</mi><mi>p</mi><mi>h</mi><mi>i</mi><mi>l</mi><mi>i</mi><mi>c</mi><mi>i</mi><mi>t</mi><mi>y</mi></mrow></mfrac><mo>×</mo><mfrac><mrow><mi>l</mi><mi>i</mi><mi>p</mi><mi>o</mi><mi>p</mi><mi>h</mi><mi>i</mi><mi>l</mi><mi>i</mi><mi>c</mi><mi>i</mi><mi>t</mi><mi>y</mi></mrow><mrow><mi>A</mi><mi>U</mi><mi>C</mi></mrow></mfrac><mo>=</mo><mfrac><mrow><mn>4015.73</mn><mo>−</mo><mn>3915.87</mn></mrow><mrow><mi>−</mi><mn>0.97</mn><mo>−</mo><mi>−</mi><mn>0.097</mn></mrow></mfrac><mo>×</mo><mfrac><mrow><mi>−</mi><mn>0.97</mn></mrow><mn>4015.73</mn></mfrac><mo>=</mo><mn>0.027</mn></mrow><annotation encoding="application/x-tex">\frac{\Delta AUC}{\Delta lipophilicity} \times \frac{lipophilicity}{AUC}=\frac{4015.73-3915.87}{-0.97--0.097} \times \frac{-0.97}{4015.73}=0.027</annotation></semantics></math></p>
 <p>The results of the sensitivity analysis can be plotted with two
 functions:</p>
 <ul>
@@ -141,7 +146,8 @@ concentration (<code>C_max</code>), and time when the maximum
 concentration is reached (<code>t_max</code>).</li>
 </ul>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
 <p><img src="esqlabsR-sensitivity_files/figure-html/spider-plot-1.png" width="672"></p>
 <ul>
 <li>the <code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> function plots the
@@ -149,9 +155,7 @@ concentration profile for each of the input parameter values:</li>
 </ul>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
-<span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span>
-<span><span class="co">#&gt; Warning in scale_y_log10(limits = replace(pLimits, pLimits == 0, 0.001), : <span style="color: #00BB00;">log-10</span> transformation introduced infinite values.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">log-10</span> transformation introduced infinite values.</span></span></code></pre></div>
+<span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
 <p><img src="esqlabsR-sensitivity_files/figure-html/time-profile-1.png" width="672"></p>
 </div>
 <div class="section level3">
@@ -186,7 +190,7 @@ multiplication factor is 1).</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
     </footer>
