@@ -27,7 +27,7 @@
 #' custom function(s) for output calculations. User-defined functions should
 #' have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
 #' x-Dimension (time) or y-Dimension values from simulation results. The output
-#' of the function is a numerical value for each output and parameter path, which
+#' of the function is a single numerical value for each output and parameter path, which
 #' is then included in the returned dataframe of PK parameters.
 #' @param saOutputFilePath Path to excel file in which PK-parameter data should
 #' be saved. If a file already exists, it will be overwritten. Default is `NULL`,
@@ -62,7 +62,20 @@
 #'   outputPaths = outputPaths,
 #'   parameterPaths = parameterPaths
 #' )
+#'
+#' # Calculate sensitivity for a user-defined function that computes the
+#' # averate of the simulated y-values
+#' customOutputFunctions <- list(
+#'   "Average" = function(y) mean(y)
+#' )
+#' sensitivityCalculation(
+#'   simulation = simulation,
+#'   outputPaths = outputPaths,
+#'   parameterPaths = parameterPaths,
+#'   customOutputFunctions = customOutputFunctions
+#' )
 #' }
+#'
 #' @export
 sensitivityCalculation <- function(simulation,
                                    outputPaths,
