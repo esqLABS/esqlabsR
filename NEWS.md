@@ -45,9 +45,10 @@
   - Function `sensitivitySpiderPlot` now supports `xAxisType` and `yAxisType`
     options for switching between percent and absolute values (\#695).
     
-  - Function `sensitivityCalculation()` will throw more informative messages
-    when `outputPaths` or `parameterPaths` is not a character vector or NULL
-    (\#712).
+  - Function `sensitivityCalculation()` will throw more informative messages when
+    `outputPaths` or `parameterPaths` is not a character vector or NULL (\#712).
+    
+  - Minor improvements and bug fixes (\#720).
     
   - Embedded Shiny Application were removed. (\#736). `Function Visualizer` can
     be found [in its dedicated
@@ -57,7 +58,7 @@
 
   - Test ospsuite plotting functions are compatible with `esqlabsPlotConfiguration`
     (\#733).
-
+    
 # esqlabsR 5.2.0
 
 ## Breaking changes
