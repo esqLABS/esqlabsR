@@ -8,10 +8,11 @@
 #' @param simulationResultsBatch List of simulation result batches.
 #' @param parameterPaths List of parameter paths corresponding to the simulation
 #' results.
-#' @param customOutputFunctions Optional list of custom output functions for
-#' user-defined PK analyses.
+#' @param customOutputFunctions Optional list of custom output functions. The sensitivities
+#' will be calculated for the outputs of these functions.
 #'
-#' @return A dataframe containing the PK parameters from all simulation results.
+#' @return A dataframe containing the PK parameters (or values of custom
+#' function) from all simulation results.
 #'
 #' @keywords internal
 #' @noRd
@@ -152,7 +153,7 @@
       names(customOutputFunctions)
     )
 
-    # calculate user-defined PK values using user-defined functions
+    # calculate values of user-defined functions
     for (customFunctionName in names(customOutputFunctions)) {
       customOutputFunction <- customOutputFunctions[[customFunctionName]]
       formalNames <- names(formals(customOutputFunction))
