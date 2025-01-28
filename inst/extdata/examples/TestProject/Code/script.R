@@ -1,9 +1,10 @@
-sourceAll(file.path(getwd(), "utils"))
-sourceAll(file.path(getwd(), "InputCode"))
-sourceAll(file.path(getwd(), "Scenarios"))
-sourceAll(file.path(getwd(), "TransferFunctions"))
-# Maybe have to provide a path to the file when using in tests, as current wd
-# will be different
-projectConfiguration <- esqlabsR::createProjectConfiguration("../ProjectConfiguration.xlsx")
+library(esqlabsR)
+
+sourceAll(file.path(getwd(), "Code", "utils"))
+sourceAll(file.path(getwd(), "Code", "InputCode"))
+sourceAll(file.path(getwd(), "Code", "Scenarios"))
+sourceAll(file.path(getwd(), "Code", "TransferFunctions"))
+
+projectConfiguration <- esqlabsR::createProjectConfiguration()
 ###### Scenarios#########
 scenarioResults <- defaultScenario(projectConfiguration = projectConfiguration)
