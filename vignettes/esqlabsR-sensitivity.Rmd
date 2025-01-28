@@ -105,16 +105,16 @@ sensitivityTimeProfiles(analysis)
 
 Though the typical workflows for sensitivity analysis are focused on PK
 parameters, it is also possible to calculate the sensitivities for any
-kind of numerical model outputs using user-defined functions. As for the
-PK parameters, the provided function(s) will be applied to each of the
-output defined in the argument `outputPaths` of the
-`sensitivityCalculation()` function.
+numerical model outputs using user-defined functions. As for the PK
+parameters, the provided function(s) will be applied to each output
+defined in the argument `outputPaths` of the `sensitivityCalculation()`
+function.
 
 The custom functions are provided as a named list of functions in the
 `customOutputFunctions` argument. Each function must have the arguments
-`xValues` and `yValues`, through it accesses the simulated time values
-(`xValues`) or the output values (`yValues`). The function should return
-a single numeric value.
+`x` and `y`, through which it accesses the simulated time values (`x`)
+or the output values (`y`). The function should return a single numeric
+value.
 
 In the following example, we calculate the sensitivity of the average
 concentration of aciclovir in the peripheral venous blood to the
@@ -147,9 +147,9 @@ customAnalysis <- sensitivityCalculation(
 head(customAnalysis$pkData)
 ```
 
-[**Note**]{.underline}: If we want to calculate the sensitivity of the custom function
-only without the default PK-paraeters, we need to set the `pkParameters` value 
-to an empty list.
+[**Note**]{.underline}: If we want to calculate the sensitivity of the
+custom function only without the default PK-parameters, we need to set
+the `pkParameters` value to an empty list.
 
 Finally, we plot the sensitivity of the average concentration of
 aciclovir in the peripheral venous blood to the lipophilicity of
