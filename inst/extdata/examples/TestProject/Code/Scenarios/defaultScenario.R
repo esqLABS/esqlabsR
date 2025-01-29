@@ -50,13 +50,6 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
   # Which sheets to load
 
   importerConfiguration <- NULL
-  # For compatibility with projects created with esqlabsR <5.0.1, use old data set
-  # naming pattern.
-  # importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-  #   configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-  # )
-  # importerConfiguration$namingPattern <- "{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"
-
   dataSheets <- c("Laskin 1982.Group A")
   observedData <- esqlabsR::loadObservedData(
     projectConfiguration = projectConfiguration,
@@ -70,6 +63,8 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
   # sort(names(observedData))
   ########## Create figures########
   plots <- createPlotsFromExcel(
+    plotGridNames = c("Aciclovir",
+                      "Aciclovir2"),
     simulatedScenarios = simulatedScenariosResults,
     observedData = observedData,
     projectConfiguration = projectConfiguration,
