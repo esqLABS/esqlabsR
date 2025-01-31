@@ -73,7 +73,7 @@ geomean <- function(x, na.rm = FALSE, trim = 0) {
 #' @return Geometric standard deviation of `x`
 #' @export
 geosd <- function(x, na.rm = FALSE) {
-  exp(sd(log(x), na.rm = na.rm))
+  exp(stats::sd(log(x), na.rm = na.rm))
 }
 
 

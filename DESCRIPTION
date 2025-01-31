@@ -23,12 +23,14 @@ Depends:
     R (>= 4.1)
 Imports:
     colorspace,
+    cli,
     dplyr,
     fs,
     ggplot2,
     grDevices,
     labeling,
     lifecycle,
+    methods,
     ospsuite.utils (>= 1.5.0),
     parallel,
     patchwork,

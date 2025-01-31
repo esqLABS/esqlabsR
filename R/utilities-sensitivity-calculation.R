@@ -55,7 +55,7 @@
                                             customOutputFunctions = NULL) {
   # calculate standard pkAnalyses
   pkDataList <- userPKDataList <-
-    setNames(
+    stats::setNames(
       vector("list", length(simulationResults)),
       names(simulationResults)
     )
@@ -183,8 +183,7 @@
   # combined and prepare PK data to match calculatePKAnalyses() output
   userPKDataFrame <- dplyr::bind_rows(userPKValuePathList)
   userPKDataFrame <- dplyr::select(
-    userPKDataFrame,
-    IndividualId, QuantityPath, Parameter, Value, Unit
+    userPKDataFrame, IndividualId, QuantityPath, Parameter, Value, Unit
   )
 
   return(userPKDataFrame)
