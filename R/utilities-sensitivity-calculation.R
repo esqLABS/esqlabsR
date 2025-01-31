@@ -191,36 +191,6 @@
 
 # dataframe modification helpers ------------------------------
 
-#' @title Percent change in PK parameters
-#'
-#' @description Compute %change in PK parameters and their sensitivity
-#'
-#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
-#'   columns renamed to follow `UpperCamel` case.
-#'
-#' @keywords internal
-#' @noRd
-.computePercentChange <- function(data) {
-  # baseline values with a scaling of 1, i.e. no scaling
-  baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
-
-  # baseline values for parameters of interest
-  ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
-  PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
-
-  # add columns with %change and sensitivity
-  # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
-  data %>%
-    dplyr::mutate(
-      PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
-      SensitivityPKParameter =
-      # delta PK / PK
-        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
-          # p / delta p
-          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
-    )
-}
-
 #' Calculate custom PK values
 #'
 #' This function calculates user-defined PK values from simulation results using
@@ -297,9 +267,6 @@
   return(userPKDataFrame)
 }
 
-
-# dataframe modification helpers ------------------------------
-
 #' @title Percent change in PK parameters
 #'
 #' @description Compute %change in PK parameters and their sensitivity
@@ -321,13 +288,34 @@
   # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
   data %>%
     dplyr::mutate(
-      PercentChangePK = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
+      PKPercentChange = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
       SensitivityPKParameter =
-      # delta PK / PK
+        # delta PK / PK
         ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
-          # p / delta p
-          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
+        # p / delta p
+        (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
     )
+}
+
+#' @keywords internal
+#' @noRd
+.convertToWide <- function(data,
+                           pkParameterNames = names(ospsuite::StandardPKParameter)) {
+  dataWide <- tidyr::pivot_wider(
+    data,
+    names_from  = PKParameter,
+    values_from = c(PKParameterValue, Unit, PKPercentChange, SensitivityPKParameter),
+    names_glue  = "{PKParameter}_{.value}"
+  ) %>%
+    dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")) %>%
+    # metrics for each parameter are grouped together
+    dplyr::select(
+      dplyr::matches("Output|^Parameter"),
+      dplyr::matches(pkParameterNames)
+    ) %>%
+    dplyr::arrange(OutputPath)
+
+  return(dataWide)
 }
 
 #' @title Add columns with details about parameter paths
@@ -361,59 +349,6 @@
       ParameterFactor = as.numeric(ParameterFactor)
     ) %>%
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
-}
-
-# dataframe modification helpers ------------------------------
-
-#' @title Percent change in PK parameters
-#'
-#' @description Compute %change in PK parameters and their sensitivity
-#'
-#' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
-#'   columns renamed to follow `UpperCamel` case.
-#'
-#' @keywords internal
-#' @noRd
-.computePercentChange <- function(data) {
-  # baseline values with a scaling of 1, i.e. no scaling
-  baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
-
-  # baseline values for parameters of interest
-  ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
-  PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
-
-  # add columns with %change and sensitivity
-  # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
-  data %>%
-    dplyr::mutate(
-      PKPercentChange = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
-      SensitivityPKParameter =
-      # delta PK / PK
-        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
-          # p / delta p
-          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
-    )
-}
-
-#' @keywords internal
-#' @noRd
-.convertToWide <- function(data,
-                           pkParameterNames = names(ospsuite::StandardPKParameter)) {
-  dataWide <- tidyr::pivot_wider(
-    data,
-    names_from  = PKParameter,
-    values_from = c(PKParameterValue, Unit, PKPercentChange, SensitivityPKParameter),
-    names_glue  = "{PKParameter}_{.value}"
-  ) %>%
-    dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")) %>%
-    # metrics for each parameter are grouped together
-    dplyr::select(
-      dplyr::matches("Output|^Parameter"),
-      dplyr::matches(pkParameterNames)
-    ) %>%
-    dplyr::arrange(OutputPath)
-
-  return(dataWide)
 }
 
 # variationRange handlers -------------------------------------------------
