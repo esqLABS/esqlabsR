@@ -173,7 +173,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
   # Create list of plots ---------------------------------
 
   splitData <- split(data, data$OutputPath)
-  lsPlots <- setNames(
+  lsPlots <- stats::setNames(
     vector("list", length(names(splitData))), names(splitData)
   )
 
@@ -230,7 +230,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
   # loop through unique PKParameters
   pkParams <- unique(data$PKParameter)
-  plotList <- setNames(vector("list", length(pkParams)), pkParams)
+  plotList <- stats::setNames(vector("list", length(pkParams)), pkParams)
 
   for (param in pkParams) {
     dataSubset <- dplyr::filter(data, PKParameter == param)

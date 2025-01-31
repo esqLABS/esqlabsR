@@ -137,7 +137,7 @@
   # extract simulation result values
   simulationResultsDf <- simulationResultsToDataFrame(simulationResults)
 
-  userPKValuePathList <- setNames(
+  userPKValuePathList <- stats::setNames(
     vector("list", length(outputPaths)),
     outputPaths
   )
@@ -148,7 +148,7 @@
     x <- outputData$Time
     y <- outputData$simulationValues
 
-    userPKValueList <- setNames(
+    userPKValueList <- stats::setNames(
       vector("list", length(customOutputFunctions)),
       names(customOutputFunctions)
     )
@@ -246,7 +246,7 @@
   # extract simulation result values
   simulationResultsDf <- simulationResultsToDataFrame(simulationResults)
 
-  userPKValuePathList <- setNames(
+  userPKValuePathList <- stats::setNames(
     vector("list", length(outputPaths)),
     outputPaths
   )
@@ -257,7 +257,7 @@
     x <- outputData$Time
     y <- outputData$simulationValues
 
-    userPKValueList <- setNames(
+    userPKValueList <- stats::setNames(
       vector("list", length(customOutputFunctions)),
       names(customOutputFunctions)
     )
