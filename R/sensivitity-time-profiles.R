@@ -163,7 +163,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # Create list of plots ---------------------------------
 
   splitData <- split(data, data$OutputPath)
-  lsPlots <- setNames(
+  lsPlots <- stats::setNames(
     vector("list", length(names(splitData))), names(splitData)
   )
 
@@ -218,7 +218,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # Loop through unique ParameterPath
   paramPaths <- unique(data$ParameterPath)
   paramPaths <- paramPaths[!is.na(paramPaths)]
-  plotList <- setNames(vector("list", length(paramPaths)), paramPaths)
+  plotList <- stats::setNames(vector("list", length(paramPaths)), paramPaths)
 
   for (paramPath in paramPaths) {
     dataSubset <- dplyr::filter(data, ParameterPath == paramPath)
@@ -426,7 +426,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   xUnits <- .adjustUnits(xUnits, outputPaths)
   yUnits <- .adjustUnits(yUnits, outputPaths)
 
-  parameterPathList <- setNames(
+  parameterPathList <- stats::setNames(
     vector("list", length(parameterPaths)),
     parameterPaths
   )
@@ -435,7 +435,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     simulationResultsPath <- simulationResults[[parameterPath]]
     parameterFactor <- as.list(names(simulationResultsPath))
 
-    outputPathList <- setNames(
+    outputPathList <- stats::setNames(
       vector("list", length(outputPaths)),
       outputPaths
     )
@@ -500,15 +500,15 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     dplyr::ungroup()
 
   # select and arrange columns
-  combinedDf <- dplyr::select(
+  combinedDf <- dplyr::relocate(
     combinedDf,
     OutputPath,
     dplyr::starts_with("Parameter"),
     xValues,
-    yValues,
-    dplyr::everything(),
-    -IndividualId,
-    -name
+    yValues
+    ) %>%
+  dplyr::select(
+    -IndividualId, -name
   )
 
   return(combinedDf)

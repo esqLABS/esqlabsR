@@ -1,5 +1,9 @@
 # esqlabsR (development version)
 
+## Minor improvements and bug fixes
+
+- Fix warnings related to NSE evaluation (\#762)
+
 # esqlabsR 5.3.0
 
 ## Breaking changes

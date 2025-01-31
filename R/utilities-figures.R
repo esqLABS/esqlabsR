@@ -522,7 +522,7 @@ createPlotsFromExcel <- function(
       }
 
       # Caste the value and set it
-      newConfiguration[[colName]] <- as(
+      newConfiguration[[colName]] <- methods::as(
         object = value,
         Class = expectedType
       )

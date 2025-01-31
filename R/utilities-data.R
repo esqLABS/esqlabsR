@@ -201,7 +201,7 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   switch(method,
     arithmetic = {
       yMeans <- tapply(df[["yValues"]], df[["xValues"]], mean)
-      yError <- tapply(df[["yValues"]], df[["xValues"]], sd)
+      yError <- tapply(df[["yValues"]], df[["xValues"]], stats::sd)
       meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
       meanDataSet$yErrorType <- ospsuite::DataErrorType$ArithmeticStdDev
     },

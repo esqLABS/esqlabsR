@@ -219,13 +219,13 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
   }
 
   if (distribution == Distributions$Normal) {
-    return(rnorm(n, mean, sd))
+    return(stats::rnorm(n, mean, sd))
   }
 
   if (distribution == Distributions$LogNormal) {
     location <- log(mean^2 / sqrt(sd^2 + mean^2))
     shape <- sqrt(log(1 + (sd^2 / mean^2)))
-    vals <- rlnorm(n = n, meanlog = location, sdlog = shape)
+    vals <- stats::rlnorm(n = n, meanlog = location, sdlog = shape)
     return(vals)
   }
   return(NULL)
