@@ -500,15 +500,15 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     dplyr::ungroup()
 
   # select and arrange columns
-  combinedDf <- dplyr::select(
+  combinedDf <- dplyr::relocate(
     combinedDf,
     OutputPath,
     dplyr::starts_with("Parameter"),
     xValues,
-    yValues,
-    dplyr::everything(),
-    -IndividualId,
-    -name
+    yValues
+    ) %>%
+  dplyr::select(
+    -IndividualId, -name
   )
 
   return(combinedDf)
