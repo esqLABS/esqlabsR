@@ -506,10 +506,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     dplyr::starts_with("Parameter"),
     xValues,
     yValues
-    ) %>%
-  dplyr::select(
-    -IndividualId, -name
-  )
+  ) %>%
+    dplyr::select(
+      -IndividualId, -name
+    )
 
   return(combinedDf)
 }

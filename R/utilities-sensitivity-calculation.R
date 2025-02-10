@@ -212,10 +212,10 @@
     dplyr::mutate(
       PKPercentChange = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
       SensitivityPKParameter =
-        # delta PK / PK
+      # delta PK / PK
         ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
-        # p / delta p
-        (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
+          # p / delta p
+          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
     )
 }
 
