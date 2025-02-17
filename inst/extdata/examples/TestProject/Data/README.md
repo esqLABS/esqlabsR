@@ -1,1 +1,0 @@
-By default, observed data files should be stored in this folder

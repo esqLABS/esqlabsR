@@ -1,1 +1,0 @@
-Any kind of exported model/project sturcture used for exchange. Simulations exported as pkml that are used in scenarios should go into the "Simulations" folder.
