@@ -30,11 +30,11 @@ createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xl
 }
 
 
-#' Initialize esqlabsR Project Folder
+#' Initialize esqlabsR Project Folders and required Files
 #'
 #' @description
 #'
-#' Creates the default project folder structure with excels file templates in
+#' Creates the default project folder structure with Excel file templates in
 #' the working directory.
 #'
 #' @param destination A string defining the path where to initialize the project.
