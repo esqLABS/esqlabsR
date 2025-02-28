@@ -40,7 +40,6 @@ Temporary Items
 .Rhistory
 .RData
 .Ruserdata
-*.Rproj
 inst/doc
 .httr-oauth
 revdep/checks
