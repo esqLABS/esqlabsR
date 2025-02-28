@@ -42,7 +42,24 @@ createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xl
 #' @inheritParams fs::dir_copy
 #' @export
 init_project <- function(destination = ".", overwrite = FALSE) {
+  if (overwrite) {
+    qs <- sample(c("Absolutely not", "Yes", "No way"))
+
+    out <- utils::menu(
+      title = "This function will overwrite the existing project. Are you sure you want to continue ?",
+      choices = qs
+    )
+
+    if (out == 0L || qs[[out]] != "Yes") {
+      cli::cli_abort("The function was aborted by the user.")
+    }
+  }
+
   destination <- fs::path_abs(destination)
+
+  if (!fs::dir_exists(destination)) {
+    cli::cli_abort("The specified destination folder does not exist. ({destination}) ")
+  }
 
   type <- "example"
 
@@ -50,19 +67,16 @@ init_project <- function(destination = ".", overwrite = FALSE) {
     "example" = example_directory("TestProject")
   )
 
-  for (dir in fs::dir_ls(source_folder, type = "directory")) {
-    fs::dir_copy(dir,
-      new_path = destination,
-      overwrite = overwrite
-    )
+
+  if (!overwrite && (any(stringr::str_detect("ProjectConfiguration.*xlsx$", fs::dir_ls(destination))) | fs::dir_exists(file.path(destination, "Configurations")))) {
+    cli::cli_abort("The destination folder seems to already contain an esqlabsR project and would be overwriten by this function.")
+    cli::cli_inform("If you want to overwrite the existing project, use the argument `overwrite = TRUE`")
   }
 
-  for (file in fs::dir_ls(source_folder, type = "file")) {
-    fs::file_copy(file,
-      new_path = destination,
-      overwrite = overwrite
-    )
-  }
+  res <- file.copy(list.files(source_folder, full.names = TRUE),
+            destination,
+            recursive = TRUE,
+            overwrite = TRUE)
 }
 
 
