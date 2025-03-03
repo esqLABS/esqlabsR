@@ -537,7 +537,7 @@ test_that("It creates plots only for specified plotGrids", {
     projectConfiguration = projectConfiguration,
     stopIfNotFound = TRUE
   )
-  expect_equal(names(plots), c("Aciclovir"))
+  expect_equal(names(plots$plots), c("Aciclovir"))
 })
 
 test_that("It trows an error when specified plot grid names are not defined in the sheet", {
