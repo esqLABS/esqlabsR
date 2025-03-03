@@ -469,7 +469,7 @@ createPlotsFromExcel <- function(
     })
   }
 
-  return(plotGrids)
+  return(list("plots" = plotGrids, "dataCombined" = dataCombinedList))
 }
 
 #' Create a plotConfiguration or exportConfiguration objects from a row of sheet

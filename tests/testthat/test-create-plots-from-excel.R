@@ -524,7 +524,9 @@ test_that("It creates plots for all plot grids when plotGridNames is NULL", {
     projectConfiguration = projectConfiguration,
     stopIfNotFound = TRUE
   )
-  expect_equal(names(plots), c("Aciclovir", "Aciclovir2", "Aciclovir3"))
+  expect_equal(names(plots$plots), c("Aciclovir", "Aciclovir2", "Aciclovir3"))
+  expect_equal(names(plots$dataCombined), c("AciclovirPVB", "AciclovirPop"))
+  expect_true(isOfType(plots$dataCombined, "DataCombined"))
 })
 
 test_that("It creates plots only for specified plotGrids", {

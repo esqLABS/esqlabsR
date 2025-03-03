@@ -1,5 +1,11 @@
 # esqlabsR (development version)
 
+## Major Changes
+
+- `createPlotsFromExcel` now returns a list with the items `plots` and `dataCombined`. 
+`plots` contains `ggplot2` objects and `dataCombined` the list of `DataCombined` 
+objects used for the creation of the plots (\#780).
+
 ## Minor improvements and bug fixes
 
 - Fix warnings related to NSE evaluation (\#762)
