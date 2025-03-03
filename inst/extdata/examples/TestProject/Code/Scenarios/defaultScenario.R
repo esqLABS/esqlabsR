@@ -62,7 +62,8 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
   # file for figure specification
   # sort(names(observedData))
   ########## Create figures########
-  plots <- createPlotsFromExcel(
+  # The function return the figures as `ggplot2` objects and the data combined objects
+  plotsAndDC <- createPlotsFromExcel(
     plotGridNames = c("Aciclovir",
                       "Aciclovir2"),
     simulatedScenarios = simulatedScenariosResults,
@@ -73,5 +74,5 @@ defaultScenario <- function(projectConfiguration, loadPreSimulatedResults = FALS
   )
 
   # Return a list with simulated scenarios and created plots
-  return(list(simulatedScenariosResults = simulatedScenariosResults, plots = plots))
+  return(list(simulatedScenariosResults = simulatedScenariosResults, plotsAndDC = plotsAndDC))
 }

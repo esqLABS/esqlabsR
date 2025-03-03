@@ -37,7 +37,9 @@ relevant for plots specified for export in the \code{exportConfiguration} sheet.
 simulated results or observed data are not found. If FALSE a warning is printed.}
 }
 \value{
-A list of \code{ggplot} objects
+A list named list with \code{plots} being the list of \code{ggplot} objects
+and \code{dataCombined} being the list of \code{DataCombined} objects used for the creation
+of the plots.
 }
 \description{
 Generate plots as defined in excel file \code{projectConfiguration$plotsFile}

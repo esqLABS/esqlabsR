@@ -272,7 +272,9 @@ createEsqlabsExportConfiguration <- function(outputFolder) { # nolint: object_le
 #' stored. If `NULL` (default), `projectConfiguration$outputFolder` is used. Only
 #' relevant for plots specified for export in the `exportConfiguration` sheet.
 #'
-#' @return A list of `ggplot` objects
+#' @return A list named list with `plots` being the list of `ggplot` objects
+#' and `dataCombined` being the list of `DataCombined` objects used for the creation
+#' of the plots.
 #'
 #' @import tidyr
 #'
