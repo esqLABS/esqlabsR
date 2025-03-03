@@ -185,23 +185,34 @@ plots <- createPlotsFromExcel(
 )
 ```
 
-The function returns a named list of `ggplot2` objects, with names being
-the names of the plot grids:
+The function returns a list with the two entries `plots` and `dataCombined`. `plots`
+is a named list of `ggplot2` objects, with names being the names of the plot grids,
+and `dataCombined` is a list of `DataCombined` objects, with the names being the names of the 
+`DataCombined` used for creation of the specified plots:
 
 ```{r}
-names(plots)
+print("The following plots were generated:")
+names(plots$plots)
+
+print("The following DataCombined objects were used:")
+names(plots$dataCombined)
 ```
 
 
 ```{r}
-plots$Aciclovir
+plots$plots$Aciclovir
 ```
 
 ```{r}
-plots$Aciclovir2
+plots$plots$Aciclovir2
 ```
 
-Also, calling this function will export the plots as image files if the 
+The returned `DataCombined` objects can be used e.g. to calculate the residuals
+between simulation results and observed data mapped in the `DataCombined`. For
+more information on how to use the `DataCombined` objects, please refer to the
+[documentation of the `{ospsuite}` package](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/calculateResiduals.html).
+
+Calling `createPlotsFromExcel()` will export the plots as image files if the 
 exportConfiguration sheet is setup correctly.
 
 By default, the function will try to create all plots defined in the
