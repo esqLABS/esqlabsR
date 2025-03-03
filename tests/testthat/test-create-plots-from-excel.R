@@ -724,6 +724,47 @@ test_that("It exports plot grids as defined in sheet `exportConfiguration`", {
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
       )
+      # Get the name of the created folder (if successfull)
+      # Using tail in case there are multiple folders, so we just need the latest one
+      subFolderName <- tail(list.files(file.path(tempDir, "Figures")), n = 1)
+      expect_true(file.exists(file.path(tempDir, "Figures", subFolderName, "Aciclovir1.png")))
+      expect_true(file.exists(file.path(tempDir, "Figures", subFolderName, "Aciclovir2.png")))
+    }
+  )
+})
+
+test_that("It exports plot grids with specified output folder", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  projectConfigurationLocal$outputFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- data.frame(
+        plotGridName = rep("Aciclovir", 2),
+        outputName = c("Aciclovir1", "Aciclovir2"),
+        height = c(10, NA)
+      )
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+
+
+      createPlotsFromExcel(
+        simulatedScenarios = simulatedScenarios,
+        observedData = observedData,
+        projectConfiguration = projectConfigurationLocal,
+        stopIfNotFound = TRUE,
+        outputFolder = tempDir
+      )
       expect_true(file.exists(file.path(tempDir, "Aciclovir1.png")))
       expect_true(file.exists(file.path(tempDir, "Aciclovir2.png")))
     }
