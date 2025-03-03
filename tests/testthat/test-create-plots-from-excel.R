@@ -74,6 +74,12 @@ plotGridsDf <- data.frame(list(
 
 exportConfigurationDf <- data.frame(list("plotGridName" = character(0), "outputName" = character(0)))
 
+# Helper function to get the most recently created/modified directory
+.getLatestDirectory <- function(baseDir) {
+  allDirs <- list.dirs(baseDir, full.names = TRUE, recursive = FALSE)
+  allDirs[which.max(file.info(allDirs)$mtime)]
+}
+
 # Validation DataCombined
 test_that("It trows an error if mandatory field dataType is not filled out", {
   tempDir <- tempdir()
@@ -724,11 +730,10 @@ test_that("It exports plot grids as defined in sheet `exportConfiguration`", {
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
       )
-      # Get the name of the created folder (if successfull)
-      # Using tail in case there are multiple folders, so we just need the latest one
-      subFolderName <- tail(list.files(file.path(tempDir, "Figures")), n = 1)
-      expect_true(file.exists(file.path(tempDir, "Figures", subFolderName, "Aciclovir1.png")))
-      expect_true(file.exists(file.path(tempDir, "Figures", subFolderName, "Aciclovir2.png")))
+      # Get the most recently created/modified folder in the Figures directory
+      latestDir <- .getLatestDirectory(file.path(tempDir, "Figures"))
+      expect_true(file.exists(file.path(latestDir, "Aciclovir1.png")))
+      expect_true(file.exists(file.path(latestDir, "Aciclovir2.png")))
     }
   )
 })
@@ -765,8 +770,10 @@ test_that("It exports plot grids with specified output folder", {
         stopIfNotFound = TRUE,
         outputFolder = tempDir
       )
-      expect_true(file.exists(file.path(tempDir, "Aciclovir1.png")))
-      expect_true(file.exists(file.path(tempDir, "Aciclovir2.png")))
+      # Get the most recently created/modified folder in the Figures directory
+      latestDir <- .getLatestDirectory(file.path(tempDir, "Figures"))
+      expect_true(file.exists(file.path(latestDir, "Aciclovir1.png")))
+      expect_true(file.exists(file.path(latestDir, "Aciclovir2.png")))
     }
   )
 })
@@ -838,8 +845,13 @@ test_that("It correctly treats names with underscores", {
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
       )
-      expect_true(file.exists(file.path(tempDir, "Aciclovir1.png")))
-      expect_true(file.exists(file.path(tempDir, "Aciclovir2.png")))
+      
+      # Get the most recently created/modified folder in the Figures directory
+      figuresPath <- file.path(tempDir, "Figures")
+      latestDir <- .getLatestDirectory(figuresPath)
+      
+      expect_true(file.exists(file.path(latestDir, "Aciclovir1.png")))
+      expect_true(file.exists(file.path(latestDir, "Aciclovir2.png")))
     }
   )
 })
