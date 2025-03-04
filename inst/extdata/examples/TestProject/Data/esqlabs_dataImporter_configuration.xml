@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ImporterConfiguration fileName="" namingConventions="{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}" version="15">
+<ImporterConfiguration namingConventions="{Study Id}_{Molecule}_{Subject Id}_{Species}_{Gender}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}" version="17">
   <Parameters>
     <MappingDataFormatParameter columnName="Time">
       <MappedColumn name="Time">
@@ -28,7 +28,7 @@
     <MetaDataFormatParameter columnName="Route" metaDataId="Route" isColumn="1" />
     <GroupByDataFormatParameter columnName="Group Id" />
   </Parameters>
-  <FormulaCache>
-    <StringMap />
-  </FormulaCache>
+  <LoadedSheets>
+    <LoadedSheetsChild></LoadedSheetsChild>
+  </LoadedSheets>
 </ImporterConfiguration>
