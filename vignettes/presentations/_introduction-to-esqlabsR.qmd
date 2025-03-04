@@ -30,7 +30,7 @@ library(showtext)
 showtext::showtext_opts(dpi = 300)
 
 my_project_configuration <-
-  createProjectConfiguration(path = test_ProjectConfiguration())
+  createProjectConfiguration(path = exampleProjectConfigurationPath())
 ```
 
 ```{css, echo = FALSE}
@@ -149,7 +149,7 @@ init_project()
 
 <br>
 
-`init_project()` will create the expected simulation project’s folder structure.
+`init_project()` will create the expected simulation project's folder structure.
 
 <br>
 
@@ -224,7 +224,7 @@ Everything is already configured !
 
 ```{r, echo = FALSE}
 reactable::reactable(
-  data = head(readxl::read_xlsx(path = test_ProjectConfiguration())),
+  data = head(readxl::read_xlsx(path = exampleProjectConfigurationPath())),
   columns = list(
     "Property" = reactable::colDef(minWidth = 50),
     "Value" = reactable::colDef(minWidth = 50),

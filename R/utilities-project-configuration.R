@@ -83,23 +83,11 @@ init_project <- function(destination = ".", overwrite = FALSE) {
 
 #' Get the path to example ProjectConfiguration.xlsx
 #'
-#' @return a string representing the path to the ProjectConfiguration.xlsx file
-#' used as example
+#' @return A string representing the path to the example ProjectConfiguration.xlsx file
 #' @export
-#'
 #' @examples
-#' example_ProjectConfiguration()
-example_ProjectConfiguration <- function() {
-  # for now it targets TestProject as it is both an example and a test project
-  file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
-}
-
-#' Get the path to tests' ProjectConfiguration.xlsx
-#'
-#' @return a string representing the path to the ProjectConfiguration.xlsx file
-#' used as test.
-#' @keywords internal
-test_ProjectConfiguration <- function() {
-  # for now it targets TestProject as it is both an example and a test project
+#' exampleProjectConfigurationPath()
+exampleProjectConfigurationPath <- function() {
+  # Returns the path to the example project configuration file in TestProject
   file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
 }

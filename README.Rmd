@@ -95,10 +95,10 @@ Below is a simple example of how to work with the package:
 library(esqlabsR)
 
 # Load excel-based configuration
-# The function `example_ProjectConfiguration()` returns the path to the example project
+# The function `exampleProjectConfigurationPath()` returns the path to the example project
 # configuration included in the package. Replace the variable `configurationPath`
 # with the path to you project configuration file.
-configurationPath <- example_ProjectConfiguration()
+configurationPath <- exampleProjectConfigurationPath()
 
 myProjectConfiguration <-
   createProjectConfiguration(configurationPath)
