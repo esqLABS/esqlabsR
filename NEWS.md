@@ -1,8 +1,26 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+- The Importer configuration provided with the template project has been
+  updated to include `Gender` in the naming pattern. The new naming pattern is as follows:
+  
+  `{Study Id}_{Molecule}_{Subject Id}_{Species}_{Gender}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`.
+  
+  This change will only affect new projects initailized with the new package version.
+  Keep in mind that `Plots.xlsx` files created with the old naming pattern will not work with the new configuration.
+  You will have to manually add the `Gender` naming section (if no gender was specified in the 
+  observed data excel sheet, simply add an additional `_`) after the `Species` section to the
+  names of the data sets specified in the `DataCombined` sheet of the `Plots.xlsx` file.
+
+
 ## Minor improvements and bug fixes
 
 - Fix warnings related to NSE evaluation (\#762)
+
+- Figures defined for the export in the `exportConfiguration` sheet of the `Plots.xlsx` 
+file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Results` folder
+ defined in the `ProjectConfiguration` (\#778).
 
 # esqlabsR 5.3.0
 
