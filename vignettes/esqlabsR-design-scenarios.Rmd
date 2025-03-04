@@ -327,10 +327,6 @@ The order of parameter sheets of the "ModelParameters.xlsx" file defined
 in the **ModelParameterSheets** column defines the order in which the
 parameters are applied.
 
-<!-- For demonstrating the simulation design process, we will use the example included in the package (which can be accessed using `example_ProjectConfiguration`). It models the administration of a single dose of 250 mg aciclovir intravenously to an individual with a 90 ml/min estimated glomerular filtration rate. -->
+<!-- For demonstrating the simulation design process, we will use the example included in the package (which can be accessed using `exampleProjectConfigurationPath`). -->
 
-<!-- ```{r, warning = FALSE} -->
-
-<!-- projectConfiguration <- createProjectConfiguration(example_ProjectConfiguration()) -->
-
-<!-- ``` -->
+<!-- projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath()) -->

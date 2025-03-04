@@ -77,7 +77,17 @@ Note: For projects created for version 3 of `esqlabsR` package, refer to [`esqla
 showtext::showtext_opts(dpi = 300)
 ```
 
-You can start with the "Get Started" vignette: `vignette("esqlabsR")`. 
+You can start with the "Get Started" vignette: `vignette("esqlabsR")`.
+
+`{esqlabsR}` workflows require a specific project structure. You can initialize a new project by running:
+
+```{r, eval=FALSE}
+esqlabsR::init_project()
+```
+
+This will create the required folder structure and files for your project in the 
+working directory from where you run the command.
+
 Below is a simple example of how to work with the package:
 
 ```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
@@ -85,35 +95,40 @@ Below is a simple example of how to work with the package:
 library(esqlabsR)
 
 # Load excel-based configuration
-my_project_configuration <-
-  createProjectConfiguration(example_ProjectConfiguration())
+# The function `exampleProjectConfigurationPath()` returns the path to the example project
+# configuration included in the package. Replace the variable `configurationPath`
+# with the path to you project configuration file.
+configurationPath <- exampleProjectConfigurationPath()
+
+myProjectConfiguration <-
+  createProjectConfiguration(configurationPath)
 
 
-# Setup simulation scenarios
-my_scenarios <-
+# Create simulation scenarios defined in the excel files
+myScenarios <-
   createScenarios(
     readScenarioConfigurationFromExcel( # Read scenarios from excel file
       scenarioNames = "TestScenario", # Import the scenario defined as "TestScenario"
       # in the excel file
-      projectConfiguration = my_project_configuration
+      projectConfiguration = myProjectConfiguration
     )
   )
 
 # Run simulations
-my_simulation <- runScenarios(
-  scenarios = my_scenarios
+mySimulations <- runScenarios(
+  scenarios = myScenarios
 )
 
 # Initialize a `DataCombined` object to store simulation results
-my_datacombined <- DataCombined$new()
+myDatacombined <- DataCombined$new()
 
-my_datacombined$addSimulationResults(my_simulation$TestScenario$results,
+myDatacombined$addSimulationResults(mySimulations$TestScenario$results,
   names = "Simulated",
   groups = "Aciclovir"
 )
 
 # Plot simulation results
-plotIndividualTimeProfile(my_datacombined)
+plotIndividualTimeProfile(myDatacombined)
 ```
 
 ## Learn More

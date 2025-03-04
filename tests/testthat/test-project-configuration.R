@@ -11,7 +11,7 @@ test_that("A warning is (not) displayed if path/file does not exist", {
 
 
 test_that("`createDefaultProjectConfiguration()` is deprecated", {
-  expect_warning(createDefaultProjectConfiguration(path = example_ProjectConfiguration()))
+  expect_warning(createDefaultProjectConfiguration(path = exampleProjectConfigurationPath()))
 })
 
 
