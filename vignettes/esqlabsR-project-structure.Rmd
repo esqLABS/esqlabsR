@@ -32,7 +32,7 @@ structure.
 
 
 ```{r, echo = FALSE}
-fs::dir_tree(path = esqlabsR:::example_directory("TestProject"), glob = "*.md|*.R", invert = TRUE)
+fs::dir_tree(path = esqlabsR:::exampleDirectory("TestProject"), glob = "*.md|*.R", invert = TRUE)
 ```
 ## Create a ProjectConfiguration
 
