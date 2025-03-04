@@ -126,8 +126,8 @@ col2hsv <- function(color) {
 #'
 #' @description
 #'
-#' An instance of `DefaultPlotConfiguration` R6 class is needed for creating
-#' visualizations with the `{ospsuite}` package.
+#' An instance of `DefaultPlotConfiguration` R6 class from `{tlf}` package is
+#' needed for creating visualizations with the `{ospsuite}` package.
 #'
 #' The default attributes of the class are chosen to reflect the corporate
 #' standards adopted by esqLABS GmbH.
