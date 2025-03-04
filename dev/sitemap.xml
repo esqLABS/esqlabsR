@@ -49,7 +49,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/escapeForRegex.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqLABS_colors.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqlabsRSettingNames.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/example_ProjectConfiguration.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/exampleProjectConfigurationPath.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/example_directory.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/executeInParallel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.html</loc></url>
@@ -92,7 +92,6 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sineFunction.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sourceAll.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/stringToNum.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/test_ProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/writeIndividualToXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/writeParameterStructureToXLS.html</loc></url>
 </urlset>
