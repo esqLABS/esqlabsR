@@ -1,4 +1,4 @@
-## context("initializeSimulation")
+
 
 test_that("`initializeSimulation()` loads a simulation at the minimum", {
   simulation <- loadSimulation(system.file("extdata", "simple.pkml", package = "ospsuite"))
@@ -20,7 +20,7 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
-## context("compareSimulationParameters")
+
 
 test_that("`compareSimulations()` produces no differences with identical simulations", {
   simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
@@ -48,8 +48,14 @@ test_that("`compareSimulations()` lists differencies on parameter correctly", {
   expect_equal(res$Parameters$In1NotIn2[[1]]$path, getAllParametersMatching(in1notIn2Paths, sim1)[[1]]$path)
   expect_equal(res$Parameters$In2NotIn1[[1]]$path, getAllParametersMatching(in2notIn1Paths, sim2)[[1]]$path)
 
-  expect_equal(res$Parameters$Different[[1]]$simulation1$value, getAllParametersMatching(differentPaths, sim1)[[1]]$value)
-  expect_equal(res$Parameters$Different[[1]]$simulation2$value, getAllParametersMatching(differentPaths, sim2)[[1]]$value)
+  expect_equal(
+    res$Parameters$Different[[1]]$simulation1$value,
+    getAllParametersMatching(differentPaths, sim1)[[1]]$value
+  )
+  expect_equal(
+    res$Parameters$Different[[1]]$simulation2$value,
+    getAllParametersMatching(differentPaths, sim2)[[1]]$value
+  )
 })
 # getAllApplicationParameters
 

@@ -1,27 +1,27 @@
-# esqLABS_colors ----------------------------------------------------------
+# esqlabsColors ----------------------------------------------------------
 
-test_that("esqLABS_colors input validation works as expected", {
-  expect_error(esqLABS_colors(-1), messages$nrOfColorsShouldBePositive(-1))
+test_that("esqlabsColors input validation works as expected", {
+  expect_error(esqlabsColors(-1), messages$nrOfColorsShouldBePositive(-1))
 })
 
-test_that("esqLABS_colors wprks with empty argument vector", {
-  expect_length(esqLABS_colors(0), 0)
+test_that("esqlabsColors works with empty argument vector", {
+  expect_length(esqlabsColors(0), 0)
 })
 
-test_that("esqLABS_colors returns two colors", {
-  expect_length(esqLABS_colors(2), 2)
+test_that("esqlabsColors returns two colors", {
+  expect_length(esqlabsColors(2), 2)
 })
 
-test_that("esqLABS_colors returns three colors", {
-  expect_length(esqLABS_colors(3), 3)
+test_that("esqlabsColors returns three colors", {
+  expect_length(esqlabsColors(3), 3)
 })
 
-test_that("esqLABS_colors returns ten colors", {
-  expect_length(esqLABS_colors(10), 10)
+test_that("esqlabsColors returns ten colors", {
+  expect_length(esqlabsColors(10), 10)
 })
 
-test_that("esqLABS_colors returns ten colors", {
-  expect_length(esqLABS_colors(10), 10)
+test_that("esqlabsColors returns ten colors", {
+  expect_length(esqlabsColors(10), 10)
 })
 
 # col2hsv -----------------------------------------------------------------

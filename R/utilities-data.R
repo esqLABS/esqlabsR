@@ -2,13 +2,13 @@
 #'
 #' @param string A string or a list of strings to be converted to numeric values
 #' @param lloqMode How to treat entries below LLOQ, i.e., of a form "<2":
-#'  `LLOQ/2` (default): return the number divided by 2,
-#'  `LLOQ`: return the numerical value,
-#'  `ZERO`: return 0,
-#'  `ignore`: return `NA`
+#'   `LLOQ/2` (default): return the number divided by 2,
+#'   `LLOQ`: return the numerical value,
+#'   `ZERO`: return 0,
+#'   `ignore`: return `NA`
 #' @param uloqMode How to treat entries above ULOQ, i.e., of a form ">2":
-#'  `ULOQ`: return the numerical value,
-#'  `ignore`: return `NA`
+#'   `ULOQ`: return the numerical value,
+#'   `ignore`: return `NA`
 #'
 #' @details Tries to convert each string to a numeric with `as.numeric()`.
 #' If any conversion fails and returns `NA`, the value is tested for being a LLOQ-

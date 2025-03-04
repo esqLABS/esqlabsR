@@ -17,7 +17,7 @@
 #' @return A list of colors as HEX values.
 #' @import grDevices
 #' @export
-esqLABS_colors <- function(nrOfColors) {
+esqlabsColors <- function(nrOfColors) {
   # esqLABS colors in HSV model
   esqRedHSV <- grDevices::rgb2hsv(234, 94, 94, maxColorValue = 255)
   esqBlueHSV <- grDevices::rgb2hsv(74, 189, 203, maxColorValue = 255)
@@ -96,7 +96,7 @@ esqLABS_colors <- function(nrOfColors) {
   }
   palette <- c(palette, esq_palette[3])
 
-  return(palette)
+  return(palette) # nolint: return_linter.
 }
 
 #' Returns the HSV values for a given R color name
@@ -126,8 +126,8 @@ col2hsv <- function(color) {
 #'
 #' @description
 #'
-#' An instance of `DefaultPlotConfiguration` R6 class is needed for creating
-#' visualizations with the `{ospsuite}` package.
+#' An instance of `DefaultPlotConfiguration` R6 class from `{tlf}` package is
+#' needed for creating visualizations with the `{ospsuite}` package.
 #'
 #' The default attributes of the class are chosen to reflect the corporate
 #' standards adopted by esqLABS GmbH.
@@ -245,7 +245,6 @@ createEsqlabsExportConfiguration <- function(outputFolder) { # nolint: object_le
   # export".
   exportConfiguration$format <- "png"
   exportConfiguration$width <- 18
-  # exportConfiguration$height <- 18
   exportConfiguration$heightPerRow <- 12
   exportConfiguration$units <- "cm"
   return(exportConfiguration)
@@ -341,7 +340,7 @@ createPlotsFromExcel <- function(
 
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
   defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  plotConfigurationList <- apply(dfPlotConfigurations, 1, \(row){
+  plotConfigurationList <- apply(dfPlotConfigurations, 1, \(row) {
     plotConfiguration <- .createConfigurationFromRow(
       defaultConfiguration = defaultPlotConfiguration,
       # Have to exclude all columns that should not be vectorized

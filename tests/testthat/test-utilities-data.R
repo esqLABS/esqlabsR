@@ -1,4 +1,4 @@
-## context("stringToNum")
+
 
 test_that("It converts a single positive number", {
   string <- "21"
@@ -22,7 +22,7 @@ test_that("It converts a non numerics to NA", {
 
 test_that("It converts a LLOQ values", {
   string <- c("21", "one", "<5", "-21", " < - 5 ", "<s")
-  # LLOQ/2
+  # "LLOQ/2"
   expect_equal(stringToNum(string, lloqMode = LLOQMode$`LLOQ/2`), c(21, NA, 2.5, -21, -2.5, NA))
   # LLOQ
   expect_equal(stringToNum(string, lloqMode = LLOQMode$LLOQ), c(21, NA, 5, -21, -5, NA))
@@ -40,7 +40,7 @@ test_that("It converts a ULOQ values", {
   expect_equal(stringToNum(string, uloqMode = ULOQMode$ignore), c(21, NA, NA, -21, NA, NA))
 })
 
-## context("calculateMeanDataSet")
+
 dataSet1 <- ospsuite::DataSet$new(name = "data1")
 dataSet2 <- ospsuite::DataSet$new(name = "data2")
 

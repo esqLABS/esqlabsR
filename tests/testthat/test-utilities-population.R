@@ -1,4 +1,4 @@
-## context("sampleRandomValue")
+
 
 test_that("`sampleRandomValue()` generates needed distribution", {
   expect_error(
@@ -122,7 +122,7 @@ test_that("extendPopulationFromXLS works", {
           "Mean" = 0.12,
           "SD" = 0.001,
           "Distribution" = "Normal",
-          check.names = F
+          check.names = FALSE
         ))
       )
 
@@ -157,7 +157,7 @@ test_that("extendPopulationFromXLS throws an error if the sheet has wrong struct
           "Mean" = numeric(),
           "SD" = numeric(),
           # "Distribution" = character(),  # Distribution column is missing
-          check.names = F
+          check.names = FALSE
         ))
       )
 
@@ -178,7 +178,7 @@ test_that("extendPopulationFromXLS throws an error if the sheet has wrong struct
           "Mean" = numeric(),
           "SD" = numeric(),
           "Distribution" = character(),
-          check.names = F
+          check.names = FALSE
         ))
       )
 
@@ -206,7 +206,7 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
           "Mean" = numeric(),
           "SD" = numeric(),
           "Distribution" = character(), # Distribution column is missing
-          check.names = F
+          check.names = FALSE
         ))
       )
 
@@ -228,7 +228,7 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
           "Mean" = 0.12,
           "SD" = 0.001,
           "Distribution" = NA,
-          check.names = F
+          check.names = FALSE
         ))
       )
 

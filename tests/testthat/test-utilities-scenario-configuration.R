@@ -1,4 +1,4 @@
-## context("readScenarioConfigurationFromExcel")
+
 # Create a project configuration
 projectConfiguration <- testProjectConfiguration()
 

@@ -1,4 +1,4 @@
-## context("getMoleculenameFromQuantity")
+
 simulation <- loadSimulation(system.file("extdata", "Aciclovir.pkml", package = "ospsuite"))
 simTree <- getSimulationTree(simulation)
 
