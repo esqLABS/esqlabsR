@@ -1,4 +1,4 @@
-## context("readIndividualCharacteristicsFromXLS")
+
 skip_on_ci()
 
 XLSpath <- "../data/Individuals.xlsx"
@@ -49,7 +49,7 @@ test_that("It create IndividualCharacteristics when numerical values are empty",
   expect_equal(individualCharacteristics$gender, "MALE")
 })
 
-## context("writeIndividualToXLS")
+
 
 test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
   withr::with_tempdir(
