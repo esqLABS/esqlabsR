@@ -2,7 +2,8 @@
 #'
 #' @description  Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
 #'
-#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx` file located in the working directory.
+#' @param path path to the `ProjectConfiguration.xlsx` file. Defaults to the `ProjectConfiguration.xlsx` 
+#'   file in the working directory.
 #'
 #' @return Object of type `ProjectConfiguration`
 #' @export
@@ -20,7 +21,8 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 #'
 #' @description  Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
 #'
-#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx` file located in the working directory.
+#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx`
+#'  file located in the working directory.
 #'
 #' @return Object of type `ProjectConfiguration`
 #' @export
@@ -41,7 +43,7 @@ createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xl
 #' default to current working directory.
 #' @inheritParams fs::dir_copy
 #' @export
-init_project <- function(destination = ".", overwrite = FALSE) {
+initProject <- function(destination = ".", overwrite = FALSE) {
   if (overwrite) {
     qs <- sample(c("Absolutely not", "Yes", "No way"))
 
@@ -64,11 +66,11 @@ init_project <- function(destination = ".", overwrite = FALSE) {
   type <- "example"
 
   source_folder <- switch(type,
-    "example" = example_directory("TestProject")
+    "example" = exampleDirectory("TestProject")
   )
 
 
-  if (!overwrite && (any(stringr::str_detect("ProjectConfiguration.*xlsx$", fs::dir_ls(destination))) | fs::dir_exists(file.path(destination, "Configurations")))) {
+  if (!overwrite && (any(stringr::str_detect("ProjectConfiguration.*xlsx$", fs::dir_ls(destination))) || fs::dir_exists(file.path(destination, "Configurations")))) {
     cli::cli_abort("The destination folder seems to already contain an esqlabsR project and would be overwriten by this function.")
     cli::cli_inform("If you want to overwrite the existing project, use the argument `overwrite = TRUE`")
   }
@@ -91,7 +93,7 @@ init_project <- function(destination = ".", overwrite = FALSE) {
 #' example_ProjectConfiguration()
 example_ProjectConfiguration <- function() {
   # for now it targets TestProject as it is both an example and a test project
-  file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
+  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
 }
 
 #' Get the path to tests' ProjectConfiguration.xlsx
