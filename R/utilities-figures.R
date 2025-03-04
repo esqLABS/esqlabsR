@@ -449,7 +449,12 @@ createPlotsFromExcel <- function(
   dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
-    outputFolder <- outputFolder %||% projectConfiguration$outputFolder
+    outputFolder <- outputFolder %||% file.path(
+      projectConfiguration$outputFolder,
+      "Figures",
+      format(Sys.time(), "%F %H-%M")
+    )
+
     defaultExportConfiguration <- createEsqlabsExportConfiguration(outputFolder)
     exportConfigurations <- apply(dfExportConfigurations, 1, \(row){
       exportConfiguration <- .createConfigurationFromRow(
