@@ -845,11 +845,11 @@ test_that("It correctly treats names with underscores", {
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
       )
-      
+
       # Get the most recently created/modified folder in the Figures directory
       figuresPath <- file.path(tempDir, "Figures")
       latestDir <- .getLatestDirectory(figuresPath)
-      
+
       expect_true(file.exists(file.path(latestDir, "Aciclovir1.png")))
       expect_true(file.exists(file.path(latestDir, "Aciclovir2.png")))
     }

@@ -74,9 +74,10 @@ init_project <- function(destination = ".", overwrite = FALSE) {
   }
 
   res <- file.copy(list.files(source_folder, full.names = TRUE),
-            destination,
-            recursive = TRUE,
-            overwrite = TRUE)
+    destination,
+    recursive = TRUE,
+    overwrite = TRUE
+  )
 }
 
 
