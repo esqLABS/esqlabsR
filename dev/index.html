@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9012</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9013</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -123,40 +123,79 @@
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Load excel-based configuration</span></span>
-<span><span class="co"># The function `example_ProjectConfiguration()` returns the path to the example project</span></span>
-<span><span class="co"># configuration included in the package. Replace the variable `configurationPath` </span></span>
+<span><span class="co"># The function `exampleProjectConfigurationPath()` returns the path to the example project</span></span>
+<span><span class="co"># configuration included in the package. Replace the variable `configurationPath`</span></span>
 <span><span class="co"># with the path to you project configuration file.</span></span>
-<span><span class="va">configurationPath</span> <span class="op">&lt;-</span> <span class="fu">example_ProjectConfiguration</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">configurationPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">myProjectConfiguration</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="va">configurationPath</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># Define which scenarios to run</span></span>
+<span><span class="va">scenarioNames</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TestScenario"</span><span class="op">)</span></span>
+<span><span class="co"># Set scenario names to NULL if you want to simulate all scenarios defined in the</span></span>
+<span><span class="co"># excel file</span></span>
+<span><span class="co"># scenarioNames &lt;- NULL</span></span>
 <span></span>
-<span><span class="co"># Create simulation scenarios defined in the excel files</span></span>
-<span><span class="va">myScenarios</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu"><a href="reference/createScenarios.html">createScenarios</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span> <span class="co"># Read scenarios from excel file</span></span>
-<span>      scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>, <span class="co"># Import the scenario defined as "TestScenario"</span></span>
-<span>      <span class="co"># in the excel file</span></span>
-<span>      projectConfiguration <span class="op">=</span> <span class="va">myProjectConfiguration</span></span>
-<span>    <span class="op">)</span></span>
+<span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
+<span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
+<span>  scenarioNames <span class="op">=</span> <span class="va">scenarioNames</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">myProjectConfiguration</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Define custom parameters for the scenarios. These parameter will be applied</span></span>
+<span><span class="co"># additionally to the paremetrization specified in the Excel files.</span></span>
+<span><span class="va">customParam</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  paths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Aciclovir|Lipophilicity"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="op">-</span><span class="fl">0.1</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Log Units"</span></span>
 <span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Create simulation scenarios defined in the excel files and apply the custom parameters</span></span>
+<span><span class="va">myScenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createScenarios.html">createScenarios</a></span><span class="op">(</span></span>
+<span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarioConfigurations</span>,</span>
+<span>  customParams <span class="op">=</span> <span class="va">customParam</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Adjust simulation run options, if necessary.</span></span>
+<span><span class="co"># E.g. disable check for negative values if required</span></span>
+<span><span class="va">simulationRunOptions</span> <span class="op">&lt;-</span> <span class="fu">ospsuite</span><span class="fu">::</span><span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html" class="external-link">SimulationRunOptions</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">simulationRunOptions</span><span class="op">$</span><span class="va">checkForNegativeValues</span> <span class="op">&lt;-</span> <span class="cn">FALSE</span></span>
 <span></span>
 <span><span class="co"># Run simulations</span></span>
-<span><span class="va">mySimulations</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
-<span>  scenarios <span class="op">=</span> <span class="va">myScenarios</span></span>
+<span><span class="va">simulatedScenariosResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
+<span>  scenarios <span class="op">=</span> <span class="va">myScenarios</span>,</span>
+<span>  simulationRunOptions <span class="op">=</span> <span class="va">simulationRunOptions</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Initialize a `DataCombined` object to store simulation results</span></span>
-<span><span class="va">myDatacombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
+<span>    <span class="co"># Save results and store the path to the results for later re-use</span></span>
+<span>    <span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span>, <span class="va">myProjectConfiguration</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">myDatacombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">mySimulations</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
-<span>  names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
-<span>  groups <span class="op">=</span> <span class="st">"Aciclovir"</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Plot simulation results</span></span>
-<span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">myDatacombined</span><span class="op">)</span></span></code></pre></div>
+<span>    <span class="co"># Load observed data using the default importer configuration provided with the package. Alternatively, you can load a custom data importer configuration.</span></span>
+<span>  <span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Laskin 1982.Group A"</span><span class="op">)</span></span>
+<span>  <span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu">esqlabsR</span><span class="fu">::</span><span class="fu"><a href="reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
+<span>    projectConfiguration <span class="op">=</span> <span class="va">myProjectConfiguration</span>,</span>
+<span>    sheets <span class="op">=</span> <span class="va">dataSheets</span></span>
+<span>  <span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="co">########## Create figures defined in the Plots.xlsx file########</span></span>
+<span>  <span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createPlotsFromExcel.html">createPlotsFromExcel</a></span><span class="op">(</span></span>
+<span>    plotGridNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Aciclovir"</span>,</span>
+<span>                      <span class="st">"Aciclovir2"</span><span class="op">)</span>,</span>
+<span>    simulatedScenarios <span class="op">=</span> <span class="va">simulatedScenariosResults</span>,</span>
+<span>    observedData <span class="op">=</span> <span class="va">observedData</span>,</span>
+<span>    projectConfiguration <span class="op">=</span> <span class="va">myProjectConfiguration</span>,</span>
+<span>    outputFolder <span class="op">=</span> <span class="va">outputFolder</span>,</span>
+<span>    stopIfNotFound <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">plots</span><span class="op">$</span><span class="va">Aciclovir</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-6-1.png" width="80%" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2">
