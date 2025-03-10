@@ -44,7 +44,7 @@ By printing the `ProjectConfiguration`, we can see the locations of all files
 used in the workflows:
 
 ```{r, eval = TRUE}
-my_project_configuration <- createProjectConfiguration(path = example_ProjectConfiguration())
+my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath())
 ```
 
 Now that the project structure is initialized and the `ProjectConfiguration` is 
@@ -80,7 +80,7 @@ All these directories and files have a specific purpose and template and are
 describe in next sections.
 
 ```{r, echo = FALSE}
-ProjectConfiguration_excel <- readxl::read_xlsx(example_ProjectConfiguration())
+ProjectConfiguration_excel <- readxl::read_xlsx(exampleProjectConfigurationPath())
 
 reactable::reactable(ProjectConfiguration_excel,
   columns = list(

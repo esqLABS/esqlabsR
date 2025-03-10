@@ -99,6 +99,20 @@ esqlabsColors <- function(nrOfColors) {
   return(palette) # nolint: return_linter.
 }
 
+#' esqLABS color palette (deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `esqlabs_colors()` was renamed to `esqlabsColors()` to create a more
+#' consistent API.
+#' @keywords internal
+#' @export
+esqlabs_colors <- function(nrOfColors) {
+  lifecycle::deprecate_warn(when = "5.3.0", what = "esqlabs_colors()", with = "esqlabsColors()")
+  return(esqlabsColors(nrOfColors))
+}
+
 #' Returns the HSV values for a given R color name
 #'
 #' @param color vector of any of the three kinds of R color specifications,

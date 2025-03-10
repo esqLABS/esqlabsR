@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities-project-configuration.R
 \name{initProject}
 \alias{initProject}
-\title{Initialize esqlabsR Project Folder}
+\title{Initialize esqlabsR Project Folders and required Files}
 \usage{
 initProject(destination = ".", overwrite = FALSE)
 }
@@ -14,6 +14,6 @@ default to current working directory.}
 file exists an error will be thrown.}
 }
 \description{
-Creates the default project folder structure with excels file templates in
+Creates the default project folder structure with Excel file templates in
 the working directory.
 }

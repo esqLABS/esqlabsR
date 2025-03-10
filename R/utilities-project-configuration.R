@@ -30,11 +30,11 @@ createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xl
   return(projectConfiguration)
 }
 
-#' Initialize esqlabsR Project Folder
+#' Initialize esqlabsR Project Folders and required Files
 #'
 #' @description
 #'
-#' Creates the default project folder structure with excels file templates in
+#' Creates the default project folder structure with Excel file templates in
 #' the working directory.
 #'
 #' @param destination A string defining the path where to initialize the project.
@@ -73,30 +73,19 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   }
 
   res <- file.copy(list.files(source_folder, full.names = TRUE),
-            destination,
-            recursive = TRUE,
-            overwrite = TRUE)
+    destination,
+    recursive = TRUE,
+    overwrite = TRUE
+  )
 }
 
 #' Get the path to example ProjectConfiguration.xlsx
 #'
-#' @return a string representing the path to the ProjectConfiguration.xlsx file
-#' used as example
+#' @return A string representing the path to the example ProjectConfiguration.xlsx file
 #' @export
-#'
 #' @examples
-#' example_ProjectConfiguration()
-example_ProjectConfiguration <- function() {
-  # for now it targets TestProject as it is both an example and a test project
-  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
-}
-
-#' Get the path to tests' ProjectConfiguration.xlsx
-#'
-#' @return a string representing the path to the ProjectConfiguration.xlsx file
-#' used as test.
-#' @keywords internal
-test_ProjectConfiguration <- function() {
-  # for now it targets TestProject as it is both an example and a test project
+#' exampleProjectConfigurationPath()
+exampleProjectConfigurationPath <- function() {
+  # Returns the path to the example project configuration file in TestProject
   file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
 }

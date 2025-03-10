@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities-project-configuration.R
 \name{createProjectConfiguration}
 \alias{createProjectConfiguration}
-\title{#' Create a \code{ProjectConfiguration}}
+\title{Create a \code{ProjectConfiguration}}
 \usage{
 createProjectConfiguration(path = file.path("ProjectConfiguration.xlsx"))
 }
