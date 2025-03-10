@@ -46,7 +46,7 @@ reference:
   contents:
   - matches("^plot")
   - matches("^col")
-  - contains("color")
+  - matches("[Cc]olor")
   - has_concept("create-plotting-configurations")
   - createDataCombinedFromExcel
 - title: Input validation
