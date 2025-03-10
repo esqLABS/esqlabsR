@@ -68,7 +68,7 @@ You can start with the “Get Started” vignette: `vignette("esqlabsR")`.
 initialize a new project by running:
 
 ``` r
-esqlabsR::init_project()
+esqlabsR::initProject()
 ```
 
 This will create the required folder structure and files for your

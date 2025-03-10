@@ -35,13 +35,13 @@ implemented in this package rely on simple concepts:
 a well defined project structure based on Excel files. These files are organized
 in different folders and their structure must not be altered.
 
-A new project folder can be initialized with the `init_project()`
+A new project folder can be initialized with the `initProject()`
 function.
 
 ```{r, eval=FALSE}
 library(esqlabsR)
 
-init_project()
+initProject()
 ```
 
 It will create the expected simulation project's folder structure, which is described 

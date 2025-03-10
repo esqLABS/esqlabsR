@@ -18,7 +18,7 @@ reference:
   - contains("Project")
   - contains("Scenario")
   - createPlotsFromExcel
-  - init_project
+  - initProject
 - title: Helpers for data import, wrangling, and export
   contents:
   - matches("^read")
