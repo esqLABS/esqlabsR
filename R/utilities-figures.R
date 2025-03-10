@@ -281,6 +281,7 @@ createPlotsFromExcel <- function(
     plotGridNames = NULL,
     simulatedScenarios = NULL,
     observedData = NULL,
+    dataCombined = NULL,
     projectConfiguration,
     outputFolder = NULL,
     stopIfNotFound = TRUE) {
