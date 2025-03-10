@@ -21,6 +21,8 @@
 - Figures defined for the export in the `exportConfiguration` sheet of the `Plots.xlsx` 
 file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Results` folder
  defined in the `ProjectConfiguration` (\#778).
+ 
+- Fix warning cannot be displayed when no individual model parameters are displayed.
 
 # esqlabsR 5.3.0
 
