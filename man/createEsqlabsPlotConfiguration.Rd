@@ -10,8 +10,8 @@ createEsqlabsPlotConfiguration()
 An instance of \code{DefaultPlotConfiguration} R6 class.
 }
 \description{
-An instance of \code{DefaultPlotConfiguration} R6 class is needed for creating
-visualizations with the \code{{ospsuite}} package.
+An instance of \code{DefaultPlotConfiguration} R6 class from \code{{tlf}} package is
+needed for creating visualizations with the \code{{ospsuite}} package.
 
 The default attributes of the class are chosen to reflect the corporate
 standards adopted by esqLABS GmbH.

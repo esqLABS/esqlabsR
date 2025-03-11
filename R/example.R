@@ -5,7 +5,7 @@
 #'
 #' @param name Name of example project. If `NULL`, the example names will be listed.
 #' @keywords internal
-example_directory <- function(name = NULL) {
+exampleDirectory <- function(name = NULL) {
   if (is.null(name)) {
     dir(system.file("extdata", "examples", package = "esqlabsR"))
   } else {

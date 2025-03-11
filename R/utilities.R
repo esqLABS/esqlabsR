@@ -49,16 +49,16 @@ getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdR
   return(idx)
 }
 
-#' Calculate geometric mean of a numeric vector.
+#' Calculate geometric mean of a numeric vector
 #'
-#' @param x Numeric array
+#' @param x Numeric array to calculate geometric mean for
 #' @param na.rm A logical value indicating whether `NA` values should be
-#'   stripped before the computation proceeds.
-#' @param trim the fraction (0 to 0.5) of observations to be trimmed from each
+#'   stripped before the computation proceeds
+#' @param trim Fraction (0 to 0.5) of observations to be trimmed from each
 #'   end of `x` before the mean is computed. Values of trim outside that range
-#'   are taken as the nearest endpoint.
+#'   are taken as the nearest endpoint
 #'
-#' @return Geometric mean of`x`
+#' @return Geometric mean of `x`
 #' @export
 geomean <- function(x, na.rm = FALSE, trim = 0) {
   exp(mean(log(x), na.rm = na.rm, trim = trim))

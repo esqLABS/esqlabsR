@@ -82,7 +82,7 @@ You can start with the "Get Started" vignette: `vignette("esqlabsR")`.
 `{esqlabsR}` workflows require a specific project structure. You can initialize a new project by running:
 
 ```{r, eval=FALSE}
-esqlabsR::init_project()
+esqlabsR::initProject()
 ```
 
 This will create the required folder structure and files for your project in the 

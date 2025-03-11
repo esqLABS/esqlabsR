@@ -144,17 +144,17 @@ remotes::install_github("esqLABS/esqlabsR")
 
 ```{r, eval=FALSE, echo = TRUE}
 library(esqlabsR)
-init_project()
+initProject()
 ```
 
 <br>
 
-`init_project()` will create the expected simulation project's folder structure.
+`initProject()` will create the expected simulation project's folder structure.
 
 <br>
 
 ::: {.callout-note}
-`init_project()` is a new feature available in esqlabsR v5.0.0
+`initProject()` is a new feature available in esqlabsR v5.0.0
 :::
 
 ::: footer

@@ -12,6 +12,10 @@
   You will have to manually add the `Gender` naming section (if no gender was specified in the 
   observed data excel sheet, simply add an additional `_`) after the `Species` section to the
   names of the data sets specified in the `DataCombined` sheet of the `Plots.xlsx` file.
+  
+- Snake case functions have been renamed to follow camelCase convention. This includes:
+    - `init_project()` function has been renamed to `initProject()`,
+    - `esqlabs_colors()` function has been renamed to `esqlabsColors()`.
 
 
 ## Minor improvements and bug fixes

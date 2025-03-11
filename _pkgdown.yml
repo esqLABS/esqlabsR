@@ -18,7 +18,7 @@ reference:
   - contains("Project")
   - contains("Scenario")
   - createPlotsFromExcel
-  - init_project
+  - initProject
 - title: Helpers for data import, wrangling, and export
   contents:
   - matches("^read")
@@ -46,7 +46,7 @@ reference:
   contents:
   - matches("^plot")
   - matches("^col")
-  - contains("color")
+  - matches("[Cc]olor")
   - has_concept("create-plotting-configurations")
   - createDataCombinedFromExcel
 - title: Input validation

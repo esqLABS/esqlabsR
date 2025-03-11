@@ -19,12 +19,12 @@ library(esqlabsR)
 
 ## Initialize the Project Structure
 
-Project Structure can be initialized by calling the function `init_project()`.
+Project Structure can be initialized by calling the function `initProject()`.
 
 ```{r, eval=FALSE, message = FALSE}
 library(esqlabsR)
 
-init_project()
+initProject()
 ```
 
 This will create a set of directories and files that match the expected project's 
@@ -32,7 +32,7 @@ structure.
 
 
 ```{r, echo = FALSE}
-fs::dir_tree(path = esqlabsR:::example_directory("TestProject"), glob = "*.md|*.R", invert = TRUE)
+fs::dir_tree(path = esqlabsR:::exampleDirectory("TestProject"), glob = "*.md|*.R", invert = TRUE)
 ```
 ## Create a ProjectConfiguration
 

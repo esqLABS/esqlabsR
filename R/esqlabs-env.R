@@ -42,7 +42,7 @@ getEsqlabsRSetting <- function(settingName) {
   # Total number of colors
   nrOfColors <- 52
   # First three colors are fixed
-  firstColors <- esqLABS_colors(3)
+  firstColors <- esqlabsColors(3)
   # Add secondary colors
   firstColors <- c(
     firstColors,
@@ -54,7 +54,7 @@ getEsqlabsRSetting <- function(settingName) {
     "#c87699"
   )
   # Get colors in between the three fixed colors
-  unsortedColors <- esqLABS_colors(nrOfColors)
+  unsortedColors <- esqlabsColors(nrOfColors)
   unsortedColors <- setdiff(unsortedColors, firstColors)
   # nrOfColors - 3 because the first three colors are already sampled
   nrPerColor <- floor((nrOfColors - 3) / 3)
