@@ -48,10 +48,10 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateScenarioConfigurations.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/enumPutList.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/escapeForRegex.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqLABS_colors.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqlabsColors.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqlabsRSettingNames.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/exampleDirectory.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/exampleProjectConfigurationPath.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/example_directory.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/executeInParallel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/extendParameterStructure.html</loc></url>
@@ -66,7 +66,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/getMoleculeNameFromQuantity.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/hillFunction.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/index.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/init_project.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/initProject.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/initializeSimulation.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/isParametersEqual.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/isTableFormulasEqual.html</loc></url>

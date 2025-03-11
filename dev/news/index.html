@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9014</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9015</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,6 +57,13 @@
 <p><code>{Study Id}_{Molecule}_{Subject Id}_{Species}_{Gender}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>.</p>
 <p>This change will only affect new projects initailized with the new package version. Keep in mind that <code>Plots.xlsx</code> files created with the old naming pattern will not work with the new configuration. You will have to manually add the <code>Gender</code> naming section (if no gender was specified in the observed data excel sheet, simply add an additional <code>_</code>) after the <code>Species</code> section to the names of the data sets specified in the <code>DataCombined</code> sheet of the <code>Plots.xlsx</code> file.</p>
 </li>
+<li>
+<p>Snake case functions have been renamed to follow camelCase convention. This includes:</p>
+<ul><li>
+<code>init_project()</code> function has been renamed to <code><a href="../reference/initProject.html">initProject()</a></code>,</li>
+<li>
+<code>esqlabs_colors()</code> function has been renamed to <code><a href="../reference/esqlabsColors.html">esqlabsColors()</a></code>.</li>
+</ul></li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
