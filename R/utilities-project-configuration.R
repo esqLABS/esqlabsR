@@ -87,5 +87,5 @@ initProject <- function(destination = ".", overwrite = FALSE) {
 #' exampleProjectConfigurationPath()
 exampleProjectConfigurationPath <- function() {
   # Returns the path to the example project configuration file in TestProject
-  file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
+  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
 }
