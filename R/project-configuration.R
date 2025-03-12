@@ -187,8 +187,8 @@ ProjectConfiguration <- R6::R6Class(
           private$.replace_env_var(value)
       }
       private$.clean_path(private$.projectConfigurationData$outputFolder$value,
-        self$projectConfigurationDirPath,
-        must_work = FALSE
+                          self$projectConfigurationDirPath,
+                          must_work = FALSE
       )
     }
   ),
@@ -273,12 +273,16 @@ ProjectConfiguration <- R6::R6Class(
     .replace_env_var = function(path){
       # split path between each /
       path_split <- unlist(strsplit(path, "/"))
-      # check if each element matches an environment variable
       for (i in seq_along(path_split)) {
-        if (Sys.getenv(path_split[i]) != "" && stringr::str_detect(path_split[i], "path", negate = TRUE)) {
-          cli::cli_inform(c(v = "Environment variable found: {path_split[i]}",
-                            i = "Variable will be replaced by its value: {Sys.getenv(path_split[i])}"))
-          path_split[i] <- Sys.getenv(path_split[i])
+        # Don't replace "path" in path_split[i] with PATH variable (windows)
+        if(!stringr::str_detect(string = path_split[i],
+                                pattern = stringr::regex("path",ignore_case = T))){
+          # check if path_split[i] is an environment variable
+          if (Sys.getenv(path_split[i]) != "") {
+            cli::cli_inform(c(v = "Environment variable found: {path_split[i]}",
+                              i = "Variable will be replaced by its value: {Sys.getenv(path_split[i])}"))
+            path_split[i] <- Sys.getenv(path_split[i])
+          }
         }
       }
       # reconstruct path with updated environment variables
