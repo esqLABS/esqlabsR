@@ -20,9 +20,10 @@
 ## Major changes
 
 - `ProjectConfiguration.xslx` configuration file now support environment variables.
-  When creating project configuration using `createProjectConfiguration()` function,
-  the package will look for matching environment variable and build the paths accordingly.
-  When happening, a message is shown to the user to make this transparent.
+  When creating project configuration using `createProjectConfiguration()`
+  function or when modifying the projectConfiguration object directly, When
+  happening, a message is shown to the user to make this transparent. the package
+  will look for matching environment variable and build the paths accordingly.
 
 
 ## Minor improvements and bug fixes

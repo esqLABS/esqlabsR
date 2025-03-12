@@ -33,7 +33,8 @@ ProjectConfiguration <- R6::R6Class(
     #' @field modelFolder Path to the folder containing pkml simulation files.
     modelFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$modelFolder$value <- value
+        private$.projectConfigurationData$modelFolder$value <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$modelFolder$value,
@@ -44,7 +45,8 @@ ProjectConfiguration <- R6::R6Class(
     #' parameterization;
     configurationsFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$configurationsFolder$value <- value
+        private$.projectConfigurationData$configurationsFolder$value <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$configurationsFolder$value,
@@ -56,7 +58,8 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder".
     modelParamsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$modelParamsFile$value <- value
+        private$.projectConfigurationData$modelParamsFile$value <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$modelParamsFile$value,
@@ -68,7 +71,8 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder"
     individualsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$individualsFile$value <- value
+        private$.projectConfigurationData$individualsFile$value <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$individualsFile$value,
@@ -80,7 +84,8 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder".
     populationsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$populationsFile$value <- value
+        private$.projectConfigurationData$populationsFile$value <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$populationsFile$value,
@@ -91,7 +96,8 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder".
     populationsFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$populationsFolder$value <- value
+        private$.projectConfigurationData$populationsFolder$value <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$populationsFolder$value,
@@ -103,7 +109,8 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder".
     scenariosFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$scenariosFile$value <- value
+        private$.projectConfigurationData$scenariosFile$value  <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$scenariosFile$value,
@@ -115,7 +122,8 @@ ProjectConfiguration <- R6::R6Class(
     #'  Must be located in the "configurationsFolder".
     applicationsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$applicationsFile$value <- value
+        private$.projectConfigurationData$applicationsFile$value  <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$applicationsFile$value,
@@ -126,7 +134,8 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder".
     plotsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$plotsFile$value <- value
+        private$.projectConfigurationData$plotsFile$value  <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$plotsFile$value,
@@ -137,7 +146,8 @@ ProjectConfiguration <- R6::R6Class(
     #' located.
     dataFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$dataFolder$value <- value
+        private$.projectConfigurationData$dataFolder$value  <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$dataFolder$value,
@@ -148,7 +158,8 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "dataFolder"
     dataFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$dataFile$value <- value
+        private$.projectConfigurationData$dataFile$value  <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$dataFile$value,
@@ -160,7 +171,8 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "dataFolder"
     dataImporterConfigurationFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$dataImporterConfigurationFile$value <- value
+        private$.projectConfigurationData$dataImporterConfigurationFile$value  <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(
         private$.projectConfigurationData$dataImporterConfigurationFile$value,
@@ -171,7 +183,8 @@ ProjectConfiguration <- R6::R6Class(
     #' saved to; relative to the "Code" folder
     outputFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$outputFolder$value <- value
+        private$.projectConfigurationData$outputFolder$value  <-
+          private$.replace_env_var(value)
       }
       private$.clean_path(private$.projectConfigurationData$outputFolder$value,
         self$projectConfigurationDirPath,
@@ -257,12 +270,7 @@ ProjectConfiguration <- R6::R6Class(
         self[[property]] <- private$.projectConfigurationData[[property]]$value
       }
     },
-    .clean_path = function(path, parent = NULL, must_work = TRUE) {
-      # In case project configuration is initialized empty
-      if (is.null(path) || is.na(path)) {
-        return(NULL)
-      }
-
+    .replace_env_var = function(path){
       # split path between each /
       path_split <- unlist(strsplit(path, "/"))
       # check if each element matches an environment variable
@@ -275,7 +283,15 @@ ProjectConfiguration <- R6::R6Class(
       }
       # reconstruct path with updated environment variables
       path <- paste(path_split, collapse = "/")
+      return(path)
+    },
+    .clean_path = function(path, parent = NULL, must_work = TRUE) {
+      # In case project configuration is initialized empty
+      if (is.null(path) || is.na(path)) {
+        return(NULL)
+      }
 
+      path <- private$.replace_env_var(path)
 
       if (is.null(parent) || is.na(parent) || fs::is_absolute_path(path)) {
         # When provided path is absolute or doesn't have parent directory, don't append parent
