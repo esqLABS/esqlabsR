@@ -275,7 +275,7 @@ ProjectConfiguration <- R6::R6Class(
       path_split <- unlist(strsplit(path, "/"))
       # check if each element matches an environment variable
       for (i in seq_along(path_split)) {
-        if (Sys.getenv(path_split[i]) != "") {
+        if (Sys.getenv(path_split[i]) != "" && stringr::str_detect(path_split[i], "path", negate = TRUE)) {
           cli::cli_inform(c(v = "Environment variable found: {path_split[i]}",
                             i = "Variable will be replaced by its value: {Sys.getenv(path_split[i])}"))
           path_split[i] <- Sys.getenv(path_split[i])
