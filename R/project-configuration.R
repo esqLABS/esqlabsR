@@ -109,7 +109,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder".
     scenariosFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$scenariosFile$value  <-
+        private$.projectConfigurationData$scenariosFile$value <-
           private$.replace_env_var(value)
       }
       private$.clean_path(
@@ -122,7 +122,7 @@ ProjectConfiguration <- R6::R6Class(
     #'  Must be located in the "configurationsFolder".
     applicationsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$applicationsFile$value  <-
+        private$.projectConfigurationData$applicationsFile$value <-
           private$.replace_env_var(value)
       }
       private$.clean_path(
@@ -134,7 +134,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder".
     plotsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$plotsFile$value  <-
+        private$.projectConfigurationData$plotsFile$value <-
           private$.replace_env_var(value)
       }
       private$.clean_path(
@@ -146,7 +146,7 @@ ProjectConfiguration <- R6::R6Class(
     #' located.
     dataFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$dataFolder$value  <-
+        private$.projectConfigurationData$dataFolder$value <-
           private$.replace_env_var(value)
       }
       private$.clean_path(
@@ -158,7 +158,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "dataFolder"
     dataFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$dataFile$value  <-
+        private$.projectConfigurationData$dataFile$value <-
           private$.replace_env_var(value)
       }
       private$.clean_path(
@@ -171,7 +171,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "dataFolder"
     dataImporterConfigurationFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$dataImporterConfigurationFile$value  <-
+        private$.projectConfigurationData$dataImporterConfigurationFile$value <-
           private$.replace_env_var(value)
       }
       private$.clean_path(
@@ -183,12 +183,12 @@ ProjectConfiguration <- R6::R6Class(
     #' saved to; relative to the "Code" folder
     outputFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$outputFolder$value  <-
+        private$.projectConfigurationData$outputFolder$value <-
           private$.replace_env_var(value)
       }
       private$.clean_path(private$.projectConfigurationData$outputFolder$value,
-                          self$projectConfigurationDirPath,
-                          must_work = FALSE
+        self$projectConfigurationDirPath,
+        must_work = FALSE
       )
     }
   ),
@@ -270,17 +270,21 @@ ProjectConfiguration <- R6::R6Class(
         self[[property]] <- private$.projectConfigurationData[[property]]$value
       }
     },
-    .replace_env_var = function(path){
+    .replace_env_var = function(path) {
       # split path between each /
       path_split <- unlist(strsplit(path, "/"))
       for (i in seq_along(path_split)) {
         # Don't replace "path" in path_split[i] with PATH variable (windows)
-        if(!stringr::str_detect(string = path_split[i],
-                                pattern = stringr::regex("path",ignore_case = T))){
+        if (!stringr::str_detect(
+          string = path_split[i],
+          pattern = stringr::regex("path", ignore_case = T)
+        )) {
           # check if path_split[i] is an environment variable
           if (Sys.getenv(path_split[i]) != "") {
-            cli::cli_inform(c(v = "Environment variable found: {path_split[i]}",
-                              i = "Variable will be replaced by its value: {Sys.getenv(path_split[i])}"))
+            cli::cli_inform(c(
+              v = "Environment variable found: {path_split[i]}",
+              i = "Variable will be replaced by its value: {Sys.getenv(path_split[i])}"
+            ))
             path_split[i] <- Sys.getenv(path_split[i])
           }
         }

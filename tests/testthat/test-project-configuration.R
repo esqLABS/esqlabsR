@@ -69,35 +69,33 @@ test_that("Project Configuration can be customized but throws warning if path ar
 test_that("Project Configuration can be exported", {
   # Copy test file to temp location
   temp_file1 <- withr::local_tempfile(fileext = ".xlsx")
-  file.copy(exampleProjectConfigurationPath(), temp_file1)
-  myConfig <- suppressWarnings(createProjectConfiguration(temp_file1))
+  expect_no_error(testProjectConfiguration()$save(path = temp_file1))
 
-  # Make sure exported configuration is identical as original
-  temp_file2 <- withr::local_tempfile(fileext = ".xlsx")
-  myConfig$save(path = temp_file2)
-  myConfig2 <- suppressWarnings(createProjectConfiguration(temp_file2))
+  # Load the file and compare
+  expect_true(file.exists(temp_file1))
+  imported_pc <- createProjectConfiguration(path = temp_file1)
 
-  suppressWarnings({
-    myConfig2$projectConfigurationFilePath <- myConfig$projectConfigurationFilePath
-  })
+  imported_pc$projectConfigurationFilePath <- testProjectConfigurationPath()
 
-  suppressWarnings(expect_equal(myConfig, myConfig2))
+  expect_equal(testProjectConfiguration(), imported_pc)
 })
 
 test_that("Project Configuration supports environment variable", {
+  withr::with_envvar(
+    new = c(
+      "ENV_VARIABLE_1" = "path/from/env/variable/1",
+      "ENV_VARIABLE_2" = "path/from/env/variable/2"
+    ),
+    code = {
+      # Using Env Variable in Excel files
+      pc <-
+        createProjectConfiguration(test_path("..", "data", "ProjectConfigurationEnvironmentVariable.xlsx"))
 
-  withr::with_envvar(new = c("ENV_VARIABLE_1"="path/from/env/variable/1",
-                             "ENV_VARIABLE_2"="path/from/env/variable/2"),
-                     code = {
-                       # Using Env Variable in Excel files
-                       pc <-
-                         createProjectConfiguration(test_path("..", "data", "ProjectConfigurationEnvironmentVariable.xlsx"))
+      suppressWarnings(expect_match(pc$configurationsFolder, Sys.getenv("ENV_VARIABLE_1")))
 
-                       suppressWarnings(expect_match(pc$configurationsFolder, Sys.getenv("ENV_VARIABLE_1")))
-
-                       # Set environment variable directly in the object
-                       pc <- testProjectConfiguration()
-                       suppressWarnings(pc$configurationsFolder <- "ENV_VARIABLE_1")
-                     })
+      # Set environment variable directly in the object
+      pc <- testProjectConfiguration()
+      suppressWarnings(pc$configurationsFolder <- "ENV_VARIABLE_1")
+    }
+  )
 })
-
