@@ -66,14 +66,13 @@ test_that("Project Configuration can be customized but throws warning if path ar
 })
 
 
-
 test_that("Project Configuration can be exported", {
   # Copy test file to temp location
   temp_file1 <- withr::local_tempfile(fileext = ".xlsx")
-  file.copy(test_path("..", "data", "ProjectConfiguration-V5.xlsx"), temp_file1)
+  file.copy(exampleProjectConfigurationPath(), temp_file1)
   myConfig <- suppressWarnings(createProjectConfiguration(temp_file1))
 
-  # Import exported configuration and check if identical to original
+  # Make sure exported configuration is identical as original
   temp_file2 <- withr::local_tempfile(fileext = ".xlsx")
   myConfig$save(path = temp_file2)
   myConfig2 <- suppressWarnings(createProjectConfiguration(temp_file2))
@@ -101,3 +100,4 @@ test_that("Project Configuration supports environment variable", {
                        suppressWarnings(pc$configurationsFolder <- "ENV_VARIABLE_1")
                      })
 })
+
