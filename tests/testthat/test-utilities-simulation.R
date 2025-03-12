@@ -1,5 +1,3 @@
-
-
 test_that("`initializeSimulation()` loads a simulation at the minimum", {
   simulation <- loadSimulation(system.file("extdata", "simple.pkml", package = "ospsuite"))
   initializeSimulation(simulation)

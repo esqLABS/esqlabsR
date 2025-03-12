@@ -1,4 +1,3 @@
-
 # Create a project configuration
 projectConfiguration <- testProjectConfiguration()
 defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"

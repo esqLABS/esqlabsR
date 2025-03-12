@@ -1,5 +1,3 @@
-
-
 test_that("It converts a single positive number", {
   string <- "21"
   expect_equal(stringToNum(string), 21)
