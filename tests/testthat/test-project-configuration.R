@@ -83,7 +83,7 @@ test_that("Project Configuration can be exported", {
 test_that("Project Configuration supports environment variable", {
   withr::with_envvar(
     new = c(
-      "ENV_VARIABLE_1" = "path/from/env/variable/1",
+      "ENV_VARIABLE_1" = "C:/path/from/env/variable/1",
       "ENV_VARIABLE_2" = "path/from/env/variable/2"
     ),
     code = {
@@ -96,6 +96,8 @@ test_that("Project Configuration supports environment variable", {
       # Set environment variable directly in the object
       pc <- testProjectConfiguration()
       suppressWarnings(pc$configurationsFolder <- "ENV_VARIABLE_1")
+      suppressWarnings(expect_match(pc$configurationsFolder, Sys.getenv("ENV_VARIABLE_1")))
     }
   )
 })
+
