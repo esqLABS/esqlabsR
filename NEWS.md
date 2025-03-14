@@ -16,6 +16,15 @@
 - Snake case functions have been renamed to follow camelCase convention. This includes:
     - `init_project()` function has been renamed to `initProject()`,
     - `esqlabs_colors()` function has been renamed to `esqlabsColors()`.
+    
+## Major changes
+
+- `ProjectConfiguration.xslx` configuration file now support environment variables.
+  When creating project configuration using `createProjectConfiguration()` or when
+  modifying the projectConfiguration object directly, the package will look for
+  matching environment variables and build the paths accordingly. A message is
+  shown to the user to make this transparent.
+  
 
 
 ## Minor improvements and bug fixes

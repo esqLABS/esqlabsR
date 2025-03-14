@@ -1,4 +1,3 @@
-
 # Create a project configuration
 projectConfiguration <- testProjectConfiguration()
 

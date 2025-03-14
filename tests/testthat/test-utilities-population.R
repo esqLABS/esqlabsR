@@ -1,5 +1,3 @@
-
-
 test_that("`sampleRandomValue()` generates needed distribution", {
   expect_error(
     sampleRandomValue("xyz", 5, 2, 10),

@@ -1,4 +1,3 @@
-
 dataFolder <- getTestDataFilePath("")
 
 test_that("It can read an empty sheet", {

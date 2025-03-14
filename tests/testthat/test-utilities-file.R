@@ -1,5 +1,3 @@
-
-
 test_that("`sourceAll()` sources all files in the directory", {
   withr::with_tempdir(
     code = {

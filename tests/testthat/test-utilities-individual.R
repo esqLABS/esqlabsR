@@ -1,4 +1,3 @@
-
 skip_on_ci()
 
 XLSpath <- "../data/Individuals.xlsx"
