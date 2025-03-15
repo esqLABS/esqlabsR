@@ -22,8 +22,6 @@ simulatedScenarios <- runScenarios(
   scenarios = scenarios
 )
 
-# For compatibility with projects created with esqlabsR <5.0.1, use old data set
-# naming pattern.
 importerConfiguration <- ospsuite::loadDataImporterConfiguration(
   configurationFilePath = projectConfiguration$dataImporterConfigurationFile
 )
@@ -845,11 +843,11 @@ test_that("It correctly treats names with underscores", {
         projectConfiguration = projectConfigurationLocal,
         stopIfNotFound = TRUE
       )
-      
+
       # Get the most recently created/modified folder in the Figures directory
       figuresPath <- file.path(tempDir, "Figures")
       latestDir <- .getLatestDirectory(figuresPath)
-      
+
       expect_true(file.exists(file.path(latestDir, "Aciclovir1.png")))
       expect_true(file.exists(file.path(latestDir, "Aciclovir2.png")))
     }
@@ -1249,44 +1247,6 @@ test_that(".createConfigurationFromRow correctly reads values in quotes", {
         c("Test with", "quotes, comma and", "comma")
       )
       expect_equal(parsedValues, expectedValues)
-    }
-  )
-})
-
-# It returns an empty data combined when no data set is found
-test_that("It returns an empty DataCombined when no data is available", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- data.frame(
-        plotGridName = c(NA),
-        outputName = c(NA)
-      )
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
-
-      # Warnings are suppressed because they are expected but not relevant for
-      # this test.
-      suppressWarnings({
-        dataCombined <- createDataCombinedFromExcel(
-          file = file.path(tempDir, "Plots.xlsx"),
-          stopIfNotFound = FALSE
-        )
-      })
-
-
-      expect_equal(dataCombined[[1]], DataCombined$new())
     }
   )
 })

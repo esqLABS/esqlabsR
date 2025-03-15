@@ -5,12 +5,9 @@
 #' @param dataCombinedNames Names of the DataCombined objects that will be created.
 #' If `NULL` (default), all DataCombined objects specified in the excel sheet will
 #' be created. If a DataCombined object with a given name does not exist, an error is thrown.
-#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`
-#' @param observedData A list of `DataSet` objects
-#' @param stopIfNotFound If TRUE (default), the function stops if any of the
-#' simulated results or observed data are not found. If FALSE a warning is printed.
+#' @inheritParams createDataCombinedFromExcel
 #'
-#' @return A list of `DataCombined` objects
+#' @returns A list of `DataCombined` objects
 #'
 #' @import tidyr
 #'
@@ -130,6 +127,63 @@ createDataCombinedFromExcel <- function(
   return(dataCombinedList)
 }
 
+#' Generate DataCombined objects as defined in excel file for specific plots.
+#'
+#' @details
+#' Given names of plots defined in the `plotGrids` sheet of the excel file, this function
+#' creates `DataCombined` objects that are used in the plots.
+#' @param plotGridNames Names of the plot grid specified in the sheet `plotGrids`.
+#' Each data combined used by the specified plot grids will be created.
+#' @param projectConfiguration Object of class `ProjectConfiguration`
+#' that contains information about the output paths and the excel file
+#' where plots are defined.
+#' @inheritParams createDataCombinedFromExcel
+#' @returns A list of `DataCombined` objects that are required to create plots
+#' specified in `plotGridNames`
+#'
+#' @export
+createDataCombinedForPlots <- function(
+    plotGridNames,
+    simulatedScenarios = NULL,
+    observedData = NULL,
+    projectConfiguration,
+    stopIfNotFound = TRUE) {
+  validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
+  validateIsOfType(projectConfiguration, "ProjectConfiguration")
+  validateIsString(plotGridNames, nullAllowed = FALSE)
+
+  # read sheet "plotGrids" with info for plotGridConfigurations
+  dfPlotGrids <- readExcel(projectConfiguration$plotsFile,
+    sheet = "plotGrids"
+  )
+
+  # read sheet "plotConfiguration"
+  dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile,
+    sheet = "plotConfiguration"
+  )
+
+  # Filter and validate plotGrids
+  dfPlotGrids <- dplyr::filter(
+    dfPlotGrids, !dplyr::if_all(dplyr::everything(), is.na)
+  )
+  dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
+
+  # Filter and validate only used plot configurations
+  dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
+
+
+  # Filter and validate only used data combined
+  dataCombinedList <- createDataCombinedFromExcel(
+    file = projectConfiguration$plotsFile,
+    sheet = "DataCombined",
+    dataCombinedNames = unique(dfPlotConfigurations$DataCombinedName),
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData,
+    stopIfNotFound = stopIfNotFound
+  )
+
+  return(dataCombinedList)
+}
 
 #' Validate and process the 'DataCombined' sheet
 #'
@@ -139,7 +193,7 @@ createDataCombinedFromExcel <- function(
 #' @param stopIfNotFound if `TRUE`, throw an error if a simulated result of an
 #' observed data are not found
 #'
-#' @return Processed `dfDataCombined`
+#' @returns Processed `dfDataCombined`
 #' @keywords internal
 .validateDataCombinedFromExcel <- function(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound) {
   # mandatory column label is empty - throw error

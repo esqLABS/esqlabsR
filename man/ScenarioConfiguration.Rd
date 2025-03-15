@@ -4,6 +4,9 @@
 \name{ScenarioConfiguration}
 \alias{ScenarioConfiguration}
 \title{ScenarioConfiguration}
+\value{
+A new \code{ScenarioConfiguration} object.
+}
 \description{
 An object storing configuration of a specific scenario
 }
@@ -93,9 +96,6 @@ Initialize a new instance of the class
 \item{\code{projectConfiguration}}{An object of class \code{ProjectConfiguration}.}
 }
 \if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A new \code{ScenarioConfiguration} object.
 }
 }
 \if{html}{\out{<hr>}}

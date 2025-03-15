@@ -25,6 +25,7 @@ file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Re
 - `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
   to create plots defined in the `plotGridNames` argument. Missing `DataCombined`
   will be created from the Excel file (default behavior).
+  
 - New function `createDataCombinedForPlots()` to create `DataCombined` objects
   from the `Plots.xlsx` file for specified set of plots. This function can be used 
   to create `DataCombined` objects that can be passed to `createPlotsFromExcel()`.

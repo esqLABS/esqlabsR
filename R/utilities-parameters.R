@@ -7,7 +7,7 @@
 #'   parameters. Multiple sheets can be processed. If no sheets are provided,
 #'   the first one in the Excel file is used.
 #'
-#' @return A list containing vectors 'paths' with the full paths to the
+#' @returns A list containing vectors 'paths' with the full paths to the
 #'   parameters, 'values' the values of the parameters, and 'units' with the
 #'   units the values are in.
 #' @export
@@ -175,7 +175,7 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
 #'  `parameters`. If an entry with the same path is already present in `parameters`,
 #'  its value and unit will be overwritten with the values from `newParameters`.
 #'
-#' @return Updated list of parameter paths, values, and units
+#' @returns Updated list of parameter paths, values, and units
 #' @export
 extendParameterStructure <- function(parameters, newParameters) {
   .validateParametersStructure(
@@ -219,7 +219,7 @@ extendParameterStructure <- function(parameters, newParameters) {
 #'
 #' @noRd
 #'
-#' @return A named list with vectors `paths`, `values`, and `units`
+#' @returns A named list with vectors `paths`, `values`, and `units`
 #' @keywords internal
 .parametersVectorToList <- function(pathsValuesVector, pathsUnitsVector) {
   paths <- names(pathsValuesVector)
@@ -257,7 +257,7 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' @param compareFormulasByValue If `FALSE`(default), formulas are compared by their types and string. If `TRUE`,
 #'  only values are compared.
 #'
-#' @return `TRUE` if parameters are considered equal, `FALSE` otherwise
+#' @returns `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
 isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE, compareFormulasByValue = FALSE) {
   validateIsOfType(c(parameter1, parameter2), "Parameter")
@@ -323,7 +323,7 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
 #' @param formula1 First formula to compare
 #' @param formula2 Second formula to compare
 #'
-#' @return TRUE if the table formulas are equal, FALSE otherwise
+#' @returns TRUE if the table formulas are equal, FALSE otherwise
 #' @export
 isTableFormulasEqual <- function(formula1, formula2) {
   allPoints1 <- formula1$allPoints
@@ -395,7 +395,7 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, # nolint: obje
 #' @param parameterPath Full path to the parameter, with path elements separated
 #' by '|'
 #'
-#' @return A list with elements 'containerPath' and 'parameterName'
+#' @returns A list with elements 'containerPath' and 'parameterName'
 #' @keywords internal
 #' @noRd
 .splitParameterPathIntoContainerAndName <- function(parameterPath) {

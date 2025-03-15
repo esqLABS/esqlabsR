@@ -7,7 +7,7 @@
 #' @param sheet Name or the index of the sheet in the excel file.
 #' If `NULL`, the first sheet in the file is used.
 #'
-#' @return A `PopulationCharacteristics` object based on the information
+#' @returns A `PopulationCharacteristics` object based on the information
 #' in the excel file.
 #' @import readxl
 #' @export
@@ -211,7 +211,7 @@ Distributions <- enum(list(
 #' @param sd Standard deviation of the random variable
 #' @param n Size of the sample
 #'
-#' @return Numerical vector of size n with randomly sampled values
+#' @returns Numerical vector of size n with randomly sampled values
 #' @export
 sampleRandomValue <- function(distribution, mean, sd, n) {
   if (!enumHasKey(distribution, Distributions)) {
@@ -237,7 +237,7 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 #' 'Ontogeny'
 #'
 #' @keywords internal
-#' @return A list of `MoleculeOntogeny` objects
+#' @returns A list of `MoleculeOntogeny` objects
 .readOntongeniesFromXLS <- function(data) {
   # Read columns 'Ontogeny' and 'Protein'
   ontogenies <- data$Ontogeny

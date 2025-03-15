@@ -21,13 +21,6 @@ createDataCombinedFromExcel(
 \item{dataCombinedNames}{Names of the DataCombined objects that will be created.
 If \code{NULL} (default), all DataCombined objects specified in the excel sheet will
 be created. If a DataCombined object with a given name does not exist, an error is thrown.}
-
-\item{simulatedScenarios}{A list of simulated scenarios as returned by \code{runScenarios()}}
-
-\item{observedData}{A list of \code{DataSet} objects}
-
-\item{stopIfNotFound}{If TRUE (default), the function stops if any of the
-simulated results or observed data are not found. If FALSE a warning is printed.}
 }
 \value{
 A list of \code{DataCombined} objects
