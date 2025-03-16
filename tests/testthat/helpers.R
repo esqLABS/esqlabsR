@@ -22,7 +22,7 @@ executeWithTestFile <- function(actionWithFile) {
 
 testProjectConfigurationPath <- function() {
   # for now it targets TestProject as it is both an example and a test project
-  file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
+  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
 }
 
 testProjectConfiguration <- function() {
@@ -30,5 +30,5 @@ testProjectConfiguration <- function() {
 }
 
 testConfigurationsPath <- function(...) {
-  normalizePath(file.path(example_directory("TestProject"), "Configurations", ...), mustWork = T)
+  normalizePath(file.path(exampleDirectory("TestProject"), "Configurations", ...), mustWork = TRUE)
 }

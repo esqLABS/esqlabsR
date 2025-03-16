@@ -1,4 +1,3 @@
-# context("readParametersFromXLS-data")
 dataFolder <- getTestDataFilePath("")
 
 test_that("It can read an empty sheet", {
@@ -55,7 +54,7 @@ test_that("It overwrites the value if the path is present in multiple sheets", {
 })
 
 
-# context("extendParameterStructure")
+
 
 test_that("It trows an error if wrong structure is provideed", {
   expect_error(

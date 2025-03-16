@@ -109,7 +109,7 @@ Scenario <- R6::R6Class(
             newParameters = indivModelParams
           )
         } else {
-          warning(messages$warningNoIndividualModelParameters(
+          warning(messages$warningNoIndividualSpecificModelParameters(
             scenarioName = scenarioConfiguration$scenarioName,
             individualId = scenarioConfiguration$individualId
           ))

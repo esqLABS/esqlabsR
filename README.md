@@ -68,7 +68,7 @@ You can start with the “Get Started” vignette: `vignette("esqlabsR")`.
 initialize a new project by running:
 
 ``` r
-esqlabsR::init_project()
+esqlabsR::initProject()
 ```
 
 This will create the required folder structure and files for your
@@ -81,40 +81,79 @@ Below is a simple example of how to work with the package:
 library(esqlabsR)
 
 # Load excel-based configuration
-# The function `example_ProjectConfiguration()` returns the path to the example project
-# configuration included in the package. Replace the variable `configurationPath` 
+# The function `exampleProjectConfigurationPath()` returns the path to the example project
+# configuration included in the package. Replace the variable `configurationPath`
 # with the path to you project configuration file.
-configurationPath <- example_ProjectConfiguration()
+configurationPath <- exampleProjectConfigurationPath()
 
 myProjectConfiguration <-
   createProjectConfiguration(configurationPath)
 
+# Define which scenarios to run
+scenarioNames <- c("TestScenario")
+# Set scenario names to NULL if you want to simulate all scenarios defined in the
+# excel file
+# scenarioNames <- NULL
 
-# Create simulation scenarios defined in the excel files
-myScenarios <-
-  createScenarios(
-    readScenarioConfigurationFromExcel( # Read scenarios from excel file
-      scenarioNames = "TestScenario", # Import the scenario defined as "TestScenario"
-      # in the excel file
-      projectConfiguration = myProjectConfiguration
-    )
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = scenarioNames,
+  projectConfiguration = myProjectConfiguration
+)
+
+# Define custom parameters for the scenarios. These parameter will be applied
+# additionally to the paremetrization specified in the Excel files.
+customParam <- list(
+  paths = c(
+    "Aciclovir|Lipophilicity"
+  ),
+  values = c(
+    -0.1
+  ),
+  units = c(
+    "Log Units"
   )
+)
+
+# Create simulation scenarios defined in the excel files and apply the custom parameters
+myScenarios <- createScenarios(
+  scenarioConfigurations = scenarioConfigurations,
+  customParams = customParam
+)
+
+# Adjust simulation run options, if necessary.
+# E.g. disable check for negative values if required
+simulationRunOptions <- ospsuite::SimulationRunOptions$new()
+simulationRunOptions$checkForNegativeValues <- FALSE
 
 # Run simulations
-mySimulations <- runScenarios(
-  scenarios = myScenarios
+simulatedScenariosResults <- runScenarios(
+  scenarios = myScenarios,
+  simulationRunOptions = simulationRunOptions
 )
 
-# Initialize a `DataCombined` object to store simulation results
-myDatacombined <- DataCombined$new()
+    # Save results and store the path to the results for later re-use
+    outputFolder <- saveScenarioResults(simulatedScenariosResults, myProjectConfiguration)
 
-myDatacombined$addSimulationResults(mySimulations$TestScenario$results,
-  names = "Simulated",
-  groups = "Aciclovir"
-)
-
-# Plot simulation results
-plotIndividualTimeProfile(myDatacombined)
+    # Load observed data using the default importer configuration provided with the package. Alternatively, you can load a custom data importer configuration.
+  dataSheets <- c("Laskin 1982.Group A")
+  observedData <- esqlabsR::loadObservedData(
+    projectConfiguration = myProjectConfiguration,
+    sheets = dataSheets
+  )
+  
+  ########## Create figures defined in the Plots.xlsx file########
+  plots <- createPlotsFromExcel(
+    plotGridNames = c("Aciclovir",
+                      "Aciclovir2"),
+    simulatedScenarios = simulatedScenariosResults,
+    observedData = observedData,
+    projectConfiguration = myProjectConfiguration,
+    outputFolder = outputFolder,
+    stopIfNotFound = TRUE
+  )
+  
+  plots$Aciclovir
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="80%" style="display: block; margin: auto;" />

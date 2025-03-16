@@ -1,5 +1,3 @@
-##  context("sourceAll")
-
 test_that("`sourceAll()` sources all files in the directory", {
   withr::with_tempdir(
     code = {
@@ -16,7 +14,7 @@ test_that("`sourceAll()` sources all files in the directory", {
   )
 })
 
-##  context("pathFromClipboard")
+
 
 test_that("`pathFromClipboard()` converts paths as expected", {
   # This will work only in interactive mode, i.e. with

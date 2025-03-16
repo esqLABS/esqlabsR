@@ -12,6 +12,19 @@
   You will have to manually add the `Gender` naming section (if no gender was specified in the 
   observed data excel sheet, simply add an additional `_`) after the `Species` section to the
   names of the data sets specified in the `DataCombined` sheet of the `Plots.xlsx` file.
+  
+- Snake case functions have been renamed to follow camelCase convention. This includes:
+    - `init_project()` function has been renamed to `initProject()`,
+    - `esqlabs_colors()` function has been renamed to `esqlabsColors()`.
+    
+## Major changes
+
+- `ProjectConfiguration.xslx` configuration file now support environment variables.
+  When creating project configuration using `createProjectConfiguration()` or when
+  modifying the projectConfiguration object directly, the package will look for
+  matching environment variables and build the paths accordingly. A message is
+  shown to the user to make this transparent.
+  
 
 
 ## Minor improvements and bug fixes
@@ -21,6 +34,8 @@
 - Figures defined for the export in the `exportConfiguration` sheet of the `Plots.xlsx` 
 file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Results` folder
  defined in the `ProjectConfiguration` (\#778).
+ 
+- Fix warning cannot be displayed when no individual model parameters are displayed.
  
 - `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
   to create plots defined in the `plotGridNames` argument. Missing `DataCombined`

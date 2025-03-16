@@ -2,7 +2,8 @@
 #'
 #' @description  Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
 #'
-#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx` file located in the working directory.
+#' @param path path to the `ProjectConfiguration.xlsx` file. Defaults to the `ProjectConfiguration.xlsx`
+#'   file in the working directory.
 #'
 #' @returns Object of type `ProjectConfiguration`
 #' @export
@@ -15,12 +16,12 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
   return(createProjectConfiguration(path))
 }
 
-
-#' #' Create a `ProjectConfiguration`
+#' Create a `ProjectConfiguration`
 #'
 #' @description  Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
 #'
-#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx` file located in the working directory.
+#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx`
+#'  file located in the working directory.
 #'
 #' @returns Object of type `ProjectConfiguration`
 #' @export
@@ -28,7 +29,6 @@ createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xl
   projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = path)
   return(projectConfiguration)
 }
-
 
 #' Initialize esqlabsR Project Folders and required Files
 #'
@@ -41,7 +41,7 @@ createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xl
 #' default to current working directory.
 #' @inheritParams fs::dir_copy
 #' @export
-init_project <- function(destination = ".", overwrite = FALSE) {
+initProject <- function(destination = ".", overwrite = FALSE) {
   if (overwrite) {
     qs <- sample(c("Absolutely not", "Yes", "No way"))
 
@@ -64,11 +64,10 @@ init_project <- function(destination = ".", overwrite = FALSE) {
   type <- "example"
 
   source_folder <- switch(type,
-    "example" = example_directory("TestProject")
+    "example" = exampleDirectory("TestProject")
   )
 
-
-  if (!overwrite && (any(stringr::str_detect("ProjectConfiguration.*xlsx$", fs::dir_ls(destination))) | fs::dir_exists(file.path(destination, "Configurations")))) {
+  if (!overwrite && (any(stringr::str_detect("ProjectConfiguration.*xlsx$", fs::dir_ls(destination))) || fs::dir_exists(file.path(destination, "Configurations")))) {
     cli::cli_abort("The destination folder seems to already contain an esqlabsR project and would be overwriten by this function.")
     cli::cli_inform("If you want to overwrite the existing project, use the argument `overwrite = TRUE`")
   }
@@ -80,8 +79,6 @@ init_project <- function(destination = ".", overwrite = FALSE) {
   )
 }
 
-
-
 #' Get the path to example ProjectConfiguration.xlsx
 #'
 #' @returns A string representing the path to the example ProjectConfiguration.xlsx file
@@ -90,5 +87,5 @@ init_project <- function(destination = ".", overwrite = FALSE) {
 #' exampleProjectConfigurationPath()
 exampleProjectConfigurationPath <- function() {
   # Returns the path to the example project configuration file in TestProject
-  file.path(example_directory("TestProject"), "ProjectConfiguration.xlsx")
+  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
 }

@@ -2,12 +2,13 @@
 % Please edit documentation in R/utilities-project-configuration.R
 \name{createProjectConfiguration}
 \alias{createProjectConfiguration}
-\title{#' Create a \code{ProjectConfiguration}}
+\title{Create a \code{ProjectConfiguration}}
 \usage{
 createProjectConfiguration(path = file.path("ProjectConfiguration.xlsx"))
 }
 \arguments{
-\item{path}{path to the \code{ProjectConfiguration.xlsx} file. default to the \code{ProjectConfiguration.xlsx} file located in the working directory.}
+\item{path}{path to the \code{ProjectConfiguration.xlsx} file. default to the \code{ProjectConfiguration.xlsx}
+file located in the working directory.}
 }
 \value{
 Object of type \code{ProjectConfiguration}
