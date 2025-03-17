@@ -186,8 +186,8 @@ ProjectConfiguration <- R6::R6Class(
           value
       }
       private$.clean_path(private$.projectConfigurationData$outputFolder$value,
-                          self$projectConfigurationDirPath,
-                          must_work = FALSE
+        self$projectConfigurationDirPath,
+        must_work = FALSE
       )
     }
   ),
@@ -272,14 +272,13 @@ ProjectConfiguration <- R6::R6Class(
         self[[property]] <- private$.projectConfigurationData[[property]]$value
       }
     },
-
     .clean_path = function(path, parent = NULL, must_work = TRUE, replace_env_vars = TRUE) {
       # In case project configuration is initialized empty
       if (is.null(path) || is.na(path)) {
         return(NULL)
       }
 
-      if(replace_env_vars) {
+      if (replace_env_vars) {
         path <- private$.replace_env_var(path)
       }
 
@@ -356,10 +355,12 @@ ProjectConfiguration <- R6::R6Class(
       cli::cli_li("Data File: {.file {as.character(self$dataFile)}}")
       cli::cli_li("Data Importer Configuration File: {.file {as.character(self$dataImporterConfigurationFile)}}")
 
-      if(!isEmpty(private$.replaced_env_vars)) {
+      if (!isEmpty(private$.replaced_env_vars)) {
         cli::cli_h2("Environment Variables")
         cli::cli_inform("Environment variables were detected and replaced in paths:")
-        purrr::iwalk(private$.replaced_env_vars, \(x, idx){cli::cli_li("{idx} to {x}")})
+        purrr::iwalk(private$.replaced_env_vars, \(x, idx){
+          cli::cli_li("{idx} to {x}")
+        })
       }
       invisible(self)
     },

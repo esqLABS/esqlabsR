@@ -431,11 +431,11 @@
 #' @keywords internal
 #' @noRd
 .validatePKParameters <- function(pkParameters) {
-  if (!is.null(pkParameters) && !isIncluded(pkParameters, names(ospsuite::StandardPKParameter))) {
-    nsPKNames <- pkParameters[!pkParameters %in% names(ospsuite::StandardPKParameter)]
+  if (!is.null(pkParameters) && !isIncluded(pkParameters, ospsuite::allPKParameterNames())) {
+    nsPKNames <- pkParameters[!pkParameters %in% ospsuite::allPKParameterNames()]
 
     message(
-      "Following non-standard PK parameters will not be calculated:\n",
+      "Following PK parameters are specified but were not calculated:\n",
       paste0(nsPKNames, collapse = "\n")
     )
   }

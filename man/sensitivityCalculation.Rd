@@ -40,10 +40,9 @@ values. Default is \code{"relative"}.}
 
 \item{pkParameters}{A vector of names of PK parameters for which the
 sensitivities will be calculated. For a full set of available standard PK
-parameters, run \code{names(ospsuite::StandardPKParameter)}. By default, only
-the following parameters will be considered: \code{"C_max"}, \code{"t_max"}, \code{"AUC_inf"}.
-If \code{NULL}, all available PK-parameters will be calculated. You can also
-specify custom PK parameters.}
+parameters, run \code{names(ospsuite::StandardPKParameter)}. By default, the
+following parameters are considered: \code{"C_max"}, \code{"t_max"}, \code{"AUC_inf"}.
+If \code{NULL}, all available PK-parameters (including the user-defined) will be calculated.}
 
 \item{customOutputFunctions}{A named list with
 custom function(s) for output calculations. User-defined functions should
