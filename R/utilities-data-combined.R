@@ -5,7 +5,10 @@
 #' @param dataCombinedNames Names of the DataCombined objects that will be created.
 #' If `NULL` (default), all DataCombined objects specified in the excel sheet will
 #' be created. If a DataCombined object with a given name does not exist, an error is thrown.
-#' @inheritParams createDataCombinedFromExcel
+#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`
+#' @param observedData A list of `DataSet` objects
+#' @param stopIfNotFound If TRUE (default), the function stops if any of the
+#' simulated results or observed data are not found. If FALSE a warning is printed.
 #'
 #' @returns A list of `DataCombined` objects
 #'
@@ -138,6 +141,7 @@ createDataCombinedFromExcel <- function(
 #' that contains information about the output paths and the excel file
 #' where plots are defined.
 #' @inheritParams createDataCombinedFromExcel
+#'
 #' @returns A list of `DataCombined` objects that are required to create plots
 #' specified in `plotGridNames`
 #'
