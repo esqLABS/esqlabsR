@@ -100,4 +100,3 @@ test_that("Project Configuration supports environment variable", {
     }
   )
 })
-

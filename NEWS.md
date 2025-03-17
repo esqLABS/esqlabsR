@@ -37,6 +37,9 @@ file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Re
  
 - Fix warning cannot be displayed when no individual model parameters are displayed.
 
+- `sensitivityCalculation()` now supports non-default PK parameters, e.g., user-defined PK-Parameters 
+(see https://www.open-systems-pharmacology.org/OSPSuite-R/articles/pk-analysis.html#user-defined-pk-parameters 
+for how to create user-defined PK parameters). (\#788)
 - Fix `extendPopulationFromXLS()` did not created correct parameter paths (\#769).
 
 # esqlabsR 5.3.0
