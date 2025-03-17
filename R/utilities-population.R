@@ -186,10 +186,9 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
     ))
   }
 
-
   extendPopulationByUserDefinedParams(
     population = population,
-    parameterPaths = paste(complete_data$`Container Path`, complete_data$`Parameter Name`),
+    parameterPaths = paste(complete_data$`Container Path`, complete_data$`Parameter Name`, collapse = "|"),
     meanValues = complete_data$Mean,
     sdValues = complete_data$SD,
     distributions = complete_data$Distribution

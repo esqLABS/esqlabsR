@@ -37,6 +37,8 @@ file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Re
  
 - Fix warning cannot be displayed when no individual model parameters are displayed.
 
+- Fix `extendPopulationFromXLS()` did not created correct parameter paths (\#769).
+
 # esqlabsR 5.3.0
 
 ## Breaking changes
