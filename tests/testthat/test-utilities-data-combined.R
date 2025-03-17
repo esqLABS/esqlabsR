@@ -50,6 +50,28 @@ dataCombinedDf <- data.frame(list(
   "yScaleFactors" = c(NA, NA)
 ))
 
+plotConfigurationDf <- data.frame(list(
+  "plotID" = "P1",
+  "DataCombinedName" = "AciclovirPVB",
+  "plotType" = "individual",
+  "title" = NA,
+  "xUnit" = NA,
+  "yUnit" = NA,
+  "xAxisScale" = NA,
+  "yAxisScale" = NA,
+  "xValuesLimits" = NA,
+  "yValuesLimits" = NA,
+  "quantiles" = NA,
+  "nsd" = NA,
+  "foldDistance" = NA
+))
+
+plotGridsDf <- data.frame(list(
+  "name" = "Aciclovir",
+  "plotIDs" = "P1",
+  "title" = "Aciclovir PVB"
+))
+
 # It returns an empty data combined when no data set is found
 test_that("It returns an empty DataCombined when no data is available", {
   tempDir <- tempdir()
