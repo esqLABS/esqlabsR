@@ -20,10 +20,11 @@
       $paths
       [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
       [2] "Organism|Muscle|Intracellular|Aciclovir|Concentration"                    
-      [3] "Organism|Kidney GFR"                                                      
+      [3] "Organism|Kidney|GFR"                                                      
+      [4] "Organism|Kidney|eGFR"                                                     
       
       $values
-      [1] 0.0000000 0.0000000 0.1198664
+      [1] 0.0000000 0.0000000 0.1198664 0.1186738
       
 
 # extendPopulationFromXLS throws an error if specified sheet is empty or data is missing
