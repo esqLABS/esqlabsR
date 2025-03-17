@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9016</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9018</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,10 +106,9 @@ values. Default is <code>"relative"</code>.</p></dd>
 <dt id="arg-pkparameters">pkParameters<a class="anchor" aria-label="anchor" href="#arg-pkparameters"></a></dt>
 <dd><p>A vector of names of PK parameters for which the
 sensitivities will be calculated. For a full set of available standard PK
-parameters, run <code>names(ospsuite::StandardPKParameter)</code>. By default, only
-the following parameters will be considered: <code>"C_max"</code>, <code>"t_max"</code>, <code>"AUC_inf"</code>.
-If <code>NULL</code>, all available PK-parameters will be calculated. You can also
-specify custom PK parameters.</p></dd>
+parameters, run <code>names(ospsuite::StandardPKParameter)</code>. By default, the
+following parameters are considered: <code>"C_max"</code>, <code>"t_max"</code>, <code>"AUC_inf"</code>.
+If <code>NULL</code>, all available PK-parameters (including the user-defined) will be calculated.</p></dd>
 
 
 <dt id="arg-customoutputfunctions">customOutputFunctions<a class="anchor" aria-label="anchor" href="#arg-customoutputfunctions"></a></dt>
