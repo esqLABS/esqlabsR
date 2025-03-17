@@ -45,6 +45,9 @@ file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Re
   from the `Plots.xlsx` file for specified set of plots. This function can be used 
   to create `DataCombined` objects that can be passed to `createPlotsFromExcel()`.
 
+- `sensitivityCalculation()` now supports non-default PK parameters, e.g., user-defined PK-Parameters 
+(see https://www.open-systems-pharmacology.org/OSPSuite-R/articles/pk-analysis.html#user-defined-pk-parameters 
+for how to create user-defined PK parameters). (\#788)
 # esqlabsR 5.3.0
 
 ## Breaking changes
