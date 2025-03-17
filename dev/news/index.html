@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9018</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9019</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,15 +75,19 @@
 <ul><li><p>Fix warnings related to NSE evaluation (<a href="https://github.com/esqLABS/esqlabsR/issues/762" class="external-link">#762</a>)</p></li>
 <li><p>Figures defined for the export in the <code>exportConfiguration</code> sheet of the <code>Plots.xlsx</code> file are now exported to the subfolder <code>Figures\&lt;Current Time Stamp&gt;</code> of the <code>Results</code> folder defined in the <code>ProjectConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/778" class="external-link">#778</a>).</p></li>
 <li><p>Fix warning cannot be displayed when no individual model parameters are displayed.</p></li>
-<li><p><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> now supports non-default PK parameters, e.g., user-defined PK-Parameters (see <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/pk-analysis.html#user-defined-pk-parameters" class="external-link uri">https://www.open-systems-pharmacology.org/OSPSuite-R/articles/pk-analysis.html#user-defined-pk-parameters</a> for how to create user-defined PK parameters). (<a href="https://github.com/esqLABS/esqlabsR/issues/788" class="external-link">#788</a>) # esqlabsR 5.3.0</p></li>
+<li><p><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> now supports non-default PK parameters, e.g., user-defined PK-Parameters (see <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/pk-analysis.html#user-defined-pk-parameters" class="external-link uri">https://www.open-systems-pharmacology.org/OSPSuite-R/articles/pk-analysis.html#user-defined-pk-parameters</a> for how to create user-defined PK parameters). (<a href="https://github.com/esqLABS/esqlabsR/issues/788" class="external-link">#788</a>)</p></li>
+<li><p>Fix <code><a href="../reference/extendPopulationFromXLS.html">extendPopulationFromXLS()</a></code> did not created correct parameter paths (<a href="https://github.com/esqLABS/esqlabsR/issues/769" class="external-link">#769</a>).</p></li>
 </ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="5.3.0" id="esqlabsr-530">esqlabsR 5.3.0<a class="anchor" aria-label="anchor" href="#esqlabsr-530"></a></h2>
 <div class="section level3">
-<h3 id="breaking-changes-development-version-1">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version-1"></a></h3>
+<h3 id="breaking-changes-5-3-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-5-3-0"></a></h3>
 <ul><li><p>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> with renamed parameter <code>pkDataFilePath</code> to <code>saOutputFilePath</code> and updated output files to include PK parameter units (<a href="https://github.com/esqLABS/esqlabsR/issues/696" class="external-link">#696</a>).</p></li>
 <li><p>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> now accepts <code>variationRange</code> as both <code>absolute</code> and <code>relative</code> values, specified by the <code>variationType</code> parameter. Added support for passing <code>variationRange</code> as a list, allowing individual variations for each parameter in <code>parameterPaths</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/731" class="external-link">#731</a>).</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="major-changes-development-version-1">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-development-version-1"></a></h3>
+<h3 id="major-changes-5-3-0">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-5-3-0"></a></h3>
 <ul><li><p><code>createDefaultProjectConfiguration</code> is now soft-deprecated in favor of <code>createProjectConfiguration</code>. (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</p></li>
 <li><p><code>ProjectConfiguration</code> fields have been renamed to be more consistant and easier to understand. (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</p></li>
 <li>
@@ -105,7 +109,7 @@
 <li><p><code>{ospsuite.parameteridentification}</code> is not longer a dependency of <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="minor-improvements-and-bug-fixes-development-version-1">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version-1"></a></h3>
+<h3 id="minor-improvements-and-bug-fixes-5-3-0">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-3-0"></a></h3>
 <ul><li><p>When an application protocol defined for a scenario is not found in the excel file, an error is thrown.</p></li>
 <li><p>Handle simulation failures in <code>sensitivityCalculation</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/694" class="external-link">#694</a>).</p></li>
 <li><p>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> supports new parameter <code>customOutputFunctions</code>, allowing user-defined functions for PK parameter calculation (<a href="https://github.com/esqLABS/esqlabsR/issues/685" class="external-link">#685</a>).</p></li>
