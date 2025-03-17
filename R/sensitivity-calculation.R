@@ -268,7 +268,7 @@ sensitivityCalculation <- function(simulation,
     } else {
       # Convert tidy data to wide format
       pkParameterNames <- c(
-        names(ospsuite::allPKParameterNames()),
+        ospsuite::allPKParameterNames(),
         names(customOutputFunctions)
       )
       pkDataWide <- .convertToWide(pkData, pkParameterNames)

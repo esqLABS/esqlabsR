@@ -182,7 +182,7 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = parameterPaths
     ),
-    "Following non-standard PK parameters will not be calculated:\nabc\nxyz\n",
+    "Following PK parameters are specified but were not calculated:\nabc\nxyz\n",
     fixed = TRUE
   )
 })
