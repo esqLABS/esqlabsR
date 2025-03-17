@@ -34,6 +34,22 @@ observedData <- esqlabsR::loadObservedData(
   importerConfiguration = importerConfiguration
 )
 
+dataCombinedDf <- data.frame(list(
+  "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
+  "dataType" = c("simulated", "observed"),
+  "label" = c("Aciclovir simulated", "Aciclovir observed"),
+  "scenario" = c(scenarioNames[1], NA),
+  "path" = c(outputPaths, NA),
+  "dataSet" = c(NA, names(observedData)),
+  "group" = c("Aciclovir PVB", "Aciclovir PVB"),
+  "xOffsets" = c(NA, NA),
+  "xOffsetsUnits" = c(NA, NA),
+  "yOffsets" = c(NA, NA),
+  "yOffsetsUnits" = c(NA, NA),
+  "xScaleFactors" = c(NA, NA),
+  "yScaleFactors" = c(NA, NA)
+))
+
 # It returns an empty data combined when no data set is found
 test_that("It returns an empty DataCombined when no data is available", {
   tempDir <- tempdir()
