@@ -16,9 +16,16 @@ createDataCombinedForPlots(
 \item{plotGridNames}{Names of the plot grid specified in the sheet \code{plotGrids}.
 Each data combined used by the specified plot grids will be created.}
 
+\item{simulatedScenarios}{A list of simulated scenarios as returned by \code{runScenarios()}}
+
+\item{observedData}{A list of \code{DataSet} objects}
+
 \item{projectConfiguration}{Object of class \code{ProjectConfiguration}
 that contains information about the output paths and the excel file
 where plots are defined.}
+
+\item{stopIfNotFound}{If TRUE (default), the function stops if any of the
+simulated results or observed data are not found. If FALSE a warning is printed.}
 }
 \value{
 A list of \code{DataCombined} objects that are required to create plots
