@@ -19,10 +19,9 @@
 #' values. Default is `"relative"`.
 #' @param pkParameters A vector of names of PK parameters for which the
 #' sensitivities will be calculated. For a full set of available standard PK
-#' parameters, run `names(ospsuite::StandardPKParameter)`. By default, only
-#' the following parameters will be considered: `"C_max"`, `"t_max"`, `"AUC_inf"`.
-#' If `NULL`, all available PK-parameters will be calculated. You can also
-#' specify custom PK parameters.
+#' parameters, run `names(ospsuite::StandardPKParameter)`. By default, the
+#' following parameters are considered: `"C_max"`, `"t_max"`, `"AUC_inf"`.
+#' If `NULL`, all available PK-parameters (including the user-defined) will be calculated.
 #' @param customOutputFunctions A named list with
 #' custom function(s) for output calculations. User-defined functions should
 #' have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
@@ -269,7 +268,7 @@ sensitivityCalculation <- function(simulation,
     } else {
       # Convert tidy data to wide format
       pkParameterNames <- c(
-        names(ospsuite::StandardPKParameter),
+        names(ospsuite::allPKParameterNames()),
         names(customOutputFunctions)
       )
       pkDataWide <- .convertToWide(pkData, pkParameterNames)
