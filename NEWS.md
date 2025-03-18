@@ -2,6 +2,7 @@
 
 ## Breaking changes
 
+- ´{esqlabsR}` now requires `{ospsuite.utils}` version \>= 1.6.2.
 - The Importer configuration provided with the template project has been
   updated to include `Gender` in the naming pattern. The new naming pattern is as follows:
   
@@ -24,8 +25,6 @@
   modifying the projectConfiguration object directly, the package will look for
   matching environment variables and build the paths accordingly. A message is
   shown to the user to make this transparent.
-  
-
 
 ## Minor improvements and bug fixes
 

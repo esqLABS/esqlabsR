@@ -19,7 +19,7 @@
          Population Id: NULL 
          Read population from csv file: FALSE 
          Application protocol: NULL 
-         Simulation time intervals: NULL 
+         Simulation time intervals: 
            Interval: 1 
              Start: 0 
              End: 10 
