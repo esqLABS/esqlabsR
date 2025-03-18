@@ -125,7 +125,7 @@ a parameter sheet from the list"
     #' @description
     #' Initialize a new instance of the class
     #' @param projectConfiguration An object of class `ProjectConfiguration`.
-    #' @return A new `ScenarioConfiguration` object.
+    #' @returns A new `ScenarioConfiguration` object.
     initialize = function(projectConfiguration) {
       private$.projectConfiguration <- projectConfiguration
       private$.paramSheets <- enum(NULL)

@@ -11,7 +11,7 @@
 #' If a scenario that is specified in `scenarioNames` is not found in the excel
 #' file, an error is thrown.
 #'
-#' @return A named list of `ScenarioConfiguration` objects withe the names of the
+#' @returns A named list of `ScenarioConfiguration` objects withe the names of the
 #' list being scenario names.
 #' @export
 #'
