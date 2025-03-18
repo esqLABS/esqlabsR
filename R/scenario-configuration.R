@@ -187,7 +187,7 @@ a parameter sheet from the list"
       private$printLine("Population Id", self$populationId)
       private$printLine("Read population from csv file", self$readPopulationFromCSV)
       private$printLine("Application protocol", self$applicationProtocol)
-      private$printLine("Simulation time intervals")
+      private$printLine("Simulation time intervals:")
       for (i in seq_along(self$simulationTime)) {
         private$printLine("  Interval", i)
         private$printLine("    Start", self$simulationTime[[i]][1])
