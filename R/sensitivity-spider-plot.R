@@ -21,13 +21,16 @@
 #' A separate plot will be generated for each output path. Each plot will
 #' contain a spider plot panel for each PK parameter, and the sensitivities
 #' for each parameter will be displayed as lines.
-#' @param yAxisType Character string, either "percent" (percentage change) or
-#' "absolute" (absolute values) for PK parameter values, for y-axis data normalization.
-#' Default is "percent".
 #' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
 #' (linear scale), to set the x-axis scale. Default is "log".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis scale
 #' similarly to `xAxisScale`. Default is "lin".
+#' @param xAxisType Character string, either "percent" (percentage change) or
+#' "absolute" (absolute values) for PK parameter values, for x-axis data normalization.
+#' Default is "percent".
+#' @param yAxisType Character string, either "percent" (percentage change) or
+#' "absolute" (absolute values) for PK parameter values, for y-axis data normalization.
+#' Default is "percent".
 #' @param yAxisFacetScales Character string, either "fixed" or "free", determines
 #' the scaling across y-axes of different facets. Default is "fixed".
 #' If "fixed", all facetes within one plot will have the same range, which allows
@@ -107,9 +110,9 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   pkParameters = NULL,
                                   xAxisScale = NULL,
                                   yAxisScale = NULL,
-                                  yAxisFacetScales = "fixed",
                                   xAxisType = "percent",
                                   yAxisType = "percent",
+                                  yAxisFacetScales = "fixed",
                                   defaultPlotConfiguration = NULL) {
   # Input validation -------------------------------------
 
