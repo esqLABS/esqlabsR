@@ -24,6 +24,7 @@
   modifying the projectConfiguration object directly, the package will look for
   matching environment variables and build the paths accordingly. A message is
   shown to the user to make this transparent.
+- Complete `sensitivitySpiderPlot` documentation (\#799)
   
 
 
