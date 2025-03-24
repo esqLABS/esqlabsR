@@ -1,3 +1,6 @@
+# Create a project configuration
+projectConfiguration <- testProjectConfiguration()
+
 test_that("`ScenarioConfiguration` active bindings are modified", {
   expect_snapshot({
     mySC <- ScenarioConfiguration$new(projectConfiguration = ProjectConfiguration$new())

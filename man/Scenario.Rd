@@ -7,9 +7,6 @@
 \description{
 Simulation scenario
 }
-\section{Super class}{
-\code{\link[ospsuite.utils:Printable]{ospsuite.utils::Printable}} -> \code{Scenario}
-}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{

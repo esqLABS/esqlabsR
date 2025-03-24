@@ -1,6 +1,4 @@
-skip_on_ci()
-
-XLSpath <- "../data/Individuals.xlsx"
+XLSpath <- getTestDataFilePath("Individuals.xlsx")
 
 test_that("It returns NULL if the specified individual Id cannot be found in
           the file and nullIfNotFound is TRUE", {

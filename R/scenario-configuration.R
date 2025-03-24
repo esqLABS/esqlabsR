@@ -5,7 +5,6 @@
 #' @export
 ScenarioConfiguration <- R6::R6Class(
   "ScenarioConfiguration",
-  inherit = ospsuite.utils::Printable,
   cloneable = TRUE,
   active = list(
     #' @field simulateSteadyState Boolean representing whether the simulation
@@ -175,29 +174,49 @@ a parameter sheet from the list"
     #' @description
     #' Print the object to the console
     #' @param projectConfiguration Whether to also print project configuration. default to TRUE.
-    print = function(projectConfiguration = TRUE) {
+    #' @param className Whether to print the name of the class at the beginning. default to TRUE.
+    print = function(projectConfiguration = TRUE, className = TRUE) {
+      if (className) ospsuite.utils::ospPrintClass(self)
+
       if (projectConfiguration) {
-        self$projectConfiguration$print()
+        ospsuite.utils::ospPrintHeader("Project configuration", level = 1)
+        self$projectConfiguration$print(className = FALSE)
       }
-      private$printClass()
-      private$printLine("Model file name", self$modelFile)
-      private$printLine("Scenario name", self$scenarioName)
-      private$printLine("Parameters sheets", enumKeys(self$paramSheets))
-      private$printLine("Individual Id", self$individualId)
-      private$printLine("Population Id", self$populationId)
-      private$printLine("Read population from csv file", self$readPopulationFromCSV)
-      private$printLine("Application protocol", self$applicationProtocol)
-      private$printLine("Simulation time intervals:")
+      ospsuite.utils::ospPrintHeader("Scenario configuration", level = 1)
+      ospsuite.utils::ospPrintItems(list(
+        "Scenario name" = self$scenarioName,
+        "Model file name" = self$modelFile,
+        "Application protocol" = self$applicationProtocol,
+        "Simulation type" = self$simulationType,
+        "Individual Id" = self$individualId,
+        "Population Id" = self$populationId,
+        "Read population from csv file" = self$readPopulationFromCSV,
+        "Parameters sheets" = enumKeys(self$paramSheets),
+        "Simulate steady-state" = self$simulateSteadyState,
+        "Steady-state time" = self$steadyStateTime
+      ), print_empty = TRUE)
+      ospsuite.utils::ospPrintHeader("Simulation time intervals", level = 2)
       for (i in seq_along(self$simulationTime)) {
-        private$printLine("  Interval", i)
-        private$printLine("    Start", self$simulationTime[[i]][1])
-        private$printLine("    End", self$simulationTime[[i]][2])
-        private$printLine("    Resolution", self$simulationTime[[i]][3])
+        ospsuite.utils::ospPrintItems(
+          list(
+            "Start" = self$simulationTime[[i]][1],
+            "End" = self$simulationTime[[i]][2],
+            "Resolution" = self$simulationTime[[i]][3]
+          ),
+          print_empty = TRUE,
+          title = paste("Interval", i)
+        )
       }
-      private$printLine("Simulation time intervals unit", self$simulationTimeUnit)
-      private$printLine("Simulate steady-state", self$simulateSteadyState)
-      private$printLine("Steady-state time", self$steadyStateTime)
-      invisible(self)
+      ospsuite.utils::ospPrintItems(list(
+        "Simulation time intervals unit" = self$simulationTimeUnit
+      ))
+
+      if (self$simulateSteadyState) {
+        ospsuite.utils::ospPrintItems(list(
+          "Simulate steady-state" = self$simulateSteadyState,
+          "Steady-state time" = self$steadyStateTime
+        ), title = "Steady state")
+      }
     }
   )
 )
