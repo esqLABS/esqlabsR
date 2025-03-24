@@ -19,7 +19,7 @@ parameter."><meta property="og:image" content="https://esqlabs.github.io/esqlabs
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9019</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9020</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,9 +80,9 @@ parameter.</p>
 <span>  pkParameters <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  xAxisScale <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  yAxisScale <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  yAxisFacetScales <span class="op">=</span> <span class="st">"fixed"</span>,</span>
 <span>  xAxisType <span class="op">=</span> <span class="st">"percent"</span>,</span>
 <span>  yAxisType <span class="op">=</span> <span class="st">"percent"</span>,</span>
+<span>  yAxisFacetScales <span class="op">=</span> <span class="st">"fixed"</span>,</span>
 <span>  defaultPlotConfiguration <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -117,6 +117,18 @@ for each parameter will be displayed as lines.</p></dd>
 similarly to <code>xAxisScale</code>. Default is "lin".</p></dd>
 
 
+<dt id="arg-xaxistype">xAxisType<a class="anchor" aria-label="anchor" href="#arg-xaxistype"></a></dt>
+<dd><p>Character string, either "percent" (percentage change) or
+"absolute" (absolute values) for PK parameter values, for x-axis data normalization.
+Default is "percent".</p></dd>
+
+
+<dt id="arg-yaxistype">yAxisType<a class="anchor" aria-label="anchor" href="#arg-yaxistype"></a></dt>
+<dd><p>Character string, either "percent" (percentage change) or
+"absolute" (absolute values) for PK parameter values, for y-axis data normalization.
+Default is "percent".</p></dd>
+
+
 <dt id="arg-yaxisfacetscales">yAxisFacetScales<a class="anchor" aria-label="anchor" href="#arg-yaxisfacetscales"></a></dt>
 <dd><p>Character string, either "fixed" or "free", determines
 the scaling across y-axes of different facets. Default is "fixed".
@@ -124,12 +136,6 @@ If "fixed", all facetes within one plot will have the same range, which allows
 for easier comparison between different PK parameters. If "free", each facet
 will have its own range, which allows for better visualization of the single
 PK parameters sensitivity.</p></dd>
-
-
-<dt id="arg-yaxistype">yAxisType<a class="anchor" aria-label="anchor" href="#arg-yaxistype"></a></dt>
-<dd><p>Character string, either "percent" (percentage change) or
-"absolute" (absolute values) for PK parameter values, for y-axis data normalization.
-Default is "percent".</p></dd>
 
 
 <dt id="arg-defaultplotconfiguration">defaultPlotConfiguration<a class="anchor" aria-label="anchor" href="#arg-defaultplotconfiguration"></a></dt>
