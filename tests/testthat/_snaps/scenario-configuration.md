@@ -10,6 +10,12 @@
       mySC$removeParamSheets(NULL)
       mySC$addParamSheets(c("mySheet1", "mySheet2"))
       mySC$print(projectConfiguration = FALSE)
+    Condition
+      Warning:
+      ospsuite.utils::Printable was deprecated in ospsuite.utils 1.6.2.
+      i Please use ospsuite.utils::ospPrint*() instead.
+      i The deprecated feature was likely used in the ospsuite.utils package.
+        Please report the issue at <https://github.com/open-systems-pharmacology/OSPSuite.RUtils/issues>.
     Output
       ScenarioConfiguration: 
          Model file name: NULL 
