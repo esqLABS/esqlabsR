@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9020</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9022</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,8 @@
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
 <div class="section level3">
 <h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
-<ul><li>
+<ul><li><p>{esqlabsR}<code>now requires</code>{ospsuite.utils}` version &gt;= 1.7.0.</p></li>
+<li>
 <p>The Importer configuration provided with the template project has been updated to include <code>Gender</code> in the naming pattern. The new naming pattern is as follows:</p>
 <p><code>{Study Id}_{Molecule}_{Subject Id}_{Species}_{Gender}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>.</p>
 <p>This change will only affect new projects initailized with the new package version. Keep in mind that <code>Plots.xlsx</code> files created with the old naming pattern will not work with the new configuration. You will have to manually add the <code>Gender</code> naming section (if no gender was specified in the observed data excel sheet, simply add an additional <code>_</code>) after the <code>Species</code> section to the names of the data sets specified in the <code>DataCombined</code> sheet of the <code>Plots.xlsx</code> file.</p>
@@ -73,6 +74,12 @@
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
+<ul><li>Improved print outputs for all classes</li>
+<li>Classes do not inherit from the deprecated <code>Printable</code> class from the <a href="https://github.com/open-systems-pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a> package.</li>
+<li>Print methods for all classes are now implemented using the <code>ospPrint\*</code> functions introduced in version 1.7.0. of the <a href="https://github.com/open-systems-pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a> package.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="minor-improvements-and-bug-fixes-development-version-1">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version-1"></a></h3>
 <ul><li><p>Fix warnings related to NSE evaluation (<a href="https://github.com/esqLABS/esqlabsR/issues/762" class="external-link">#762</a>)</p></li>
 <li><p>Figures defined for the export in the <code>exportConfiguration</code> sheet of the <code>Plots.xlsx</code> file are now exported to the subfolder <code>Figures\&lt;Current Time Stamp&gt;</code> of the <code>Results</code> folder defined in the <code>ProjectConfiguration</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/778" class="external-link">#778</a>).</p></li>
 <li><p>Fix warning cannot be displayed when no individual model parameters are displayed.</p></li>

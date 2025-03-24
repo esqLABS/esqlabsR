@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9020</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9022</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -104,30 +104,27 @@ argument to the function. To create the configuration for the
 <span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
 <span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; Warning: ospsuite.utils::Printable was deprecated in ospsuite.utils 1.6.2.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use ospsuite.utils::ospPrint*() instead.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">ospsuite.utils</span> package.</span></span>
-<span><span class="co">#&gt;   Please report the issue at</span></span>
-<span><span class="co">#&gt;   <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/open-systems-pharmacology/OSPSuite.RUtils/issues&gt;</span>.</span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
-<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
-<span><span class="co">#&gt; ScenarioConfiguration: </span></span>
-<span><span class="co">#&gt;    Model file name: Aciclovir.pkml </span></span>
-<span><span class="co">#&gt;    Scenario name: TestScenario </span></span>
-<span><span class="co">#&gt;    Parameters sheets: Global </span></span>
-<span><span class="co">#&gt;    Individual Id: Indiv1 </span></span>
-<span><span class="co">#&gt;    Population Id: NULL </span></span>
-<span><span class="co">#&gt;    Read population from csv file: FALSE </span></span>
-<span><span class="co">#&gt;    Application protocol: Aciclovir_iv_250mg </span></span>
-<span><span class="co">#&gt;    Simulation time intervals: NULL </span></span>
-<span><span class="co">#&gt;      Interval: 1 </span></span>
-<span><span class="co">#&gt;        Start: 0 </span></span>
-<span><span class="co">#&gt;        End: 24 </span></span>
-<span><span class="co">#&gt;        Resolution: 60 </span></span>
-<span><span class="co">#&gt;    Simulation time intervals unit: h </span></span>
-<span><span class="co">#&gt;    Simulate steady-state: FALSE </span></span>
-<span><span class="co">#&gt;    Steady-state time: 1000</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; <span style="color: #0000BB;">&lt;ScenarioConfiguration&gt;</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Scenario configuration</span> <span style="color: #00BBBB;">──────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt;   • Scenario name: TestScenario</span></span>
+<span><span class="co">#&gt;   • Model file name: Aciclovir.pkml</span></span>
+<span><span class="co">#&gt;   • Application protocol: Aciclovir_iv_250mg</span></span>
+<span><span class="co">#&gt;   • Simulation type: Individual</span></span>
+<span><span class="co">#&gt;   • Individual Id: Indiv1</span></span>
+<span><span class="co">#&gt;   • Population Id: NULL</span></span>
+<span><span class="co">#&gt;   • Read population from csv file: FALSE</span></span>
+<span><span class="co">#&gt;   • Parameters sheets: Global</span></span>
+<span><span class="co">#&gt;   • Simulate steady-state: FALSE</span></span>
+<span><span class="co">#&gt;   • Steady-state time: 1000</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Simulation time intervals</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="font-weight: bold;">Interval 1</span>:</span></span>
+<span><span class="co">#&gt;   • Start: 0</span></span>
+<span><span class="co">#&gt;   • End: 24</span></span>
+<span><span class="co">#&gt;   • Resolution: 60</span></span>
+<span><span class="co">#&gt;   • Simulation time intervals unit: h</span></span></code></pre>
 <p>Alternatively, we can create configurations for all scenarios defined
 in the <code>Scenarios.xlsx</code> by calling
 <code>readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)</code>
@@ -206,11 +203,11 @@ if the scenario is a population simulation.</p>
 <span><span class="co">#&gt; 6            0    5</span></span>
 <span><span class="co">#&gt;   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span></span>
 <span><span class="co">#&gt; 1                                                                  0.000000</span></span>
-<span><span class="co">#&gt; 2                                                                  2.712956</span></span>
-<span><span class="co">#&gt; 3                                                                  7.830195</span></span>
-<span><span class="co">#&gt; 4                                                                 13.107069</span></span>
-<span><span class="co">#&gt; 5                                                                 18.253483</span></span>
-<span><span class="co">#&gt; 6                                                                 23.234007</span></span>
+<span><span class="co">#&gt; 2                                                                  2.713234</span></span>
+<span><span class="co">#&gt; 3                                                                  7.830658</span></span>
+<span><span class="co">#&gt; 4                                                                 13.107625</span></span>
+<span><span class="co">#&gt; 5                                                                 18.254129</span></span>
+<span><span class="co">#&gt; 6                                                                 23.234764</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`$unit</span></span>
 <span><span class="co">#&gt; [1] "µmol/l"</span></span>
