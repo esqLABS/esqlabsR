@@ -2,6 +2,7 @@
 
 ## Breaking changes
 
+- {esqlabsR}` now requires `{ospsuite.utils}` version \>= 1.7.0.
 - The Importer configuration provided with the template project has been
   updated to include `Gender` in the naming pattern. The new naming pattern is as follows:
   
@@ -25,8 +26,14 @@
   matching environment variables and build the paths accordingly. A message is
   shown to the user to make this transparent.
 - Complete `sensitivitySpiderPlot` documentation (\#799)
-  
 
+## Minor improvements and bug fixes
+
+- Improved print outputs for all classes
+- Classes do not inherit from the deprecated `Printable` class from the `{ospsuite.utils}` package.
+- Print methods for all classes are now implemented using the `ospPrint\*` functions 
+introduced in version 1.7.0. of the `{ospsuite.utils}` package.
+  
 
 ## Minor improvements and bug fixes
 
