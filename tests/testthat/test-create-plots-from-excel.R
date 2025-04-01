@@ -22,8 +22,6 @@ simulatedScenarios <- runScenarios(
   scenarios = scenarios
 )
 
-# For compatibility with projects created with esqlabsR <5.0.1, use old data set
-# naming pattern.
 importerConfiguration <- ospsuite::loadDataImporterConfiguration(
   configurationFilePath = projectConfiguration$dataImporterConfigurationFile
 )
