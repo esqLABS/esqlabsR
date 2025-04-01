@@ -6,7 +6,7 @@
 #' @param Km Value of the effector at which the value of the function is half-maximal.
 #' @param alpha Hill coefficient defining the steepness of the function. Default is `1`.
 #'
-#' @return Vmax * x^alpha / (x^alpha + Km^alpha)
+#' @returns Vmax * x^alpha / (x^alpha + Km^alpha)
 #' @export
 hillFunction <- function(x, Vmax, Km, alpha = 1) {
   Vmax * x^alpha / (x^alpha + Km^alpha)
@@ -18,7 +18,7 @@ hillFunction <- function(x, Vmax, Km, alpha = 1) {
 #' @param x_0 Basal value of the effector.
 #' @param alpha Steepness of the function. Default is `1`.
 #'
-#' @return (x / x_0)^alpha
+#' @returns (x / x_0)^alpha
 #' @export
 foldChangeFunction <- function(x, x_0, alpha = 1) {
   (x / x_0)^alpha
@@ -32,7 +32,7 @@ foldChangeFunction <- function(x, x_0, alpha = 1) {
 #' @param xOffset Offset of the function on the x-axis
 #' @param yOffset Offset of the function on the y-axis
 #'
-#' @return Value of the sine function for x.
+#' @returns Value of the sine function for x.
 #' @export
 sineFunction <- function(x, amplitude, period, xOffset, yOffset) {
   amplitude * sin((2 * pi / period) * (x + xOffset)) + yOffset
