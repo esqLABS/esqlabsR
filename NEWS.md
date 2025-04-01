@@ -33,6 +33,8 @@
 - Classes do not inherit from the deprecated `Printable` class from the `{ospsuite.utils}` package.
 - Print methods for all classes are now implemented using the `ospPrint\*` functions 
 introduced in version 1.7.0. of the `{ospsuite.utils}` package.
+- Fix when `createPlotsFromExcel` or `createDataCombinedFromExcel` would return 
+wrong names of DataCombined for which the output path for a simulation scenario is not defined (\#800).
   
 
 ## Minor improvements and bug fixes

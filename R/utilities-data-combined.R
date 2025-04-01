@@ -163,13 +163,13 @@ createDataCombinedFromExcel <- function(
   # dataType == simulated, but no path defined - throw error
   missingLabel <- is.na(dfDataCombined[dfDataCombined$dataType == "simulated", ]$path)
   if (sum(missingLabel) > 0) {
-    stop(messages$stopNoPathProvided(dfDataCombined[missingLabel & dfDataCombined$dataType == "simulated", ]$DataCombinedName))
+    stop(messages$stopNoPathProvided(dfDataCombined[dfDataCombined$dataType == "simulated", ]$DataCombinedName[missingLabel]))
   }
 
   # dataType == observed, but no data set defined - throw error
   missingLabel <- is.na(dfDataCombined[dfDataCombined$dataType == "observed", ]$dataSet)
   if (sum(missingLabel) > 0) {
-    stop(messages$stopNoDataSetProvided(dfDataCombined[dfDataCombined$dataType == "observed", ]$DataCombinedName[which(missingLabel)]))
+    stop(messages$stopNoDataSetProvided(dfDataCombined[dfDataCombined$dataType == "observed", ]$DataCombinedName[missingLabel]))
   }
 
   # Store the names of all DataCombined before filtering. This is required
