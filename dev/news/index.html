@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9022</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9024</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,6 +77,7 @@
 <ul><li>Improved print outputs for all classes</li>
 <li>Classes do not inherit from the deprecated <code>Printable</code> class from the <a href="https://github.com/open-systems-pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a> package.</li>
 <li>Print methods for all classes are now implemented using the <code>ospPrint\*</code> functions introduced in version 1.7.0. of the <a href="https://github.com/open-systems-pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a> package.</li>
+<li>Fix when <code>createPlotsFromExcel</code> or <code>createDataCombinedFromExcel</code> would return wrong names of DataCombined for which the output path for a simulation scenario is not defined (<a href="https://github.com/esqLABS/esqlabsR/issues/800" class="external-link">#800</a>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version-1">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version-1"></a></h3>
