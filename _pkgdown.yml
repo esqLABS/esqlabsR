@@ -27,6 +27,7 @@ reference:
   - matches("^write")
   - matches("^export")
   - createDataCombinedFromExcel
+  - createDataCombinedForPlots
 - title: Helpers for modeling and simulation
   contents:
   - matches("^compare")

@@ -16,7 +16,7 @@ esqlabsRSettingNames <- enum(names(esqlabsEnv))
 #'
 #' @param settingName String name of the setting
 #'
-#' @return Value of the setting stored in esqlabsEnv. If the setting does not
+#' @returns Value of the setting stored in esqlabsEnv. If the setting does not
 #'   exist, an error is thrown.
 #' @export
 #'

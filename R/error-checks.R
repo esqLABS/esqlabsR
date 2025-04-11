@@ -5,7 +5,7 @@
 #'
 #' @keywords internal
 #'
-#' @return `TRUE` if validation succeeded (silently). Throws an error otherwise.
+#' @returns `TRUE` if validation succeeded (silently). Throws an error otherwise.
 .validateParametersStructure <- function(parameterStructure, argumentName = NULL,
                                          nullAllowed = FALSE) {
   if (is.null(parameterStructure) && nullAllowed) {
@@ -23,7 +23,7 @@
 #' @param object A class or an instance of a class to check
 #' @param field Name of the field
 #'
-#' @return `TRUE` if the `object` has an active binding `field`,
+#' @returns `TRUE` if the `object` has an active binding `field`,
 #' `FALSE?  otherwise.
 #' @keywords internal
 .validateClassHasField <- function(object, field) {

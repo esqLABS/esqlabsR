@@ -49,6 +49,14 @@ file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Re
  defined in the `ProjectConfiguration` (\#778).
  
 - Fix warning cannot be displayed when no individual model parameters are displayed.
+ 
+- `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
+  to create plots defined in the `plotGridNames` argument. Missing `DataCombined`
+  will be created from the Excel file (default behavior).
+  
+- New function `createDataCombinedForPlots()` to create `DataCombined` objects
+  from the `Plots.xlsx` file for specified set of plots. This function can be used 
+  to create `DataCombined` objects that can be passed to `createPlotsFromExcel()`.
 
 - `sensitivityCalculation()` now supports non-default PK parameters, e.g., user-defined PK-Parameters 
 (see https://www.open-systems-pharmacology.org/OSPSuite-R/articles/pk-analysis.html#user-defined-pk-parameters 

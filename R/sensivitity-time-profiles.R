@@ -54,7 +54,7 @@
 #'
 #' @family sensitivity-calculation
 #'
-#' @return A `patchwork` object containing the combined ggplot objects if a
+#' @returns A `patchwork` object containing the combined ggplot objects if a
 #' single output path is specified, or a list of `patchwork` objects for
 #' multiple output paths.
 #'
@@ -401,7 +401,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 #' @param parameterPaths A character vector of parameter paths.
 #' @param outputPaths A character vector of output paths.
 #'
-#' @return A combined `data.frame` containing both simulation results and
+#' @returns A combined `data.frame` containing both simulation results and
 #' observed data.
 #'
 #' @keywords internal
@@ -520,7 +520,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 #' @param xUnit Optional unit for the x-dimension.
 #' @param yUnit Optional unit for the y-dimension.
 #'
-#' @return TRUE if conversion is possible, otherwise FALSE.
+#' @returns TRUE if conversion is possible, otherwise FALSE.
 #'
 #' @keywords internal
 #' @noRd

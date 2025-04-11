@@ -4,6 +4,9 @@
 \name{Scenario}
 \alias{Scenario}
 \title{Scenario}
+\value{
+A new \code{Scenario} object.
+}
 \description{
 Simulation scenario
 }
@@ -69,9 +72,6 @@ thrown if any of the custom defined parameter does not exist. If \code{FALSE},
 non-existent parameters are  ignored.}
 }
 \if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A new \code{Scenario} object.
 }
 }
 \if{html}{\out{<hr>}}

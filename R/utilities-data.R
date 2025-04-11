@@ -15,7 +15,7 @@
 #' or a ULOQ value, i.e., of a form "<2" or ">2", respectively. If this is a case,
 #' the returned value is defined by the parameters `lloqMode` and `uloqMode`.
 #' In any other case where the string cannot be converted to a numeric, `NA` is returned.
-#' @return A numeric value or a list of numeric values
+#' @returns A numeric value or a list of numeric values
 #' @export
 stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMode$ULOQ) {
   # Input validations
@@ -97,7 +97,7 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
 #'  and dataSet3 has no LLOQ, then 2 is used for the returned `DataSet`.
 #'  The LLOQ of the returned `DataSet` is the arithmetic mean of LLOQ values of
 #'  all `DataSet`s
-#' @return A single `DataSet` object
+#' @returns A single `DataSet` object
 #' @export
 calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLOQMode$`LLOQ/2`,
                                  outputXunit = NULL, outputYunit = NULL, outputMolWeight = NULL) {
@@ -255,7 +255,7 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' the data. If `NULL` (default), default esqlabs importer configuration as
 #' defined in `projectConfiguration$dataImporterConfigurationFile` will be used.
 #'
-#' @return
+#' @returns
 #' A named list of `DataSet` objects, with names being the names of the data sets.
 #' @export
 #'
@@ -299,7 +299,7 @@ loadObservedData <- function(projectConfiguration, sheets = NULL, importerConfig
 #' If `NULL` (default), all data sets located in the folder are loaded. Must not
 #' contain the ".pkml" file extension.
 #'
-#' @return
+#' @returns
 #' A named list of `DataSet` objects, with names being the names of the data sets.
 #' @export
 #'
