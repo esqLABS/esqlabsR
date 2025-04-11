@@ -5,7 +5,6 @@
 #' @export
 Scenario <- R6::R6Class(
   "Scenario",
-  inherit = ospsuite.utils::Printable,
   cloneable = FALSE,
   active = list(
     #' @field scenarioConfiguration `scenarioConfiguration` used for creation of this scenario.
@@ -238,9 +237,11 @@ Scenario <- R6::R6Class(
     #' Print the object to the console
     #' @param ... Rest arguments.
     print = function(...) {
-      self$scenarioConfiguration$print()
-      private$printClass()
-      private$printLine("Scenario type", self$scenarioType)
+      ospsuite.utils::ospPrintClass(self)
+      ospsuite.utils::ospPrintItems(list(
+        "Scenario type" = self$scenarioType
+      ))
+      self$scenarioConfiguration$print(className = FALSE)
       invisible(self)
     }
   )

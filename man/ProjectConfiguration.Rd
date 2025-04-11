@@ -98,9 +98,16 @@ Print}
 \subsection{Method \code{print()}}{
 print prints a summary of the Project Configuration.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$print()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$print(className = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{className}}{Whether to print the name of the class at the beginning. default to TRUE.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ProjectConfiguration-save"></a>}}

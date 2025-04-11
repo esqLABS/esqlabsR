@@ -2,6 +2,7 @@
 
 ## Breaking changes
 
+- {esqlabsR}` now requires `{ospsuite.utils}` version \>= 1.7.0.
 - The Importer configuration provided with the template project has been
   updated to include `Gender` in the naming pattern. The new naming pattern is as follows:
   
@@ -17,6 +18,9 @@
     - `init_project()` function has been renamed to `initProject()`,
     - `esqlabs_colors()` function has been renamed to `esqlabsColors()`.
     
+  - The functions `hillFunction()`, `foldChangeFunction()`, and `sineFunction()` 
+    have been removed.
+    
 ## Major changes
 
 - `ProjectConfiguration.xslx` configuration file now support environment variables.
@@ -24,8 +28,17 @@
   modifying the projectConfiguration object directly, the package will look for
   matching environment variables and build the paths accordingly. A message is
   shown to the user to make this transparent.
-  
+- Complete `sensitivitySpiderPlot` documentation (\#799)
 
+## Minor improvements and bug fixes
+
+- Improved print outputs for all classes
+- Classes do not inherit from the deprecated `Printable` class from the `{ospsuite.utils}` package.
+- Print methods for all classes are now implemented using the `ospPrint\*` functions 
+introduced in version 1.7.0. of the `{ospsuite.utils}` package.
+- Fix when `createPlotsFromExcel` or `createDataCombinedFromExcel` would return 
+wrong names of DataCombined for which the output path for a simulation scenario is not defined (\#800).
+  
 
 ## Minor improvements and bug fixes
 
@@ -48,6 +61,8 @@ file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Re
 - `sensitivityCalculation()` now supports non-default PK parameters, e.g., user-defined PK-Parameters 
 (see https://www.open-systems-pharmacology.org/OSPSuite-R/articles/pk-analysis.html#user-defined-pk-parameters 
 for how to create user-defined PK parameters). (\#788)
+- Fix `extendPopulationFromXLS()` did not created correct parameter paths (\#769).
+
 # esqlabsR 5.3.0
 
 ## Breaking changes

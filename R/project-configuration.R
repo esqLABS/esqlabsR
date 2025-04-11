@@ -333,27 +333,34 @@ ProjectConfiguration <- R6::R6Class(
     },
     #' Print
     #' @description print prints a summary of the Project Configuration.
-    print = function() {
-      cli::cli_h1("Project Configuration")
-      cli::cli_li("Working Directory: {.file {getwd()}}")
-      cli::cli_li("Project Configuration file stored at {self$projectConfigurationFilePath}")
+    #' @param className Whether to print the name of the class at the beginning. default to TRUE.
+    print = function(className = TRUE) {
+      if (className) ospsuite.utils::ospPrintClass(self)
+      ospsuite.utils::ospPrintItems(list(
+        "Working Directory" = getwd(),
+        "Project Configuration file stored at" = self$projectConfigurationFilePath
+      ))
 
-      cli::cli_h2("Paths")
-      cli::cli_h3("Folders")
-      cli::cli_li("Configurations Folder: {.file {as.character(self$configurationsFolder)}}")
-      cli::cli_li("Model Folder: {.file {as.character(self$modelFolder)}}")
-      cli::cli_li("Data Folder: {.file {as.character(self$dataFolder)}}")
-      cli::cli_li("Output Folder: {.file {as.character(self$outputFolder)}}")
-      cli::cli_li("Populations Folder: {.file {as.character(self$populationsFolder)}}")
-      cli::cli_h3("Files")
-      cli::cli_li("Model Parameters File: {.file {as.character(self$modelParamsFile)}}")
-      cli::cli_li("Individuals File: {.file {as.character(self$individualsFile)}}")
-      cli::cli_li("Populations File: {.file {as.character(self$populationsFile)}}")
-      cli::cli_li("Scenarios File: {.file {as.character(self$scenariosFile)}}")
-      cli::cli_li("Applications File: {.file {as.character(self$applicationsFile)}}")
-      cli::cli_li("Plots File: {.file {as.character(self$plotsFile)}}")
-      cli::cli_li("Data File: {.file {as.character(self$dataFile)}}")
-      cli::cli_li("Data Importer Configuration File: {.file {as.character(self$dataImporterConfigurationFile)}}")
+      ospsuite.utils::ospPrintHeader("Paths", level = 2)
+      ospsuite.utils::ospPrintItems(list(
+        "Configurations Folder" = self$configurationsFolder,
+        "Model Folder" = self$modelFolder,
+        "Data Folder" = self$dataFolder,
+        "Output Folder" = self$outputFolder,
+        "Populations Folder" = self$populationsFolder
+      ), title = "Folders")
+
+      ospsuite.utils::ospPrintItems(list(
+        "Model Parameters File" = self$modelParamsFile,
+        "Individuals File" = self$individualsFile,
+        "Populations File" = self$populationsFile,
+        "Scenarios File" = self$scenariosFile,
+        "Applications File" = self$applicationsFile,
+        "Plots File" = self$plotsFile,
+        "Data File" = self$dataFile,
+        "Data Importer Configuration File" = self$dataImporterConfigurationFile
+      ), title = "Files")
+
 
       if (!isEmpty(private$.replaced_env_vars)) {
         cli::cli_h2("Environment Variables")

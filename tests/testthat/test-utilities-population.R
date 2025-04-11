@@ -115,8 +115,8 @@ test_that("extendPopulationFromXLS works", {
       .writeExcel(
         path = PopulationParameters,
         data = list("UserDefinedVariability" = data.frame(
-          `Container Path` = "Organism|Kidney",
-          `Parameter Name` = "GFR",
+          `Container Path` = c("Organism|Kidney", "Organism|Kidney"),
+          `Parameter Name` = c("GFR", "eGFR"),
           "Mean" = 0.12,
           "SD" = 0.001,
           "Distribution" = "Normal",
@@ -127,15 +127,19 @@ test_that("extendPopulationFromXLS works", {
       population <- ospsuite::loadPopulation(system.file("extdata", "SimResults_pop.csv", package = "ospsuite"))
 
       set.seed(42)
-
       extendPopulationFromXLS(population,
         PopulationParameters,
         sheet = "UserDefinedVariability"
       )
-
       expect_snapshot(
         population$getParameterValuesForIndividual(4)
       )
+      expect_equal(population$allParameterPaths, c(
+        "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+        "Organism|Muscle|Intracellular|Aciclovir|Concentration",
+        "Organism|Kidney|GFR",
+        "Organism|Kidney|eGFR"
+      ))
     }
   )
 })

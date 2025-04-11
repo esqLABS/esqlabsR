@@ -35,12 +35,12 @@ observedData <- esqlabsR::loadObservedData(
 )
 
 dataCombinedDf <- data.frame(list(
-  "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
-  "dataType" = c("simulated", "observed"),
-  "label" = c("Aciclovir simulated", "Aciclovir observed"),
-  "scenario" = c(scenarioNames[1], NA),
-  "path" = c(outputPaths, NA),
-  "dataSet" = c(NA, names(observedData)),
+  "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB", "DC_missingPath", "DC_missingPath"),
+  "dataType" = c("simulated", "observed", "simulated", "observed"),
+  "label" = c("Aciclovir simulated", "Aciclovir observed", "Aciclovir simulated", "Aciclovir observed"),
+  "scenario" = c(scenarioNames[1], NA, scenarioNames[1], NA),
+  "path" = c(outputPaths, NA, NA, NA),
+  "dataSet" = c(NA, names(observedData), NA, names(observedData)),
   "group" = c("Aciclovir PVB", "Aciclovir PVB"),
   "xOffsets" = c(NA, NA),
   "xOffsetsUnits" = c(NA, NA),
@@ -50,96 +50,6 @@ dataCombinedDf <- data.frame(list(
   "yScaleFactors" = c(NA, NA)
 ))
 
-plotConfigurationDf <- data.frame(list(
-  "plotID" = "P1",
-  "DataCombinedName" = "AciclovirPVB",
-  "plotType" = "individual",
-  "title" = NA,
-  "xUnit" = NA,
-  "yUnit" = NA,
-  "xAxisScale" = NA,
-  "yAxisScale" = NA,
-  "xValuesLimits" = NA,
-  "yValuesLimits" = NA,
-  "quantiles" = NA,
-  "nsd" = NA,
-  "foldDistance" = NA
-))
-
-plotGridsDf <- data.frame(list(
-  "name" = "Aciclovir",
-  "plotIDs" = "P1",
-  "title" = "Aciclovir PVB"
-))
-
-# It returns an empty data combined when no data set is found
-test_that("It returns an empty DataCombined when no data is available", {
-  tempDir <- tempdir()
-  projectConfigurationLocal <- projectConfiguration$clone()
-  projectConfigurationLocal$configurationsFolder <- tempDir
-  withr::with_tempfile(
-    new = "Plots.xlsx",
-    tmpdir = tempDir,
-    code = {
-      dataCombinedDfLocal <- dataCombinedDf
-      plotConfigurationDfLocal <- plotConfigurationDf
-      plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- data.frame(
-        plotGridName = c(NA),
-        outputName = c(NA)
-      )
-      .writeExcel(data = list(
-        "DataCombined" = dataCombinedDfLocal,
-        "plotConfiguration" = plotConfigurationDfLocal,
-        "plotGrids" = plotGridsDfLocal,
-        "exportConfiguration" = exportConfigurationDfLocal
-      ), path = file.path(tempDir, "Plots.xlsx"), )
-
-      # Warnings are suppressed because they are expected but not relevant for
-      # this test.
-      suppressWarnings({
-        dataCombined <- createDataCombinedFromExcel(
-          file = file.path(tempDir, "Plots.xlsx"),
-          stopIfNotFound = FALSE
-        )
-      })
-
-
-      expect_equal(dataCombined[[1]], DataCombined$new())
-    }
-  )
-})
-
-test_that("It creates specified DataCombined", {
-  dc <- createDataCombinedFromExcel(
-    file = projectConfiguration$plotsFile,
-    sheet = "DataCombined",
-    dataCombinedNames = "AciclovirPVB",
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
-    stopIfNotFound = TRUE
-  )
-  expect_equal(names(dc), c("AciclovirPVB"))
-  expect_true(isOfType(dc, "DataCombined"))
-})
-
-test_that("It creates DataCombined for the specified plots", {
-  dc <- createDataCombinedForPlots(
-    plotGridNames = c("P2", "P4"),
-    projectConfiguration = projectConfiguration,
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData
-  )
-  expect_equal(names(dc), c("AciclovirPVB", "AciclovirPop"))
-  expect_true(isOfType(dc, "DataCombined"))
-})
-
-test_that("It creates plots for all plot grids when plotGridNames is NULL", {
-  plots <- createPlotsFromExcel(
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
-    projectConfiguration = projectConfiguration,
-    stopIfNotFound = TRUE
-  )
-  expect_equal(names(plots), c("Aciclovir", "Aciclovir2", "Aciclovir3"))
+test_that("It returns correct names of data combined when a path is not specified for one simulated scenario", {
+  expect_error(.validateDataCombinedFromExcel(dataCombinedDf, observedData), regexp = messages$stopNoPathProvided("DC_missingPath"))
 })
