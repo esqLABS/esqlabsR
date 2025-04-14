@@ -26,6 +26,9 @@
   matching environment variables and build the paths accordingly. A message is
   shown to the user to make this transparent.
 - Complete `sensitivitySpiderPlot` documentation (\#799)
+- `parameterPaths` in `sensitivityCalculation()` can now be a named vector. 
+The names will be stored and used as custom labels in all relevant plotting functions (\#811).
+
 
 ## Minor improvements and bug fixes
 
