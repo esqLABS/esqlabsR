@@ -167,10 +167,11 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     pkParameters      = pkParameters
   )
 
-  # getting the scales right
+  # set scales and parameterPath labels
   data <- dplyr::mutate(data,
     ParameterFactor = ParameterFactor * 100,
-    PKPercentChange = PKPercentChange + 100
+    PKPercentChange = PKPercentChange + 100,
+    ParameterPathLabel = dplyr::coalesce(ParameterPathUserName, ParameterPath)
   )
 
   # Create list of plots ---------------------------------
@@ -276,10 +277,10 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
     plot <- ggplot(
       dataSubset,
-      aes(x = .data[[xColumn]], y = .data[[yColumn]], group = ParameterPath)
+      aes(x = .data[[xColumn]], y = .data[[yColumn]], group = ParameterPathLabel)
     ) +
       geom_line(
-        aes(group = ParameterPath, color = as.factor(ParameterPath)),
+        aes(group = ParameterPathLabel, color = as.factor(ParameterPathLabel)),
         linewidth = plotConfiguration$linesSize,
         alpha = plotConfiguration$linesAlpha,
         na.rm = TRUE
