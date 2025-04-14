@@ -66,6 +66,13 @@ test_that("sensitivitySpiderPlot legend labels are correctly applied", {
 
   p <- sensitivitySpiderPlot(resultsLab)
 
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivitySpiderPlot works with user parameter path names",
+      fig = p
+    )
+  )
+
   n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
