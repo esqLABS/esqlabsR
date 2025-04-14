@@ -145,10 +145,12 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   data <- dplyr::arrange(data, dplyr::desc(abs(PKMeanPercentChange)))
   data <- dplyr::mutate(
     data,
-    ParameterPath = purrr::map_chr(ParameterPath, .splitParameterName)
+    ParameterPath = purrr::map_chr(ParameterPath, .splitParameterName),
+    ParameterPathLabel = dplyr::coalesce(ParameterPathUserName, ParameterPath)
   )
-  data$ParameterPath <- factor(data$ParameterPath,
-    levels = rev(unique(data$ParameterPath))
+
+  data$ParameterPathLabel <- factor(data$ParameterPathLabel,
+    levels = rev(unique(data$ParameterPathLabel))
   )
 
   data <- dplyr::filter(
@@ -202,7 +204,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     plot <- ggplot(
       dataSubset,
       aes(
-        x = ParameterPath,
+        x = ParameterPathLabel,
         y = PKPercentChange,
         fill = as.factor(ParameterFactor)
       )
