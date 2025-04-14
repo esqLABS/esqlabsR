@@ -362,8 +362,8 @@ test_that("sensitivityCalculation returns correct PK parameters dataframe", {
     colnames(results$pkData),
     c(
       "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue",
-      "ParameterUnit", "PKParameter", "PKParameterValue", "PKPercentChange",
-      "Unit", "SensitivityPKParameter"
+      "ParameterUnit", "ParameterPathUserName", "PKParameter", "PKParameterValue",
+      "PKPercentChange", "Unit", "SensitivityPKParameter"
     )
   )
 })
@@ -485,10 +485,10 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
 
 pkDataWideColumns <- c(
   "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue", "ParameterUnit",
-  "C_max", "C_max_norm", "C_max_Unit", "C_max_norm_Unit", "C_max_PKPercentChange",
-  "C_max_norm_PKPercentChange", "C_max_Sensitivity", "C_max_norm_Sensitivity",
-  "t_max", "t_max_Unit", "t_max_PKPercentChange", "t_max_Sensitivity",
-  "AUC_tEnd", "AUC_tEnd_norm", "AUC_tEnd_Unit", "AUC_tEnd_norm_Unit",
+  "ParameterPathUserName", "C_max", "C_max_norm", "C_max_Unit", "C_max_norm_Unit",
+  "C_max_PKPercentChange", "C_max_norm_PKPercentChange", "C_max_Sensitivity",
+  "C_max_norm_Sensitivity", "t_max", "t_max_Unit", "t_max_PKPercentChange",
+  "t_max_Sensitivity", "AUC_tEnd", "AUC_tEnd_norm", "AUC_tEnd_Unit", "AUC_tEnd_norm_Unit",
   "AUC_tEnd_PKPercentChange", "AUC_tEnd_norm_PKPercentChange", "AUC_tEnd_Sensitivity",
   "AUC_tEnd_norm_Sensitivity", "AUC_inf", "AUC_inf_norm", "AUC_inf_Unit",
   "AUC_inf_norm_Unit", "AUC_inf_PKPercentChange", "AUC_inf_norm_PKPercentChange",
@@ -512,7 +512,7 @@ test_that("sensitivityCalculation converts output to wide format as expected", {
   )
   pkDataWide <- esqlabsR:::.convertToWide(results2$pkData)
 
-  expect_equal(dim(pkDataWide), c(12L, 57L))
+  expect_equal(dim(pkDataWide), c(12L, 58L))
   expect_equal(colnames(pkDataWide), pkDataWideColumns)
 })
 
@@ -548,7 +548,7 @@ test_that("sensitivityCalculation converts output to wide format as expected wit
   )
   pkDataWide <- esqlabsR:::.convertToWide(results2$pkData, pkParameterNames)
 
-  expect_equal(dim(pkDataWide), c(12L, 65L))
+  expect_equal(dim(pkDataWide), c(12L, 66L))
   expect_equal(colnames(pkDataWide), pkDataWideColumns)
 })
 
