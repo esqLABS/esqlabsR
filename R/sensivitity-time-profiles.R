@@ -157,7 +157,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       is.na(ParameterPath),
       ParameterPath,
       purrr::map_chr(ParameterPath, .splitParameterName, equalLines = TRUE)
-    )
+    ),
+    ParameterPathLabel = dplyr::coalesce(ParameterPathUserName, ParameterPath)
   )
 
   # Create list of plots ---------------------------------
@@ -216,12 +217,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
 
   # Loop through unique ParameterPath
-  paramPaths <- unique(data$ParameterPath)
+  paramPaths <- unique(data$ParameterPathLabel)
   paramPaths <- paramPaths[!is.na(paramPaths)]
   plotList <- stats::setNames(vector("list", length(paramPaths)), paramPaths)
 
   for (paramPath in paramPaths) {
-    dataSubset <- dplyr::filter(data, ParameterPath == paramPath)
+    dataSubset <- dplyr::filter(data, ParameterPathLabel == paramPath)
 
     # replace zeros dynamically to avoid warning when log transform
     dataSubset$yValues <- ifelse(dataSubset$yValues <= 0,
@@ -231,7 +232,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     # combine original data subset with observed data
     if ("observed" %in% data$dataType) {
       observedData <- dplyr::filter(data, dataType == "observed") %>%
-        dplyr::select(-ParameterPath)
+        dplyr::select(-ParameterPath, -ParameterPathLabel)
       hasObservedData <- isTRUE(nrow(observedData) != 0)
     } else {
       hasObservedData <- FALSE
@@ -301,7 +302,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     # Finalize plot --------------------------------------
 
     plot <- plot +
-      facet_wrap(~ParameterPath) +
+      facet_wrap(~ParameterPathLabel) +
       labs(
         x = plotConfiguration$xLabel,
         y = plotConfiguration$yLabel,
@@ -412,7 +413,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
                                                 outputPaths,
                                                 xUnits,
                                                 yUnits) {
-  if (!identical(names(simulationResults), parameterPaths)) {
+  if (!identical(names(simulationResults), unname(parameterPaths))) {
     stop(messages$invalidSimulationResultNames(
       names(simulationResults), parameterPaths
     ))
@@ -492,7 +493,13 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   combinedDf <- dplyr::bind_rows(parameterPathList, .id = "ParameterPath")
-  # cConvert parameterFactor to numeric for simulated data
+  parameterPathUserName <-  names(parameterPaths)[match(combinedDf$ParameterPath, unname(parameterPaths))]
+  combinedDf <- dplyr::mutate(
+    combinedDf,
+    ParameterPathUserName = parameterPathUserName %||% NA_character_
+  )
+
+  # Convert parameterFactor to numeric for simulated data
   combinedDf <- dplyr::rowwise(combinedDf) %>%
     dplyr::mutate(
       ParameterFactor = if (dataType == "simulated") as.numeric(name) else NA_real_

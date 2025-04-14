@@ -70,6 +70,26 @@ test_that("sensitivityTimeProfiles creates expected default plot", {
   expect_snapshot(pb$plot$labels)
 })
 
+test_that("sensitivityTimeProfiles applies user-defined parameter labels", {
+  names(parameterPaths) <-  c("Lipophilicity", "Dose", "GFR fraction")
+
+  resultsLab <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = variationRange
+  )
+
+  p <- sensitivityTimeProfiles(resultsLab)
+
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivityTimeProfiles works as expected - user labels",
+      fig = p
+    )
+  )
+})
+
 # Parameterized plots -----------------------------------------------------
 
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
