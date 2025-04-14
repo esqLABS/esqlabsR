@@ -55,7 +55,7 @@ test_that("sensitivitySpiderPlot creates expected default plot", {
 })
 
 test_that("sensitivitySpiderPlot legend labels are correctly applied", {
-  names(parameterPaths) <-  c("Lipophilicity", "Dose", "GFR fraction")
+  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
     simulation = simulation,

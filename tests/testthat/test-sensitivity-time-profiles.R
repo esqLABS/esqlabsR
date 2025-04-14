@@ -71,7 +71,7 @@ test_that("sensitivityTimeProfiles creates expected default plot", {
 })
 
 test_that("sensitivityTimeProfiles applies user-defined parameter labels", {
-  names(parameterPaths) <-  c("Lipophilicity", "Dose", "GFR fraction")
+  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
     simulation = simulation,

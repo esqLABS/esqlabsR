@@ -493,7 +493,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   combinedDf <- dplyr::bind_rows(parameterPathList, .id = "ParameterPath")
-  parameterPathUserName <-  names(parameterPaths)[match(combinedDf$ParameterPath, unname(parameterPaths))]
+  parameterPathUserName <- names(parameterPaths)[match(combinedDf$ParameterPath, unname(parameterPaths))]
   combinedDf <- dplyr::mutate(
     combinedDf,
     ParameterPathUserName = parameterPathUserName %||% NA_character_

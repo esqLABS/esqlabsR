@@ -70,7 +70,7 @@ test_that("sensitivityTornadoPlot creates default plot", {
 })
 
 test_that("sensitivityTornadoPlot creates default plot with custom parameter path labels", {
-  names(parameterPaths) <-  c("Lipophilicity", "Dose", "GFR fraction")
+  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
     simulation = simulation,
