@@ -132,16 +132,22 @@ meanFunction <- function(x, y) {
 Next, we run the sensitivity analysis for the average concentration of
 aciclovir in the peripheral venous blood:
 
+To define custom labels for the parameters in the resulting plots, you can pass 
+a *named vector* to the `parameterPaths` argument, where the names will be used 
+as labels instead of full paths.
+
 ```{r custom-analysis}
 simulation <- simulatedScenarios$TestScenario$simulation
 customOutputPaths <- enum(list(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 ))
+customParameterPaths <- c("Lipophilicity" = "Aciclovir|Lipophilicity") 
+
 customAnalysis <- sensitivityCalculation(
   simulation,
   customOutputPaths,
   pkParameters = list(),
-  parameterPaths = "Aciclovir|Lipophilicity",
+  parameterPaths = customParameterPaths,
   customOutputFunctions = list(AverageConcentration = meanFunction)
 )
 head(customAnalysis$pkData)
@@ -153,8 +159,7 @@ the `pkParameters` value to an empty list.
 
 Finally, we plot the sensitivity of the average concentration of
 aciclovir in the peripheral venous blood to the lipophilicity of
-aciclovir:
-
+aciclovir. 
 ```{r custom-plot, fig.width=7, fig.height=4}
 sensitivitySpiderPlot(customAnalysis)
 ```
