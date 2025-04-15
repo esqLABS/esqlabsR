@@ -86,6 +86,22 @@
 #' myPlotConfiguration$linesColor <- c("#4D8076", "#C34A36")
 #' myPlotConfiguration$subtitle <- "Custom settings"
 #' sensitivityTimeProfiles(results, defaultPlotConfiguration = myPlotConfiguration)
+#'
+#' # Use named parameter paths to customize facet labels
+#' namedParameterPaths <- c(
+#'   "Lipophilicity" = "Aciclovir|Lipophilicity",
+#'   "Dose" = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#' )
+#'
+#' resultsNamed <- sensitivityCalculation(
+#'   simulation = simulation,
+#'   outputPaths = outputPaths,
+#'   parameterPaths = namedParameterPaths
+#' )
+#'
+#' sensitivitySpiderPlot(resultsNamed)
+
 #' }
 #' @export
 sensitivityTimeProfiles <- function(sensitivityCalculation,

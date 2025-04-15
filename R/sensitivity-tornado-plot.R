@@ -76,6 +76,21 @@
 #' myPlotConfiguration$legendPosition <- "bottom"
 #' myPlotConfiguration$subtitle <- "Custom settings"
 #' sensitivityTornadoPlot(results, defaultPlotConfiguration = myPlotConfiguration)
+#'
+#' # Use named parameter paths to customize axis labels
+#' namedParameterPaths <- c(
+#'   "Lipophilicity" = "Aciclovir|Lipophilicity",
+#'   "Dose" = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#' )
+#'
+#' resultsNamed <- sensitivityCalculation(
+#'   simulation = simulation,
+#'   outputPaths = outputPaths,
+#'   parameterPaths = namedParameterPaths
+#' )
+#'
+#' sensitivityTornadoPlot(resultsNamed)
 #' }
 #'
 #' @export
