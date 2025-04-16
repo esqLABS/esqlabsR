@@ -19,7 +19,7 @@ parameter."><meta property="og:image" content="https://esqlabs.github.io/esqlabs
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9026</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9027</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -209,7 +209,23 @@ multiple output paths.</p>
 <span class="r-in"><span><span class="va">myPlotConfiguration</span><span class="op">$</span><span class="va">pointsShape</span> <span class="op">&lt;-</span> <span class="fl">22</span></span></span>
 <span class="r-in"><span><span class="va">myPlotConfiguration</span><span class="op">$</span><span class="va">subtitle</span> <span class="op">&lt;-</span> <span class="st">"Custom settings"</span></span></span>
 <span class="r-in"><span><span class="fu">sensitivitySpiderPlot</span><span class="op">(</span><span class="va">results</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">myPlotConfiguration</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Use named parameter paths to customize legend labels</span></span></span>
+<span class="r-in"><span><span class="va">namedParameterPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"Lipophilicity"</span> <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"Dose"</span> <span class="op">=</span> <span class="st">"Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"GFR fraction"</span> <span class="op">=</span> <span class="st">"Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">resultsNamed</span> <span class="op">&lt;-</span> <span class="fu"><a href="sensitivityCalculation.html">sensitivityCalculation</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  simulation <span class="op">=</span> <span class="va">simulation</span>,</span></span>
+<span class="r-in"><span>  outputPaths <span class="op">=</span> <span class="va">outputPaths</span>,</span></span>
+<span class="r-in"><span>  parameterPaths <span class="op">=</span> <span class="va">namedParameterPaths</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu">sensitivitySpiderPlot</span><span class="op">(</span><span class="va">resultsNamed</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9026</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.3.0.9027</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -113,7 +113,7 @@ input parameter values.</p>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivityCalculation.html">sensitivityCalculation</a></span><span class="op">(</span><span class="va">simulation</span>, <span class="va">OutputPaths</span>, parameterPaths <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">pkData</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 10</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 11</span></span></span>
 <span><span class="co">#&gt;   OutputPath          ParameterPath ParameterFactor ParameterValue ParameterUnit</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|Periphera… Aciclovir|Li…             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> Log Units    </span></span>
@@ -122,8 +122,9 @@ input parameter values.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|Periphera… Aciclovir|Li…             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> Log Units    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|Periphera… Aciclovir|Li…             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> Log Units    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|Periphera… Aciclovir|Li…             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> Log Units    </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 5 more variables: PKParameter &lt;chr&gt;, PKParameterValue &lt;dbl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   PKPercentChange &lt;dbl&gt;, Unit &lt;chr&gt;, SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: ParameterPathUserName &lt;chr&gt;, PKParameter &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   PKParameterValue &lt;dbl&gt;, PKPercentChange &lt;dbl&gt;, Unit &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
 <p>In the aciclovir example case, the default value of lipophilicity is
 -0.097 log units, corresponding to the area under the curve (AUC) of
 3915.87 µmol×min/L. Increasing the lipophilicity to -0.0097 log units
@@ -181,21 +182,27 @@ numerical vector:</p>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Next, we run the sensitivity analysis for the average concentration
 of aciclovir in the peripheral venous blood:</p>
+<p>To define custom labels for the parameters in the resulting plots,
+you can pass a <em>named vector</em> to the <code>parameterPaths</code>
+argument, where the names will be used as labels instead of full
+paths.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">simulation</span></span>
 <span><span class="va">customOutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/enum.html" class="external-link">enum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  Aciclovir_PVB <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">customParameterPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Lipophilicity"</span> <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span><span class="op">)</span> </span>
+<span></span>
 <span><span class="va">customAnalysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivityCalculation.html">sensitivityCalculation</a></span><span class="op">(</span></span>
 <span>  <span class="va">simulation</span>,</span>
 <span>  <span class="va">customOutputPaths</span>,</span>
 <span>  pkParameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  parameterPaths <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span>,</span>
+<span>  parameterPaths <span class="op">=</span> <span class="va">customParameterPaths</span>,</span>
 <span>  customOutputFunctions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>AverageConcentration <span class="op">=</span> <span class="va">meanFunction</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Following PK parameters are specified but were not calculated:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">customAnalysis</span><span class="op">$</span><span class="va">pkData</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 10</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 11</span></span></span>
 <span><span class="co">#&gt;   OutputPath          ParameterPath ParameterFactor ParameterValue ParameterUnit</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|Periphera… Aciclovir|Li…             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> Log Units    </span></span>
@@ -204,14 +211,15 @@ of aciclovir in the peripheral venous blood:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|Periphera… Aciclovir|Li…             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> Log Units    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|Periphera… Aciclovir|Li…             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> Log Units    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|Periphera… Aciclovir|Li…             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> Log Units    </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 5 more variables: PKParameter &lt;chr&gt;, PKParameterValue &lt;dbl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   PKPercentChange &lt;dbl&gt;, Unit &lt;chr&gt;, SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: ParameterPathUserName &lt;chr&gt;, PKParameter &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   PKParameterValue &lt;dbl&gt;, PKPercentChange &lt;dbl&gt;, Unit &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
 <p><u><strong>Note</strong></u>: If we want to calculate the sensitivity
 of the custom function only without the default PK-parameters, we need
 to set the <code>pkParameters</code> value to an empty list.</p>
 <p>Finally, we plot the sensitivity of the average concentration of
 aciclovir in the peripheral venous blood to the lipophilicity of
-aciclovir:</p>
+aciclovir.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">customAnalysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
