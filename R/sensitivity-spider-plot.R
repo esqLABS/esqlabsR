@@ -102,7 +102,23 @@
 #' myPlotConfiguration$pointsShape <- 22
 #' myPlotConfiguration$subtitle <- "Custom settings"
 #' sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
+#'
+#' # Use named parameter paths to customize legend labels
+#' namedParameterPaths <- c(
+#'   "Lipophilicity" = "Aciclovir|Lipophilicity",
+#'   "Dose" = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#' )
+#'
+#' resultsNamed <- sensitivityCalculation(
+#'   simulation = simulation,
+#'   outputPaths = outputPaths,
+#'   parameterPaths = namedParameterPaths
+#' )
+#'
+#' sensitivitySpiderPlot(resultsNamed)
 #' }
+#'
 #' @export
 sensitivitySpiderPlot <- function(sensitivityCalculation,
                                   outputPaths = NULL,
@@ -167,10 +183,11 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     pkParameters      = pkParameters
   )
 
-  # getting the scales right
+  # set scales and parameterPath labels
   data <- dplyr::mutate(data,
     ParameterFactor = ParameterFactor * 100,
-    PKPercentChange = PKPercentChange + 100
+    PKPercentChange = PKPercentChange + 100,
+    ParameterPathLabel = dplyr::coalesce(ParameterPathUserName, ParameterPath)
   )
 
   # Create list of plots ---------------------------------
@@ -276,10 +293,10 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
     plot <- ggplot(
       dataSubset,
-      aes(x = .data[[xColumn]], y = .data[[yColumn]], group = ParameterPath)
+      aes(x = .data[[xColumn]], y = .data[[yColumn]], group = ParameterPathLabel)
     ) +
       geom_line(
-        aes(group = ParameterPath, color = as.factor(ParameterPath)),
+        aes(group = ParameterPathLabel, color = as.factor(ParameterPathLabel)),
         linewidth = plotConfiguration$linesSize,
         alpha = plotConfiguration$linesAlpha,
         na.rm = TRUE

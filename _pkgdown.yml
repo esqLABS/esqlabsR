@@ -56,7 +56,6 @@ reference:
   - stringToNum
   - GenderInt
   - contains("Types")
-  - escapeForRegex
 - title: Sensitivity analysis
   contents: starts_with("sensitivity")
 - title: Shiny applications

@@ -76,6 +76,21 @@
 #' myPlotConfiguration$legendPosition <- "bottom"
 #' myPlotConfiguration$subtitle <- "Custom settings"
 #' sensitivityTornadoPlot(results, defaultPlotConfiguration = myPlotConfiguration)
+#'
+#' # Use named parameter paths to customize axis labels
+#' namedParameterPaths <- c(
+#'   "Lipophilicity" = "Aciclovir|Lipophilicity",
+#'   "Dose" = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#' )
+#'
+#' resultsNamed <- sensitivityCalculation(
+#'   simulation = simulation,
+#'   outputPaths = outputPaths,
+#'   parameterPaths = namedParameterPaths
+#' )
+#'
+#' sensitivityTornadoPlot(resultsNamed)
 #' }
 #'
 #' @export
@@ -145,10 +160,12 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   data <- dplyr::arrange(data, dplyr::desc(abs(PKMeanPercentChange)))
   data <- dplyr::mutate(
     data,
-    ParameterPath = purrr::map_chr(ParameterPath, .splitParameterName)
+    ParameterPath = purrr::map_chr(ParameterPath, .splitParameterName),
+    ParameterPathLabel = dplyr::coalesce(ParameterPathUserName, ParameterPath)
   )
-  data$ParameterPath <- factor(data$ParameterPath,
-    levels = rev(unique(data$ParameterPath))
+
+  data$ParameterPathLabel <- factor(data$ParameterPathLabel,
+    levels = rev(unique(data$ParameterPathLabel))
   )
 
   data <- dplyr::filter(
@@ -202,7 +219,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     plot <- ggplot(
       dataSubset,
       aes(
-        x = ParameterPath,
+        x = ParameterPathLabel,
         y = PKPercentChange,
         fill = as.factor(ParameterFactor)
       )
