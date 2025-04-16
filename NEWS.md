@@ -18,9 +18,12 @@
     - `init_project()` function has been renamed to `initProject()`,
     - `esqlabs_colors()` function has been renamed to `esqlabsColors()`.
     
-  - The functions `hillFunction()`, `foldChangeFunction()`, and `sineFunction()` 
-    have been removed.
+- The functions `hillFunction()`, `foldChangeFunction()`, and `sineFunction()` 
+  have been removed.
     
+- The function `escapeForRegex()` has been removed from the package.
+
+
 ## Major changes
 
 - `ProjectConfiguration.xslx` configuration file now support environment variables.
