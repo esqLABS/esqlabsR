@@ -1,5 +1,9 @@
 # esqlabsR (development version)
 
+## Minor improvements and bug fixes
+
+- `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
+
 # esqlabsR 5.4.0
 
 ## Breaking changes
