@@ -16,7 +16,7 @@ simulated. See \code{\link[=createScenarios]{createScenarios()}} for details.}
 
 \item{customParams}{A list containing vectors 'paths' with the full paths to the
 parameters, 'values' the values of the parameters, and 'units' with the
-units the values are in. The values to be applied to the model.}
+units the values are in. The values will be applied to all scenarios.}
 
 \item{stopIfParameterNotFound}{Boolean. If \code{TRUE} (default) and a custom parameter is not found, an error is thrown. If \code{FALSE}, non-existing parameters
 are ignored.}
