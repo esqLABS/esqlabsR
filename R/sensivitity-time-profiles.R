@@ -101,6 +101,7 @@
 #' )
 #'
 #' sensitivitySpiderPlot(resultsNamed)
+#' }
 
 #' }
 #' @export

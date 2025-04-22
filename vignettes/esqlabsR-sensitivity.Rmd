@@ -141,7 +141,7 @@ simulation <- simulatedScenarios$TestScenario$simulation
 customOutputPaths <- enum(list(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 ))
-customParameterPaths <- c("Lipophilicity" = "Aciclovir|Lipophilicity") 
+customParameterPaths <- c("Lipophilicity" = "Aciclovir|Lipophilicity")
 
 customAnalysis <- sensitivityCalculation(
   simulation,

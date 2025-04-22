@@ -1,5 +1,11 @@
 # esqlabsR (development version)
 
+## Major changes
+
+- User-defined parameters passed to the `createScenarios()` or `Scenario$new()` 
+in the `customParams` argument are applied last. Up to this version, they 
+were overwritten by the administration protocol (\#817)
+
 ## Minor improvements and bug fixes
 
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.

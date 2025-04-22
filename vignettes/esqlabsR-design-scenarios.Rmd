@@ -321,7 +321,7 @@ If a parameter path is defined in multiple steps, its value will be
 overwritten by the subsequent steps. That means individual parameter
 values will overwrite the values defined in the "ModelParameters.xlsx"
 file, and parameters specified in the `customParams` argument of the
-`runScenarios()` function will overwrite everything else.
+`createScenarios()` function will overwrite everything else.
 
 The order of parameter sheets of the "ModelParameters.xlsx" file defined
 in the **ModelParameterSheets** column defines the order in which the
