@@ -23,7 +23,9 @@ sensitivityCalculation(
 sensitivity will be analyzed.}
 
 \item{parameterPaths}{A single or a vector of the parameter path(s) to be
-varied.}
+varied. Can also be a named vector, where the names are user-defined labels.
+These names will be stored and used in downstream plotting functions (e.g.,
+as legend labels) if provided.}
 
 \item{variationRange}{Optional numeric vector or list defining the scaling of
 the parameters. The same variation range is applied to all specified parameters

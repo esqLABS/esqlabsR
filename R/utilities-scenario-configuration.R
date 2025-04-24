@@ -66,6 +66,9 @@ readScenarioConfigurationFromExcel <- function(scenarioNames = NULL, projectConf
 
   # Remove empty rows
   wholeData <- dplyr::filter(wholeData, !dplyr::if_all(dplyr::everything(), is.na))
+  # Remove all rows where the name of the scenario is not defined. This might happen when other columns
+  # have accidentially some entry, and then the whole row is read with scneario name = NA
+  wholeData <- dplyr::filter(wholeData, !is.na(Scenario_name))
 
   outputPathsDf <- readExcel(
     path = projectConfiguration$scenariosFile,

@@ -1,5 +1,17 @@
 # esqlabsR (development version)
 
+## Major changes
+
+- User-defined parameters passed to the `createScenarios()` or `Scenario$new()` 
+in the `customParams` argument are applied last. Up to this version, they 
+were overwritten by the administration protocol (\#817)
+
+## Minor improvements and bug fixes
+
+- `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
+
+# esqlabsR 5.4.0
+
 ## Breaking changes
 
 - {esqlabsR}` now requires `{ospsuite.utils}` version \>= 1.7.0.
@@ -18,9 +30,12 @@
     - `init_project()` function has been renamed to `initProject()`,
     - `esqlabs_colors()` function has been renamed to `esqlabsColors()`.
     
-  - The functions `hillFunction()`, `foldChangeFunction()`, and `sineFunction()` 
-    have been removed.
+- The functions `hillFunction()`, `foldChangeFunction()`, and `sineFunction()` 
+  have been removed.
     
+- The function `escapeForRegex()` has been removed from the package.
+
+
 ## Major changes
 
 - `ProjectConfiguration.xslx` configuration file now support environment variables.
@@ -29,6 +44,9 @@
   matching environment variables and build the paths accordingly. A message is
   shown to the user to make this transparent.
 - Complete `sensitivitySpiderPlot` documentation (\#799)
+- `parameterPaths` in `sensitivityCalculation()` can now be a named vector. 
+The names will be stored and used as custom labels in all relevant plotting functions (\#811).
+
 
 ## Minor improvements and bug fixes
 

@@ -30,6 +30,7 @@ results <- sensitivityCalculation(
   variationRange = variationRange
 )
 
+
 # Validate plotting arguments ---------------------------------------------
 
 test_that("sensitivityTornadoPlot fails with incorrect input", {
@@ -65,6 +66,32 @@ test_that("sensitivityTornadoPlot creates default plot", {
       title = "sensitivityTornadoPlot works as expected",
       fig = p
     )
+  )
+})
+
+test_that("sensitivityTornadoPlot creates default plot with custom parameter path labels", {
+  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
+
+  resultsLab <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = variationRange
+  )
+
+  p <- sensitivityTornadoPlot(resultsLab)
+
+  vdiffr::expect_doppelganger(
+    title = "sensitivityTornadoPlot works with user parameter path names",
+    fig = suppressWarnings(p)
+  )
+
+  n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  pb <- ggplot2::ggplot_build(p[[n]][[1]])
+
+  expect_setequal(
+    names(parameterPaths),
+    pb$layout$panel_params[[1]]$y$get_labels()
   )
 })
 

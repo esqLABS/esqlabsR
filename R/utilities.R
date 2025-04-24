@@ -117,15 +117,3 @@ compareWithNA <- function(v1, v2) {
   same[is.na(same)] <- FALSE
   return(same)
 }
-
-#' Escape a string for possible regular expression match
-#'
-#' @param string String to be escaped
-#'
-#' @returns string with prefix "\\Q" and suffix "\\E" appended.
-#' The resulting string will not be recognized as a regular expression pattern.
-#'
-#' @export
-escapeForRegex <- function(string) {
-  paste0("\\Q", string, "\\E")
-}

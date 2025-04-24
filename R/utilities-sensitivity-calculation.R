@@ -24,7 +24,7 @@
   for (i in seq_along(simulationResultsBatch)) {
     batchResultsList[[i]] <- .simulationResultsToPKDataFrame(
       simulationResultsBatch[[i]],
-      parameterPaths[[i]],
+      parameterPaths[i],
       customOutputFunctions
     )
   }
@@ -268,7 +268,8 @@
       ParameterPath = purrr::pluck(parameter[[1]], "path"),
       ParameterValue = purrr::pluck(parameter[[1]], "value"),
       ParameterUnit = purrr::pluck(parameter[[1]], "unit"),
-      ParameterFactor = as.numeric(ParameterFactor)
+      ParameterFactor = as.numeric(ParameterFactor),
+      ParameterPathUserName = names(parameterPath) %||% NA_character_,
     ) %>%
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
 }

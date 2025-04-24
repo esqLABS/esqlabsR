@@ -177,3 +177,33 @@ test_that("It saves and loads scenario results for scenario names with forbidden
     tmpdir = tempdir
   )
 })
+
+
+test_that("The hierarchy of parametrization is correct", {
+  # Define which scenarios to run
+  scenarioNames <- c("TestScenario")
+  # Create `ScenarioConfiguration` objects from excel files without custom parameters
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+
+  # Check that the hierarchy of parametrization is correct
+  idx <- which(scenarios[[1]]$finalCustomParams$paths == "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose")
+  expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 250)
+
+  # Create `ScenarioConfiguration` objects from excel files with custom parameter
+  scenarios <- createScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    customParams = list(
+      paths = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+      values = 500,
+      units = "mg"
+    )
+  )
+
+  # Check that the hierarchy of parametrization is correct
+  idx <- which(scenarios[[1]]$finalCustomParams$paths == "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose")
+  expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 500)
+})

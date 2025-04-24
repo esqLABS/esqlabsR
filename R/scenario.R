@@ -115,13 +115,6 @@ Scenario <- R6::R6Class(
         }
       }
 
-      if (!is.null(customParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = customParams
-        )
-      }
-
       # Set administration protocols
       excelFilePath <- scenarioConfiguration$projectConfiguration$applicationsFile
       # Checking for 'NA' if administration protocol is not set in excel file.
@@ -138,6 +131,14 @@ Scenario <- R6::R6Class(
           newParameters = applicationParams
         )
       }
+
+      if (!is.null(customParams)) {
+        params <- extendParameterStructure(
+          parameters = params,
+          newParameters = customParams
+        )
+      }
+
       # Save the final custom parameters
       private$.finalCustomParams <- params
 

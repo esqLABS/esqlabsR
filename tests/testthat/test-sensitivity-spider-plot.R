@@ -29,6 +29,7 @@ results <- sensitivityCalculation(
   variationRange = variationRange
 )
 
+
 # Validate plotting arguments ---------------------------------------------
 
 test_that("sensitivitySpiderPlot fails with invalid input", {
@@ -50,6 +51,34 @@ test_that("sensitivitySpiderPlot creates expected default plot", {
       title = "sensitivitySpiderPlot works as expected",
       fig = p
     )
+  )
+})
+
+test_that("sensitivitySpiderPlot legend labels are correctly applied", {
+  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
+
+  resultsLab <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    variationRange = variationRange
+  )
+
+  p <- sensitivitySpiderPlot(resultsLab)
+
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivitySpiderPlot works with user parameter path names",
+      fig = p
+    )
+  )
+
+  n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  pb <- ggplot2::ggplot_build(p[[n]][[1]])
+
+  expect_equal(
+    levels(as.factor(names(parameterPaths))),
+    as.character(pb$plot$scales$get_scales("colour")$get_labels())
   )
 })
 
