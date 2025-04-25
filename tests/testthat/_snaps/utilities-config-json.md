@@ -432,7 +432,7 @@
       [1] "TestScenario"
       
       $files$scenarios$Scenarios$rows[[1]]$IndividualId
-      [1] "Indiv2"
+      [1] "Indiv1"
       
       $files$scenarios$Scenarios$rows[[1]]$PopulationId
       [1] NA
@@ -570,7 +570,7 @@
       [1] "Aciclovir_iv_250mg"
       
       $files$scenarios$Scenarios$rows[[4]]$SimulationTime
-      [1] "0, 12, 24"
+      [1] "0, 12, 20"
       
       $files$scenarios$Scenarios$rows[[4]]$SimulationTimeUnit
       [1] "h"
@@ -629,47 +629,6 @@
       [1] "Aciclovir.pkml"
       
       $files$scenarios$Scenarios$rows[[5]]$OutputPathsIds
-      [1] NA
-      
-      
-      $files$scenarios$Scenarios$rows[[6]]
-      $files$scenarios$Scenarios$rows[[6]]$Scenario_name
-      [1] "NewScenario"
-      
-      $files$scenarios$Scenarios$rows[[6]]$IndividualId
-      [1] "Indiv1"
-      
-      $files$scenarios$Scenarios$rows[[6]]$PopulationId
-      [1] NA
-      
-      $files$scenarios$Scenarios$rows[[6]]$ReadPopulationFromCSV
-      [1] "FALSE"
-      
-      $files$scenarios$Scenarios$rows[[6]]$ModelParameterSheets
-      [1] "Global"
-      
-      $files$scenarios$Scenarios$rows[[6]]$ApplicationProtocol
-      [1] "Aciclovir_iv_250mg"
-      
-      $files$scenarios$Scenarios$rows[[6]]$SimulationTime
-      [1] "0, 24, 60"
-      
-      $files$scenarios$Scenarios$rows[[6]]$SimulationTimeUnit
-      [1] "h"
-      
-      $files$scenarios$Scenarios$rows[[6]]$SteadyState
-      [1] "FALSE"
-      
-      $files$scenarios$Scenarios$rows[[6]]$SteadyStateTime
-      [1] NA
-      
-      $files$scenarios$Scenarios$rows[[6]]$SteadyStateTimeUnit
-      [1] NA
-      
-      $files$scenarios$Scenarios$rows[[6]]$ModelFile
-      [1] "Aciclovir.pkml"
-      
-      $files$scenarios$Scenarios$rows[[6]]$OutputPathsIds
       [1] NA
       
       
@@ -2042,33 +2001,29 @@
       
       $files$scenarios$Scenarios$rows
                     Scenario_name IndividualId   PopulationId ReadPopulationFromCSV
-      1              TestScenario       Indiv2           <NA>                  <NA>
+      1              TestScenario       Indiv1           <NA>                  <NA>
       2             TestScenario2       Indiv1           <NA>                  <NA>
       3        PopulationScenario       Indiv1 TestPopulation                 FALSE
       4 PopulationScenarioFromCSV       Indiv1 TestPopulation                  TRUE
       5 TestScenario_missingParam       Indiv1           <NA>                  <NA>
-      6               NewScenario       Indiv1           <NA>                 FALSE
         ModelParameterSheets ApplicationProtocol      SimulationTime
       1               Global  Aciclovir_iv_250mg           0, 24, 60
       2               Global  Aciclovir_iv_250mg 0, 1, 60; 1, 12, 20
       3               Global  Aciclovir_iv_250mg           0, 12, 20
-      4               Global  Aciclovir_iv_250mg           0, 12, 24
+      4               Global  Aciclovir_iv_250mg           0, 12, 20
       5 Global, MissingParam  Aciclovir_iv_250mg           0, 24, 60
-      6               Global  Aciclovir_iv_250mg           0, 24, 60
         SimulationTimeUnit SteadyState SteadyStateTime SteadyStateTimeUnit
       1                  h        <NA>            <NA>                <NA>
       2                  h        TRUE             500                 min
       3                  h       FALSE            <NA>                <NA>
       4                  h       FALSE            <NA>                <NA>
       5                  h        <NA>            <NA>                <NA>
-      6                  h       FALSE            <NA>                <NA>
              ModelFile                    OutputPathsIds
       1 Aciclovir.pkml                              <NA>
       2 Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
       3 Aciclovir.pkml                              <NA>
       4 Aciclovir.pkml                              <NA>
       5 Aciclovir.pkml                              <NA>
-      6 Aciclovir.pkml                              <NA>
       
       
       $files$scenarios$OutputPaths
