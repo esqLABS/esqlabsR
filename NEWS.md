@@ -1,10 +1,33 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+- The function `createDataCombinedFromExcel()` gets a new signature. The arguments 
+`file` and `sheet` are removed. The file from which the `DataCombined` objects 
+are created is now passed as part of the `ProjectConfiguration` passed as 
+`projectConfiguration` argument, the sheet is always `DataCombined`.
+
+- The function `createDataCombinedFromExcel()` gets a new argument `plotGridNames`.
+The `plotGridNames` argument is a character vector of names of the plots 
+specified in the sheet `plotGrids`. The function will then create and return 
+`DataCombined` used in the specified plots. The new argument can be combined with 
+`dataCombinedNames`.Useful in combination with the new argument `dataCombinedList` 
+of the function `createPlotsFromExcel()`.
+
+- Argument `dataCombinedNames = NULL` of the function `createDataCombinedFromExcel()`
+does not create `DataCombined` for all entries in the excel file any more. If 
+`dataCombinedNames = NULL`, `plotGridNames` must be specified. If both arguments
+are `NULL`, an empty list is returned.
+
 ## Major changes
 
 - User-defined parameters passed to the `createScenarios()` or `Scenario$new()` 
 in the `customParams` argument are applied last. Up to this version, they 
 were overwritten by the administration protocol (\#817)
+
+- `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
+  to create plots defined in the `plotGridNames` argument. Missing `DataCombined`
+  will be created from the Excel file (default behavior).
 
 ## Minor improvements and bug fixes
 
@@ -15,6 +38,7 @@ were overwritten by the administration protocol (\#817)
 ## Breaking changes
 
 - {esqlabsR}` now requires `{ospsuite.utils}` version \>= 1.7.0.
+
 - The Importer configuration provided with the template project has been
   updated to include `Gender` in the naming pattern. The new naming pattern is as follows:
   
@@ -43,7 +67,9 @@ were overwritten by the administration protocol (\#817)
   modifying the projectConfiguration object directly, the package will look for
   matching environment variables and build the paths accordingly. A message is
   shown to the user to make this transparent.
+  
 - Complete `sensitivitySpiderPlot` documentation (\#799)
+
 - `parameterPaths` in `sensitivityCalculation()` can now be a named vector. 
 The names will be stored and used as custom labels in all relevant plotting functions (\#811).
 
@@ -51,9 +77,12 @@ The names will be stored and used as custom labels in all relevant plotting func
 ## Minor improvements and bug fixes
 
 - Improved print outputs for all classes
+
 - Classes do not inherit from the deprecated `Printable` class from the `{ospsuite.utils}` package.
+
 - Print methods for all classes are now implemented using the `ospPrint\*` functions 
 introduced in version 1.7.0. of the `{ospsuite.utils}` package.
+
 - Fix when `createPlotsFromExcel` or `createDataCombinedFromExcel` would return 
 wrong names of DataCombined for which the output path for a simulation scenario is not defined (\#800).
   
@@ -67,14 +96,6 @@ file are now exported to the subfolder `Figures\<Current Time Stamp>` of the `Re
  defined in the `ProjectConfiguration` (\#778).
  
 - Fix warning cannot be displayed when no individual model parameters are displayed.
- 
-- `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
-  to create plots defined in the `plotGridNames` argument. Missing `DataCombined`
-  will be created from the Excel file (default behavior).
-  
-- New function `createDataCombinedForPlots()` to create `DataCombined` objects
-  from the `Plots.xlsx` file for specified set of plots. This function can be used 
-  to create `DataCombined` objects that can be passed to `createPlotsFromExcel()`.
 
 - `sensitivityCalculation()` now supports non-default PK parameters, e.g., user-defined PK-Parameters 
 (see https://www.open-systems-pharmacology.org/OSPSuite-R/articles/pk-analysis.html#user-defined-pk-parameters 

@@ -41,7 +41,6 @@ First, `DataCombined` are defined with simulation results coming from simulated
 scenarios and observed data sets in the **DataCombined** sheet. More information
 in the [Create a Datacombined](#specify-a-datacombined) section.
 
-
 From each `DataCombined`, multiple plots of different types can be defined using
 the **plotConfiguration** sheet. More information in the [Customizing
 Plots](#customizing-plots) section.
@@ -172,7 +171,7 @@ example can be found
 [here](https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/examples/TestProject/Parameters/Plots.xlsx).
 
 
-#### use `createPlotsFromExcel()`
+#### Use `createPlotsFromExcel()`
 In the next step, the user calls the function `createPlotsFromExcel()`, passing
 the generated data:
 
@@ -210,6 +209,36 @@ required by these plots cannot be found, an error is thrown. To override this
 behavior, e.g., to only plot the observed data without having the results
 simulated, change the value of the argument `stopIfNotFound` to `FALSE`. You can
 also specify which plots to create with the `plotGridNames` argument.
+
+#### Extract `DataCombined` required for plotting and calculate residuals
+
+The `createPlotsFromExcel()` function automatically creates all `DataCombined` 
+required for the specified plots. In some cases it is usefull to get the `DataCombined` 
+objects before plotting. E.g., you could calculate the residuals between all 
+groups defined in the `DataCombined` (see [`{ospsuite}` documentation](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations) for more details), or modify the `DataCombined` before using them
+for plotting. To do so, you can use the `createDataCombinedFromExcel()` function:
+
+```{r}
+# Create DataCombined used inthe plots "Aciclovir" and "Aciclovir2"
+dataCombined <- createDataCombinedFromExcel(
+  projectConfiguration = projectConfiguration,
+  plotGridNames = c("Aciclovir", "Aciclovir2"),
+  simulatedScenarios = simulatedScenarios,
+  observedData = observedData
+)
+
+print(dataCombined)
+
+# Calculate residuals. Residuals are returned for each observed data point
+residuals <- calculateResiduals(dataCombined = dataCombined[[1]],
+                   scaling = "lin"
+)
+
+# Calculate the sum of residuals to convieniently quanity the quality of predictions
+sumResiduals <- sum(residuals$residualValues)
+
+print(paste0("The sum of linear residuals for is ", sumResiduals))
+```
 
 ## Plotting With Code
 

@@ -292,6 +292,7 @@ messages$invalidSimulationResultNames <- function(simulationResultNames,
   )
 }
 
+# Sensitivity calculation####
 messages$sensitivityAnalysisSimulationFailure <- function(parameterPath, parameterFactor) {
   cat(
     paste0(

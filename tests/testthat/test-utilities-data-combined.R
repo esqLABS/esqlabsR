@@ -90,12 +90,11 @@ plotGridsDf <- data.frame(list(
   "title" = "Aciclovir PVB"
 ))
 
-test_that("It returns correct names of data combined when a path is not specified for one simulated scenario", {
+test_that("It throws an error with correct names of data combined when a path is not specified for one simulated scenario", {
   expect_error(.validateDataCombinedFromExcel(dataCombinedDf_missingPath, observedData), regexp = messages$stopNoPathProvided("DC_missingPath"))
 })
 
-# It returns an empty data combined when no data set is found
-test_that("It returns an empty DataCombined when no data is available", {
+test_that("It throws an error when no data is available and stopIfNotFound = TRUE", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -116,12 +115,78 @@ test_that("It returns an empty DataCombined when no data is available", {
         "plotGrids" = plotGridsDfLocal,
         "exportConfiguration" = exportConfigurationDfLocal
       ), path = file.path(tempDir, "Plots.xlsx"), )
+      expect_error(
+        createDataCombinedFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          dataCombinedNames = "AciclovirPVB",
+          projectConfiguration = projectConfiguration
+        ),
+        regexp = messages$stopInvalidDataSetName("Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_")
+      )
+    }
+  )
+})
 
+test_that("It throws an error when no simulated results are available and stopIfNotFound = TRUE", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- data.frame(
+        plotGridName = c(NA),
+        outputName = c(NA)
+      )
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
+      expect_error(
+        createDataCombinedFromExcel(
+          observedData = observedData,
+          dataCombinedNames = "AciclovirPVB",
+          projectConfiguration = projectConfiguration
+        ),
+        regexp = messages$warningInvalidScenarioName("TestScenario")
+      )
+    }
+  )
+})
+
+test_that("It returns an empty DataCombined when no data is available and stopIfNotFound = FALSE", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- data.frame(
+        plotGridName = c(NA),
+        outputName = c(NA)
+      )
+      .writeExcel(data = list(
+        "DataCombined" = dataCombinedDfLocal,
+        "plotConfiguration" = plotConfigurationDfLocal,
+        "plotGrids" = plotGridsDfLocal,
+        "exportConfiguration" = exportConfigurationDfLocal
+      ), path = file.path(tempDir, "Plots.xlsx"), )
       # Warnings are suppressed because they are expected but not relevant for
       # this test.
       suppressWarnings({
         dataCombined <- createDataCombinedFromExcel(
-          file = file.path(tempDir, "Plots.xlsx"),
+          projectConfiguration = projectConfiguration,
+          dataCombinedNames = "AciclovirPVB",
           stopIfNotFound = FALSE
         )
       })
@@ -130,4 +195,62 @@ test_that("It returns an empty DataCombined when no data is available", {
       expect_equal(dataCombined[[1]], DataCombined$new())
     }
   )
+})
+
+test_that("It returns an empty list when no DataCombined or plotGridNames are specified", {
+  dataCombined <- createDataCombinedFromExcel(
+    projectConfiguration = projectConfiguration
+  )
+
+  expect_equal(dataCombined, list())
+})
+
+test_that("It creates correct DataCombined when only data combined names are provided", {
+  dataCombined <- createDataCombinedFromExcel(
+    projectConfiguration = projectConfiguration,
+    dataCombinedNames = "AciclovirPop",
+    simulatedScenarios = simulatedScenarios,,
+    observedData = observedData
+  )
+
+  expect_true(ospsuite.utils::isOfType(dataCombined, "DataCombined"))
+  expect_equal(names(dataCombined)[[1]], "AciclovirPop")
+})
+
+test_that("It creates correct DataCombined when only plotGridNames are provided", {
+  dataCombined <- createDataCombinedFromExcel(
+    projectConfiguration = projectConfiguration,
+    plotGridNames =  "Aciclovir3",
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData
+  )
+
+  expect_true(ospsuite.utils::isOfType(dataCombined, "DataCombined"))
+  expect_equal(names(dataCombined)[[1]], "AciclovirPop")
+})
+
+test_that("It creates correct DataCombined when both plotGridNames and data combined names are provided", {
+  dataCombined <- createDataCombinedFromExcel(
+    projectConfiguration = projectConfiguration,
+    plotGridNames =  "Aciclovir3",
+    dataCombinedNames = "AciclovirPVB",
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData
+  )
+
+  expect_true(ospsuite.utils::isOfType(dataCombined, "DataCombined"))
+  expect_true(all(names(dataCombined) %in% c("AciclovirPop", "AciclovirPVB")))
+})
+
+test_that("It does not create duplicates when both plotGridNames and data combined names are provided", {
+  dataCombined <- createDataCombinedFromExcel(
+    projectConfiguration = projectConfiguration,
+    plotGridNames =  "Aciclovir3",
+    dataCombinedNames = "AciclovirPop",
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData
+  )
+
+  expect_true(ospsuite.utils::isOfType(dataCombined, "DataCombined"))
+  expect_equal(names(dataCombined), "AciclovirPop")
 })
