@@ -4,11 +4,16 @@
 
 - User-defined parameters passed to the `createScenarios()` or `Scenario$new()` 
 in the `customParams` argument are applied last. Up to this version, they 
-were overwritten by the administration protocol (\#817)
+were overwritten by the administration protocol (\#817).
+- Added `snapshotProjectConfiguration()` and `restoreProjectConfiguration()` functions 
+to support version control and project sharing of project configurations.
 
 ## Minor improvements and bug fixes
 
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
+- Added documentation for ProjectConfiguration snapshot workflow in the project structure 
+vignette to help users with version control and project sharing.
+
 
 # esqlabsR 5.4.0
 
