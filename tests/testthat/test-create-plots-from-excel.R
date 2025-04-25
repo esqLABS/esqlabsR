@@ -530,6 +530,83 @@ test_that("It creates plots for all plot grids when plotGridNames is NULL", {
   expect_equal(names(plots), c("Aciclovir", "Aciclovir2", "Aciclovir3"))
 })
 
+test_that("When custom DataCombined is passed, it is used instead of the one defined in the Excel", {
+  set.seed(123)
+
+dataCombinedList <- createDataCombinedFromExcel(projectConfiguration = projectConfiguration, plotGridNames = c("Aciclovir", "Aciclovir2", "Aciclovir3"),
+                                                simulatedScenarios = simulatedScenarios,
+                                                observedData = observedData)
+
+# Change the x-offset of a data combined
+dataCombinedList$AciclovirPVB$setDataTransformations(xOffsets = 0)
+
+plots <- createPlotsFromExcel(
+  simulatedScenarios = simulatedScenarios,
+  observedData = observedData,
+  projectConfiguration = projectConfiguration,
+  dataCombinedList = dataCombinedList,
+  stopIfNotFound = TRUE
+)
+
+vdiffr::expect_doppelganger(title = "firstPlot", print(plots[[1]]))
+vdiffr::expect_doppelganger(title = "secondPlot", print(plots[[2]]))
+  })
+
+test_that("It can create plots when custom data combined are passed that are missing in the excel", {
+
+  set.seed(123)
+
+  dataCombinedList <- createDataCombinedFromExcel(projectConfiguration = projectConfiguration, plotGridNames = c("Aciclovir", "Aciclovir2", "Aciclovir3"),
+                                                  simulatedScenarios = simulatedScenarios,
+                                                  observedData = observedData)
+
+emptyDataCombinedDf <- data.frame(list(
+  "DataCombinedName" = NA,
+  "dataType" = NA,
+  "label" = NA,
+  "scenario" = NA,
+  "path" = NA,
+  "dataSet" = NA,
+  "group" = NA,
+  "xOffsets" = NA,
+  "xOffsetsUnits" = NA,
+  "yOffsets" = NA,
+  "yOffsetsUnits" = NA,
+  "xScaleFactors" = NA,
+  "yScaleFactors" = NA
+))
+
+tempDir <- tempdir()
+projectConfigurationLocal <- projectConfiguration$clone()
+projectConfigurationLocal$configurationsFolder <- tempDir
+withr::with_tempfile(
+  new = "Plots.xlsx",
+  tmpdir = tempDir,
+  code = {
+    dataCombinedDfLocal <- emptyDataCombinedDf
+    plotConfigurationDfLocal <- plotConfigurationDf
+    plotGridsDfLocal <- plotGridsDf
+    exportConfigurationDfLocal <- exportConfigurationDf
+    .writeExcel(data = list(
+      "DataCombined" = dataCombinedDfLocal,
+      "plotConfiguration" = plotConfigurationDfLocal,
+      "plotGrids" = plotGridsDfLocal,
+      "exportConfiguration" = exportConfigurationDfLocal
+    ), path = file.path(tempDir, "Plots.xlsx"), )
+    plots <- createPlotsFromExcel(
+      simulatedScenarios = simulatedScenarios,
+      observedData = observedData,
+      projectConfiguration = projectConfigurationLocal,
+      dataCombinedList = dataCombinedList,
+      stopIfNotFound = TRUE
+    )
+
+    vdiffr::expect_doppelganger(title = "firstPlotCustomDC", print(plots[[1]]))
+  }
+)
+
+})
+
 test_that("It creates plots only for specified plotGrids", {
   plots <- createPlotsFromExcel(
     plotGridNames = "Aciclovir",

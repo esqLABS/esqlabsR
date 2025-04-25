@@ -292,6 +292,9 @@ createPlotsFromExcel <- function(
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
   validateIsOfType(dataCombinedList, "DataCombined", nullAllowed = TRUE)
+  if (!typeof(dataCombinedList) %in% c("list", "NULL")) {
+    stop(messages$errorDataCombinedListMustBeList(typeof(dataCombinedList)))
+  }
 
   plotConfigurations <- .readPlotConfigurations(
     projectConfiguration = projectConfiguration,
@@ -307,13 +310,17 @@ createPlotsFromExcel <- function(
   }
 
   # Filter and validate only used data combined
-  dataCombinedList <- createDataCombinedFromExcel(
+  dataCombinedListFromExcel <- createDataCombinedFromExcel(
     projectConfiguration = projectConfiguration,
     dataCombinedNames = unique(dfPlotConfigurations$DataCombinedName),
     simulatedScenarios = simulatedScenarios,
     observedData = observedData,
     stopIfNotFound = stopIfNotFound
   )
+  # Add entries from to the provided list of DataCombined.
+  dataCombinedListFromExcel[names(dataCombinedList)] <- dataCombinedList
+  dataCombinedList <- dataCombinedListFromExcel
+
   dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, names(dataCombinedList))
 
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
@@ -830,9 +837,7 @@ createPlotsFromExcel <- function(
 #'
 #' @returns A named list with configurations 'plotGrids', 'dfPlotConfigurations',
 #' and 'exportConfigurations'
-#' @export
-#'
-#' @examples
+#' @noRd
 .readPlotConfigurations <- function(projectConfiguration, plotGridNames) {
   # read sheet "plotGrids" with info for plotGridConfigurations
   dfPlotGrids <- readExcel(projectConfiguration$plotsFile,
