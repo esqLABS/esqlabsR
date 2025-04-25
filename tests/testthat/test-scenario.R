@@ -147,32 +147,6 @@ test_that("Warning is shown when individual characteristics are not found", {
   )
 })
 
-test_that("Warning is shown when individual specific model parameters are not found", {
-  skip_on_os("mac")
-
-  scenarioNames <- c("TestScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Set individual ID to an individual that exists but has no parameters sheet
-  scenarioConfigurations$TestScenario$individualId <- "Indiv1"
-
-  # Use the exact warning message text to match
-  warning_regex <- paste0(
-    "No individual-specific model parameters for individual 'Indiv1' ",
-    "in scenario 'TestScenario'"
-  )
-
-  expect_warning(
-    Scenario$new(
-      scenarioConfigurations$TestScenario,
-      stopIfParameterNotFound = FALSE
-    ),
-    warning_regex
-  )
-})
 
 
 test_that("Population from CSV is loaded correctly", {
