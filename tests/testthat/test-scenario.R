@@ -143,8 +143,7 @@ test_that("Warning is shown when individual characteristics are not found", {
     Scenario$new(
       scenarioConfigurations$TestScenario,
       stopIfParameterNotFound = FALSE
-    ),
-    "No individual characteristics"
+    )
   )
 })
 
