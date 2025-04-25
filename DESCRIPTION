@@ -32,7 +32,6 @@ Imports:
     labeling,
     lifecycle,
     methods,
-    ospsuite.utils (>= 1.6.0),
     parallel,
     patchwork,
     purrr,
