@@ -40,11 +40,13 @@ test_that("Scenario properties are read-only", {
   )
 
   # Test that properties are read-only
-  expect_error(scenario$scenarioConfiguration <- "new value", "read-only")
-  expect_error(scenario$finalCustomParams <- "new value", "read-only")
-  expect_error(scenario$simulation <- "new value", "read-only")
-  expect_error(scenario$population <- "new value", "read-only")
-  expect_error(scenario$scenarioType <- "new value", "read-only")
+  expect_error(
+    scenario$scenarioConfiguration <- "new value"
+  )
+  expect_error(scenario$finalCustomParams <- "new value")
+  expect_error(scenario$simulation <- "new value")
+  expect_error(scenario$population <- "new value")
+  expect_error(scenario$scenarioType <- "new value")
 })
 
 test_that("Scenario type is correctly identified", {
@@ -123,4 +125,98 @@ test_that("Print method works", {
 
   # Test that print method returns the object invisibly
   expect_equal(scenario, scenario$print())
+})
+
+test_that("Warning is shown when individual characteristics are not found", {
+  skip_on_os("mac")
+
+  scenarioNames <- c("TestScenario")
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Set individual ID to non-existent individual
+  scenarioConfigurations$TestScenario$individualId <- "NonExistentIndividual"
+
+  expect_warning(
+    Scenario$new(
+      scenarioConfigurations$TestScenario,
+      stopIfParameterNotFound = FALSE
+    ),
+    "No individual characteristics"
+  )
+})
+
+test_that("Warning is shown when individual specific model parameters are not found", {
+  skip_on_os("mac")
+
+  scenarioNames <- c("TestScenario")
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Set individual ID to an individual that exists but has no parameters sheet
+  scenarioConfigurations$TestScenario$individualId <- "Indiv1"
+
+  # Use the exact warning message text to match
+  warning_regex <- paste0(
+    "No individual-specific model parameters for individual 'Indiv1' ",
+    "in scenario 'TestScenario'"
+  )
+
+  expect_warning(
+    Scenario$new(
+      scenarioConfigurations$TestScenario,
+      stopIfParameterNotFound = FALSE
+    ),
+    warning_regex
+  )
+})
+
+test_that("A scenario with simulation time and output intervals is created correctly", {
+  skip_on_os("mac")
+
+  scenarioNames <- c("TestScenario")
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Set simulation time - use string format like "0,24,0.1"
+  scenarioConfigurations$TestScenario$simulationTime <- "0,24,0.1"
+  scenarioConfigurations$TestScenario$simulationTimeUnit <- "h"
+
+  scenario <- Scenario$new(
+    scenarioConfigurations$TestScenario,
+    stopIfParameterNotFound = FALSE
+  )
+
+  # Check that the simulation time was set correctly
+  outputIntervals <- ospsuite::getOutputIntervals(scenario$simulation)
+  expect_equal(length(outputIntervals), 1)
+  expect_equal(outputIntervals[[1]]$startTime, 0)
+  expect_equal(outputIntervals[[1]]$endTime, 24 * 3600) # 24h in seconds
+})
+
+test_that("Population from CSV is loaded correctly", {
+  skip_on_os("mac")
+
+  scenarioNames <- c("PopulationScenarioFromCSV")
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Ensure readPopulationFromCSV is set to TRUE
+  scenarioConfigurations$PopulationScenarioFromCSV$readPopulationFromCSV <- TRUE
+
+  scenario <- Scenario$new(
+    scenarioConfigurations$PopulationScenarioFromCSV,
+    stopIfParameterNotFound = FALSE
+  )
+
+  expect_true(isOfType(scenario$population, "Population"))
+  expect_equal(scenario$scenarioType, "Population")
 })
