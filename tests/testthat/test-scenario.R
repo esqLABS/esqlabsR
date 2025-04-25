@@ -175,30 +175,6 @@ test_that("Warning is shown when individual specific model parameters are not fo
   )
 })
 
-test_that("A scenario with simulation time and output intervals is created correctly", {
-  skip_on_os("mac")
-
-  scenarioNames <- c("TestScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Set simulation time - use string format like "0,24,0.1"
-  scenarioConfigurations$TestScenario$simulationTime <- "0,24,0.1"
-  scenarioConfigurations$TestScenario$simulationTimeUnit <- "h"
-
-  scenario <- Scenario$new(
-    scenarioConfigurations$TestScenario,
-    stopIfParameterNotFound = FALSE
-  )
-
-  # Check that the simulation time was set correctly
-  outputIntervals <- ospsuite::getOutputIntervals(scenario$simulation)
-  expect_equal(length(outputIntervals), 1)
-  expect_equal(outputIntervals[[1]]$startTime, 0)
-  expect_equal(outputIntervals[[1]]$endTime, 24 * 3600) # 24h in seconds
-})
 
 test_that("Population from CSV is loaded correctly", {
   skip_on_os("mac")

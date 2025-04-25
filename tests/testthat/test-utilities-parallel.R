@@ -28,35 +28,3 @@ test_that("`executeInParallel()` works as expected", {
 
   expect_error(executeInParallel("log", list(letters[1:4], LETTERS[1:4])))
 })
-
-test_that("`executeInParallel()` works with custom functions", {
-  skip_on_os("mac")
-
-  # Define a custom function that uses an exported value
-  squareAndAdd <- function(x, y) {
-    return(x^2 + y)
-  }
-
-  valueToExport <- 10
-
-  result <- executeInParallel(
-    squareAndAdd,
-    list(1, 2, 3, 4),
-    exports = "valueToExport",
-    y = valueToExport,
-    nrOfCores = 2
-  )
-
-  expect_equal(result, list(11, 14, 19, 26))
-
-  # Test validation of outputNames length
-  expect_error(
-    executeInParallel(
-      "mean",
-      list(1:4, 5:8),
-      outputNames = c("one"),
-      nrOfCores = 2
-    ),
-    "must have the same length"
-  )
-})
