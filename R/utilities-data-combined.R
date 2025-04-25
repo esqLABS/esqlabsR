@@ -26,27 +26,25 @@ createDataCombinedFromExcel <- function(
     simulatedScenarios = NULL,
     observedData = NULL,
     stopIfNotFound = TRUE) {
+  validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
+  validateIsOfType(projectConfiguration, "ProjectConfiguration")
+  validateIsString(plotGridNames, nullAllowed = TRUE)
 
-    validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
-    validateIsOfType(projectConfiguration, "ProjectConfiguration")
-    validateIsString(plotGridNames, nullAllowed = TRUE)
+  # Exit early if no data combined names or plot grid names are provided
+  if (is.null(dataCombinedNames) && is.null(plotGridNames)) {
+    return(list())
+  }
 
-    # Exit early if no data combined names or plot grid names are provided
-    if (is.null(dataCombinedNames) && is.null(plotGridNames)) {
-      return(list())
-    }
-
-    # If plotGridNames are provided, extract the names of required data combined
-    # and add them to the passed data combined names
-    if (!is.null(plotGridNames)){
-
-      # Combine the passed data combined names with the names required for
-      # the passed plots
+  # If plotGridNames are provided, extract the names of required data combined
+  # and add them to the passed data combined names
+  if (!is.null(plotGridNames)) {
+    # Combine the passed data combined names with the names required for
+    # the passed plots
     dataCombinedNames <- union(dataCombinedNames, .extractDataCombinedNamesForPlots(projectConfiguration = projectConfiguration, plotGridNames = plotGridNames))
-}
+  }
 
   dfDataCombined <- readExcel(path = projectConfiguration$plotsFile, sheet = "DataCombined")
-    dfDataCombined <- dplyr::filter(dfDataCombined, DataCombinedName %in% dataCombinedNames)
+  dfDataCombined <- dplyr::filter(dfDataCombined, DataCombinedName %in% dataCombinedNames)
 
   dfDataCombined <- .validateDataCombinedFromExcel(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound)
 
@@ -217,7 +215,7 @@ createDataCombinedFromExcel <- function(
   missingDc <- setdiff(dcNames, unique(dfDataCombined$DataCombinedName))
   # Create empty rows for each missing DataCombined
   for (name in missingDc) {
-    dfDataCombined[nrow(dfDataCombined) +1, 1] <- name
+    dfDataCombined[nrow(dfDataCombined) + 1, 1] <- name
   }
 
   return(dfDataCombined)
@@ -233,10 +231,10 @@ createDataCombinedFromExcel <- function(
 #'
 #' @returns A list with the names of required DataCombined
 #' @noRd
-.extractDataCombinedNamesForPlots <- function(projectConfiguration, plotGridNames){
+.extractDataCombinedNamesForPlots <- function(projectConfiguration, plotGridNames) {
   # read sheet "plotGrids" with info for plotGridConfigurations
   dfPlotGrids <- readExcel(projectConfiguration$plotsFile,
-                           sheet = "plotGrids"
+    sheet = "plotGrids"
   )
 
   # Filter for only specified plot grids
@@ -249,7 +247,7 @@ createDataCombinedFromExcel <- function(
 
   # read sheet "plotConfiguration"
   dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile,
-                                    sheet = "plotConfiguration"
+    sheet = "plotConfiguration"
   )
 
   # Filter and validate plotGrids
@@ -264,4 +262,4 @@ createDataCombinedFromExcel <- function(
   dataCombinedNames <- unique(dfPlotConfigurations$DataCombinedName)
 
   return(dataCombinedNames)
-  }
+}

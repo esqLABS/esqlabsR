@@ -209,7 +209,7 @@ test_that("It creates correct DataCombined when only data combined names are pro
   dataCombined <- createDataCombinedFromExcel(
     projectConfiguration = projectConfiguration,
     dataCombinedNames = "AciclovirPop",
-    simulatedScenarios = simulatedScenarios,,
+    simulatedScenarios = simulatedScenarios, ,
     observedData = observedData
   )
 
@@ -220,7 +220,7 @@ test_that("It creates correct DataCombined when only data combined names are pro
 test_that("It creates correct DataCombined when only plotGridNames are provided", {
   dataCombined <- createDataCombinedFromExcel(
     projectConfiguration = projectConfiguration,
-    plotGridNames =  "Aciclovir3",
+    plotGridNames = "Aciclovir3",
     simulatedScenarios = simulatedScenarios,
     observedData = observedData
   )
@@ -232,7 +232,7 @@ test_that("It creates correct DataCombined when only plotGridNames are provided"
 test_that("It creates correct DataCombined when both plotGridNames and data combined names are provided", {
   dataCombined <- createDataCombinedFromExcel(
     projectConfiguration = projectConfiguration,
-    plotGridNames =  "Aciclovir3",
+    plotGridNames = "Aciclovir3",
     dataCombinedNames = "AciclovirPVB",
     simulatedScenarios = simulatedScenarios,
     observedData = observedData
@@ -245,7 +245,7 @@ test_that("It creates correct DataCombined when both plotGridNames and data comb
 test_that("It does not create duplicates when both plotGridNames and data combined names are provided", {
   dataCombined <- createDataCombinedFromExcel(
     projectConfiguration = projectConfiguration,
-    plotGridNames =  "Aciclovir3",
+    plotGridNames = "Aciclovir3",
     dataCombinedNames = "AciclovirPop",
     simulatedScenarios = simulatedScenarios,
     observedData = observedData

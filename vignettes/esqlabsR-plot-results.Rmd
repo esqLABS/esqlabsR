@@ -230,8 +230,9 @@ dataCombined <- createDataCombinedFromExcel(
 print(dataCombined)
 
 # Calculate residuals. Residuals are returned for each observed data point
-residuals <- calculateResiduals(dataCombined = dataCombined[[1]],
-                   scaling = "lin"
+residuals <- calculateResiduals(
+  dataCombined = dataCombined[[1]],
+  scaling = "lin"
 )
 
 # Calculate the sum of residuals to convieniently quanity the quality of predictions
