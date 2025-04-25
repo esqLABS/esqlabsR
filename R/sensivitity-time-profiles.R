@@ -102,8 +102,6 @@
 #'
 #' sensitivitySpiderPlot(resultsNamed)
 #' }
-
-#' }
 #' @export
 sensitivityTimeProfiles <- function(sensitivityCalculation,
                                     outputPaths = NULL,

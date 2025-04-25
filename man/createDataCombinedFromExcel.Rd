@@ -5,22 +5,25 @@
 \title{Generate DataCombined objects as defined in excel file}
 \usage{
 createDataCombinedFromExcel(
-  file,
-  sheet = NULL,
+  projectConfiguration,
   dataCombinedNames = NULL,
+  plotGridNames = NULL,
   simulatedScenarios = NULL,
   observedData = NULL,
   stopIfNotFound = TRUE
 )
 }
 \arguments{
-\item{file}{Full path of excel file}
-
-\item{sheet}{Name of sheet to use - if \code{NULL} the first sheet will be used}
+\item{projectConfiguration}{Object of class \code{ProjectConfiguration}
+that contains information about the output paths and the excel file
+where plots are defined.}
 
 \item{dataCombinedNames}{Names of the DataCombined objects that will be created.
-If \code{NULL} (default), all DataCombined objects specified in the excel sheet will
-be created. If a DataCombined object with a given name does not exist, an error is thrown.}
+If a DataCombined with a given name is not defined in the Excel file, an error is thrown. Can be used together with \code{plotGridNames}.}
+
+\item{plotGridNames}{Names of the plot grid specified in the sheet \code{plotGrids}.
+Each data combined used by the specified plot grids will be created. Can be
+used together with \code{dataCombinedNames}.}
 
 \item{simulatedScenarios}{A list of simulated scenarios as returned by \code{runScenarios()}}
 
@@ -30,7 +33,8 @@ be created. If a DataCombined object with a given name does not exist, an error 
 simulated results or observed data are not found. If FALSE a warning is printed.}
 }
 \value{
-A list of \code{DataCombined} objects
+A list of \code{DataCombined} objects, or an empty list if both \code{dataCombinedNames} and \code{plotGridNames} are \code{NULL} or \code{stopIfNotFound = TRUE} and the specified
+\code{DataCombined} could not be created.
 }
 \description{
 Generate DataCombined objects as defined in excel file
