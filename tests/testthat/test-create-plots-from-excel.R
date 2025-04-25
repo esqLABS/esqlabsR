@@ -509,7 +509,6 @@ test_that("It returns NULL if no plotGrids are defined in the excel sheet", {
         "exportConfiguration" = exportConfigurationDfLocal
       ), path = file.path(tempDir, "Plots.xlsx"), )
 
-
       plots <- createPlotsFromExcel(
         simulatedScenarios = simulatedScenarios,
         observedData = observedData,

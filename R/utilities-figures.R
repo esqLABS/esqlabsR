@@ -293,44 +293,18 @@ createPlotsFromExcel <- function(
   validateIsString(plotGridNames, nullAllowed = TRUE)
   validateIsOfType(dataCombinedList, "DataCombined", nullAllowed = TRUE)
 
-  # read sheet "plotGrids" with info for plotGridConfigurations
-  dfPlotGrids <- readExcel(projectConfiguration$plotsFile,
-    sheet = "plotGrids"
+  plotConfigurations <- .readPlotConfigurations(
+    projectConfiguration = projectConfiguration,
+    plotGridNames = plotGridNames
   )
-  # read sheet "exportConfiguration"
-  dfExportConfigurations <- readExcel(projectConfiguration$plotsFile,
-    sheet = "exportConfiguration"
-  ) %>%
-    dplyr::rename(name = outputName)
-  # Filter for only specified plot grids
-  if (!is.null(plotGridNames)) {
-    # Throw an error if a plot grid name that is passed is not defined in the excel file
-    missingPlotGrids <- setdiff(plotGridNames, unique(dfPlotGrids$name))
-    if (length(missingPlotGrids) != 0) {
-      stop(messages$invalidPlotGridNames(missingPlotGrids))
-    }
+  dfPlotConfigurations <- plotConfigurations$plotConfigurations
+  dfPlotGrids <- plotConfigurations$plotGrids
+  dfExportConfigurations <- plotConfigurations$exportConfigurations
 
-    dfPlotGrids <- dplyr::filter(dfPlotGrids, name %in% plotGridNames)
-    dfExportConfigurations <- dplyr::filter(dfExportConfigurations, plotGridName %in% plotGridNames)
+  # Exit early if not plotGrids are defined
+  if (is.null(dfPlotGrids)) {
+    return(NULL)
   }
-
-  # Exit early if no PlotGrid is defined
-  if (dim(dfPlotGrids)[[1]] == 0) {
-    return()
-  }
-  # read sheet "plotConfiguration"
-  dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile,
-    sheet = "plotConfiguration"
-  )
-
-  # Filter and validate plotGrids
-  dfPlotGrids <- dplyr::filter(
-    dfPlotGrids, !dplyr::if_all(dplyr::everything(), is.na)
-  )
-  dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
-
-  # Filter and validate only used plot configurations
-  dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
 
   # Filter and validate only used data combined
   dataCombinedList <- createDataCombinedFromExcel(
@@ -847,4 +821,65 @@ createPlotsFromExcel <- function(
   )
 
   return(plotConfigurationOptions[names])
+}
+
+#' Read and validate plot configurations from the excel file
+#'
+#' @param projectConfiguration Object of class `ProjectConfiguration`
+#' @param plotGridNames Names of the plot grid specified in the sheet `plotGrids`
+#'
+#' @returns A named list with configurations 'plotGrids', 'dfPlotConfigurations',
+#' and 'exportConfigurations'
+#' @export
+#'
+#' @examples
+.readPlotConfigurations <- function(projectConfiguration, plotGridNames) {
+  # read sheet "plotGrids" with info for plotGridConfigurations
+  dfPlotGrids <- readExcel(projectConfiguration$plotsFile,
+    sheet = "plotGrids"
+  )
+
+  # read sheet "exportConfiguration"
+  dfExportConfigurations <- readExcel(projectConfiguration$plotsFile,
+    sheet = "exportConfiguration"
+  ) %>%
+    dplyr::rename(name = outputName)
+
+  # Filter for only specified plot grids
+  if (!is.null(plotGridNames)) {
+    # Throw an error if a plot grid name that is passed is not defined in the excel file
+    missingPlotGrids <- setdiff(plotGridNames, unique(dfPlotGrids$name))
+    if (length(missingPlotGrids) != 0) {
+      stop(messages$invalidPlotGridNames(missingPlotGrids))
+    }
+
+    dfPlotGrids <- dplyr::filter(dfPlotGrids, name %in% plotGridNames)
+    # Filter export configurations for specified plot grids only
+    dfExportConfigurations <- dplyr::filter(dfExportConfigurations, plotGridName %in% plotGridNames)
+  }
+
+  # Exit early if no PlotGrid is defined
+  if (dim(dfPlotGrids)[[1]] == 0) {
+    return()
+  }
+
+  # read sheet "plotConfiguration"
+  dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile,
+    sheet = "plotConfiguration"
+  )
+
+  # Filter and validate plotGrids
+  dfPlotGrids <- dplyr::filter(
+    dfPlotGrids, !dplyr::if_all(dplyr::everything(), is.na)
+  )
+  dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
+
+  # Filter and validate only used plot configurations
+  dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
+
+  return(list(
+    plotGrids = dfPlotGrids,
+    exportConfigurations = dfExportConfigurations,
+    plotConfigurations = dfPlotConfigurations
+  ))
 }
