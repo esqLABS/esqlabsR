@@ -309,10 +309,16 @@ createPlotsFromExcel <- function(
     return(NULL)
   }
 
+  # Get the names of data combined that are required for creation of the plots
+  dataCombinedNames <- unique(dfPlotConfigurations$DataCombinedName)
+  # Do not create DataCombined that are already passed
+  if (!is.null(dataCombinedList)) {
+    dataCombinedNames <- setdiff(dataCombinedNames, names(dataCombinedList))
+  }
   # Filter and validate only used data combined
   dataCombinedListFromExcel <- createDataCombinedFromExcel(
     projectConfiguration = projectConfiguration,
-    dataCombinedNames = unique(dfPlotConfigurations$DataCombinedName),
+    dataCombinedNames = dataCombinedNames,
     simulatedScenarios = simulatedScenarios,
     observedData = observedData,
     stopIfNotFound = stopIfNotFound

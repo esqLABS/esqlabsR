@@ -241,6 +241,22 @@ sumResiduals <- sum(residuals$residualValues)
 print(paste0("The sum of linear residuals for is ", sumResiduals))
 ```
 
+You can modify the created `DataCombined`, e.g., by changing the offsets, and pass
+them to the `createPlotsFromExcel` function: 
+
+```{r}
+# Change the offset of the first group
+dataCombined[[1]]$setDataTransformations(xOffsets = 0)
+# Create the plots using the modified DataCombined
+plots <- createPlotsFromExcel(
+  simulatedScenarios = simulatedScenarios,
+  observedData = observedData,
+  plotGridNames = c("Aciclovir", "Aciclovir2"),
+  projectConfiguration = projectConfiguration,
+  dataCombinedList = dataCombined
+)
+```
+
 ## Plotting With Code
 
 In some situation, the user needs to quickly draw a plot from a simulation
