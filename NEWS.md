@@ -1,5 +1,13 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+- Protein ontogenies for individuals and populations are now defined in one column
+`Protein Ontogenies` in the sheets `IndividualBiometrics` (for individuals) or `Demographics`
+(for populations). The columns `Protein` and `Ontogeny` are no longer supported. The new column
+`Protein Ontogenies` is a comma-separated list of protein names and ontogeny names pairs. For example: 
+`CYP3A4:CYP3A4,CYP2D6:CYP2C8` will create a CYP3A4 ontogeny for the protein CYP3A4 and a CYP2D6 ontogeny for the protein CYP2C8. (#825)
+
 ## Major changes
 
 - User-defined parameters passed to the `createScenarios()` or `Scenario$new()` 
