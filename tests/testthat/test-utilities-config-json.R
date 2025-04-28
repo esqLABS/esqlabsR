@@ -234,3 +234,182 @@ test_that("ProjectConfiguration.xlsx data is preserved in JSON round-trip", {
   # Check that both data frames are identical
   expect_identical(originalDf, regeneratedDf)
 })
+
+
+test_that("projectConfigurationStatus() correctly handles missing JSON file", {
+  # Create a temporary test project
+  test_proj <- local_test_project()
+
+  # Path to non-existent JSON file
+  json_path <- file.path(test_proj$dir, "NonExistent.json")
+
+  # Check status - should throw an error
+  expect_error(
+    projectConfigurationStatus(test_proj$project_config_path, json_path),
+    "JSON file does not exist"
+  )
+})
+
+test_that("projectConfigurationStatus() automatically finds JSON file when not specified", {
+  # Create a temporary test project
+  test_proj <- local_test_project()
+
+  # Take a snapshot of the current configuration using default name
+  snapshotProjectConfiguration(test_proj$project_config_path)
+
+  # Default JSON path should be in the same directory as the Excel file
+  expected_json_path <- sub("\\.xlsx$", ".json", test_proj$project_config_path)
+  expect_true(file.exists(expected_json_path))
+
+  # Check status without specifying JSON path - should find it automatically
+  status_result <- projectConfigurationStatus(test_proj$project_config_path)
+  expect_true(status_result$in_sync)
+})
+
+test_that("projectConfigurationStatus() correctly identifies in-sync files", {
+  # Create a temporary test project
+  test_proj <- local_test_project()
+
+  # Check status - should be in sync
+  status_result <- projectConfigurationStatus(
+    test_proj$project_config_path,
+    test_proj$snapshot_path
+  )
+  expect_true(status_result$in_sync)
+})
+
+test_that("projectConfigurationStatus() detects sheet-level changes in Excel files", {
+  # Create a temporary test project
+  test_proj <- local_test_project()
+
+  # Path to Plots.xlsx in the configurations directory
+  plots_path <- file.path(test_proj$configurations_dir, "Plots.xlsx")
+
+  # Get existing sheets in Plots.xlsx
+  existing_sheets <- readxl::excel_sheets(plots_path)
+
+  # Create a new sheet with test data
+  new_sheet_data <- data.frame(
+    TestID = c("test1", "test2"),
+    TestName = c("Test One", "Test Two"),
+    TestValue = c(1, 2)
+  )
+
+  # Load existing data into a list
+  sheet_list <- list()
+  for (sheet in existing_sheets) {
+    sheet_list[[sheet]] <- readExcel(plots_path, sheet)
+  }
+
+  # Add new sheet to the list
+  sheet_list[["NewTestSheet"]] <- new_sheet_data
+
+  # Write all sheets back to the file
+  .writeExcel(sheet_list, plots_path)
+
+  # Verify the new sheet was added
+  updated_sheets <- readxl::excel_sheets(plots_path)
+  expect_true("NewTestSheet" %in% updated_sheets)
+
+  # Check status - should detect sheet-level changes
+  status_result <- projectConfigurationStatus(
+    test_proj$project_config_path,
+    test_proj$snapshot_path
+  )
+  expect_false(status_result$in_sync)
+
+  expect_snapshot(status_result$details)
+})
+
+test_that("projectConfigurationStatus() detects data-level changes in Excel sheets", {
+  # Create a temporary test project
+  test_proj <- local_test_project()
+
+  # Path to Scenarios.xlsx in the configurations directory
+  scenarios_path <- createProjectConfiguration(
+    test_proj$project_config_path
+  )$scenariosFile
+
+  # Get existing sheets in Scenarios.xlsx
+  existing_sheets <- readxl::excel_sheets(scenarios_path)
+
+  new_data <- list()
+
+  for (i in seq_along(existing_sheets)) {
+    sheet_data <- readExcel(scenarios_path, existing_sheets[i])
+
+    if (i == 1) {
+      # copy last row to a new row
+      sheet_data[nrow(sheet_data) + 1, ] <- sheet_data[nrow(sheet_data), ]
+    }
+    new_data[[existing_sheets[i]]] <- sheet_data
+  }
+
+  .writeExcel(new_data, scenarios_path)
+
+  # Check status - should detect data-level changes
+  status_result <- projectConfigurationStatus(
+    test_proj$project_config_path,
+    test_proj$snapshot_path
+  )
+  expect_false(status_result$in_sync)
+
+  expect_snapshot(status_result$details)
+})
+
+test_that("projectConfigurationStatus() handles simultaneous sheet, and data changes", {
+  # Create a temporary test project
+  test_proj <- local_test_project()
+
+  # 1. Make data change
+  scenarios_path <- createProjectConfiguration(
+    test_proj$project_config_path
+  )$scenariosFile
+
+  # Get existing sheets in Scenarios.xlsx
+  existing_sheets <- readxl::excel_sheets(scenarios_path)
+
+  new_data <- list()
+
+  for (i in seq_along(existing_sheets)) {
+    sheet_data <- readExcel(scenarios_path, existing_sheets[i])
+
+    if (i == 1) {
+      # copy last row to a new row
+      sheet_data[nrow(sheet_data) + 1, ] <- sheet_data[nrow(sheet_data), ]
+    }
+    new_data[[existing_sheets[i]]] <- sheet_data
+  }
+
+  .writeExcel(new_data, scenarios_path)
+
+  # 2. Add a new sheet to an existing Excel file
+  plots_path <-   createProjectConfiguration(
+    test_proj$project_config_path
+  )$plotsFile
+  if (file.exists(plots_path)) {
+    # Create a new sheet
+    new_sheet_data <- data.frame(
+      TestID = c("test1", "test2"),
+      TestName = c("Test One", "Test Two")
+    )
+
+    # Write to the file as a new sheet
+    existing_sheets <- readxl::excel_sheets(plots_path)
+    sheet_list <- list()
+    for (sheet in existing_sheets) {
+      sheet_list[[sheet]] <- readExcel(plots_path, sheet)
+    }
+    sheet_list[["CombinedTestSheet"]] <- new_sheet_data
+    .writeExcel(sheet_list, plots_path)
+  }
+
+  # Check status - should detect all types of changes
+  status_result <- projectConfigurationStatus(
+    test_proj$project_config_path,
+    test_proj$snapshot_path
+  )
+  expect_false(status_result$in_sync)
+
+  expect_snapshot(status_result$details)
+})

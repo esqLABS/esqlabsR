@@ -66,7 +66,7 @@ local_test_project <- function(
   list(
     dir = temp_dir,
     project_config_path = file.path(temp_dir, "ProjectConfiguration.xlsx"),
-    json_path = file.path(temp_dir, "config.json"),
+    snapshot_path = file.path(temp_dir, "ProjectConfiguration.json"),
     configurations_dir = file.path(temp_dir, "Configurations")
   )
 }

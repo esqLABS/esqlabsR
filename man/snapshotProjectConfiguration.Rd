@@ -5,14 +5,15 @@
 \title{Export project configuration Excel files to JSON}
 \usage{
 snapshotProjectConfiguration(
-  project_config = "ProjectConfiguration.xlsx",
-  output_dir = "."
+  projectConfig = "ProjectConfiguration.xlsx",
+  outputDir = NULL,
+  ...
 )
 }
 \arguments{
-\item{project_config}{A ProjectConfiguration object or path to ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".}
+\item{projectConfig}{A ProjectConfiguration object or path to ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".}
 
-\item{output_dir}{where the JSON file will be saved. Defaults to the current working directory.}
+\item{outputDir}{Directory where the JSON file will be saved. If NULL (default), the JSON file will be created in the same directory as the source Excel file.}
 }
 \value{
 Invisibly returns the exported configuration data structure

@@ -11,8 +11,10 @@
 #' @export
 snapshotProjectConfiguration <- function(
   projectConfig = "ProjectConfiguration.xlsx",
-  outputDir = NULL
+  outputDir = NULL,
+  ...
 ) {
+  extraArguments <- list(...)
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
     projectConfig <- createProjectConfiguration(projectConfig)
@@ -57,25 +59,9 @@ snapshotProjectConfiguration <- function(
     !is.null(projectConfig$projectConfigurationFilePath) &&
       file.exists(projectConfig$projectConfigurationFilePath)
   ) {
-    projConfigDf <- readExcel(projectConfig$projectConfigurationFilePath)
-
-    # Convert to simple list format
-    projConfigData <- list(
-      column_names = names(projConfigDf),
-      rows = list()
+    configData$projectConfiguration <- .excelToListStructure(
+      projectConfig$projectConfigurationFilePath
     )
-
-    # Store each row
-    if (nrow(projConfigDf) > 0) {
-      for (i in 1:nrow(projConfigDf)) {
-        # Extract row as a character vector
-        rowValues <- sapply(projConfigDf[i, ], as.character)
-        projConfigData$rows[[i]] <- as.list(rowValues)
-      }
-    }
-
-    # Store in config data
-    configData$projectConfiguration <- projConfigData
   }
 
   # Define files to export
@@ -100,26 +86,8 @@ snapshotProjectConfiguration <- function(
 
       # Process each sheet
       for (sheet in sheets) {
-        # Read the data
-        df <- readExcel(filePath, sheet)
-
-        # Convert to simple list format to avoid serialization issues
-        sheetData <- list(
-          column_names = names(df),
-          rows = list()
-        )
-
-        # Store each row
-        if (nrow(df) > 0) {
-          for (i in 1:nrow(df)) {
-            # Extract row as a character vector to avoid type issues during serialization
-            rowValues <- sapply(df[i, ], as.character)
-            sheetData$rows[[i]] <- as.list(rowValues)
-          }
-        }
-
-        # Store in config data
-        configData[[name]][[sheet]] <- sheetData
+        # Read the data and convert to list structure
+        configData[[name]][[sheet]] <- .excelToListStructure(filePath, sheet)
       }
     }
   }
@@ -141,25 +109,8 @@ snapshotProjectConfiguration <- function(
 
       for (csvFile in csvFiles) {
         fileName <- basename(csvFile)
-        csvDf <- utils::read.csv(csvFile, stringsAsFactors = FALSE)
-
-        # Convert to simple list format
-        csvData <- list(
-          column_names = names(csvDf),
-          rows = list()
-        )
-
-        # Store each row
-        if (nrow(csvDf) > 0) {
-          for (i in 1:nrow(csvDf)) {
-            # Extract row as a character vector
-            rowValues <- sapply(csvDf[i, ], as.character)
-            csvData$rows[[i]] <- as.list(rowValues)
-          }
-        }
-
-        # Store in config data
-        configData$populationsCSV[[fileName]] <- csvData
+        # Read CSV and convert to list structure
+        configData$populationsCSV[[fileName]] <- .csvToListStructure(csvFile)
       }
     }
   }
@@ -190,7 +141,7 @@ snapshotProjectConfiguration <- function(
   # Get relative path from working directory
   outputFile <- fs::path_rel(outputPath, start = getwd())
 
-  if (interactive()) {
+  if (interactive() && !isTRUE(extraArguments$silent)) {
     cli::cli_alert_success(
       "Snapshot of {.file {inputFile}} created at {.file {outputFile}}"
     )
@@ -424,6 +375,349 @@ restoreProjectConfiguration <- function(
   invisible(createProjectConfiguration(projConfigPath))
 }
 
+#' Check if Excel configuration files are in sync with JSON snapshot
+#'
+#' @description
+#' Compares Excel configuration files against their JSON snapshot to determine if they
+#' are synchronized. The JSON snapshot is considered the source of truth.
+#'
+#' @param projectConfig A ProjectConfiguration object or path to ProjectConfiguration excel file.
+#'   Defaults to "ProjectConfiguration.xlsx".
+#' @param jsonPath Path to the JSON configuration file. If NULL (default), the function
+#'   will look for a JSON file with the same name as the ProjectConfiguration file but with .json extension.
+#'
+#' @return A list with components:
+#'   \item{in_sync}{Logical indicating whether all files are synchronized}
+#'   \item{details}{A list with detailed comparison results for each file}
+#'
+#'  @import cli
+#' @export
+projectConfigurationStatus <- function(
+  projectConfig = "ProjectConfiguration.xlsx",
+  jsonPath = NULL
+) {
+  # Convert to ProjectConfiguration object if path is provided
+  if (is.character(projectConfig)) {
+    projectConfig <- createProjectConfiguration(projectConfig)
+  }
+
+  # Validate projectConfig
+  if (!inherits(projectConfig, "ProjectConfiguration")) {
+    stop(
+      "projectConfig must be a ProjectConfiguration object or valid path to ProjectConfiguration.xlsx"
+    )
+  }
+
+  # Determine JSON path if not provided
+  if (is.null(jsonPath)) {
+    if (!is.null(projectConfig$projectConfigurationFilePath)) {
+      jsonPath <- sub(
+        "\\.xlsx$",
+        ".json",
+        projectConfig$projectConfigurationFilePath
+      )
+    } else {
+      jsonPath <- "ProjectConfiguration.json"
+    }
+  }
+
+  # Check if JSON file exists
+  if (!file.exists(jsonPath)) {
+    stop("JSON file does not exist: ", jsonPath)
+  }
+
+  # Create temporary directory for snapshot
+  tempDir <- tempfile("config_snapshot")
+  dir.create(tempDir, showWarnings = FALSE, recursive = TRUE)
+  on.exit(unlink(tempDir, recursive = TRUE), add = TRUE)
+
+  # Create current snapshot from Excel files
+  tempJsonPath <- file.path(tempDir, basename(jsonPath))
+  snapshotProjectConfiguration(
+    projectConfig,
+    outputDir = tempDir,
+    silent = TRUE
+  )
+
+  # Load both JSON files as strings first for a quick initial check
+  originalJson <- readLines(jsonPath, warn = FALSE)
+  currentJson <- readLines(tempJsonPath, warn = FALSE)
+
+  # Simple string comparison to check if files are identical
+  if (identical(originalJson, currentJson)) {
+    # Files are identical
+    result <- list(
+      in_sync = TRUE,
+      details = list()
+    )
+
+    # Display message if interactive
+    if (interactive()) {
+      cli::cli_alert_success(
+        "Excel configuration files are in sync with JSON snapshot."
+      )
+    }
+  } else {
+    # Files are different, now do a detailed comparison
+    originalJsonObj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+    currentJsonObj <- jsonlite::fromJSON(tempJsonPath, simplifyVector = FALSE)
+
+    # Initialize detailed difference tracking
+    fileChanges <- list()
+    sheetChanges <- list()
+    dataChanges <- list()
+
+    # Keep track of file status for summary display
+    fileStatus <- list()
+    fileStatus[["ProjectConfiguration.xlsx"]] <- "in-sync"
+
+    # 1. Check for differences in Excel files (added/removed files)
+    originalFiles <- names(originalJsonObj)
+    currentFiles <- names(currentJsonObj)
+
+    # Files missing in current Excel compared to snapshot
+    missingFiles <- setdiff(originalFiles, currentFiles)
+    if (length(missingFiles) > 0) {
+      for (file in missingFiles) {
+        fileChanges[[file]] <- "Excel file is missing but exists in snapshot"
+        fileStatus[[file]] <- "out-of-sync"
+      }
+    }
+
+    # Files added in current Excel compared to snapshot
+    addedFiles <- setdiff(currentFiles, originalFiles)
+    if (length(addedFiles) > 0) {
+      for (file in addedFiles) {
+        fileChanges[[file]] <- "New Excel file not present in snapshot"
+        fileStatus[[file]] <- "out-of-sync"
+      }
+    }
+
+    # Common files to check for sheet and data differences
+    commonFiles <- intersect(originalFiles, currentFiles)
+
+    # 2. Check for sheet differences in each file
+    for (file in commonFiles) {
+      # Skip some keys that are not Excel files
+      if (file %in% c("populationsCSV")) {
+        next
+      }
+
+      # Initialize file status as in-sync, will be updated if differences found
+      if (!(file %in% names(fileStatus))) {
+        fileStatus[[file]] <- "in-sync"
+      }
+
+      # For files with sheets
+      if (is.list(originalJsonObj[[file]]) && is.list(currentJsonObj[[file]])) {
+        originalSheets <- names(originalJsonObj[[file]])
+        currentSheets <- names(currentJsonObj[[file]])
+
+        # Sheets missing in current Excel compared to snapshot
+        missingSheets <- setdiff(originalSheets, currentSheets)
+        if (length(missingSheets) > 0) {
+          sheetChanges[[file]] <- list(
+            missing = missingSheets
+          )
+          fileStatus[[file]] <- "out-of-sync"
+        }
+
+        # Sheets added in current Excel compared to snapshot
+        addedSheets <- setdiff(currentSheets, originalSheets)
+        if (length(addedSheets) > 0) {
+          if (file %in% names(sheetChanges)) {
+            sheetChanges[[file]][["added"]] <- addedSheets
+          } else {
+            sheetChanges[[file]] <- list(
+              added = addedSheets
+            )
+          }
+          fileStatus[[file]] <- "out-of-sync"
+        }
+
+        # 3. Check for data differences in common sheets
+        commonSheets <- intersect(originalSheets, currentSheets)
+        changedSheets <- c()
+
+        for (sheet in commonSheets) {
+          if (
+            !identical(
+              originalJsonObj[[file]][[sheet]],
+              currentJsonObj[[file]][[sheet]]
+            )
+          ) {
+            changedSheets <- c(changedSheets, sheet)
+            fileStatus[[file]] <- "out-of-sync"
+          }
+        }
+
+        if (length(changedSheets) > 0) {
+          dataChanges[[file]] <- changedSheets
+        }
+      }
+    }
+
+    # Format all changes for report
+    differences <- list(
+      file_status = fileStatus,
+      file_changes = if (length(fileChanges) > 0) fileChanges else NULL,
+      sheet_changes = if (length(sheetChanges) > 0) sheetChanges else NULL,
+      data_changes = if (length(dataChanges) > 0) dataChanges else NULL
+    )
+
+    # Return result
+    result <- list(
+      in_sync = FALSE,
+      details = differences
+    )
+
+    # Display message if interactive
+    if (interactive()) {
+      cli::cli_alert_warning(
+        "Excel configuration files are NOT in sync with JSON snapshot."
+      )
+
+      # Display the summary of file statuses
+      cli::cli_h2("File Sync Status:")
+
+      for (file in names(fileStatus)) {
+        status_text <- fileStatus[[file]]
+        if (status_text == "in-sync") {
+          cli::cli_text(
+            "{.green {symbol$tick}} {file}.xlsx:  {status_text}"
+          )
+        } else {
+          cli::cli_text(
+            "{.red {symbol$cross}} {file}.xlsx: {status_text}"
+          )
+        }
+      }
+
+      # Display detailed differences
+      cli::cli_h2("Details:")
+
+      for (file in names(fileStatus)) {
+        if (fileStatus[[file]] == "out-of-sync") {
+          cli::cli_li("{file}.xlsx")
+
+          # Sheet changes
+          if (
+            !is.null(differences$sheet_changes) &&
+              file %in% names(differences$sheet_changes)
+          ) {
+            sheet_info <- differences$sheet_changes[[file]]
+
+            if (
+              !is.null(sheet_info$missing) && length(sheet_info$missing) > 0
+            ) {
+              missing_sheets <- paste(sheet_info$missing, collapse = ", ")
+              sublist <- cli::cli_ul()
+              cli::cli_li("Missing sheets: {missing_sheets}")
+              cli::cli_end(sublist)
+            }
+
+            if (!is.null(sheet_info$added) && length(sheet_info$added) > 0) {
+              added_sheets <- paste(sheet_info$added, collapse = ", ")
+              sublist <- cli::cli_ul()
+              cli::cli_li("New sheets: {added_sheets}")
+              cli::cli_end(sublist)
+            }
+          }
+
+          # Data changes
+          if (
+            !is.null(differences$data_changes) &&
+              file %in% names(differences$data_changes)
+          ) {
+            changed_sheets <- paste(
+              differences$data_changes[[file]],
+              collapse = ", "
+            )
+            sublist <- cli::cli_ul()
+            cli::cli_li("Different data in sheets: {changed_sheets}")
+            cli::cli_end(sublist)
+          }
+        }
+      }
+
+      # Add suggestions for resolving differences
+      cli::cli_h2("Suggested Actions:")
+      cli::cli_text("To resolve these differences, you can:")
+      cli::cli_ul()
+
+      # Suggest snapshotProjectConfiguration to update the JSON snapshot
+      cli::cli_li(
+        "{.code snapshotProjectConfiguration()} - Save the changes from Excel files to the project snapshot."
+      )
+
+      # Suggest restoreProjectConfiguration to update the Excel files
+      cli::cli_li(
+        "{.code restoreProjectConfiguration()} - Recreate the Excel files according to the configuration snapshot."
+      )
+
+      cli::cli_end()
+    }
+  }
+
+  invisible(result)
+}
+
+#' Convert Excel file to list structure for JSON serialization
+#'
+#' @param filePath Path to the Excel file
+#' @param sheet Sheet name to read. If NULL, reads the first sheet.
+#' @return List structure ready for JSON serialization
+#' @keywords internal
+#' @noRd
+.excelToListStructure <- function(filePath, sheet = NULL) {
+  # Read the data
+  df <- readExcel(filePath, sheet)
+
+  # Convert to simple list format
+  sheetData <- list(
+    column_names = names(df),
+    rows = list()
+  )
+
+  # Store each row
+  if (nrow(df) > 0) {
+    for (i in 1:nrow(df)) {
+      # Extract row as a character vector to avoid type issues during serialization
+      rowValues <- sapply(df[i, ], as.character)
+      sheetData$rows[[i]] <- as.list(rowValues)
+    }
+  }
+
+  return(sheetData)
+}
+
+#' Convert CSV file to list structure for JSON serialization
+#'
+#' @param filePath Path to the CSV file
+#' @return List structure ready for JSON serialization
+#' @keywords internal
+#' @noRd
+.csvToListStructure <- function(filePath) {
+  # Read the CSV data
+  csvDf <- utils::read.csv(filePath, stringsAsFactors = FALSE)
+
+  # Convert to simple list format
+  csvData <- list(
+    column_names = names(csvDf),
+    rows = list()
+  )
+
+  # Store each row
+  if (nrow(csvDf) > 0) {
+    for (i in 1:nrow(csvDf)) {
+      # Extract row as a character vector
+      rowValues <- sapply(csvDf[i, ], as.character)
+      csvData$rows[[i]] <- as.list(rowValues)
+    }
+  }
+
+  return(csvData)
+}
 
 #' Convert data frame columns to appropriate types
 #'

@@ -5,14 +5,15 @@
 \title{Import project configuration from JSON to Excel files}
 \usage{
 restoreProjectConfiguration(
-  json_path = "ProjectConfiguration.json",
-  output_dir = "."
+  jsonPath = "ProjectConfiguration.json",
+  outputDir = NULL
 )
 }
 \arguments{
-\item{json_path}{Path to the JSON configuration file. Defaults to "ProjectConfiguration.json".}
+\item{jsonPath}{Path to the JSON configuration file. Defaults to "ProjectConfiguration.json".}
 
-\item{output_dir}{Directory where the Excel files will be created. Defaults to the current working directory.}
+\item{outputDir}{Directory where the Excel files will be created. If NULL (default), the Excel files
+will be created in the same directory as the source JSON file.}
 }
 \value{
 A ProjectConfiguration object initialized with the regenerated ProjectConfiguration.xlsx
