@@ -254,7 +254,7 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
   for (ontogeny in proteinOntogenyMappings) {
     # Split by ':' to separate protein and ontogeny
     ontogenyMapping <- unlist(strsplit(x = ontogeny, split = ":", fixed = TRUE))
-    #Throw an error when the structure is not correct
+    # Throw an error when the structure is not correct
     if (length(ontogenyMapping) != 2) {
       stop(messages$errorWrongOntogenyStructure(ontogeny))
     }
