@@ -11,9 +11,8 @@ to support version control and project sharing of project configurations.
 ## Minor improvements and bug fixes
 
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
-- Added documentation for ProjectConfiguration snapshot workflow in the project structure 
-vignette to help users with version control and project sharing.
-
+- Fixed a bug when the dimension in the y-axis label of `sensitivityTimeProfiles()` 
+did not match the unit (\#823).
 
 # esqlabsR 5.4.0
 
