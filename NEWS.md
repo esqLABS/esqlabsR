@@ -9,6 +9,8 @@ were overwritten by the administration protocol (\#817)
 ## Minor improvements and bug fixes
 
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
+- Fixed a bug when the dimension in the y-axis label of `sensitivityTimeProfiles()` 
+did not match the unit (\#823).
 
 # esqlabsR 5.4.0
 
