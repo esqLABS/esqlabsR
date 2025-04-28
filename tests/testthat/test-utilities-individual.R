@@ -21,7 +21,7 @@ test_that("It throws an error if the specified individual Id cannot be found in
   ), messages$errorWrongIndividualId(individualId))
 })
 
-test_that("It create IndividualCharacteristics with the correct values", {
+test_that("It creates IndividualCharacteristics with the correct values", {
   individualId <- "Vicini_1999"
   individualCharacteristics <- readIndividualCharacteristicsFromXLS(
     XLSpath = XLSpath,
@@ -35,7 +35,7 @@ test_that("It create IndividualCharacteristics with the correct values", {
   expect_equal(individualCharacteristics$age$value, 27)
 })
 
-test_that("It create IndividualCharacteristics when numerical values are empty", {
+test_that("It creates IndividualCharacteristics when numerical values are empty", {
   individualId <- "Individual_with_NAs"
   individualCharacteristics <- readIndividualCharacteristicsFromXLS(
     XLSpath = XLSpath,

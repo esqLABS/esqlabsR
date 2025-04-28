@@ -7,8 +7,7 @@
 .readOntongeniesFromXLS(data)
 }
 \arguments{
-\item{data}{Data from from excel file containing columns 'Protein' and
-'Ontogeny'}
+\item{data}{Data from from excel file with the column 'Protein Ontogenies'}
 }
 \value{
 A list of \code{MoleculeOntogeny} objects

@@ -33,5 +33,5 @@ Read individual characteristics from file
 Read individual characteristics from an excel sheet
 and create an \code{IndividualCharacteristics}-object. The excel sheet must have
 the columns \code{IndividualId}, \code{Species}, \code{Population}, \code{Gender}, \code{Weight [kg]},
-\code{Height [cm]}, \code{Age [year(s)]}, \code{Protein}, and \code{Ontogeny}.
+\code{Height [cm]}, \code{Age [year(s)]}, and \verb{Protein Ontogenies}.
 }
