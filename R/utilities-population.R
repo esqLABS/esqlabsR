@@ -251,7 +251,8 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
   proteinOntogenyMappings <- trimws(proteinOntogenyMappings)
 
   moleculeOntogenies <- vector("list", length(proteinOntogenyMappings))
-  for (ontogeny in proteinOntogenyMappings) {
+  for (i in seq_along(proteinOntogenyMappings)) {
+    ontogeny <- proteinOntogenyMappings[[i]]
     # Split by ':' to separate protein and ontogeny
     ontogenyMapping <- unlist(strsplit(x = ontogeny, split = ":", fixed = TRUE))
     # Throw an error when the structure is not correct
