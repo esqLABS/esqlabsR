@@ -43,11 +43,6 @@ snapshotProjectConfiguration <- function(
 
   outputPath <- file.path(outputDir, outputFileName)
 
-  # Validate outputPath
-  if (!endsWith(tolower(outputPath), ".json")) {
-    stop("outputPath must end with .json extension")
-  }
-
   # Ensure the directory exists, create it if it doesn't
   outputDir <- dirname(outputPath)
   if (!dir.exists(outputDir) && outputDir != "") {
@@ -195,9 +190,11 @@ snapshotProjectConfiguration <- function(
   # Get relative path from working directory
   outputFile <- fs::path_rel(outputPath, start = getwd())
 
-  cli::cli_alert_success(
-    "Snapshot of {.file {inputFile}} created at {.file {outputFile}}"
-  )
+  if (interactive()) {
+    cli::cli_alert_success(
+      "Snapshot of {.file {inputFile}} created at {.file {outputFile}}"
+    )
+  }
 
   invisible(configData)
 }
@@ -417,9 +414,11 @@ restoreProjectConfiguration <- function(
   relPath <- fs::path_rel(projConfigPath, start = getwd())
 
   # Display message with relative path
-  cli::cli_alert_success(
-    "Project configuration from {.file {jsonPath}} restored at {.file {relPath}}"
-  )
+  if (interactive()) {
+    cli::cli_alert_success(
+      "Project configuration from {.file {jsonPath}} restored at {.file {relPath}}"
+    )
+  }
 
   # Create and return a ProjectConfiguration object
   invisible(createProjectConfiguration(projConfigPath))
