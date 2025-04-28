@@ -4,108 +4,112 @@
 #' Exports all Excel configuration files in the Configurations folder of an esqlabsR project
 #' to a single JSON file. This allows for easier version control and programmatic manipulation.
 #'
-#' @param project_config A ProjectConfiguration object or path to ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".
-#' @param output_dir where the JSON file will be saved. Defaults to the current working directory.
+#' @param projectConfig A ProjectConfiguration object or path to ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".
+#' @param outputDir Directory where the JSON file will be saved. If NULL (default), the JSON file will be created in the same directory as the source Excel file.
 #'
 #' @return Invisibly returns the exported configuration data structure
 #' @export
 snapshotProjectConfiguration <- function(
-  project_config = "ProjectConfiguration.xlsx",
-  output_dir = "."
+  projectConfig = "ProjectConfiguration.xlsx",
+  outputDir = NULL
 ) {
   # Convert to ProjectConfiguration object if path is provided
-  if (is.character(project_config)) {
-    project_config <- createProjectConfiguration(project_config)
+  if (is.character(projectConfig)) {
+    projectConfig <- createProjectConfiguration(projectConfig)
   }
 
-  # Validate project_config
-  if (!inherits(project_config, "ProjectConfiguration")) {
+  # Validate projectConfig
+  if (!inherits(projectConfig, "ProjectConfiguration")) {
     stop(
-      "project_config must be a ProjectConfiguration object or valid path to ProjectConfiguration.xlsx"
+      "projectConfig must be a ProjectConfiguration object or valid path to ProjectConfiguration.xlsx"
     )
   }
 
-  # Determine output filename based on source excel filename
-  if (!is.null(project_config$projectConfigurationFilePath)) {
-    source_filename <- basename(project_config$projectConfigurationFilePath)
-    output_filename <- sub("\\.xlsx$", ".json", source_filename)
+  # Determine output filename and path based on source excel filename
+  if (!is.null(projectConfig$projectConfigurationFilePath)) {
+    sourceFileName <- basename(projectConfig$projectConfigurationFilePath)
+    # If outputDir is NULL, use the same directory as the source file
+    if (is.null(outputDir)) {
+      outputDir <- dirname(projectConfig$projectConfigurationFilePath)
+    }
+    outputFileName <- sub("\\.xlsx$", ".json", sourceFileName)
   } else {
-    output_filename <- "ProjectConfiguration.json"
+    outputFileName <- "ProjectConfiguration.json"
+    # If outputDir is NULL and no projectConfigurationFilePath, use current directory
+    if (is.null(outputDir)) {
+      outputDir <- "."
+    }
   }
 
-  output_path <- file.path(output_dir, output_filename)
+  outputPath <- file.path(outputDir, outputFileName)
 
-  # Validate output_path
-  if (!endsWith(tolower(output_path), ".json")) {
-    stop("output_path must end with .json extension")
+  # Validate outputPath
+  if (!endsWith(tolower(outputPath), ".json")) {
+    stop("outputPath must end with .json extension")
   }
 
   # Ensure the directory exists, create it if it doesn't
-  output_dir <- dirname(output_path)
-  if (!dir.exists(output_dir) && output_dir != "") {
-    dir.create(output_dir, recursive = TRUE)
+  outputDir <- dirname(outputPath)
+  if (!dir.exists(outputDir) && outputDir != "") {
+    dir.create(outputDir, recursive = TRUE)
   }
 
   # Create the main config structure
-  config_data <- list(
-    files = list()
-  )
+  configData <- list()
 
   # Add ProjectConfiguration.xlsx data
   if (
-    !is.null(project_config$projectConfigurationFilePath) &&
-      file.exists(project_config$projectConfigurationFilePath)
+    !is.null(projectConfig$projectConfigurationFilePath) &&
+      file.exists(projectConfig$projectConfigurationFilePath)
   ) {
-    proj_config_df <- readExcel(project_config$projectConfigurationFilePath)
+    projConfigDf <- readExcel(projectConfig$projectConfigurationFilePath)
 
     # Convert to simple list format
-    proj_config_data <- list(
-      column_names = names(proj_config_df),
+    projConfigData <- list(
+      column_names = names(projConfigDf),
       rows = list()
     )
 
     # Store each row
-    if (nrow(proj_config_df) > 0) {
-      for (i in 1:nrow(proj_config_df)) {
+    if (nrow(projConfigDf) > 0) {
+      for (i in 1:nrow(projConfigDf)) {
         # Extract row as a character vector
-        row_values <- sapply(proj_config_df[i, ], as.character)
-        proj_config_data$rows[[i]] <- as.list(row_values)
+        rowValues <- sapply(projConfigDf[i, ], as.character)
+        projConfigData$rows[[i]] <- as.list(rowValues)
       }
     }
 
     # Store in config data
-    config_data$files$projectConfiguration <- list(
-      ProjectConfiguration = proj_config_data
-    )
+    configData$projectConfiguration <- projConfigData
   }
 
   # Define files to export
-  excel_files <- list(
-    modelParameters = project_config$modelParamsFile,
-    individuals = project_config$individualsFile,
-    populations = project_config$populationsFile,
-    scenarios = project_config$scenariosFile,
-    applications = project_config$applicationsFile,
-    plots = project_config$plotsFile
+  excelFiles <- list(
+    modelParameterSets = projectConfig$modelParamsFile,
+    Individuals = projectConfig$individualsFile,
+    Populations = projectConfig$populationsFile,
+    Scenarios = projectConfig$scenariosFile,
+    Applications = projectConfig$applicationsFile,
+    Plots = projectConfig$plotsFile
   )
 
   # Read each Excel file and store its sheets
-  for (name in names(excel_files)) {
-    file_path <- excel_files[[name]]
-    if (!is.na(file_path) && file.exists(file_path)) {
+  for (name in names(excelFiles)) {
+    filePath <- excelFiles[[name]]
+    if (!is.na(filePath) && file.exists(filePath)) {
       # Get sheets
-      sheets <- readxl::excel_sheets(file_path)
+      sheets <- readxl::excel_sheets(filePath)
 
       # Create a container for this file's sheets
-      config_data$files[[name]] <- list()
+      configData[[name]] <- list()
 
       # Process each sheet
       for (sheet in sheets) {
         # Read the data
-        df <- readExcel(file_path, sheet)
+        df <- readExcel(filePath, sheet)
 
         # Convert to simple list format to avoid serialization issues
-        sheet_data <- list(
+        sheetData <- list(
           column_names = names(df),
           rows = list()
         )
@@ -114,88 +118,88 @@ snapshotProjectConfiguration <- function(
         if (nrow(df) > 0) {
           for (i in 1:nrow(df)) {
             # Extract row as a character vector to avoid type issues during serialization
-            row_values <- sapply(df[i, ], as.character)
-            sheet_data$rows[[i]] <- as.list(row_values)
+            rowValues <- sapply(df[i, ], as.character)
+            sheetData$rows[[i]] <- as.list(rowValues)
           }
         }
 
         # Store in config data
-        config_data$files[[name]][[sheet]] <- sheet_data
+        configData[[name]][[sheet]] <- sheetData
       }
     }
   }
 
   # Handle CSV files in populations folder if it exists
   if (
-    !is.na(project_config$populationsFolder) &&
-      dir.exists(project_config$populationsFolder)
+    !is.na(projectConfig$populationsFolder) &&
+      dir.exists(projectConfig$populationsFolder)
   ) {
     # Find CSV files
-    csv_files <- list.files(
-      project_config$populationsFolder,
+    csvFiles <- list.files(
+      projectConfig$populationsFolder,
       pattern = "\\.csv$",
       full.names = TRUE
     )
 
-    if (length(csv_files) > 0) {
-      config_data$files$populationsCSV <- list()
+    if (length(csvFiles) > 0) {
+      configData$populationsCSV <- list()
 
-      for (csv_file in csv_files) {
-        file_name <- basename(csv_file)
-        csv_df <- utils::read.csv(csv_file, stringsAsFactors = FALSE)
+      for (csvFile in csvFiles) {
+        fileName <- basename(csvFile)
+        csvDf <- utils::read.csv(csvFile, stringsAsFactors = FALSE)
 
         # Convert to simple list format
-        csv_data <- list(
-          column_names = names(csv_df),
+        csvData <- list(
+          column_names = names(csvDf),
           rows = list()
         )
 
         # Store each row
-        if (nrow(csv_df) > 0) {
-          for (i in 1:nrow(csv_df)) {
+        if (nrow(csvDf) > 0) {
+          for (i in 1:nrow(csvDf)) {
             # Extract row as a character vector
-            row_values <- sapply(csv_df[i, ], as.character)
-            csv_data$rows[[i]] <- as.list(row_values)
+            rowValues <- sapply(csvDf[i, ], as.character)
+            csvData$rows[[i]] <- as.list(rowValues)
           }
         }
 
         # Store in config data
-        config_data$files$populationsCSV[[file_name]] <- csv_data
+        configData$populationsCSV[[fileName]] <- csvData
       }
     }
   }
 
   # Convert to JSON
-  json_data <- jsonlite::toJSON(
-    config_data,
+  jsonData <- jsonlite::toJSON(
+    configData,
     pretty = TRUE,
     auto_unbox = TRUE,
     digits = NA
   )
 
   # Ensure output directory exists
-  dir_path <- dirname(output_path)
-  if (!dir.exists(dir_path)) {
-    dir.create(dir_path, recursive = TRUE)
+  dirPath <- dirname(outputPath)
+  if (!dir.exists(dirPath)) {
+    dir.create(dirPath, recursive = TRUE)
   }
 
   # Write to file
-  writeLines(json_data, output_path)
+  writeLines(jsonData, outputPath)
 
   # Display message with relative path
-  input_file <- fs::path_rel(
-    project_config$projectConfigurationFilePath,
+  inputFile <- fs::path_rel(
+    projectConfig$projectConfigurationFilePath,
     start = getwd()
   )
 
   # Get relative path from working directory
-  output_file <- fs::path_rel(output_path, start = getwd())
+  outputFile <- fs::path_rel(outputPath, start = getwd())
 
   cli::cli_alert_success(
-    "Snapshot of {.file {input_file}} created at {.file {output_file}}"
+    "Snapshot of {.file {inputFile}} created at {.file {outputFile}}"
   )
 
-  invisible(config_data)
+  invisible(configData)
 }
 
 #' Import project configuration from JSON to Excel files
@@ -204,89 +208,95 @@ snapshotProjectConfiguration <- function(
 #' Creates Excel configuration files from a JSON configuration file.
 #' This allows for recreating the project configuration from version-controlled JSON.
 #'
-#' @param json_path Path to the JSON configuration file. Defaults to "ProjectConfiguration.json".
-#' @param output_dir Directory where the Excel files will be created. Defaults to the current working directory.
+#' @param jsonPath Path to the JSON configuration file. Defaults to "ProjectConfiguration.json".
+#' @param outputDir Directory where the Excel files will be created. If NULL (default), the Excel files
+#'   will be created in the same directory as the source JSON file.
 #'
 #' @return A ProjectConfiguration object initialized with the regenerated ProjectConfiguration.xlsx
 #' @export
 restoreProjectConfiguration <- function(
-  json_path = "ProjectConfiguration.json",
-  output_dir = "."
+  jsonPath = "ProjectConfiguration.json",
+  outputDir = NULL
 ) {
   # Check if JSON file exists
-  if (!file.exists(json_path)) {
-    stop("JSON file does not exist: ", json_path)
+  if (!file.exists(jsonPath)) {
+    stop("JSON file does not exist: ", jsonPath)
+  }
+
+  # If outputDir is NULL, use the same directory as the source JSON file
+  if (is.null(outputDir)) {
+    outputDir <- dirname(jsonPath)
   }
 
   # Create output directory if it doesn't exist
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE)
+  if (!dir.exists(outputDir)) {
+    dir.create(outputDir, recursive = TRUE)
   }
 
   # Create Configurations directory
-  config_dir <- file.path(output_dir, "Configurations")
-  if (!dir.exists(config_dir)) {
-    dir.create(config_dir, recursive = TRUE, showWarnings = FALSE)
+  configDir <- file.path(outputDir, "Configurations")
+  if (!dir.exists(configDir)) {
+    dir.create(configDir, recursive = TRUE, showWarnings = FALSE)
   }
 
   # Load JSON data
-  config_data <- jsonlite::fromJSON(json_path, simplifyVector = FALSE)
+  configData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
 
   # Determine Excel filename based on source JSON filename
-  json_filename <- basename(json_path)
-  excel_filename <- sub("\\.json$", ".xlsx", json_filename)
+  jsonFilename <- basename(jsonPath)
+  excelFilename <- sub("\\.json$", ".xlsx", jsonFilename)
 
   # Path to save ProjectConfiguration.xlsx
-  proj_config_path <- file.path(output_dir, excel_filename)
+  projConfigPath <- file.path(outputDir, excelFilename)
 
   # Handle ProjectConfiguration.xlsx if present
-  if ("projectConfiguration" %in% names(config_data$files)) {
-    proj_config_data <- config_data$files$projectConfiguration$ProjectConfiguration
+  if ("projectConfiguration" %in% names(configData)) {
+    projConfigData <- configData$projectConfiguration
 
     # Get column names
-    column_names <- proj_config_data$column_names
+    columnNames <- projConfigData$column_names
 
     # Create an empty data frame with the correct structure
-    proj_config_df <- data.frame(matrix(
-      ncol = length(column_names),
-      nrow = length(proj_config_data$rows)
+    projConfigDf <- data.frame(matrix(
+      ncol = length(columnNames),
+      nrow = length(projConfigData$rows)
     ))
-    colnames(proj_config_df) <- column_names
+    colnames(projConfigDf) <- columnNames
 
     # Fill in data if we have rows
-    if (length(proj_config_data$rows) > 0) {
-      for (i in seq_along(proj_config_data$rows)) {
-        row_data <- proj_config_data$rows[[i]]
+    if (length(projConfigData$rows) > 0) {
+      for (i in seq_along(projConfigData$rows)) {
+        rowData <- projConfigData$rows[[i]]
 
         # Fill in each column
-        for (j in seq_along(column_names)) {
-          if (j <= length(row_data)) {
-            proj_config_df[i, j] <- row_data[[j]] %||% ""
+        for (j in seq_along(columnNames)) {
+          if (j <= length(rowData)) {
+            projConfigDf[i, j] <- rowData[[j]] %||% ""
           }
         }
       }
 
       # Convert data types to match the originals
-      proj_config_df <- .convert_data_types(proj_config_df)
+      projConfigDf <- .convertDataTypes(projConfigDf)
     }
 
     # Write ProjectConfiguration.xlsx file to the root directory, not inside Configurations
-    .writeExcel(proj_config_df, proj_config_path)
+    .writeExcel(projConfigDf, projConfigPath)
   } else {
     # If no ProjectConfiguration in JSON, create a basic one
     warning("No ProjectConfiguration found in JSON file. Creating a basic one.")
 
     # Create a basic ProjectConfiguration dataframe
-    proj_config_df <- data.frame(
+    projConfigDf <- data.frame(
       Property = c(
         "modelFolder",
         "configurationsFolder",
         "outputFolder"
       ),
       Value = c(
-        file.path(output_dir, "Models"),
-        file.path(output_dir, "Configurations"),
-        file.path(output_dir, "Results")
+        file.path(outputDir, "Models"),
+        file.path(outputDir, "Configurations"),
+        file.path(outputDir, "Results")
       ),
       Description = c(
         "Path to folder containing model files",
@@ -296,123 +306,123 @@ restoreProjectConfiguration <- function(
     )
 
     # Write the basic ProjectConfiguration
-    .writeExcel(proj_config_df, proj_config_path)
+    .writeExcel(projConfigDf, projConfigPath)
   }
 
   # Map file names to their Excel filenames
-  file_mapping <- list(
-    modelParameters = "ModelParameters.xlsx",
-    individuals = "Individuals.xlsx",
-    populations = "Populations.xlsx",
-    scenarios = "Scenarios.xlsx",
-    applications = "Applications.xlsx",
-    plots = "Plots.xlsx"
+  fileMapping <- list(
+    modelParameterSets = "ModelParameters.xlsx",
+    Individuals = "Individuals.xlsx",
+    Populations = "Populations.xlsx",
+    Scenarios = "Scenarios.xlsx",
+    Applications = "Applications.xlsx",
+    Plots = "Plots.xlsx"
   )
 
   # Process each Excel file
-  for (name in names(file_mapping)) {
-    if (name %in% names(config_data$files)) {
+  for (name in names(fileMapping)) {
+    if (name %in% names(configData)) {
       # Get the sheets for this file
-      sheets_data <- config_data$files[[name]]
-      excel_sheets <- list()
+      sheetsData <- configData[[name]]
+      excelSheets <- list()
 
       # Process each sheet
-      for (sheet_name in names(sheets_data)) {
-        sheet_info <- sheets_data[[sheet_name]]
+      for (sheetName in names(sheetsData)) {
+        sheetInfo <- sheetsData[[sheetName]]
 
         # Get column names
-        column_names <- sheet_info$column_names
+        columnNames <- sheetInfo$column_names
 
         # Create an empty data frame with the correct structure
         df <- data.frame(matrix(
-          ncol = length(column_names),
-          nrow = length(sheet_info$rows)
+          ncol = length(columnNames),
+          nrow = length(sheetInfo$rows)
         ))
-        colnames(df) <- column_names
+        colnames(df) <- columnNames
 
         # Fill in data if we have rows
-        if (length(sheet_info$rows) > 0) {
-          for (i in seq_along(sheet_info$rows)) {
-            row_data <- sheet_info$rows[[i]]
+        if (length(sheetInfo$rows) > 0) {
+          for (i in seq_along(sheetInfo$rows)) {
+            rowData <- sheetInfo$rows[[i]]
 
             # Fill in each column
-            for (j in seq_along(column_names)) {
-              if (j <= length(row_data)) {
-                df[i, j] <- row_data[[j]] %||% ""
+            for (j in seq_along(columnNames)) {
+              if (j <= length(rowData)) {
+                df[i, j] <- rowData[[j]] %||% ""
               }
             }
           }
 
           # Convert data types to match the originals
-          df <- .convert_data_types(df)
+          df <- .convertDataTypes(df)
         }
 
         # Add to the list of sheets
-        excel_sheets[[sheet_name]] <- df
+        excelSheets[[sheetName]] <- df
       }
 
       # Write the Excel file if we have data
-      if (length(excel_sheets) > 0) {
-        excel_path <- file.path(config_dir, file_mapping[[name]])
-        .writeExcel(excel_sheets, excel_path)
+      if (length(excelSheets) > 0) {
+        excelPath <- file.path(configDir, fileMapping[[name]])
+        .writeExcel(excelSheets, excelPath)
       }
     }
   }
 
   # Handle populations CSV folder
-  if ("populationsCSV" %in% names(config_data$files)) {
-    csv_dir <- file.path(config_dir, "PopulationsCSV")
-    if (!dir.exists(csv_dir)) {
-      dir.create(csv_dir, recursive = TRUE, showWarnings = FALSE)
+  if ("populationsCSV" %in% names(configData)) {
+    csvDir <- file.path(configDir, "PopulationsCSV")
+    if (!dir.exists(csvDir)) {
+      dir.create(csvDir, recursive = TRUE, showWarnings = FALSE)
     }
 
     # Get CSV files
-    csv_files <- config_data$files$populationsCSV
+    csvFiles <- configData$populationsCSV
 
     # Process each CSV file
-    for (file_name in names(csv_files)) {
-      csv_info <- csv_files[[file_name]]
+    for (fileName in names(csvFiles)) {
+      csvInfo <- csvFiles[[fileName]]
 
       # Get column names
-      column_names <- csv_info$column_names
+      columnNames <- csvInfo$column_names
 
       # Create empty data frame
-      csv_df <- data.frame(matrix(
-        ncol = length(column_names),
-        nrow = length(csv_info$rows)
+      csvDf <- data.frame(matrix(
+        ncol = length(columnNames),
+        nrow = length(csvInfo$rows)
       ))
-      colnames(csv_df) <- column_names
+      colnames(csvDf) <- columnNames
 
       # Fill in data if we have rows
-      if (length(csv_info$rows) > 0) {
-        for (i in seq_along(csv_info$rows)) {
-          row_data <- csv_info$rows[[i]]
+      if (length(csvInfo$rows) > 0) {
+        for (i in seq_along(csvInfo$rows)) {
+          rowData <- csvInfo$rows[[i]]
 
           # Fill in each column
-          for (j in seq_along(column_names)) {
-            if (j <= length(row_data)) {
-              csv_df[i, j] <- row_data[[j]]
+          for (j in seq_along(columnNames)) {
+            if (j <= length(rowData)) {
+              csvDf[i, j] <- rowData[[j]]
             }
           }
         }
       }
 
       # Write CSV file
-      csv_path <- file.path(csv_dir, file_name)
-      utils::write.csv(csv_df, csv_path, row.names = FALSE)
+      csvPath <- file.path(csvDir, fileName)
+      utils::write.csv(csvDf, csvPath, row.names = FALSE)
     }
   }
 
   # Get relative path from working directory for the output message
-  rel_path <- fs::path_rel(proj_config_path, start = getwd())
+  relPath <- fs::path_rel(projConfigPath, start = getwd())
 
   # Display message with relative path
   cli::cli_alert_success(
-    "Project configuration from {.file {json_path}} restored at {.file {rel_path}}"
+    "Project configuration from {.file {jsonPath}} restored at {.file {relPath}}"
   )
 
   # Create and return a ProjectConfiguration object
-  invisible(createProjectConfiguration(proj_config_path))
+  invisible(createProjectConfiguration(projConfigPath))
 }
 
 
@@ -422,33 +432,33 @@ restoreProjectConfiguration <- function(
 #' @return Data frame with columns converted to appropriate types
 #' @keywords internal
 #' @noRd
-.convert_data_types <- function(df) {
+.convertDataTypes <- function(df) {
   if (ncol(df) == 0 || nrow(df) == 0) {
     return(df)
   }
 
-  for (col_name in names(df)) {
+  for (colName in names(df)) {
     # Get non-NA values for type checking
-    values <- df[[col_name]]
-    non_na_values <- values[!is.na(values) & values != ""]
+    values <- df[[colName]]
+    nonNaValues <- values[!is.na(values) & values != ""]
 
     # Skip if all values are NA or empty
-    if (length(non_na_values) == 0) {
+    if (length(nonNaValues) == 0) {
       next
     }
 
     # Check if column can be converted to logical (TRUE/FALSE values)
-    if (all(non_na_values %in% c("TRUE", "FALSE"))) {
-      df[[col_name]] <- as.logical(values)
+    if (all(nonNaValues %in% c("TRUE", "FALSE"))) {
+      df[[colName]] <- as.logical(values)
       next
     }
 
     # Check if column can be converted to numeric
     # Use suppressWarnings to handle NAs gracefully
-    numeric_conversion <- suppressWarnings(as.numeric(values))
+    numericConversion <- suppressWarnings(as.numeric(values))
     # If no NAs were introduced by conversion (except those that were already NA)
-    if (!any(is.na(numeric_conversion) & !is.na(values) & values != "")) {
-      df[[col_name]] <- numeric_conversion
+    if (!any(is.na(numericConversion) & !is.na(values) & values != "")) {
+      df[[colName]] <- numericConversion
     }
   }
 

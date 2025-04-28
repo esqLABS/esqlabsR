@@ -3,28 +3,28 @@ test_that("snapshotProjectConfiguration exports project configuration to JSON wi
   paths <- local_test_project()
 
   # Create output directory that will be automatically cleaned up
-  output_dir <- withr::local_tempdir("test_export")
+  outputDir <- withr::local_tempdir("test_export")
 
   # Get the expected JSON filename based on source Excel file
-  excel_filename <- basename(paths$project_config_path)
-  expected_json_filename <- sub("\\.xlsx$", ".json", excel_filename)
-  expected_json_path <- file.path(output_dir, expected_json_filename)
+  excelFilename <- basename(paths$project_config_path)
+  expectedJsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  expectedJsonPath <- file.path(outputDir, expectedJsonFilename)
 
-  # Export to JSON
-  config_data <- snapshotProjectConfiguration(
+  # Export to JSON with explicit outputDir
+  configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    output_dir
+    outputDir
   )
 
   # Check JSON content with snapshot
-  expect_snapshot(config_data)
+  expect_snapshot(configData)
 
   # Check that JSON file with expected name exists
-  expect_true(file.exists(expected_json_path))
+  expect_true(file.exists(expectedJsonPath))
 
   # Check JSON content in file with snapshot
-  json_content <- jsonlite::fromJSON(expected_json_path)
-  expect_snapshot(json_content)
+  jsonContent <- jsonlite::fromJSON(expectedJsonPath)
+  expect_snapshot(jsonContent)
 })
 
 test_that("restoreProjectConfiguration creates Excel files from JSON with correct filename", {
@@ -32,41 +32,41 @@ test_that("restoreProjectConfiguration creates Excel files from JSON with correc
   paths <- local_test_project()
 
   # Create output directories that will be automatically cleaned up
-  export_dir <- withr::local_tempdir("test_export")
-  import_dir <- withr::local_tempdir("test_import")
+  exportDir <- withr::local_tempdir("test_export")
+  importDir <- withr::local_tempdir("test_import")
 
-  # Export to JSON
-  excel_filename <- basename(paths$project_config_path)
-  json_filename <- sub("\\.xlsx$", ".json", excel_filename)
+  # Export to JSON with explicit outputDir
+  excelFilename <- basename(paths$project_config_path)
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
 
-  config_data <- snapshotProjectConfiguration(
+  configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    export_dir
+    exportDir
   )
 
   # Get the actual JSON path
-  json_path <- file.path(export_dir, json_filename)
+  jsonPath <- file.path(exportDir, jsonFilename)
 
   # Check JSON file exists
-  expect_true(file.exists(json_path))
+  expect_true(file.exists(jsonPath))
 
-  # Import from JSON
-  project_config <- restoreProjectConfiguration(json_path, import_dir)
+  # Import from JSON with explicit outputDir
+  projectConfig <- restoreProjectConfiguration(jsonPath, importDir)
 
   # Check that a ProjectConfiguration object is returned
-  expect_s3_class(project_config, "ProjectConfiguration")
+  expect_s3_class(projectConfig, "ProjectConfiguration")
 
-  # Expected Excel filename in import_dir should match the original Excel filename
-  expected_excel_path <- file.path(import_dir, excel_filename)
-  expect_true(file.exists(expected_excel_path))
+  # Expected Excel filename in importDir should match the original Excel filename
+  expectedExcelPath <- file.path(importDir, excelFilename)
+  expect_true(file.exists(expectedExcelPath))
 
   # Check configurations directory was created
-  config_dir <- file.path(import_dir, "Configurations")
-  expect_true(dir.exists(config_dir))
+  configDir <- file.path(importDir, "Configurations")
+  expect_true(dir.exists(configDir))
 
   # Check at least some Excel files were created
-  excel_files <- list.files(config_dir, pattern = "\\.xlsx$")
-  expect_true(length(excel_files) > 0)
+  excelFiles <- list.files(configDir, pattern = "\\.xlsx$")
+  expect_true(length(excelFiles) > 0)
 })
 
 test_that("Excel files in Configurations folder preserve content after JSON roundtrip", {
@@ -74,11 +74,11 @@ test_that("Excel files in Configurations folder preserve content after JSON roun
   paths <- local_test_project()
 
   # Create output directories for export and import
-  export_dir <- withr::local_tempdir("test_excel_content_export")
-  import_dir <- withr::local_tempdir("test_excel_content_import")
+  exportDir <- withr::local_tempdir("test_excel_content_export")
+  importDir <- withr::local_tempdir("test_excel_content_import")
 
   # Get the file mappings to test
-  file_mapping <- list(
+  fileMapping <- list(
     modelParameters = "ModelParameters.xlsx",
     individuals = "Individuals.xlsx",
     populations = "Populations.xlsx",
@@ -87,64 +87,64 @@ test_that("Excel files in Configurations folder preserve content after JSON roun
     plots = "Plots.xlsx"
   )
 
-  # Export to JSON
-  excel_filename <- basename(paths$project_config_path)
-  json_filename <- sub("\\.xlsx$", ".json", excel_filename)
+  # Export to JSON with explicit outputDir
+  excelFilename <- basename(paths$project_config_path)
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
 
-  config_data <- snapshotProjectConfiguration(
+  configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    export_dir
+    exportDir
   )
 
   # Get the actual JSON path
-  json_path <- file.path(export_dir, json_filename)
+  jsonPath <- file.path(exportDir, jsonFilename)
 
-  # Import from JSON
-  restoreProjectConfiguration(json_path, import_dir)
+  # Import from JSON with explicit outputDir
+  restoreProjectConfiguration(jsonPath, importDir)
 
   # Configurations directory in the import directory
-  config_dir <- file.path(import_dir, "Configurations")
-  expect_true(dir.exists(config_dir))
+  configDir <- file.path(importDir, "Configurations")
+  expect_true(dir.exists(configDir))
 
   # Verify sheet names are preserved in each Excel file
-  for (name in names(file_mapping)) {
+  for (name in names(fileMapping)) {
     # Get paths to original and regenerated files
-    original_path <- file.path(paths$configurations_dir, file_mapping[[name]])
-    regenerated_path <- file.path(
-      config_dir,
-      file_mapping[[name]]
+    originalPath <- file.path(paths$configurations_dir, fileMapping[[name]])
+    regeneratedPath <- file.path(
+      configDir,
+      fileMapping[[name]]
     )
 
     # Skip if original file doesn't exist
-    if (!file.exists(original_path)) {
+    if (!file.exists(originalPath)) {
       next
     }
 
     # Verify the regenerated file exists
     expect_true(
-      file.exists(regenerated_path),
-      info = paste("Regenerated file not found:", regenerated_path)
+      file.exists(regeneratedPath),
+      info = paste("Regenerated file not found:", regeneratedPath)
     )
 
     # Get sheet names from both files
-    original_sheets <- readxl::excel_sheets(original_path)
-    regenerated_sheets <- readxl::excel_sheets(regenerated_path)
+    originalSheets <- readxl::excel_sheets(originalPath)
+    regeneratedSheets <- readxl::excel_sheets(regeneratedPath)
 
     # Check that both files have the same sheets
     expect_identical(
-      original_sheets,
-      regenerated_sheets,
-      info = paste("Sheet names don't match for:", file_mapping[[name]])
+      originalSheets,
+      regeneratedSheets,
+      info = paste("Sheet names don't match for:", fileMapping[[name]])
     )
 
     # Check basic data structure is preserved
-    for (sheet in original_sheets) {
+    for (sheet in originalSheets) {
       # Read sheets from both files
-      original_data <- readExcel(original_path, sheet)
-      regenerated_data <- readExcel(regenerated_path, sheet)
+      originalData <- readExcel(originalPath, sheet)
+      regeneratedData <- readExcel(regeneratedPath, sheet)
 
       # Check that both files have the same data
-      expect_identical(original_data, regenerated_data)
+      expect_identical(originalData, regeneratedData)
     }
   }
 })
@@ -154,46 +154,46 @@ test_that("ProjectConfiguration can be created from regenerated JSON files", {
   paths <- local_test_project()
 
   # Get the original Excel filename
-  excel_filename <- basename(paths$project_config_path)
+  excelFilename <- basename(paths$project_config_path)
 
   # Create output directories for export and import
-  export_dir <- withr::local_tempdir("test_config_export")
-  import_dir <- withr::local_tempdir("test_config_import")
+  exportDir <- withr::local_tempdir("test_config_export")
+  importDir <- withr::local_tempdir("test_config_import")
 
-  # Export to JSON
-  json_filename <- sub("\\.xlsx$", ".json", excel_filename)
-  config_data <- snapshotProjectConfiguration(
+  # Export to JSON with explicit outputDir
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    export_dir
+    exportDir
   )
-  json_path <- file.path(export_dir, json_filename)
+  jsonPath <- file.path(exportDir, jsonFilename)
 
-  # Import from JSON
-  restoreProjectConfiguration(json_path, import_dir)
+  # Import from JSON with explicit outputDir
+  restoreProjectConfiguration(jsonPath, importDir)
 
   # Path to regenerated ProjectConfiguration.xlsx (in root directory, not in Configurations)
-  regenerated_project_config_path <- file.path(
-    import_dir,
-    excel_filename
+  regeneratedProjectConfigPath <- file.path(
+    importDir,
+    excelFilename
   )
 
   # Verify the file was created successfully
-  expect_true(file.exists(regenerated_project_config_path))
+  expect_true(file.exists(regeneratedProjectConfigPath))
 
-  # Change working directory to output_dir to use relative paths
-  old_wd <- getwd()
-  setwd(import_dir)
-  on.exit(setwd(old_wd), add = TRUE)
+  # Change working directory to outputDir to use relative paths
+  oldWd <- getwd()
+  setwd(importDir)
+  on.exit(setwd(oldWd), add = TRUE)
 
   # Try to create a ProjectConfiguration object with a relative path
-  relative_path <- excel_filename
+  relativePath <- excelFilename
   expect_no_error({
-    project_config <- createProjectConfiguration(relative_path)
+    projectConfig <- createProjectConfiguration(relativePath)
   })
 
   # Verify the created object is of the correct class
-  project_config <- createProjectConfiguration(relative_path)
-  expect_s3_class(project_config, "ProjectConfiguration")
+  projectConfig <- createProjectConfiguration(relativePath)
+  expect_s3_class(projectConfig, "ProjectConfiguration")
 })
 
 test_that("ProjectConfiguration.xlsx data is preserved in JSON round-trip", {
@@ -201,36 +201,36 @@ test_that("ProjectConfiguration.xlsx data is preserved in JSON round-trip", {
   paths <- local_test_project()
 
   # Get the original Excel filename
-  excel_filename <- basename(paths$project_config_path)
+  excelFilename <- basename(paths$project_config_path)
 
   # Create output directories for export and import
-  export_dir <- withr::local_tempdir("test_data_export")
-  import_dir <- withr::local_tempdir("test_data_import")
+  exportDir <- withr::local_tempdir("test_data_export")
+  importDir <- withr::local_tempdir("test_data_import")
 
-  # Export to JSON
-  json_filename <- sub("\\.xlsx$", ".json", excel_filename)
-  config_data <- snapshotProjectConfiguration(
+  # Export to JSON with explicit outputDir
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    export_dir
+    exportDir
   )
-  json_path <- file.path(export_dir, json_filename)
+  jsonPath <- file.path(exportDir, jsonFilename)
 
-  # Import from JSON
-  regenerated_config <- restoreProjectConfiguration(json_path, import_dir)
+  # Import from JSON with explicit outputDir
+  regeneratedConfig <- restoreProjectConfiguration(jsonPath, importDir)
 
   # Check that a ProjectConfiguration object was returned
-  expect_s3_class(regenerated_config, "ProjectConfiguration")
+  expect_s3_class(regeneratedConfig, "ProjectConfiguration")
 
   # Check that ProjectConfiguration.xlsx was created with the same name as original
-  expected_excel_path <- file.path(import_dir, excel_filename)
-  expect_true(file.exists(expected_excel_path))
+  expectedExcelPath <- file.path(importDir, excelFilename)
+  expect_true(file.exists(expectedExcelPath))
 
   # Read the original ProjectConfiguration.xlsx
-  original_df <- readExcel(paths$project_config_path)
+  originalDf <- readExcel(paths$project_config_path)
 
   # Read the regenerated ProjectConfiguration.xlsx to compare directly
-  regenerated_df <- readExcel(expected_excel_path)
+  regeneratedDf <- readExcel(expectedExcelPath)
 
   # Check that both data frames are identical
-  expect_identical(original_df, regenerated_df)
+  expect_identical(originalDf, regeneratedDf)
 })

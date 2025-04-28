@@ -1,290 +1,287 @@
 # snapshotProjectConfiguration exports project configuration to JSON with correct filename
 
     Code
-      config_data
+      configData
     Output
-      $files
-      $files$projectConfiguration
-      $files$projectConfiguration$ProjectConfiguration
-      $files$projectConfiguration$ProjectConfiguration$column_names
+      $projectConfiguration
+      $projectConfiguration$column_names
       [1] "Property"    "Value"       "Description"
       
-      $files$projectConfiguration$ProjectConfiguration$rows
-      $files$projectConfiguration$ProjectConfiguration$rows[[1]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[1]]$Property
+      $projectConfiguration$rows
+      $projectConfiguration$rows[[1]]
+      $projectConfiguration$rows[[1]]$Property
       [1] "modelFolder"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[1]]$Value
+      $projectConfiguration$rows[[1]]$Value
       [1] "Models/Simulations/"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[1]]$Description
+      $projectConfiguration$rows[[1]]$Description
       [1] "Path to the folder with pkml simulation files; relative to the location of this file"
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[2]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[2]]$Property
+      $projectConfiguration$rows[[2]]
+      $projectConfiguration$rows[[2]]$Property
       [1] "configurationsFolder"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[2]]$Value
+      $projectConfiguration$rows[[2]]$Value
       [1] "Configurations/"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[2]]$Description
+      $projectConfiguration$rows[[2]]$Description
       [1] "Path to the folder with excel files with parametrization; relative to the location of this file"
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[3]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[3]]$Property
+      $projectConfiguration$rows[[3]]
+      $projectConfiguration$rows[[3]]$Property
       [1] "modelParamsFile"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[3]]$Value
+      $projectConfiguration$rows[[3]]$Value
       [1] "ModelParameters.xlsx"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[3]]$Description
+      $projectConfiguration$rows[[3]]$Description
       [1] "Name of the excel file with global model parametrization. Must be located in the \"paramsFolder\""
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[4]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[4]]$Property
+      $projectConfiguration$rows[[4]]
+      $projectConfiguration$rows[[4]]$Property
       [1] "individualsFile"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[4]]$Value
+      $projectConfiguration$rows[[4]]$Value
       [1] "Individuals.xlsx"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[4]]$Description
+      $projectConfiguration$rows[[4]]$Description
       [1] "Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\""
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[5]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[5]]$Property
+      $projectConfiguration$rows[[5]]
+      $projectConfiguration$rows[[5]]$Property
       [1] "populationsFile"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[5]]$Value
+      $projectConfiguration$rows[[5]]$Value
       [1] "Populations.xlsx"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[5]]$Description
+      $projectConfiguration$rows[[5]]$Description
       [1] "Name of the excel file with population information. Must be located in the \"paramsFolder\""
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[6]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[6]]$Property
+      $projectConfiguration$rows[[6]]
+      $projectConfiguration$rows[[6]]$Property
       [1] "populationsFolder"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[6]]$Value
+      $projectConfiguration$rows[[6]]$Value
       [1] "PopulationsCSV"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[6]]$Description
+      $projectConfiguration$rows[[6]]$Description
       [1] "Name of the folder containing population defined in files"
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[7]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[7]]$Property
+      $projectConfiguration$rows[[7]]
+      $projectConfiguration$rows[[7]]$Property
       [1] "scenariosFile"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[7]]$Value
+      $projectConfiguration$rows[[7]]$Value
       [1] "Scenarios.xlsx"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[7]]$Description
+      $projectConfiguration$rows[[7]]$Description
       [1] "Name of the excel file with scenario definitions. Must be located in the \"paramsFolder\""
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[8]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[8]]$Property
+      $projectConfiguration$rows[[8]]
+      $projectConfiguration$rows[[8]]$Property
       [1] "applicationsFile"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[8]]$Value
+      $projectConfiguration$rows[[8]]$Value
       [1] "Applications.xlsx"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[8]]$Description
+      $projectConfiguration$rows[[8]]$Description
       [1] "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"paramsFolder\""
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[9]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[9]]$Property
+      $projectConfiguration$rows[[9]]
+      $projectConfiguration$rows[[9]]$Property
       [1] "plotsFile"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[9]]$Value
+      $projectConfiguration$rows[[9]]$Value
       [1] "Plots.xlsx"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[9]]$Description
+      $projectConfiguration$rows[[9]]$Description
       [1] "Name of the excel file with plot definitions. Must be located in the \"paramsFolder\""
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[10]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[10]]$Property
+      $projectConfiguration$rows[[10]]
+      $projectConfiguration$rows[[10]]$Property
       [1] "dataFolder"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[10]]$Value
+      $projectConfiguration$rows[[10]]$Value
       [1] "Data/"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[10]]$Description
+      $projectConfiguration$rows[[10]]$Description
       [1] "Path to the folder where experimental data files are located; relative to the location of this file"
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[11]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[11]]$Property
+      $projectConfiguration$rows[[11]]
+      $projectConfiguration$rows[[11]]$Property
       [1] "dataFile"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[11]]$Value
+      $projectConfiguration$rows[[11]]$Value
       [1] "TestProject_TimeValuesData.xlsx"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[11]]$Description
+      $projectConfiguration$rows[[11]]$Description
       [1] "Name of the excel file with experimental data. Must be located in the \"dataFolder\""
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[12]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[12]]$Property
+      $projectConfiguration$rows[[12]]
+      $projectConfiguration$rows[[12]]$Property
       [1] "dataImporterConfigurationFile"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[12]]$Value
+      $projectConfiguration$rows[[12]]$Value
       [1] "esqlabs_dataImporter_configuration.xml"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[12]]$Description
+      $projectConfiguration$rows[[12]]$Description
       [1] "Name of data importer configuration file in xml format used to load the data. Must be located in the \"dataFolder\""
       
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[13]]
-      $files$projectConfiguration$ProjectConfiguration$rows[[13]]$Property
+      $projectConfiguration$rows[[13]]
+      $projectConfiguration$rows[[13]]$Property
       [1] "outputFolder"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[13]]$Value
+      $projectConfiguration$rows[[13]]$Value
       [1] "Results/"
       
-      $files$projectConfiguration$ProjectConfiguration$rows[[13]]$Description
+      $projectConfiguration$rows[[13]]$Description
       [1] "Path to the folder where the results should be saved to; relative to the location of this file"
       
       
       
       
-      
-      $files$modelParameters
-      $files$modelParameters$Global
-      $files$modelParameters$Global$column_names
+      $modelParameterSets
+      $modelParameterSets$Global
+      $modelParameterSets$Global$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$modelParameters$Global$rows
-      $files$modelParameters$Global$rows[[1]]
-      $files$modelParameters$Global$rows[[1]]$`Container Path`
+      $modelParameterSets$Global$rows
+      $modelParameterSets$Global$rows[[1]]
+      $modelParameterSets$Global$rows[[1]]$`Container Path`
       [1] "Organism|Liver"
       
-      $files$modelParameters$Global$rows[[1]]$`Parameter Name`
+      $modelParameterSets$Global$rows[[1]]$`Parameter Name`
       [1] "EHC continuous fraction"
       
-      $files$modelParameters$Global$rows[[1]]$Value
+      $modelParameterSets$Global$rows[[1]]$Value
       [1] "1"
       
-      $files$modelParameters$Global$rows[[1]]$Units
+      $modelParameterSets$Global$rows[[1]]$Units
       [1] NA
       
       
       
       
-      $files$modelParameters$MissingParam
-      $files$modelParameters$MissingParam$column_names
+      $modelParameterSets$MissingParam
+      $modelParameterSets$MissingParam$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$modelParameters$MissingParam$rows
-      $files$modelParameters$MissingParam$rows[[1]]
-      $files$modelParameters$MissingParam$rows[[1]]$`Container Path`
+      $modelParameterSets$MissingParam$rows
+      $modelParameterSets$MissingParam$rows[[1]]
+      $modelParameterSets$MissingParam$rows[[1]]$`Container Path`
       [1] "foo"
       
-      $files$modelParameters$MissingParam$rows[[1]]$`Parameter Name`
+      $modelParameterSets$MissingParam$rows[[1]]$`Parameter Name`
       [1] "bar"
       
-      $files$modelParameters$MissingParam$rows[[1]]$Value
+      $modelParameterSets$MissingParam$rows[[1]]$Value
       [1] "2"
       
-      $files$modelParameters$MissingParam$rows[[1]]$Units
+      $modelParameterSets$MissingParam$rows[[1]]$Units
       [1] NA
       
       
       
       
-      $files$modelParameters$Aciclovir
-      $files$modelParameters$Aciclovir$column_names
+      $modelParameterSets$Aciclovir
+      $modelParameterSets$Aciclovir$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$modelParameters$Aciclovir$rows
-      $files$modelParameters$Aciclovir$rows[[1]]
-      $files$modelParameters$Aciclovir$rows[[1]]$`Container Path`
+      $modelParameterSets$Aciclovir$rows
+      $modelParameterSets$Aciclovir$rows[[1]]
+      $modelParameterSets$Aciclovir$rows[[1]]$`Container Path`
       [1] "Aciclovir"
       
-      $files$modelParameters$Aciclovir$rows[[1]]$`Parameter Name`
+      $modelParameterSets$Aciclovir$rows[[1]]$`Parameter Name`
       [1] "Lipophilicity"
       
-      $files$modelParameters$Aciclovir$rows[[1]]$Value
+      $modelParameterSets$Aciclovir$rows[[1]]$Value
       [1] "-0.1"
       
-      $files$modelParameters$Aciclovir$rows[[1]]$Units
+      $modelParameterSets$Aciclovir$rows[[1]]$Units
       [1] "Log Units"
       
       
       
       
       
-      $files$individuals
-      $files$individuals$IndividualBiometrics
-      $files$individuals$IndividualBiometrics$column_names
+      $Individuals
+      $Individuals$IndividualBiometrics
+      $Individuals$IndividualBiometrics$column_names
       [1] "IndividualId"  "Species"       "Population"    "Gender"       
       [5] "Weight [kg]"   "Height [cm]"   "Age [year(s)]" "Protein"      
       [9] "Ontogeny"     
       
-      $files$individuals$IndividualBiometrics$rows
-      $files$individuals$IndividualBiometrics$rows[[1]]
-      $files$individuals$IndividualBiometrics$rows[[1]]$IndividualId
+      $Individuals$IndividualBiometrics$rows
+      $Individuals$IndividualBiometrics$rows[[1]]
+      $Individuals$IndividualBiometrics$rows[[1]]$IndividualId
       [1] "Indiv1"
       
-      $files$individuals$IndividualBiometrics$rows[[1]]$Species
+      $Individuals$IndividualBiometrics$rows[[1]]$Species
       [1] "Human"
       
-      $files$individuals$IndividualBiometrics$rows[[1]]$Population
+      $Individuals$IndividualBiometrics$rows[[1]]$Population
       [1] "European_ICRP_2002"
       
-      $files$individuals$IndividualBiometrics$rows[[1]]$Gender
+      $Individuals$IndividualBiometrics$rows[[1]]$Gender
       [1] "MALE"
       
-      $files$individuals$IndividualBiometrics$rows[[1]]$`Weight [kg]`
+      $Individuals$IndividualBiometrics$rows[[1]]$`Weight [kg]`
       [1] "73"
       
-      $files$individuals$IndividualBiometrics$rows[[1]]$`Height [cm]`
+      $Individuals$IndividualBiometrics$rows[[1]]$`Height [cm]`
       [1] "176"
       
-      $files$individuals$IndividualBiometrics$rows[[1]]$`Age [year(s)]`
+      $Individuals$IndividualBiometrics$rows[[1]]$`Age [year(s)]`
       [1] "30"
       
-      $files$individuals$IndividualBiometrics$rows[[1]]$Protein
+      $Individuals$IndividualBiometrics$rows[[1]]$Protein
       [1] NA
       
-      $files$individuals$IndividualBiometrics$rows[[1]]$Ontogeny
+      $Individuals$IndividualBiometrics$rows[[1]]$Ontogeny
       [1] NA
       
       
       
       
-      $files$individuals$Indiv1
-      $files$individuals$Indiv1$column_names
+      $Individuals$Indiv1
+      $Individuals$Indiv1$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$individuals$Indiv1$rows
-      $files$individuals$Indiv1$rows[[1]]
-      $files$individuals$Indiv1$rows[[1]]$`Container Path`
+      $Individuals$Indiv1$rows
+      $Individuals$Indiv1$rows[[1]]
+      $Individuals$Indiv1$rows[[1]]$`Container Path`
       [1] "Organism|Kidney"
       
-      $files$individuals$Indiv1$rows[[1]]$`Parameter Name`
+      $Individuals$Indiv1$rows[[1]]$`Parameter Name`
       [1] "GFR"
       
-      $files$individuals$Indiv1$rows[[1]]$Value
+      $Individuals$Indiv1$rows[[1]]$Value
       [1] "90"
       
-      $files$individuals$Indiv1$rows[[1]]$Units
+      $Individuals$Indiv1$rows[[1]]$Units
       [1] "ml/min"
       
       
       
       
       
-      $files$populations
-      $files$populations$Demographics
-      $files$populations$Demographics$column_names
+      $Populations
+      $Populations$Demographics
+      $Populations$Demographics$column_names
        [1] "PopulationName"      "species"             "population"         
        [4] "numberOfIndividuals" "proportionOfFemales" "weightMin"          
        [7] "weightMax"           "weightUnit"          "heightMin"          
@@ -292,865 +289,865 @@
       [13] "ageMax"              "BMIMin"              "BMIMax"             
       [16] "BMIUnit"             "Protein"             "Ontogeny"           
       
-      $files$populations$Demographics$rows
-      $files$populations$Demographics$rows[[1]]
-      $files$populations$Demographics$rows[[1]]$PopulationName
+      $Populations$Demographics$rows
+      $Populations$Demographics$rows[[1]]
+      $Populations$Demographics$rows[[1]]$PopulationName
       [1] "TestPopulation"
       
-      $files$populations$Demographics$rows[[1]]$species
+      $Populations$Demographics$rows[[1]]$species
       [1] "Human"
       
-      $files$populations$Demographics$rows[[1]]$population
+      $Populations$Demographics$rows[[1]]$population
       [1] "European_ICRP_2002"
       
-      $files$populations$Demographics$rows[[1]]$numberOfIndividuals
+      $Populations$Demographics$rows[[1]]$numberOfIndividuals
       [1] "2"
       
-      $files$populations$Demographics$rows[[1]]$proportionOfFemales
+      $Populations$Demographics$rows[[1]]$proportionOfFemales
       [1] "0"
       
-      $files$populations$Demographics$rows[[1]]$weightMin
+      $Populations$Demographics$rows[[1]]$weightMin
       [1] NA
       
-      $files$populations$Demographics$rows[[1]]$weightMax
+      $Populations$Demographics$rows[[1]]$weightMax
       [1] NA
       
-      $files$populations$Demographics$rows[[1]]$weightUnit
+      $Populations$Demographics$rows[[1]]$weightUnit
       [1] "kg"
       
-      $files$populations$Demographics$rows[[1]]$heightMin
+      $Populations$Demographics$rows[[1]]$heightMin
       [1] NA
       
-      $files$populations$Demographics$rows[[1]]$heightMax
+      $Populations$Demographics$rows[[1]]$heightMax
       [1] NA
       
-      $files$populations$Demographics$rows[[1]]$heightUnit
+      $Populations$Demographics$rows[[1]]$heightUnit
       [1] "cm"
       
-      $files$populations$Demographics$rows[[1]]$ageMin
+      $Populations$Demographics$rows[[1]]$ageMin
       [1] "22"
       
-      $files$populations$Demographics$rows[[1]]$ageMax
+      $Populations$Demographics$rows[[1]]$ageMax
       [1] "41"
       
-      $files$populations$Demographics$rows[[1]]$BMIMin
+      $Populations$Demographics$rows[[1]]$BMIMin
       [1] NA
       
-      $files$populations$Demographics$rows[[1]]$BMIMax
+      $Populations$Demographics$rows[[1]]$BMIMax
       [1] NA
       
-      $files$populations$Demographics$rows[[1]]$BMIUnit
+      $Populations$Demographics$rows[[1]]$BMIUnit
       [1] "kg/m²"
       
-      $files$populations$Demographics$rows[[1]]$Protein
+      $Populations$Demographics$rows[[1]]$Protein
       [1] "CYP3A4, CYP2D6"
       
-      $files$populations$Demographics$rows[[1]]$Ontogeny
+      $Populations$Demographics$rows[[1]]$Ontogeny
       [1] "CYP3A4, CYP2D6"
       
       
-      $files$populations$Demographics$rows[[2]]
-      $files$populations$Demographics$rows[[2]]$PopulationName
+      $Populations$Demographics$rows[[2]]
+      $Populations$Demographics$rows[[2]]$PopulationName
       [1] "TestPopulation_noOnto"
       
-      $files$populations$Demographics$rows[[2]]$species
+      $Populations$Demographics$rows[[2]]$species
       [1] "Human"
       
-      $files$populations$Demographics$rows[[2]]$population
+      $Populations$Demographics$rows[[2]]$population
       [1] "European_ICRP_2002"
       
-      $files$populations$Demographics$rows[[2]]$numberOfIndividuals
+      $Populations$Demographics$rows[[2]]$numberOfIndividuals
       [1] "2"
       
-      $files$populations$Demographics$rows[[2]]$proportionOfFemales
+      $Populations$Demographics$rows[[2]]$proportionOfFemales
       [1] "0"
       
-      $files$populations$Demographics$rows[[2]]$weightMin
+      $Populations$Demographics$rows[[2]]$weightMin
       [1] NA
       
-      $files$populations$Demographics$rows[[2]]$weightMax
+      $Populations$Demographics$rows[[2]]$weightMax
       [1] NA
       
-      $files$populations$Demographics$rows[[2]]$weightUnit
+      $Populations$Demographics$rows[[2]]$weightUnit
       [1] "kg"
       
-      $files$populations$Demographics$rows[[2]]$heightMin
+      $Populations$Demographics$rows[[2]]$heightMin
       [1] NA
       
-      $files$populations$Demographics$rows[[2]]$heightMax
+      $Populations$Demographics$rows[[2]]$heightMax
       [1] NA
       
-      $files$populations$Demographics$rows[[2]]$heightUnit
+      $Populations$Demographics$rows[[2]]$heightUnit
       [1] "cm"
       
-      $files$populations$Demographics$rows[[2]]$ageMin
+      $Populations$Demographics$rows[[2]]$ageMin
       [1] "22"
       
-      $files$populations$Demographics$rows[[2]]$ageMax
+      $Populations$Demographics$rows[[2]]$ageMax
       [1] "41"
       
-      $files$populations$Demographics$rows[[2]]$BMIMin
+      $Populations$Demographics$rows[[2]]$BMIMin
       [1] NA
       
-      $files$populations$Demographics$rows[[2]]$BMIMax
+      $Populations$Demographics$rows[[2]]$BMIMax
       [1] NA
       
-      $files$populations$Demographics$rows[[2]]$BMIUnit
+      $Populations$Demographics$rows[[2]]$BMIUnit
       [1] "kg/m²"
       
-      $files$populations$Demographics$rows[[2]]$Protein
+      $Populations$Demographics$rows[[2]]$Protein
       [1] NA
       
-      $files$populations$Demographics$rows[[2]]$Ontogeny
+      $Populations$Demographics$rows[[2]]$Ontogeny
       [1] NA
       
       
       
       
-      $files$populations$UserDefinedVariability
-      $files$populations$UserDefinedVariability$column_names
+      $Populations$UserDefinedVariability
+      $Populations$UserDefinedVariability$column_names
       [1] "Container Path" "Parameter Name" "Mean"           "SD"            
       [5] "Distribution"  
       
-      $files$populations$UserDefinedVariability$rows
+      $Populations$UserDefinedVariability$rows
       list()
       
       
       
-      $files$scenarios
-      $files$scenarios$Scenarios
-      $files$scenarios$Scenarios$column_names
+      $Scenarios
+      $Scenarios$Scenarios
+      $Scenarios$Scenarios$column_names
        [1] "Scenario_name"         "IndividualId"          "PopulationId"         
        [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "ApplicationProtocol"  
        [7] "SimulationTime"        "SimulationTimeUnit"    "SteadyState"          
       [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "ModelFile"            
       [13] "OutputPathsIds"       
       
-      $files$scenarios$Scenarios$rows
-      $files$scenarios$Scenarios$rows[[1]]
-      $files$scenarios$Scenarios$rows[[1]]$Scenario_name
+      $Scenarios$Scenarios$rows
+      $Scenarios$Scenarios$rows[[1]]
+      $Scenarios$Scenarios$rows[[1]]$Scenario_name
       [1] "TestScenario"
       
-      $files$scenarios$Scenarios$rows[[1]]$IndividualId
+      $Scenarios$Scenarios$rows[[1]]$IndividualId
       [1] "Indiv1"
       
-      $files$scenarios$Scenarios$rows[[1]]$PopulationId
+      $Scenarios$Scenarios$rows[[1]]$PopulationId
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[1]]$ReadPopulationFromCSV
+      $Scenarios$Scenarios$rows[[1]]$ReadPopulationFromCSV
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[1]]$ModelParameterSheets
+      $Scenarios$Scenarios$rows[[1]]$ModelParameterSheets
       [1] "Global"
       
-      $files$scenarios$Scenarios$rows[[1]]$ApplicationProtocol
+      $Scenarios$Scenarios$rows[[1]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
       
-      $files$scenarios$Scenarios$rows[[1]]$SimulationTime
+      $Scenarios$Scenarios$rows[[1]]$SimulationTime
       [1] "0, 24, 60"
       
-      $files$scenarios$Scenarios$rows[[1]]$SimulationTimeUnit
+      $Scenarios$Scenarios$rows[[1]]$SimulationTimeUnit
       [1] "h"
       
-      $files$scenarios$Scenarios$rows[[1]]$SteadyState
+      $Scenarios$Scenarios$rows[[1]]$SteadyState
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[1]]$SteadyStateTime
+      $Scenarios$Scenarios$rows[[1]]$SteadyStateTime
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[1]]$SteadyStateTimeUnit
+      $Scenarios$Scenarios$rows[[1]]$SteadyStateTimeUnit
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[1]]$ModelFile
+      $Scenarios$Scenarios$rows[[1]]$ModelFile
       [1] "Aciclovir.pkml"
       
-      $files$scenarios$Scenarios$rows[[1]]$OutputPathsIds
+      $Scenarios$Scenarios$rows[[1]]$OutputPathsIds
       [1] NA
       
       
-      $files$scenarios$Scenarios$rows[[2]]
-      $files$scenarios$Scenarios$rows[[2]]$Scenario_name
+      $Scenarios$Scenarios$rows[[2]]
+      $Scenarios$Scenarios$rows[[2]]$Scenario_name
       [1] "TestScenario2"
       
-      $files$scenarios$Scenarios$rows[[2]]$IndividualId
+      $Scenarios$Scenarios$rows[[2]]$IndividualId
       [1] "Indiv1"
       
-      $files$scenarios$Scenarios$rows[[2]]$PopulationId
+      $Scenarios$Scenarios$rows[[2]]$PopulationId
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[2]]$ReadPopulationFromCSV
+      $Scenarios$Scenarios$rows[[2]]$ReadPopulationFromCSV
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[2]]$ModelParameterSheets
+      $Scenarios$Scenarios$rows[[2]]$ModelParameterSheets
       [1] "Global"
       
-      $files$scenarios$Scenarios$rows[[2]]$ApplicationProtocol
+      $Scenarios$Scenarios$rows[[2]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
       
-      $files$scenarios$Scenarios$rows[[2]]$SimulationTime
+      $Scenarios$Scenarios$rows[[2]]$SimulationTime
       [1] "0, 1, 60; 1, 12, 20"
       
-      $files$scenarios$Scenarios$rows[[2]]$SimulationTimeUnit
+      $Scenarios$Scenarios$rows[[2]]$SimulationTimeUnit
       [1] "h"
       
-      $files$scenarios$Scenarios$rows[[2]]$SteadyState
+      $Scenarios$Scenarios$rows[[2]]$SteadyState
       [1] "TRUE"
       
-      $files$scenarios$Scenarios$rows[[2]]$SteadyStateTime
+      $Scenarios$Scenarios$rows[[2]]$SteadyStateTime
       [1] "500"
       
-      $files$scenarios$Scenarios$rows[[2]]$SteadyStateTimeUnit
+      $Scenarios$Scenarios$rows[[2]]$SteadyStateTimeUnit
       [1] "min"
       
-      $files$scenarios$Scenarios$rows[[2]]$ModelFile
+      $Scenarios$Scenarios$rows[[2]]$ModelFile
       [1] "Aciclovir.pkml"
       
-      $files$scenarios$Scenarios$rows[[2]]$OutputPathsIds
+      $Scenarios$Scenarios$rows[[2]]$OutputPathsIds
       [1] "Aciclovir_PVB, Aciclovir_fat_cell"
       
       
-      $files$scenarios$Scenarios$rows[[3]]
-      $files$scenarios$Scenarios$rows[[3]]$Scenario_name
+      $Scenarios$Scenarios$rows[[3]]
+      $Scenarios$Scenarios$rows[[3]]$Scenario_name
       [1] "PopulationScenario"
       
-      $files$scenarios$Scenarios$rows[[3]]$IndividualId
+      $Scenarios$Scenarios$rows[[3]]$IndividualId
       [1] "Indiv1"
       
-      $files$scenarios$Scenarios$rows[[3]]$PopulationId
+      $Scenarios$Scenarios$rows[[3]]$PopulationId
       [1] "TestPopulation"
       
-      $files$scenarios$Scenarios$rows[[3]]$ReadPopulationFromCSV
+      $Scenarios$Scenarios$rows[[3]]$ReadPopulationFromCSV
       [1] "FALSE"
       
-      $files$scenarios$Scenarios$rows[[3]]$ModelParameterSheets
+      $Scenarios$Scenarios$rows[[3]]$ModelParameterSheets
       [1] "Global"
       
-      $files$scenarios$Scenarios$rows[[3]]$ApplicationProtocol
+      $Scenarios$Scenarios$rows[[3]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
       
-      $files$scenarios$Scenarios$rows[[3]]$SimulationTime
+      $Scenarios$Scenarios$rows[[3]]$SimulationTime
       [1] "0, 12, 20"
       
-      $files$scenarios$Scenarios$rows[[3]]$SimulationTimeUnit
+      $Scenarios$Scenarios$rows[[3]]$SimulationTimeUnit
       [1] "h"
       
-      $files$scenarios$Scenarios$rows[[3]]$SteadyState
+      $Scenarios$Scenarios$rows[[3]]$SteadyState
       [1] "FALSE"
       
-      $files$scenarios$Scenarios$rows[[3]]$SteadyStateTime
+      $Scenarios$Scenarios$rows[[3]]$SteadyStateTime
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[3]]$SteadyStateTimeUnit
+      $Scenarios$Scenarios$rows[[3]]$SteadyStateTimeUnit
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[3]]$ModelFile
+      $Scenarios$Scenarios$rows[[3]]$ModelFile
       [1] "Aciclovir.pkml"
       
-      $files$scenarios$Scenarios$rows[[3]]$OutputPathsIds
+      $Scenarios$Scenarios$rows[[3]]$OutputPathsIds
       [1] NA
       
       
-      $files$scenarios$Scenarios$rows[[4]]
-      $files$scenarios$Scenarios$rows[[4]]$Scenario_name
+      $Scenarios$Scenarios$rows[[4]]
+      $Scenarios$Scenarios$rows[[4]]$Scenario_name
       [1] "PopulationScenarioFromCSV"
       
-      $files$scenarios$Scenarios$rows[[4]]$IndividualId
+      $Scenarios$Scenarios$rows[[4]]$IndividualId
       [1] "Indiv1"
       
-      $files$scenarios$Scenarios$rows[[4]]$PopulationId
+      $Scenarios$Scenarios$rows[[4]]$PopulationId
       [1] "TestPopulation"
       
-      $files$scenarios$Scenarios$rows[[4]]$ReadPopulationFromCSV
+      $Scenarios$Scenarios$rows[[4]]$ReadPopulationFromCSV
       [1] "TRUE"
       
-      $files$scenarios$Scenarios$rows[[4]]$ModelParameterSheets
+      $Scenarios$Scenarios$rows[[4]]$ModelParameterSheets
       [1] "Global"
       
-      $files$scenarios$Scenarios$rows[[4]]$ApplicationProtocol
+      $Scenarios$Scenarios$rows[[4]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
       
-      $files$scenarios$Scenarios$rows[[4]]$SimulationTime
+      $Scenarios$Scenarios$rows[[4]]$SimulationTime
       [1] "0, 12, 20"
       
-      $files$scenarios$Scenarios$rows[[4]]$SimulationTimeUnit
+      $Scenarios$Scenarios$rows[[4]]$SimulationTimeUnit
       [1] "h"
       
-      $files$scenarios$Scenarios$rows[[4]]$SteadyState
+      $Scenarios$Scenarios$rows[[4]]$SteadyState
       [1] "FALSE"
       
-      $files$scenarios$Scenarios$rows[[4]]$SteadyStateTime
+      $Scenarios$Scenarios$rows[[4]]$SteadyStateTime
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[4]]$SteadyStateTimeUnit
+      $Scenarios$Scenarios$rows[[4]]$SteadyStateTimeUnit
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[4]]$ModelFile
+      $Scenarios$Scenarios$rows[[4]]$ModelFile
       [1] "Aciclovir.pkml"
       
-      $files$scenarios$Scenarios$rows[[4]]$OutputPathsIds
+      $Scenarios$Scenarios$rows[[4]]$OutputPathsIds
       [1] NA
       
       
-      $files$scenarios$Scenarios$rows[[5]]
-      $files$scenarios$Scenarios$rows[[5]]$Scenario_name
+      $Scenarios$Scenarios$rows[[5]]
+      $Scenarios$Scenarios$rows[[5]]$Scenario_name
       [1] "TestScenario_missingParam"
       
-      $files$scenarios$Scenarios$rows[[5]]$IndividualId
+      $Scenarios$Scenarios$rows[[5]]$IndividualId
       [1] "Indiv1"
       
-      $files$scenarios$Scenarios$rows[[5]]$PopulationId
+      $Scenarios$Scenarios$rows[[5]]$PopulationId
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[5]]$ReadPopulationFromCSV
+      $Scenarios$Scenarios$rows[[5]]$ReadPopulationFromCSV
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[5]]$ModelParameterSheets
+      $Scenarios$Scenarios$rows[[5]]$ModelParameterSheets
       [1] "Global, MissingParam"
       
-      $files$scenarios$Scenarios$rows[[5]]$ApplicationProtocol
+      $Scenarios$Scenarios$rows[[5]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
       
-      $files$scenarios$Scenarios$rows[[5]]$SimulationTime
+      $Scenarios$Scenarios$rows[[5]]$SimulationTime
       [1] "0, 24, 60"
       
-      $files$scenarios$Scenarios$rows[[5]]$SimulationTimeUnit
+      $Scenarios$Scenarios$rows[[5]]$SimulationTimeUnit
       [1] "h"
       
-      $files$scenarios$Scenarios$rows[[5]]$SteadyState
+      $Scenarios$Scenarios$rows[[5]]$SteadyState
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[5]]$SteadyStateTime
+      $Scenarios$Scenarios$rows[[5]]$SteadyStateTime
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[5]]$SteadyStateTimeUnit
+      $Scenarios$Scenarios$rows[[5]]$SteadyStateTimeUnit
       [1] NA
       
-      $files$scenarios$Scenarios$rows[[5]]$ModelFile
+      $Scenarios$Scenarios$rows[[5]]$ModelFile
       [1] "Aciclovir.pkml"
       
-      $files$scenarios$Scenarios$rows[[5]]$OutputPathsIds
+      $Scenarios$Scenarios$rows[[5]]$OutputPathsIds
       [1] NA
       
       
       
       
-      $files$scenarios$OutputPaths
-      $files$scenarios$OutputPaths$column_names
+      $Scenarios$OutputPaths
+      $Scenarios$OutputPaths$column_names
       [1] "OutputPathId" "OutputPath"  
       
-      $files$scenarios$OutputPaths$rows
-      $files$scenarios$OutputPaths$rows[[1]]
-      $files$scenarios$OutputPaths$rows[[1]]$OutputPathId
+      $Scenarios$OutputPaths$rows
+      $Scenarios$OutputPaths$rows[[1]]
+      $Scenarios$OutputPaths$rows[[1]]$OutputPathId
       [1] "Aciclovir_PVB"
       
-      $files$scenarios$OutputPaths$rows[[1]]$OutputPath
+      $Scenarios$OutputPaths$rows[[1]]$OutputPath
       [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
       
       
-      $files$scenarios$OutputPaths$rows[[2]]
-      $files$scenarios$OutputPaths$rows[[2]]$OutputPathId
+      $Scenarios$OutputPaths$rows[[2]]
+      $Scenarios$OutputPaths$rows[[2]]$OutputPathId
       [1] "Aciclovir_fat_cell"
       
-      $files$scenarios$OutputPaths$rows[[2]]$OutputPath
+      $Scenarios$OutputPaths$rows[[2]]$OutputPath
       [1] "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
       
       
       
       
       
-      $files$applications
-      $files$applications$Aciclovir_iv_250mg
-      $files$applications$Aciclovir_iv_250mg$column_names
+      $Applications
+      $Applications$Aciclovir_iv_250mg
+      $Applications$Aciclovir_iv_250mg$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$applications$Aciclovir_iv_250mg$rows
-      $files$applications$Aciclovir_iv_250mg$rows[[1]]
-      $files$applications$Aciclovir_iv_250mg$rows[[1]]$`Container Path`
+      $Applications$Aciclovir_iv_250mg$rows
+      $Applications$Aciclovir_iv_250mg$rows[[1]]
+      $Applications$Aciclovir_iv_250mg$rows[[1]]$`Container Path`
       [1] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem"
       
-      $files$applications$Aciclovir_iv_250mg$rows[[1]]$`Parameter Name`
+      $Applications$Aciclovir_iv_250mg$rows[[1]]$`Parameter Name`
       [1] "Dose"
       
-      $files$applications$Aciclovir_iv_250mg$rows[[1]]$Value
+      $Applications$Aciclovir_iv_250mg$rows[[1]]$Value
       [1] "250"
       
-      $files$applications$Aciclovir_iv_250mg$rows[[1]]$Units
+      $Applications$Aciclovir_iv_250mg$rows[[1]]$Units
       [1] "mg"
       
       
       
       
       
-      $files$plots
-      $files$plots$DataCombined
-      $files$plots$DataCombined$column_names
+      $Plots
+      $Plots$DataCombined
+      $Plots$DataCombined$column_names
        [1] "DataCombinedName" "dataType"         "label"            "scenario"        
        [5] "path"             "dataSet"          "group"            "xOffsets"        
        [9] "xOffsetsUnits"    "yOffsets"         "yOffsetsUnits"    "xScaleFactors"   
       [13] "yScaleFactors"   
       
-      $files$plots$DataCombined$rows
-      $files$plots$DataCombined$rows[[1]]
-      $files$plots$DataCombined$rows[[1]]$DataCombinedName
+      $Plots$DataCombined$rows
+      $Plots$DataCombined$rows[[1]]
+      $Plots$DataCombined$rows[[1]]$DataCombinedName
       [1] "AciclovirPVB"
       
-      $files$plots$DataCombined$rows[[1]]$dataType
+      $Plots$DataCombined$rows[[1]]$dataType
       [1] "simulated"
       
-      $files$plots$DataCombined$rows[[1]]$label
+      $Plots$DataCombined$rows[[1]]$label
       [1] "Aciclovir simulated"
       
-      $files$plots$DataCombined$rows[[1]]$scenario
+      $Plots$DataCombined$rows[[1]]$scenario
       [1] "TestScenario"
       
-      $files$plots$DataCombined$rows[[1]]$path
+      $Plots$DataCombined$rows[[1]]$path
       [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
       
-      $files$plots$DataCombined$rows[[1]]$dataSet
+      $Plots$DataCombined$rows[[1]]$dataSet
       [1] NA
       
-      $files$plots$DataCombined$rows[[1]]$group
+      $Plots$DataCombined$rows[[1]]$group
       [1] "Aciclovir PVB"
       
-      $files$plots$DataCombined$rows[[1]]$xOffsets
+      $Plots$DataCombined$rows[[1]]$xOffsets
       [1] "1"
       
-      $files$plots$DataCombined$rows[[1]]$xOffsetsUnits
+      $Plots$DataCombined$rows[[1]]$xOffsetsUnits
       [1] "h"
       
-      $files$plots$DataCombined$rows[[1]]$yOffsets
+      $Plots$DataCombined$rows[[1]]$yOffsets
       [1] NA
       
-      $files$plots$DataCombined$rows[[1]]$yOffsetsUnits
+      $Plots$DataCombined$rows[[1]]$yOffsetsUnits
       [1] NA
       
-      $files$plots$DataCombined$rows[[1]]$xScaleFactors
+      $Plots$DataCombined$rows[[1]]$xScaleFactors
       [1] NA
       
-      $files$plots$DataCombined$rows[[1]]$yScaleFactors
+      $Plots$DataCombined$rows[[1]]$yScaleFactors
       [1] NA
       
       
-      $files$plots$DataCombined$rows[[2]]
-      $files$plots$DataCombined$rows[[2]]$DataCombinedName
+      $Plots$DataCombined$rows[[2]]
+      $Plots$DataCombined$rows[[2]]$DataCombinedName
       [1] "AciclovirPVB"
       
-      $files$plots$DataCombined$rows[[2]]$dataType
+      $Plots$DataCombined$rows[[2]]$dataType
       [1] "observed"
       
-      $files$plots$DataCombined$rows[[2]]$label
+      $Plots$DataCombined$rows[[2]]$label
       [1] "Aciclovri observed"
       
-      $files$plots$DataCombined$rows[[2]]$scenario
+      $Plots$DataCombined$rows[[2]]$scenario
       [1] NA
       
-      $files$plots$DataCombined$rows[[2]]$path
+      $Plots$DataCombined$rows[[2]]$path
       [1] NA
       
-      $files$plots$DataCombined$rows[[2]]$dataSet
+      $Plots$DataCombined$rows[[2]]$dataSet
       [1] "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
       
-      $files$plots$DataCombined$rows[[2]]$group
+      $Plots$DataCombined$rows[[2]]$group
       [1] "Aciclovir PVB"
       
-      $files$plots$DataCombined$rows[[2]]$xOffsets
+      $Plots$DataCombined$rows[[2]]$xOffsets
       [1] "1"
       
-      $files$plots$DataCombined$rows[[2]]$xOffsetsUnits
+      $Plots$DataCombined$rows[[2]]$xOffsetsUnits
       [1] "min"
       
-      $files$plots$DataCombined$rows[[2]]$yOffsets
+      $Plots$DataCombined$rows[[2]]$yOffsets
       [1] NA
       
-      $files$plots$DataCombined$rows[[2]]$yOffsetsUnits
+      $Plots$DataCombined$rows[[2]]$yOffsetsUnits
       [1] NA
       
-      $files$plots$DataCombined$rows[[2]]$xScaleFactors
+      $Plots$DataCombined$rows[[2]]$xScaleFactors
       [1] NA
       
-      $files$plots$DataCombined$rows[[2]]$yScaleFactors
+      $Plots$DataCombined$rows[[2]]$yScaleFactors
       [1] NA
       
       
-      $files$plots$DataCombined$rows[[3]]
-      $files$plots$DataCombined$rows[[3]]$DataCombinedName
+      $Plots$DataCombined$rows[[3]]
+      $Plots$DataCombined$rows[[3]]$DataCombinedName
       [1] "AciclovirPop"
       
-      $files$plots$DataCombined$rows[[3]]$dataType
+      $Plots$DataCombined$rows[[3]]$dataType
       [1] "simulated"
       
-      $files$plots$DataCombined$rows[[3]]$label
+      $Plots$DataCombined$rows[[3]]$label
       [1] "Aciclovir simulated"
       
-      $files$plots$DataCombined$rows[[3]]$scenario
+      $Plots$DataCombined$rows[[3]]$scenario
       [1] "PopulationScenario"
       
-      $files$plots$DataCombined$rows[[3]]$path
+      $Plots$DataCombined$rows[[3]]$path
       [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
       
-      $files$plots$DataCombined$rows[[3]]$dataSet
+      $Plots$DataCombined$rows[[3]]$dataSet
       [1] NA
       
-      $files$plots$DataCombined$rows[[3]]$group
+      $Plots$DataCombined$rows[[3]]$group
       [1] "AciclovirPop"
       
-      $files$plots$DataCombined$rows[[3]]$xOffsets
+      $Plots$DataCombined$rows[[3]]$xOffsets
       [1] "1"
       
-      $files$plots$DataCombined$rows[[3]]$xOffsetsUnits
+      $Plots$DataCombined$rows[[3]]$xOffsetsUnits
       [1] "h"
       
-      $files$plots$DataCombined$rows[[3]]$yOffsets
+      $Plots$DataCombined$rows[[3]]$yOffsets
       [1] NA
       
-      $files$plots$DataCombined$rows[[3]]$yOffsetsUnits
+      $Plots$DataCombined$rows[[3]]$yOffsetsUnits
       [1] NA
       
-      $files$plots$DataCombined$rows[[3]]$xScaleFactors
+      $Plots$DataCombined$rows[[3]]$xScaleFactors
       [1] NA
       
-      $files$plots$DataCombined$rows[[3]]$yScaleFactors
+      $Plots$DataCombined$rows[[3]]$yScaleFactors
       [1] NA
       
       
-      $files$plots$DataCombined$rows[[4]]
-      $files$plots$DataCombined$rows[[4]]$DataCombinedName
+      $Plots$DataCombined$rows[[4]]
+      $Plots$DataCombined$rows[[4]]$DataCombinedName
       [1] "AciclovirPop"
       
-      $files$plots$DataCombined$rows[[4]]$dataType
+      $Plots$DataCombined$rows[[4]]$dataType
       [1] "observed"
       
-      $files$plots$DataCombined$rows[[4]]$label
+      $Plots$DataCombined$rows[[4]]$label
       [1] "Aciclovri observed"
       
-      $files$plots$DataCombined$rows[[4]]$scenario
+      $Plots$DataCombined$rows[[4]]$scenario
       [1] NA
       
-      $files$plots$DataCombined$rows[[4]]$path
+      $Plots$DataCombined$rows[[4]]$path
       [1] NA
       
-      $files$plots$DataCombined$rows[[4]]$dataSet
+      $Plots$DataCombined$rows[[4]]$dataSet
       [1] "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
       
-      $files$plots$DataCombined$rows[[4]]$group
+      $Plots$DataCombined$rows[[4]]$group
       [1] "AciclovirPop"
       
-      $files$plots$DataCombined$rows[[4]]$xOffsets
+      $Plots$DataCombined$rows[[4]]$xOffsets
       [1] "1"
       
-      $files$plots$DataCombined$rows[[4]]$xOffsetsUnits
+      $Plots$DataCombined$rows[[4]]$xOffsetsUnits
       [1] "min"
       
-      $files$plots$DataCombined$rows[[4]]$yOffsets
+      $Plots$DataCombined$rows[[4]]$yOffsets
       [1] NA
       
-      $files$plots$DataCombined$rows[[4]]$yOffsetsUnits
+      $Plots$DataCombined$rows[[4]]$yOffsetsUnits
       [1] NA
       
-      $files$plots$DataCombined$rows[[4]]$xScaleFactors
+      $Plots$DataCombined$rows[[4]]$xScaleFactors
       [1] NA
       
-      $files$plots$DataCombined$rows[[4]]$yScaleFactors
+      $Plots$DataCombined$rows[[4]]$yScaleFactors
       [1] NA
       
       
       
       
-      $files$plots$plotConfiguration
-      $files$plots$plotConfiguration$column_names
+      $Plots$plotConfiguration
+      $Plots$plotConfiguration$column_names
        [1] "plotID"           "DataCombinedName" "plotType"         "title"           
        [5] "xUnit"            "yUnit"            "xAxisScale"       "yAxisScale"      
        [9] "xValuesLimits"    "yValuesLimits"    "aggregation"      "quantiles"       
       [13] "nsd"              "foldDistance"    
       
-      $files$plots$plotConfiguration$rows
-      $files$plots$plotConfiguration$rows[[1]]
-      $files$plots$plotConfiguration$rows[[1]]$plotID
+      $Plots$plotConfiguration$rows
+      $Plots$plotConfiguration$rows[[1]]
+      $Plots$plotConfiguration$rows[[1]]$plotID
       [1] "P1"
       
-      $files$plots$plotConfiguration$rows[[1]]$DataCombinedName
+      $Plots$plotConfiguration$rows[[1]]$DataCombinedName
       [1] "AciclovirPVB"
       
-      $files$plots$plotConfiguration$rows[[1]]$plotType
+      $Plots$plotConfiguration$rows[[1]]$plotType
       [1] "individual"
       
-      $files$plots$plotConfiguration$rows[[1]]$title
+      $Plots$plotConfiguration$rows[[1]]$title
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[1]]$xUnit
+      $Plots$plotConfiguration$rows[[1]]$xUnit
       [1] "h"
       
-      $files$plots$plotConfiguration$rows[[1]]$yUnit
+      $Plots$plotConfiguration$rows[[1]]$yUnit
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[1]]$xAxisScale
+      $Plots$plotConfiguration$rows[[1]]$xAxisScale
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[1]]$yAxisScale
+      $Plots$plotConfiguration$rows[[1]]$yAxisScale
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[1]]$xValuesLimits
+      $Plots$plotConfiguration$rows[[1]]$xValuesLimits
       [1] "0, 24"
       
-      $files$plots$plotConfiguration$rows[[1]]$yValuesLimits
+      $Plots$plotConfiguration$rows[[1]]$yValuesLimits
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[1]]$aggregation
+      $Plots$plotConfiguration$rows[[1]]$aggregation
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[1]]$quantiles
+      $Plots$plotConfiguration$rows[[1]]$quantiles
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[1]]$nsd
+      $Plots$plotConfiguration$rows[[1]]$nsd
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[1]]$foldDistance
+      $Plots$plotConfiguration$rows[[1]]$foldDistance
       [1] NA
       
       
-      $files$plots$plotConfiguration$rows[[2]]
-      $files$plots$plotConfiguration$rows[[2]]$plotID
+      $Plots$plotConfiguration$rows[[2]]
+      $Plots$plotConfiguration$rows[[2]]$plotID
       [1] "P2"
       
-      $files$plots$plotConfiguration$rows[[2]]$DataCombinedName
+      $Plots$plotConfiguration$rows[[2]]$DataCombinedName
       [1] "AciclovirPVB"
       
-      $files$plots$plotConfiguration$rows[[2]]$plotType
+      $Plots$plotConfiguration$rows[[2]]$plotType
       [1] "observedVsSimulated"
       
-      $files$plots$plotConfiguration$rows[[2]]$title
+      $Plots$plotConfiguration$rows[[2]]$title
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$xUnit
+      $Plots$plotConfiguration$rows[[2]]$xUnit
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$yUnit
+      $Plots$plotConfiguration$rows[[2]]$yUnit
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$xAxisScale
+      $Plots$plotConfiguration$rows[[2]]$xAxisScale
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$yAxisScale
+      $Plots$plotConfiguration$rows[[2]]$yAxisScale
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$xValuesLimits
+      $Plots$plotConfiguration$rows[[2]]$xValuesLimits
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$yValuesLimits
+      $Plots$plotConfiguration$rows[[2]]$yValuesLimits
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$aggregation
+      $Plots$plotConfiguration$rows[[2]]$aggregation
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$quantiles
+      $Plots$plotConfiguration$rows[[2]]$quantiles
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$nsd
+      $Plots$plotConfiguration$rows[[2]]$nsd
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[2]]$foldDistance
+      $Plots$plotConfiguration$rows[[2]]$foldDistance
       [1] "2, 3"
       
       
-      $files$plots$plotConfiguration$rows[[3]]
-      $files$plots$plotConfiguration$rows[[3]]$plotID
+      $Plots$plotConfiguration$rows[[3]]
+      $Plots$plotConfiguration$rows[[3]]$plotID
       [1] "P3"
       
-      $files$plots$plotConfiguration$rows[[3]]$DataCombinedName
+      $Plots$plotConfiguration$rows[[3]]$DataCombinedName
       [1] "AciclovirPVB"
       
-      $files$plots$plotConfiguration$rows[[3]]$plotType
+      $Plots$plotConfiguration$rows[[3]]$plotType
       [1] "residualsVsSimulated"
       
-      $files$plots$plotConfiguration$rows[[3]]$title
+      $Plots$plotConfiguration$rows[[3]]$title
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$xUnit
+      $Plots$plotConfiguration$rows[[3]]$xUnit
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$yUnit
+      $Plots$plotConfiguration$rows[[3]]$yUnit
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$xAxisScale
+      $Plots$plotConfiguration$rows[[3]]$xAxisScale
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$yAxisScale
+      $Plots$plotConfiguration$rows[[3]]$yAxisScale
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$xValuesLimits
+      $Plots$plotConfiguration$rows[[3]]$xValuesLimits
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$yValuesLimits
+      $Plots$plotConfiguration$rows[[3]]$yValuesLimits
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$aggregation
+      $Plots$plotConfiguration$rows[[3]]$aggregation
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$quantiles
+      $Plots$plotConfiguration$rows[[3]]$quantiles
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$nsd
+      $Plots$plotConfiguration$rows[[3]]$nsd
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[3]]$foldDistance
+      $Plots$plotConfiguration$rows[[3]]$foldDistance
       [1] NA
       
       
-      $files$plots$plotConfiguration$rows[[4]]
-      $files$plots$plotConfiguration$rows[[4]]$plotID
+      $Plots$plotConfiguration$rows[[4]]
+      $Plots$plotConfiguration$rows[[4]]$plotID
       [1] "P4"
       
-      $files$plots$plotConfiguration$rows[[4]]$DataCombinedName
+      $Plots$plotConfiguration$rows[[4]]$DataCombinedName
       [1] "AciclovirPop"
       
-      $files$plots$plotConfiguration$rows[[4]]$plotType
+      $Plots$plotConfiguration$rows[[4]]$plotType
       [1] "population"
       
-      $files$plots$plotConfiguration$rows[[4]]$title
+      $Plots$plotConfiguration$rows[[4]]$title
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[4]]$xUnit
+      $Plots$plotConfiguration$rows[[4]]$xUnit
       [1] "h"
       
-      $files$plots$plotConfiguration$rows[[4]]$yUnit
+      $Plots$plotConfiguration$rows[[4]]$yUnit
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[4]]$xAxisScale
+      $Plots$plotConfiguration$rows[[4]]$xAxisScale
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[4]]$yAxisScale
+      $Plots$plotConfiguration$rows[[4]]$yAxisScale
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[4]]$xValuesLimits
+      $Plots$plotConfiguration$rows[[4]]$xValuesLimits
       [1] "0, 24"
       
-      $files$plots$plotConfiguration$rows[[4]]$yValuesLimits
+      $Plots$plotConfiguration$rows[[4]]$yValuesLimits
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[4]]$aggregation
+      $Plots$plotConfiguration$rows[[4]]$aggregation
       [1] "arithmetic"
       
-      $files$plots$plotConfiguration$rows[[4]]$quantiles
+      $Plots$plotConfiguration$rows[[4]]$quantiles
       [1] NA
       
-      $files$plots$plotConfiguration$rows[[4]]$nsd
+      $Plots$plotConfiguration$rows[[4]]$nsd
       [1] "1.96"
       
-      $files$plots$plotConfiguration$rows[[4]]$foldDistance
+      $Plots$plotConfiguration$rows[[4]]$foldDistance
       [1] NA
       
       
       
       
-      $files$plots$plotGrids
-      $files$plots$plotGrids$column_names
+      $Plots$plotGrids
+      $Plots$plotGrids$column_names
       [1] "name"    "plotIDs" "title"  
       
-      $files$plots$plotGrids$rows
-      $files$plots$plotGrids$rows[[1]]
-      $files$plots$plotGrids$rows[[1]]$name
+      $Plots$plotGrids$rows
+      $Plots$plotGrids$rows[[1]]
+      $Plots$plotGrids$rows[[1]]$name
       [1] "Aciclovir"
       
-      $files$plots$plotGrids$rows[[1]]$plotIDs
+      $Plots$plotGrids$rows[[1]]$plotIDs
       [1] "P1, P2, P3"
       
-      $files$plots$plotGrids$rows[[1]]$title
+      $Plots$plotGrids$rows[[1]]$title
       [1] NA
       
       
-      $files$plots$plotGrids$rows[[2]]
-      $files$plots$plotGrids$rows[[2]]$name
+      $Plots$plotGrids$rows[[2]]
+      $Plots$plotGrids$rows[[2]]$name
       [1] "Aciclovir2"
       
-      $files$plots$plotGrids$rows[[2]]$plotIDs
+      $Plots$plotGrids$rows[[2]]$plotIDs
       [1] "P2"
       
-      $files$plots$plotGrids$rows[[2]]$title
+      $Plots$plotGrids$rows[[2]]$title
       [1] NA
       
       
-      $files$plots$plotGrids$rows[[3]]
-      $files$plots$plotGrids$rows[[3]]$name
+      $Plots$plotGrids$rows[[3]]
+      $Plots$plotGrids$rows[[3]]$name
       [1] "Aciclovir3"
       
-      $files$plots$plotGrids$rows[[3]]$plotIDs
+      $Plots$plotGrids$rows[[3]]$plotIDs
       [1] "P4"
       
-      $files$plots$plotGrids$rows[[3]]$title
+      $Plots$plotGrids$rows[[3]]$title
       [1] NA
       
       
       
       
-      $files$plots$exportConfiguration
-      $files$plots$exportConfiguration$column_names
+      $Plots$exportConfiguration
+      $Plots$exportConfiguration$column_names
       [1] "plotGridName" "outputName"   "width"       
       
-      $files$plots$exportConfiguration$rows
+      $Plots$exportConfiguration$rows
       list()
       
       
-      $files$plots$dataTypes
-      $files$plots$dataTypes$column_names
+      $Plots$dataTypes
+      $Plots$dataTypes$column_names
       [1] "dataType"
       
-      $files$plots$dataTypes$rows
-      $files$plots$dataTypes$rows[[1]]
-      $files$plots$dataTypes$rows[[1]]$dataType
+      $Plots$dataTypes$rows
+      $Plots$dataTypes$rows[[1]]
+      $Plots$dataTypes$rows[[1]]$dataType
       [1] "observed"
       
       
-      $files$plots$dataTypes$rows[[2]]
-      $files$plots$dataTypes$rows[[2]]$dataType
+      $Plots$dataTypes$rows[[2]]
+      $Plots$dataTypes$rows[[2]]$dataType
       [1] "simulated"
       
       
       
       
-      $files$plots$plotTypes
-      $files$plots$plotTypes$column_names
+      $Plots$plotTypes
+      $Plots$plotTypes$column_names
       [1] "plotType"
       
-      $files$plots$plotTypes$rows
-      $files$plots$plotTypes$rows[[1]]
-      $files$plots$plotTypes$rows[[1]]$plotType
+      $Plots$plotTypes$rows
+      $Plots$plotTypes$rows[[1]]
+      $Plots$plotTypes$rows[[1]]$plotType
       [1] "individual"
       
       
-      $files$plots$plotTypes$rows[[2]]
-      $files$plots$plotTypes$rows[[2]]$plotType
+      $Plots$plotTypes$rows[[2]]
+      $Plots$plotTypes$rows[[2]]$plotType
       [1] "population"
       
       
-      $files$plots$plotTypes$rows[[3]]
-      $files$plots$plotTypes$rows[[3]]$plotType
+      $Plots$plotTypes$rows[[3]]
+      $Plots$plotTypes$rows[[3]]$plotType
       [1] "observedVsSimulated"
       
       
-      $files$plots$plotTypes$rows[[4]]
-      $files$plots$plotTypes$rows[[4]]$plotType
+      $Plots$plotTypes$rows[[4]]
+      $Plots$plotTypes$rows[[4]]$plotType
       [1] "residualsVsSimulated"
       
       
-      $files$plots$plotTypes$rows[[5]]
-      $files$plots$plotTypes$rows[[5]]$plotType
+      $Plots$plotTypes$rows[[5]]
+      $Plots$plotTypes$rows[[5]]$plotType
       [1] "residualsVsTime"
       
       
       
       
-      $files$plots$ObservedDataNames
-      $files$plots$ObservedDataNames$column_names
+      $Plots$ObservedDataNames
+      $Plots$ObservedDataNames$column_names
       character(0)
       
-      $files$plots$ObservedDataNames$rows
+      $Plots$ObservedDataNames$rows
       list()
       
       
       
-      $files$populationsCSV
-      $files$populationsCSV$TestPopulation.csv
-      $files$populationsCSV$TestPopulation.csv$column_names
+      $populationsCSV
+      $populationsCSV$TestPopulation.csv
+      $populationsCSV$TestPopulation.csv$column_names
         [1] "IndividualId"                                                             
         [2] "Gender"                                                                   
         [3] "Population"                                                               
@@ -1252,610 +1249,609 @@
        [99] "Organism.Spleen.Volume"                                                   
       [100] "Organism.Spleen.Specific.blood.flow.rate"                                 
       
-      $files$populationsCSV$TestPopulation.csv$rows
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$IndividualId
+      $populationsCSV$TestPopulation.csv$rows
+      $populationsCSV$TestPopulation.csv$rows[[1]]
+      $populationsCSV$TestPopulation.csv$rows[[1]]$IndividualId
       [1] "0"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Gender
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Gender
       [1] "MALE"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Population
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Population
       [1] "European_ICRP_2002"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Weight
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Weight
       [1] "61.5347980234939"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.BMI
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.BMI
       [1] "0.22110435036443"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.BSA
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.BSA
       [1] "168.868520364698"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Age
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Age
       [1] "40.2758611595611"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Gestational.age
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Gestational.age
       [1] "40"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Height
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Height
       [1] "16.6825235226199"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Ontogeny.factor..albumin.
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Ontogeny.factor..albumin.
       [1] "0.899636802882332"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Ontogeny.factor..alpha1.acid.glycoprotein.
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Ontogeny.factor..alpha1.acid.glycoprotein.
       [1] "1.15949978271202"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Hematocrit
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Hematocrit
       [1] "0.47"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.VenousBlood.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.VenousBlood.Volume
       [1] "0.90091056303014"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.ArterialBlood.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.ArterialBlood.Volume
       [1] "0.406135603100194"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Bone.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Bone.Specific.blood.flow.rate
       [1] "0.0315090234960704"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Bone.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Bone.Volume
       [1] "10.8690045999271"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Brain.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Brain.Volume
       [1] "1.57168243846914"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Brain.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Brain.Specific.blood.flow.rate
       [1] "0.489495988836155"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Volume
       [1] "7.52250463972452"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..lipid.
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..lipid.
       [1] "0.8"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.lipid..PT
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.lipid..PT
       [1] "0.79"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..phospholipid..PT
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..phospholipid..PT
       [1] "0.002"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Fraction.interstitial
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Fraction.interstitial
       [1] "0.16"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..water.
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..water.
       [1] "0.15"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..water..PT
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..water..PT
       [1] "0.18"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.lipid..RR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.lipid..RR
       [1] "0.853"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.lipid..WS
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.lipid..WS
       [1] "0.92"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.phospholipid..RR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.phospholipid..RR
       [1] "0.0016"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.phospholipid..plasma..WS
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..neutral.phospholipid..plasma..WS
       [1] "0.002024"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..extracellular.water..RR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..extracellular.water..RR
       [1] "0.135"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..intracellular.water..RR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..intracellular.water..RR
       [1] "0.00899999999999998"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..water..WS
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Vf..water..WS
       [1] "0.03"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Fat.Specific.blood.flow.rate
       [1] "0.0206732323263958"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Gonads.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Gonads.Volume
       [1] "0.0363901626133667"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Gonads.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Gonads.Specific.blood.flow.rate
       [1] "0.0806178855218515"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Heart.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Heart.Volume
       [1] "0.427747241993127"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Heart.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Heart.Specific.blood.flow.rate
       [1] "0.682071775659985"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Volume
       [1] "0.49070666449687"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Age.of.aging.onset
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Age.of.aging.onset
       [1] "30"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Aging.half.time
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Aging.half.time
       [1] "54"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.GFRmat
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.GFRmat
       [1] "0.0702927779334989"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Hill.coefficient.for.aging.GFR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Hill.coefficient.for.aging.GFR
       [1] "1.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Hill.coefficient.for.GFR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Hill.coefficient.for.GFR
       [1] "15.3024731123431"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Maximal.decreasing.rate.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Maximal.decreasing.rate.factor
       [1] "0.9"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.TM50.for.GFR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.TM50.for.GFR
       [1] "45.2037451452012"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Kidney.Specific.blood.flow.rate
       [1] "2.8377452010901"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Effective.surface.area.variability.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Effective.surface.area.variability.factor
       [1] "1.77008432606349"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.Distal.radius
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.Distal.radius
       [1] "0.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.Gastric.emptying.time
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.Gastric.emptying.time
       [1] "5.96819895017132"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.GET_alpha..Weibull.function..variability.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.GET_alpha..Weibull.function..variability.factor
       [1] "3.2105442703701"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.GET_beta..Weibull.function..variability.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.GET_beta..Weibull.function..variability.factor
       [1] "1.1006818299719"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.Length
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.Length
       [1] "2"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.Proximal.radius
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Stomach.Proximal.radius
       [1] "0.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Duodenum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Duodenum.Effective.surface.area.enhancement.factor
       [1] "292.6883"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.UpperJejunum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.UpperJejunum.Effective.surface.area.enhancement.factor
       [1] "447.9877"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.LowerJejunum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.LowerJejunum.Effective.surface.area.enhancement.factor
       [1] "372.9358"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.UpperIleum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.UpperIleum.Effective.surface.area.enhancement.factor
       [1] "260.7527"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.LowerIleum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.LowerIleum.Effective.surface.area.enhancement.factor
       [1] "146.565"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Caecum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Caecum.Effective.surface.area.enhancement.factor
       [1] "1.8"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.ColonAscendens.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.ColonAscendens.Effective.surface.area.enhancement.factor
       [1] "2.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.ColonTransversum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.ColonTransversum.Effective.surface.area.enhancement.factor
       [1] "2.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.ColonDescendens.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.ColonDescendens.Effective.surface.area.enhancement.factor
       [1] "2.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.ColonSigmoid.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.ColonSigmoid.Effective.surface.area.enhancement.factor
       [1] "2.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Rectum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lumen.Rectum.Effective.surface.area.enhancement.factor
       [1] "3.56"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Stomach.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Stomach.Volume
       [1] "0.194438572408107"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Stomach.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Stomach.Specific.blood.flow.rate
       [1] "0.448201473480319"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.SmallIntestine.Small.intestinal.transit.time
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.SmallIntestine.Small.intestinal.transit.time
       [1] "107.630542050005"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.SmallIntestine.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.SmallIntestine.Volume
       [1] "0.592413461580726"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.SmallIntestine.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.SmallIntestine.Specific.blood.flow.rate
       [1] "0.92329394054034"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.LargeIntestine.Large.intestinal.transit.time
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.LargeIntestine.Large.intestinal.transit.time
       [1] "2652"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.LargeIntestine.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.LargeIntestine.Volume
       [1] "0.463264373078633"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.LargeIntestine.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.LargeIntestine.Specific.blood.flow.rate
       [1] "0.635781142717255"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Liver.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Liver.Volume
       [1] "2.63322588671254"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Liver.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Liver.Specific.blood.flow.rate
       [1] "0.175550792244102"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lung.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lung.Volume
       [1] "1.17197321761479"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lung.Fraction.vascular
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Lung.Fraction.vascular
       [1] "0.58"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Volume
       [1] "29.3017789696476"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..lipid.
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..lipid.
       [1] "0.013"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.lipid..PT
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.lipid..PT
       [1] "0.0238"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..phospholipid..PT
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..phospholipid..PT
       [1] "0.0072"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..protein.
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..protein.
       [1] "0.177"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..water.
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..water.
       [1] "0.811"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..water..PT
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..water..PT
       [1] "0.76"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Fraction.interstitial
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Fraction.interstitial
       [1] "0.16"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.lipid..RR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.lipid..RR
       [1] "0.022"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.lipid..WS
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.lipid..WS
       [1] "0.0049"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.phospholipid..RR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.phospholipid..RR
       [1] "0.0078"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.phospholipid..plasma..WS
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..neutral.phospholipid..plasma..WS
       [1] "0.0042"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..extracellular.water..RR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..extracellular.water..RR
       [1] "0.079"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..protein..WS
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..protein..WS
       [1] "0.19"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..intracellular.water..RR
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..intracellular.water..RR
       [1] "0.666"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..water..WS
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Vf..water..WS
       [1] "0.76"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Muscle.Specific.blood.flow.rate
       [1] "0.036611489119001"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Pancreas.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Pancreas.Volume
       [1] "0.27516244712599"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Pancreas.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Pancreas.Specific.blood.flow.rate
       [1] "0.372521833876031"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.PortalVein.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.PortalVein.Volume
       [1] "0.942640954550504"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Skin.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Skin.Volume
       [1] "3.49102282995465"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Skin.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Skin.Specific.blood.flow.rate
       [1] "0.0845837873081867"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Spleen.Volume
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Spleen.Volume
       [1] "0.243795397465916"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Spleen.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[1]]$Organism.Spleen.Specific.blood.flow.rate
       [1] "0.909827131937137"
       
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$IndividualId
+      $populationsCSV$TestPopulation.csv$rows[[2]]
+      $populationsCSV$TestPopulation.csv$rows[[2]]$IndividualId
       [1] "1"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Gender
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Gender
       [1] "MALE"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Population
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Population
       [1] "European_ICRP_2002"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Weight
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Weight
       [1] "62.9655208804219"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.BMI
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.BMI
       [1] "0.196540160342841"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.BSA
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.BSA
       [1] "176.938242514102"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Age
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Age
       [1] "23.9117595571614"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Gestational.age
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Gestational.age
       [1] "40"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Height
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Height
       [1] "17.8988754990528"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Ontogeny.factor..albumin.
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Ontogeny.factor..albumin.
       [1] "0.8530616107376"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Ontogeny.factor..alpha1.acid.glycoprotein.
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Ontogeny.factor..alpha1.acid.glycoprotein.
       [1] "0.699689929706047"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Hematocrit
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Hematocrit
       [1] "0.449705865190538"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.VenousBlood.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.VenousBlood.Volume
       [1] "0.92167719798216"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.ArterialBlood.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.ArterialBlood.Volume
       [1] "0.424738350141017"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Bone.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Bone.Specific.blood.flow.rate
       [1] "0.0319717624193636"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Bone.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Bone.Volume
       [1] "11.4983895299467"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Brain.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Brain.Volume
       [1] "1.47702462355843"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Brain.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Brain.Specific.blood.flow.rate
       [1] "0.510232110737281"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Volume
       [1] "8.19841733381987"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..lipid.
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..lipid.
       [1] "0.771588211266753"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.lipid..PT
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.lipid..PT
       [1] "0.761943358625919"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..phospholipid..PT
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..phospholipid..PT
       [1] "0.00192897052816688"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Fraction.interstitial
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Fraction.interstitial
       [1] "0.184352961771355"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..water.
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..water.
       [1] "0.178411788733247"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..water..PT
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..water..PT
       [1] "0.214094146479896"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.lipid..RR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.lipid..RR
       [1] "0.822705930263175"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.lipid..WS
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.lipid..WS
       [1] "0.887326442956766"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.phospholipid..RR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.phospholipid..RR
       [1] "0.00154317642253351"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.phospholipid..plasma..WS
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..neutral.phospholipid..plasma..WS
       [1] "0.00195211817450489"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..extracellular.water..RR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..extracellular.water..RR
       [1] "0.160570609859922"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..intracellular.water..RR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..intracellular.water..RR
       [1] "0.0107047073239948"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..water..WS
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Vf..water..WS
       [1] "0.0356823577466494"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Fat.Specific.blood.flow.rate
       [1] "0.0257942437085706"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Gonads.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Gonads.Volume
       [1] "0.0302628508592311"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Gonads.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Gonads.Specific.blood.flow.rate
       [1] "0.107258474391816"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Heart.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Heart.Volume
       [1] "0.198169802641703"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Heart.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Heart.Specific.blood.flow.rate
       [1] "0.710677787703658"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Volume
       [1] "0.493479572294716"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Age.of.aging.onset
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Age.of.aging.onset
       [1] "30"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Aging.half.time
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Aging.half.time
       [1] "54"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.GFRmat
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.GFRmat
       [1] "0.107102771082758"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Hill.coefficient.for.aging.GFR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Hill.coefficient.for.aging.GFR
       [1] "1.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Hill.coefficient.for.GFR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Hill.coefficient.for.GFR
       [1] "15.6612677239469"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Maximal.decreasing.rate.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Maximal.decreasing.rate.factor
       [1] "0.9"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.TM50.for.GFR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.TM50.for.GFR
       [1] "44.0003667679178"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Kidney.Specific.blood.flow.rate
       [1] "3.38592193173909"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Effective.surface.area.variability.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Effective.surface.area.variability.factor
       [1] "0.867556397888081"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.Distal.radius
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.Distal.radius
       [1] "0.489621579458441"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.Gastric.emptying.time
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.Gastric.emptying.time
       [1] "13.9818897126764"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.GET_alpha..Weibull.function..variability.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.GET_alpha..Weibull.function..variability.factor
       [1] "0.977244398387356"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.GET_beta..Weibull.function..variability.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.GET_beta..Weibull.function..variability.factor
       [1] "1.04051643753397"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.Length
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.Length
       [1] "1.95847820017984"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.Proximal.radius
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Stomach.Proximal.radius
       [1] "0.489621579458441"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Duodenum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Duodenum.Effective.surface.area.enhancement.factor
       [1] "292.6883"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.UpperJejunum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.UpperJejunum.Effective.surface.area.enhancement.factor
       [1] "447.9877"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.LowerJejunum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.LowerJejunum.Effective.surface.area.enhancement.factor
       [1] "372.9358"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.UpperIleum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.UpperIleum.Effective.surface.area.enhancement.factor
       [1] "260.7527"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.LowerIleum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.LowerIleum.Effective.surface.area.enhancement.factor
       [1] "146.565"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Caecum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Caecum.Effective.surface.area.enhancement.factor
       [1] "1.8"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.ColonAscendens.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.ColonAscendens.Effective.surface.area.enhancement.factor
       [1] "2.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.ColonTransversum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.ColonTransversum.Effective.surface.area.enhancement.factor
       [1] "2.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.ColonDescendens.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.ColonDescendens.Effective.surface.area.enhancement.factor
       [1] "2.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.ColonSigmoid.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.ColonSigmoid.Effective.surface.area.enhancement.factor
       [1] "2.5"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Rectum.Effective.surface.area.enhancement.factor
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lumen.Rectum.Effective.surface.area.enhancement.factor
       [1] "3.56"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Stomach.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Stomach.Volume
       [1] "0.187016027845032"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Stomach.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Stomach.Specific.blood.flow.rate
       [1] "0.397796555465622"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.SmallIntestine.Small.intestinal.transit.time
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.SmallIntestine.Small.intestinal.transit.time
       [1] "79.8673742545636"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.SmallIntestine.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.SmallIntestine.Volume
       [1] "0.64221475348445"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.SmallIntestine.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.SmallIntestine.Specific.blood.flow.rate
       [1] "0.893277355348927"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.LargeIntestine.Large.intestinal.transit.time
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.LargeIntestine.Large.intestinal.transit.time
       [1] "2592.33524366018"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.LargeIntestine.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.LargeIntestine.Volume
       [1] "0.420636829269417"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.LargeIntestine.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.LargeIntestine.Specific.blood.flow.rate
       [1] "0.691223816270522"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Liver.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Liver.Volume
       [1] "2.3273205469601"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Liver.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Liver.Specific.blood.flow.rate
       [1] "0.211653907325067"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lung.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lung.Volume
       [1] "1.2070302874223"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lung.Fraction.vascular
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Lung.Fraction.vascular
       [1] "0.58"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Volume
       [1] "30.4937318900507"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..lipid.
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..lipid.
       [1] "0.013"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.lipid..PT
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.lipid..PT
       [1] "0.0238"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..phospholipid..PT
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..phospholipid..PT
       [1] "0.0072"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..protein.
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..protein.
       [1] "0.177"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..water.
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..water.
       [1] "0.811"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..water..PT
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..water..PT
       [1] "0.76"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Fraction.interstitial
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Fraction.interstitial
       [1] "0.168117653923785"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.lipid..RR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.lipid..RR
       [1] "0.022"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.lipid..WS
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.lipid..WS
       [1] "0.0049"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.phospholipid..RR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.phospholipid..RR
       [1] "0.0078"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.phospholipid..plasma..WS
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..neutral.phospholipid..plasma..WS
       [1] "0.0042"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..extracellular.water..RR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..extracellular.water..RR
       [1] "0.079"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..protein..WS
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..protein..WS
       [1] "0.19"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..intracellular.water..RR
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..intracellular.water..RR
       [1] "0.666"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..water..WS
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Vf..water..WS
       [1] "0.76"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Muscle.Specific.blood.flow.rate
       [1] "0.0338854472547501"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Pancreas.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Pancreas.Volume
       [1] "0.240890815218283"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Pancreas.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Pancreas.Specific.blood.flow.rate
       [1] "0.391209979824467"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.PortalVein.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.PortalVein.Volume
       [1] "1.03448435940802"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Skin.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Skin.Volume
       [1] "3.08838802634855"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Skin.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Skin.Specific.blood.flow.rate
       [1] "0.102410398588552"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Spleen.Volume
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Spleen.Volume
       [1] "0.0816480831712129"
       
-      $files$populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Spleen.Specific.blood.flow.rate
+      $populationsCSV$TestPopulation.csv$rows[[2]]$Organism.Spleen.Specific.blood.flow.rate
       [1] "0.866536264266006"
-      
       
       
       
@@ -1865,15 +1861,13 @@
 ---
 
     Code
-      json_content
+      jsonContent
     Output
-      $files
-      $files$projectConfiguration
-      $files$projectConfiguration$ProjectConfiguration
-      $files$projectConfiguration$ProjectConfiguration$column_names
+      $projectConfiguration
+      $projectConfiguration$column_names
       [1] "Property"    "Value"       "Description"
       
-      $files$projectConfiguration$ProjectConfiguration$rows
+      $projectConfiguration$rows
                               Property                                  Value
       1                    modelFolder                    Models/Simulations/
       2           configurationsFolder                        Configurations/
@@ -1904,63 +1898,62 @@
       13                                     Path to the folder where the results should be saved to; relative to the location of this file
       
       
-      
-      $files$modelParameters
-      $files$modelParameters$Global
-      $files$modelParameters$Global$column_names
+      $modelParameterSets
+      $modelParameterSets$Global
+      $modelParameterSets$Global$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$modelParameters$Global$rows
+      $modelParameterSets$Global$rows
         Container Path          Parameter Name Value Units
       1 Organism|Liver EHC continuous fraction     1    NA
       
       
-      $files$modelParameters$MissingParam
-      $files$modelParameters$MissingParam$column_names
+      $modelParameterSets$MissingParam
+      $modelParameterSets$MissingParam$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$modelParameters$MissingParam$rows
+      $modelParameterSets$MissingParam$rows
         Container Path Parameter Name Value Units
       1            foo            bar     2    NA
       
       
-      $files$modelParameters$Aciclovir
-      $files$modelParameters$Aciclovir$column_names
+      $modelParameterSets$Aciclovir
+      $modelParameterSets$Aciclovir$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$modelParameters$Aciclovir$rows
+      $modelParameterSets$Aciclovir$rows
         Container Path Parameter Name Value     Units
       1      Aciclovir  Lipophilicity  -0.1 Log Units
       
       
       
-      $files$individuals
-      $files$individuals$IndividualBiometrics
-      $files$individuals$IndividualBiometrics$column_names
+      $Individuals
+      $Individuals$IndividualBiometrics
+      $Individuals$IndividualBiometrics$column_names
       [1] "IndividualId"  "Species"       "Population"    "Gender"       
       [5] "Weight [kg]"   "Height [cm]"   "Age [year(s)]" "Protein"      
       [9] "Ontogeny"     
       
-      $files$individuals$IndividualBiometrics$rows
+      $Individuals$IndividualBiometrics$rows
         IndividualId Species         Population Gender Weight [kg] Height [cm]
       1       Indiv1   Human European_ICRP_2002   MALE          73         176
         Age [year(s)] Protein Ontogeny
       1            30      NA       NA
       
       
-      $files$individuals$Indiv1
-      $files$individuals$Indiv1$column_names
+      $Individuals$Indiv1
+      $Individuals$Indiv1$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$individuals$Indiv1$rows
+      $Individuals$Indiv1$rows
          Container Path Parameter Name Value  Units
       1 Organism|Kidney            GFR    90 ml/min
       
       
       
-      $files$populations
-      $files$populations$Demographics
-      $files$populations$Demographics$column_names
+      $Populations
+      $Populations$Demographics
+      $Populations$Demographics$column_names
        [1] "PopulationName"      "species"             "population"         
        [4] "numberOfIndividuals" "proportionOfFemales" "weightMin"          
        [7] "weightMax"           "weightUnit"          "heightMin"          
@@ -1968,7 +1961,7 @@
       [13] "ageMax"              "BMIMin"              "BMIMax"             
       [16] "BMIUnit"             "Protein"             "Ontogeny"           
       
-      $files$populations$Demographics$rows
+      $Populations$Demographics$rows
                PopulationName species         population numberOfIndividuals
       1        TestPopulation   Human European_ICRP_2002                   2
       2 TestPopulation_noOnto   Human European_ICRP_2002                   2
@@ -1980,26 +1973,26 @@
       2         cm     22     41     NA     NA   kg/m²           <NA>           <NA>
       
       
-      $files$populations$UserDefinedVariability
-      $files$populations$UserDefinedVariability$column_names
+      $Populations$UserDefinedVariability
+      $Populations$UserDefinedVariability$column_names
       [1] "Container Path" "Parameter Name" "Mean"           "SD"            
       [5] "Distribution"  
       
-      $files$populations$UserDefinedVariability$rows
+      $Populations$UserDefinedVariability$rows
       list()
       
       
       
-      $files$scenarios
-      $files$scenarios$Scenarios
-      $files$scenarios$Scenarios$column_names
+      $Scenarios
+      $Scenarios$Scenarios
+      $Scenarios$Scenarios$column_names
        [1] "Scenario_name"         "IndividualId"          "PopulationId"         
        [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "ApplicationProtocol"  
        [7] "SimulationTime"        "SimulationTimeUnit"    "SteadyState"          
       [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "ModelFile"            
       [13] "OutputPathsIds"       
       
-      $files$scenarios$Scenarios$rows
+      $Scenarios$Scenarios$rows
                     Scenario_name IndividualId   PopulationId ReadPopulationFromCSV
       1              TestScenario       Indiv1           <NA>                  <NA>
       2             TestScenario2       Indiv1           <NA>                  <NA>
@@ -2026,11 +2019,11 @@
       5 Aciclovir.pkml                              <NA>
       
       
-      $files$scenarios$OutputPaths
-      $files$scenarios$OutputPaths$column_names
+      $Scenarios$OutputPaths
+      $Scenarios$OutputPaths$column_names
       [1] "OutputPathId" "OutputPath"  
       
-      $files$scenarios$OutputPaths$rows
+      $Scenarios$OutputPaths$rows
               OutputPathId
       1      Aciclovir_PVB
       2 Aciclovir_fat_cell
@@ -2040,12 +2033,12 @@
       
       
       
-      $files$applications
-      $files$applications$Aciclovir_iv_250mg
-      $files$applications$Aciclovir_iv_250mg$column_names
+      $Applications
+      $Applications$Aciclovir_iv_250mg
+      $Applications$Aciclovir_iv_250mg$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
-      $files$applications$Aciclovir_iv_250mg$rows
+      $Applications$Aciclovir_iv_250mg$rows
                                                       Container Path Parameter Name
       1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose
         Value Units
@@ -2053,15 +2046,15 @@
       
       
       
-      $files$plots
-      $files$plots$DataCombined
-      $files$plots$DataCombined$column_names
+      $Plots
+      $Plots$DataCombined
+      $Plots$DataCombined$column_names
        [1] "DataCombinedName" "dataType"         "label"            "scenario"        
        [5] "path"             "dataSet"          "group"            "xOffsets"        
        [9] "xOffsetsUnits"    "yOffsets"         "yOffsetsUnits"    "xScaleFactors"   
       [13] "yScaleFactors"   
       
-      $files$plots$DataCombined$rows
+      $Plots$DataCombined$rows
         DataCombinedName  dataType               label           scenario
       1     AciclovirPVB simulated Aciclovir simulated       TestScenario
       2     AciclovirPVB  observed  Aciclovri observed               <NA>
@@ -2089,14 +2082,14 @@
       4            NA
       
       
-      $files$plots$plotConfiguration
-      $files$plots$plotConfiguration$column_names
+      $Plots$plotConfiguration
+      $Plots$plotConfiguration$column_names
        [1] "plotID"           "DataCombinedName" "plotType"         "title"           
        [5] "xUnit"            "yUnit"            "xAxisScale"       "yAxisScale"      
        [9] "xValuesLimits"    "yValuesLimits"    "aggregation"      "quantiles"       
       [13] "nsd"              "foldDistance"    
       
-      $files$plots$plotConfiguration$rows
+      $Plots$plotConfiguration$rows
         plotID DataCombinedName             plotType title xUnit yUnit xAxisScale
       1     P1     AciclovirPVB           individual    NA     h    NA         NA
       2     P2     AciclovirPVB  observedVsSimulated    NA  <NA>    NA         NA
@@ -2114,40 +2107,40 @@
       4         <NA>
       
       
-      $files$plots$plotGrids
-      $files$plots$plotGrids$column_names
+      $Plots$plotGrids
+      $Plots$plotGrids$column_names
       [1] "name"    "plotIDs" "title"  
       
-      $files$plots$plotGrids$rows
+      $Plots$plotGrids$rows
               name    plotIDs title
       1  Aciclovir P1, P2, P3    NA
       2 Aciclovir2         P2    NA
       3 Aciclovir3         P4    NA
       
       
-      $files$plots$exportConfiguration
-      $files$plots$exportConfiguration$column_names
+      $Plots$exportConfiguration
+      $Plots$exportConfiguration$column_names
       [1] "plotGridName" "outputName"   "width"       
       
-      $files$plots$exportConfiguration$rows
+      $Plots$exportConfiguration$rows
       list()
       
       
-      $files$plots$dataTypes
-      $files$plots$dataTypes$column_names
+      $Plots$dataTypes
+      $Plots$dataTypes$column_names
       [1] "dataType"
       
-      $files$plots$dataTypes$rows
+      $Plots$dataTypes$rows
          dataType
       1  observed
       2 simulated
       
       
-      $files$plots$plotTypes
-      $files$plots$plotTypes$column_names
+      $Plots$plotTypes
+      $Plots$plotTypes$column_names
       [1] "plotType"
       
-      $files$plots$plotTypes$rows
+      $Plots$plotTypes$rows
                     plotType
       1           individual
       2           population
@@ -2156,18 +2149,18 @@
       5      residualsVsTime
       
       
-      $files$plots$ObservedDataNames
-      $files$plots$ObservedDataNames$column_names
+      $Plots$ObservedDataNames
+      $Plots$ObservedDataNames$column_names
       list()
       
-      $files$plots$ObservedDataNames$rows
+      $Plots$ObservedDataNames$rows
       list()
       
       
       
-      $files$populationsCSV
-      $files$populationsCSV$TestPopulation.csv
-      $files$populationsCSV$TestPopulation.csv$column_names
+      $populationsCSV
+      $populationsCSV$TestPopulation.csv
+      $populationsCSV$TestPopulation.csv$column_names
         [1] "IndividualId"                                                             
         [2] "Gender"                                                                   
         [3] "Population"                                                               
@@ -2269,7 +2262,7 @@
        [99] "Organism.Spleen.Volume"                                                   
       [100] "Organism.Spleen.Specific.blood.flow.rate"                                 
       
-      $files$populationsCSV$TestPopulation.csv$rows
+      $populationsCSV$TestPopulation.csv$rows
         IndividualId Gender         Population  Organism.Weight      Organism.BMI
       1            0   MALE European_ICRP_2002 61.5347980234939  0.22110435036443
       2            1   MALE European_ICRP_2002 62.9655208804219 0.196540160342841
@@ -2456,7 +2449,6 @@
         Organism.Spleen.Volume Organism.Spleen.Specific.blood.flow.rate
       1      0.243795397465916                        0.909827131937137
       2     0.0816480831712129                        0.866536264266006
-      
       
       
       
