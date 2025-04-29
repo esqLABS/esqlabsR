@@ -46,6 +46,10 @@ test_that("It creates population characteristics with ontogenies from excel", {
       c(
         populationCharacteristics$allMoleculeOntogenies[[1]]$molecule,
         populationCharacteristics$allMoleculeOntogenies[[2]]$molecule
+      ),
+      c(
+        populationCharacteristics$allMoleculeOntogenies[[1]]$ontogeny,
+        populationCharacteristics$allMoleculeOntogenies[[2]]$ontogeny
       )
     ),
     c(
@@ -55,7 +59,8 @@ test_that("It creates population characteristics with ontogenies from excel", {
       0,
       22,
       41,
-      c("CYP3A4", "CYP2D6")
+      c("CYP3A4", "CYP2D6"),
+      c("CYP3A4", "CYP2C8")
     )
   )
 })
