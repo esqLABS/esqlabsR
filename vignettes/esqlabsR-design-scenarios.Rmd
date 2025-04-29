@@ -75,16 +75,14 @@ b)  To define an individual-specific parametrization, create a new sheet
     and name it as the individual's ID.
 
 If your model contains proteins (e.g., enzymes or transporters), you
-have to specify their ontongenies in the columns 'Protein' and
-'Ontogeny'. If not specified, age-dependent protein expression will not
-be considered. You can specify a list of protein names in the column
-'Protein', separated by a `,`, and a list of standard ontogenies
-implemented in the PK-Sim database in the column 'Ontogeny'. For
-example, if your model contains proteins with names `CYP3A4_alternative`
-and `CYP2D6_alternative`, you can specify their ontogenies by entering
-`CYP3A4_alternative, CYP2D6_alternative` in the 'Protein' column, and
-`CYP3A4, CYP2D6` in the 'Ontogeny' column. To see the list of supported
-ontogienes, call `ospsuite::StandardOntogeny`.
+have to specify their ontongenies in the column 'Protein Ontogenies' as a list (separated by a `,`)
+of `<Protein>:<Ontogeny>` values.  The value of `<Ontogeny>` must be one of the 
+standard ontogenies implemented in the PK-Sim database (call `ospsuite::StandardOntogeny` 
+to see the list of supported ontogenies). For example, if your model contains 
+proteins with names `CYP3A4_alternative` and `CYP2D6_alternative`, you can specify
+their ontogenies by entering `CYP3A4_alternative:CYP3A4, CYP2D6_alternative:CYP2D6`
+in the 'Protein Ontogenies' column. If not specified, age-dependent protein expression will not
+be considered.
 
 ### 6. Population
 
@@ -100,7 +98,7 @@ value of the `ReadPopulationFromCSV` column to `TRUE`. The population
 CSV file must be located in the `Parameters/Populations` folder.
 
 To apply ontogenies of proteins implemented in PK-Sim data base, you
-have to specify the ontogenies for the proteins in the mode. See Section
+have to specify the ontogenies for the proteins in the model. See Section
 [5. Individuals](#individuals) for more information.
 
 ### 7. Time

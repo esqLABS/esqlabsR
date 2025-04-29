@@ -46,6 +46,10 @@ test_that("It creates population characteristics with ontogenies from excel", {
       c(
         populationCharacteristics$allMoleculeOntogenies[[1]]$molecule,
         populationCharacteristics$allMoleculeOntogenies[[2]]$molecule
+      ),
+      c(
+        populationCharacteristics$allMoleculeOntogenies[[1]]$ontogeny,
+        populationCharacteristics$allMoleculeOntogenies[[2]]$ontogeny
       )
     ),
     c(
@@ -55,7 +59,8 @@ test_that("It creates population characteristics with ontogenies from excel", {
       0,
       22,
       41,
-      c("CYP3A4", "CYP2D6")
+      c("CYP3A4", "CYP2D6"),
+      c("CYP3A4", "CYP2C8")
     )
   )
 })
@@ -243,4 +248,24 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
       )
     }
   )
+})
+
+test_that("It throws an error when protein ontogenies are defined improperly", {
+  data <- tibble("PopulationName" = "TestPopulation",
+                 "species" = "Human",
+                 "population" = "European_ICRP_2002",
+                 "numberOfIndividuals" = 2,
+                 "proportionOfFemales" =  0,
+                 "weightMin", "weightMax",
+                 "weightUnit" = "kg",
+                 "heightMin",
+                 "heightMax",
+                 "heightUnit" = "cm",
+                 "ageMin",
+                 "ageMax",
+                 "BMIMin",
+                 "BMIMax",
+                 "BMIUnit",
+                 "Protein Ontogenies" = "CYP3A4:CYP3A4,CYP2D6")
+  expect_error(.readOntongeniesFromXLS(data), regexp = messages$errorWrongOntogenyStructure("CYP2D6"))
 })

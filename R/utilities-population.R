@@ -14,7 +14,7 @@
 readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) {
   columnNames <- c(
     "PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax",
-    "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein", "Ontogeny"
+    "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein Ontogenies"
   )
 
   validateIsString(c(XLSpath, populationName))
@@ -46,8 +46,8 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
       next
     }
     columnName <- names(data[rowIdx, ][i])
-    # skip columns 'Ontogeny' and 'Protein' as they will be processed separately
-    if (any(columnName == c("Ontogeny", "Protein"))) {
+    # skip the column 'Protein Ontogenis' it will be processed separately
+    if (columnName == "Protein Ontogenies") {
       next
     }
     arguments[[columnName]] <- value
@@ -231,40 +231,40 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 
 #' Read ontogeny mapping from excel
 #'
-#' @param data Data from from excel file containing columns 'Protein' and
-#' 'Ontogeny'
+#' @param data Data from from excel file with the column 'Protein Ontogenies'
 #'
 #' @keywords internal
 #' @return A list of `MoleculeOntogeny` objects
 .readOntongeniesFromXLS <- function(data) {
-  # Read columns 'Ontogeny' and 'Protein'
-  ontogenies <- data$Ontogeny
-  # calling 'as.character' as sometimes empty cells in Excel are not recognized as
-  # chr NA, but some other NA, and strsplit fails.
-  ontogenies <- as.character(ontogenies)
-  # Proteins/ontogenies are separated by a ','
-  ontogenies <- unlist(strsplit(x = ontogenies, split = ",", fixed = TRUE))
-  # Remove whitespaces
-  ontogenies <- trimws(ontogenies)
-  proteins <- data$Protein
-  proteins <- as.character(proteins)
-  proteins <- unlist(strsplit(x = proteins, split = ",", fixed = TRUE))
-  proteins <- trimws(proteins)
-
-  # For each protein, an ontogeny must be specified
-  validateIsSameLength(proteins, ontogenies)
-  # Return 'NULL' if no ontogenies are specified. Not returning earlier to catch
-  # a case where e.g. protein names are specified but not the ontogenies (lenghts
-  # are not equal)
-  if (anyNA(proteins)) {
+  proteinOntogenyMappings <- data[["Protein Ontogenies"]]
+  # Return 'NULL' if no ontogenies are specified.
+  if (is.na(proteinOntogenyMappings)) {
     return(NULL)
   }
-  moleculeOntogenies <- vector("list", length(proteins))
-  for (i in seq_along(proteins)) {
-    ontogeny <- ontogenies[[i]]
+
+  # calling 'as.character' as sometimes empty cells in Excel are not recognized as
+  # chr NA, but some other NA, and strsplit fails.
+  proteinOntogenyMappings <- as.character(proteinOntogenyMappings)
+  # Proteins/ontogenies mappings are separated by a ','
+  proteinOntogenyMappings <- unlist(strsplit(x = proteinOntogenyMappings, split = ",", fixed = TRUE))
+  # Remove whitespaces
+  proteinOntogenyMappings <- trimws(proteinOntogenyMappings)
+
+  moleculeOntogenies <- vector("list", length(proteinOntogenyMappings))
+  for (i in seq_along(proteinOntogenyMappings)) {
+    ontogeny <- proteinOntogenyMappings[[i]]
+    # Split by ':' to separate protein and ontogeny
+    ontogenyMapping <- unlist(strsplit(x = ontogeny, split = ":", fixed = TRUE))
+    # Throw an error when the structure is not correct
+    if (length(ontogenyMapping) != 2) {
+      stop(messages$errorWrongOntogenyStructure(ontogeny))
+    }
+
+    protein <- ontogenyMapping[[1]]
+    ontogeny <- ontogenyMapping[[2]]
     validateEnumValue(value = ontogeny, enum = ospsuite::StandardOntogeny)
     moleculeOntogenies[[i]] <- ospsuite::MoleculeOntogeny$new(
-      molecule = proteins[[i]],
+      molecule = protein,
       ontogeny = ospsuite::StandardOntogeny[[ontogeny]]
     )
   }
