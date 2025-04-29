@@ -216,10 +216,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       unique(data$xUnit), "]"
     )
   }
+  yUnitForPlot <- unique(data$yUnit)
+  yDimensionForPlot <- ospsuite::getDimensionForUnit(yUnitForPlot)
   if (is.null(plotConfiguration$yLabel)) {
     plotConfiguration$yLabel <- paste0(
-      unique(data$yDimension), " [",
-      unique(data$yUnit), "]"
+      yDimensionForPlot, " [",
+      yUnitForPlot, "]"
     )
   }
 
