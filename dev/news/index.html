@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,6 +50,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
+<ul><li>Protein ontogenies for individuals and populations are now defined in one column <code>Protein Ontogenies</code> in the sheets <code>IndividualBiometrics</code> (for individuals) or <code>Demographics</code> (for populations). The columns <code>Protein</code> and <code>Ontogeny</code> are no longer supported. The new column <code>Protein Ontogenies</code> is a comma-separated list of protein names and ontogeny names pairs. For example: <code>CYP3A4:CYP3A4,CYP2D6:CYP2C8</code> will create a CYP3A4 ontogeny for the protein CYP3A4 and a CYP2D6 ontogeny for the protein CYP2C8. (<a href="https://github.com/esqLABS/esqlabsR/issues/825" class="external-link">#825</a>)</li>
+</ul></div>
 <div class="section level3">
 <h3 id="major-changes-development-version">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-development-version"></a></h3>
 <ul><li>User-defined parameters passed to the <code><a href="../reference/createScenarios.html">createScenarios()</a></code> or <code>Scenario$new()</code> in the <code>customParams</code> argument are applied last. Up to this version, they were overwritten by the administration protocol (<a href="https://github.com/esqLABS/esqlabsR/issues/817" class="external-link">#817</a>)</li>
