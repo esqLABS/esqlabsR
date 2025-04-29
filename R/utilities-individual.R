@@ -66,7 +66,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' @param nullIfNotFound Boolean. If `TRUE` (default), `NULL` is returned if
 #' no entry with the give `individualId` exists. Otherwise, an error is thrown.
 #'
-#' @return An `IndividualCharacteristics` object
+#' @returns An `IndividualCharacteristics` object
 #' @import ospsuite
 #' @export
 readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_length_linter.

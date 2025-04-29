@@ -39,7 +39,7 @@ ExportConfiguration <- R6::R6Class(
     #' @description Save/Export a plot
     #' @param plotObject A `ggplot` object
     #' @param fileName character file name of the exported plot
-    #' @return The file name of the exported plot
+    #' @returns The file name of the exported plot
     savePlot = function(plotObject, fileName = NULL) {
       # This function overrides the parent `savePlot()` function in order to
       # calculate the height of the output based on the number of rows.
