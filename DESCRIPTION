@@ -29,6 +29,7 @@ Imports:
     fs,
     ggplot2,
     grDevices,
+    jsonlite,
     labeling,
     lifecycle,
     methods,
