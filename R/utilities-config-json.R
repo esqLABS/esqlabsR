@@ -469,7 +469,6 @@ projectConfigurationStatus <- function(
 
     # Keep track of file status for summary display
     fileStatus <- list()
-    fileStatus[["ProjectConfiguration.xlsx"]] <- "in-sync"
 
     # 1. Check for differences in Excel files (added/removed files)
     originalFiles <- names(originalJsonObj)

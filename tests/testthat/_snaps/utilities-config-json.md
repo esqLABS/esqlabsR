@@ -2459,9 +2459,6 @@
       status_result$details
     Output
       $file_status
-      $file_status$ProjectConfiguration.xlsx
-      [1] "in-sync"
-      
       $file_status$projectConfiguration
       [1] "in-sync"
       
@@ -2504,9 +2501,6 @@
       status_result$details
     Output
       $file_status
-      $file_status$ProjectConfiguration.xlsx
-      [1] "in-sync"
-      
       $file_status$projectConfiguration
       [1] "in-sync"
       
@@ -2547,9 +2541,6 @@
       status_result$details
     Output
       $file_status
-      $file_status$ProjectConfiguration.xlsx
-      [1] "in-sync"
-      
       $file_status$projectConfiguration
       [1] "in-sync"
       
