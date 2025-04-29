@@ -55,7 +55,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' @details Read individual characteristics from an excel sheet
 #' and create an `IndividualCharacteristics`-object. The excel sheet must have
 #' the columns `IndividualId`, `Species`, `Population`, `Gender`, `Weight [kg]`,
-#' `Height [cm]`, `Age [year(s)]`, `Protein`, and `Ontogeny`.
+#' `Height [cm]`, `Age [year(s)]`, and `Protein Ontogenies`.
 
 #' @param XLSpath Full path to the excel file
 #'
@@ -82,7 +82,7 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_lengt
 
   columnNames <- c(
     "IndividualId", "Species", "Population", "Gender", "Weight [kg]",
-    "Height [cm]", "Age [year(s)]", "Protein", "Ontogeny"
+    "Height [cm]", "Age [year(s)]", "Protein Ontogenies"
   )
 
   data <- readExcel(path = XLSpath, sheet = sheet)

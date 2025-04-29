@@ -2,6 +2,14 @@
 
 ## Breaking changes
 
+- Protein ontogenies for individuals and populations are now defined in one column
+`Protein Ontogenies` in the sheets `IndividualBiometrics` (for individuals) or `Demographics`
+(for populations). The columns `Protein` and `Ontogeny` are no longer supported. The new column
+`Protein Ontogenies` is a comma-separated list of protein names and ontogeny names pairs. For example: 
+`CYP3A4:CYP3A4,CYP2D6:CYP2C8` will create a CYP3A4 ontogeny for the protein CYP3A4 and a CYP2D6 ontogeny for the protein CYP2C8. (#825)
+
+## Breaking changes
+
 - The function `createDataCombinedFromExcel()` gets a new signature. The arguments 
 `file` and `sheet` are removed. The file from which the `DataCombined` objects 
 are created is now passed as part of the `ProjectConfiguration` passed as 
@@ -32,6 +40,8 @@ were overwritten by the administration protocol (\#817)
 ## Minor improvements and bug fixes
 
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
+- Fixed a bug when the dimension in the y-axis label of `sensitivityTimeProfiles()` 
+did not match the unit (\#823).
 
 # esqlabsR 5.4.0
 
