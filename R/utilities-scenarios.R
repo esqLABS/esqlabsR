@@ -79,6 +79,10 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     id <- simulation$id
     results <- simulationResults[[id]]
     population <- scenario$population
+    # For the cases when population is set to NA, convert it to NULL
+    if (!isOfType(population, "Population") && is.na(population)) {
+      population <- NULL
+    }
 
     # Retrieving quantities from paths to support pattern matching with '*'
     outputQuantities <- NULL
@@ -94,8 +98,11 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
       warning(messages$missingResultsForScenario(scenarioName))
       outputValues <- NULL
     } else {
+      browser()
       outputValues <- getOutputValues(results,
-        quantitiesOrPaths = outputQuantities
+        quantitiesOrPaths = outputQuantities,
+        population = population,
+        addMetaData = FALSE
       )
     }
     returnList[[idx]] <- list(
@@ -286,7 +293,8 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
     )
 
     outputValues <- getOutputValues(results,
-      quantitiesOrPaths = results$allQuantityPaths
+      quantitiesOrPaths = results$allQuantityPaths,
+      addMetaData = FALSE
     )
     simulatedScenariosResults[[scenarioNames[[i]]]] <-
       list(simulation = simulation, results = results, outputValues = outputValues)

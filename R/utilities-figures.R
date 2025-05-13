@@ -236,6 +236,8 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
 #'
 #' @export
 createEsqlabsExportConfiguration <- function(outputFolder) { # nolint: object_length_linter.
+  # Specifying the namespace because we want to use the ExportConfiguration
+  # from esqlabsR and not from TLF
   exportConfiguration <- esqlabsR::ExportConfiguration$new()
 
   exportConfiguration$path <- outputFolder
