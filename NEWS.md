@@ -19,6 +19,9 @@ were overwritten by the administration protocol (\#817)
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
 - Fixed a bug when the dimension in the y-axis label of `sensitivityTimeProfiles()` 
 did not match the unit (\#823).
+- When creating a scenario, the name of the scenario is set as the name of the simulation.
+This way, when saving the simulation to PKML and loading in MoBi, the loaded simulation
+will have the updated name.
 
 # esqlabsR 5.4.0
 
