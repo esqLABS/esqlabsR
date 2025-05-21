@@ -19,7 +19,7 @@ were overwritten by the administration protocol (\#817)
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
 - Fixed a bug when the dimension in the y-axis label of `sensitivityTimeProfiles()` 
 did not match the unit (\#823).
-- `sensitivityTimeProfiles()` accepts a `DataSet` or a list of `DataSet` objects for `observedData` (\#832).
+- `sensitivityTimeProfiles()` accepts a `DataSet` or a list of `DataSet` objects for `observedData` (\#831).
 
 
 # esqlabsR 5.4.0
