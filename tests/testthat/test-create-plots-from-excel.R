@@ -22,6 +22,13 @@ simulatedScenarios <- runScenarios(
   scenarios = scenarios
 )
 
+# Load pre-simulated results for the "TestScenario". Required to ensure
+# identify of the results, otherwise numerical noise interferes with snapshot testing
+preSimulatedResults <- ospsuite::importResultsFromCSV(simulation = simulatedScenarios$TestScenario$simulation,
+                                                      filePaths = getTestDataFilePath("TestScenario_results.csv"))
+simulatedScenarios$TestScenario$results <- preSimulatedResults
+simulatedScenarios$TestScenario$outputValues <- getOutputValues(simulationResults = preSimulatedResults)
+
 importerConfiguration <- ospsuite::loadDataImporterConfiguration(
   configurationFilePath = projectConfiguration$dataImporterConfigurationFile
 )
@@ -531,8 +538,6 @@ test_that("It creates plots for all plot grids when plotGridNames is NULL", {
 })
 
 test_that("When custom DataCombined is passed, it is used instead of the one defined in the Excel", {
-  set.seed(123)
-
   dataCombinedList <- createDataCombinedFromExcel(
     projectConfiguration = projectConfiguration, plotGridNames = c("Aciclovir", "Aciclovir2", "Aciclovir3"),
     simulatedScenarios = simulatedScenarios,
@@ -549,14 +554,11 @@ test_that("When custom DataCombined is passed, it is used instead of the one def
     dataCombinedList = dataCombinedList,
     stopIfNotFound = TRUE
   )
-
-  vdiffr::expect_doppelganger(title = "firstPlot", print(plots[[1]]))
-  vdiffr::expect_doppelganger(title = "secondPlot", print(plots[[2]]))
+  vdiffr::expect_doppelganger(title = "firstPlot", plots[[1]])
+  vdiffr::expect_doppelganger(title = "secondPlot", plots[[2]])
 })
 
 test_that("It can create plots when custom data combined are passed that are missing in the excel", {
-  set.seed(123)
-
   dataCombinedList <- createDataCombinedFromExcel(
     projectConfiguration = projectConfiguration, plotGridNames = c("Aciclovir", "Aciclovir2", "Aciclovir3"),
     simulatedScenarios = simulatedScenarios,
@@ -603,8 +605,7 @@ test_that("It can create plots when custom data combined are passed that are mis
         dataCombinedList = dataCombinedList,
         stopIfNotFound = TRUE
       )
-
-      vdiffr::expect_doppelganger(title = "firstPlotCustomDC", print(plots[[1]]))
+      vdiffr::expect_doppelganger(title = "firstPlotCustomDC", plots[[1]])
     }
   )
 })
