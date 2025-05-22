@@ -147,6 +147,8 @@ Scenario <- R6::R6Class(
         scenarioConfiguration$projectConfiguration$modelFolder,
         scenarioConfiguration$modelFile
       ), loadFromCache = FALSE)
+      # Set simulation name
+      simulation$name <- scenarioConfiguration$scenarioName
       # Set the outputs, if new were specified
       if (!is.null(scenarioConfiguration$outputPaths)) {
         setOutputs(quantitiesOrPaths = scenarioConfiguration$outputPaths, simulation = simulation)
