@@ -24,8 +24,10 @@ simulatedScenarios <- runScenarios(
 
 # Load pre-simulated results for the "TestScenario". Required to ensure
 # identify of the results, otherwise numerical noise interferes with snapshot testing
-preSimulatedResults <- ospsuite::importResultsFromCSV(simulation = simulatedScenarios$TestScenario$simulation,
-                                                      filePaths = getTestDataFilePath("TestScenario_results.csv"))
+preSimulatedResults <- ospsuite::importResultsFromCSV(
+  simulation = simulatedScenarios$TestScenario$simulation,
+  filePaths = getTestDataFilePath("TestScenario_results.csv")
+)
 simulatedScenarios$TestScenario$results <- preSimulatedResults
 simulatedScenarios$TestScenario$outputValues <- getOutputValues(simulationResults = preSimulatedResults)
 
