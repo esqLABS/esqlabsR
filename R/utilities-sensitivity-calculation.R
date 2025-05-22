@@ -11,7 +11,7 @@
 #' @param customOutputFunctions Optional list of custom output functions. The sensitivities
 #' will be calculated for the outputs of these functions.
 #'
-#' @return A dataframe containing the PK parameters (or values of custom
+#' @returns A dataframe containing the PK parameters (or values of custom
 #' function) from all simulation results.
 #'
 #' @keywords internal
@@ -46,7 +46,7 @@
 #' @param customOutputFunctions Optional list of custom output functions for
 #' user-defined PK analyses.
 #'
-#' @return A dataframe containing the combined standard and user-defined PK data.
+#' @returns A dataframe containing the combined standard and user-defined PK data.
 #'
 #' @keywords internal
 #' @noRd
@@ -124,7 +124,7 @@
 #' @param customOutputFunctions Named list of custom output functions to calculate
 #' PK values.
 #'
-#' @return A dataframe containing the custom PK values.
+#' @returns A dataframe containing the custom PK values.
 #'
 #' @keywords internal
 #' @noRd
@@ -315,7 +315,7 @@
 #' @param variationRange A vector or list of variation values.
 #' @param parameterPaths A single or a vector of the parameter path(s) to be
 #' varied.
-#' @return A named list of `variationRange` values.
+#' @returns A named list of `variationRange` values.
 #'
 #' @keywords internal
 #' @noRd
@@ -345,7 +345,7 @@
 #' @param variationRange A named list of variation values (absolute or relative).
 #' @param initialValues A named list of initial parameter values.
 #' @param variationType A string specifying the variation type ("absolute" or "relative").
-#' @return A list of transformed variationRange values.
+#' @returns A list of transformed variationRange values.
 #'
 #' @keywords internal
 #' @noRd
@@ -374,7 +374,7 @@
 #' - none of the entries are duplicated
 #' - there are no empty strings (`""`)
 #'
-#' @return Error if validation is unsuccessful; otherwise, `NULL`.
+#' @returns Error if validation is unsuccessful; otherwise, `NULL`.
 #'
 #' @examples
 #'

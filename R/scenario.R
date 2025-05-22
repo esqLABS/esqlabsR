@@ -230,7 +230,7 @@ Scenario <- R6::R6Class(
     #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
     #'   thrown if any of the custom defined parameter does not exist. If `FALSE`,
     #'   non-existent parameters are  ignored.
-    #' @return A new `Scenario` object.
+    #' @returns A new `Scenario` object.
     initialize = function(scenarioConfiguration, customParams = NULL, stopIfParameterNotFound = TRUE) {
       private$.scenarioConfiguration <- scenarioConfiguration
       private$.simulation <- private$.initializeFromConfiguration(customParams = customParams, stopIfParameterNotFound = stopIfParameterNotFound)

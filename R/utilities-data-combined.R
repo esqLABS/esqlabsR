@@ -1,34 +1,50 @@
 #' Generate DataCombined objects as defined in excel file
 #'
-#' @param file Full path of excel file
-#' @param sheet Name of sheet to use - if `NULL` the first sheet will be used
 #' @param dataCombinedNames Names of the DataCombined objects that will be created.
-#' If `NULL` (default), all DataCombined objects specified in the excel sheet will
-#' be created. If a DataCombined object with a given name does not exist, an error is thrown.
+#' If a DataCombined with a given name is not defined in the Excel file, an error is thrown. Can be used together with `plotGridNames`.
+#' @param plotGridNames Names of the plot grid specified in the sheet `plotGrids`.
+#' Each data combined used by the specified plot grids will be created. Can be
+#' used together with `dataCombinedNames`.
+#' @param projectConfiguration Object of class `ProjectConfiguration`
+#' that contains information about the output paths and the excel file
+#' where plots are defined.
 #' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`
 #' @param observedData A list of `DataSet` objects
 #' @param stopIfNotFound If TRUE (default), the function stops if any of the
 #' simulated results or observed data are not found. If FALSE a warning is printed.
 #'
-#' @return A list of `DataCombined` objects
+#' @returns A list of `DataCombined` objects, or an empty list if both `dataCombinedNames` and `plotGridNames` are `NULL` or `stopIfNotFound = TRUE` and the specified
+#' `DataCombined` could not be created.
 #'
 #' @import tidyr
 #'
 #' @export
 createDataCombinedFromExcel <- function(
-    file,
-    sheet = NULL,
+    projectConfiguration,
     dataCombinedNames = NULL,
+    plotGridNames = NULL,
     simulatedScenarios = NULL,
     observedData = NULL,
     stopIfNotFound = TRUE) {
-  validateIsString(file)
-  validateIsString(sheet, nullAllowed = TRUE)
+  validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
+  validateIsOfType(projectConfiguration, "ProjectConfiguration")
+  validateIsString(plotGridNames, nullAllowed = TRUE)
 
-  dfDataCombined <- readExcel(path = file, sheet = sheet %||% 1)
-  if (!is.null(dataCombinedNames)) {
-    dfDataCombined <- dplyr::filter(dfDataCombined, DataCombinedName %in% dataCombinedNames)
+  # Exit early if no data combined names or plot grid names are provided
+  if (is.null(dataCombinedNames) && is.null(plotGridNames)) {
+    return(list())
   }
+
+  # If plotGridNames are provided, extract the names of required data combined
+  # and add them to the passed data combined names
+  if (!is.null(plotGridNames)) {
+    # Combine the passed data combined names with the names required for
+    # the passed plots
+    dataCombinedNames <- union(dataCombinedNames, .extractDataCombinedNamesForPlots(projectConfiguration = projectConfiguration, plotGridNames = plotGridNames))
+  }
+
+  dfDataCombined <- readExcel(path = projectConfiguration$plotsFile, sheet = "DataCombined")
+  dfDataCombined <- dplyr::filter(dfDataCombined, DataCombinedName %in% dataCombinedNames)
 
   dfDataCombined <- .validateDataCombinedFromExcel(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound)
 
@@ -130,7 +146,6 @@ createDataCombinedFromExcel <- function(
   return(dataCombinedList)
 }
 
-
 #' Validate and process the 'DataCombined' sheet
 #'
 #' @param dfDataCombined Data frame created by reading the ' DataCombined' sheet
@@ -139,7 +154,7 @@ createDataCombinedFromExcel <- function(
 #' @param stopIfNotFound if `TRUE`, throw an error if a simulated result of an
 #' observed data are not found
 #'
-#' @return Processed `dfDataCombined`
+#' @returns Processed `dfDataCombined`
 #' @keywords internal
 .validateDataCombinedFromExcel <- function(dfDataCombined, simulatedScenarios, observedData, stopIfNotFound) {
   # mandatory column label is empty - throw error
@@ -196,13 +211,32 @@ createDataCombinedFromExcel <- function(
     warning(messages$warningInvalidDataSetName(missingDataSets))
     dfDataCombined <- dfDataCombined[!(dfDataCombined$dataSet %in% missingDataSets), ]
   }
-
   # Identify the names of DataCombined that have been completely removed
   missingDc <- setdiff(dcNames, unique(dfDataCombined$DataCombinedName))
   # Create empty rows for each missing DataCombined
   for (name in missingDc) {
-    dfDataCombined[nrow(dfDataCombined) + 1, ] <- as.list(c(name, rep(NA, ncol(dfDataCombined) - 1)))
+    dfDataCombined[nrow(dfDataCombined) + 1, 1] <- name
   }
 
   return(dfDataCombined)
+}
+
+
+#' Extract names of DataCombined required for the creation of specified plots
+#'
+#' @param plotGridNames Names of the plot grid specified in the sheet `plotGrids`.
+#' @param projectConfiguration Object of class `ProjectConfiguration`
+#' that contains information about the output paths and the excel file
+#' where plots are defined.
+#'
+#' @returns A list with the names of required DataCombined
+#' @noRd
+.extractDataCombinedNamesForPlots <- function(projectConfiguration, plotGridNames) {
+  dfPlotConfigurations <- .readPlotConfigurations(
+    projectConfiguration = projectConfiguration,
+    plotGridNames = plotGridNames
+  )$plotConfigurations
+  dataCombinedNames <- unique(dfPlotConfigurations$DataCombinedName)
+
+  return(dataCombinedNames)
 }

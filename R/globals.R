@@ -4,9 +4,11 @@
 # defining global variables and functions to appease R CMD Check
 
 utils::globalVariables(
-  names = c("ParameterPathLabel",
-            "Scenario_name",
-            "ParameterPathUserName"),
+  names = c(
+    "ParameterPathLabel",
+    "Scenario_name",
+    "ParameterPathUserName"
+  ),
   package = "esqlabsR",
   add = FALSE
 )

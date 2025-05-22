@@ -11,7 +11,7 @@
 #'
 #' @param quantity A `Quantity` object
 #'
-#' @return Name of the molecule the quantity is associated with.
+#' @returns Name of the molecule the quantity is associated with.
 #' @export
 #'
 #' @examples
