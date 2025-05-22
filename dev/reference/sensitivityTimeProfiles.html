@@ -11,7 +11,7 @@ illustrating the dynamics of model outputs to parameter variations."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9007</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,10 +114,11 @@ will be used.</p></dd>
 
 
 <dt id="arg-observeddata">observedData<a class="anchor" aria-label="anchor" href="#arg-observeddata"></a></dt>
-<dd><p>Optional. A set of <code>DataSet</code> objects containing observed
-data. If provided, observed data will be plotted together with the simulated data
-based on <code>OutputPath</code> dimension for direct comparison within the visualizations.
-Will be added only to plots with matching y dimension.</p></dd>
+<dd><p>Optional. A <code>DataSet</code> or a list of <code>DataSet</code> objects
+containing observed data. If provided, observed data will be plotted together
+with the simulated data based on <code>OutputPath</code> dimension for direct comparison
+within the visualizations. Observed data will only be added to plots with
+matching y-dimensions.</p></dd>
 
 
 <dt id="arg-defaultplotconfiguration">defaultPlotConfiguration<a class="anchor" aria-label="anchor" href="#arg-defaultplotconfiguration"></a></dt>

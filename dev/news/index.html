@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9007</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,6 +63,8 @@
 <ul><li>
 <code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> ignores rows where <code>Scenario_name</code> is empty.</li>
 <li>Fixed a bug when the dimension in the y-axis label of <code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> did not match the unit (<a href="https://github.com/esqLABS/esqlabsR/issues/823" class="external-link">#823</a>).</li>
+<li>
+<code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> accepts a <code>DataSet</code> or a list of <code>DataSet</code> objects for <code>observedData</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/831" class="external-link">#831</a>).</li>
 <li>When creating a scenario, the name of the scenario is set as the name of the simulation. This way, when saving the simulation to PKML and loading in MoBi, the loaded simulation will have the updated name.</li>
 </ul></div>
 </div>
