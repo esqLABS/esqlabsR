@@ -26,10 +26,11 @@
 #' list should correspond to the `outputPaths`, and units conversion will be
 #' applied accordingly. If `NULL`, default units from the simulation results
 #' will be used.
-#' @param observedData Optional. A set of `DataSet` objects containing observed
-#' data. If provided, observed data will be plotted together with the simulated data
-#' based on `OutputPath` dimension for direct comparison within the visualizations.
-#' Will be added only to plots with matching y dimension.
+#' @param observedData Optional. A `DataSet` or a list of `DataSet` objects
+#' containing observed data. If provided, observed data will be plotted together
+#' with the simulated data based on `OutputPath` dimension for direct comparison
+#' within the visualizations. Observed data will only be added to plots with
+#' matching y-dimensions.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics. Plot-specific settings provided directly
 #' to the function, such as `xAxisScale`, will take precedence over any
@@ -115,9 +116,13 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  validateIsOfType(observedData, DataSet, nullAllowed = TRUE)
   validateIsOfType(xUnits, "list", nullAllowed = TRUE)
   validateIsOfType(yUnits, "list", nullAllowed = TRUE)
+
+  if (!is.null(observedData)) {
+    observedData <- ospsuite.utils::toList(observedData)
+    validateIsOfType(observedData, "DataSet")
+  }
 
   .validateCharVectors(outputPaths, nullAllowed = TRUE)
   .validateCharVectors(parameterPaths, nullAllowed = TRUE)
@@ -436,6 +441,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     ))
   }
   validateIsOfType(simulationResults, "list")
+  validateIsOfType(dataSets, "list", nullAllowed = TRUE)
 
   # validate if xUnits are valid unit for time dimension
   lapply(xUnits, validateEnumValue, ospUnits$Time, TRUE)
@@ -473,7 +479,6 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
       # add dataSets when units are convertable for outputPath
       if (!is.null(dataSets)) {
-        validateIsOfType(dataSets, "list")
         for (j in seq_along(dataSets)) {
           dataCombinedClone <- dataCombined$clone()
 
