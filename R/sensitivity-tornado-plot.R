@@ -128,8 +128,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     subtitle = NULL,
     title = NULL,
     titleSize = 14,
-    yLabel = "Parameter",
-    xLabel = "Input parameter value [% of reference]"
+    xLabel = "Input parameter value [% of reference]",
+    yLabel = "Parameter"
   )
 
   # apply configuration overrides and validate
@@ -219,8 +219,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     plot <- ggplot(
       dataSubset,
       aes(
-        x = ParameterPathLabel,
-        y = PKPercentChange,
+        x = PKPercentChange,
+        y = ParameterPathLabel,
         fill = as.factor(ParameterFactor)
       )
     ) +
@@ -228,18 +228,17 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
         color = "grey",
         width = 0.9,
         na.rm = TRUE
-      ) +
-      coord_flip()
+      )
 
     plot <- plot +
-      geom_hline(
-        yintercept = 0,
+      geom_vline(
+        xintercept = 0,
         color = "grey",
         linewidth = 1
       )
 
     plot <- plot +
-      scale_y_continuous(
+      scale_x_continuous(
         limits = pLimits,
         breaks = scales::breaks_extended(),
         labels = scales::label_number_auto()
@@ -250,8 +249,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     plot <- plot +
       facet_wrap(~PKParameter, scales = "fixed") +
       labs(
-        x = plotConfiguration$yLabel,
-        y = plotConfiguration$xLabel,
+        x = plotConfiguration$xLabel,
+        y = plotConfiguration$yLabel,
         title = NULL,
         fill = plotConfiguration$legendTitle
       ) +
