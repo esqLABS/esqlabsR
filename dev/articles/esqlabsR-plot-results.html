@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -231,7 +231,7 @@ options. The <code>Plot.xlsx</code> file used in this example can be
 found <a href="https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/examples/TestProject/Parameters/Plots.xlsx" class="external-link">here</a>.</p>
 </div>
 <div class="section level4">
-<h4 id="use-createplotsfromexcel">use <code>createPlotsFromExcel()</code><a class="anchor" aria-label="anchor" href="#use-createplotsfromexcel"></a>
+<h4 id="use-createplotsfromexcel">Use <code>createPlotsFromExcel()</code><a class="anchor" aria-label="anchor" href="#use-createplotsfromexcel"></a>
 </h4>
 <p>In the next step, the user calls the function
 <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>, passing the generated data:</p>
@@ -263,6 +263,62 @@ without having the results simulated, change the value of the argument
 <code>stopIfNotFound</code> to <code>FALSE</code>. You can also specify
 which plots to create with the <code>plotGridNames</code> argument.</p>
 </div>
+<div class="section level4">
+<h4 id="extract-datacombined-required-for-plotting-and-calculate-residuals">Extract <code>DataCombined</code> required for plotting and
+calculate residuals<a class="anchor" aria-label="anchor" href="#extract-datacombined-required-for-plotting-and-calculate-residuals"></a>
+</h4>
+<p>The <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> function automatically
+creates all <code>DataCombined</code> required for the specified plots.
+In some cases it is usefull to get the <code>DataCombined</code> objects
+before plotting. E.g., you could calculate the residuals between all
+groups defined in the <code>DataCombined</code> (see <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations" class="external-link"><code>{ospsuite}</code>
+documentation</a> for more details), or modify the
+<code>DataCombined</code> before using them for plotting. To do so, you
+can use the <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> function:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create DataCombined used inthe plots "Aciclovir" and "Aciclovir2"</span></span>
+<span><span class="va">dataCombined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel</a></span><span class="op">(</span></span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  plotGridNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Aciclovir"</span>, <span class="st">"Aciclovir2"</span><span class="op">)</span>,</span>
+<span>  simulatedScenarios <span class="op">=</span> <span class="va">simulatedScenarios</span>,</span>
+<span>  observedData <span class="op">=</span> <span class="va">observedData</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">dataCombined</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $AciclovirPVB</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
+<span><span class="co">#&gt;   name                group         dataType </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Aciclovir simulated Aciclovir PVB simulated</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Aciclovri observed  Aciclovir PVB observed</span></span>
+<span></span>
+<span><span class="co"># Calculate residuals. Residuals are returned for each observed data point</span></span>
+<span><span class="va">residuals</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/calculateResiduals.html" class="external-link">calculateResiduals</a></span><span class="op">(</span></span>
+<span>  dataCombined <span class="op">=</span> <span class="va">dataCombined</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>  scaling <span class="op">=</span> <span class="st">"lin"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Calculate the sum of residuals to convieniently quanity the quality of predictions</span></span>
+<span><span class="va">sumResiduals</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">residuals</span><span class="op">$</span><span class="va">residualValues</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"The sum of linear residuals for is "</span>, <span class="va">sumResiduals</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "The sum of linear residuals for is 47.1824395753477"</span></span></code></pre></div>
+<p>You can modify the created <code>DataCombined</code>, e.g., by
+changing the offsets, and pass them to the
+<code>createPlotsFromExcel</code> function:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Change the offset of the first group</span></span>
+<span><span class="va">dataCombined</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="fu">setDataTransformations</span><span class="op">(</span>xOffsets <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
+<span><span class="co"># Create the plots using the modified DataCombined</span></span>
+<span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel</a></span><span class="op">(</span></span>
+<span>  simulatedScenarios <span class="op">=</span> <span class="va">simulatedScenarios</span>,</span>
+<span>  observedData <span class="op">=</span> <span class="va">observedData</span>,</span>
+<span>  plotGridNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Aciclovir"</span>, <span class="st">"Aciclovir2"</span><span class="op">)</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  dataCombinedList <span class="op">=</span> <span class="va">dataCombined</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
 </div>
 </div>
 <div class="section level2">
@@ -291,7 +347,7 @@ supported plot types and how to customize them.</p>
 </h3>
 <p>For the following examples, we will use the same scenario as
 described in the <a href="#example">Example</a> above.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span><span class="co"># Create a project configuration</span></span>
 <span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
@@ -330,7 +386,7 @@ methods. Data sets of the same group will then be plotted together when
 calling plotting functions on the <code>DataCombined</code> object.</p>
 <p>Let’s create a <code>DataCombined</code> object and populate it with
 data with the following code:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dataCombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observedData</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
@@ -365,7 +421,7 @@ following functions:</p>
 <code>PlotGirdConfiguration</code>, refer to the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link">reference</a></p>
 <p>The next example shows how to create a multi-panel figure using the
 default configurations.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plotConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">gridConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -393,7 +449,7 @@ default configurations.</p>
 <p>To save the plot to a <code>PNG</code> file, use the <a href="https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html" class="external-link"><code>ExportConfiguration</code></a>.
 Make sure that the <code>fileName</code> argument ends with
 <code>.png</code>:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">outputFolder</span><span class="op">)</span></span>
 <span><span class="va">exportConfig</span><span class="op">$</span><span class="fu">savePlot</span><span class="op">(</span><span class="va">gridPlot</span>, fileName <span class="op">=</span> <span class="st">"All plots.png"</span><span class="op">)</span></span></code></pre></div>
 <p>By default, the height of the output figure is calculated from the
@@ -419,7 +475,7 @@ structure is followed, and a valid <code>ProjectConfiguration</code>
 files with observed data are present in the
 <code>projectConfiguration$dataFolder</code> folder, the following code
 loads the data:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
@@ -491,7 +547,7 @@ class</a></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>

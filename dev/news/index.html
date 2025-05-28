@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,8 +55,15 @@
 <ul><li>Protein ontogenies for individuals and populations are now defined in one column <code>Protein Ontogenies</code> in the sheets <code>IndividualBiometrics</code> (for individuals) or <code>Demographics</code> (for populations). The columns <code>Protein</code> and <code>Ontogeny</code> are no longer supported. The new column <code>Protein Ontogenies</code> is a comma-separated list of protein names and ontogeny names pairs. For example: <code>CYP3A4:CYP3A4,CYP2D6:CYP2C8</code> will create a CYP3A4 ontogeny for the protein CYP3A4 and a CYP2D6 ontogeny for the protein CYP2C8. (<a href="https://github.com/esqLABS/esqlabsR/issues/825" class="external-link">#825</a>)</li>
 </ul></div>
 <div class="section level3">
+<h3 id="breaking-changes-development-version-1">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version-1"></a></h3>
+<ul><li><p>The function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> gets a new signature. The arguments <code>file</code> and <code>sheet</code> are removed. The file from which the <code>DataCombined</code> objects are created is now passed as part of the <code>ProjectConfiguration</code> passed as <code>projectConfiguration</code> argument, the sheet is always <code>DataCombined</code>.</p></li>
+<li><p>The function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> gets a new argument <code>plotGridNames</code>. The <code>plotGridNames</code> argument is a character vector of names of the plots specified in the sheet <code>plotGrids</code>. The function will then create and return <code>DataCombined</code> used in the specified plots. The new argument can be combined with <code>dataCombinedNames</code>.Useful in combination with the new argument <code>dataCombinedList</code> of the function <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>.</p></li>
+<li><p>Argument <code>dataCombinedNames = NULL</code> of the function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> does not create <code>DataCombined</code> for all entries in the excel file any more. If <code>dataCombinedNames = NULL</code>, <code>plotGridNames</code> must be specified. If both arguments are <code>NULL</code>, an empty list is returned.</p></li>
+</ul></div>
+<div class="section level3">
 <h3 id="major-changes-development-version">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-development-version"></a></h3>
-<ul><li>User-defined parameters passed to the <code><a href="../reference/createScenarios.html">createScenarios()</a></code> or <code>Scenario$new()</code> in the <code>customParams</code> argument are applied last. Up to this version, they were overwritten by the administration protocol (<a href="https://github.com/esqLABS/esqlabsR/issues/817" class="external-link">#817</a>)</li>
+<ul><li><p>User-defined parameters passed to the <code><a href="../reference/createScenarios.html">createScenarios()</a></code> or <code>Scenario$new()</code> in the <code>customParams</code> argument are applied last. Up to this version, they were overwritten by the administration protocol (<a href="https://github.com/esqLABS/esqlabsR/issues/817" class="external-link">#817</a>)</p></li>
+<li><p><code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> now accepts a (named) list of <code>DataCombined</code> objects as input to create plots defined in the <code>plotGridNames</code> argument. Missing <code>DataCombined</code> will be created from the Excel file (default behavior).</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
@@ -90,18 +97,16 @@
 </ul></div>
 <div class="section level3">
 <h3 id="major-changes-5-4-0">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-5-4-0"></a></h3>
-<ul><li>
-<code>ProjectConfiguration.xslx</code> configuration file now support environment variables. When creating project configuration using <code><a href="../reference/createProjectConfiguration.html">createProjectConfiguration()</a></code> or when modifying the projectConfiguration object directly, the package will look for matching environment variables and build the paths accordingly. A message is shown to the user to make this transparent.</li>
-<li>Complete <code>sensitivitySpiderPlot</code> documentation (<a href="https://github.com/esqLABS/esqlabsR/issues/799" class="external-link">#799</a>)</li>
-<li>
-<code>parameterPaths</code> in <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> can now be a named vector. The names will be stored and used as custom labels in all relevant plotting functions (<a href="https://github.com/esqLABS/esqlabsR/issues/811" class="external-link">#811</a>).</li>
+<ul><li><p><code>ProjectConfiguration.xslx</code> configuration file now support environment variables. When creating project configuration using <code><a href="../reference/createProjectConfiguration.html">createProjectConfiguration()</a></code> or when modifying the projectConfiguration object directly, the package will look for matching environment variables and build the paths accordingly. A message is shown to the user to make this transparent.</p></li>
+<li><p>Complete <code>sensitivitySpiderPlot</code> documentation (<a href="https://github.com/esqLABS/esqlabsR/issues/799" class="external-link">#799</a>)</p></li>
+<li><p><code>parameterPaths</code> in <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> can now be a named vector. The names will be stored and used as custom labels in all relevant plotting functions (<a href="https://github.com/esqLABS/esqlabsR/issues/811" class="external-link">#811</a>).</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-5-4-0">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-4-0"></a></h3>
-<ul><li>Improved print outputs for all classes</li>
-<li>Classes do not inherit from the deprecated <code>Printable</code> class from the <a href="https://github.com/open-systems-pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a> package.</li>
-<li>Print methods for all classes are now implemented using the <code>ospPrint\*</code> functions introduced in version 1.7.0. of the <a href="https://github.com/open-systems-pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a> package.</li>
-<li>Fix when <code>createPlotsFromExcel</code> or <code>createDataCombinedFromExcel</code> would return wrong names of DataCombined for which the output path for a simulation scenario is not defined (<a href="https://github.com/esqLABS/esqlabsR/issues/800" class="external-link">#800</a>).</li>
+<ul><li><p>Improved print outputs for all classes</p></li>
+<li><p>Classes do not inherit from the deprecated <code>Printable</code> class from the <a href="https://github.com/open-systems-pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a> package.</p></li>
+<li><p>Print methods for all classes are now implemented using the <code>ospPrint\*</code> functions introduced in version 1.7.0. of the <a href="https://github.com/open-systems-pharmacology/OSPSuite.RUtils" class="external-link">ospsuite.utils</a> package.</p></li>
+<li><p>Fix when <code>createPlotsFromExcel</code> or <code>createDataCombinedFromExcel</code> would return wrong names of DataCombined for which the output path for a simulation scenario is not defined (<a href="https://github.com/esqLABS/esqlabsR/issues/800" class="external-link">#800</a>).</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-5-4-0-1">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-4-0-1"></a></h3>
@@ -383,7 +388,7 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>
