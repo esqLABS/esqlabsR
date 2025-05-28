@@ -19,7 +19,7 @@
 #'   `value` to be accepted. **WARNING**: setting a relative threshold will result
 #'   in only exact matches if `value` is 0!
 #'
-#' @return Index of a value within the array which is closest to `value` and the
+#' @returns Index of a value within the array which is closest to `value` and the
 #'   difference is within the defined threshold. If multiple entries of `array`
 #'   have the same difference which is minimal, a vector of indices is returned.
 #'   If no value is within the defined threshold, `NULL` is returned.
@@ -58,7 +58,7 @@ getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdR
 #'   end of `x` before the mean is computed. Values of trim outside that range
 #'   are taken as the nearest endpoint
 #'
-#' @return Geometric mean of `x`
+#' @returns Geometric mean of `x`
 #' @export
 geomean <- function(x, na.rm = FALSE, trim = 0) {
   exp(mean(log(x), na.rm = na.rm, trim = trim))
@@ -70,7 +70,7 @@ geomean <- function(x, na.rm = FALSE, trim = 0) {
 #' @param na.rm A logical value indicating whether `NA` values should be
 #'   stripped before the computation proceeds.
 #'
-#' @return Geometric standard deviation of `x`
+#' @returns Geometric standard deviation of `x`
 #' @export
 geosd <- function(x, na.rm = FALSE) {
   exp(stats::sd(log(x), na.rm = na.rm))
@@ -83,7 +83,7 @@ geosd <- function(x, na.rm = FALSE) {
 #' @param listArg The list from which the entry will be removed
 #' @description Removes all occurrences of the entry from the list. If the entry
 #'   is not in the list nothing is removed.
-#' @return The list without the entry. If the input is a vector, it is converted
+#' @returns The list without the entry. If the input is a vector, it is converted
 #'   to a list.
 #'
 #' @examples
@@ -109,7 +109,7 @@ removeFromList <- function(entry, listArg) {
 #' @param v2 Value or a list of values to compare. May include `NA`.
 #' @details From http://www.cookbook-r.com/Manipulating_data/Comparing_vectors_or_factors_with_NA/
 #'
-#' @return `TRUE` wherever elements are the same, including `NA`'s,
+#' @returns `TRUE` wherever elements are the same, including `NA`'s,
 # and `FALSE` everywhere else.
 #' @export
 compareWithNA <- function(v1, v2) {

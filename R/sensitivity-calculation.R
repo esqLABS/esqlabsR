@@ -38,7 +38,7 @@
 #'
 #' @family sensitivity-calculation
 #'
-#' @return
+#' @returns
 #'
 #' A list containing following objects:
 #' - `SimulationResults`
