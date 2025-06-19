@@ -26,7 +26,7 @@ sourceAll <- function(folderPath, recursive = FALSE) {
 #' @param path Path that will be converted. If `"clipboard"` (default), path is
 #'   queried from clipboard.
 #'
-#' @return String representation of a file path with `/` as separator.
+#' @returns String representation of a file path with `/` as separator.
 #' @export
 pathFromClipboard <- function(path = "clipboard") {
   y <- if (path == "clipboard") {
@@ -47,7 +47,7 @@ pathFromClipboard <- function(path = "clipboard") {
 #'   file is used.
 #' @param ... Any other parameters that can be passed to `readxl::read_excel`
 #'
-#' @return A tibble with the contents of the excel sheet
+#' @returns A tibble with the contents of the excel sheet
 #' @export
 readExcel <- function(path, sheet = NULL, ...) {
   return(readxl::read_excel(

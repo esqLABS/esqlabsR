@@ -169,3 +169,19 @@ test_that("Population from CSV is loaded correctly", {
   expect_true(isOfType(scenario$population, "Population"))
   expect_equal(scenario$scenarioType, "Population")
 })
+
+test_that("The name of a scenario is set as simulation name", {
+  projectConfiguration <- testProjectConfiguration()
+  scenarioNames <- c(
+    "TestScenario"
+  )
+  # Create `ScenarioConfiguration` objects from excel files
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = FALSE)
+
+  # Check if the name of the simulation is set to the name of the scenario
+  expect_equal(scenarios[[1]]$simulation$name, scenarioNames[[1]])
+})

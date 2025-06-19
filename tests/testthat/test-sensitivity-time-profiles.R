@@ -111,7 +111,7 @@ test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
 
 test_that("sensitivityTimeProfiles works with observed data", {
   set.seed(123)
-  p <- sensitivityTimeProfiles(results, observedData = obsData)
+  p <- sensitivityTimeProfiles(results, observedData = obsData[[1]])
 
   set.seed(123)
   suppressWarnings(

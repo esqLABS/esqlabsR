@@ -15,7 +15,7 @@
 #'   index in `outputNames` as as the argument value in `firstArguments`. If
 #'   specified, `outputNames` must have the same length as `firstArguments`
 #'
-#' @return A list containing the outputs of the function `fun` iterated over the
+#' @returns A list containing the outputs of the function `fun` iterated over the
 #'   values in `firstArguments`.
 #'
 #' @import parallel

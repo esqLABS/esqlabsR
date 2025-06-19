@@ -1,7 +1,7 @@
 Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
-Version: 5.4.0.9004
+Version: 5.4.0.9008
 Authors@R: c(
     person("esqLABS GmbH", role = c("cph", "fnd")),
     person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
@@ -29,14 +29,11 @@ Imports:
     ggplot2,
     grDevices,
     jsonlite,
-    labeling,
     lifecycle,
     methods,
-    ospsuite.utils (>= 1.6.0),
     parallel,
     patchwork,
     purrr,
-    R6,
     readxl,
     scales,
     stringr,
@@ -57,8 +54,7 @@ Suggests:
     showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
-    withr,
-    reactable
+    withr
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3

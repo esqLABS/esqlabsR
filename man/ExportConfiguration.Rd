@@ -3,6 +3,9 @@
 \name{ExportConfiguration}
 \alias{ExportConfiguration}
 \title{ExportConfiguration}
+\value{
+The file name of the exported plot
+}
 \description{
 R6 class defining properties for saving a \code{ggplot} object
 }
@@ -92,9 +95,6 @@ Save/Export a plot
 \item{\code{fileName}}{character file name of the exported plot}
 }
 \if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-The file name of the exported plot
 }
 }
 \if{html}{\out{<hr>}}

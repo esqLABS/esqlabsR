@@ -30,6 +30,11 @@ messages$errorWrongPopulationName <- function(populationName) {
   paste0("Population name ", populationName, " is not specified in the population file!")
 }
 
+messages$errorWrongOntogenyStructure <- function(entry) {
+  paste0("Wrong structure provided for the protein ontogeny specification. Expected
+  is a pair of <ProteinName:Ontogeny>, but the entry is: ", entry)
+}
+
 # utilities-individual####
 messages$errorWrongIndividualId <- function(individualId) {
   paste0("Individual with id ", individualId, " is not specified in the individual characteristics file!")
@@ -292,6 +297,14 @@ messages$invalidSimulationResultNames <- function(simulationResultNames,
   )
 }
 
+messages$errorDataCombinedListMustBeList <- function(type) {
+  paste0(
+    "The argument 'dataCombined' must be a named list of DataCombined objects, but the
+    type of passed argument is '", type, "'."
+  )
+}
+
+# Sensitivity calculation####
 messages$sensitivityAnalysisSimulationFailure <- function(parameterPath, parameterFactor) {
   cat(
     paste0(
