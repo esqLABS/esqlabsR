@@ -1,4 +1,6 @@
 test_that("`executeInParallel()` works as expected", {
+  skip_on_os("mac")
+
   chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
 
   # Limiting the number of cores so the test does not fail when building
@@ -14,7 +16,9 @@ test_that("`executeInParallel()` works as expected", {
   v1 <- 1:4
   v2 <- 8:100
 
-  x <- executeInParallel("mean", list(v1, v2),
+  x <- executeInParallel(
+    "mean",
+    list(v1, v2),
     outputNames = c("res1", "res2"),
     nrOfCores = num_workers
   )

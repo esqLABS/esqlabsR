@@ -30,13 +30,13 @@ sourceAll <- function(folderPath, recursive = FALSE) {
 #' @export
 pathFromClipboard <- function(path = "clipboard") {
   y <- if (path == "clipboard") {
-    utils::readClipboard()
+    clipr::read_clip()
   } else {
     cat("Please enter the path:\n\n")
     readline()
   }
   x <- chartr("\\", "/", y)
-  utils::writeClipboard(x)
+  clipr::write_clip(x, allow_non_interactive = TRUE)
   return(x)
 }
 
