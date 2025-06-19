@@ -32,8 +32,12 @@ are `NULL`, an empty list is returned.
 - User-defined parameters passed to the `createScenarios()` or `Scenario$new()` 
 in the `customParams` argument are applied last. Up to this version, they 
 were overwritten by the administration protocol (\#817).
+
 - Added `snapshotProjectConfiguration()` and `restoreProjectConfiguration()` functions 
 to support version control and project sharing of project configurations.
+
+- Added `projectConfigurationStatus()` function to check the status of the project configuration, 
+the Excel configuration files and the JSON snapshot.
 
 - `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
   to create plots defined in the `plotGridNames` argument. Missing `DataCombined`

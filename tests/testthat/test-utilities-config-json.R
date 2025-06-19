@@ -235,7 +235,6 @@ test_that("ProjectConfiguration.xlsx data is preserved in JSON round-trip", {
   expect_identical(originalDf, regeneratedDf)
 })
 
-
 test_that("projectConfigurationStatus() correctly handles missing JSON file", {
   # Create a temporary test project
   test_proj <- local_test_project()
@@ -384,7 +383,7 @@ test_that("projectConfigurationStatus() handles simultaneous sheet, and data cha
   .writeExcel(new_data, scenarios_path)
 
   # 2. Add a new sheet to an existing Excel file
-  plots_path <-   createProjectConfiguration(
+  plots_path <- createProjectConfiguration(
     test_proj$project_config_path
   )$plotsFile
   if (file.exists(plots_path)) {
@@ -413,3 +412,215 @@ test_that("projectConfigurationStatus() handles simultaneous sheet, and data cha
 
   expect_snapshot(status_result$details)
 })
+
+# Tests for modified flag behavior in JSON utilities context
+test_that("snapshotProjectConfiguration works with unmodified ProjectConfiguration", {
+  # Create a test project
+  test_proj <- local_test_project()
+
+  # Load ProjectConfiguration (should be unmodified)
+  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  expect_false(projectConfig$modified)
+
+  # Create output directory
+  outputDir <- withr::local_tempdir("test_snapshot_unmodified")
+
+  # Snapshot should work without issues
+  expect_no_error({
+    configData <- snapshotProjectConfiguration(projectConfig, outputDir)
+  })
+
+  # Original config should still be unmodified
+  expect_false(projectConfig$modified)
+
+  # JSON file should be created
+  excelFilename <- basename(projectConfig$projectConfigurationFilePath)
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  jsonPath <- file.path(outputDir, jsonFilename)
+  expect_true(file.exists(jsonPath))
+})
+
+test_that("snapshotProjectConfiguration works with modified ProjectConfiguration", {
+  # Create a test project
+  test_proj <- local_test_project()
+
+  # Load and modify ProjectConfiguration
+  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  suppressWarnings(projectConfig$modelFolder <- "modified/model/folder")
+  expect_true(projectConfig$modified)
+
+  # Create output directory
+  outputDir <- withr::local_tempdir("test_snapshot_modified")
+
+  # Snapshot should work even with modified config
+  expect_no_error({
+    configData <- snapshotProjectConfiguration(projectConfig, outputDir)
+  })
+
+  # Original config should still be modified (snapshot doesn't change this)
+  expect_true(projectConfig$modified)
+
+  # JSON file should be created
+  excelFilename <- basename(projectConfig$projectConfigurationFilePath)
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  jsonPath <- file.path(outputDir, jsonFilename)
+  expect_true(file.exists(jsonPath))
+})
+
+test_that("restoreProjectConfiguration returns ProjectConfiguration with modified=FALSE", {
+  # Create a test project and snapshot
+  test_proj <- local_test_project()
+
+  # Create output directories
+  exportDir <- withr::local_tempdir("test_restore_export")
+  importDir <- withr::local_tempdir("test_restore_import")
+
+  # Export to JSON
+  excelFilename <- basename(test_proj$project_config_path)
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  snapshotProjectConfiguration(test_proj$project_config_path, exportDir)
+  jsonPath <- file.path(exportDir, jsonFilename)
+
+  # Restore from JSON
+  restoredConfig <- restoreProjectConfiguration(jsonPath, importDir)
+
+  # Restored config should have modified=FALSE (freshly loaded from file)
+  expect_false(restoredConfig$modified)
+  expect_s3_class(restoredConfig, "ProjectConfiguration")
+})
+
+test_that("projectConfigurationStatus warns about modified ProjectConfiguration", {
+  # Create a test project
+  test_proj <- local_test_project()
+
+  # Load and modify ProjectConfiguration
+  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  suppressWarnings(projectConfig$modelFolder <- "modified/model/folder")
+  expect_true(projectConfig$modified)
+
+  # Check status with modified config - should show warning message
+  expect_warning(
+    status_result <- projectConfigurationStatus(
+      projectConfig,
+      test_proj$snapshot_path
+    ),
+    "The ProjectConfiguration object has been modified"
+  )
+
+  # Status should still work and return results
+  expect_true(is.logical(status_result$in_sync))
+  expect_true(is.list(status_result$details))
+  expect_true(status_result$unsaved_changes)
+})
+
+test_that("projectConfigurationStatus does not warn about unmodified ProjectConfiguration", {
+  # Create a test project
+  test_proj <- local_test_project()
+
+  # Load ProjectConfiguration without modifying
+  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  expect_false(projectConfig$modified)
+
+  # Create a JSON snapshot
+  snapshotProjectConfiguration(test_proj$project_config_path)
+  jsonPath <- sub("\\.xlsx$", ".json", test_proj$project_config_path)
+
+  # Check status - should not show warning about modification
+  expect_no_warning({
+    status_result <- projectConfigurationStatus(projectConfig, jsonPath)
+  })
+
+  # Status should work normally
+  expect_true(status_result$in_sync)
+})
+
+test_that("modifying ProjectConfiguration after snapshotting affects status check", {
+  # Create a test project
+  test_proj <- local_test_project()
+
+  # Load ProjectConfiguration
+  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  expect_false(projectConfig$modified)
+
+  # Take snapshot of unmodified config
+  snapshotProjectConfiguration(projectConfig)
+  jsonPath <- sub("\\.xlsx$", ".json", test_proj$project_config_path)
+
+  # Verify initial status is in sync
+  status1 <- projectConfigurationStatus(projectConfig, jsonPath)
+  expect_true(status1$in_sync)
+
+  # Modify the configuration
+  suppressWarnings(projectConfig$modelFolder <- "modified/model/folder")
+  expect_true(projectConfig$modified)
+
+  # Status check should now warn about modification
+
+  expect_warning(status2 <- projectConfigurationStatus(projectConfig, jsonPath))
+  # The warning is about the object being modified, not necessarily about sync status
+  expect_true(status2$in_sync)
+  expect_true(status2$unsaved_changes)
+})
+
+test_that("JSON roundtrip preserves modified flag behavior", {
+  # Create a test project
+  test_proj <- local_test_project()
+
+  # Create export/import directories
+  exportDir <- withr::local_tempdir("test_roundtrip_export")
+  importDir <- withr::local_tempdir("test_roundtrip_import")
+
+  # Load original ProjectConfiguration
+  originalConfig <- createProjectConfiguration(test_proj$project_config_path)
+  expect_false(originalConfig$modified)
+
+  # Export to JSON
+  excelFilename <- basename(test_proj$project_config_path)
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  snapshotProjectConfiguration(originalConfig, exportDir)
+  jsonPath <- file.path(exportDir, jsonFilename)
+
+  # Restore from JSON
+  restoredConfig <- restoreProjectConfiguration(jsonPath, importDir)
+  expect_false(restoredConfig$modified)
+
+  # Modify the restored config
+  suppressWarnings(restoredConfig$dataFolder <- "new/data/folder")
+  expect_true(restoredConfig$modified)
+
+  # Save the modified config
+  tempFile <- withr::local_tempfile(fileext = ".xlsx")
+  restoredConfig$save(tempFile)
+  expect_false(restoredConfig$modified)
+
+  # Load from saved file
+  finalConfig <- createProjectConfiguration(tempFile)
+  expect_false(finalConfig$modified)
+})
+
+test_that("snapshotProjectConfiguration with path string handles modified flag correctly", {
+  # Create a test project
+  test_proj <- local_test_project()
+
+  # Create output directory
+  outputDir <- withr::local_tempdir("test_snapshot_path")
+
+  # Snapshot using path string (not ProjectConfiguration object)
+  expect_no_error({
+    configData <- snapshotProjectConfiguration(
+      test_proj$project_config_path,
+      outputDir
+    )
+  })
+
+  # Load the original file to check it wasn't affected
+  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  expect_false(projectConfig$modified)
+
+  # JSON file should be created
+  excelFilename <- basename(test_proj$project_config_path)
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  jsonPath <- file.path(outputDir, jsonFilename)
+  expect_true(file.exists(jsonPath))
+})
+
