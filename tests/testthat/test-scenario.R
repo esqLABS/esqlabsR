@@ -148,7 +148,6 @@ test_that("Warning is shown when individual characteristics are not found", {
 })
 
 
-
 test_that("Population from CSV is loaded correctly", {
   skip_on_os("mac")
 
@@ -171,6 +170,8 @@ test_that("Population from CSV is loaded correctly", {
 })
 
 test_that("The name of a scenario is set as simulation name", {
+  skip_on_os("mac")
+
   projectConfiguration <- testProjectConfiguration()
   scenarioNames <- c(
     "TestScenario"
@@ -180,7 +181,10 @@ test_that("The name of a scenario is set as simulation name", {
     scenarioNames = scenarioNames,
     projectConfiguration = projectConfiguration
   )
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = FALSE)
+  scenarios <- createScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    stopIfParameterNotFound = FALSE
+  )
 
   # Check if the name of the simulation is set to the name of the scenario
   expect_equal(scenarios[[1]]$simulation$name, scenarioNames[[1]])

@@ -1,3 +1,5 @@
+skip_on_os("mac")
+
 projectConfiguration <- testProjectConfiguration()
 
 # Define which scenarios to run

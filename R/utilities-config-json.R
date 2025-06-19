@@ -452,11 +452,10 @@ projectConfigurationStatus <- function(
     )
 
     # Display message if interactive
-    if (interactive()) {
       cli::cli_alert_success(
         "Excel configuration files are in sync with JSON snapshot."
       )
-    }
+
   } else {
     # Files are different, now do a detailed comparison
     originalJsonObj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
@@ -571,7 +570,6 @@ projectConfigurationStatus <- function(
     )
 
     # Display message if interactive
-    if (interactive()) {
       cli::cli_alert_warning(
         "Excel configuration files are NOT in sync with JSON snapshot."
       )
@@ -583,11 +581,11 @@ projectConfigurationStatus <- function(
         status_text <- fileStatus[[file]]
         if (status_text == "in-sync") {
           cli::cli_text(
-            "{.green {symbol$tick}} {file}.xlsx:  {status_text}"
+            "{.green {cli::symbol$tick}} {file}.xlsx:  {status_text}"
           )
         } else {
           cli::cli_text(
-            "{.red {symbol$cross}} {file}.xlsx: {status_text}"
+            "{.red {cli::symbol$cross}} {file}.xlsx: {status_text}"
           )
         }
       }
@@ -656,7 +654,6 @@ projectConfigurationStatus <- function(
 
       cli::cli_end()
     }
-  }
 
   invisible(result)
 }

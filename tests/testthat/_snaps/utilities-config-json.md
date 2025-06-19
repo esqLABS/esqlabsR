@@ -221,9 +221,9 @@
       $Individuals
       $Individuals$IndividualBiometrics
       $Individuals$IndividualBiometrics$column_names
-      [1] "IndividualId"  "Species"       "Population"    "Gender"       
-      [5] "Weight [kg]"   "Height [cm]"   "Age [year(s)]" "Protein"      
-      [9] "Ontogeny"     
+      [1] "IndividualId"       "Species"            "Population"        
+      [4] "Gender"             "Weight [kg]"        "Height [cm]"       
+      [7] "Age [year(s)]"      "Protein Ontogenies"
       
       $Individuals$IndividualBiometrics$rows
       $Individuals$IndividualBiometrics$rows[[1]]
@@ -248,11 +248,8 @@
       $Individuals$IndividualBiometrics$rows[[1]]$`Age [year(s)]`
       [1] "30"
       
-      $Individuals$IndividualBiometrics$rows[[1]]$Protein
-      [1] NA
-      
-      $Individuals$IndividualBiometrics$rows[[1]]$Ontogeny
-      [1] NA
+      $Individuals$IndividualBiometrics$rows[[1]]$`Protein Ontogenies`
+      [1] "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
       
       
       
@@ -287,7 +284,7 @@
        [7] "weightMax"           "weightUnit"          "heightMin"          
       [10] "heightMax"           "heightUnit"          "ageMin"             
       [13] "ageMax"              "BMIMin"              "BMIMax"             
-      [16] "BMIUnit"             "Protein"             "Ontogeny"           
+      [16] "BMIUnit"             "Protein Ontogenies" 
       
       $Populations$Demographics$rows
       $Populations$Demographics$rows[[1]]
@@ -339,11 +336,8 @@
       $Populations$Demographics$rows[[1]]$BMIUnit
       [1] "kg/m²"
       
-      $Populations$Demographics$rows[[1]]$Protein
-      [1] "CYP3A4, CYP2D6"
-      
-      $Populations$Demographics$rows[[1]]$Ontogeny
-      [1] "CYP3A4, CYP2D6"
+      $Populations$Demographics$rows[[1]]$`Protein Ontogenies`
+      [1] "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
       
       
       $Populations$Demographics$rows[[2]]
@@ -395,10 +389,7 @@
       $Populations$Demographics$rows[[2]]$BMIUnit
       [1] "kg/m²"
       
-      $Populations$Demographics$rows[[2]]$Protein
-      [1] NA
-      
-      $Populations$Demographics$rows[[2]]$Ontogeny
+      $Populations$Demographics$rows[[2]]$`Protein Ontogenies`
       [1] NA
       
       
@@ -1930,15 +1921,15 @@
       $Individuals
       $Individuals$IndividualBiometrics
       $Individuals$IndividualBiometrics$column_names
-      [1] "IndividualId"  "Species"       "Population"    "Gender"       
-      [5] "Weight [kg]"   "Height [cm]"   "Age [year(s)]" "Protein"      
-      [9] "Ontogeny"     
+      [1] "IndividualId"       "Species"            "Population"        
+      [4] "Gender"             "Weight [kg]"        "Height [cm]"       
+      [7] "Age [year(s)]"      "Protein Ontogenies"
       
       $Individuals$IndividualBiometrics$rows
         IndividualId Species         Population Gender Weight [kg] Height [cm]
       1       Indiv1   Human European_ICRP_2002   MALE          73         176
-        Age [year(s)] Protein Ontogeny
-      1            30      NA       NA
+        Age [year(s)]          Protein Ontogenies
+      1            30 CYP3A4:CYP3A4,CYP2D6:CYP2C8
       
       
       $Individuals$Indiv1
@@ -1959,7 +1950,7 @@
        [7] "weightMax"           "weightUnit"          "heightMin"          
       [10] "heightMax"           "heightUnit"          "ageMin"             
       [13] "ageMax"              "BMIMin"              "BMIMax"             
-      [16] "BMIUnit"             "Protein"             "Ontogeny"           
+      [16] "BMIUnit"             "Protein Ontogenies" 
       
       $Populations$Demographics$rows
                PopulationName species         population numberOfIndividuals
@@ -1968,9 +1959,9 @@
         proportionOfFemales weightMin weightMax weightUnit heightMin heightMax
       1                   0        NA        NA         kg        NA        NA
       2                   0        NA        NA         kg        NA        NA
-        heightUnit ageMin ageMax BMIMin BMIMax BMIUnit        Protein       Ontogeny
-      1         cm     22     41     NA     NA   kg/m² CYP3A4, CYP2D6 CYP3A4, CYP2D6
-      2         cm     22     41     NA     NA   kg/m²           <NA>           <NA>
+        heightUnit ageMin ageMax BMIMin BMIMax BMIUnit          Protein Ontogenies
+      1         cm     22     41     NA     NA   kg/m² CYP3A4:CYP3A4,CYP2D6:CYP2C8
+      2         cm     22     41     NA     NA   kg/m²                        <NA>
       
       
       $Populations$UserDefinedVariability

@@ -15,21 +15,19 @@ test_that("`sourceAll()` sources all files in the directory", {
 })
 
 
-
 test_that("`pathFromClipboard()` converts paths as expected", {
   # This will work only in interactive mode, i.e. with
   # `devtools::test_active_file()` or `devtools::test()`, but not during R CMD
   # Check on CRAN or AppVeyor where the system clipboard is not available
 
   skip_on_ci()
+  skip_if_not_installed("clipr")
 
-  if (clipr::clipr_available()) {
-    path <- "C:\\Users\\Documents"
-    clipr::write_clip(path, allow_non_interactive = TRUE)
+  path <- "C:\\Users\\Documents"
+  clipr::write_clip(path, allow_non_interactive = TRUE)
 
-    expect_equal(
-      pathFromClipboard(),
-      "C:/Users/Documents"
-    )
-  }
+  expect_equal(
+    pathFromClipboard(),
+    "C:/Users/Documents"
+  )
 })

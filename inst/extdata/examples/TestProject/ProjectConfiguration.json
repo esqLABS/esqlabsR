@@ -106,7 +106,7 @@
   },
   "Individuals": {
     "IndividualBiometrics": {
-      "column_names": ["IndividualId", "Species", "Population", "Gender", "Weight [kg]", "Height [cm]", "Age [year(s)]", "Protein", "Ontogeny"],
+      "column_names": ["IndividualId", "Species", "Population", "Gender", "Weight [kg]", "Height [cm]", "Age [year(s)]", "Protein Ontogenies"],
       "rows": [
         {
           "IndividualId": "Indiv1",
@@ -116,8 +116,7 @@
           "Weight [kg]": "73",
           "Height [cm]": "176",
           "Age [year(s)]": "30",
-          "Protein": null,
-          "Ontogeny": null
+          "Protein Ontogenies": "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
         }
       ]
     },
@@ -135,7 +134,7 @@
   },
   "Populations": {
     "Demographics": {
-      "column_names": ["PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax", "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein", "Ontogeny"],
+      "column_names": ["PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax", "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein Ontogenies"],
       "rows": [
         {
           "PopulationName": "TestPopulation",
@@ -154,8 +153,7 @@
           "BMIMin": null,
           "BMIMax": null,
           "BMIUnit": "kg/m²",
-          "Protein": "CYP3A4, CYP2D6",
-          "Ontogeny": "CYP3A4, CYP2D6"
+          "Protein Ontogenies": "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
         },
         {
           "PopulationName": "TestPopulation_noOnto",
@@ -174,8 +172,7 @@
           "BMIMin": null,
           "BMIMax": null,
           "BMIUnit": "kg/m²",
-          "Protein": null,
-          "Ontogeny": null
+          "Protein Ontogenies": null
         }
       ]
     },
