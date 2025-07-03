@@ -295,7 +295,6 @@ createPlotsFromExcel <- function(
   if (!typeof(dataCombinedList) %in% c("list", "NULL")) {
     stop(messages$errorDataCombinedListMustBeList(typeof(dataCombinedList)))
   }
-
   plotConfigurations <- .readPlotConfigurations(
     projectConfiguration = projectConfiguration,
     plotGridNames = plotGridNames
@@ -335,6 +334,8 @@ createPlotsFromExcel <- function(
     plotConfiguration <- .createConfigurationFromRow(
       defaultConfiguration = defaultPlotConfiguration,
       # Have to exclude all columns that should not be vectorized
+      # Excluding title and subtitle because they should not be processed,
+      # e.g., split by ","
       row[!(names(row) %in% c(
         "plotID",
         "DataCombinedName",
@@ -349,8 +350,13 @@ createPlotsFromExcel <- function(
         "foldDistance"
       ))]
     )
+    # Apply title and subtitle properties
     if (!is.na(row[["title"]])) {
       plotConfiguration$title <- row[["title"]]
+    }
+
+    if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
+      plotConfiguration$subtitle <- row[["subtitle"]]
     }
     return(plotConfiguration)
   })
@@ -477,7 +483,6 @@ createPlotsFromExcel <- function(
 .createConfigurationFromRow <- function(defaultConfiguration, ...) {
   columns <- c(...)
   newConfiguration <- defaultConfiguration$clone()
-
   lapply(seq_along(columns), function(i) {
     value <- columns[[i]]
     colName <- names(columns)[[i]]
