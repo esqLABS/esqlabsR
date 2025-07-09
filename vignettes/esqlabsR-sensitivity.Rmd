@@ -81,7 +81,7 @@ increase of AUC to 4015.73 µmol×min/L (a change of 2.55%). The
 sensitivity of AUC to 10-fold increase of lipophilicity is calculated as
 $$\frac{\Delta AUC}{\Delta lipophilicity} \times \frac{lipophilicity}{AUC}=\frac{4015.73-3915.87}{-0.97--0.097} \times \frac{-0.97}{4015.73}=0.027$$
 
-The results of the sensitivity analysis can be plotted with two
+The results of the sensitivity analysis can be plotted using the following 
 functions:
 
 -   the `sensitivitySpiderPlot()` function generate a separate plot for
@@ -100,6 +100,14 @@ sensitivitySpiderPlot(analysis)
 ```{r time-profile, fig.width=7, fig.height=4}
 sensitivityTimeProfiles(analysis)
 ```
+
+- the `sensitivityTornadoPlot` function visualizes the impact of increasing or decreasing input parameters on PK parameters at a fixed scaling factor. The scaling factor to plot (default: 0.1) and its reciprocal (e.g., 10) must both be included in the sensitivity analysis result.
+While only a single parameter (lipophilicity) is varied in this example, tornado plots are especially useful for side-by-side comparisons when multiple parameters are analyzed.
+
+```{r tornado-plot, fig.width=7, fig.height=3.5}
+sensitivityTornadoPlot(analysis)
+```
+
 
 ### Sensitivity calculation for user-defined (non-PK parameters) outputs
 
