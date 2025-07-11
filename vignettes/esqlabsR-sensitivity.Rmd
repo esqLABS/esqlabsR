@@ -65,10 +65,15 @@ PK parameters for each of the input parameter values.
 
 ```{r analysis}
 simulation <- simulatedScenarios$TestScenario$simulation
-OutputPaths <- enum(list(
+outputPaths <- enum(list(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 ))
-analysis <- sensitivityCalculation(simulation, OutputPaths, parameterPaths = "Aciclovir|Lipophilicity")
+parameterPaths <- c(
+  "Lipophilicity" = "Aciclovir|Lipophilicity",
+  "Dose" = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+)
+analysis <- sensitivityCalculation(simulation, outputPaths, parameterPaths)
 head(analysis$pkData)
 ```
 
@@ -80,6 +85,20 @@ while decreasing the lipophilicity to -0.97 log units leads to an
 increase of AUC to 4015.73 µmol×min/L (a change of 2.55%). The
 sensitivity of AUC to 10-fold increase of lipophilicity is calculated as
 $$\frac{\Delta AUC}{\Delta lipophilicity} \times \frac{lipophilicity}{AUC}=\frac{4015.73-3915.87}{-0.97--0.097} \times \frac{-0.97}{4015.73}=0.027$$
+```{r}
+analysis$pkData |>
+  dplyr::filter(
+    ParameterPath == "Aciclovir|Lipophilicity",
+    PKParameter == "AUC_inf",
+    ParameterFactor %in% c(0.1, 1, 10)
+  ) |>
+  dplyr::select(ParameterFactor, PKParameterValue, 
+                PKPercentChange, SensitivityPKParameter) |>
+  dplyr::mutate(
+    PKPercentChange = round(PKPercentChange, 2),
+    SensitivityPKParameter = round(SensitivityPKParameter, 4)
+  )
+```
 
 The results of the sensitivity analysis can be plotted using the following 
 functions:
