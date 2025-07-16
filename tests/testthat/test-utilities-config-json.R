@@ -424,6 +424,62 @@ test_that("projectConfigurationStatus() handles simultaneous sheet, and data cha
   expect_snapshot(status_result$details)
 })
 
+test_that("snapshotProjectConfiguration and restoreProjectConfiguration handle added columns Excel configuration file", {
+  # Set up test project
+  paths <- local_test_project()
+
+  # Path to Plots.xlsx in the configurations directory
+  plots_path <- file.path(paths$configurations_dir, "Plots.xlsx")
+  expect_true(file.exists(plots_path))
+
+  # Read the plotConfiguration sheet
+  plot_config_df <- readExcel(plots_path, "plotConfiguration")
+  n_rows <- nrow(plot_config_df)
+
+  # Add a new column (e.g., 'linesSize') with a value (e.g., 2.5)
+  new_col_name <- "linesSize"
+  new_col_values <- c(rep(2.5, n_rows-1), NA)
+  plot_config_df[[new_col_name]] <- new_col_values
+
+  # Write the modified plotConfiguration sheet back, preserving all sheets
+  sheet_names <- readxl::excel_sheets(plots_path)
+  all_sheets <- lapply(sheet_names, function(s) {
+    if (s == "plotConfiguration") plot_config_df else readExcel(plots_path, s)
+  })
+  names(all_sheets) <- sheet_names
+  .writeExcel(all_sheets, plots_path)
+
+  # Export to JSON (snapshot)
+  exportDir <- withr::local_tempdir("test_export_added_col_plotconfig")
+  excelFilename <- basename(paths$project_config_path)
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  snapshotProjectConfiguration(paths$project_config_path, exportDir)
+  jsonPath <- file.path(exportDir, jsonFilename)
+  expect_true(file.exists(jsonPath))
+
+  # Restore from JSON to a new directory
+  importDir <- withr::local_tempdir("test_import_added_col_plotconfig")
+  restoreProjectConfiguration(jsonPath, importDir)
+
+  # Path to restored Plots.xlsx
+  restored_plots_path <- file.path(importDir, "Configurations", "Plots.xlsx")
+  expect_true(file.exists(restored_plots_path))
+
+  # Check the new column exists and values are preserved in the restored file
+  restored_plot_config_df <- readExcel(restored_plots_path, "plotConfiguration")
+  expect_true(new_col_name %in% colnames(restored_plot_config_df))
+  expect_equal(restored_plot_config_df[[new_col_name]], new_col_values)
+
+  # Check that the rest of the data is preserved (except for the new column)
+  expect_equal(
+    plot_config_df[setdiff(colnames(plot_config_df), new_col_name)],
+    restored_plot_config_df[setdiff(
+      colnames(restored_plot_config_df),
+      new_col_name
+    )]
+  )
+})
+
 # Tests for modified flag behavior in JSON utilities context
 test_that("snapshotProjectConfiguration works with unmodified ProjectConfiguration", {
   # Create a test project
