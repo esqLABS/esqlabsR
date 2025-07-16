@@ -266,14 +266,6 @@ test_that("projectConfigurationStatus() automatically finds JSON file when not s
 })
 
 
-# If some changes we made to one of the project configuration excel files, the following test will fail 
-# because the ProjectConfiguration Snapshot wasn't updated. Update the snapshot by running the lines below:
-
-# snapshotProjectConfiguration(
-#   "inst/extdata/examples/TestProject/ProjectConfiguration.xlsx",
-#   outputDir = "inst/extdata/examples/TestProject"
-# )
-
 test_that("projectConfigurationStatus() correctly identifies in-sync files", {
   # Create a temporary test project
   test_proj <- local_test_project()
@@ -283,7 +275,17 @@ test_that("projectConfigurationStatus() correctly identifies in-sync files", {
     test_proj$project_config_path,
     test_proj$snapshot_path
   )
-  expect_true(status_result$in_sync)
+  expect_true(
+    status_result$in_sync,
+    info = r"{If some changes we made to one of the project configuration excel files, the following test will fail
+because the ProjectConfiguration Snapshot was not updated. Update the snapshot by running the lines below:
+
+  snapshotProjectConfiguration(
+    projectConfig = "inst/extdata/examples/TestProject/ProjectConfiguration.xlsx",
+    outputDir = "inst/extdata/examples/TestProject"
+  )
+}"
+  )
 })
 
 test_that("projectConfigurationStatus() detects sheet-level changes in Excel files", {
@@ -632,4 +634,3 @@ test_that("snapshotProjectConfiguration with path string handles modified flag c
   jsonPath <- file.path(outputDir, jsonFilename)
   expect_true(file.exists(jsonPath))
 })
-
