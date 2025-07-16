@@ -634,3 +634,27 @@ test_that("snapshotProjectConfiguration with path string handles modified flag c
   jsonPath <- file.path(outputDir, jsonFilename)
   expect_true(file.exists(jsonPath))
 })
+
+test_that("restoreProjectConfiguration aborts if user declines overwrite when files are not in sync", {
+  # Set up test project and export/import dirs
+  paths <- local_test_project()
+  exportDir <- withr::local_tempdir("test_export_abort")
+  importDir <- withr::local_tempdir("test_import_abort")
+
+  # Export to JSON
+  excelFilename <- basename(paths$project_config_path)
+  jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
+  snapshotProjectConfiguration(paths$project_config_path, exportDir)
+  jsonPath <- file.path(exportDir, jsonFilename)
+
+  # Create an out-of-sync Excel file in importDir
+  file.copy(paths$project_config_path, file.path(importDir, excelFilename))
+  # Modify the Excel file to make it out of sync
+  df <- readExcel(file.path(importDir, excelFilename))
+  df$Value[1] <- "MODIFIED_VALUE" # change a value
+  .writeExcel(df, file.path(importDir, excelFilename))
+
+  expect_warning(
+    restoreProjectConfiguration(jsonPath, importDir)
+  )
+})

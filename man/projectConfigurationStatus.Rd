@@ -6,7 +6,8 @@
 \usage{
 projectConfigurationStatus(
   projectConfig = "ProjectConfiguration.xlsx",
-  jsonPath = NULL
+  jsonPath = NULL,
+  silent = FALSE
 )
 }
 \arguments{

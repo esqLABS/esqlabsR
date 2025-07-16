@@ -158,6 +158,7 @@ snapshotProjectConfiguration <- function(
 #' This allows for recreating the project configuration from version-controlled JSON.
 #'
 #' @family project configuration snapshots
+#'
 #' @param jsonPath Path to the JSON configuration file. Defaults to "ProjectConfiguration.json".
 #' @param outputDir Directory where the Excel files will be created. If NULL (default), the Excel files
 #'   will be created in the same directory as the source JSON file.
@@ -176,6 +177,37 @@ restoreProjectConfiguration <- function(
   # If outputDir is NULL, use the same directory as the source JSON file
   if (is.null(outputDir)) {
     outputDir <- dirname(jsonPath)
+  }
+
+  # Determine Excel filename based on source JSON filename
+  jsonFilename <- basename(jsonPath)
+  excelFilename <- sub("\\.json$", ".xlsx", jsonFilename)
+  projConfigPath <- file.path(outputDir, excelFilename)
+
+  # Only check sync if Excel file exists
+  if (file.exists(projConfigPath)) {
+    status <- projectConfigurationStatus(
+      projConfigPath,
+      jsonPath,
+      silent = TRUE
+    )
+    if (!isTRUE(status$in_sync)) {
+      cli::cli_alert_warning(
+        "The Excel configuration files are NOT in sync with the JSON snapshot. 
+      Restoring will OVERWRITE the Excel files and you may lose unsaved work."
+      )
+
+      if (interactive()) {
+        qs <- sample(c("Absolutely not", "Yes", "No way"))
+        out <- utils::menu(
+          title = "Are you sure you want to continue?",
+          choices = qs
+        )
+        if (out == 0L || qs[[out]] != "Yes") {
+          cli::cli_abort("The function was aborted by the user.")
+        }
+      }
+    }
   }
 
   # Create output directory if it doesn't exist
@@ -398,7 +430,8 @@ restoreProjectConfiguration <- function(
 #' @export
 projectConfigurationStatus <- function(
   projectConfig = "ProjectConfiguration.xlsx",
-  jsonPath = NULL
+  jsonPath = NULL,
+  silent = FALSE
 ) {
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
@@ -414,12 +447,12 @@ projectConfigurationStatus <- function(
 
   # Check if the project configuration has been modified
   hasUnsavedChanges <- projectConfig$modified
-  if (hasUnsavedChanges) {
+  if (hasUnsavedChanges && !silent) {
     cli::cli_warn(
       c(
         "!" = "The ProjectConfiguration object has been modified since loading from file.",
         "i" = "The object properties don't match the original Excel file.",
-        ">" = "Consider running {.code projectConfig$save()} to save changes to the Excel file."
+        ">" = "Consider running {.run projectConfig$save()} to save changes to the Excel file."
       )
     )
   }
@@ -469,7 +502,7 @@ projectConfigurationStatus <- function(
     )
 
     # Display message if interactive
-    if (hasUnsavedChanges) {
+    if (hasUnsavedChanges && !silent) {
       cli::cli_alert_success(
         "Excel configuration files are in sync with JSON snapshot."
       )
@@ -595,19 +628,19 @@ projectConfigurationStatus <- function(
       unsaved_changes = hasUnsavedChanges
     )
 
-    # Display message if interactive
-    if (hasUnsavedChanges) {
+    # Display message
+    if (!silent) {
       cli::cli_alert_warning(
         "Excel configuration files are NOT in sync with JSON snapshot."
       )
-      cli::cli_alert_info(
-        "Additionally, the ProjectConfiguration object has {.strong unsaved changes} that differ from the Excel file."
-      )
-    } else {
-      cli::cli_alert_warning(
-        "Excel configuration files are NOT in sync with JSON snapshot."
-      )
+      if(hasUnsavedChanges & !silent){
+        cli::cli_alert_info(
+          "Additionally, the ProjectConfiguration object has {.strong unsaved changes} that differ from the Excel file."
+        )
+      }
     }
+
+    if(!silent){
 
     # Display the summary of file statuses
     cli::cli_h2("File Sync Status:")
@@ -678,25 +711,26 @@ projectConfigurationStatus <- function(
     # If there are unsaved changes, suggest saving first
     if (hasUnsavedChanges) {
       cli::cli_li(
-        "{.code projectConfig$save()} - Save the unsaved changes in the ProjectConfiguration object to the Excel file."
+        "{.run projectConfig$save()} - Save the unsaved changes in the ProjectConfiguration object to the Excel file."
       )
     }
 
     # Suggest snapshotProjectConfiguration to update the JSON snapshot
     cli::cli_li(
-      "{.code snapshotProjectConfiguration()} - Save the changes from Excel files to the project snapshot."
+      "{.run snapshotProjectConfiguration()} - Save the changes from Excel files to the project snapshot."
     )
 
     # Suggest restoreProjectConfiguration to update the Excel files
     cli::cli_li(
-      "{.code restoreProjectConfiguration()} - Recreate the Excel files according to the configuration snapshot."
+      "{.run restoreProjectConfiguration()} - Recreate the Excel files according to the configuration snapshot."
     )
 
     cli::cli_end()
   }
+}
 
   invisible(result)
-}
+  }
 
 #' Convert Excel file to list structure for JSON serialization
 #'
