@@ -4,6 +4,7 @@
 #' Exports all Excel configuration files in the Configurations folder of an esqlabsR project
 #' to a single JSON file. This allows for easier version control and programmatic manipulation.
 #'
+#' @family project configuration snapshots
 #' @param projectConfig A ProjectConfiguration object or path to ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".
 #' @param outputDir Directory where the JSON file will be saved. If NULL (default), the JSON file will be created in the same directory as the source Excel file.
 #'
@@ -156,6 +157,7 @@ snapshotProjectConfiguration <- function(
 #' Creates Excel configuration files from a JSON configuration file.
 #' This allows for recreating the project configuration from version-controlled JSON.
 #'
+#' @family project configuration snapshots
 #' @param jsonPath Path to the JSON configuration file. Defaults to "ProjectConfiguration.json".
 #' @param outputDir Directory where the Excel files will be created. If NULL (default), the Excel files
 #'   will be created in the same directory as the source JSON file.
@@ -386,6 +388,7 @@ restoreProjectConfiguration <- function(
 #' @param jsonPath Path to the JSON configuration file. If NULL (default), the function
 #'   will look for a JSON file with the same name as the ProjectConfiguration file but with .json extension.
 #'
+#' @family project configuration snapshots
 #' @return A list with components:
 #'   \item{in_sync}{Logical indicating whether all files are synchronized}
 #'   \item{details}{A list with detailed comparison results for each file}

@@ -20,6 +20,7 @@ will look for a JSON file with the same name as the ProjectConfiguration file bu
 A list with components:
 \item{in_sync}{Logical indicating whether all files are synchronized}
 \item{details}{A list with detailed comparison results for each file}
+\item{unsaved_changes}{Logical indicating whether the ProjectConfiguration object has unsaved modifications}
 
 @import cli
 }
@@ -27,3 +28,9 @@ A list with components:
 Compares Excel configuration files against their JSON snapshot to determine if they
 are synchronized. The JSON snapshot is considered the source of truth.
 }
+\seealso{
+Other project configuration snapshots: 
+\code{\link{restoreProjectConfiguration}()},
+\code{\link{snapshotProjectConfiguration}()}
+}
+\concept{project configuration snapshots}

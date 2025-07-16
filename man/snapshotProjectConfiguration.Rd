@@ -22,3 +22,9 @@ Invisibly returns the exported configuration data structure
 Exports all Excel configuration files in the Configurations folder of an esqlabsR project
 to a single JSON file. This allows for easier version control and programmatic manipulation.
 }
+\seealso{
+Other project configuration snapshots: 
+\code{\link{projectConfigurationStatus}()},
+\code{\link{restoreProjectConfiguration}()}
+}
+\concept{project configuration snapshots}

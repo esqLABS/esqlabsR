@@ -22,3 +22,9 @@ A ProjectConfiguration object initialized with the regenerated ProjectConfigurat
 Creates Excel configuration files from a JSON configuration file.
 This allows for recreating the project configuration from version-controlled JSON.
 }
+\seealso{
+Other project configuration snapshots: 
+\code{\link{projectConfigurationStatus}()},
+\code{\link{snapshotProjectConfiguration}()}
+}
+\concept{project configuration snapshots}
