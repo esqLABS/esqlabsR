@@ -265,6 +265,15 @@ test_that("projectConfigurationStatus() automatically finds JSON file when not s
   expect_true(status_result$in_sync)
 })
 
+
+# If some changes we made to one of the project configuration excel files, the following test will fail 
+# because the ProjectConfiguration Snapshot wasn't updated. Update the snapshot by running the lines below:
+
+# snapshotProjectConfiguration(
+#   "inst/extdata/examples/TestProject/ProjectConfiguration.xlsx",
+#   outputDir = "inst/extdata/examples/TestProject"
+# )
+
 test_that("projectConfigurationStatus() correctly identifies in-sync files", {
   # Create a temporary test project
   test_proj <- local_test_project()

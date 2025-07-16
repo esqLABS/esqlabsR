@@ -849,7 +849,7 @@
        [1] "plotID"           "DataCombinedName" "plotType"         "title"           
        [5] "xUnit"            "yUnit"            "xAxisScale"       "yAxisScale"      
        [9] "xValuesLimits"    "yValuesLimits"    "aggregation"      "quantiles"       
-      [13] "nsd"              "foldDistance"    
+      [13] "nsd"              "foldDistance"     "subtitle"        
       
       $Plots$plotConfiguration$rows
       $Plots$plotConfiguration$rows[[1]]
@@ -863,7 +863,7 @@
       [1] "individual"
       
       $Plots$plotConfiguration$rows[[1]]$title
-      [1] NA
+      [1] "PlotTitle"
       
       $Plots$plotConfiguration$rows[[1]]$xUnit
       [1] "h"
@@ -894,6 +894,9 @@
       
       $Plots$plotConfiguration$rows[[1]]$foldDistance
       [1] NA
+      
+      $Plots$plotConfiguration$rows[[1]]$subtitle
+      [1] "PlotSubtitle"
       
       
       $Plots$plotConfiguration$rows[[2]]
@@ -939,6 +942,9 @@
       $Plots$plotConfiguration$rows[[2]]$foldDistance
       [1] "2, 3"
       
+      $Plots$plotConfiguration$rows[[2]]$subtitle
+      [1] NA
+      
       
       $Plots$plotConfiguration$rows[[3]]
       $Plots$plotConfiguration$rows[[3]]$plotID
@@ -981,6 +987,9 @@
       [1] NA
       
       $Plots$plotConfiguration$rows[[3]]$foldDistance
+      [1] NA
+      
+      $Plots$plotConfiguration$rows[[3]]$subtitle
       [1] NA
       
       
@@ -1027,12 +1036,15 @@
       $Plots$plotConfiguration$rows[[4]]$foldDistance
       [1] NA
       
+      $Plots$plotConfiguration$rows[[4]]$subtitle
+      [1] NA
+      
       
       
       
       $Plots$plotGrids
       $Plots$plotGrids$column_names
-      [1] "name"    "plotIDs" "title"  
+      [1] "name"     "plotIDs"  "title"    "subtitle"
       
       $Plots$plotGrids$rows
       $Plots$plotGrids$rows[[1]]
@@ -1043,7 +1055,10 @@
       [1] "P1, P2, P3"
       
       $Plots$plotGrids$rows[[1]]$title
-      [1] NA
+      [1] "GridTitle"
+      
+      $Plots$plotGrids$rows[[1]]$subtitle
+      [1] "GridSubtitle"
       
       
       $Plots$plotGrids$rows[[2]]
@@ -1056,6 +1071,9 @@
       $Plots$plotGrids$rows[[2]]$title
       [1] NA
       
+      $Plots$plotGrids$rows[[2]]$subtitle
+      [1] NA
+      
       
       $Plots$plotGrids$rows[[3]]
       $Plots$plotGrids$rows[[3]]$name
@@ -1065,6 +1083,9 @@
       [1] "P4"
       
       $Plots$plotGrids$rows[[3]]$title
+      [1] NA
+      
+      $Plots$plotGrids$rows[[3]]$subtitle
       [1] NA
       
       
@@ -2078,35 +2099,35 @@
        [1] "plotID"           "DataCombinedName" "plotType"         "title"           
        [5] "xUnit"            "yUnit"            "xAxisScale"       "yAxisScale"      
        [9] "xValuesLimits"    "yValuesLimits"    "aggregation"      "quantiles"       
-      [13] "nsd"              "foldDistance"    
+      [13] "nsd"              "foldDistance"     "subtitle"        
       
       $Plots$plotConfiguration$rows
-        plotID DataCombinedName             plotType title xUnit yUnit xAxisScale
-      1     P1     AciclovirPVB           individual    NA     h    NA         NA
-      2     P2     AciclovirPVB  observedVsSimulated    NA  <NA>    NA         NA
-      3     P3     AciclovirPVB residualsVsSimulated    NA  <NA>    NA         NA
-      4     P4     AciclovirPop           population    NA     h    NA         NA
+        plotID DataCombinedName             plotType     title xUnit yUnit xAxisScale
+      1     P1     AciclovirPVB           individual PlotTitle     h    NA         NA
+      2     P2     AciclovirPVB  observedVsSimulated      <NA>  <NA>    NA         NA
+      3     P3     AciclovirPVB residualsVsSimulated      <NA>  <NA>    NA         NA
+      4     P4     AciclovirPop           population      <NA>     h    NA         NA
         yAxisScale xValuesLimits yValuesLimits aggregation quantiles  nsd
       1         NA         0, 24            NA        <NA>        NA <NA>
       2         NA          <NA>            NA        <NA>        NA <NA>
       3         NA          <NA>            NA        <NA>        NA <NA>
       4         NA         0, 24            NA  arithmetic        NA 1.96
-        foldDistance
-      1         <NA>
-      2         2, 3
-      3         <NA>
-      4         <NA>
+        foldDistance     subtitle
+      1         <NA> PlotSubtitle
+      2         2, 3         <NA>
+      3         <NA>         <NA>
+      4         <NA>         <NA>
       
       
       $Plots$plotGrids
       $Plots$plotGrids$column_names
-      [1] "name"    "plotIDs" "title"  
+      [1] "name"     "plotIDs"  "title"    "subtitle"
       
       $Plots$plotGrids$rows
-              name    plotIDs title
-      1  Aciclovir P1, P2, P3    NA
-      2 Aciclovir2         P2    NA
-      3 Aciclovir3         P4    NA
+              name    plotIDs     title     subtitle
+      1  Aciclovir P1, P2, P3 GridTitle GridSubtitle
+      2 Aciclovir2         P2      <NA>         <NA>
+      3 Aciclovir3         P4      <NA>         <NA>
       
       
       $Plots$exportConfiguration

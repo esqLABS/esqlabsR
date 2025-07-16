@@ -356,13 +356,13 @@
       ]
     },
     "plotConfiguration": {
-      "column_names": ["plotID", "DataCombinedName", "plotType", "title", "xUnit", "yUnit", "xAxisScale", "yAxisScale", "xValuesLimits", "yValuesLimits", "aggregation", "quantiles", "nsd", "foldDistance"],
+      "column_names": ["plotID", "DataCombinedName", "plotType", "title", "xUnit", "yUnit", "xAxisScale", "yAxisScale", "xValuesLimits", "yValuesLimits", "aggregation", "quantiles", "nsd", "foldDistance", "subtitle"],
       "rows": [
         {
           "plotID": "P1",
           "DataCombinedName": "AciclovirPVB",
           "plotType": "individual",
-          "title": null,
+          "title": "PlotTitle",
           "xUnit": "h",
           "yUnit": null,
           "xAxisScale": null,
@@ -372,7 +372,8 @@
           "aggregation": null,
           "quantiles": null,
           "nsd": null,
-          "foldDistance": null
+          "foldDistance": null,
+          "subtitle": "PlotSubtitle"
         },
         {
           "plotID": "P2",
@@ -388,7 +389,8 @@
           "aggregation": null,
           "quantiles": null,
           "nsd": null,
-          "foldDistance": "2, 3"
+          "foldDistance": "2, 3",
+          "subtitle": null
         },
         {
           "plotID": "P3",
@@ -404,7 +406,8 @@
           "aggregation": null,
           "quantiles": null,
           "nsd": null,
-          "foldDistance": null
+          "foldDistance": null,
+          "subtitle": null
         },
         {
           "plotID": "P4",
@@ -420,27 +423,31 @@
           "aggregation": "arithmetic",
           "quantiles": null,
           "nsd": "1.96",
-          "foldDistance": null
+          "foldDistance": null,
+          "subtitle": null
         }
       ]
     },
     "plotGrids": {
-      "column_names": ["name", "plotIDs", "title"],
+      "column_names": ["name", "plotIDs", "title", "subtitle"],
       "rows": [
         {
           "name": "Aciclovir",
           "plotIDs": "P1, P2, P3",
-          "title": null
+          "title": "GridTitle",
+          "subtitle": "GridSubtitle"
         },
         {
           "name": "Aciclovir2",
           "plotIDs": "P2",
-          "title": null
+          "title": null,
+          "subtitle": null
         },
         {
           "name": "Aciclovir3",
           "plotIDs": "P4",
-          "title": null
+          "title": null,
+          "subtitle": null
         }
       ]
     },
