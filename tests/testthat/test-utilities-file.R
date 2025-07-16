@@ -21,6 +21,7 @@ test_that("`pathFromClipboard()` converts paths as expected", {
   # Check on CRAN or AppVeyor where the system clipboard is not available
 
   skip_on_ci()
+  skip_if_not(interactive())
   skip_if_not_installed("clipr")
 
   path <- "C:\\Users\\Documents"
