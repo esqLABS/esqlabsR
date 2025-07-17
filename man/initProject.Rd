@@ -10,8 +10,8 @@ initProject(destination = ".", overwrite = FALSE)
 \item{destination}{A string defining the path where to initialize the project.
 default to current working directory.}
 
-\item{overwrite}{Overwrite files if they exist. If this is \code{FALSE} and the
-file exists an error will be thrown.}
+\item{overwrite}{If TRUE, overwrites existing project without asking for permission.
+If FALSE and a project already exists, asks user for permission to overwrite.}
 }
 \description{
 Creates the default project folder structure with Excel file templates in
