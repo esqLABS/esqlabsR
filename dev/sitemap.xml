@@ -71,6 +71,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedDataFromPKML.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/pathFromClipboard.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/projectConfigurationStatus.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readIndividualCharacteristicsFromXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readParametersFromXLS.html</loc></url>
@@ -78,6 +79,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readScenarioConfigurationFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/reexports.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/removeFromList.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/restoreProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sampleRandomValue.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/saveScenarioResults.html</loc></url>
@@ -87,6 +89,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTornadoPlot.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/setApplications.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/setParameterValuesByPathWithCondition.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/snapshotProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sourceAll.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/stringToNum.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/writeIndividualToXLS.html</loc></url>
