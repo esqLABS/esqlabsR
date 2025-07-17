@@ -11,23 +11,32 @@ test_that("A warning is (not) displayed if path/file does not exist", {
 
 
 test_that("`createDefaultProjectConfiguration()` is deprecated", {
-  expect_warning(createDefaultProjectConfiguration(path = exampleProjectConfigurationPath()))
+  expect_warning(createDefaultProjectConfiguration(
+    path = exampleProjectConfigurationPath()
+  ))
 })
-
 
 
 test_that("Project Configuration can be created from V5 project configuration file but raises a warning", {
-  expect_warning(createProjectConfiguration(test_path("..", "data", "ProjectConfiguration-V5.xlsx")))
+  expect_warning(createProjectConfiguration(test_path(
+    "..",
+    "data",
+    "ProjectConfiguration-V5.xlsx"
+  )))
 })
 
 test_that("Project Configuration can be customized but throws warning if path are wrong", {
-  myConfig <- testProjectConfiguration()
+  # Create a project configuration using temporary project
+  temp_project <- with_temp_project()
+  myConfig <- temp_project$config
 
   expect_warning({
     myConfig$configurationsFolder <- "Wrong/Folder"
   })
 
-  myConfig <- testProjectConfiguration()
+  # Create a new temporary project for each test to avoid interference
+  temp_project2 <- with_temp_project()
+  myConfig <- temp_project2$config
   expect_warning({
     myConfig$dataFolder <- "folder/that/does/not/exist"
   })
@@ -38,7 +47,9 @@ test_that("Project Configuration can be customized but throws warning if path ar
     myConfig$populationsFolder <- "folder/that/does/not/exist"
   })
 
-  myConfig <- testProjectConfiguration()
+  # Create a new temporary project for each test to avoid interference
+  temp_project3 <- with_temp_project()
+  myConfig <- temp_project3$config
   expect_warning({
     myConfig$modelParamsFile <- "donotexist.xslx"
   })
@@ -89,14 +100,24 @@ test_that("Project Configuration supports environment variable", {
     code = {
       # Using Env Variable in Excel files
       pc <-
-        createProjectConfiguration(test_path("..", "data", "ProjectConfigurationEnvironmentVariable.xlsx"))
+        createProjectConfiguration(test_path(
+          "..",
+          "data",
+          "ProjectConfigurationEnvironmentVariable.xlsx"
+        ))
 
-      suppressWarnings(expect_match(pc$configurationsFolder, Sys.getenv("ENV_VARIABLE_1")))
+      suppressWarnings(expect_match(
+        pc$configurationsFolder,
+        Sys.getenv("ENV_VARIABLE_1")
+      ))
 
       # Set environment variable directly in the object
       pc <- testProjectConfiguration()
       suppressWarnings(pc$configurationsFolder <- "ENV_VARIABLE_1")
-      suppressWarnings(expect_match(pc$configurationsFolder, Sys.getenv("ENV_VARIABLE_1")))
+      suppressWarnings(expect_match(
+        pc$configurationsFolder,
+        Sys.getenv("ENV_VARIABLE_1")
+      ))
     }
   )
 })
