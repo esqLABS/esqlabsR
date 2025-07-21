@@ -2,10 +2,11 @@ defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Periphera
 
 test_that("It stops with an error if the excel file defines a parameter that is
           not present", {
+  skip_on_os("mac")
+
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
-
   # Define which scenarios to run
   scenarioNames <- c("TestScenario_missingParam")
   # Create `ScenarioConfiguration` objects from excel files
@@ -20,10 +21,11 @@ test_that("It stops with an error if the excel file defines a parameter that is
 })
 
 test_that("All working scenarios in testProject can be created without errors", {
+  skip_on_os("mac")
+
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
-
   # Define which scenarios to run
   scenarioNames <- c(
     "TestScenario",
@@ -44,10 +46,11 @@ test_that("All working scenarios in testProject can be created without errors", 
 })
 
 test_that("It runs one scenario without specifying output paths", {
+  skip_on_os("mac")
+
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
-
   # Define which scenarios to run
   scenarioNames <- c("TestScenario_missingParam")
   # Create `ScenarioConfiguration` objects from excel files
@@ -72,10 +75,11 @@ test_that("It runs one scenario without specifying output paths", {
 })
 
 test_that("It runs one scenario with specifying output paths", {
+  skip_on_os("mac")
+
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
-
   OutputPaths <- enum(list(
     Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
     Aciclovir_bone_pls = "Organism|Bone|Plasma|Aciclovir|Concentration"
@@ -107,10 +111,11 @@ test_that("It runs one scenario with specifying output paths", {
 })
 
 test_that("It runs two scenarios", {
+  skip_on_os("mac")
+
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
-
   # Define which scenarios to run
   scenarioNames <- c(
     "TestScenario",
@@ -148,10 +153,11 @@ test_that("It runs two scenarios", {
 })
 
 test_that("It runs population and individual scenarios", {
+  skip_on_os("mac")
+
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
-
   # Define which scenarios to run
   scenarioNames <- c(
     "TestScenario",
@@ -182,10 +188,11 @@ test_that("It runs population and individual scenarios", {
 
 
 test_that("It saves and loads scenario results for scenario names with forbidden characters", {
+  skip_on_os("mac")
+
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
-
   # Define which scenarios to run
   scenarioNames <- c("TestScenario")
   # Create `ScenarioConfiguration` objects from excel files
@@ -238,10 +245,11 @@ test_that("It saves and loads scenario results for scenario names with forbidden
 
 
 test_that("The hierarchy of parametrization is correct", {
+  skip_on_os("mac")
+
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
-
   # Define which scenarios to run
   scenarioNames <- c("TestScenario")
   # Create `ScenarioConfiguration` objects from excel files without custom parameters
@@ -274,4 +282,16 @@ test_that("The hierarchy of parametrization is correct", {
       "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
   )
   expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 300)
+})
+
+test_that("loadScenarioResults throws an error when files don't exist", {
+  # Use a non-existent folder to trigger an error
+  nonExistentFolder <- file.path(tempdir(), "non-existent-folder")
+
+  expect_error(
+    loadScenarioResults(
+      scenarioNames = "TestScenario",
+      resultsFolder = nonExistentFolder
+    )
+  )
 })

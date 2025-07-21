@@ -18,6 +18,9 @@ paths.}
 path for other paths. If NULL, then, other paths should be absolute
 paths.}
 
+\item{\code{modified}}{Logical indicating whether any configuration properties
+have been modified since loading from file. Read-only.}
+
 \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
 
 \item{\code{configurationsFolder}}{Path to the folder containing excel files with model

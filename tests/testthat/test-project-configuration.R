@@ -121,3 +121,150 @@ test_that("Project Configuration supports environment variable", {
     }
   )
 })
+
+# Tests for the modified flag behavior
+test_that("modified flag is FALSE when ProjectConfiguration is first created", {
+  myConfig <- testProjectConfiguration()
+  expect_false(myConfig$modified)
+})
+
+test_that("modified flag is read-only and cannot be set directly", {
+  myConfig <- testProjectConfiguration()
+  expect_error(myConfig$modified <- TRUE, "modified is readonly")
+})
+
+test_that("modified flag becomes TRUE when any configuration property is changed", {
+  myConfig <- testProjectConfiguration()
+  expect_false(myConfig$modified)
+
+  # Test each property that should set modified flag
+  suppressWarnings(myConfig$modelFolder <- "new/model/folder")
+  expect_true(myConfig$modified)
+
+  # Reset and test configurationsFolder
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$configurationsFolder <- "new/config/folder")
+  expect_true(myConfig$modified)
+
+  # Reset and test modelParamsFile
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$modelParamsFile <- "newModelParams.xlsx")
+  expect_true(myConfig$modified)
+
+  # Reset and test individualsFile
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$individualsFile <- "newIndividuals.xlsx")
+  expect_true(myConfig$modified)
+
+  # Reset and test populationsFile
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$populationsFile <- "newPopulations.xlsx")
+  expect_true(myConfig$modified)
+
+  # Reset and test populationsFolder
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$populationsFolder <- "newPopulationsFolder")
+  expect_true(myConfig$modified)
+
+  # Reset and test scenariosFile
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$scenariosFile <- "newScenarios.xlsx")
+  expect_true(myConfig$modified)
+
+  # Reset and test applicationsFile
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$applicationsFile <- "newApplications.xlsx")
+  expect_true(myConfig$modified)
+
+  # Reset and test plotsFile
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$plotsFile <- "newPlots.xlsx")
+  expect_true(myConfig$modified)
+
+  # Reset and test dataFolder
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$dataFolder <- "new/data/folder")
+  expect_true(myConfig$modified)
+
+  # Reset and test dataFile
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$dataFile <- "newData.xlsx")
+  expect_true(myConfig$modified)
+
+  # Reset and test dataImporterConfigurationFile
+  myConfig <- testProjectConfiguration()
+  suppressWarnings(myConfig$dataImporterConfigurationFile <- "newImporter.xml")
+  expect_true(myConfig$modified)
+
+  # Reset and test outputFolder
+  myConfig <- testProjectConfiguration()
+  myConfig$outputFolder <- "new/output/folder"
+  expect_true(myConfig$modified)
+})
+
+test_that("modified flag becomes FALSE after saving the configuration", {
+  myConfig <- testProjectConfiguration()
+
+  # Modify a property
+  suppressWarnings(myConfig$modelFolder <- "modified/folder")
+  expect_true(myConfig$modified)
+
+  # Save to temporary file
+  temp_file <- withr::local_tempfile(fileext = ".xlsx")
+  myConfig$save(path = temp_file)
+
+  # After saving, modified should be FALSE
+  expect_false(myConfig$modified)
+})
+
+test_that("modified flag becomes FALSE after loading configuration from file", {
+  myConfig <- testProjectConfiguration()
+
+  # Modify a property
+  suppressWarnings(myConfig$modelFolder <- "modified/folder")
+  expect_true(myConfig$modified)
+
+  # Load from file again (this should reset modified flag)
+  myConfig$projectConfigurationFilePath <- testProjectConfigurationPath()
+  expect_false(myConfig$modified)
+})
+
+test_that("modified flag persists across multiple property changes", {
+  myConfig <- testProjectConfiguration()
+  expect_false(myConfig$modified)
+
+  # Make multiple changes
+  suppressWarnings(myConfig$modelFolder <- "new/model/folder")
+  expect_true(myConfig$modified)
+
+  suppressWarnings(myConfig$dataFolder <- "new/data/folder")
+  expect_true(myConfig$modified)
+
+  myConfig$outputFolder <- "new/output/folder"
+  expect_true(myConfig$modified)
+})
+
+test_that("empty ProjectConfiguration has modified flag FALSE", {
+  # Create empty ProjectConfiguration without file path
+  emptyConfig <- ProjectConfiguration$new()
+  expect_false(emptyConfig$modified)
+})
+
+test_that("modified flag behavior with cloned ProjectConfiguration", {
+  myConfig <- testProjectConfiguration()
+  expect_false(myConfig$modified)
+
+  # Clone the configuration
+  clonedConfig <- myConfig$clone()
+  expect_false(clonedConfig$modified)
+
+  # Modify the original
+  suppressWarnings(myConfig$modelFolder <- "modified/folder")
+  expect_true(myConfig$modified)
+  expect_false(clonedConfig$modified) # Clone should not be affected
+
+  # Modify the clone
+  suppressWarnings(clonedConfig$dataFolder <- "modified/data/folder")
+  expect_true(myConfig$modified) # Original should still be modified
+  expect_true(clonedConfig$modified) # Clone should now be modified
+})
