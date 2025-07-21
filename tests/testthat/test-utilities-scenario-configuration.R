@@ -1,13 +1,34 @@
+# Create a project configuration
+projectConfiguration <- testProjectConfiguration()
+
 # Template scenario configuration for testing
+scenariosDf <- data.frame(list(
+  "Scenario_name" = "TestScenario",
+  "IndividualId" = "Indiv1",
+  "PopulationId" = c(NA),
+  "ReadPopulationFromCSV" = c(NA),
+  "ModelParameterSheets" = c(NA),
+  "ApplicationProtocol" = c(NA),
+  "SimulationTime" = c(NA),
+  "SimulationTimeUnit" = c(NA),
+  "SteadyState" = c(NA),
+  "SteadyStateTime" = c(NA),
+  "SteadyStateTimeUnit" = c(NA),
+  "ModelFile" = c("Aciclovir.pkml"),
+  "OutputPathsIds" = c(NA)
+))
+
+# Template scenario configuration for testing with new structure
 templateScenarioConfiguration <- ScenarioConfiguration$new(
-  name = "TestScenario",
-  simulationFile = "Aciclovir.pkml",
-  individualId = "Indiv1",
-  applicationProtocol = "IV 250mg 10min",
-  simulationTime = 24,
-  simulationTimeUnit = "h",
-  outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  projectConfiguration = projectConfiguration
 )
+templateScenarioConfiguration$scenarioName <- "TestScenario"
+templateScenarioConfiguration$modelFile <- "Aciclovir.pkml"
+templateScenarioConfiguration$individualId <- "Indiv1"
+templateScenarioConfiguration$applicationProtocol <- "IV 250mg 10min"
+templateScenarioConfiguration$simulationTime <- "0, 24, 60"
+templateScenarioConfiguration$simulationTimeUnit <- "h"
+templateScenarioConfiguration$outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("`ScenarioConfiguration` active bindings are modified", {
   # Create a fresh temporary project for this test
@@ -15,14 +36,14 @@ test_that("`ScenarioConfiguration` active bindings are modified", {
   projectConfiguration <- temp_project$config
 
   # Test that the active bindings work correctly
-  expect_equal(templateScenarioConfiguration$name, "TestScenario")
-  expect_equal(templateScenarioConfiguration$simulationFile, "Aciclovir.pkml")
+  expect_equal(templateScenarioConfiguration$scenarioName, "TestScenario")
+  expect_equal(templateScenarioConfiguration$modelFile, "Aciclovir.pkml")
   expect_equal(templateScenarioConfiguration$individualId, "Indiv1")
   expect_equal(
     templateScenarioConfiguration$applicationProtocol,
     "IV 250mg 10min"
   )
-  expect_equal(templateScenarioConfiguration$simulationTime, 24)
+  expect_equal(templateScenarioConfiguration$simulationTime, list(c(0, 24, 60)))
   expect_equal(templateScenarioConfiguration$simulationTimeUnit, "h")
   expect_equal(
     templateScenarioConfiguration$outputPaths,
@@ -42,7 +63,7 @@ test_that("`ScenarioConfiguration` can be created from excel file", {
   )
 
   expect_equal(length(scenarioConfigurations), 1)
-  expect_equal(scenarioConfigurations[[1]]$name, "TestScenario")
+  expect_equal(scenarioConfigurations[[1]]$scenarioName, "TestScenario")
 })
 
 test_that("it throws an error when wrong scenario is defined", {
