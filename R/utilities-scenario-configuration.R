@@ -311,38 +311,37 @@ setApplications <- function(simulation, scenarioConfiguration) {
   return(simulationTimeIntervals)
 }
 
-#' Add scenarios from PKML files
+#' Create scenario configurations from PKML files
 #'
 #' @description
 #' Creates scenario configurations from PKML files by extracting available information
 #' such as applications, output paths, and simulation time settings. This function
-#' allows users to easily add scenarios to an already initialized project without
-#' manually filling in all the details.
+#' creates scenario configuration objects.
 #'
 #' @param pkmlFilePaths Paths to PKML files to create scenarios from
 #' @param projectConfiguration A `ProjectConfiguration` object holding base information
 #' @param scenarioNames Optional custom names for the scenarios. If `NULL` (default),
-#'   scenario names will be derived from the PKML file names
+#'   scenario names will be extracted from the simulation names in the PKML files.
 #' @param individualId Optional individual ID to use for all scenarios. If `NULL` (default),
 #'   no individual will be specified
 #' @param populationId Optional population ID to use for all scenarios. If `NULL` (default),
 #'   no population will be specified
 #' @param applicationProtocols Optional application protocol names to use for scenarios.
-#'   If `NULL` (default), application protocols will be extracted from the PKML files
+#'   If `NULL` (default), application protocols will be extracted from the PKML file with all its parameters.
 #' @param paramSheets Optional parameter sheet names to apply to scenarios.
-#'   If `NULL` (default), only "Global" will be used
+#'   If `NULL` (default), no parameter sheets will be applied
 #' @param outputPaths Optional output paths to use for scenarios. If `NULL` (default),
 #'   output paths will be extracted from the PKML files
 #' @param simulationTime Optional simulation time to use for scenarios. If `NULL` (default),
 #'   simulation time will be extracted from the PKML files
-#' @param simulationTimeUnit Optional simulation time unit. If `NULL` (default),
-#'   will be extracted from the PKML file's output schema intervals, or set to "min" (minutes) if not available
+#' @param simulationTimeUnit Optional simulation time unit. Only used when `simulationTime` is provided.
+#'   If `NULL` (default), will be extracted from the PKML file's output schema intervals, or set to "min" (minutes) if not available
 #' @param steadyState Whether to simulate steady-state. Default is `FALSE`
-#' @param steadyStateTime Steady-state time in minutes. Default is `1000`
-#' @param steadyStateTimeUnit Steady-state time unit. Default is "min"
+#' @param steadyStateTime Steady-state time. Only used when `steadyState = TRUE`.
+#'   If `NULL` (default), no steady-state time will be set.
+#' @param steadyStateTimeUnit Steady-state time unit. Only used when `steadyState = TRUE` and `steadyStateTime` is provided.
+#'   If `NULL` (default), "min" will be used.
 #' @param readPopulationFromCSV Whether to read population from CSV. Default is `FALSE`
-#' @param appendToExisting Whether to append new scenarios to existing ones in the
-#'   scenarios file. If `FALSE` (default), existing scenarios will be overwritten
 #'
 #' @details
 #' This function extracts the following information from PKML files:
@@ -350,12 +349,9 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' - **Output paths**: All selected outputs for the simulation
 #' - **Simulation time**: Time intervals with start time, end time, and resolution
 #' - **Simulation time unit**: Time unit from the output schema intervals (e.g., "h" for hours)
-#' - **Molecules**: Names of molecules in the simulation
 #'
-#' The function creates scenario configurations and writes them to the scenarios
-#' Excel file defined in the project configuration. If `appendToExisting` is `TRUE`,
-#' new scenarios will be added to existing ones; otherwise, existing scenarios
-#' will be replaced.
+#' The function creates scenario configurations but does not write them to Excel files.
+#' Use `addScenarioConfigurationsToExcel()` to add the scenarios to the project's Excel files.
 #'
 #' @returns A named list of `ScenarioConfiguration` objects with the names being
 #'   the scenario names
@@ -366,22 +362,34 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' # Create default project configuration
 #' projectConfiguration <- createDefaultProjectConfiguration()
 #'
-#' # Add scenarios from a single PKML file
+#' # Create scenarios from a single PKML file
 #' pkmlPath <- "path/to/simulation.pkml"
-#' scenarios <- addScenarioFromPKML(
+#' scenarios <- createScenarioConfigurationsFromPKML(
 #'   pkmlFilePaths = pkmlPath,
 #'   projectConfiguration = projectConfiguration
 #' )
 #'
-#' # Add scenarios from multiple PKML files with custom names
+#' # Add scenarios to Excel configuration
+#' addScenarioConfigurationsToExcel(
+#'   scenarioConfigurations = scenarios,
+#'   projectConfiguration = projectConfiguration
+#' )
+#'
+#' # Create scenarios from multiple PKML files with custom names
 #' pkmlPaths <- c("path/to/sim1.pkml", "path/to/sim2.pkml")
-#' scenarios <- addScenarioFromPKML(
+#' scenarios <- createScenarioConfigurationsFromPKML(
 #'   pkmlFilePaths = pkmlPaths,
 #'   projectConfiguration = projectConfiguration,
 #'   scenarioNames = c("Scenario1", "Scenario2")
 #' )
+#'
+#' # Add multiple scenarios to configuration
+#' addScenarioConfigurationsToExcel(
+#'   scenarioConfigurations = scenarios,
+#'   projectConfiguration = projectConfiguration
+#' )
 #' }
-addScenarioFromPKML <- function(
+createScenarioConfigurationsFromPKML <- function(
   pkmlFilePaths,
   projectConfiguration,
   scenarioNames = NULL,
@@ -393,10 +401,9 @@ addScenarioFromPKML <- function(
   simulationTime = NULL,
   simulationTimeUnit = NULL,
   steadyState = FALSE,
-  steadyStateTime = 1000,
-  steadyStateTimeUnit = "min",
-  readPopulationFromCSV = FALSE,
-  appendToExisting = TRUE
+  steadyStateTime = NULL,
+  steadyStateTimeUnit = NULL,
+  readPopulationFromCSV = FALSE
 ) {
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
@@ -410,44 +417,76 @@ addScenarioFromPKML <- function(
   validateIsString(simulationTime, nullAllowed = TRUE)
   validateIsString(simulationTimeUnit, nullAllowed = TRUE)
   validateIsLogical(steadyState)
-  validateIsNumeric(steadyStateTime)
-  validateIsString(steadyStateTimeUnit)
+  validateIsNumeric(steadyStateTime, nullAllowed = TRUE)
+  validateIsString(steadyStateTimeUnit, nullAllowed = TRUE)
   validateIsLogical(readPopulationFromCSV)
-  validateIsLogical(appendToExisting)
 
   # Check if PKML files exist
   for (pkmlPath in pkmlFilePaths) {
     if (!file.exists(pkmlPath)) {
-      stop(messages$fileNotFound(pkmlPath))
+      cli::cli_abort(c(
+        "File not found:",
+        "x" = "Cannot find PKML file: {.path {pkmlPath}}"
+      ))
     }
   }
 
   # Generate scenario names if not provided
   if (is.null(scenarioNames)) {
-    scenarioNames <- paste0(
-      "Scenario",
-      tools::file_path_sans_ext(basename(pkmlFilePaths))
-    )
+    # Extract scenario names from PKML simulation names
+    simulationNames <- character()
+    for (pkmlPath in pkmlFilePaths) {
+      simulation <- ospsuite::loadSimulation(
+        filePath = pkmlPath,
+        loadFromCache = FALSE
+      )
+      simulationNames <- c(simulationNames, simulation$name)
+    }
+
+    # Use simulation names if available and non-empty, otherwise use file names
+    if (all(nzchar(simulationNames))) {
+      scenarioNames <- simulationNames
+    } else {
+      scenarioNames <- tools::file_path_sans_ext(basename(pkmlFilePaths))
+    }
+  }
+
+  # Check for duplicates in scenario names and handle them
+  if (length(scenarioNames) != length(unique(scenarioNames))) {
+    duplicateNames <- unique(scenarioNames[duplicated(scenarioNames)])
+
+    # Add indices to make names unique
+    for (name in duplicateNames) {
+      indices <- which(scenarioNames == name)
+      for (i in seq_along(indices)) {
+        scenarioNames[indices[i]] <- paste0(name, "_", i)
+      }
+    }
+
+    # Warn about the duplicates
+    cli::cli_warn(c(
+      "Duplicate scenario names found and made unique by adding indices:",
+      "i" = "Duplicated names: {.val {duplicateNames}}"
+    ))
   }
 
   # Validate scenario names length
   if (length(scenarioNames) != length(pkmlFilePaths)) {
-    stop(messages$errorWrongArguments(
-      "scenarioNames must have the same length as pkmlFilePaths"
+    cli::cli_abort(c(
+      "Invalid argument lengths:",
+      "x" = "scenarioNames must have the same length as pkmlFilePaths",
+      "i" = "scenarioNames has length {length(scenarioNames)}, pkmlFilePaths has length {length(pkmlFilePaths)}"
     ))
   }
 
-  # Set default values
-  if (is.null(paramSheets)) {
-    paramSheets <- "Global"
-  }
+  # Set default values - paramSheets can remain NULL if not specified
 
   # Create scenario configurations
   scenarioConfigurations <- list()
 
   for (i in seq_along(pkmlFilePaths)) {
-    pkmlPath <- pkmlFilePaths[i]
-    scenarioName <- scenarioNames[i]
+    pkmlPath <- pkmlFilePaths[[i]]
+    scenarioName <- scenarioNames[[i]]
 
     # Load simulation to extract information
     simulation <- ospsuite::loadSimulation(
@@ -476,53 +515,28 @@ addScenarioFromPKML <- function(
     scenarioConfiguration$readPopulationFromCSV <- readPopulationFromCSV
 
     # Set parameter sheets
-    scenarioConfiguration$addParamSheets(paramSheets)
+    if (!is.null(paramSheets)) {
+      scenarioConfiguration$addParamSheets(paramSheets)
+    }
 
     # Extract and set application protocol
-    protocolName <- NULL
     if (!is.null(applicationProtocols)) {
       if (length(applicationProtocols) == 1) {
         protocolName <- applicationProtocols
       } else if (length(applicationProtocols) == length(pkmlFilePaths)) {
-        protocolName <- applicationProtocols[i]
+        protocolName <- applicationProtocols[[i]]
       } else {
-        stop(messages$errorWrongArguments(
-          "applicationProtocols must have length 1 or same length as pkmlFilePaths"
+        cli::cli_abort(c(
+          "Invalid applicationProtocols length:",
+          "x" = "applicationProtocols must have length 1 or same length as pkmlFilePaths",
+          "i" = "applicationProtocols has length {length(applicationProtocols)}, pkmlFilePaths has length {length(pkmlFilePaths)}"
         ))
       }
     } else {
-      # Extract application protocols from PKML
-      if (!is.null(simTree$Applications)) {
-        appNames <- names(simTree$Applications)
-        if (length(appNames) > 0) {
-          protocolName <- appNames[1] # Use first application
-        }
-      }
+      # Application protocol name is by default the name of the scenario
+      protocolName <- scenarioName
     }
     scenarioConfiguration$applicationProtocol <- protocolName
-
-    # Ensure protocol sheet exists in Applications.xlsx
-    if (!is.null(protocolName)) {
-      applicationsFile <- projectConfiguration$applicationsFile
-      if (file.exists(applicationsFile)) {
-        sheets <- readxl::excel_sheets(applicationsFile)
-        if (!(protocolName %in% sheets)) {
-          # Read header from first sheet
-          firstSheet <- sheets[1]
-          header <- readxl::read_excel(
-            applicationsFile,
-            sheet = firstSheet,
-            n_max = 0
-          )
-          # Read all sheets as list
-          wb <- openxlsx::loadWorkbook(applicationsFile)
-          # Add new sheet with header only
-          openxlsx::addWorksheet(wb, protocolName)
-          openxlsx::writeData(wb, protocolName, header)
-          openxlsx::saveWorkbook(wb, applicationsFile, overwrite = TRUE)
-        }
-      }
-    }
 
     # Extract and set output paths
     if (!is.null(outputPaths)) {
@@ -602,51 +616,262 @@ addScenarioFromPKML <- function(
             timeIntervals <- c(timeIntervals, intervalString)
           }
 
-          # Combine all intervals with semicolon separator
-          timeString <- paste(timeIntervals, collapse = "; ")
-          scenarioConfiguration$simulationTime <- timeString
-          scenarioConfiguration$simulationTimeUnit <- simulationTimeUnit
+          # Join all intervals with semicolons
+          if (length(timeIntervals) > 0) {
+            scenarioConfiguration$simulationTime <- paste(
+              timeIntervals,
+              collapse = "; "
+            )
+            scenarioConfiguration$simulationTimeUnit <- simulationTimeUnit
+          }
         }
-      } else {
-        # No intervals found, set default time unit if not provided
-        if (is.null(simulationTimeUnit)) {
-          simulationTimeUnit <- "min"
-        }
-        scenarioConfiguration$simulationTimeUnit <- simulationTimeUnit
       }
     }
 
-    # Set steady state parameters
-    scenarioConfiguration$simulateSteadyState <- steadyState
+    # Set steady state configuration
     if (steadyState) {
-      scenarioConfiguration$steadyStateTime <- ospsuite::toBaseUnit(
-        quantityOrDimension = ospsuite::ospDimensions$Time,
-        values = steadyStateTime,
-        unit = steadyStateTimeUnit
-      )
+      scenarioConfiguration$simulateSteadyState <- TRUE
+      if (!is.null(steadyStateTime)) {
+        # Use default time unit if not provided
+        timeUnit <- if (is.null(steadyStateTimeUnit)) {
+          "min"
+        } else {
+          steadyStateTimeUnit
+        }
+        scenarioConfiguration$steadyStateTime <- ospsuite::toBaseUnit(
+          quantityOrDimension = ospsuite::ospDimensions$Time,
+          values = steadyStateTime,
+          unit = timeUnit
+        )
+      }
     }
 
-    scenarioConfigurations[[i]] <- scenarioConfiguration
+    scenarioConfigurations[[scenarioName]] <- scenarioConfiguration
   }
 
-  names(scenarioConfigurations) <- scenarioNames
-
-  # Write scenarios to Excel file
-  .writeScenariosToExcel(
-    scenarioConfigurations,
-    projectConfiguration,
-    appendToExisting
-  )
-
-  # Notify user
-  cli::cli_alert_success(
-    sprintf(
-      "Scenario(s) successfully added to %s",
-      basename(projectConfiguration$scenariosFile)
-    )
-  )
-  invisible(NULL)
+  return(scenarioConfigurations)
 }
+
+#' Add scenario configurations to project Excel files
+#'
+#' @description
+#' Adds scenario configurations to the project's Scenarios.xlsx file and ensures
+#' that required application protocol sheets exist in the Applications.xlsx file.
+#' This function handles the Excel file operations for adding scenarios to a project.
+#'
+#' @param scenarioConfigurations A named list of `ScenarioConfiguration` objects
+#'   to add to the project
+#' @param projectConfiguration A `ProjectConfiguration` object holding base information
+#' @param appendToExisting Whether to append new scenarios to existing ones in the
+#'   scenarios file. If `FALSE`, the ENTIRE scenarios file will be overwritten with
+#'   only the new scenarios. If `TRUE` (default), new scenarios will be added to existing ones
+#'
+#' @details
+#' This function performs the following operations:
+#' - Checks for duplicate scenario names if `appendToExisting` is `TRUE`
+#' - Creates missing application protocol sheets in Applications.xlsx
+#' - Writes scenario configurations to the Scenarios.xlsx file
+#'
+#' The function ensures that the Excel files are properly structured and that
+#' all required sheets and headers are present.
+#'
+#' @returns Invisibly returns the names of the added scenarios
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create scenario configurations from PKML
+#' scenarios <- createScenarioConfigurationsFromPKML(
+#'   pkmlFilePaths = "path/to/simulation.pkml",
+#'   projectConfiguration = projectConfiguration
+#' )
+#'
+#' # Add scenarios to project Excel files
+#' addScenarioConfigurationsToExcel(
+#'   scenarioConfigurations = scenarios,
+#'   projectConfiguration = projectConfiguration,
+#'   appendToExisting = TRUE
+#' )
+#' }
+addScenarioConfigurationsToExcel <- function(
+  scenarioConfigurations,
+  projectConfiguration,
+  appendToExisting = TRUE
+) {
+  # Validate inputs
+  validateIsOfType(projectConfiguration, ProjectConfiguration)
+  validateIsLogical(appendToExisting)
+
+  if (
+    !is.list(scenarioConfigurations) || is.null(names(scenarioConfigurations))
+  ) {
+    cli::cli_abort(c(
+      "Invalid scenarioConfigurations:",
+      "x" = "scenarioConfigurations must be a named list",
+      "i" = "Each scenario configuration must have a unique name"
+    ))
+  }
+
+  # Validate that all entries are ScenarioConfiguration objects
+  for (i in seq_along(scenarioConfigurations)) {
+    validateIsOfType(scenarioConfigurations[[i]], ScenarioConfiguration)
+  }
+
+  # Check for duplicate scenario names if appending
+  if (appendToExisting && file.exists(projectConfiguration$scenariosFile)) {
+    tryCatch(
+      {
+        # Read existing scenarios to check for duplicates
+        existingScenarios <- readScenarioConfigurationFromExcel(
+          projectConfiguration = projectConfiguration
+        )
+        existingNames <- names(existingScenarios)
+        newNames <- names(scenarioConfigurations)
+        duplicateNames <- intersect(existingNames, newNames)
+
+        if (length(duplicateNames) > 0) {
+          cli::cli_abort(c(
+            "Duplicate scenario names found:",
+            "x" = "Cannot add scenarios with duplicate names to existing configuration",
+            "i" = "Duplicated names: {.val {duplicateNames}}"
+          ))
+        }
+      },
+      error = function(e) {
+        # If reading existing scenarios fails, proceed with writing
+        # This can happen if the Excel file is corrupted or has wrong structure
+        cli::cli_warn(c(
+          "Could not read existing scenarios, proceeding with write operation",
+          "i" = "This may happen if the Excel file structure is unexpected"
+        ))
+      }
+    )
+  }
+
+  # Ensure protocol sheets exist in Applications.xlsx and extract parameters
+  for (scenarioConfig in scenarioConfigurations) {
+    protocolName <- scenarioConfig$applicationProtocol
+    if (!is.null(protocolName) && !is.na(protocolName)) {
+      applicationsFile <- projectConfiguration$applicationsFile
+
+      # Check if sheet already exists
+      sheetExists <- FALSE
+      if (file.exists(applicationsFile)) {
+        sheets <- readxl::excel_sheets(applicationsFile)
+        sheetExists <- protocolName %in% sheets
+      }
+
+      # Only extract and write parameters if sheet doesn't exist
+      if (!sheetExists) {
+        # Load the PKML file to extract parameters
+        pkmlPath <- file.path(
+          projectConfiguration$modelFolder,
+          scenarioConfig$modelFile
+        )
+
+        if (file.exists(pkmlPath)) {
+          simulation <- ospsuite::loadSimulation(
+            filePath = pkmlPath,
+            loadFromCache = FALSE
+          )
+
+          # Extract all events parameters. Starting from PK-Sim v12, applications are located
+          # under the `Events` node in the simulation tree.
+          eventsParams <- ospsuite::getAllParametersMatching(
+            "Events|**",
+            simulation
+          )
+
+          # Extract all applications parameters. Before v12, applications were located
+          # under the `Applications` node in the simulation tree.
+          applicationsParams <- ospsuite::getAllParametersMatching(
+            "Applications|**",
+            simulation
+          )
+
+          # Some default parameters should be excluded from the list of parameters.
+          defaultParamsToExclude <- c(
+            "Volume",
+            "Application rate"
+          )
+
+          # Iterate through all parameters and only keep those that are defined by a constant
+          # value.
+          constantApplicationParams <- lapply(
+            c(applicationsParams, eventsParams),
+            function(param) {
+              # Check if the parameter is in the excluded list
+              if (param$name %in% defaultParamsToExclude) {
+                return(NULL)
+              }
+
+              if (param$isConstant) {
+                return(param)
+              } else {
+                return(NULL)
+              }
+            }
+          )
+          # Remove all `NULL` from the list
+          constantApplicationParams <- constantApplicationParams[
+            lengths(constantApplicationParams) != 0
+          ]
+
+          # Write parameters to Applications excel if there are parameters to write
+          if (length(constantApplicationParams) > 0) {
+            exportParametersToXLS(
+              parameters = constantApplicationParams,
+              paramsXLSpath = applicationsFile,
+              sheet = protocolName
+            )
+          } else {
+            # If no parameters, create empty sheet with proper header
+            if (file.exists(applicationsFile)) {
+              sheets <- readxl::excel_sheets(applicationsFile)
+              if (length(sheets) > 0) {
+                # Read header from first sheet
+                firstSheet <- sheets[1]
+                header <- readxl::read_excel(
+                  applicationsFile,
+                  sheet = firstSheet,
+                  n_max = 0
+                )
+                # Add new sheet with header only
+                wb <- openxlsx::loadWorkbook(applicationsFile)
+                openxlsx::addWorksheet(wb, protocolName)
+                openxlsx::writeData(wb, protocolName, header)
+                openxlsx::saveWorkbook(wb, applicationsFile, overwrite = TRUE)
+              }
+            } else {
+              # Create new file with empty parameters sheet
+              emptyParams <- data.frame(
+                "Container Path" = character(0),
+                "Parameter Name" = character(0),
+                "Value" = numeric(0),
+                "Units" = character(0),
+                check.names = FALSE
+              )
+              wb <- openxlsx::createWorkbook()
+              openxlsx::addWorksheet(wb, protocolName)
+              openxlsx::writeData(wb, protocolName, emptyParams)
+              openxlsx::saveWorkbook(wb, applicationsFile)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  # Write scenarios to Excel
+  .writeScenariosToExcel(
+    scenarioConfigurations = scenarioConfigurations,
+    projectConfiguration = projectConfiguration,
+    appendToExisting = appendToExisting
+  )
+
+  invisible(names(scenarioConfigurations))
+}
+
 
 #' Write scenarios to Excel file
 #'
