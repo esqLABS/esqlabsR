@@ -39,8 +39,6 @@ test_that("Scenario can be run", {
 })
 
 test_that("It throws an error when the application protocol is not found", {
-  skip_on_os("mac")
-
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
   scenarioNames <- c(
@@ -65,7 +63,8 @@ test_that("It throws an error when the application protocol is not found", {
 })
 
 test_that("Scenario properties are read-only", {
-  skip_on_os("mac")
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
 
   scenarioNames <- c("TestScenario")
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
@@ -89,7 +88,8 @@ test_that("Scenario properties are read-only", {
 })
 
 test_that("Scenario type is correctly identified", {
-  skip_on_os("mac")
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
 
   # Create individual scenario
   scenarioNames <- c("TestScenario")
@@ -119,7 +119,8 @@ test_that("Scenario type is correctly identified", {
 })
 
 test_that("Custom parameters are correctly applied", {
-  skip_on_os("mac")
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
 
   scenarioNames <- c("TestScenario")
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
@@ -149,7 +150,8 @@ test_that("Custom parameters are correctly applied", {
 })
 
 test_that("Print method works", {
-  skip_on_os("mac")
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
 
   scenarioNames <- c("TestScenario")
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
@@ -167,7 +169,8 @@ test_that("Print method works", {
 })
 
 test_that("Warning is shown when individual characteristics are not found", {
-  skip_on_os("mac")
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
 
   scenarioNames <- c("TestScenario")
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
@@ -188,7 +191,8 @@ test_that("Warning is shown when individual characteristics are not found", {
 
 
 test_that("Population from CSV is loaded correctly", {
-  skip_on_os("mac")
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
 
   scenarioNames <- c("PopulationScenarioFromCSV")
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
@@ -209,7 +213,8 @@ test_that("Population from CSV is loaded correctly", {
 })
 
 test_that("The name of a scenario is set as simulation name", {
-  skip_on_os("mac")
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
 
   # Create a project configuration using temporary project
   temp_project <- with_temp_project()
