@@ -48,3 +48,5 @@ references.bib
 .tgitconfig
 ^rakefile\.rb$
 _\.new\.png$
+^[.]?air[.]toml$
+^\.vscode$

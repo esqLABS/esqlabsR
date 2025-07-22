@@ -26,13 +26,17 @@ test_that("Project Configuration can be created from V5 project configuration fi
 })
 
 test_that("Project Configuration can be customized but throws warning if path are wrong", {
-  myConfig <- testProjectConfiguration()
+  # Create a project configuration using temporary project
+  temp_project <- with_temp_project()
+  myConfig <- temp_project$config
 
   expect_warning({
     myConfig$configurationsFolder <- "Wrong/Folder"
   })
 
-  myConfig <- testProjectConfiguration()
+  # Create a new temporary project for each test to avoid interference
+  temp_project2 <- with_temp_project()
+  myConfig <- temp_project2$config
   expect_warning({
     myConfig$dataFolder <- "folder/that/does/not/exist"
   })
@@ -43,7 +47,9 @@ test_that("Project Configuration can be customized but throws warning if path ar
     myConfig$populationsFolder <- "folder/that/does/not/exist"
   })
 
-  myConfig <- testProjectConfiguration()
+  # Create a new temporary project for each test to avoid interference
+  temp_project3 <- with_temp_project()
+  myConfig <- temp_project3$config
   expect_warning({
     myConfig$modelParamsFile <- "donotexist.xslx"
   })
