@@ -52,6 +52,15 @@ test_that("sensitivityTornadoPlot fails with invalid parameterFactor", {
   )
 })
 
+test_that("sensitivityTornadoPlot fails with invalid xAxisZoomRange", {
+  xAxisZoomRange <- 100
+  expect_error(
+    sensitivityTornadoPlot(results, xAxisZoomRange = xAxisZoomRange),
+    messages$errorWrongLength(xAxisZoomRange, 2),
+    fixed = TRUE
+  )
+})
+
 test_that("sensitivityTornadoPlot errors if parameterFactor is missing in sensitivity calculation results", {
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0.2),
@@ -122,6 +131,23 @@ test_that("sensitivityTornadoPlot works with custom PK parameter", {
     fig = suppressWarnings(p)
   )
 })
+
+
+# Default plot with x-axis zoom -------------------------------------------
+
+test_that("sensitivityTornadoPlot applies x-axis zoom range correctly", {
+  set.seed(123)
+  p <- sensitivityTornadoPlot(results, xAxisZoomRange = c(-100, 100))
+
+  set.seed(123)
+  suppressWarnings(
+    vdiffr::expect_doppelganger(
+      title = "sensitivityTornadoPlot zoomed",
+      fig = p
+    )
+  )
+})
+
 
 # Multiple output paths ---------------------------------------------------
 
