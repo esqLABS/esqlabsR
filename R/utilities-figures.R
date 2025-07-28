@@ -14,7 +14,7 @@
 #' @param nrOfColors Positive integer defining the number of colors to be generated.
 #'
 #' @import grDevices
-#' @return A list of colors as HEX values.
+#' @returns A list of colors as HEX values.
 #' @import grDevices
 #' @export
 esqlabsColors <- function(nrOfColors) {
@@ -106,7 +106,7 @@ esqlabsColors <- function(nrOfColors) {
 #'   the form "#rrggbb" or "#rrggbbaa" (see rgb), or a positive integer `i`
 #'   meaning `palette()[i]`.
 #'
-#' @return A matrix with a column for each color. The three rows of the matrix
+#' @returns A matrix with a column for each color. The three rows of the matrix
 #'   indicate hue, saturation and value and are named "h", "s", and "v"
 #'   accordingly.
 #' @export
@@ -132,7 +132,7 @@ col2hsv <- function(color) {
 #' The default attributes of the class are chosen to reflect the corporate
 #' standards adopted by esqLABS GmbH.
 #'
-#' @return An instance of `DefaultPlotConfiguration` R6 class.
+#' @returns An instance of `DefaultPlotConfiguration` R6 class.
 #'
 #' @examples
 #' createEsqlabsPlotConfiguration()
@@ -192,7 +192,7 @@ createEsqlabsPlotConfiguration <- function() {
 #' The default attributes of the class are chosen to reflect the corporate
 #' standards adopted by esqLABS GmbH.
 #'
-#' @return An instance of `PlotGridConfiguration` R6 class.
+#' @returns An instance of `PlotGridConfiguration` R6 class.
 #'
 #' @examples
 #' createEsqlabsPlotGridConfiguration()
@@ -226,7 +226,7 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
 #' The default attributes of the class are chosen to reflect the corporate
 #' standards adopted by esqLABS GmbH.
 #'
-#' @return An instance of `ExportConfiguration` R6 class.
+#' @returns An instance of `ExportConfiguration` R6 class.
 #'
 #' @examples
 #' myProjConfig <- ProjectConfiguration$new()
@@ -270,8 +270,12 @@ createEsqlabsExportConfiguration <- function(outputFolder) { # nolint: object_le
 #' @param outputFolder Optional - path to the folder where the results will be
 #' stored. If `NULL` (default), `projectConfiguration$outputFolder` is used. Only
 #' relevant for plots specified for export in the `exportConfiguration` sheet.
+#' @param dataCombinedList A (named) list of `DataCombined` objects as input
+#' to create plots defined in the `plotGridNames` argument.
+#' Missing `DataCombined` will be created from the Excel file (default behavior).
+#' Defaults to `NULL`, in which case all `DataCombined` are created from Excel.
 #'
-#' @return A list of `ggplot` objects
+#' @returns A list of `ggplot` objects
 #'
 #' @import tidyr
 #'
@@ -280,61 +284,47 @@ createPlotsFromExcel <- function(
     plotGridNames = NULL,
     simulatedScenarios = NULL,
     observedData = NULL,
+    dataCombinedList = NULL,
     projectConfiguration,
     outputFolder = NULL,
     stopIfNotFound = TRUE) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
-
-  # read sheet "plotGrids" with info for plotGridConfigurations
-  dfPlotGrids <- readExcel(projectConfiguration$plotsFile,
-    sheet = "plotGrids"
+  validateIsOfType(dataCombinedList, "DataCombined", nullAllowed = TRUE)
+  if (!typeof(dataCombinedList) %in% c("list", "NULL")) {
+    stop(messages$errorDataCombinedListMustBeList(typeof(dataCombinedList)))
+  }
+  plotConfigurations <- .readPlotConfigurations(
+    projectConfiguration = projectConfiguration,
+    plotGridNames = plotGridNames
   )
-  # read sheet "exportConfiguration"
-  dfExportConfigurations <- readExcel(projectConfiguration$plotsFile,
-    sheet = "exportConfiguration"
-  ) %>%
-    dplyr::rename(name = outputName)
-  # Filter for only specified plot grids
-  if (!is.null(plotGridNames)) {
-    # Throw an error if a plot grid name that is passed is not defined in the excel file
-    missingPlotGrids <- setdiff(plotGridNames, unique(dfPlotGrids$name))
-    if (length(missingPlotGrids) != 0) {
-      stop(messages$invalidPlotGridNames(missingPlotGrids))
-    }
+  dfPlotConfigurations <- plotConfigurations$plotConfigurations
+  dfPlotGrids <- plotConfigurations$plotGrids
+  dfExportConfigurations <- plotConfigurations$exportConfigurations
 
-    dfPlotGrids <- dplyr::filter(dfPlotGrids, name %in% plotGridNames)
-    dfExportConfigurations <- dplyr::filter(dfExportConfigurations, plotGridName %in% plotGridNames)
+  # Exit early if not plotGrids are defined
+  if (is.null(dfPlotGrids)) {
+    return(NULL)
   }
 
-  # Exit early if no PlotGrid is defined
-  if (dim(dfPlotGrids)[[1]] == 0) {
-    return()
+  # Get the names of data combined that are required for creation of the plots
+  dataCombinedNames <- unique(dfPlotConfigurations$DataCombinedName)
+  # Do not create DataCombined that are already passed
+  if (!is.null(dataCombinedList)) {
+    dataCombinedNames <- setdiff(dataCombinedNames, names(dataCombinedList))
   }
-  # read sheet "plotConfiguration"
-  dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile,
-    sheet = "plotConfiguration"
-  )
-
-  # Filter and validate plotGrids
-  dfPlotGrids <- dplyr::filter(
-    dfPlotGrids, !dplyr::if_all(dplyr::everything(), is.na)
-  )
-  dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
-
-  # Filter and validate only used plot configurations
-  dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
-
   # Filter and validate only used data combined
-  dataCombinedList <- createDataCombinedFromExcel(
-    file = projectConfiguration$plotsFile,
-    sheet = "DataCombined",
-    dataCombinedNames = unique(dfPlotConfigurations$DataCombinedName),
+  dataCombinedListFromExcel <- createDataCombinedFromExcel(
+    projectConfiguration = projectConfiguration,
+    dataCombinedNames = dataCombinedNames,
     simulatedScenarios = simulatedScenarios,
     observedData = observedData,
     stopIfNotFound = stopIfNotFound
   )
+  # Add entries from to the provided list of DataCombined.
+  dataCombinedListFromExcel[names(dataCombinedList)] <- dataCombinedList
+  dataCombinedList <- dataCombinedListFromExcel
 
   dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, names(dataCombinedList))
 
@@ -344,6 +334,8 @@ createPlotsFromExcel <- function(
     plotConfiguration <- .createConfigurationFromRow(
       defaultConfiguration = defaultPlotConfiguration,
       # Have to exclude all columns that should not be vectorized
+      # Excluding title and subtitle because they should not be processed,
+      # e.g., split by ","
       row[!(names(row) %in% c(
         "plotID",
         "DataCombinedName",
@@ -358,8 +350,13 @@ createPlotsFromExcel <- function(
         "foldDistance"
       ))]
     )
+    # Apply title and subtitle properties
     if (!is.na(row[["title"]])) {
       plotConfiguration$title <- row[["title"]]
+    }
+
+    if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
+      plotConfiguration$subtitle <- row[["subtitle"]]
     }
     return(plotConfiguration)
   })
@@ -481,12 +478,11 @@ createPlotsFromExcel <- function(
 #'
 #' @param defaultConfiguration default plotConfiguration or exportConfiguration
 #' @param ... row with configuration properties
-#' @return A customized plot- or exportConfiguration object
+#' @returns A customized plot- or exportConfiguration object
 #' @keywords internal
 .createConfigurationFromRow <- function(defaultConfiguration, ...) {
   columns <- c(...)
   newConfiguration <- defaultConfiguration$clone()
-
   lapply(seq_along(columns), function(i) {
     value <- columns[[i]]
     colName <- names(columns)[[i]]
@@ -541,7 +537,7 @@ createPlotsFromExcel <- function(
 #' @param dfPlotConfigurations Data frame created by reading the ' plotConfiguration' sheet
 #' @param dataCombinedNames Names of the 'DataCombined' that are referenced in the plot configurations
 #'
-#' @return Processed `dfPlotConfigurations`
+#' @returns Processed `dfPlotConfigurations`
 #' @keywords internal
 .validatePlotConfigurationFromExcel <- function(dfPlotConfigurations, dataCombinedNames) {
   # mandatory column DataCombinedName is empty - throw error
@@ -576,7 +572,7 @@ createPlotsFromExcel <- function(
 #' @param dfPlotGrids Data frame created by reading the ' plotGrids' sheet
 #' @param plotIDs IDs of the plots that are referenced in the plot grids
 #'
-#' @return Processed `dfPlotGrids`
+#' @returns Processed `dfPlotGrids`
 #' @keywords internal
 .validatePlotGridsFromExcel <- function(dfPlotGrids, plotIDs) {
   # mandatory column plotIDs is empty - throw error
@@ -616,7 +612,7 @@ createPlotsFromExcel <- function(
 #' @param dfExportConfigurations Data frame created by reading the 'exportConfiguration' sheet
 #' @param plotGrids List of multipanel plots created previously
 #'
-#' @return Processed `dfExportConfigurations`
+#' @returns Processed `dfExportConfigurations`
 #' @keywords internal
 .validateExportConfigurationsFromExcel <- function(dfExportConfigurations, plotGrids) {
   # mandatory column outputName is empty - throw warning, remove rows
@@ -763,7 +759,7 @@ createPlotsFromExcel <- function(
 #' allowable values, and value ranges, formatted to facilitate validation with
 #' `ospsuite::validateIsOption` function.
 #'
-#' @return A list of lists, each containing type specifications and constraints
+#' @returns A list of lists, each containing type specifications and constraints
 #'         for a plot configuration parameter.
 #' @keywords internal
 #' @noRd
@@ -843,4 +839,63 @@ createPlotsFromExcel <- function(
   )
 
   return(plotConfigurationOptions[names])
+}
+
+#' Read and validate plot configurations from the excel file
+#'
+#' @param projectConfiguration Object of class `ProjectConfiguration`
+#' @param plotGridNames Names of the plot grid specified in the sheet `plotGrids`
+#'
+#' @returns A named list with configurations 'plotGrids', 'dfPlotConfigurations',
+#' and 'exportConfigurations'
+#' @noRd
+.readPlotConfigurations <- function(projectConfiguration, plotGridNames) {
+  # read sheet "plotGrids" with info for plotGridConfigurations
+  dfPlotGrids <- readExcel(projectConfiguration$plotsFile,
+    sheet = "plotGrids"
+  )
+
+  # read sheet "exportConfiguration"
+  dfExportConfigurations <- readExcel(projectConfiguration$plotsFile,
+    sheet = "exportConfiguration"
+  ) %>%
+    dplyr::rename(name = outputName)
+
+  # Filter for only specified plot grids
+  if (!is.null(plotGridNames)) {
+    # Throw an error if a plot grid name that is passed is not defined in the excel file
+    missingPlotGrids <- setdiff(plotGridNames, unique(dfPlotGrids$name))
+    if (length(missingPlotGrids) != 0) {
+      stop(messages$invalidPlotGridNames(missingPlotGrids))
+    }
+
+    dfPlotGrids <- dplyr::filter(dfPlotGrids, name %in% plotGridNames)
+    # Filter export configurations for specified plot grids only
+    dfExportConfigurations <- dplyr::filter(dfExportConfigurations, plotGridName %in% plotGridNames)
+  }
+
+  # Exit early if no PlotGrid is defined
+  if (dim(dfPlotGrids)[[1]] == 0) {
+    return()
+  }
+
+  # read sheet "plotConfiguration"
+  dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile,
+    sheet = "plotConfiguration"
+  )
+
+  # Filter and validate plotGrids
+  dfPlotGrids <- dplyr::filter(
+    dfPlotGrids, !dplyr::if_all(dplyr::everything(), is.na)
+  )
+  dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
+
+  # Filter and validate only used plot configurations
+  dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
+
+  return(list(
+    plotGrids = dfPlotGrids,
+    exportConfigurations = dfExportConfigurations,
+    plotConfigurations = dfPlotConfigurations
+  ))
 }

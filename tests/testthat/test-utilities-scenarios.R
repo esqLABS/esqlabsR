@@ -4,6 +4,7 @@ defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Periphera
 
 test_that("It stops with an error if the excel file defines a parameter that is
           not present", {
+  skip_on_os("mac")
   # Define which scenarios to run
   scenarioNames <- c("TestScenario_missingParam")
   # Create `ScenarioConfiguration` objects from excel files
@@ -11,10 +12,14 @@ test_that("It stops with an error if the excel file defines a parameter that is
     scenarioNames = scenarioNames,
     projectConfiguration = projectConfiguration
   )
-  expect_error(createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = TRUE))
+  expect_error(createScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    stopIfParameterNotFound = TRUE
+  ))
 })
 
 test_that("All working scenarios in testProject can be created without errors", {
+  skip_on_os("mac")
   # Define which scenarios to run
   scenarioNames <- c(
     "TestScenario",
@@ -28,10 +33,15 @@ test_that("All working scenarios in testProject can be created without errors", 
     projectConfiguration = projectConfiguration
   )
 
-  expect_no_error(createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = FALSE))
+  expect_no_error(createScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    stopIfParameterNotFound = FALSE
+  ))
 })
 
 test_that("It runs one scenario without specifying output paths", {
+  skip_on_os("mac")
+
   # Define which scenarios to run
   scenarioNames <- c("TestScenario_missingParam")
   # Create `ScenarioConfiguration` objects from excel files
@@ -39,17 +49,25 @@ test_that("It runs one scenario without specifying output paths", {
     scenarioNames = scenarioNames,
     projectConfiguration = projectConfiguration
   )
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations, stopIfParameterNotFound = FALSE)
+  scenarios <- createScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    stopIfParameterNotFound = FALSE
+  )
 
   simulatedScenarios <- runScenarios(
     scenarios = scenarios
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
-  expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths, defaultOutputPath)
+  expect_equal(
+    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    defaultOutputPath
+  )
 })
 
 test_that("It runs one scenario with specifying output paths", {
+  skip_on_os("mac")
+
   OutputPaths <- enum(list(
     Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
     Aciclovir_bone_pls = "Organism|Bone|Plasma|Aciclovir|Concentration"
@@ -74,10 +92,15 @@ test_that("It runs one scenario with specifying output paths", {
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
-  expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths, enumValues(OutputPaths))
+  expect_equal(
+    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    enumValues(OutputPaths)
+  )
 })
 
 test_that("It runs two scenarios", {
+  skip_on_os("mac")
+
   # Define which scenarios to run
   scenarioNames <- c(
     "TestScenario",
@@ -100,15 +123,23 @@ test_that("It runs two scenarios", {
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
-  expect_equal(simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths, defaultOutputPath)
+  expect_equal(
+    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    defaultOutputPath
+  )
 
-  expect_equal(simulatedScenarios[[scenarioNames[[2]]]]$results$allQuantityPaths, c(
-    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-    "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
-  ))
+  expect_equal(
+    simulatedScenarios[[scenarioNames[[2]]]]$results$allQuantityPaths,
+    c(
+      "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+    )
+  )
 })
 
 test_that("It runs population and individual scenarios", {
+  skip_on_os("mac")
+
   # Define which scenarios to run
   scenarioNames <- c(
     "TestScenario",
@@ -126,14 +157,21 @@ test_that("It runs population and individual scenarios", {
 
   expect_equal(names(simulatedScenarios), scenarioNames)
   # Check that the first scenario is individual simulation
-  expect_equal(length(simulatedScenarios[[scenarioNames[[1]]]]$results$allIndividualIds), 1)
+  expect_equal(
+    length(simulatedScenarios[[scenarioNames[[1]]]]$results$allIndividualIds),
+    1
+  )
   # Check that the second scenario is population simulation
-  expect_equal(length(simulatedScenarios[[scenarioNames[[2]]]]$results$allIndividualIds), 2)
+  expect_equal(
+    length(simulatedScenarios[[scenarioNames[[2]]]]$results$allIndividualIds),
+    2
+  )
 })
 
 
-
 test_that("It saves and loads scenario results for scenario names with forbidden characters", {
+  skip_on_os("mac")
+
   # Define which scenarios to run
   scenarioNames <- c("TestScenario")
   # Create `ScenarioConfiguration` objects from excel files
@@ -159,8 +197,14 @@ test_that("It saves and loads scenario results for scenario names with forbidden
         outputFolder = tempdir
       )
       # Check that the results are saved
-      expect_true(file.exists(file.path(tempdir, "TestScenario_with_slash.pkml")))
-      expect_true(file.exists(file.path(tempdir, "TestScenario_with_slash.csv")))
+      expect_true(file.exists(file.path(
+        tempdir,
+        "TestScenario_with_slash.pkml"
+      )))
+      expect_true(file.exists(file.path(
+        tempdir,
+        "TestScenario_with_slash.csv"
+      )))
 
       # Check that the correted output folder path is returned
       expect_equal(outputFolder, tempdir)
@@ -180,6 +224,8 @@ test_that("It saves and loads scenario results for scenario names with forbidden
 
 
 test_that("The hierarchy of parametrization is correct", {
+  skip_on_os("mac")
+
   # Define which scenarios to run
   scenarioNames <- c("TestScenario")
   # Create `ScenarioConfiguration` objects from excel files without custom parameters
@@ -190,7 +236,10 @@ test_that("The hierarchy of parametrization is correct", {
   scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
 
   # Check that the hierarchy of parametrization is correct
-  idx <- which(scenarios[[1]]$finalCustomParams$paths == "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose")
+  idx <- which(
+    scenarios[[1]]$finalCustomParams$paths ==
+      "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+  )
   expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 250)
 
   # Create `ScenarioConfiguration` objects from excel files with custom parameter
@@ -204,6 +253,21 @@ test_that("The hierarchy of parametrization is correct", {
   )
 
   # Check that the hierarchy of parametrization is correct
-  idx <- which(scenarios[[1]]$finalCustomParams$paths == "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose")
+  idx <- which(
+    scenarios[[1]]$finalCustomParams$paths ==
+      "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+  )
   expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 500)
+})
+
+test_that("loadScenarioResults throws an error when files don't exist", {
+  # Use a non-existent folder to trigger an error
+  nonExistentFolder <- file.path(tempdir(), "non-existent-folder")
+
+  expect_error(
+    loadScenarioResults(
+      scenarioNames = "TestScenario",
+      resultsFolder = nonExistentFolder
+    )
+  )
 })

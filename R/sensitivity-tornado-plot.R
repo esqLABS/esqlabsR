@@ -43,7 +43,7 @@
 #'
 #' @family sensitivity-calculation
 #'
-#' @return A `patchwork` object containing the combined ggplot objects if a
+#' @returns A `patchwork` object containing the combined ggplot objects if a
 #' single output path is specified, or a list of `patchwork` objects for
 #' multiple output paths.
 #'

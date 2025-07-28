@@ -297,6 +297,14 @@ messages$invalidSimulationResultNames <- function(simulationResultNames,
   )
 }
 
+messages$errorDataCombinedListMustBeList <- function(type) {
+  paste0(
+    "The argument 'dataCombined' must be a named list of DataCombined objects, but the
+    type of passed argument is '", type, "'."
+  )
+}
+
+# Sensitivity calculation####
 messages$sensitivityAnalysisSimulationFailure <- function(parameterPath, parameterFactor) {
   cat(
     paste0(

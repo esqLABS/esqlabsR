@@ -29,11 +29,21 @@ ProjectConfiguration <- R6::R6Class(
         stop("projectConfigurationDirPath is readonly")
       }
     },
+    #' @field modified Logical indicating whether any configuration properties
+    #' have been modified since loading from file. Read-only.
+    modified = function(value) {
+      if (missing(value)) {
+        private$.modified
+      } else {
+        stop("modified is readonly")
+      }
+    },
     #' @field modelFolder Path to the folder containing pkml simulation files.
     modelFolder = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$modelFolder$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$modelFolder$value,
@@ -46,6 +56,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$configurationsFolder$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$configurationsFolder$value,
@@ -59,6 +70,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$modelParamsFile$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$modelParamsFile$value,
@@ -72,6 +84,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$individualsFile$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$individualsFile$value,
@@ -85,6 +98,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$populationsFile$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$populationsFile$value,
@@ -97,6 +111,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$populationsFolder$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$populationsFolder$value,
@@ -110,6 +125,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$scenariosFile$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$scenariosFile$value,
@@ -123,6 +139,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$applicationsFile$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$applicationsFile$value,
@@ -135,6 +152,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$plotsFile$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$plotsFile$value,
@@ -147,6 +165,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$dataFolder$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$dataFolder$value,
@@ -159,6 +178,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$dataFile$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$dataFile$value,
@@ -172,6 +192,7 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$dataImporterConfigurationFile$value <-
           value
+        private$.modified <- TRUE
       }
       private$.clean_path(
         private$.projectConfigurationData$dataImporterConfigurationFile$value,
@@ -184,8 +205,10 @@ ProjectConfiguration <- R6::R6Class(
       if (!missing(value)) {
         private$.projectConfigurationData$outputFolder$value <-
           value
+        private$.modified <- TRUE
       }
-      private$.clean_path(private$.projectConfigurationData$outputFolder$value,
+      private$.clean_path(
+        private$.projectConfigurationData$outputFolder$value,
         self$projectConfigurationDirPath,
         must_work = FALSE
       )
@@ -195,38 +218,46 @@ ProjectConfiguration <- R6::R6Class(
     .projectConfigurationData = NULL,
     .projectConfigurationFilePath = NULL,
     .projectConfigurationDirPath = NULL,
+    .modified = FALSE,
     .checkProjectConfigurationFile = function() {
       data <- private$.projectConfigurationData
 
       # Check if read data is from V5, if yes, load and rename the objects to
       # make it compatible with v6.
-      if (all(c(
-        "paramsFolder",
-        "paramsFile",
-        "individualsFile",
-        "populationParamsFile",
-        "scenarioDefinitionFile",
-        "scenarioApplicationsFile",
-        "plotsFile",
-        "dataFolder",
-        "dataFile",
-        "dataImporterConfigurationFile",
-        "compoundPropertiesFile",
-        "outputFolder"
-      ) %in% names(data))) {
+      if (
+        all(
+          c(
+            "paramsFolder",
+            "paramsFile",
+            "individualsFile",
+            "populationParamsFile",
+            "scenarioDefinitionFile",
+            "scenarioApplicationsFile",
+            "plotsFile",
+            "dataFolder",
+            "dataFile",
+            "dataImporterConfigurationFile",
+            "compoundPropertiesFile",
+            "outputFolder"
+          ) %in%
+            names(data)
+        )
+      ) {
         cli::cli_warn(c(
           "!" = "The project configuration file layout used is from an older version of the package.",
           "i" = "This version is still supported and will be loaded but it is recommended to update the project configuration file.
                            To do so, use the {.code $save} method of the project configuration object."
         ))
 
-
         data$configurationsFolder <- data$paramsFolder
         data$modelParamsFile <- data$paramsFile
         data$populationsFile <- data$populationParamsFile
         data$scenariosFile <- data$scenarioDefinitionFile
         data$applicationsFile <- data$scenarioApplicationsFile
-        data$populationsFolder <- list(value = NA, description = "Name of the folder containing population defined in files")
+        data$populationsFolder <- list(
+          value = NA,
+          description = "Name of the folder containing population defined in files"
+        )
 
         # Delete previous properties
         data$paramsFolder <- NULL
@@ -240,7 +271,9 @@ ProjectConfiguration <- R6::R6Class(
       # If one of the excel configuration is not expected, return an error.
       for (property in names(data)) {
         if (!(property %in% names(self))) {
-          cli::cli_abort(c("x" = "Property {property} is not a valid configuration property for {self$projectConfigurationFilePath}"))
+          cli::cli_abort(c(
+            "x" = "Property {property} is not a valid configuration property for {self$projectConfigurationFilePath}"
+          ))
         }
       }
       private$.projectConfigurationData <- data
@@ -271,8 +304,16 @@ ProjectConfiguration <- R6::R6Class(
         # Update each private property
         self[[property]] <- private$.projectConfigurationData[[property]]$value
       }
+
+      # Mark as not modified after loading from file
+      private$.modified <- FALSE
     },
-    .clean_path = function(path, parent = NULL, must_work = TRUE, replace_env_vars = TRUE) {
+    .clean_path = function(
+      path,
+      parent = NULL,
+      must_work = TRUE,
+      replace_env_vars = TRUE
+    ) {
       # In case project configuration is initialized empty
       if (is.null(path) || is.na(path)) {
         return(NULL)
@@ -302,13 +343,17 @@ ProjectConfiguration <- R6::R6Class(
       path_split <- unlist(strsplit(path, "/"))
       for (i in seq_along(path_split)) {
         # Don't replace "path" in path_split[i] with PATH variable (windows)
-        if (!stringr::str_detect(
-          string = path_split[i],
-          pattern = stringr::regex("path", ignore_case = T)
-        )) {
+        if (
+          !stringr::str_detect(
+            string = path_split[i],
+            pattern = stringr::regex("path", ignore_case = T)
+          )
+        ) {
           # check if path_split[i] is an environment variable
           if (Sys.getenv(path_split[i]) != "") {
-            private$.replaced_env_vars[[path_split[i]]] <- Sys.getenv(path_split[i])
+            private$.replaced_env_vars[[path_split[
+              i
+            ]]] <- Sys.getenv(path_split[i])
             path_split[i] <- Sys.getenv(path_split[i])
           }
         }
@@ -325,6 +370,9 @@ ProjectConfiguration <- R6::R6Class(
     #' @param projectConfigurationFilePath A string representing the path to the
     #' project configuration file.
     initialize = function(projectConfigurationFilePath = character()) {
+      # Initialize as not modified
+      private$.modified <- FALSE
+
       if (!missing(projectConfigurationFilePath)) {
         self$projectConfigurationFilePath <- projectConfigurationFilePath
       } else {
@@ -335,37 +383,46 @@ ProjectConfiguration <- R6::R6Class(
     #' @description print prints a summary of the Project Configuration.
     #' @param className Whether to print the name of the class at the beginning. default to TRUE.
     print = function(className = TRUE) {
-      if (className) ospsuite.utils::ospPrintClass(self)
+      if (className) {
+        ospsuite.utils::ospPrintClass(self)
+      }
       ospsuite.utils::ospPrintItems(list(
         "Working Directory" = getwd(),
         "Project Configuration file stored at" = self$projectConfigurationFilePath
       ))
 
       ospsuite.utils::ospPrintHeader("Paths", level = 2)
-      ospsuite.utils::ospPrintItems(list(
-        "Configurations Folder" = self$configurationsFolder,
-        "Model Folder" = self$modelFolder,
-        "Data Folder" = self$dataFolder,
-        "Output Folder" = self$outputFolder,
-        "Populations Folder" = self$populationsFolder
-      ), title = "Folders")
+      ospsuite.utils::ospPrintItems(
+        list(
+          "Configurations Folder" = self$configurationsFolder,
+          "Model Folder" = self$modelFolder,
+          "Data Folder" = self$dataFolder,
+          "Output Folder" = self$outputFolder,
+          "Populations Folder" = self$populationsFolder
+        ),
+        title = "Folders"
+      )
 
-      ospsuite.utils::ospPrintItems(list(
-        "Model Parameters File" = self$modelParamsFile,
-        "Individuals File" = self$individualsFile,
-        "Populations File" = self$populationsFile,
-        "Scenarios File" = self$scenariosFile,
-        "Applications File" = self$applicationsFile,
-        "Plots File" = self$plotsFile,
-        "Data File" = self$dataFile,
-        "Data Importer Configuration File" = self$dataImporterConfigurationFile
-      ), title = "Files")
-
+      ospsuite.utils::ospPrintItems(
+        list(
+          "Model Parameters File" = self$modelParamsFile,
+          "Individuals File" = self$individualsFile,
+          "Populations File" = self$populationsFile,
+          "Scenarios File" = self$scenariosFile,
+          "Applications File" = self$applicationsFile,
+          "Plots File" = self$plotsFile,
+          "Data File" = self$dataFile,
+          "Data Importer Configuration File" = self$dataImporterConfigurationFile
+        ),
+        title = "Files"
+      )
 
       if (!isEmpty(private$.replaced_env_vars)) {
         cli::cli_h2("Environment Variables")
-        cli::cli_inform("Environment variables were detected and replaced in paths:")
-        purrr::iwalk(private$.replaced_env_vars, \(x, idx){
+        cli::cli_inform(
+          "Environment variables were detected and replaced in paths:"
+        )
+        purrr::iwalk(private$.replaced_env_vars, \(x, idx) {
           cli::cli_li("{idx} to {x}")
         })
       }
@@ -376,7 +433,12 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @export
     save = function(path) {
-      df <- data.frame(Property = character(), Value = character(), Description = character(), stringsAsFactors = FALSE)
+      df <- data.frame(
+        Property = character(),
+        Value = character(),
+        Description = character(),
+        stringsAsFactors = FALSE
+      )
       for (prop in c(
         "modelFolder",
         "configurationsFolder",
@@ -403,6 +465,9 @@ ProjectConfiguration <- R6::R6Class(
       }
 
       .writeExcel(df, path = path %||% self$projectConfigurationFilePath)
+
+      # Mark as not modified after saving
+      private$.modified <- FALSE
     }
   )
 )
