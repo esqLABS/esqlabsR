@@ -3,7 +3,9 @@ projectConfiguration <- testProjectConfiguration()
 
 test_that("`ScenarioConfiguration` active bindings are modified", {
   expect_snapshot({
-    mySC <- ScenarioConfiguration$new(projectConfiguration = ProjectConfiguration$new())
+    mySC <- ScenarioConfiguration$new(
+      projectConfiguration = ProjectConfiguration$new()
+    )
 
     mySC$simulateSteadyState <- TRUE
 
@@ -19,9 +21,23 @@ test_that("`ScenarioConfiguration` active bindings are modified", {
 })
 
 test_that("It produces expected errors for incorrect active binding values", {
-  mySC <- ScenarioConfiguration$new(projectConfiguration = ProjectConfiguration$new())
+  mySC <- ScenarioConfiguration$new(
+    projectConfiguration = ProjectConfiguration$new()
+  )
 
-  expect_error(mySC$simulateSteadyState <- 1, messages$errorWrongType("value", "numeric", "logical"))
-  expect_error(mySC$steadyStateTime <- -1, messages$valueShouldNotBeNegative("steadyStateTime", -1))
-  expect_error(mySC$simulationType <- "X", messages$wrongSimulationType())
+  expect_error(
+    mySC$simulateSteadyState <- 1,
+    regexp = messages$errorWrongType("value", "numeric", "logical"),
+    fixed = TRUE
+  )
+  expect_error(
+    mySC$steadyStateTime <- -1,
+    regexp = messages$valueShouldNotBeNegative("steadyStateTime", -1),
+    fixed = TRUE
+  )
+  expect_error(
+    mySC$simulationType <- "X",
+    regexp = messages$wrongSimulationType(),
+    fixed = TRUE
+  )
 })

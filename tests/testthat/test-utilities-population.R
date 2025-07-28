@@ -308,7 +308,8 @@ test_that("It throws an error when protein ontogenies are defined improperly", {
     "population" = "European_ICRP_2002",
     "numberOfIndividuals" = 2,
     "proportionOfFemales" = 0,
-    "weightMin", "weightMax",
+    "weightMin",
+    "weightMax",
     "weightUnit" = "kg",
     "heightMin",
     "heightMax",
@@ -320,5 +321,9 @@ test_that("It throws an error when protein ontogenies are defined improperly", {
     "BMIUnit",
     "Protein Ontogenies" = "CYP3A4:CYP3A4,CYP2D6"
   )
-  expect_error(.readOntongeniesFromXLS(data), regexp = messages$errorWrongOntogenyStructure("CYP2D6"))
+  expect_error(
+    .readOntongeniesFromXLS(data),
+    regexp = messages$errorWrongOntogenyStructure("CYP2D6"),
+    fixed = TRUE
+  )
 })

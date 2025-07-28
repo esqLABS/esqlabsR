@@ -63,7 +63,10 @@ test_that("sensitivityCalculation fails with invalid `outputPaths`", {
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
-      outputPaths = c("", "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"),
+      outputPaths = c(
+        "",
+        "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+      ),
       parameterPaths = parameterPath
     ),
     "The argument `outputPaths` contains empty strings"
@@ -72,7 +75,10 @@ test_that("sensitivityCalculation fails with invalid `outputPaths`", {
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
-      outputPaths = rep("Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)", 2),
+      outputPaths = rep(
+        "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+        2
+      ),
       parameterPaths = parameterPath
     ),
     "The argument `outputPaths` must contain only distinct values"
@@ -216,7 +222,12 @@ test_that("sensitivityCalculation fails with invalid `variationRange`", {
       parameterPaths = parameterPaths,
       variationRange = c("x", "y", "z")
     ),
-    "argument 'variationRange' is of type 'character', but expected 'numeric, or integer'!"
+    regexp = messages$errorWrongType(
+      "variationRange",
+      "character",
+      "numeric/integer"
+    ),
+    fixed = TRUE
   )
 
   expect_error(
@@ -226,7 +237,12 @@ test_that("sensitivityCalculation fails with invalid `variationRange`", {
       parameterPaths = parameterPaths,
       variationRange = list(c(0.1, 1, 10), c("x", "y", "z"), c(0.1, 1, 10)),
     ),
-    "argument 'variationRange' is of type 'character', but expected 'numeric, or integer'!"
+    regexp = messages$errorWrongType(
+      "variationRange",
+      "character",
+      "numeric/integer"
+    ),
+    fixed = TRUE
   )
 
   expect_error(
@@ -236,7 +252,8 @@ test_that("sensitivityCalculation fails with invalid `variationRange`", {
       parameterPaths = parameterPaths,
       variationRange = list(c(0.1, 1, 10), c(0.1, 1, 10)),
     ),
-    "`variationRange` must be either a vector or a list equal to the length of `parameterPaths`"
+    regexp = messages$invalidVariationRangeLength(),
+    fixed = TRUE
   )
 })
 
@@ -251,7 +268,12 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
       variationRange = c(0.1, 2, 20),
       customOutputFunctions = "invalid"
     ),
-    "argument 'customOutputFunctions' is of type 'character', but expected 'list'!"
+    regexp = messages$errorWrongType(
+      "customOutputFunctions",
+      "character",
+      "list"
+    ),
+    fixed = TRUE
   )
 
   expect_error(
@@ -262,7 +284,12 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
       variationRange = c(0.1, 2, 20),
       customOutputFunctions = list("invalid" = "function")
     ),
-    "argument 'customOutputFunctions' is of type 'list', but expected 'function'!"
+    regexp = messages$errorWrongType(
+      "customOutputFunctions",
+      "list",
+      "function"
+    ),
+    fixed = TRUE
   )
 
   expect_error(
@@ -272,10 +299,12 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
       parameterPaths = parameterPaths,
       variationRange = c(0.1, 2, 20),
       customOutputFunctions = list(
-        function(x) x, function(y) y
+        function(x) x,
+        function(y) y
       )
     ),
-    "argument 'customOutputFunctions' is not a named list!"
+    regexp = messages$errorNotNamedList("customOutputFunctions"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -285,10 +314,13 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
       parameterPaths = parameterPaths,
       variationRange = c(0.1, 2, 20),
       customOutputFunctions = list(
-        "funA" = function(x) x, function(y) y, "funC" = function(x) x^2
+        "funA" = function(x) x,
+        function(y) y,
+        "funC" = function(x) x^2
       )
     ),
-    "argument 'customOutputFunctions' is not a named list!"
+    regexp = messages$errorNotNamedList("customOutputFunctions"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -301,7 +333,8 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
         x / y * z
       })
     ),
-    "The user-defined function must have either 'x', 'y', or both 'x' and 'y'"
+    regexp = messages$invalidCustomFunctionParameters(c("x", "y", "z")),
+    fixed = TRUE
   )
 
   expect_error(
@@ -322,15 +355,18 @@ test_that("sensitivityCalculation returns a valid `SensitivityCalculation` objec
   expect_true(isOfType(results, "SensitivityCalculation"))
 
   expect_equal(
-    length(results$simulationResults), length(parameterPaths)
+    length(results$simulationResults),
+    length(parameterPaths)
   )
 
   expect_equal(
-    length(results$simulationResults[[1]]), length(variationRange) + 1L
+    length(results$simulationResults[[1]]),
+    length(variationRange) + 1L
   )
 
   expect_equal(
-    length(results$parameterPaths), length(parameterPaths)
+    length(results$parameterPaths),
+    length(parameterPaths)
   )
 })
 
@@ -361,9 +397,17 @@ test_that("sensitivityCalculation returns correct PK parameters dataframe", {
   expect_equal(
     colnames(results$pkData),
     c(
-      "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue",
-      "ParameterUnit", "ParameterPathUserName", "PKParameter", "PKParameterValue",
-      "PKPercentChange", "Unit", "SensitivityPKParameter"
+      "OutputPath",
+      "ParameterPath",
+      "ParameterFactor",
+      "ParameterValue",
+      "ParameterUnit",
+      "ParameterPathUserName",
+      "PKParameter",
+      "PKParameterValue",
+      "PKPercentChange",
+      "Unit",
+      "SensitivityPKParameter"
     )
   )
 })
@@ -484,21 +528,64 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
 # Check PK wide data ------------------------------------------------------
 
 pkDataWideColumns <- c(
-  "OutputPath", "ParameterPath", "ParameterFactor", "ParameterValue", "ParameterUnit",
-  "ParameterPathUserName", "C_max", "C_max_norm", "C_max_Unit", "C_max_norm_Unit",
-  "C_max_PKPercentChange", "C_max_norm_PKPercentChange", "C_max_Sensitivity",
-  "C_max_norm_Sensitivity", "t_max", "t_max_Unit", "t_max_PKPercentChange",
-  "t_max_Sensitivity", "AUC_tEnd", "AUC_tEnd_norm", "AUC_tEnd_Unit", "AUC_tEnd_norm_Unit",
-  "AUC_tEnd_PKPercentChange", "AUC_tEnd_norm_PKPercentChange", "AUC_tEnd_Sensitivity",
-  "AUC_tEnd_norm_Sensitivity", "AUC_inf", "AUC_inf_norm", "AUC_inf_Unit",
-  "AUC_inf_norm_Unit", "AUC_inf_PKPercentChange", "AUC_inf_norm_PKPercentChange",
-  "AUC_inf_Sensitivity", "AUC_inf_norm_Sensitivity", "CL", "FractionAucLastToInf",
-  "CL_Unit", "FractionAucLastToInf_Unit", "CL_PKPercentChange", "FractionAucLastToInf_PKPercentChange",
-  "CL_Sensitivity", "FractionAucLastToInf_Sensitivity", "MRT",
-  "MRT_Unit", "MRT_PKPercentChange", "MRT_Sensitivity", "Thalf",
-  "Thalf_Unit", "Thalf_PKPercentChange", "Thalf_Sensitivity", "Vss",
-  "Vss_Unit", "Vss_PKPercentChange", "Vss_Sensitivity", "Vd", "Vd_Unit",
-  "Vd_PKPercentChange", "Vd_Sensitivity"
+  "OutputPath",
+  "ParameterPath",
+  "ParameterFactor",
+  "ParameterValue",
+  "ParameterUnit",
+  "ParameterPathUserName",
+  "C_max",
+  "C_max_norm",
+  "C_max_Unit",
+  "C_max_norm_Unit",
+  "C_max_PKPercentChange",
+  "C_max_norm_PKPercentChange",
+  "C_max_Sensitivity",
+  "C_max_norm_Sensitivity",
+  "t_max",
+  "t_max_Unit",
+  "t_max_PKPercentChange",
+  "t_max_Sensitivity",
+  "AUC_tEnd",
+  "AUC_tEnd_norm",
+  "AUC_tEnd_Unit",
+  "AUC_tEnd_norm_Unit",
+  "AUC_tEnd_PKPercentChange",
+  "AUC_tEnd_norm_PKPercentChange",
+  "AUC_tEnd_Sensitivity",
+  "AUC_tEnd_norm_Sensitivity",
+  "AUC_inf",
+  "AUC_inf_norm",
+  "AUC_inf_Unit",
+  "AUC_inf_norm_Unit",
+  "AUC_inf_PKPercentChange",
+  "AUC_inf_norm_PKPercentChange",
+  "AUC_inf_Sensitivity",
+  "AUC_inf_norm_Sensitivity",
+  "CL",
+  "FractionAucLastToInf",
+  "CL_Unit",
+  "FractionAucLastToInf_Unit",
+  "CL_PKPercentChange",
+  "FractionAucLastToInf_PKPercentChange",
+  "CL_Sensitivity",
+  "FractionAucLastToInf_Sensitivity",
+  "MRT",
+  "MRT_Unit",
+  "MRT_PKPercentChange",
+  "MRT_Sensitivity",
+  "Thalf",
+  "Thalf_Unit",
+  "Thalf_PKPercentChange",
+  "Thalf_Sensitivity",
+  "Vss",
+  "Vss_Unit",
+  "Vss_PKPercentChange",
+  "Vss_Sensitivity",
+  "Vd",
+  "Vd_Unit",
+  "Vd_PKPercentChange",
+  "Vd_Sensitivity"
 )
 
 test_that("sensitivityCalculation converts output to wide format as expected", {
@@ -527,9 +614,14 @@ test_that("sensitivityCalculation converts output to wide format as expected wit
     }
   )
   pkDataWideColumns <- c(
-    pkDataWideColumns, "minmax", "minmax_Unit",
-    "minmax_PKPercentChange", "minmax_Sensitivity",
-    "max_slope", "max_slope_Unit", "max_slope_PKPercentChange",
+    pkDataWideColumns,
+    "minmax",
+    "minmax_Unit",
+    "minmax_PKPercentChange",
+    "minmax_Sensitivity",
+    "max_slope",
+    "max_slope_Unit",
+    "max_slope_PKPercentChange",
     "max_slope_Sensitivity"
   )
 

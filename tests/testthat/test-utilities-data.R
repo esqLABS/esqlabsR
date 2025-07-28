@@ -21,21 +21,39 @@ test_that("It converts a non numerics to NA", {
 test_that("It converts a LLOQ values", {
   string <- c("21", "one", "<5", "-21", " < - 5 ", "<s")
   # "LLOQ/2"
-  expect_equal(stringToNum(string, lloqMode = LLOQMode$`LLOQ/2`), c(21, NA, 2.5, -21, -2.5, NA))
+  expect_equal(
+    stringToNum(string, lloqMode = LLOQMode$`LLOQ/2`),
+    c(21, NA, 2.5, -21, -2.5, NA)
+  )
   # LLOQ
-  expect_equal(stringToNum(string, lloqMode = LLOQMode$LLOQ), c(21, NA, 5, -21, -5, NA))
+  expect_equal(
+    stringToNum(string, lloqMode = LLOQMode$LLOQ),
+    c(21, NA, 5, -21, -5, NA)
+  )
   # ZERO
-  expect_equal(stringToNum(string, lloqMode = LLOQMode$ZERO), c(21, NA, 0, -21, 0, NA))
+  expect_equal(
+    stringToNum(string, lloqMode = LLOQMode$ZERO),
+    c(21, NA, 0, -21, 0, NA)
+  )
   # IGNORE
-  expect_equal(stringToNum(string, lloqMode = LLOQMode$ignore), c(21, NA, NA, -21, NA, NA))
+  expect_equal(
+    stringToNum(string, lloqMode = LLOQMode$ignore),
+    c(21, NA, NA, -21, NA, NA)
+  )
 })
 
 test_that("It converts a ULOQ values", {
   string <- c("21", "one", ">5", "-21", " > - 5 ", "<s")
   # ULOQ
-  expect_equal(stringToNum(string, uloqMode = ULOQMode$ULOQ), c(21, NA, 5, -21, -5, NA))
+  expect_equal(
+    stringToNum(string, uloqMode = ULOQMode$ULOQ),
+    c(21, NA, 5, -21, -5, NA)
+  )
   # IGNORE
-  expect_equal(stringToNum(string, uloqMode = ULOQMode$ignore), c(21, NA, NA, -21, NA, NA))
+  expect_equal(
+    stringToNum(string, uloqMode = ULOQMode$ignore),
+    c(21, NA, NA, -21, NA, NA)
+  )
 })
 
 
@@ -66,30 +84,58 @@ test_that("It can calculate the arithmetic mean and standard deviation (default)
   meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2))
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 3:6, 8), tolerance = 1e-06)
-  expect_equal(meanDataSet$yErrorValues, c(NaN, rep(sqrt(2), 4), NaN), tolerance = 1e-06)
+  expect_equal(
+    meanDataSet$yErrorValues,
+    c(NaN, rep(sqrt(2), 4), NaN),
+    tolerance = 1e-06
+  )
 })
 
 test_that("It can calculate the geometric mean and standard deviation", {
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), method = "geometric")
+  meanDataSet <- calculateMeanDataSet(
+    list(dataSet1, dataSet2),
+    method = "geometric"
+  )
   expect_equal(meanDataSet$xValues, 1:6)
-  expect_equal(meanDataSet$yValues, c(
-    1, geomean(c(2, 4)), geomean(c(3, 5)),
-    geomean(c(4, 6)), geomean(c(5, 7)), 8
-  ))
-  expect_equal(meanDataSet$yErrorValues, c(
-    NaN, geosd(c(2, 4)), geosd(c(3, 5)),
-    geosd(c(4, 6)), geosd(c(5, 7)), NaN
-  ),
-  tolerance = 1e-06
+  expect_equal(
+    meanDataSet$yValues,
+    c(
+      1,
+      geomean(c(2, 4)),
+      geomean(c(3, 5)),
+      geomean(c(4, 6)),
+      geomean(c(5, 7)),
+      8
+    )
+  )
+  expect_equal(
+    meanDataSet$yErrorValues,
+    c(
+      NaN,
+      geosd(c(2, 4)),
+      geosd(c(3, 5)),
+      geosd(c(4, 6)),
+      geosd(c(5, 7)),
+      NaN
+    ),
+    tolerance = 1e-06
   )
 })
 
 test_that("It can convert values to outputXunit and outputYunit", {
   # input units are "h" and "mg/l"
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), outputXunit = "min", outputYunit = "µg/l")
+  meanDataSet <- calculateMeanDataSet(
+    list(dataSet1, dataSet2),
+    outputXunit = "min",
+    outputYunit = "µg/l"
+  )
   expect_equal(meanDataSet$xValues, seq(60, 360, 60))
   expect_equal(meanDataSet$yValues, c(1, 3:6, 8) * 1000, tolerance = 1e-06)
-  expect_equal(meanDataSet$yErrorValues, c(NaN, rep(sqrt(2e06), 4), NaN), tolerance = 1e-06)
+  expect_equal(
+    meanDataSet$yErrorValues,
+    c(NaN, rep(sqrt(2e06), 4), NaN),
+    tolerance = 1e-06
+  )
 })
 
 test_that("It can convert values to xUnit and yUnit of first data set, with given molWeights", {
@@ -99,7 +145,10 @@ test_that("It can convert values to xUnit and yUnit of first data set, with give
   dataSet2$molWeight <- 4
   dataSet2$setValues(xValues = seq(120, 360, 60), yValues = 4:8)
   dataSet2$xUnit <- "min"
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), outputMolWeight = 5)
+  meanDataSet <- calculateMeanDataSet(
+    list(dataSet1, dataSet2),
+    outputMolWeight = 5
+  )
   expect_equal(meanDataSet$molWeight, 5)
   expect_equal(meanDataSet$xUnit, "h")
   expect_equal(meanDataSet$xValues, 1:6)
@@ -108,10 +157,18 @@ test_that("It can convert values to xUnit and yUnit of first data set, with give
   # dataSet2 yValues in mmol/l: 1.00 1.25 1.50 1.75 2.00
   # dataSet1 yValues in mg/l: 1 2 3 4 5
   expect_equal(meanDataSet$yValues, c(1, 1.5, 2.125, 2.75, 3.375, 2))
-  expect_equal(meanDataSet$yErrorValues, c(
-    NaN, sd(c(1, 2)), sd(c(1.25, 3)),
-    sd(c(1.5, 4)), sd(c(1.75, 5)), NaN
-  ), tolerance = 1e-06)
+  expect_equal(
+    meanDataSet$yErrorValues,
+    c(
+      NaN,
+      sd(c(1, 2)),
+      sd(c(1.25, 3)),
+      sd(c(1.5, 4)),
+      sd(c(1.75, 5)),
+      NaN
+    ),
+    tolerance = 1e-06
+  )
 })
 
 test_that("It throws an error when xValues can not be converted to same xUnit", {
@@ -120,7 +177,10 @@ test_that("It throws an error when xValues can not be converted to same xUnit", 
   dataSet1$setValues(xValues = 1:5, yValues = 1:5)
   dataSet2$setValues(xValues = 2:6, yValues = 4:8)
   dataSet2$xDimension <- ospsuite::ospDimensions$Flow
-  expect_error(calculateMeanDataSet(list(dataSet1, dataSet2)), "Unit 'l/min' is not defined in dimension 'Time'")
+  expect_error(
+    calculateMeanDataSet(list(dataSet1, dataSet2)),
+    "Unit 'l/min' is not defined in dimension 'Time'"
+  )
 })
 
 test_that("It throws an error when yValues can not be converted to same yUnit", {
@@ -153,7 +213,11 @@ test_that("Only meta data entries that are equal in all inital data sets are set
 test_that("It throws an error when molWeights of data sets are different and no outputMolWeight is given", {
   dataSet1$molWeight <- 1
   dataSet2$molWeight <- 2
-  expect_error(calculateMeanDataSet(list(dataSet1, dataSet2)), messages$errorOutputMolWeightNeeded())
+  expect_error(
+    calculateMeanDataSet(list(dataSet1, dataSet2)),
+    regexp = messages$errorOutputMolWeightNeeded(),
+    fixed = TRUE
+  )
 })
 
 test_that("It can handle the lloqMode argument", {
@@ -163,31 +227,67 @@ test_that("It can handle the lloqMode argument", {
   dataSet2$setValues(xValues = 2:6, yValues = 4:8)
   dataSet2$LLOQ <- 6
   # LLOQ/2 --> no difference
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), lloqMode = "LLOQ/2")
+  meanDataSet <- calculateMeanDataSet(
+    list(dataSet1, dataSet2),
+    lloqMode = "LLOQ/2"
+  )
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 3:6, 8), tolerance = 1e-06)
-  expect_equal(meanDataSet$yErrorValues, c(NaN, rep(sqrt(2), 4), NaN), tolerance = 1e-06)
+  expect_equal(
+    meanDataSet$yErrorValues,
+    c(NaN, rep(sqrt(2), 4), NaN),
+    tolerance = 1e-06
+  )
   # LLOQ
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), lloqMode = "LLOQ")
+  meanDataSet <- calculateMeanDataSet(
+    list(dataSet1, dataSet2),
+    lloqMode = "LLOQ"
+  )
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 4, 4.5, 5, 6, 8), tolerance = 1e-06)
-  expect_equal(meanDataSet$yErrorValues, c(
-    NaN, sd(c(2, 6)), sd(c(3, 6)), sd(c(4, 6)),
-    sd(c(5, 7)), NaN
-  ), tolerance = 1e-06)
+  expect_equal(
+    meanDataSet$yErrorValues,
+    c(
+      NaN,
+      sd(c(2, 6)),
+      sd(c(3, 6)),
+      sd(c(4, 6)),
+      sd(c(5, 7)),
+      NaN
+    ),
+    tolerance = 1e-06
+  )
   # ZERO
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), lloqMode = "ZERO")
+  meanDataSet <- calculateMeanDataSet(
+    list(dataSet1, dataSet2),
+    lloqMode = "ZERO"
+  )
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 1, 1.5, 5, 6, 8), tolerance = 1e-06)
-  expect_equal(meanDataSet$yErrorValues, c(
-    NaN, sd(c(2, 0)), sd(c(3, 0)), sd(c(4, 6)),
-    sd(c(5, 7)), NaN
-  ), tolerance = 1e-06)
+  expect_equal(
+    meanDataSet$yErrorValues,
+    c(
+      NaN,
+      sd(c(2, 0)),
+      sd(c(3, 0)),
+      sd(c(4, 6)),
+      sd(c(5, 7)),
+      NaN
+    ),
+    tolerance = 1e-06
+  )
   # ignore
-  meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2), lloqMode = "ignore")
+  meanDataSet <- calculateMeanDataSet(
+    list(dataSet1, dataSet2),
+    lloqMode = "ignore"
+  )
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 2, 3, 5, 6, 8), tolerance = 1e-06)
-  expect_equal(meanDataSet$yErrorValues, c(NaN, NaN, NaN, sd(c(4, 6)), sd(c(5, 7)), NaN), tolerance = 1e-06)
+  expect_equal(
+    meanDataSet$yErrorValues,
+    c(NaN, NaN, NaN, sd(c(4, 6)), sd(c(5, 7)), NaN),
+    tolerance = 1e-06
+  )
 })
 
 test_that("It sets the LLOQ if it is given for any of the original data sets", {
