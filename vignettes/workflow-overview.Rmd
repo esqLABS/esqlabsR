@@ -2,7 +2,7 @@
 title: "Overview"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{esqlabsR-workflow-overview}
+  %\VignetteIndexEntry{workflow-overview}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -36,20 +36,22 @@ structure required for the workflows.
 The output is a `ProjectConfiguration` object that will be used 
 in many steps during the rest of the process.
 
-Learn more in `vignette("esqlabsR-project-structure")`.
+**Version Control**: You can create JSON snapshots of your project configuration for team collaboration and version control using `snapshotProjectConfiguration()` and `restoreProjectConfiguration()`.
+
+Learn more in `vignette("project-structure")`.
 
 ## 2. Design Scenarios
 In esqlabsR, simulations are defined as *scenarios*, which are set up during this
 step.
 
-Learn more in `vignette("esqlabsR-design-scenarios")`.
+Learn more in `vignette("design-scenarios")`.
 
 ## 3. Run Simulations
 After scenarios have been set up, the simulations are run, and the results are returned.
 
-Learn more in `vignette("esqlabsR-run-simulations")`.
+Learn more in `vignette("run-simulations")`.
 
 ## 4. Plot Results
 `esqlabsR` implements convenient and automated ways to generate various plots for visual representation of simulation results.
 
-Learn more in `vignette("esqlabsR-plot-results")`.
+Learn more in `vignette("plot-results")`.

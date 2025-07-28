@@ -2,7 +2,7 @@
 title: "Sensitivity Analysis"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{esqlabsR-sensitivity}
+  %\VignetteIndexEntry{sensitivity}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
