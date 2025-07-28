@@ -55,6 +55,7 @@ This way, when saving the simulation to PKML and loading in MoBi, the loaded sim
 will have the updated name.
 - Fixed a bug in `createPlotsFromExcel()` when subtitle of PlotConfiguration was
 not applied (\#845).
+- Added example usage of `sensitivityTornadoPlot()` to the sensitivity analysis vignette (#847).
 
 # esqlabsR 5.4.0
 
