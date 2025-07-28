@@ -22,6 +22,9 @@
 #' during sensitivity analysis used in the tornado plot. Both the `parameterFactor`
 #' and its reciprocal (`1/parameterFactor`) must be included in the
 #' `variationRange` specified in the `sensitivityCalculation`. Default is 0.1.
+#' @param xAxisZoomRange Numeric vector of length 2; specifies the x-axis limits
+#' to zoom into. This does not remove any data but constrains the visible
+#' plotting range for improved readability.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics.
 #'
@@ -99,6 +102,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
                                    parameterPaths = NULL,
                                    pkParameters = NULL,
                                    parameterFactor = 0.1,
+                                   xAxisZoomRange = NULL,
                                    defaultPlotConfiguration = NULL) {
   # Input validation -------------------------------------
 
@@ -111,6 +115,10 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   .validateCharVectors(outputPaths, nullAllowed = TRUE)
   .validateCharVectors(parameterPaths, nullAllowed = TRUE)
   .validateCharVectors(pkParameters, nullAllowed = TRUE)
+  ospsuite.utils::validateIsNumeric(xAxisZoomRange, nullAllowed = TRUE)
+  if (!is.null(xAxisZoomRange)) {
+    ospsuite.utils::validateIsOfLength(xAxisZoomRange, 2)
+  }
 
   data <- sensitivityCalculation$pkData
 
@@ -184,6 +192,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   for (outputPath in names(splitData)) {
     lsPlots[[outputPath]] <- .createTornadoPlot(
       splitData[[outputPath]],
+      xAxisZoomRange = xAxisZoomRange,
       defaultPlotConfiguration = customPlotConfiguration
     )
   }
@@ -194,6 +203,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .createTornadoPlot <- function(data,
+                               xAxisZoomRange = NULL,
                                defaultPlotConfiguration) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration$clone()
@@ -202,7 +212,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     list(title = unique(data$OutputPath))
   )
 
-  # calculate x-axis limits
+  # adjust x-axis limits to be symmetric around 0
   pLimits <- .calculateLimits(data$PKPercentChange)
   pLimits[1] <- -1 * max(abs(pLimits))
   pLimits[2] <- max(abs(pLimits))
@@ -274,6 +284,16 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       plot <- plot + scale_fill_manual(
         values = colorspace::lighten(pColor, amount = 0.2)
       )
+    }
+
+    # apply x-axis zoom range if specified
+    if (!is.null(xAxisZoomRange)) {
+      plot <- plot +
+        coord_cartesian(
+          xlim = xAxisZoomRange,
+          expand = TRUE,
+          clip = "on"
+        )
     }
 
     plotList[[param]] <- plot
