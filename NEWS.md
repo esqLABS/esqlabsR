@@ -49,6 +49,8 @@ the Excel configuration files and the JSON snapshot.
 - Fixed a bug when the dimension in the y-axis label of `sensitivityTimeProfiles()` 
 did not match the unit (\#823).
 - `sensitivityTimeProfiles()` accepts a `DataSet` or a list of `DataSet` objects for `observedData` (\#831).
+- `sensitivityTornadoPlot()` accepts a new `xAxisZoomRange` parameter to control the 
+visible x-axis range in the plot (\#840).
 - When creating a scenario, the name of the scenario is set as the name of the simulation.
 This way, when saving the simulation to PKML and loading in MoBi, the loaded simulation
 will have the updated name.
