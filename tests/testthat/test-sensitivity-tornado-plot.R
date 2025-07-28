@@ -36,7 +36,12 @@ results <- sensitivityCalculation(
 test_that("sensitivityTornadoPlot fails with incorrect input", {
   expect_error(
     sensitivityTornadoPlot("x"),
-    "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
+    regexp = messages$errorWrongType(
+      "sensitivityCalculation",
+      "character",
+      "SensitivityCalculation"
+    ),
+    fixed = TRUE
   )
 })
 
