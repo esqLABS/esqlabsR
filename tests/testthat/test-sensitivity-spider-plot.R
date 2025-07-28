@@ -35,7 +35,12 @@ results <- sensitivityCalculation(
 test_that("sensitivitySpiderPlot fails with invalid input", {
   expect_error(
     sensitivitySpiderPlot("x"),
-    "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
+    regexp = messages$errorWrongType(
+      "sensitivityCalculation",
+      "character",
+      "SensitivityCalculation"
+    ),
+    fixed = TRUE
   )
 })
 
@@ -138,7 +143,8 @@ test_that("sensitivitySpiderPlot correctly applies absolute y-axis values correc
 
 test_that("sensitivitySpiderPlot applies absolute x-axis values correctly", {
   set.seed(123)
-  p <- sensitivitySpiderPlot(results,
+  p <- sensitivitySpiderPlot(
+    results,
     xAxisType = "absolute",
     # select parameter paths with non-negative values
     parameterPaths = parameterPaths[2:3]
@@ -155,13 +161,19 @@ test_that("sensitivitySpiderPlot applies absolute x-axis values correctly", {
 
 test_that("sensitivitySpiderPlot applies absolute x- and y-axis values correctly", {
   set.seed(123)
-  p1 <- sensitivitySpiderPlot(results,
-    xAxisType = "absolute", yAxisType = "absolute",
-    xAxisScale = "log", yAxisScale = "lin"
+  p1 <- sensitivitySpiderPlot(
+    results,
+    xAxisType = "absolute",
+    yAxisType = "absolute",
+    xAxisScale = "log",
+    yAxisScale = "lin"
   ) # default scales
-  p2 <- sensitivitySpiderPlot(results,
-    xAxisType = "absolute", yAxisType = "absolute",
-    xAxisScale = "lin", yAxisScale = "log"
+  p2 <- sensitivitySpiderPlot(
+    results,
+    xAxisType = "absolute",
+    yAxisType = "absolute",
+    xAxisScale = "lin",
+    yAxisScale = "log"
   )
 
   expect_snapshot(extractAxisRange(p1))
@@ -170,10 +182,16 @@ test_that("sensitivitySpiderPlot applies absolute x- and y-axis values correctly
 
 test_that("sensitivitySpiderPlot applies free scaling with absolute y-values", {
   set.seed(123)
-  p <- sensitivitySpiderPlot(results, yAxisType = "absolute", yAxisFacetScales = "free")
+  p <- sensitivitySpiderPlot(
+    results,
+    yAxisType = "absolute",
+    yAxisFacetScales = "free"
+  )
   pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
   plotParams <- list(
-    unlist(plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)),
+    unlist(
+      plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)
+    ),
     unlist(plotParams <- purrr::map(pbs, ~ .x$plot$labels$y))
   )
 
@@ -189,7 +207,10 @@ test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
   myPlotConfiguration$xAxisScale <- "lin"
   myPlotConfiguration$yAxisScale <- "log"
 
-  p <- sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
+  p <- sensitivitySpiderPlot(
+    results,
+    defaultPlotConfiguration = myPlotConfiguration
+  )
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
   expect_equal(pb$layout$panel_scales_x[[1]]$trans$name, "identity")
@@ -201,9 +222,11 @@ test_that("sensitivitySpiderPlot signature overrides defaultPlotConfiguration", 
   myPlotConfiguration$xAxisScale <- "lin" # to be overridden
   myPlotConfiguration$yAxisScale <- "log" # to be overridden
 
-  p <- sensitivitySpiderPlot(results,
+  p <- sensitivitySpiderPlot(
+    results,
     defaultPlotConfiguration = myPlotConfiguration,
-    xAxisScale = "log", yAxisScale = "lin"
+    xAxisScale = "log",
+    yAxisScale = "lin"
   )
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
