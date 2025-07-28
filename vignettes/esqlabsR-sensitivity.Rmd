@@ -17,27 +17,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(esqlabsR)
-```
-
-```{r, echo = FALSE, results = "hide", message = FALSE}
-library(esqlabsR)
-projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
-dataSheets <- "Laskin 1982.Group A"
-observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = "TestScenario",
-  projectConfiguration = projectConfiguration
-)
-
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-
-simulatedScenarios <- runScenarios(
-  scenarios = scenarios
-)
-```
 
 ### Overview
 
@@ -53,23 +32,37 @@ This vignette demonstrates a complete sensitivity analysis workflow in
 simulation, define and vary selected parameters, calculate
 sensitivities, and visualize the impact on PK metrics.
 
+
 ### Running the sensitivity analysis
+
+We begin by loading a simulation of aciclovir from the package example data:
+
+```{r load, message = FALSE}
+library(esqlabsR)
+
+simulationFilePath <- system.file(
+  "extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml",
+  package = "esqlabsR"
+)
+
+simulation <- loadSimulation(simulationFilePath)
+```
+
 
 The `sensitivityCalculation()` function in `{esqlabsR}` automates the analysis
 process by re-running the simulation with scaled input parameters. By default, 
 each parameter is varied from 0.1× to 10× its original value, which can be 
-customized via the `variationRange` argument.
+customized using the `variationRange` argument.
 
 The function returns a structured list containing the varied parameters, 
 simulation results, and a data frame of calculated PK metrics for each variation.
 
 
 In the following example, we analyze how changes in *lipophilicity*,
-*dose*, and *glomerular filtration (GFR) fraction* affect the
+*dose*, and *glomerular filtration rate (GFR fraction)* affect the
 pharmacokinetics of aciclovir:
 
 ```{r analysis}
-simulation <- simulatedScenarios$TestScenario$simulation
 outputPaths <- enum(list(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 ))
@@ -78,6 +71,7 @@ parameterPaths <- c(
   "Dose" = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
 )
+
 analysis <- sensitivityCalculation(simulation, outputPaths, parameterPaths)
 head(analysis$pkData)
 ```
@@ -204,7 +198,7 @@ can pass a *named vector* to the `parameterPaths` argument, where the
 names will be used as labels instead of full paths.
 
 ```{r custom-analysis}
-simulation <- simulatedScenarios$TestScenario$simulation
+simulation <- loadSimulation(simulationFilePath)
 customOutputPaths <- enum(list(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 ))
