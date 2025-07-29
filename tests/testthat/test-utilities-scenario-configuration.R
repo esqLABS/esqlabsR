@@ -345,7 +345,8 @@ test_that("It throws an error when no population is specified for a population s
 
   expect_error(
     createScenarios(scenarioConfigurations = scenarioConfigurations),
-    messages$noPopulationIdForPopulationScenario("PopulationScenario")
+    regexp = messages$noPopulationIdForPopulationScenario("PopulationScenario"),
+    fixed = TRUE
   )
 })
 
