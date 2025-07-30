@@ -58,6 +58,7 @@ will have the updated name.
 - Fixed a bug in `createPlotsFromExcel()` when subtitle of PlotConfiguration was
 not applied (\#845).
 - Added example usage of `sensitivityTornadoPlot()` to the sensitivity analysis vignette (#847).
+- Corrected x-axis label in `sensitivityTornadoPlot()` to reflect changes in PK parameter (\#861).
 
 # esqlabsR 5.4.0
 
