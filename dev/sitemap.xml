@@ -1,18 +1,18 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/CODE_OF_CONDUCT.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/LICENSE.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-advanced.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-design-scenarios.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-plot-results.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-project-structure.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-run-simulations.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-sensitivity.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-workflow-overview.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/advanced.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/design-scenarios.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/index.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/plot-results.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/presentations/_introduction-to-esqlabsR.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/presentations.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/project-migration-guide.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/project-structure.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/run-simulations.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/workflow-overview.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/authors.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/index.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/news/index.html</loc></url>

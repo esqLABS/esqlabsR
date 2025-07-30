@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9012</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9013</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,16 +21,16 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-workflow-overview.html">Overview</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-project-structure.html">1. Initialize a Project</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-design-scenarios.html">2. Design Scenarios</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-run-simulations.html">3. Run Simulations</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-plot-results.html">4. Plot Results</a></li>
+    <li><a class="dropdown-item" href="../articles/workflow-overview.html">Overview</a></li>
+    <li><a class="dropdown-item" href="../articles/project-structure.html">1. Initialize a Project</a></li>
+    <li><a class="dropdown-item" href="../articles/design-scenarios.html">2. Design Scenarios</a></li>
+    <li><a class="dropdown-item" href="../articles/run-simulations.html">3. Run Simulations</a></li>
+    <li><a class="dropdown-item" href="../articles/plot-results.html">4. Plot Results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
     <li><a class="dropdown-item" href="../articles/presentations.html">Presentations</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/advanced.html">Advanced Topics</a></li>
     <li><a class="dropdown-item" href="../articles/project-migration-guide.html">Migrating Project Structure Versions</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -63,8 +63,17 @@
 <div class="section level3">
 <h3 id="major-changes-development-version">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-development-version"></a></h3>
 <ul><li><p>User-defined parameters passed to the <code><a href="../reference/createScenarios.html">createScenarios()</a></code> or <code>Scenario$new()</code> in the <code>customParams</code> argument are applied last. Up to this version, they were overwritten by the administration protocol (<a href="https://github.com/esqLABS/esqlabsR/issues/817" class="external-link">#817</a>).</p></li>
-<li><p>Added <code><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration()</a></code> and <code><a href="../reference/restoreProjectConfiguration.html">restoreProjectConfiguration()</a></code> functions to support version control and project sharing of project configurations.</p></li>
-<li><p>Added <code><a href="../reference/projectConfigurationStatus.html">projectConfigurationStatus()</a></code> function to check the status of the project configuration, the Excel configuration files and the JSON snapshot.</p></li>
+<li>
+<p>Project Configuration Version Control - Added comprehensive snapshot and restore functionality for project configurations:</p>
+<ul><li>
+<code><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration()</a></code> exports all Excel configuration files to a single JSON file for version control</li>
+<li>
+<code><a href="../reference/restoreProjectConfiguration.html">restoreProjectConfiguration()</a></code> recreates Excel files from JSON snapshots for easy project sharing</li>
+<li>
+<code><a href="../reference/projectConfigurationStatus.html">projectConfigurationStatus()</a></code> checks synchronization between Excel files and JSON snapshots</li>
+<li>Perfect for team collaboration, Git version control, and project backup strategies</li>
+<li>Comprehensive documentation for version control features is now included in <code><a href="../articles/project-structure.html">vignette("project-structure")</a></code>.</li>
+</ul></li>
 <li><p><code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> now accepts a (named) list of <code>DataCombined</code> objects as input to create plots defined in the <code>plotGridNames</code> argument. Missing <code>DataCombined</code> will be created from the Excel file (default behavior).</p></li>
 </ul></div>
 <div class="section level3">
