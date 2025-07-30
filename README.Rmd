@@ -176,11 +176,11 @@ plots$Aciclovir
 
 You can find more information on specific topics in dedicated vignettes:
 
-  - Start with `vignette("esqlabsR-workflow-overview")` to learn about the esqlabsR's streamlined workflow.
-  - `vignette("esqlabsR-project-structure")` details the structure and purpose of each component file and directory of an esqlabsR project.
-  - `vignette("esqlabsR-design-scenarios")` explains how you can design your own simulations only using excel files.
-  - `vignette("esqlabsR-run-simulations")` describes all you need to know to run your customized simulations.
-  - `vignette("esqlabsR-plot-results")` explains how to generate visualizations from simulations.
+  - Start with `vignette("workflow-overview")` to learn about the esqlabsR's streamlined workflow.
+- `vignette("project-structure")` details the structure and purpose of each component file and directory of an esqlabsR project.
+- `vignette("design-scenarios")` explains how you can design your own simulations only using excel files.
+- `vignette("run-simulations")` describes all you need to know to run your customized simulations.
+- `vignette("plot-results")` explains how to generate visualizations from simulations.
 
 ## Related Work
 

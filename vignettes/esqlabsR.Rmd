@@ -45,7 +45,7 @@ initProject()
 ```
 
 It will create the expected simulation project's folder structure, which is described 
-in details in `vignette("esqlabsR-project-structure")`.
+in details in `vignette("project-structure")`.
 
 Each one of these folders contains a series of `.xlsx` files with
 specific purpose. They are all linked to the project through the
@@ -86,6 +86,26 @@ run the following:
 ```{r, warning=FALSE, message = FALSE}
 my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath())
 ```
+
+## Version Control and Project Sharing
+
+`esqlabsR` provides powerful version control capabilities through project configuration snapshots. This allows you to:
+
+- **Track changes** to your project configuration in version control systems like Git
+- **Share projects** with team members easily  
+- **Create backups** before making significant changes
+- **Ensure reproducibility** across different environments
+
+```{r, eval=FALSE}
+# Create a JSON snapshot of your project configuration
+snapshotProjectConfiguration(my_project_configuration)
+
+# Share the JSON file with team members or commit to version control
+# Later, restore the project configuration from the snapshot
+restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
+```
+
+For comprehensive information about version control features, workflows, and best practices, see the "Version Control and Project Sharing" section in `vignette("project-structure")`.
 
 ## Design Scenarios
 
@@ -128,7 +148,7 @@ the`Individuals.xlsx` file and/or specify a parameter sheet with this
 `IndividualId` in the same file.
 
 For more information on all the scenario parameters that can be setup,
-read `vignette("esqlabsR-design-scenarios")`.
+read `vignette("design-scenarios")`.
 
 ## Run Scenarios
 
@@ -172,7 +192,7 @@ myScenarioResults <- loadScenarioResults(
 ```
 
 Learn more on how to run simulations in
-`vignette("esqlabsR-run-simulations")`.
+`vignette("run-simulations")`.
 
 ## Plot Results
 
@@ -218,4 +238,4 @@ plotObservedVsSimulated(my_datacombined)
 ```
 
 Many other plot types are available in `{esqlabsR}`, read
-`vignette("esqlabsR-plot-results")` to learn more.
+`vignette("plot-results")` to learn more.

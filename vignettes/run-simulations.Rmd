@@ -2,7 +2,7 @@
 title: "3. Run Simulations"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{esqlabsR-run-simulations}
+  %\VignetteIndexEntry{run-simulations}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -116,5 +116,5 @@ run is `saveScenarioResults`. Then, you will be able to restore the
 results using `loadScenarioResults`.
 
 Now that the results have been generated, you can proceed to the next
-step in the `vignette("esqlabsR-plot-results")`.
+step in the `vignette("plot-results")`.
 <!-- Read the following sections to learn more about the options for running simulations. -->
