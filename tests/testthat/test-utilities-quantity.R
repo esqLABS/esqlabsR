@@ -1,11 +1,19 @@
-simulation <- loadSimulation(system.file("extdata", "Aciclovir.pkml", package = "ospsuite"))
+simulation <- loadSimulation(system.file(
+  "extdata",
+  "Aciclovir.pkml",
+  package = "ospsuite"
+))
 simTree <- getSimulationTree(simulation)
 
 test_that("It throws an error if the quantity does not come from a molecule", {
   path <- simTree$Organism$Weight
   quantity <- getQuantity(path, simulation)
 
-  expect_error(getMoleculeNameFromQuantity(quantity), messages$cannotGetMoleculeFromQuantity(path))
+  expect_error(
+    getMoleculeNameFromQuantity(quantity),
+    regexp = messages$cannotGetMoleculeFromQuantity(path),
+    fixed = TRUE
+  )
 })
 
 test_that("It returns the correct name of the molecule for molecules global parameter", {

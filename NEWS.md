@@ -8,11 +8,41 @@
 `Protein Ontogenies` is a comma-separated list of protein names and ontogeny names pairs. For example: 
 `CYP3A4:CYP3A4,CYP2D6:CYP2C8` will create a CYP3A4 ontogeny for the protein CYP3A4 and a CYP2D6 ontogeny for the protein CYP2C8. (#825)
 
+## Breaking changes
+
+- The function `createDataCombinedFromExcel()` gets a new signature. The arguments 
+`file` and `sheet` are removed. The file from which the `DataCombined` objects 
+are created is now passed as part of the `ProjectConfiguration` passed as 
+`projectConfiguration` argument, the sheet is always `DataCombined`.
+
+- The function `createDataCombinedFromExcel()` gets a new argument `plotGridNames`.
+The `plotGridNames` argument is a character vector of names of the plots 
+specified in the sheet `plotGrids`. The function will then create and return 
+`DataCombined` used in the specified plots. The new argument can be combined with 
+`dataCombinedNames`.Useful in combination with the new argument `dataCombinedList` 
+of the function `createPlotsFromExcel()`.
+
+- Argument `dataCombinedNames = NULL` of the function `createDataCombinedFromExcel()`
+does not create `DataCombined` for all entries in the excel file any more. If 
+`dataCombinedNames = NULL`, `plotGridNames` must be specified. If both arguments
+are `NULL`, an empty list is returned.
+
 ## Major changes
 
 - User-defined parameters passed to the `createScenarios()` or `Scenario$new()` 
 in the `customParams` argument are applied last. Up to this version, they 
-were overwritten by the administration protocol (\#817)
+were overwritten by the administration protocol (\#817).
+
+- Project Configuration Version Control - Added comprehensive snapshot and restore functionality for project configurations:
+  - `snapshotProjectConfiguration()` exports all Excel configuration files to a single JSON file for version control
+  - `restoreProjectConfiguration()` recreates Excel files from JSON snapshots for easy project sharing
+  - `projectConfigurationStatus()` checks synchronization between Excel files and JSON snapshots
+  - Perfect for team collaboration, Git version control, and project backup strategies
+  - Comprehensive documentation for version control features is now included in `vignette("project-structure")`.
+
+- `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
+  to create plots defined in the `plotGridNames` argument. Missing `DataCombined`
+  will be created from the Excel file (default behavior).
 
 - New function `addScenariosToExcel()` to add scenarios configurations to the `Scenarios.xlsx` file.
 Existing scenarios will not be overwriten. If the scenario configuration file 
@@ -27,12 +57,22 @@ for all simulations of a PK-Sim snapshot.
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
 - Fixed a bug when the dimension in the y-axis label of `sensitivityTimeProfiles()` 
 did not match the unit (\#823).
+- `sensitivityTimeProfiles()` accepts a `DataSet` or a list of `DataSet` objects for `observedData` (\#831).
+- `sensitivityTornadoPlot()` accepts a new `xAxisZoomRange` parameter to control the 
+visible x-axis range in the plot (\#840).
+- When creating a scenario, the name of the scenario is set as the name of the simulation.
+This way, when saving the simulation to PKML and loading in MoBi, the loaded simulation
+will have the updated name.
+- Fixed a bug in `createPlotsFromExcel()` when subtitle of PlotConfiguration was
+not applied (\#845).
+- Added example usage of `sensitivityTornadoPlot()` to the sensitivity analysis vignette (#847).
 
 # esqlabsR 5.4.0
 
 ## Breaking changes
 
 - {esqlabsR}` now requires `{ospsuite.utils}` version \>= 1.7.0.
+
 - The Importer configuration provided with the template project has been
   updated to include `Gender` in the naming pattern. The new naming pattern is as follows:
   
@@ -61,7 +101,9 @@ did not match the unit (\#823).
   modifying the projectConfiguration object directly, the package will look for
   matching environment variables and build the paths accordingly. A message is
   shown to the user to make this transparent.
+  
 - Complete `sensitivitySpiderPlot` documentation (\#799)
+
 - `parameterPaths` in `sensitivityCalculation()` can now be a named vector. 
 The names will be stored and used as custom labels in all relevant plotting functions (\#811).
 
@@ -69,9 +111,12 @@ The names will be stored and used as custom labels in all relevant plotting func
 ## Minor improvements and bug fixes
 
 - Improved print outputs for all classes
+
 - Classes do not inherit from the deprecated `Printable` class from the `{ospsuite.utils}` package.
+
 - Print methods for all classes are now implemented using the `ospPrint\*` functions 
 introduced in version 1.7.0. of the `{ospsuite.utils}` package.
+
 - Fix when `createPlotsFromExcel` or `createDataCombinedFromExcel` would return 
 wrong names of DataCombined for which the output path for a simulation scenario is not defined (\#800).
   

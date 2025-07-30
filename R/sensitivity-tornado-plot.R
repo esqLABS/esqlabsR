@@ -22,6 +22,9 @@
 #' during sensitivity analysis used in the tornado plot. Both the `parameterFactor`
 #' and its reciprocal (`1/parameterFactor`) must be included in the
 #' `variationRange` specified in the `sensitivityCalculation`. Default is 0.1.
+#' @param xAxisZoomRange Numeric vector of length 2; specifies the x-axis limits
+#' to zoom into. This does not remove any data but constrains the visible
+#' plotting range for improved readability.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
 #' used to customize plot aesthetics.
 #'
@@ -43,7 +46,7 @@
 #'
 #' @family sensitivity-calculation
 #'
-#' @return A `patchwork` object containing the combined ggplot objects if a
+#' @returns A `patchwork` object containing the combined ggplot objects if a
 #' single output path is specified, or a list of `patchwork` objects for
 #' multiple output paths.
 #'
@@ -99,6 +102,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
                                    parameterPaths = NULL,
                                    pkParameters = NULL,
                                    parameterFactor = 0.1,
+                                   xAxisZoomRange = NULL,
                                    defaultPlotConfiguration = NULL) {
   # Input validation -------------------------------------
 
@@ -111,6 +115,10 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   .validateCharVectors(outputPaths, nullAllowed = TRUE)
   .validateCharVectors(parameterPaths, nullAllowed = TRUE)
   .validateCharVectors(pkParameters, nullAllowed = TRUE)
+  ospsuite.utils::validateIsNumeric(xAxisZoomRange, nullAllowed = TRUE)
+  if (!is.null(xAxisZoomRange)) {
+    ospsuite.utils::validateIsOfLength(xAxisZoomRange, 2)
+  }
 
   data <- sensitivityCalculation$pkData
 
@@ -128,8 +136,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     subtitle = NULL,
     title = NULL,
     titleSize = 14,
-    yLabel = "Parameter",
-    xLabel = "Input parameter value [% of reference]"
+    xLabel = "Input parameter value [% of reference]",
+    yLabel = "Parameter"
   )
 
   # apply configuration overrides and validate
@@ -184,6 +192,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   for (outputPath in names(splitData)) {
     lsPlots[[outputPath]] <- .createTornadoPlot(
       splitData[[outputPath]],
+      xAxisZoomRange = xAxisZoomRange,
       defaultPlotConfiguration = customPlotConfiguration
     )
   }
@@ -194,6 +203,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 #' @keywords internal
 #' @noRd
 .createTornadoPlot <- function(data,
+                               xAxisZoomRange = NULL,
                                defaultPlotConfiguration) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration$clone()
@@ -202,7 +212,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     list(title = unique(data$OutputPath))
   )
 
-  # calculate x-axis limits
+  # adjust x-axis limits to be symmetric around 0
   pLimits <- .calculateLimits(data$PKPercentChange)
   pLimits[1] <- -1 * max(abs(pLimits))
   pLimits[2] <- max(abs(pLimits))
@@ -219,8 +229,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     plot <- ggplot(
       dataSubset,
       aes(
-        x = ParameterPathLabel,
-        y = PKPercentChange,
+        x = PKPercentChange,
+        y = ParameterPathLabel,
         fill = as.factor(ParameterFactor)
       )
     ) +
@@ -228,18 +238,17 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
         color = "grey",
         width = 0.9,
         na.rm = TRUE
-      ) +
-      coord_flip()
+      )
 
     plot <- plot +
-      geom_hline(
-        yintercept = 0,
+      geom_vline(
+        xintercept = 0,
         color = "grey",
         linewidth = 1
       )
 
     plot <- plot +
-      scale_y_continuous(
+      scale_x_continuous(
         limits = pLimits,
         breaks = scales::breaks_extended(),
         labels = scales::label_number_auto()
@@ -250,8 +259,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     plot <- plot +
       facet_wrap(~PKParameter, scales = "fixed") +
       labs(
-        x = plotConfiguration$yLabel,
-        y = plotConfiguration$xLabel,
+        x = plotConfiguration$xLabel,
+        y = plotConfiguration$yLabel,
         title = NULL,
         fill = plotConfiguration$legendTitle
       ) +
@@ -275,6 +284,16 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       plot <- plot + scale_fill_manual(
         values = colorspace::lighten(pColor, amount = 0.2)
       )
+    }
+
+    # apply x-axis zoom range if specified
+    if (!is.null(xAxisZoomRange)) {
+      plot <- plot +
+        coord_cartesian(
+          xlim = xAxisZoomRange,
+          expand = TRUE,
+          clip = "on"
+        )
     }
 
     plotList[[param]] <- plot

@@ -8,6 +8,7 @@ createPlotsFromExcel(
   plotGridNames = NULL,
   simulatedScenarios = NULL,
   observedData = NULL,
+  dataCombinedList = NULL,
   projectConfiguration,
   outputFolder = NULL,
   stopIfNotFound = TRUE
@@ -24,6 +25,11 @@ Can be \code{NULL} if no simulated data is required for the plots.}
 
 \item{observedData}{A list of \code{DataSet} objects. Can be \code{NULL} if no observed
 data is required for the plots.}
+
+\item{dataCombinedList}{A (named) list of \code{DataCombined} objects as input
+to create plots defined in the \code{plotGridNames} argument.
+Missing \code{DataCombined} will be created from the Excel file (default behavior).
+Defaults to \code{NULL}, in which case all \code{DataCombined} are created from Excel.}
 
 \item{projectConfiguration}{Object of class \code{ProjectConfiguration}
 that contains information about the output paths and the excel file

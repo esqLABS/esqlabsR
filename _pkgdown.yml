@@ -17,6 +17,7 @@ reference:
   contents:
   - contains("Project")
   - contains("Scenario")
+  - projectConfigurationStatus
   - createPlotsFromExcel
   - initProject
 - title: Helpers for data import, wrangling, and export
@@ -75,16 +76,16 @@ articles:
 - title: esqlabsR Workflow
   navbar: esqlabsR Workflow
   contents:
-  - esqlabsR-workflow-overview
-  - esqlabsR-project-structure
-  - esqlabsR-design-scenarios
-  - esqlabsR-run-simulations
-  - esqlabsR-plot-results
+  - workflow-overview
+  - project-structure
+  - design-scenarios
+  - run-simulations
+  - plot-results
 - title: Miscellaneous
   navbar: Miscellaneous
   contents:
   - presentations
-  - esqlabsR-sensitivity
-  - esqlabsR-advanced
+  - sensitivity
+  - advanced
   - project-migration-guide
 

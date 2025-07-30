@@ -4,7 +4,7 @@
 #' to simulation runs. If `NULL`, default options are used.
 #' @param scenarios List of `Scenario` objects to be simulated.
 #'
-#' @return A named list, where the names are scenario names, and the values are
+#' @returns A named list, where the names are scenario names, and the values are
 #' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
 #' `results` being `SimulatioResults` object produced by running the simulation,
 #' `outputValues` the output values of the `SimulationResults`, and `population`
@@ -138,7 +138,7 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 #' @param stopIfParameterNotFound Boolean. If `TRUE` (default) and a custom parameter is not found, an error is thrown. If `FALSE`, non-existing parameters
 #' are ignored.
 #'
-#' @return Named list of `Scenario` objects.
+#' @returns Named list of `Scenario` objects.
 #' @export
 createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfParameterNotFound = TRUE) {
   .validateScenarioConfigurations(scenarioConfigurations)
@@ -171,7 +171,7 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfP
 #'
 #' @export
 #'
-#' @return `outputFolder` or the created output folder path, if no `outputFolder` was provided.
+#' @returns `outputFolder` or the created output folder path, if no `outputFolder` was provided.
 #'
 #' @examples \dontrun{
 #' projectConfiguration <- esqlabsR::createProjectConfiguration()
@@ -251,7 +251,7 @@ saveScenarioResults <- function(
 #' simulation files being located in the same folder (`resultsFolder`) and have
 #' the names of the scenarios.
 #'
-#' @return A named list, where the names are scenario names, and the values are
+#' @returns A named list, where the names are scenario names, and the values are
 #' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
 #' `results` being `SimulatioResults` object produced by running the simulation,
 #' and `outputValues` the output values of the `SimulationResults`.

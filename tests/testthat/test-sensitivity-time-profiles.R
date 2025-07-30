@@ -44,7 +44,12 @@ obsData <<- loadDataSetsFromExcel(
 test_that("sensitivityTimeProfiles fails with invalid input", {
   expect_error(
     sensitivityTimeProfiles("x"),
-    "argument 'sensitivityCalculation' is of type 'character', but expected 'SensitivityCalculation'"
+    regexp = messages$errorWrongType(
+      "sensitivityCalculation",
+      "character",
+      "SensitivityCalculation"
+    ),
+    fixed = TRUE
   )
 })
 
@@ -111,7 +116,7 @@ test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
 
 test_that("sensitivityTimeProfiles works with observed data", {
   set.seed(123)
-  p <- sensitivityTimeProfiles(results, observedData = obsData)
+  p <- sensitivityTimeProfiles(results, observedData = obsData[[1]])
 
   set.seed(123)
   suppressWarnings(
@@ -127,11 +132,13 @@ test_that("sensitivityTimeProfiles works with observed data", {
 test_that("sensitivityTimeProfiles errors for non-list units", {
   expect_error(
     sensitivityTimeProfiles(results, xUnits = "h"),
-    "argument 'xUnits' is of type 'character', but expected 'list'"
+    regexp = messages$errorWrongType("xUnits", "character", "list"),
+    fixed = TRUE
   )
   expect_error(
     sensitivityTimeProfiles(results, yUnits = "mol/l"),
-    "argument 'yUnits' is of type 'character', but expected 'list'"
+    regexp = messages$errorWrongType("yUnits", "character", "list"),
+    fixed = TRUE
   )
 })
 
@@ -139,18 +146,22 @@ test_that("sensitivityTimeProfiles errors on invalid units", {
   # invalid unit
   expect_error(
     sensitivityTimeProfiles(results, yUnits = list("mol/kg")),
-    "Value 'mol/kg' is not in defined enumeration values"
+    regexp = "is not in defined enumeration values"
   )
   # invalid x-axis unit
   expect_error(
     sensitivityTimeProfiles(results, xUnits = list("mol/l")),
-    "Value 'mol/l' is not in defined enumeration values"
+    regexp = "is not in defined enumeration values"
   )
 })
 
 test_that("sensitivityTimeProfiles applies unit conversion", {
   set.seed(123)
-  p <- sensitivityTimeProfiles(results, xUnits = list("h"), yUnits = list("mol/l"))
+  p <- sensitivityTimeProfiles(
+    results,
+    xUnits = list("h"),
+    yUnits = list("mol/l")
+  )
 
   set.seed(123)
   suppressWarnings(
@@ -206,7 +217,10 @@ test_that("sensitivityTimeProfiles plots are correct for multiple output paths",
 
 test_that("sensitivityTimeProfiles works with multiple outputs and observed data", {
   set.seed(123)
-  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple, observedData = obsData)
+  plotsMultiple <- sensitivityTimeProfiles(
+    resultsMultiple,
+    observedData = obsData
+  )
 
   set.seed(123)
   suppressWarnings(
@@ -220,7 +234,8 @@ test_that("sensitivityTimeProfiles works with multiple outputs and observed data
 # multiple output paths unit conversion
 
 test_that("sensitivityTimeProfiles applies y-unit conversion for multiple paths", {
-  p <- sensitivityTimeProfiles(resultsMultiple,
+  p <- sensitivityTimeProfiles(
+    resultsMultiple,
     yUnits = list("mol/l", "month(s)", "nmol")
   )
 
@@ -228,7 +243,8 @@ test_that("sensitivityTimeProfiles applies y-unit conversion for multiple paths"
 })
 
 test_that("sensitivityTimeProfiles handles y-unit conversion with `NULL` for multiple paths", {
-  p <- sensitivityTimeProfiles(resultsMultiple,
+  p <- sensitivityTimeProfiles(
+    resultsMultiple,
     yUnits = list("mol/l", NULL, "mol")
   )
 
@@ -236,12 +252,8 @@ test_that("sensitivityTimeProfiles handles y-unit conversion with `NULL` for mul
 })
 
 test_that("sensitivityTimeProfiles applies y-unit conversion with a single unit for multiple paths", {
-  p1 <- sensitivityTimeProfiles(resultsMultiple,
-    yUnits = list("mg/ml")
-  )
-  p2 <- sensitivityTimeProfiles(resultsMultiple,
-    yUnits = list("mg/ml", NULL)
-  )
+  p1 <- sensitivityTimeProfiles(resultsMultiple, yUnits = list("mg/ml"))
+  p2 <- sensitivityTimeProfiles(resultsMultiple, yUnits = list("mg/ml", NULL))
 
   expect_snapshot(extractAxisRange(p1))
   expect_identical(
@@ -252,10 +264,12 @@ test_that("sensitivityTimeProfiles applies y-unit conversion with a single unit 
 
 test_that("sensitivityTimeProfiles handles non-convertible y-units for multiple paths", {
   p1 <- sensitivityTimeProfiles(resultsMultiple) # default
-  p2 <- sensitivityTimeProfiles(resultsMultiple, # not converted: all wrong units
+  p2 <- sensitivityTimeProfiles(
+    resultsMultiple, # not converted: all wrong units
     yUnits = list("mol", "kg", "µmol/h")
   )
-  p3 <- sensitivityTimeProfiles(resultsMultiple, # not converted: correct unit wrong path
+  p3 <- sensitivityTimeProfiles(
+    resultsMultiple, # not converted: correct unit wrong path
     yUnits = list("mol", "mol")
   )
 
@@ -284,11 +298,15 @@ obsDataMultiple <- c(obsData1, obsData2)
 names(obsDataMultiple)[2] <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
 obsDataMultiple[[2]]$name <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
 obsDataMultiple[[2]]$addMetaData("Study Id", "Laskin 1982.Group A - Mock")
-obsDataMultiple[[2]]$setValues(obsDataMultiple[[2]]$xValues, obsDataMultiple[[2]]$yValues + 0.1)
+obsDataMultiple[[2]]$setValues(
+  obsDataMultiple[[2]]$xValues,
+  obsDataMultiple[[2]]$yValues + 0.1
+)
 
 test_that("sensitivityTimeProfiles works with multiple observed data with same dimension", {
   set.seed(123)
-  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
+  plotsMultiple <- sensitivityTimeProfiles(
+    resultsMultiple,
     observedData = obsDataMultiple
   )
 
@@ -307,7 +325,8 @@ obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
 
 test_that("sensitivityTimeProfiles works with multiple observed data with different dimensions", {
   set.seed(123)
-  plotsMultiple <- sensitivityTimeProfiles(resultsMultiple,
+  plotsMultiple <- sensitivityTimeProfiles(
+    resultsMultiple,
     observedData = obsDataMultiple
   )
 

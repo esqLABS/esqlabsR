@@ -42,10 +42,11 @@ list should correspond to the \code{outputPaths}, and units conversion will be
 applied accordingly. If \code{NULL}, default units from the simulation results
 will be used.}
 
-\item{observedData}{Optional. A set of \code{DataSet} objects containing observed
-data. If provided, observed data will be plotted together with the simulated data
-based on \code{OutputPath} dimension for direct comparison within the visualizations.
-Will be added only to plots with matching y dimension.}
+\item{observedData}{Optional. A \code{DataSet} or a list of \code{DataSet} objects
+containing observed data. If provided, observed data will be plotted together
+with the simulated data based on \code{OutputPath} dimension for direct comparison
+within the visualizations. Observed data will only be added to plots with
+matching y-dimensions.}
 
 \item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
 used to customize plot aesthetics. Plot-specific settings provided directly

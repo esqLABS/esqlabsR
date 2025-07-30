@@ -97,7 +97,7 @@ initializeSimulation <- function(simulation,
 #' if the have the same value but different formulas (e.g., a constant vs. explicit formula).
 #' If `TRUE`, only values are compared.
 #'
-#' @return Named list with following levels:
+#' @returns Named list with following levels:
 #' - `Parameters` with named lists `In1NotIn2`, `In2NotIn1`, and `Different`,
 #'   holding the `Parameter` objects that are present in the first but not in the second
 #'   simulation, present in the second but not in the first simulation, and
@@ -151,7 +151,7 @@ compareSimulations <- function(simulation1, simulation2, compareFormulasByValue 
 #' function returns a list of all constant parameters located under the
 #' `ProtocolSchemaItem` container of applications defined for the `moleculeNames`.
 #'
-#' @return A list of `Parameter` objects defining the applications in the
+#' @returns A list of `Parameter` objects defining the applications in the
 #' simulation.
 #' @export
 #'

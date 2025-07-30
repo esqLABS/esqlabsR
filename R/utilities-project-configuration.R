@@ -5,7 +5,7 @@
 #' @param path path to the `ProjectConfiguration.xlsx` file. Defaults to the `ProjectConfiguration.xlsx`
 #'   file in the working directory.
 #'
-#' @return Object of type `ProjectConfiguration`
+#' @returns Object of type `ProjectConfiguration`
 #' @export
 createDefaultProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
   lifecycle::deprecate_soft(
@@ -23,7 +23,7 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 #' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx`
 #'  file located in the working directory.
 #'
-#' @return Object of type `ProjectConfiguration`
+#' @returns Object of type `ProjectConfiguration`
 #' @export
 createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
   projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = path)
@@ -81,7 +81,7 @@ initProject <- function(destination = ".", overwrite = FALSE) {
 
 #' Get the path to example ProjectConfiguration.xlsx
 #'
-#' @return A string representing the path to the example ProjectConfiguration.xlsx file
+#' @returns A string representing the path to the example ProjectConfiguration.xlsx file
 #' @export
 #' @examples
 #' exampleProjectConfigurationPath()

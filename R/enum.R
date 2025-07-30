@@ -7,7 +7,7 @@
 #' @param overwrite if TRUE and a `key` exists, it will be overwritten with the
 #'   new value. Otherwise, an error is thrown. Default is `FALSE`.
 #'
-#' @return Enum with added key-value pair.
+#' @returns Enum with added key-value pair.
 #' @export
 #'
 #' @examples
