@@ -1,8 +1,8 @@
 ---
-title: "Sensitivity Analysis"
+title: "Sensitivity Analysis – Plot Customization"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{esqlabsR-sensitivity}
+  %\VignetteIndexEntry{esqlabsR-sensitivity-plots}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
