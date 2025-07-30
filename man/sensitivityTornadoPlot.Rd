@@ -10,6 +10,7 @@ sensitivityTornadoPlot(
   parameterPaths = NULL,
   pkParameters = NULL,
   parameterFactor = 0.1,
+  xAxisZoomRange = NULL,
   defaultPlotConfiguration = NULL
 )
 }
@@ -30,6 +31,10 @@ for each parameter will be displayed as lines.}
 during sensitivity analysis used in the tornado plot. Both the \code{parameterFactor}
 and its reciprocal (\code{1/parameterFactor}) must be included in the
 \code{variationRange} specified in the \code{sensitivityCalculation}. Default is 0.1.}
+
+\item{xAxisZoomRange}{Numeric vector of length 2; specifies the x-axis limits
+to zoom into. This does not remove any data but constrains the visible
+plotting range for improved readability.}
 
 \item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
 used to customize plot aesthetics.
