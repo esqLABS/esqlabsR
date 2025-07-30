@@ -2,7 +2,7 @@
 title: "4. Plot Results"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{esqlabsR-plot-results}
+  %\VignetteIndexEntry{plot-results}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
