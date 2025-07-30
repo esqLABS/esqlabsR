@@ -98,7 +98,6 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
       warning(messages$missingResultsForScenario(scenarioName))
       outputValues <- NULL
     } else {
-      browser()
       outputValues <- getOutputValues(results,
         quantitiesOrPaths = outputQuantities,
         population = population,

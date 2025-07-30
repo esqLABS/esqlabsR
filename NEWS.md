@@ -44,9 +44,6 @@ were overwritten by the administration protocol (\#817).
   to create plots defined in the `plotGridNames` argument. Missing `DataCombined`
   will be created from the Excel file (default behavior).
 
-- New function `addScenariosToExcel()` to add scenarios configurations to the `Scenarios.xlsx` file.
-Existing scenarios will not be overwriten. If the scenario configuration file 
-already contains a scenario with the same name, the resulting file will have a duplicate entry.
 - New function `addPlotsToExcelFromSnapshot()` to add entries for plots defined 
 for all simulations of a PK-Sim snapshot to the `Plots.xlsx` file.
 - New function `createScenarioConfigurationsFromSnapshot()` to create scenario configurations
