@@ -85,8 +85,8 @@ articles:
   navbar: Miscellaneous
   contents:
   - presentations
-  - esqlabsR-sensitivity
-  - esqlabsR-sensitivity-plots
-  - esqlabsR-advanced
+  - sensitivity
+  - sensitivity-plots
+  - advanced
   - project-migration-guide
 
