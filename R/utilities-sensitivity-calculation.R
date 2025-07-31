@@ -608,3 +608,89 @@ saveSensitivityCalculation <- function(sensitivityCalculation,
 
   invisible(NULL)
 }
+
+#' Load Sensitivity Calculation Results
+#'
+#' Restores a previously saved sensitivity calculation from a directory created
+#' with [saveSensitivityCalculation()]. If no simulation object is provided, the
+#' function attempts to load it from the saved simulation file path.
+#'
+#' @param outputDir Path to the directory containing the saved sensitivity
+#' calculation files.
+#' @param simulation Optional. A `Simulation` object. If not provided, the function
+#' will attempt to load the simulation from the path stored in the metadata.
+#'
+#' @return
+#' A named list of class `SensitivityCalculation`.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Load sensitivity analysis result from disk
+#' sensitivityCalculation <- loadSensitivityCalculation("output/my-sensitivity")
+#' }
+loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
+  validateIsString(outputDir)
+  validateIsOfType(simulation, "Simulation", nullAllowed = TRUE)
+
+  metaPath <- file.path(outputDir, "sensitivityCalculation.meta")
+  if (!file.exists(metaPath)) {
+    stop(messages$errorSensitivityCalculationNotFound(metaPath))
+  }
+
+  # Load sensitivityCalculation structure
+  sensitivityCalculation <- readRDS(metaPath)
+
+  # Attempt to load simulation if not provided
+  if (is.null(simulation)) {
+    simFilePath <- sensitivityCalculation$simFilePath
+    simulation <- tryCatch(
+      {
+        ospsuite::loadSimulation(simFilePath)
+      },
+      error = function(e) {
+        stop(messages$errorFailedToLoadSimulation(simFilePath, e$message))
+      }
+    )
+  }
+
+  # Locate simulation result files
+  simResultFiles <- list.files(
+    path = outputDir,
+    pattern = "^simulationResult_\\d+_\\d+\\.csv$",
+    full.names = TRUE
+  )
+
+  variationRange <- unique(sensitivityCalculation$pkData$ParameterFactor)
+  parameterPaths <- sensitivityCalculation$parameterPaths
+
+  expectedCount <- length(parameterPaths) * length(variationRange)
+  if (length(simResultFiles) != expectedCount) {
+    stop(messages$errorCorruptSensitivityCalculation(outputDir))
+  }
+
+  simulationResults <- sensitivityCalculation$simulationResults
+
+  # Refill the structure by index using naming convention from export
+  for (file in simResultFiles) {
+    matches <- stringr::str_match(
+      basename(file), "simulationResult_(\\d+)_(\\d+)\\.csv$"
+    )
+    i <- as.integer(matches[2])
+    j <- as.integer(matches[3])
+
+    simulationResult <- ospsuite::importResultsFromCSV(simulation, file)
+    simulationResults[[i]][[j]] <- simulationResult
+
+    if (!all(sensitivityCalculation$outputPaths %in%
+      simulationResult$allQuantityPaths)) {
+      stop(messages$errorCorruptSensitivityCalculation(outputDir))
+    }
+  }
+
+  sensitivityCalculation$simFilePath <- NULL
+  sensitivityCalculation$simulationResults <- simulationResults
+
+  return(sensitivityCalculation)
+}

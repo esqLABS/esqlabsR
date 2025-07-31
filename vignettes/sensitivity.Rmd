@@ -85,8 +85,10 @@ analysis$pkData |>
     PKParameter == "AUC_inf",
     ParameterFactor %in% c(0.1, 1, 10)
   ) |>
-  dplyr::select(ParameterFactor, PKParameterValue, 
-                PKPercentChange, SensitivityPKParameter) |>
+  dplyr::select(
+    ParameterFactor, PKParameterValue,
+    PKPercentChange, SensitivityPKParameter
+  ) |>
   dplyr::mutate(
     PKPercentChange = round(PKPercentChange, 2),
     SensitivityPKParameter = round(SensitivityPKParameter, 4)

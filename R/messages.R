@@ -334,9 +334,28 @@ messages$invalidVariationRangeLength <- function() {
   "`variationRange` must be either a vector or a list equal to the length of `parameterPaths`."
 }
 
+messages$errorSensitivityCalculationNotFound <- function(path) {
+  cliFormat("Sensitivity calculation not found at path {.file {path}}.")
+}
+
 messages$errorOutputDirExists <- function(outputDir) {
   cliFormat(
     "Directory {.file {outputDir}} already exists.",
     "Set {.code overwrite = TRUE} to replace it."
+  )
+}
+
+messages$errorFailedToLoadSimulation <- function(path, message) {
+  cliFormat(
+    "Failed to load simulation from saved path {.file {path}}.",
+    "Please provide the {.cls Simulation} object explicitly.",
+    paste0("Error: ", message)
+  )
+}
+
+messages$errorCorruptSensitivityCalculation <- function(path) {
+  cliFormat(
+    "Failed to load sensitivity calculation from {.file {path}}.",
+    "The saved files appear to be incomplete or corrupted."
   )
 }
