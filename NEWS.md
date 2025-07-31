@@ -43,6 +43,9 @@ were overwritten by the administration protocol (\#817).
 - `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
   to create plots defined in the `plotGridNames` argument. Missing `DataCombined`
   will be created from the Excel file (default behavior).
+- New `saveSensitivityCalculation()` and `loadSensitivityCalculation()` functions 
+to save and restore sensitivity analysis results (\#862).  
+
 
 ## Minor improvements and bug fixes
 
