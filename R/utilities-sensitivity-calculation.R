@@ -526,3 +526,85 @@
 
   return(data)
 }
+
+
+# save / load SensitivityCalculation ------------
+
+#' Save Sensitivity Calculation Results
+#'
+#' Saves the results of a sensitivity analysis to a specified directory,
+#' including metadata and simulation output required for restoring or sharing
+#' the analysis.
+#'
+#' @param sensitivityCalculation A named list of class `SensitivityCalculation`
+#' as returned by [sensitivityCalculation()], containing `simulationResults`,
+#' `outputPaths`, `parameterPaths`, and `pkData`.
+#' @param outputDir A character string specifying the path to the directory
+#' where the results should be saved.
+#' @param overwrite Logical. If `TRUE`, an existing directory at `outputDir`
+#' will be deleted and replaced. Default is `FALSE`.
+#'
+#' @return
+#' Invisibly returns `NULL`. Results are saved to disk in the specified folder.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' sensitivityCalculation <- sensitivityCalculation(
+#'   simulation = mySim,
+#'   outputPaths = "Organism|PeripheralVenousBlood|Drug|Plasma",
+#'   parameterPaths = c("Drug|Lipophilicity", "Application|Dose")
+#' )
+#'
+#' saveSensitivityCalculation(
+#'   sensitivityCalculation,
+#'   outputDir = "output/my-sensitivity",
+#'   overwrite = TRUE
+#' )
+#' }
+saveSensitivityCalculation <- function(sensitivityCalculation,
+                                       outputDir,
+                                       overwrite = FALSE) {
+  validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  validateIsString(outputDir)
+  validateIsLogical(overwrite)
+
+  if (dir.exists(outputDir)) {
+    if (!overwrite) {
+      stop(messages$errorOutputDirExists(outputDir))
+    }
+    unlink(outputDir, recursive = TRUE)
+  }
+
+  dir.create(outputDir, recursive = TRUE)
+
+  simulationResults <- sensitivityCalculation$simulationResults
+
+  # Store the simulation source path so it can be reloaded later
+  simFilePath <- simulationResults[[1]][[1]]$simulation$sourceFile
+  sensitivityCalculation$simFilePath <- simFilePath
+
+  # Export each SimulationResults object to CSV
+  for (i in seq_along(simulationResults)) {
+    for (j in seq_along(simulationResults[[i]])) {
+      fileName <- sprintf("simulationResult_%03d_%03d.csv", i, j)
+      filePath <- file.path(outputDir, fileName)
+      ospsuite::exportResultsToCSV(
+        simulationResults[[i]][[j]],
+        filePath
+      )
+      # Clear `SimulationResults` while preserving named list structure
+      simulationResults[[i]][[j]] <- list(NULL)
+    }
+  }
+
+  # save sensitivityCalculation w/o `SimulationResults`
+  sensitivityCalculation$simulationResults <- simulationResults
+  saveRDS(
+    sensitivityCalculation,
+    file.path(outputDir, "sensitivityCalculation.meta")
+  )
+
+  invisible(NULL)
+}

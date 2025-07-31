@@ -333,3 +333,10 @@ messages$errorNotNamedList <- function(objectName, optionalMessage = NULL) {
 messages$invalidVariationRangeLength <- function() {
   "`variationRange` must be either a vector or a list equal to the length of `parameterPaths`."
 }
+
+messages$errorOutputDirExists <- function(outputDir) {
+  cliFormat(
+    "Directory {.file {outputDir}} already exists.",
+    "Set {.code overwrite = TRUE} to replace it."
+  )
+}
