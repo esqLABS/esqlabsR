@@ -85,8 +85,10 @@ analysis$pkData |>
     PKParameter == "AUC_inf",
     ParameterFactor %in% c(0.1, 1, 10)
   ) |>
-  dplyr::select(ParameterFactor, PKParameterValue, 
-                PKPercentChange, SensitivityPKParameter) |>
+  dplyr::select(
+    ParameterFactor, PKParameterValue,
+    PKPercentChange, SensitivityPKParameter
+  ) |>
   dplyr::mutate(
     PKPercentChange = round(PKPercentChange, 2),
     SensitivityPKParameter = round(SensitivityPKParameter, 4)
@@ -98,6 +100,26 @@ AUC of 3915.9 µmol·min/L. Ten-fold higher (−0.0097) reduces AUC by 0.5
 %, whereas ten-fold lower (−0.97) increases it by 2.5 %. The sensitivity
 of AUC to a 10-fold increase in lipophilicity is calculated as:
 $$ \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4015.73-3915.87}{-0.97--0.097} \times \frac{-0.097}{3915.87} = 0.0028 $$
+
+
+### Saving and Loading Sensitivity Results
+
+The results of a sensitivity analysis can be saved using `saveSensitivityCalculation()` 
+and restored with `loadSensitivityCalculation()`. 
+The `simulation` argument in `loadSensitivityCalculation()` is optional. If the 
+original `Simulation` object is provided, reloading from disk is avoided. Otherwise, 
+the function attempts to load the `.pkml` file from the path recorded during the 
+original analysis, which must still be accessible.
+
+```{r save-load, eval=FALSE}
+# Save to disk
+outputDir <- file.path(tempdir(), "sensitivity-results")
+saveSensitivityCalculation(analysis, outputDir)
+
+# Reload from disk
+analysis <- loadSensitivityCalculation(outputDir, simulation)
+```
+
 
 ### Visualizing Sensitivity Results
 

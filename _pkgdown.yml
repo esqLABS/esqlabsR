@@ -58,7 +58,7 @@ reference:
   - GenderInt
   - contains("Types")
 - title: Sensitivity analysis
-  contents: starts_with("sensitivity")
+  contents: matches("[Ss]ensitivity")
 - title: Shiny applications
   contents: matches("^start")
 - title: Miscellaneous
