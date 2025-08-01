@@ -70,6 +70,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedData.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedDataFromPKML.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadSensitivityCalculation.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/pathFromClipboard.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/projectConfigurationStatus.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readExcel.html</loc></url>
@@ -83,6 +84,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sampleRandomValue.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/saveScenarioResults.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/saveSensitivityCalculation.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sensitivitySpiderPlot.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.html</loc></url>

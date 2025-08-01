@@ -15,7 +15,7 @@ highlighting the model's sensitivity to these parameters."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9014</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9015</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,6 +73,7 @@ highlighting the model's sensitivity to these parameters.</p>
 <span>  parameterPaths <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pkParameters <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  parameterFactor <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  xAxisZoomRange <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  defaultPlotConfiguration <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -102,6 +103,12 @@ for each parameter will be displayed as lines.</p></dd>
 during sensitivity analysis used in the tornado plot. Both the <code>parameterFactor</code>
 and its reciprocal (<code>1/parameterFactor</code>) must be included in the
 <code>variationRange</code> specified in the <code>sensitivityCalculation</code>. Default is 0.1.</p></dd>
+
+
+<dt id="arg-xaxiszoomrange">xAxisZoomRange<a class="anchor" aria-label="anchor" href="#arg-xaxiszoomrange"></a></dt>
+<dd><p>Numeric vector of length 2; specifies the x-axis limits
+to zoom into. This does not remove any data but constrains the visible
+plotting range for improved readability.</p></dd>
 
 
 <dt id="arg-defaultplotconfiguration">defaultPlotConfiguration<a class="anchor" aria-label="anchor" href="#arg-defaultplotconfiguration"></a></dt>
