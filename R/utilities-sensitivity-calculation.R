@@ -574,6 +574,14 @@ saveSensitivityCalculation <- function(sensitivityCalculation,
     if (!overwrite) {
       stop(messages$errorOutputDirExists(outputDir))
     }
+
+    contents <- list.files(outputDir, all.files = TRUE, no.. = TRUE)
+    if (interactive() && length(contents) > 0) {
+      if (!usethis::ui_yeah(messages$promptDeleteOutputDir(outputDir))) {
+        cli::cli_abort("Aborted by user.")
+      }
+    }
+
     unlink(outputDir, recursive = TRUE)
   }
 

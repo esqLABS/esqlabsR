@@ -359,3 +359,9 @@ messages$errorCorruptSensitivityCalculation <- function(path) {
     "The saved files appear to be incomplete or corrupted."
   )
 }
+
+messages$promptDeleteOutputDir <- function(outputDir) {
+  cliFormat(
+    "Directory {.file {outputDir}} already exists. Do you want to delete it?"
+  )
+}
