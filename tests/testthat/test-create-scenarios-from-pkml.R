@@ -378,11 +378,11 @@ test_that("createScenarioConfigurationsFromPKML handles duplicate scenario names
   # Check that names were made unique
   expect_equal(
     names(scenarioConfigurations),
-    c("DuplicateName_1", "DuplicateName_2", "UniqueName")
+    c("DuplicateName", "DuplicateName_2", "UniqueName")
   )
   expect_equal(
-    scenarioConfigurations[["DuplicateName_1"]]$scenarioName,
-    "DuplicateName_1"
+    scenarioConfigurations[["DuplicateName"]]$scenarioName,
+    "DuplicateName"
   )
   expect_equal(
     scenarioConfigurations[["DuplicateName_2"]]$scenarioName,
@@ -406,7 +406,7 @@ test_that("createScenarioConfigurationsFromPKML handles duplicate scenario names
   # Check that all names were made unique
   expect_equal(
     names(scenarioConfigurations2),
-    c("Name1_1", "Name1_2", "Name2_1", "Name2_2")
+    c("Name1", "Name1_2", "Name2", "Name2_2")
   )
 })
 

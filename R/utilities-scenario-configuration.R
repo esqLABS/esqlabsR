@@ -1,17 +1,23 @@
-#' Read scenario definition(s) from excel file
+#' Read scenario definition(s) from Excel file
 #'
-#' @param scenarioNames Names of the scenarios that are defined in the excel file.
-#' If `NULL` (default), all scenarios specified in the excel file will be
-#' created.
-#' @param projectConfiguration A `ProjectConfiguration` object holding base information
+#' @param scenarioNames Character vector. Names of the scenarios that are defined in the Excel file.
+#'   If `NULL` (default), all scenarios specified in the Excel file will be
+#'   created.
+#' @param projectConfiguration A `ProjectConfiguration` object holding base information.
 #'
-#' @details Reads scenario definition from the excel file defined in
+#' @details Reads scenario definition from the Excel file defined in
 #' `ProjectConfiguration` and creates `ScenarioConfiguration` objects with new
 #' information.
-#' If a scenario that is specified in `scenarioNames` is not found in the excel
+#' If a scenario that is specified in `scenarioNames` is not found in the Excel
 #' file, an error is thrown.
 #'
-#' @returns A named list of `ScenarioConfiguration` objects withe the names of the
+#' The function expects the Excel file to have a "Scenarios" sheet with the following
+#' columns: `Scenario_name`, `IndividualId`, `PopulationId`, `ReadPopulationFromCSV`,
+#' `ModelParameterSheets`, `ApplicationProtocol`, `SimulationTime`, `SimulationTimeUnit`,
+#' `SteadyState`, `SteadyStateTime`, `SteadyStateTimeUnit`, `ModelFile`, `OutputPathsIds`.
+#' It also expects an "OutputPaths" sheet with `OutputPathId` and `OutputPath` columns.
+#'
+#' @returns A named list of `ScenarioConfiguration` objects with the names of the
 #' list being scenario names.
 #' @export
 #'
@@ -20,8 +26,8 @@
 #' # Create default ProjectConfiguration
 #' projectConfiguration <- createProjectConfiguration()
 #' scenarioName <- "MyScenario"
-#' # Read scenario definition from excel
-#' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)[[scenarioName]]
+#' # Read scenario definition from Excel
+#' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioNames = scenarioName, projectConfiguration)[[scenarioName]]
 #' }
 readScenarioConfigurationFromExcel <- function(
   scenarioNames = NULL,
@@ -212,16 +218,20 @@ readScenarioConfigurationFromExcel <- function(
   return(scenarioConfigurations)
 }
 
-#' Set an application protocol in a `Simulation` from the excel file.
-#'
-#' @details Set the parameter values describing the application protocol
-#' defined in the scenario configuration.
+#' Set an application protocol in a `Simulation` from the Excel file
 #'
 #' @param simulation A `Simulation` object that will be modified.
 #' @param scenarioConfiguration A `ScenarioConfiguration` object holding the
-#' name of the application protocol.
+#'   name of the application protocol.
 #'
-#' This function is deprecated. Use `setParametersFromXLS` instead.
+#' @details Sets the parameter values describing the application protocol
+#' defined in the scenario configuration by reading from the Applications.xlsx file.
+#' The function looks for a sheet named after the application protocol and applies
+#' all parameter values found in that sheet to the simulation.
+#'
+#' @section Deprecation:
+#' This function is deprecated. Use `setParametersFromXLS` instead for better
+#' parameter handling and more flexibility.
 #'
 #' @export
 setApplications <- function(simulation, scenarioConfiguration) {
@@ -250,7 +260,12 @@ setApplications <- function(simulation, scenarioConfiguration) {
 
 #' Validate `ScenarioConfiguration` objects
 #'
-#' @param scenarioConfigurations Scenario configurations to validate.
+#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to validate.
+#'
+#' @details Validates that all scenario configurations are of the correct type
+#' and that population scenarios have a defined population ID. Throws an error
+#' if validation fails.
+#'
 #' @keywords internal
 .validateScenarioConfigurations <- function(scenarioConfigurations) {
   validateIsOfType(scenarioConfigurations, "ScenarioConfiguration")
@@ -268,7 +283,23 @@ setApplications <- function(simulation, scenarioConfiguration) {
   }
 }
 
-# Parse simulation time intervals
+#' Parse simulation time intervals from string format
+#'
+#' @param simulationTimeIntervalsString Character string. A string containing simulation time intervals
+#'   in the format "start1,end1,resolution1;start2,end2,resolution2;...".
+#'   Each interval consists of start time, end time, and resolution separated by commas,
+#'   and multiple intervals are separated by semicolons.
+#'
+#' @details Parses a string representation of simulation time intervals into a list
+#' of numeric vectors. Each vector contains three elements: [start_time, end_time, resolution].
+#' The function validates that all values are numeric, positive, and that start times
+#' are less than end times.
+#'
+#' @returns A list of numeric vectors, each containing three elements representing
+#' [start_time, end_time, resolution] for each time interval. Returns `NULL` if
+#' the input string is `NULL`.
+#'
+#' @keywords internal
 .parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
   # Check if the simulation time intervals are defined
   if (is.null(simulationTimeIntervalsString)) {
@@ -316,45 +347,51 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' @description
 #' Creates scenario configurations from PKML files by extracting available information
 #' such as applications, output paths, and simulation time settings. This function
-#' creates scenario configuration objects.
+#' creates scenario configuration objects that can be used with the esqlabsR workflow.
 #'
-#' @param pkmlFilePaths Paths to PKML files to create scenarios from
-#' @param projectConfiguration A `ProjectConfiguration` object holding base information
-#' @param scenarioNames Optional custom names for the scenarios. If `NULL` (default),
+#' @param pkmlFilePaths Character vector of paths to PKML files to create scenarios from.
+#' @param projectConfiguration A `ProjectConfiguration` object holding base information.
+#' @param scenarioNames Character vector. Optional custom names for the scenarios. If `NULL` (default),
 #'   scenario names will be extracted from the simulation names in the PKML files.
-#' @param individualId Optional individual ID to use for all scenarios. If `NULL` (default),
-#'   no individual will be specified
-#' @param populationId Optional population ID to use for all scenarios. If `NULL` (default),
-#'   no population will be specified
-#' @param applicationProtocols Optional application protocol names to use for scenarios.
-#'   If `NULL` (default), application protocols will be extracted from the PKML file with all its parameters.
-#' @param paramSheets Optional parameter sheet names to apply to scenarios.
-#'   If `NULL` (default), no parameter sheets will be applied
-#' @param outputPaths Optional output paths to use for scenarios. If `NULL` (default),
-#'   output paths will be extracted from the PKML files
-#' @param simulationTime Optional simulation time to use for scenarios. If `NULL` (default),
-#'   simulation time will be extracted from the PKML files
-#' @param simulationTimeUnit Optional simulation time unit. Only used when `simulationTime` is provided.
-#'   If `NULL` (default), will be extracted from the PKML file's output schema intervals, or set to "min" (minutes) if not available
-#' @param steadyState Whether to simulate steady-state. Default is `FALSE`
-#' @param steadyStateTime Steady-state time. Only used when `steadyState = TRUE`.
+#'   If provided, must have the same length as `pkmlFilePaths`.
+#' @param individualId Character string. Optional individual ID to use for all scenarios. If `NULL` (default),
+#'   no individual will be specified.
+#' @param populationId Character string. Optional population ID to use for all scenarios. If `NULL` (default),
+#'   no population will be specified. If provided, sets simulation type to "Population".
+#' @param applicationProtocols Character vector. Optional application protocol names to use for scenarios.
+#'   If `NULL` (default), application protocols will be set to the scenario name.
+#'   If provided, can be a single string (applied to all scenarios) or a vector
+#'   with the same length as `pkmlFilePaths`.
+#' @param paramSheets Character vector. Optional parameter sheet names to apply to scenarios.
+#'   If `NULL` (default), no parameter sheets will be applied.
+#' @param outputPaths Character vector. Optional output paths to use for scenarios. If `NULL` (default),
+#'   output paths will be extracted from the PKML files' output selections.
+#' @param simulationTime Character string. Optional simulation time to use for scenarios as character string containing one or
+#'   multiple time intervals separated by a ';'. Each time interval is a triplet of values <StartTime, EndTime, Resolution>,
+#'   where `Resolution` is the number of simulated points per time unit defined in the `simulationTimeUnit`. If `NULL` (default),
+#'   simulation time will be extracted from the PKML files' output schema intervals.
+#' @param simulationTimeUnit Character string. Optional simulation time unit. Only used when `simulationTime` is provided.
+#'   If `NULL` (default), will be extracted from the PKML file's output schema intervals, or set to "min" (minutes) if not available.
+#' @param steadyState Logical. Whether to simulate steady-state. Default is `FALSE`.
+#' @param steadyStateTime Numeric. Steady-state time. Only used when `steadyState = TRUE`.
 #'   If `NULL` (default), no steady-state time will be set.
-#' @param steadyStateTimeUnit Steady-state time unit. Only used when `steadyState = TRUE` and `steadyStateTime` is provided.
+#' @param steadyStateTimeUnit Character string. Steady-state time unit. Only used when `steadyState = TRUE` and `steadyStateTime` is provided.
 #'   If `NULL` (default), "min" will be used.
-#' @param readPopulationFromCSV Whether to read population from CSV. Default is `FALSE`
+#' @param readPopulationFromCSV Logical. Whether to read population from CSV. Default is `FALSE`.
 #'
 #' @details
 #' This function extracts the following information from PKML files:
-#' - **Applications**: All application protocols defined in the simulation
-#' - **Output paths**: All selected outputs for the simulation
-#' - **Simulation time**: Time intervals with start time, end time, and resolution
-#' - **Simulation time unit**: Time unit from the output schema intervals (e.g., "h" for hours)
+#' * **Applications**: Application protocol names (defaults to scenario name).
+#' * **Output paths**: All selected outputs for the simulation from `outputSelections$allOutputs`.
+#' * **Simulation time**: Time intervals with start time, end time, and resolution from `outputSchema$intervals`.
+#' * **Simulation time unit**: Time unit from the output schema intervals (e.g., "h" for hours).
 #'
-#' The function creates scenario configurations but does not write them to Excel files.
+#' The function handles duplicate scenario names by appending indices (e.g., "Scenario_1", "Scenario_2").
+#' It creates scenario configurations but does not write them to Excel files.
 #' Use `addScenarioConfigurationsToExcel()` to add the scenarios to the project's Excel files.
 #'
 #' @returns A named list of `ScenarioConfiguration` objects with the names being
-#'   the scenario names
+#'   the scenario names.
 #' @export
 #'
 #' @examples
@@ -420,58 +457,10 @@ createScenarioConfigurationsFromPKML <- function(
   validateIsNumeric(steadyStateTime, nullAllowed = TRUE)
   validateIsString(steadyStateTimeUnit, nullAllowed = TRUE)
   validateIsLogical(readPopulationFromCSV)
-
-  # Check if PKML files exist
-  for (pkmlPath in pkmlFilePaths) {
-    if (!file.exists(pkmlPath)) {
-      cli::cli_abort(c(
-        "File not found:",
-        "x" = "Cannot find PKML file: {.path {pkmlPath}}"
-      ))
-    }
-  }
-
-  # Generate scenario names if not provided
-  if (is.null(scenarioNames)) {
-    # Extract scenario names from PKML simulation names
-    simulationNames <- character()
-    for (pkmlPath in pkmlFilePaths) {
-      simulation <- ospsuite::loadSimulation(
-        filePath = pkmlPath,
-        loadFromCache = FALSE
-      )
-      simulationNames <- c(simulationNames, simulation$name)
-    }
-
-    # Use simulation names if available and non-empty, otherwise use file names
-    if (all(nzchar(simulationNames))) {
-      scenarioNames <- simulationNames
-    } else {
-      scenarioNames <- tools::file_path_sans_ext(basename(pkmlFilePaths))
-    }
-  }
-
-  # Check for duplicates in scenario names and handle them
-  if (length(scenarioNames) != length(unique(scenarioNames))) {
-    duplicateNames <- unique(scenarioNames[duplicated(scenarioNames)])
-
-    # Add indices to make names unique
-    for (name in duplicateNames) {
-      indices <- which(scenarioNames == name)
-      for (i in seq_along(indices)) {
-        scenarioNames[indices[i]] <- paste0(name, "_", i)
-      }
-    }
-
-    # Warn about the duplicates
-    cli::cli_warn(c(
-      "Duplicate scenario names found and made unique by adding indices:",
-      "i" = "Duplicated names: {.val {duplicateNames}}"
-    ))
-  }
-
   # Validate scenario names length
-  if (length(scenarioNames) != length(pkmlFilePaths)) {
+  if (
+    !is.null(scenarioNames) && length(scenarioNames) != length(pkmlFilePaths)
+  ) {
     cli::cli_abort(c(
       "Invalid argument lengths:",
       "x" = "scenarioNames must have the same length as pkmlFilePaths",
@@ -479,20 +468,50 @@ createScenarioConfigurationsFromPKML <- function(
     ))
   }
 
-  # Set default values - paramSheets can remain NULL if not specified
-
-  # Create scenario configurations
+  # Initialize variables
   scenarioConfigurations <- list()
+  allScenarioNames <- c()
 
   for (i in seq_along(pkmlFilePaths)) {
     pkmlPath <- pkmlFilePaths[[i]]
-    scenarioName <- scenarioNames[[i]]
+    # Check if PKML files exist
+    if (!file.exists(pkmlPath)) {
+      cli::cli_abort(c(
+        "File not found:",
+        "x" = "Cannot find PKML file: {.path {pkmlPath}}"
+      ))
+    }
 
-    # Load simulation to extract information
+    # Load simulation from PKML file
     simulation <- ospsuite::loadSimulation(
       filePath = pkmlPath,
       loadFromCache = FALSE
     )
+
+    # Extract scenario name from simulation if not provided by user
+    if (is.null(scenarioNames)) {
+      originalScenarioName <- scenarioName <- simulation$name
+    } else {
+      originalScenarioName <- scenarioName <- scenarioNames[[i]]
+    }
+
+    # Look for duplicated scenario names
+    if (scenarioName %in% allScenarioNames) {
+      # Duplicated scenarioName found
+      # count number of existing scenarios with this name
+      existingCount <- sum(allScenarioNames == originalScenarioName)
+      # Make scenario name unique by appending index
+      scenarioName <- paste0(scenarioName, "_", existingCount + 1)
+
+      # Warn the user
+      cli::cli_warn(c(
+        "Duplicate scenario names found and made unique by adding indices:",
+        "i" = "Duplicated names: {.val {originalScenarioName}}, renamed to {.val {scenarioName}}"
+      ))
+    }
+
+    allScenarioNames <- c(allScenarioNames, originalScenarioName)
+
     simTree <- ospsuite::getSimulationTree(simulation)
 
     # Create scenario configuration
@@ -536,6 +555,7 @@ createScenarioConfigurationsFromPKML <- function(
       # Application protocol name is by default the name of the scenario
       protocolName <- scenarioName
     }
+
     scenarioConfiguration$applicationProtocol <- protocolName
 
     # Extract and set output paths
@@ -659,23 +679,31 @@ createScenarioConfigurationsFromPKML <- function(
 #' that required application protocol sheets exist in the Applications.xlsx file.
 #' This function handles the Excel file operations for adding scenarios to a project.
 #'
-#' @param scenarioConfigurations A named list of `ScenarioConfiguration` objects
-#'   to add to the project
-#' @param projectConfiguration A `ProjectConfiguration` object holding base information
-#' @param appendToExisting Whether to append new scenarios to existing ones in the
+#' @param scenarioConfigurations Named list of `ScenarioConfiguration` objects to add to the project.
+#' @param projectConfiguration A `ProjectConfiguration` object holding base information.
+#' @param appendToExisting Logical. Whether to append new scenarios to existing ones in the
 #'   scenarios file. If `FALSE`, the ENTIRE scenarios file will be overwritten with
-#'   only the new scenarios. If `TRUE` (default), new scenarios will be added to existing ones
+#'   only the new scenarios. If `TRUE` (default), new scenarios will be added to existing ones.
 #'
 #' @details
 #' This function performs the following operations:
-#' - Checks for duplicate scenario names if `appendToExisting` is `TRUE`
-#' - Creates missing application protocol sheets in Applications.xlsx
-#' - Writes scenario configurations to the Scenarios.xlsx file
+#' * Checks for duplicate scenario names if `appendToExisting` is `TRUE`.
+#' * Creates missing application protocol sheets in Applications.xlsx by extracting
+#'   parameters from PKML files (both Events and Applications parameters).
+#' * Writes scenario configurations to the Scenarios.xlsx file with proper structure.
+#' * Manages output paths and their IDs in the OutputPaths sheet.
 #'
-#' The function ensures that the Excel files are properly structured and that
-#' all required sheets and headers are present.
+#' The function ensures that the Excel files are properly structured with the following sheets:
+#' * **Scenarios sheet**: Contains scenario definitions with columns for scenario name,
+#'   individual/population IDs, parameter sheets, application protocol, simulation time,
+#'   steady state settings, model file, and output path IDs.
+#' * **OutputPaths sheet**: Contains output path IDs and their corresponding paths.
+#' * **Applications.xlsx**: Contains application protocol sheets with parameter definitions.
 #'
-#' @returns Invisibly returns the names of the added scenarios
+#' The function handles parameter extraction from PKML files, excluding default parameters
+#' like "Volume" and "Application rate", and only includes constant parameters.
+#'
+#' @returns Invisibly returns the names of the added scenarios.
 #' @export
 #'
 #' @examples
@@ -719,33 +747,21 @@ addScenarioConfigurationsToExcel <- function(
 
   # Check for duplicate scenario names if appending
   if (appendToExisting && file.exists(projectConfiguration$scenariosFile)) {
-    tryCatch(
-      {
-        # Read existing scenarios to check for duplicates
-        existingScenarios <- readScenarioConfigurationFromExcel(
-          projectConfiguration = projectConfiguration
-        )
-        existingNames <- names(existingScenarios)
-        newNames <- names(scenarioConfigurations)
-        duplicateNames <- intersect(existingNames, newNames)
-
-        if (length(duplicateNames) > 0) {
-          cli::cli_abort(c(
-            "Duplicate scenario names found:",
-            "x" = "Cannot add scenarios with duplicate names to existing configuration",
-            "i" = "Duplicated names: {.val {duplicateNames}}"
-          ))
-        }
-      },
-      error = function(e) {
-        # If reading existing scenarios fails, proceed with writing
-        # This can happen if the Excel file is corrupted or has wrong structure
-        cli::cli_warn(c(
-          "Could not read existing scenarios, proceeding with write operation",
-          "i" = "This may happen if the Excel file structure is unexpected"
-        ))
-      }
+    # Read existing scenarios to check for duplicates
+    existingScenarios <- readScenarioConfigurationFromExcel(
+      projectConfiguration = projectConfiguration
     )
+    existingNames <- names(existingScenarios)
+    newNames <- names(scenarioConfigurations)
+    duplicateNames <- intersect(existingNames, newNames)
+
+    if (length(duplicateNames) > 0) {
+      cli::cli_abort(c(
+        "Duplicate scenario names found:",
+        "x" = "Cannot add scenarios with duplicate names to existing configuration",
+        "i" = "Duplicated names: {.val {duplicateNames}}"
+      ))
+    }
   }
 
   # Ensure protocol sheets exist in Applications.xlsx and extract parameters
@@ -875,9 +891,14 @@ addScenarioConfigurationsToExcel <- function(
 
 #' Write scenarios to Excel file
 #'
-#' @param scenarioConfigurations List of scenario configurations
-#' @param projectConfiguration Project configuration object
-#' @param appendToExisting Whether to append to existing scenarios
+#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to write.
+#' @param projectConfiguration A `ProjectConfiguration` object containing file paths.
+#' @param appendToExisting Logical. Whether to append to existing scenarios or overwrite.
+#'
+#' @details Internal function that handles the actual writing of scenario configurations
+#' to Excel files. Creates both the Scenarios and OutputPaths sheets with proper
+#' data types and structure. Handles merging with existing data when appending.
+#'
 #' @keywords internal
 .writeScenariosToExcel <- function(
   scenarioConfigurations,
@@ -1189,8 +1210,14 @@ addScenarioConfigurationsToExcel <- function(
 
 #' Format simulation time for Excel
 #'
-#' @param simulationTime List of simulation time intervals (as parsed by ScenarioConfiguration)
-#' @returns Formatted string for Excel
+#' @param simulationTime List of numeric vectors. Simulation time intervals (as parsed by ScenarioConfiguration)
+#'   or character string containing time intervals.
+#'
+#' @details Converts simulation time intervals from a list format to a string format
+#' suitable for Excel storage. Each interval is formatted as "start, end, resolution"
+#' and multiple intervals are separated by semicolons.
+#'
+#' @returns Formatted string for Excel storage, or empty string if input is NULL.
 #' @keywords internal
 .formatSimulationTimeForExcel <- function(simulationTime) {
   if (is.null(simulationTime)) {

@@ -7,12 +7,18 @@
 .formatSimulationTimeForExcel(simulationTime)
 }
 \arguments{
-\item{simulationTime}{List of simulation time intervals (as parsed by ScenarioConfiguration)}
+\item{simulationTime}{List of numeric vectors. Simulation time intervals (as parsed by ScenarioConfiguration)
+or character string containing time intervals.}
 }
 \value{
-Formatted string for Excel
+Formatted string for Excel storage, or empty string if input is NULL.
 }
 \description{
 Format simulation time for Excel
+}
+\details{
+Converts simulation time intervals from a list format to a string format
+suitable for Excel storage. Each interval is formatted as "start, end, resolution"
+and multiple intervals are separated by semicolons.
 }
 \keyword{internal}

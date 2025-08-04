@@ -11,17 +11,16 @@ addScenarioConfigurationsToExcel(
 )
 }
 \arguments{
-\item{scenarioConfigurations}{A named list of \code{ScenarioConfiguration} objects
-to add to the project}
+\item{scenarioConfigurations}{Named list of \code{ScenarioConfiguration} objects to add to the project.}
 
-\item{projectConfiguration}{A \code{ProjectConfiguration} object holding base information}
+\item{projectConfiguration}{A \code{ProjectConfiguration} object holding base information.}
 
-\item{appendToExisting}{Whether to append new scenarios to existing ones in the
+\item{appendToExisting}{Logical. Whether to append new scenarios to existing ones in the
 scenarios file. If \code{FALSE}, the ENTIRE scenarios file will be overwritten with
-only the new scenarios. If \code{TRUE} (default), new scenarios will be added to existing ones}
+only the new scenarios. If \code{TRUE} (default), new scenarios will be added to existing ones.}
 }
 \value{
-Invisibly returns the names of the added scenarios
+Invisibly returns the names of the added scenarios.
 }
 \description{
 Adds scenario configurations to the project's Scenarios.xlsx file and ensures
@@ -31,13 +30,24 @@ This function handles the Excel file operations for adding scenarios to a projec
 \details{
 This function performs the following operations:
 \itemize{
-\item Checks for duplicate scenario names if \code{appendToExisting} is \code{TRUE}
-\item Creates missing application protocol sheets in Applications.xlsx
-\item Writes scenario configurations to the Scenarios.xlsx file
+\item Checks for duplicate scenario names if \code{appendToExisting} is \code{TRUE}.
+\item Creates missing application protocol sheets in Applications.xlsx by extracting
+parameters from PKML files (both Events and Applications parameters).
+\item Writes scenario configurations to the Scenarios.xlsx file with proper structure.
+\item Manages output paths and their IDs in the OutputPaths sheet.
 }
 
-The function ensures that the Excel files are properly structured and that
-all required sheets and headers are present.
+The function ensures that the Excel files are properly structured with the following sheets:
+\itemize{
+\item \strong{Scenarios sheet}: Contains scenario definitions with columns for scenario name,
+individual/population IDs, parameter sheets, application protocol, simulation time,
+steady state settings, model file, and output path IDs.
+\item \strong{OutputPaths sheet}: Contains output path IDs and their corresponding paths.
+\item \strong{Applications.xlsx}: Contains application protocol sheets with parameter definitions.
+}
+
+The function handles parameter extraction from PKML files, excluding default parameters
+like "Volume" and "Application rate", and only includes constant parameters.
 }
 \examples{
 \dontrun{

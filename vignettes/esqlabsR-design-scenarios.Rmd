@@ -229,7 +229,11 @@ application parameters for the molecule `Aciclovir` from the example
 simulation:
 
 ```{r}
-sim <- loadSimulation(system.file("extdata", "Aciclovir.pkml", package = "ospsuite"))
+sim <- loadSimulation(system.file(
+  "extdata",
+  "Aciclovir.pkml",
+  package = "ospsuite"
+))
 applicationParams <- getAllApplicationParameters(sim)
 print(applicationParams)
 ```
@@ -238,7 +242,10 @@ And export the parameters to an Excel file using the
 `exportParametersToXLS()` function:
 
 ```{r, eval=FALSE}
-exportParametersToXLS(parameters = applicationParams, paramsXLSpath = "../Applications.xlsx")
+exportParametersToXLS(
+  parameters = applicationParams,
+  paramsXLSpath = "../Applications.xlsx"
+)
 ```
 
 The created Excel file will have the same structure as all
@@ -253,13 +260,15 @@ values. Resolution is the number of simulated points per time unit
 defined in the column `TimeUnit`. Simulation intervals are separated by
 a `;`.
 
-For example, to simulate the model for 10 minutes with a resolution of 1
-point per minute, the value of the column `SimulationTime` should be
+For example, to simulate the model for 10 minutes with a resolution of 1 point per minute, the value of the column `SimulationTime` should be
 `0, 10, 1`, and that of the column `SimulationTimeUnit` should be `min`.
-To simulate the model for \* 20 hours with a resolution of 1 point per
-minute, then \* for three weeks (equals to 3*7*24 = 504 hours) with a
-resolution of 1 point per hour, and finally \* for two days (equals to
-504 + 2\*24 = 552 hours) with a resolution of 10 points per hour,
+
+For example, to simulate the model for: 
+
+- 20 hours with a resolution of 1 point per minute, 
+- then for three weeks (equals to 3\*7\*24 = 504 hours) with a
+resolution of 1 point per hour, 
+-finally for two days (equals to 504 + 2\*24 = 552 hours) with a resolution of 10 points per hour,
 
 the value of the column `SimulationTime` should be
 `0, 20, 60; 20, 504, 1; 504, 552, 10`, and that of the column

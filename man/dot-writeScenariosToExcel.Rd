@@ -11,13 +11,18 @@
 )
 }
 \arguments{
-\item{scenarioConfigurations}{List of scenario configurations}
+\item{scenarioConfigurations}{List of \code{ScenarioConfiguration} objects to write.}
 
-\item{projectConfiguration}{Project configuration object}
+\item{projectConfiguration}{A \code{ProjectConfiguration} object containing file paths.}
 
-\item{appendToExisting}{Whether to append to existing scenarios}
+\item{appendToExisting}{Logical. Whether to append to existing scenarios or overwrite.}
 }
 \description{
 Write scenarios to Excel file
+}
+\details{
+Internal function that handles the actual writing of scenario configurations
+to Excel files. Creates both the Scenarios and OutputPaths sheets with proper
+data types and structure. Handles merging with existing data when appending.
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities-scenario-configuration.R
 \name{setApplications}
 \alias{setApplications}
-\title{Set an application protocol in a \code{Simulation} from the excel file.}
+\title{Set an application protocol in a \code{Simulation} from the Excel file}
 \usage{
 setApplications(simulation, scenarioConfiguration)
 }
@@ -10,14 +10,20 @@ setApplications(simulation, scenarioConfiguration)
 \item{simulation}{A \code{Simulation} object that will be modified.}
 
 \item{scenarioConfiguration}{A \code{ScenarioConfiguration} object holding the
-name of the application protocol.
-
-This function is deprecated. Use \code{setParametersFromXLS} instead.}
+name of the application protocol.}
 }
 \description{
-Set an application protocol in a \code{Simulation} from the excel file.
+Set an application protocol in a \code{Simulation} from the Excel file
 }
 \details{
-Set the parameter values describing the application protocol
-defined in the scenario configuration.
+Sets the parameter values describing the application protocol
+defined in the scenario configuration by reading from the Applications.xlsx file.
+The function looks for a sheet named after the application protocol and applies
+all parameter values found in that sheet to the simulation.
 }
+\section{Deprecation}{
+
+This function is deprecated. Use \code{setParametersFromXLS} instead for better
+parameter handling and more flexibility.
+}
+
