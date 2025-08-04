@@ -24,11 +24,17 @@ test_that("It produces expected errors for incorrect active binding values", {
 
   expect_error(
     mySC$simulateSteadyState <- 1,
-    messages$errorWrongType("value", "numeric", "logical")
+    regexp = messages$errorWrongType("value", "numeric", "logical"),
+    fixed = TRUE
   )
   expect_error(
     mySC$steadyStateTime <- -1,
-    messages$valueShouldNotBeNegative("steadyStateTime", -1)
+    regexp = messages$valueShouldNotBeNegative("steadyStateTime", -1),
+    fixed = TRUE
   )
-  expect_error(mySC$simulationType <- "X", messages$wrongSimulationType())
+  expect_error(
+    mySC$simulationType <- "X",
+    regexp = messages$wrongSimulationType(),
+    fixed = TRUE
+  )
 })

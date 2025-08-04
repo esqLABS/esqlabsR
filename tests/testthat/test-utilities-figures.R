@@ -1,7 +1,11 @@
 # esqlabsColors ----------------------------------------------------------
 
 test_that("esqlabsColors input validation works as expected", {
-  expect_error(esqlabsColors(-1), messages$nrOfColorsShouldBePositive(-1))
+  expect_error(
+    esqlabsColors(-1),
+    regexp = messages$nrOfColorsShouldBePositive(-1),
+    fixed = TRUE
+  )
 })
 
 test_that("esqlabsColors works with empty argument vector", {
@@ -29,7 +33,8 @@ test_that("esqlabsColors returns ten colors", {
 test_that("col2hsv returns expected HSV values for a given R color name", {
   expect_equal(
     col2hsv("yellow"),
-    structure(c(0.166666666666667, 1, 1),
+    structure(
+      c(0.166666666666667, 1, 1),
       .Dim = c(3L, 1L),
       .Dimnames = list(c("h", "s", "v"), NULL)
     )
@@ -37,7 +42,8 @@ test_that("col2hsv returns expected HSV values for a given R color name", {
 
   expect_equal(
     col2hsv("white"),
-    structure(c(0, 0, 1),
+    structure(
+      c(0, 0, 1),
       .Dim = c(3L, 1L),
       .Dimnames = list(c("h", "s", "v"), NULL)
     )
@@ -75,7 +81,8 @@ test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
   esqlabsFields <- names(esqlabsConfig)
 
   missingFields <- setdiff(defaultFields, esqlabsFields)
-  expect_true(length(missingFields) == 0,
+  expect_true(
+    length(missingFields) == 0,
     info = paste("Missing fields:", paste(missingFields, collapse = ", "))
   )
 
@@ -86,7 +93,9 @@ test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
 
   # Check if the types of the remaining fields are the same between both configurations
   for (field in defaultFields) {
-    expect_equal(class(esqlabsConfig[[field]]), class(defaultConfig[[field]]),
+    expect_equal(
+      class(esqlabsConfig[[field]]),
+      class(defaultConfig[[field]]),
       info = paste("Field", field, "has different types")
     )
   }
