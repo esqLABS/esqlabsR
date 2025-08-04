@@ -47,6 +47,11 @@ were overwritten by the administration protocol (\#817).
 to save and restore sensitivity analysis results (\#862).  
 
 
+- New function `addPlotsToExcelFromSnapshot()` to add entries for plots defined 
+for all simulations of a PK-Sim snapshot to the `Plots.xlsx` file.
+- New function `createScenarioConfigurationsFromSnapshot()` to create scenario configurations
+for all simulations of a PK-Sim snapshot.
+
 ## Minor improvements and bug fixes
 
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
