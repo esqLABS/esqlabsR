@@ -15,6 +15,7 @@
 #'
 #' @export
 runScenarios <- function(scenarios, simulationRunOptions = NULL) {
+  scenarios <- ospsuite.utils::toList(scenarios)
   # List of individiaul simulations
   individualSimulations <- list()
   # List of population scenarios
