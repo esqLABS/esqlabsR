@@ -62,6 +62,7 @@ will have the updated name.
 not applied (\#845).
 - Added example usage of `sensitivityTornadoPlot()` to the sensitivity analysis vignette (#847).
 - Corrected x-axis label in `sensitivityTornadoPlot()` to reflect changes in PK parameter (\#861).
+- `runScenarios` now correctly accepts one single `Scenario` object.
 
 # esqlabsR 5.4.0
 
