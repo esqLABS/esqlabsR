@@ -2,7 +2,7 @@
 title: "Advanced Topics"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{esqlabsR-advanced}
+  %\VignetteIndexEntry{advanced}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

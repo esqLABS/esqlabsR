@@ -136,7 +136,7 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     subtitle = NULL,
     title = NULL,
     titleSize = 14,
-    xLabel = "Input parameter value [% of reference]",
+    xLabel = "Change in PK parameter [% relative to baseline]",
     yLabel = "Parameter"
   )
 

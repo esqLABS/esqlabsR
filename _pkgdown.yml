@@ -58,7 +58,7 @@ reference:
   - GenderInt
   - contains("Types")
 - title: Sensitivity analysis
-  contents: starts_with("sensitivity")
+  contents: matches("[Ss]ensitivity")
 - title: Shiny applications
   contents: matches("^start")
 - title: Miscellaneous
@@ -76,16 +76,16 @@ articles:
 - title: esqlabsR Workflow
   navbar: esqlabsR Workflow
   contents:
-  - esqlabsR-workflow-overview
-  - esqlabsR-project-structure
-  - esqlabsR-design-scenarios
-  - esqlabsR-run-simulations
-  - esqlabsR-plot-results
+  - workflow-overview
+  - project-structure
+  - design-scenarios
+  - run-simulations
+  - plot-results
 - title: Miscellaneous
   navbar: Miscellaneous
   contents:
   - presentations
-  - esqlabsR-sensitivity
-  - esqlabsR-advanced
+  - sensitivity
+  - advanced
   - project-migration-guide
 

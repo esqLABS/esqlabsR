@@ -33,15 +33,19 @@ are `NULL`, an empty list is returned.
 in the `customParams` argument are applied last. Up to this version, they 
 were overwritten by the administration protocol (\#817).
 
-- Added `snapshotProjectConfiguration()` and `restoreProjectConfiguration()` functions 
-to support version control and project sharing of project configurations.
-
-- Added `projectConfigurationStatus()` function to check the status of the project configuration, 
-the Excel configuration files and the JSON snapshot.
+- Project Configuration Version Control - Added comprehensive snapshot and restore functionality for project configurations:
+  - `snapshotProjectConfiguration()` exports all Excel configuration files to a single JSON file for version control
+  - `restoreProjectConfiguration()` recreates Excel files from JSON snapshots for easy project sharing
+  - `projectConfigurationStatus()` checks synchronization between Excel files and JSON snapshots
+  - Perfect for team collaboration, Git version control, and project backup strategies
+  - Comprehensive documentation for version control features is now included in `vignette("project-structure")`.
 
 - `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
   to create plots defined in the `plotGridNames` argument. Missing `DataCombined`
   will be created from the Excel file (default behavior).
+- New `saveSensitivityCalculation()` and `loadSensitivityCalculation()` functions 
+to save and restore sensitivity analysis results (\#862).  
+
 
 ## Minor improvements and bug fixes
 
@@ -57,6 +61,7 @@ will have the updated name.
 - Fixed a bug in `createPlotsFromExcel()` when subtitle of PlotConfiguration was
 not applied (\#845).
 - Added example usage of `sensitivityTornadoPlot()` to the sensitivity analysis vignette (#847).
+- Corrected x-axis label in `sensitivityTornadoPlot()` to reflect changes in PK parameter (\#861).
 
 # esqlabsR 5.4.0
 

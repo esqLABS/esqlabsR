@@ -2,7 +2,7 @@
 title: "2. Design Scenarios"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{esqlabsR-simulations}
+  %\VignetteIndexEntry{design-scenarios}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -51,7 +51,7 @@ Specify the simulation `*.pkml` file to use in the column `ModelFile`.
 
 If you want to run the simulation with the settings as it has been
 exported from PK-Sim or MoBi, you can proceed to
-`vignette("esqlabsR-run-simulations")`.
+`vignette("run-simulations")`.
 
 ## Customize a scenario
 
@@ -120,7 +120,7 @@ same simulation file by defining an application protocol in the column
 `ApplicationProtocol`. See the description below.
 
 Now that you designed your own simulation, read
-`vignette("esqlabsR-run-simulations")` to continue the process. To learn
+`vignette("run-simulations")` to continue the process. To learn
 more about simulation design, read the following sections.
 
 ## Details
@@ -260,15 +260,13 @@ values. Resolution is the number of simulated points per time unit
 defined in the column `TimeUnit`. Simulation intervals are separated by
 a `;`.
 
-For example, to simulate the model for 10 minutes with a resolution of 1 point per minute, the value of the column `SimulationTime` should be
+For example, to simulate the model for 10 minutes with a resolution of 1
+point per minute, the value of the column `SimulationTime` should be
 `0, 10, 1`, and that of the column `SimulationTimeUnit` should be `min`.
-
-For example, to simulate the model for: 
-
-- 20 hours with a resolution of 1 point per minute, 
-- then for three weeks (equals to 3\*7\*24 = 504 hours) with a
-resolution of 1 point per hour, 
--finally for two days (equals to 504 + 2\*24 = 552 hours) with a resolution of 10 points per hour,
+To simulate the model for \* 20 hours with a resolution of 1 point per
+minute, then \* for three weeks (equals to 3*7*24 = 504 hours) with a
+resolution of 1 point per hour, and finally \* for two days (equals to
+504 + 2\*24 = 552 hours) with a resolution of 10 points per hour,
 
 the value of the column `SimulationTime` should be
 `0, 20, 60; 20, 504, 1; 504, 552, 10`, and that of the column
