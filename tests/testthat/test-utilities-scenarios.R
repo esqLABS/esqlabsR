@@ -271,3 +271,29 @@ test_that("loadScenarioResults throws an error when files don't exist", {
     )
   )
 })
+
+test_that("It correctly runs when only one scenario (not a list) is provided", {
+  skip_on_os("mac")
+
+  # Define which scenarios to run
+  scenarioNames <- c("TestScenario_missingParam")
+  # Create `ScenarioConfiguration` objects from excel files
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+  scenarios <- createScenarios(
+    scenarioConfigurations = scenarioConfigurations,
+    stopIfParameterNotFound = FALSE
+  )
+
+  simulatedScenarios <- runScenarios(
+    scenarios = scenarios[[1]]
+  )
+
+  expect_equal(names(simulatedScenarios), scenarioNames)
+  expect_equal(
+    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    defaultOutputPath
+  )
+})
