@@ -299,6 +299,10 @@ test_that("loadScenarioResults throws an error when files don't exist", {
 test_that("It correctly runs when only one scenario (not a list) is provided", {
   skip_on_os("mac")
 
+  # Create a fresh temporary project for this test
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
   # Define which scenarios to run
   scenarioNames <- c("TestScenario_missingParam")
   # Create `ScenarioConfiguration` objects from excel files
