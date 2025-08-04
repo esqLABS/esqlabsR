@@ -55,7 +55,7 @@ test_that("It runs one scenario without specifying output paths", {
   )
 
   simulatedScenarios <- runScenarios(
-    scenarios = scenarios[[1]]
+    scenarios = scenarios
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
