@@ -477,7 +477,10 @@ test_that("It shows a meaningful error when steady-state is true but no unit is 
         path = file.path(tempDir, "Scenarios.xlsx"),
       )
 
-      expect_error(readScenarioConfigurationFromExcel(projectConfiguration = projectConfigurationLocal),
+      expect_error(
+        readScenarioConfigurationFromExcel(
+          projectConfiguration = projectConfigurationLocal
+        ),
         regexp = messages$missingSteadyStateTimeUnit("TestScenario"),
         fixed = TRUE
       )

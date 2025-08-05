@@ -31,12 +31,16 @@ esqlabsColors <- function(nrOfColors) {
 
   # pre-calculate distances between blue and red and red and green.
   deltaH_b_r <- (esqRedHSV[1] - esqBlueHSV[1])
-  deltaS_b_r <- max(esqRedHSV[2], esqBlueHSV[2]) - min(esqRedHSV[2], esqBlueHSV[2])
-  deltaV_b_r <- max(esqRedHSV[3], esqBlueHSV[3]) - min(esqRedHSV[3], esqBlueHSV[3])
+  deltaS_b_r <- max(esqRedHSV[2], esqBlueHSV[2]) -
+    min(esqRedHSV[2], esqBlueHSV[2])
+  deltaV_b_r <- max(esqRedHSV[3], esqBlueHSV[3]) -
+    min(esqRedHSV[3], esqBlueHSV[3])
 
   deltaH_r_g <- abs(esqRedHSV[1] - (esqGreenHSV[1] + 1))
-  deltaS_r_g <- max(esqRedHSV[2], esqGreenHSV[2]) - min(esqRedHSV[2], esqGreenHSV[2])
-  deltaV_r_g <- max(esqRedHSV[3], esqGreenHSV[3]) - min(esqRedHSV[3], esqGreenHSV[3])
+  deltaS_r_g <- max(esqRedHSV[2], esqGreenHSV[2]) -
+    min(esqRedHSV[2], esqGreenHSV[2])
+  deltaV_r_g <- max(esqRedHSV[3], esqGreenHSV[3]) -
+    min(esqRedHSV[3], esqGreenHSV[3])
 
   if (nrOfColors < 0) {
     stop(messages$nrOfColorsShouldBePositive(nrOfColors))
@@ -200,7 +204,8 @@ createEsqlabsPlotConfiguration <- function() {
 #' @family create-plotting-configurations
 #'
 #' @export
-createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linter.
+createEsqlabsPlotGridConfiguration <- function() {
+  # nolint: object_length_linter.
   plotGridConfiguration <- tlf::PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
@@ -235,7 +240,8 @@ createEsqlabsPlotGridConfiguration <- function() { # nolint: object_length_linte
 #' @family create-plotting-configurations
 #'
 #' @export
-createEsqlabsExportConfiguration <- function(outputFolder) { # nolint: object_length_linter.
+createEsqlabsExportConfiguration <- function(outputFolder) {
+  # nolint: object_length_linter.
   # Specifying the namespace because we want to use the ExportConfiguration
   # from esqlabsR and not from TLF
   exportConfiguration <- esqlabsR::ExportConfiguration$new()
@@ -328,7 +334,10 @@ createPlotsFromExcel <- function(
   dataCombinedListFromExcel[names(dataCombinedList)] <- dataCombinedList
   dataCombinedList <- dataCombinedListFromExcel
 
-  dfPlotConfigurations <- .validatePlotConfigurationFromExcel(dfPlotConfigurations, names(dataCombinedList))
+  dfPlotConfigurations <- .validatePlotConfigurationFromExcel(
+    dfPlotConfigurations,
+    names(dataCombinedList)
+  )
 
   # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
   defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
@@ -338,19 +347,22 @@ createPlotsFromExcel <- function(
       # Have to exclude all columns that should not be vectorized
       # Excluding title and subtitle because they should not be processed,
       # e.g., split by ","
-      row[!(names(row) %in% c(
-        "plotID",
-        "DataCombinedName",
-        "plotType",
-        "title",
-        "subtitle",
-        "xLabel",
-        "yLabel",
-        "aggregation",
-        "quantiles",
-        "nsd",
-        "foldDistance"
-      ))]
+      row[
+        !(names(row) %in%
+          c(
+            "plotID",
+            "DataCombinedName",
+            "plotType",
+            "title",
+            "subtitle",
+            "xLabel",
+            "yLabel",
+            "aggregation",
+            "quantiles",
+            "nsd",
+            "foldDistance"
+          ))
+      ]
     )
     # Apply title and subtitle properties
     if (!is.na(row[["title"]])) {
@@ -366,14 +378,25 @@ createPlotsFromExcel <- function(
 
   # create a list of plots from dataCombinedList and plotConfigurationList
   plotList <- lapply(dfPlotConfigurations$plotID, \(plotId) {
-    dataCombined <- dataCombinedList[[dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$DataCombinedName]]
+    dataCombined <- dataCombinedList[[
+      dfPlotConfigurations[
+        dfPlotConfigurations$plotID == plotId,
+      ]$DataCombinedName
+    ]]
     switch(dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
       # Individual time profile
-      individual = plotIndividualTimeProfile(dataCombined, plotConfigurationList[[plotId]]),
+      individual = plotIndividualTimeProfile(
+        dataCombined,
+        plotConfigurationList[[plotId]]
+      ),
       # Population time profile
       population = {
-        aggregation <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$aggregation
-        quantiles <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$quantiles
+        aggregation <- dfPlotConfigurations[
+          dfPlotConfigurations$plotID == plotId,
+        ]$aggregation
+        quantiles <- dfPlotConfigurations[
+          dfPlotConfigurations$plotID == plotId,
+        ]$quantiles
         nsd <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$nsd
         args <- list()
         args$dataCombined <- dataCombined
@@ -393,17 +416,27 @@ createPlotsFromExcel <- function(
         do.call(plotPopulationTimeProfile, args)
       },
       observedVsSimulated = {
-        foldDist <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$foldDistance
+        foldDist <- dfPlotConfigurations[
+          dfPlotConfigurations$plotID == plotId,
+        ]$foldDistance
         if (is.na(foldDist)) {
           plotObservedVsSimulated(dataCombined, plotConfigurationList[[plotId]])
         } else {
-          plotObservedVsSimulated(dataCombined, plotConfigurationList[[plotId]],
+          plotObservedVsSimulated(
+            dataCombined,
+            plotConfigurationList[[plotId]],
             foldDistance = as.numeric(unlist(strsplit(foldDist, split = ",")))
           )
         }
       },
-      residualsVsSimulated = plotResidualsVsSimulated(dataCombined, plotConfigurationList[[plotId]]),
-      residualsVsTime = plotResidualsVsTime(dataCombined, plotConfigurationList[[plotId]])
+      residualsVsSimulated = plotResidualsVsSimulated(
+        dataCombined,
+        plotConfigurationList[[plotId]]
+      ),
+      residualsVsTime = plotResidualsVsTime(
+        dataCombined,
+        plotConfigurationList[[plotId]]
+      )
     )
   })
   names(plotList) <- dfPlotConfigurations$plotID
@@ -421,7 +454,10 @@ createPlotsFromExcel <- function(
       plotGridConfiguration$title <- row$title
     }
 
-    plotsToAdd <- plotList[intersect(unlist(row$plotIDs), dfPlotConfigurations$plotID)]
+    plotsToAdd <- plotList[intersect(
+      unlist(row$plotIDs),
+      dfPlotConfigurations$plotID
+    )]
     # Have to remove NULL instances. NULL can be produced e.g. when trying to create
     # a simulated vs observed plot without any groups
     plotsToAdd <- plotsToAdd[lengths(plotsToAdd) != 0]
@@ -434,7 +470,15 @@ createPlotsFromExcel <- function(
       plotGridConfiguration$tagLevels <- NULL
     }
     plotGridConfiguration$addPlots(plots = plotsToAdd)
-    if (length(invalidPlotIDs <- setdiff(unlist(row$plotIDs), dfPlotConfigurations$plotID)) != 0) {
+    if (
+      length(
+        invalidPlotIDs <- setdiff(
+          unlist(row$plotIDs),
+          dfPlotConfigurations$plotID
+        )
+      ) !=
+        0
+    ) {
       warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
     }
     plotGrid(plotGridConfiguration)
@@ -443,19 +487,24 @@ createPlotsFromExcel <- function(
 
   ## Remove rows that are entirely empty
   dfExportConfigurations <- dplyr::filter(
-    dfExportConfigurations, !dplyr::if_all(dplyr::everything(), is.na)
+    dfExportConfigurations,
+    !dplyr::if_all(dplyr::everything(), is.na)
   )
-  dfExportConfigurations <- .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
+  dfExportConfigurations <- .validateExportConfigurationsFromExcel(
+    dfExportConfigurations,
+    plotGrids
+  )
   if (nrow(dfExportConfigurations) > 0) {
     # create a list of ExportConfiguration objects from dfExportConfigurations
-    outputFolder <- outputFolder %||% file.path(
-      projectConfiguration$outputFolder,
-      "Figures",
-      format(Sys.time(), "%F %H-%M")
-    )
+    outputFolder <- outputFolder %||%
+      file.path(
+        projectConfiguration$outputFolder,
+        "Figures",
+        format(Sys.time(), "%F %H-%M")
+      )
 
     defaultExportConfiguration <- createEsqlabsExportConfiguration(outputFolder)
-    exportConfigurations <- apply(dfExportConfigurations, 1, \(row){
+    exportConfigurations <- apply(dfExportConfigurations, 1, \(row) {
       exportConfiguration <- .createConfigurationFromRow(
         defaultConfiguration = defaultExportConfiguration,
         row[!(names(row) %in% c("plotGridName", "name"))]
@@ -469,7 +518,9 @@ createPlotsFromExcel <- function(
     })
     # export plotGrid if defined in exportConfigurations
     lapply(seq_along(exportConfigurations), function(i) {
-      exportConfigurations[[i]]$savePlot(plotGrids[[dfExportConfigurations$plotGridName[i]]])
+      exportConfigurations[[
+        i
+      ]]$savePlot(plotGrids[[dfExportConfigurations$plotGridName[i]]])
     })
   }
 
@@ -502,7 +553,9 @@ createPlotsFromExcel <- function(
       # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
       # Split the input string by ',' but do not split within ""
       value <- unlist(trimws(scan(
-        text = as.character(value), what = "character", sep = ",",
+        text = as.character(value),
+        what = "character",
+        sep = ",",
         quiet = TRUE
       )))
 
@@ -517,10 +570,15 @@ createPlotsFromExcel <- function(
       }
       # Special treatment for axis limits, as we know their data type but cannot
       # get it with the proposed generic way since default limits are not set
-      if (colName %in% c(
-        "xAxisLimits", "yAxisLimits",
-        "xValuesLimits", "yValuesLimits"
-      )) {
+      if (
+        colName %in%
+          c(
+            "xAxisLimits",
+            "yAxisLimits",
+            "xValuesLimits",
+            "yValuesLimits"
+          )
+      ) {
         expectedType <- "double"
       }
 
@@ -542,7 +600,9 @@ createPlotsFromExcel <- function(
 #'
 #' @returns Processed `dfPlotConfigurations`
 #' @keywords internal
-.validatePlotConfigurationFromExcel <- function(dfPlotConfigurations, dataCombinedNames) {
+.validatePlotConfigurationFromExcel <- function(
+    dfPlotConfigurations,
+    dataCombinedNames) {
   # mandatory column DataCombinedName is empty - throw error
   missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
   if (missingLabel > 0) {
@@ -550,7 +610,9 @@ createPlotsFromExcel <- function(
   }
 
   # plotIDs must be unique
-  duplicated_plotIDs <- dfPlotConfigurations$plotID[duplicated(dfPlotConfigurations$plotID)]
+  duplicated_plotIDs <- dfPlotConfigurations$plotID[duplicated(
+    dfPlotConfigurations$plotID
+  )]
   if (length(duplicated_plotIDs) > 0) {
     stop(messages$PlotIDsMustBeUnique(duplicated_plotIDs))
   }
@@ -562,7 +624,10 @@ createPlotsFromExcel <- function(
   }
 
   # DataCombined that are not defined in the DataCombined sheet. Stop if any.
-  missingDataCombined <- setdiff(setdiff(dfPlotConfigurations$DataCombinedName, dataCombinedNames), NA)
+  missingDataCombined <- setdiff(
+    setdiff(dfPlotConfigurations$DataCombinedName, dataCombinedNames),
+    NA
+  )
   if (length(missingDataCombined) != 0) {
     stop(messages$stopInvalidDataCombinedName(missingDataCombined))
   }
@@ -594,15 +659,20 @@ createPlotsFromExcel <- function(
   # Split the input string by ',' but do not split within ""
   # Have to do it one row at a time, otherwise it returns one separate list entry
   # for each plot it (and not lists of plot ids)
-  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId){
+  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId) {
     unlist(trimws(scan(
-      text = as.character(plotId), what = "character", sep = ",",
+      text = as.character(plotId),
+      what = "character",
+      sep = ",",
       quiet = TRUE
     )))
   })
 
   # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
-  missingPlots <- setdiff(setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs), NA)
+  missingPlots <- setdiff(
+    setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs),
+    NA
+  )
   if (length(missingPlots) != 0) {
     stop(messages$errorInvalidPlotID(missingPlots))
   }
@@ -617,18 +687,27 @@ createPlotsFromExcel <- function(
 #'
 #' @returns Processed `dfExportConfigurations`
 #' @keywords internal
-.validateExportConfigurationsFromExcel <- function(dfExportConfigurations, plotGrids) {
+.validateExportConfigurationsFromExcel <- function(
+    dfExportConfigurations,
+    plotGrids) {
   # mandatory column outputName is empty - throw warning, remove rows
   missingName <- sum(is.na(dfExportConfigurations$name))
   if (missingName > 0) {
-    dfExportConfigurations <- dfExportConfigurations[!is.na(dfExportConfigurations$name), ]
+    dfExportConfigurations <- dfExportConfigurations[
+      !is.na(dfExportConfigurations$name),
+    ]
     warning(messages$missingOutputFileName())
   }
 
   plotGrids <- purrr::compact(plotGrids)
-  missingPlotGrids <- setdiff(dfExportConfigurations$plotGridName, names(plotGrids))
+  missingPlotGrids <- setdiff(
+    dfExportConfigurations$plotGridName,
+    names(plotGrids)
+  )
   if (length(missingPlotGrids) != 0) {
-    dfExportConfigurations <- dfExportConfigurations[!(dfExportConfigurations$plotGridName %in% missingPlotGrids), ]
+    dfExportConfigurations <- dfExportConfigurations[
+      !(dfExportConfigurations$plotGridName %in% missingPlotGrids),
+    ]
     warning(messages$missingPlotGrids(missingPlotGrids))
   }
 
@@ -657,7 +736,9 @@ createPlotsFromExcel <- function(
 
     if (is.null(defaultValues[[name]]) && is.null(plotConfiguration[[name]])) {
       plotConfiguration[[name]] <- plotOverrideConfig[[name]]
-    } else if (!is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])) {
+    } else if (
+      !is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])
+    ) {
       if (all(plotConfiguration[[name]] == defaultValues[[name]])) {
         plotConfiguration[[name]] <- plotOverrideConfig[[name]]
       }
@@ -684,9 +765,10 @@ createPlotsFromExcel <- function(
 #'
 #' @keywords internal
 #' @noRd
-.applyPlotConfiguration <- function(defaultPlotConfiguration = NULL,
-                                    plotOverrideConfig = NULL,
-                                    ...) {
+.applyPlotConfiguration <- function(
+    defaultPlotConfiguration = NULL,
+    plotOverrideConfig = NULL,
+    ...) {
   # validate input defaultPlotConfiguration
   if (is.null(defaultPlotConfiguration)) {
     defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
@@ -713,7 +795,8 @@ createPlotsFromExcel <- function(
 
   # override only default configuration values with settings in plotOverrideConfig
   customPlotConfiguration <- .updatePlotConfiguration(
-    customPlotConfiguration, plotOverrideConfig
+    customPlotConfiguration,
+    plotOverrideConfig
   )
 
   # convert to list and validate final plot configuration
@@ -854,12 +937,11 @@ createPlotsFromExcel <- function(
 #' @noRd
 .readPlotConfigurations <- function(projectConfiguration, plotGridNames) {
   # read sheet "plotGrids" with info for plotGridConfigurations
-  dfPlotGrids <- readExcel(projectConfiguration$plotsFile,
-    sheet = "plotGrids"
-  )
+  dfPlotGrids <- readExcel(projectConfiguration$plotsFile, sheet = "plotGrids")
 
   # read sheet "exportConfiguration"
-  dfExportConfigurations <- readExcel(projectConfiguration$plotsFile,
+  dfExportConfigurations <- readExcel(
+    projectConfiguration$plotsFile,
     sheet = "exportConfiguration"
   ) %>%
     dplyr::rename(name = outputName)
@@ -874,7 +956,10 @@ createPlotsFromExcel <- function(
 
     dfPlotGrids <- dplyr::filter(dfPlotGrids, name %in% plotGridNames)
     # Filter export configurations for specified plot grids only
-    dfExportConfigurations <- dplyr::filter(dfExportConfigurations, plotGridName %in% plotGridNames)
+    dfExportConfigurations <- dplyr::filter(
+      dfExportConfigurations,
+      plotGridName %in% plotGridNames
+    )
   }
 
   # Exit early if no PlotGrid is defined
@@ -883,18 +968,26 @@ createPlotsFromExcel <- function(
   }
 
   # read sheet "plotConfiguration"
-  dfPlotConfigurations <- readExcel(projectConfiguration$plotsFile,
+  dfPlotConfigurations <- readExcel(
+    projectConfiguration$plotsFile,
     sheet = "plotConfiguration"
   )
 
   # Filter and validate plotGrids
   dfPlotGrids <- dplyr::filter(
-    dfPlotGrids, !dplyr::if_all(dplyr::everything(), is.na)
+    dfPlotGrids,
+    !dplyr::if_all(dplyr::everything(), is.na)
   )
-  dfPlotGrids <- .validatePlotGridsFromExcel(dfPlotGrids, unique(dfPlotConfigurations$plotID))
+  dfPlotGrids <- .validatePlotGridsFromExcel(
+    dfPlotGrids,
+    unique(dfPlotConfigurations$plotID)
+  )
 
   # Filter and validate only used plot configurations
-  dfPlotConfigurations <- dplyr::filter(dfPlotConfigurations, plotID %in% unlist(unique(dfPlotGrids$plotIDs)))
+  dfPlotConfigurations <- dplyr::filter(
+    dfPlotConfigurations,
+    plotID %in% unlist(unique(dfPlotGrids$plotIDs))
+  )
 
   return(list(
     plotGrids = dfPlotGrids,

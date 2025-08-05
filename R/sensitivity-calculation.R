@@ -78,15 +78,16 @@
 #' }
 #'
 #' @export
-sensitivityCalculation <- function(simulation,
-                                   outputPaths,
-                                   parameterPaths,
-                                   variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
-                                   variationType = c("relative"),
-                                   pkParameters = c("C_max", "t_max", "AUC_inf"),
-                                   customOutputFunctions = NULL,
-                                   saOutputFilePath = NULL,
-                                   simulationRunOptions = NULL) {
+sensitivityCalculation <- function(
+    simulation,
+    outputPaths,
+    parameterPaths,
+    variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
+    variationType = c("relative"),
+    pkParameters = c("C_max", "t_max", "AUC_inf"),
+    customOutputFunctions = NULL,
+    saOutputFilePath = NULL,
+    simulationRunOptions = NULL) {
   # Input validation ------------------------------------------------------
 
   # Validate vector arguments of character type
@@ -148,7 +149,9 @@ sensitivityCalculation <- function(simulation,
 
   # Transform and validate variationRange
   variationRange <- .transformVariationRange(
-    variationRange, initialValues, variationType
+    variationRange,
+    initialValues,
+    variationType
   )
   variationRange <- lapply(variationRange, .validateVariationRange)
 
@@ -159,7 +162,8 @@ sensitivityCalculation <- function(simulation,
   for (parameterPath in parameterPaths) {
     # Initialize batchResultsIdMap for the current parameter
     batchResultsIdMap[[parameterPath]] <- vector(
-      "list", length(variationRange[[parameterPath]])
+      "list",
+      length(variationRange[[parameterPath]])
     )
     names(batchResultsIdMap[[parameterPath]]) <- variationRange[[parameterPath]]
   }
@@ -206,7 +210,9 @@ sensitivityCalculation <- function(simulation,
     for (scaleFactorIdx in seq_along(variationRange[[formulaParamPath]])) {
       batchResultsIdMap[[formulaParamPath]][[scaleFactorIdx]] <-
         formulaBatch$addRunValues(
-          parameterValues = variationRange[[formulaParamPath]][[scaleFactorIdx]] *
+          parameterValues = variationRange[[formulaParamPath]][[
+            scaleFactorIdx
+          ]] *
             initialValues[[formulaParamPath]]
         )
     }
@@ -243,7 +249,8 @@ sensitivityCalculation <- function(simulation,
         simulationResultsBatch[[parameterPath]][[parameterFactor]] <- NULL
         warning(
           messages$sensitivityAnalysisSimulationFailure(
-            parameterPath, parameterFactor
+            parameterPath,
+            parameterFactor
           )
         )
       }
@@ -254,7 +261,9 @@ sensitivityCalculation <- function(simulation,
 
   # Extract data frame for PK parameters
   pkData <- .simulationResultsBatchToPKDataFrame(
-    simulationResultsBatch, parameterPaths, customOutputFunctions
+    simulationResultsBatch,
+    parameterPaths,
+    customOutputFunctions
   )
 
   # Filter out unneeded PK parameters
@@ -286,9 +295,9 @@ sensitivityCalculation <- function(simulation,
   # Final list with needed objects and data frames for plotting functions.
   results <- list(
     "simulationResults" = simulationResultsBatch,
-    "outputPaths"       = outputPaths,
-    "parameterPaths"    = parameterPaths,
-    "pkData"            = pkData
+    "outputPaths" = outputPaths,
+    "parameterPaths" = parameterPaths,
+    "pkData" = pkData
   )
 
   # Reset simulation outputs
@@ -297,7 +306,8 @@ sensitivityCalculation <- function(simulation,
 
   for (outputSelection in oldOutputSelections) {
     ospsuite::addOutputs(
-      quantitiesOrPaths = outputSelection$path, simulation = simulation
+      quantitiesOrPaths = outputSelection$path,
+      simulation = simulation
     )
   }
 

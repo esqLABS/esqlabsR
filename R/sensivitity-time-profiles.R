@@ -104,15 +104,16 @@
 #' sensitivitySpiderPlot(resultsNamed)
 #' }
 #' @export
-sensitivityTimeProfiles <- function(sensitivityCalculation,
-                                    outputPaths = NULL,
-                                    parameterPaths = NULL,
-                                    xAxisScale = NULL,
-                                    yAxisScale = NULL,
-                                    xUnits = NULL,
-                                    yUnits = NULL,
-                                    observedData = NULL,
-                                    defaultPlotConfiguration = NULL) {
+sensitivityTimeProfiles <- function(
+    sensitivityCalculation,
+    outputPaths = NULL,
+    parameterPaths = NULL,
+    xAxisScale = NULL,
+    yAxisScale = NULL,
+    xUnits = NULL,
+    yUnits = NULL,
+    observedData = NULL,
+    defaultPlotConfiguration = NULL) {
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -146,20 +147,20 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # apply configuration overrides and validate
   customPlotConfiguration <- .applyPlotConfiguration(
     defaultPlotConfiguration = defaultPlotConfiguration,
-    plotOverrideConfig       = timeProfilesConfiguration,
-    xAxisScale               = xAxisScale,
-    yAxisScale               = yAxisScale
+    plotOverrideConfig = timeProfilesConfiguration,
+    xAxisScale = xAxisScale,
+    yAxisScale = yAxisScale
   )
 
   # Prepare data -----------------------------------------
 
   data <- .aggregateSimulationAndObservedData(
-    simulationResults        = sensitivityCalculation$simulationResults,
-    dataSets                 = observedData,
-    parameterPaths           = sensitivityCalculation$parameterPaths,
-    outputPaths              = sensitivityCalculation$outputPaths,
-    xUnits                   = xUnits,
-    yUnits                   = yUnits
+    simulationResults = sensitivityCalculation$simulationResults,
+    dataSets = observedData,
+    parameterPaths = sensitivityCalculation$parameterPaths,
+    outputPaths = sensitivityCalculation$outputPaths,
+    xUnits = xUnits,
+    yUnits = yUnits
   )
 
   # filter out data not needed for plotting
@@ -185,7 +186,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
   splitData <- split(data, data$OutputPath)
   lsPlots <- stats::setNames(
-    vector("list", length(names(splitData))), names(splitData)
+    vector("list", length(names(splitData))),
+    names(splitData)
   )
 
   # create plot for each output path
@@ -203,8 +205,7 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 
 #' @keywords internal
 #' @noRd
-.createTimeProfiles <- function(data,
-                                defaultPlotConfiguration) {
+.createTimeProfiles <- function(data, defaultPlotConfiguration) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration$clone()
   plotConfiguration <- .updatePlotConfiguration(
@@ -215,25 +216,31 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # create axis labels
   if (is.null(plotConfiguration$xLabel)) {
     plotConfiguration$xLabel <- paste0(
-      unique(data$xDimension), " [",
-      unique(data$xUnit), "]"
+      unique(data$xDimension),
+      " [",
+      unique(data$xUnit),
+      "]"
     )
   }
   yUnitForPlot <- unique(data$yUnit)
   yDimensionForPlot <- ospsuite::getDimensionForUnit(yUnitForPlot)
   if (is.null(plotConfiguration$yLabel)) {
     plotConfiguration$yLabel <- paste0(
-      yDimensionForPlot, " [",
-      yUnitForPlot, "]"
+      yDimensionForPlot,
+      " [",
+      yUnitForPlot,
+      "]"
     )
   }
 
   # calculate y-axis limits and color legend breaks
-  pLimits <- .calculateLimits(data$yValues,
+  pLimits <- .calculateLimits(
+    data$yValues,
     scaling = plotConfiguration$yAxisScale
   )
   cBreaks <- c(
-    min(data$ParameterFactor, na.rm = TRUE), 1,
+    min(data$ParameterFactor, na.rm = TRUE),
+    1,
     max(data$ParameterFactor, na.rm = TRUE)
   )
   cBreaks <- unique(ifelse(cBreaks == 0, 1, cBreaks))
@@ -247,8 +254,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     dataSubset <- dplyr::filter(data, ParameterPathLabel == paramPath)
 
     # replace zeros dynamically to avoid warning when log transform
-    dataSubset$yValues <- ifelse(dataSubset$yValues <= 0,
-      pLimits[1], dataSubset$yValues
+    dataSubset$yValues <- ifelse(
+      dataSubset$yValues <= 0,
+      pLimits[1],
+      dataSubset$yValues
     )
 
     # combine original data subset with observed data
@@ -403,7 +412,9 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       )
     ) +
     patchwork::plot_layout(
-      guides = "collect", axes = "collect", ncol = length(plotList)
+      guides = "collect",
+      axes = "collect",
+      ncol = length(plotList)
     ) &
     theme(legend.position = plotConfiguration$legendPosition)
 
@@ -429,15 +440,17 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
 #'
 #' @keywords internal
 #' @noRd
-.aggregateSimulationAndObservedData <- function(simulationResults,
-                                                dataSets,
-                                                parameterPaths,
-                                                outputPaths,
-                                                xUnits,
-                                                yUnits) {
+.aggregateSimulationAndObservedData <- function(
+    simulationResults,
+    dataSets,
+    parameterPaths,
+    outputPaths,
+    xUnits,
+    yUnits) {
   if (!identical(names(simulationResults), unname(parameterPaths))) {
     stop(messages$invalidSimulationResultNames(
-      names(simulationResults), parameterPaths
+      names(simulationResults),
+      parameterPaths
     ))
   }
   validateIsOfType(simulationResults, "list")
@@ -482,9 +495,11 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
         for (j in seq_along(dataSets)) {
           dataCombinedClone <- dataCombined$clone()
 
-          if (.isConvertableUnit(
-            dataCombinedClone$addDataSets(dataSets[[j]])
-          )) {
+          if (
+            .isConvertableUnit(
+              dataCombinedClone$addDataSets(dataSets[[j]])
+            )
+          ) {
             dataCombined$addDataSets(dataSets[[j]])
           }
         }
@@ -493,11 +508,12 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
       # clone the combined data to check for specified unit conversion
       dataCombinedSpecifiedClone <- dataCombined$clone()
 
-      if (.isConvertableUnit(
-        dataCombinedSpecifiedClone,
-        xUnit = xUnits[[outputPath]],
-        yUnit = yUnits[[outputPath]]
-      )
+      if (
+        .isConvertableUnit(
+          dataCombinedSpecifiedClone,
+          xUnit = xUnits[[outputPath]],
+          yUnit = yUnits[[outputPath]]
+        )
       ) {
         outputPathList[[outputPath]] <- convertUnits(
           dataCombinedSpecifiedClone,
@@ -515,7 +531,10 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   }
 
   combinedDf <- dplyr::bind_rows(parameterPathList, .id = "ParameterPath")
-  parameterPathUserName <- names(parameterPaths)[match(combinedDf$ParameterPath, unname(parameterPaths))]
+  parameterPathUserName <- names(parameterPaths)[match(
+    combinedDf$ParameterPath,
+    unname(parameterPaths)
+  )]
   combinedDf <- dplyr::mutate(
     combinedDf,
     ParameterPathUserName = parameterPathUserName %||% NA_character_
@@ -524,7 +543,11 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
   # Convert parameterFactor to numeric for simulated data
   combinedDf <- dplyr::rowwise(combinedDf) %>%
     dplyr::mutate(
-      ParameterFactor = if (dataType == "simulated") as.numeric(name) else NA_real_
+      ParameterFactor = if (dataType == "simulated") {
+        as.numeric(name)
+      } else {
+        NA_real_
+      }
     ) %>%
     dplyr::ungroup()
 
@@ -537,7 +560,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     yValues
   ) %>%
     dplyr::select(
-      -IndividualId, -name
+      -IndividualId,
+      -name
     )
 
   return(combinedDf)
@@ -581,7 +605,8 @@ sensitivityTimeProfiles <- function(sensitivityCalculation,
     tryCatch(
       {
         ospsuite.utils::validateEnumValue(
-          unit, ospUnits[[dimension]],
+          unit,
+          ospUnits[[dimension]],
           nullAllowed = nullAllowed
         )
         return(NULL)

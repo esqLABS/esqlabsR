@@ -25,13 +25,21 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
 
-  containerPaths <- vector("character", length(individual$distributedParameters$paths))
-  paramNames <- vector("character", length(individual$distributedParameters$paths))
+  containerPaths <- vector(
+    "character",
+    length(individual$distributedParameters$paths)
+  )
+  paramNames <- vector(
+    "character",
+    length(individual$distributedParameters$paths)
+  )
   values <- vector("numeric", length(individual$distributedParameters$paths))
   units <- vector("character", length(individual$distributedParameters$paths))
 
   for (i in seq_along(individual$distributedParameters$paths)) {
-    splittedPath <- .splitParameterPathIntoContainerAndName(individual$distributedParameters$paths[[i]])
+    splittedPath <- .splitParameterPathIntoContainerAndName(individual$distributedParameters$paths[[
+      i
+    ]])
 
     containerPaths[i] <- splittedPath$containerPath
     paramNames[i] <- splittedPath$parameterName
@@ -69,10 +77,11 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' @returns An `IndividualCharacteristics` object
 #' @import ospsuite
 #' @export
-readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_length_linter.
-                                                 individualId,
-                                                 sheet = "IndividualBiometrics",
-                                                 nullIfNotFound = TRUE) {
+readIndividualCharacteristicsFromXLS <- function(
+    XLSpath, # nolint: object_length_linter.
+    individualId,
+    sheet = "IndividualBiometrics",
+    nullIfNotFound = TRUE) {
   validateIsString(c(XLSpath, individualId))
 
   # If no sheet has been specified, read from the first sheet
@@ -81,8 +90,14 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_lengt
   }
 
   columnNames <- c(
-    "IndividualId", "Species", "Population", "Gender", "Weight [kg]",
-    "Height [cm]", "Age [year(s)]", "Protein Ontogenies"
+    "IndividualId",
+    "Species",
+    "Population",
+    "Gender",
+    "Weight [kg]",
+    "Height [cm]",
+    "Age [year(s)]",
+    "Protein Ontogenies"
   )
 
   data <- readExcel(path = XLSpath, sheet = sheet)
@@ -103,7 +118,8 @@ readIndividualCharacteristicsFromXLS <- function(XLSpath, # nolint: object_lengt
 
   # Create the IndividualCharacteristics object
   individualCharacteristics <- ospsuite::createIndividualCharacteristics(
-    species = data$Species[[rowIdx]], population = data$Population[[rowIdx]],
+    species = data$Species[[rowIdx]],
+    population = data$Population[[rowIdx]],
     gender = data$Gender[[rowIdx]],
     weight = data$`Weight [kg]`[[rowIdx]],
     height = data$`Height [cm]`[[rowIdx]],

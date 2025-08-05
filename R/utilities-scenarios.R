@@ -33,7 +33,10 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 
     if (scenario$scenarioConfiguration$simulateSteadyState) {
       steadyStateSimulations <- c(steadyStateSimulations, scenario$simulation)
-      steadyStateTimes <- c(steadyStateTimes, scenario$scenarioConfiguration$steadyStateTime)
+      steadyStateTimes <- c(
+        steadyStateTimes,
+        scenario$scenarioConfiguration$steadyStateTime
+      )
     }
   }
 
@@ -51,7 +54,8 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
   for (simulation in steadyStateSimulations) {
     ospsuite::setQuantityValuesByPath(
       quantityPaths = initialValues[[simulation$id]]$paths,
-      values = initialValues[[simulation$id]]$values, simulation = simulation
+      values = initialValues[[simulation$id]]$values,
+      simulation = simulation
     )
   }
 
@@ -81,7 +85,11 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     results <- simulationResults[[id]]
     population <- scenario$population
     # For the cases when population is set to NA, convert it to NULL
-    if (!is.null(population) && !isOfType(population, "Population") && is.na(population)) {
+    if (
+      !is.null(population) &&
+        !isOfType(population, "Population") &&
+        is.na(population)
+    ) {
       population <- NULL
     }
 
@@ -99,14 +107,16 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
       warning(messages$missingResultsForScenario(scenarioName))
       outputValues <- NULL
     } else {
-      outputValues <- getOutputValues(results,
+      outputValues <- getOutputValues(
+        results,
         quantitiesOrPaths = outputQuantities,
         population = population,
         addMetaData = FALSE
       )
     }
     returnList[[idx]] <- list(
-      simulation = simulation, results = results,
+      simulation = simulation,
+      results = results,
       outputValues = outputValues,
       population = population
     )
@@ -140,7 +150,10 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 #'
 #' @returns Named list of `Scenario` objects.
 #' @export
-createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfParameterNotFound = TRUE) {
+createScenarios <- function(
+    scenarioConfigurations,
+    customParams = NULL,
+    stopIfParameterNotFound = TRUE) {
   .validateScenarioConfigurations(scenarioConfigurations)
   .validateParametersStructure(
     parameterStructure = customParams,
@@ -148,7 +161,14 @@ createScenarios <- function(scenarioConfigurations, customParams = NULL, stopIfP
     nullAllowed = TRUE
   )
 
-  scenarios <- purrr::map(scenarioConfigurations, ~ Scenario$new(.x, customParams = customParams, stopIfParameterNotFound = stopIfParameterNotFound)) %>%
+  scenarios <- purrr::map(
+    scenarioConfigurations,
+    ~ Scenario$new(
+      .x,
+      customParams = customParams,
+      stopIfParameterNotFound = stopIfParameterNotFound
+    )
+  ) %>%
     purrr::set_names(purrr::map(scenarioConfigurations, ~ .x$scenarioName))
 
   return(scenarios)
@@ -191,11 +211,12 @@ saveScenarioResults <- function(
     saveSimulationsToPKML = TRUE) {
   validateIsLogical(saveSimulationsToPKML)
 
-  outputFolder <- outputFolder %||% file.path(
-    projectConfiguration$outputFolder,
-    "SimulationResults",
-    format(Sys.time(), "%F %H-%M")
-  )
+  outputFolder <- outputFolder %||%
+    file.path(
+      projectConfiguration$outputFolder,
+      "SimulationResults",
+      format(Sys.time(), "%F %H-%M")
+    )
 
   for (i in seq_along(simulatedScenariosResults)) {
     results <- simulatedScenariosResults[[i]]$results
@@ -213,7 +234,10 @@ saveScenarioResults <- function(
         }
         # Save simulations
         if (saveSimulationsToPKML) {
-          outputPathSim <- file.path(outputFolder, paste0(scenarioName, ".pkml"))
+          outputPathSim <- file.path(
+            outputFolder,
+            paste0(scenarioName, ".pkml")
+          )
           ospsuite::saveSimulation(
             simulation = simulatedScenariosResults[[i]]$simulation,
             filePath = outputPathSim
@@ -221,8 +245,12 @@ saveScenarioResults <- function(
         }
         # Save population
         if (isOfType(simulatedScenariosResults[[i]]$population, "Population")) {
-          ospsuite::exportPopulationToCSV(simulatedScenariosResults[[i]]$population,
-            filePath = file.path(outputFolder, paste0(scenarioName, "_population.csv"))
+          ospsuite::exportPopulationToCSV(
+            simulatedScenariosResults[[i]]$population,
+            filePath = file.path(
+              outputFolder,
+              paste0(scenarioName, "_population.csv")
+            )
           )
         }
         # Save results
@@ -285,19 +313,29 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
     # Used only for loading the results, the name of the scenario is not changed.
     scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
 
-    simulation <- loadSimulation(paste0(resultsFolder, "/", scenarioNameForPath, ".pkml"))
+    simulation <- loadSimulation(paste0(
+      resultsFolder,
+      "/",
+      scenarioNameForPath,
+      ".pkml"
+    ))
 
     results <- importResultsFromCSV(
       simulation = simulation,
       filePaths = paste0(resultsFolder, "/", scenarioNameForPath, ".csv")
     )
 
-    outputValues <- getOutputValues(results,
+    outputValues <- getOutputValues(
+      results,
       quantitiesOrPaths = results$allQuantityPaths,
       addMetaData = FALSE
     )
     simulatedScenariosResults[[scenarioNames[[i]]]] <-
-      list(simulation = simulation, results = results, outputValues = outputValues)
+      list(
+        simulation = simulation,
+        results = results,
+        outputValues = outputValues
+      )
   }
 
   return(simulatedScenariosResults)

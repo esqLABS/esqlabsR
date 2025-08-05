@@ -668,7 +668,9 @@ projectConfigurationStatus <- function(
           ) {
             sheet_info <- differences$sheet_changes[[file]]
 
-            if (!is.null(sheet_info$missing) && length(sheet_info$missing) > 0) {
+            if (
+              !is.null(sheet_info$missing) && length(sheet_info$missing) > 0
+            ) {
               missing_sheets <- paste(sheet_info$missing, collapse = ", ")
               sublist <- cli::cli_ul()
               cli::cli_li("Missing sheets: {missing_sheets}")
