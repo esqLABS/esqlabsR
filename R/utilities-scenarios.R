@@ -81,7 +81,7 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     results <- simulationResults[[id]]
     population <- scenario$population
     # For the cases when population is set to NA, convert it to NULL
-    if (!isOfType(population, "Population") && is.na(population)) {
+    if (!is.null(population) && !isOfType(population, "Population") && is.na(population)) {
       population <- NULL
     }
 
