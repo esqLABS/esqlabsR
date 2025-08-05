@@ -1,19 +1,31 @@
 messages <- ospsuite.utils::messages
 
 # Parameters structure####
-messages$errorWrongXLSStructure <- function(filePath, expectedColNames, optionalMessage = NULL) {
+messages$errorWrongXLSStructure <- function(
+  filePath,
+  expectedColNames,
+  optionalMessage = NULL
+) {
   paste0(
-    "Loading from XLS failed, the file '", filePath, "' has wrong structure!
-    The file should contain columns '", paste0(expectedColNames, collapse = ", "), "'",
+    "Loading from XLS failed, the file '",
+    filePath,
+    "' has wrong structure!
+    The file should contain columns '",
+    paste0(expectedColNames, collapse = ", "),
+    "'",
     optionalMessage
   )
 }
 
 messages$wrongParametersStructure <- function(argumentName) {
-  paste0("Argument '", argumentName, "' has wrong structure. Expected is a named list with three vectors
+  paste0(
+    "Argument '",
+    argumentName,
+    "' has wrong structure. Expected is a named list with three vectors
   `paths` representing full parameter paths, `values` with numerical values of the
   parameters, and `units' representing the units the values are in. All three
-  vectors must have the same length")
+  vectors must have the same length"
+  )
 }
 
 # Enum####
@@ -23,27 +35,61 @@ messages$errorEnumPutListMultipleKeys <- function() {
 
 # utilities-population####
 messages$errorDistributionNotSupported <- function(string) {
-  paste0("The distribution '", string, "' is not supported. Supported distributions are listed in `Distributions`.")
+  paste0(
+    "The distribution '",
+    string,
+    "' is not supported. Supported distributions are listed in `Distributions`."
+  )
 }
 
 messages$errorWrongPopulationName <- function(populationName) {
-  paste0("Population name ", populationName, " is not specified in the population file!")
+  paste0(
+    "Population name ",
+    populationName,
+    " is not specified in the population file!"
+  )
 }
 
 messages$errorWrongOntogenyStructure <- function(entry) {
-  paste0("Wrong structure provided for the protein ontogeny specification. Expected
-  is a pair of <ProteinName:Ontogeny>, but the entry is: ", entry)
+  paste0(
+    "Wrong structure provided for the protein ontogeny specification. Expected
+  is a pair of <ProteinName:Ontogeny>, but the entry is: ",
+    entry
+  )
 }
 
 # utilities-individual####
 messages$errorWrongIndividualId <- function(individualId) {
-  paste0("Individual with id ", individualId, " is not specified in the individual characteristics file!")
+  paste0(
+    "Individual with id ",
+    individualId,
+    " is not specified in the individual characteristics file!"
+  )
 }
 
 # utilities####
-messages$warningValueWithinThresholdNotExisting <- function(value, threshold, optionalMessage = NULL) {
+messages$fileNotFound <- function(filePath) {
+  paste0("File not found: '", filePath, "'")
+}
+
+messages$errorDuplicateScenarioNames <- function(duplicateNames) {
   paste0(
-    "value `", value, "` not found in the array within the absolute threshold of  ", threshold,
+    "Duplicate scenario names found: '",
+    paste(duplicateNames, collapse = "', '"),
+    "'. Please provide unique scenario names."
+  )
+}
+
+messages$warningValueWithinThresholdNotExisting <- function(
+  value,
+  threshold,
+  optionalMessage = NULL
+) {
+  paste0(
+    "value `",
+    value,
+    "` not found in the array within the absolute threshold of  ",
+    threshold,
     optionalMessage
   )
 }
@@ -51,13 +97,18 @@ messages$warningValueWithinThresholdNotExisting <- function(value, threshold, op
 messages$errorWrongArguments <- function(expectedArguments) {
   paste0(
     "Wrong arguments provided for the function! Expected arguments are: ",
-    expectedArguments, "."
+    expectedArguments,
+    "."
   )
 }
 
 # utilities numerics####
 messages$valueShouldNotBeNegative <- function(parameterName, value) {
-  paste0(parameterName, " must be a positive numerical value, but the value is ", value)
+  paste0(
+    parameterName,
+    " must be a positive numerical value, but the value is ",
+    value
+  )
 }
 
 # utilities-data####
@@ -75,11 +126,19 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
 }
 
 messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = NULL) {
-  paste0("PlotID must be unique in PlotConfiguration, but the following plotIDs are duplicated: ", duplicated_plotIDs)
+  paste0(
+    "PlotID must be unique in PlotConfiguration, but the following plotIDs are duplicated: ",
+    duplicated_plotIDs
+  )
 }
 
-messages$PlotGridsNamesMustBeUnique <- function(duplicated_plotGridsNames = NULL) {
-  paste0("PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated:\n", paste(duplicated_plotGridsNames, collapse = "\n"))
+messages$PlotGridsNamesMustBeUnique <- function(
+  duplicated_plotGridsNames = NULL
+) {
+  paste0(
+    "PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated:\n",
+    paste(duplicated_plotGridsNames, collapse = "\n")
+  )
 }
 
 messages$UnknownPlotConfiguration <- function(name) {
@@ -87,15 +146,30 @@ messages$UnknownPlotConfiguration <- function(name) {
 }
 
 # scenario####
-messages$errorApplicationProtocolNotFound <- function(scenarioName, applicationProtocol) {
-  paste0("Application protocol '", applicationProtocol, "' defined in scenario '", scenarioName, "' not found in the excel file 'ApplicationParameters.xlsx'")
+messages$errorApplicationProtocolNotFound <- function(
+  scenarioName,
+  applicationProtocol
+) {
+  paste0(
+    "Application protocol '",
+    applicationProtocol,
+    "' defined in scenario '",
+    scenarioName,
+    "' not found in the excel file 'ApplicationParameters.xlsx'"
+  )
 }
 messages$wrongSimulationType <- function() {
   "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"
 }
 
-messages$scenarioConfigurationNameNotFoundWhenReading <- function(scenarioName) {
-  return(paste0("readScenarioDefinition: Scenario '", scenarioName, "' is not specified!"))
+messages$scenarioConfigurationNameNotFoundWhenReading <- function(
+  scenarioName
+) {
+  return(paste0(
+    "readScenarioDefinition: Scenario '",
+    scenarioName,
+    "' is not specified!"
+  ))
 }
 
 messages$warningInvalidScenarioName <- function(scenarioNames) {
@@ -106,36 +180,56 @@ messages$warningInvalidScenarioName <- function(scenarioNames) {
   )
 }
 
-messages$warningNoIndividualCharacteristics <- function(scenarioName, individualId) {
+messages$warningNoIndividualCharacteristics <- function(
+  scenarioName,
+  individualId
+) {
   paste0(
-    "Scenario ", scenarioName, ": No individual characteristics for individual id '",
-    individualId, "' found."
+    "Scenario ",
+    scenarioName,
+    ": No individual characteristics for individual id '",
+    individualId,
+    "' found."
   )
 }
 
-messages$warningNoIndividualSpecificModelParameters <- function(scenarioName, individualId) {
+messages$warningNoIndividualSpecificModelParameters <- function(
+  scenarioName,
+  individualId
+) {
   paste0(
-    "Scenario ", scenarioName, ": No individual specific model parameters for individual id '",
-    individualId, "' found."
+    "Scenario ",
+    scenarioName,
+    ": No individual specific model parameters for individual id '",
+    individualId,
+    "' found."
   )
 }
 
 messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
-  paste0("Simulation type of the scenario with scenario name '", scenarioName, "' is set to
+  paste0(
+    "Simulation type of the scenario with scenario name '",
+    scenarioName,
+    "' is set to
          'Population', but the field `populationId` is not set! Every population
-         simulation scenario must have a population id defined")
+         simulation scenario must have a population id defined"
+  )
 }
 
 messages$stopScenarioNameNonUnique <- function(scenarioName) {
   paste0(
-    "Scenario '", scenarioName, "' is defined multiple times! Make sure that each
+    "Scenario '",
+    scenarioName,
+    "' is defined multiple times! Make sure that each
     scenario defined in the excel file has a unique name."
   )
 }
 
 messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
   paste0(
-    "The time interval string '", timeIntervalString, "' is not valid! Please
+    "The time interval string '",
+    timeIntervalString,
+    "' is not valid! Please
     check the format of the string. Following criteria must be
     met: 1) Each time interval must contain three numbers separated by a ',', 2) all
     numbers must be positive, 3) The first number (start time) must be smaller than
@@ -145,11 +239,19 @@ messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
 }
 
 messages$stopScenarioMissingTimeUnit <- function(scenarioName) {
-  paste0("Scenario '", scenarioName, "' has simulation time defined, but no unit is specified! Please specify simulation time unit.")
+  paste0(
+    "Scenario '",
+    scenarioName,
+    "' has simulation time defined, but no unit is specified! Please specify simulation time unit."
+  )
 }
 
 messages$missingResultsForScenario <- function(scenarioName) {
-  paste0("No simulation results could be computed for the cenario '", scenarioName, "'.")
+  paste0(
+    "No simulation results could be computed for the cenario '",
+    scenarioName,
+    "'."
+  )
 }
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function() {
@@ -159,16 +261,28 @@ messages$noPKDataToWrite <- function() {
 # sensitivity analysis plotting
 messages$noParameterFactor <- function(data, parameterFactor) {
   paste0(
-    "'parameterFactor' values of ", parameterFactor, " and ", 1 / parameterFactor,
+    "'parameterFactor' values of ",
+    parameterFactor,
+    " and ",
+    1 / parameterFactor,
     " are not included in the sensitivity analysis results. Current values: ",
-    paste(sort(unique(data$ParameterFactor)), collapse = ", "), ". ",
+    paste(sort(unique(data$ParameterFactor)), collapse = ", "),
+    ". ",
     "Please rerun the sensitivity analysis with the required values."
   )
 }
 
 # utilities-quantity####
-messages$cannotGetMoleculeFromQuantity <- function(quantityPath, optionalMessage = NULL) {
-  paste0("Could not retrieve molecule name for the quantity with the path '", quantityPath, "'. ", optionalMessage)
+messages$cannotGetMoleculeFromQuantity <- function(
+  quantityPath,
+  optionalMessage = NULL
+) {
+  paste0(
+    "Could not retrieve molecule name for the quantity with the path '",
+    quantityPath,
+    "'. ",
+    optionalMessage
+  )
 }
 
 # data sets
@@ -183,7 +297,9 @@ messages$warningInvalidDataSetName <- function(dataSetNames) {
 # Plots.xlsx####
 messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
   paste0(
-    "The plots with plotIDs ", paste(plotIDs, collapse = ",\n"), " could not be added to plot grid `",
+    "The plots with plotIDs ",
+    paste(plotIDs, collapse = ",\n"),
+    " could not be added to plot grid `",
     plotGridTitle,
     "`. Please check if they are defined in sheet `plotConfiguration` and data is added in sheet `DataCombined`."
   )
@@ -191,7 +307,9 @@ messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
 
 messages$errorInvalidPlotID <- function(plotIDs) {
   paste0(
-    "The plots with plotIDs ", paste(plotIDs, collapse = ",\n"), " are used in the sheet
+    "The plots with plotIDs ",
+    paste(plotIDs, collapse = ",\n"),
+    " are used in the sheet
     'plotGrids' but are not defined in the sheet 'plotConfiguration'."
   )
 }
@@ -229,20 +347,30 @@ messages$stopInvalidDataCombinedName <- function(dataCombinedNames) {
 
 messages$stopNoPathProvided <- function(dataCombinedName) {
   paste0(
-    "No output path is defined for the DataCombined '", paste0(dataCombinedName, collapse = ", "), "'.
+    "No output path is defined for the DataCombined '",
+    paste0(dataCombinedName, collapse = ", "),
+    "'.
     Each simulation output must have an output path specified."
   )
 }
 
 messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
   paste0(
-    "Output path '", path, "' is defined in the DataCombined '", paste0(dataCombinedName, collapse = ", "), "' for scenario '", scenarioName, "' but has not been simulated. Please check that the output path is specified for this scenario."
+    "Output path '",
+    path,
+    "' is defined in the DataCombined '",
+    paste0(dataCombinedName, collapse = ", "),
+    "' for scenario '",
+    scenarioName,
+    "' but has not been simulated. Please check that the output path is specified for this scenario."
   )
 }
 
 messages$stopNoDataSetProvided <- function(dataCombinedName) {
   paste0(
-    "No data set is defined for the DataCombined '", paste0(dataCombinedName, collapse = ", \n"), "'.
+    "No data set is defined for the DataCombined '",
+    paste0(dataCombinedName, collapse = ", \n"),
+    "'.
     Each observed data must have a 'dataSet' specified."
   )
 }
@@ -254,14 +382,25 @@ messages$stopInvalidDataSetName <- function(dataSetNames) {
   )
 }
 
-messages$invalidConfigurationPropertyFromExcel <- function(propertyName, configurationType) {
-  paste0("Trying to apply property '", propertyName, "' that is not supported by
-         the configuration '", configurationType, "'! Check column names in the
-         excel file defining plot configurations.")
+messages$invalidConfigurationPropertyFromExcel <- function(
+  propertyName,
+  configurationType
+) {
+  paste0(
+    "Trying to apply property '",
+    propertyName,
+    "' that is not supported by
+         the configuration '",
+    configurationType,
+    "'! Check column names in the
+         excel file defining plot configurations."
+  )
 }
 
 messages$missingOutputFileName <- function() {
-  paste0("Missing values found in mandatory column 'outputName' of sheet 'exportConfiguration'. No plots are exported to file for corresponding rows.")
+  paste0(
+    "Missing values found in mandatory column 'outputName' of sheet 'exportConfiguration'. No plots are exported to file for corresponding rows."
+  )
 }
 
 messages$missingPlotGrids <- function(missingPlotGrids) {
@@ -281,35 +420,49 @@ messages$invalidPlotGridNames <- function(plotGridNames) {
 
 messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
   paste(
-    "Following output path IDs have been specified as output for scenario '", scenarioName,
+    "Following output path IDs have been specified as output for scenario '",
+    scenarioName,
     "', but are not present in the `OutputPaths` sheet! Define these outputs first: ",
     paste0(outputPathIds, collapse = ",\n")
   )
 }
 
-messages$invalidSimulationResultNames <- function(simulationResultNames,
-                                                  parameterPaths) {
+messages$invalidSimulationResultNames <- function(
+  simulationResultNames,
+  parameterPaths
+) {
   paste(
     "The names of the simulationResults and parameterPaths must be the same.\n",
-    "SimulationResults names: ", paste(simulationResultNames, collapse = ", "),
+    "SimulationResults names: ",
+    paste(simulationResultNames, collapse = ", "),
     "\n",
-    "ParameterPaths names: ", paste(parameterPaths, collapse = ", ")
+    "ParameterPaths names: ",
+    paste(parameterPaths, collapse = ", ")
   )
 }
 
 messages$errorDataCombinedListMustBeList <- function(type) {
   paste0(
     "The argument 'dataCombined' must be a named list of DataCombined objects, but the
-    type of passed argument is '", type, "'."
+    type of passed argument is '",
+    type,
+    "'."
   )
 }
 
 # Sensitivity calculation####
-messages$sensitivityAnalysisSimulationFailure <- function(parameterPath, parameterFactor) {
+messages$sensitivityAnalysisSimulationFailure <- function(
+  parameterPath,
+  parameterFactor
+) {
   cat(
     paste0(
-      "Simulation for `", parameterPath, "`\n",
-      "with variation factor `", parameterFactor, "` failed!\n",
+      "Simulation for `",
+      parameterPath,
+      "`\n",
+      "with variation factor `",
+      parameterFactor,
+      "` failed!\n",
       "The results will not be included in the sensitivity calculation.\n"
     )
   )
@@ -318,14 +471,18 @@ messages$sensitivityAnalysisSimulationFailure <- function(parameterPath, paramet
 messages$invalidCustomFunctionParameters <- function(providedParams) {
   paste(
     "The user-defined function must have either 'x', 'y', or both 'x' and 'y' as parameters.",
-    "Provided parameters are: ", paste0(providedParams, collapse = ", ")
+    "Provided parameters are: ",
+    paste0(providedParams, collapse = ", ")
   )
 }
 
 messages$errorNotNamedList <- function(objectName, optionalMessage = NULL) {
   callingFunction <- ospsuite.utils:::.getCallingFunctionName()
   paste0(
-    callingFunction, ": argument '", objectName, "' is not a named list!",
+    callingFunction,
+    ": argument '",
+    objectName,
+    "' is not a named list!",
     optionalMessage
   )
 }
