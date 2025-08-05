@@ -416,7 +416,8 @@ createPlotsFromExcel <- function(
       row[!(names(row) %in% c("name", "plotIDs", "title"))]
     )
 
-    if (!is.na(row$title)) {
+    # Ignore if title is not defined or no 'title' column is present
+    if (!is.na(row$title) || is.null(row$title)) {
       plotGridConfiguration$title <- row$title
     }
 
