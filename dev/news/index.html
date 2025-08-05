@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9017</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9018</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,6 +88,10 @@
 <li>Fixed a bug in <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> when subtitle of PlotConfiguration was not applied (<a href="https://github.com/esqLABS/esqlabsR/issues/845" class="external-link">#845</a>).</li>
 <li>Added example usage of <code><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot()</a></code> to the sensitivity analysis vignette (<a href="https://github.com/esqLABS/esqlabsR/issues/847" class="external-link">#847</a>).</li>
 <li>Corrected x-axis label in <code><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot()</a></code> to reflect changes in PK parameter (<a href="https://github.com/esqLABS/esqlabsR/issues/861" class="external-link">#861</a>).</li>
+<li>Better error message when <code>SteadyState = TRUE</code> and <code>SteadyStateTime</code> but not <code>SteadyStateTimeUnit</code> is defined in the scenario configuration (<a href="https://github.com/esqLABS/esqlabsR/issues/863" class="external-link">#863</a>).</li>
+<li>
+<code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> does not fail when <code>plotGrids</code> has no <code>title</code> column. (<a href="https://github.com/esqLABS/esqlabsR/issues/860" class="external-link">#860</a>)</li>
+<li>The package <code>ospsuite.utils</code> is imported but not the direct dependency. (<a href="https://github.com/esqLABS/esqlabsR/issues/836" class="external-link">#836</a>)</li>
 </ul></div>
 </div>
     <div class="section level2">
