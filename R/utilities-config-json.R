@@ -11,10 +11,9 @@
 #' @return Invisibly returns the exported configuration data structure
 #' @export
 snapshotProjectConfiguration <- function(
-  projectConfig = "ProjectConfiguration.xlsx",
-  outputDir = NULL,
-  ...
-) {
+    projectConfig = "ProjectConfiguration.xlsx",
+    outputDir = NULL,
+    ...) {
   extraArguments <- list(...)
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
@@ -166,9 +165,8 @@ snapshotProjectConfiguration <- function(
 #' @return A ProjectConfiguration object initialized with the regenerated ProjectConfiguration.xlsx
 #' @export
 restoreProjectConfiguration <- function(
-  jsonPath = "ProjectConfiguration.json",
-  outputDir = NULL
-) {
+    jsonPath = "ProjectConfiguration.json",
+    outputDir = NULL) {
   # Check if JSON file exists
   if (!file.exists(jsonPath)) {
     stop("JSON file does not exist: ", jsonPath)
@@ -193,7 +191,7 @@ restoreProjectConfiguration <- function(
     )
     if (!isTRUE(status$in_sync)) {
       cli::cli_alert_warning(
-        "The Excel configuration files are NOT in sync with the JSON snapshot. 
+        "The Excel configuration files are NOT in sync with the JSON snapshot.
       Restoring will OVERWRITE the Excel files and you may lose unsaved work."
       )
 
@@ -429,10 +427,9 @@ restoreProjectConfiguration <- function(
 #'  @import cli
 #' @export
 projectConfigurationStatus <- function(
-  projectConfig = "ProjectConfiguration.xlsx",
-  jsonPath = NULL,
-  silent = FALSE
-) {
+    projectConfig = "ProjectConfiguration.xlsx",
+    jsonPath = NULL,
+    silent = FALSE) {
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
     projectConfig <- createProjectConfiguration(projectConfig)
@@ -633,104 +630,103 @@ projectConfigurationStatus <- function(
       cli::cli_alert_warning(
         "Excel configuration files are NOT in sync with JSON snapshot."
       )
-      if(hasUnsavedChanges & !silent){
+      if (hasUnsavedChanges & !silent) {
         cli::cli_alert_info(
           "Additionally, the ProjectConfiguration object has {.strong unsaved changes} that differ from the Excel file."
         )
       }
     }
 
-    if(!silent){
+    if (!silent) {
+      # Display the summary of file statuses
+      cli::cli_h2("File Sync Status:")
 
-    # Display the summary of file statuses
-    cli::cli_h2("File Sync Status:")
-
-    for (file in names(fileStatus)) {
-      status_text <- fileStatus[[file]]
-      if (status_text == "in-sync") {
-        cli::cli_text(
-          "{.green {cli::symbol$tick}} {file}.xlsx:  {status_text}"
-        )
-      } else {
-        cli::cli_text(
-          "{.red {cli::symbol$cross}} {file}.xlsx: {status_text}"
-        )
-      }
-    }
-
-    # Display detailed differences
-    cli::cli_h2("Details:")
-
-    for (file in names(fileStatus)) {
-      if (fileStatus[[file]] == "out-of-sync") {
-        cli::cli_li("{file}.xlsx")
-
-        # Sheet changes
-        if (
-          !is.null(differences$sheet_changes) &&
-            file %in% names(differences$sheet_changes)
-        ) {
-          sheet_info <- differences$sheet_changes[[file]]
-
-          if (!is.null(sheet_info$missing) && length(sheet_info$missing) > 0) {
-            missing_sheets <- paste(sheet_info$missing, collapse = ", ")
-            sublist <- cli::cli_ul()
-            cli::cli_li("Missing sheets: {missing_sheets}")
-            cli::cli_end(sublist)
-          }
-
-          if (!is.null(sheet_info$added) && length(sheet_info$added) > 0) {
-            added_sheets <- paste(sheet_info$added, collapse = ", ")
-            sublist <- cli::cli_ul()
-            cli::cli_li("New sheets: {added_sheets}")
-            cli::cli_end(sublist)
-          }
-        }
-
-        # Data changes
-        if (
-          !is.null(differences$data_changes) &&
-            file %in% names(differences$data_changes)
-        ) {
-          changed_sheets <- paste(
-            differences$data_changes[[file]],
-            collapse = ", "
+      for (file in names(fileStatus)) {
+        status_text <- fileStatus[[file]]
+        if (status_text == "in-sync") {
+          cli::cli_text(
+            "{.green {cli::symbol$tick}} {file}.xlsx:  {status_text}"
           )
-          sublist <- cli::cli_ul()
-          cli::cli_li("Different data in sheets: {changed_sheets}")
-          cli::cli_end(sublist)
+        } else {
+          cli::cli_text(
+            "{.red {cli::symbol$cross}} {file}.xlsx: {status_text}"
+          )
         }
       }
-    }
 
-    # Add suggestions for resolving differences
-    cli::cli_h2("Suggested Actions:")
-    cli::cli_text("To resolve these differences, you can:")
-    cli::cli_ul()
+      # Display detailed differences
+      cli::cli_h2("Details:")
 
-    # If there are unsaved changes, suggest saving first
-    if (hasUnsavedChanges) {
+      for (file in names(fileStatus)) {
+        if (fileStatus[[file]] == "out-of-sync") {
+          cli::cli_li("{file}.xlsx")
+
+          # Sheet changes
+          if (
+            !is.null(differences$sheet_changes) &&
+              file %in% names(differences$sheet_changes)
+          ) {
+            sheet_info <- differences$sheet_changes[[file]]
+
+            if (!is.null(sheet_info$missing) && length(sheet_info$missing) > 0) {
+              missing_sheets <- paste(sheet_info$missing, collapse = ", ")
+              sublist <- cli::cli_ul()
+              cli::cli_li("Missing sheets: {missing_sheets}")
+              cli::cli_end(sublist)
+            }
+
+            if (!is.null(sheet_info$added) && length(sheet_info$added) > 0) {
+              added_sheets <- paste(sheet_info$added, collapse = ", ")
+              sublist <- cli::cli_ul()
+              cli::cli_li("New sheets: {added_sheets}")
+              cli::cli_end(sublist)
+            }
+          }
+
+          # Data changes
+          if (
+            !is.null(differences$data_changes) &&
+              file %in% names(differences$data_changes)
+          ) {
+            changed_sheets <- paste(
+              differences$data_changes[[file]],
+              collapse = ", "
+            )
+            sublist <- cli::cli_ul()
+            cli::cli_li("Different data in sheets: {changed_sheets}")
+            cli::cli_end(sublist)
+          }
+        }
+      }
+
+      # Add suggestions for resolving differences
+      cli::cli_h2("Suggested Actions:")
+      cli::cli_text("To resolve these differences, you can:")
+      cli::cli_ul()
+
+      # If there are unsaved changes, suggest saving first
+      if (hasUnsavedChanges) {
+        cli::cli_li(
+          "{.run projectConfig$save()} - Save the unsaved changes in the ProjectConfiguration object to the Excel file."
+        )
+      }
+
+      # Suggest snapshotProjectConfiguration to update the JSON snapshot
       cli::cli_li(
-        "{.run projectConfig$save()} - Save the unsaved changes in the ProjectConfiguration object to the Excel file."
+        "{.run snapshotProjectConfiguration()} - Save the changes from Excel files to the project snapshot."
       )
+
+      # Suggest restoreProjectConfiguration to update the Excel files
+      cli::cli_li(
+        "{.run restoreProjectConfiguration()} - Recreate the Excel files according to the configuration snapshot."
+      )
+
+      cli::cli_end()
     }
-
-    # Suggest snapshotProjectConfiguration to update the JSON snapshot
-    cli::cli_li(
-      "{.run snapshotProjectConfiguration()} - Save the changes from Excel files to the project snapshot."
-    )
-
-    # Suggest restoreProjectConfiguration to update the Excel files
-    cli::cli_li(
-      "{.run restoreProjectConfiguration()} - Recreate the Excel files according to the configuration snapshot."
-    )
-
-    cli::cli_end()
   }
-}
 
   invisible(result)
-  }
+}
 
 #' Convert Excel file to list structure for JSON serialization
 #'

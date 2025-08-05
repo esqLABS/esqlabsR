@@ -61,6 +61,7 @@ will have the updated name.
 not applied (\#845).
 - Added example usage of `sensitivityTornadoPlot()` to the sensitivity analysis vignette (#847).
 - Corrected x-axis label in `sensitivityTornadoPlot()` to reflect changes in PK parameter (\#861).
+- Better error message when `SteadyState = TRUE` and `SteadyStateTime` but not `SteadyStateTimeUnit` is defined in the scenario configuration (\#863).
 
 # esqlabsR 5.4.0
 

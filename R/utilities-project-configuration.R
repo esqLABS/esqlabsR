@@ -8,8 +8,7 @@
 #' @returns Object of type `ProjectConfiguration`
 #' @export
 createDefaultProjectConfiguration <- function(
-  path = file.path("ProjectConfiguration.xlsx")
-) {
+    path = file.path("ProjectConfiguration.xlsx")) {
   lifecycle::deprecate_soft(
     what = "createDefaultProjectConfiguration()",
     with = "createProjectConfiguration()",
@@ -28,8 +27,7 @@ createDefaultProjectConfiguration <- function(
 #' @returns Object of type `ProjectConfiguration`
 #' @export
 createProjectConfiguration <- function(
-  path = file.path("ProjectConfiguration.xlsx")
-) {
+    path = file.path("ProjectConfiguration.xlsx")) {
   projectConfiguration <- ProjectConfiguration$new(
     projectConfigurationFilePath = path
   )
@@ -96,7 +94,9 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   }
 
   type <- "example"
-  source_folder <- switch(type, "example" = exampleDirectory("TestProject"))
+  source_folder <- switch(type,
+    "example" = exampleDirectory("TestProject")
+  )
 
   # Check if project already exists
   if (isProjectInitialized(destination)) {
