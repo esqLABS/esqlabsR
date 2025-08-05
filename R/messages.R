@@ -249,7 +249,7 @@ messages$missingResultsForScenario <- function(scenarioName) {
 
 messages$missingSteadyStateTimeUnit <- function(scenarioName) {
   paste0(
-    "Missing unit for steady-state time (column 'SteadyStateTimeUnit') for cenario '",
+    "Missing unit for steady-state time (column 'SteadyStateTimeUnit') for scenario '",
     scenarioName,
     "'."
   )
