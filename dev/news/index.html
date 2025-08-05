@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9016</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9017</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,11 +52,8 @@
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
 <div class="section level3">
 <h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
-<ul><li>Protein ontogenies for individuals and populations are now defined in one column <code>Protein Ontogenies</code> in the sheets <code>IndividualBiometrics</code> (for individuals) or <code>Demographics</code> (for populations). The columns <code>Protein</code> and <code>Ontogeny</code> are no longer supported. The new column <code>Protein Ontogenies</code> is a comma-separated list of protein names and ontogeny names pairs. For example: <code>CYP3A4:CYP3A4,CYP2D6:CYP2C8</code> will create a CYP3A4 ontogeny for the protein CYP3A4 and a CYP2D6 ontogeny for the protein CYP2C8. (<a href="https://github.com/esqLABS/esqlabsR/issues/825" class="external-link">#825</a>)</li>
-</ul></div>
-<div class="section level3">
-<h3 id="breaking-changes-development-version-1">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version-1"></a></h3>
-<ul><li><p>The function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> gets a new signature. The arguments <code>file</code> and <code>sheet</code> are removed. The file from which the <code>DataCombined</code> objects are created is now passed as part of the <code>ProjectConfiguration</code> passed as <code>projectConfiguration</code> argument, the sheet is always <code>DataCombined</code>.</p></li>
+<ul><li><p>Protein ontogenies for individuals and populations are now defined in one column <code>Protein Ontogenies</code> in the sheets <code>IndividualBiometrics</code> (for individuals) or <code>Demographics</code> (for populations). The columns <code>Protein</code> and <code>Ontogeny</code> are no longer supported. The new column <code>Protein Ontogenies</code> is a comma-separated list of protein names and ontogeny names pairs. For example: <code>CYP3A4:CYP3A4,CYP2D6:CYP2C8</code> will create a CYP3A4 ontogeny for the protein CYP3A4 and a CYP2D6 ontogeny for the protein CYP2C8. (<a href="https://github.com/esqLABS/esqlabsR/issues/825" class="external-link">#825</a>)</p></li>
+<li><p>The function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> gets a new signature. The arguments <code>file</code> and <code>sheet</code> are removed. The file from which the <code>DataCombined</code> objects are created is now passed as part of the <code>ProjectConfiguration</code> passed as <code>projectConfiguration</code> argument, the sheet is always <code>DataCombined</code>.</p></li>
 <li><p>The function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> gets a new argument <code>plotGridNames</code>. The <code>plotGridNames</code> argument is a character vector of names of the plots specified in the sheet <code>plotGrids</code>. The function will then create and return <code>DataCombined</code> used in the specified plots. The new argument can be combined with <code>dataCombinedNames</code>.Useful in combination with the new argument <code>dataCombinedList</code> of the function <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>.</p></li>
 <li><p>Argument <code>dataCombinedNames = NULL</code> of the function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> does not create <code>DataCombined</code> for all entries in the excel file any more. If <code>dataCombinedNames = NULL</code>, <code>plotGridNames</code> must be specified. If both arguments are <code>NULL</code>, an empty list is returned.</p></li>
 </ul></div>
@@ -76,6 +73,7 @@
 </ul></li>
 <li><p><code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> now accepts a (named) list of <code>DataCombined</code> objects as input to create plots defined in the <code>plotGridNames</code> argument. Missing <code>DataCombined</code> will be created from the Excel file (default behavior).</p></li>
 <li><p>New <code><a href="../reference/saveSensitivityCalculation.html">saveSensitivityCalculation()</a></code> and <code><a href="../reference/loadSensitivityCalculation.html">loadSensitivityCalculation()</a></code> functions to save and restore sensitivity analysis results (<a href="https://github.com/esqLABS/esqlabsR/issues/862" class="external-link">#862</a>).</p></li>
+<li><p>Add <code><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML()</a></code> and <code><a href="../reference/addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel()</a></code> functions that automate scenario creation and writing to Excel from PKML files (<a href="https://github.com/esqLABS/esqlabsR/issues/853" class="external-link">#853</a>).</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
@@ -90,8 +88,6 @@
 <li>Fixed a bug in <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code> when subtitle of PlotConfiguration was not applied (<a href="https://github.com/esqLABS/esqlabsR/issues/845" class="external-link">#845</a>).</li>
 <li>Added example usage of <code><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot()</a></code> to the sensitivity analysis vignette (<a href="https://github.com/esqLABS/esqlabsR/issues/847" class="external-link">#847</a>).</li>
 <li>Corrected x-axis label in <code><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot()</a></code> to reflect changes in PK parameter (<a href="https://github.com/esqLABS/esqlabsR/issues/861" class="external-link">#861</a>).</li>
-<li>
-<code>runScenarios</code> now correctly accepts one single <code>Scenario</code> object.</li>
 </ul></div>
 </div>
     <div class="section level2">

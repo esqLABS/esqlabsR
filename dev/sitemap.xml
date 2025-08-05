@@ -24,6 +24,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/Scenario.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/ScenarioConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/ULOQMode.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/addScenarioConfigurationsToExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/applyIndividualParameters.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/calculateMeanDataSet.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/col2hsv.html</loc></url>
@@ -36,8 +37,11 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotGridConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createPlotsFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createProjectConfiguration.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createScenarios.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-createConfigurationFromRow.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-formatSimulationTimeForExcel.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-parseSimulationTimeIntervals.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-readOntongeniesFromXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateClassHasField.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateDataCombinedFromExcel.html</loc></url>
@@ -46,6 +50,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validatePlotConfigurationFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validatePlotGridsFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateScenarioConfigurations.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/dot-writeScenariosToExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/enumPutList.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqlabsColors.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/esqlabsRSettingNames.html</loc></url>
@@ -66,6 +71,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/initProject.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/initializeSimulation.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/isParametersEqual.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/isProjectInitialized.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/isTableFormulasEqual.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedData.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedDataFromPKML.html</loc></url>

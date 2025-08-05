@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9016</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9017</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -327,7 +327,11 @@ parameters in the <code>Applications</code> container. In the following
 example, we will extract application parameters for the molecule
 <code>Aciclovir</code> from the example simulation:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadSimulation.html" class="external-link">loadSimulation</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"Aciclovir.pkml"</span>, package <span class="op">=</span> <span class="st">"ospsuite"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadSimulation.html" class="external-link">loadSimulation</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>  <span class="st">"extdata"</span>,</span>
+<span>  <span class="st">"Aciclovir.pkml"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"ospsuite"</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">applicationParams</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getAllApplicationParameters.html">getAllApplicationParameters</a></span><span class="op">(</span><span class="va">sim</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">applicationParams</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [[1]]</span></span>
@@ -386,7 +390,10 @@ example, we will extract application parameters for the molecule
 <p>And export the parameters to an Excel file using the
 <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> function:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/exportParametersToXLS.html">exportParametersToXLS</a></span><span class="op">(</span>parameters <span class="op">=</span> <span class="va">applicationParams</span>, paramsXLSpath <span class="op">=</span> <span class="st">"../Applications.xlsx"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/exportParametersToXLS.html">exportParametersToXLS</a></span><span class="op">(</span></span>
+<span>  parameters <span class="op">=</span> <span class="va">applicationParams</span>,</span>
+<span>  paramsXLSpath <span class="op">=</span> <span class="st">"../Applications.xlsx"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>The created Excel file will have the same structure as all
 Parameter-files and can be directly loaded in MoBi or R using the
 <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function.</p>
@@ -403,11 +410,14 @@ separated by a <code>;</code>.</p>
 of 1 point per minute, the value of the column
 <code>SimulationTime</code> should be <code>0, 10, 1</code>, and that of
 the column <code>SimulationTimeUnit</code> should be <code>min</code>.
-To simulate the model for * 20 hours with a resolution of 1 point per
-minute, then * for three weeks (equals to 3<em>7</em>24 = 504 hours)
-with a resolution of 1 point per hour, and finally * for two days
-(equals to 504 + 2*24 = 552 hours) with a resolution of 10 points per
-hour,</p>
+To simulate the model for</p>
+<ul>
+<li>20 hours with a resolution of 1 point per minute, then</li>
+<li>for three weeks (equals to 3<em>7</em>24 = 504 hours) with a
+resolution of 1 point per hour, and finally</li>
+<li>for two days (equals to 504 + 2*24 = 552 hours) with a resolution of
+10 points per hour,</li>
+</ul>
 <p>the value of the column <code>SimulationTime</code> should be
 <code>0, 20, 60; 20, 504, 1; 504, 552, 10</code>, and that of the column
 <code>SimulationTimeUnit</code> should be <code>h</code>.</p>
@@ -454,8 +464,8 @@ defining a unique identifier for this path in the column
 this:</p>
 <table class="table">
 <colgroup>
-<col width="20%">
-<col width="79%">
+<col width="23%">
+<col width="76%">
 </colgroup>
 <thead><tr class="header">
 <th>OutputPathId</th>
