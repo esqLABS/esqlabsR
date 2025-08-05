@@ -21,12 +21,14 @@
 #' @import parallel
 #' @seealso{[parLapply()]}
 #' @export
-executeInParallel <- function(fun,
-                              firstArguments,
-                              exports = NULL,
-                              ...,
-                              outputNames = NULL,
-                              nrOfCores = ospsuite::getOSPSuiteSetting("numberOfCores")) {
+executeInParallel <- function(
+  fun,
+  firstArguments,
+  exports = NULL,
+  ...,
+  outputNames = NULL,
+  nrOfCores = ospsuite::getOSPSuiteSetting("numberOfCores")
+) {
   if (!is.null(outputNames)) {
     validateIsSameLength(firstArguments, outputNames)
   }

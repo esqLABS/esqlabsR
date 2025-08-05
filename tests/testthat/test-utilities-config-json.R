@@ -438,7 +438,7 @@ test_that("snapshotProjectConfiguration and restoreProjectConfiguration handle a
 
   # Add a new column (e.g., 'linesSize') with a value (e.g., 2.5)
   new_col_name <- "linesSize"
-  new_col_values <- c(rep(2.5, n_rows-1), NA)
+  new_col_values <- c(rep(2.5, n_rows - 1), NA)
   plot_config_df[[new_col_name]] <- new_col_values
 
   # Write the modified plotConfiguration sheet back, preserving all sheets

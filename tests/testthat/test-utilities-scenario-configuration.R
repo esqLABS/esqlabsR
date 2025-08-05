@@ -457,3 +457,33 @@ test_that("It parses time intervals correctly", {
     fixed = TRUE
   )
 })
+
+test_that("It shows a meaningful error when steady-state is true but no unit is set", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Scenarios.xlsx",
+    tmpdir = tempDir,
+    code = {
+      scenariosDfLocal <- scenariosDf
+      scenariosDfLocal$SteadyState <- TRUE
+      scenariosDfLocal$SteadyStateTime <- 15
+      .writeExcel(
+        data = list(
+          "Scenarios" = scenariosDfLocal,
+          "OutputPaths" = data.frame()
+        ),
+        path = file.path(tempDir, "Scenarios.xlsx"),
+      )
+
+      expect_error(
+        readScenarioConfigurationFromExcel(
+          projectConfiguration = projectConfigurationLocal
+        ),
+        regexp = messages$missingSteadyStateTimeUnit("TestScenario"),
+        fixed = TRUE
+      )
+    }
+  )
+})

@@ -16,9 +16,10 @@
 #'
 #' @keywords internal
 #' @noRd
-.simulationResultsBatchToPKDataFrame <- function(simulationResultsBatch,
-                                                 parameterPaths,
-                                                 customOutputFunctions) {
+.simulationResultsBatchToPKDataFrame <- function(
+    simulationResultsBatch,
+    parameterPaths,
+    customOutputFunctions) {
   batchResultsList <- list()
 
   for (i in seq_along(simulationResultsBatch)) {
@@ -50,9 +51,10 @@
 #'
 #' @keywords internal
 #' @noRd
-.simulationResultsToPKDataFrame <- function(simulationResults,
-                                            parameterPath,
-                                            customOutputFunctions = NULL) {
+.simulationResultsToPKDataFrame <- function(
+    simulationResults,
+    parameterPath,
+    customOutputFunctions = NULL) {
   # calculate standard pkAnalyses
   pkDataList <- userPKDataList <-
     stats::setNames(
@@ -89,8 +91,8 @@
   # modify and format data
   pkData <- dplyr::rename(
     pkData,
-    OutputPath       = QuantityPath,
-    PKParameter      = Parameter,
+    OutputPath = QuantityPath,
+    PKParameter = Parameter,
     PKParameterValue = Value
   )
 
@@ -183,7 +185,12 @@
   # combined and prepare PK data to match calculatePKAnalyses() output
   userPKDataFrame <- dplyr::bind_rows(userPKValuePathList)
   userPKDataFrame <- dplyr::select(
-    userPKDataFrame, IndividualId, QuantityPath, Parameter, Value, Unit
+    userPKDataFrame,
+    IndividualId,
+    QuantityPath,
+    Parameter,
+    Value,
+    Unit
   )
 
   return(userPKDataFrame)
@@ -210,26 +217,36 @@
   # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
   data %>%
     dplyr::mutate(
-      PKPercentChange = ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) * 100,
-      SensitivityPKParameter =
+      PKPercentChange = ((PKParameterValue - PKParameterBaseValue) /
+        PKParameterBaseValue) *
+        100,
       # delta PK / PK
-        ((PKParameterValue - PKParameterBaseValue) / PKParameterBaseValue) *
-          # p / delta p
-          (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
+      SensitivityPKParameter = ((PKParameterValue - PKParameterBaseValue) /
+        PKParameterBaseValue) *
+        # p / delta p
+        (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
     )
 }
 
 #' @keywords internal
 #' @noRd
-.convertToWide <- function(data,
-                           pkParameterNames = names(ospsuite::StandardPKParameter)) {
+.convertToWide <- function(
+    data,
+    pkParameterNames = names(ospsuite::StandardPKParameter)) {
   dataWide <- tidyr::pivot_wider(
     data,
-    names_from  = PKParameter,
-    values_from = c(PKParameterValue, Unit, PKPercentChange, SensitivityPKParameter),
-    names_glue  = "{PKParameter}_{.value}"
+    names_from = PKParameter,
+    values_from = c(
+      PKParameterValue,
+      Unit,
+      PKPercentChange,
+      SensitivityPKParameter
+    ),
+    names_glue = "{PKParameter}_{.value}"
   ) %>%
-    dplyr::rename_all(~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")) %>%
+    dplyr::rename_all(
+      ~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")
+    ) %>%
     # metrics for each parameter are grouped together
     dplyr::select(
       dplyr::matches("Output|^Parameter"),
@@ -324,8 +341,7 @@
 
   if (length(variationRange) == 1) {
     variationRange <- rep(variationRange, length(parameterPaths))
-  }
-  # Ensure the lengths of variationRange and parameterPath are equal
+  } # Ensure the lengths of variationRange and parameterPath are equal
   else if (length(variationRange) != length(parameterPaths)) {
     cli::cli_abort(
       messages$invalidVariationRangeLength()
@@ -349,7 +365,10 @@
 #'
 #' @keywords internal
 #' @noRd
-.transformVariationRange <- function(variationRange, initialValues, variationType) {
+.transformVariationRange <- function(
+    variationRange,
+    initialValues,
+    variationType) {
   if (variationType == "absolute") {
     variationRange <- purrr::map2(variationRange, initialValues, ~ .x / .y)
   }
@@ -432,8 +451,13 @@
 #' @keywords internal
 #' @noRd
 .validatePKParameters <- function(pkParameters) {
-  if (!is.null(pkParameters) && !isIncluded(pkParameters, ospsuite::allPKParameterNames())) {
-    nsPKNames <- pkParameters[!pkParameters %in% ospsuite::allPKParameterNames()]
+  if (
+    !is.null(pkParameters) &&
+      !isIncluded(pkParameters, ospsuite::allPKParameterNames())
+  ) {
+    nsPKNames <- pkParameters[
+      !pkParameters %in% ospsuite::allPKParameterNames()
+    ]
 
     message(
       "Following PK parameters are specified but were not calculated:\n",
@@ -481,12 +505,13 @@
 #'
 #' @keywords internal
 #' @noRd
-.savePlotList <- function(plotlist,
-                          plot.type,
-                          outputFolder = "",
-                          width = 16,
-                          height = 9,
-                          dpi = 300) {
+.savePlotList <- function(
+    plotlist,
+    plot.type,
+    outputFolder = "",
+    width = 16,
+    height = 9,
+    dpi = 300) {
   purrr::walk2(
     .x = plotlist,
     .y = seq_along(plotlist),
@@ -508,10 +533,11 @@
 #'
 #' @keywords internal
 #' @noRd
-.filterPlottingData <- function(data,
-                                outputPaths = NULL,
-                                parameterPaths = NULL,
-                                pkParameters = NULL) {
+.filterPlottingData <- function(
+    data,
+    outputPaths = NULL,
+    parameterPaths = NULL,
+    pkParameters = NULL) {
   if (!is.null(outputPaths)) {
     data <- dplyr::filter(data, OutputPath %in% outputPaths)
   }
@@ -563,9 +589,10 @@
 #'   overwrite = TRUE
 #' )
 #' }
-saveSensitivityCalculation <- function(sensitivityCalculation,
-                                       outputDir,
-                                       overwrite = FALSE) {
+saveSensitivityCalculation <- function(
+    sensitivityCalculation,
+    outputDir,
+    overwrite = FALSE) {
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   validateIsString(outputDir)
   validateIsLogical(overwrite)
@@ -683,7 +710,8 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
   # Refill the structure by index using naming convention from export
   for (file in simResultFiles) {
     matches <- stringr::str_match(
-      basename(file), "simulationResult_(\\d+)_(\\d+)\\.csv$"
+      basename(file),
+      "simulationResult_(\\d+)_(\\d+)\\.csv$"
     )
     i <- as.integer(matches[2])
     j <- as.integer(matches[3])
@@ -691,8 +719,12 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
     simulationResult <- ospsuite::importResultsFromCSV(simulation, file)
     simulationResults[[i]][[j]] <- simulationResult
 
-    if (!all(sensitivityCalculation$outputPaths %in%
-      simulationResult$allQuantityPaths)) {
+    if (
+      !all(
+        sensitivityCalculation$outputPaths %in%
+          simulationResult$allQuantityPaths
+      )
+    ) {
       stop(messages$errorCorruptSensitivityCalculation(outputDir))
     }
   }
