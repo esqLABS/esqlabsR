@@ -44,6 +44,9 @@ were overwritten by the administration protocol (\#817).
 - New `saveSensitivityCalculation()` and `loadSensitivityCalculation()` functions 
 to save and restore sensitivity analysis results (\#862).
 - Add `createScenarioConfigurationsFromPKML()` and `addScenarioConfigurationsToExcel()` functions that automate scenario creation and writing to Excel from PKML files (\#853).
+- Added species-specific parameter sheets for the species Beagle, Dog, Minipig, and Mouse.
+It is now possible to create scenariosfor  each species implemented in PK-Sim 
+(except for the experimental cat cattle) from the base human simulation.
 
 
 ## Minor improvements and bug fixes

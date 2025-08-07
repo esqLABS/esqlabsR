@@ -158,10 +158,11 @@ file, see description below. **IndividualId** may be empty. In this
 case, the individual as defined in the `pkml` simulation without any
 individual-specific model parameters will be simulated. The same
 individual can be used in multiple scenarios. It is possible to scale
-from a human model to the species **Rat**, **Rabbit**, and **Monkey** by
-applying the respective individual to the simulation. Other species
-scalings are technically possible but the correctness of the results is
-not guaranteed as there exist some structural differences between the
+from a human model to the species **Beagle**, **Dog**, **Minipig**,
+**Mouse**, **Rat**, **Rabbit**, and **Monkey** by applying the
+respective individual to the simulation. Other species scalings are
+technically possible but the correctness of the results is not
+guaranteed as there exist some structural differences between the
 species.
 
 #### PopulationId
@@ -269,9 +270,9 @@ To simulate the model for
 
 -   20 hours with a resolution of 1 point per minute, then
 -   for three weeks (equals to 3*7*24 = 504 hours) with a resolution of
-    1 point per hour, and finally 
--   for two days (equals to 504 + 2\*24 =
-    552 hours) with a resolution of 10 points per hour,
+    1 point per hour, and finally
+-   for two days (equals to 504 + 2\*24 = 552 hours) with a resolution
+    of 10 points per hour,
 
 the value of the column `SimulationTime` should be
 `0, 20, 60; 20, 504, 1; 504, 552, 10`, and that of the column
@@ -311,7 +312,7 @@ this path in the column `OutputPathId`. The content of the sheet could
 look like this:
 
 | OutputPathId | OutputPath |
-|-----------------|-------------------------------------------------------|
+|----|----|
 | Aciclovir_PVB | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
 | Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container |
 
