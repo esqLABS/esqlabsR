@@ -17,7 +17,10 @@
 #' In any other case where the string cannot be converted to a numeric, `NA` is returned.
 #' @returns A numeric value or a list of numeric values
 #' @export
-stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMode$ULOQ) {
+stringToNum <- function(
+    string,
+    lloqMode = LLOQMode$`LLOQ/2`,
+    uloqMode = ULOQMode$ULOQ) {
   # Input validations
   validateEnumValue(lloqMode, LLOQMode)
   validateEnumValue(uloqMode, ULOQMode)
@@ -37,7 +40,10 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
       # CHECK FOR LLOQ
       if (substring(string[[idx]], first = 1, last = 1) == "<") {
         # Transform the value that follow the "<" character
-        value <- suppressWarnings(as.numeric(substring(string[[idx]], first = 2)))
+        value <- suppressWarnings(as.numeric(substring(
+          string[[idx]],
+          first = 2
+        )))
         # If value is NA (could not convert to numeric), continue, as the output
         # should be NA
         if (is.na(value)) {
@@ -58,7 +64,10 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
       # CHECK FOR ULOQ
       if (substring(string[[idx]], first = 1, last = 1) == ">") {
         # Transform the value that follow the "<" character
-        value <- suppressWarnings(as.numeric(substring(string[[idx]], first = 2)))
+        value <- suppressWarnings(as.numeric(substring(
+          string[[idx]],
+          first = 2
+        )))
         # If value is NA (could not convert to numeric), continue, as the output
         # should be NA
         if (is.na(value)) {
@@ -99,8 +108,13 @@ stringToNum <- function(string, lloqMode = LLOQMode$`LLOQ/2`, uloqMode = ULOQMod
 #'  all `DataSet`s
 #' @returns A single `DataSet` object
 #' @export
-calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLOQMode$`LLOQ/2`,
-                                 outputXunit = NULL, outputYunit = NULL, outputMolWeight = NULL) {
+calculateMeanDataSet <- function(
+    dataSets,
+    method = "arithmetic",
+    lloqMode = LLOQMode$`LLOQ/2`,
+    outputXunit = NULL,
+    outputYunit = NULL,
+    outputMolWeight = NULL) {
   validateIsOfType(dataSets, "DataSet")
   if (!any(c("arithmetic", "geometric") == method)) {
     stop(messages$errorInvalidMeanMethod())
@@ -162,9 +176,15 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
   )
 
   # meanDataSet$LLOQ = arithmetic mean lloq of all data sets with lloq
-  lloqMean <- suppressWarnings(mean(unlist(sapply(c(dataSets), function(x) {
-    x$LLOQ
-  }), use.names = FALSE), na.rm = TRUE))
+  lloqMean <- suppressWarnings(mean(
+    unlist(
+      sapply(c(dataSets), function(x) {
+        x$LLOQ
+      }),
+      use.names = FALSE
+    ),
+    na.rm = TRUE
+  ))
   if (!is.na(lloqMean)) {
     meanDataSet$LLOQ <- lloqMean
   }
@@ -179,7 +199,8 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
         sourceUnit = unit
       )
     },
-    df$xValues, df$xUnit
+    df$xValues,
+    df$xUnit
   )
 
   # convert yValues to same unit
@@ -194,7 +215,9 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
         molWeightUnit = "g/mol"
       )
     },
-    df$yValues, df$yUnit, df$molWeight
+    df$yValues,
+    df$yUnit,
+    df$molWeight
   )
 
   # calculate means and standard deviations according to chosen method
@@ -202,25 +225,43 @@ calculateMeanDataSet <- function(dataSets, method = "arithmetic", lloqMode = LLO
     arithmetic = {
       yMeans <- tapply(df[["yValues"]], df[["xValues"]], mean)
       yError <- tapply(df[["yValues"]], df[["xValues"]], stats::sd)
-      meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
+      meanDataSet$setValues(
+        xValues = as.numeric(names(yMeans)),
+        yValues = yMeans,
+        yErrorValues = yError
+      )
       meanDataSet$yErrorType <- ospsuite::DataErrorType$ArithmeticStdDev
     },
     geometric = {
       yMeans <- tapply(df[["yValues"]], df[["xValues"]], geomean)
       yError <- tapply(df[["yValues"]], df[["xValues"]], geosd)
-      meanDataSet$setValues(xValues = as.numeric(names(yMeans)), yValues = yMeans, yErrorValues = yError)
+      meanDataSet$setValues(
+        xValues = as.numeric(names(yMeans)),
+        yValues = yMeans,
+        yErrorValues = yError
+      )
       meanDataSet$yErrorType <- ospsuite::DataErrorType$GeometricStdDev
     }
   )
 
   # add all meta that are equal in every data set
-  metaDataNames <- Reduce(intersect, lapply(c(dataSets), function(x) {
-    names(x$metaData)
-  }))
+  metaDataNames <- Reduce(
+    intersect,
+    lapply(c(dataSets), function(x) {
+      names(x$metaData)
+    })
+  )
   for (name in metaDataNames) {
-    value <- Reduce(intersect, sapply(c(dataSets), function(x) {
-      x$metaData[[name]]
-    }, simplify = FALSE))
+    value <- Reduce(
+      intersect,
+      sapply(
+        c(dataSets),
+        function(x) {
+          x$metaData[[name]]
+        },
+        simplify = FALSE
+      )
+    )
     if (length(value) != 0) {
       meanDataSet$addMetaData(name = name, value = value)
     }
@@ -265,10 +306,14 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' projectConfiguration <- createProjectConfiguration()
 #' dataSets <- loadObservedData(projectConfiguration)
 #' }
-loadObservedData <- function(projectConfiguration, sheets = NULL, importerConfiguration = NULL) {
-  importerConfiguration <- importerConfiguration %||% ospsuite::loadDataImporterConfiguration(
-    configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-  )
+loadObservedData <- function(
+    projectConfiguration,
+    sheets = NULL,
+    importerConfiguration = NULL) {
+  importerConfiguration <- importerConfiguration %||%
+    ospsuite::loadDataImporterConfiguration(
+      configurationFilePath = projectConfiguration$dataImporterConfigurationFile
+    )
   validateIsString(sheets, nullAllowed = TRUE)
   # If sheets have been specified, import only those. Otherwise try to import all
   # sheets
@@ -309,25 +354,32 @@ loadObservedData <- function(projectConfiguration, sheets = NULL, importerConfig
 #' projectConfiguration <- createProjectConfiguration()
 #' dataSets <- loadObservedData(projectConfiguration)
 #' }
-loadObservedDataFromPKML <- function(projectConfiguration, obsDataNames = NULL) {
+loadObservedDataFromPKML <- function(
+    projectConfiguration,
+    obsDataNames = NULL) {
   ospsuite.utils::validateIsString(obsDataNames, nullAllowed = TRUE)
   # If data sets have been specified, import only those. Otherwise try to import all
   # files
   if (!is.null(obsDataNames)) {
     allFiles <- paste0(obsDataNames, ".pkml")
   } else {
-    allFiles <- list.files(path = file.path(
-      projectConfiguration$dataFolder,
-      "pkml"
-    ), pattern = "*.pkml")
+    allFiles <- list.files(
+      path = file.path(
+        projectConfiguration$dataFolder,
+        "pkml"
+      ),
+      pattern = "*.pkml"
+    )
   }
 
   dataSets <- lapply(allFiles, function(fileName) {
-    ospsuite::loadDataSetFromPKML(filePath = file.path(
-      projectConfiguration$dataFolder,
-      "pkml",
-      fileName
-    ))
+    ospsuite::loadDataSetFromPKML(
+      filePath = file.path(
+        projectConfiguration$dataFolder,
+        "pkml",
+        fileName
+      )
+    )
   })
   names(dataSets) <- lapply(dataSets, function(x) {
     x$name

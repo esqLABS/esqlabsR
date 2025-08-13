@@ -3,7 +3,10 @@ dataFolder <- getTestDataFilePath("")
 test_that("It can read an empty sheet", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
   sheets <- c("EmptySheet")
-  params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
+  params <- readParametersFromXLS(
+    paramsXLSpath = paramsXLSpath,
+    sheets = sheets
+  )
 
   expect_equal(names(params), c("paths", "values", "units"))
   expect_type(params$values, "double")
@@ -13,7 +16,10 @@ test_that("It can read an empty sheet", {
 test_that("It can read a properly defined file", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
   sheets <- c("ValidSheet")
-  params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
+  params <- readParametersFromXLS(
+    paramsXLSpath = paramsXLSpath,
+    sheets = sheets
+  )
 
   expect_named(params, c("paths", "values", "units"))
 })
@@ -21,7 +27,10 @@ test_that("It can read a properly defined file", {
 test_that("It can read a properly defined file with extra columns", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
   sheets <- c("ValidSheed_extraColumns")
-  params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
+  params <- readParametersFromXLS(
+    paramsXLSpath = paramsXLSpath,
+    sheets = sheets
+  )
 
   expect_named(params, c("paths", "values", "units"))
 })
@@ -30,16 +39,22 @@ test_that("It throws an error when a sheet has wrong structure", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
   sheets <- "InvalidSheet"
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
-  expect_error(readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets),
-    regexp =
-      messages$errorWrongXLSStructure(filePath = paramsXLSpath, expectedColNames = columnNames)
+  expect_error(
+    readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets),
+    regexp = messages$errorWrongXLSStructure(
+      filePath = paramsXLSpath,
+      expectedColNames = columnNames
+    )
   )
 })
 
 test_that("It overwrites the value if the path is present in multiple sheets", {
   paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
   sheets <- c("ValidSheet", "SecondSheet")
-  params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
+  params <- readParametersFromXLS(
+    paramsXLSpath = paramsXLSpath,
+    sheets = sheets
+  )
 
   paramsPaths <- c(
     "Path1|Param1",
@@ -52,8 +67,6 @@ test_that("It overwrites the value if the path is present in multiple sheets", {
   expect_equal(expectedVals, params$values[idx])
   expect_equal(expectedUnits, params$units[idx])
 })
-
-
 
 
 test_that("It trows an error if wrong structure is provideed", {
@@ -76,7 +89,8 @@ test_that("It trows an error if wrong structure is provideed", {
 test_that("It extends an empty structure by new values", {
   params <- list(paths = NULL, values = NULL, units = NULL)
   newParams <- list(
-    paths = c("Path1", "Path2"), values = c(1, 2),
+    paths = c("Path1", "Path2"),
+    values = c(1, 2),
     units = c("", "µmol")
   )
 
@@ -93,7 +107,8 @@ test_that("It extends an empty structure by new values", {
 test_that("It extends a structure by empty structure", {
   newParams <- list(paths = NULL, values = NULL, units = NULL)
   params <- list(
-    paths = c("Path1", "Path2"), values = c(1, 2),
+    paths = c("Path1", "Path2"),
+    values = c(1, 2),
     units = c("", "µmol")
   )
 
@@ -109,10 +124,15 @@ test_that("It extends a structure by empty structure", {
 
 test_that("It extends a structure by a new structure", {
   params <- list(
-    paths = c("Path1", "Path2"), values = c(1, 2),
+    paths = c("Path1", "Path2"),
+    values = c(1, 2),
     units = c("", "µmol")
   )
-  newParams <- list(paths = c("Path2", "Path3"), values = c(1, 3), units = c("", "µmol"))
+  newParams <- list(
+    paths = c("Path2", "Path3"),
+    values = c(1, 3),
+    units = c("", "µmol")
+  )
 
   extended <- extendParameterStructure(
     parameters = params,
@@ -155,7 +175,8 @@ test_that("It writes the excel file with one parameter provided
       xlsPath <- "tmp.xlsx"
       sheet <- "newSheet"
       exportParametersToXLS(
-        parameters = param1, paramsXLSpath = xlsPath,
+        parameters = param1,
+        paramsXLSpath = xlsPath,
         sheet = sheet
       )
 
@@ -176,7 +197,8 @@ test_that("It writes the excel file with two parameters provided
       xlsPath <- "tmp.xlsx"
       sheet <- "newSheet"
       exportParametersToXLS(
-        parameters = c(param1, param2), paramsXLSpath = xlsPath,
+        parameters = c(param1, param2),
+        paramsXLSpath = xlsPath,
         sheet = sheet
       )
 
@@ -212,7 +234,10 @@ test_that("It writes the excel file with two parameters provided
       )
 
       # Load from xls and compare
-      paramsRead <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet)
+      paramsRead <- readParametersFromXLS(
+        paramsXLSpath = xlsPath,
+        sheets = sheet
+      )
 
       expect_equal(paramsRead$paths[[1]], params$paths[[1]])
       expect_equal(paramsRead$values[[1]], params$values[[1]])
@@ -254,9 +279,11 @@ test_that("It appends parameters to an already existing parameter excel file", {
         append = TRUE
       )
 
-
       # Load from xls and compare
-      paramsRead <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet)
+      paramsRead <- readParametersFromXLS(
+        paramsXLSpath = xlsPath,
+        sheets = sheet
+      )
 
       expect_equal(paramsRead$paths[[3]], newParam$paths[[1]])
       expect_equal(paramsRead$values[[3]], newParam$values[[1]])

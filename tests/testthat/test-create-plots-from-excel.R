@@ -1480,3 +1480,38 @@ test_that(".createConfigurationFromRow correctly reads values in quotes", {
     }
   )
 })
+
+test_that("It ignores a title argument in plotGrids when the title column is not present", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotGridsDfLocal <- plotGridsDf
+      plotGridsDfLocal$title <- NULL # Remove the title column
+      exportConfigurationDfLocal <- exportConfigurationDf
+      .writeExcel(
+        data = list(
+          "DataCombined" = dataCombinedDfLocal,
+          "plotConfiguration" = plotConfigurationDfLocal,
+          "plotGrids" = plotGridsDfLocal,
+          "exportConfiguration" = exportConfigurationDfLocal
+        ),
+        path = file.path(tempDir, "Plots.xlsx"),
+      )
+
+      expect_no_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+    }
+  )
+})

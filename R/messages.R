@@ -2,10 +2,9 @@ messages <- ospsuite.utils::messages
 
 # Parameters structure####
 messages$errorWrongXLSStructure <- function(
-  filePath,
-  expectedColNames,
-  optionalMessage = NULL
-) {
+    filePath,
+    expectedColNames,
+    optionalMessage = NULL) {
   paste0(
     "Loading from XLS failed, the file '",
     filePath,
@@ -81,10 +80,9 @@ messages$errorDuplicateScenarioNames <- function(duplicateNames) {
 }
 
 messages$warningValueWithinThresholdNotExisting <- function(
-  value,
-  threshold,
-  optionalMessage = NULL
-) {
+    value,
+    threshold,
+    optionalMessage = NULL) {
   paste0(
     "value `",
     value,
@@ -133,8 +131,7 @@ messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = NULL) {
 }
 
 messages$PlotGridsNamesMustBeUnique <- function(
-  duplicated_plotGridsNames = NULL
-) {
+    duplicated_plotGridsNames = NULL) {
   paste0(
     "PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated:\n",
     paste(duplicated_plotGridsNames, collapse = "\n")
@@ -147,9 +144,8 @@ messages$UnknownPlotConfiguration <- function(name) {
 
 # scenario####
 messages$errorApplicationProtocolNotFound <- function(
-  scenarioName,
-  applicationProtocol
-) {
+    scenarioName,
+    applicationProtocol) {
   paste0(
     "Application protocol '",
     applicationProtocol,
@@ -163,8 +159,7 @@ messages$wrongSimulationType <- function() {
 }
 
 messages$scenarioConfigurationNameNotFoundWhenReading <- function(
-  scenarioName
-) {
+    scenarioName) {
   return(paste0(
     "readScenarioDefinition: Scenario '",
     scenarioName,
@@ -181,9 +176,8 @@ messages$warningInvalidScenarioName <- function(scenarioNames) {
 }
 
 messages$warningNoIndividualCharacteristics <- function(
-  scenarioName,
-  individualId
-) {
+    scenarioName,
+    individualId) {
   paste0(
     "Scenario ",
     scenarioName,
@@ -194,9 +188,8 @@ messages$warningNoIndividualCharacteristics <- function(
 }
 
 messages$warningNoIndividualSpecificModelParameters <- function(
-  scenarioName,
-  individualId
-) {
+    scenarioName,
+    individualId) {
   paste0(
     "Scenario ",
     scenarioName,
@@ -248,7 +241,15 @@ messages$stopScenarioMissingTimeUnit <- function(scenarioName) {
 
 messages$missingResultsForScenario <- function(scenarioName) {
   paste0(
-    "No simulation results could be computed for the cenario '",
+    "No simulation results could be computed for the scenario '",
+    scenarioName,
+    "'."
+  )
+}
+
+messages$missingSteadyStateTimeUnit <- function(scenarioName) {
+  paste0(
+    "Missing unit for steady-state time (column 'SteadyStateTimeUnit') for scenario '",
     scenarioName,
     "'."
   )
@@ -274,9 +275,8 @@ messages$noParameterFactor <- function(data, parameterFactor) {
 
 # utilities-quantity####
 messages$cannotGetMoleculeFromQuantity <- function(
-  quantityPath,
-  optionalMessage = NULL
-) {
+    quantityPath,
+    optionalMessage = NULL) {
   paste0(
     "Could not retrieve molecule name for the quantity with the path '",
     quantityPath,
@@ -383,9 +383,8 @@ messages$stopInvalidDataSetName <- function(dataSetNames) {
 }
 
 messages$invalidConfigurationPropertyFromExcel <- function(
-  propertyName,
-  configurationType
-) {
+    propertyName,
+    configurationType) {
   paste0(
     "Trying to apply property '",
     propertyName,
@@ -428,9 +427,8 @@ messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
 }
 
 messages$invalidSimulationResultNames <- function(
-  simulationResultNames,
-  parameterPaths
-) {
+    simulationResultNames,
+    parameterPaths) {
   paste(
     "The names of the simulationResults and parameterPaths must be the same.\n",
     "SimulationResults names: ",
@@ -452,20 +450,17 @@ messages$errorDataCombinedListMustBeList <- function(type) {
 
 # Sensitivity calculation####
 messages$sensitivityAnalysisSimulationFailure <- function(
-  parameterPath,
-  parameterFactor
-) {
-  cat(
-    paste0(
-      "Simulation for `",
-      parameterPath,
-      "`\n",
-      "with variation factor `",
-      parameterFactor,
-      "` failed!\n",
-      "The results will not be included in the sensitivity calculation.\n"
-    )
-  )
+    parameterPath,
+    parameterFactor) {
+  cat(paste0(
+    "Simulation for `",
+    parameterPath,
+    "`\n",
+    "with variation factor `",
+    parameterFactor,
+    "` failed!\n",
+    "The results will not be included in the sensitivity calculation.\n"
+  ))
 }
 
 messages$invalidCustomFunctionParameters <- function(providedParams) {

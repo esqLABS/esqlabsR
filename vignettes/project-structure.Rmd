@@ -145,7 +145,7 @@ Use `projectConfigurationStatus()` to check if your Excel files are synchronized
 ```{r, eval=FALSE}
 # Check if files are in sync
 status <- projectConfigurationStatus("ProjectConfiguration.xlsx", "ProjectConfiguration.json")
-print(status$in_sync)  # TRUE if synchronized, FALSE otherwise
+print(status$in_sync) # TRUE if synchronized, FALSE otherwise
 ```
 
 #### Workflow Examples
@@ -154,7 +154,7 @@ print(status$in_sync)  # TRUE if synchronized, FALSE otherwise
 
 1. **Initial Setup**: Create a snapshot of your project configuration
    ```{r, eval=FALSE}
-   snapshotProjectConfiguration("ProjectConfiguration.xlsx")
+snapshotProjectConfiguration("ProjectConfiguration.xlsx")
    ```
 
 2. **Version Control**: Commit the JSON file to your Git repository
@@ -165,7 +165,7 @@ print(status$in_sync)  # TRUE if synchronized, FALSE otherwise
 
 3. **Team Sharing**: Team members can restore the project
    ```{r, eval=FALSE}
-   restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
+restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
    ```
 
 **Backup Strategy**: Before making significant changes to your project:

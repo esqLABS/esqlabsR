@@ -27,13 +27,23 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
-      stop(messages$errorWrongXLSStructure(filePath = paramsXLSpath, expectedColNames = columnNames))
+      stop(messages$errorWrongXLSStructure(
+        filePath = paramsXLSpath,
+        expectedColNames = columnNames
+      ))
     }
 
-    fullPaths <- paste(data[["Container Path"]], data[["Parameter Name"]], sep = "|")
+    fullPaths <- paste(
+      data[["Container Path"]],
+      data[["Parameter Name"]],
+      sep = "|"
+    )
     pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
 
-    pathsUnitsVector[fullPaths] <- tidyr::replace_na(data = as.character(data[["Units"]]), replace = "")
+    pathsUnitsVector[fullPaths] <- tidyr::replace_na(
+      data = as.character(data[["Units"]]),
+      replace = ""
+    )
   }
 
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
@@ -59,22 +69,38 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' writeParameterStructureToXLS(params, "test.xlsx")
 #' }
 #'
-writeParameterStructureToXLS <- function(parameterStructure, paramsXLSpath, sheet = NULL, append = FALSE) {
+writeParameterStructureToXLS <- function(
+    parameterStructure,
+    paramsXLSpath,
+    sheet = NULL,
+    append = FALSE) {
   if (isTRUE(append)) {
-    existingData <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheet)
+    existingData <- readParametersFromXLS(
+      paramsXLSpath = paramsXLSpath,
+      sheets = sheet
+    )
     parameterStructure$paths <- c(existingData$paths, parameterStructure$paths)
-    parameterStructure$values <- c(existingData$values, parameterStructure$values)
+    parameterStructure$values <- c(
+      existingData$values,
+      parameterStructure$values
+    )
     parameterStructure$units <- c(existingData$units, parameterStructure$units)
   }
 
   .validateParametersStructure(parameterStructure, "parameterStructure")
   # Split full parameter paths into container path and parameter name
-  containerPaths <- unlist(lapply(parameterStructure$paths, \(x){
-    .splitParameterPathIntoContainerAndName(x)$containerPath
-  }), use.names = FALSE)
-  parameterNames <- unlist(lapply(parameterStructure$paths, \(x){
-    .splitParameterPathIntoContainerAndName(x)$parameterName
-  }), use.names = FALSE)
+  containerPaths <- unlist(
+    lapply(parameterStructure$paths, \(x) {
+      .splitParameterPathIntoContainerAndName(x)$containerPath
+    }),
+    use.names = FALSE
+  )
+  parameterNames <- unlist(
+    lapply(parameterStructure$paths, \(x) {
+      .splitParameterPathIntoContainerAndName(x)$parameterName
+    }),
+    use.names = FALSE
+  )
 
   # Create a data frame with the parameter structure
   output <- data.frame(
@@ -259,7 +285,11 @@ extendParameterStructure <- function(parameters, newParameters) {
 #'
 #' @returns `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
-isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE, compareFormulasByValue = FALSE) {
+isParametersEqual <- function(
+    parameter1,
+    parameter2,
+    checkFormulaValues = FALSE,
+    compareFormulasByValue = FALSE) {
   validateIsOfType(c(parameter1, parameter2), "Parameter")
 
   # Check for the path
@@ -276,10 +306,22 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
   }
 
   # Check for formula type equality
-  if (!all(
-    c(formula1$isConstant, formula1$isDistributed, formula1$isExplicit, formula1$isTable) ==
-      c(formula2$isConstant, formula2$isDistributed, formula2$isExplicit, formula2$isTable)
-  )) {
+  if (
+    !all(
+      c(
+        formula1$isConstant,
+        formula1$isDistributed,
+        formula1$isExplicit,
+        formula1$isTable
+      ) ==
+        c(
+          formula2$isConstant,
+          formula2$isDistributed,
+          formula2$isExplicit,
+          formula2$isTable
+        )
+    )
+  ) {
     return(FALSE)
   }
 
@@ -301,7 +343,9 @@ isParametersEqual <- function(parameter1, parameter2, checkFormulaValues = FALSE
 
   # Explicit
   if (formula1$isExplicit) {
-    if (checkFormulaValues && (!identical(parameter1$value, parameter2$value))) {
+    if (
+      checkFormulaValues && (!identical(parameter1$value, parameter2$value))
+    ) {
       return(FALSE)
     }
 
@@ -370,13 +414,14 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' )
 #' @import ospsuite
 #' @export
-setParameterValuesByPathWithCondition <- function(parameterPaths, # nolint: object_length_linter.
-                                                  values,
-                                                  simulation,
-                                                  condition = function(path) {
-                                                    TRUE
-                                                  },
-                                                  units = NULL) {
+setParameterValuesByPathWithCondition <- function(
+    parameterPaths, # nolint: object_length_linter.
+    values,
+    simulation,
+    condition = function(path) {
+      TRUE
+    },
+    units = NULL) {
   for (i in seq_along(parameterPaths)) {
     path <- parameterPaths[[i]]
     if (condition(path)) {
@@ -401,7 +446,10 @@ setParameterValuesByPathWithCondition <- function(parameterPaths, # nolint: obje
 .splitParameterPathIntoContainerAndName <- function(parameterPath) {
   fullPathParts <- strsplit(parameterPath, split = "|", fixed = TRUE)[[1]]
 
-  containerPath <- paste(fullPathParts[seq_along(fullPathParts) - 1], collapse = "|")
+  containerPath <- paste(
+    fullPathParts[seq_along(fullPathParts) - 1],
+    collapse = "|"
+  )
   paramName <- fullPathParts[[length(fullPathParts)]]
   return(list(containerPath = containerPath, parameterName = paramName))
 }
