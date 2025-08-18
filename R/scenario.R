@@ -68,7 +68,8 @@ Scenario <- R6::R6Class(
     .population = NA,
 
     # Private function for initialization of the scenario from the configuration
-    .initializeFromConfiguration = function(customParams = NULL, stopIfParameterNotFound = TRUE) {
+    .initializeFromConfiguration = function(customParams = NULL,
+                                            stopIfParameterNotFound = TRUE) {
       scenarioConfiguration <- private$.scenarioConfiguration
       # Read parameters from the parameters file
       params <- readParametersFromXLS(
@@ -80,7 +81,10 @@ Scenario <- R6::R6Class(
       individualCharacteristics <- NULL
       # Check for 'NULL' and 'NA'. 'NA' happens when no individual is defined in
       # the excel file.
-      if (!is.null(scenarioConfiguration$individualId) && !is.na(scenarioConfiguration$individualId)) {
+      if (
+        !is.null(scenarioConfiguration$individualId) &&
+          !is.na(scenarioConfiguration$individualId)
+      ) {
         individualCharacteristics <- readIndividualCharacteristicsFromXLS(
           XLSpath = scenarioConfiguration$projectConfiguration$individualsFile,
           individualId = scenarioConfiguration$individualId,
@@ -95,10 +99,13 @@ Scenario <- R6::R6Class(
         }
 
         # Find individual-specific model parameters
-        excelSheets <- readxl::excel_sheets(path = scenarioConfiguration$projectConfiguration$individualsFile)
+        excelSheets <- readxl::excel_sheets(
+          path = scenarioConfiguration$projectConfiguration$individualsFile
+        )
 
         if (any(excelSheets == scenarioConfiguration$individualId)) {
-          indivModelParams <- readParametersFromXLS(scenarioConfiguration$projectConfiguration$individualsFile,
+          indivModelParams <- readParametersFromXLS(
+            scenarioConfiguration$projectConfiguration$individualsFile,
             sheets = scenarioConfiguration$individualId
           )
 
@@ -119,13 +126,21 @@ Scenario <- R6::R6Class(
       excelFilePath <- scenarioConfiguration$projectConfiguration$applicationsFile
       # Checking for 'NA' if administration protocol is not set in excel file.
       if (!is.na(scenarioConfiguration$applicationProtocol)) {
-        if (!any(readxl::excel_sheets(excelFilePath) == scenarioConfiguration$applicationProtocol)) {
+        if (
+          !any(
+            readxl::excel_sheets(excelFilePath) ==
+              scenarioConfiguration$applicationProtocol
+          )
+        ) {
           stop(messages$errorApplicationProtocolNotFound(
             scenarioName = scenarioConfiguration$scenarioName,
             applicationProtocol = scenarioConfiguration$applicationProtocol
           ))
         }
-        applicationParams <- readParametersFromXLS(excelFilePath, scenarioConfiguration$applicationProtocol)
+        applicationParams <- readParametersFromXLS(
+          excelFilePath,
+          scenarioConfiguration$applicationProtocol
+        )
         params <- extendParameterStructure(
           parameters = params,
           newParameters = applicationParams
@@ -143,15 +158,21 @@ Scenario <- R6::R6Class(
       private$.finalCustomParams <- params
 
       # Load simulation
-      simulation <- ospsuite::loadSimulation(filePath = file.path(
-        scenarioConfiguration$projectConfiguration$modelFolder,
-        scenarioConfiguration$modelFile
-      ), loadFromCache = FALSE)
+      simulation <- ospsuite::loadSimulation(
+        filePath = file.path(
+          scenarioConfiguration$projectConfiguration$modelFolder,
+          scenarioConfiguration$modelFile
+        ),
+        loadFromCache = FALSE
+      )
       # Set simulation name
       simulation$name <- scenarioConfiguration$scenarioName
       # Set the outputs, if new were specified
       if (!is.null(scenarioConfiguration$outputPaths)) {
-        setOutputs(quantitiesOrPaths = scenarioConfiguration$outputPaths, simulation = simulation)
+        setOutputs(
+          quantitiesOrPaths = scenarioConfiguration$outputPaths,
+          simulation = simulation
+        )
       }
       # Set simulation time if defined by the user.
       if (!is.null(scenarioConfiguration$simulationTime)) {
@@ -171,11 +192,12 @@ Scenario <- R6::R6Class(
               values = scenarioConfiguration$simulationTime[[i]][2],
               unit = scenarioConfiguration$simulationTimeUnit
             ),
-            resolution = scenarioConfiguration$simulationTime[[i]][3] / toBaseUnit(
-              quantityOrDimension = ospDimensions$Time,
-              values = 1,
-              unit = scenarioConfiguration$simulationTimeUnit
-            )
+            resolution = scenarioConfiguration$simulationTime[[i]][3] /
+              toBaseUnit(
+                quantityOrDimension = ospDimensions$Time,
+                values = 1,
+                unit = scenarioConfiguration$simulationTimeUnit
+              )
           )
         }
       }
@@ -199,10 +221,13 @@ Scenario <- R6::R6Class(
       # Create a population for population scenarios
       if (scenarioConfiguration$simulationType == "Population") {
         if (scenarioConfiguration$readPopulationFromCSV) {
-          populationPath <- paste0(file.path(
-            scenarioConfiguration$projectConfiguration$populationsFolder,
-            scenarioConfiguration$populationId
-          ), ".csv")
+          populationPath <- paste0(
+            file.path(
+              scenarioConfiguration$projectConfiguration$populationsFolder,
+              scenarioConfiguration$populationId
+            ),
+            ".csv"
+          )
           population <- loadPopulation(populationPath)
         } else {
           popCharacteristics <- readPopulationCharacteristicsFromXLS(
@@ -210,7 +235,9 @@ Scenario <- R6::R6Class(
             populationName = scenarioConfiguration$populationId,
             sheet = "Demographics"
           )
-          population <- createPopulation(populationCharacteristics = popCharacteristics)
+          population <- createPopulation(
+            populationCharacteristics = popCharacteristics
+          )
           # Create population returns a list, in contrast to load population, where the object is returned!
           population <- population$population
         }
@@ -231,9 +258,14 @@ Scenario <- R6::R6Class(
     #'   thrown if any of the custom defined parameter does not exist. If `FALSE`,
     #'   non-existent parameters are  ignored.
     #' @returns A new `Scenario` object.
-    initialize = function(scenarioConfiguration, customParams = NULL, stopIfParameterNotFound = TRUE) {
+    initialize = function(scenarioConfiguration,
+                          customParams = NULL,
+                          stopIfParameterNotFound = TRUE) {
       private$.scenarioConfiguration <- scenarioConfiguration
-      private$.simulation <- private$.initializeFromConfiguration(customParams = customParams, stopIfParameterNotFound = stopIfParameterNotFound)
+      private$.simulation <- private$.initializeFromConfiguration(
+        customParams = customParams,
+        stopIfParameterNotFound = stopIfParameterNotFound
+      )
       private$.initializePopulationFromConfiguration()
     },
     #' @description

@@ -97,13 +97,14 @@
 #' }
 #'
 #' @export
-sensitivityTornadoPlot <- function(sensitivityCalculation,
-                                   outputPaths = NULL,
-                                   parameterPaths = NULL,
-                                   pkParameters = NULL,
-                                   parameterFactor = 0.1,
-                                   xAxisZoomRange = NULL,
-                                   defaultPlotConfiguration = NULL) {
+sensitivityTornadoPlot <- function(
+    sensitivityCalculation,
+    outputPaths = NULL,
+    parameterPaths = NULL,
+    pkParameters = NULL,
+    parameterFactor = 0.1,
+    xAxisZoomRange = NULL,
+    defaultPlotConfiguration = NULL) {
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -136,14 +137,14 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     subtitle = NULL,
     title = NULL,
     titleSize = 14,
-    xLabel = "Input parameter value [% of reference]",
+    xLabel = "Change in PK parameter [% relative to baseline]",
     yLabel = "Parameter"
   )
 
   # apply configuration overrides and validate
   customPlotConfiguration <- .applyPlotConfiguration(
     defaultPlotConfiguration = defaultPlotConfiguration,
-    plotOverrideConfig       = tornadoPlotConfiguration
+    plotOverrideConfig = tornadoPlotConfiguration
   )
 
   # Prepare data -----------------------------------------
@@ -158,7 +159,10 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
   # set ordered levels for parameter plotting
   data <- dplyr::group_by(
     data,
-    OutputPath, ParameterPath, PKParameter, ParameterFactor
+    OutputPath,
+    ParameterPath,
+    PKParameter,
+    ParameterFactor
   )
   data <- dplyr::mutate(
     data,
@@ -172,7 +176,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     ParameterPathLabel = dplyr::coalesce(ParameterPathUserName, ParameterPath)
   )
 
-  data$ParameterPathLabel <- factor(data$ParameterPathLabel,
+  data$ParameterPathLabel <- factor(
+    data$ParameterPathLabel,
     levels = rev(unique(data$ParameterPathLabel))
   )
 
@@ -185,7 +190,8 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 
   splitData <- split(data, data$OutputPath)
   lsPlots <- stats::setNames(
-    vector("list", length(names(splitData))), names(splitData)
+    vector("list", length(names(splitData))),
+    names(splitData)
   )
 
   # create plot for each output path
@@ -202,9 +208,10 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
 
 #' @keywords internal
 #' @noRd
-.createTornadoPlot <- function(data,
-                               xAxisZoomRange = NULL,
-                               defaultPlotConfiguration) {
+.createTornadoPlot <- function(
+    data,
+    xAxisZoomRange = NULL,
+    defaultPlotConfiguration) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration$clone()
   plotConfiguration <- .updatePlotConfiguration(
@@ -281,9 +288,10 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       pLevels <- levels(as.factor(data$ParameterFactor))
       pColor <- plotConfiguration$linesColor[1:length(pLevels)]
       names(pColor) <- pLevels
-      plot <- plot + scale_fill_manual(
-        values = colorspace::lighten(pColor, amount = 0.2)
-      )
+      plot <- plot +
+        scale_fill_manual(
+          values = colorspace::lighten(pColor, amount = 0.2)
+        )
     }
 
     # apply x-axis zoom range if specified
@@ -299,7 +307,6 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
     plotList[[param]] <- plot
   }
 
-
   # Compile individual plots -----------------------------
 
   plotPatchwork <- patchwork::wrap_plots(plotList, ncol = 1) +
@@ -311,7 +318,9 @@ sensitivityTornadoPlot <- function(sensitivityCalculation,
       )
     ) +
     patchwork::plot_layout(
-      guides = "collect", axes = "collect", ncol = 1
+      guides = "collect",
+      axes = "collect",
+      ncol = 1
     ) &
     theme(legend.position = plotConfiguration$legendPosition)
 

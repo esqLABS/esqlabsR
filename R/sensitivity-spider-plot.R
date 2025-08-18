@@ -120,16 +120,17 @@
 #' }
 #'
 #' @export
-sensitivitySpiderPlot <- function(sensitivityCalculation,
-                                  outputPaths = NULL,
-                                  parameterPaths = NULL,
-                                  pkParameters = NULL,
-                                  xAxisScale = NULL,
-                                  yAxisScale = NULL,
-                                  xAxisType = "percent",
-                                  yAxisType = "percent",
-                                  yAxisFacetScales = "fixed",
-                                  defaultPlotConfiguration = NULL) {
+sensitivitySpiderPlot <- function(
+    sensitivityCalculation,
+    outputPaths = NULL,
+    parameterPaths = NULL,
+    pkParameters = NULL,
+    xAxisScale = NULL,
+    yAxisScale = NULL,
+    xAxisType = "percent",
+    yAxisType = "percent",
+    yAxisFacetScales = "fixed",
+    defaultPlotConfiguration = NULL) {
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -142,49 +143,54 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
   spiderPlotConfiguration <- list(
     legendPosition = "bottom",
-    legendTitle    = "Parameter",
-    linesSize      = 1.4,
-    pointsShape    = 21L,
-    pointsSize     = 2,
-    title          = NULL,
-    titleSize      = 14,
-    xAxisScale     = "log",
-    xLabel         = NULL,
-    yAxisScale     = "lin",
-    yAxisTicks     = 10L,
-    yLabel         = NULL
+    legendTitle = "Parameter",
+    linesSize = 1.4,
+    pointsShape = 21L,
+    pointsSize = 2,
+    title = NULL,
+    titleSize = 14,
+    xAxisScale = "log",
+    xLabel = NULL,
+    yAxisScale = "lin",
+    yAxisTicks = 10L,
+    yLabel = NULL
   )
 
   # apply configuration overrides and validate
   customPlotConfiguration <- .applyPlotConfiguration(
     defaultPlotConfiguration = defaultPlotConfiguration,
-    plotOverrideConfig       = spiderPlotConfiguration,
-    xAxisScale               = xAxisScale,
-    yAxisScale               = yAxisScale
+    plotOverrideConfig = spiderPlotConfiguration,
+    xAxisScale = xAxisScale,
+    yAxisScale = yAxisScale
   )
 
   # validate separately as not supported by DefaultPlotConfiguration
   validateIsOption(
     list(
       yAxisFacetScales = yAxisFacetScales,
-      xAxisType        = xAxisType,
-      yAxisType        = yAxisType
+      xAxisType = xAxisType,
+      yAxisType = yAxisType
     ),
-    .getPlotConfigurationOptions(c("yAxisFacetScales", "xAxisType", "yAxisType"))
+    .getPlotConfigurationOptions(c(
+      "yAxisFacetScales",
+      "xAxisType",
+      "yAxisType"
+    ))
   )
 
   # Prepare data -----------------------------------------
 
   data <- sensitivityCalculation$pkData
   data <- .filterPlottingData(
-    data              = data,
-    outputPaths       = outputPaths,
-    parameterPaths    = parameterPaths,
-    pkParameters      = pkParameters
+    data = data,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths,
+    pkParameters = pkParameters
   )
 
   # set scales and parameterPath labels
-  data <- dplyr::mutate(data,
+  data <- dplyr::mutate(
+    data,
     ParameterFactor = ParameterFactor * 100,
     PKPercentChange = PKPercentChange + 100,
     ParameterPathLabel = dplyr::coalesce(ParameterPathUserName, ParameterPath)
@@ -194,7 +200,8 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
   splitData <- split(data, data$OutputPath)
   lsPlots <- stats::setNames(
-    vector("list", length(names(splitData))), names(splitData)
+    vector("list", length(names(splitData))),
+    names(splitData)
   )
 
   # create plot for each output path
@@ -213,11 +220,12 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
 #' @keywords internal
 #' @noRd
-.createSpiderPlot <- function(data,
-                              xAxisType = "percent",
-                              yAxisType = "percent",
-                              yAxisFacetScales = "fixed",
-                              defaultPlotConfiguration) {
+.createSpiderPlot <- function(
+    data,
+    xAxisType = "percent",
+    yAxisType = "percent",
+    yAxisFacetScales = "fixed",
+    defaultPlotConfiguration) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration$clone()
   plotConfiguration <- .updatePlotConfiguration(
@@ -262,16 +270,20 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       # same label for all plots based on yAxisType
       if (is.null(plotConfiguration$yLabel)) {
         plotConfiguration$yLabel <- switch(yAxisType,
-          "percent"  = "PK-Parameter value [% of reference]",
+          "percent" = "PK-Parameter value [% of reference]",
           "absolute" = "PK-Parameter value",
           "PK-Parameter value"
         )
       }
       # limits based on entire data
       pLimits <- .calculateLimits(unlist(data[, yColumn]))
-    } else { # free y-axis scale
+    } else {
+      # free y-axis scale
       plotConfiguration$yLabel <- paste0(
-        dataSubset$PKParameter[1], " [", dataSubset$Unit[1], "]"
+        dataSubset$PKParameter[1],
+        " [",
+        dataSubset$Unit[1],
+        "]"
       )
       pLimits <- NULL
     }
@@ -279,7 +291,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
     # x-axis label based on xAxisType
     plotConfiguration$xLabel <- plotConfiguration$xLabel %||%
       switch(xAxisType,
-        "percent"  = "Input parameter value [% of reference]",
+        "percent" = "Input parameter value [% of reference]",
         "absolute" = "Input parameter value",
         "PK-Parameter value"
       )
@@ -293,7 +305,11 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
 
     plot <- ggplot(
       dataSubset,
-      aes(x = .data[[xColumn]], y = .data[[yColumn]], group = ParameterPathLabel)
+      aes(
+        x = .data[[xColumn]],
+        y = .data[[yColumn]],
+        group = ParameterPathLabel
+      )
     ) +
       geom_line(
         aes(group = ParameterPathLabel, color = as.factor(ParameterPathLabel)),
@@ -302,7 +318,7 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         na.rm = TRUE
       ) +
       geom_point(
-        size  = plotConfiguration$pointsSize,
+        size = plotConfiguration$pointsSize,
         shape = plotConfiguration$pointsShape[1],
         na.rm = TRUE
       )
@@ -372,10 +388,12 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
         panel.grid.minor = element_blank(),
         text = element_text(size = 11)
       ) +
-      guides(col = guide_legend(
-        nrow = length(unique(data$PKParameter)),
-        title.position = "top"
-      ))
+      guides(
+        col = guide_legend(
+          nrow = length(unique(data$PKParameter)),
+          title.position = "top"
+        )
+      )
 
     # apply color scales
     if (is.null(plotConfiguration$linesColor)) {
@@ -398,7 +416,9 @@ sensitivitySpiderPlot <- function(sensitivityCalculation,
       )
     ) +
     patchwork::plot_layout(
-      guides = "collect", axes = "collect", ncol = length(plotList)
+      guides = "collect",
+      axes = "collect",
+      ncol = length(plotList)
     ) &
     theme(legend.position = plotConfiguration$legendPosition)
 

@@ -8,8 +8,6 @@
 `Protein Ontogenies` is a comma-separated list of protein names and ontogeny names pairs. For example: 
 `CYP3A4:CYP3A4,CYP2D6:CYP2C8` will create a CYP3A4 ontogeny for the protein CYP3A4 and a CYP2D6 ontogeny for the protein CYP2C8. (#825)
 
-## Breaking changes
-
 - The function `createDataCombinedFromExcel()` gets a new signature. The arguments 
 `file` and `sheet` are removed. The file from which the `DataCombined` objects 
 are created is now passed as part of the `ProjectConfiguration` passed as 
@@ -43,6 +41,13 @@ were overwritten by the administration protocol (\#817).
 - `createPlotsFromExcel()` now accepts a (named) list of `DataCombined` objects as input
   to create plots defined in the `plotGridNames` argument. Missing `DataCombined`
   will be created from the Excel file (default behavior).
+- New `saveSensitivityCalculation()` and `loadSensitivityCalculation()` functions 
+to save and restore sensitivity analysis results (\#862).
+- Add `createScenarioConfigurationsFromPKML()` and `addScenarioConfigurationsToExcel()` functions that automate scenario creation and writing to Excel from PKML files (\#853).
+- Added species-specific parameter sheets for the species Beagle, Dog, Minipig, and Mouse.
+It is now possible to create scenarios for  each species implemented in PK-Sim 
+(except for the experimental cat and cattle) from the base human simulation.
+
 
 ## Minor improvements and bug fixes
 
@@ -59,6 +64,10 @@ will have the updated name.
 not applied (\#845).
 - Added example usage of `sensitivityTornadoPlot()` to the sensitivity analysis vignette (\#847).
 - New vignette on sensitivity analysis plot customization (\#858).
+- Corrected x-axis label in `sensitivityTornadoPlot()` to reflect changes in PK parameter (\#861).
+- Better error message when `SteadyState = TRUE` and `SteadyStateTime` but not `SteadyStateTimeUnit` is defined in the scenario configuration (\#863).
+- `createPlotsFromExcel()` does not fail when `plotGrids` has no `title` column. (\#860)
+- The package `ospsuite.utils` is imported but not the direct dependency. (\#836)
 
 # esqlabsR 5.4.0
 
