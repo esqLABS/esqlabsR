@@ -10,9 +10,10 @@ articles:
   project-migration-guide: project-migration-guide.html
   project-structure: project-structure.html
   run-simulations: run-simulations.html
+  sensitivity-plots: sensitivity-plots.html
   sensitivity: sensitivity.html
   workflow-overview: workflow-overview.html
-last_built: 2025-08-18T08:54Z
+last_built: 2025-08-18T13:39Z
 urls:
   reference: https://esqlabs.github.io/esqlabsR/reference
   article: https://esqlabs.github.io/esqlabsR/articles

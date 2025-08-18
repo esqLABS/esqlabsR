@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9019</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.4.0.9020</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
     <li><a class="dropdown-item" href="../articles/presentations.html">Presentations</a></li>
     <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
     <li><a class="dropdown-item" href="../articles/advanced.html">Advanced Topics</a></li>
     <li><a class="dropdown-item" href="../articles/project-migration-guide.html">Migrating Project Structure Versions</a></li>
   </ul>
@@ -165,10 +166,11 @@ only.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>             1              <span style="text-decoration: underline;">4</span>073.            0                  <span style="color: #BB0000;">NaN</span>     </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>            10              <span style="text-decoration: underline;">4</span>160.            2.13                 0.002<span style="text-decoration: underline;">4</span></span></span></code></pre></div>
 <p>In our example the default lipophilicity (−0.097 log units) yields an
-AUC of 3915.9 µmol·min/L. Ten-fold higher (−0.0097) reduces AUC by 0.5
-%, whereas ten-fold lower (−0.97) increases it by 2.5 %. The sensitivity
-of AUC to a 10-fold increase in lipophilicity is calculated as:
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Sensitivity</mtext><mo>=</mo><mfrac><mrow><mi>Δ</mi><mtext mathvariant="normal">AUC</mtext></mrow><mrow><mi>Δ</mi><mtext mathvariant="normal">lipophilicity</mtext></mrow></mfrac><mo>×</mo><mfrac><mtext mathvariant="normal">lipophilicity</mtext><mtext mathvariant="normal">AUC</mtext></mfrac><mo>=</mo><mfrac><mrow><mn>4015.73</mn><mo>−</mo><mn>3915.87</mn></mrow><mrow><mo>−</mo><mn>0.97</mn><mo>−</mo><mo>−</mo><mn>0.097</mn></mrow></mfrac><mo>×</mo><mfrac><mrow><mo>−</mo><mn>0.097</mn></mrow><mn>3915.87</mn></mfrac><mo>=</mo><mn>0.0028</mn></mrow><annotation encoding="application/x-tex"> \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4015.73-3915.87}{-0.97--0.097} \times \frac{-0.097}{3915.87} = 0.0028 </annotation></semantics></math></p>
+AUC of 4072.6 µmol·min/L. Ten-fold higher (−0.0097) reduces AUC by 0.44
+%, whereas ten-fold lower (−0.97) increases it by 2.13 %. The
+sensitivity of AUC to a 10-fold increase in lipophilicity is calculated
+as:
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Sensitivity</mtext><mo>=</mo><mfrac><mrow><mi>Δ</mi><mtext mathvariant="normal">AUC</mtext></mrow><mrow><mi>Δ</mi><mtext mathvariant="normal">lipophilicity</mtext></mrow></mfrac><mo>×</mo><mfrac><mtext mathvariant="normal">lipophilicity</mtext><mtext mathvariant="normal">AUC</mtext></mfrac><mo>=</mo><mfrac><mrow><mn>4159.5</mn><mo>−</mo><mn>4072.6</mn></mrow><mrow><mo>−</mo><mn>0.97</mn><mo>−</mo><mo>−</mo><mn>0.097</mn></mrow></mfrac><mo>×</mo><mfrac><mrow><mo>−</mo><mn>0.097</mn></mrow><mn>4072.6</mn></mfrac><mo>=</mo><mn>0.0028</mn></mrow><annotation encoding="application/x-tex"> \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4159.5-4072.6}{-0.97--0.097} \times \frac{-0.097}{4072.6} = 0.0028 </annotation></semantics></math></p>
 </div>
 <div class="section level3">
 <h3 id="saving-and-loading-sensitivity-results">Saving and Loading Sensitivity Results<a class="anchor" aria-label="anchor" href="#saving-and-loading-sensitivity-results"></a>
