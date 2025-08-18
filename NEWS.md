@@ -62,7 +62,8 @@ This way, when saving the simulation to PKML and loading in MoBi, the loaded sim
 will have the updated name.
 - Fixed a bug in `createPlotsFromExcel()` when subtitle of PlotConfiguration was
 not applied (\#845).
-- Added example usage of `sensitivityTornadoPlot()` to the sensitivity analysis vignette (#847).
+- Added example usage of `sensitivityTornadoPlot()` to the sensitivity analysis vignette (\#847).
+- New vignette on sensitivity analysis plot customization (\#858).
 - Corrected x-axis label in `sensitivityTornadoPlot()` to reflect changes in PK parameter (\#861).
 - Better error message when `SteadyState = TRUE` and `SteadyStateTime` but not `SteadyStateTimeUnit` is defined in the scenario configuration (\#863).
 - `createPlotsFromExcel()` does not fail when `plotGrids` has no `title` column. (\#860)
