@@ -1,18 +1,19 @@
-pandoc: '3.4'
-pkgdown: 2.1.2
+pandoc: 3.1.11
+pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
-  esqlabsR-advanced: esqlabsR-advanced.html
-  esqlabsR-design-scenarios: esqlabsR-design-scenarios.html
-  esqlabsR-plot-results: esqlabsR-plot-results.html
-  esqlabsR-project-structure: esqlabsR-project-structure.html
-  esqlabsR-run-simulations: esqlabsR-run-simulations.html
-  esqlabsR-sensitivity: esqlabsR-sensitivity.html
-  esqlabsR-workflow-overview: esqlabsR-workflow-overview.html
+  advanced: advanced.html
+  design-scenarios: design-scenarios.html
   esqlabsR: esqlabsR.html
+  plot-results: plot-results.html
   presentations: presentations.html
   project-migration-guide: project-migration-guide.html
-last_built: 2025-05-23T14:47Z
+  project-structure: project-structure.html
+  run-simulations: run-simulations.html
+  sensitivity-plots: sensitivity-plots.html
+  sensitivity: sensitivity.html
+  workflow-overview: workflow-overview.html
+last_built: 2025-08-18T14:24Z
 urls:
   reference: https://esqlabs.github.io/esqlabsR/reference
   article: https://esqlabs.github.io/esqlabsR/articles

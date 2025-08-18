@@ -6,11 +6,6 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Get Started • esqlabsR</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
-<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="icon" sizes="any" href="../favicon.ico">
-<link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -25,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,23 +29,24 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../articles/esqlabsR.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../articles/esqlabsR.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-workflow-overview.html">Overview</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-project-structure.html">1. Initialize a Project</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-design-scenarios.html">2. Design Scenarios</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-run-simulations.html">3. Run Simulations</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-plot-results.html">4. Plot Results</a></li>
+    <li><a class="dropdown-item" href="../articles/workflow-overview.html">Overview</a></li>
+    <li><a class="dropdown-item" href="../articles/project-structure.html">1. Initialize a Project</a></li>
+    <li><a class="dropdown-item" href="../articles/design-scenarios.html">2. Design Scenarios</a></li>
+    <li><a class="dropdown-item" href="../articles/run-simulations.html">3. Run Simulations</a></li>
+    <li><a class="dropdown-item" href="../articles/plot-results.html">4. Plot Results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
     <li><a class="dropdown-item" href="../articles/presentations.html">Presentations</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-sensitivity.html">Sensitivity Analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/esqlabsR-advanced.html">Advanced Topics</a></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
+    <li><a class="dropdown-item" href="../articles/advanced.html">Advanced Topics</a></li>
     <li><a class="dropdown-item" href="../articles/project-migration-guide.html">Migrating Project Structure Versions</a></li>
   </ul>
 </li>
@@ -76,7 +72,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Get Started</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/HEAD/vignettes/esqlabsR.Rmd" class="external-link"><code>vignettes/esqlabsR.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/main/vignettes/esqlabsR.Rmd" class="external-link"><code>vignettes/esqlabsR.Rmd</code></a></small>
       <div class="d-none name"><code>esqlabsR.Rmd</code></div>
     </div>
 
@@ -108,7 +104,7 @@ structure must not be altered.</p>
 <span><span class="fu"><a href="../reference/initProject.html">initProject</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>It will create the expected simulation project’s folder structure,
 which is described in details in
-<code><a href="../articles/esqlabsR-project-structure.html">vignette("esqlabsR-project-structure")</a></code>.</p>
+<code><a href="../articles/project-structure.html">vignette("project-structure")</a></code>.</p>
 <p>Each one of these folders contains a series of <code>.xlsx</code>
 files with specific purpose. They are all linked to the project through
 the <code>ProjectConfiguration.xlsx</code> file located in the root of
@@ -140,6 +136,36 @@ files that are used in the project.</p>
 the rest of this tutorial, run the following:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="version-control-and-project-sharing">Version Control and Project Sharing<a class="anchor" aria-label="anchor" href="#version-control-and-project-sharing"></a>
+</h2>
+<p><code>esqlabsR</code> provides powerful version control capabilities
+through project configuration snapshots. This allows you to:</p>
+<ul>
+<li>
+<strong>Track changes</strong> to your project configuration in
+version control systems like Git</li>
+<li>
+<strong>Share projects</strong> with team members easily<br>
+</li>
+<li>
+<strong>Create backups</strong> before making significant
+changes</li>
+<li>
+<strong>Ensure reproducibility</strong> across different
+environments</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create a JSON snapshot of your project configuration</span></span>
+<span><span class="fu"><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration</a></span><span class="op">(</span><span class="va">my_project_configuration</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Share the JSON file with team members or commit to version control</span></span>
+<span><span class="co"># Later, restore the project configuration from the snapshot</span></span>
+<span><span class="va">restored_config</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/restoreProjectConfiguration.html">restoreProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.json"</span><span class="op">)</span></span></code></pre></div>
+<p>For comprehensive information about version control features,
+workflows, and best practices, see the “Version Control and Project
+Sharing” section in <code><a href="../articles/project-structure.html">vignette("project-structure")</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="design-scenarios">Design Scenarios<a class="anchor" aria-label="anchor" href="#design-scenarios"></a>
@@ -188,7 +214,7 @@ different <code>IndividualId</code> in the
 the<code>Individuals.xlsx</code> file and/or specify a parameter sheet
 with this <code>IndividualId</code> in the same file.</p>
 <p>For more information on all the scenario parameters that can be
-setup, read <code><a href="../articles/esqlabsR-design-scenarios.html">vignette("esqlabsR-design-scenarios")</a></code>.</p>
+setup, read <code><a href="../articles/design-scenarios.html">vignette("design-scenarios")</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="run-scenarios">Run Scenarios<a class="anchor" aria-label="anchor" href="#run-scenarios"></a>
@@ -197,7 +223,7 @@ setup, read <code><a href="../articles/esqlabsR-design-scenarios.html">vignette(
 can import <code>ScenarioConfiguration</code> using
 <code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> and create
 <code>Scenario</code> objects with <code><a href="../reference/createScenarios.html">createScenarios()</a></code>:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarios.html">createScenarios</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
 <span>    scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
@@ -205,12 +231,12 @@ can import <code>ScenarioConfiguration</code> using
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Then, we run the simulations by passing the scenarios we defined:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">myScenarioResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span><span class="va">my_scenarios</span><span class="op">)</span></span></code></pre></div>
 <p>Simulation results can be saved for later use:
 <code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code> and
 <code><a href="../reference/loadScenarioResults.html">loadScenarioResults()</a></code>.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span><span class="va">myScenarioResults</span>,</span>
 <span>  projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
 <span>  outputFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span></span>
@@ -221,7 +247,7 @@ can import <code>ScenarioConfiguration</code> using
 <span>  resultsFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Learn more on how to run simulations in
-<code><a href="../articles/esqlabsR-run-simulations.html">vignette("esqlabsR-run-simulations")</a></code>.</p>
+<code><a href="../articles/run-simulations.html">vignette("run-simulations")</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="plot-results">Plot Results<a class="anchor" aria-label="anchor" href="#plot-results"></a>
@@ -232,22 +258,22 @@ observed data using the <code>DataCombined</code> class and creating
 figures using functions implemented in the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a>
 package.</p>
 <p>First, a <code>DataCombined</code> object is initialized:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_datacombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Then, simulation result are added to the dataCombined object:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">myScenarioResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
 <span>  names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
 <span>  groups <span class="op">=</span> <span class="st">"Aciclovir"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Finally, the plot is generated:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">my_datacombined</span><span class="op">)</span></span></code></pre></div>
-<p><img src="esqlabsR_files/figure-html/unnamed-chunk-11-1.png" width="80%" style="display: block; margin: auto;"></p>
+<p><img src="esqlabsR_files/figure-html/unnamed-chunk-12-1.png" width="80%" style="display: block; margin: auto;"></p>
 <p>In some cases, we also want to plot the observed experimental data
 (stored in <code>Data/</code>). <code>DataCombined</code> also has the
 ability to store observed data for them to be plotted.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">observed_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
 <span>  projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
 <span>  sheets <span class="op">=</span> <span class="st">"Laskin 1982.Group A"</span></span>
@@ -256,9 +282,9 @@ ability to store observed data for them to be plotted.</p>
 <span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observed_data</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated</a></span><span class="op">(</span><span class="va">my_datacombined</span><span class="op">)</span></span></code></pre></div>
-<p><img src="esqlabsR_files/figure-html/unnamed-chunk-12-1.png" width="80%" style="display: block; margin: auto;"></p>
+<p><img src="esqlabsR_files/figure-html/unnamed-chunk-13-1.png" width="80%" style="display: block; margin: auto;"></p>
 <p>Many other plot types are available in <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>, read
-<code><a href="../articles/esqlabsR-plot-results.html">vignette("esqlabsR-plot-results")</a></code> to learn more.</p>
+<code><a href="../articles/plot-results.html">vignette("plot-results")</a></code> to learn more.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -271,7 +297,7 @@ ability to store observed data for them to be plotted.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer>
