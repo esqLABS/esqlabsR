@@ -94,8 +94,24 @@ found in:
 -   [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html)
 -   [`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/reference/sensitivityTornadoPlot.html)
 
-| Configuration Option | Spider Plot  | Time Profiles  | Tornado Plot  | Description |
-|----------------|--------------|--------------|--------------|--------------|
+## Customizing Plots with `defaultPlotConfiguration`
+
+The `defaultPlotConfiguration` object provides a centralized way to
+control the appearance of sensitivity analysis plots. If no
+configuration is provided (`NULL`), each plotting function will
+automatically create one using `createEsqlabsPlotConfiguration()` with
+default settings.
+
+These defaults ensure a consistent and clean appearance across plot
+types, but they can be fully customized to match specific presentation
+or publication requirements. Each plotting function recognizes only a
+subset of options depending on the visual structure of the plot.
+
+The table below summarizes which configuration options are supported by
+each plot type:
+
+| Configuration Option | Spider Plot | Time Profiles | Tornado Plot | Description |
+|---------------|---------------|---------------|---------------|---------------|
 | `legendPosition` | ✔️ | ✔️ | ✔️ | Position of the legend on the plot |
 | `legendTitle` | ✔️ | ✔️ | ✔️ | Title displayed for the legend |
 | `linesAlpha` | ✔️ | ✔️ |  | Transparency of line elements |
@@ -115,8 +131,14 @@ found in:
 | `yValuesLimits` | ✔️ |  |  | Limits for y-values |
 | `yLabel` | ✔️ | ✔️ | ✔️ | Label for the y-axis |
 
+**Note:** `defaultPlotConfiguration` follows ggplot2-style aesthetics (e.g., `legendPosition`, `linesColor`, `pointsShape`). The sensitivity plotting 
+functions apply the fields shown in this vignette; other fields have no effect 
+here. For a broader catalog and default values, see the `PlotConfiguration` [reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotConfiguration.html) and the [vignette](https://www.open-systems-pharmacology.org/TLF-Library/articles/plot-configuration.html).
 
-To explicitly control the appearance of your plots, create and modify a 
+
+### Example - create and apply configuration
+
+To explicitly control the appearance of your plots, create and modify a
 configuration object as shown below:
 
 ```{r plot-config}
@@ -128,7 +150,6 @@ myConfiguration$subtitle <- "Customized Plot"
 myConfiguration$legendPosition <- "right"
 ```
 
-
 You can then pass this object to any sensitivity plotting function:
 
 ```{r spider-plot-config, fig.width=7, fig.height=4}
@@ -138,33 +159,35 @@ sensitivitySpiderPlot(
 )
 ```
 
-Note that when a named vector is used for `parameterPaths`, those names will 
-also be used as labels in the plots.
-
+Note that when a named vector is used for `parameterPaths`, those names
+will also be used as labels in the plots.
 
 ### Direct Arguments vs. Configuration Object
 
-Some plot-specific settings—such as axis scaling—are available as direct 
-arguments to the plotting functions. These options control core aspects of the 
-plot’s structure and behavior and are therefore exposed explicitly. 
+Some plot-specific settings—such as axis scaling—are available as direct
+arguments to the plotting functions. These options control core aspects
+of the plot’s structure and behavior and are therefore exposed
+explicitly.
 
 Examples include:
-- `xAxisScale` and `yAxisScale` in `sensitivityTimeProfiles()`
-- `xAxisType` and `yAxisType` in `sensitivitySpiderPlot()`
 
-When specified, these arguments **override** the corresponding values in the 
-`defaultPlotConfiguration` object. This provides a convenient way to apply 
-one-off changes without modifying the configuration globally.
+-   `xAxisScale` and `yAxisScale` in `sensitivityTimeProfiles()`\
+-   `xAxisType` and `yAxisType` in `sensitivitySpiderPlot()`
 
-The example below demonstrates this behavior: although the configuration sets 
-the y-axis to a logarithmic scale, passing `yAxisScale = "lin"` directly to the 
-function takes precedence and applies a linear scale instead.
+When specified, these arguments **override** the corresponding values in
+the `defaultPlotConfiguration` object. This provides a convenient way to
+apply one-off changes without modifying the configuration globally.
+
+The example below demonstrates this behavior: although the configuration
+sets the y-axis to a logarithmic scale, passing `yAxisScale = "lin"`
+directly to the function takes precedence and applies a linear scale
+instead.
 
 ```{r time-profile-override, fig.width=7, fig.height=4}
 myConfiguration <- createEsqlabsPlotConfiguration()
 
 myConfiguration$linesColor <- c("#d8b365", "#5ab4ac")
-myConfiguration$subtitle <- c("Customized Plot")
+myConfiguration$subtitle <- "Customized Plot"
 
 myConfiguration$yAxisScale <- "log" 
 
@@ -175,24 +198,23 @@ sensitivityTimeProfiles(
 )
 ```
 
-
 ### Modifying plots after creation
 
-The sensitivity plotting functions in `{esqlabsR}` are designed to generate 
-clean, publication-ready visuals by default. However, when additional 
-customization is needed—beyond what is offered through `defaultPlotConfiguration` 
-you can manually modify the output using standard `{ggplot2}` and `{patchwork}`
-tools.
+The sensitivity plotting functions in `{esqlabsR}` are designed to
+generate clean, publication-ready visuals by default. However, when
+additional customization is needed—beyond what is offered through
+`defaultPlotConfiguration` you can manually modify the output using
+standard `{ggplot2}` and `{patchwork}` tools.
 
-Each plotting function returns a **list of `patchwork` objects**, with one entry 
-per output path. A `patchwork` object is a composite layout of individual 
-`ggplot2` plots, allowing you to:
+Each plotting function returns a **list of `patchwork` objects**, with
+one entry per output path. A `patchwork` object is a composite layout of
+individual `ggplot2` plots, allowing you to:
 
-- Apply global changes to all subplots using the `&` operator
-- Access and modify individual subplots
+-   Apply global changes to all subplots using the `&` operator
+-   Access and modify individual subplots
 
-This flexibility makes post-processing straightforward. For example, modifying 
-a spider plot after creation:
+This flexibility makes post-processing straightforward. For example,
+modifying a spider plot after creation:
 
 ```{r tornado-plot-process, message=FALSE, warning=FALSE, fig.width=7, fig.height=4}
 library(ggplot2)
@@ -214,28 +236,27 @@ spiderPlot &
   coord_cartesian(ylim = c(80, 125))                    # Zoom in on the y-axis range
 ```
 
-
-
 ## Summary and Best Practices
 
-This vignette demonstrated how to customize and refine sensitivity analysis 
-plots in `{esqlabsR}` using the Aciclovir example. 
+This vignette demonstrated how to customize and refine sensitivity
+analysis plots in `{esqlabsR}` using the Aciclovir example.
 
 Key takeaways:
 
-- Use `createEsqlabsPlotConfiguration()` to define and reuse plot styling across 
-spider, tornado, and time profile plots.
-- Apply direct function arguments (e.g., `yAxisScale`) to override configuration 
-values for one-off adjustments.
-- Access and post-process plots using standard `{ggplot2}` and `{patchwork}` 
-methods for full flexibility.
-- Named `parameterPaths` automatically control facet labels in plots, improving 
-clarity.
+-   Use `createEsqlabsPlotConfiguration()` to define and reuse plot
+    styling across spider, tornado, and time profile plots.
+-   Apply direct function arguments (e.g., `yAxisScale`) to override
+    configuration values for one-off adjustments.
+-   Access and post-process plots using standard `{ggplot2}` and
+    `{patchwork}` methods for full flexibility.
+-   Named `parameterPaths` automatically control facet labels in plots,
+    improving clarity.
 
-For consistent, high-quality plots:
-- Keep a reusable `defaultPlotConfiguration` object with your preferred style.
-- Use `patchwork::&` to apply global tweaks (e.g., layout, limits, themes).
-- Extract and modify subplots as needed for custom presentations or publications.
+For consistent, high-quality plots: - Keep a reusable
+`defaultPlotConfiguration` object with your preferred style. - Use
+`patchwork::&` to apply global tweaks (e.g., layout, limits, themes). -
+Extract and modify subplots as needed for custom presentations or
+publications.
 
-With these tools, you can quickly move from simulation to high-quality 
+With these tools, you can quickly move from simulation to high-quality
 visualizations tailored to your specific audience and goals.
