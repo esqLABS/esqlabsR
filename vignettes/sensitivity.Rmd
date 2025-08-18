@@ -99,7 +99,7 @@ In our example the default lipophilicity (−0.097 log units) yields an
 AUC of 3915.9 µmol·min/L. Ten-fold higher (−0.0097) reduces AUC by 0.5
 %, whereas ten-fold lower (−0.97) increases it by 2.5 %. The sensitivity
 of AUC to a 10-fold increase in lipophilicity is calculated as:
-$$ \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4015.73-3915.87}{-0.97--0.097} \times \frac{-0.097}{3915.87} = 0.0028 $$
+$$ \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4159.5-4072.6}{-0.97--0.097} \times \frac{-0.097}{4072.6} = 0.0028 $$
 
 
 ### Saving and Loading Sensitivity Results
