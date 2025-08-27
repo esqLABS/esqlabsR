@@ -7,7 +7,8 @@
 #'
 #' @returns Object of type `ProjectConfiguration`
 #' @export
-createDefaultProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
+createDefaultProjectConfiguration <- function(
+    path = file.path("ProjectConfiguration.xlsx")) {
   lifecycle::deprecate_soft(
     what = "createDefaultProjectConfiguration()",
     with = "createProjectConfiguration()",
@@ -25,9 +26,50 @@ createDefaultProjectConfiguration <- function(path = file.path("ProjectConfigura
 #'
 #' @returns Object of type `ProjectConfiguration`
 #' @export
-createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xlsx")) {
-  projectConfiguration <- ProjectConfiguration$new(projectConfigurationFilePath = path)
+createProjectConfiguration <- function(
+    path = file.path("ProjectConfiguration.xlsx")) {
+  projectConfiguration <- ProjectConfiguration$new(
+    projectConfigurationFilePath = path
+  )
   return(projectConfiguration)
+}
+
+#' Check if a directory contains an esqlabsR project
+#'
+#' @description
+#' Checks if a directory already contains an esqlabsR project by looking for
+#' the presence of ProjectConfiguration.xlsx file or Configurations folder.
+#'
+#' @param destination A string defining the path to check for an existing project.
+#' Defaults to current working directory.
+#'
+#' @returns TRUE if an esqlabsR project exists in the directory, FALSE otherwise.
+#' @export
+#' @examples
+#' \dontrun{
+#' # Check if current directory has a project
+#' hasProject <- isProjectInitialized()
+#'
+#' # Check if specific directory has a project
+#' hasProject <- isProjectInitialized("path/to/project")
+#' }
+isProjectInitialized <- function(destination = ".") {
+  destination <- fs::path_abs(destination)
+
+  if (!fs::dir_exists(destination)) {
+    return(FALSE)
+  }
+
+  # Check for ProjectConfiguration.xlsx file
+  hasConfigFile <- any(stringr::str_detect(
+    "ProjectConfiguration.*xlsx$",
+    fs::dir_ls(destination)
+  ))
+
+  # Check for Configurations folder
+  hasConfigFolder <- fs::dir_exists(file.path(destination, "Configurations"))
+
+  return(hasConfigFile || hasConfigFolder)
 }
 
 #' Initialize esqlabsR Project Folders and required Files
@@ -39,40 +81,47 @@ createProjectConfiguration <- function(path = file.path("ProjectConfiguration.xl
 #'
 #' @param destination A string defining the path where to initialize the project.
 #' default to current working directory.
-#' @inheritParams fs::dir_copy
+#' @param overwrite If TRUE, overwrites existing project without asking for permission.
+#' If FALSE and a project already exists, asks user for permission to overwrite.
 #' @export
 initProject <- function(destination = ".", overwrite = FALSE) {
-  if (overwrite) {
-    qs <- sample(c("Absolutely not", "Yes", "No way"))
-
-    out <- utils::menu(
-      title = "This function will overwrite the existing project. Are you sure you want to continue ?",
-      choices = qs
-    )
-
-    if (out == 0L || qs[[out]] != "Yes") {
-      cli::cli_abort("The function was aborted by the user.")
-    }
-  }
-
   destination <- fs::path_abs(destination)
 
   if (!fs::dir_exists(destination)) {
-    cli::cli_abort("The specified destination folder does not exist. ({destination}) ")
+    cli::cli_abort(
+      "The specified destination folder does not exist. ({destination}) "
+    )
   }
 
   type <- "example"
-
   source_folder <- switch(type,
     "example" = exampleDirectory("TestProject")
   )
 
-  if (!overwrite && (any(stringr::str_detect("ProjectConfiguration.*xlsx$", fs::dir_ls(destination))) || fs::dir_exists(file.path(destination, "Configurations")))) {
-    cli::cli_abort("The destination folder seems to already contain an esqlabsR project and would be overwriten by this function.")
-    cli::cli_inform("If you want to overwrite the existing project, use the argument `overwrite = TRUE`")
+  # Check if project already exists
+  if (isProjectInitialized(destination)) {
+    if (overwrite) {
+      # Overwrite without asking
+      cli::cli_inform("Overwriting existing esqlabsR project in {destination}")
+    } else {
+      # Ask for permission to overwrite
+      qs <- sample(c("Absolutely not", "Yes", "No way"))
+
+      out <- utils::menu(
+        title = "The destination folder seems to already contain an esqlabsR project. Do you want to overwrite it?",
+        choices = qs
+      )
+
+      if (out == 0L || qs[[out]] != "Yes") {
+        cli::cli_abort("The function was aborted by the user.")
+      }
+
+      cli::cli_inform("Overwriting existing esqlabsR project in {destination}")
+    }
   }
 
-  res <- file.copy(list.files(source_folder, full.names = TRUE),
+  res <- file.copy(
+    list.files(source_folder, full.names = TRUE),
     destination,
     recursive = TRUE,
     overwrite = TRUE

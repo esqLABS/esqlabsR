@@ -9,12 +9,35 @@ esqlabsEnv$colorPalette <- .getEsqlabsColors()
 }
 
 utils::globalVariables(c(
-  "DataCombinedName", "IndividualId", "OutputPath", "OutputPathId",
-  "PKMeanPercentChange", "PKParameter", "PKParameterValue", "PKPercentChange",
-  "Parameter", "ParameterFactor", "ParameterPath", "ParameterValue",
-  "QuantityPath", "SensitivityPKParameter", "Study Id", "Unit", "Value",
-  "dataType", "name", "outputName", "paths", "plotGridName", "plotID",
-  "scenario", "xOffsets", "xScaleFactors", "xValues", "yOffsets",
-  "yScaleFactors", "yValues"
+  "DataCombinedName",
+  "IndividualId",
+  "OutputPath",
+  "OutputPathId",
+  "PKMeanPercentChange",
+  "PKParameter",
+  "PKParameterValue",
+  "PKPercentChange",
+  "Parameter",
+  "ParameterFactor",
+  "ParameterPath",
+  "ParameterValue",
+  "QuantityPath",
+  "SensitivityPKParameter",
+  "Study Id",
+  "Unit",
+  "Value",
+  "dataType",
+  "name",
+  "outputName",
+  "paths",
+  "plotGridName",
+  "plotID",
+  "scenario",
+  "xOffsets",
+  "xScaleFactors",
+  "xValues",
+  "yOffsets",
+  "yScaleFactors",
+  "yValues"
 ))
 # nocov end

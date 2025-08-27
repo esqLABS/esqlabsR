@@ -6,8 +6,10 @@
 #' @keywords internal
 #'
 #' @returns `TRUE` if validation succeeded (silently). Throws an error otherwise.
-.validateParametersStructure <- function(parameterStructure, argumentName = NULL,
-                                         nullAllowed = FALSE) {
+.validateParametersStructure <- function(
+    parameterStructure,
+    argumentName = NULL,
+    nullAllowed = FALSE) {
   if (is.null(parameterStructure) && nullAllowed) {
     return(invisible(TRUE))
   }

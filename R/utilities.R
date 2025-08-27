@@ -24,7 +24,11 @@
 #'   have the same difference which is minimal, a vector of indices is returned.
 #'   If no value is within the defined threshold, `NULL` is returned.
 #' @export
-getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdRel = NULL) {
+getIndexClosestToValue <- function(
+    value,
+    array,
+    thresholdAbs = NULL,
+    thresholdRel = NULL) {
   # If no absolute threshold is set, calculate if from relative threshold
   if (is.null(thresholdAbs)) {
     # If no relative threshold is set also, no threshold is applied
@@ -42,7 +46,10 @@ getIndexClosestToValue <- function(value, array, thresholdAbs = NULL, thresholdR
   idx <- which(distances == min(distances) & distances <= thresholdAbs)
 
   if (length(idx) == 0) {
-    warning(messages$warningValueWithinThresholdNotExisting(value, thresholdAbs))
+    warning(messages$warningValueWithinThresholdNotExisting(
+      value,
+      thresholdAbs
+    ))
     return(NULL)
   }
 

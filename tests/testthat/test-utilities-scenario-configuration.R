@@ -18,6 +18,54 @@ scenariosDf <- data.frame(list(
   "OutputPathsIds" = c(NA)
 ))
 
+# Template scenario configuration for testing with new structure
+templateScenarioConfiguration <- ScenarioConfiguration$new(
+  projectConfiguration = projectConfiguration
+)
+templateScenarioConfiguration$scenarioName <- "TestScenario"
+templateScenarioConfiguration$modelFile <- "Aciclovir.pkml"
+templateScenarioConfiguration$individualId <- "Indiv1"
+templateScenarioConfiguration$applicationProtocol <- "IV 250mg 10min"
+templateScenarioConfiguration$simulationTime <- "0, 24, 60"
+templateScenarioConfiguration$simulationTimeUnit <- "h"
+templateScenarioConfiguration$outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+
+test_that("`ScenarioConfiguration` active bindings are modified", {
+  # Create a fresh temporary project for this test
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  # Test that the active bindings work correctly
+  expect_equal(templateScenarioConfiguration$scenarioName, "TestScenario")
+  expect_equal(templateScenarioConfiguration$modelFile, "Aciclovir.pkml")
+  expect_equal(templateScenarioConfiguration$individualId, "Indiv1")
+  expect_equal(
+    templateScenarioConfiguration$applicationProtocol,
+    "IV 250mg 10min"
+  )
+  expect_equal(templateScenarioConfiguration$simulationTime, list(c(0, 24, 60)))
+  expect_equal(templateScenarioConfiguration$simulationTimeUnit, "h")
+  expect_equal(
+    templateScenarioConfiguration$outputPaths,
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  )
+})
+
+test_that("`ScenarioConfiguration` can be created from excel file", {
+  # Create a fresh temporary project for this test
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  # Test that scenario configuration can be read from excel
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = c("TestScenario"),
+    projectConfiguration = projectConfiguration
+  )
+
+  expect_equal(length(scenarioConfigurations), 1)
+  expect_equal(scenarioConfigurations[[1]]$scenarioName, "TestScenario")
+})
+
 test_that("it throws an error when wrong scenario is defined", {
   scenarioNames <- "wrong"
   expect_error(
@@ -407,5 +455,35 @@ test_that("It parses time intervals correctly", {
     .parseSimulationTimeIntervals(timeIntervalStringInvalid),
     messages$stopWrongTimeIntervalString(timeIntervalStringInvalid),
     fixed = TRUE
+  )
+})
+
+test_that("It shows a meaningful error when steady-state is true but no unit is set", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Scenarios.xlsx",
+    tmpdir = tempDir,
+    code = {
+      scenariosDfLocal <- scenariosDf
+      scenariosDfLocal$SteadyState <- TRUE
+      scenariosDfLocal$SteadyStateTime <- 15
+      .writeExcel(
+        data = list(
+          "Scenarios" = scenariosDfLocal,
+          "OutputPaths" = data.frame()
+        ),
+        path = file.path(tempDir, "Scenarios.xlsx"),
+      )
+
+      expect_error(
+        readScenarioConfigurationFromExcel(
+          projectConfiguration = projectConfigurationLocal
+        ),
+        regexp = messages$missingSteadyStateTimeUnit("TestScenario"),
+        fixed = TRUE
+      )
+    }
   )
 })

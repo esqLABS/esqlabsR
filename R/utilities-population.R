@@ -11,10 +11,28 @@
 #' in the excel file.
 #' @import readxl
 #' @export
-readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet = NULL) {
+readPopulationCharacteristicsFromXLS <- function(
+    XLSpath,
+    populationName,
+    sheet = NULL) {
   columnNames <- c(
-    "PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax",
-    "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein Ontogenies"
+    "PopulationName",
+    "species",
+    "population",
+    "numberOfIndividuals",
+    "proportionOfFemales",
+    "weightMin",
+    "weightMax",
+    "weightUnit",
+    "heightMin",
+    "heightMax",
+    "heightUnit",
+    "ageMin",
+    "ageMax",
+    "BMIMin",
+    "BMIMax",
+    "BMIUnit",
+    "Protein Ontogenies"
   )
 
   validateIsString(c(XLSpath, populationName))
@@ -26,7 +44,10 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   data <- readExcel(path = XLSpath, sheet = sheet)
 
   if (!all(columnNames %in% names(data))) {
-    stop(messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
+    stop(messages$errorWrongXLSStructure(
+      filePath = XLSpath,
+      expectedColNames = columnNames
+    ))
   }
   # Find the row with the given population name
   rowIdx <- which(data$PopulationName == populationName)
@@ -57,7 +78,10 @@ readPopulationCharacteristicsFromXLS <- function(XLSpath, populationName, sheet 
   arguments[["moleculeOntogenies"]] <- .readOntongeniesFromXLS(data[rowIdx, ])
 
   # Using do.call to call the method with arguments in a list
-  populationCharacterstics <- do.call(createPopulationCharacteristics, arguments)
+  populationCharacterstics <- do.call(
+    createPopulationCharacteristics,
+    arguments
+  )
 
   return(populationCharacterstics)
 }
@@ -86,17 +110,18 @@ GenderInt <- enum(list(
 #'   be sampled. Must have the same length as `parameterPaths`.
 #' A list of supported distributions is defined in `Distributions`. Default is `"Normal"`.
 #' @export
-extendPopulationByUserDefinedParams <- function(population, # nolint: object_length_linter.
-                                                parameterPaths,
-                                                meanValues,
-                                                sdValues,
-                                                distributions = Distributions$Normal) {
+extendPopulationByUserDefinedParams <- function(
+    population, # nolint: object_length_linter.
+    parameterPaths,
+    meanValues,
+    sdValues,
+    distributions = Distributions$Normal) {
   validateIsOfType(population, "Population")
   validateIsString(parameterPaths)
   validateIsNumeric(c(meanValues, sdValues))
-  distributions <- distributions %||% rep(Distributions$Normal, length(parameterPaths))
+  distributions <- distributions %||%
+    rep(Distributions$Normal, length(parameterPaths))
   validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
-
 
   # Iterate through all parameters and sample a parameter values vector
   for (i in seq_along(parameterPaths)) {
@@ -141,8 +166,11 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
   }
 
   columnNames <- c(
-    "Container Path", "Parameter Name", "Mean",
-    "SD", "Distribution"
+    "Container Path",
+    "Parameter Name",
+    "Mean",
+    "SD",
+    "Distribution"
   )
 
   columnTypes <- c("text", "text", "numeric", "numeric", "text")
@@ -152,42 +180,62 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
       data <- readExcel(path = XLSpath, sheet = sheet, col_types = columnTypes)
     },
     error = function(e) {
-      cli::cli_abort(message = messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames), call = rlang::caller_env(4))
+      cli::cli_abort(
+        message = messages$errorWrongXLSStructure(
+          filePath = XLSpath,
+          expectedColNames = columnNames
+        ),
+        call = rlang::caller_env(4)
+      )
     }
   )
 
   if (!all(columnNames %in% names(data))) {
-    cli::cli_abort(message = messages$errorWrongXLSStructure(filePath = XLSpath, expectedColNames = columnNames))
+    cli::cli_abort(
+      message = messages$errorWrongXLSStructure(
+        filePath = XLSpath,
+        expectedColNames = columnNames
+      )
+    )
   }
 
   if (nrow(data) == 0) {
-    cli::cli_abort(message = c(
-      "x" = "The specified excel sheet does not contain any rows with data.",
-      "*" = "Please check the excel sheet name and content and try again."
-    ))
+    cli::cli_abort(
+      message = c(
+        "x" = "The specified excel sheet does not contain any rows with data.",
+        "*" = "Please check the excel sheet name and content and try again."
+      )
+    )
   }
 
   complete_data <-
     data %>%
     dplyr::filter(!dplyr::if_any(dplyr::everything(), ~ is.na(.)))
 
-
   if (nrow(complete_data) < nrow(data)) {
-    cli::cli_warn(message = c(
-      "x" = "The specified excel sheet contains uncomplete row(s)",
-      "i" = "Using only complete rows to define population parameters"
-    ))
+    cli::cli_warn(
+      message = c(
+        "x" = "The specified excel sheet contains uncomplete row(s)",
+        "i" = "Using only complete rows to define population parameters"
+      )
+    )
   }
 
   if (nrow(complete_data) == 0) {
-    cli::cli_abort(message = c(
-      "x" = "The specified excel sheet does not contain any complete row",
-      "*" = "Please fill all the columns and try again."
-    ))
+    cli::cli_abort(
+      message = c(
+        "x" = "The specified excel sheet does not contain any complete row",
+        "*" = "Please fill all the columns and try again."
+      )
+    )
   }
   extendPopulationByUserDefinedParams(
     population = population,
-    parameterPaths = paste(complete_data$`Container Path`, complete_data$`Parameter Name`, sep = "|"),
+    parameterPaths = paste(
+      complete_data$`Container Path`,
+      complete_data$`Parameter Name`,
+      sep = "|"
+    ),
     meanValues = complete_data$Mean,
     sdValues = complete_data$SD,
     distributions = complete_data$Distribution
@@ -246,7 +294,11 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
   # chr NA, but some other NA, and strsplit fails.
   proteinOntogenyMappings <- as.character(proteinOntogenyMappings)
   # Proteins/ontogenies mappings are separated by a ','
-  proteinOntogenyMappings <- unlist(strsplit(x = proteinOntogenyMappings, split = ",", fixed = TRUE))
+  proteinOntogenyMappings <- unlist(strsplit(
+    x = proteinOntogenyMappings,
+    split = ",",
+    fixed = TRUE
+  ))
   # Remove whitespaces
   proteinOntogenyMappings <- trimws(proteinOntogenyMappings)
 

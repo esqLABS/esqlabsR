@@ -35,7 +35,6 @@ ExportConfiguration <- R6::R6Class(
     .height = NULL
   ),
   public = list(
-
     #' @description Save/Export a plot
     #' @param plotObject A `ggplot` object
     #' @param fileName character file name of the exported plot
@@ -49,7 +48,8 @@ ExportConfiguration <- R6::R6Class(
       # If `heightPerRow` is defined, calculate the height of the figure
       if (!is.null(self$heightPerRow)) {
         # Get the number of rows as defined in the plot layout
-        nrOfRows <- ggplot2::wrap_dims(length(plotObject$patches$plots) + 1,
+        nrOfRows <- ggplot2::wrap_dims(
+          length(plotObject$patches$plots) + 1,
           nrow = plotObject$patches$layout$nrow,
           ncol = plotObject$patches$layout$ncol
         )[[1]]

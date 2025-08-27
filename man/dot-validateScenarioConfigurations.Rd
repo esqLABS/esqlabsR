@@ -7,9 +7,14 @@
 .validateScenarioConfigurations(scenarioConfigurations)
 }
 \arguments{
-\item{scenarioConfigurations}{Scenario configurations to validate.}
+\item{scenarioConfigurations}{List of \code{ScenarioConfiguration} objects to validate.}
 }
 \description{
 Validate \code{ScenarioConfiguration} objects
+}
+\details{
+Validates that all scenario configurations are of the correct type
+and that population scenarios have a defined population ID. Throws an error
+if validation fails.
 }
 \keyword{internal}

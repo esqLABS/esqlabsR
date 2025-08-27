@@ -308,8 +308,9 @@ test_that("It sets the LLOQ if it is given for any of the original data sets", {
 })
 
 test_that("loadObservedData loads data correctly from test project", {
-  # Get test project configuration
-  projectConfiguration <- testProjectConfiguration()
+  # Create a project configuration using temporary project
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
 
   # Load all sheets
   dataSets <- loadObservedData(projectConfiguration)

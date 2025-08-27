@@ -2,37 +2,43 @@
 % Please edit documentation in R/utilities-scenario-configuration.R
 \name{readScenarioConfigurationFromExcel}
 \alias{readScenarioConfigurationFromExcel}
-\title{Read scenario definition(s) from excel file}
+\title{Read scenario definition(s) from Excel file}
 \usage{
 readScenarioConfigurationFromExcel(scenarioNames = NULL, projectConfiguration)
 }
 \arguments{
-\item{scenarioNames}{Names of the scenarios that are defined in the excel file.
-If \code{NULL} (default), all scenarios specified in the excel file will be
+\item{scenarioNames}{Character vector. Names of the scenarios that are defined in the Excel file.
+If \code{NULL} (default), all scenarios specified in the Excel file will be
 created.}
 
-\item{projectConfiguration}{A \code{ProjectConfiguration} object holding base information}
+\item{projectConfiguration}{A \code{ProjectConfiguration} object holding base information.}
 }
 \value{
-A named list of \code{ScenarioConfiguration} objects withe the names of the
+A named list of \code{ScenarioConfiguration} objects with the names of the
 list being scenario names.
 }
 \description{
-Read scenario definition(s) from excel file
+Read scenario definition(s) from Excel file
 }
 \details{
-Reads scenario definition from the excel file defined in
+Reads scenario definition from the Excel file defined in
 \code{ProjectConfiguration} and creates \code{ScenarioConfiguration} objects with new
 information.
-If a scenario that is specified in \code{scenarioNames} is not found in the excel
+If a scenario that is specified in \code{scenarioNames} is not found in the Excel
 file, an error is thrown.
+
+The function expects the Excel file to have a "Scenarios" sheet with the following
+columns: \code{Scenario_name}, \code{IndividualId}, \code{PopulationId}, \code{ReadPopulationFromCSV},
+\code{ModelParameterSheets}, \code{ApplicationProtocol}, \code{SimulationTime}, \code{SimulationTimeUnit},
+\code{SteadyState}, \code{SteadyStateTime}, \code{SteadyStateTimeUnit}, \code{ModelFile}, \code{OutputPathsIds}.
+It also expects an "OutputPaths" sheet with \code{OutputPathId} and \code{OutputPath} columns.
 }
 \examples{
 \dontrun{
 # Create default ProjectConfiguration
 projectConfiguration <- createProjectConfiguration()
 scenarioName <- "MyScenario"
-# Read scenario definition from excel
-scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioConfiguration)[[scenarioName]]
+# Read scenario definition from Excel
+scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioNames = scenarioName, projectConfiguration)[[scenarioName]]
 }
 }

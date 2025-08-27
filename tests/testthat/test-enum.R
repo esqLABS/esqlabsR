@@ -18,5 +18,10 @@ test_that("Check key-value mappings work", {
 
   expect_error(enumPutList("a", list(12, 2, "a"), myEnum))
 
-  expect_error(enumPutList(c("c", "d", "g"), list(12, 2, "a"), myEnum, overwrite = TRUE))
+  expect_error(enumPutList(
+    c("c", "d", "g"),
+    list(12, 2, "a"),
+    myEnum,
+    overwrite = TRUE
+  ))
 })

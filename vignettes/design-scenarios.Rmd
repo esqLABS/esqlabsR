@@ -75,14 +75,16 @@ b)  To define an individual-specific parametrization, create a new sheet
     and name it as the individual's ID.
 
 If your model contains proteins (e.g., enzymes or transporters), you
-have to specify their ontongenies in the column 'Protein Ontogenies' as a list (separated by a `,`)
-of `<Protein>:<Ontogeny>` values.  The value of `<Ontogeny>` must be one of the 
-standard ontogenies implemented in the PK-Sim database (call `ospsuite::StandardOntogeny` 
-to see the list of supported ontogenies). For example, if your model contains 
-proteins with names `CYP3A4_alternative` and `CYP2D6_alternative`, you can specify
-their ontogenies by entering `CYP3A4_alternative:CYP3A4, CYP2D6_alternative:CYP2D6`
-in the 'Protein Ontogenies' column. If not specified, age-dependent protein expression will not
-be considered.
+have to specify their ontongenies in the column 'Protein Ontogenies' as
+a list (separated by a `,`) of `<Protein>:<Ontogeny>` values. The value
+of `<Ontogeny>` must be one of the standard ontogenies implemented in
+the PK-Sim database (call `ospsuite::StandardOntogeny` to see the list
+of supported ontogenies). For example, if your model contains proteins
+with names `CYP3A4_alternative` and `CYP2D6_alternative`, you can
+specify their ontogenies by entering
+`CYP3A4_alternative:CYP3A4, CYP2D6_alternative:CYP2D6` in the 'Protein
+Ontogenies' column. If not specified, age-dependent protein expression
+will not be considered.
 
 ### 6. Population
 
@@ -98,8 +100,8 @@ value of the `ReadPopulationFromCSV` column to `TRUE`. The population
 CSV file must be located in the `Parameters/Populations` folder.
 
 To apply ontogenies of proteins implemented in PK-Sim data base, you
-have to specify the ontogenies for the proteins in the model. See Section
-[5. Individuals](#individuals) for more information.
+have to specify the ontogenies for the proteins in the model. See
+Section [5. Individuals](#individuals) for more information.
 
 ### 7. Time
 
@@ -120,8 +122,8 @@ same simulation file by defining an application protocol in the column
 `ApplicationProtocol`. See the description below.
 
 Now that you designed your own simulation, read
-`vignette("run-simulations")` to continue the process. To learn
-more about simulation design, read the following sections.
+`vignette("run-simulations")` to continue the process. To learn more
+about simulation design, read the following sections.
 
 ## Details
 
@@ -156,10 +158,11 @@ file, see description below. **IndividualId** may be empty. In this
 case, the individual as defined in the `pkml` simulation without any
 individual-specific model parameters will be simulated. The same
 individual can be used in multiple scenarios. It is possible to scale
-from a human model to the species **Rat**, **Rabbit**, and **Monkey** by
-applying the respective individual to the simulation. Other species
-scalings are technically possible but the correctness of the results is
-not guaranteed as there exist some structural differences between the
+from a human model to the species **Beagle**, **Dog**, **Minipig**,
+**Mouse**, **Rat**, **Rabbit**, and **Monkey** by applying the
+respective individual to the simulation. Other species scalings are
+technically possible but the correctness of the results is not
+guaranteed as there exist some structural differences between the
 species.
 
 #### PopulationId
@@ -229,7 +232,11 @@ application parameters for the molecule `Aciclovir` from the example
 simulation:
 
 ```{r}
-sim <- loadSimulation(system.file("extdata", "Aciclovir.pkml", package = "ospsuite"))
+sim <- loadSimulation(system.file(
+  "extdata",
+  "Aciclovir.pkml",
+  package = "ospsuite"
+))
 applicationParams <- getAllApplicationParameters(sim)
 print(applicationParams)
 ```
@@ -238,7 +245,10 @@ And export the parameters to an Excel file using the
 `exportParametersToXLS()` function:
 
 ```{r, eval=FALSE}
-exportParametersToXLS(parameters = applicationParams, paramsXLSpath = "../Applications.xlsx")
+exportParametersToXLS(
+  parameters = applicationParams,
+  paramsXLSpath = "../Applications.xlsx"
+)
 ```
 
 The created Excel file will have the same structure as all
@@ -256,10 +266,13 @@ a `;`.
 For example, to simulate the model for 10 minutes with a resolution of 1
 point per minute, the value of the column `SimulationTime` should be
 `0, 10, 1`, and that of the column `SimulationTimeUnit` should be `min`.
-To simulate the model for \* 20 hours with a resolution of 1 point per
-minute, then \* for three weeks (equals to 3*7*24 = 504 hours) with a
-resolution of 1 point per hour, and finally \* for two days (equals to
-504 + 2\*24 = 552 hours) with a resolution of 10 points per hour,
+To simulate the model for
+
+-   20 hours with a resolution of 1 point per minute, then
+-   for three weeks (equals to 3*7*24 = 504 hours) with a resolution of
+    1 point per hour, and finally
+-   for two days (equals to 504 + 2\*24 = 552 hours) with a resolution
+    of 10 points per hour,
 
 the value of the column `SimulationTime` should be
 `0, 20, 60; 20, 504, 1; 504, 552, 10`, and that of the column
@@ -298,10 +311,10 @@ path into the column `OutputPath` and defining a unique identifier for
 this path in the column `OutputPathId`. The content of the sheet could
 look like this:
 
-| OutputPathId       | OutputPath                                                                   |
-|--------------------|------------------------------------------------------------------------------|
-| Aciclovir_PVB      | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
-| Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container          |
+| OutputPathId | OutputPath |
+|----|----|
+| Aciclovir_PVB | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
+| Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container |
 
 In the `Scenarios` sheet, enter the IDs of all paths the outputs should
 be generated for, separated by a comma, e.g.,

@@ -154,7 +154,8 @@ a parameter sheet from the list"
     #' that will be applied to the simulation
     #' @param sheetNames A name or a list of names of the excel sheet
     addParamSheets = function(sheetNames) {
-      private$.paramSheets <- enumPut(sheetNames,
+      private$.paramSheets <- enumPut(
+        sheetNames,
         sheetNames,
         enum = private$.paramSheets,
         overwrite = TRUE
@@ -168,7 +169,10 @@ a parameter sheet from the list"
       if (is.null(sheetNames)) {
         private$.paramSheets <- enum(NULL)
       } else {
-        private$.paramSheets <- enumRemove(keys = sheetNames, enum = private$.paramSheets)
+        private$.paramSheets <- enumRemove(
+          keys = sheetNames,
+          enum = private$.paramSheets
+        )
       }
     },
     #' @description
@@ -183,18 +187,21 @@ a parameter sheet from the list"
         self$projectConfiguration$print(className = FALSE)
       }
       ospsuite.utils::ospPrintHeader("Scenario configuration", level = 1)
-      ospsuite.utils::ospPrintItems(list(
-        "Scenario name" = self$scenarioName,
-        "Model file name" = self$modelFile,
-        "Application protocol" = self$applicationProtocol,
-        "Simulation type" = self$simulationType,
-        "Individual Id" = self$individualId,
-        "Population Id" = self$populationId,
-        "Read population from csv file" = self$readPopulationFromCSV,
-        "Parameters sheets" = enumKeys(self$paramSheets),
-        "Simulate steady-state" = self$simulateSteadyState,
-        "Steady-state time" = self$steadyStateTime
-      ), print_empty = TRUE)
+      ospsuite.utils::ospPrintItems(
+        list(
+          "Scenario name" = self$scenarioName,
+          "Model file name" = self$modelFile,
+          "Application protocol" = self$applicationProtocol,
+          "Simulation type" = self$simulationType,
+          "Individual Id" = self$individualId,
+          "Population Id" = self$populationId,
+          "Read population from csv file" = self$readPopulationFromCSV,
+          "Parameters sheets" = enumKeys(self$paramSheets),
+          "Simulate steady-state" = self$simulateSteadyState,
+          "Steady-state time" = self$steadyStateTime
+        ),
+        print_empty = TRUE
+      )
       ospsuite.utils::ospPrintHeader("Simulation time intervals", level = 2)
       for (i in seq_along(self$simulationTime)) {
         ospsuite.utils::ospPrintItems(
@@ -212,10 +219,13 @@ a parameter sheet from the list"
       ))
 
       if (self$simulateSteadyState) {
-        ospsuite.utils::ospPrintItems(list(
-          "Simulate steady-state" = self$simulateSteadyState,
-          "Steady-state time" = self$steadyStateTime
-        ), title = "Steady state")
+        ospsuite.utils::ospPrintItems(
+          list(
+            "Simulate steady-state" = self$simulateSteadyState,
+            "Steady-state time" = self$steadyStateTime
+          ),
+          title = "Steady state"
+        )
       }
     }
   )
