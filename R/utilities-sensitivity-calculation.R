@@ -378,70 +378,42 @@
 
 # validation helpers ------------------------------
 
-#' Validate vector arguments of `character` type
+#' Validate a character vector
 #'
-#' @param argVector A vector of `character` type.
-#' @param nullAllowed Boolean flag if `NULL` is accepted for the object. Default
-#' is `FALSE`.
+#' @param object An object or a vector of type `character`.
+#' @param nullAllowed Boolean flag if `NULL` is accepted for the object.
+#' If `TRUE`, `NULL` always returns TRUE, otherwise `NULL` returns FALSE.
+#' Default is `FALSE`.
 #'
-#' @description
-#'
-#' If the parameter in your function accepts vectors of `character` type, this
-#' can help you validate the following aspects:
-#'
-#' - the elements are indeed of `character` type
-#' - none of the entries are duplicated
-#' - there are no empty strings (`""`)
-#'
-#' @returns Error if validation is unsuccessful; otherwise, `NULL`.
-#'
-#' @examples
-#'
-#' x <- c("a", "b", "a")
-#' # this will produce error
-#' # validateCharVectors(x)
-#'
-#' # this will return `NULL`
-#' y <- c("a", "b", "c")
-#' validateCharVectors(y)
+#' @return
+#' `NULL` if the entered object is a valid character vector, otherwise produces
+#' an error. Also accepts `NULL` as input if `nullAllowed` is set to `TRUE`.
 #'
 #' @keywords internal
 #' @noRd
-.validateCharVectors <- function(argVector, nullAllowed = FALSE) {
-  argName <- deparse(substitute(argVector))
+.validateCharVector <- function(object, nullAllowed = FALSE) {
+  objectName <- deparse(substitute(object))
+  objectType <- "character"
 
-  # Handle NULL cases based on nullAllowed
-  if (is.null(argVector) && !nullAllowed) {
-    cli::cli_abort("The argument `{argName}` cannot be NULL.")
-  }
-
-  # Skip further checks if NULL is allowed and the argument is NULL
-  if (is.null(argVector)) {
-    return()
+  # Handle NULL
+  if (is.null(object)) {
+    if (nullAllowed) return(invisible(NULL))
+    stop(messages$errorWrongType(objectName, class(object)[1], objectType))
   }
 
   # Check if the argument is of type character
-  if (!isOfType(argVector, "character")) {
-    cli::cli_abort(c(
-      "x" = "The argument `{argName}` must be of type {.val character}.",
-      "i" = "Ensure that the provided value is a character vector."
-    ))
+  if (!(is.atomic(object) && typeof(object) == objectType)) {
+    stop(messages$errorWrongType(objectName, class(object)[1], objectType))
   }
 
   # Ensure all values are distinct
-  if (!hasOnlyDistinctValues(argVector)) {
-    cli::cli_abort(c(
-      "x" = "The argument `{argName}` must contain only distinct values.",
-      "i" = "Remove any duplicate entries from the `{argName}`."
-    ))
+  if (!hasOnlyDistinctValues(object)) {
+    stop(messages$errorDuplicatedValues())
   }
 
   # Check for empty string values
-  if (any(nchar(argVector) == 0L)) {
-    cli::cli_abort(c(
-      "x" = "The argument `{argName}` contains empty strings.",
-      "i" = "Ensure that `{argName}` does not have any empty entries."
-    ))
+  if (any(!nzchar(object))) {
+    stop(messages$errorEmptyString(objectName))
   }
 }
 

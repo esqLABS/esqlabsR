@@ -37,27 +37,40 @@ test_that("sensitivityCalculation fails with invalid `outputPaths`", {
     sensitivityCalculation(
       simulation = simulation,
       outputPaths = NULL,
-      parameterPaths = parameterPath
+      parameterPaths = parameterPaths
     ),
-    "The argument `outputPaths` cannot be NULL"
+    messages$errorWrongType("outputPaths", class(NULL), "character"),
+    fixed = TRUE
   )
 
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
       outputPaths = c(1, 2, 3),
-      parameterPaths = parameterPath
+      parameterPaths = parameterPaths
     ),
-    'The argument `outputPaths` must be of type "character"'
+    messages$errorWrongType("outputPaths", "numeric", "character"),
+    fixed = TRUE
+  )
+
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = list("pathNameA" = "pathA"),
+      parameterPaths = parameterPaths
+    ),
+    messages$errorWrongType("outputPaths", "list", "character"),
+    fixed = TRUE
   )
 
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
       outputPaths = "",
-      parameterPaths = parameterPath
+      parameterPaths = parameterPaths
     ),
-    "The argument `outputPaths` contains empty strings"
+    messages$errorEmptyString("outputPaths"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -69,7 +82,8 @@ test_that("sensitivityCalculation fails with invalid `outputPaths`", {
       ),
       parameterPaths = parameterPath
     ),
-    "The argument `outputPaths` contains empty strings"
+    messages$errorEmptyString("outputPaths"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -81,7 +95,8 @@ test_that("sensitivityCalculation fails with invalid `outputPaths`", {
       ),
       parameterPaths = parameterPath
     ),
-    "The argument `outputPaths` must contain only distinct values"
+    messages$errorDuplicatedValues(),
+    fixed = TRUE
   )
 })
 
@@ -94,7 +109,8 @@ test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = NULL
     ),
-    "The argument `parameterPaths` cannot be NULL"
+    messages$errorWrongType("parameterPaths", class(NULL), "character"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -103,7 +119,8 @@ test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = c(1, 2, 3)
     ),
-    'The argument `parameterPaths` must be of type "character"'
+    messages$errorWrongType("parameterPaths", "numeric", "character"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -112,7 +129,8 @@ test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = ""
     ),
-    "The argument `parameterPaths` contains empty strings"
+    messages$errorEmptyString("parameterPaths"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -125,7 +143,8 @@ test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
         "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
       )
     ),
-    "The argument `parameterPaths` contains empty strings"
+    messages$errorEmptyString("parameterPaths"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -134,7 +153,8 @@ test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = c(parameterPaths, parameterPaths[1])
     ),
-    "The argument `parameterPaths` must contain only distinct values"
+    messages$errorDuplicatedValues(),
+    fixed = TRUE
   )
 })
 
@@ -148,7 +168,8 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = outputPaths,
       parameterPaths = parameterPaths
     ),
-    'The argument `pkParameters` must be of type "character"'
+    messages$errorWrongType("pkParameters", "numeric", "character"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -158,7 +179,8 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = outputPaths,
       parameterPaths = parameterPaths
     ),
-    "The argument `pkParameters` contains empty strings"
+    messages$errorEmptyString("pkParameters"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -168,7 +190,8 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = outputPaths,
       parameterPaths = parameterPaths
     ),
-    "The argument `pkParameters` contains empty strings"
+    messages$errorEmptyString("pkParameters"),
+    fixed = TRUE
   )
 
   expect_error(
@@ -178,7 +201,8 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = parameterPaths
     ),
-    "The argument `pkParameters` must contain only distinct values"
+    messages$errorDuplicatedValues(),
+    fixed = TRUE
   )
 
   expect_message(
@@ -346,6 +370,20 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
       customOutputFunctions = list("invalid" = \(x, y, z) x / y * z)
     ),
     "The user-defined function must have either 'x', 'y', or both 'x' and 'y'"
+  )
+})
+
+# Validate variationType
+
+test_that("sensitivityCalculation fails with invalid `variationType`", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationType = "invalidType"
+    ),
+    'should be one of \\"relative\\", \\"absolute\\"'
   )
 })
 

@@ -63,9 +63,9 @@ In the following example, we analyze how changes in *lipophilicity*,
 pharmacokinetics of aciclovir:
 
 ```{r analysis}
-outputPaths <- enum(list(
+outputPaths <- c(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-))
+)
 parameterPaths <- c(
   "Lipophilicity" = "Aciclovir|Lipophilicity",
   "Dose" = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
@@ -221,15 +221,15 @@ names will be used as labels instead of full paths.
 
 ```{r custom-analysis}
 simulation <- loadSimulation(simulationFilePath)
-customOutputPaths <- enum(list(
+customOutputPaths <- c(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-))
+)
 customParameterPaths <- c("Lipophilicity" = "Aciclovir|Lipophilicity")
 
 customAnalysis <- sensitivityCalculation(
   simulation,
   customOutputPaths,
-  pkParameters = list(),
+  pkParameters = c("C_max"),
   parameterPaths = customParameterPaths,
   customOutputFunctions = list(AverageConcentration = meanFunction)
 )

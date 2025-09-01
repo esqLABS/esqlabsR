@@ -49,9 +49,9 @@ simulationFilePath <- system.file(
 )
 
 simulation <- loadSimulation(simulationFilePath)
-outputPaths <- enum(list(
+outputPaths <- c(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-))
+)
 
 # Use named parameter paths to customize facet labels
 namedParameterPaths <- c(
@@ -226,7 +226,7 @@ spiderPlots <- sensitivitySpiderPlot(
 )
 
 # Extract the plot for a specific output path
-spiderPlot <- spiderPlots[[outputPaths$Aciclovir_PVB]]
+spiderPlot <- spiderPlots[[outputPaths["Aciclovir_PVB"]]]
 
 # Modify plot using `patchwork` and `ggplot2` functions
 spiderPlot & 
