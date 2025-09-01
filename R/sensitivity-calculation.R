@@ -83,7 +83,7 @@ sensitivityCalculation <- function(
     outputPaths,
     parameterPaths,
     variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
-    variationType = c("relative"),
+    variationType = c("relative", "absolute"),
     pkParameters = c("C_max", "t_max", "AUC_inf"),
     customOutputFunctions = NULL,
     saOutputFilePath = NULL,
@@ -96,6 +96,8 @@ sensitivityCalculation <- function(
   .validateCharVector(names(parameterPaths), nullAllowed = TRUE)
   .validateCharVector(variationType)
   .validateCharVector(pkParameters, nullAllowed = TRUE)
+
+  variationType <- match.arg(variationType)
 
   # Check for non-standard PK parameters
   .validatePKParameters(pkParameters)

@@ -373,6 +373,20 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
   )
 })
 
+# Validate variationType
+
+test_that("sensitivityCalculation fails with invalid `variationType`", {
+  expect_error(
+    sensitivityCalculation(
+      simulation = simulation,
+      outputPaths = outputPaths,
+      parameterPaths = parameterPaths,
+      variationType = "invalidType"
+    ),
+    'should be one of \\"relative\\", \\"absolute\\"'
+  )
+})
+
 # Check SensitivityCalculation object -------------------------------------
 
 test_that("sensitivityCalculation returns a valid `SensitivityCalculation` object", {
