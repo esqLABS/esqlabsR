@@ -113,9 +113,9 @@ sensitivityTornadoPlot <- function(
     .getPlotConfigurationOptions("parameterFactor")
   )
 
-  .validateCharVectors(outputPaths, nullAllowed = TRUE)
-  .validateCharVectors(parameterPaths, nullAllowed = TRUE)
-  .validateCharVectors(pkParameters, nullAllowed = TRUE)
+  .validateCharVector(outputPaths, nullAllowed = TRUE)
+  .validateCharVector(parameterPaths, nullAllowed = TRUE)
+  .validateCharVector(pkParameters, nullAllowed = TRUE)
   ospsuite.utils::validateIsNumeric(xAxisZoomRange, nullAllowed = TRUE)
   if (!is.null(xAxisZoomRange)) {
     ospsuite.utils::validateIsOfLength(xAxisZoomRange, 2)

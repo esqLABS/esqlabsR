@@ -125,8 +125,8 @@ sensitivityTimeProfiles <- function(
     validateIsOfType(observedData, "DataSet")
   }
 
-  .validateCharVectors(outputPaths, nullAllowed = TRUE)
-  .validateCharVectors(parameterPaths, nullAllowed = TRUE)
+  .validateCharVector(outputPaths, nullAllowed = TRUE)
+  .validateCharVector(parameterPaths, nullAllowed = TRUE)
 
   # Plot configuration setup -----------------------------
 

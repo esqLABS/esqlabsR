@@ -91,11 +91,11 @@ sensitivityCalculation <- function(
   # Input validation ------------------------------------------------------
 
   # Validate vector arguments of character type
-  .validateCharVectors(outputPaths)
-  .validateCharVectors(parameterPaths)
-  .validateCharVectors(names(parameterPaths), nullAllowed = TRUE)
-  .validateCharVectors(variationType)
-  .validateCharVectors(pkParameters, nullAllowed = TRUE)
+  .validateCharVector(outputPaths)
+  .validateCharVector(parameterPaths)
+  .validateCharVector(names(parameterPaths), nullAllowed = TRUE)
+  .validateCharVector(variationType)
+  .validateCharVector(pkParameters, nullAllowed = TRUE)
 
   # Check for non-standard PK parameters
   .validatePKParameters(pkParameters)
