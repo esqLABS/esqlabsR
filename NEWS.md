@@ -1,5 +1,14 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+## Major changes
+
+## Minor improvements and bug fixes
+
+- Improved `.validateCharVector()` to enforce atomic character vectors (#881).
+
+
 # esqlabsR 5.5.0
 
 ## Breaking changes
