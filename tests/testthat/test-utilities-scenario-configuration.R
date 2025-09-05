@@ -66,7 +66,7 @@ test_that("`ScenarioConfiguration` can be created from excel file", {
   expect_equal(scenarioConfigurations[[1]]$scenarioName, "TestScenario")
 })
 
-test_that("Parameter sheet names with parenthesis are properly parsed", {
+test_that("Parameter sheet names with parentheses are properly parsed", {
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
