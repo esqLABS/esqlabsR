@@ -17,9 +17,10 @@
 #' @keywords internal
 #' @noRd
 .simulationResultsBatchToPKDataFrame <- function(
-    simulationResultsBatch,
-    parameterPaths,
-    customOutputFunctions) {
+  simulationResultsBatch,
+  parameterPaths,
+  customOutputFunctions
+) {
   batchResultsList <- list()
 
   for (i in seq_along(simulationResultsBatch)) {
@@ -52,9 +53,10 @@
 #' @keywords internal
 #' @noRd
 .simulationResultsToPKDataFrame <- function(
-    simulationResults,
-    parameterPath,
-    customOutputFunctions = NULL) {
+  simulationResults,
+  parameterPath,
+  customOutputFunctions = NULL
+) {
   # calculate standard pkAnalyses
   pkDataList <- userPKDataList <-
     stats::setNames(
@@ -164,7 +166,8 @@
 
       # user-defined functions should have either 'x', 'y',
       # or both 'x' and 'y' as parameters
-      userPKValue <- switch(paste(sort(formalNames), collapse = ","),
+      userPKValue <- switch(
+        paste(sort(formalNames), collapse = ","),
         "x,y" = customOutputFunction(x = x, y = y),
         "x" = customOutputFunction(x = x),
         "y" = customOutputFunction(y = y),
@@ -231,8 +234,9 @@
 #' @keywords internal
 #' @noRd
 .convertToWide <- function(
-    data,
-    pkParameterNames = names(ospsuite::StandardPKParameter)) {
+  data,
+  pkParameterNames = names(ospsuite::StandardPKParameter)
+) {
   dataWide <- tidyr::pivot_wider(
     data,
     names_from = PKParameter,
@@ -340,9 +344,9 @@
   variationRange <- toList(variationRange)
 
   if (length(variationRange) == 1) {
+    # Ensure the lengths of variationRange and parameterPath are equal
     variationRange <- rep(variationRange, length(parameterPaths))
-  } # Ensure the lengths of variationRange and parameterPath are equal
-  else if (length(variationRange) != length(parameterPaths)) {
+  } else if (length(variationRange) != length(parameterPaths)) {
     cli::cli_abort(
       messages$invalidVariationRangeLength()
     )
@@ -366,9 +370,10 @@
 #' @keywords internal
 #' @noRd
 .transformVariationRange <- function(
-    variationRange,
-    initialValues,
-    variationType) {
+  variationRange,
+  initialValues,
+  variationType
+) {
   if (variationType == "absolute") {
     variationRange <- purrr::map2(variationRange, initialValues, ~ .x / .y)
   }
@@ -397,7 +402,9 @@
 
   # Handle NULL
   if (is.null(object)) {
-    if (nullAllowed) return(invisible(NULL))
+    if (nullAllowed) {
+      return(invisible(NULL))
+    }
     stop(messages$errorWrongType(objectName, class(object)[1], objectType))
   }
 
@@ -478,12 +485,13 @@
 #' @keywords internal
 #' @noRd
 .savePlotList <- function(
-    plotlist,
-    plot.type,
-    outputFolder = "",
-    width = 16,
-    height = 9,
-    dpi = 300) {
+  plotlist,
+  plot.type,
+  outputFolder = "",
+  width = 16,
+  height = 9,
+  dpi = 300
+) {
   purrr::walk2(
     .x = plotlist,
     .y = seq_along(plotlist),
@@ -506,10 +514,11 @@
 #' @keywords internal
 #' @noRd
 .filterPlottingData <- function(
-    data,
-    outputPaths = NULL,
-    parameterPaths = NULL,
-    pkParameters = NULL) {
+  data,
+  outputPaths = NULL,
+  parameterPaths = NULL,
+  pkParameters = NULL
+) {
   if (!is.null(outputPaths)) {
     data <- dplyr::filter(data, OutputPath %in% outputPaths)
   }
@@ -562,9 +571,10 @@
 #' )
 #' }
 saveSensitivityCalculation <- function(
-    sensitivityCalculation,
-    outputDir,
-    overwrite = FALSE) {
+  sensitivityCalculation,
+  outputDir,
+  overwrite = FALSE
+) {
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   validateIsString(outputDir)
   validateIsLogical(overwrite)

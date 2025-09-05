@@ -71,7 +71,7 @@ ScenarioConfiguration <- R6::R6Class(
         private$.steadyStateTime <- value
       }
     },
-    #' @field paramSheets Names of the sheets from the parameters-excel file
+    #' @field paramSheets A named list. Names of the sheets from the parameters-excel file
     #'   that will be applied to the simulation
     paramSheets = function(value) {
       if (missing(value)) {
@@ -180,7 +180,9 @@ a parameter sheet from the list"
     #' @param projectConfiguration Whether to also print project configuration. default to TRUE.
     #' @param className Whether to print the name of the class at the beginning. default to TRUE.
     print = function(projectConfiguration = TRUE, className = TRUE) {
-      if (className) ospsuite.utils::ospPrintClass(self)
+      if (className) {
+        ospsuite.utils::ospPrintClass(self)
+      }
 
       if (projectConfiguration) {
         ospsuite.utils::ospPrintHeader("Project configuration", level = 1)

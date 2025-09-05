@@ -25,10 +25,11 @@
 #'   If no value is within the defined threshold, `NULL` is returned.
 #' @export
 getIndexClosestToValue <- function(
-    value,
-    array,
-    thresholdAbs = NULL,
-    thresholdRel = NULL) {
+  value,
+  array,
+  thresholdAbs = NULL,
+  thresholdRel = NULL
+) {
   # If no absolute threshold is set, calculate if from relative threshold
   if (is.null(thresholdAbs)) {
     # If no relative threshold is set also, no threshold is applied

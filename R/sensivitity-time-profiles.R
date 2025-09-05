@@ -105,15 +105,16 @@
 #' }
 #' @export
 sensitivityTimeProfiles <- function(
-    sensitivityCalculation,
-    outputPaths = NULL,
-    parameterPaths = NULL,
-    xAxisScale = NULL,
-    yAxisScale = NULL,
-    xUnits = NULL,
-    yUnits = NULL,
-    observedData = NULL,
-    defaultPlotConfiguration = NULL) {
+  sensitivityCalculation,
+  outputPaths = NULL,
+  parameterPaths = NULL,
+  xAxisScale = NULL,
+  yAxisScale = NULL,
+  xUnits = NULL,
+  yUnits = NULL,
+  observedData = NULL,
+  defaultPlotConfiguration = NULL
+) {
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -441,12 +442,13 @@ sensitivityTimeProfiles <- function(
 #' @keywords internal
 #' @noRd
 .aggregateSimulationAndObservedData <- function(
-    simulationResults,
-    dataSets,
-    parameterPaths,
-    outputPaths,
-    xUnits,
-    yUnits) {
+  simulationResults,
+  dataSets,
+  parameterPaths,
+  outputPaths,
+  xUnits,
+  yUnits
+) {
   if (!identical(names(simulationResults), unname(parameterPaths))) {
     stop(messages$invalidSimulationResultNames(
       names(simulationResults),

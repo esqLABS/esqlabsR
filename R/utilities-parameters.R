@@ -70,10 +70,11 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 #' }
 #'
 writeParameterStructureToXLS <- function(
-    parameterStructure,
-    paramsXLSpath,
-    sheet = NULL,
-    append = FALSE) {
+  parameterStructure,
+  paramsXLSpath,
+  sheet = NULL,
+  append = FALSE
+) {
   if (isTRUE(append)) {
     existingData <- readParametersFromXLS(
       paramsXLSpath = paramsXLSpath,
@@ -144,7 +145,7 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL) {
 
   parameterContainerPath <-
     parameterUnits <-
-    parameterName <- vector("character", length(parameters))
+      parameterName <- vector("character", length(parameters))
   parameterValue <- vector("numeric", length(parameters))
 
   for (paramIdx in seq_along(parameters)) {
@@ -286,10 +287,11 @@ extendParameterStructure <- function(parameters, newParameters) {
 #' @returns `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
 isParametersEqual <- function(
-    parameter1,
-    parameter2,
-    checkFormulaValues = FALSE,
-    compareFormulasByValue = FALSE) {
+  parameter1,
+  parameter2,
+  checkFormulaValues = FALSE,
+  compareFormulasByValue = FALSE
+) {
   validateIsOfType(c(parameter1, parameter2), "Parameter")
 
   # Check for the path
@@ -415,13 +417,14 @@ isTableFormulasEqual <- function(formula1, formula2) {
 #' @import ospsuite
 #' @export
 setParameterValuesByPathWithCondition <- function(
-    parameterPaths, # nolint: object_length_linter.
-    values,
-    simulation,
-    condition = function(path) {
-      TRUE
-    },
-    units = NULL) {
+  parameterPaths, # nolint: object_length_linter.
+  values,
+  simulation,
+  condition = function(path) {
+    TRUE
+  },
+  units = NULL
+) {
   for (i in seq_along(parameterPaths)) {
     path <- parameterPaths[[i]]
     if (condition(path)) {

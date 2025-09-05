@@ -28,10 +28,11 @@
 #' simulationResults <- runSimulations(simulation = simulation)
 #' }
 initializeSimulation <- function(
-    simulation,
-    individualCharacteristics = NULL,
-    additionalParams = NULL,
-    stopIfParameterNotFound = TRUE) {
+  simulation,
+  individualCharacteristics = NULL,
+  additionalParams = NULL,
+  stopIfParameterNotFound = TRUE
+) {
   validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
   validateIsOfType(
     individualCharacteristics,
@@ -125,9 +126,10 @@ initializeSimulation <- function(
 #' diffParams <- compareSimulationParameters(humanSim, ratSim)
 #' }
 compareSimulations <- function(
-    simulation1,
-    simulation2,
-    compareFormulasByValue = FALSE) {
+  simulation1,
+  simulation2,
+  compareFormulasByValue = FALSE
+) {
   paths1 <- getAllParameterPathsIn(simulation1)
   paths2 <- getAllParameterPathsIn(simulation2)
   commonPaths <- intersect(paths1, paths2)

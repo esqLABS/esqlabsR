@@ -30,9 +30,10 @@ getSimulationFilePath <- function(simulationName) {
 # Helper function to load a model easily. In the test environment, we do not want to load from cache by default. Instead
 # new instances should be created unless specifically specified otherwise
 loadTestSimulation <- function(
-    simulationName,
-    loadFromCache = FALSE,
-    addToCache = TRUE) {
+  simulationName,
+  loadFromCache = FALSE,
+  addToCache = TRUE
+) {
   simFile <- getSimulationFilePath(simulationName)
   sim <- ospsuite::loadSimulation(
     simFile,
@@ -221,8 +222,9 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
 # This is a test fixture following the pattern from testthat.r-lib.org/articles/test-fixtures.html
 # Returns a list with paths to the project directory and key files
 local_test_project <- function(
-    project_name = "TestProject",
-    env = parent.frame()) {
+  project_name = "TestProject",
+  env = parent.frame()
+) {
   # Create temp directory for test
   temp_dir <- withr::local_tempdir("test_project", .local_envir = env)
 

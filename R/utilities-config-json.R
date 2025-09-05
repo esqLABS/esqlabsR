@@ -11,9 +11,10 @@
 #' @return Invisibly returns the exported configuration data structure
 #' @export
 snapshotProjectConfiguration <- function(
-    projectConfig = "ProjectConfiguration.xlsx",
-    outputDir = NULL,
-    ...) {
+  projectConfig = "ProjectConfiguration.xlsx",
+  outputDir = NULL,
+  ...
+) {
   extraArguments <- list(...)
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
@@ -165,8 +166,9 @@ snapshotProjectConfiguration <- function(
 #' @return A ProjectConfiguration object initialized with the regenerated ProjectConfiguration.xlsx
 #' @export
 restoreProjectConfiguration <- function(
-    jsonPath = "ProjectConfiguration.json",
-    outputDir = NULL) {
+  jsonPath = "ProjectConfiguration.json",
+  outputDir = NULL
+) {
   # Check if JSON file exists
   if (!file.exists(jsonPath)) {
     stop("JSON file does not exist: ", jsonPath)
@@ -427,9 +429,10 @@ restoreProjectConfiguration <- function(
 #'  @import cli
 #' @export
 projectConfigurationStatus <- function(
-    projectConfig = "ProjectConfiguration.xlsx",
-    jsonPath = NULL,
-    silent = FALSE) {
+  projectConfig = "ProjectConfiguration.xlsx",
+  jsonPath = NULL,
+  silent = FALSE
+) {
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
     projectConfig <- createProjectConfiguration(projectConfig)

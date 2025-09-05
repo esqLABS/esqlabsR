@@ -98,13 +98,14 @@
 #'
 #' @export
 sensitivityTornadoPlot <- function(
-    sensitivityCalculation,
-    outputPaths = NULL,
-    parameterPaths = NULL,
-    pkParameters = NULL,
-    parameterFactor = 0.1,
-    xAxisZoomRange = NULL,
-    defaultPlotConfiguration = NULL) {
+  sensitivityCalculation,
+  outputPaths = NULL,
+  parameterPaths = NULL,
+  pkParameters = NULL,
+  parameterFactor = 0.1,
+  xAxisZoomRange = NULL,
+  defaultPlotConfiguration = NULL
+) {
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -209,9 +210,10 @@ sensitivityTornadoPlot <- function(
 #' @keywords internal
 #' @noRd
 .createTornadoPlot <- function(
-    data,
-    xAxisZoomRange = NULL,
-    defaultPlotConfiguration) {
+  data,
+  xAxisZoomRange = NULL,
+  defaultPlotConfiguration
+) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration$clone()
   plotConfiguration <- .updatePlotConfiguration(
