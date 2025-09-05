@@ -66,6 +66,27 @@ test_that("`ScenarioConfiguration` can be created from excel file", {
   expect_equal(scenarioConfigurations[[1]]$scenarioName, "TestScenario")
 })
 
+test_that("Parameter sheet names with parenthesis are properly parsed", {
+  # Create a fresh temporary project for this test
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  # Test that scenario configuration can be read from excel
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = c("TestScenario", "TestScenario2"),
+    projectConfiguration = projectConfiguration
+  )
+
+  expect_equal(
+    scenarioConfigurations[["TestScenario"]]$paramSheets,
+    list("Global" = "Global")
+  )
+  expect_equal(
+    scenarioConfigurations[["TestScenario2"]]$paramSheets,
+    list("Global" = "Global", "Aciclovir" = "Aciclovir")
+  )
+})
+
 test_that("it throws an error when wrong scenario is defined", {
   scenarioNames <- "wrong"
   expect_error(
@@ -195,7 +216,7 @@ test_that("It creates multiple correct scenarios", {
   )
   expect_equal(
     scenarioConfigurations[[scenarioNames[[2]]]]$paramSheets,
-    enum(enumValues = "Global")
+    enum(enumValues = c("Global", "Aciclovir"))
   )
   expect_equal(
     scenarioConfigurations[[scenarioNames[[2]]]]$scenarioName,

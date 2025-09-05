@@ -470,7 +470,7 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[2]]$ModelParameterSheets
-      [1] "Global"
+      [1] "\"Global\", \"Aciclovir\""
       
       $Scenarios$Scenarios$rows[[2]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
@@ -2011,12 +2011,12 @@
       3        PopulationScenario       Indiv1 TestPopulation                 FALSE
       4 PopulationScenarioFromCSV       Indiv1 TestPopulation                  TRUE
       5 TestScenario_missingParam       Indiv1           <NA>                  <NA>
-        ModelParameterSheets ApplicationProtocol      SimulationTime
-      1               Global  Aciclovir_iv_250mg           0, 24, 60
-      2               Global  Aciclovir_iv_250mg 0, 1, 60; 1, 12, 20
-      3               Global  Aciclovir_iv_250mg           0, 12, 20
-      4               Global  Aciclovir_iv_250mg           0, 12, 20
-      5 Global, MissingParam  Aciclovir_iv_250mg           0, 24, 60
+         ModelParameterSheets ApplicationProtocol      SimulationTime
+      1                Global  Aciclovir_iv_250mg           0, 24, 60
+      2 "Global", "Aciclovir"  Aciclovir_iv_250mg 0, 1, 60; 1, 12, 20
+      3                Global  Aciclovir_iv_250mg           0, 12, 20
+      4                Global  Aciclovir_iv_250mg           0, 12, 20
+      5  Global, MissingParam  Aciclovir_iv_250mg           0, 24, 60
         SimulationTimeUnit SteadyState SteadyStateTime SteadyStateTimeUnit
       1                  h        <NA>            <NA>                <NA>
       2                  h        TRUE             500                 min
@@ -2462,132 +2462,6 @@
       1      0.243795397465916                        0.909827131937137
       2     0.0816480831712129                        0.866536264266006
       
-      
-      
-
-# projectConfigurationStatus() detects sheet-level changes in Excel files
-
-    Code
-      status_result$details
-    Output
-      $file_status
-      $file_status$projectConfiguration
-      [1] "in-sync"
-      
-      $file_status$modelParameterSets
-      [1] "in-sync"
-      
-      $file_status$Individuals
-      [1] "in-sync"
-      
-      $file_status$Populations
-      [1] "in-sync"
-      
-      $file_status$Scenarios
-      [1] "in-sync"
-      
-      $file_status$Applications
-      [1] "in-sync"
-      
-      $file_status$Plots
-      [1] "out-of-sync"
-      
-      
-      $file_changes
-      NULL
-      
-      $sheet_changes
-      $sheet_changes$Plots
-      $sheet_changes$Plots$added
-      [1] "NewTestSheet"
-      
-      
-      
-      $data_changes
-      NULL
-      
-
-# projectConfigurationStatus() detects data-level changes in Excel sheets
-
-    Code
-      status_result$details
-    Output
-      $file_status
-      $file_status$projectConfiguration
-      [1] "in-sync"
-      
-      $file_status$modelParameterSets
-      [1] "in-sync"
-      
-      $file_status$Individuals
-      [1] "in-sync"
-      
-      $file_status$Populations
-      [1] "in-sync"
-      
-      $file_status$Scenarios
-      [1] "out-of-sync"
-      
-      $file_status$Applications
-      [1] "in-sync"
-      
-      $file_status$Plots
-      [1] "in-sync"
-      
-      
-      $file_changes
-      NULL
-      
-      $sheet_changes
-      NULL
-      
-      $data_changes
-      $data_changes$Scenarios
-      [1] "Scenarios"
-      
-      
-
-# projectConfigurationStatus() handles simultaneous sheet, and data changes
-
-    Code
-      status_result$details
-    Output
-      $file_status
-      $file_status$projectConfiguration
-      [1] "in-sync"
-      
-      $file_status$modelParameterSets
-      [1] "in-sync"
-      
-      $file_status$Individuals
-      [1] "in-sync"
-      
-      $file_status$Populations
-      [1] "in-sync"
-      
-      $file_status$Scenarios
-      [1] "out-of-sync"
-      
-      $file_status$Applications
-      [1] "in-sync"
-      
-      $file_status$Plots
-      [1] "out-of-sync"
-      
-      
-      $file_changes
-      NULL
-      
-      $sheet_changes
-      $sheet_changes$Plots
-      $sheet_changes$Plots$added
-      [1] "CombinedTestSheet"
-      
-      
-      
-      $data_changes
-      $data_changes$Scenarios
-      [1] "Scenarios"
       
       
 
