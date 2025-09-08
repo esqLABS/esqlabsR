@@ -78,12 +78,12 @@ test_that("Parameter sheet names with parentheses are properly parsed", {
   )
 
   expect_equal(
-    scenarioConfigurations[["TestScenario"]]$paramSheets,
-    list("Global" = "Global")
+    names(scenarioConfigurations[["TestScenario"]]$paramSheets),
+    "Global"
   )
   expect_equal(
-    scenarioConfigurations[["TestScenario2"]]$paramSheets,
-    list("Global" = "Global", "Aciclovir" = "Aciclovir")
+    names(scenarioConfigurations[["TestScenario2"]]$paramSheets),
+    c("Global", "Aciclovir", "Sheet, with comma")
   )
 })
 
@@ -216,7 +216,7 @@ test_that("It creates multiple correct scenarios", {
   )
   expect_equal(
     scenarioConfigurations[[scenarioNames[[2]]]]$paramSheets,
-    enum(enumValues = c("Global", "Aciclovir"))
+    enum(enumValues = c("Global", "Aciclovir", "Sheet, with comma"))
   )
   expect_equal(
     scenarioConfigurations[[scenarioNames[[2]]]]$scenarioName,

@@ -175,6 +175,27 @@
       
       
       
+      $modelParameterSets$`Sheet, with comma`
+      $modelParameterSets$`Sheet, with comma`$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $modelParameterSets$`Sheet, with comma`$rows
+      $modelParameterSets$`Sheet, with comma`$rows[[1]]
+      $modelParameterSets$`Sheet, with comma`$rows[[1]]$`Container Path`
+      [1] "Organism|Liver"
+      
+      $modelParameterSets$`Sheet, with comma`$rows[[1]]$`Parameter Name`
+      [1] "EHC continuous fraction"
+      
+      $modelParameterSets$`Sheet, with comma`$rows[[1]]$Value
+      [1] "1"
+      
+      $modelParameterSets$`Sheet, with comma`$rows[[1]]$Units
+      [1] NA
+      
+      
+      
+      
       $modelParameterSets$MissingParam
       $modelParameterSets$MissingParam$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
@@ -470,7 +491,7 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[2]]$ModelParameterSheets
-      [1] "\"Global\", \"Aciclovir\""
+      [1] "\"Global\", \"Aciclovir\", \"Sheet, with comma\""
       
       $Scenarios$Scenarios$rows[[2]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
@@ -1920,6 +1941,15 @@
       1 Organism|Liver EHC continuous fraction     1    NA
       
       
+      $modelParameterSets$`Sheet, with comma`
+      $modelParameterSets$`Sheet, with comma`$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $modelParameterSets$`Sheet, with comma`$rows
+        Container Path          Parameter Name Value Units
+      1 Organism|Liver EHC continuous fraction     1    NA
+      
+      
       $modelParameterSets$MissingParam
       $modelParameterSets$MissingParam$column_names
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
@@ -2011,24 +2041,24 @@
       3        PopulationScenario       Indiv1 TestPopulation                 FALSE
       4 PopulationScenarioFromCSV       Indiv1 TestPopulation                  TRUE
       5 TestScenario_missingParam       Indiv1           <NA>                  <NA>
-         ModelParameterSheets ApplicationProtocol      SimulationTime
-      1                Global  Aciclovir_iv_250mg           0, 24, 60
-      2 "Global", "Aciclovir"  Aciclovir_iv_250mg 0, 1, 60; 1, 12, 20
-      3                Global  Aciclovir_iv_250mg           0, 12, 20
-      4                Global  Aciclovir_iv_250mg           0, 12, 20
-      5  Global, MissingParam  Aciclovir_iv_250mg           0, 24, 60
-        SimulationTimeUnit SteadyState SteadyStateTime SteadyStateTimeUnit
-      1                  h        <NA>            <NA>                <NA>
-      2                  h        TRUE             500                 min
-      3                  h       FALSE            <NA>                <NA>
-      4                  h       FALSE            <NA>                <NA>
-      5                  h        <NA>            <NA>                <NA>
-             ModelFile                    OutputPathsIds
-      1 Aciclovir.pkml                              <NA>
-      2 Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
-      3 Aciclovir.pkml                              <NA>
-      4 Aciclovir.pkml                              <NA>
-      5 Aciclovir.pkml                              <NA>
+                              ModelParameterSheets ApplicationProtocol
+      1                                     Global  Aciclovir_iv_250mg
+      2 "Global", "Aciclovir", "Sheet, with comma"  Aciclovir_iv_250mg
+      3                                     Global  Aciclovir_iv_250mg
+      4                                     Global  Aciclovir_iv_250mg
+      5                       Global, MissingParam  Aciclovir_iv_250mg
+             SimulationTime SimulationTimeUnit SteadyState SteadyStateTime
+      1           0, 24, 60                  h        <NA>            <NA>
+      2 0, 1, 60; 1, 12, 20                  h        TRUE             500
+      3           0, 12, 20                  h       FALSE            <NA>
+      4           0, 12, 20                  h       FALSE            <NA>
+      5           0, 24, 60                  h        <NA>            <NA>
+        SteadyStateTimeUnit      ModelFile                    OutputPathsIds
+      1                <NA> Aciclovir.pkml                              <NA>
+      2                 min Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
+      3                <NA> Aciclovir.pkml                              <NA>
+      4                <NA> Aciclovir.pkml                              <NA>
+      5                <NA> Aciclovir.pkml                              <NA>
       
       
       $Scenarios$OutputPaths
@@ -2462,6 +2492,132 @@
       1      0.243795397465916                        0.909827131937137
       2     0.0816480831712129                        0.866536264266006
       
+      
+      
+
+# projectConfigurationStatus() detects sheet-level changes in Excel files
+
+    Code
+      status_result$details
+    Output
+      $file_status
+      $file_status$projectConfiguration
+      [1] "in-sync"
+      
+      $file_status$modelParameterSets
+      [1] "in-sync"
+      
+      $file_status$Individuals
+      [1] "in-sync"
+      
+      $file_status$Populations
+      [1] "in-sync"
+      
+      $file_status$Scenarios
+      [1] "in-sync"
+      
+      $file_status$Applications
+      [1] "in-sync"
+      
+      $file_status$Plots
+      [1] "out-of-sync"
+      
+      
+      $file_changes
+      NULL
+      
+      $sheet_changes
+      $sheet_changes$Plots
+      $sheet_changes$Plots$added
+      [1] "NewTestSheet"
+      
+      
+      
+      $data_changes
+      NULL
+      
+
+# projectConfigurationStatus() detects data-level changes in Excel sheets
+
+    Code
+      status_result$details
+    Output
+      $file_status
+      $file_status$projectConfiguration
+      [1] "in-sync"
+      
+      $file_status$modelParameterSets
+      [1] "in-sync"
+      
+      $file_status$Individuals
+      [1] "in-sync"
+      
+      $file_status$Populations
+      [1] "in-sync"
+      
+      $file_status$Scenarios
+      [1] "out-of-sync"
+      
+      $file_status$Applications
+      [1] "in-sync"
+      
+      $file_status$Plots
+      [1] "in-sync"
+      
+      
+      $file_changes
+      NULL
+      
+      $sheet_changes
+      NULL
+      
+      $data_changes
+      $data_changes$Scenarios
+      [1] "Scenarios"
+      
+      
+
+# projectConfigurationStatus() handles simultaneous sheet, and data changes
+
+    Code
+      status_result$details
+    Output
+      $file_status
+      $file_status$projectConfiguration
+      [1] "in-sync"
+      
+      $file_status$modelParameterSets
+      [1] "in-sync"
+      
+      $file_status$Individuals
+      [1] "in-sync"
+      
+      $file_status$Populations
+      [1] "in-sync"
+      
+      $file_status$Scenarios
+      [1] "out-of-sync"
+      
+      $file_status$Applications
+      [1] "in-sync"
+      
+      $file_status$Plots
+      [1] "out-of-sync"
+      
+      
+      $file_changes
+      NULL
+      
+      $sheet_changes
+      $sheet_changes$Plots
+      $sheet_changes$Plots$added
+      [1] "CombinedTestSheet"
+      
+      
+      
+      $data_changes
+      $data_changes$Scenarios
+      [1] "Scenarios"
       
       
 
