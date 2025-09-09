@@ -9,7 +9,7 @@ sensitivityCalculation(
   outputPaths,
   parameterPaths,
   variationRange = c(seq(0.1, 1, by = 0.1), seq(2, 10, by = 1)),
-  variationType = c("relative"),
+  variationType = c("relative", "absolute"),
   pkParameters = c("C_max", "t_max", "AUC_inf"),
   customOutputFunctions = NULL,
   saOutputFilePath = NULL,

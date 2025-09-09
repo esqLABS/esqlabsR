@@ -289,13 +289,14 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 #'
 #' @export
 createPlotsFromExcel <- function(
-    plotGridNames = NULL,
-    simulatedScenarios = NULL,
-    observedData = NULL,
-    dataCombinedList = NULL,
-    projectConfiguration,
-    outputFolder = NULL,
-    stopIfNotFound = TRUE) {
+  plotGridNames = NULL,
+  simulatedScenarios = NULL,
+  observedData = NULL,
+  dataCombinedList = NULL,
+  projectConfiguration,
+  outputFolder = NULL,
+  stopIfNotFound = TRUE
+) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
@@ -383,7 +384,8 @@ createPlotsFromExcel <- function(
         dfPlotConfigurations$plotID == plotId,
       ]$DataCombinedName
     ]]
-    switch(dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
+    switch(
+      dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
       # Individual time profile
       individual = plotIndividualTimeProfile(
         dataCombined,
@@ -601,8 +603,9 @@ createPlotsFromExcel <- function(
 #' @returns Processed `dfPlotConfigurations`
 #' @keywords internal
 .validatePlotConfigurationFromExcel <- function(
-    dfPlotConfigurations,
-    dataCombinedNames) {
+  dfPlotConfigurations,
+  dataCombinedNames
+) {
   # mandatory column DataCombinedName is empty - throw error
   missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
   if (missingLabel > 0) {
@@ -688,8 +691,9 @@ createPlotsFromExcel <- function(
 #' @returns Processed `dfExportConfigurations`
 #' @keywords internal
 .validateExportConfigurationsFromExcel <- function(
-    dfExportConfigurations,
-    plotGrids) {
+  dfExportConfigurations,
+  plotGrids
+) {
   # mandatory column outputName is empty - throw warning, remove rows
   missingName <- sum(is.na(dfExportConfigurations$name))
   if (missingName > 0) {
@@ -766,9 +770,10 @@ createPlotsFromExcel <- function(
 #' @keywords internal
 #' @noRd
 .applyPlotConfiguration <- function(
-    defaultPlotConfiguration = NULL,
-    plotOverrideConfig = NULL,
-    ...) {
+  defaultPlotConfiguration = NULL,
+  plotOverrideConfig = NULL,
+  ...
+) {
   # validate input defaultPlotConfiguration
   if (is.null(defaultPlotConfiguration)) {
     defaultPlotConfiguration <- createEsqlabsPlotConfiguration()

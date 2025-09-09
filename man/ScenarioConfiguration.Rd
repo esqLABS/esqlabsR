@@ -55,7 +55,7 @@ simulated points per time unit defined in the column \code{TimeUnit}.}
 
 \item{\code{steadyStateTime}}{Time in minutes to simulate if simulating steady-state. May be \code{NULL}.}
 
-\item{\code{paramSheets}}{Names of the sheets from the parameters-excel file
+\item{\code{paramSheets}}{A named list. Names of the sheets from the parameters-excel file
 that will be applied to the simulation}
 
 \item{\code{simulationType}}{Type of the simulation - "Individual" or

@@ -81,6 +81,17 @@
         }
       ]
     },
+    "Sheet, with comma": {
+      "column_names": ["Container Path", "Parameter Name", "Value", "Units"],
+      "rows": [
+        {
+          "Container Path": "Organism|Liver",
+          "Parameter Name": "EHC continuous fraction",
+          "Value": "1",
+          "Units": null
+        }
+      ]
+    },
     "MissingParam": {
       "column_names": ["Container Path", "Parameter Name", "Value", "Units"],
       "rows": [
@@ -205,7 +216,7 @@
           "IndividualId": "Indiv1",
           "PopulationId": null,
           "ReadPopulationFromCSV": null,
-          "ModelParameterSheets": "Global",
+          "ModelParameterSheets": "\"Global\", \"Aciclovir\", \"Sheet, with comma\"",
           "ApplicationProtocol": "Aciclovir_iv_250mg",
           "SimulationTime": "0, 1, 60; 1, 12, 20",
           "SimulationTimeUnit": "h",

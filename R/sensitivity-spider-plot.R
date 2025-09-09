@@ -121,16 +121,17 @@
 #'
 #' @export
 sensitivitySpiderPlot <- function(
-    sensitivityCalculation,
-    outputPaths = NULL,
-    parameterPaths = NULL,
-    pkParameters = NULL,
-    xAxisScale = NULL,
-    yAxisScale = NULL,
-    xAxisType = "percent",
-    yAxisType = "percent",
-    yAxisFacetScales = "fixed",
-    defaultPlotConfiguration = NULL) {
+  sensitivityCalculation,
+  outputPaths = NULL,
+  parameterPaths = NULL,
+  pkParameters = NULL,
+  xAxisScale = NULL,
+  yAxisScale = NULL,
+  xAxisType = "percent",
+  yAxisType = "percent",
+  yAxisFacetScales = "fixed",
+  defaultPlotConfiguration = NULL
+) {
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -221,11 +222,12 @@ sensitivitySpiderPlot <- function(
 #' @keywords internal
 #' @noRd
 .createSpiderPlot <- function(
-    data,
-    xAxisType = "percent",
-    yAxisType = "percent",
-    yAxisFacetScales = "fixed",
-    defaultPlotConfiguration) {
+  data,
+  xAxisType = "percent",
+  yAxisType = "percent",
+  yAxisFacetScales = "fixed",
+  defaultPlotConfiguration
+) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration$clone()
   plotConfiguration <- .updatePlotConfiguration(
@@ -269,7 +271,8 @@ sensitivitySpiderPlot <- function(
     if (isTRUE(yAxisFacetScales == "fixed")) {
       # same label for all plots based on yAxisType
       if (is.null(plotConfiguration$yLabel)) {
-        plotConfiguration$yLabel <- switch(yAxisType,
+        plotConfiguration$yLabel <- switch(
+          yAxisType,
           "percent" = "PK-Parameter value [% of reference]",
           "absolute" = "PK-Parameter value",
           "PK-Parameter value"
@@ -290,7 +293,8 @@ sensitivitySpiderPlot <- function(
 
     # x-axis label based on xAxisType
     plotConfiguration$xLabel <- plotConfiguration$xLabel %||%
-      switch(xAxisType,
+      switch(
+        xAxisType,
         "percent" = "Input parameter value [% of reference]",
         "absolute" = "Input parameter value",
         "PK-Parameter value"

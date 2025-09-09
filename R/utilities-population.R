@@ -12,9 +12,10 @@
 #' @import readxl
 #' @export
 readPopulationCharacteristicsFromXLS <- function(
-    XLSpath,
-    populationName,
-    sheet = NULL) {
+  XLSpath,
+  populationName,
+  sheet = NULL
+) {
   columnNames <- c(
     "PopulationName",
     "species",
@@ -111,11 +112,12 @@ GenderInt <- enum(list(
 #' A list of supported distributions is defined in `Distributions`. Default is `"Normal"`.
 #' @export
 extendPopulationByUserDefinedParams <- function(
-    population, # nolint: object_length_linter.
-    parameterPaths,
-    meanValues,
-    sdValues,
-    distributions = Distributions$Normal) {
+  population, # nolint: object_length_linter.
+  parameterPaths,
+  meanValues,
+  sdValues,
+  distributions = Distributions$Normal
+) {
   validateIsOfType(population, "Population")
   validateIsString(parameterPaths)
   validateIsNumeric(c(meanValues, sdValues))

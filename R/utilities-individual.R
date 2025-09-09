@@ -78,10 +78,11 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
 #' @import ospsuite
 #' @export
 readIndividualCharacteristicsFromXLS <- function(
-    XLSpath, # nolint: object_length_linter.
-    individualId,
-    sheet = "IndividualBiometrics",
-    nullIfNotFound = TRUE) {
+  XLSpath, # nolint: object_length_linter.
+  individualId,
+  sheet = "IndividualBiometrics",
+  nullIfNotFound = TRUE
+) {
   validateIsString(c(XLSpath, individualId))
 
   # If no sheet has been specified, read from the first sheet

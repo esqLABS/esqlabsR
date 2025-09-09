@@ -308,10 +308,12 @@ ProjectConfiguration <- R6::R6Class(
       # Mark as not modified after loading from file
       private$.modified <- FALSE
     },
-    .clean_path = function(path,
-                           parent = NULL,
-                           must_work = TRUE,
-                           replace_env_vars = TRUE) {
+    .clean_path = function(
+      path,
+      parent = NULL,
+      must_work = TRUE,
+      replace_env_vars = TRUE
+    ) {
       # In case project configuration is initialized empty
       if (is.null(path) || is.na(path)) {
         return(NULL)

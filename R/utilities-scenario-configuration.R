@@ -30,8 +30,9 @@
 #' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioNames = scenarioName, projectConfiguration)[[scenarioName]]
 #' }
 readScenarioConfigurationFromExcel <- function(
-    scenarioNames = NULL,
-    projectConfiguration) {
+  scenarioNames = NULL,
+  projectConfiguration
+) {
   validateIsString(scenarioNames, nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 
@@ -129,11 +130,17 @@ readScenarioConfigurationFromExcel <- function(
     scenarioConfiguration$scenarioName <- scenarioName
     # Parameter sheets
     paramSheets <- data$ModelParameterSheets
+
     if (!is.na(paramSheets)) {
-      sheetNames <- strsplit(x = paramSheets, split = ",", fixed = TRUE)[[1]]
-      # Remove leading/trailing whitespaces
-      sheetNames <- trimws(sheetNames)
-      scenarioConfiguration$addParamSheets(sheetNames)
+      # The values can be enclosed in "" in case sheet names contain a ','.
+      # Split the input string by ',' but do not split within ""
+      paramSheets <- trimws(scan(
+        text = as.character(paramSheets),
+        what = "character",
+        sep = ",",
+        quiet = TRUE
+      ))
+      scenarioConfiguration$addParamSheets(paramSheets)
     }
 
     # Simulation time
@@ -431,20 +438,21 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' )
 #' }
 createScenarioConfigurationsFromPKML <- function(
-    pkmlFilePaths,
-    projectConfiguration,
-    scenarioNames = NULL,
-    individualId = NULL,
-    populationId = NULL,
-    applicationProtocols = NULL,
-    paramSheets = NULL,
-    outputPaths = NULL,
-    simulationTime = NULL,
-    simulationTimeUnit = NULL,
-    steadyState = FALSE,
-    steadyStateTime = NULL,
-    steadyStateTimeUnit = NULL,
-    readPopulationFromCSV = FALSE) {
+  pkmlFilePaths,
+  projectConfiguration,
+  scenarioNames = NULL,
+  individualId = NULL,
+  populationId = NULL,
+  applicationProtocols = NULL,
+  paramSheets = NULL,
+  outputPaths = NULL,
+  simulationTime = NULL,
+  simulationTimeUnit = NULL,
+  steadyState = FALSE,
+  steadyStateTime = NULL,
+  steadyStateTimeUnit = NULL,
+  readPopulationFromCSV = FALSE
+) {
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
@@ -725,9 +733,10 @@ createScenarioConfigurationsFromPKML <- function(
 #' )
 #' }
 addScenarioConfigurationsToExcel <- function(
-    scenarioConfigurations,
-    projectConfiguration,
-    appendToExisting = TRUE) {
+  scenarioConfigurations,
+  projectConfiguration,
+  appendToExisting = TRUE
+) {
   # Validate inputs
   validateIsOfType(projectConfiguration, ProjectConfiguration)
   validateIsLogical(appendToExisting)
@@ -903,9 +912,10 @@ addScenarioConfigurationsToExcel <- function(
 #'
 #' @keywords internal
 .writeScenariosToExcel <- function(
-    scenarioConfigurations,
-    projectConfiguration,
-    appendToExisting) {
+  scenarioConfigurations,
+  projectConfiguration,
+  appendToExisting
+) {
   # Create data frame for scenarios
   scenariosData <- data.frame(
     Scenario_name = character(),

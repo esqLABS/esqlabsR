@@ -20,12 +20,13 @@
 #'
 #' @export
 createDataCombinedFromExcel <- function(
-    projectConfiguration,
-    dataCombinedNames = NULL,
-    plotGridNames = NULL,
-    simulatedScenarios = NULL,
-    observedData = NULL,
-    stopIfNotFound = TRUE) {
+  projectConfiguration,
+  dataCombinedNames = NULL,
+  plotGridNames = NULL,
+  simulatedScenarios = NULL,
+  observedData = NULL,
+  stopIfNotFound = TRUE
+) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
@@ -216,10 +217,11 @@ createDataCombinedFromExcel <- function(
 #' @returns Processed `dfDataCombined`
 #' @keywords internal
 .validateDataCombinedFromExcel <- function(
-    dfDataCombined,
-    simulatedScenarios,
-    observedData,
-    stopIfNotFound) {
+  dfDataCombined,
+  simulatedScenarios,
+  observedData,
+  stopIfNotFound
+) {
   # mandatory column label is empty - throw error
   missingLabel <- sum(is.na(dfDataCombined$label))
   if (missingLabel > 0) {
@@ -316,8 +318,9 @@ createDataCombinedFromExcel <- function(
 #' @returns A list with the names of required DataCombined
 #' @noRd
 .extractDataCombinedNamesForPlots <- function(
-    projectConfiguration,
-    plotGridNames) {
+  projectConfiguration,
+  plotGridNames
+) {
   dfPlotConfigurations <- .readPlotConfigurations(
     projectConfiguration = projectConfiguration,
     plotGridNames = plotGridNames

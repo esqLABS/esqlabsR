@@ -7,7 +7,7 @@
 ## Minor improvements and bug fixes
 
 - Improved `.validateCharVector()` to enforce atomic character vectors (#881).
-
+- Parenthesis in parameter sheet names are ignored, allowing separating sheet names with spaces (#883).
 
 # esqlabsR 5.5.0
 
