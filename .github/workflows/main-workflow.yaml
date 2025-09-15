@@ -16,20 +16,79 @@ jobs:
     secrets:
       private-key: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
 
+  update-remotes:
+    if: ${{ !cancelled() }}
+    needs: [bump-dev-version]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
+        fetch-depth: 0
+
+    - name: Setup R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: 'release'
+
+    - name: Install R dependencies
+      run: |
+        install.packages(c("desc"), repos = "https://cloud.r-project.org/")
+      shell: Rscript {0}
+
+    - name: Update Remotes field
+      id: update-remotes
+      run: |
+        echo "Running remotes update script..."
+        Rscript .github/scripts/update-remotes.R
+        
+        # Check if DESCRIPTION was modified
+        if git diff --quiet DESCRIPTION; then
+          echo "changed=false" >> $GITHUB_OUTPUT
+          echo "No changes to DESCRIPTION file"
+        else
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "DESCRIPTION file was modified"
+        fi
+
+    - name: Commit and push changes
+      if: steps.update-remotes.outputs.changed == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add DESCRIPTION
+        git commit -m "Update Remotes field based on package version status
+        
+        - Automatically updated by GitHub Action
+        - Added/removed @*release tags based on development vs release version"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
+
+    - name: Summary
+      run: |
+        if [ "${{ steps.update-remotes.outputs.changed }}" == "true" ]; then
+          echo "✅ Remotes field updated successfully"
+        else
+          echo "ℹ️ No changes needed for Remotes field"
+        fi
+
 
   R-CMD-Check:
     if: ${{ !cancelled() }}
-    needs: [bump-dev-version]
+    needs: [bump-dev-version, update-remotes]
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
 
   test-coverage:
     if: ${{ !cancelled() }}
-    needs: [bump-dev-version]
+    needs: [bump-dev-version, update-remotes]
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/test-coverage.yaml@main
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   pkgdown:
     if: ${{ !cancelled() }}
-    needs: [bump-dev-version]
+    needs: [bump-dev-version, update-remotes]
     uses:  Open-Systems-Pharmacology/Workflows/.github/workflows/pkgdown.yaml@main
