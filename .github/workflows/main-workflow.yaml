@@ -22,10 +22,17 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Get GitHub App Token
+      id: get_token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ vars.ACTIONS_MANAGER_APPID }}
+        private-key: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
+
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
+        token: ${{ steps.get_token.outputs.token }}
         fetch-depth: 0
 
     - name: Setup R
@@ -39,37 +46,24 @@ jobs:
       shell: Rscript {0}
 
     - name: Update Remotes field
-      id: update-remotes
       run: |
         echo "Running remotes update script..."
         Rscript .github/scripts/update-remotes.R
-        
-        # Check if DESCRIPTION was modified
-        if git diff --quiet DESCRIPTION; then
-          echo "changed=false" >> $GITHUB_OUTPUT
-          echo "No changes to DESCRIPTION file"
-        else
-          echo "changed=true" >> $GITHUB_OUTPUT
-          echo "DESCRIPTION file was modified"
-        fi
 
     - name: Commit and push changes
-      if: steps.update-remotes.outputs.changed == 'true'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add DESCRIPTION
-        git commit -m "Update Remotes field based on package version status [skip ci]
-        
-        - Automatically updated by GitHub Action
-        - Added/removed @*release tags based on development vs release version"
-        git push
+      id: add-and-commit
+      uses: EndBug/add-and-commit@v9
+      with:
+        add: 'DESCRIPTION'
+        message: 'Update Remotes field based on package version status [skip ci]'
+        default_author: github_actions
+        push: 'origin HEAD:${{ github.head_ref || github.ref_name }}'
       env:
-        GITHUB_TOKEN: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
+        GITHUB_TOKEN: ${{ steps.get_token.outputs.token }}
 
     - name: Summary
       run: |
-        if [ "${{ steps.update-remotes.outputs.changed }}" == "true" ]; then
+        if [ "${{ steps.add-and-commit.outputs.committed }}" == "true" ]; then
           echo "✅ Remotes field updated successfully"
         else
           echo "ℹ️ No changes needed for Remotes field"
