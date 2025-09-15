@@ -47,6 +47,7 @@ Suggests:
     clipr,
     covr,
     devtools,
+    desc,
     knitr,
     openxlsx,
     reactable,
@@ -64,7 +65,6 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Remotes: 
-    ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
+Remotes: ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
     tlf=Open-Systems-Pharmacology/TLF-Library,
     ospsuite=Open-Systems-Pharmacology/OSPSuite-R

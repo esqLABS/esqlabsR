@@ -16,20 +16,73 @@ jobs:
     secrets:
       private-key: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
 
+  update-remotes:
+    if: ${{ !cancelled() }}
+    needs: [bump-dev-version]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Get GitHub App Token
+      id: get_token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ vars.ACTIONS_MANAGER_APPID }}
+        private-key: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ steps.get_token.outputs.token }}
+        fetch-depth: 0
+
+    - name: Setup R
+      uses: r-lib/actions/setup-r@v2
+      with:
+        r-version: 'release'
+
+    - name: Install R dependencies
+      run: |
+        install.packages(c("desc"), repos = "https://cloud.r-project.org/")
+      shell: Rscript {0}
+
+    - name: Update Remotes field
+      run: |
+        echo "Running remotes update script..."
+        Rscript .github/scripts/update-remotes.R
+
+    - name: Commit and push changes
+      id: add-and-commit
+      uses: EndBug/add-and-commit@v9
+      with:
+        add: 'DESCRIPTION'
+        message: 'Update Remotes field based on package version status [skip ci]'
+        default_author: github_actions
+        push: 'origin HEAD:${{ github.head_ref || github.ref_name }}'
+      env:
+        GITHUB_TOKEN: ${{ steps.get_token.outputs.token }}
+
+    - name: Summary
+      run: |
+        if [ "${{ steps.add-and-commit.outputs.committed }}" == "true" ]; then
+          echo "✅ Remotes field updated successfully"
+        else
+          echo "ℹ️ No changes needed for Remotes field"
+        fi
+
 
   R-CMD-Check:
     if: ${{ !cancelled() }}
-    needs: [bump-dev-version]
+    needs: [bump-dev-version, update-remotes]
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
 
   test-coverage:
     if: ${{ !cancelled() }}
-    needs: [bump-dev-version]
+    needs: [bump-dev-version, update-remotes]
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/test-coverage.yaml@main
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   pkgdown:
     if: ${{ !cancelled() }}
-    needs: [bump-dev-version]
+    needs: [bump-dev-version, update-remotes]
     uses:  Open-Systems-Pharmacology/Workflows/.github/workflows/pkgdown.yaml@main
