@@ -59,7 +59,7 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add DESCRIPTION
-        git commit -m "Update Remotes field based on package version status
+        git commit -m "Update Remotes field based on package version status [skip ci]
         
         - Automatically updated by GitHub Action
         - Added/removed @*release tags based on development vs release version"
