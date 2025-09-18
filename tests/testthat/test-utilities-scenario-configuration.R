@@ -508,3 +508,58 @@ test_that("It shows a meaningful error when steady-state is true but no unit is 
     }
   )
 })
+
+# Tests for Excel sheet name sanitization
+test_that(".sanitizeExcelSheetName handles valid names correctly", {
+  expect_equal(.sanitizeExcelSheetName("ValidName", warn = FALSE), "ValidName")
+  expect_equal(.sanitizeExcelSheetName("Valid_Name_123", warn = FALSE), "Valid_Name_123")
+  expect_equal(.sanitizeExcelSheetName("Name with spaces", warn = FALSE), "Name with spaces")
+})
+
+test_that(".sanitizeExcelSheetName removes invalid characters", {
+  expect_equal(.sanitizeExcelSheetName("Test/Name", warn = FALSE), "Test_Name")
+  expect_equal(.sanitizeExcelSheetName("Test\\Name", warn = FALSE), "Test_Name")
+  expect_equal(.sanitizeExcelSheetName("Test*Name", warn = FALSE), "Test_Name")
+  expect_equal(.sanitizeExcelSheetName("Test[Name]", warn = FALSE), "Test_Name_")
+  expect_equal(.sanitizeExcelSheetName("Test:Name?", warn = FALSE), "Test_Name_")
+  expect_equal(.sanitizeExcelSheetName("Test/Name*With[All]:Invalid?", warn = FALSE), "Test_Name_With_All__Invalid_")
+})
+
+test_that(".sanitizeExcelSheetName truncates long names", {
+  longName <- "This_is_a_very_long_sheet_name_that_exceeds_31_characters_limit"
+  result <- .sanitizeExcelSheetName(longName, warn = FALSE)
+  expect_equal(nchar(result), 31)
+  expect_equal(result, "This_is_a_very_long_sheet_name_")
+})
+
+test_that(".sanitizeExcelSheetName handles edge cases", {
+  expect_equal(.sanitizeExcelSheetName("", warn = FALSE), "Sheet")
+  expect_equal(.sanitizeExcelSheetName("   ", warn = FALSE), "Sheet")
+  expect_equal(.sanitizeExcelSheetName(NULL, warn = FALSE), "Sheet")
+  expect_equal(.sanitizeExcelSheetName(NA, warn = FALSE), "Sheet")
+})
+
+test_that(".sanitizeExcelSheetName trims whitespace", {
+  expect_equal(.sanitizeExcelSheetName("  ValidName  ", warn = FALSE), "ValidName")
+  expect_equal(.sanitizeExcelSheetName("  Test Name  ", warn = FALSE), "Test Name")
+})
+
+test_that(".sanitizeExcelSheetName warns when names are modified", {
+  expect_warning(
+    .sanitizeExcelSheetName("Test/Invalid", warn = TRUE),
+    "Excel sheet name was sanitized"
+  )
+  expect_warning(
+    .sanitizeExcelSheetName("This_is_a_very_long_sheet_name_that_exceeds_31_characters", warn = TRUE),
+    "Excel sheet name was sanitized"
+  )
+  expect_silent(.sanitizeExcelSheetName("ValidName", warn = TRUE))
+})
+
+test_that(".sanitizeExcelSheetName handles combined issues", {
+  complexName <- "  Invalid/Name*With[Special]:Characters?And_Very_Long_Name_That_Exceeds_Limit  "
+  result <- .sanitizeExcelSheetName(complexName, warn = FALSE)
+  expect_equal(nchar(result), 31)
+  expect_true(!grepl("[/\\\\*\\[\\]:?]", result))
+  expect_equal(result, "Invalid_Name_With_Special__Char")
+})
