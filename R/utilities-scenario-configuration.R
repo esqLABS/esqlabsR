@@ -250,15 +250,18 @@ setApplications <- function(simulation, scenarioConfiguration) {
   # Set from excel
   excelFilePath <- scenarioConfiguration$projectConfiguration$applicationsFile
   # Only try to apply parameters if the sheet exists
+  protocolName <- .sanitizeExcelSheetName(
+    scenarioConfiguration$applicationProtocol, 
+    warn = FALSE
+  )
   if (
     any(
-      readxl::excel_sheets(excelFilePath) ==
-        scenarioConfiguration$applicationProtocol
+      readxl::excel_sheets(excelFilePath) == protocolName
     )
   ) {
     params <- readParametersFromXLS(
       excelFilePath,
-      scenarioConfiguration$applicationProtocol
+      protocolName
     )
     ospsuite::setParameterValuesByPath(
       parameterPaths = params$paths,
@@ -528,7 +531,10 @@ createScenarioConfigurationsFromPKML <- function(
     # Create scenario configuration
     scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
     scenarioConfiguration$scenarioName <- scenarioName
-    scenarioConfiguration$modelFile <- basename(pkmlPath)
+    scenarioConfiguration$modelFile <- path_rel(
+      pkmlPath,
+      start = projectConfiguration$modelFolder
+    )
 
     # Set individual ID
     if (!is.null(individualId)) {
@@ -552,9 +558,9 @@ createScenarioConfigurationsFromPKML <- function(
     # Extract and set application protocol
     if (!is.null(applicationProtocols)) {
       if (length(applicationProtocols) == 1) {
-        protocolName <- applicationProtocols
+        protocolName <- .sanitizeExcelSheetName(applicationProtocols, warn = TRUE)
       } else if (length(applicationProtocols) == length(pkmlFilePaths)) {
-        protocolName <- applicationProtocols[[i]]
+        protocolName <- .sanitizeExcelSheetName(applicationProtocols[[i]], warn = TRUE)
       } else {
         cli::cli_abort(c(
           "Invalid applicationProtocols length:",
@@ -564,7 +570,8 @@ createScenarioConfigurationsFromPKML <- function(
       }
     } else {
       # Application protocol name is by default the name of the scenario
-      protocolName <- scenarioName
+      # Sanitize to ensure it's a valid Excel sheet name
+      protocolName <- .sanitizeExcelSheetName(scenarioName, warn = TRUE)
     }
 
     scenarioConfiguration$applicationProtocol <- protocolName
@@ -779,6 +786,8 @@ addScenarioConfigurationsToExcel <- function(
   for (scenarioConfig in scenarioConfigurations) {
     protocolName <- scenarioConfig$applicationProtocol
     if (!is.null(protocolName) && !is.na(protocolName)) {
+      # Sanitize protocol name to ensure it's a valid Excel sheet name
+      protocolName <- .sanitizeExcelSheetName(protocolName)
       applicationsFile <- projectConfiguration$applicationsFile
 
       # Check if sheet already exists
@@ -849,7 +858,8 @@ addScenarioConfigurationsToExcel <- function(
             exportParametersToXLS(
               parameters = constantApplicationParams,
               paramsXLSpath = applicationsFile,
-              sheet = protocolName
+              sheet = protocolName,
+              append = TRUE
             )
           } else {
             # If no parameters, create empty sheet with proper header
@@ -884,6 +894,8 @@ addScenarioConfigurationsToExcel <- function(
               openxlsx::saveWorkbook(wb, applicationsFile)
             }
           }
+        } else {
+          cli::cli_abort("PKML {pkmlPath} file cannot be find.")
         }
       }
     }
@@ -1217,6 +1229,84 @@ addScenarioConfigurationsToExcel <- function(
     OutputPaths = outputPathsData
   )
   .writeExcel(data = scenariosList, path = projectConfiguration$scenariosFile)
+}
+
+#' Sanitize a string to be a valid Excel sheet name
+#'
+#' @param sheetName Character string. The proposed sheet name to sanitize.
+#' @param warn Logical. Whether to warn if the sheet name was modified. Default is TRUE.
+#'
+#' @details Sanitizes a string to comply with Excel sheet naming rules:
+#' * Must be 31 characters or less
+#' * Cannot contain any of these characters: / \ * [ ] : ?
+#' * Cannot be empty
+#' * Leading/trailing spaces are trimmed
+#' If the name becomes empty after sanitization, "Sheet" is used as default.
+#' If the name is too long, it's truncated and a suffix may be added to ensure uniqueness.
+#' If warn=TRUE and the name was modified, a warning is issued.
+#'
+#' @returns A valid Excel sheet name.
+#' @keywords internal
+.sanitizeExcelSheetName <- function(sheetName, warn = TRUE) {
+  if (is.null(sheetName) || is.na(sheetName)) {
+    return("Sheet")
+  }
+  
+  # Store original name for comparison
+  originalName <- as.character(sheetName)
+  
+  # Convert to character and trim spaces
+  sheetName <- trimws(originalName)
+  
+  # If empty after trimming, use default
+  if (nchar(sheetName) == 0) {
+    if (warn && originalName != "Sheet") {
+      cli::cli_warn(c(
+        "Excel sheet name was empty or invalid:",
+        "i" = "Using default name 'Sheet'"
+      ))
+    }
+    return("Sheet")
+  }
+  
+  # Remove invalid characters: / \ * [ ] : ?
+  sanitizedName <- sheetName
+  sanitizedName <- gsub("/", "_", sanitizedName)    # Replace /
+  sanitizedName <- gsub("\\\\", "_", sanitizedName) # Replace \
+  sanitizedName <- gsub("\\*", "_", sanitizedName)  # Replace *
+  sanitizedName <- gsub("\\[", "_", sanitizedName)  # Replace [
+  sanitizedName <- gsub("\\]", "_", sanitizedName)  # Replace ]
+  sanitizedName <- gsub(":", "_", sanitizedName)    # Replace :
+  sanitizedName <- gsub("\\?", "_", sanitizedName)  # Replace ?
+  
+  # Trim to 31 characters maximum
+  if (nchar(sanitizedName) > 31) {
+    sanitizedName <- substr(sanitizedName, 1, 31)
+  }
+  
+  # Final check - if still empty (unlikely), use default
+  if (nchar(trimws(sanitizedName)) == 0) {
+    if (warn) {
+      cli::cli_warn(c(
+        "Excel sheet name became empty after sanitization:",
+        "x" = "Original name: '{originalName}'",
+        "i" = "Using default name 'Sheet'"
+      ))
+    }
+    return("Sheet")
+  }
+  
+  # Warn if the name was changed
+  if (warn && sanitizedName != originalName) {
+    cli::cli_warn(c(
+      "Excel sheet name was sanitized to comply with naming rules:",
+      "x" = "Original name: '{originalName}'",
+      "v" = "Sanitized name: '{sanitizedName}'",
+      "i" = "Excel sheet names must be 31 characters or less and cannot contain: / \\\\ * [ ] : ?"
+    ))
+  }
+  
+  return(sanitizedName)
 }
 
 #' Format simulation time for Excel
