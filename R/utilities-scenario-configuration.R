@@ -99,7 +99,7 @@ readScenarioConfigurationFromExcel <- function(
     !dplyr::if_all(dplyr::everything(), is.na)
   )
   # Remove all rows where the name of the scenario is not defined. This might happen when other columns
-  # have accidentially some entry, and then the whole row is read with scneario name = NA
+  # have accidentally some entry, and then the whole row is read with scenario name = NA
   wholeData <- dplyr::filter(wholeData, !is.na(Scenario_name))
 
   outputPathsDf <- readExcel(
@@ -538,7 +538,11 @@ createScenarioConfigurationsFromPKML <- function(
         outputPaths <- rep(list(outputPaths), nScenarios)
       } else if (length(outputPaths) == nScenarios) {
         # Vector matches scenarios length - use as is (for comma-separated strings)
-        outputPaths <- .recycleOrValidateVector(outputPaths, "outputPaths", nScenarios)
+        outputPaths <- .recycleOrValidateVector(
+          outputPaths,
+          "outputPaths",
+          nScenarios
+        )
       } else {
         cli::cli_abort(c(
           "Invalid argument length:",
@@ -697,7 +701,9 @@ createScenarioConfigurationsFromPKML <- function(
       ) {
         # Split by comma if it's a single string with multiple paths
         if (
-          is.character(scenarioOutputPaths) && length(scenarioOutputPaths) == 1 && is.null(names(scenarioOutputPaths))
+          is.character(scenarioOutputPaths) &&
+            length(scenarioOutputPaths) == 1 &&
+            is.null(names(scenarioOutputPaths))
         ) {
           scenarioOutputPaths <- trimws(strsplit(scenarioOutputPaths, ",")[[1]])
         }
@@ -1096,7 +1102,7 @@ addScenarioConfigurationsToExcel <- function(
     if (!is.null(scenarioConfig$outputPaths)) {
       paths <- scenarioConfig$outputPaths
       names <- names(paths)
-      
+
       for (j in seq_along(paths)) {
         path <- paths[j]
         if (!path %in% allOutputPaths) {
