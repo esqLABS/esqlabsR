@@ -326,6 +326,125 @@ test_that("Comma-separated paramSheets and outputPaths are handled correctly", {
   expect_equal(scenario2$outputPaths, c("Path3", "Path4", "Path5"))
 })
 
+test_that("Named outputPaths vectors are handled correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+  pkmlPaths <- rep(pkmlPath, 2)
+
+  # Test with named vectors for outputPaths
+  namedOutputPaths <- list(
+    c(
+      "plasma" = "Organism|VenousBlood|Plasma|compound|Concentration in container",
+      "liver" = "Organism|Liver|Intracellular|compound|Concentration"
+    ),
+    c("kidney" = "Organism|Kidney|Intracellular|compound|Concentration")
+  )
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPaths,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("Scenario1", "Scenario2"),
+    outputPaths = namedOutputPaths
+  )
+
+  expect_length(scenarioConfigurations, 2)
+
+  scenario1 <- scenarioConfigurations[["Scenario1"]]
+  expectedPaths1 <- c(
+    "plasma" = "Organism|VenousBlood|Plasma|compound|Concentration in container",
+    "liver" = "Organism|Liver|Intracellular|compound|Concentration"
+  )
+  expect_equal(scenario1$outputPaths, expectedPaths1)
+  expect_equal(names(scenario1$outputPaths), c("plasma", "liver"))
+
+  scenario2 <- scenarioConfigurations[["Scenario2"]]
+  expectedPaths2 <- c(
+    "kidney" = "Organism|Kidney|Intracellular|compound|Concentration"
+  )
+  expect_equal(scenario2$outputPaths, expectedPaths2)
+  expect_equal(names(scenario2$outputPaths), "kidney")
+})
+
+test_that("Single named outputPath vector is recycled correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+  pkmlPaths <- rep(pkmlPath, 2)
+
+  # Test recycling a single named vector
+  singleNamedOutputPath <- c(
+    "plasma" = "Organism|VenousBlood|Plasma|compound|Concentration in container"
+  )
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPaths,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("Scenario1", "Scenario2"),
+    outputPaths = singleNamedOutputPath
+  )
+
+  expect_length(scenarioConfigurations, 2)
+
+  # Both scenarios should have the same named output path
+  scenario1 <- scenarioConfigurations[["Scenario1"]]
+  scenario2 <- scenarioConfigurations[["Scenario2"]]
+
+  expect_equal(scenario1$outputPaths, singleNamedOutputPath)
+  expect_equal(scenario2$outputPaths, singleNamedOutputPath)
+  expect_equal(names(scenario1$outputPaths), "plasma")
+  expect_equal(names(scenario2$outputPaths), "plasma")
+})
+
+test_that("Named outputPaths are exported to Excel with correct OutputPathIds", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Create scenario with named output paths
+  namedOutputPaths <- c(
+    "plasma" = "Organism|VenousBlood|Plasma|compound|Concentration in container",
+    "liver" = "Organism|Liver|Intracellular|compound|Concentration"
+  )
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "TestScenario",
+    outputPaths = namedOutputPaths
+  )
+
+  # Add to Excel
+  addScenarioConfigurationsToExcel(
+    scenarioConfigurations = scenarioConfigurations,
+    projectConfiguration = projectConfiguration,
+    appendToExisting = FALSE
+  )
+
+  # Read back the OutputPaths sheet
+  outputPaths <- readExcel(
+    path = projectConfiguration$scenariosFile,
+    sheet = "OutputPaths"
+  )
+
+  # Check that the names are used as OutputPathId
+  expect_true("plasma" %in% outputPaths$OutputPathId)
+  expect_true("liver" %in% outputPaths$OutputPathId)
+
+  # Check that the paths match
+  plasmaRow <- outputPaths[outputPaths$OutputPathId == "plasma", ]
+  expect_equal(
+    plasmaRow$OutputPath,
+    "Organism|VenousBlood|Plasma|compound|Concentration in container"
+  )
+
+  liverRow <- outputPaths[outputPaths$OutputPathId == "liver", ]
+  expect_equal(
+    liverRow$OutputPath,
+    "Organism|Liver|Intracellular|compound|Concentration"
+  )
+})
+
 test_that("Vectorized simulation time parameters work correctly", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config

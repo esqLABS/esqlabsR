@@ -146,9 +146,10 @@ a parameter sheet from the list"
     #' a population will be created a the scenario will be simulated as a population
     #' simulation.
     populationId = NULL,
-    #' @field outputPaths a list of output paths for which the results will be
+    #' @field outputPaths a character vector or named vector of output paths for which the results will be
     #' calculated. If `NULL` (default), outputs as defined in the simulation
-    #' are used.
+    #' are used. Can be a named vector where names serve as aliases for the paths,
+    #' e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").
     outputPaths = NULL,
     #' @description Add the names of sheets in the parameters excel-file
     #' that will be applied to the simulation

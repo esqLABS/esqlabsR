@@ -300,10 +300,11 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #'   If `NULL` (default), no parameter sheets will be applied. Can be a single string (recycled for all
 #'   scenarios) or a vector with the same length as `pkmlFilePaths`. If providing multiple sheets per
 #'   scenario, separate them with commas in the string.
-#' @param outputPaths Character vector. Optional output paths to use for scenarios. If `NULL` (default),
+#' @param outputPaths Character vector or named vector. Optional output paths to use for scenarios. If `NULL` (default),
 #'   output paths will be extracted from the PKML files' output selections. Can be a single string
 #'   (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`. If providing
-#'   multiple paths per scenario, separate them with commas in the string.
+#'   multiple paths per scenario, separate them with commas in the string. Named vectors are supported
+#'   where names serve as aliases for the paths, e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").
 #' @param simulationTime Character vector. Optional simulation time to use for scenarios as character strings containing one or
 #'   multiple time intervals separated by a ';'. Each time interval is a triplet of values <StartTime, EndTime, Resolution>,
 #'   where `Resolution` is the number of simulated points per time unit defined in the `simulationTimeUnit`. If `NULL` (default),
@@ -516,11 +517,37 @@ createScenarioConfigurationsFromPKML <- function(
     "paramSheets",
     nScenarios
   )
-  outputPaths <- .recycleOrValidateVector(
-    outputPaths,
-    "outputPaths",
-    nScenarios
-  )
+  # Special handling for outputPaths to preserve named vectors
+  if (!is.null(outputPaths)) {
+    if (is.list(outputPaths)) {
+      # outputPaths is a list - validate length
+      if (length(outputPaths) == 1) {
+        # Recycle single list element to all scenarios
+        outputPaths <- rep(outputPaths, nScenarios)
+      } else if (length(outputPaths) != nScenarios) {
+        cli::cli_abort(c(
+          "Invalid argument length:",
+          "x" = "outputPaths must have length 1 or same length as pkmlFilePaths",
+          "i" = "outputPaths has length {length(outputPaths)}, pkmlFilePaths has length {nScenarios}"
+        ))
+      }
+    } else {
+      # outputPaths is a vector
+      if (length(outputPaths) == 1) {
+        # Single vector - recycle entire vector to each scenario (preserves named vectors)
+        outputPaths <- rep(list(outputPaths), nScenarios)
+      } else if (length(outputPaths) == nScenarios) {
+        # Vector matches scenarios length - use as is (for comma-separated strings)
+        outputPaths <- .recycleOrValidateVector(outputPaths, "outputPaths", nScenarios)
+      } else {
+        cli::cli_abort(c(
+          "Invalid argument length:",
+          "x" = "outputPaths must have length 1 or same length as pkmlFilePaths",
+          "i" = "outputPaths has length {length(outputPaths)}, pkmlFilePaths has length {nScenarios}"
+        ))
+      }
+    }
+  }
   simulationTime <- .recycleOrValidateVector(
     simulationTime,
     "simulationTime",
@@ -655,19 +682,26 @@ createScenarioConfigurationsFromPKML <- function(
 
     # Extract and set output paths
     if (!is.null(outputPaths)) {
-      # outputPaths can be a character vector or comma-separated string for this scenario
-      scenarioOutputPaths <- outputPaths[[i]]
+      # Handle different types of outputPaths structure
+      if (is.list(outputPaths)) {
+        # outputPaths is a list (named vectors case)
+        scenarioOutputPaths <- outputPaths[[i]]
+      } else {
+        # outputPaths is a regular vector (comma-separated strings case)
+        scenarioOutputPaths <- outputPaths[i]
+      }
       if (
         !is.null(scenarioOutputPaths) &&
-          !is.na(scenarioOutputPaths) &&
-          nchar(scenarioOutputPaths) > 0
+          !any(is.na(scenarioOutputPaths)) &&
+          all(nchar(scenarioOutputPaths) > 0)
       ) {
         # Split by comma if it's a single string with multiple paths
         if (
-          is.character(scenarioOutputPaths) && length(scenarioOutputPaths) == 1
+          is.character(scenarioOutputPaths) && length(scenarioOutputPaths) == 1 && is.null(names(scenarioOutputPaths))
         ) {
           scenarioOutputPaths <- trimws(strsplit(scenarioOutputPaths, ",")[[1]])
         }
+        # Handle named vectors: preserve names if they exist
         scenarioConfiguration$outputPaths <- scenarioOutputPaths
       }
     } else {
@@ -816,6 +850,8 @@ createScenarioConfigurationsFromPKML <- function(
 #'   individual/population IDs, parameter sheets, application protocol, simulation time,
 #'   steady state settings, model file, and output path IDs.
 #' * **OutputPaths sheet**: Contains output path IDs and their corresponding paths.
+#'   When named vectors are used for `outputPaths` in scenario configurations, the names
+#'   will be used as OutputPathId values.
 #' * **Applications.xlsx**: Contains application protocol sheets with parameter definitions.
 #'
 #' The function handles parameter extraction from PKML files, excluding default parameters
@@ -1053,14 +1089,28 @@ addScenarioConfigurationsToExcel <- function(
     stringsAsFactors = FALSE
   )
 
-  # Collect all output paths
+  # Collect all output paths with their names (if any)
   allOutputPaths <- character()
+  allOutputPathNames <- character()
   for (scenarioConfig in scenarioConfigurations) {
     if (!is.null(scenarioConfig$outputPaths)) {
-      allOutputPaths <- c(allOutputPaths, scenarioConfig$outputPaths)
+      paths <- scenarioConfig$outputPaths
+      names <- names(paths)
+      
+      for (j in seq_along(paths)) {
+        path <- paths[j]
+        if (!path %in% allOutputPaths) {
+          allOutputPaths <- c(allOutputPaths, path)
+          # Use name as identifier if available, otherwise use the path itself as basis for ID
+          if (!is.null(names) && !is.na(names[j]) && nchar(names[j]) > 0) {
+            allOutputPathNames <- c(allOutputPathNames, names[j])
+          } else {
+            allOutputPathNames <- c(allOutputPathNames, NA_character_)
+          }
+        }
+      }
     }
   }
-  allOutputPaths <- unique(allOutputPaths)
 
   # Check if there are existing output paths in the Excel file
   existingOutputPaths <- NULL
@@ -1082,6 +1132,7 @@ addScenarioConfigurationsToExcel <- function(
   outputPathIds <- character(length(allOutputPaths))
   for (i in seq_along(allOutputPaths)) {
     outputPath <- allOutputPaths[i]
+    outputPathName <- allOutputPathNames[i]
 
     # Check if this output path already exists in the Excel file
     if (!is.null(existingOutputPaths)) {
@@ -1090,12 +1141,20 @@ addScenarioConfigurationsToExcel <- function(
         # Use existing ID
         outputPathIds[i] <- existingOutputPaths$OutputPathId[existingIdx[1]]
       } else {
-        # Generate new sequential ID
-        outputPathIds[i] <- paste0("OpP", i)
+        # Use name as ID if available, otherwise generate new sequential ID
+        if (!is.na(outputPathName)) {
+          outputPathIds[i] <- outputPathName
+        } else {
+          outputPathIds[i] <- paste0("OpP", i)
+        }
       }
     } else {
-      # No existing file, generate new sequential ID
-      outputPathIds[i] <- paste0("OpP", i)
+      # Use name as ID if available, otherwise generate new sequential ID
+      if (!is.na(outputPathName)) {
+        outputPathIds[i] <- outputPathName
+      } else {
+        outputPathIds[i] <- paste0("OpP", i)
+      }
     }
   }
 
