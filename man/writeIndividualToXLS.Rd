@@ -13,6 +13,9 @@ information.}
 
 \item{outputXLSPath}{Path to the Excel file the parameter set will be written to}
 }
+\value{
+Path to the created Excel file
+}
 \description{
 Create a parameter set describing an individual and write it to the Excel file
 }

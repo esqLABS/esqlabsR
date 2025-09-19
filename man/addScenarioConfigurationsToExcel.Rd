@@ -43,6 +43,8 @@ The function ensures that the Excel files are properly structured with the follo
 individual/population IDs, parameter sheets, application protocol, simulation time,
 steady state settings, model file, and output path IDs.
 \item \strong{OutputPaths sheet}: Contains output path IDs and their corresponding paths.
+When named vectors are used for \code{outputPaths} in scenario configurations, the names
+will be used as OutputPathId values.
 \item \strong{Applications.xlsx}: Contains application protocol sheets with parameter definitions.
 }
 

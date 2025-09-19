@@ -4,7 +4,7 @@
 \alias{exportParametersToXLS}
 \title{Export simulation parameters to excel}
 \usage{
-exportParametersToXLS(parameters, paramsXLSpath, sheet = NULL)
+exportParametersToXLS(parameters, paramsXLSpath, sheet = NULL, append = FALSE)
 }
 \arguments{
 \item{parameters}{A single or a list of \code{Parameter} objects}
@@ -12,6 +12,10 @@ exportParametersToXLS(parameters, paramsXLSpath, sheet = NULL)
 \item{paramsXLSpath}{Path to the excel file}
 
 \item{sheet}{(Optional) name of the excel sheet}
+
+\item{append}{If TRUE, appends parameters to existing file. If the file exists
+but the sheet doesn't exist, creates a new sheet. If FALSE (default),
+overwrites the existing file.}
 }
 \description{
 Creates an excel file with information from the passed

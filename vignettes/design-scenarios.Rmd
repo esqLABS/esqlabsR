@@ -75,7 +75,7 @@ b)  To define an individual-specific parametrization, create a new sheet
     and name it as the individual's ID.
 
 If your model contains proteins (e.g., enzymes or transporters), you
-have to specify their ontongenies in the column 'Protein Ontogenies' as
+have to specify their ontogenies in the column 'Protein Ontogenies' as
 a list (separated by a `,`) of `<Protein>:<Ontogeny>` values. The value
 of `<Ontogeny>` must be one of the standard ontogenies implemented in
 the PK-Sim database (call `ospsuite::StandardOntogeny` to see the list
@@ -124,6 +124,43 @@ same simulation file by defining an application protocol in the column
 Now that you designed your own simulation, read
 `vignette("run-simulations")` to continue the process. To learn more
 about simulation design, read the following sections.
+
+## Alternative: Creating scenarios directly from PKML files
+
+For more advanced users or when working programmatically, `esqlabsR` provides 
+functions to create scenario configurations directly from PKML files, bypassing 
+the need to manually create Excel files:
+
+- `createScenarioConfigurationsFromPKML()`: Creates scenario configurations from 
+  PKML files by extracting simulation settings, applications, and output paths.
+- `addScenarioConfigurationsToExcel()`: Adds scenario configurations to the 
+  project Excel files for later use.
+
+This approach is particularly useful when:
+- You have multiple PKML files to convert into scenarios
+- You want to automate scenario creation
+- You're working with simulation files that already contain the needed configuration
+
+Example usage:
+
+```{r, eval=FALSE}
+# Create scenarios from PKML files
+scenarioConfigs <- createScenarioConfigurationsFromPKML(
+  pkmlFilePaths = c("Model1.pkml", "Model2.pkml"),
+  projectConfiguration = projectConfiguration,
+  scenarioNames = c("Scenario1", "Scenario2"),
+  outputPaths = c(
+    "plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration",
+    "liver" = "Organism|Liver|Intracellular|Drug|Concentration"
+  )
+)
+
+# Add them to the project Excel files
+addScenarioConfigurationsToExcel(
+  scenarioConfigurations = scenarioConfigs,
+  projectConfiguration = projectConfiguration
+)
+```
 
 ## Details
 
@@ -251,6 +288,19 @@ exportParametersToXLS(
 )
 ```
 
+If you need to add more parameters to an existing Excel file without overwriting it, 
+you can use the `append` parameter:
+
+```{r, eval=FALSE}
+# Add more parameters to existing file
+exportParametersToXLS(
+  parameters = additionalParams,
+  paramsXLSpath = "../Applications.xlsx",
+  sheet = "AdditionalProtocol",
+  append = TRUE
+)
+```
+
 The created Excel file will have the same structure as all
 Parameter-files and can be directly loaded in MoBi or R using the
 `readParametersFromXLS()` function.
@@ -319,6 +369,18 @@ look like this:
 In the `Scenarios` sheet, enter the IDs of all paths the outputs should
 be generated for, separated by a comma, e.g.,
 `Aciclovir_PVB, Aciclovir_fat_cell`.
+
+**Alternative approach:** When programmatically creating scenarios, you can also use 
+named vectors for output paths, where names serve as aliases:
+
+```{r, eval=FALSE}
+outputPaths <- c(
+  "plasma" = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+  "fat_cell" = "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+)
+```
+
+This approach is particularly useful with the new `createScenarioConfigurationsFromPKML()` function.
 
 ### Scenario parameterization hierarchy
 

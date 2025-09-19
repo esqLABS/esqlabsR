@@ -4,6 +4,8 @@
 #'   describing the individual. See `createIndividualCharacterstics` for more
 #'   information.
 #' @param outputXLSPath Path to the Excel file the parameter set will be written to
+#' 
+#' @return Path to the created Excel file
 #'
 #' @seealso createIndividualCharacteristics crateIndividual
 #'
@@ -56,6 +58,7 @@ writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   colnames(output) <- columnNames
 
   .writeExcel(data = output, path = outputXLSPath)
+  return(outputXLSPath)
 }
 
 #' Read individual characteristics from file

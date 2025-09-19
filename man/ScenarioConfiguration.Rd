@@ -29,9 +29,10 @@ sheet "Demographics". If \code{ScenarioConfguration$simulationType} is \code{pop
 a population will be created a the scenario will be simulated as a population
 simulation.}
 
-\item{\code{outputPaths}}{a list of output paths for which the results will be
+\item{\code{outputPaths}}{a character vector or named vector of output paths for which the results will be
 calculated. If \code{NULL} (default), outputs as defined in the simulation
-are used.}
+are used. Can be a named vector where names serve as aliases for the paths,
+e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").}
 }
 \if{html}{\out{</div>}}
 }

@@ -60,22 +60,63 @@ readExcel <- function(path, sheet = NULL, ...) {
 
 #' Write data to excel
 #'
-#' @details Uses `writexl::write_xlsx` to write data to excel. If the folder
-#' does not exist, creates folder(s) recursively.
+#' @details Uses `writexl::write_xlsx` to write data to excel by default, or
+#' `openxlsx` for append functionality. If the folder does not exist, creates
+#' folder(s) recursively. If the file exists and append is TRUE, can append
+#' new sheets or append data to existing sheets.
 #'
 #' @param data Data frame or named list of data frames that will be sheets in
 #' the xlsx
+#' @param path Path to the xlsx file
+#' @param append If TRUE and file exists, appends data. If FALSE (default),
+#' overwrites the file.
 #' @inheritParams writexl::write_xlsx
 #' @keywords internal
 #' @noRd
-.writeExcel <- function(data, path, col_names = TRUE) {
+.writeExcel <- function(data, path, col_names = TRUE, append = FALSE) {
   # If the provided path to the output file targets a non-existent directory,
   # try to create the directory
-  resultsDir <- dirname(path)
-  if (!file.exists(resultsDir)) {
-    dir.create(resultsDir, recursive = TRUE)
+  parentDir <- dirname(path)
+  if (!file.exists(parentDir)) {
+    dir.create(parentDir, recursive = TRUE)
   }
 
-  # Write the data into an excel file.
-  writexl::write_xlsx(data, path = path, col_names = col_names)
+  # If not appending or file doesn't exist, use regular write
+  if (!file.exists(path) || !append) {
+    writexl::write_xlsx(data, path = path, col_names = col_names)
+    return()
+  }
+
+  # File exists and we want to append
+  # Load existing workbook
+  wb <- openxlsx::loadWorkbook(path)
+
+  # Convert single data frame to named list if necessary
+  if (is.data.frame(data)) {
+    data <- list(data)
+    names(data) <- "Sheet1"
+  }
+
+  # Process each sheet in the new data
+  for (sheetName in names(data)) {
+    sheetData <- data[[sheetName]]
+
+    if (sheetName %in% names(wb)) {
+      # Sheet exists - append data to existing sheet
+      existingData <- readxl::read_excel(path, sheet = sheetName)
+      combinedData <- rbind(existingData, sheetData)
+
+      # Remove the existing sheet and add the combined data
+      openxlsx::removeWorksheet(wb, sheetName)
+      openxlsx::addWorksheet(wb, sheetName)
+      openxlsx::writeData(wb, sheetName, combinedData, colNames = col_names)
+    } else {
+      # Sheet doesn't exist - add new sheet
+      openxlsx::addWorksheet(wb, sheetName)
+      openxlsx::writeData(wb, sheetName, sheetData, colNames = col_names)
+    }
+  }
+
+  # Save the workbook
+  openxlsx::saveWorkbook(wb, path, overwrite = TRUE)
 }

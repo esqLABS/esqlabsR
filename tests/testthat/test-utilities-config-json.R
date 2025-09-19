@@ -691,7 +691,7 @@ test_that("snapshotProjectConfiguration with path string handles modified flag c
   expect_true(file.exists(jsonPath))
 })
 
-test_that("restoreProjectConfiguration aborts if user declines overwrite when files are not in sync", {
+test_that("restoreProjectConfiguration handles out-of-sync files correctly in non-interactive mode", {
   # Set up test project and export/import dirs
   paths <- local_test_project()
   exportDir <- withr::local_tempdir("test_export_abort")
@@ -703,14 +703,34 @@ test_that("restoreProjectConfiguration aborts if user declines overwrite when fi
   snapshotProjectConfiguration(paths$project_config_path, exportDir)
   jsonPath <- file.path(exportDir, jsonFilename)
 
-  # Create an out-of-sync Excel file in importDir
+  # Create the complete project structure in importDir to avoid path validation warnings
+  # Copy the ProjectConfiguration.xlsx file
   file.copy(paths$project_config_path, file.path(importDir, excelFilename))
+  
+  # Create the directory structure referenced in the project configuration
+  # to prevent path validation warnings
+  dir.create(file.path(importDir, "Models", "Simulations"), recursive = TRUE)
+  dir.create(file.path(importDir, "Data"), recursive = TRUE)
+  dir.create(file.path(importDir, "Results"), recursive = TRUE)
+  
+  # Copy the Configurations directory and its files
+  configurationsDir <- file.path(importDir, "Configurations")
+  dir.create(configurationsDir, recursive = TRUE)
+  file.copy(
+    list.files(paths$configurations_dir, full.names = TRUE),
+    configurationsDir,
+    recursive = TRUE
+  )
+  
   # Modify the Excel file to make it out of sync
   df <- readExcel(file.path(importDir, excelFilename))
   df$Value[1] <- "MODIFIED_VALUE" # change a value
   .writeExcel(df, file.path(importDir, excelFilename))
 
-  expect_warning(
+  # The function doesn't prompt in non-interactive mode, so we test that it
+  # successfully restores when files are out of sync in non-interactive mode
+  # In interactive mode, it would prompt the user
+  expect_no_error(
     restoreProjectConfiguration(jsonPath, importDir)
   )
 })
