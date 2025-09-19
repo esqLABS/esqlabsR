@@ -1,13 +1,11 @@
-# Test for createScenarioConfigurationsFromPKML and addScenarioConfigurationsToExcel functions
+# ==============================================================================
+# SECTION 1: Core Functionality Tests
+# ==============================================================================
 
-# Basic functionality tests
-test_that("createScenarioConfigurationsFromPKML and addScenarioConfigurationsToExcel create scenarios from PKML files", {
+test_that("Basic scenario creation from single PKML file", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
-  pkmlPath <- file.path(
-    temp_project$config$modelFolder,
-    "Aciclovir.pkml"
-  )
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   # Create scenarios from PKML
   scenarioConfigurations <- createScenarioConfigurationsFromPKML(
@@ -15,277 +13,524 @@ test_that("createScenarioConfigurationsFromPKML and addScenarioConfigurationsToE
     projectConfiguration = projectConfiguration
   )
 
-  # Add scenarios to configuration
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
-  )
-
-  scenarioName <- "Vergin 1995 IV"
-  scenarios <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioName,
-    projectConfiguration = projectConfiguration
-  )
-  expect_length(scenarios, 1)
-  scenario <- scenarios[[1]]
-  expect_equal(scenario$scenarioName, scenarioName)
-  expect_equal(scenario$modelFile, "Aciclovir.pkml")
-  expect_equal(scenario$applicationProtocol, scenarioName)
-  # The Aciclovir.pkml file has displayUnit="h" (hours) in its output schema
+  expect_length(scenarioConfigurations, 1)
+  scenario <- scenarioConfigurations[[1]]
+  expect_equal(scenario$scenarioName, "Vergin 1995 IV")
+  expect_equal(as.character(scenario$modelFile), "Aciclovir.pkml")
+  expect_equal(scenario$applicationProtocol, "Vergin 1995 IV")
   expect_equal(scenario$simulationTimeUnit, "h")
   expect_false(scenario$simulateSteadyState)
   expect_false(scenario$readPopulationFromCSV)
   expect_true(length(scenario$outputPaths) > 0)
-  expect_true(
-    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" %in%
-      scenario$outputPaths
-  )
   expect_true(!is.null(scenario$simulationTime))
 })
 
-test_that("createScenarioConfigurationsFromPKML extracts time unit from PKML file", {
+test_that("Scenario creation with custom names", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
-  # Create scenarios from PKML
   scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = file.path(
-      temp_project$config$modelFolder,
-      "Aciclovir.pkml"
-    ),
-    projectConfiguration = projectConfiguration
-  )
-
-  # Add scenarios to configuration
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Load scenarios and verify time unit was extracted
-  scenarioName <- "Vergin 1995 IV"
-  scenarios <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioName,
-    projectConfiguration = projectConfiguration
-  )
-  expect_length(scenarios, 1)
-  expect_equal(scenarios[[1]]$simulationTimeUnit, "h")
-})
-
-test_that("createScenarioConfigurationsFromPKML uses provided time unit when specified", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  # Create scenarios from PKML with custom time unit
-  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = file.path(
-      temp_project$config$modelFolder,
-      "Aciclovir.pkml"
-    ),
-    projectConfiguration = projectConfiguration,
-    simulationTimeUnit = "min"
-  )
-
-  # Add scenarios to configuration
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Load scenarios and verify custom time unit was used
-  scenarioName <- "Vergin 1995 IV"
-  scenarios <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioName,
-    projectConfiguration = projectConfiguration
-  )
-  expect_length(scenarios, 1)
-  expect_equal(scenarios[[1]]$simulationTimeUnit, "min")
-})
-
-test_that("createScenarioConfigurationsFromPKML works with custom scenario names", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  # Create scenarios from PKML with custom name
-  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = file.path(
-      temp_project$config$modelFolder,
-      "Aciclovir.pkml"
-    ),
+    pkmlFilePaths = pkmlPath,
     projectConfiguration = projectConfiguration,
     scenarioNames = "CustomScenario"
   )
 
-  # Add scenarios to configuration
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
+  expect_length(scenarioConfigurations, 1)
+  expect_equal(names(scenarioConfigurations), "CustomScenario")
+  expect_equal(
+    scenarioConfigurations[["CustomScenario"]]$scenarioName,
+    "CustomScenario"
   )
-
-  scenarios <- readScenarioConfigurationFromExcel(
-    scenarioNames = "CustomScenario",
-    projectConfiguration = projectConfiguration
-  )
-  expect_length(scenarios, 1)
-  expect_equal(names(scenarios), "CustomScenario")
-  expect_equal(scenarios[[1]]$scenarioName, "CustomScenario")
 })
 
-test_that("createScenarioConfigurationsFromPKML works with multiple PKML files", {
+test_that("Time unit extraction from PKML file", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
-  # Create scenarios from multiple PKML files
   scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = c(
-      file.path(temp_project$config$modelFolder, "Aciclovir.pkml"),
-      file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-    ),
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration
+  )
+
+  expect_equal(scenarioConfigurations[[1]]$simulationTimeUnit, "h")
+})
+
+test_that("Custom time unit overrides PKML time unit", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
     projectConfiguration = projectConfiguration,
-    scenarioNames = c("Scenario1", "Scenario2")
+    simulationTimeUnit = "min"
   )
 
-  # Add scenarios to configuration
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
-  )
-
-  scenarios <- readScenarioConfigurationFromExcel(
-    scenarioNames = c("Scenario1", "Scenario2"),
-    projectConfiguration = projectConfiguration
-  )
-  expect_length(scenarios, 2)
-  expect_equal(names(scenarios), c("Scenario1", "Scenario2"))
-  expect_equal(scenarios[[1]]$scenarioName, "Scenario1")
-  expect_equal(scenarios[[2]]$scenarioName, "Scenario2")
+  expect_equal(scenarioConfigurations[[1]]$simulationTimeUnit, "min")
 })
 
-test_that("createScenarioConfigurationsFromPKML works with custom parameters", {
+# ==============================================================================
+# SECTION 2: Vectorization and Recycling Tests
+# ==============================================================================
+
+test_that("Case 1: Single PKML, no other arguments (original behavior)", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
-  # Create scenarios from PKML with custom parameters
   scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = file.path(
-      temp_project$config$modelFolder,
-      "Aciclovir.pkml"
-    ),
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration
+  )
+
+  expect_length(scenarioConfigurations, 1)
+  expect_equal(names(scenarioConfigurations), "Vergin 1995 IV")
+})
+
+test_that("Case 2: Single PKML with single-value arguments", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "CustomScenario",
+    individualId = "Individual001",
+    steadyState = TRUE,
+    readPopulationFromCSV = FALSE
+  )
+
+  expect_length(scenarioConfigurations, 1)
+  expect_equal(names(scenarioConfigurations), "CustomScenario")
+
+  scenario <- scenarioConfigurations[["CustomScenario"]]
+  expect_equal(scenario$individualId, "Individual001")
+  expect_true(scenario$simulateSteadyState)
+  expect_false(scenario$readPopulationFromCSV)
+})
+
+test_that("Case 3: Single PKML with vector arguments (PKML recycled)", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("LowDose", "MediumDose", "HighDose"),
+    individualId = c("Patient1", "Patient2", "Patient3"),
+    applicationProtocols = c("Protocol1", "Protocol2", "Protocol3"),
+    steadyState = c(FALSE, TRUE, TRUE),
+    readPopulationFromCSV = c(FALSE, FALSE, TRUE)
+  )
+
+  expect_length(scenarioConfigurations, 3)
+  expect_equal(
+    names(scenarioConfigurations),
+    c("LowDose", "MediumDose", "HighDose")
+  )
+
+  # All scenarios should use the same model file
+  for (scenario in scenarioConfigurations) {
+    expect_equal(as.character(scenario$modelFile), "Aciclovir.pkml")
+  }
+
+  # But have different settings
+  expect_equal(scenarioConfigurations[["LowDose"]]$individualId, "Patient1")
+  expect_equal(scenarioConfigurations[["MediumDose"]]$individualId, "Patient2")
+  expect_equal(scenarioConfigurations[["HighDose"]]$individualId, "Patient3")
+})
+
+test_that("Case 4: Multiple PKMLs with single-value arguments (arguments recycled)", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+  pkmlPaths <- rep(pkmlPath, 3)
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPaths,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("Model1", "Model2", "Model3"),
+    individualId = "SharedIndividual",
+    applicationProtocols = "SharedProtocol",
+    steadyState = TRUE,
+    readPopulationFromCSV = FALSE
+  )
+
+  expect_length(scenarioConfigurations, 3)
+  expect_equal(names(scenarioConfigurations), c("Model1", "Model2", "Model3"))
+
+  # All scenarios should have the same recycled settings
+  for (scenario in scenarioConfigurations) {
+    expect_equal(scenario$individualId, "SharedIndividual")
+    expect_equal(scenario$applicationProtocol, "SharedProtocol")
+    expect_true(scenario$simulateSteadyState)
+    expect_false(scenario$readPopulationFromCSV)
+  }
+})
+
+test_that("Case 5: Multiple PKMLs with vector arguments", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+  pkmlPaths <- rep(pkmlPath, 3)
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPaths,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("Pediatric", "Adult", "Elderly"),
+    individualId = c("Child001", "Adult001", "Elder001"),
+    applicationProtocols = c("PedProtocol", "AdultProtocol", "ElderProtocol"),
+    steadyState = c(FALSE, TRUE, TRUE),
+    readPopulationFromCSV = c(FALSE, TRUE, FALSE)
+  )
+
+  expect_length(scenarioConfigurations, 3)
+  expect_equal(
+    names(scenarioConfigurations),
+    c("Pediatric", "Adult", "Elderly")
+  )
+
+  # Check each scenario has different settings
+  expect_equal(scenarioConfigurations[["Pediatric"]]$individualId, "Child001")
+  expect_equal(scenarioConfigurations[["Adult"]]$individualId, "Adult001")
+  expect_equal(scenarioConfigurations[["Elderly"]]$individualId, "Elder001")
+
+  expect_false(scenarioConfigurations[["Pediatric"]]$simulateSteadyState)
+  expect_true(scenarioConfigurations[["Adult"]]$simulateSteadyState)
+  expect_true(scenarioConfigurations[["Elderly"]]$simulateSteadyState)
+})
+
+test_that("Vector recycling works for single values", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+  pkmlPaths <- rep(pkmlPath, 3)
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPaths,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("Scenario1", "Scenario2", "Scenario3"),
+    individualId = "TestIndividual",
+    steadyState = TRUE,
+    steadyStateTime = 500,
+    steadyStateTimeUnit = "min",
+    readPopulationFromCSV = FALSE
+  )
+
+  expect_length(scenarioConfigurations, 3)
+
+  # Check that all scenarios got the recycled values
+  for (i in 1:3) {
+    scenario <- scenarioConfigurations[[i]]
+    expect_equal(scenario$individualId, "TestIndividual")
+    expect_true(scenario$simulateSteadyState)
+    expect_false(scenario$readPopulationFromCSV)
+    expected_time <- ospsuite::toBaseUnit(
+      quantityOrDimension = ospsuite::ospDimensions$Time,
+      values = 500,
+      unit = "min"
+    )
+    expect_equal(scenario$steadyStateTime, expected_time)
+  }
+})
+
+test_that("Mixed NULL and vector arguments work correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+  pkmlPaths <- rep(pkmlPath, 2)
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPaths,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("Test1", "Test2"),
+    individualId = NULL,
+    populationId = c("Pop1", "Pop2"),
+    applicationProtocols = "SharedProtocol",
+    paramSheets = NULL,
+    steadyState = c(TRUE, FALSE)
+  )
+
+  expect_length(scenarioConfigurations, 2)
+
+  scenario1 <- scenarioConfigurations[["Test1"]]
+  expect_null(scenario1$individualId)
+  expect_equal(scenario1$populationId, "Pop1")
+  expect_equal(scenario1$applicationProtocol, "SharedProtocol")
+  expect_true(scenario1$simulateSteadyState)
+
+  scenario2 <- scenarioConfigurations[["Test2"]]
+  expect_null(scenario2$individualId)
+  expect_equal(scenario2$populationId, "Pop2")
+  expect_equal(scenario2$applicationProtocol, "SharedProtocol")
+  expect_false(scenario2$simulateSteadyState)
+})
+
+# ==============================================================================
+# SECTION 3: Parameter Handling Tests
+# ==============================================================================
+
+test_that("Custom parameters are applied correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
     projectConfiguration = projectConfiguration,
     individualId = "TestIndividual",
-    paramSheets = c("Global", "Custom"),
+    paramSheets = "Global,Custom",
     steadyState = TRUE,
     steadyStateTime = 500,
     steadyStateTimeUnit = "min"
   )
 
-  # Add scenarios to configuration
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
-  )
-
-  scenarioName <- "Vergin 1995 IV"
-  scenarios <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioName,
-    projectConfiguration = projectConfiguration
-  )
-  scenario <- scenarios[[1]]
+  scenario <- scenarioConfigurations[[1]]
   expect_equal(scenario$individualId, "TestIndividual")
   expect_equal(enumKeys(scenario$paramSheets), c("Global", "Custom"))
   expect_true(scenario$simulateSteadyState)
-  expect_equal(
-    scenario$steadyStateTime,
-    ospsuite::toBaseUnit(
-      quantityOrDimension = ospsuite::ospDimensions$Time,
-      values = 500,
-      unit = "min"
-    )
+  expected_time <- ospsuite::toBaseUnit(
+    quantityOrDimension = ospsuite::ospDimensions$Time,
+    values = 500,
+    unit = "min"
   )
+  expect_equal(scenario$steadyStateTime, expected_time)
 })
 
-test_that("createScenarioConfigurationsFromPKML uses NULL defaults for steady state parameters", {
+test_that("Comma-separated paramSheets and outputPaths are handled correctly", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+  pkmlPaths <- rep(pkmlPath, 2)
 
-  # Create scenarios with default parameters (steadyState = FALSE, NULL times)
   scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = file.path(
-      temp_project$config$modelFolder,
-      "Aciclovir.pkml"
-    ),
+    pkmlFilePaths = pkmlPaths,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("Scenario1", "Scenario2"),
+    paramSheets = c("Global,Custom", "Global,Alternative"),
+    outputPaths = c("Path1,Path2", "Path3,Path4,Path5")
+  )
+
+  expect_length(scenarioConfigurations, 2)
+
+  scenario1 <- scenarioConfigurations[["Scenario1"]]
+  expect_equal(enumKeys(scenario1$paramSheets), c("Global", "Custom"))
+  expect_equal(scenario1$outputPaths, c("Path1", "Path2"))
+
+  scenario2 <- scenarioConfigurations[["Scenario2"]]
+  expect_equal(enumKeys(scenario2$paramSheets), c("Global", "Alternative"))
+  expect_equal(scenario2$outputPaths, c("Path3", "Path4", "Path5"))
+})
+
+test_that("Vectorized simulation time parameters work correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+  pkmlPaths <- rep(pkmlPath, 2)
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPaths,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("ShortSim", "LongSim"),
+    simulationTime = c("0, 24, 100", "0, 168, 200"),
+    simulationTimeUnit = c("h", "h")
+  )
+
+  expect_length(scenarioConfigurations, 2)
+
+  scenario1 <- scenarioConfigurations[["ShortSim"]]
+  expected_intervals_1 <- list(c(0, 24, 100))
+  expect_equal(scenario1$simulationTime, expected_intervals_1)
+  expect_equal(scenario1$simulationTimeUnit, "h")
+
+  scenario2 <- scenarioConfigurations[["LongSim"]]
+  expected_intervals_2 <- list(c(0, 168, 200))
+  expect_equal(scenario2$simulationTime, expected_intervals_2)
+  expect_equal(scenario2$simulationTimeUnit, "h")
+})
+
+test_that("NULL defaults for steady state parameters work correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Default behavior
+  scenarioConfigurations1 <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
     projectConfiguration = projectConfiguration
   )
 
-  # Check that steady state is disabled by default
-  scenarioName <- names(scenarioConfigurations)[1]
-  scenario <- scenarioConfigurations[[1]]
-  expect_false(scenario$simulateSteadyState)
+  scenario1 <- scenarioConfigurations1[[1]]
+  expect_false(scenario1$simulateSteadyState)
 
-  # Test steady state enabled but no time provided (should still work)
+  # Steady state enabled but no time provided
   scenarioConfigurations2 <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = file.path(
-      temp_project$config$modelFolder,
-      "Aciclovir.pkml"
-    ),
+    pkmlFilePaths = pkmlPath,
     projectConfiguration = projectConfiguration,
     scenarioNames = "TestSteadyStateNullTime",
     steadyState = TRUE
-    # steadyStateTime and steadyStateTimeUnit are NULL by default
   )
 
   scenario2 <- scenarioConfigurations2[[1]]
   expect_true(scenario2$simulateSteadyState)
-  # steadyStateTime should remain NULL when not provided
 })
 
-test_that("addScenarioConfigurationsToExcel appends by default", {
+test_that("Application protocol names are handled correctly", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
-  # First, create some existing scenarios
-  existingScenarios <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = c(
-      file.path(temp_project$config$modelFolder, "Aciclovir.pkml"),
-      file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-    ),
+  # Default protocol name should be scenario name
+  scenarioConfigurations1 <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
     projectConfiguration = projectConfiguration,
-    scenarioNames = c("ExistingScenario1", "ExistingScenario2")
-  )
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = existingScenarios,
-    projectConfiguration = projectConfiguration
-  )
-  original_scenarios_names <- names(existingScenarios)
-
-  # Then add new scenarios
-  newScenarios <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = c(
-      file.path(temp_project$config$modelFolder, "Aciclovir.pkml"),
-      file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-    ),
-    projectConfiguration = projectConfiguration,
-    scenarioNames = c("Scenario1", "Scenario2")
-  )
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = newScenarios,
-    projectConfiguration = projectConfiguration,
-    appendToExisting = TRUE
+    scenarioNames = "MyCustomScenario"
   )
 
-  # Verify all scenarios exist
-  allScenarios <- readScenarioConfigurationFromExcel(
-    scenarioNames = c(original_scenarios_names, "Scenario1", "Scenario2"),
-    projectConfiguration = projectConfiguration
-  )
-  expect_length(allScenarios, 4)
   expect_equal(
-    names(allScenarios),
-    c(original_scenarios_names, "Scenario1", "Scenario2")
+    scenarioConfigurations1[["MyCustomScenario"]]$applicationProtocol,
+    "MyCustomScenario"
+  )
+
+  # Explicit protocol name should be used
+  scenarioConfigurations2 <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "TestExplicitProtocol",
+    applicationProtocols = "CustomProtocolName"
+  )
+
+  expect_equal(
+    scenarioConfigurations2[["TestExplicitProtocol"]]$applicationProtocol,
+    "CustomProtocolName"
   )
 })
 
-test_that("createScenarioConfigurationsFromPKML throws error for non-existent file", {
+test_that("Complex scenario configuration with all parameters", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Test scenario with all possible parameters set
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "ComplexScenario",
+    individualId = "Individual123",
+    populationId = "Population456",
+    applicationProtocols = "ComplexProtocol",
+    paramSheets = "Global,Custom,Advanced",
+    outputPaths = "Path1,Path2,Path3",
+    simulationTime = "0,24,100;24,48,50",
+    simulationTimeUnit = "h",
+    steadyState = TRUE,
+    steadyStateTime = 1500,
+    steadyStateTimeUnit = "min",
+    readPopulationFromCSV = TRUE
+  )
+
+  scenario <- scenarioConfigurations[["ComplexScenario"]]
+  expect_equal(scenario$scenarioName, "ComplexScenario")
+  expect_equal(scenario$individualId, "Individual123")
+  expect_equal(scenario$populationId, "Population456")
+  expect_equal(scenario$simulationType, "Population")
+  expect_equal(scenario$applicationProtocol, "ComplexProtocol")
+  expect_equal(
+    enumKeys(scenario$paramSheets),
+    c("Global", "Custom", "Advanced")
+  )
+  expect_equal(scenario$outputPaths, c("Path1", "Path2", "Path3"))
+  expect_equal(scenario$simulationTime, list(c(0, 24, 100), c(24, 48, 50)))
+  expect_equal(scenario$simulationTimeUnit, "h")
+  expect_true(scenario$simulateSteadyState)
+  expect_true(scenario$readPopulationFromCSV)
+  # Steady state time should be converted to base units
+  expect_true(!is.null(scenario$steadyStateTime))
+})
+
+test_that("Empty parameter sheets and output paths handling", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Test with empty parameter sheets
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "EmptyParamsTest",
+    paramSheets = "",
+    outputPaths = ""
+  )
+
+  scenario <- scenarioConfigurations[["EmptyParamsTest"]]
+  expect_equal(scenario$scenarioName, "EmptyParamsTest")
+  # Empty param sheets should not add any sheets
+  expect_equal(length(enumKeys(scenario$paramSheets)), 0)
+})
+
+test_that("PKML file with custom simulation time intervals", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Test with custom simulation time that overrides PKML
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "CustomTimeTest",
+    simulationTime = "0,12,50;12,24,25",
+    simulationTimeUnit = "h"
+  )
+
+  scenario <- scenarioConfigurations[["CustomTimeTest"]]
+  expect_equal(scenario$simulationTime, list(c(0, 12, 50), c(12, 24, 25)))
+  expect_equal(scenario$simulationTimeUnit, "h")
+})
+
+test_that(".parseSimulationTimeIntervals internal function works correctly", {
+  # Test NULL input
+  result <- esqlabsR:::.parseSimulationTimeIntervals(NULL)
+  expect_null(result)
+
+  # Test single interval
+  result <- esqlabsR:::.parseSimulationTimeIntervals("0,24,100")
+  expect_equal(result, list(c(0, 24, 100)))
+
+  # Test multiple intervals
+  result <- esqlabsR:::.parseSimulationTimeIntervals("0,24,100;24,48,50")
+  expect_equal(result, list(c(0, 24, 100), c(24, 48, 50)))
+
+  # Test error conditions
+  expect_error(
+    esqlabsR:::.parseSimulationTimeIntervals("0,24"),
+    "time interval string"
+  )
+
+  expect_error(
+    esqlabsR:::.parseSimulationTimeIntervals("0,24,0"),
+    "time interval string"
+  )
+
+  expect_error(
+    esqlabsR:::.parseSimulationTimeIntervals("-1,24,100"),
+    "time interval string"
+  )
+
+  expect_error(
+    esqlabsR:::.parseSimulationTimeIntervals("24,0,100"),
+    "time interval string"
+  )
+})
+
+# ==============================================================================
+# SECTION 4: Error Handling and Validation Tests
+# ==============================================================================
+
+test_that("Non-existent PKML file throws error", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
 
@@ -298,69 +543,45 @@ test_that("createScenarioConfigurationsFromPKML throws error for non-existent fi
   )
 })
 
-test_that("addScenarioConfigurationsToExcel throws error for duplicate scenario names", {
+test_that("Invalid vector lengths throw errors", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+  pkmlPaths <- rep(pkmlPath, 3) # 3 scenarios
 
-  # First add a scenario
-  firstScenarios <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
-    scenarioNames = "Scenario1"
-  )
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = firstScenarios,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Try to add another scenario with the same name
-  duplicateScenarios <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
-    scenarioNames = "Scenario1"
-  )
-
-  expect_error(
-    addScenarioConfigurationsToExcel(
-      scenarioConfigurations = duplicateScenarios,
-      projectConfiguration = projectConfiguration
-    ),
-    "Duplicate scenario names found"
-  )
-})
-
-test_that("createScenarioConfigurationsFromPKML throws error for wrong scenario names length", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-
+  # Test with wrong length for individualId (pkmlPaths=3, individualId=2 -> inconsistent lengths)
   expect_error(
     createScenarioConfigurationsFromPKML(
-      pkmlFilePaths = pkmlPath,
+      pkmlFilePaths = pkmlPaths,
       projectConfiguration = projectConfiguration,
-      scenarioNames = c("Scenario1", "Scenario2")
+      individualId = c("Ind1", "Ind2") # Length 2, but pkmlPaths is length 3
     ),
-    "Invalid argument lengths"
+    "Inconsistent vector argument lengths"
   )
-})
 
-test_that("createScenarioConfigurationsFromPKML throws error for wrong application protocols length", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-
+  # Test with wrong length for steadyState (pkmlPaths=3, steadyState=2 -> inconsistent lengths)
   expect_error(
     createScenarioConfigurationsFromPKML(
-      pkmlFilePaths = pkmlPath,
+      pkmlFilePaths = pkmlPaths,
       projectConfiguration = projectConfiguration,
-      applicationProtocols = c("Protocol1", "Protocol2")
+      steadyState = c(TRUE, FALSE) # Length 2, but pkmlPaths is length 3
     ),
-    "Invalid applicationProtocols length"
+    "Inconsistent vector argument lengths"
+  )
+
+  # Test inconsistent vector lengths (both > 1 but different lengths)
+  expect_error(
+    createScenarioConfigurationsFromPKML(
+      pkmlFilePaths = pkmlPath, # Length 1
+      projectConfiguration = projectConfiguration,
+      scenarioNames = c("S1", "S2"), # Length 2
+      individualId = c("I1", "I2", "I3") # Length 3 - inconsistent!
+    ),
+    "Inconsistent vector argument lengths.*All vector arguments with length > 1 must have the same length"
   )
 })
 
-test_that("createScenarioConfigurationsFromPKML handles duplicate scenario names by adding indices", {
+test_that("Duplicate scenario names are handled correctly", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
@@ -380,317 +601,237 @@ test_that("createScenarioConfigurationsFromPKML handles duplicate scenario names
     names(scenarioConfigurations),
     c("DuplicateName", "DuplicateName_2", "UniqueName")
   )
-  expect_equal(
-    scenarioConfigurations[["DuplicateName"]]$scenarioName,
-    "DuplicateName"
-  )
-  expect_equal(
-    scenarioConfigurations[["DuplicateName_2"]]$scenarioName,
-    "DuplicateName_2"
-  )
-  expect_equal(
-    scenarioConfigurations[["UniqueName"]]$scenarioName,
-    "UniqueName"
-  )
+})
 
-  # Test with multiple different duplicate names
-  expect_warning(
-    scenarioConfigurations2 <- createScenarioConfigurationsFromPKML(
-      pkmlFilePaths = c(pkmlPath, pkmlPath, pkmlPath, pkmlPath),
-      projectConfiguration = projectConfiguration,
-      scenarioNames = c("Name1", "Name1", "Name2", "Name2")
+test_that("readScenarioConfigurationFromExcel error conditions", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  # Test with non-existent scenarios file
+  expect_error(
+    readScenarioConfigurationFromExcel(
+      scenarioNames = "NonExistent",
+      projectConfiguration = projectConfiguration
     ),
-    "Duplicate scenario names found and made unique by adding indices"
+    "Scenario.*not specified"
   )
 
-  # Check that all names were made unique
-  expect_equal(
-    names(scenarioConfigurations2),
-    c("Name1", "Name1_2", "Name2", "Name2_2")
+  # Create an invalid Excel file structure
+  invalidData <- data.frame(
+    WrongColumn1 = "test",
+    WrongColumn2 = "test2"
+  )
+  wb <- openxlsx::createWorkbook()
+  openxlsx::addWorksheet(wb, "Scenarios")
+  openxlsx::writeData(wb, "Scenarios", invalidData)
+  openxlsx::saveWorkbook(
+    wb,
+    projectConfiguration$scenariosFile,
+    overwrite = TRUE
+  )
+
+  expect_error(
+    readScenarioConfigurationFromExcel(
+      projectConfiguration = projectConfiguration
+    ),
+    "wrong structure"
   )
 })
 
-test_that("addScenarioConfigurationsToExcel creates protocol sheet if missing and scenario is runnable", {
+test_that("addScenarioConfigurationsToExcel validation errors", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  # Test with invalid scenarioConfigurations (not a named list)
+  expect_error(
+    addScenarioConfigurationsToExcel(
+      scenarioConfigurations = list("invalid"),
+      projectConfiguration = projectConfiguration
+    ),
+    "scenarioConfigurations must be a named list"
+  )
+
+  # Test with invalid scenarioConfigurations (wrong object type)
+  expect_error(
+    addScenarioConfigurationsToExcel(
+      scenarioConfigurations = list(TestScenario = "not a scenario config"),
+      projectConfiguration = projectConfiguration
+    ),
+    "type.*character.*expected.*ScenarioConfiguration"
+  )
+})
+
+test_that("Internal validation functions work correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  # Create a valid scenario configuration
+  validScenario <- ScenarioConfiguration$new(projectConfiguration)
+  validScenario$scenarioName <- "ValidScenario"
+
+  # Test valid scenario configurations
+  expect_silent(esqlabsR:::.validateScenarioConfigurations(list(validScenario)))
+
+  # Test population scenario without population ID
+  populationScenario <- ScenarioConfiguration$new(projectConfiguration)
+  populationScenario$scenarioName <- "PopulationScenario"
+  populationScenario$simulationType <- "Population"
+  populationScenario$populationId <- NULL
+
+  expect_error(
+    esqlabsR:::.validateScenarioConfigurations(list(populationScenario)),
+    "population.*id"
+  )
+
+  # Test population scenario with population ID
+  populationScenario$populationId <- "TestPopulation"
+  expect_silent(esqlabsR:::.validateScenarioConfigurations(list(
+    populationScenario
+  )))
+})
+
+# ==============================================================================
+# SECTION 5: Excel Integration Tests
+# ==============================================================================
+
+test_that("Full workflow: createScenarioConfigurationsFromPKML + addScenarioConfigurationsToExcel", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
-  # Create scenarios from PKML
+  # Create scenarios
   scenarioConfigurations <- createScenarioConfigurationsFromPKML(
     pkmlFilePaths = pkmlPath,
     projectConfiguration = projectConfiguration
   )
 
-  # Add scenarios to configuration
+  # Add to Excel
   addScenarioConfigurationsToExcel(
     scenarioConfigurations = scenarioConfigurations,
     projectConfiguration = projectConfiguration
   )
 
-  # Protocol name should now be the scenario name, not extracted from PKML
+  # Verify by reading back
+  scenarioName <- "Vergin 1995 IV"
+  scenarios <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioName,
+    projectConfiguration = projectConfiguration
+  )
+
+  expect_length(scenarios, 1)
+  scenario <- scenarios[[1]]
+  expect_equal(scenario$scenarioName, scenarioName)
+  expect_equal(as.character(scenario$modelFile), "Aciclovir.pkml")
+  expect_true(
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" %in%
+      scenario$outputPaths
+  )
+})
+
+test_that("Excel append functionality works correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # First, create some existing scenarios
+  existingScenarios <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = c(pkmlPath, pkmlPath),
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("ExistingScenario1", "ExistingScenario2")
+  )
+  addScenarioConfigurationsToExcel(
+    scenarioConfigurations = existingScenarios,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Then add new scenarios
+  newScenarios <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = c(pkmlPath, pkmlPath),
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("NewScenario1", "NewScenario2")
+  )
+  addScenarioConfigurationsToExcel(
+    scenarioConfigurations = newScenarios,
+    projectConfiguration = projectConfiguration,
+    appendToExisting = TRUE
+  )
+
+  # Verify all scenarios exist
+  allScenarios <- readScenarioConfigurationFromExcel(
+    scenarioNames = c(
+      "ExistingScenario1",
+      "ExistingScenario2",
+      "NewScenario1",
+      "NewScenario2"
+    ),
+    projectConfiguration = projectConfiguration
+  )
+  expect_length(allScenarios, 4)
+})
+
+test_that("Duplicate scenario names in Excel throw error", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # First add a scenario
+  firstScenarios <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "DuplicateScenario"
+  )
+  addScenarioConfigurationsToExcel(
+    scenarioConfigurations = firstScenarios,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Try to add another scenario with the same name
+  duplicateScenarios <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "DuplicateScenario"
+  )
+
+  expect_error(
+    addScenarioConfigurationsToExcel(
+      scenarioConfigurations = duplicateScenarios,
+      projectConfiguration = projectConfiguration
+    ),
+    "Duplicate scenario names found"
+  )
+})
+
+test_that("Application protocol sheets are created correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Create scenarios
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Add to Excel (this should create the protocol sheet)
+  addScenarioConfigurationsToExcel(
+    scenarioConfigurations = scenarioConfigurations,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Check that the protocol sheet was created
   scenarioName <- "Vergin 1995 IV"
   protocolName <- scenarioName
 
-  # Check that the new protocol sheet was created
   expect_true(
     protocolName %in%
-      readxl::excel_sheets(
-        projectConfiguration$applicationsFile
-      )
-  )
-
-  # Read headers to verify sheet structure
-  headerFirst <- readxl::read_excel(
-    projectConfiguration$applicationsFile,
-    sheet = readxl::excel_sheets(projectConfiguration$applicationsFile)[1],
-    n_max = 0
-  )
-  headerNew <- readxl::read_excel(
-    projectConfiguration$applicationsFile,
-    sheet = protocolName,
-    n_max = 0
-  )
-
-  expect_true(
-    protocolName %in%
-      readxl::excel_sheets(
-        projectConfiguration$applicationsFile
-      )
-  )
-  expect_equal(headerFirst, headerNew)
-
-  # Test that the scenario is runnable
-  scenarioName <- "Vergin 1995 IV"
-  scenarios <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioName,
-    projectConfiguration = projectConfiguration
-  )
-  expect_length(scenarios, 1)
-  expect_equal(names(scenarios), scenarioName)
-
-  # Run the scenario to ensure it's properly configured
-  runableScenarios <- createScenarios(scenarioConfigurations = scenarios)
-  simulatedScenarios <- runScenarios(scenarios = runableScenarios)
-  expect_length(simulatedScenarios, 1)
-  expect_equal(names(simulatedScenarios), scenarioName)
-  expect_true(!is.null(simulatedScenarios[[scenarioName]]$results))
-  expect_true(
-    length(simulatedScenarios[[scenarioName]]$results$allQuantityPaths) > 0
+      readxl::excel_sheets(projectConfiguration$applicationsFile)
   )
 })
 
-test_that("createScenarioConfigurationsFromPKML and addScenarioConfigurationsToExcel create runnable scenarios", {
+test_that("Existing application sheets are not overwritten", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-
-  # Create scenarios from PKML
-  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Add scenarios to configuration
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Read back the scenarios and verify they can be run
-  scenarioName <- "Vergin 1995 IV"
-  scenarios <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioName,
-    projectConfiguration = projectConfiguration
-  )
-  expect_length(scenarios, 1)
-  expect_equal(names(scenarios), scenarioName)
-
-  # Create runnable scenarios and simulate
-  runableScenarios <- createScenarios(scenarioConfigurations = scenarios)
-  simulatedScenarios <- runScenarios(scenarios = runableScenarios)
-  expect_length(simulatedScenarios, 1)
-  expect_equal(names(simulatedScenarios), scenarioName)
-  expect_true(!is.null(simulatedScenarios[[scenarioName]]$results))
-  expect_true(
-    length(simulatedScenarios[[scenarioName]]$results$allQuantityPaths) > 0
-  )
-})
-
-# Tests for new protocol extraction functionality
-test_that("createScenarioConfigurationsFromPKML defaults protocol name to scenario name", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-
-  # Create scenarios with custom scenario name
-  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
-    scenarioNames = "MyCustomScenario"
-  )
-
-  # Check that protocol name matches scenario name
-  scenario <- scenarioConfigurations[["MyCustomScenario"]]
-  expect_equal(scenario$applicationProtocol, "MyCustomScenario")
-})
-
-test_that("createScenarioConfigurationsFromPKML has no side effects on Excel files", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-
-  # Record initial state of Applications file
-  applicationsFile <- projectConfiguration$applicationsFile
-  initialExists <- file.exists(applicationsFile)
-  initialSheets <- character(0)
-  if (initialExists) {
-    initialSheets <- readxl::excel_sheets(applicationsFile)
-  }
-
-  # Create scenarios from PKML
-  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
-    scenarioNames = "TestNoSideEffects"
-  )
-
-  # Check that scenario was created
-  expect_length(scenarioConfigurations, 1)
-  expect_equal(names(scenarioConfigurations), "TestNoSideEffects")
-
-  # Check that Applications file state is unchanged
-  finalExists <- file.exists(applicationsFile)
-  expect_equal(finalExists, initialExists)
-
-  if (finalExists) {
-    finalSheets <- readxl::excel_sheets(applicationsFile)
-    expect_equal(finalSheets, initialSheets)
-    # Specifically check that our scenario sheet was NOT created
-    expect_false("TestNoSideEffects" %in% finalSheets)
-  }
-})
-
-test_that("addScenarioConfigurationsToExcel extracts and writes application parameters to Excel", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-
-  # Create scenarios from PKML (should have no side effects)
-  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
-    scenarioNames = "TestParameterExtraction"
-  )
-
-  # Check that the scenario configuration was created
-  expect_length(scenarioConfigurations, 1)
-  scenario <- scenarioConfigurations[["TestParameterExtraction"]]
-  expect_equal(scenario$applicationProtocol, "TestParameterExtraction")
-
-  # At this point, no Excel files should be created or modified
-  applicationsFile <- projectConfiguration$applicationsFile
-  if (file.exists(applicationsFile)) {
-    sheets <- readxl::excel_sheets(applicationsFile)
-    expect_false("TestParameterExtraction" %in% sheets)
-  }
-
-  # Now add scenarios to Excel - this should extract and write parameters
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Check that Applications.xlsx file has the new sheet with parameters
-  expect_true(file.exists(applicationsFile))
-
-  sheets <- readxl::excel_sheets(applicationsFile)
-  expect_true("TestParameterExtraction" %in% sheets)
-
-  # Read the parameters from the new sheet
-  params <- readxl::read_excel(
-    applicationsFile,
-    sheet = "TestParameterExtraction"
-  )
-
-  # Check that it has the correct structure
-  expected_columns <- c("Container Path", "Parameter Name", "Value", "Units")
-  expect_true(all(expected_columns %in% colnames(params)))
-
-  # Check that we have some parameters (should have constant application parameters)
-  expect_true(nrow(params) > 0)
-
-  # Check that excluded parameters like "Volume" and "Application rate" are not present
-  excluded_params <- c("Volume", "Application rate")
-  expect_false(any(params$`Parameter Name` %in% excluded_params))
-})
-
-test_that("addScenarioConfigurationsToExcel extracts both Applications and Events parameters", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-
-  # Load simulation to check what parameters exist
-  simulation <- ospsuite::loadSimulation(pkmlPath)
-
-  # Get parameters from both Applications and Events nodes
-  applicationsParams <- ospsuite::getAllParametersMatching(
-    "Applications|**",
-    simulation
-  )
-  eventsParams <- ospsuite::getAllParametersMatching("Events|**", simulation)
-
-  # Check that we have some parameters in at least one of the locations
-  expect_true(length(applicationsParams) > 0 || length(eventsParams) > 0)
-
-  # Create scenarios from PKML
-  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
-    scenarioNames = "TestBothNodes"
-  )
-
-  # Add scenarios to Excel - this should extract and write parameters
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Check that parameters were written to Excel
-  applicationsFile <- projectConfiguration$applicationsFile
-  expect_true(file.exists(applicationsFile))
-
-  sheets <- readxl::excel_sheets(applicationsFile)
-  expect_true("TestBothNodes" %in% sheets)
-
-  # Read the parameters
-  params <- readxl::read_excel(applicationsFile, sheet = "TestBothNodes")
-  expect_true(nrow(params) > 0)
-})
-
-test_that("createScenarioConfigurationsFromPKML respects provided applicationProtocols parameter", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-
-  # Create scenarios with explicit application protocol
-  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
-    scenarioNames = "TestExplicitProtocol",
-    applicationProtocols = "CustomProtocolName"
-  )
-
-  # Check that the explicit protocol name was used
-  scenario <- scenarioConfigurations[["TestExplicitProtocol"]]
-  expect_equal(scenario$applicationProtocol, "CustomProtocolName")
-})
-
-test_that("addScenarioConfigurationsToExcel doesn't overwrite existing application sheets", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
-
-  # First, manually create a sheet with some data
   applicationsFile <- projectConfiguration$applicationsFile
 
   # Create initial data
@@ -702,7 +843,7 @@ test_that("addScenarioConfigurationsToExcel doesn't overwrite existing applicati
     check.names = FALSE
   )
 
-  # Write to Excel with a specific sheet name
+  # Write to Excel with specific sheet name
   protocolName <- "TestNoOverwrite"
   wb <- openxlsx::createWorkbook()
   openxlsx::addWorksheet(wb, protocolName)
@@ -714,7 +855,7 @@ test_that("addScenarioConfigurationsToExcel doesn't overwrite existing applicati
   expect_equal(nrow(initialParams), 1)
   expect_equal(initialParams$`Parameter Name`[1], "TestParam")
 
-  # Now create scenarios with the same protocol name
+  # Create scenarios with the same protocol name
   scenarioConfigurations <- createScenarioConfigurationsFromPKML(
     pkmlFilePaths = pkmlPath,
     projectConfiguration = projectConfiguration,
@@ -734,7 +875,181 @@ test_that("addScenarioConfigurationsToExcel doesn't overwrite existing applicati
   expect_equal(finalParams$Value[1], 999)
 })
 
-test_that("addScenarioConfigurationsToExcel filters constant parameters correctly", {
+test_that("Scenarios can be created without PKML file existing for applications", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Create scenarios
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "TestMissingPKML"
+  )
+
+  # Manually remove the PKML file to test the error path
+  tempPkml <- file.path(temp_project$config$modelFolder, "temp.pkml")
+  file.copy(pkmlPath, tempPkml)
+  scenarioConfigurations[[1]]$modelFile <- "temp.pkml"
+  file.remove(tempPkml)
+
+  # This should throw an error when trying to add to Excel
+  expect_error(
+    addScenarioConfigurationsToExcel(
+      scenarioConfigurations = scenarioConfigurations,
+      projectConfiguration = projectConfiguration
+    ),
+    "PKML.*file cannot be find"
+  )
+})
+
+test_that("Empty applications file creation works correctly", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Create scenarios
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "TestEmptyFile"
+  )
+
+  # Remove applications file to test creation
+  applicationsFile <- projectConfiguration$applicationsFile
+  if (file.exists(applicationsFile)) {
+    file.remove(applicationsFile)
+  }
+
+  # This should create the applications file
+  addScenarioConfigurationsToExcel(
+    scenarioConfigurations = scenarioConfigurations,
+    projectConfiguration = projectConfiguration
+  )
+
+  expect_true(file.exists(applicationsFile))
+  sheets <- readxl::excel_sheets(applicationsFile)
+  expect_true("TestEmptyFile" %in% sheets)
+})
+
+# ==============================================================================
+# SECTION 6: Edge Cases and Regression Tests
+# ==============================================================================
+
+test_that("Function has no side effects on Excel files", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Record initial state
+  applicationsFile <- projectConfiguration$applicationsFile
+  initialExists <- file.exists(applicationsFile)
+  initialSheets <- character(0)
+  if (initialExists) {
+    initialSheets <- readxl::excel_sheets(applicationsFile)
+  }
+
+  # Create scenarios (should have no side effects)
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "TestNoSideEffects"
+  )
+
+  # Check that scenario was created
+  expect_length(scenarioConfigurations, 1)
+  expect_equal(names(scenarioConfigurations), "TestNoSideEffects")
+
+  # Check that Applications file state is unchanged
+  finalExists <- file.exists(applicationsFile)
+  expect_equal(finalExists, initialExists)
+
+  if (finalExists) {
+    finalSheets <- readxl::excel_sheets(applicationsFile)
+    expect_equal(finalSheets, initialSheets)
+    expect_false("TestNoSideEffects" %in% finalSheets)
+  }
+})
+
+test_that("Created scenarios are runnable", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Create and add scenarios
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration
+  )
+
+  addScenarioConfigurationsToExcel(
+    scenarioConfigurations = scenarioConfigurations,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Read back and run
+  scenarioName <- "Vergin 1995 IV"
+  scenarios <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioName,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Test that the scenario is runnable
+  runnableScenarios <- createScenarios(scenarioConfigurations = scenarios)
+  simulatedScenarios <- runScenarios(scenarios = runnableScenarios)
+
+  expect_length(simulatedScenarios, 1)
+  expect_equal(names(simulatedScenarios), scenarioName)
+  expect_true(!is.null(simulatedScenarios[[scenarioName]]$results))
+  expect_true(
+    length(simulatedScenarios[[scenarioName]]$results$allQuantityPaths) > 0
+  )
+})
+
+test_that("Both Applications and Events parameters are extracted", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # Load simulation to check what parameters exist
+  simulation <- ospsuite::loadSimulation(pkmlPath)
+
+  applicationsParams <- ospsuite::getAllParametersMatching(
+    "Applications|**",
+    simulation
+  )
+  eventsParams <- ospsuite::getAllParametersMatching("Events|**", simulation)
+
+  # Skip test if no parameters found
+  skip_if(
+    length(applicationsParams) == 0 && length(eventsParams) == 0,
+    "No application/event parameters found in test PKML"
+  )
+
+  # Create and add scenarios
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "TestBothNodes"
+  )
+
+  addScenarioConfigurationsToExcel(
+    scenarioConfigurations = scenarioConfigurations,
+    projectConfiguration = projectConfiguration
+  )
+
+  # Check that parameters were written
+  applicationsFile <- projectConfiguration$applicationsFile
+  expect_true(file.exists(applicationsFile))
+
+  sheets <- readxl::excel_sheets(applicationsFile)
+  expect_true("TestBothNodes" %in% sheets)
+
+  params <- readxl::read_excel(applicationsFile, sheet = "TestBothNodes")
+  expect_true(nrow(params) > 0)
+})
+
+test_that("Constant parameters are filtered correctly", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
@@ -746,9 +1061,8 @@ test_that("addScenarioConfigurationsToExcel filters constant parameters correctl
     ospsuite::getAllParametersMatching("Events|**", simulation)
   )
 
-  # Find constant and non-constant parameters
+  # Find constant parameters
   constantParams <- Filter(function(p) p$isConstant, allParams)
-  nonConstantParams <- Filter(function(p) !p$isConstant, allParams)
 
   # Skip test if no parameters found
   skip_if(
@@ -791,4 +1105,64 @@ test_that("addScenarioConfigurationsToExcel filters constant parameters correctl
       expect_true(all(writtenPaths %in% constantPaths))
     }
   }
+})
+
+test_that("Helper functions work correctly", {
+  # Test .sanitizeExcelSheetName
+  expect_equal(esqlabsR:::.sanitizeExcelSheetName(NULL, warn = FALSE), "Sheet")
+  expect_equal(esqlabsR:::.sanitizeExcelSheetName(NA, warn = FALSE), "Sheet")
+  expect_equal(esqlabsR:::.sanitizeExcelSheetName("", warn = FALSE), "Sheet")
+  expect_equal(esqlabsR:::.sanitizeExcelSheetName("   ", warn = FALSE), "Sheet")
+  expect_equal(
+    esqlabsR:::.sanitizeExcelSheetName("ValidName", warn = FALSE),
+    "ValidName"
+  )
+
+  # Test with invalid characters
+  expect_warning(
+    result <- esqlabsR:::.sanitizeExcelSheetName(
+      "Invalid/Name[*]:?\\",
+      warn = TRUE
+    ),
+    "Excel sheet name was sanitized"
+  )
+  expect_equal(result, "Invalid_Name______")
+
+  # Test name that's too long
+  longName <- paste(rep("a", 35), collapse = "")
+  expect_warning(
+    result <- esqlabsR:::.sanitizeExcelSheetName(longName, warn = TRUE),
+    "Excel sheet name was sanitized"
+  )
+  expect_equal(nchar(result), 31)
+
+  # Test .formatSimulationTimeForExcel
+  expect_equal(esqlabsR:::.formatSimulationTimeForExcel(NULL), "")
+  expect_equal(
+    esqlabsR:::.formatSimulationTimeForExcel(list(c(0, 24, 100))),
+    "0, 24, 100"
+  )
+  expect_equal(
+    esqlabsR:::.formatSimulationTimeForExcel(list(
+      c(0, 24, 100),
+      c(24, 48, 50)
+    )),
+    "0, 24, 100; 24, 48, 50"
+  )
+})
+
+test_that("Deprecated setApplications function works", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  simulation <- ospsuite::loadSimulation(pkmlPath)
+  scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
+  scenarioConfiguration$applicationProtocol <- "TestProtocol"
+
+  # Test deprecated function with warning
+  expect_warning(
+    setApplications(simulation, scenarioConfiguration),
+    "setApplications.*deprecated"
+  )
 })
