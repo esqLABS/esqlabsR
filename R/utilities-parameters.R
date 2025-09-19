@@ -188,7 +188,7 @@ exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL, appen
   if (!is.null(sheet)) {
     names(data) <- sheet
   }
-  .writeExcelWithAppend(data = data, path = paramsXLSpath, append = append)
+  .writeExcel(data = data, path = paramsXLSpath, append = append)
 }
 
 #' Extend parameters structure with new entries
