@@ -59,11 +59,11 @@ test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
         gender = Gender$Male,
         weight = 70
       )
-      writeIndividualToXLS(
+      tmp <- writeIndividualToXLS(
         humanIndividualCharacteristics,
         "ParameterSet.xlsx"
       )
-      df <- readxl::read_xlsx("ParameterSet.xlsx")
+      df <- readxl::read_xlsx(tmp)
 
       expect_equal(dim(df), c(96L, 4L))
       expect_equal(
