@@ -180,7 +180,7 @@ a parameter sheet from the list"
     #' Print the object to the console
     #' @param projectConfiguration Whether to also print project configuration. default to TRUE.
     #' @param className Whether to print the name of the class at the beginning. default to TRUE.
-    print = function(projectConfiguration = TRUE, className = TRUE) {
+    print = function(className = TRUE, projectConfiguration = FALSE) {
       if (className) {
         ospsuite.utils::ospPrintClass(self)
       }
