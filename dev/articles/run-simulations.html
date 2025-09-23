@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -184,10 +184,6 @@ if the scenario is a population simulation.</p>
 <span></span>
 <span><span class="co"># Each simulation can be accessed using its name</span></span>
 <span><span class="va">simulatedScenariosResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">simulation</span></span>
-<span><span class="co">#&gt; <span style="color: #0000BB;">&lt;Simulation&gt;</span></span></span>
-<span><span class="co">#&gt;   • Name: TestScenario</span></span>
-<span><span class="co">#&gt;   • Source file:</span></span>
-<span><span class="co">#&gt;   /home/runner/work/_temp/Library/esqlabsR/extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml</span></span>
 <span></span>
 <span><span class="co"># Of course, it contains simulated results as dataframe</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">outputValues</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span>
@@ -195,6 +191,10 @@ if the scenario is a population simulation.</p>
 <span><span class="co"># It also contains dataframe's metadata</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">outputValues</span><span class="op">$</span><span class="va">metaData</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "TestScenario"</span></span>
+<span><span class="co">#&gt; <span style="color: #0000BB;">&lt;Simulation&gt;</span></span></span>
+<span><span class="co">#&gt;   • Name: TestScenario</span></span>
+<span><span class="co">#&gt;   • Source file:</span></span>
+<span><span class="co">#&gt;   /home/runner/work/_temp/Library/esqlabsR/extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml</span></span>
 <span><span class="co">#&gt;   IndividualId Time</span></span>
 <span><span class="co">#&gt; 1            0    0</span></span>
 <span><span class="co">#&gt; 2            0    1</span></span>
@@ -204,11 +204,11 @@ if the scenario is a population simulation.</p>
 <span><span class="co">#&gt; 6            0    5</span></span>
 <span><span class="co">#&gt;   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span></span>
 <span><span class="co">#&gt; 1                                                                  0.000000</span></span>
-<span><span class="co">#&gt; 2                                                                  2.713030</span></span>
-<span><span class="co">#&gt; 3                                                                  7.830454</span></span>
-<span><span class="co">#&gt; 4                                                                 13.107507</span></span>
-<span><span class="co">#&gt; 5                                                                 18.254124</span></span>
-<span><span class="co">#&gt; 6                                                                 23.234884</span></span>
+<span><span class="co">#&gt; 2                                                                  2.713185</span></span>
+<span><span class="co">#&gt; 3                                                                  7.830622</span></span>
+<span><span class="co">#&gt; 4                                                                 13.107626</span></span>
+<span><span class="co">#&gt; 5                                                                 18.254156</span></span>
+<span><span class="co">#&gt; 6                                                                 23.234800</span></span>
 <span><span class="co">#&gt; NULL</span></span></code></pre></div>
 <p>It is a good idea to store simulation results as <code>*.csv</code>
 along with simulations as <code>.*pkml</code> and, optionally, the

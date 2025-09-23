@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,9 +88,10 @@ simulation.</p></dd>
 
 
 <dt><code>outputPaths</code></dt>
-<dd><p>a list of output paths for which the results will be
+<dd><p>a character vector or named vector of output paths for which the results will be
 calculated. If <code>NULL</code> (default), outputs as defined in the simulation
-are used.</p></dd>
+are used. Can be a named vector where names serve as aliases for the paths,
+e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").</p></dd>
 
 
 </dl><p></p></div>
