@@ -2,8 +2,6 @@ defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Periphera
 
 test_that("It stops with an error if the excel file defines a parameter that is
           not present", {
-  skip_on_os("mac")
-
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -21,8 +19,6 @@ test_that("It stops with an error if the excel file defines a parameter that is
 })
 
 test_that("All working scenarios in testProject can be created without errors", {
-  skip_on_os("mac")
-
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -46,8 +42,6 @@ test_that("All working scenarios in testProject can be created without errors", 
 })
 
 test_that("It runs one scenario without specifying output paths", {
-  skip_on_os("mac")
-
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -75,8 +69,6 @@ test_that("It runs one scenario without specifying output paths", {
 })
 
 test_that("It runs one scenario with specifying output paths", {
-  skip_on_os("mac")
-
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -111,8 +103,6 @@ test_that("It runs one scenario with specifying output paths", {
 })
 
 test_that("It runs two scenarios", {
-  skip_on_os("mac")
-
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -153,8 +143,6 @@ test_that("It runs two scenarios", {
 })
 
 test_that("It runs population and individual scenarios", {
-  skip_on_os("mac")
-
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -188,8 +176,6 @@ test_that("It runs population and individual scenarios", {
 
 
 test_that("It saves and loads scenario results for scenario names with forbidden characters", {
-  skip_on_os("mac")
-
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -245,8 +231,6 @@ test_that("It saves and loads scenario results for scenario names with forbidden
 
 
 test_that("The hierarchy of parametrization is correct", {
-  skip_on_os("mac")
-
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -297,8 +281,6 @@ test_that("loadScenarioResults throws an error when files don't exist", {
 })
 
 test_that("It correctly runs when only one scenario (not a list) is provided", {
-  skip_on_os("mac")
-
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config

@@ -99,7 +99,7 @@ readScenarioConfigurationFromExcel <- function(
     !dplyr::if_all(dplyr::everything(), is.na)
   )
   # Remove all rows where the name of the scenario is not defined. This might happen when other columns
-  # have accidentially some entry, and then the whole row is read with scneario name = NA
+  # have accidentally some entry, and then the whole row is read with scenario name = NA
   wholeData <- dplyr::filter(wholeData, !is.na(Scenario_name))
 
   outputPathsDf <- readExcel(
@@ -250,15 +250,18 @@ setApplications <- function(simulation, scenarioConfiguration) {
   # Set from excel
   excelFilePath <- scenarioConfiguration$projectConfiguration$applicationsFile
   # Only try to apply parameters if the sheet exists
+  protocolName <- .sanitizeExcelSheetName(
+    scenarioConfiguration$applicationProtocol,
+    warn = FALSE
+  )
   if (
     any(
-      readxl::excel_sheets(excelFilePath) ==
-        scenarioConfiguration$applicationProtocol
+      readxl::excel_sheets(excelFilePath) == protocolName
     )
   ) {
     params <- readParametersFromXLS(
       excelFilePath,
-      scenarioConfiguration$applicationProtocol
+      protocolName
     )
     ospsuite::setParameterValuesByPath(
       parameterPaths = params$paths,
@@ -269,89 +272,6 @@ setApplications <- function(simulation, scenarioConfiguration) {
   }
 }
 
-#' Validate `ScenarioConfiguration` objects
-#'
-#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to validate.
-#'
-#' @details Validates that all scenario configurations are of the correct type
-#' and that population scenarios have a defined population ID. Throws an error
-#' if validation fails.
-#'
-#' @keywords internal
-.validateScenarioConfigurations <- function(scenarioConfigurations) {
-  validateIsOfType(scenarioConfigurations, "ScenarioConfiguration")
-
-  # Check if population is defined for each population scenario
-  for (scenarioConfiguration in scenarioConfigurations) {
-    if (
-      scenarioConfiguration$simulationType == "Population" &&
-        is.null(scenarioConfiguration$populationId)
-    ) {
-      stop(messages$noPopulationIdForPopulationScenario(
-        scenarioConfiguration$scenarioName
-      ))
-    }
-  }
-}
-
-#' Parse simulation time intervals from string format
-#'
-#' @param simulationTimeIntervalsString Character string. A string containing simulation time intervals
-#'   in the format "start1,end1,resolution1;start2,end2,resolution2;...".
-#'   Each interval consists of start time, end time, and resolution separated by commas,
-#'   and multiple intervals are separated by semicolons.
-#'
-#' @details Parses a string representation of simulation time intervals into a list
-#' of numeric vectors. Each vector contains three elements: [start_time, end_time, resolution].
-#' The function validates that all values are numeric, positive, and that start times
-#' are less than end times.
-#'
-#' @returns A list of numeric vectors, each containing three elements representing
-#' [start_time, end_time, resolution] for each time interval. Returns `NULL` if
-#' the input string is `NULL`.
-#'
-#' @keywords internal
-.parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
-  # Check if the simulation time intervals are defined
-  if (is.null(simulationTimeIntervalsString)) {
-    return(NULL)
-  }
-
-  # Split the string by ';'
-  simulationTimeIntervals <- strsplit(
-    x = simulationTimeIntervalsString,
-    split = ";",
-    fixed = TRUE
-  )[[1]]
-  # Split each interval by ','
-  simulationTimeIntervals <- strsplit(
-    x = simulationTimeIntervals,
-    split = ",",
-    fixed = TRUE
-  )
-  # Convert to numeric
-  simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
-  # Validate that all are numeric
-  validateIsNumeric(simulationTimeIntervals)
-  # Validate that all are positive
-  if (any(unlist(simulationTimeIntervals) < 0)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
-  }
-  # Validate all intervals are of length 3
-  if (any(sapply(simulationTimeIntervals, length) != 3)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
-  }
-  # Validate all resolution entries are greater than 0
-  if (any(sapply(simulationTimeIntervals, function(x) x[3] <= 0))) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
-  }
-  # Validate all start values are smaller than end values
-  if (any(sapply(simulationTimeIntervals, function(x) x[1] >= x[2]))) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
-  }
-
-  return(simulationTimeIntervals)
-}
 
 #' Create scenario configurations from PKML files
 #'
@@ -361,34 +281,48 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' creates scenario configuration objects that can be used with the esqlabsR workflow.
 #'
 #' @param pkmlFilePaths Character vector of paths to PKML files to create scenarios from.
+#'   Can be a single string (recycled for all scenarios) or a vector with the same length
+#'   as the number of scenarios being created (determined by the longest vector argument).
 #' @param projectConfiguration A `ProjectConfiguration` object holding base information.
 #' @param scenarioNames Character vector. Optional custom names for the scenarios. If `NULL` (default),
 #'   scenario names will be extracted from the simulation names in the PKML files.
 #'   If provided, must have the same length as `pkmlFilePaths`.
-#' @param individualId Character string. Optional individual ID to use for all scenarios. If `NULL` (default),
-#'   no individual will be specified.
-#' @param populationId Character string. Optional population ID to use for all scenarios. If `NULL` (default),
-#'   no population will be specified. If provided, sets simulation type to "Population".
+#' @param individualId Character vector. Optional individual IDs to use for scenarios. If `NULL` (default),
+#'   no individual will be specified. Can be a single string (recycled for all scenarios) or a vector
+#'   with the same length as `pkmlFilePaths`.
+#' @param populationId Character vector. Optional population IDs to use for scenarios. If `NULL` (default),
+#'   no population will be specified. If provided, sets simulation type to "Population". Can be a single
+#'   string (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
 #' @param applicationProtocols Character vector. Optional application protocol names to use for scenarios.
 #'   If `NULL` (default), application protocols will be set to the scenario name.
-#'   If provided, can be a single string (applied to all scenarios) or a vector
-#'   with the same length as `pkmlFilePaths`.
+#'   Can be a single string (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
 #' @param paramSheets Character vector. Optional parameter sheet names to apply to scenarios.
-#'   If `NULL` (default), no parameter sheets will be applied.
-#' @param outputPaths Character vector. Optional output paths to use for scenarios. If `NULL` (default),
-#'   output paths will be extracted from the PKML files' output selections.
-#' @param simulationTime Character string. Optional simulation time to use for scenarios as character string containing one or
+#'   If `NULL` (default), no parameter sheets will be applied. Can be a single string (recycled for all
+#'   scenarios) or a vector with the same length as `pkmlFilePaths`. If providing multiple sheets per
+#'   scenario, separate them with commas in the string.
+#' @param outputPaths Character vector or named vector. Optional output paths to use for scenarios. If `NULL` (default),
+#'   output paths will be extracted from the PKML files' output selections. Can be a single string
+#'   (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`. If providing
+#'   multiple paths per scenario, separate them with commas in the string. Named vectors are supported
+#'   where names serve as aliases for the paths, e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").
+#' @param simulationTime Character vector. Optional simulation time to use for scenarios as character strings containing one or
 #'   multiple time intervals separated by a ';'. Each time interval is a triplet of values <StartTime, EndTime, Resolution>,
 #'   where `Resolution` is the number of simulated points per time unit defined in the `simulationTimeUnit`. If `NULL` (default),
-#'   simulation time will be extracted from the PKML files' output schema intervals.
-#' @param simulationTimeUnit Character string. Optional simulation time unit. Only used when `simulationTime` is provided.
+#'   simulation time will be extracted from the PKML files' output schema intervals. Can be a single string (recycled for all
+#'   scenarios) or a vector with the same length as `pkmlFilePaths`.
+#' @param simulationTimeUnit Character vector. Optional simulation time units. Only used when `simulationTime` is provided.
 #'   If `NULL` (default), will be extracted from the PKML file's output schema intervals, or set to "min" (minutes) if not available.
-#' @param steadyState Logical. Whether to simulate steady-state. Default is `FALSE`.
-#' @param steadyStateTime Numeric. Steady-state time. Only used when `steadyState = TRUE`.
-#'   If `NULL` (default), no steady-state time will be set.
-#' @param steadyStateTimeUnit Character string. Steady-state time unit. Only used when `steadyState = TRUE` and `steadyStateTime` is provided.
-#'   If `NULL` (default), "min" will be used.
-#' @param readPopulationFromCSV Logical. Whether to read population from CSV. Default is `FALSE`.
+#'   Can be a single string (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
+#' @param steadyState Logical vector. Whether to simulate steady-state for each scenario. Default is `FALSE`.
+#'   Can be a single logical value (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
+#' @param steadyStateTime Numeric vector. Steady-state times. Only used when corresponding `steadyState` is `TRUE`.
+#'   If `NULL` (default), no steady-state time will be set. Can be a single numeric value (recycled for all scenarios)
+#'   or a vector with the same length as `pkmlFilePaths`.
+#' @param steadyStateTimeUnit Character vector. Steady-state time units. Only used when `steadyState = TRUE` and `steadyStateTime` is provided.
+#'   If `NULL` (default), "min" will be used. Can be a single string (recycled for all scenarios) or a vector
+#'   with the same length as `pkmlFilePaths`.
+#' @param readPopulationFromCSV Logical vector. Whether to read population from CSV for each scenario. Default is `FALSE`.
+#'   Can be a single logical value (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
 #'
 #' @details
 #' This function extracts the following information from PKML files:
@@ -396,6 +330,21 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' * **Output paths**: All selected outputs for the simulation from `outputSelections$allOutputs`.
 #' * **Simulation time**: Time intervals with start time, end time, and resolution from `outputSchema$intervals`.
 #' * **Simulation time unit**: Time unit from the output schema intervals (e.g., "h" for hours).
+#'
+#' ## Vector Arguments and Recycling
+#'
+#' All arguments support vectorization to create scenarios with different parameter values:
+#' * **Length 1**: The value is recycled (applied to all scenarios).
+#' * **Length > 1**: All vector arguments must have the same length, which determines the number of scenarios.
+#' * **Mixed lengths**: An error is thrown if vector arguments have inconsistent lengths.
+#'
+#' The number of scenarios created is determined by the longest vector argument. All shorter vectors
+#' (including `pkmlFilePaths`) are recycled to match this length.
+#'
+#' This allows you to efficiently create multiple scenarios in several ways:
+#' * **Same PKML, different settings**: Use a single PKML file with vectors of different parameter values.
+#' * **Different PKMLs, same settings**: Use multiple PKML files with single parameter values.
+#' * **Different PKMLs, different settings**: Use vectors of both PKML files and parameter values.
 #'
 #' The function handles duplicate scenario names by appending indices (e.g., "Scenario_1", "Scenario_2").
 #' It creates scenario configurations but does not write them to Excel files.
@@ -436,6 +385,36 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #'   scenarioConfigurations = scenarios,
 #'   projectConfiguration = projectConfiguration
 #' )
+#'
+#' # Example of vector recycling - single value applied to all scenarios
+#' scenarios <- createScenarioConfigurationsFromPKML(
+#'   pkmlFilePaths = c("sim1.pkml", "sim2.pkml", "sim3.pkml"),
+#'   projectConfiguration = projectConfiguration,
+#'   individualId = "Individual_001", # Recycled to all scenarios
+#'   steadyState = TRUE,              # Recycled to all scenarios
+#'   steadyStateTime = 1000           # Recycled to all scenarios
+#' )
+#'
+#' # Example of vector arguments - different values per scenario
+#' scenarios <- createScenarioConfigurationsFromPKML(
+#'   pkmlFilePaths = c("pediatric.pkml", "adult.pkml", "elderly.pkml"),
+#'   projectConfiguration = projectConfiguration,
+#'   scenarioNames = c("Pediatric", "Adult", "Elderly"),
+#'   individualId = c("Child_001", "Adult_001", "Elderly_001"),
+#'   applicationProtocols = c("Pediatric_Dose", "Standard_Dose", "Reduced_Dose"),
+#'   steadyState = c(FALSE, TRUE, TRUE),
+#'   steadyStateTime = c(NA, 2000, 1500)
+#' )
+#'
+#' # Example of PKML recycling - same model, different settings
+#' scenarios <- createScenarioConfigurationsFromPKML(
+#'   pkmlFilePaths = "base_model.pkml",                    # Single PKML recycled
+#'   projectConfiguration = projectConfiguration,
+#'   scenarioNames = c("LowDose", "MediumDose", "HighDose"),
+#'   individualId = c("Patient1", "Patient2", "Patient3"),
+#'   applicationProtocols = c("Low_Protocol", "Med_Protocol", "High_Protocol"),
+#'   steadyState = c(FALSE, TRUE, TRUE)                   # Different settings per scenario
+#' )
 #' }
 createScenarioConfigurationsFromPKML <- function(
   pkmlFilePaths,
@@ -456,28 +435,153 @@ createScenarioConfigurationsFromPKML <- function(
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
-  validateIsString(scenarioNames, nullAllowed = TRUE)
-  validateIsString(individualId, nullAllowed = TRUE)
-  validateIsString(populationId, nullAllowed = TRUE)
-  validateIsCharacter(applicationProtocols, nullAllowed = TRUE)
-  validateIsCharacter(paramSheets, nullAllowed = TRUE)
-  validateIsCharacter(outputPaths, nullAllowed = TRUE)
-  validateIsString(simulationTime, nullAllowed = TRUE)
-  validateIsString(simulationTimeUnit, nullAllowed = TRUE)
-  validateIsLogical(steadyState)
-  validateIsNumeric(steadyStateTime, nullAllowed = TRUE)
-  validateIsString(steadyStateTimeUnit, nullAllowed = TRUE)
-  validateIsLogical(readPopulationFromCSV)
-  # Validate scenario names length
-  if (
-    !is.null(scenarioNames) && length(scenarioNames) != length(pkmlFilePaths)
-  ) {
-    cli::cli_abort(c(
-      "Invalid argument lengths:",
-      "x" = "scenarioNames must have the same length as pkmlFilePaths",
-      "i" = "scenarioNames has length {length(scenarioNames)}, pkmlFilePaths has length {length(pkmlFilePaths)}"
-    ))
+  if (!is.null(scenarioNames)) {
+    validateIsCharacter(scenarioNames)
   }
+  if (!is.null(individualId)) {
+    validateIsCharacter(individualId)
+  }
+  if (!is.null(populationId)) {
+    validateIsCharacter(populationId)
+  }
+  if (!is.null(applicationProtocols)) {
+    validateIsCharacter(applicationProtocols)
+  }
+  if (!is.null(paramSheets)) {
+    validateIsCharacter(paramSheets)
+  }
+  if (!is.null(outputPaths)) {
+    validateIsCharacter(outputPaths)
+  }
+  if (!is.null(simulationTime)) {
+    validateIsCharacter(simulationTime)
+  }
+  if (!is.null(simulationTimeUnit)) {
+    validateIsCharacter(simulationTimeUnit)
+  }
+  validateIsLogical(steadyState)
+  if (!is.null(steadyStateTime)) {
+    validateIsNumeric(steadyStateTime)
+  }
+  if (!is.null(steadyStateTimeUnit)) {
+    validateIsCharacter(steadyStateTimeUnit)
+  }
+  validateIsLogical(readPopulationFromCSV)
+
+  # Get the number of scenarios to create based on vector arguments
+  # Note: projectConfiguration is excluded as it should always be a single object
+  nScenarios <- .getScenarioCount(
+    pkmlFilePaths,
+    scenarioNames,
+    individualId,
+    populationId,
+    applicationProtocols,
+    paramSheets,
+    outputPaths,
+    simulationTime,
+    simulationTimeUnit,
+    steadyState,
+    steadyStateTime,
+    steadyStateTimeUnit,
+    readPopulationFromCSV
+  )
+
+  # Recycle or validate all vector arguments (including pkmlFilePaths)
+  pkmlFilePaths <- .recycleOrValidateVector(
+    pkmlFilePaths,
+    "pkmlFilePaths",
+    nScenarios
+  )
+  scenarioNames <- .recycleOrValidateVector(
+    scenarioNames,
+    "scenarioNames",
+    nScenarios
+  )
+  individualId <- .recycleOrValidateVector(
+    individualId,
+    "individualId",
+    nScenarios
+  )
+  populationId <- .recycleOrValidateVector(
+    populationId,
+    "populationId",
+    nScenarios
+  )
+  applicationProtocols <- .recycleOrValidateVector(
+    applicationProtocols,
+    "applicationProtocols",
+    nScenarios
+  )
+  paramSheets <- .recycleOrValidateVector(
+    paramSheets,
+    "paramSheets",
+    nScenarios
+  )
+  # Special handling for outputPaths to preserve named vectors
+  if (!is.null(outputPaths)) {
+    if (is.list(outputPaths)) {
+      # outputPaths is a list - validate length
+      if (length(outputPaths) == 1) {
+        # Recycle single list element to all scenarios
+        outputPaths <- rep(outputPaths, nScenarios)
+      } else if (length(outputPaths) != nScenarios) {
+        cli::cli_abort(c(
+          "Invalid argument length:",
+          "x" = "outputPaths must have length 1 or same length as pkmlFilePaths",
+          "i" = "outputPaths has length {length(outputPaths)}, pkmlFilePaths has length {nScenarios}"
+        ))
+      }
+    } else {
+      # outputPaths is a vector
+      if (length(outputPaths) == 1) {
+        # Single vector - recycle entire vector to each scenario (preserves named vectors)
+        outputPaths <- rep(list(outputPaths), nScenarios)
+      } else if (length(outputPaths) == nScenarios) {
+        # Vector matches scenarios length - use as is (for comma-separated strings)
+        outputPaths <- .recycleOrValidateVector(
+          outputPaths,
+          "outputPaths",
+          nScenarios
+        )
+      } else {
+        cli::cli_abort(c(
+          "Invalid argument length:",
+          "x" = "outputPaths must have length 1 or same length as pkmlFilePaths",
+          "i" = "outputPaths has length {length(outputPaths)}, pkmlFilePaths has length {nScenarios}"
+        ))
+      }
+    }
+  }
+  simulationTime <- .recycleOrValidateVector(
+    simulationTime,
+    "simulationTime",
+    nScenarios
+  )
+  simulationTimeUnit <- .recycleOrValidateVector(
+    simulationTimeUnit,
+    "simulationTimeUnit",
+    nScenarios
+  )
+  steadyState <- .recycleOrValidateVector(
+    steadyState,
+    "steadyState",
+    nScenarios
+  )
+  steadyStateTime <- .recycleOrValidateVector(
+    steadyStateTime,
+    "steadyStateTime",
+    nScenarios
+  )
+  steadyStateTimeUnit <- .recycleOrValidateVector(
+    steadyStateTimeUnit,
+    "steadyStateTimeUnit",
+    nScenarios
+  )
+  readPopulationFromCSV <- .recycleOrValidateVector(
+    readPopulationFromCSV,
+    "readPopulationFromCSV",
+    nScenarios
+  )
 
   # Initialize variables
   scenarioConfigurations <- list()
@@ -528,50 +632,84 @@ createScenarioConfigurationsFromPKML <- function(
     # Create scenario configuration
     scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
     scenarioConfiguration$scenarioName <- scenarioName
-    scenarioConfiguration$modelFile <- basename(pkmlPath)
+    scenarioConfiguration$modelFile <- path_rel(
+      pkmlPath,
+      start = projectConfiguration$modelFolder
+    )
 
     # Set individual ID
     if (!is.null(individualId)) {
-      scenarioConfiguration$individualId <- individualId
+      scenarioConfiguration$individualId <- individualId[[i]]
     }
 
     # Set population ID
     if (!is.null(populationId)) {
-      scenarioConfiguration$populationId <- populationId
+      scenarioConfiguration$populationId <- populationId[[i]]
       scenarioConfiguration$simulationType <- "Population"
     }
 
     # Set read population from CSV
-    scenarioConfiguration$readPopulationFromCSV <- readPopulationFromCSV
+    scenarioConfiguration$readPopulationFromCSV <- readPopulationFromCSV[[i]]
 
     # Set parameter sheets
     if (!is.null(paramSheets)) {
-      scenarioConfiguration$addParamSheets(paramSheets)
+      # paramSheets can be a character vector for this scenario
+      scenarioParamSheets <- paramSheets[[i]]
+      if (
+        !is.null(scenarioParamSheets) &&
+          !is.na(scenarioParamSheets) &&
+          nchar(scenarioParamSheets) > 0
+      ) {
+        # Split by comma if it's a single string with multiple sheets
+        if (
+          is.character(scenarioParamSheets) && length(scenarioParamSheets) == 1
+        ) {
+          scenarioParamSheets <- trimws(strsplit(scenarioParamSheets, ",")[[1]])
+        }
+        scenarioConfiguration$addParamSheets(scenarioParamSheets)
+      }
     }
 
     # Extract and set application protocol
     if (!is.null(applicationProtocols)) {
-      if (length(applicationProtocols) == 1) {
-        protocolName <- applicationProtocols
-      } else if (length(applicationProtocols) == length(pkmlFilePaths)) {
-        protocolName <- applicationProtocols[[i]]
-      } else {
-        cli::cli_abort(c(
-          "Invalid applicationProtocols length:",
-          "x" = "applicationProtocols must have length 1 or same length as pkmlFilePaths",
-          "i" = "applicationProtocols has length {length(applicationProtocols)}, pkmlFilePaths has length {length(pkmlFilePaths)}"
-        ))
-      }
+      protocolName <- .sanitizeExcelSheetName(
+        applicationProtocols[[i]],
+        warn = TRUE
+      )
     } else {
       # Application protocol name is by default the name of the scenario
-      protocolName <- scenarioName
+      # Sanitize to ensure it's a valid Excel sheet name
+      protocolName <- .sanitizeExcelSheetName(scenarioName, warn = TRUE)
     }
 
     scenarioConfiguration$applicationProtocol <- protocolName
 
     # Extract and set output paths
     if (!is.null(outputPaths)) {
-      scenarioConfiguration$outputPaths <- outputPaths
+      # Handle different types of outputPaths structure
+      if (is.list(outputPaths)) {
+        # outputPaths is a list (named vectors case)
+        scenarioOutputPaths <- outputPaths[[i]]
+      } else {
+        # outputPaths is a regular vector (comma-separated strings case)
+        scenarioOutputPaths <- outputPaths[i]
+      }
+      if (
+        !is.null(scenarioOutputPaths) &&
+          !any(is.na(scenarioOutputPaths)) &&
+          all(nchar(scenarioOutputPaths) > 0)
+      ) {
+        # Split by comma if it's a single string with multiple paths
+        if (
+          is.character(scenarioOutputPaths) &&
+            length(scenarioOutputPaths) == 1 &&
+            is.null(names(scenarioOutputPaths))
+        ) {
+          scenarioOutputPaths <- trimws(strsplit(scenarioOutputPaths, ",")[[1]])
+        }
+        # Handle named vectors: preserve names if they exist
+        scenarioConfiguration$outputPaths <- scenarioOutputPaths
+      }
     } else {
       # Extract output paths from PKML
       if (!is.null(simulation$outputSelections$allOutputs)) {
@@ -585,8 +723,10 @@ createScenarioConfigurationsFromPKML <- function(
 
     # Extract and set simulation time
     if (!is.null(simulationTime)) {
-      scenarioConfiguration$simulationTime <- simulationTime
-      scenarioConfiguration$simulationTimeUnit <- simulationTimeUnit
+      scenarioConfiguration$simulationTime <- simulationTime[[i]]
+      if (!is.null(simulationTimeUnit)) {
+        scenarioConfiguration$simulationTimeUnit <- simulationTimeUnit[[i]]
+      }
     } else {
       # Extract simulation time from PKML
       if (!is.null(simulation$outputSchema$intervals)) {
@@ -597,11 +737,13 @@ createScenarioConfigurationsFromPKML <- function(
             # Get the unit from the first interval's start time
             firstInterval <- intervals[[1]]
             if (!is.null(firstInterval$startTime$displayUnit)) {
-              simulationTimeUnit <- firstInterval$startTime$displayUnit
+              scenarioSimulationTimeUnit <- firstInterval$startTime$displayUnit
             } else {
               # Fallback to minutes if no display unit found
-              simulationTimeUnit <- "min"
+              scenarioSimulationTimeUnit <- "min"
             }
+          } else {
+            scenarioSimulationTimeUnit <- simulationTimeUnit[[i]]
           }
 
           # Create time intervals string from all intervals
@@ -617,21 +759,21 @@ createScenarioConfigurationsFromPKML <- function(
             endTimeUnit <- interval$endTime$displayUnit
 
             # Convert to target units if different
-            if (startTimeUnit != simulationTimeUnit) {
+            if (startTimeUnit != scenarioSimulationTimeUnit) {
               startTimeDisplay <- ospsuite::toUnit(
                 quantityOrDimension = ospsuite::ospDimensions$Time,
                 values = startTime,
-                targetUnit = simulationTimeUnit
+                targetUnit = scenarioSimulationTimeUnit
               )
             } else {
               startTimeDisplay <- startTime
             }
 
-            if (endTimeUnit != simulationTimeUnit) {
+            if (endTimeUnit != scenarioSimulationTimeUnit) {
               endTimeDisplay <- ospsuite::toUnit(
                 quantityOrDimension = ospsuite::ospDimensions$Time,
                 values = endTime,
-                targetUnit = simulationTimeUnit
+                targetUnit = scenarioSimulationTimeUnit
               )
             } else {
               endTimeDisplay <- endTime
@@ -653,27 +795,32 @@ createScenarioConfigurationsFromPKML <- function(
               timeIntervals,
               collapse = "; "
             )
-            scenarioConfiguration$simulationTimeUnit <- simulationTimeUnit
+            scenarioConfiguration$simulationTimeUnit <- scenarioSimulationTimeUnit
           }
         }
       }
     }
 
     # Set steady state configuration
-    if (steadyState) {
+    if (steadyState[[i]]) {
       scenarioConfiguration$simulateSteadyState <- TRUE
       if (!is.null(steadyStateTime)) {
-        # Use default time unit if not provided
-        timeUnit <- if (is.null(steadyStateTimeUnit)) {
-          "min"
-        } else {
-          steadyStateTimeUnit
+        scenarioSteadyStateTime <- steadyStateTime[[i]]
+        if (
+          !is.null(scenarioSteadyStateTime) && !is.na(scenarioSteadyStateTime)
+        ) {
+          # Use default time unit if not provided
+          timeUnit <- if (is.null(steadyStateTimeUnit)) {
+            "min"
+          } else {
+            steadyStateTimeUnit[[i]]
+          }
+          scenarioConfiguration$steadyStateTime <- ospsuite::toBaseUnit(
+            quantityOrDimension = ospsuite::ospDimensions$Time,
+            values = scenarioSteadyStateTime,
+            unit = timeUnit
+          )
         }
-        scenarioConfiguration$steadyStateTime <- ospsuite::toBaseUnit(
-          quantityOrDimension = ospsuite::ospDimensions$Time,
-          values = steadyStateTime,
-          unit = timeUnit
-        )
       }
     }
 
@@ -709,6 +856,8 @@ createScenarioConfigurationsFromPKML <- function(
 #'   individual/population IDs, parameter sheets, application protocol, simulation time,
 #'   steady state settings, model file, and output path IDs.
 #' * **OutputPaths sheet**: Contains output path IDs and their corresponding paths.
+#'   When named vectors are used for `outputPaths` in scenario configurations, the names
+#'   will be used as OutputPathId values.
 #' * **Applications.xlsx**: Contains application protocol sheets with parameter definitions.
 #'
 #' The function handles parameter extraction from PKML files, excluding default parameters
@@ -779,6 +928,8 @@ addScenarioConfigurationsToExcel <- function(
   for (scenarioConfig in scenarioConfigurations) {
     protocolName <- scenarioConfig$applicationProtocol
     if (!is.null(protocolName) && !is.na(protocolName)) {
+      # Sanitize protocol name to ensure it's a valid Excel sheet name
+      protocolName <- .sanitizeExcelSheetName(protocolName)
       applicationsFile <- projectConfiguration$applicationsFile
 
       # Check if sheet already exists
@@ -849,7 +1000,8 @@ addScenarioConfigurationsToExcel <- function(
             exportParametersToXLS(
               parameters = constantApplicationParams,
               paramsXLSpath = applicationsFile,
-              sheet = protocolName
+              sheet = protocolName,
+              append = TRUE
             )
           } else {
             # If no parameters, create empty sheet with proper header
@@ -884,6 +1036,8 @@ addScenarioConfigurationsToExcel <- function(
               openxlsx::saveWorkbook(wb, applicationsFile)
             }
           }
+        } else {
+          cli::cli_abort("PKML {pkmlPath} file cannot be find.")
         }
       }
     }
@@ -941,14 +1095,28 @@ addScenarioConfigurationsToExcel <- function(
     stringsAsFactors = FALSE
   )
 
-  # Collect all output paths
+  # Collect all output paths with their names (if any)
   allOutputPaths <- character()
+  allOutputPathNames <- character()
   for (scenarioConfig in scenarioConfigurations) {
     if (!is.null(scenarioConfig$outputPaths)) {
-      allOutputPaths <- c(allOutputPaths, scenarioConfig$outputPaths)
+      paths <- scenarioConfig$outputPaths
+      names <- names(paths)
+
+      for (j in seq_along(paths)) {
+        path <- paths[j]
+        if (!path %in% allOutputPaths) {
+          allOutputPaths <- c(allOutputPaths, path)
+          # Use name as identifier if available, otherwise use the path itself as basis for ID
+          if (!is.null(names) && !is.na(names[j]) && nchar(names[j]) > 0) {
+            allOutputPathNames <- c(allOutputPathNames, names[j])
+          } else {
+            allOutputPathNames <- c(allOutputPathNames, NA_character_)
+          }
+        }
+      }
     }
   }
-  allOutputPaths <- unique(allOutputPaths)
 
   # Check if there are existing output paths in the Excel file
   existingOutputPaths <- NULL
@@ -970,6 +1138,7 @@ addScenarioConfigurationsToExcel <- function(
   outputPathIds <- character(length(allOutputPaths))
   for (i in seq_along(allOutputPaths)) {
     outputPath <- allOutputPaths[i]
+    outputPathName <- allOutputPathNames[i]
 
     # Check if this output path already exists in the Excel file
     if (!is.null(existingOutputPaths)) {
@@ -978,12 +1147,20 @@ addScenarioConfigurationsToExcel <- function(
         # Use existing ID
         outputPathIds[i] <- existingOutputPaths$OutputPathId[existingIdx[1]]
       } else {
-        # Generate new sequential ID
-        outputPathIds[i] <- paste0("OpP", i)
+        # Use name as ID if available, otherwise generate new sequential ID
+        if (!is.na(outputPathName)) {
+          outputPathIds[i] <- outputPathName
+        } else {
+          outputPathIds[i] <- paste0("OpP", i)
+        }
       }
     } else {
-      # No existing file, generate new sequential ID
-      outputPathIds[i] <- paste0("OpP", i)
+      # Use name as ID if available, otherwise generate new sequential ID
+      if (!is.na(outputPathName)) {
+        outputPathIds[i] <- outputPathName
+      } else {
+        outputPathIds[i] <- paste0("OpP", i)
+      }
     }
   }
 
@@ -1219,6 +1396,84 @@ addScenarioConfigurationsToExcel <- function(
   .writeExcel(data = scenariosList, path = projectConfiguration$scenariosFile)
 }
 
+#' Sanitize a string to be a valid Excel sheet name
+#'
+#' @param sheetName Character string. The proposed sheet name to sanitize.
+#' @param warn Logical. Whether to warn if the sheet name was modified. Default is TRUE.
+#'
+#' @details Sanitizes a string to comply with Excel sheet naming rules:
+#' * Must be 31 characters or less
+#' * Cannot contain any of these characters: / \ * [ ] : ?
+#' * Cannot be empty
+#' * Leading/trailing spaces are trimmed
+#' If the name becomes empty after sanitization, "Sheet" is used as default.
+#' If the name is too long, it's truncated and a suffix may be added to ensure uniqueness.
+#' If warn=TRUE and the name was modified, a warning is issued.
+#'
+#' @returns A valid Excel sheet name.
+#' @keywords internal
+.sanitizeExcelSheetName <- function(sheetName, warn = TRUE) {
+  if (is.null(sheetName) || is.na(sheetName)) {
+    return("Sheet")
+  }
+
+  # Store original name for comparison
+  originalName <- as.character(sheetName)
+
+  # Convert to character and trim spaces
+  sheetName <- trimws(originalName)
+
+  # If empty after trimming, use default
+  if (nchar(sheetName) == 0) {
+    if (warn && originalName != "Sheet") {
+      cli::cli_warn(c(
+        "Excel sheet name was empty or invalid:",
+        "i" = "Using default name 'Sheet'"
+      ))
+    }
+    return("Sheet")
+  }
+
+  # Remove invalid characters: / \ * [ ] : ?
+  sanitizedName <- sheetName
+  sanitizedName <- gsub("/", "_", sanitizedName) # Replace /
+  sanitizedName <- gsub("\\\\", "_", sanitizedName) # Replace \
+  sanitizedName <- gsub("\\*", "_", sanitizedName) # Replace *
+  sanitizedName <- gsub("\\[", "_", sanitizedName) # Replace [
+  sanitizedName <- gsub("\\]", "_", sanitizedName) # Replace ]
+  sanitizedName <- gsub(":", "_", sanitizedName) # Replace :
+  sanitizedName <- gsub("\\?", "_", sanitizedName) # Replace ?
+
+  # Trim to 31 characters maximum
+  if (nchar(sanitizedName) > 31) {
+    sanitizedName <- substr(sanitizedName, 1, 31)
+  }
+
+  # Final check - if still empty (unlikely), use default
+  if (nchar(trimws(sanitizedName)) == 0) {
+    if (warn) {
+      cli::cli_warn(c(
+        "Excel sheet name became empty after sanitization:",
+        "x" = "Original name: '{originalName}'",
+        "i" = "Using default name 'Sheet'"
+      ))
+    }
+    return("Sheet")
+  }
+
+  # Warn if the name was changed
+  if (warn && sanitizedName != originalName) {
+    cli::cli_warn(c(
+      "Excel sheet name was sanitized to comply with naming rules:",
+      "x" = "Original name: '{originalName}'",
+      "v" = "Sanitized name: '{sanitizedName}'",
+      "i" = "Excel sheet names must be 31 characters or less and cannot contain: / \\\\ * [ ] : ?"
+    ))
+  }
+
+  return(sanitizedName)
+}
+
 #' Format simulation time for Excel
 #'
 #' @param simulationTime List of numeric vectors. Simulation time intervals (as parsed by ScenarioConfiguration)
@@ -1242,4 +1497,170 @@ addScenarioConfigurationsToExcel <- function(
 
   # Combine all intervals with semicolon separator
   paste(intervalStrings, collapse = "; ")
+}
+
+
+#' Validate `ScenarioConfiguration` objects
+#'
+#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to validate.
+#'
+#' @details Validates that all scenario configurations are of the correct type
+#' and that population scenarios have a defined population ID. Throws an error
+#' if validation fails.
+#'
+#' @keywords internal
+.validateScenarioConfigurations <- function(scenarioConfigurations) {
+  validateIsOfType(scenarioConfigurations, "ScenarioConfiguration")
+
+  # Check if population is defined for each population scenario
+  for (scenarioConfiguration in scenarioConfigurations) {
+    if (
+      scenarioConfiguration$simulationType == "Population" &&
+        is.null(scenarioConfiguration$populationId)
+    ) {
+      stop(messages$noPopulationIdForPopulationScenario(
+        scenarioConfiguration$scenarioName
+      ))
+    }
+  }
+}
+
+#' Parse simulation time intervals from string format
+#'
+#' @param simulationTimeIntervalsString Character string. A string containing simulation time intervals
+#'   in the format "start1,end1,resolution1;start2,end2,resolution2;...".
+#'   Each interval consists of start time, end time, and resolution separated by commas,
+#'   and multiple intervals are separated by semicolons.
+#'
+#' @details Parses a string representation of simulation time intervals into a list
+#' of numeric vectors. Each vector contains three elements: start_time, end_time, resolution.
+#' The function validates that all values are numeric, positive, and that start times
+#' are less than end times.
+#'
+#' @returns A list of numeric vectors, each containing three elements representing
+#' start_time, end_time, resolution for each time interval. Returns `NULL` if
+#' the input string is `NULL`.
+#'
+#' @keywords internal
+.parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
+  # Check if the simulation time intervals are defined
+  if (is.null(simulationTimeIntervalsString)) {
+    return(NULL)
+  }
+
+  # Split the string by ';'
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervalsString,
+    split = ";",
+    fixed = TRUE
+  )[[1]]
+  # Split each interval by ','
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervals,
+    split = ",",
+    fixed = TRUE
+  )
+  # Convert to numeric
+  simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
+  # Validate that all are numeric
+  validateIsNumeric(simulationTimeIntervals)
+  # Validate that all are positive
+  if (any(unlist(simulationTimeIntervals) < 0)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  # Validate all intervals are of length 3
+  if (any(sapply(simulationTimeIntervals, length) != 3)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  # Validate all resolution entries are greater than 0
+  if (any(sapply(simulationTimeIntervals, function(x) x[3] <= 0))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  # Validate all start values are smaller than end values
+  if (any(sapply(simulationTimeIntervals, function(x) x[1] >= x[2]))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+
+  return(simulationTimeIntervals)
+}
+
+#' Get the number of scenarios to create based on vector arguments
+#'
+#' @param pkmlFilePaths Character vector of PKML file paths.
+#' @param ... Other vector arguments to check for length consistency.
+#'
+#' @details Determines the number of scenarios to create based on the length of vector
+#' arguments. All vector arguments with length > 1 must have the same length, which
+#' determines the final number of scenarios.
+#'
+#' @returns Integer number of scenarios to create.
+#' @keywords internal
+.getScenarioCount <- function(pkmlFilePaths, ...) {
+  args <- list(...)
+  all_args <- c(list(pkmlFilePaths = pkmlFilePaths), args)
+  lengths <- sapply(all_args, function(x) if (is.null(x)) 0 else length(x))
+
+  # Filter out NULL arguments (length 0)
+  valid_lengths <- lengths[lengths > 0]
+  # Get lengths > 1 (vectors that determine scenario count)
+  vector_lengths <- valid_lengths[valid_lengths > 1]
+
+  if (length(vector_lengths) == 0) {
+    # Case 1 & 2: No vectors with length > 1
+    # If pkmlFilePaths exists and has length 1, and all other args are length 1 or NULL
+    # Create exactly 1 scenario
+    pkml_length <- length(pkmlFilePaths)
+    if (pkml_length == 1) {
+      return(1) # Cases 1 & 2: Single scenario
+    } else {
+      # This shouldn't happen since pkmlFilePaths length > 1 would be in vector_lengths
+      return(pkml_length)
+    }
+  } else {
+    # Cases 3, 4, 5: At least one vector with length > 1
+    if (length(unique(vector_lengths)) == 1) {
+      # All vectors with length > 1 have the same length
+      return(vector_lengths[1])
+    } else {
+      # Inconsistent vector lengths
+      cli::cli_abort(c(
+        "Inconsistent vector argument lengths:",
+        "x" = "All vector arguments with length > 1 must have the same length",
+        "i" = "Found lengths: {paste(unique(vector_lengths), collapse = ', ')}"
+      ))
+    }
+  }
+}
+
+#' Recycle or validate vector arguments for scenario creation
+#'
+#' @param arg Vector argument to recycle or validate.
+#' @param argName Character string name of the argument for error messages.
+#' @param nScenarios Integer number of scenarios to create.
+#'
+#' @details Handles vector recycling for scenario parameters. Single values are
+#' recycled to all scenarios, vectors with the correct length are used as-is,
+#' and invalid lengths throw an error.
+#'
+#' @returns Vector with the correct length for all scenarios, or NULL if input was NULL.
+#' @keywords internal
+.recycleOrValidateVector <- function(arg, argName, nScenarios) {
+  if (is.null(arg)) {
+    return(NULL)
+  }
+
+  if (length(arg) == 1) {
+    # Recycle single value to all scenarios
+    return(rep(arg, nScenarios))
+  } else if (length(arg) == nScenarios) {
+    # Vector has same length as number of scenarios
+    return(arg)
+  } else {
+    # Invalid length
+    cli::cli_abort(c(
+      "Invalid argument length:",
+      "x" = "{argName} must have length 1 or same length as pkmlFilePaths",
+      "i" = "{argName} has length {length(arg)}, pkmlFilePaths has length {nScenarios}"
+    ))
+  }
 }

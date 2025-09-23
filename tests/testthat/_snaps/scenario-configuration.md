@@ -10,7 +10,7 @@
       mySC$removeParamSheets(NULL)
       mySC$addParamSheets(c("mySheet1", "mySheet2"))
       mySC$print(projectConfiguration = FALSE)
-    Message
+    Output
       <ScenarioConfiguration>
       
       -- Scenario configuration ------------------------------------------------------
