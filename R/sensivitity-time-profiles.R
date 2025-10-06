@@ -594,35 +594,6 @@ sensitivityTimeProfiles <- function(
   return(unitsConvertable)
 }
 
-#' Validate if unit is valid for any dimension in `ospUnits`
-#'
-#' Checks if a given unit is valid across all dimensions in `ospUnits`.
-#'
-#' @keywords internal
-#' @noRd
-.validateUnitInOspUnits <- function(unit, nullAllowed = FALSE) {
-  unitDimensions <- names(ospUnits)
-
-  for (dimension in unitDimensions) {
-    tryCatch(
-      {
-        ospsuite.utils::validateEnumValue(
-          unit,
-          ospUnits[[dimension]],
-          nullAllowed = nullAllowed
-        )
-        return(NULL)
-      },
-      error = function(e) {
-        # do nothing, continue to the next dimension
-      }
-    )
-  }
-
-  # error if unit is not valid in any dimension
-  stop(ospsuite.utils::messages$errorValueNotInEnum(ospUnits, unit))
-}
-
 #' Normalize units to match the length of outputPaths
 #'
 #' Validate and normalize the units to ensure they match the length of
@@ -635,7 +606,7 @@ sensitivityTimeProfiles <- function(
     return(rep(list(NULL), length(outputPaths)))
   }
   # validate if units are valid in any dimension
-  lapply(units, .validateUnitInOspUnits, TRUE)
+  lapply(units, ospsuite.utils::validateEnumValue(unit, ospUnits, nullAllowed = TRUE)
 
   # check the lengths and extend or add NULL
   if (length(units) == 1) {
