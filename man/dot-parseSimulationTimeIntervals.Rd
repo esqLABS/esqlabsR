@@ -14,7 +14,7 @@ and multiple intervals are separated by semicolons.}
 }
 \value{
 A list of numeric vectors, each containing three elements representing
-\link{start_time, end_time, resolution} for each time interval. Returns \code{NULL} if
+start_time, end_time, resolution for each time interval. Returns \code{NULL} if
 the input string is \code{NULL}.
 }
 \description{
@@ -22,7 +22,7 @@ Parse simulation time intervals from string format
 }
 \details{
 Parses a string representation of simulation time intervals into a list
-of numeric vectors. Each vector contains three elements: \link{start_time, end_time, resolution}.
+of numeric vectors. Each vector contains three elements: start_time, end_time, resolution.
 The function validates that all values are numeric, positive, and that start times
 are less than end times.
 }

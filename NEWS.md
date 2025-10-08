@@ -6,8 +6,12 @@
 
 ## Minor improvements and bug fixes
 
-- Improved `.validateCharVector()` to enforce atomic character vectors (#881).
-- Parenthesis in parameter sheet names are ignored, allowing separating sheet names with spaces (#883).
+- Enhanced `createScenarioConfigurationsFromPKML()` with vector argument support - all parameters now support named vectors and vector recycling for flexible scenario creation. (\#890)
+- Added support for named vectors in `outputPaths` parameter across scenario functions - names serve as aliases for output paths, e.g., `c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration in container")`. (\#890)
+- Added Excel append functionality to `exportParametersToXLS()` - new `append` parameter allows adding parameters to existing Excel files without overwriting. (\#890)
+- Added Excel sheet name sanitization for application protocols - protocol names are automatically sanitized to comply with Excel naming rules, removing invalid characters and truncating long names. (\#890)
+- Improved `.validateCharVector()` to enforce atomic character vectors (\#881).
+- Parenthesis in parameter sheet names are ignored, allowing separating sheet names with spaces (\#883).
 
 # esqlabsR 5.5.0
 
