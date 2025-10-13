@@ -146,12 +146,12 @@ test_that("sensitivityTimeProfiles errors on invalid units", {
   # invalid unit
   expect_error(
     sensitivityTimeProfiles(results, yUnits = list("mol/kg")),
-    regexp = "is not in defined enumeration values"
+    regexp = "is not a valid"
   )
   # invalid x-axis unit
   expect_error(
     sensitivityTimeProfiles(results, xUnits = list("mol/l")),
-    regexp = "is not in defined enumeration values"
+    regexp = "is not a valid"
   )
 })
 
