@@ -1,5 +1,5 @@
 ---
-output: 
+output:
   github_document:
     df_print: "kable"
 ---
@@ -22,25 +22,23 @@ library(dplyr)
 # esqlabsR <a href="https://esqlabs.github.io/esqlabsR/"><img src="man/figures/logo.png" align="right" height="139" alt="esqlabsR website" /></a>
 
 <!-- badges: start -->
-[![](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/main-workflow.yaml?branch=main&label=Build
-)](https://github.com/esqlabs/esqlabsR/actions/workflows/main-workflow.yaml)
+
+[![](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/main-workflow.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/main-workflow.yaml)
 [![Codecov test coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
+
 <!-- badges: end -->
 
-
-The `{esqlabsR}` package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS).  
+The `{esqlabsR}` package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS).
 
 The `{esqlabsR}` package is designed for PBK modelers who use the OSPS suite. By using this package, you can streamline your modeling and simulation (M&S) workflow and ensure standardized and reproducible practices.
 
 The package provides functions to:
 
-  - Design, import and run Simulations,
-  - Generate standardized plots and other reporting materials,
-  - Interact with the OSPS features using simple Excel files.
+- Design, import and run Simulations,
+- Generate standardized plots and other reporting materials,
+- Interact with the OSPS features using simple Excel files.
 
-
-To get started with the esqlabsR package, please follow the [Get Started tutorial](articles/esqlabsR.html).
-
+To get started with the esqlabsR package, please follow the [Get Started tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
 
 ## Installation
 
@@ -56,7 +54,6 @@ To get started with the esqlabsR package, please follow the [Get Started tutoria
 ### Install the package
 
 You can install the package by running:
-
 
 ```{r, eval=FALSE}
 install.packages("pak")
@@ -85,7 +82,7 @@ You can start with the "Get Started" vignette: `vignette("esqlabsR")`.
 esqlabsR::initProject()
 ```
 
-This will create the required folder structure and files for your project in the 
+This will create the required folder structure and files for your project in the
 working directory from where you run the command.
 
 Below is a simple example of how to work with the package:
@@ -176,7 +173,7 @@ plots$Aciclovir
 
 You can find more information on specific topics in dedicated vignettes:
 
-  - Start with `vignette("workflow-overview")` to learn about the esqlabsR's streamlined workflow.
+- Start with `vignette("workflow-overview")` to learn about the esqlabsR's streamlined workflow.
 - `vignette("project-structure")` details the structure and purpose of each component file and directory of an esqlabsR project.
 - `vignette("design-scenarios")` explains how you can design your own simulations only using excel files.
 - `vignette("run-simulations")` describes all you need to know to run your customized simulations.
@@ -185,18 +182,16 @@ You can find more information on specific topics in dedicated vignettes:
 ## Related Work
 
 `{esqlabsR}` relies on the following Open Systems Pharmacology R packages:
-  
-  - [rSharp](https://github.com/Open-Systems-Pharmacology/rSharp/)
-  - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
-  - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
-  - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
 
+- [rSharp](https://github.com/Open-Systems-Pharmacology/rSharp/)
+- [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
+- [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
+- [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
 
 ## Contributing
 
 - Follow the OSPS-R [coding standards](https://dev.open-systems-pharmacology.org/r-development-resources/coding_standards_r).
 - Our contribution guide can be found [here](https://dev.open-systems-pharmacology.org/r-development-resources/collaboration_guide).
-
 
 ## Code of Conduct
 

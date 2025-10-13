@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 ## Introduction
 
 This vignette builds on the **aciclovir** example presented in the
-[Sensitivity Analysis](./esqlabsR-sensitivity.html) vignette, which
+[Sensitivity Analysis](https://esqlabs.github.io/esqlabsR/articles/sensitivity.html) vignette, which
 demonstrated the standard workflow and default plotting functions
 available in `{esqlabsR}`.
 
@@ -37,7 +37,7 @@ standard `{ggplot2}` or `{patchwork}` operations.
 
 ## Setup and Running the Sensitivity Analysis
 
-Before applying this configuration, let’s first run a sensitivity
+Before applying this configuration, let's first run a sensitivity
 analysis using the aciclovir example:
 
 ```{r analysis, message=FALSE, warning=FALSE}
@@ -60,8 +60,8 @@ namedParameterPaths <- c(
 )
 
 analysis <- sensitivityCalculation(
-  simulation, 
-  outputPaths, 
+  simulation,
+  outputPaths,
   namedParameterPaths
 )
 ```
@@ -71,28 +71,28 @@ analysis <- sensitivityCalculation(
 The `{esqlabsR}` package provides three plotting functions to visualize
 sensitivity analysis results:
 
--   **`sensitivitySpiderPlot()`**: Creates spider plots for sensitivity
-    calculation. Each plot shows how a set of PK parameters for a given
-    output responds to changes in model parameters. The x-axis
-    represents the parameter values (absolute or relative), and the
-    y-axis shows the resulting PK changes.
+- **`sensitivitySpiderPlot()`**: Creates spider plots for sensitivity
+  calculation. Each plot shows how a set of PK parameters for a given
+  output responds to changes in model parameters. The x-axis
+  represents the parameter values (absolute or relative), and the
+  y-axis shows the resulting PK changes.
 
--   **`sensitivityTimeProfiles()`**: Creates time profiles for selected
-    outputs generated in a sensitivity analysis. Each plot illustrates
-    the dynamic response of model outputs over time in reaction to
-    parameter variations.
+- **`sensitivityTimeProfiles()`**: Creates time profiles for selected
+  outputs generated in a sensitivity analysis. Each plot illustrates
+  the dynamic response of model outputs over time in reaction to
+  parameter variations.
 
--   **`sensitivityTornadoPlot()`**: Generates tornado plots to visualize
-    the effect of modifying parameters by a specific scaling factor and
-    its reciprocal. Each plot highlights the impact of parameter changes
-    on PK results for a selected output.
+- **`sensitivityTornadoPlot()`**: Generates tornado plots to visualize
+  the effect of modifying parameters by a specific scaling factor and
+  its reciprocal. Each plot highlights the impact of parameter changes
+  on PK results for a selected output.
 
 More detailed information on function signatures and examples can be
 found in:
 
--   [`sensitivitySpiderPlot()`](https://esqlabs.github.io/esqlabsR/reference/sensitivitySpiderPlot.html)
--   [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html)
--   [`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/reference/sensitivityTornadoPlot.html)
+- [`sensitivitySpiderPlot()`](https://esqlabs.github.io/esqlabsR/reference/sensitivitySpiderPlot.html)
+- [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html)
+- [`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/reference/sensitivityTornadoPlot.html)
 
 ## Customizing Plots with `defaultPlotConfiguration`
 
@@ -110,31 +110,30 @@ subset of options depending on the visual structure of the plot.
 The table below summarizes which configuration options are supported by
 each plot type:
 
-| Configuration Option | Spider Plot | Time Profiles | Tornado Plot | Description |
-|---------------|---------------|---------------|---------------|---------------|
-| `legendPosition` | ✔️ | ✔️ | ✔️ | Position of the legend on the plot |
-| `legendTitle` | ✔️ | ✔️ | ✔️ | Title displayed for the legend |
-| `linesAlpha` | ✔️ | ✔️ |  | Transparency of line elements |
-| `linesColor` | ✔️ | ✔️ | ✔️ | Color of lines (or bars for tornado) |
-| `linesSize` | ✔️ | ✔️ |  | Thickness of line elements |
-| `pointsShape` | ✔️ | ✔️ |  | Shape of data points |
-| `pointsSize` | ✔️ |  |  | Size of data points |
-| `title` | ✔️ | ✔️ | ✔️ | Main title of the plot |
-| `titleSize` | ✔️ | ✔️ | ✔️ | Font size of the title |
-| `subtitle` | ✔️ |  | ✔️ | Subtitle text below the title |
-| `xAxisScale` | ✔️ | ✔️ |  | X-axis scale type ("log", "lin") |
-| `xLabel` | ✔️ | ✔️ | ✔️ | Label for the x-axis |
-| `xValuesLimits` | ✔️ |  |  | Limits for x-values |
-| `yAxisScale` | ✔️ | ✔️ |  | Y-axis scale type ("log", "lin") |
-| `yAxisTicks` | ✔️ |  |  | Number of ticks on y-axis |
-| `yAxisLimits` | ✔️ |  |  | Y-axis limits |
-| `yValuesLimits` | ✔️ |  |  | Limits for y-values |
-| `yLabel` | ✔️ | ✔️ | ✔️ | Label for the y-axis |
+| Configuration Option | Spider Plot | Time Profiles | Tornado Plot | Description                          |
+| -------------------- | ----------- | ------------- | ------------ | ------------------------------------ |
+| `legendPosition`     | ✔️          | ✔️            | ✔️           | Position of the legend on the plot   |
+| `legendTitle`        | ✔️          | ✔️            | ✔️           | Title displayed for the legend       |
+| `linesAlpha`         | ✔️          | ✔️            |              | Transparency of line elements        |
+| `linesColor`         | ✔️          | ✔️            | ✔️           | Color of lines (or bars for tornado) |
+| `linesSize`          | ✔️          | ✔️            |              | Thickness of line elements           |
+| `pointsShape`        | ✔️          | ✔️            |              | Shape of data points                 |
+| `pointsSize`         | ✔️          |               |              | Size of data points                  |
+| `title`              | ✔️          | ✔️            | ✔️           | Main title of the plot               |
+| `titleSize`          | ✔️          | ✔️            | ✔️           | Font size of the title               |
+| `subtitle`           | ✔️          |               | ✔️           | Subtitle text below the title        |
+| `xAxisScale`         | ✔️          | ✔️            |              | X-axis scale type ("log", "lin")     |
+| `xLabel`             | ✔️          | ✔️            | ✔️           | Label for the x-axis                 |
+| `xValuesLimits`      | ✔️          |               |              | Limits for x-values                  |
+| `yAxisScale`         | ✔️          | ✔️            |              | Y-axis scale type ("log", "lin")     |
+| `yAxisTicks`         | ✔️          |               |              | Number of ticks on y-axis            |
+| `yAxisLimits`        | ✔️          |               |              | Y-axis limits                        |
+| `yValuesLimits`      | ✔️          |               |              | Limits for y-values                  |
+| `yLabel`             | ✔️          | ✔️            | ✔️           | Label for the y-axis                 |
 
-**Note:** `defaultPlotConfiguration` follows ggplot2-style aesthetics (e.g., `legendPosition`, `linesColor`, `pointsShape`). The sensitivity plotting 
-functions apply the fields shown in this vignette; other fields have no effect 
+**Note:** `defaultPlotConfiguration` follows ggplot2-style aesthetics (e.g., `legendPosition`, `linesColor`, `pointsShape`). The sensitivity plotting
+functions apply the fields shown in this vignette; other fields have no effect
 here. For a broader catalog and default values, see the `PlotConfiguration` [reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotConfiguration.html) and the [vignette](https://www.open-systems-pharmacology.org/TLF-Library/articles/plot-configuration.html).
-
 
 ### Example - create and apply configuration
 
@@ -154,7 +153,7 @@ You can then pass this object to any sensitivity plotting function:
 
 ```{r spider-plot-config, fig.width=7, fig.height=4}
 sensitivitySpiderPlot(
-  sensitivityCalculation = analysis, 
+  sensitivityCalculation = analysis,
   defaultPlotConfiguration = myConfiguration
 )
 ```
@@ -171,8 +170,8 @@ explicitly.
 
 Examples include:
 
--   `xAxisScale` and `yAxisScale` in `sensitivityTimeProfiles()`\
--   `xAxisType` and `yAxisType` in `sensitivitySpiderPlot()`
+- `xAxisScale` and `yAxisScale` in `sensitivityTimeProfiles()`\
+- `xAxisType` and `yAxisType` in `sensitivitySpiderPlot()`
 
 When specified, these arguments **override** the corresponding values in
 the `defaultPlotConfiguration` object. This provides a convenient way to
@@ -189,11 +188,11 @@ myConfiguration <- createEsqlabsPlotConfiguration()
 myConfiguration$linesColor <- c("#d8b365", "#5ab4ac")
 myConfiguration$subtitle <- "Customized Plot"
 
-myConfiguration$yAxisScale <- "log" 
+myConfiguration$yAxisScale <- "log"
 
 sensitivityTimeProfiles(
-  sensitivityCalculation = analysis, 
-  yAxisScale = "lin", 
+  sensitivityCalculation = analysis,
+  yAxisScale = "lin",
   defaultPlotConfiguration = myConfiguration
 )
 ```
@@ -210,8 +209,8 @@ Each plotting function returns a **list of `patchwork` objects**, with
 one entry per output path. A `patchwork` object is a composite layout of
 individual `ggplot2` plots, allowing you to:
 
--   Apply global changes to all subplots using the `&` operator
--   Access and modify individual subplots
+- Apply global changes to all subplots using the `&` operator
+- Access and modify individual subplots
 
 This flexibility makes post-processing straightforward. For example,
 modifying a spider plot after creation:
@@ -221,7 +220,7 @@ library(ggplot2)
 library(patchwork)
 
 spiderPlots <- sensitivitySpiderPlot(
-  sensitivityCalculation = analysis, 
+  sensitivityCalculation = analysis,
   pkParameters = c("AUC_inf", "C_max")
 )
 
@@ -229,7 +228,7 @@ spiderPlots <- sensitivitySpiderPlot(
 spiderPlot <- spiderPlots[[outputPaths["Aciclovir_PVB"]]]
 
 # Modify plot using `patchwork` and `ggplot2` functions
-spiderPlot & 
+spiderPlot &
   theme(legend.position = "top") &                      # Place legend above the plot
   guides(col = guide_legend(ncol = 2)) &                # Display legend entries in two columns
   scale_color_manual(values = c("#66a61e", "#d95f02")) &# Use custom colors for lines
@@ -243,14 +242,14 @@ analysis plots in `{esqlabsR}` using the Aciclovir example.
 
 Key takeaways:
 
--   Use `createEsqlabsPlotConfiguration()` to define and reuse plot
-    styling across spider, tornado, and time profile plots.
--   Apply direct function arguments (e.g., `yAxisScale`) to override
-    configuration values for one-off adjustments.
--   Access and post-process plots using standard `{ggplot2}` and
-    `{patchwork}` methods for full flexibility.
--   Named `parameterPaths` automatically control facet labels in plots,
-    improving clarity.
+- Use `createEsqlabsPlotConfiguration()` to define and reuse plot
+  styling across spider, tornado, and time profile plots.
+- Apply direct function arguments (e.g., `yAxisScale`) to override
+  configuration values for one-off adjustments.
+- Access and post-process plots using standard `{ggplot2}` and
+  `{patchwork}` methods for full flexibility.
+- Named `parameterPaths` automatically control facet labels in plots,
+  improving clarity.
 
 For consistent, high-quality plots: - Keep a reusable
 `defaultPlotConfiguration` object with your preferred style. - Use
