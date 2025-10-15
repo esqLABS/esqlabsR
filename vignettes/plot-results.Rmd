@@ -23,13 +23,11 @@ defaultClassAttributes <- c("initialize", "clone", "print", ".__enclos_env__")
 library(esqlabsR)
 ```
 
-
 Plotting the simulation results is an integral part of model diagnostics and
 quality control. `{esqlabsR}` implements an excel-based [Plotting
 Workflow](#plotting-workflow) for figure creation directly from simulated
 scenarios. It is also possible to use `{esqlabsR}`'s functions to [plot using R
 code](#plotting-with-code).
-
 
 ## Plotting Workflow
 
@@ -103,7 +101,6 @@ For properties that accept a list of values (e.g. `xAxisLimits`), the values
 should be separated by a `,`. If an entry itself contains a `,`, enclose it
 between parenthesis.
 
-
 ### Drawing Plots
 
 `plotGrids` are the objects that will be used to draw the plots. They are
@@ -116,11 +113,10 @@ combine in the plotIDs column, separated by a `,`.
 To customize the plotGrid, the user can add all the necessary columns that are
 defined in the `PlotGridConfiguration` class. Here is a sample of the available:
 
-```{r, echo=FALSE}	
+```{r, echo=FALSE}
 pgc <- PlotGridConfiguration$new()
 names(pgc)[!(names(pgc) %in% defaultClassAttributes)][1:15]
 ```
-
 
 ### Export Plots
 
@@ -130,13 +126,12 @@ plotGridName column. Then, the output file name must be specified in the
 outputName column. The output format can be customize using the properties
 listed in the `ExportConfiguration` class. Here is a sample of the available:
 
-```{r, echo=FALSE}  
+```{r, echo=FALSE}
 ec <- ExportConfiguration$new()
 names(ec)[!(names(ec) %in% defaultClassAttributes)][1:5]
 ```
 
 ### Plotting Workflow Example
-
 
 #### Example Scenario
 
@@ -163,15 +158,15 @@ dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
 ```
 
-
 #### Setup the `Plot.xlsx` file
+
 Then, the `Plot.xlsx` file is setup to define the `DataCombined`, customize
 plots, specify plotGrids and export options. The `Plot.xlsx` file used in this
 example can be found
-[here](https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/examples/TestProject/Parameters/Plots.xlsx).
-
+[here](https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/examples/TestProject/Configurations/Plots.xlsx).
 
 #### Use `createPlotsFromExcel()`
+
 In the next step, the user calls the function `createPlotsFromExcel()`, passing
 the generated data:
 
@@ -191,7 +186,6 @@ the names of the plot grids:
 names(plots)
 ```
 
-
 ```{r}
 plots$Aciclovir
 ```
@@ -200,7 +194,7 @@ plots$Aciclovir
 plots$Aciclovir2
 ```
 
-Also, calling this function will export the plots as image files if the 
+Also, calling this function will export the plots as image files if the
 exportConfiguration sheet is setup correctly.
 
 By default, the function will try to create all plots defined in the
@@ -212,9 +206,9 @@ also specify which plots to create with the `plotGridNames` argument.
 
 #### Extract `DataCombined` required for plotting and calculate residuals
 
-The `createPlotsFromExcel()` function automatically creates all `DataCombined` 
-required for the specified plots. In some cases it is usefull to get the `DataCombined` 
-objects before plotting. E.g., you could calculate the residuals between all 
+The `createPlotsFromExcel()` function automatically creates all `DataCombined`
+required for the specified plots. In some cases it is usefull to get the `DataCombined`
+objects before plotting. E.g., you could calculate the residuals between all
 groups defined in the `DataCombined` (see [`{ospsuite}` documentation](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations) for more details), or modify the `DataCombined` before using them
 for plotting. To do so, you can use the `createDataCombinedFromExcel()` function:
 
@@ -242,7 +236,7 @@ print(paste0("The sum of linear residuals for is ", sumResiduals))
 ```
 
 You can modify the created `DataCombined`, e.g., by changing the offsets, and pass
-them to the `createPlotsFromExcel` function: 
+them to the `createPlotsFromExcel` function:
 
 ```{r}
 # Change the offset of the first group
@@ -265,7 +259,6 @@ this situation, using the `Plots.xlsx` file is not necessary. Instead, the user
 can directly use `{esqlabsR}`'s and `{ospsuite}`'s plotting functions to create
 the desired plot while preserving the `{esqlabsR}` theme.
 
-
 ### Basics of figure creation with `{ospsuite}`
 
 Simulated modeling scenarios can be passed to plotting functions from the
@@ -276,7 +269,6 @@ class](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-co
 article. The article [Visualizations with
 `DataCombined`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/data-combined-plotting.html)
 covers the basics of creating supported plot types and how to customize them.
-
 
 ### Using esqlabsR
 
@@ -302,7 +294,6 @@ simulatedScenarios <- runScenarios(
 dataSheets <- "Laskin 1982.Group A"
 observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
 ```
-
 
 For the following steps, no `Plots.xlsx` file is needed. Instead, we will use
 the `DataCombined` class to store the simulated and observed data, use the
@@ -333,29 +324,28 @@ dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
 )
 ```
 
-
 You can also return the `DataCombined` objects defined in the `DataCombined`
 sheet with the function `createDataCombinedFromExcel()`, read (this
-section)[\#specify-a-datacombined] for more information.
-
+section)[#specify-a-datacombined] for more information.
 
 #### Customize and generate plots
 
 Customization of the generated figures - specifying title, axes ranges, axes
-units, the position of the legend, etc., are done through *plot configurations*
+units, the position of the legend, etc., are done through _plot configurations_
+
 - objects of the class
-[`DefaultPlotConfiguration`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html).
-To combine multiple plots into a multi-panel figure, create a
-`PlotGridConfiguration` object, add plots to it, and plot with the `plotGrid()`
-method. Finally, to export a plot to a file (e.g., `PNG` or `PDF`), use an
-`ExportConfiguration` object.
+  [`DefaultPlotConfiguration`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html).
+  To combine multiple plots into a multi-panel figure, create a
+  `PlotGridConfiguration` object, add plots to it, and plot with the `plotGrid()`
+  method. Finally, to export a plot to a file (e.g., `PNG` or `PDF`), use an
+  `ExportConfiguration` object.
 
 To use configurations with a similar look and feel in the different `esqLABS`
 projects, create the configurations using the following functions:
 
-  - [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html)
-  - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html)
-  - [`createEsqlabsExportConfiguration(projectConfiguration)`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html)
+- [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html)
+- [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html)
+- [`createEsqlabsExportConfiguration(projectConfiguration)`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html)
 
 For the list of supported properties of the `PlotGirdConfiguration`, refer to
 the
@@ -397,7 +387,6 @@ exportConfig <- createEsqlabsExportConfiguration(projectConfiguration$outputFold
 exportConfig$savePlot(gridPlot, fileName = "All plots.png")
 ```
 
-
 By default, the height of the output figure is calculated from the
 number of rows in the multi-panel plot and the height defined in
 `ExportConfiguration$heightPerRow`. If you want to define a fixed height
@@ -437,34 +426,33 @@ The function loads the data from the file
 `DataSet`objects. The resulting object can be used to plot results to
 compare simulated and observed data.
 
-
 ## Troubleshooting
 
-  - At any time, you can check the groups assigned to the datasets in the
-    `DataCombined` object by calling the
-    `DataCombined$groupMap` or
-    by examining the output of `dataCombined$toDataFrame()`.
+- At any time, you can check the groups assigned to the datasets in the
+  `DataCombined` object by calling the
+  `DataCombined$groupMap` or
+  by examining the output of `dataCombined$toDataFrame()`.
 
 More detailed information on function signatures can be found in the following:
 
-  - `ospsuite` documentation on:
-      - [loadDataImporterConfiguration()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html)
-      - [DataImporterConfiguration
-        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataImporterConfiguration.html)
-      - [createImporterConfigurationForFile()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/createImporterConfigurationForFile.html)
-      - [DataSet
-        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
-      - [dataSetToDataFrame()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/dataSetToDataFrame.html)
-      - [loadDataSetsFromExcel()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html)
-      - [loadDataSetFromPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetFromPKML.html)
-      - [saveDataSetToPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/saveDataSetToPKML.html)
-      - [`DataCombined`
-        class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html)
-      - [`plotIndividualTimeProfile()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html)
-      - [`plotObservedVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html)
-      - [`plotResidualsVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html)
-      - [`plotResidualsVsTime()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html)
-  - `tlf` documentation on:
-      - [`PlotGridConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
-      - [`plotGrid()`](https://www.open-systems-pharmacology.org/TLF-Library/reference/plotGrid.html)
-      - [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
+- `ospsuite` documentation on:
+  - [loadDataImporterConfiguration()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html)
+  - [DataImporterConfiguration
+    class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataImporterConfiguration.html)
+  - [createImporterConfigurationForFile()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/createImporterConfigurationForFile.html)
+  - [DataSet
+    class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
+  - [dataSetToDataFrame()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/dataSetToDataFrame.html)
+  - [loadDataSetsFromExcel()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html)
+  - [loadDataSetFromPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetFromPKML.html)
+  - [saveDataSetToPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/saveDataSetToPKML.html)
+  - [`DataCombined`
+    class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html)
+  - [`plotIndividualTimeProfile()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html)
+  - [`plotObservedVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html)
+  - [`plotResidualsVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html)
+  - [`plotResidualsVsTime()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html)
+- `tlf` documentation on:
+  - [`PlotGridConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
+  - [`plotGrid()`](https://www.open-systems-pharmacology.org/TLF-Library/reference/plotGrid.html)
+  - [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
