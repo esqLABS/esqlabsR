@@ -28,7 +28,7 @@ The package provides functions to:
 - Interact with the OSPS features using simple Excel files.
 
 To get started with the esqlabsR package, please follow the [Get Started
-tutorial](./articles/esqlabsR.html).
+tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
 
 ## Installation
 
