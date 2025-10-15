@@ -32,7 +32,7 @@ jobs:
   lychee-link-check:
     if: ${{ !cancelled() }}
     needs: [bump-dev-version]
-    uses:  Open-Systems-Pharmacology/Workflows/.github/workflows/Check_URLs.yml@main  
+    uses:  Open-Systems-Pharmacology/Workflows/.github/workflows/Check_URLs.yml@main
 
   pkgdown:
     if: ${{ !cancelled() }}
