@@ -1,4 +1,3 @@
-
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 # esqlabsR <a href="https://esqlabs.github.io/esqlabsR/"><img src="man/figures/logo.png" align="right" height="139" alt="esqlabsR website" /></a>
@@ -8,6 +7,7 @@
 [![](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/main-workflow.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/main-workflow.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
+
 <!-- badges: end -->
 
 The `{esqlabsR}` package facilitates and standardizes the modeling and
@@ -28,7 +28,7 @@ The package provides functions to:
 - Interact with the OSPS features using simple Excel files.
 
 To get started with the esqlabsR package, please follow the [Get Started
-tutorial](articles/esqlabsR.html).
+tutorial](./articles/esqlabsR.html).
 
 ## Installation
 
@@ -45,7 +45,7 @@ tutorial](articles/esqlabsR.html).
 
 You can install the package by running:
 
-``` r
+```r
 install.packages("pak")
 pak::pak("esqLABS/esqlabsR@*release")
 ```
@@ -53,7 +53,7 @@ pak::pak("esqLABS/esqlabsR@*release")
 The latest development version of the package can also be installed
 with:
 
-``` r
+```r
 pak::pak("esqLABS/esqlabsR")
 ```
 
@@ -67,7 +67,7 @@ You can start with the “Get Started” vignette: `vignette("esqlabsR")`.
 `{esqlabsR}` workflows require a specific project structure. You can
 initialize a new project by running:
 
-``` r
+```r
 esqlabsR::initProject()
 ```
 
@@ -76,7 +76,7 @@ project in the working directory from where you run the command.
 
 Below is a simple example of how to work with the package:
 
-``` r
+```r
 # load esqlabsR
 library(esqlabsR)
 
@@ -141,7 +141,7 @@ simulatedScenariosResults <- runScenarios(
     projectConfiguration = myProjectConfiguration,
     sheets = dataSheets
   )
-  
+
   ########## Create figures defined in the Plots.xlsx file########
   plots <- createPlotsFromExcel(
     plotGridNames = c("Aciclovir",
@@ -152,7 +152,7 @@ simulatedScenariosResults <- runScenarios(
     outputFolder = outputFolder,
     stopIfNotFound = TRUE
   )
-  
+
   plots$Aciclovir
 ```
 
