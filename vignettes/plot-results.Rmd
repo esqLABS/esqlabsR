@@ -326,7 +326,7 @@ dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
 
 You can also return the `DataCombined` objects defined in the `DataCombined`
 sheet with the function `createDataCombinedFromExcel()`, read (this
-section)[\#specify-a-datacombined] for more information.
+section)[#specify-a-datacombined] for more information.
 
 #### Customize and generate plots
 
