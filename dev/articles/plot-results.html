@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9005</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9006</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -229,7 +229,7 @@ corresponding observed data.</p>
 <p>Then, the <code>Plot.xlsx</code> file is setup to define the
 <code>DataCombined</code>, customize plots, specify plotGrids and export
 options. The <code>Plot.xlsx</code> file used in this example can be
-found <a href="https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/examples/TestProject/Parameters/Plots.xlsx" class="external-link">here</a>.</p>
+found <a href="https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/examples/TestProject/Configurations/Plots.xlsx" class="external-link">here</a>.</p>
 </div>
 <div class="section level4">
 <h4 id="use-createplotsfromexcel">Use <code>createPlotsFromExcel()</code><a class="anchor" aria-label="anchor" href="#use-createplotsfromexcel"></a>
@@ -307,7 +307,7 @@ can use the <code><a href="../reference/createDataCombinedFromExcel.html">create
 <span><span class="va">sumResiduals</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">residuals</span><span class="op">$</span><span class="va">residualValues</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"The sum of linear residuals for is "</span>, <span class="va">sumResiduals</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "The sum of linear residuals for is 47.1767330613814"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "The sum of linear residuals for is 47.1989766645941"</span></span></code></pre></div>
 <p>You can modify the created <code>DataCombined</code>, e.g., by
 changing the offsets, and pass them to the
 <code>createPlotsFromExcel</code> function:</p>
@@ -407,12 +407,15 @@ section)[#specify-a-datacombined] for more information.</p>
 </h4>
 <p>Customization of the generated figures - specifying title, axes
 ranges, axes units, the position of the legend, etc., are done through
-<em>plot configurations</em> - objects of the class <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html" class="external-link"><code>DefaultPlotConfiguration</code></a>.
+<em>plot configurations</em></p>
+<ul>
+<li>objects of the class <a href="https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html" class="external-link"><code>DefaultPlotConfiguration</code></a>.
 To combine multiple plots into a multi-panel figure, create a
 <code>PlotGridConfiguration</code> object, add plots to it, and plot
 with the <code><a href="https://rdrr.io/pkg/tlf/man/plotGrid.html" class="external-link">plotGrid()</a></code> method. Finally, to export a plot to a
 file (e.g., <code>PNG</code> or <code>PDF</code>), use an
-<code>ExportConfiguration</code> object.</p>
+<code>ExportConfiguration</code> object.</li>
+</ul>
 <p>To use configurations with a similar look and feel in the different
 <code>esqLABS</code> projects, create the configurations using the
 following functions:</p>
