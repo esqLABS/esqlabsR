@@ -9,7 +9,7 @@
       [3] "Organism|Kidney|GFR"                                                      
       
       $values
-      [1] 0.0000000 0.0000000 0.1198664
+      [1] 0.0000 0.0000 0.1199
       
 
 # extendPopulationFromXLS works
@@ -24,7 +24,7 @@
       [4] "Organism|Kidney|eGFR"                                                     
       
       $values
-      [1] 0.0000000 0.0000000 0.1198664 0.1186738
+      [1] 0.0000 0.0000 0.1199 0.1187
       
 
 # extendPopulationFromXLS throws an error if specified sheet is empty or data is missing

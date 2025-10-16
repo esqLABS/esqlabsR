@@ -30,14 +30,9 @@ results <- sensitivityCalculation(
 )
 
 # load observed data
-filePath <- testthat::test_path("../data/AciclovirLaskinData.xlsx")
-dataConfiguration <- createImporterConfigurationForFile(filePath = filePath)
-dataConfiguration$sheets <- "Laskin 1982.Group A"
-dataConfiguration$namingPattern <- "{Source}.{Sheet}"
-obsData <<- loadDataSetsFromExcel(
-  xlsFilePath = filePath,
-  importerConfigurationOrPath = dataConfiguration
-)
+obsData <- ospsuite::loadDataSetFromPKML(testthat::test_path(
+  "../data/ObsDataAciclovir_3.pkml"
+))
 
 # Validate plotting arguments ---------------------------------------------
 
@@ -116,7 +111,7 @@ test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
 
 test_that("sensitivityTimeProfiles works with observed data", {
   set.seed(123)
-  p <- sensitivityTimeProfiles(results, observedData = obsData[[1]])
+  p <- sensitivityTimeProfiles(results, observedData = obsData)
 
   set.seed(123)
   suppressWarnings(
