@@ -47,6 +47,7 @@ Suggests:
     clipr,
     covr,
     devtools,
+    desc,
     knitr,
     openxlsx,
     reactable,
