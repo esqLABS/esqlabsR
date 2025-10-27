@@ -388,11 +388,11 @@ messages$errorDataCombinedListMustBeList <- function(type) {
 messages$sensitivityAnalysisSimulationFailure <- function(
     parameterPath,
     parameterFactor) {
-  glue::glue(
+  cat(glue::glue(
     "Simulation for `{parameterPath}`\n
     with variation factor `{parameterFactor}` failed!\n
     The results will not be included in the sensitivity calculation.\n"
-  )
+  ), "\n")
 }
 
 messages$invalidCustomFunctionParameters <- function(providedParams) {
