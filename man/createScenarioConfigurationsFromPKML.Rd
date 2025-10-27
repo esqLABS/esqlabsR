@@ -157,8 +157,8 @@ scenarios <- createScenarioConfigurationsFromPKML(
   pkmlFilePaths = c("sim1.pkml", "sim2.pkml", "sim3.pkml"),
   projectConfiguration = projectConfiguration,
   individualId = "Individual_001", # Recycled to all scenarios
-  steadyState = TRUE,              # Recycled to all scenarios
-  steadyStateTime = 1000           # Recycled to all scenarios
+  steadyState = TRUE, # Recycled to all scenarios
+  steadyStateTime = 1000 # Recycled to all scenarios
 )
 
 # Example of vector arguments - different values per scenario
@@ -174,12 +174,12 @@ scenarios <- createScenarioConfigurationsFromPKML(
 
 # Example of PKML recycling - same model, different settings
 scenarios <- createScenarioConfigurationsFromPKML(
-  pkmlFilePaths = "base_model.pkml",                    # Single PKML recycled
+  pkmlFilePaths = "base_model.pkml", # Single PKML recycled
   projectConfiguration = projectConfiguration,
   scenarioNames = c("LowDose", "MediumDose", "HighDose"),
   individualId = c("Patient1", "Patient2", "Patient3"),
   applicationProtocols = c("Low_Protocol", "Med_Protocol", "High_Protocol"),
-  steadyState = c(FALSE, TRUE, TRUE)                   # Different settings per scenario
+  steadyState = c(FALSE, TRUE, TRUE) # Different settings per scenario
 )
 }
 }

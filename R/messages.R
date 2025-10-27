@@ -390,7 +390,7 @@ messages$sensitivityAnalysisSimulationFailure <- function(
     "Simulation for `{parameterPath}`\n
     with variation factor `{parameterFactor}` failed!\n
     The results will not be included in the sensitivity calculation.\n"
-  )
+  ))
 }
 
 messages$invalidCustomFunctionParameters <- function(providedParams) {

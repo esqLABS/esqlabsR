@@ -27,12 +27,12 @@
 #' projectConfiguration <- createProjectConfiguration()
 #' scenarioName <- "MyScenario"
 #' # Read scenario definition from Excel
-#' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioNames = scenarioName, projectConfiguration)[[scenarioName]]
+#' scenarioConfiguration <-
+#'   readScenarioConfigurationFromExcel(scenarioNames = scenarioName, projectConfiguration)[[scenarioName]]
 #' }
 readScenarioConfigurationFromExcel <- function(
-  scenarioNames = NULL,
-  projectConfiguration
-) {
+    scenarioNames = NULL,
+    projectConfiguration) {
   validateIsString(scenarioNames, nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 
@@ -391,8 +391,8 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #'   pkmlFilePaths = c("sim1.pkml", "sim2.pkml", "sim3.pkml"),
 #'   projectConfiguration = projectConfiguration,
 #'   individualId = "Individual_001", # Recycled to all scenarios
-#'   steadyState = TRUE,              # Recycled to all scenarios
-#'   steadyStateTime = 1000           # Recycled to all scenarios
+#'   steadyState = TRUE, # Recycled to all scenarios
+#'   steadyStateTime = 1000 # Recycled to all scenarios
 #' )
 #'
 #' # Example of vector arguments - different values per scenario
@@ -408,30 +408,29 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #'
 #' # Example of PKML recycling - same model, different settings
 #' scenarios <- createScenarioConfigurationsFromPKML(
-#'   pkmlFilePaths = "base_model.pkml",                    # Single PKML recycled
+#'   pkmlFilePaths = "base_model.pkml", # Single PKML recycled
 #'   projectConfiguration = projectConfiguration,
 #'   scenarioNames = c("LowDose", "MediumDose", "HighDose"),
 #'   individualId = c("Patient1", "Patient2", "Patient3"),
 #'   applicationProtocols = c("Low_Protocol", "Med_Protocol", "High_Protocol"),
-#'   steadyState = c(FALSE, TRUE, TRUE)                   # Different settings per scenario
+#'   steadyState = c(FALSE, TRUE, TRUE) # Different settings per scenario
 #' )
 #' }
 createScenarioConfigurationsFromPKML <- function(
-  pkmlFilePaths,
-  projectConfiguration,
-  scenarioNames = NULL,
-  individualId = NULL,
-  populationId = NULL,
-  applicationProtocols = NULL,
-  paramSheets = NULL,
-  outputPaths = NULL,
-  simulationTime = NULL,
-  simulationTimeUnit = NULL,
-  steadyState = FALSE,
-  steadyStateTime = NULL,
-  steadyStateTimeUnit = NULL,
-  readPopulationFromCSV = FALSE
-) {
+    pkmlFilePaths,
+    projectConfiguration,
+    scenarioNames = NULL,
+    individualId = NULL,
+    populationId = NULL,
+    applicationProtocols = NULL,
+    paramSheets = NULL,
+    outputPaths = NULL,
+    simulationTime = NULL,
+    simulationTimeUnit = NULL,
+    steadyState = FALSE,
+    steadyStateTime = NULL,
+    steadyStateTimeUnit = NULL,
+    readPopulationFromCSV = FALSE) {
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
@@ -616,7 +615,7 @@ createScenarioConfigurationsFromPKML <- function(
       # count number of existing scenarios with this name
       existingCount <- sum(allScenarioNames == originalScenarioName)
       # Make scenario name unique by appending index
-      scenarioName <- paste0(scenarioName, "_", existingCount + 1)
+      scenarioName <- glue::glue("{scenarioName}_{existingCount + 1}")
 
       # Warn the user
       cli::cli_warn(c(
@@ -882,10 +881,9 @@ createScenarioConfigurationsFromPKML <- function(
 #' )
 #' }
 addScenarioConfigurationsToExcel <- function(
-  scenarioConfigurations,
-  projectConfiguration,
-  appendToExisting = TRUE
-) {
+    scenarioConfigurations,
+    projectConfiguration,
+    appendToExisting = TRUE) {
   # Validate inputs
   validateIsOfType(projectConfiguration, ProjectConfiguration)
   validateIsLogical(appendToExisting)
@@ -1066,10 +1064,9 @@ addScenarioConfigurationsToExcel <- function(
 #'
 #' @keywords internal
 .writeScenariosToExcel <- function(
-  scenarioConfigurations,
-  projectConfiguration,
-  appendToExisting
-) {
+    scenarioConfigurations,
+    projectConfiguration,
+    appendToExisting) {
   # Create data frame for scenarios
   scenariosData <- data.frame(
     Scenario_name = character(),
@@ -1151,7 +1148,7 @@ addScenarioConfigurationsToExcel <- function(
         if (!is.na(outputPathName)) {
           outputPathIds[i] <- outputPathName
         } else {
-          outputPathIds[i] <- paste0("OpP", i)
+          outputPathIds[i] <- glue::glue("OpP{i}")
         }
       }
     } else {
@@ -1159,7 +1156,7 @@ addScenarioConfigurationsToExcel <- function(
       if (!is.na(outputPathName)) {
         outputPathIds[i] <- outputPathName
       } else {
-        outputPathIds[i] <- paste0("OpP", i)
+        outputPathIds[i] <- glue::glue("OpP{i}")
       }
     }
   }

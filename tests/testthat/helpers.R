@@ -24,16 +24,15 @@ getTestDataFilePath <- function(fileName = "") {
 }
 
 getSimulationFilePath <- function(simulationName) {
-  getTestDataFilePath(paste0(simulationName, ".pkml"))
+  getTestDataFilePath(glue::glue("{simulationName}.pkml"))
 }
 
 # Helper function to load a model easily. In the test environment, we do not want to load from cache by default. Instead
 # new instances should be created unless specifically specified otherwise
 loadTestSimulation <- function(
-  simulationName,
-  loadFromCache = FALSE,
-  addToCache = TRUE
-) {
+    simulationName,
+    loadFromCache = FALSE,
+    addToCache = TRUE) {
   simFile <- getSimulationFilePath(simulationName)
   sim <- ospsuite::loadSimulation(
     simFile,
@@ -196,7 +195,7 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
   if (is.null(projectName)) {
     temp_dir <- tempfile("esqlabsR_test_")
   } else {
-    temp_dir <- tempfile(paste0("esqlabsR_", projectName, "_"))
+    temp_dir <- tempfile(glue::glue("esqlabsR_{projectName}_"))
   }
   dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
   # Ensure cleanup after test
@@ -222,9 +221,8 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
 # This is a test fixture following the pattern from testthat.r-lib.org/articles/test-fixtures.html
 # Returns a list with paths to the project directory and key files
 local_test_project <- function(
-  project_name = "TestProject",
-  env = parent.frame()
-) {
+    project_name = "TestProject",
+    env = parent.frame()) {
   # Create temp directory for test
   temp_dir <- withr::local_tempdir("test_project", .local_envir = env)
 
