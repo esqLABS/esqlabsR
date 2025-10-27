@@ -229,7 +229,7 @@ residuals <- calculateResiduals(
   scaling = "lin"
 )
 
-# Calculate the sum of residuals to convieniently quanity the quality of predictions
+# Calculate the sum of residuals to conveniently quantify the quality of predictions
 sumResiduals <- sum(residuals$residualValues)
 
 print(glue::glue("The sum of linear residuals for is {sumResiduals}"))
