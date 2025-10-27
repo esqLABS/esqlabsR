@@ -17,7 +17,7 @@ messages$wrongParametersStructure <- function(argumentName) {
   glue::glue(
     "Argument '{argumentName}' has wrong structure. Expected is a named list with three vectors
   `paths` representing full parameter paths, `values` with numerical values of the
-  parameters, and `units' representing the units the values are in. All three
+  parameters, and `units` representing the units the values are in. All three
   vectors must have the same length"
   )
 }
