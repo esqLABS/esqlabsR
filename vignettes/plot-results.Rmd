@@ -232,7 +232,7 @@ residuals <- calculateResiduals(
 # Calculate the sum of residuals to convieniently quanity the quality of predictions
 sumResiduals <- sum(residuals$residualValues)
 
-print(paste0("The sum of linear residuals for is ", sumResiduals))
+print(glue::glue("The sum of linear residuals for is {sumResiduals}"))
 ```
 
 You can modify the created `DataCombined`, e.g., by changing the offsets, and pass

@@ -68,10 +68,8 @@ Scenario <- R6::R6Class(
     .population = NA,
 
     # Private function for initialization of the scenario from the configuration
-    .initializeFromConfiguration = function(
-      customParams = NULL,
-      stopIfParameterNotFound = TRUE
-    ) {
+    .initializeFromConfiguration = function(customParams = NULL,
+                                            stopIfParameterNotFound = TRUE) {
       scenarioConfiguration <- private$.scenarioConfiguration
       # Read parameters from the parameters file
       params <- readParametersFromXLS(
@@ -223,12 +221,11 @@ Scenario <- R6::R6Class(
       # Create a population for population scenarios
       if (scenarioConfiguration$simulationType == "Population") {
         if (scenarioConfiguration$readPopulationFromCSV) {
-          populationPath <- paste0(
-            file.path(
+          populationPath <- glue::glue(
+            "{file.path(
               scenarioConfiguration$projectConfiguration$populationsFolder,
               scenarioConfiguration$populationId
-            ),
-            ".csv"
+            )}.csv"
           )
           population <- loadPopulation(populationPath)
         } else {
@@ -260,11 +257,9 @@ Scenario <- R6::R6Class(
     #'   thrown if any of the custom defined parameter does not exist. If `FALSE`,
     #'   non-existent parameters are  ignored.
     #' @returns A new `Scenario` object.
-    initialize = function(
-      scenarioConfiguration,
-      customParams = NULL,
-      stopIfParameterNotFound = TRUE
-    ) {
+    initialize = function(scenarioConfiguration,
+                          customParams = NULL,
+                          stopIfParameterNotFound = TRUE) {
       private$.scenarioConfiguration <- scenarioConfiguration
       private$.simulation <- private$.initializeFromConfiguration(
         customParams = customParams,

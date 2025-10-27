@@ -151,10 +151,9 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 #' @returns Named list of `Scenario` objects.
 #' @export
 createScenarios <- function(
-  scenarioConfigurations,
-  customParams = NULL,
-  stopIfParameterNotFound = TRUE
-) {
+    scenarioConfigurations,
+    customParams = NULL,
+    stopIfParameterNotFound = TRUE) {
   .validateScenarioConfigurations(scenarioConfigurations)
   .validateParametersStructure(
     parameterStructure = customParams,
@@ -206,11 +205,10 @@ createScenarios <- function(
 #' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
 #' }
 saveScenarioResults <- function(
-  simulatedScenariosResults,
-  projectConfiguration,
-  outputFolder = NULL,
-  saveSimulationsToPKML = TRUE
-) {
+    simulatedScenariosResults,
+    projectConfiguration,
+    outputFolder = NULL,
+    saveSimulationsToPKML = TRUE) {
   validateIsLogical(saveSimulationsToPKML)
 
   outputFolder <- outputFolder %||%
@@ -227,7 +225,7 @@ saveScenarioResults <- function(
     # Replace "\" and "/" by "_" so the file name does not result in folders
     scenarioName <- gsub("[\\\\/]", "_", scenarioName)
 
-    outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
+    outputPath <- file.path(outputFolder, glue::glue("{scenarioName}.csv"))
     tryCatch(
       {
         # Create a new folder if it does not exist
@@ -238,7 +236,7 @@ saveScenarioResults <- function(
         if (saveSimulationsToPKML) {
           outputPathSim <- file.path(
             outputFolder,
-            paste0(scenarioName, ".pkml")
+            glue::glue("{scenarioName}.pkml")
           )
           ospsuite::saveSimulation(
             simulation = simulatedScenariosResults[[i]]$simulation,
@@ -251,7 +249,7 @@ saveScenarioResults <- function(
             simulatedScenariosResults[[i]]$population,
             filePath = file.path(
               outputFolder,
-              paste0(scenarioName, "_population.csv")
+              glue::glue("{scenarioName}_population.csv")
             )
           )
         }
@@ -259,7 +257,7 @@ saveScenarioResults <- function(
         ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
       },
       error = function(cond) {
-        warning(paste0("Cannot save to path '", outputFolder, "'"))
+        warning(glue::glue("Cannot save to path '{outputFolder}'"))
         message("Original error message:")
         message(cond)
       },
@@ -315,16 +313,11 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
     # Used only for loading the results, the name of the scenario is not changed.
     scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
 
-    simulation <- loadSimulation(paste0(
-      resultsFolder,
-      "/",
-      scenarioNameForPath,
-      ".pkml"
-    ))
+    simulation <- loadSimulation(glue::glue("{resultsFolder}/{scenarioNameForPath}.pkml"))
 
     results <- importResultsFromCSV(
       simulation = simulation,
-      filePaths = paste0(resultsFolder, "/", scenarioNameForPath, ".csv")
+      filePaths = glue::glue("{resultsFolder}/{scenarioNameForPath}.csv")
     )
 
     outputValues <- getOutputValues(

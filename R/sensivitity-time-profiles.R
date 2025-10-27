@@ -105,16 +105,15 @@
 #' }
 #' @export
 sensitivityTimeProfiles <- function(
-  sensitivityCalculation,
-  outputPaths = NULL,
-  parameterPaths = NULL,
-  xAxisScale = NULL,
-  yAxisScale = NULL,
-  xUnits = NULL,
-  yUnits = NULL,
-  observedData = NULL,
-  defaultPlotConfiguration = NULL
-) {
+    sensitivityCalculation,
+    outputPaths = NULL,
+    parameterPaths = NULL,
+    xAxisScale = NULL,
+    yAxisScale = NULL,
+    xUnits = NULL,
+    yUnits = NULL,
+    observedData = NULL,
+    defaultPlotConfiguration = NULL) {
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -216,22 +215,12 @@ sensitivityTimeProfiles <- function(
 
   # create axis labels
   if (is.null(plotConfiguration$xLabel)) {
-    plotConfiguration$xLabel <- paste0(
-      unique(data$xDimension),
-      " [",
-      unique(data$xUnit),
-      "]"
-    )
+    plotConfiguration$xLabel <- glue::glue("{unique(data$xDimension)} [{unique(data$xUnit)}]")
   }
   yUnitForPlot <- unique(data$yUnit)
   yDimensionForPlot <- ospsuite::getDimensionForUnit(yUnitForPlot)
   if (is.null(plotConfiguration$yLabel)) {
-    plotConfiguration$yLabel <- paste0(
-      yDimensionForPlot,
-      " [",
-      yUnitForPlot,
-      "]"
-    )
+    plotConfiguration$yLabel <- glue::glue("{yDimensionForPlot} [{yUnitForPlot}]")
   }
 
   # calculate y-axis limits and color legend breaks
@@ -442,13 +431,12 @@ sensitivityTimeProfiles <- function(
 #' @keywords internal
 #' @noRd
 .aggregateSimulationAndObservedData <- function(
-  simulationResults,
-  dataSets,
-  parameterPaths,
-  outputPaths,
-  xUnits,
-  yUnits
-) {
+    simulationResults,
+    dataSets,
+    parameterPaths,
+    outputPaths,
+    xUnits,
+    yUnits) {
   if (!identical(names(simulationResults), unname(parameterPaths))) {
     stop(messages$invalidSimulationResultNames(
       names(simulationResults),

@@ -18,10 +18,9 @@
 #' @returns A numeric value or a list of numeric values
 #' @export
 stringToNum <- function(
-  string,
-  lloqMode = LLOQMode$`LLOQ/2`,
-  uloqMode = ULOQMode$ULOQ
-) {
+    string,
+    lloqMode = LLOQMode$`LLOQ/2`,
+    uloqMode = ULOQMode$ULOQ) {
   # Input validations
   validateEnumValue(lloqMode, LLOQMode)
   validateEnumValue(uloqMode, ULOQMode)
@@ -50,8 +49,7 @@ stringToNum <- function(
         if (is.na(value)) {
           next
         }
-        switch(
-          lloqMode,
+        switch(lloqMode,
           "LLOQ/2" = {
             numVals[[idx]] <- value / 2
           },
@@ -75,8 +73,7 @@ stringToNum <- function(
         if (is.na(value)) {
           next
         }
-        switch(
-          uloqMode,
+        switch(uloqMode,
           "ULOQ" = numVals[[idx]] <- value,
           # remove data points with lloq
           "ignore" = numVals[[idx]] <- NA
@@ -112,13 +109,12 @@ stringToNum <- function(
 #' @returns A single `DataSet` object
 #' @export
 calculateMeanDataSet <- function(
-  dataSets,
-  method = "arithmetic",
-  lloqMode = LLOQMode$`LLOQ/2`,
-  outputXunit = NULL,
-  outputYunit = NULL,
-  outputMolWeight = NULL
-) {
+    dataSets,
+    method = "arithmetic",
+    lloqMode = LLOQMode$`LLOQ/2`,
+    outputXunit = NULL,
+    outputYunit = NULL,
+    outputMolWeight = NULL) {
   validateIsOfType(dataSets, "DataSet")
   if (!any(c("arithmetic", "geometric") == method)) {
     stop(messages$errorInvalidMeanMethod())
@@ -167,8 +163,7 @@ calculateMeanDataSet <- function(
 
   # adjust yValues as specified by lloqMode argument
   ind <- !is.na(df$lloq) & df$yValues < df$lloq
-  switch(
-    lloqMode,
+  switch(lloqMode,
     # nothing to do for LLOQ/2
     "LLOQ/2" = {},
     # set all data points with lloq that are smaller than it to value of lloq
@@ -225,8 +220,7 @@ calculateMeanDataSet <- function(
   )
 
   # calculate means and standard deviations according to chosen method
-  switch(
-    method,
+  switch(method,
     arithmetic = {
       yMeans <- tapply(df[["yValues"]], df[["xValues"]], mean)
       yError <- tapply(df[["yValues"]], df[["xValues"]], stats::sd)
@@ -312,10 +306,9 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' dataSets <- loadObservedData(projectConfiguration)
 #' }
 loadObservedData <- function(
-  projectConfiguration,
-  sheets = NULL,
-  importerConfiguration = NULL
-) {
+    projectConfiguration,
+    sheets = NULL,
+    importerConfiguration = NULL) {
   importerConfiguration <- importerConfiguration %||%
     ospsuite::loadDataImporterConfiguration(
       configurationFilePath = projectConfiguration$dataImporterConfigurationFile
@@ -361,14 +354,13 @@ loadObservedData <- function(
 #' dataSets <- loadObservedData(projectConfiguration)
 #' }
 loadObservedDataFromPKML <- function(
-  projectConfiguration,
-  obsDataNames = NULL
-) {
+    projectConfiguration,
+    obsDataNames = NULL) {
   ospsuite.utils::validateIsString(obsDataNames, nullAllowed = TRUE)
   # If data sets have been specified, import only those. Otherwise try to import all
   # files
   if (!is.null(obsDataNames)) {
-    allFiles <- paste0(obsDataNames, ".pkml")
+    allFiles <- glue::glue("{obsDataNames}.pkml")
   } else {
     allFiles <- list.files(
       path = file.path(

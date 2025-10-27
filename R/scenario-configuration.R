@@ -77,11 +77,11 @@ ScenarioConfiguration <- R6::R6Class(
       if (missing(value)) {
         private$.paramSheets
       } else {
-        stop(paste0(
-          messages$errorPropertyReadOnly("paramSheets"),
-          ". Use functions 'addParamSheet' and 'removeParamSheet' to add or remove
-a parameter sheet from the list"
-        ))
+        stop(
+          glue::glue("{messages$errorPropertyReadOnly('paramSheets')}.
+                      Use functions 'addParamSheet' and 'removeParamSheet' to add or remove
+                      a parameter sheet from the list")
+        )
       }
     },
     #' @field simulationType Type of the simulation - "Individual" or
