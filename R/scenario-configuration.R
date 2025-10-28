@@ -78,9 +78,11 @@ ScenarioConfiguration <- R6::R6Class(
         private$.paramSheets
       } else {
         stop(
-          glue::glue("{messages$errorPropertyReadOnly('paramSheets')}.
+          glue::glue(
+            "{messages$errorPropertyReadOnly('paramSheets')}.
 Use functions 'addParamSheet' and 'removeParamSheet' to add or remove
-a parameter sheet from the list")
+a parameter sheet from the list"
+          )
         )
       }
     },

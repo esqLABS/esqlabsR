@@ -31,8 +31,9 @@
 #'   readScenarioConfigurationFromExcel(scenarioNames = scenarioName, projectConfiguration)[[scenarioName]]
 #' }
 readScenarioConfigurationFromExcel <- function(
-    scenarioNames = NULL,
-    projectConfiguration) {
+  scenarioNames = NULL,
+  projectConfiguration
+) {
   validateIsString(scenarioNames, nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
 
@@ -417,20 +418,21 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' )
 #' }
 createScenarioConfigurationsFromPKML <- function(
-    pkmlFilePaths,
-    projectConfiguration,
-    scenarioNames = NULL,
-    individualId = NULL,
-    populationId = NULL,
-    applicationProtocols = NULL,
-    paramSheets = NULL,
-    outputPaths = NULL,
-    simulationTime = NULL,
-    simulationTimeUnit = NULL,
-    steadyState = FALSE,
-    steadyStateTime = NULL,
-    steadyStateTimeUnit = NULL,
-    readPopulationFromCSV = FALSE) {
+  pkmlFilePaths,
+  projectConfiguration,
+  scenarioNames = NULL,
+  individualId = NULL,
+  populationId = NULL,
+  applicationProtocols = NULL,
+  paramSheets = NULL,
+  outputPaths = NULL,
+  simulationTime = NULL,
+  simulationTimeUnit = NULL,
+  steadyState = FALSE,
+  steadyStateTime = NULL,
+  steadyStateTimeUnit = NULL,
+  readPopulationFromCSV = FALSE
+) {
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
@@ -881,9 +883,10 @@ createScenarioConfigurationsFromPKML <- function(
 #' )
 #' }
 addScenarioConfigurationsToExcel <- function(
-    scenarioConfigurations,
-    projectConfiguration,
-    appendToExisting = TRUE) {
+  scenarioConfigurations,
+  projectConfiguration,
+  appendToExisting = TRUE
+) {
   # Validate inputs
   validateIsOfType(projectConfiguration, ProjectConfiguration)
   validateIsLogical(appendToExisting)
@@ -1064,9 +1067,10 @@ addScenarioConfigurationsToExcel <- function(
 #'
 #' @keywords internal
 .writeScenariosToExcel <- function(
-    scenarioConfigurations,
-    projectConfiguration,
-    appendToExisting) {
+  scenarioConfigurations,
+  projectConfiguration,
+  appendToExisting
+) {
   # Create data frame for scenarios
   scenariosData <- data.frame(
     Scenario_name = character(),

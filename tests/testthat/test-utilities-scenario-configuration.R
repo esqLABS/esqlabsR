@@ -512,17 +512,32 @@ test_that("It shows a meaningful error when steady-state is true but no unit is 
 # Tests for Excel sheet name sanitization
 test_that(".sanitizeExcelSheetName handles valid names correctly", {
   expect_equal(.sanitizeExcelSheetName("ValidName", warn = FALSE), "ValidName")
-  expect_equal(.sanitizeExcelSheetName("Valid_Name_123", warn = FALSE), "Valid_Name_123")
-  expect_equal(.sanitizeExcelSheetName("Name with spaces", warn = FALSE), "Name with spaces")
+  expect_equal(
+    .sanitizeExcelSheetName("Valid_Name_123", warn = FALSE),
+    "Valid_Name_123"
+  )
+  expect_equal(
+    .sanitizeExcelSheetName("Name with spaces", warn = FALSE),
+    "Name with spaces"
+  )
 })
 
 test_that(".sanitizeExcelSheetName removes invalid characters", {
   expect_equal(.sanitizeExcelSheetName("Test/Name", warn = FALSE), "Test_Name")
   expect_equal(.sanitizeExcelSheetName("Test\\Name", warn = FALSE), "Test_Name")
   expect_equal(.sanitizeExcelSheetName("Test*Name", warn = FALSE), "Test_Name")
-  expect_equal(.sanitizeExcelSheetName("Test[Name]", warn = FALSE), "Test_Name_")
-  expect_equal(.sanitizeExcelSheetName("Test:Name?", warn = FALSE), "Test_Name_")
-  expect_equal(.sanitizeExcelSheetName("Test/Name*With[All]:Invalid?", warn = FALSE), "Test_Name_With_All__Invalid_")
+  expect_equal(
+    .sanitizeExcelSheetName("Test[Name]", warn = FALSE),
+    "Test_Name_"
+  )
+  expect_equal(
+    .sanitizeExcelSheetName("Test:Name?", warn = FALSE),
+    "Test_Name_"
+  )
+  expect_equal(
+    .sanitizeExcelSheetName("Test/Name*With[All]:Invalid?", warn = FALSE),
+    "Test_Name_With_All__Invalid_"
+  )
 })
 
 test_that(".sanitizeExcelSheetName truncates long names", {
@@ -540,8 +555,14 @@ test_that(".sanitizeExcelSheetName handles edge cases", {
 })
 
 test_that(".sanitizeExcelSheetName trims whitespace", {
-  expect_equal(.sanitizeExcelSheetName("  ValidName  ", warn = FALSE), "ValidName")
-  expect_equal(.sanitizeExcelSheetName("  Test Name  ", warn = FALSE), "Test Name")
+  expect_equal(
+    .sanitizeExcelSheetName("  ValidName  ", warn = FALSE),
+    "ValidName"
+  )
+  expect_equal(
+    .sanitizeExcelSheetName("  Test Name  ", warn = FALSE),
+    "Test Name"
+  )
 })
 
 test_that(".sanitizeExcelSheetName warns when names are modified", {
@@ -550,7 +571,10 @@ test_that(".sanitizeExcelSheetName warns when names are modified", {
     "Excel sheet name was sanitized"
   )
   expect_warning(
-    .sanitizeExcelSheetName("This_is_a_very_long_sheet_name_that_exceeds_31_characters", warn = TRUE),
+    .sanitizeExcelSheetName(
+      "This_is_a_very_long_sheet_name_that_exceeds_31_characters",
+      warn = TRUE
+    ),
     "Excel sheet name was sanitized"
   )
   expect_silent(.sanitizeExcelSheetName("ValidName", warn = TRUE))

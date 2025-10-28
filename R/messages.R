@@ -2,9 +2,10 @@ messages <- ospsuite.utils::messages
 
 # Parameters structure####
 messages$errorWrongXLSStructure <- function(
-    filePath,
-    expectedColNames,
-    optionalMessage = NULL) {
+  filePath,
+  expectedColNames,
+  optionalMessage = NULL
+) {
   glue::glue(
     "Loading from XLS failed, the file '{filePath}' has wrong structure!
     The file should contain columns '",
@@ -67,9 +68,10 @@ messages$errorDuplicateScenarioNames <- function(duplicateNames) {
 }
 
 messages$warningValueWithinThresholdNotExisting <- function(
-    value,
-    threshold,
-    optionalMessage = NULL) {
+  value,
+  threshold,
+  optionalMessage = NULL
+) {
   glue::glue(
     "value `{value}` not found in the array within the absolute threshold of `{threshold}`. {optionalMessage}"
   )
@@ -110,7 +112,8 @@ messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = NULL) {
 }
 
 messages$PlotGridsNamesMustBeUnique <- function(
-    duplicated_plotGridsNames = NULL) {
+  duplicated_plotGridsNames = NULL
+) {
   glue::glue(
     "PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated:\n",
     glue::glue_collapse(duplicated_plotGridsNames, sep = "\n")
@@ -123,8 +126,9 @@ messages$UnknownPlotConfiguration <- function(name) {
 
 # scenario####
 messages$errorApplicationProtocolNotFound <- function(
-    scenarioName,
-    applicationProtocol) {
+  scenarioName,
+  applicationProtocol
+) {
   glue::glue(
     "Application protocol '{applicationProtocol}' defined in scenario '{scenarioName}' not found in the excel file 'ApplicationProtocols.xlsx'"
   )
@@ -134,7 +138,8 @@ messages$wrongSimulationType <- function() {
 }
 
 messages$scenarioConfigurationNameNotFoundWhenReading <- function(
-    scenarioName) {
+  scenarioName
+) {
   glue::glue(
     "readScenarioDefinition: Scenario '{scenarioName}' is not specified!"
   )
@@ -149,16 +154,18 @@ messages$warningInvalidScenarioName <- function(scenarioNames) {
 }
 
 messages$warningNoIndividualCharacteristics <- function(
-    scenarioName,
-    individualId) {
+  scenarioName,
+  individualId
+) {
   glue::glue(
     "Scenario {scenarioName}: No individual characteristics for individual id '{individualId}' found."
   )
 }
 
 messages$warningNoIndividualSpecificModelParameters <- function(
-    scenarioName,
-    individualId) {
+  scenarioName,
+  individualId
+) {
   glue::glue(
     "Scenario {scenarioName}: No individual specific model parameters for individual id '{individualId}' found."
   )
@@ -223,8 +230,9 @@ messages$noParameterFactor <- function(data, parameterFactor) {
 
 # utilities-quantity####
 messages$cannotGetMoleculeFromQuantity <- function(
-    quantityPath,
-    optionalMessage = NULL) {
+  quantityPath,
+  optionalMessage = NULL
+) {
   glue::glue(
     "Could not retrieve molecule name for the quantity with the path '{quantityPath}'. {optionalMessage}"
   )
@@ -324,8 +332,9 @@ messages$stopInvalidDataSetName <- function(dataSetNames) {
 }
 
 messages$invalidConfigurationPropertyFromExcel <- function(
-    propertyName,
-    configurationType) {
+  propertyName,
+  configurationType
+) {
   glue::glue(
     "Trying to apply property '{propertyName}' that is not supported by
     the configuration '{configurationType}'! Check column names in the
@@ -363,8 +372,9 @@ messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
 }
 
 messages$invalidSimulationResultNames <- function(
-    simulationResultNames,
-    parameterPaths) {
+  simulationResultNames,
+  parameterPaths
+) {
   paste(
     "The names of the simulationResults and parameterPaths must be the same.\n",
     "SimulationResults names: ",
@@ -384,8 +394,9 @@ messages$errorDataCombinedListMustBeList <- function(type) {
 
 # Sensitivity calculation####
 messages$sensitivityAnalysisSimulationFailure <- function(
-    parameterPath,
-    parameterFactor) {
+  parameterPath,
+  parameterFactor
+) {
   cat(glue::glue(
     "Simulation for `{parameterPath}`\n
     with variation factor `{parameterFactor}` failed!\n

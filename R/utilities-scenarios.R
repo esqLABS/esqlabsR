@@ -151,9 +151,10 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 #' @returns Named list of `Scenario` objects.
 #' @export
 createScenarios <- function(
-    scenarioConfigurations,
-    customParams = NULL,
-    stopIfParameterNotFound = TRUE) {
+  scenarioConfigurations,
+  customParams = NULL,
+  stopIfParameterNotFound = TRUE
+) {
   .validateScenarioConfigurations(scenarioConfigurations)
   .validateParametersStructure(
     parameterStructure = customParams,
@@ -205,10 +206,11 @@ createScenarios <- function(
 #' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
 #' }
 saveScenarioResults <- function(
-    simulatedScenariosResults,
-    projectConfiguration,
-    outputFolder = NULL,
-    saveSimulationsToPKML = TRUE) {
+  simulatedScenariosResults,
+  projectConfiguration,
+  outputFolder = NULL,
+  saveSimulationsToPKML = TRUE
+) {
   validateIsLogical(saveSimulationsToPKML)
 
   outputFolder <- outputFolder %||%
@@ -313,7 +315,9 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
     # Used only for loading the results, the name of the scenario is not changed.
     scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
 
-    simulation <- loadSimulation(glue::glue("{resultsFolder}/{scenarioNameForPath}.pkml"))
+    simulation <- loadSimulation(glue::glue(
+      "{resultsFolder}/{scenarioNameForPath}.pkml"
+    ))
 
     results <- importResultsFromCSV(
       simulation = simulation,
