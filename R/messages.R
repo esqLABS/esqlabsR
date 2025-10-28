@@ -245,9 +245,8 @@ messages$noPKDataToWrite <- function() {
 # sensitivity analysis plotting
 messages$noParameterFactor <- function(data, parameterFactor) {
   glue::glue(
-    "'parameterFactor' values of {parameterFactor} and {1/parameterFactor}
-    are not included in the sensitivity analysis results. 
-    Current values: {glue::glue_collapse(sort(unique(data$ParameterFactor)), sep = ', ')}. 
+    "'parameterFactor' values of {parameterFactor} and {1 / parameterFactor} are not included in the \\
+    sensitivity analysis results. Current values: {paste(sort(unique(data$ParameterFactor)), collapse = ', ')}. \\
     Please rerun the sensitivity analysis with the required values."
   ) |>
     as.character()
