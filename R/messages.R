@@ -7,64 +7,73 @@ messages$errorWrongXLSStructure <- function(
   optionalMessage = NULL
 ) {
   glue::glue(
-    "Loading from XLS failed, the file '{filePath}' has wrong structure!
+    "Loading from XLS failed, the file '{filePath}' has wrong structure! \\
     The file should contain columns '",
     glue::glue_collapse(expectedColNames, sep = ", "),
     "'. {optionalMessage}"
-  )
+  ) |>
+    as.character()
 }
 
 messages$wrongParametersStructure <- function(argumentName) {
   glue::glue(
-    "Argument '{argumentName}' has wrong structure. Expected is a named list with three vectors
-  `paths` representing full parameter paths, `values` with numerical values of the
-  parameters, and `units` representing the units the values are in. All three
-  vectors must have the same length"
-  )
+    "Argument '{argumentName}' has wrong structure. Expected is a named list with three vectors \\
+    `paths` representing full parameter paths, `values` with numerical values of the \\
+    parameters, and `units` representing the units the values are in. All three \\
+    vectors must have the same length"
+  ) |>
+    as.character()
 }
 
 # Enum####
 messages$errorEnumPutListMultipleKeys <- function() {
-  glue::glue("Trying to put multiple keys, but only one key is allowed!")
+  glue::glue("Trying to put multiple keys, but only one key is allowed!") |>
+    as.character()
 }
 
 # utilities-population####
 messages$errorDistributionNotSupported <- function(string) {
   glue::glue(
     "The distribution '{string}' is not supported. Supported distributions are listed in `Distributions`."
-  )
+  ) |>
+    as.character()
 }
 
 messages$errorWrongPopulationName <- function(populationName) {
   glue::glue(
     "Population name {populationName} is not specified in the population file!"
-  )
+  ) |>
+    as.character()
 }
 
 messages$errorWrongOntogenyStructure <- function(entry) {
   glue::glue(
-    "Wrong structure provided for the protein ontogeny specification. Expected
-  is a pair of <ProteinName:Ontogeny>, but the entry is: {entry}"
-  )
+    "Wrong structure provided for the protein ontogeny specification. Expected \\
+    is a pair of <ProteinName:Ontogeny>, but the entry is: {entry}"
+  ) |>
+    as.character()
 }
 
 # utilities-individual####
 messages$errorWrongIndividualId <- function(individualId) {
   glue::glue(
     "Individual with id {individualId} is not specified in the individual characteristics file!"
-  )
+  ) |>
+    as.character()
 }
 
 # utilities####
 messages$fileNotFound <- function(filePath) {
-  glue::glue("File not found: '{filePath}'")
+  glue::glue("File not found: '{filePath}'") |>
+    as.character()
 }
 
 messages$errorDuplicateScenarioNames <- function(duplicateNames) {
   names_collapsed <- glue::glue_collapse(duplicateNames, sep = "', '")
   glue::glue(
     "Duplicate scenario names found: '{names_collapsed}'. Please provide unique scenario names."
-  )
+  ) |>
+    as.character()
 }
 
 messages$warningValueWithinThresholdNotExisting <- function(
@@ -74,20 +83,23 @@ messages$warningValueWithinThresholdNotExisting <- function(
 ) {
   glue::glue(
     "value `{value}` not found in the array within the absolute threshold of `{threshold}`. {optionalMessage}"
-  )
+  ) |>
+    as.character()
 }
 
 messages$errorWrongArguments <- function(expectedArguments) {
   glue::glue(
     "Wrong arguments provided for the function! Expected arguments are: {expectedArguments}."
-  )
+  ) |>
+    as.character()
 }
 
 # utilities numerics####
 messages$valueShouldNotBeNegative <- function(parameterName, value) {
   glue::glue(
     "{parameterName} must be a positive numerical value, but the value is {value}"
-  )
+  ) |>
+    as.character()
 }
 
 # utilities-data####
@@ -101,14 +113,16 @@ messages$errorOutputMolWeightNeeded <- function() {
 
 # utilities-figures####
 messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
-  glue::glue("nrOfColors must be positive, value {nrOfColors} is not valid!")
+  glue::glue("nrOfColors must be positive, value {nrOfColors} is not valid!") |>
+    as.character()
 }
 
 messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = NULL) {
   glue::glue(
     "PlotID must be unique in PlotConfiguration, but the following plotIDs are duplicated: ",
     glue::glue_collapse(duplicated_plotIDs, sep = ", ")
-  )
+  ) |>
+    as.character()
 }
 
 messages$PlotGridsNamesMustBeUnique <- function(
@@ -117,11 +131,13 @@ messages$PlotGridsNamesMustBeUnique <- function(
   glue::glue(
     "PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated:\n",
     glue::glue_collapse(duplicated_plotGridsNames, sep = "\n")
-  )
+  ) |>
+    as.character()
 }
 
 messages$UnknownPlotConfiguration <- function(name) {
-  glue::glue("Unknown plot configuration option: {name}")
+  glue::glue("Unknown plot configuration option: {name}") |>
+    as.character()
 }
 
 # scenario####
@@ -130,8 +146,10 @@ messages$errorApplicationProtocolNotFound <- function(
   applicationProtocol
 ) {
   glue::glue(
-    "Application protocol '{applicationProtocol}' defined in scenario '{scenarioName}' not found in the excel file 'ApplicationProtocols.xlsx'"
-  )
+    "Application protocol '{applicationProtocol}' defined in scenario '{scenarioName}' not found \\
+    in the excel file 'ApplicationProtocols.xlsx'"
+  ) |>
+    as.character()
 }
 messages$wrongSimulationType <- function() {
   "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"
@@ -142,7 +160,8 @@ messages$scenarioConfigurationNameNotFoundWhenReading <- function(
 ) {
   glue::glue(
     "readScenarioDefinition: Scenario '{scenarioName}' is not specified!"
-  )
+  ) |>
+    as.character()
 }
 
 messages$warningInvalidScenarioName <- function(scenarioNames) {
@@ -150,7 +169,8 @@ messages$warningInvalidScenarioName <- function(scenarioNames) {
     "The following scenarios are not present in `simulatedScenarios`: ",
     glue::glue_collapse(scenarioNames, sep = ",\n"),
     ". Data cannot be added to `DataCombined` object."
-  )
+  ) |>
+    as.character()
 }
 
 messages$warningNoIndividualCharacteristics <- function(
@@ -159,7 +179,8 @@ messages$warningNoIndividualCharacteristics <- function(
 ) {
   glue::glue(
     "Scenario {scenarioName}: No individual characteristics for individual id '{individualId}' found."
-  )
+  ) |>
+    as.character()
 }
 
 messages$warningNoIndividualSpecificModelParameters <- function(
@@ -168,52 +189,59 @@ messages$warningNoIndividualSpecificModelParameters <- function(
 ) {
   glue::glue(
     "Scenario {scenarioName}: No individual specific model parameters for individual id '{individualId}' found."
-  )
+  ) |>
+    as.character()
 }
 
 messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   glue::glue(
-    "Simulation type of the scenario with scenario name '{scenarioName}' is set to
-    'Population', but the field `populationId` is not set! Every population
+    "Simulation type of the scenario with scenario name '{scenarioName}' is set to \\
+    'Population', but the field `populationId` is not set! Every population \\
     simulation scenario must have a population id defined"
-  )
+  ) |>
+    as.character()
 }
 
 messages$stopScenarioNameNonUnique <- function(scenarioName) {
   glue::glue(
-    "Scenario '{scenarioName}' is defined multiple times! Make sure that each
+    "Scenario '{scenarioName}' is defined multiple times! Make sure that each \\
     scenario defined in the excel file has a unique name."
-  )
+  ) |>
+    as.character()
 }
 
 messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
   glue::glue(
-    "The time interval string '{timeIntervalString}' is not valid! Please
-    check the format of the string. Following criteria must be
-    met: 1) Each time interval must contain three numbers separated by a ',', 2) all
-    numbers must be positive, 3) The first number (start time) must be smaller than
-    the second number (end time), 4) The third number (resolution) must
+    "The time interval string '{timeIntervalString}' is not valid! Please \\
+    check the format of the string. Following criteria must be \\
+    met: 1) Each time interval must contain three numbers separated by a ',', 2) all \\
+    numbers must be positive, 3) The first number (start time) must be smaller than \\
+    the second number (end time), 4) The third number (resolution) must \\
     be greater than zero. Time intervals must be separated by a ';'."
-  )
+  ) |>
+    as.character()
 }
 
 messages$stopScenarioMissingTimeUnit <- function(scenarioName) {
   glue::glue(
-    "Scenario '{scenarioName}' has simulation time defined, but no unit is specified!
+    "Scenario '{scenarioName}' has simulation time defined, but no unit is specified! \\
     Please specify simulation time unit."
-  )
+  ) |>
+    as.character()
 }
 
 messages$missingResultsForScenario <- function(scenarioName) {
   glue::glue(
     "No simulation results could be computed for the scenario '{scenarioName}'."
-  )
+  ) |>
+    as.character()
 }
 
 messages$missingSteadyStateTimeUnit <- function(scenarioName) {
   glue::glue(
     "Missing unit for steady-state time (column 'SteadyStateTimeUnit') for scenario '{scenarioName}'."
-  )
+  ) |>
+    as.character()
 }
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function() {
@@ -223,9 +251,12 @@ messages$noPKDataToWrite <- function() {
 # sensitivity analysis plotting
 messages$noParameterFactor <- function(data, parameterFactor) {
   glue::glue(
-    "'parameterFactor' values of {parameterFactor} and {1/parameterFactor}
-    are not included in the sensitivity analysis results. Current values: {glue::glue_collapse(sort(unique(data$ParameterFactor)), sep = ', ')}. Please rerun the sensitivity analysis with the required values."
-  )
+    "'parameterFactor' values of {parameterFactor} and {1/parameterFactor} \\
+    are not included in the sensitivity analysis results. \\
+    Current values: {glue::glue_collapse(sort(unique(data$ParameterFactor)), sep = ', ')}. \\
+    Please rerun the sensitivity analysis with the required values."
+  ) |>
+    as.character()
 }
 
 # utilities-quantity####
@@ -235,7 +266,8 @@ messages$cannotGetMoleculeFromQuantity <- function(
 ) {
   glue::glue(
     "Could not retrieve molecule name for the quantity with the path '{quantityPath}'. {optionalMessage}"
-  )
+  ) |>
+    as.character()
 }
 
 # data sets
@@ -244,7 +276,8 @@ messages$warningInvalidDataSetName <- function(dataSetNames) {
     "The following data sets are not present in `observedData`: ",
     glue::glue_collapse(dataSetNames, sep = ",\n"),
     ". Data can not be added to `DataCombined` object."
-  )
+  ) |>
+    as.character()
 }
 
 # Plots.xlsx####
@@ -252,9 +285,10 @@ messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
   glue::glue(
     "The plots with plotIDs ",
     glue::glue_collapse(plotIDs, sep = ",\n"),
-    " could not be added to plot grid `{plotGridTitle}`. Please check if they are defined
+    " could not be added to plot grid `{plotGridTitle}`. Please check if they are defined \\
     in sheet `plotConfiguration` and data is added in sheet `DataCombined`."
-  )
+  ) |>
+    as.character()
 }
 
 messages$errorInvalidPlotID <- function(plotIDs) {
@@ -263,7 +297,8 @@ messages$errorInvalidPlotID <- function(plotIDs) {
     glue::glue_collapse(plotIDs, sep = ",\n"),
     " are used in the sheet
     'plotGrids' but are not defined in the sheet 'plotConfiguration'."
-  )
+  ) |>
+    as.character()
 }
 
 messages$missingPlotIDs <- function() {
@@ -283,7 +318,8 @@ messages$missingDataType <- function() {
 }
 
 messages$missingScenarioName <- function() {
-  "Missing values found in mandatory column 'scenario' of sheet 'DataCombined' when 'dataType' is 'simulated'. Fill in values to proceed."
+  "Missing values found in mandatory column 'scenario' of sheet 'DataCombined' when 'dataType' is 'simulated'. \\
+  Fill in values to proceed."
 }
 
 messages$missingDataCombinedName <- function() {
@@ -294,7 +330,8 @@ messages$stopInvalidDataCombinedName <- function(dataCombinedNames) {
   glue::glue(
     "The following DataCombined are used in `plotConfiguration` sheet but are not present in `DataCombined` sheet: ",
     glue::glue_collapse(dataCombinedNames, sep = ", ")
-  )
+  ) |>
+    as.character()
 }
 
 messages$stopNoPathProvided <- function(dataCombinedName) {
@@ -303,7 +340,8 @@ messages$stopNoPathProvided <- function(dataCombinedName) {
     glue::glue_collapse(dataCombinedName, sep = ", "),
     "'.
     Each simulation output must have an output path specified."
-  )
+  ) |>
+    as.character()
 }
 
 messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
@@ -312,7 +350,8 @@ messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
     glue::glue_collapse(dataCombinedName, sep = ", "),
     "' for scenario '{scenarioName}' but has not been simulated.
     Please check that the output path is specified for this scenario."
-  )
+  ) |>
+    as.character()
 }
 
 messages$stopNoDataSetProvided <- function(dataCombinedName) {
@@ -321,14 +360,16 @@ messages$stopNoDataSetProvided <- function(dataCombinedName) {
     glue::glue_collapse(dataCombinedName, sep = ", \n"),
     "'.
     Each observed data must have a 'dataSet' specified."
-  )
+  ) |>
+    as.character()
 }
 
 messages$stopInvalidDataSetName <- function(dataSetNames) {
   glue::glue(
     "The following data sets are not present in `observedData`: ",
     glue::glue_collapse(dataSetNames, sep = ",\n")
-  )
+  ) |>
+    as.character()
 }
 
 messages$invalidConfigurationPropertyFromExcel <- function(
@@ -336,15 +377,17 @@ messages$invalidConfigurationPropertyFromExcel <- function(
   configurationType
 ) {
   glue::glue(
-    "Trying to apply property '{propertyName}' that is not supported by
-    the configuration '{configurationType}'! Check column names in the
+    "Trying to apply property '{propertyName}' that is not supported by \\
+    the configuration '{configurationType}'! Check column names in the \\
     excel file defining plot configurations."
-  )
+  ) |>
+    as.character()
 }
 
 messages$missingOutputFileName <- function() {
   glue::glue(
-    "Missing values found in mandatory column 'outputName' of sheet 'exportConfiguration'. No plots are exported to file for corresponding rows."
+    "Missing values found in mandatory column 'outputName' of sheet 'exportConfiguration'. \\
+    No plots are exported to file for corresponding rows."
   )
 }
 
@@ -353,22 +396,26 @@ messages$missingPlotGrids <- function(missingPlotGrids) {
     "Invalid values in column 'plotGridName' of sheet 'exportConfiguration': ",
     glue::glue_collapse(missingPlotGrids, sep = ",\n"),
     ". Plot grids are either not defined or empty and can not be exported to file."
-  )
+  ) |>
+    as.character()
 }
 
 messages$invalidPlotGridNames <- function(plotGridNames) {
   glue::glue(
-    "Following plot grid names have been specified but are not present in the `plotGrids` sheet! Define these plots first: ",
+    "Following plot grid names have been specified but are not present in the `plotGrids` sheet! \\
+    Define these plots first: ",
     glue::glue_collapse(plotGridNames, sep = ",\n")
-  )
+  ) |>
+    as.character()
 }
 
 messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
   glue::glue(
-    "Following output path IDs have been specified as output for scenario '{scenarioName}',
+    "Following output path IDs have been specified as output for scenario '{scenarioName}', \\
     but are not present in the `OutputPaths` sheet! Define these outputs first: ",
     glue::glue_collapse(outputPathIds, sep = ",\n")
-  )
+  ) |>
+    as.character()
 }
 
 messages$invalidSimulationResultNames <- function(
@@ -387,9 +434,10 @@ messages$invalidSimulationResultNames <- function(
 
 messages$errorDataCombinedListMustBeList <- function(type) {
   glue::glue(
-    "The argument 'dataCombined' must be a named list of DataCombined objects, but the
+    "The argument 'dataCombined' must be a named list of DataCombined objects, but the \\
     type of passed argument is '{type}'."
-  )
+  ) |>
+    as.character()
 }
 
 # Sensitivity calculation####
@@ -397,11 +445,14 @@ messages$sensitivityAnalysisSimulationFailure <- function(
   parameterPath,
   parameterFactor
 ) {
-  cat(glue::glue(
-    "Simulation for `{parameterPath}`\n
+  cat(
+    glue::glue(
+      "Simulation for `{parameterPath}`\n
     with variation factor `{parameterFactor}` failed!\n
     The results will not be included in the sensitivity calculation.\n"
-  ))
+    ) |>
+      as.character()
+  )
 }
 
 messages$invalidCustomFunctionParameters <- function(providedParams) {
@@ -409,14 +460,16 @@ messages$invalidCustomFunctionParameters <- function(providedParams) {
     "The user-defined function must have either 'x', 'y', or both 'x' and 'y' as parameters.
     Provided parameters are: ",
     glue::glue_collapse(providedParams, sep = ", ")
-  )
+  ) |>
+    as.character()
 }
 
 messages$errorNotNamedList <- function(objectName, optionalMessage = NULL) {
   callingFunction <- ospsuite.utils:::.getCallingFunctionName()
   glue::glue(
     "{callingFunction}: argument '{objectName}' is not a named list! {optionalMessage}"
-  )
+  ) |>
+    as.character()
 }
 
 messages$invalidVariationRangeLength <- function() {
