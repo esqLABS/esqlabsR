@@ -529,6 +529,82 @@ createPlotsFromExcel <- function(
   return(plotGrids)
 }
 
+#' Parse and validate comma-separated Excel field
+#'
+#' Parses comma-separated values from Excel and validates using ospsuite.utils.
+#' Provides Excel-specific error context (plotID, field name) for common issues.
+#'
+#' @param value Raw value from Excel cell
+#' @param fieldName Name of the field for error messages
+#' @param plotID Optional plot ID for error context
+#' @param expectedLength Expected number of values (NULL for any length)
+#' @param expectedType Expected type ("numeric" or "character")
+#' @returns Parsed and validated vector
+#' @keywords internal
+.parseExcelMultiValueField <- function(
+  value,
+  fieldName,
+  plotID = NULL,
+  expectedLength = NULL,
+  expectedType = "numeric"
+) {
+  originalValue <- value
+
+  # Parse using scan (existing method)
+  parsed <- unlist(trimws(scan(
+    text = as.character(value),
+    what = "character",
+    sep = ",",
+    quiet = TRUE
+  )))
+
+  # Detect common error: space-separated instead of comma-separated
+  if (!is.null(expectedLength) && length(parsed) != expectedLength) {
+    # Check if might be space-separated
+    spaceSplit <- unlist(trimws(strsplit(as.character(originalValue), "\\s+")))
+    if (length(spaceSplit) == expectedLength) {
+      # Check if all parts look numeric (for numeric fields)
+      if (expectedType == "numeric") {
+        numericTest <- suppressWarnings(as.numeric(spaceSplit))
+        if (!any(is.na(numericTest))) {
+          # User likely used spaces instead of commas
+          stop(messages$excelFieldFormatError(
+            fieldName, originalValue, plotID, "comma-separated"
+          ), call. = FALSE)
+        }
+      }
+    }
+  }
+
+  # Validate length using ospsuite.utils
+  if (!is.null(expectedLength)) {
+    tryCatch(
+      ospsuite.utils::validateIsOfLength(parsed, expectedLength),
+      error = function(e) {
+        stop(messages$excelFieldLengthError(
+          fieldName, originalValue, plotID, expectedLength, length(parsed)
+        ), call. = FALSE)
+      }
+    )
+  }
+
+  # Validate type and convert if needed
+  if (expectedType == "numeric") {
+    numericParsed <- suppressWarnings(as.numeric(parsed))
+    tryCatch(
+      ospsuite.utils::validateIsNumeric(numericParsed),
+      error = function(e) {
+        stop(messages$excelFieldTypeError(
+          fieldName, originalValue, plotID, "numeric"
+        ), call. = FALSE)
+      }
+    )
+    return(numericParsed)
+  }
+
+  return(parsed)
+}
+
 #' Create a plotConfiguration or exportConfiguration objects from a row of sheet
 #' 'plotConfiguration' or 'exportConfiguration'
 #'
@@ -550,28 +626,7 @@ createPlotsFromExcel <- function(
           configurationType = class(newConfiguration)[[1]]
         ))
       }
-      # For fields that require multiple values (e.g., axis limits require the
-      # upper and the lower limit value), values are separated by a ','.
-      # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
-      # Split the input string by ',' but do not split within ""
-      value <- unlist(trimws(scan(
-        text = as.character(value),
-        what = "character",
-        sep = ",",
-        quiet = TRUE
-      )))
-
-      # Expected type of the field to cast the value to the
-      # correct type. For fields that do not have a default value (NULL), we have
-      # to assume character until a better solution is found
-      expectedType <- "character"
-      # Try to get the expected type of the field from the default value
-      defVal <- newConfiguration[[colName]]
-      if (!is.null(defVal)) {
-        expectedType <- typeof(defVal)
-      }
-      # Special treatment for axis limits, as we know their data type but cannot
-      # get it with the proposed generic way since default limits are not set
+      # Special treatment for axis limits - parse and validate early with clear errors
       if (
         colName %in%
           c(
@@ -581,14 +636,44 @@ createPlotsFromExcel <- function(
             "yValuesLimits"
           )
       ) {
-        expectedType <- "double"
-      }
+        # Use wrapper function with ospsuite.utils validation
+        value <- .parseExcelMultiValueField(
+          value = value,
+          fieldName = colName,
+          plotID = if ("plotID" %in% names(columns)) columns[["plotID"]] else NULL,
+          expectedLength = 2,
+          expectedType = "numeric"
+        )
+        # Set directly (already validated and converted)
+        newConfiguration[[colName]] <- value
+      } else {
+        # For other fields, use existing logic
+        # For fields that require multiple values, values are separated by a ','.
+        # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
+        # Split the input string by ',' but do not split within ""
+        value <- unlist(trimws(scan(
+          text = as.character(value),
+          what = "character",
+          sep = ",",
+          quiet = TRUE
+        )))
 
-      # Caste the value and set it
-      newConfiguration[[colName]] <- methods::as(
-        object = value,
-        Class = expectedType
-      )
+        # Expected type of the field to cast the value to the
+        # correct type. For fields that do not have a default value (NULL), we have
+        # to assume character until a better solution is found
+        expectedType <- "character"
+        # Try to get the expected type of the field from the default value
+        defVal <- newConfiguration[[colName]]
+        if (!is.null(defVal)) {
+          expectedType <- typeof(defVal)
+        }
+
+        # Caste the value and set it
+        newConfiguration[[colName]] <- methods::as(
+          object = value,
+          Class = expectedType
+        )
+      }
     }
   })
 

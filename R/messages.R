@@ -528,3 +528,33 @@ messages$promptDeleteOutputDir <- function(outputDir) {
     "Directory {.file {outputDir}} already exists. Do you want to delete it?"
   )
 }
+
+# Excel field validation error messages ####
+messages$excelFieldFormatError <- function(fieldName, value, plotID, expectedFormat) {
+  plotInfo <- if (!is.null(plotID)) paste0(" in plot '", plotID, "'") else ""
+  paste0(
+    "Excel validation error", plotInfo, ": Invalid format for '", fieldName, "'.\n",
+    "  Provided: '", value, "'\n",
+    "  Expected: Values separated by commas (not spaces)\n",
+    "  Example: '72, 80' or '72,80' (not '72 80')"
+  )
+}
+
+messages$excelFieldLengthError <- function(fieldName, value, plotID, expected, actual) {
+  plotInfo <- if (!is.null(plotID)) paste0(" in plot '", plotID, "'") else ""
+  paste0(
+    "Excel validation error", plotInfo, ": Wrong number of values for '", fieldName, "'.\n",
+    "  Provided: '", value, "' (", actual, " value", if (actual != 1) "s" else "", ")\n",
+    "  Expected: ", expected, " comma-separated value", if (expected != 1) "s" else "", "\n",
+    "  Example: '72, 80'"
+  )
+}
+
+messages$excelFieldTypeError <- function(fieldName, value, plotID, expectedType) {
+  plotInfo <- if (!is.null(plotID)) paste0(" in plot '", plotID, "'") else ""
+  paste0(
+    "Excel validation error", plotInfo, ": Invalid '", fieldName, "' value.\n",
+    "  Provided: '", value, "'\n",
+    "  Expected: ", expectedType, " values"
+  )
+}
