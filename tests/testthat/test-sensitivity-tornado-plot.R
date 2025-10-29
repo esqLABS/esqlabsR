@@ -48,7 +48,8 @@ test_that("sensitivityTornadoPlot fails with incorrect input", {
 test_that("sensitivityTornadoPlot fails with invalid parameterFactor", {
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0),
-    regexp = "Option validation failed"
+    regexp = messages$errorOptionOutOfBounds(parameterFactor = 0),
+    fixed = TRUE
   )
 })
 
@@ -64,11 +65,8 @@ test_that("sensitivityTornadoPlot fails with invalid xAxisZoomRange", {
 test_that("sensitivityTornadoPlot errors if parameterFactor is missing in sensitivity calculation results", {
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0.2),
-    glue::glue(
-      "'parameterFactor' values of 0.2 and 5 are not included in the \\
-      sensitivity analysis results. Current values: 0.1, 1, 2, 10. \\
-      Please rerun the sensitivity analysis with the required values."
-    )
+    messages$noParameterFactor(results$pkData, parameterFactor = 0.2),
+    fixed = TRUE
   )
 })
 

@@ -252,6 +252,16 @@ messages$noParameterFactor <- function(data, parameterFactor) {
     as.character()
 }
 
+messages$errorOptionOutOfBounds <- function(parameterFactor) {
+  range <- .getPlotConfigurationOptions(
+    "parameterFactor"
+  )$parameterFactor$valueRange
+  glue::glue(
+    "Value(s) out of the allowed range [{range[1]}, {range[2]}]"
+  ) |>
+    as.character()
+}
+
 # utilities-quantity####
 messages$cannotGetMoleculeFromQuantity <- function(
   quantityPath,
