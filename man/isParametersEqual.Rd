@@ -20,8 +20,8 @@ isParametersEqual(
 compared. Otherwise, the values are only compared if the formulas are
 overridden (isFixedValue == TRUE). FALSE by default.}
 
-\item{compareFormulasByValue}{If \code{FALSE}(default), formulas are compared by their types and string. If \code{TRUE},
-only values are compared.}
+\item{compareFormulasByValue}{If \code{FALSE}(default), formulas are compared by
+their types and string. If \code{TRUE}, only values are compared.}
 }
 \value{
 \code{TRUE} if parameters are considered equal, \code{FALSE} otherwise
@@ -30,16 +30,14 @@ only values are compared.}
 Check if two parameters are equal with respect to certain properties.
 }
 \details{
-The parameters are not equal if:
-The paths of the parameters are not equal;
-The types of the formulas differ (types checked: isConstant, isDistributed, isExplicit, isTable);
-Constant formulas have different values;
+The parameters are not equal if: The paths of the parameters are not
+equal; The types of the formulas differ (types checked: isConstant,
+isDistributed, isExplicit, isTable); Constant formulas have different values;
 Distributed formulas have different values (not checking for distribution)
 Explicit formulas: If formula string are not equal, OR one of the parameter
-values is fixed (formula is overridden),
-OR both parameter values are fixed and differ,
-OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
-Table formulas: If the number of points differ, OR any of the points differ,
-OR one of the parameter values is fixed (formula is overridden),
-OR both parameter values are fixed and differ.
+values is fixed (formula is overridden), OR both parameter values are fixed
+and differ, OR checkFormulaValues is TRUE and the values differ (disregarding
+of overridden or not) Table formulas: If the number of points differ, OR any
+of the points differ, OR one of the parameter values is fixed (formula is
+overridden), OR both parameter values are fixed and differ.
 }

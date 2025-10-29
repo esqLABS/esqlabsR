@@ -7,8 +7,8 @@ Scenario <- R6::R6Class(
   "Scenario",
   cloneable = FALSE,
   active = list(
-    #' @field scenarioConfiguration `scenarioConfiguration` used for creation of this scenario.
-    #' Read-only
+    #' @field scenarioConfiguration `scenarioConfiguration` used for creation of
+    #'   this scenario. Read-only.
     scenarioConfiguration = function(value) {
       if (missing(value)) {
         private$.scenarioConfiguration
@@ -17,12 +17,11 @@ Scenario <- R6::R6Class(
       }
     },
     #' @field finalCustomParams Custom parameters to be used for the simulation.
-    #' Read-only
-    #' @description
-    #' Custom parameters to be used for the simulation. The final custom parameters
-    #' are a combination of parametrization through the excel files and the custom
-    #' parameters specified by the user through the `customParams` argument of the
-    #' `Scenario` constructor.
+    #'   Read-only.
+    #' @description Custom parameters to be used for the simulation. The final
+    #'   custom parameters are a combination of parametrization through the
+    #'   excel files and the custom parameters specified by the user through the
+    #'   `customParams` argument of the `Scenario` constructor.
     finalCustomParams = function(value) {
       if (missing(value)) {
         private$.finalCustomParams
@@ -30,8 +29,9 @@ Scenario <- R6::R6Class(
         stop(messages$errorPropertyReadOnly("finalCustomParams"))
       }
     },
-    #' @field simulation Simulation object created from the `ScenarioConfiguration`. Read-only
-    #' @description Simulation object. Read-only
+    #' @field simulation Simulation object created from the
+    #'   `ScenarioConfiguration`. Read-only
+    #' @description Simulation object. Read-only.
     simulation = function(value) {
       if (missing(value)) {
         private$.simulation
@@ -39,7 +39,8 @@ Scenario <- R6::R6Class(
         stop(messages$errorPropertyReadOnly("simulation"))
       }
     },
-    #' @field population Population object in case the scenario is a population simulation. Read-only
+    #' @field population Population object in case the scenario is a population
+    #'   simulation. Read-only.
     population = function(value) {
       if (missing(value)) {
         private$.population
@@ -48,7 +49,8 @@ Scenario <- R6::R6Class(
       }
     },
 
-    #' @field scenarioType Type of the scenario - individual or population. Read-only
+    #' @field scenarioType Type of the scenario - individual or population.
+    #'   Read-only
     scenarioType = function(value) {
       if (missing(value)) {
         if (isOfType(private$.population, "Population")) {
@@ -240,7 +242,8 @@ Scenario <- R6::R6Class(
           population <- createPopulation(
             populationCharacteristics = popCharacteristics
           )
-          # Create population returns a list, in contrast to load population, where the object is returned!
+          # Create population returns a list, in contrast to load population,
+          # where the object is returned!
           population <- population$population
         }
       }
@@ -248,17 +251,16 @@ Scenario <- R6::R6Class(
     }
   ),
   public = list(
-    #' @description
-    #' Initialize a new instance of the class. Initializes the scenario from
-    #' `ScenarioConfiguration` object.
+    #' @description Initialize a new instance of the class. Initializes the
+    #' scenario from `ScenarioConfiguration` object.
     #' @param scenarioConfiguration An object of class `ScenarioConfiguration`.
-    #' @param customParams Custom parameters to be used for the simulation.
-    #'  A list containing vectors 'paths' with the full paths to the
-    #' parameters, 'values' the values of the parameters, and 'units' with the
-    #' units the values are in.
+    #' @param customParams Custom parameters to be used for the simulation. A
+    #'   list containing vectors 'paths' with the full paths to the parameters,
+    #'   'values' the values of the parameters, and 'units' with the units the
+    #'   values are in.
     #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
-    #'   thrown if any of the custom defined parameter does not exist. If `FALSE`,
-    #'   non-existent parameters are  ignored.
+    #'   thrown if any of the custom defined parameter does not exist. If
+    #'   `FALSE`, non-existent parameters are  ignored.
     #' @returns A new `Scenario` object.
     initialize = function(
       scenarioConfiguration,
@@ -272,8 +274,7 @@ Scenario <- R6::R6Class(
       )
       private$.initializePopulationFromConfiguration()
     },
-    #' @description
-    #' Print the object to the console
+    #' @description Print the object to the console
     #' @param ... Rest arguments.
     print = function(...) {
       ospsuite.utils::ospPrintClass(self)

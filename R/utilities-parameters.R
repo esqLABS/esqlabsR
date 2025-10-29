@@ -1,14 +1,13 @@
-#' Read parameter values from a structured Excel file.
-#' Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
-#' 'Value', and 'Units'
+#' Read parameter values from a structured Excel file. Each excel sheet must
+#' consist of columns 'Container Path', 'Parameter Name', 'Value', and 'Units'
 #'
 #' @param paramsXLSpath Path to the excel file
 #' @param sheets Names of the excel sheets containing the information about the
 #'   parameters. Multiple sheets can be processed. If no sheets are provided,
 #'   the first one in the Excel file is used.
 #'
-#' @returns A list containing vectors 'paths' with the full paths to the
-#'   parameters, 'values' the values of the parameters, and 'units' with the
+#' @returns A list containing vectors `paths` with the full paths to the
+#'   parameters, `values` the values of the parameters, and `units` with the
 #'   units the values are in.
 #' @export
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
@@ -51,20 +50,25 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 
 #' Write parameter structure to excel that can be loaded in MoBi
 #'
-#' @param parameterStructure A list containing vectors 'paths' with the full paths to the parameters,
-#' 'values' the values of the parameters, and 'units' with the units the values are in.
+#' @param parameterStructure A list containing vectors `paths` with the full
+#'   paths to the parameters, `values` the values of the parameters, and `units`
+#'   with the units the values are in.
 #'
 #' @param paramsXLSpath Path to the excel file
 #' @param sheet (Optional) name of the excel sheet
-#' @param append If TRUE, the existing excel file/sheet will be appended with the new
-#'  parameter structure. If FALSE (default), the existing file will be
-#'  overwritten.
+#' @param append If TRUE, the existing excel file/sheet will be appended with
+#'   the new parameter structure. If FALSE (default), the existing file will be
+#'   overwritten.
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' params <- list(paths = c("Container1|Path1", "Container|Second|Third|Path2"), values = c(1, 2), units = c("", "µmol"))
+#' params <- list(
+#'   paths = c("Container1|Path1", "Container|Second|Third|Path2"),
+#'   values = c(1, 2),
+#'   units = c("", "µmol")
+#' )
 #'
 #' writeParameterStructureToXLS(params, "test.xlsx")
 #' }
@@ -198,17 +202,18 @@ exportParametersToXLS <- function(
 
 #' Extend parameters structure with new entries
 #'
-#' @param parameters A list containing vectors 'paths' with the full paths to the
-#'   parameters, 'values' the values of the parameters, and 'units' with the
+#' @param parameters A list containing vectors `paths` with the full paths to
+#'   the parameters, `values` the values of the parameters, and `units` with the
 #'   units the values are in. This list will be extended.
-#' @param newParameters A list containing vectors 'paths' with the full paths to the
-#'   parameters, 'values' the values of the parameters, and 'units' with the
+#' @param newParameters A list containing vectors 'paths' with the full paths to
+#'   the parameters, 'values' the values of the parameters, and 'units' with the
 #'   units the values are in. Entries from this list will extend or overwrite
 #'   the list `parameters`
 #'
 #' @details This function adds new parameter entries from `newParameters` to
-#'  `parameters`. If an entry with the same path is already present in `parameters`,
-#'  its value and unit will be overwritten with the values from `newParameters`.
+#'   `parameters`. If an entry with the same path is already present in
+#'   `parameters`, its value and unit will be overwritten with the values from
+#'   `newParameters`.
 #'
 #' @returns Updated list of parameter paths, values, and units
 #' @export
@@ -247,10 +252,10 @@ extendParameterStructure <- function(parameters, newParameters) {
 
 #' Convert parameters vector structure to list structure
 #'
-#' @param pathsValuesVector Named vector of numerical parameter values
-#' with parameter paths as names
+#' @param pathsValuesVector Named vector of numerical parameter values with
+#'   parameter paths as names
 #' @param pathsUnitsVector Named vector of parameter values units with parameter
-#' paths as names
+#'   paths as names
 #'
 #' @noRd
 #'
@@ -270,27 +275,24 @@ extendParameterStructure <- function(parameters, newParameters) {
 
 #' @title Check if two parameters are equal with respect to certain properties.
 #'
-#' @details
-#' The parameters are not equal if:
-#' The paths of the parameters are not equal;
-#' The types of the formulas differ (types checked: isConstant, isDistributed, isExplicit, isTable);
-#' Constant formulas have different values;
+#' @details The parameters are not equal if: The paths of the parameters are not
+#' equal; The types of the formulas differ (types checked: isConstant,
+#' isDistributed, isExplicit, isTable); Constant formulas have different values;
 #' Distributed formulas have different values (not checking for distribution)
 #' Explicit formulas: If formula string are not equal, OR one of the parameter
-#' values is fixed (formula is overridden),
-#' OR both parameter values are fixed and differ,
-#' OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
-#' Table formulas: If the number of points differ, OR any of the points differ,
-#' OR one of the parameter values is fixed (formula is overridden),
-#' OR both parameter values are fixed and differ.
+#' values is fixed (formula is overridden), OR both parameter values are fixed
+#' and differ, OR checkFormulaValues is TRUE and the values differ (disregarding
+#' of overridden or not) Table formulas: If the number of points differ, OR any
+#' of the points differ, OR one of the parameter values is fixed (formula is
+#' overridden), OR both parameter values are fixed and differ.
 #'
 #' @param parameter1 First parameter to compare
 #' @param parameter2 Second parameter to compare
 #' @param checkFormulaValues If TRUE, values of explicit formulas are always
 #'   compared. Otherwise, the values are only compared if the formulas are
 #'   overridden (isFixedValue == TRUE). FALSE by default.
-#' @param compareFormulasByValue If `FALSE`(default), formulas are compared by their types and string. If `TRUE`,
-#'  only values are compared.
+#' @param compareFormulasByValue If `FALSE`(default), formulas are compared by
+#'   their types and string. If `TRUE`, only values are compared.
 #'
 #' @returns `TRUE` if parameters are considered equal, `FALSE` otherwise
 #' @export
@@ -395,17 +397,20 @@ isTableFormulasEqual <- function(formula1, formula2) {
   }
 }
 
-#' Set the values of parameters in the simulation by path, if the `condition` is true.
+#' Set the values of parameters in the simulation by path, if the `condition` is
+#' true.
 #'
 #' @param parameterPaths A single or a list of parameter path
-#' @param values A numeric value that should be assigned to the parameters or a vector
-#' of numeric values, if the value of more than one parameter should be changed. Must have the same
-#' length as 'parameterPaths'
-#' @param condition A function that receives a parameter path as an argument
-#' and returns `TRUE` of `FALSE`
-#' @param units A string or a list of strings defining the units of the `values`. If `NULL` (default), values
-#' are assumed to be in base units. If not `NULL`, must have the same length as 'parameterPaths'.
-#' @param simulation Simulation used to retrieve parameter instances from given paths.
+#' @param values A numeric value that should be assigned to the parameters or a
+#'   vector of numeric values, if the value of more than one parameter should be
+#'   changed. Must have the same length as `parameterPaths`
+#' @param condition A function that receives a parameter path as an argument and
+#'   returns `TRUE` of `FALSE`
+#' @param units A string or a list of strings defining the units of the
+#'   `values`. If `NULL` (default), values are assumed to be in base units. If
+#'   not `NULL`, must have the same length as `parameterPaths`.
+#' @param simulation Simulation used to retrieve parameter instances from given
+#'   paths.
 #'
 #' @examples
 #' simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
@@ -449,9 +454,9 @@ setParameterValuesByPathWithCondition <- function(
 #' Split parameter path into container path and parameter name
 #'
 #' @param parameterPath Full path to the parameter, with path elements separated
-#' by '|'
+#'   by `|`
 #'
-#' @returns A list with elements 'containerPath' and 'parameterName'
+#' @returns A list with elements `containerPath` and `parameterName`
 #' @keywords internal
 #' @noRd
 .splitParameterPathIntoContainerAndName <- function(parameterPath) {

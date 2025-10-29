@@ -1,9 +1,11 @@
-#' Create a parameter set describing an individual and write it to the Excel file
+#' Create a parameter set describing an individual and write it to the Excel
+#' file
 #'
 #' @param individualCharacteristics An `IndividualCharacteristics` object
 #'   describing the individual. See `createIndividualCharacterstics` for more
 #'   information.
-#' @param outputXLSPath Path to the Excel file the parameter set will be written to
+#' @param outputXLSPath Path to the Excel file the parameter set will be written
+#'   to
 #'
 #' @return Path to the created Excel file
 #'
@@ -134,11 +136,12 @@ readIndividualCharacteristicsFromXLS <- function(
   return(individualCharacteristics)
 }
 
-#' Apply an individual to the simulation.
-#' For human species, only parameters that do not override formulas are applied.
-#' For other species, all parameters returned by `createIndividual` are applied.
+#' Apply an individual to the simulation. For human species, only parameters
+#' that do not override formulas are applied. For other species, all parameters
+#' returned by `createIndividual` are applied.
 #'
-#' @param individualCharacteristics `IndividualCharacteristics` describing an individual. Optional
+#' @param individualCharacteristics `IndividualCharacteristics` describing an
+#'   individual. Optional
 #' @param simulation `Simulation` loaded from the PKML file
 #' @import ospsuite
 #' @export

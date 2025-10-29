@@ -1,24 +1,25 @@
 #' Read scenario definition(s) from Excel file
 #'
-#' @param scenarioNames Character vector. Names of the scenarios that are defined in the Excel file.
-#'   If `NULL` (default), all scenarios specified in the Excel file will be
-#'   created.
-#' @param projectConfiguration A `ProjectConfiguration` object holding base information.
+#' @param scenarioNames Character vector. Names of the scenarios that are
+#'   defined in the Excel file. If `NULL` (default), all scenarios specified in
+#'   the Excel file will be created.
+#' @param projectConfiguration A `ProjectConfiguration` object holding base
+#'   information.
 #'
 #' @details Reads scenario definition from the Excel file defined in
-#' `ProjectConfiguration` and creates `ScenarioConfiguration` objects with new
-#' information.
-#' If a scenario that is specified in `scenarioNames` is not found in the Excel
-#' file, an error is thrown.
+#'   `ProjectConfiguration` and creates `ScenarioConfiguration` objects with new
+#'   information. If a scenario that is specified in `scenarioNames` is not
+#'   found in the Excel file, an error is thrown.
 #'
-#' The function expects the Excel file to have a "Scenarios" sheet with the following
-#' columns: `Scenario_name`, `IndividualId`, `PopulationId`, `ReadPopulationFromCSV`,
-#' `ModelParameterSheets`, `ApplicationProtocol`, `SimulationTime`, `SimulationTimeUnit`,
-#' `SteadyState`, `SteadyStateTime`, `SteadyStateTimeUnit`, `ModelFile`, `OutputPathsIds`.
-#' It also expects an "OutputPaths" sheet with `OutputPathId` and `OutputPath` columns.
+#'   The function expects the Excel file to have a "Scenarios" sheet with the
+#'   following columns: `Scenario_name`, `IndividualId`, `PopulationId`,
+#'   `ReadPopulationFromCSV`, `ModelParameterSheets`, `ApplicationProtocol`,
+#'   `SimulationTime`, `SimulationTimeUnit`, `SteadyState`, `SteadyStateTime`,
+#'   `SteadyStateTimeUnit`, `ModelFile`, `OutputPathsIds`. It also expects an
+#'   "OutputPaths" sheet with `OutputPathId` and `OutputPath` columns.
 #'
-#' @returns A named list of `ScenarioConfiguration` objects with the names of the
-#' list being scenario names.
+#' @returns A named list of `ScenarioConfiguration` objects with the names of
+#'   the list being scenario names.
 #' @export
 #'
 #' @examples
@@ -27,7 +28,10 @@
 #' projectConfiguration <- createProjectConfiguration()
 #' scenarioName <- "MyScenario"
 #' # Read scenario definition from Excel
-#' scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioNames = scenarioName, projectConfiguration)[[scenarioName]]
+#' scenarioConfiguration <- readScenarioConfigurationFromExcel(
+#'   scenarioNames = scenarioName,
+#'   projectConfiguration
+#' )[[scenarioName]]
 #' }
 readScenarioConfigurationFromExcel <- function(
   scenarioNames = NULL,

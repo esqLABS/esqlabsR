@@ -2,19 +2,17 @@
 #'
 #' @param string A string or a list of strings to be converted to numeric values
 #' @param lloqMode How to treat entries below LLOQ, i.e., of a form "<2":
-#'   `LLOQ/2` (default): return the number divided by 2,
-#'   `LLOQ`: return the numerical value,
-#'   `ZERO`: return 0,
-#'   `ignore`: return `NA`
+#'   `LLOQ/2` (default): return the number divided by 2, `LLOQ`: return the
+#'   numerical value, `ZERO`: return 0, `ignore`: return `NA`
 #' @param uloqMode How to treat entries above ULOQ, i.e., of a form ">2":
-#'   `ULOQ`: return the numerical value,
-#'   `ignore`: return `NA`
+#'   `ULOQ`: return the numerical value, `ignore`: return `NA`
 #'
-#' @details Tries to convert each string to a numeric with `as.numeric()`.
-#' If any conversion fails and returns `NA`, the value is tested for being a LLOQ-
-#' or a ULOQ value, i.e., of a form "<2" or ">2", respectively. If this is a case,
-#' the returned value is defined by the parameters `lloqMode` and `uloqMode`.
-#' In any other case where the string cannot be converted to a numeric, `NA` is returned.
+#' @details Tries to convert each string to a numeric with `as.numeric()`. If
+#'   any conversion fails and returns `NA`, the value is tested for being a
+#'   LLOQ- or a ULOQ value, i.e., of a form "<2" or ">2", respectively. If this
+#'   is a case, the returned value is defined by the parameters `lloqMode` and
+#'   `uloqMode`. In any other case where the string cannot be converted to a
+#'   numeric, `NA` is returned.
 #' @returns A numeric value or a list of numeric values
 #' @export
 stringToNum <- function(
@@ -30,7 +28,8 @@ stringToNum <- function(
   # Attempt to convert all passed values to numeric
   numVals <- suppressWarnings(as.numeric(string))
 
-  # If any values could not be interpreted and were coerced to NA, decide what to do (e.g. LLOQ and ULOQ treatment)
+  # If any values could not be interpreted and were coerced to NA, decide what
+  # to do (e.g. LLOQ and ULOQ treatment)
   naVals <- is.na(numVals)
   if (any(naVals)) {
     for (idx in which(naVals)) {
@@ -87,28 +86,29 @@ stringToNum <- function(
   return(numVals)
 }
 
-#' Calculate mean and standard deviation for the yValues of the given `DataSet` objects
+#' Calculate mean and standard deviation for the yValues of the given `DataSet`
+#' objects
 #'
 #' @param dataSets list of `DataSet` objects
 #' @param method method for calculating the mean and standard deviation - either
-#'  `arithmetic` (default) or `geometric`
-#' @param lloqMode how to treat data points below LLOQ if LLOQ is given - `LLOQ/2` (default):
-#'  use as given (since `DataSet` stores values below LLOQ as `LLOQ/2`),
-#'  `LLOQ`: set value to LLOQ value, `ZERO`: set value to 0, `ignore`:
-#'  do not use data points for mean calculation
-#' @param outputXunit xUnit of output data set, if `NULL` (default) xUnit of the first data set
-#'  will be used
-#' @param outputYunit yUnit of output data set, if `NULL` (default) yUnit of the first data set
-#'  will be used
-#' @param outputMolWeight molWeight of output data set in `g/mol` - obligatory when initial
-#'  data sets have differing molWeight values
-#' @details Calculates mean and standard deviation of the yValues of the given `DataSet`
-#'  objects per xValue. The meta data of the returned `DataSet` consists of all meta
-#'  data that are equal in all initial data sets. Its LLOQ is the mean LLOQ value of all
-#'  data sets which have an LLOQ set, e.g. if dataSet1 has LLOQ 1, dataSet2 has LLOQ 3
-#'  and dataSet3 has no LLOQ, then 2 is used for the returned `DataSet`.
-#'  The LLOQ of the returned `DataSet` is the arithmetic mean of LLOQ values of
-#'  all `DataSet`s
+#'   `arithmetic` (default) or `geometric`
+#' @param lloqMode how to treat data points below LLOQ if LLOQ is given -
+#'   `LLOQ/2` (default): use as given (since `DataSet` stores values below LLOQ
+#'   as `LLOQ/2`), `LLOQ`: set value to LLOQ value, `ZERO`: set value to 0,
+#'   `ignore`: do not use data points for mean calculation
+#' @param outputXunit xUnit of output data set, if `NULL` (default) xUnit of the
+#'   first data set will be used
+#' @param outputYunit yUnit of output data set, if `NULL` (default) yUnit of the
+#'   first data set will be used
+#' @param outputMolWeight molWeight of output data set in `g/mol` - obligatory
+#'   when initial data sets have differing molWeight values
+#' @details Calculates mean and standard deviation of the yValues of the given
+#'   `DataSet` objects per xValue. The meta data of the returned `DataSet`
+#'   consists of all meta data that are equal in all initial data sets. Its LLOQ
+#'   is the mean LLOQ value of all data sets which have an LLOQ set, e.g. if
+#'   dataSet1 has LLOQ 1, dataSet2 has LLOQ 3 and dataSet3 has no LLOQ, then 2
+#'   is used for the returned `DataSet`. The LLOQ of the returned `DataSet` is
+#'   the arithmetic mean of LLOQ values of all `DataSet`s
 #' @returns A single `DataSet` object
 #' @export
 calculateMeanDataSet <- function(
@@ -288,21 +288,22 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' Load data from excel
 #'
 #' @description Loads data sets from excel. The excel file containing the data
-#' must be located in the folder `projectConfiguration$dataFolder`
-#' and be named `projectConfiguration$dataFile`.
-#' Importer configuration file must be located in the same folder and named
-#' `projectConfiguration$dataImporterConfigurationFile`.
+#'   must be located in the folder `projectConfiguration$dataFolder` and be
+#'   named `projectConfiguration$dataFile`. Importer configuration file must be
+#'   located in the same folder and named
+#'   `projectConfiguration$dataImporterConfigurationFile`.
 #'
 #' @param projectConfiguration Object of class `ProjectConfiguration` containing
-#' the necessary information.
-#' @param sheets String or a list of strings defining which sheets to load.
-#' If `NULL` (default), all sheets within the file are loaded.
+#'   the necessary information.
+#' @param sheets String or a list of strings defining which sheets to load. If
+#'   `NULL` (default), all sheets within the file are loaded.
 #' @param importerConfiguration `DataImporterConfiguration` object used to load
-#' the data. If `NULL` (default), default esqlabs importer configuration as
-#' defined in `projectConfiguration$dataImporterConfigurationFile` will be used.
+#'   the data. If `NULL` (default), default esqlabs importer configuration as
+#'   defined in `projectConfiguration$dataImporterConfigurationFile` will be
+#'   used.
 #'
-#' @returns
-#' A named list of `DataSet` objects, with names being the names of the data sets.
+#' @returns A named list of `DataSet` objects, with names being the names of the
+#' data sets.
 #' @export
 #'
 #' @examples
@@ -341,17 +342,17 @@ loadObservedData <- function(
 #' Load data from pkml
 #'
 #' @description Loads data sets that are exported as pkml. The files must be
-#' located in the folder `projectConfiguration$dataFolder`, subfolder `pkml`.
-#' and be named `projectConfiguration$dataFile`.
+#'   located in the folder `projectConfiguration$dataFolder`, subfolder `pkml`.
+#'   and be named `projectConfiguration$dataFile`.
 #'
 #' @param projectConfiguration Object of class `ProjectConfiguration` containing
-#' the necessary information.
-#' @param obsDataNames String or a list of strings defining data sets to load
-#' If `NULL` (default), all data sets located in the folder are loaded. Must not
-#' contain the ".pkml" file extension.
+#'   the necessary information.
+#' @param obsDataNames String or a list of strings defining data sets to load If
+#'   `NULL` (default), all data sets located in the folder are loaded. Must not
+#'   contain the ".pkml" file extension.
 #'
-#' @returns
-#' A named list of `DataSet` objects, with names being the names of the data sets.
+#' @returns A named list of `DataSet` objects, with names being the names of the
+#' data sets.
 #' @export
 #'
 #' @examples

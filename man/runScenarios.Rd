@@ -9,20 +9,21 @@ runScenarios(scenarios, simulationRunOptions = NULL)
 \arguments{
 \item{scenarios}{List of \code{Scenario} objects to be simulated.}
 
-\item{simulationRunOptions}{Object of type \code{SimulationRunOptions} that will be passed
-to simulation runs. If \code{NULL}, default options are used.}
+\item{simulationRunOptions}{Object of type \code{SimulationRunOptions} that will
+be passed to simulation runs. If \code{NULL}, default options are used.}
 }
 \value{
 A named list, where the names are scenario names, and the values are
-lists with the entries \code{simulation} being the initialized \code{Simulation} object with applied parameters,
-\code{results} being \code{SimulatioResults} object produced by running the simulation,
-\code{outputValues} the output values of the \code{SimulationResults}, and \code{population}
-the \code{Population} object if the scenario is a population simulation.
+lists with the entries \code{simulation} being the initialized \code{Simulation}
+object with applied parameters, \code{results} being \code{SimulatioResults} object
+produced by running the simulation, \code{outputValues} the output values of the
+\code{SimulationResults}, and \code{population} the \code{Population} object if the
+scenario is a population simulation.
 }
 \description{
 Run a set of scenarios.
 }
 \details{
-If simulation of a scenario fails, a warning is produced, and the \code{outputValues}
-for this scenario is \code{NULL}.
+If simulation of a scenario fails, a warning is produced, and the
+\code{outputValues} for this scenario is \code{NULL}.
 }

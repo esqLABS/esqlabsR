@@ -22,15 +22,15 @@ sensitivityTornadoPlot(
 output path(s), parameter path(s), and PK parameters to be displayed,
 respectively. If \code{NULL}, all included paths and parameters present in the
 supplied \code{SensitivityCalculation} object will be displayed in the
-visualization.
-A separate plot will be generated for each output path. Each plot will
-contain a tornado plot panel for each PK parameter, and the sensitivities
-for each parameter will be displayed as lines.}
+visualization. A separate plot will be generated for each output path. Each
+plot will contain a tornado plot panel for each PK parameter, and the
+sensitivities for each parameter will be displayed as lines.}
 
 \item{parameterFactor}{Numeric; the scaling factor used to adjust parameters
-during sensitivity analysis used in the tornado plot. Both the \code{parameterFactor}
-and its reciprocal (\code{1/parameterFactor}) must be included in the
-\code{variationRange} specified in the \code{sensitivityCalculation}. Default is 0.1.}
+during sensitivity analysis used in the tornado plot. Both the
+\code{parameterFactor} and its reciprocal (\code{1/parameterFactor}) must be included
+in the \code{variationRange} specified in the \code{sensitivityCalculation}. Default
+is 0.1.}
 
 \item{xAxisZoomRange}{Numeric vector of length 2; specifies the x-axis limits
 to zoom into. This does not remove any data but constrains the visible
@@ -49,11 +49,11 @@ Supported parameters include:
 \item \code{titleSize}: Font size of the plot title.
 \item \code{xLabel}: Label text for the x-axis.
 \item \code{yLabel}: Label text for the y-axis.
-}
 
-Default values are set to provide a standardized look, but each parameter can
-be tailored to fit specific visual needs. Modifying these parameters will
-directly affect the aesthetics of the output plots.}
+Default values are set to provide a standardized look, but each parameter
+can be tailored to fit specific visual needs. Modifying these parameters
+will directly affect the aesthetics of the output plots.
+}}
 }
 \value{
 A \code{patchwork} object containing the combined ggplot objects if a
@@ -61,11 +61,11 @@ single output path is specified, or a list of \code{patchwork} objects for
 multiple output paths.
 }
 \description{
-Generates tornado plots to visualize the results of sensitivity analysis.
-Each plot shows the effect of modifying parameters by a specific scaling factor
-(\code{parameterFactor}) and its reciprocal on specific model outputs. This
-visualization helps to assess the impact of parameter changes on the results,
-highlighting the model's sensitivity to these parameters.
+Generates tornado plots to visualize the results of sensitivity
+analysis. Each plot shows the effect of modifying parameters by a specific
+scaling factor (\code{parameterFactor}) and its reciprocal on specific model
+outputs. This visualization helps to assess the impact of parameter changes
+on the results, highlighting the model's sensitivity to these parameters.
 }
 \examples{
 \dontrun{

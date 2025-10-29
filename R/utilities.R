@@ -16,13 +16,13 @@
 #'   `thresholdAbs` is set, `thresholdRel` is ignored. If 0, only exact match
 #'   between `value` and `array` is accepted.
 #' @param thresholdRel A fraction by which the closest value may differ from
-#'   `value` to be accepted. **WARNING**: setting a relative threshold will result
-#'   in only exact matches if `value` is 0!
+#'   `value` to be accepted. **WARNING**: setting a relative threshold will
+#'   result in only exact matches if `value` is 0!
 #'
-#' @returns Index of a value within the array which is closest to `value` and the
-#'   difference is within the defined threshold. If multiple entries of `array`
-#'   have the same difference which is minimal, a vector of indices is returned.
-#'   If no value is within the defined threshold, `NULL` is returned.
+#' @returns Index of a value within the array which is closest to `value` and
+#'   the difference is within the defined threshold. If multiple entries of
+#'   `array` have the same difference which is minimal, a vector of indices is
+#'   returned. If no value is within the defined threshold, `NULL` is returned.
 #' @export
 getIndexClosestToValue <- function(
   value,
@@ -62,9 +62,9 @@ getIndexClosestToValue <- function(
 #' @param x Numeric array to calculate geometric mean for
 #' @param na.rm A logical value indicating whether `NA` values should be
 #'   stripped before the computation proceeds
-#' @param trim Fraction (0 to 0.5) of observations to be trimmed from each
-#'   end of `x` before the mean is computed. Values of trim outside that range
-#'   are taken as the nearest endpoint
+#' @param trim Fraction (0 to 0.5) of observations to be trimmed from each end
+#'   of `x` before the mean is computed. Values of trim outside that range are
+#'   taken as the nearest endpoint
 #'
 #' @returns Geometric mean of `x`
 #' @export
@@ -91,8 +91,8 @@ geosd <- function(x, na.rm = FALSE) {
 #' @param listArg The list from which the entry will be removed
 #' @description Removes all occurrences of the entry from the list. If the entry
 #'   is not in the list nothing is removed.
-#' @returns The list without the entry. If the input is a vector, it is converted
-#'   to a list.
+#' @returns The list without the entry. If the input is a vector, it is
+#'   converted to a list.
 #'
 #' @examples
 #' myList <- list("one", "two", "one", "three")

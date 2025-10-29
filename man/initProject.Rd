@@ -7,13 +7,14 @@
 initProject(destination = ".", overwrite = FALSE)
 }
 \arguments{
-\item{destination}{A string defining the path where to initialize the project.
-default to current working directory.}
+\item{destination}{A string defining the path where to initialize the
+project. default to current working directory.}
 
-\item{overwrite}{If TRUE, overwrites existing project without asking for permission.
-If FALSE and a project already exists, asks user for permission to overwrite.}
+\item{overwrite}{If TRUE, overwrites existing project without asking for
+permission. If FALSE and a project already exists, asks user for permission
+to overwrite.}
 }
 \description{
-Creates the default project folder structure with Excel file templates in
-the working directory.
+Creates the default project folder structure with Excel file templates in the
+working directory.
 }

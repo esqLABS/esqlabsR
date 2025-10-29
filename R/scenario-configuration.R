@@ -21,9 +21,9 @@ ScenarioConfiguration <- R6::R6Class(
         private$.simulateSteadyState <- value
       }
     },
-    #' @field readPopulationFromCSV Boolean representing whether the a new population
-    #' will be created (value is `FALSE`) or an existing population will be imported
-    #' from a csv.
+    #' @field readPopulationFromCSV Boolean representing whether the a new
+    #'   population will be created (value is `FALSE`) or an existing population
+    #'   will be imported from a csv.
     readPopulationFromCSV = function(value) {
       if (missing(value)) {
         private$.readPopulationFromCsv
@@ -36,11 +36,12 @@ ScenarioConfiguration <- R6::R6Class(
         private$.readPopulationFromCsv <- value
       }
     },
-    #' @field simulationTime Specified simulation time intervals. If `NULL` (default),
-    #' simulation time as defined in the `Simulation` object will be used.
-    #' Accepted are multiple time intervals separated by a ';'. Each time interval
-    #' is a triplet of values <StartTime, EndTime, Resolution>, where `Resolution` is the number of
-    #' simulated points per time unit defined in the column `TimeUnit`.
+    #' @field simulationTime Specified simulation time intervals. If `NULL`
+    #'   (default), simulation time as defined in the `Simulation` object will
+    #'   be used. Accepted are multiple time intervals separated by a ';'. Each
+    #'   time interval is a triplet of values <StartTime, EndTime, Resolution>,
+    #'   where `Resolution` is the number of simulated points per time unit
+    #'   defined in the column `TimeUnit`.
     simulationTime = function(value) {
       if (missing(value)) {
         private$.simulationTime
@@ -59,7 +60,8 @@ ScenarioConfiguration <- R6::R6Class(
       }
     },
 
-    #' @field steadyStateTime Time in minutes to simulate if simulating steady-state. May be `NULL`.
+    #' @field steadyStateTime Time in minutes to simulate if simulating
+    #'   steady-state. May be `NULL`.
     steadyStateTime = function(value) {
       if (missing(value)) {
         private$.steadyStateTime
@@ -71,8 +73,8 @@ ScenarioConfiguration <- R6::R6Class(
         private$.steadyStateTime <- value
       }
     },
-    #' @field paramSheets A named list. Names of the sheets from the parameters-excel file
-    #'   that will be applied to the simulation
+    #' @field paramSheets A named list. Names of the sheets from the
+    #'   parameters-excel file that will be applied to the simulation
     paramSheets = function(value) {
       if (missing(value)) {
         private$.paramSheets
@@ -99,8 +101,8 @@ a parameter sheet from the list"
         }
       }
     },
-    #' @field projectConfiguration `ProjectConfiguration` that will be used in scenarios.
-    #' Read-only
+    #' @field projectConfiguration `ProjectConfiguration` that will be used in
+    #'   scenarios. Read-only
     projectConfiguration = function(value) {
       if (missing(value)) {
         private$.projectConfiguration
@@ -121,8 +123,7 @@ a parameter sheet from the list"
     .readPopulationFromCsv = FALSE
   ),
   public = list(
-    #' @description
-    #' Initialize a new instance of the class
+    #' @description Initialize a new instance of the class
     #' @param projectConfiguration An object of class `ProjectConfiguration`.
     #' @returns A new `ScenarioConfiguration` object.
     initialize = function(projectConfiguration) {
@@ -133,26 +134,29 @@ a parameter sheet from the list"
     #' @field scenarioName Name of the simulated scenario
     scenarioName = NULL,
     #' @field modelFile Name of the simulation to be loaded (must include the
-    #' extension ".pkml"). Must be located in the "modelFolder".
+    #'   extension ".pkml"). Must be located in the "modelFolder".
     modelFile = NULL,
-    #' @field applicationProtocol Name of the application protocol to be applied. Defined
-    #' in the excel file "Applications.xlsx"
+    #' @field applicationProtocol Name of the application protocol to be
+    #'   applied. Defined in the excel file "Applications.xlsx"
     applicationProtocol = NULL,
-    #' @field individualId Id of the individual as specified in "Individuals.xlsx".
-    #' If `NULL` (default), the individual as defined in the simulation file will be simulated.
+    #' @field individualId Id of the individual as specified in
+    #'   "Individuals.xlsx". If `NULL` (default), the individual as defined in
+    #'   the simulation file will be simulated.
     individualId = NULL,
-    #' @field populationId Id of the population as specified in "Populations.xlsx",
-    #' sheet "Demographics". If `ScenarioConfguration$simulationType` is `population`,
-    #' a population will be created a the scenario will be simulated as a population
-    #' simulation.
+    #' @field populationId Id of the population as specified in
+    #'   "Populations.xlsx", sheet "Demographics". If
+    #'   `ScenarioConfguration$simulationType` is `population`, a population
+    #'   will be created a the scenario will be simulated as a population
+    #'   simulation.
     populationId = NULL,
-    #' @field outputPaths a character vector or named vector of output paths for which the results will be
-    #' calculated. If `NULL` (default), outputs as defined in the simulation
-    #' are used. Can be a named vector where names serve as aliases for the paths,
-    #' e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").
+    #' @field outputPaths a character vector or named vector of output paths for
+    #'   which the results will be calculated. If `NULL` (default), outputs as
+    #'   defined in the simulation are used. Can be a named vector where names
+    #'   serve as aliases for the paths, e.g., c("plasma" =
+    #'   "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").
     outputPaths = NULL,
-    #' @description Add the names of sheets in the parameters excel-file
-    #' that will be applied to the simulation
+    #' @description Add the names of sheets in the parameters excel-file that
+    #'   will be applied to the simulation
     #' @param sheetNames A name or a list of names of the excel sheet
     addParamSheets = function(sheetNames) {
       private$.paramSheets <- enumPut(
@@ -162,10 +166,10 @@ a parameter sheet from the list"
         overwrite = TRUE
       )
     },
-    #' @description Remove the names of sheets in the parameters excel-file
-    #' from the list of sheets `paramSheets`
-    #' @param sheetNames A name or a list of names of the excel sheet.
-    #' If `NULL` (default), all sheets are removed
+    #' @description Remove the names of sheets in the parameters excel-file from
+    #'   the list of sheets `paramSheets`
+    #' @param sheetNames A name or a list of names of the excel sheet. If `NULL`
+    #'   (default), all sheets are removed.
     removeParamSheets = function(sheetNames = NULL) {
       if (is.null(sheetNames)) {
         private$.paramSheets <- enum(NULL)
@@ -176,10 +180,11 @@ a parameter sheet from the list"
         )
       }
     },
-    #' @description
-    #' Print the object to the console
-    #' @param projectConfiguration Whether to also print project configuration. default to TRUE.
-    #' @param className Whether to print the name of the class at the beginning. default to TRUE.
+    #' @description Print the object to the console
+    #' @param projectConfiguration Whether to also print project configuration.
+    #'   default to TRUE.
+    #' @param className Whether to print the name of the class at the beginning.
+    #'   default to TRUE.
     print = function(className = TRUE, projectConfiguration = FALSE) {
       if (className) {
         ospsuite.utils::ospPrintClass(self)

@@ -10,17 +10,21 @@ restoreProjectConfiguration(
 )
 }
 \arguments{
-\item{jsonPath}{Path to the JSON configuration file. Defaults to "ProjectConfiguration.json".}
+\item{jsonPath}{Path to the JSON configuration file. Defaults to
+"ProjectConfiguration.json".}
 
-\item{outputDir}{Directory where the Excel files will be created. If NULL (default), the Excel files
-will be created in the same directory as the source JSON file.}
+\item{outputDir}{Directory where the Excel files will be created. If NULL
+(default), the Excel files will be created in the same directory as the
+source JSON file.}
 }
 \value{
-A ProjectConfiguration object initialized with the regenerated ProjectConfiguration.xlsx
+A ProjectConfiguration object initialized with the regenerated
+ProjectConfiguration.xlsx
 }
 \description{
-Creates Excel configuration files from a JSON configuration file.
-This allows for recreating the project configuration from version-controlled JSON.
+Creates Excel configuration files from a JSON configuration
+file. This allows for recreating the project configuration from
+version-controlled JSON.
 }
 \seealso{
 Other project configuration snapshots: 

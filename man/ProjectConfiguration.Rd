@@ -23,26 +23,25 @@ have been modified since loading from file. Read-only.}
 
 \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
 
-\item{\code{configurationsFolder}}{Path to the folder containing excel files with model
-parameterization;}
+\item{\code{configurationsFolder}}{Path to the folder containing excel files
+with model parameterization.}
 
 \item{\code{modelParamsFile}}{Name of the excel file with global model
-parameterization.
-Must be located in the "configurationsFolder".}
+parameterization. Must be located in the "configurationsFolder".}
 
-\item{\code{individualsFile}}{Name of the excel file with
-individual-specific model parameterization.
-Must be located in the "configurationsFolder"}
+\item{\code{individualsFile}}{Name of the excel file with individual-specific
+model parameterization.
+Must be located in the "configurationsFolder".}
 
 \item{\code{populationsFile}}{Name of the excel file with population
 information.
 Must be located in the "configurationsFolder".}
 
-\item{\code{populationsFolder}}{Name of the folder containing population defined through csv files
+\item{\code{populationsFolder}}{Name of the folder containing population defined
+through csv files.
 Must be located in the "configurationsFolder".}
 
-\item{\code{scenariosFile}}{Name of the excel file with scenario
-definitions.
+\item{\code{scenariosFile}}{Name of the excel file with scenario definitions.
 Must be located in the "configurationsFolder".}
 
 \item{\code{applicationsFile}}{Name of the excel file scenario-specific
@@ -62,8 +61,8 @@ Must be located in the "dataFolder"}
 file in xml format used to load the data.
 Must be located in the "dataFolder"}
 
-\item{\code{outputFolder}}{Path to the folder where the results should be
-saved to; relative to the "Code" folder
+\item{\code{outputFolder}}{Path to the folder where the results should be saved
+relative to the "Code" folder
 Initialize}
 }
 \if{html}{\out{</div>}}
@@ -107,7 +106,8 @@ print prints a summary of the Project Configuration.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{className}}{Whether to print the name of the class at the beginning. default to TRUE.}
+\item{\code{className}}{Whether to print the name of the class at the beginning.
+default to TRUE.}
 }
 \if{html}{\out{</div>}}
 }
@@ -116,7 +116,8 @@ print prints a summary of the Project Configuration.
 \if{html}{\out{<a id="method-ProjectConfiguration-save"></a>}}
 \if{latex}{\out{\hypertarget{method-ProjectConfiguration-save}{}}}
 \subsection{Method \code{save()}}{
-Export ProjectConfiguration object to ProjectConfiguration.xlsx
+Export ProjectConfiguration object to
+ProjectConfiguration.xlsx
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$save(path)}\if{html}{\out{</div>}}
 }
@@ -124,7 +125,8 @@ Export ProjectConfiguration object to ProjectConfiguration.xlsx
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{path}}{a string representing the path or file name where to save the file. Can be absolute or relative (to working directory).}
+\item{\code{path}}{a string representing the path or file name where to save the
+file. Can be absolute or relative (to working directory).}
 }
 \if{html}{\out{</div>}}
 }

@@ -7,7 +7,8 @@
 exampleDirectory(name = NULL)
 }
 \arguments{
-\item{name}{Name of example project. If \code{NULL}, the example names will be listed.}
+\item{name}{Name of example project. If \code{NULL}, the example names will be
+listed.}
 }
 \description{
 esqlabsR comes bundled with some example Project in its \code{inst/extdata}
