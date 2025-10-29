@@ -133,11 +133,16 @@ writeParameterStructureToXLS <- function(
 #' @param paramsXLSpath Path to the excel file
 #' @param sheet (Optional) name of the excel sheet
 #' @param append If TRUE, appends parameters to existing file. If the file exists
-#'   but the sheet doesn't exist, creates a new sheet. If FALSE (default), 
+#'   but the sheet doesn't exist, creates a new sheet. If FALSE (default),
 #'   overwrites the existing file.
 
 #' @export
-exportParametersToXLS <- function(parameters, paramsXLSpath, sheet = NULL, append = FALSE) {
+exportParametersToXLS <- function(
+  parameters,
+  paramsXLSpath,
+  sheet = NULL,
+  append = FALSE
+) {
   validateIsOfType(parameters, "Parameter")
   validateIsCharacter(sheet, nullAllowed = TRUE)
   if (!is.null(sheet)) {

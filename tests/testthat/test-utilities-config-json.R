@@ -706,13 +706,13 @@ test_that("restoreProjectConfiguration handles out-of-sync files correctly in no
   # Create the complete project structure in importDir to avoid path validation warnings
   # Copy the ProjectConfiguration.xlsx file
   file.copy(paths$project_config_path, file.path(importDir, excelFilename))
-  
+
   # Create the directory structure referenced in the project configuration
   # to prevent path validation warnings
   dir.create(file.path(importDir, "Models", "Simulations"), recursive = TRUE)
   dir.create(file.path(importDir, "Data"), recursive = TRUE)
   dir.create(file.path(importDir, "Results"), recursive = TRUE)
-  
+
   # Copy the Configurations directory and its files
   configurationsDir <- file.path(importDir, "Configurations")
   dir.create(configurationsDir, recursive = TRUE)
@@ -721,7 +721,7 @@ test_that("restoreProjectConfiguration handles out-of-sync files correctly in no
     configurationsDir,
     recursive = TRUE
   )
-  
+
   # Modify the Excel file to make it out of sync
   df <- readExcel(file.path(importDir, excelFilename))
   df$Value[1] <- "MODIFIED_VALUE" # change a value
