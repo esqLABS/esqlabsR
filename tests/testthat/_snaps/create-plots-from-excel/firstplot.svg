@@ -287,20 +287,11 @@
 </defs>
 <g clip-path='url(#cpMjg2LjgzfDQ3Mi4xMHwxODAuMjh8NTMzLjkz)'>
 <rect x='286.83' y='180.28' width='185.27' height='353.65' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
-</g>
-<defs>
-  <clipPath id='cpNDcyLjEwfDQ3Mi4xMHwxODAuMjh8MTgwLjI4'>
-    <rect x='472.10' y='180.28' width='0.00' height='0.00' />
-  </clipPath>
-</defs>
-<g clip-path='url(#cpNDcyLjEwfDQ3Mi4xMHwxODAuMjh8MTgwLjI4)'>
-<rect x='472.10' y='180.28' width='0.00' height='0.00' style='stroke-width: 0.00; stroke: none;' />
-</g>
-<g clip-path='url(#cpMjg2LjgzfDQ3Mi4xMHwxODAuMjh8NTMzLjkz)'>
+<rect x='286.83' y='180.28' width='185.27' height='353.65' style='stroke-width: 0.00; stroke: none;' />
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
 </g>
-<g clip-path='url(#cpNDcyLjEwfDQ3Mi4xMHwxODAuMjh8MTgwLjI4)'>
+<g clip-path='url(#cpMjg2LjgzfDQ3Mi4xMHwxODAuMjh8NTMzLjkz)'>
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
 </g>
