@@ -405,7 +405,7 @@ messages$invalidSimulationResultNames <- function(
     SimulationResults names:
     {glue::glue_collapse(simulationResultNames, sep = ', ')},
     ParameterPaths names:
-    {glue::glue_collapse(parameterPaths, collapse = ', ')}"
+    {glue::glue_collapse(parameterPaths, sep = ', ')}"
   ) |>
     as.character()
 }
