@@ -104,6 +104,32 @@ test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
 # single observed and simulated datasets
 oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
 
+test_that(".parseExcelMultiValueField numeric conversion path is covered", {
+  # Direct test to ensure numeric conversion code path is covered
+  result <- esqlabsR:::.parseExcelMultiValueField(
+    value = "72.5, 80.5",
+    fieldName = "test",
+    plotID = "P1",
+    expectedLength = 2,
+    expectedType = "numeric"
+  )
+  expect_equal(result, c(72.5, 80.5))
+  expect_true(is.numeric(result))
+
+  # Test space-separated numeric values trigger correct error
+  expect_error(
+    esqlabsR:::.parseExcelMultiValueField(
+      value = "72 80",
+      fieldName = "test",
+      plotID = "P1",
+      expectedLength = 2,
+      expectedType = "numeric"
+    ),
+    regexp = "Invalid format.*Expected.*Values separated by commas",
+    fixed = FALSE
+  )
+})
+
 test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualTimeProfile", {
   esqlabsConfig <- createEsqlabsPlotConfiguration()
 

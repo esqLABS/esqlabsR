@@ -139,15 +139,15 @@ If \code{NULL} (default), all sheets are removed}
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ScenarioConfiguration$print(projectConfiguration = TRUE, className = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ScenarioConfiguration$print(className = TRUE, projectConfiguration = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{projectConfiguration}}{Whether to also print project configuration. default to TRUE.}
-
 \item{\code{className}}{Whether to print the name of the class at the beginning. default to TRUE.}
+
+\item{\code{projectConfiguration}}{Whether to also print project configuration. default to TRUE.}
 }
 \if{html}{\out{</div>}}
 }

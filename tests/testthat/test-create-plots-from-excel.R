@@ -1513,3 +1513,174 @@ test_that("It ignores a title argument in plotGrids when the title column is not
     }
   )
 })
+
+# Tests for issue #848: Better validation for Excel fields
+test_that("It provides clear error when xValuesLimits uses space instead of comma (#848)", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      plotConfigurationDfLocal <- data.frame(list(
+        "plotID" = "TestPlot",
+        "DataCombinedName" = "AciclovirPVB",
+        "plotType" = "individual",
+        "title" = NA,
+        "xUnit" = NA,
+        "yUnit" = NA,
+        "xAxisScale" = NA,
+        "yAxisScale" = NA,
+        "xValuesLimits" = "72 80",  # Space-separated - should trigger clear error
+        "yValuesLimits" = NA,
+        "quantiles" = NA,
+        "nsd" = NA,
+        "foldDistance" = NA
+      ))
+
+      plotGridsDfLocal <- data.frame(list(
+        "name" = "TestGrid",
+        "plotIDs" = "TestPlot",
+        "title" = "Test Grid"
+      ))
+
+      .writeExcel(
+        data = list(
+          "DataCombined" = dataCombinedDf,
+          "plotConfiguration" = plotConfigurationDfLocal,
+          "plotGrids" = plotGridsDfLocal,
+          "exportConfiguration" = exportConfigurationDf
+        ),
+        path = file.path(tempDir, "Plots.xlsx")
+      )
+
+      projectConfigurationLocal$plotsFile <- file.path(tempDir, "Plots.xlsx")
+
+      expect_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        ),
+        regexp = "Excel validation error.*xValuesLimits",
+        fixed = FALSE
+      )
+    }
+  )
+})
+
+test_that("It accepts correctly formatted comma-separated axis limits (#848)", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      plotConfigurationDfLocal <- data.frame(list(
+        "plotID" = "TestPlot",
+        "DataCombinedName" = "AciclovirPVB",
+        "plotType" = "individual",
+        "title" = NA,
+        "xUnit" = NA,
+        "yUnit" = NA,
+        "xAxisScale" = NA,
+        "yAxisScale" = NA,
+        "xValuesLimits" = "72, 80",  # Correct format
+        "yAxisLimits" = "0,100",     # Also correct (no space after comma)
+        "yValuesLimits" = NA,
+        "quantiles" = NA,
+        "nsd" = NA,
+        "foldDistance" = NA
+      ))
+
+      plotGridsDfLocal <- data.frame(list(
+        "name" = "TestGrid",
+        "plotIDs" = "TestPlot",
+        "title" = "Test Grid"
+      ))
+
+      .writeExcel(
+        data = list(
+          "DataCombined" = dataCombinedDf,
+          "plotConfiguration" = plotConfigurationDfLocal,
+          "plotGrids" = plotGridsDfLocal,
+          "exportConfiguration" = exportConfigurationDf
+        ),
+        path = file.path(tempDir, "Plots.xlsx")
+      )
+
+      projectConfigurationLocal$plotsFile <- file.path(tempDir, "Plots.xlsx")
+
+      expect_no_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        )
+      )
+    }
+  )
+})
+
+test_that("It provides clear error for wrong number of axis limit values (#848)", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      plotConfigurationDfLocal <- data.frame(list(
+        "plotID" = "TestPlot2",
+        "DataCombinedName" = "AciclovirPVB",
+        "plotType" = "individual",
+        "title" = NA,
+        "xUnit" = NA,
+        "yUnit" = NA,
+        "xAxisScale" = NA,
+        "yAxisScale" = NA,
+        "xValuesLimits" = NA,
+        "yValuesLimits" = "100",  # Only one value - should need 2
+        "quantiles" = NA,
+        "nsd" = NA,
+        "foldDistance" = NA
+      ))
+
+      plotGridsDfLocal <- data.frame(list(
+        "name" = "TestGrid",
+        "plotIDs" = "TestPlot2",
+        "title" = "Test Grid"
+      ))
+
+      .writeExcel(
+        data = list(
+          "DataCombined" = dataCombinedDf,
+          "plotConfiguration" = plotConfigurationDfLocal,
+          "plotGrids" = plotGridsDfLocal,
+          "exportConfiguration" = exportConfigurationDf
+        ),
+        path = file.path(tempDir, "Plots.xlsx")
+      )
+
+      projectConfigurationLocal$plotsFile <- file.path(tempDir, "Plots.xlsx")
+
+      expect_error(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        ),
+        regexp = "Excel validation error.*yValuesLimits.*Expected: 2",
+        fixed = FALSE
+      )
+    }
+  )
+})
