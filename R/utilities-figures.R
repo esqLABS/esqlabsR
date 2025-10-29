@@ -561,7 +561,7 @@ createPlotsFromExcel <- function(
   # Detect common error: space-separated instead of comma-separated
   if (!is.null(expectedLength) && length(parsed) != expectedLength) {
     # Check if might be space-separated
-    spaceSplit <- unlist(trimws(strsplit(as.character(originalValue), "\\s+")))
+    spaceSplit <- unlist(strsplit(trimws(as.character(originalValue)), "\\s+"))
     if (length(spaceSplit) == expectedLength) {
       # Check if all parts look numeric (for numeric fields)
       if (expectedType == "numeric") {
