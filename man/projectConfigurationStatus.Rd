@@ -17,6 +17,9 @@ ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".}
 \item{jsonPath}{Path to the JSON configuration file. If NULL (default), the
 function will look for a JSON file with the same name as the
 ProjectConfiguration file but with .json extension.}
+
+\item{silent}{Logical indicating whether to suppress informational messages.
+Defaults to FALSE.}
 }
 \value{
 A list with components: \item{in_sync}{Logical indicating whether all

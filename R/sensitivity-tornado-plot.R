@@ -287,7 +287,7 @@ sensitivityTornadoPlot <- function(
       plot <- plot + scale_fill_brewer(palette = "Set2")
     } else {
       pLevels <- levels(as.factor(data$ParameterFactor))
-      pColor <- plotConfiguration$linesColor[1:length(pLevels)]
+      pColor <- plotConfiguration$linesColor[seq_along(pLevels)]
       names(pColor) <- pLevels
       plot <- plot +
         scale_fill_manual(

@@ -10,6 +10,7 @@
 #' @param outputDir Directory where the JSON file will be saved. If NULL
 #'   (default), the JSON file will be created in the same directory as the
 #'   source Excel file.
+#' @param ... Additional arguments. 
 #'
 #' @return Invisibly returns the exported configuration data structure
 #' @export
@@ -426,6 +427,8 @@ restoreProjectConfiguration <- function(
 #' @param jsonPath Path to the JSON configuration file. If NULL (default), the
 #'   function will look for a JSON file with the same name as the
 #'   ProjectConfiguration file but with .json extension.
+#' @param silent Logical indicating whether to suppress informational messages.
+#'   Defaults to FALSE.
 #'
 #' @family project configuration snapshots
 #' @return A list with components: \item{in_sync}{Logical indicating whether all

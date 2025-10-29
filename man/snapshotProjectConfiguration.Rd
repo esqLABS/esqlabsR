@@ -17,6 +17,8 @@ ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".}
 \item{outputDir}{Directory where the JSON file will be saved. If NULL
 (default), the JSON file will be created in the same directory as the
 source Excel file.}
+
+\item{...}{Additional arguments.}
 }
 \value{
 Invisibly returns the exported configuration data structure
