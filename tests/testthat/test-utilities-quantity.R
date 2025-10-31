@@ -6,7 +6,7 @@ simulation <- loadSimulation(system.file(
 simTree <- getSimulationTree(simulation)
 
 test_that("It throws an error if the quantity does not come from a molecule", {
-  path <- simTree$Organism$Weight
+  path <- simTree$Organism$Weight$path
   quantity <- getQuantity(path, simulation)
 
   expect_error(
