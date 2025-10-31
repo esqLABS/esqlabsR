@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,8 +83,8 @@ overridden (isFixedValue == TRUE). FALSE by default.</p></dd>
 
 
 <dt id="arg-compareformulasbyvalue">compareFormulasByValue<a class="anchor" aria-label="anchor" href="#arg-compareformulasbyvalue"></a></dt>
-<dd><p>If <code>FALSE</code>(default), formulas are compared by their types and string. If <code>TRUE</code>,
-only values are compared.</p></dd>
+<dd><p>If <code>FALSE</code>(default), formulas are compared by
+their types and string. If <code>TRUE</code>, only values are compared.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -93,18 +93,16 @@ only values are compared.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The parameters are not equal if:
-The paths of the parameters are not equal;
-The types of the formulas differ (types checked: isConstant, isDistributed, isExplicit, isTable);
-Constant formulas have different values;
+    <p>The parameters are not equal if: The paths of the parameters are not
+equal; The types of the formulas differ (types checked: isConstant,
+isDistributed, isExplicit, isTable); Constant formulas have different values;
 Distributed formulas have different values (not checking for distribution)
 Explicit formulas: If formula string are not equal, OR one of the parameter
-values is fixed (formula is overridden),
-OR both parameter values are fixed and differ,
-OR checkFormulaValues is TRUE and the values differ (disregarding of overridden or not)
-Table formulas: If the number of points differ, OR any of the points differ,
-OR one of the parameter values is fixed (formula is overridden),
-OR both parameter values are fixed and differ.</p>
+values is fixed (formula is overridden), OR both parameter values are fixed
+and differ, OR checkFormulaValues is TRUE and the values differ (disregarding
+of overridden or not) Table formulas: If the number of points differ, OR any
+of the points differ, OR one of the parameter values is fixed (formula is
+overridden), OR both parameter values are fixed and differ.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

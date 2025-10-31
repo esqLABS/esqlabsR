@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,25 +62,28 @@
     <div class="section level2">
     <h2 id="active-bindings">Active bindings<a class="anchor" aria-label="anchor" href="#active-bindings"></a></h2>
     <p></p><div class="r6-active-bindings"><dl><dt><code>scenarioConfiguration</code></dt>
-<dd><p><code>scenarioConfiguration</code> used for creation of this scenario.
-Read-only</p></dd>
+<dd><p><code>scenarioConfiguration</code> used for creation of
+this scenario. Read-only.</p></dd>
 
 
 <dt><code>finalCustomParams</code></dt>
 <dd><p>Custom parameters to be used for the simulation.
-Read-only</p></dd>
+Read-only.</p></dd>
 
 
 <dt><code>simulation</code></dt>
-<dd><p>Simulation object created from the <code>ScenarioConfiguration</code>. Read-only</p></dd>
+<dd><p>Simulation object created from the
+<code>ScenarioConfiguration</code>. Read-only</p></dd>
 
 
 <dt><code>population</code></dt>
-<dd><p>Population object in case the scenario is a population simulation. Read-only</p></dd>
+<dd><p>Population object in case the scenario is a population
+simulation. Read-only.</p></dd>
 
 
 <dt><code>scenarioType</code></dt>
-<dd><p>Type of the scenario - individual or population. Read-only</p></dd>
+<dd><p>Type of the scenario - individual or population.
+Read-only</p></dd>
 
 
 </dl><p></p></div>
@@ -95,15 +98,15 @@ Read-only</p></dd>
 <li><p><a href="#method-Scenario-print"><code>Scenario$print()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-Scenario-new"></a><div class="section">
 <h3 id="method-new-">Method <code>new()</code><a class="anchor" aria-label="anchor" href="#method-new-"></a></h3>
-<p>Custom parameters to be used for the simulation. The final custom parameters
-are a combination of parametrization through the excel files and the custom
-parameters specified by the user through the <code>customParams</code> argument of the
-<code>Scenario</code> constructor.</p>
+<p>Custom parameters to be used for the simulation. The final
+custom parameters are a combination of parametrization through the
+excel files and the custom parameters specified by the user through the
+<code>customParams</code> argument of the <code>Scenario</code> constructor.</p>
 
-<p>Simulation object. Read-only</p>
+<p>Simulation object. Read-only.</p>
 
-<p>Initialize a new instance of the class. Initializes the scenario from
-<code>ScenarioConfiguration</code> object.</p><div class="section">
+<p>Initialize a new instance of the class. Initializes the
+scenario from <code>ScenarioConfiguration</code> object.</p><div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/Scenario.html">Scenario</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
 <span>  <span class="va">scenarioConfiguration</span>,</span>
@@ -119,16 +122,16 @@ parameters specified by the user through the <code>customParams</code> argument 
 
 
 <dt><code>customParams</code></dt>
-<dd><p>Custom parameters to be used for the simulation.
-A list containing vectors 'paths' with the full paths to the
-parameters, 'values' the values of the parameters, and 'units' with the
-units the values are in.</p></dd>
+<dd><p>Custom parameters to be used for the simulation. A
+list containing vectors 'paths' with the full paths to the parameters,
+'values' the values of the parameters, and 'units' with the units the
+values are in.</p></dd>
 
 
 <dt><code>stopIfParameterNotFound</code></dt>
 <dd><p>Logical. If <code>TRUE</code> (default), an error is
-thrown if any of the custom defined parameter does not exist. If <code>FALSE</code>,
-non-existent parameters are  ignored.</p></dd>
+thrown if any of the custom defined parameter does not exist. If
+<code>FALSE</code>, non-existent parameters are  ignored.</p></dd>
 
 
 </dl><p></p></div>

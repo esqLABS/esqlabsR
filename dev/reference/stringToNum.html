@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,16 +69,13 @@
 
 <dt id="arg-lloqmode">lloqMode<a class="anchor" aria-label="anchor" href="#arg-lloqmode"></a></dt>
 <dd><p>How to treat entries below LLOQ, i.e., of a form "&lt;2":
-<code>LLOQ/2</code> (default): return the number divided by 2,
-<code>LLOQ</code>: return the numerical value,
-<code>ZERO</code>: return 0,
-<code>ignore</code>: return <code>NA</code></p></dd>
+<code>LLOQ/2</code> (default): return the number divided by 2, <code>LLOQ</code>: return the
+numerical value, <code>ZERO</code>: return 0, <code>ignore</code>: return <code>NA</code></p></dd>
 
 
 <dt id="arg-uloqmode">uloqMode<a class="anchor" aria-label="anchor" href="#arg-uloqmode"></a></dt>
 <dd><p>How to treat entries above ULOQ, i.e., of a form "&gt;2":
-<code>ULOQ</code>: return the numerical value,
-<code>ignore</code>: return <code>NA</code></p></dd>
+<code>ULOQ</code>: return the numerical value, <code>ignore</code>: return <code>NA</code></p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -87,11 +84,12 @@
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Tries to convert each string to a numeric with <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code>.
-If any conversion fails and returns <code>NA</code>, the value is tested for being a LLOQ-
-or a ULOQ value, i.e., of a form "&lt;2" or "&gt;2", respectively. If this is a case,
-the returned value is defined by the parameters <code>lloqMode</code> and <code>uloqMode</code>.
-In any other case where the string cannot be converted to a numeric, <code>NA</code> is returned.</p>
+    <p>Tries to convert each string to a numeric with <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code>. If
+any conversion fails and returns <code>NA</code>, the value is tested for being a
+LLOQ- or a ULOQ value, i.e., of a form "&lt;2" or "&gt;2", respectively. If this
+is a case, the returned value is defined by the parameters <code>lloqMode</code> and
+<code>uloqMode</code>. In any other case where the string cannot be converted to a
+numeric, <code>NA</code> is returned.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

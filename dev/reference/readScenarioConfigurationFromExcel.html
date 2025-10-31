@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,32 +64,33 @@
 
 
 <dl><dt id="arg-scenarionames">scenarioNames<a class="anchor" aria-label="anchor" href="#arg-scenarionames"></a></dt>
-<dd><p>Character vector. Names of the scenarios that are defined in the Excel file.
-If <code>NULL</code> (default), all scenarios specified in the Excel file will be
-created.</p></dd>
+<dd><p>Character vector. Names of the scenarios that are
+defined in the Excel file. If <code>NULL</code> (default), all scenarios specified in
+the Excel file will be created.</p></dd>
 
 
 <dt id="arg-projectconfiguration">projectConfiguration<a class="anchor" aria-label="anchor" href="#arg-projectconfiguration"></a></dt>
-<dd><p>A <code>ProjectConfiguration</code> object holding base information.</p></dd>
+<dd><p>A <code>ProjectConfiguration</code> object holding base
+information.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list of <code>ScenarioConfiguration</code> objects with the names of the
-list being scenario names.</p>
+    <p>A named list of <code>ScenarioConfiguration</code> objects with the names of
+the list being scenario names.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Reads scenario definition from the Excel file defined in
 <code>ProjectConfiguration</code> and creates <code>ScenarioConfiguration</code> objects with new
-information.
-If a scenario that is specified in <code>scenarioNames</code> is not found in the Excel
-file, an error is thrown.</p>
-<p>The function expects the Excel file to have a "Scenarios" sheet with the following
-columns: <code>Scenario_name</code>, <code>IndividualId</code>, <code>PopulationId</code>, <code>ReadPopulationFromCSV</code>,
-<code>ModelParameterSheets</code>, <code>ApplicationProtocol</code>, <code>SimulationTime</code>, <code>SimulationTimeUnit</code>,
-<code>SteadyState</code>, <code>SteadyStateTime</code>, <code>SteadyStateTimeUnit</code>, <code>ModelFile</code>, <code>OutputPathsIds</code>.
-It also expects an "OutputPaths" sheet with <code>OutputPathId</code> and <code>OutputPath</code> columns.</p>
+information. If a scenario that is specified in <code>scenarioNames</code> is not
+found in the Excel file, an error is thrown.</p>
+<p>The function expects the Excel file to have a "Scenarios" sheet with the
+following columns: <code>Scenario_name</code>, <code>IndividualId</code>, <code>PopulationId</code>,
+<code>ReadPopulationFromCSV</code>, <code>ModelParameterSheets</code>, <code>ApplicationProtocol</code>,
+<code>SimulationTime</code>, <code>SimulationTimeUnit</code>, <code>SteadyState</code>, <code>SteadyStateTime</code>,
+<code>SteadyStateTimeUnit</code>, <code>ModelFile</code>, <code>OutputPathsIds</code>. It also expects an
+"OutputPaths" sheet with <code>OutputPathId</code> and <code>OutputPath</code> columns.</p>
     </div>
 
     <div class="section level2">
@@ -99,7 +100,10 @@ It also expects an "OutputPaths" sheet with <code>OutputPathId</code> and <code>
 <span class="r-in"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">scenarioName</span> <span class="op">&lt;-</span> <span class="st">"MyScenario"</span></span></span>
 <span class="r-in"><span><span class="co"># Read scenario definition from Excel</span></span></span>
-<span class="r-in"><span><span class="va">scenarioConfiguration</span> <span class="op">&lt;-</span> <span class="fu">readScenarioConfigurationFromExcel</span><span class="op">(</span>scenarioNames <span class="op">=</span> <span class="va">scenarioName</span>, <span class="va">projectConfiguration</span><span class="op">)</span><span class="op">[[</span><span class="va">scenarioName</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">scenarioConfiguration</span> <span class="op">&lt;-</span> <span class="fu">readScenarioConfigurationFromExcel</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  scenarioNames <span class="op">=</span> <span class="va">scenarioName</span>,</span></span>
+<span class="r-in"><span>  <span class="va">projectConfiguration</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">[[</span><span class="va">scenarioName</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

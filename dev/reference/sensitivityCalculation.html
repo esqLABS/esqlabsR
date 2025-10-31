@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,54 +84,56 @@ sensitivity will be analyzed.</p></dd>
 
 <dt id="arg-parameterpaths">parameterPaths<a class="anchor" aria-label="anchor" href="#arg-parameterpaths"></a></dt>
 <dd><p>A single or a vector of the parameter path(s) to be
-varied. Can also be a named vector, where the names are user-defined labels.
-These names will be stored and used in downstream plotting functions (e.g.,
-as legend labels) if provided.</p></dd>
+varied. Can also be a named vector, where the names are user-defined
+labels. These names will be stored and used in downstream plotting
+functions (e.g., as legend labels) if provided.</p></dd>
 
 
 <dt id="arg-variationrange">variationRange<a class="anchor" aria-label="anchor" href="#arg-variationrange"></a></dt>
 <dd><p>Optional numeric vector or list defining the scaling of
-the parameters. The same variation range is applied to all specified parameters
-unless a list is provided, in which case the length of the list must match
-the length of <code>parameterPaths</code>, allowing individual variation for each parameter.
-If not specified, the following vector will be used: c(0.1, 0.2, 0.3, 0.4,
-0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10).</p></dd>
+the parameters. The same variation range is applied to all specified
+parameters unless a list is provided, in which case the length of the list
+must match the length of <code>parameterPaths</code>, allowing individual variation
+for each parameter. If not specified, the following vector will be used:
+c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+10).</p></dd>
 
 
 <dt id="arg-variationtype">variationType<a class="anchor" aria-label="anchor" href="#arg-variationtype"></a></dt>
-<dd><p>A string specifying whether the values in <code>variationRange</code>
-are applied as <code>"absolute"</code> or <code>"relative"</code> scaling. When set to <code>"absolute"</code>,
-the values are interpreted as absolute parameter values. When set to <code>"relative"</code>,
-the values are interpreted as scaling factors relative to the initial parameter
-values. Default is <code>"relative"</code>.</p></dd>
+<dd><p>A string specifying whether the values in
+<code>variationRange</code> are applied as <code>"absolute"</code> or <code>"relative"</code> scaling. When
+set to <code>"absolute"</code>, the values are interpreted as absolute parameter
+values. When set to <code>"relative"</code>, the values are interpreted as scaling
+factors relative to the initial parameter values. Default is <code>"relative"</code>.</p></dd>
 
 
 <dt id="arg-pkparameters">pkParameters<a class="anchor" aria-label="anchor" href="#arg-pkparameters"></a></dt>
 <dd><p>A vector of names of PK parameters for which the
 sensitivities will be calculated. For a full set of available standard PK
 parameters, run <code>names(ospsuite::StandardPKParameter)</code>. By default, the
-following parameters are considered: <code>"C_max"</code>, <code>"t_max"</code>, <code>"AUC_inf"</code>.
-If <code>NULL</code>, all available PK-parameters (including the user-defined) will be calculated.</p></dd>
+following parameters are considered: <code>"C_max"</code>, <code>"t_max"</code>, <code>"AUC_inf"</code>. If
+<code>NULL</code>, all available PK-parameters (including the user-defined) will be
+calculated.</p></dd>
 
 
 <dt id="arg-customoutputfunctions">customOutputFunctions<a class="anchor" aria-label="anchor" href="#arg-customoutputfunctions"></a></dt>
-<dd><p>A named list with
-custom function(s) for output calculations. User-defined functions should
-have either 'x', 'y', or both 'x' and 'y' as parameters which correspond to
-x-Dimension (time) or y-Dimension values from simulation results. The output
-of the function is a single numerical value for each output and parameter path, which
-is then included in the returned dataframe of PK parameters.</p></dd>
+<dd><p>A named list with custom function(s) for output
+calculations. User-defined functions should have either 'x', 'y', or both
+'x' and 'y' as parameters which correspond to x-Dimension (time) or
+y-Dimension values from simulation results. The output of the function is a
+single numerical value for each output and parameter path, which is then
+included in the returned dataframe of PK parameters.</p></dd>
 
 
 <dt id="arg-saoutputfilepath">saOutputFilePath<a class="anchor" aria-label="anchor" href="#arg-saoutputfilepath"></a></dt>
 <dd><p>Path to excel file in which PK-parameter data should
-be saved. If a file already exists, it will be overwritten. Default is <code>NULL</code>,
-meaning the data will not be saved to a spreadsheet.</p></dd>
+be saved. If a file already exists, it will be overwritten. Default is
+<code>NULL</code>, meaning the data will not be saved to a spreadsheet.</p></dd>
 
 
 <dt id="arg-simulationrunoptions">simulationRunOptions<a class="anchor" aria-label="anchor" href="#arg-simulationrunoptions"></a></dt>
-<dd><p>Optional instance of a <code>SimulationRunOptions</code> used
-during the simulation run</p></dd>
+<dd><p>Optional instance of a <code>SimulationRunOptions</code>
+used during the simulation run</p></dd>
 
 </dl></div>
     <div class="section level2">

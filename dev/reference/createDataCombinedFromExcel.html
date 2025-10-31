@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,24 +71,26 @@
 
 
 <dl><dt id="arg-projectconfiguration">projectConfiguration<a class="anchor" aria-label="anchor" href="#arg-projectconfiguration"></a></dt>
-<dd><p>Object of class <code>ProjectConfiguration</code>
-that contains information about the output paths and the excel file
-where plots are defined.</p></dd>
+<dd><p>Object of class <code>ProjectConfiguration</code> that
+contains information about the output paths and the excel file where plots
+are defined.</p></dd>
 
 
 <dt id="arg-datacombinednames">dataCombinedNames<a class="anchor" aria-label="anchor" href="#arg-datacombinednames"></a></dt>
-<dd><p>Names of the DataCombined objects that will be created.
-If a DataCombined with a given name is not defined in the Excel file, an error is thrown. Can be used together with <code>plotGridNames</code>.</p></dd>
+<dd><p>Names of the DataCombined objects that will be
+created. If a DataCombined with a given name is not defined in the Excel
+file, an error is thrown. Can be used together with <code>plotGridNames</code>.</p></dd>
 
 
 <dt id="arg-plotgridnames">plotGridNames<a class="anchor" aria-label="anchor" href="#arg-plotgridnames"></a></dt>
-<dd><p>Names of the plot grid specified in the sheet <code>plotGrids</code>.
-Each data combined used by the specified plot grids will be created. Can be
-used together with <code>dataCombinedNames</code>.</p></dd>
+<dd><p>Names of the plot grid specified in the sheet
+<code>plotGrids</code>. Each data combined used by the specified plot grids will be
+created. Can be used together with <code>dataCombinedNames</code>.</p></dd>
 
 
 <dt id="arg-simulatedscenarios">simulatedScenarios<a class="anchor" aria-label="anchor" href="#arg-simulatedscenarios"></a></dt>
-<dd><p>A list of simulated scenarios as returned by <code><a href="runScenarios.html">runScenarios()</a></code></p></dd>
+<dd><p>A list of simulated scenarios as returned by
+<code><a href="runScenarios.html">runScenarios()</a></code></p></dd>
 
 
 <dt id="arg-observeddata">observedData<a class="anchor" aria-label="anchor" href="#arg-observeddata"></a></dt>
@@ -97,13 +99,14 @@ used together with <code>dataCombinedNames</code>.</p></dd>
 
 <dt id="arg-stopifnotfound">stopIfNotFound<a class="anchor" aria-label="anchor" href="#arg-stopifnotfound"></a></dt>
 <dd><p>If TRUE (default), the function stops if any of the
-simulated results or observed data are not found. If FALSE a warning is printed.</p></dd>
+simulated results or observed data are not found. If FALSE a warning is
+printed.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of <code>DataCombined</code> objects, or an empty list if both <code>dataCombinedNames</code> and <code>plotGridNames</code> are <code>NULL</code> or <code>stopIfNotFound = TRUE</code> and the specified
-<code>DataCombined</code> could not be created.</p>
+    <p>A list of <code>DataCombined</code> objects, or an empty list if both
+<code>dataCombinedNames</code> and <code>plotGridNames</code> are <code>NULL</code> or <code>stopIfNotFound = TRUE</code> and the specified <code>DataCombined</code> could not be created.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

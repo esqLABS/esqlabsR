@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,27 +71,30 @@ extension ".pkml"). Must be located in the "modelFolder".</p></dd>
 
 
 <dt><code>applicationProtocol</code></dt>
-<dd><p>Name of the application protocol to be applied. Defined
-in the excel file "Applications.xlsx"</p></dd>
+<dd><p>Name of the application protocol to be
+applied. Defined in the excel file "Applications.xlsx"</p></dd>
 
 
 <dt><code>individualId</code></dt>
-<dd><p>Id of the individual as specified in "Individuals.xlsx".
-If <code>NULL</code> (default), the individual as defined in the simulation file will be simulated.</p></dd>
+<dd><p>Id of the individual as specified in
+"Individuals.xlsx". If <code>NULL</code> (default), the individual as defined in
+the simulation file will be simulated.</p></dd>
 
 
 <dt><code>populationId</code></dt>
-<dd><p>Id of the population as specified in "Populations.xlsx",
-sheet "Demographics". If <code>ScenarioConfguration$simulationType</code> is <code>population</code>,
-a population will be created a the scenario will be simulated as a population
+<dd><p>Id of the population as specified in
+"Populations.xlsx", sheet "Demographics". If
+<code>ScenarioConfguration$simulationType</code> is <code>population</code>, a population
+will be created a the scenario will be simulated as a population
 simulation.</p></dd>
 
 
 <dt><code>outputPaths</code></dt>
-<dd><p>a character vector or named vector of output paths for which the results will be
-calculated. If <code>NULL</code> (default), outputs as defined in the simulation
-are used. Can be a named vector where names serve as aliases for the paths,
-e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").</p></dd>
+<dd><p>a character vector or named vector of output paths for
+which the results will be calculated. If <code>NULL</code> (default), outputs as
+defined in the simulation are used. Can be a named vector where names
+serve as aliases for the paths, e.g., c("plasma" =
+"Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").</p></dd>
 
 
 </dl><p></p></div>
@@ -104,17 +107,18 @@ will be brought to a steady-state first</p></dd>
 
 
 <dt><code>readPopulationFromCSV</code></dt>
-<dd><p>Boolean representing whether the a new population
-will be created (value is <code>FALSE</code>) or an existing population will be imported
-from a csv.</p></dd>
+<dd><p>Boolean representing whether the a new
+population will be created (value is <code>FALSE</code>) or an existing population
+will be imported from a csv.</p></dd>
 
 
 <dt><code>simulationTime</code></dt>
-<dd><p>Specified simulation time intervals. If <code>NULL</code> (default),
-simulation time as defined in the <code>Simulation</code> object will be used.
-Accepted are multiple time intervals separated by a ';'. Each time interval
-is a triplet of values &lt;StartTime, EndTime, Resolution&gt;, where <code>Resolution</code> is the number of
-simulated points per time unit defined in the column <code>TimeUnit</code>.</p></dd>
+<dd><p>Specified simulation time intervals. If <code>NULL</code>
+(default), simulation time as defined in the <code>Simulation</code> object will
+be used. Accepted are multiple time intervals separated by a ';'. Each
+time interval is a triplet of values &lt;StartTime, EndTime, Resolution&gt;,
+where <code>Resolution</code> is the number of simulated points per time unit
+defined in the column <code>TimeUnit</code>.</p></dd>
 
 
 <dt><code>simulationTimeUnit</code></dt>
@@ -122,12 +126,13 @@ simulated points per time unit defined in the column <code>TimeUnit</code>.</p><
 
 
 <dt><code>steadyStateTime</code></dt>
-<dd><p>Time in minutes to simulate if simulating steady-state. May be <code>NULL</code>.</p></dd>
+<dd><p>Time in minutes to simulate if simulating
+steady-state. May be <code>NULL</code>.</p></dd>
 
 
 <dt><code>paramSheets</code></dt>
-<dd><p>A named list. Names of the sheets from the parameters-excel file
-that will be applied to the simulation</p></dd>
+<dd><p>A named list. Names of the sheets from the
+parameters-excel file that will be applied to the simulation</p></dd>
 
 
 <dt><code>simulationType</code></dt>
@@ -138,8 +143,8 @@ based on information stored in <code>populationsFile</code>. Default is
 
 
 <dt><code>projectConfiguration</code></dt>
-<dd><p><code>ProjectConfiguration</code> that will be used in scenarios.
-Read-only</p></dd>
+<dd><p><code>ProjectConfiguration</code> that will be used in
+scenarios. Read-only</p></dd>
 
 
 </dl><p></p></div>
@@ -173,8 +178,8 @@ Read-only</p></dd>
 
 </div><p></p><hr><a id="method-ScenarioConfiguration-addParamSheets"></a><div class="section">
 <h3 id="method-addparamsheets-">Method <code>addParamSheets()</code><a class="anchor" aria-label="anchor" href="#method-addparamsheets-"></a></h3>
-<p>Add the names of sheets in the parameters excel-file
-that will be applied to the simulation</p><div class="section">
+<p>Add the names of sheets in the parameters excel-file that
+will be applied to the simulation</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ScenarioConfiguration</span><span class="op">$</span><span class="fu">addParamSheets</span><span class="op">(</span><span class="va">sheetNames</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -190,8 +195,8 @@ that will be applied to the simulation</p><div class="section">
 
 </div><p></p><hr><a id="method-ScenarioConfiguration-removeParamSheets"></a><div class="section">
 <h3 id="method-removeparamsheets-">Method <code>removeParamSheets()</code><a class="anchor" aria-label="anchor" href="#method-removeparamsheets-"></a></h3>
-<p>Remove the names of sheets in the parameters excel-file
-from the list of sheets <code>paramSheets</code></p><div class="section">
+<p>Remove the names of sheets in the parameters excel-file from
+the list of sheets <code>paramSheets</code></p><div class="section">
 <h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ScenarioConfiguration</span><span class="op">$</span><span class="fu">removeParamSheets</span><span class="op">(</span>sheetNames <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -199,8 +204,8 @@ from the list of sheets <code>paramSheets</code></p><div class="section">
 <div class="section">
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>sheetNames</code></dt>
-<dd><p>A name or a list of names of the excel sheet.
-If <code>NULL</code> (default), all sheets are removed</p></dd>
+<dd><p>A name or a list of names of the excel sheet. If <code>NULL</code>
+(default), all sheets are removed.</p></dd>
 
 
 </dl><p></p></div>
@@ -210,17 +215,19 @@ If <code>NULL</code> (default), all sheets are removed</p></dd>
 <h3 id="method-print-">Method <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code><a class="anchor" aria-label="anchor" href="#method-print-"></a></h3>
 <p>Print the object to the console</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ScenarioConfiguration</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="cn">TRUE</span>, className <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">ScenarioConfiguration</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span>className <span class="op">=</span> <span class="cn">TRUE</span>, projectConfiguration <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>projectConfiguration</code></dt>
-<dd><p>Whether to also print project configuration. default to TRUE.</p></dd>
+<p></p><div class="arguments"><dl><dt><code>className</code></dt>
+<dd><p>Whether to print the name of the class at the beginning.
+default to TRUE.</p></dd>
 
 
-<dt><code>className</code></dt>
-<dd><p>Whether to print the name of the class at the beginning. default to TRUE.</p></dd>
+<dt><code>projectConfiguration</code></dt>
+<dd><p>Whether to also print project configuration.
+default to TRUE.</p></dd>
 
 
 </dl><p></p></div>
