@@ -26,7 +26,6 @@ Imports:
     dplyr,
     fs,
     ggplot2,
-    glue,
     grDevices,
     jsonlite,
     lifecycle,

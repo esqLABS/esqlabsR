@@ -12,7 +12,7 @@
 - Added Excel sheet name sanitization for application protocols - protocol names are automatically sanitized to comply with Excel naming rules, removing invalid characters and truncating long names. (\#890)
 - Improved `.validateCharVector()` to enforce atomic character vectors (\#881).
 - Parenthesis in parameter sheet names are ignored, allowing separating sheet names with spaces (\#883).
-- Introduced `glue` package for consistent and maintainable message formatting (\#900).
+- Used `cliFormat` function for consistent and maintainable message formatting (\#900).
 
 # esqlabsR 5.5.0
 
