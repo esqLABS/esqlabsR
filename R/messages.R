@@ -177,8 +177,7 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
 
 messages$stopScenarioNameNonUnique <- function(scenarioName) {
   cliFormat(
-    "Scenario '{scenarioName}' is defined multiple times! Make sure that each \\
-    scenario defined in the excel file has a unique name."
+    "Scenario '{scenarioName}' is defined multiple times! Make sure that each scenario defined in the excel file has a unique name."
   )
 }
 
