@@ -11,11 +11,12 @@
 )
 }
 \arguments{
-\item{parameterStructure}{Object to be checked. Expected is a named list
-with names "paths", "values", and "units".}
+\item{parameterStructure}{Object to be checked. Expected is a named list with
+names "paths", "values", and "units".}
 }
 \value{
-\code{TRUE} if validation succeeded (silently). Throws an error otherwise.
+\code{TRUE} if validation succeeded (silently). Throws an error
+otherwise.
 }
 \description{
 Validate parameter list structure

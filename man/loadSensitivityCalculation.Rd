@@ -10,8 +10,9 @@ loadSensitivityCalculation(outputDir, simulation = NULL)
 \item{outputDir}{Path to the directory containing the saved sensitivity
 calculation files.}
 
-\item{simulation}{Optional. A \code{Simulation} object. If not provided, the function
-will attempt to load the simulation from the path stored in the metadata.}
+\item{simulation}{Optional. A \code{Simulation} object. If not provided, the
+function will attempt to load the simulation from the path stored in the
+metadata.}
 }
 \value{
 A named list of class \code{SensitivityCalculation}.

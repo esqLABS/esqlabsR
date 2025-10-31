@@ -14,7 +14,8 @@
 \arguments{
 \item{dfDataCombined}{Data frame created by reading the ' DataCombined' sheet}
 
-\item{simulatedScenarios}{List of simulated scenarios as created by \code{runScenarios()}}
+\item{simulatedScenarios}{List of simulated scenarios as created by
+\code{runScenarios()}}
 
 \item{observedData}{Observed data objects}
 

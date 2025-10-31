@@ -1,34 +1,33 @@
 #' @name sensitivityTornadoPlot
 #' @title Tornado Plot for Sensitivity Analysis
 #'
-#' @description
-#' Generates tornado plots to visualize the results of sensitivity analysis.
-#' Each plot shows the effect of modifying parameters by a specific scaling factor
-#' (`parameterFactor`) and its reciprocal on specific model outputs. This
-#' visualization helps to assess the impact of parameter changes on the results,
-#' highlighting the model's sensitivity to these parameters.
+#' @description Generates tornado plots to visualize the results of sensitivity
+#' analysis. Each plot shows the effect of modifying parameters by a specific
+#' scaling factor (`parameterFactor`) and its reciprocal on specific model
+#' outputs. This visualization helps to assess the impact of parameter changes
+#' on the results, highlighting the model's sensitivity to these parameters.
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
-#' `sensitivityCalculation()`.
+#'   `sensitivityCalculation()`.
 #' @param outputPaths,parameterPaths,pkParameters A single or a vector of the
-#' output path(s), parameter path(s), and PK parameters to be displayed,
-#' respectively. If `NULL`, all included paths and parameters present in the
-#' supplied `SensitivityCalculation` object will be displayed in the
-#' visualization.
-#' A separate plot will be generated for each output path. Each plot will
-#' contain a tornado plot panel for each PK parameter, and the sensitivities
-#' for each parameter will be displayed as lines.
+#'   output path(s), parameter path(s), and PK parameters to be displayed,
+#'   respectively. If `NULL`, all included paths and parameters present in the
+#'   supplied `SensitivityCalculation` object will be displayed in the
+#'   visualization. A separate plot will be generated for each output path. Each
+#'   plot will contain a tornado plot panel for each PK parameter, and the
+#'   sensitivities for each parameter will be displayed as lines.
 #' @param parameterFactor Numeric; the scaling factor used to adjust parameters
-#' during sensitivity analysis used in the tornado plot. Both the `parameterFactor`
-#' and its reciprocal (`1/parameterFactor`) must be included in the
-#' `variationRange` specified in the `sensitivityCalculation`. Default is 0.1.
+#'   during sensitivity analysis used in the tornado plot. Both the
+#'   `parameterFactor` and its reciprocal (`1/parameterFactor`) must be included
+#'   in the `variationRange` specified in the `sensitivityCalculation`. Default
+#'   is 0.1.
 #' @param xAxisZoomRange Numeric vector of length 2; specifies the x-axis limits
-#' to zoom into. This does not remove any data but constrains the visible
-#' plotting range for improved readability.
+#'   to zoom into. This does not remove any data but constrains the visible
+#'   plotting range for improved readability.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#' used to customize plot aesthetics.
+#'   used to customize plot aesthetics.
 #'
-#' Supported parameters include:
+#'   Supported parameters include:
 #' - `legendPosition`: Position of the legend on the plot.
 #' - `legendTitle`: Title displayed for the legend.
 #' - `linesColor`: Color of the bar elements.
@@ -38,17 +37,17 @@
 #' - `xLabel`: Label text for the x-axis.
 #' - `yLabel`: Label text for the y-axis.
 #'
-#' Default values are set to provide a standardized look, but each parameter can
-#' be tailored to fit specific visual needs. Modifying these parameters will
-#' directly affect the aesthetics of the output plots.
+#'   Default values are set to provide a standardized look, but each parameter
+#'   can be tailored to fit specific visual needs. Modifying these parameters
+#'   will directly affect the aesthetics of the output plots.
 #'
 #' @import ggplot2
 #'
 #' @family sensitivity-calculation
 #'
 #' @returns A `patchwork` object containing the combined ggplot objects if a
-#' single output path is specified, or a list of `patchwork` objects for
-#' multiple output paths.
+#'   single output path is specified, or a list of `patchwork` objects for
+#'   multiple output paths.
 #'
 #' @examples
 #' \dontrun{
@@ -288,7 +287,7 @@ sensitivityTornadoPlot <- function(
       plot <- plot + scale_fill_brewer(palette = "Set2")
     } else {
       pLevels <- levels(as.factor(data$ParameterFactor))
-      pColor <- plotConfiguration$linesColor[1:length(pLevels)]
+      pColor <- plotConfiguration$linesColor[seq_along(pLevels)]
       names(pColor) <- pLevels
       plot <- plot +
         scale_fill_manual(

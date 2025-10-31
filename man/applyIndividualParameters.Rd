@@ -2,21 +2,22 @@
 % Please edit documentation in R/utilities-individual.R
 \name{applyIndividualParameters}
 \alias{applyIndividualParameters}
-\title{Apply an individual to the simulation.
-For human species, only parameters that do not override formulas are applied.
-For other species, all parameters returned by \code{createIndividual} are applied.}
+\title{Apply an individual to the simulation. For human species, only parameters
+that do not override formulas are applied. For other species, all parameters
+returned by \code{createIndividual} are applied.}
 \usage{
 applyIndividualParameters(individualCharacteristics, simulation)
 }
 \arguments{
-\item{individualCharacteristics}{\code{IndividualCharacteristics} describing an individual. Optional}
+\item{individualCharacteristics}{\code{IndividualCharacteristics} describing an
+individual. Optional}
 
 \item{simulation}{\code{Simulation} loaded from the PKML file}
 }
 \description{
-Apply an individual to the simulation.
-For human species, only parameters that do not override formulas are applied.
-For other species, all parameters returned by \code{createIndividual} are applied.
+Apply an individual to the simulation. For human species, only parameters
+that do not override formulas are applied. For other species, all parameters
+returned by \code{createIndividual} are applied.
 }
 \examples{
 \dontrun{

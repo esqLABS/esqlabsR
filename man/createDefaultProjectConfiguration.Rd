@@ -9,12 +9,13 @@ createDefaultProjectConfiguration(
 )
 }
 \arguments{
-\item{path}{path to the \code{ProjectConfiguration.xlsx} file. Defaults to the \code{ProjectConfiguration.xlsx}
-file in the working directory.}
+\item{path}{path to the \code{ProjectConfiguration.xlsx} file. Defaults to the
+\code{ProjectConfiguration.xlsx} file in the working directory.}
 }
 \value{
 Object of type \code{ProjectConfiguration}
 }
 \description{
-Create a \code{ProjectConfiguration} based on the \code{"ProjectConfiguration.xlsx"}
+Create a \code{ProjectConfiguration} based on the
+\code{"ProjectConfiguration.xlsx"}
 }

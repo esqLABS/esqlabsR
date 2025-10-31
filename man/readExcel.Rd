@@ -9,8 +9,8 @@ readExcel(path, sheet = NULL, ...)
 \arguments{
 \item{path}{Full path of an XLS/XLSX file}
 
-\item{sheet}{Name or number of the sheet. If \code{NULL} (default), the first sheet of the
-file is used.}
+\item{sheet}{Name or number of the sheet. If \code{NULL} (default), the first
+sheet of the file is used.}
 
 \item{...}{Any other parameters that can be passed to \code{readxl::read_excel}}
 }

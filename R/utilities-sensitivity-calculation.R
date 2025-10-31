@@ -38,17 +38,18 @@
 #' Calculate PK parameters dataframe from simulation results
 #'
 #' This function calculates standard PK analyses from simulation results and
-#' converts them into a dataframe. If custom output functions are provided,
-#' it calculates user-defined PK analyses and integrates them with the standard
-#' PK data.
+#' converts them into a dataframe. If custom output functions are provided, it
+#' calculates user-defined PK analyses and integrates them with the standard PK
+#' data.
 #'
 #' @param simulationResults List of simulation results from which PK analyses
-#' are to be calculated.
+#'   are to be calculated.
 #' @param parameterPath Path to the parameter in the simulation results.
 #' @param customOutputFunctions Optional list of custom output functions for
-#' user-defined PK analyses.
+#'   user-defined PK analyses.
 #'
-#' @returns A dataframe containing the combined standard and user-defined PK data.
+#' @returns A dataframe containing the combined standard and user-defined PK
+#'   data.
 #'
 #' @keywords internal
 #' @noRd
@@ -124,9 +125,9 @@
 #' custom output functions.
 #'
 #' @param simulationResults `SimulationResults` object containing the simulation
-#' data.
-#' @param customOutputFunctions Named list of custom output functions to calculate
-#' PK values.
+#'   data.
+#' @param customOutputFunctions Named list of custom output functions to
+#'   calculate PK values.
 #'
 #' @returns A dataframe containing the custom PK values.
 #'
@@ -271,8 +272,8 @@
 #' - scaled values
 #'
 #' @param data A dataframe returned by `pkAnalysesAsDataFrame()` or by
-#'  `simulationResultsToDataFrame()`.
-#'  @inheritParams .simulationResultsToTimeSeriesDataFrame
+#'   `simulationResultsToDataFrame()`.
+#' @inheritParams .simulationResultsToTimeSeriesDataFrame
 #'
 #' @note Note that the function will work only with a single parameter path.
 #'
@@ -307,7 +308,8 @@
 #' - are all unique
 #' - include base scaling (i.e. a scaling of 1.0)
 #'
-#' @param variationRange A numeric vector of values representing scaling factors.
+#' @param variationRange A numeric vector of values representing scaling
+#'   factors.
 #'
 #' @keywords internal
 #' @noRd
@@ -329,13 +331,13 @@
 
 #' Normalize variation range to a list
 #'
-#' Ensures that `variationRange` is normalized to a list, either by converting
-#' a vector or validating that a provided list is of the correct length matching
+#' Ensures that `variationRange` is normalized to a list, either by converting a
+#' vector or validating that a provided list is of the correct length matching
 #' `parameterPaths`.
 #'
 #' @param variationRange A vector or list of variation values.
 #' @param parameterPaths A single or a vector of the parameter path(s) to be
-#' varied.
+#'   varied.
 #' @returns A named list of `variationRange` values.
 #'
 #' @keywords internal
@@ -362,9 +364,11 @@
 #' This function transforms absolute values in `variationRange` to relative
 #' values based on `initialValues` when `variationType` is set to "absolute".
 #'
-#' @param variationRange A named list of variation values (absolute or relative).
+#' @param variationRange A named list of variation values (absolute or
+#'   relative).
 #' @param initialValues A named list of initial parameter values.
-#' @param variationType A string specifying the variation type ("absolute" or "relative").
+#' @param variationType A string specifying the variation type ("absolute" or
+#'   "relative").
 #' @returns A list of transformed variationRange values.
 #'
 #' @keywords internal
@@ -386,13 +390,13 @@
 #' Validate a character vector
 #'
 #' @param object An object or a vector of type `character`.
-#' @param nullAllowed Boolean flag if `NULL` is accepted for the object.
-#' If `TRUE`, `NULL` always returns TRUE, otherwise `NULL` returns FALSE.
-#' Default is `FALSE`.
+#' @param nullAllowed Boolean flag if `NULL` is accepted for the object. If
+#'   `TRUE`, `NULL` always returns TRUE, otherwise `NULL` returns FALSE. Default
+#'   is `FALSE`.
 #'
-#' @return
-#' `NULL` if the entered object is a valid character vector, otherwise produces
-#' an error. Also accepts `NULL` as input if `nullAllowed` is set to `TRUE`.
+#' @return `NULL` if the entered object is a valid character vector, otherwise
+#' produces an error. Also accepts `NULL` as input if `nullAllowed` is set to
+#' `TRUE`.
 #'
 #' @keywords internal
 #' @noRd
@@ -544,15 +548,15 @@
 #' the analysis.
 #'
 #' @param sensitivityCalculation A named list of class `SensitivityCalculation`
-#' as returned by [sensitivityCalculation()], containing `simulationResults`,
-#' `outputPaths`, `parameterPaths`, and `pkData`.
+#'   as returned by [sensitivityCalculation()], containing `simulationResults`,
+#'   `outputPaths`, `parameterPaths`, and `pkData`.
 #' @param outputDir A character string specifying the path to the directory
-#' where the results should be saved.
+#'   where the results should be saved.
 #' @param overwrite Logical. If `TRUE`, an existing directory at `outputDir`
-#' will be deleted and replaced. Default is `FALSE`.
+#'   will be deleted and replaced. Default is `FALSE`.
 #'
-#' @return
-#' Invisibly returns `NULL`. Results are saved to disk in the specified folder.
+#' @return Invisibly returns `NULL`. Results are saved to disk in the specified
+#' folder.
 #'
 #' @export
 #'
@@ -633,12 +637,12 @@ saveSensitivityCalculation <- function(
 #' function attempts to load it from the saved simulation file path.
 #'
 #' @param outputDir Path to the directory containing the saved sensitivity
-#' calculation files.
-#' @param simulation Optional. A `Simulation` object. If not provided, the function
-#' will attempt to load the simulation from the path stored in the metadata.
+#'   calculation files.
+#' @param simulation Optional. A `Simulation` object. If not provided, the
+#'   function will attempt to load the simulation from the path stored in the
+#'   metadata.
 #'
-#' @return
-#' A named list of class `SensitivityCalculation`.
+#' @return A named list of class `SensitivityCalculation`.
 #'
 #' @export
 #'

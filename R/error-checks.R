@@ -1,11 +1,12 @@
 #' Validate parameter list structure
 #'
-#' @param parameterStructure Object to be checked. Expected is a named list
-#' with names "paths", "values", and "units".
+#' @param parameterStructure Object to be checked. Expected is a named list with
+#'   names "paths", "values", and "units".
 #'
 #' @keywords internal
 #'
-#' @returns `TRUE` if validation succeeded (silently). Throws an error otherwise.
+#' @returns `TRUE` if validation succeeded (silently). Throws an error
+#'   otherwise.
 .validateParametersStructure <- function(
   parameterStructure,
   argumentName = NULL,
@@ -26,8 +27,8 @@
 #' @param object A class or an instance of a class to check
 #' @param field Name of the field
 #'
-#' @returns `TRUE` if the `object` has an active binding `field`,
-#' `FALSE?  otherwise.
+#' @returns `TRUE` if the `object` has an active binding `field`, `FALSE`
+#'   otherwise.
 #' @keywords internal
 .validateClassHasField <- function(object, field) {
   if (!any(names(object) == field)) {

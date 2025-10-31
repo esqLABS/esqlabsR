@@ -1,17 +1,17 @@
 #' Run a set of scenarios.
 #'
-#' @param simulationRunOptions Object of type `SimulationRunOptions` that will be passed
-#' to simulation runs. If `NULL`, default options are used.
+#' @param simulationRunOptions Object of type `SimulationRunOptions` that will
+#'   be passed to simulation runs. If `NULL`, default options are used.
 #' @param scenarios List of `Scenario` objects to be simulated.
 #'
 #' @returns A named list, where the names are scenario names, and the values are
-#' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
-#' `results` being `SimulatioResults` object produced by running the simulation,
-#' `outputValues` the output values of the `SimulationResults`, and `population`
-#' the `Population` object if the scenario is a population simulation.
-#' @details
-#' If simulation of a scenario fails, a warning is produced, and the `outputValues`
-#' for this scenario is `NULL`.
+#'   lists with the entries `simulation` being the initialized `Simulation`
+#'   object with applied parameters, `results` being `SimulatioResults` object
+#'   produced by running the simulation, `outputValues` the output values of the
+#'   `SimulationResults`, and `population` the `Population` object if the
+#'   scenario is a population simulation.
+#' @details If simulation of a scenario fails, a warning is produced, and the
+#' `outputValues` for this scenario is `NULL`.
 #'
 #' @export
 runScenarios <- function(scenarios, simulationRunOptions = NULL) {
@@ -22,7 +22,8 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
   populationScenarios <- list()
   # List of simulation with steady-state
   steadyStateSimulations <- list()
-  # Have to store steady-state times separately, because they are not part of the simulation object
+  # Have to store steady-state times separately, because they are not part of
+  # the simulation object
   steadyStateTimes <- list()
   for (scenario in scenarios) {
     if (scenario$scenarioType == "Individual") {
@@ -65,7 +66,8 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     simulationRunOptions = simulationRunOptions
   )
 
-  # Run population simulations sequentially and add the to the list of simulation results
+  # Run population simulations sequentially and add the to the list of
+  # simulation results
   for (scenario in populationScenarios) {
     populationResults <- runSimulations(
       simulations = scenario$simulation,
@@ -75,7 +77,8 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     simulationResults <- c(simulationResults, populationResults)
   }
 
-  # Create output list with simulation results, simulation objects, and population objects
+  # Create output list with simulation results, simulation objects, and
+  # population objects
   returnList <- vector("list", length(simulationResults))
   for (idx in seq_along(scenarios)) {
     scenario <- scenarios[[idx]]
@@ -130,23 +133,18 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 
 #' Create `Scenario` objects from `ScenarioConfiguration` objects
 #'
-#' @description
-#' Load simulation.
-#' Apply parameters from global XLS.
-#' Apply individual physiology.
-#' Apply individual model parameters.
-#' Set simulation outputs.
-#' Set simulation time.
-#' initializeSimulation().
-#' Create population
+#' @description Load simulation. Apply parameters from global XLS. Apply
+#' individual physiology. Apply individual model parameters. Set simulation
+#' outputs. Set simulation time. initializeSimulation(). Create population
 #'
 #' @param scenarioConfigurations List of `ScenarioConfiguration` objects to be
-#' simulated. See [createScenarios()] for details.
-#' @param customParams A list containing vectors 'paths' with the full paths to the
-#' parameters, 'values' the values of the parameters, and 'units' with the
-#' units the values are in. The values will be applied to all scenarios.
-#' @param stopIfParameterNotFound Boolean. If `TRUE` (default) and a custom parameter is not found, an error is thrown. If `FALSE`, non-existing parameters
-#' are ignored.
+#'   simulated. See [createScenarios()] for details.
+#' @param customParams A list containing vectors 'paths' with the full paths to
+#'   the parameters, 'values' the values of the parameters, and 'units' with the
+#'   units the values are in. The values will be applied to all scenarios.
+#' @param stopIfParameterNotFound Boolean. If `TRUE` (default) and a custom
+#'   parameter is not found, an error is thrown. If `FALSE`, non-existing
+#'   parameters are ignored.
 #'
 #' @returns Named list of `Scenario` objects.
 #' @export

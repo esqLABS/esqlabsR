@@ -7,9 +7,11 @@
 .validatePlotConfigurationFromExcel(dfPlotConfigurations, dataCombinedNames)
 }
 \arguments{
-\item{dfPlotConfigurations}{Data frame created by reading the ' plotConfiguration' sheet}
+\item{dfPlotConfigurations}{Data frame created by reading the '
+plotConfiguration' sheet}
 
-\item{dataCombinedNames}{Names of the 'DataCombined' that are referenced in the plot configurations}
+\item{dataCombinedNames}{Names of the 'DataCombined' that are referenced in
+the plot configurations}
 }
 \value{
 Processed \code{dfPlotConfigurations}
