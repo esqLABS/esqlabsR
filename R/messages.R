@@ -298,7 +298,7 @@ messages$stopInvalidDataCombinedName <- function(dataCombinedNames) {
 
 messages$stopNoPathProvided <- function(dataCombinedName) {
   cliFormat(
-    "No output path is defined for the DataCombined '{paste(dataCombinedName, colapse = \", \")}'
+    "No output path is defined for the DataCombined '{paste(dataCombinedName, collapse = \", \")}'
     Each simulation output must have an output path specified."
   )
 }
