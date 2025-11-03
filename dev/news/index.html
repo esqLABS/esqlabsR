@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9008</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9009</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,6 +65,7 @@
 <li>Added Excel sheet name sanitization for application protocols - protocol names are automatically sanitized to comply with Excel naming rules, removing invalid characters and truncating long names. (<a href="https://github.com/esqLABS/esqlabsR/issues/890" class="external-link">#890</a>)</li>
 <li>Improved <code>.validateCharVector()</code> to enforce atomic character vectors (<a href="https://github.com/esqLABS/esqlabsR/issues/881" class="external-link">#881</a>).</li>
 <li>Parenthesis in parameter sheet names are ignored, allowing separating sheet names with spaces (<a href="https://github.com/esqLABS/esqlabsR/issues/883" class="external-link">#883</a>).</li>
+<li>Used <code>cliFormat</code> function for consistent and maintainable message formatting (<a href="https://github.com/esqLABS/esqlabsR/issues/900" class="external-link">#900</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -161,15 +162,16 @@
 <h2 class="pkg-version" data-toc-text="5.3.0" id="esqlabsr-530">esqlabsR 5.3.0<a class="anchor" aria-label="anchor" href="#esqlabsr-530"></a></h2>
 <div class="section level3">
 <h3 id="breaking-changes-5-3-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-5-3-0"></a></h3>
-<ul><li><p>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> with renamed parameter <code>pkDataFilePath</code> to <code>saOutputFilePath</code> and updated output files to include PK parameter units (<a href="https://github.com/esqLABS/esqlabsR/issues/696" class="external-link">#696</a>).</p></li>
-<li><p>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> now accepts <code>variationRange</code> as both <code>absolute</code> and <code>relative</code> values, specified by the <code>variationType</code> parameter. Added support for passing <code>variationRange</code> as a list, allowing individual variations for each parameter in <code>parameterPaths</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/731" class="external-link">#731</a>).</p></li>
+<ul><li>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> with renamed parameter <code>pkDataFilePath</code> to <code>saOutputFilePath</code> and updated output files to include PK parameter units (<a href="https://github.com/esqLABS/esqlabsR/issues/696" class="external-link">#696</a>).</li>
+<li>Function <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> now accepts <code>variationRange</code> as both <code>absolute</code> and <code>relative</code> values, specified by the <code>variationType</code> parameter. Added support for passing <code>variationRange</code> as a list, allowing individual variations for each parameter in <code>parameterPaths</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/731" class="external-link">#731</a>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="major-changes-5-3-0">Major Changes<a class="anchor" aria-label="anchor" href="#major-changes-5-3-0"></a></h3>
-<ul><li><p><code>createDefaultProjectConfiguration</code> is now soft-deprecated in favor of <code>createProjectConfiguration</code>. (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</p></li>
-<li><p><code>ProjectConfiguration</code> fields have been renamed to be more consistant and easier to understand. (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</p></li>
+<ul><li>
+<code>createDefaultProjectConfiguration</code> is now soft-deprecated in favor of <code>createProjectConfiguration</code>. (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</li>
 <li>
-<p>Files and folders names in project directory have been harmonized and improved (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</p>
+<code>ProjectConfiguration</code> fields have been renamed to be more consistant and easier to understand. (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)</li>
+<li>Files and folders names in project directory have been harmonized and improved (<a href="https://github.com/esqLABS/esqlabsR/issues/692" class="external-link">#692</a>)
 <ul><li>
 <code>Parameters</code> folder is now <code>Configurations</code>
 </li>
@@ -184,7 +186,8 @@
 </li>
 <li>Previous directory structure is still supported but deprecated.</li>
 </ul></li>
-<li><p><code>{ospsuite.parameteridentification}</code> is not longer a dependency of <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</p></li>
+<li>
+<code>{ospsuite.parameteridentification}</code> is not longer a dependency of <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-5-3-0">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-3-0"></a></h3>
@@ -257,14 +260,11 @@
 <h2 class="pkg-version" data-toc-text="5.1.0" id="esqlabsr-510">esqlabsR 5.1.0<a class="anchor" aria-label="anchor" href="#esqlabsr-510"></a></h2>
 <div class="section level3">
 <h3 id="breaking-changes-5-1-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-5-1-0"></a></h3>
-<ul><li>
-<p>When importing observed data using the default importer configuration, data set naming is grouped by <code>StudyId</code> at the first place.</p>
-<ul><li>Before: <code>{Molecule}_{Study Id}_{Subject     Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>
+<ul><li>When importing observed data using the default importer configuration, data set naming is grouped by <code>StudyId</code> at the first place.
+<ul><li>Before: <code>{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>
 </li>
-<li>After: <code>{Study Id}_{Molecule}_{Subject     Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code>
-</li>
-</ul><p>This will result in different data set names, and plots specifying the data sets by the old naming will fail. For compatibility, use custom importer configuration with the old naming:</p>
-<pre><code><span>  <span class="va">importerConfiguration</span> <span class="op">&lt;-</span> <span class="fu">ospsuite</span><span class="fu">::</span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html" class="external-link">loadDataImporterConfiguration</a></span><span class="op">(</span></span>
+<li>After: <code>{Study Id}_{Molecule}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}</code> This will result in different data set names, and plots specifying the data sets by the old naming will fail. For compatibility, use custom importer configuration with the old naming:</li>
+</ul><pre><code><span>  <span class="va">importerConfiguration</span> <span class="op">&lt;-</span> <span class="fu">ospsuite</span><span class="fu">::</span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataImporterConfiguration.html" class="external-link">loadDataImporterConfiguration</a></span><span class="op">(</span></span>
 <span>    configurationFilePath <span class="op">=</span> <span class="va">projectConfiguration</span><span class="op">$</span><span class="va">dataImporterConfigurationFile</span></span>
 <span>    <span class="op">)</span></span>
 <span>    <span class="va">importerConfiguration</span><span class="op">$</span><span class="va">namingPattern</span> <span class="op">&lt;-</span> <span class="st">"{Molecule}_{Study Id}_{Subject Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}"</span></span></code></pre>
@@ -338,19 +338,24 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 <li>Create <code>ScenarioConfigurations</code>, e.g. with</li>
 </ul></li>
 </ul><p><code>readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)</code></p>
-<ul><li><p><code>ProjectConfiguration</code> gets a new field <code>plotsFile</code>. It is the name of the excel file with plot definitions and must be located in the <code>paramsFolder</code>.</p></li>
-<li><p>When defining an individual of other species than human in <code>ScenarioConfiguration</code> and applying it to a human model, missing species-specific parameters are applied and the scaling works properly. Supported scalings are: Human to rat, human to monkey, human to rabbit.</p></li>
-<li><p><code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> does not perform steady-state run any more. This is done as part of the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function.</p></li>
-<li><p>New function <code><a href="../reference/loadObservedDataFromPKML.html">loadObservedDataFromPKML()</a></code> to load data from <code>*.pkml</code> located in the “PKML” sub-folder of the “Data” folder.</p></li>
-<li><p>New function <code><a href="../reference/createScenarios.html">createScenarios()</a></code> to create <code>Scenario</code> objects from <code>ScenarioConfiguration</code> objects.</p></li>
-<li><p>Plots can be created by calling the new function <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>. It requires as input parameters <code>simulatedScenarios</code> (a list of simulated scenarios as returned by <code><a href="../reference/runScenarios.html">runScenarios()</a></code>), <code>observedData</code> (a list of <code>DataSet</code> objects) and a <code>ProjectConfiguration</code> object <code>projectConfiguration</code>.</p></li>
-<li><p>New function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> creates <code>DataCombined</code> objects as defined in the <code>Plots.xlsx</code> file.</p></li>
-<li><p>New function <code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code> to save results produced by the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function to csv files and corresponding simulations to pkml files.</p></li>
-<li><p>New function <code><a href="../reference/loadScenarioResults.html">loadScenarioResults()</a></code> to load results from csv files into a structure as produced by the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function.</p></li>
-<li><p>New function <code>compareSimulation()</code> to compare two simulations for differences.</p></li>
-<li><p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> also returns a <code>Population</code> object for population simulations.</p></li>
-<li><p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> gets a new argument <code>savePopulationToCSV</code>, with default value <code>FALSE</code>.</p></li>
-<li><p><code>esqlabsR</code> extends the <code><a href="https://rdrr.io/pkg/tlf/man/ExportConfiguration.html" class="external-link">tlf::ExportConfiguration</a></code> class to dynamically calculate the height of the exported figure from the number of rows and the new parameter <code>heightPerRow</code>.</p></li>
+<ul><li>
+<code>ProjectConfiguration</code> gets a new field <code>plotsFile</code>. It is the name of the excel file with plot definitions and must be located in the <code>paramsFolder</code>.</li>
+<li>When defining an individual of other species than human in <code>ScenarioConfiguration</code> and applying it to a human model, missing species-specific parameters are applied and the scaling works properly. Supported scalings are: Human to rat, human to monkey, human to rabbit.</li>
+<li>
+<code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> does not perform steady-state run any more. This is done as part of the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function.</li>
+<li>New function <code><a href="../reference/loadObservedDataFromPKML.html">loadObservedDataFromPKML()</a></code> to load data from <code>*.pkml</code> located in the “PKML” sub-folder of the “Data” folder.</li>
+<li>New function <code><a href="../reference/createScenarios.html">createScenarios()</a></code> to create <code>Scenario</code> objects from <code>ScenarioConfiguration</code> objects.</li>
+<li>Plots can be created by calling the new function <code><a href="../reference/createPlotsFromExcel.html">createPlotsFromExcel()</a></code>. It requires as input parameters <code>simulatedScenarios</code> (a list of simulated scenarios as returned by <code><a href="../reference/runScenarios.html">runScenarios()</a></code>), <code>observedData</code> (a list of <code>DataSet</code> objects) and a <code>ProjectConfiguration</code> object <code>projectConfiguration</code>.</li>
+<li>New function <code><a href="../reference/createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code> creates <code>DataCombined</code> objects as defined in the <code>Plots.xlsx</code> file.</li>
+<li>New function <code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code> to save results produced by the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function to csv files and corresponding simulations to pkml files.</li>
+<li>New function <code><a href="../reference/loadScenarioResults.html">loadScenarioResults()</a></code> to load results from csv files into a structure as produced by the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function.</li>
+<li>New function <code>compareSimulation()</code> to compare two simulations for differences.</li>
+<li>
+<code><a href="../reference/runScenarios.html">runScenarios()</a></code> also returns a <code>Population</code> object for population simulations.</li>
+<li>
+<code><a href="../reference/runScenarios.html">runScenarios()</a></code> gets a new argument <code>savePopulationToCSV</code>, with default value <code>FALSE</code>.</li>
+<li>
+<code>esqlabsR</code> extends the <code><a href="https://rdrr.io/pkg/tlf/man/ExportConfiguration.html" class="external-link">tlf::ExportConfiguration</a></code> class to dynamically calculate the height of the exported figure from the number of rows and the new parameter <code>heightPerRow</code>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-changes-and-bug-fixes-5-0-0">Minor changes and bug fixes<a class="anchor" aria-label="anchor" href="#minor-changes-and-bug-fixes-5-0-0"></a></h3>
