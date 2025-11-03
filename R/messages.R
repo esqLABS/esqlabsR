@@ -22,7 +22,7 @@ messages$wrongParametersStructure <- function(argumentName) {
 
 # Enum####
 messages$errorEnumPutListMultipleKeys <- function() {
-  "Trying to put multiple keys, but only one key is allowed!"
+  cliFormat("Trying to put multiple keys, but only one key is allowed!")
 }
 
 # utilities-population####
@@ -89,11 +89,15 @@ messages$valueShouldNotBeNegative <- function(parameterName, value) {
 
 # utilities-data####
 messages$errorInvalidMeanMethod <- function() {
-  "Invalid value for argument `method`, supported values are `arithmetic` or `geometric`"
+  cliFormat(
+    "Invalid value for argument `method`, supported values are `arithmetic` or `geometric`"
+  )
 }
 
 messages$errorOutputMolWeightNeeded <- function() {
-  "`outputMolWeight` can not be `NULL` when data sets have different molWeights"
+  cliFormat(
+    "`outputMolWeight` can not be `NULL` when data sets have different molWeights"
+  )
 }
 
 # utilities-figures####
@@ -132,7 +136,9 @@ messages$errorApplicationProtocolNotFound <- function(
   )
 }
 messages$wrongSimulationType <- function() {
-  "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"
+  cliFormat(
+    "Wrong value for 'simulationType'! Accepted values are 'Individual and 'Population'"
+  )
 }
 
 messages$scenarioConfigurationNameNotFoundWhenReading <- function(
@@ -212,7 +218,9 @@ messages$missingSteadyStateTimeUnit <- function(scenarioName) {
 }
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function() {
-  "`saOutputFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
+  cliFormat(
+    "`saOutputFilePath` argument is specified, but there is no PK parameters data to write to spreadsheets."
+  )
 }
 
 # sensitivity analysis plotting
@@ -220,7 +228,7 @@ messages$noParameterFactor <- function(data, parameterFactor) {
   cliFormat(
     "'parameterFactor' values of {parameterFactor} and {1 / parameterFactor} are not included in the sensitivity analysis results. Current values: {paste(sort(unique(data$ParameterFactor)), collapse = ', ')}. Please rerun the sensitivity analysis with the required values."
   )
-}
+} 
 
 messages$errorOptionOutOfBounds <- function(parameterFactor) {
   range <- .getPlotConfigurationOptions(
@@ -266,27 +274,39 @@ messages$errorInvalidPlotID <- function(plotIDs) {
 }
 
 messages$missingPlotIDs <- function() {
-  "Missing values found in mandatory column 'plotIDs' of sheet 'plotGrids'. Fill in values to proceed."
+  cliFormat(
+    "Missing values found in mandatory column 'plotIDs' of sheet 'plotGrids'. Fill in values to proceed."
+  )
 }
 
 messages$missingLabel <- function() {
-  "Missing values found in mandatory column 'label' of sheet 'DataCombined'. Fill in values to proceed."
+  cliFormat(
+    "Missing values found in mandatory column 'label' of sheet 'DataCombined'. Fill in values to proceed."
+  )
 }
 
 messages$missingPlotType <- function() {
-  "Missing values found in mandatory column 'plotType' of sheet 'plotConfiguration'. Fill in values to proceed."
+  cliFormat(
+    "Missing values found in mandatory column 'plotType' of sheet 'plotConfiguration'. Fill in values to proceed."
+  )
 }
 
 messages$missingDataType <- function() {
-  "Missing values found in mandatory column 'dataType' of sheet 'DataCombined'. Fill in values to proceed."
+  cliFormat(
+    "Missing values found in mandatory column 'dataType' of sheet 'DataCombined'. Fill in values to proceed."
+  )
 }
 
 messages$missingScenarioName <- function() {
-  "Missing values found in mandatory column 'scenario' of sheet 'DataCombined' when 'dataType' is 'simulated'. Fill in values to proceed."
+  cliFormat(
+    "Missing values found in mandatory column 'scenario' of sheet 'DataCombined' when 'dataType' is 'simulated'. Fill in values to proceed."
+  )
 }
 
 messages$missingDataCombinedName <- function() {
-  "Missing values found in mandatory column 'DataCombinedName' of sheet 'plotConfiguration'. Fill in values to proceed."
+  cliFormat(
+    "Missing values found in mandatory column 'DataCombinedName' of sheet 'plotConfiguration'. Fill in values to proceed."
+  )
 }
 
 messages$stopInvalidDataCombinedName <- function(dataCombinedNames) {
@@ -336,7 +356,9 @@ messages$invalidConfigurationPropertyFromExcel <- function(
 }
 
 messages$missingOutputFileName <- function() {
-  "Missing values found in mandatory column 'outputName' of sheet 'exportConfiguration'. No plots are exported to file for corresponding rows."
+  cliFormat(
+    "Missing values found in mandatory column 'outputName' of sheet 'exportConfiguration'. No plots are exported to file for corresponding rows."
+  )
 }
 
 messages$missingPlotGrids <- function(missingPlotGrids) {
@@ -410,7 +432,9 @@ messages$errorNotNamedList <- function(objectName, optionalMessage = "") {
 }
 
 messages$invalidVariationRangeLength <- function() {
-  "`variationRange` must be either a vector or a list equal to the length of `parameterPaths`."
+  cliFormat(
+    "`variationRange` must be either a vector or a list equal to the length of `parameterPaths`."
+  )
 }
 
 messages$errorSensitivityCalculationNotFound <- function(path) {
