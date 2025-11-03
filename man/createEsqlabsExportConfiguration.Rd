@@ -7,8 +7,7 @@
 createEsqlabsExportConfiguration(outputFolder)
 }
 \arguments{
-\item{outputFolder}{Path to the folder where the results will be
-stored.}
+\item{outputFolder}{Path to the folder where the results will be stored.}
 }
 \value{
 An instance of \code{ExportConfiguration} R6 class.

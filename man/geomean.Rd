@@ -12,9 +12,9 @@ geomean(x, na.rm = FALSE, trim = 0)
 \item{na.rm}{A logical value indicating whether \code{NA} values should be
 stripped before the computation proceeds}
 
-\item{trim}{Fraction (0 to 0.5) of observations to be trimmed from each
-end of \code{x} before the mean is computed. Values of trim outside that range
-are taken as the nearest endpoint}
+\item{trim}{Fraction (0 to 0.5) of observations to be trimmed from each end
+of \code{x} before the mean is computed. Values of trim outside that range are
+taken as the nearest endpoint}
 }
 \value{
 Geometric mean of \code{x}

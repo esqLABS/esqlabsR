@@ -7,7 +7,8 @@
 esqlabsColors(nrOfColors)
 }
 \arguments{
-\item{nrOfColors}{Positive integer defining the number of colors to be generated.}
+\item{nrOfColors}{Positive integer defining the number of colors to be
+generated.}
 }
 \value{
 A list of colors as HEX values.
@@ -17,11 +18,11 @@ Returns the list of colors extrapolated between the esqLABS colors blue, red,
 and green.
 }
 \details{
-For \code{nrOfColors} == 1, the esqLABS-blue is returned
-For \code{nrOfColors} == 2, the esqLABS-blue and green are returned
-For \code{nrOfColors} == 3, the esqLABS-blue, red, and green are returned
-For \code{nrOfColors} > 3, the three esqLABS colors are fixed, and the remaining
-colors are extrapolated from blue to red to green. If \code{nrOfColors} is uneven,
-the blue-to-red section becomes one color more than the red-to-green section.
-In this implementation, blue-to-green is not considered.
+For \code{nrOfColors} == 1, the esqLABS-blue is returned For \code{nrOfColors} == 2,
+the esqLABS-blue and green are returned For \code{nrOfColors} == 3, the
+esqLABS-blue, red, and green are returned For \code{nrOfColors} > 3, the three
+esqLABS colors are fixed, and the remaining colors are extrapolated from blue
+to red to green. If \code{nrOfColors} is uneven, the blue-to-red section becomes
+one color more than the red-to-green section. In this implementation,
+blue-to-green is not considered.
 }

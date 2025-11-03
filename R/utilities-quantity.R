@@ -1,13 +1,15 @@
 #' Get the name of the molecule from a quantity
 #'
-#' @description Returns the name of the molecule to which the quantity object
-#' is associated. The quantity could be the amount of the molecule in a container
-#' ('Organism|VenousBlood|Plasma|Aciclovir'), a parameter of the molecule
-#' ('Aciclovir|Lipophilicity' or 'Organism|VenousBlood|Plasma|Aciclovir|Concentration'),
-#' or an observer ("Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)").
+#' @description Returns the name of the molecule to which the quantity object is
+#'   associated. The quantity could be the amount of the molecule in a container
+#'   ('Organism|VenousBlood|Plasma|Aciclovir'), a parameter of the molecule
+#'   ('Aciclovir|Lipophilicity' or
+#'   'Organism|VenousBlood|Plasma|Aciclovir|Concentration'), or an observer
+#'   ("Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous
+#'   Blood)").
 #'
-#' If the quantity is not associated with a molecule (e.g. 'Organism|Weight'),
-#' an error is thrown.
+#'   If the quantity is not associated with a molecule (e.g. 'Organism|Weight'),
+#'   an error is thrown.
 #'
 #' @param quantity A `Quantity` object
 #'

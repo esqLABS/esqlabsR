@@ -10,12 +10,13 @@ loadObservedDataFromPKML(projectConfiguration, obsDataNames = NULL)
 \item{projectConfiguration}{Object of class \code{ProjectConfiguration} containing
 the necessary information.}
 
-\item{obsDataNames}{String or a list of strings defining data sets to load
-If \code{NULL} (default), all data sets located in the folder are loaded. Must not
+\item{obsDataNames}{String or a list of strings defining data sets to load If
+\code{NULL} (default), all data sets located in the folder are loaded. Must not
 contain the ".pkml" file extension.}
 }
 \value{
-A named list of \code{DataSet} objects, with names being the names of the data sets.
+A named list of \code{DataSet} objects, with names being the names of the
+data sets.
 }
 \description{
 Loads data sets that are exported as pkml. The files must be

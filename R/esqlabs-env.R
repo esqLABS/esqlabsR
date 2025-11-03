@@ -2,7 +2,7 @@
 # It is not exported and should not be directly manipulated by other packages.
 esqlabsEnv <- new.env(parent = emptyenv())
 
-# name of the package. This will be used to retrieve information on the package at run time
+# Package name. This will be used to retrieve information on the package at run time
 esqlabsEnv$packageName <- "esqlabsR"
 
 # Version of the package
@@ -29,7 +29,8 @@ getEsqlabsRSetting <- function(settingName) {
   }
 
   obj <- esqlabsEnv[[settingName]]
-  # Evaluate if the object is a function. This is required since some properties are defined as function reference
+  # Evaluate if the object is a function. This is required since some properties
+  # are defined as function reference
   if (is.function(obj)) {
     return(obj())
   }

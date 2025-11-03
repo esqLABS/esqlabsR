@@ -14,27 +14,30 @@ createDataCombinedFromExcel(
 )
 }
 \arguments{
-\item{projectConfiguration}{Object of class \code{ProjectConfiguration}
-that contains information about the output paths and the excel file
-where plots are defined.}
+\item{projectConfiguration}{Object of class \code{ProjectConfiguration} that
+contains information about the output paths and the excel file where plots
+are defined.}
 
-\item{dataCombinedNames}{Names of the DataCombined objects that will be created.
-If a DataCombined with a given name is not defined in the Excel file, an error is thrown. Can be used together with \code{plotGridNames}.}
+\item{dataCombinedNames}{Names of the DataCombined objects that will be
+created. If a DataCombined with a given name is not defined in the Excel
+file, an error is thrown. Can be used together with \code{plotGridNames}.}
 
-\item{plotGridNames}{Names of the plot grid specified in the sheet \code{plotGrids}.
-Each data combined used by the specified plot grids will be created. Can be
-used together with \code{dataCombinedNames}.}
+\item{plotGridNames}{Names of the plot grid specified in the sheet
+\code{plotGrids}. Each data combined used by the specified plot grids will be
+created. Can be used together with \code{dataCombinedNames}.}
 
-\item{simulatedScenarios}{A list of simulated scenarios as returned by \code{runScenarios()}}
+\item{simulatedScenarios}{A list of simulated scenarios as returned by
+\code{runScenarios()}}
 
 \item{observedData}{A list of \code{DataSet} objects}
 
 \item{stopIfNotFound}{If TRUE (default), the function stops if any of the
-simulated results or observed data are not found. If FALSE a warning is printed.}
+simulated results or observed data are not found. If FALSE a warning is
+printed.}
 }
 \value{
-A list of \code{DataCombined} objects, or an empty list if both \code{dataCombinedNames} and \code{plotGridNames} are \code{NULL} or \code{stopIfNotFound = TRUE} and the specified
-\code{DataCombined} could not be created.
+A list of \code{DataCombined} objects, or an empty list if both
+\code{dataCombinedNames} and \code{plotGridNames} are \code{NULL} or \code{stopIfNotFound = TRUE} and the specified \code{DataCombined} could not be created.
 }
 \description{
 Generate DataCombined objects as defined in excel file

@@ -2,13 +2,13 @@
 #' `PopulationCharacteristics` object
 #'
 #' @param XLSpath Path to the excel file
-#' @param populationName Name of the population, as defined in the "PopulationName"
-#' column
-#' @param sheet Name or the index of the sheet in the excel file.
-#' If `NULL`, the first sheet in the file is used.
+#' @param populationName Name of the population, as defined in the
+#'   "PopulationName" column
+#' @param sheet Name or the index of the sheet in the excel file. If `NULL`, the
+#'   first sheet in the file is used.
 #'
-#' @returns A `PopulationCharacteristics` object based on the information
-#' in the excel file.
+#' @returns A `PopulationCharacteristics` object based on the information in the
+#'   excel file.
 #' @import readxl
 #' @export
 readPopulationCharacteristicsFromXLS <- function(
@@ -99,7 +99,8 @@ GenderInt <- enum(list(
 #' Add user defined variability on parameters to a population.
 #'
 #' @param population Object of type `Population`
-#' @param parameterPaths Vector of parameter path for which the variability is to be added.
+#' @param parameterPaths Vector of parameter path for which the variability is
+#'   to be added.
 #' @param meanValues Vector of mean values of the parameters. Must have the same
 #'   length as `parameterPaths`. The type of mean (arithmetic, geometric)
 #'   depends on the selected `distribution`. The values must be in the base
@@ -108,8 +109,9 @@ GenderInt <- enum(list(
 #'   have the same length as `parameterPaths`. The type of standard deviation
 #'   depends on the selected `distribution`.
 #' @param distributions Type of distribution from which the random values will
-#'   be sampled. Must have the same length as `parameterPaths`.
-#' A list of supported distributions is defined in `Distributions`. Default is `"Normal"`.
+#'   be sampled. Must have the same length as `parameterPaths`. A list of
+#'   supported distributions is defined in `Distributions`. Default is
+#'   `"Normal"`.
 #' @export
 extendPopulationByUserDefinedParams <- function(
   population, # nolint: object_length_linter.
@@ -144,15 +146,16 @@ extendPopulationByUserDefinedParams <- function(
 }
 
 
-#' Add user defined variability on parameters to a population from an excel file.
+#' Add user defined variability on parameters to a population from an excel
+#' file.
 #'
 #' @param population Object of type `Population`
 #' @param XLSpath Path to the excel file that stores the information of
-#'   parameters. The file must have the columns "Container Path",
-#'   "Parameter Name", "Mean", "SD", "Units", and "Distribution". Mean and SD
-#'   values must be in the base units of the parameters.
-#' @param sheet Name or the index of the sheet in the excel file.
-#' If `NULL`, the first sheet in the file is used.
+#'   parameters. The file must have the columns "Container Path", "Parameter
+#'   Name", "Mean", "SD", "Units", and "Distribution". Mean and SD values must
+#'   be in the base units of the parameters.
+#' @param sheet Name or the index of the sheet in the excel file. If `NULL`, the
+#'   first sheet in the file is used.
 #'
 #' @details The method reads the information from the specified excel sheet(s)
 #'   and calls `extendPopulationByUserDefinedParams`
@@ -292,8 +295,8 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
     return(NULL)
   }
 
-  # calling 'as.character' as sometimes empty cells in Excel are not recognized as
-  # chr NA, but some other NA, and strsplit fails.
+  # Calling 'as.character' as sometimes empty cells in Excel are not recognized
+  # as chr NA, but some other NA, and strsplit fails.
   proteinOntogenyMappings <- as.character(proteinOntogenyMappings)
   # Proteins/ontogenies mappings are separated by a ','
   proteinOntogenyMappings <- unlist(strsplit(

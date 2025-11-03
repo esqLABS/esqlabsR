@@ -25,31 +25,30 @@ sensitivitySpiderPlot(
 output path(s), parameter path(s), and PK parameters to be displayed,
 respectively. If \code{NULL}, all included paths and parameters present in the
 supplied \code{SensitivityCalculation} object will be displayed in the
-visualization.
-A separate plot will be generated for each output path. Each plot will
-contain a spider plot panel for each PK parameter, and the sensitivities
-for each parameter will be displayed as lines.}
+visualization. A separate plot will be generated for each output path. Each
+plot will contain a spider plot panel for each PK parameter, and the
+sensitivities for each parameter will be displayed as lines.}
 
 \item{xAxisScale}{Character string, either "log" (logarithmic scale) or "lin"
 (linear scale), to set the x-axis scale. Default is "log".}
 
-\item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis scale
-similarly to \code{xAxisScale}. Default is "lin".}
+\item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis
+scale similarly to \code{xAxisScale}. Default is "lin".}
 
 \item{xAxisType}{Character string, either "percent" (percentage change) or
-"absolute" (absolute values) for PK parameter values, for x-axis data normalization.
-Default is "percent".}
+"absolute" (absolute values) for PK parameter values, for x-axis data
+normalization. Default is "percent".}
 
 \item{yAxisType}{Character string, either "percent" (percentage change) or
-"absolute" (absolute values) for PK parameter values, for y-axis data normalization.
-Default is "percent".}
+"absolute" (absolute values) for PK parameter values, for y-axis data
+normalization. Default is "percent".}
 
-\item{yAxisFacetScales}{Character string, either "fixed" or "free", determines
-the scaling across y-axes of different facets. Default is "fixed".
-If "fixed", all facetes within one plot will have the same range, which allows
-for easier comparison between different PK parameters. If "free", each facet
-will have its own range, which allows for better visualization of the single
-PK parameters sensitivity.}
+\item{yAxisFacetScales}{Character string, either "fixed" or "free",
+determines the scaling across y-axes of different facets. Default is
+"fixed". If "fixed", all facetes within one plot will have the same range,
+which allows for easier comparison between different PK parameters. If
+"free", each facet will have its own range, which allows for better
+visualization of the single PK parameters sensitivity.}
 
 \item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
 used to customize plot aesthetics. Plot-specific settings provided directly
@@ -76,11 +75,11 @@ Supported parameters include:
 \item \code{yAxisTicks}: Number of ticks on the y-axis.
 \item \code{yLabel}: Label text for the y-axis.
 \item \code{yValuesLimits}: Numeric vector specifying the limits for y-values.
-}
 
 Default values are set to provide a standardized look, but each parameter
 can be tailored to fit specific visual needs. Modifying these parameters
-will directly affect the aesthetics of the output plots.}
+will directly affect the aesthetics of the output plots.
+}}
 }
 \value{
 A \code{patchwork} object containing the combined ggplot objects if a
@@ -88,13 +87,13 @@ single output path is specified, or a list of \code{patchwork} objects for
 multiple output paths.
 }
 \description{
-Creates spider plots for sensitivity calculation. A spider plot is a
-visualization technique that displays the sensitivity of a model output to
-changes in model parameters. Each plot displays the sensitivity of a set of
-PK parameters for a single output path to changes in model parameters. The x-axis
-represents the value of model parameters (absolute or percent from default value),
-and the y-axis represents the sensitivity of the output to changes in the model
-parameter.
+Creates spider plots for sensitivity calculation. A spider plot
+is a visualization technique that displays the sensitivity of a model output
+to changes in model parameters. Each plot displays the sensitivity of a set
+of PK parameters for a single output path to changes in model parameters. The
+x-axis represents the value of model parameters (absolute or percent from
+default value), and the y-axis represents the sensitivity of the output to
+changes in the model parameter.
 }
 \examples{
 \dontrun{

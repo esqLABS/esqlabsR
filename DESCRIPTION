@@ -1,7 +1,7 @@
 Type: Package
 Package: esqlabsR
 Title: esqLABS utilities package
-Version: 5.5.0.9007
+Version: 5.5.0.9008
 Authors@R: c(
     person("esqLABS GmbH", role = c("cph", "fnd")),
     person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
@@ -26,7 +26,6 @@ Imports:
     dplyr,
     fs,
     ggplot2,
-    glue,
     grDevices,
     jsonlite,
     lifecycle,

@@ -7,12 +7,12 @@
 extendParameterStructure(parameters, newParameters)
 }
 \arguments{
-\item{parameters}{A list containing vectors 'paths' with the full paths to the
-parameters, 'values' the values of the parameters, and 'units' with the
+\item{parameters}{A list containing vectors \code{paths} with the full paths to
+the parameters, \code{values} the values of the parameters, and \code{units} with the
 units the values are in. This list will be extended.}
 
-\item{newParameters}{A list containing vectors 'paths' with the full paths to the
-parameters, 'values' the values of the parameters, and 'units' with the
+\item{newParameters}{A list containing vectors 'paths' with the full paths to
+the parameters, 'values' the values of the parameters, and 'units' with the
 units the values are in. Entries from this list will extend or overwrite
 the list \code{parameters}}
 }
@@ -24,6 +24,7 @@ Extend parameters structure with new entries
 }
 \details{
 This function adds new parameter entries from \code{newParameters} to
-\code{parameters}. If an entry with the same path is already present in \code{parameters},
-its value and unit will be overwritten with the values from \code{newParameters}.
+\code{parameters}. If an entry with the same path is already present in
+\code{parameters}, its value and unit will be overwritten with the values from
+\code{newParameters}.
 }
