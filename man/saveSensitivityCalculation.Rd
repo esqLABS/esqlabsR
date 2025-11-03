@@ -22,7 +22,8 @@ where the results should be saved.}
 will be deleted and replaced. Default is \code{FALSE}.}
 }
 \value{
-Invisibly returns \code{NULL}. Results are saved to disk in the specified folder.
+Invisibly returns \code{NULL}. Results are saved to disk in the specified
+folder.
 }
 \description{
 Saves the results of a sensitivity analysis to a specified directory,

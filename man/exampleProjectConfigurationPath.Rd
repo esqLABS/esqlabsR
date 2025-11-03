@@ -7,7 +7,8 @@
 exampleProjectConfigurationPath()
 }
 \value{
-A string representing the path to the example ProjectConfiguration.xlsx file
+A string representing the path to the example
+ProjectConfiguration.xlsx file
 }
 \description{
 Get the path to example ProjectConfiguration.xlsx

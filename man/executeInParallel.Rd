@@ -21,7 +21,8 @@ function. The function will be called \code{n} times where \code{n} is the numbe
 entries in \code{firstArguments}}
 
 \item{exports}{Names of the objects in the calling environment that the
-function relies on that are not passed as arguments. May be \code{NULL} (default).}
+function relies on that are not passed as arguments. May be \code{NULL}
+(default).}
 
 \item{...}{Further arguments of the function.}
 
@@ -35,8 +36,8 @@ the value defined in \code{ospsuite::getOSPSuiteSetting("numberOfCores")} is
 used, and equals the number of logical cores minus 1.}
 }
 \value{
-A list containing the outputs of the function \code{fun} iterated over the
-values in \code{firstArguments}.
+A list containing the outputs of the function \code{fun} iterated over
+the values in \code{firstArguments}.
 }
 \description{
 Parallelize the execution of a function over a list of arguments values

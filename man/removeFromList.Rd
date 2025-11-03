@@ -12,8 +12,8 @@ removeFromList(entry, listArg)
 \item{listArg}{The list from which the entry will be removed}
 }
 \value{
-The list without the entry. If the input is a vector, it is converted
-to a list.
+The list without the entry. If the input is a vector, it is
+converted to a list.
 }
 \description{
 Removes all occurrences of the entry from the list. If the entry

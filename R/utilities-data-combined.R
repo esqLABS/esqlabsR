@@ -1,20 +1,24 @@
 #' Generate DataCombined objects as defined in excel file
 #'
-#' @param dataCombinedNames Names of the DataCombined objects that will be created.
-#' If a DataCombined with a given name is not defined in the Excel file, an error is thrown. Can be used together with `plotGridNames`.
-#' @param plotGridNames Names of the plot grid specified in the sheet `plotGrids`.
-#' Each data combined used by the specified plot grids will be created. Can be
-#' used together with `dataCombinedNames`.
-#' @param projectConfiguration Object of class `ProjectConfiguration`
-#' that contains information about the output paths and the excel file
-#' where plots are defined.
-#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`
+#' @param dataCombinedNames Names of the DataCombined objects that will be
+#'   created. If a DataCombined with a given name is not defined in the Excel
+#'   file, an error is thrown. Can be used together with `plotGridNames`.
+#' @param plotGridNames Names of the plot grid specified in the sheet
+#'   `plotGrids`. Each data combined used by the specified plot grids will be
+#'   created. Can be used together with `dataCombinedNames`.
+#' @param projectConfiguration Object of class `ProjectConfiguration` that
+#'   contains information about the output paths and the excel file where plots
+#'   are defined.
+#' @param simulatedScenarios A list of simulated scenarios as returned by
+#'   `runScenarios()`
 #' @param observedData A list of `DataSet` objects
 #' @param stopIfNotFound If TRUE (default), the function stops if any of the
-#' simulated results or observed data are not found. If FALSE a warning is printed.
+#'   simulated results or observed data are not found. If FALSE a warning is
+#'   printed.
 #'
-#' @returns A list of `DataCombined` objects, or an empty list if both `dataCombinedNames` and `plotGridNames` are `NULL` or `stopIfNotFound = TRUE` and the specified
-#' `DataCombined` could not be created.
+#' @returns A list of `DataCombined` objects, or an empty list if both
+#'   `dataCombinedNames` and `plotGridNames` are `NULL` or `stopIfNotFound =
+#'   TRUE` and the specified `DataCombined` could not be created.
 #'
 #' @import tidyr
 #'
@@ -209,10 +213,11 @@ createDataCombinedFromExcel <- function(
 #' Validate and process the 'DataCombined' sheet
 #'
 #' @param dfDataCombined Data frame created by reading the ' DataCombined' sheet
-#' @param simulatedScenarios List of simulated scenarios as created by `runScenarios()`
+#' @param simulatedScenarios List of simulated scenarios as created by
+#'   `runScenarios()`
 #' @param observedData Observed data objects
 #' @param stopIfNotFound if `TRUE`, throw an error if a simulated result of an
-#' observed data are not found
+#'   observed data are not found
 #'
 #' @returns Processed `dfDataCombined`
 #' @keywords internal
@@ -310,10 +315,11 @@ createDataCombinedFromExcel <- function(
 
 #' Extract names of DataCombined required for the creation of specified plots
 #'
-#' @param plotGridNames Names of the plot grid specified in the sheet `plotGrids`.
-#' @param projectConfiguration Object of class `ProjectConfiguration`
-#' that contains information about the output paths and the excel file
-#' where plots are defined.
+#' @param plotGridNames Names of the plot grid specified in the sheet
+#'   `plotGrids`.
+#' @param projectConfiguration Object of class `ProjectConfiguration` that
+#'   contains information about the output paths and the excel file where plots
+#'   are defined.
 #'
 #' @returns A list with the names of required DataCombined
 #' @noRd

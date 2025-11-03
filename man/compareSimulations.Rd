@@ -11,25 +11,26 @@ compareSimulations(simulation1, simulation2, compareFormulasByValue = FALSE)
 
 \item{simulation2}{Second \code{Simulation} to compare}
 
-\item{compareFormulasByValue}{If \code{FALSE} (default), parameters are considered not equal
-if the have the same value but different formulas (e.g., a constant vs. explicit formula).
-If \code{TRUE}, only values are compared.}
+\item{compareFormulasByValue}{If \code{FALSE} (default), parameters are considered
+not equal if the have the same value but different formulas (e.g., a
+constant vs. explicit formula). If \code{TRUE}, only values are compared.}
 }
 \value{
 Named list with following levels:
 \itemize{
 \item \code{Parameters} with named lists \code{In1NotIn2}, \code{In2NotIn1}, and \code{Different},
-holding the \code{Parameter} objects that are present in the first but not in the second
-simulation, present in the second but not in the first simulation, and
-present in both simulations but with different formulas and/or values,
-respectively.
+holding the \code{Parameter} objects that are present in the first but not in
+the second simulation, present in the second but not in the first
+simulation, and present in both simulations but with different formulas
+and/or values, respectively.
 }
 }
 \description{
 Compare two simulations
 }
 \details{
-The function compares two simulations and returns a list of entities that differ:
+The function compares two simulations and returns a list of entities
+that differ:
 \itemize{
 \item \code{Parameters}: a named list with a list of all \code{Parameter} entities that are:
 \item in simulation1 but not in simulation 2 (\code{In1NotIn2})

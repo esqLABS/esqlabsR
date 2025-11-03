@@ -3,15 +3,16 @@
 #' Returns the list of colors extrapolated between the esqLABS colors blue, red,
 #' and green.
 #'
-#' For `nrOfColors` == 1, the esqLABS-blue is returned
-#' For `nrOfColors` == 2, the esqLABS-blue and green are returned
-#' For `nrOfColors` == 3, the esqLABS-blue, red, and green are returned
-#' For `nrOfColors` > 3, the three esqLABS colors are fixed, and the remaining
-#' colors are extrapolated from blue to red to green. If `nrOfColors` is uneven,
-#' the blue-to-red section becomes one color more than the red-to-green section.
-#' In this implementation, blue-to-green is not considered.
+#' For `nrOfColors` == 1, the esqLABS-blue is returned For `nrOfColors` == 2,
+#' the esqLABS-blue and green are returned For `nrOfColors` == 3, the
+#' esqLABS-blue, red, and green are returned For `nrOfColors` > 3, the three
+#' esqLABS colors are fixed, and the remaining colors are extrapolated from blue
+#' to red to green. If `nrOfColors` is uneven, the blue-to-red section becomes
+#' one color more than the red-to-green section. In this implementation,
+#' blue-to-green is not considered.
 #'
-#' @param nrOfColors Positive integer defining the number of colors to be generated.
+#' @param nrOfColors Positive integer defining the number of colors to be
+#'   generated.
 #'
 #' @import grDevices
 #' @returns A list of colors as HEX values.
@@ -217,8 +218,7 @@ createEsqlabsPlotGridConfiguration <- function() {
   return(plotGridConfiguration)
 }
 
-#' @param outputFolder Path to the folder where the results will be
-#' stored.
+#' @param outputFolder Path to the folder where the results will be stored.
 #'
 #' @title Create an instance of `ExportConfiguration` R6 class
 #' @rdname createEsqlabsExportConfiguration
@@ -260,28 +260,32 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 
 #' Generate plots as defined in excel file `projectConfiguration$plotsFile`
 #'
-#' @param simulatedScenarios A list of simulated scenarios as returned by `runScenarios()`.
-#' Can be `NULL` if no simulated data is required for the plots.
+#' @param simulatedScenarios A list of simulated scenarios as returned by
+#'   `runScenarios()`. Can be `NULL` if no simulated data is required for the
+#'   plots.
 #' @param observedData A list of `DataSet` objects. Can be `NULL` if no observed
-#' data is required for the plots.
-#' @param projectConfiguration Object of class `ProjectConfiguration`
-#' that contains information about the output paths and the excel file
-#' where plots are defined.
+#'   data is required for the plots.
+#' @param projectConfiguration Object of class `ProjectConfiguration` that
+#'   contains information about the output paths and the excel file where plots
+#'   are defined.
 #' @param stopIfNotFound If TRUE (default), the function stops if any of the
-#' simulated results or observed data are not found. If FALSE a warning is printed.
+#'   simulated results or observed data are not found. If FALSE a warning is
+#'   printed.
 #'
-#' @param plotGridNames Names of the plot grid specified in the sheet `plotGrids`
-#' for which the figures will be created. If `NULL` (default), all plot grids
-#' specified in the excel sheet will be created. If a plot grid with a given name
-#' does not exist, an error is thrown.
+#' @param plotGridNames Names of the plot grid specified in the sheet
+#'   `plotGrids` for which the figures will be created. If `NULL` (default), all
+#'   plot grids specified in the excel sheet will be created. If a plot grid
+#'   with a given name does not exist, an error is thrown.
 #'
 #' @param outputFolder Optional - path to the folder where the results will be
-#' stored. If `NULL` (default), `projectConfiguration$outputFolder` is used. Only
-#' relevant for plots specified for export in the `exportConfiguration` sheet.
-#' @param dataCombinedList A (named) list of `DataCombined` objects as input
-#' to create plots defined in the `plotGridNames` argument.
-#' Missing `DataCombined` will be created from the Excel file (default behavior).
-#' Defaults to `NULL`, in which case all `DataCombined` are created from Excel.
+#'   stored. If `NULL` (default), `projectConfiguration$outputFolder` is used.
+#'   Only relevant for plots specified for export in the `exportConfiguration`
+#'   sheet.
+#' @param dataCombinedList A (named) list of `DataCombined` objects as input to
+#'   create plots defined in the `plotGridNames` argument. Missing
+#'   `DataCombined` will be created from the Excel file (default behavior).
+#'   Defaults to `NULL`, in which case all `DataCombined` are created from
+#'   Excel.
 #'
 #' @returns A list of `ggplot` objects
 #'
@@ -552,8 +556,8 @@ createPlotsFromExcel <- function(
       }
       # For fields that require multiple values (e.g., axis limits require the
       # upper and the lower limit value), values are separated by a ','.
-      # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
-      # Split the input string by ',' but do not split within ""
+      # Alternatively, the values can be enclosed in "" in case the title should
+      # contain a ','. Split the input string by ',' but do not split within ""
       value <- unlist(trimws(scan(
         text = as.character(value),
         what = "character",
@@ -561,9 +565,9 @@ createPlotsFromExcel <- function(
         quiet = TRUE
       )))
 
-      # Expected type of the field to cast the value to the
-      # correct type. For fields that do not have a default value (NULL), we have
-      # to assume character until a better solution is found
+      # Expected type of the field to cast the value to the correct type. For
+      # fields that do not have a default value (NULL), we have to assume
+      # character until a better solution is found
       expectedType <- "character"
       # Try to get the expected type of the field from the default value
       defVal <- newConfiguration[[colName]]
@@ -597,8 +601,10 @@ createPlotsFromExcel <- function(
 
 #' Validate and process the 'plotConfiguration' sheet
 #'
-#' @param dfPlotConfigurations Data frame created by reading the ' plotConfiguration' sheet
-#' @param dataCombinedNames Names of the 'DataCombined' that are referenced in the plot configurations
+#' @param dfPlotConfigurations Data frame created by reading the '
+#'   plotConfiguration' sheet
+#' @param dataCombinedNames Names of the 'DataCombined' that are referenced in
+#'   the plot configurations
 #'
 #' @returns Processed `dfPlotConfigurations`
 #' @keywords internal
@@ -659,9 +665,9 @@ createPlotsFromExcel <- function(
   }
 
   # The values can be enclosed in "" in case the title should contain a ','.
-  # Split the input string by ',' but do not split within ""
-  # Have to do it one row at a time, otherwise it returns one separate list entry
-  # for each plot it (and not lists of plot ids)
+  # Split the input string by ',' but do not split within "" Have to do it one
+  # row at a time, otherwise it returns one separate list entry for each plot it
+  # (and not lists of plot ids)
   dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId) {
     unlist(trimws(scan(
       text = as.character(plotId),
@@ -685,7 +691,8 @@ createPlotsFromExcel <- function(
 
 #' Validate and process the 'exportConfiguration' sheet
 #'
-#' @param dfExportConfigurations Data frame created by reading the 'exportConfiguration' sheet
+#' @param dfExportConfigurations Data frame created by reading the
+#'   'exportConfiguration' sheet
 #' @param plotGrids List of multipanel plots created previously
 #'
 #' @returns Processed `dfExportConfigurations`
@@ -756,16 +763,16 @@ createPlotsFromExcel <- function(
 #'
 #' This function applies specific configuration overrides to the default plot
 #' configuration. It first applies any additional parameters provided via `...`,
-#' then updates the default configuration with overrides from the `plotOverrideConfig`
-#' list, but only if the corresponding values have not already been set by the
-#' additional parameters. Finally, it validates the final configuration to ensure
-#' all options are valid.
+#' then updates the default configuration with overrides from the
+#' `plotOverrideConfig` list, but only if the corresponding values have not
+#' already been set by the additional parameters. Finally, it validates the
+#' final configuration to ensure all options are valid.
 #'
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#' or a list of such objects.
+#'   or a list of such objects.
 #' @param plotOverrideConfig A list with new configuration settings to apply.
 #' @param ... Additional parameters to override specific configuration settings
-#' dynamically.
+#'   dynamically.
 #'
 #' @keywords internal
 #' @noRd
@@ -845,13 +852,13 @@ createPlotsFromExcel <- function(
 
 #' Get valid plot configuration options
 #'
-#' Generates a list of valid configuration options for plotting.
-#' Each configuration option specifies constraints, including data type,
-#' allowable values, and value ranges, formatted to facilitate validation with
+#' Generates a list of valid configuration options for plotting. Each
+#' configuration option specifies constraints, including data type, allowable
+#' values, and value ranges, formatted to facilitate validation with
 #' `ospsuite::validateIsOption` function.
 #'
 #' @returns A list of lists, each containing type specifications and constraints
-#'         for a plot configuration parameter.
+#'   for a plot configuration parameter.
 #' @keywords internal
 #' @noRd
 .getPlotConfigurationOptions <- function(names) {
@@ -935,10 +942,11 @@ createPlotsFromExcel <- function(
 #' Read and validate plot configurations from the excel file
 #'
 #' @param projectConfiguration Object of class `ProjectConfiguration`
-#' @param plotGridNames Names of the plot grid specified in the sheet `plotGrids`
+#' @param plotGridNames Names of the plot grid specified in the sheet
+#'   `plotGrids`
 #'
-#' @returns A named list with configurations 'plotGrids', 'dfPlotConfigurations',
-#' and 'exportConfigurations'
+#' @returns A named list with configurations 'plotGrids',
+#'   'dfPlotConfigurations', and 'exportConfigurations'
 #' @noRd
 .readPlotConfigurations <- function(projectConfiguration, plotGridNames) {
   # read sheet "plotGrids" with info for plotGridConfigurations

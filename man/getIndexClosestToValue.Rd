@@ -18,14 +18,14 @@ getIndexClosestToValue(value, array, thresholdAbs = NULL, thresholdRel = NULL)
 between \code{value} and \code{array} is accepted.}
 
 \item{thresholdRel}{A fraction by which the closest value may differ from
-\code{value} to be accepted. \strong{WARNING}: setting a relative threshold will result
-in only exact matches if \code{value} is 0!}
+\code{value} to be accepted. \strong{WARNING}: setting a relative threshold will
+result in only exact matches if \code{value} is 0!}
 }
 \value{
-Index of a value within the array which is closest to \code{value} and the
-difference is within the defined threshold. If multiple entries of \code{array}
-have the same difference which is minimal, a vector of indices is returned.
-If no value is within the defined threshold, \code{NULL} is returned.
+Index of a value within the array which is closest to \code{value} and
+the difference is within the defined threshold. If multiple entries of
+\code{array} have the same difference which is minimal, a vector of indices is
+returned. If no value is within the defined threshold, \code{NULL} is returned.
 }
 \description{
 Find the index of the value in an array that is closest to given

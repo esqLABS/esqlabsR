@@ -12,15 +12,16 @@ writeParameterStructureToXLS(
 )
 }
 \arguments{
-\item{parameterStructure}{A list containing vectors 'paths' with the full paths to the parameters,
-'values' the values of the parameters, and 'units' with the units the values are in.}
+\item{parameterStructure}{A list containing vectors \code{paths} with the full
+paths to the parameters, \code{values} the values of the parameters, and \code{units}
+with the units the values are in.}
 
 \item{paramsXLSpath}{Path to the excel file}
 
 \item{sheet}{(Optional) name of the excel sheet}
 
-\item{append}{If TRUE, the existing excel file/sheet will be appended with the new
-parameter structure. If FALSE (default), the existing file will be
+\item{append}{If TRUE, the existing excel file/sheet will be appended with
+the new parameter structure. If FALSE (default), the existing file will be
 overwritten.}
 }
 \description{
@@ -28,7 +29,11 @@ Write parameter structure to excel that can be loaded in MoBi
 }
 \examples{
 \dontrun{
-params <- list(paths = c("Container1|Path1", "Container|Second|Third|Path2"), values = c(1, 2), units = c("", "µmol"))
+params <- list(
+  paths = c("Container1|Path1", "Container|Second|Third|Path2"),
+  values = c(1, 2),
+  units = c("", "µmol")
+)
 
 writeParameterStructureToXLS(params, "test.xlsx")
 }

@@ -2,7 +2,8 @@
 % Please edit documentation in R/utilities-parameters.R
 \name{setParameterValuesByPathWithCondition}
 \alias{setParameterValuesByPathWithCondition}
-\title{Set the values of parameters in the simulation by path, if the \code{condition} is true.}
+\title{Set the values of parameters in the simulation by path, if the \code{condition} is
+true.}
 \usage{
 setParameterValuesByPathWithCondition(
   parameterPaths,
@@ -17,20 +18,23 @@ setParameterValuesByPathWithCondition(
 \arguments{
 \item{parameterPaths}{A single or a list of parameter path}
 
-\item{values}{A numeric value that should be assigned to the parameters or a vector
-of numeric values, if the value of more than one parameter should be changed. Must have the same
-length as 'parameterPaths'}
+\item{values}{A numeric value that should be assigned to the parameters or a
+vector of numeric values, if the value of more than one parameter should be
+changed. Must have the same length as \code{parameterPaths}}
 
-\item{simulation}{Simulation used to retrieve parameter instances from given paths.}
+\item{simulation}{Simulation used to retrieve parameter instances from given
+paths.}
 
-\item{condition}{A function that receives a parameter path as an argument
-and returns \code{TRUE} of \code{FALSE}}
+\item{condition}{A function that receives a parameter path as an argument and
+returns \code{TRUE} of \code{FALSE}}
 
-\item{units}{A string or a list of strings defining the units of the \code{values}. If \code{NULL} (default), values
-are assumed to be in base units. If not \code{NULL}, must have the same length as 'parameterPaths'.}
+\item{units}{A string or a list of strings defining the units of the
+\code{values}. If \code{NULL} (default), values are assumed to be in base units. If
+not \code{NULL}, must have the same length as \code{parameterPaths}.}
 }
 \description{
-Set the values of parameters in the simulation by path, if the \code{condition} is true.
+Set the values of parameters in the simulation by path, if the \code{condition} is
+true.
 }
 \examples{
 simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")

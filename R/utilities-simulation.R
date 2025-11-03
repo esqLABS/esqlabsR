@@ -95,8 +95,8 @@ initializeSimulation <- function(
 
 #' Compare two simulations
 #'
-#' @details
-#' The function compares two simulations and returns a list of entities that differ:
+#' @details The function compares two simulations and returns a list of entities
+#' that differ:
 #' - `Parameters`: a named list with a list of all `Parameter` entities that are:
 #' - in simulation1 but not in simulation 2 (`In1NotIn2`)
 #' - in simulation 2 but not in simulation 1 (`I21NotIn1`)
@@ -107,16 +107,16 @@ initializeSimulation <- function(
 #'
 #' @param simulation1 First `Simulation` to compare
 #' @param simulation2 Second `Simulation` to compare
-#' @param compareFormulasByValue If `FALSE` (default), parameters are considered not equal
-#' if the have the same value but different formulas (e.g., a constant vs. explicit formula).
-#' If `TRUE`, only values are compared.
+#' @param compareFormulasByValue If `FALSE` (default), parameters are considered
+#'   not equal if the have the same value but different formulas (e.g., a
+#'   constant vs. explicit formula). If `TRUE`, only values are compared.
 #'
 #' @returns Named list with following levels:
 #' - `Parameters` with named lists `In1NotIn2`, `In2NotIn1`, and `Different`,
-#'   holding the `Parameter` objects that are present in the first but not in the second
-#'   simulation, present in the second but not in the first simulation, and
-#'   present in both simulations but with different formulas and/or values,
-#'   respectively.
+#'   holding the `Parameter` objects that are present in the first but not in
+#'   the second simulation, present in the second but not in the first
+#'   simulation, and present in both simulations but with different formulas
+#'   and/or values, respectively.
 #' @export
 #'
 #' @examples
@@ -177,16 +177,17 @@ compareSimulations <- function(
 #'
 #' @param simulation A `Simulation` object
 #' @param moleculeNames Names of the molecules which applications parameters
-#' will be returned. If `NUll`(default), applications for all molecules are
-#'  returned.
+#'   will be returned. If `NUll`(default), applications for all molecules are
+#'   returned.
 #'
 #' @details Every application event has a `ProtocolSchemaItem` container that
-#' holds parameters describing the dose, start time, infusion time etc. This
-#' function returns a list of all constant parameters located under the
-#' `ProtocolSchemaItem` container of applications defined for the `moleculeNames`.
+#'   holds parameters describing the dose, start time, infusion time etc. This
+#'   function returns a list of all constant parameters located under the
+#'   `ProtocolSchemaItem` container of applications defined for the
+#'   `moleculeNames`.
 #'
 #' @returns A list of `Parameter` objects defining the applications in the
-#' simulation.
+#'   simulation.
 #' @export
 #'
 #' @examples
