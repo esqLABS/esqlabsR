@@ -473,12 +473,9 @@ messages$warningSensitivityPKParameterNotCalculated <- function(
   parameterPath,
   pkParameter
 ) {
-  paste0(
-    "SensitivityPKParameter could not be calculated for ParameterPath '",
-    parameterPath,
-    "' and PKParameter '",
-    pkParameter,
-    "'. ",
+  cliFormat(
+    "SensitivityPKParameter could not be calculated for",
+    "ParameterPath {.envvar {parameterPath}} and PKParameter {.envvar {pkParameter}}.",
     "Possible reason: baseline simulation failure (ParameterFactor = 1.0)."
   )
 }
