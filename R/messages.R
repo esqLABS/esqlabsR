@@ -228,7 +228,7 @@ messages$noParameterFactor <- function(data, parameterFactor) {
   cliFormat(
     "'parameterFactor' values of {parameterFactor} and {1 / parameterFactor} are not included in the sensitivity analysis results. Current values: {paste(sort(unique(data$ParameterFactor)), collapse = ', ')}. Please rerun the sensitivity analysis with the required values."
   )
-} 
+}
 
 messages$errorOptionOutOfBounds <- function(parameterFactor) {
   range <- .getPlotConfigurationOptions(
@@ -470,7 +470,12 @@ messages$promptDeleteOutputDir <- function(outputDir) {
 }
 
 # Excel field validation error messages ####
-messages$excelFieldFormatError <- function(fieldName, value, plotID, expectedFormat) {
+messages$excelFieldFormatError <- function(
+  fieldName,
+  value,
+  plotID,
+  expectedFormat
+) {
   plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
   cliFormat(
     "Excel validation error{plotInfo}: Invalid format for {.field {fieldName}}.
@@ -480,7 +485,13 @@ messages$excelFieldFormatError <- function(fieldName, value, plotID, expectedFor
   )
 }
 
-messages$excelFieldLengthError <- function(fieldName, value, plotID, expected, actual) {
+messages$excelFieldLengthError <- function(
+  fieldName,
+  value,
+  plotID,
+  expected,
+  actual
+) {
   plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
   valuePlural <- if (actual != 1) "s" else ""
   expectedPlural <- if (expected != 1) "s" else ""
@@ -492,12 +503,20 @@ messages$excelFieldLengthError <- function(fieldName, value, plotID, expected, a
   )
 }
 
-messages$excelFieldTypeError <- function(fieldName, value, plotID, expectedType) {
+messages$excelFieldTypeError <- function(
+  fieldName,
+  value,
+  plotID,
+  expectedType
+) {
   plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
   cliFormat(
     "Excel validation error{plotInfo}: Invalid {.field {fieldName}} value.
     Provided: {.val {value}}
     Expected: {expectedType} values"
+  )
+}
+
 messages$warningSensitivityPKParameterNotCalculated <- function(
   parameterPath,
   pkParameter
