@@ -2,7 +2,8 @@
 % Please edit documentation in R/utilities-individual.R
 \name{writeIndividualToXLS}
 \alias{writeIndividualToXLS}
-\title{Create a parameter set describing an individual and write it to the Excel file}
+\title{Create a parameter set describing an individual and write it to the Excel
+file}
 \usage{
 writeIndividualToXLS(individualCharacteristics, outputXLSPath)
 }
@@ -11,13 +12,15 @@ writeIndividualToXLS(individualCharacteristics, outputXLSPath)
 describing the individual. See \code{createIndividualCharacterstics} for more
 information.}
 
-\item{outputXLSPath}{Path to the Excel file the parameter set will be written to}
+\item{outputXLSPath}{Path to the Excel file the parameter set will be written
+to}
 }
 \value{
 Path to the created Excel file
 }
 \description{
-Create a parameter set describing an individual and write it to the Excel file
+Create a parameter set describing an individual and write it to the Excel
+file
 }
 \examples{
 \dontrun{

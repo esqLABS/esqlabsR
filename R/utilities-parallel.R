@@ -5,7 +5,8 @@
 #'   function. The function will be called `n` times where `n` is the number of
 #'   entries in `firstArguments`
 #' @param exports Names of the objects in the calling environment that the
-#'   function relies on that are not passed as arguments. May be `NULL` (default).
+#'   function relies on that are not passed as arguments. May be `NULL`
+#'   (default).
 #' @param ... Further arguments of the function.
 #' @param nrOfCores Optional: the maximal number of parallel threads. By default
 #'   the value defined in `ospsuite::getOSPSuiteSetting("numberOfCores")` is
@@ -15,8 +16,8 @@
 #'   index in `outputNames` as as the argument value in `firstArguments`. If
 #'   specified, `outputNames` must have the same length as `firstArguments`
 #'
-#' @returns A list containing the outputs of the function `fun` iterated over the
-#'   values in `firstArguments`.
+#' @returns A list containing the outputs of the function `fun` iterated over
+#'   the values in `firstArguments`.
 #'
 #' @import parallel
 #' @seealso{[parLapply()]}

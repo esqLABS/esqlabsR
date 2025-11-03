@@ -12,8 +12,8 @@
 \item{field}{Name of the field}
 }
 \value{
-\code{TRUE} if the \code{object} has an active binding \code{field},
-`FALSE?  otherwise.
+\code{TRUE} if the \code{object} has an active binding \code{field}, \code{FALSE}
+otherwise.
 }
 \description{
 Check if the \code{object} contains active binding with the name \code{field}

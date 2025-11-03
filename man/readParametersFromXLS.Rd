@@ -2,9 +2,8 @@
 % Please edit documentation in R/utilities-parameters.R
 \name{readParametersFromXLS}
 \alias{readParametersFromXLS}
-\title{Read parameter values from a structured Excel file.
-Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
-'Value', and 'Units'}
+\title{Read parameter values from a structured Excel file. Each excel sheet must
+consist of columns 'Container Path', 'Parameter Name', 'Value', and 'Units'}
 \usage{
 readParametersFromXLS(paramsXLSpath, sheets = NULL)
 }
@@ -16,12 +15,11 @@ parameters. Multiple sheets can be processed. If no sheets are provided,
 the first one in the Excel file is used.}
 }
 \value{
-A list containing vectors 'paths' with the full paths to the
-parameters, 'values' the values of the parameters, and 'units' with the
+A list containing vectors \code{paths} with the full paths to the
+parameters, \code{values} the values of the parameters, and \code{units} with the
 units the values are in.
 }
 \description{
-Read parameter values from a structured Excel file.
-Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
-'Value', and 'Units'
+Read parameter values from a structured Excel file. Each excel sheet must
+consist of columns 'Container Path', 'Parameter Name', 'Value', and 'Units'
 }

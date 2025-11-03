@@ -11,16 +11,22 @@ snapshotProjectConfiguration(
 )
 }
 \arguments{
-\item{projectConfig}{A ProjectConfiguration object or path to ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".}
+\item{projectConfig}{A ProjectConfiguration object or path to
+ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".}
 
-\item{outputDir}{Directory where the JSON file will be saved. If NULL (default), the JSON file will be created in the same directory as the source Excel file.}
+\item{outputDir}{Directory where the JSON file will be saved. If NULL
+(default), the JSON file will be created in the same directory as the
+source Excel file.}
+
+\item{...}{Additional arguments.}
 }
 \value{
 Invisibly returns the exported configuration data structure
 }
 \description{
-Exports all Excel configuration files in the Configurations folder of an esqlabsR project
-to a single JSON file. This allows for easier version control and programmatic manipulation.
+Exports all Excel configuration files in the Configurations
+folder of an esqlabsR project to a single JSON file. This allows for easier
+version control and programmatic manipulation.
 }
 \seealso{
 Other project configuration snapshots: 

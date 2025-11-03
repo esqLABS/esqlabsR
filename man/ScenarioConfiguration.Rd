@@ -18,21 +18,24 @@ An object storing configuration of a specific scenario
 \item{\code{modelFile}}{Name of the simulation to be loaded (must include the
 extension ".pkml"). Must be located in the "modelFolder".}
 
-\item{\code{applicationProtocol}}{Name of the application protocol to be applied. Defined
-in the excel file "Applications.xlsx"}
+\item{\code{applicationProtocol}}{Name of the application protocol to be
+applied. Defined in the excel file "Applications.xlsx"}
 
-\item{\code{individualId}}{Id of the individual as specified in "Individuals.xlsx".
-If \code{NULL} (default), the individual as defined in the simulation file will be simulated.}
+\item{\code{individualId}}{Id of the individual as specified in
+"Individuals.xlsx". If \code{NULL} (default), the individual as defined in
+the simulation file will be simulated.}
 
-\item{\code{populationId}}{Id of the population as specified in "Populations.xlsx",
-sheet "Demographics". If \code{ScenarioConfguration$simulationType} is \code{population},
-a population will be created a the scenario will be simulated as a population
+\item{\code{populationId}}{Id of the population as specified in
+"Populations.xlsx", sheet "Demographics". If
+\code{ScenarioConfguration$simulationType} is \code{population}, a population
+will be created a the scenario will be simulated as a population
 simulation.}
 
-\item{\code{outputPaths}}{a character vector or named vector of output paths for which the results will be
-calculated. If \code{NULL} (default), outputs as defined in the simulation
-are used. Can be a named vector where names serve as aliases for the paths,
-e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").}
+\item{\code{outputPaths}}{a character vector or named vector of output paths for
+which the results will be calculated. If \code{NULL} (default), outputs as
+defined in the simulation are used. Can be a named vector where names
+serve as aliases for the paths, e.g., c("plasma" =
+"Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").}
 }
 \if{html}{\out{</div>}}
 }
@@ -42,30 +45,32 @@ e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in contai
 \item{\code{simulateSteadyState}}{Boolean representing whether the simulation
 will be brought to a steady-state first}
 
-\item{\code{readPopulationFromCSV}}{Boolean representing whether the a new population
-will be created (value is \code{FALSE}) or an existing population will be imported
-from a csv.}
+\item{\code{readPopulationFromCSV}}{Boolean representing whether the a new
+population will be created (value is \code{FALSE}) or an existing population
+will be imported from a csv.}
 
-\item{\code{simulationTime}}{Specified simulation time intervals. If \code{NULL} (default),
-simulation time as defined in the \code{Simulation} object will be used.
-Accepted are multiple time intervals separated by a ';'. Each time interval
-is a triplet of values <StartTime, EndTime, Resolution>, where \code{Resolution} is the number of
-simulated points per time unit defined in the column \code{TimeUnit}.}
+\item{\code{simulationTime}}{Specified simulation time intervals. If \code{NULL}
+(default), simulation time as defined in the \code{Simulation} object will
+be used. Accepted are multiple time intervals separated by a ';'. Each
+time interval is a triplet of values <StartTime, EndTime, Resolution>,
+where \code{Resolution} is the number of simulated points per time unit
+defined in the column \code{TimeUnit}.}
 
 \item{\code{simulationTimeUnit}}{Unit of the simulation time intervals.}
 
-\item{\code{steadyStateTime}}{Time in minutes to simulate if simulating steady-state. May be \code{NULL}.}
+\item{\code{steadyStateTime}}{Time in minutes to simulate if simulating
+steady-state. May be \code{NULL}.}
 
-\item{\code{paramSheets}}{A named list. Names of the sheets from the parameters-excel file
-that will be applied to the simulation}
+\item{\code{paramSheets}}{A named list. Names of the sheets from the
+parameters-excel file that will be applied to the simulation}
 
 \item{\code{simulationType}}{Type of the simulation - "Individual" or
 "Population". If "Population", population characteristics are created
 based on information stored in \code{populationsFile}. Default is
 "Individual"}
 
-\item{\code{projectConfiguration}}{\code{ProjectConfiguration} that will be used in scenarios.
-Read-only}
+\item{\code{projectConfiguration}}{\code{ProjectConfiguration} that will be used in
+scenarios. Read-only}
 }
 \if{html}{\out{</div>}}
 }
@@ -100,8 +105,8 @@ Initialize a new instance of the class
 \if{html}{\out{<a id="method-ScenarioConfiguration-addParamSheets"></a>}}
 \if{latex}{\out{\hypertarget{method-ScenarioConfiguration-addParamSheets}{}}}
 \subsection{Method \code{addParamSheets()}}{
-Add the names of sheets in the parameters excel-file
-that will be applied to the simulation
+Add the names of sheets in the parameters excel-file that
+will be applied to the simulation
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ScenarioConfiguration$addParamSheets(sheetNames)}\if{html}{\out{</div>}}
 }
@@ -118,8 +123,8 @@ that will be applied to the simulation
 \if{html}{\out{<a id="method-ScenarioConfiguration-removeParamSheets"></a>}}
 \if{latex}{\out{\hypertarget{method-ScenarioConfiguration-removeParamSheets}{}}}
 \subsection{Method \code{removeParamSheets()}}{
-Remove the names of sheets in the parameters excel-file
-from the list of sheets \code{paramSheets}
+Remove the names of sheets in the parameters excel-file from
+the list of sheets \code{paramSheets}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ScenarioConfiguration$removeParamSheets(sheetNames = NULL)}\if{html}{\out{</div>}}
 }
@@ -127,8 +132,8 @@ from the list of sheets \code{paramSheets}
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{sheetNames}}{A name or a list of names of the excel sheet.
-If \code{NULL} (default), all sheets are removed}
+\item{\code{sheetNames}}{A name or a list of names of the excel sheet. If \code{NULL}
+(default), all sheets are removed.}
 }
 \if{html}{\out{</div>}}
 }
@@ -145,9 +150,11 @@ Print the object to the console
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{className}}{Whether to print the name of the class at the beginning. default to TRUE.}
+\item{\code{className}}{Whether to print the name of the class at the beginning.
+default to TRUE.}
 
-\item{\code{projectConfiguration}}{Whether to also print project configuration. default to TRUE.}
+\item{\code{projectConfiguration}}{Whether to also print project configuration.
+default to TRUE.}
 }
 \if{html}{\out{</div>}}
 }
