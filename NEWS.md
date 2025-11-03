@@ -13,6 +13,7 @@
 - Improved `.validateCharVector()` to enforce atomic character vectors (\#881).
 - Parenthesis in parameter sheet names are ignored, allowing separating sheet names with spaces (\#883).
 - Used `cliFormat` function for consistent and maintainable message formatting (\#900).
+- Fixed an issue where PK parameter calculations failed when no baseline data (`ParameterFactor == 1`) was available due to simulation error. These cases are now skipped with a warning.
 
 # esqlabsR 5.5.0
 
