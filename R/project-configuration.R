@@ -50,8 +50,8 @@ ProjectConfiguration <- R6::R6Class(
         self$projectConfigurationDirPath
       )
     },
-    #' @field configurationsFolder Path to the folder containing excel files with model
-    #' parameterization;
+    #' @field configurationsFolder Path to the folder containing excel files
+    #'   with model parameterization.
     configurationsFolder = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$configurationsFolder$value <-
@@ -64,8 +64,7 @@ ProjectConfiguration <- R6::R6Class(
       )
     },
     #' @field modelParamsFile Name of the excel file with global model
-    #' parameterization.
-    #' Must be located in the "configurationsFolder".
+    #'   parameterization. Must be located in the "configurationsFolder".
     modelParamsFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$modelParamsFile$value <-
@@ -77,9 +76,9 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field individualsFile Name of the excel file with
-    #' individual-specific model parameterization.
-    #' Must be located in the "configurationsFolder"
+    #' @field individualsFile Name of the excel file with individual-specific
+    #'   model parameterization.
+    #' Must be located in the "configurationsFolder".
     individualsFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$individualsFile$value <-
@@ -92,7 +91,7 @@ ProjectConfiguration <- R6::R6Class(
       )
     },
     #' @field populationsFile Name of the excel file with population
-    #' information.
+    #'   information.
     #' Must be located in the "configurationsFolder".
     populationsFile = function(value) {
       if (!missing(value)) {
@@ -105,7 +104,8 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field populationsFolder Name of the folder containing population defined through csv files
+    #' @field populationsFolder Name of the folder containing population defined
+    #'   through csv files.
     #' Must be located in the "configurationsFolder".
     populationsFolder = function(value) {
       if (!missing(value)) {
@@ -118,8 +118,7 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field scenariosFile Name of the excel file with scenario
-    #' definitions.
+    #' @field scenariosFile Name of the excel file with scenario definitions.
     #' Must be located in the "configurationsFolder".
     scenariosFile = function(value) {
       if (!missing(value)) {
@@ -133,8 +132,8 @@ ProjectConfiguration <- R6::R6Class(
       )
     },
     #' @field applicationsFile Name of the excel file scenario-specific
-    #'  parameters such as application protocol parameters.
-    #'  Must be located in the "configurationsFolder".
+    #'   parameters such as application protocol parameters.
+    #' Must be located in the "configurationsFolder".
     applicationsFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$applicationsFile$value <-
@@ -160,7 +159,7 @@ ProjectConfiguration <- R6::R6Class(
       )
     },
     #' @field dataFolder Path to the folder where experimental data files are
-    #' located.
+    #'   located.
     dataFolder = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$dataFolder$value <-
@@ -186,7 +185,7 @@ ProjectConfiguration <- R6::R6Class(
       )
     },
     #' @field dataImporterConfigurationFile Name of data importer configuration
-    #' file in xml format used to load the data.
+    #'   file in xml format used to load the data.
     #' Must be located in the "dataFolder"
     dataImporterConfigurationFile = function(value) {
       if (!missing(value)) {
@@ -199,8 +198,8 @@ ProjectConfiguration <- R6::R6Class(
         self$dataFolder
       )
     },
-    #' @field outputFolder Path to the folder where the results should be
-    #' saved to; relative to the "Code" folder
+    #' @field outputFolder Path to the folder where the results should be saved
+    #'   relative to the "Code" folder
     outputFolder = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$outputFolder$value <-
@@ -324,7 +323,8 @@ ProjectConfiguration <- R6::R6Class(
       }
 
       if (is.null(parent) || is.na(parent) || fs::is_absolute_path(path)) {
-        # When provided path is absolute or doesn't have parent directory, don't append parent
+        # When provided path is absolute or doesn't have parent directory, don't
+        # append parent
         abs_path <- fs::path_abs(path)
       } else {
         # When provided path is relative, append parent
@@ -368,7 +368,7 @@ ProjectConfiguration <- R6::R6Class(
     #' Initialize
     #'
     #' @param projectConfigurationFilePath A string representing the path to the
-    #' project configuration file.
+    #'   project configuration file.
     initialize = function(projectConfigurationFilePath = character()) {
       # Initialize as not modified
       private$.modified <- FALSE
@@ -381,7 +381,8 @@ ProjectConfiguration <- R6::R6Class(
     },
     #' Print
     #' @description print prints a summary of the Project Configuration.
-    #' @param className Whether to print the name of the class at the beginning. default to TRUE.
+    #' @param className Whether to print the name of the class at the beginning.
+    #'   default to TRUE.
     print = function(className = TRUE) {
       if (className) {
         ospsuite.utils::ospPrintClass(self)
@@ -428,8 +429,10 @@ ProjectConfiguration <- R6::R6Class(
       }
       invisible(self)
     },
-    #' @description Export ProjectConfiguration object to ProjectConfiguration.xlsx
-    #' @param path a string representing the path or file name where to save the file. Can be absolute or relative (to working directory).
+    #' @description Export ProjectConfiguration object to
+    #'   ProjectConfiguration.xlsx
+    #' @param path a string representing the path or file name where to save the
+    #'   file. Can be absolute or relative (to working directory).
     #'
     #' @export
     save = function(path) {

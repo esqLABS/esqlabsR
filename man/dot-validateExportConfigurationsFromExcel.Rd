@@ -7,7 +7,8 @@
 .validateExportConfigurationsFromExcel(dfExportConfigurations, plotGrids)
 }
 \arguments{
-\item{dfExportConfigurations}{Data frame created by reading the 'exportConfiguration' sheet}
+\item{dfExportConfigurations}{Data frame created by reading the
+'exportConfiguration' sheet}
 
 \item{plotGrids}{List of multipanel plots created previously}
 }

@@ -7,15 +7,17 @@
 isProjectInitialized(destination = ".")
 }
 \arguments{
-\item{destination}{A string defining the path to check for an existing project.
-Defaults to current working directory.}
+\item{destination}{A string defining the path to check for an existing
+project. Defaults to current working directory.}
 }
 \value{
-TRUE if an esqlabsR project exists in the directory, FALSE otherwise.
+TRUE if an esqlabsR project exists in the directory, FALSE
+otherwise.
 }
 \description{
-Checks if a directory already contains an esqlabsR project by looking for
-the presence of ProjectConfiguration.xlsx file or Configurations folder.
+Checks if a directory already contains an esqlabsR project by
+looking for the presence of ProjectConfiguration.xlsx file or Configurations
+folder.
 }
 \examples{
 \dontrun{

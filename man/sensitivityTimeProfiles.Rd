@@ -20,12 +20,11 @@ sensitivityTimeProfiles(
 \item{sensitivityCalculation}{The \code{SensitivityCalculation} object returned by
 \code{sensitivityCalculation()}.}
 
-\item{outputPaths, parameterPaths}{A single or a vector of the
-output path(s) to be plotted for parameter path(s) which impact is analyzed,
-respectively. If \code{NULL}, all included paths and parameters present in the
-supplied \code{SensitivityCalculation} object will be displayed in the
-visualization.
-A separate plot will be generated for each output path, and a separate curve
+\item{outputPaths, parameterPaths}{A single or a vector of the output path(s)
+to be plotted for parameter path(s) which impact is analyzed, respectively.
+If \code{NULL}, all included paths and parameters present in the supplied
+\code{SensitivityCalculation} object will be displayed in the visualization. A
+separate plot will be generated for each output path, and a separate curve
 will be generated for each parameter variation. A separate panel is created
 for each varied parameter.}
 
@@ -36,17 +35,17 @@ for each varied parameter.}
 scale similarly to \code{xAxisScale}. Default is "log".}
 
 \item{xUnits, yUnits}{Lists of units for the x-axis and y-axis, respectively.
-If a list of length one is provided, it will be applied to all \code{outputPaths}
-if conversion is possible. If a list of multiple units is provided, the units
-list should correspond to the \code{outputPaths}, and units conversion will be
-applied accordingly. If \code{NULL}, default units from the simulation results
-will be used.}
+If a list of length one is provided, it will be applied to all
+\code{outputPaths} if conversion is possible. If a list of multiple units is
+provided, the units list should correspond to the \code{outputPaths}, and units
+conversion will be applied accordingly. If \code{NULL}, default units from the
+simulation results will be used.}
 
 \item{observedData}{Optional. A \code{DataSet} or a list of \code{DataSet} objects
-containing observed data. If provided, observed data will be plotted together
-with the simulated data based on \code{OutputPath} dimension for direct comparison
-within the visualizations. Observed data will only be added to plots with
-matching y-dimensions.}
+containing observed data. If provided, observed data will be plotted
+together with the simulated data based on \code{OutputPath} dimension for direct
+comparison within the visualizations. Observed data will only be added to
+plots with matching y-dimensions.}
 
 \item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
 used to customize plot aesthetics. Plot-specific settings provided directly
@@ -76,9 +75,10 @@ single output path is specified, or a list of \code{patchwork} objects for
 multiple output paths.
 }
 \description{
-Creates time profiles for selected outputs generated in a sensitivity analysis.
-This function plots time profiles for each specified output path,
-illustrating the dynamics of model outputs to parameter variations.
+Creates time profiles for selected outputs generated in a
+sensitivity analysis. This function plots time profiles for each specified
+output path, illustrating the dynamics of model outputs to parameter
+variations.
 }
 \examples{
 \dontrun{

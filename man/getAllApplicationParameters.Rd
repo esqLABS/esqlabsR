@@ -24,7 +24,8 @@ Get parameters of applications in the simulation
 Every application event has a \code{ProtocolSchemaItem} container that
 holds parameters describing the dose, start time, infusion time etc. This
 function returns a list of all constant parameters located under the
-\code{ProtocolSchemaItem} container of applications defined for the \code{moleculeNames}.
+\code{ProtocolSchemaItem} container of applications defined for the
+\code{moleculeNames}.
 }
 \examples{
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
