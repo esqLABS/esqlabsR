@@ -498,5 +498,13 @@ messages$excelFieldTypeError <- function(fieldName, value, plotID, expectedType)
     "Excel validation error{plotInfo}: Invalid {.field {fieldName}} value.
     Provided: {.val {value}}
     Expected: {expectedType} values"
+messages$warningSensitivityPKParameterNotCalculated <- function(
+  parameterPath,
+  pkParameter
+) {
+  cliFormat(
+    "SensitivityPKParameter could not be calculated for",
+    "ParameterPath {.envvar {parameterPath}} and PKParameter {.envvar {pkParameter}}.",
+    "Possible reason: baseline simulation failure (ParameterFactor = 1.0)."
   )
 }

@@ -213,6 +213,28 @@
   # baseline values with a scaling of 1, i.e. no scaling
   baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
 
+  # Handle case where no baseline data (ParameterFactor == 1.0) exists
+  if (nrow(baseDataFrame) == 0) {
+    parameterPath <- unique(data$ParameterPath)[1]
+    pkParameter <- unique(data$PKParameter)[1]
+
+    warning(
+      messages$warningSensitivityPKParameterNotCalculated(
+        parameterPath,
+        pkParameter
+      ),
+      call. = FALSE
+    )
+
+    return(
+      dplyr::mutate(
+        data,
+        PKPercentChange = NA_real_,
+        SensitivityPKParameter = NA_real_
+      )
+    )
+  }
+
   # baseline values for parameters of interest
   ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
   PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
