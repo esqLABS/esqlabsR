@@ -94,3 +94,35 @@ test_that("loadSensitivityCalculation() fails when simulation can't be retrieved
     messages$errorFailedToLoadSimulation(meta$simFilePath, "")
   ))
 })
+
+test_that(".computePercentChange() handles missing baseline simulation data", {
+  successData <- data.frame(
+    ParameterPath = "TestPath",
+    PKParameter = "C_max",
+    ParameterFactor = c(0.5, 1.0, 2.0),
+    PKParameterValue = c(10, 20, 30),
+    ParameterValue = c(5, 10, 20),
+    stringsAsFactors = FALSE
+  )
+
+  failureData <- data.frame(
+    ParameterPath = "TestPath",
+    PKParameter = "C_max",
+    ParameterFactor = c(0.5, 2.0),
+    PKParameterValue = c(10, 30),
+    ParameterValue = c(5, 20),
+    stringsAsFactors = FALSE
+  )
+
+  resultSuccess <- .computePercentChange(successData)
+  expect_warning(
+    resultFailure <- .computePercentChange(failureData),
+    messages$warningSensitivityPKParameterNotCalculated("TestPath", "C_max"),
+    fixed = TRUE
+  )
+
+  expect_equal(colnames(resultSuccess), colnames(resultFailure))
+  expect_true(all(is.na(resultFailure$PKPercentChange)))
+  expect_true(all(is.na(resultFailure$SensitivityPKParameter)))
+  expect_equal(nrow(resultFailure), nrow(failureData))
+})

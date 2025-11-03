@@ -468,3 +468,14 @@ messages$promptDeleteOutputDir <- function(outputDir) {
     "Directory {.file {outputDir}} already exists. Do you want to delete it?"
   )
 }
+
+messages$warningSensitivityPKParameterNotCalculated <- function(
+  parameterPath,
+  pkParameter
+) {
+  cliFormat(
+    "SensitivityPKParameter could not be calculated for",
+    "ParameterPath {.envvar {parameterPath}} and PKParameter {.envvar {pkParameter}}.",
+    "Possible reason: baseline simulation failure (ParameterFactor = 1.0)."
+  )
+}
