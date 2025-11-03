@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9009</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,6 +66,7 @@
 <li>Improved <code>.validateCharVector()</code> to enforce atomic character vectors (<a href="https://github.com/esqLABS/esqlabsR/issues/881" class="external-link">#881</a>).</li>
 <li>Parenthesis in parameter sheet names are ignored, allowing separating sheet names with spaces (<a href="https://github.com/esqLABS/esqlabsR/issues/883" class="external-link">#883</a>).</li>
 <li>Used <code>cliFormat</code> function for consistent and maintainable message formatting (<a href="https://github.com/esqLABS/esqlabsR/issues/900" class="external-link">#900</a>).</li>
+<li>Fixed an issue where PK parameter calculations failed when no baseline data (<code>ParameterFactor == 1</code>) was available due to simulation error. These cases are now skipped with a warning.</li>
 </ul></div>
 </div>
     <div class="section level2">
