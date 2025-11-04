@@ -48,8 +48,7 @@ test_that("sensitivityTornadoPlot fails with incorrect input", {
 test_that("sensitivityTornadoPlot fails with invalid parameterFactor", {
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0),
-    regexp = messages$errorOptionOutOfBounds(parameterFactor = 0),
-    fixed = TRUE
+    "parameterFactor.*out of the allowed range"
   )
 })
 

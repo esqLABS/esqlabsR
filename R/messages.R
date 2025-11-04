@@ -228,7 +228,7 @@ messages$noParameterFactor <- function(data, parameterFactor) {
   cliFormat(
     "'parameterFactor' values of {parameterFactor} and {1 / parameterFactor} are not included in the sensitivity analysis results. Current values: {paste(sort(unique(data$ParameterFactor)), collapse = ', ')}. Please rerun the sensitivity analysis with the required values."
   )
-} 
+}
 
 messages$errorOptionOutOfBounds <- function(parameterFactor) {
   range <- .getPlotConfigurationOptions(
@@ -466,6 +466,54 @@ messages$errorCorruptSensitivityCalculation <- function(path) {
 messages$promptDeleteOutputDir <- function(outputDir) {
   cliFormat(
     "Directory {.file {outputDir}} already exists. Do you want to delete it?"
+  )
+}
+
+# Excel field validation error messages ####
+messages$excelFieldFormatError <- function(
+  fieldName,
+  value,
+  plotID,
+  expectedFormat
+) {
+  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
+  cliFormat(
+    "Excel validation error{plotInfo}: Invalid format for {.field {fieldName}}.
+    Provided: {.val {value}}
+    Expected: Values separated by commas (not spaces)
+    Example: '72, 80' or '72,80' (not '72 80')"
+  )
+}
+
+messages$excelFieldLengthError <- function(
+  fieldName,
+  value,
+  plotID,
+  expected,
+  actual
+) {
+  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
+  valuePlural <- if (actual != 1) "s" else ""
+  expectedPlural <- if (expected != 1) "s" else ""
+  cliFormat(
+    "Excel validation error{plotInfo}: Wrong number of values for {.field {fieldName}}.
+    Provided: {.val {value}} ({actual} value{valuePlural})
+    Expected: {expected} comma-separated value{expectedPlural}
+    Example: '72, 80'"
+  )
+}
+
+messages$excelFieldTypeError <- function(
+  fieldName,
+  value,
+  plotID,
+  expectedType
+) {
+  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
+  cliFormat(
+    "Excel validation error{plotInfo}: Invalid {.field {fieldName}} value.
+    Provided: {.val {value}}
+    Expected: {expectedType} values"
   )
 }
 
