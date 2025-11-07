@@ -41,11 +41,20 @@
 </g>
 <g clip-path='url(#cpNDUuNzR8NzA5LjA0fDkwLjc5fDUzMy45Mw==)'>
 <rect x='45.74' y='90.79' width='663.31' height='443.14' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
-<rect x='45.74' y='90.79' width='663.31' height='443.14' style='stroke-width: 0.00; stroke: none;' />
+</g>
+<defs>
+  <clipPath id='cpNzA5LjA0fDcwOS4wNHw5MC43OXw5MC43OQ=='>
+    <rect x='709.04' y='90.79' width='0.00' height='0.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpNzA5LjA0fDcwOS4wNHw5MC43OXw5MC43OQ==)'>
+<rect x='709.04' y='90.79' width='0.00' height='0.00' style='stroke-width: 0.00; stroke: none;' />
+</g>
+<g clip-path='url(#cpNDUuNzR8NzA5LjA0fDkwLjc5fDUzMy45Mw==)'>
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
 </g>
-<g clip-path='url(#cpNDUuNzR8NzA5LjA0fDkwLjc5fDUzMy45Mw==)'>
+<g clip-path='url(#cpNzA5LjA0fDcwOS4wNHw5MC43OXw5MC43OQ==)'>
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
 </g>

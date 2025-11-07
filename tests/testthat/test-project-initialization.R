@@ -56,11 +56,11 @@ test_that("initProject creates proper project structure", {
     "Configurations",
     "Individuals.xlsx"
   )))
-  # expect_true(file.exists(file.path(
-  #   temp_project$path,
-  #   "Configurations",
-  #   "ApplicationParameters.xlsx"
-  # )))
+  expect_true(file.exists(file.path(
+    temp_project$path,
+    "Configurations",
+    "Applications.xlsx"
+  )))
   expect_true(file.exists(file.path(
     temp_project$path,
     "Configurations",
