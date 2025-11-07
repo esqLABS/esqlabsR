@@ -1,12 +1,16 @@
 #' Export project configuration Excel files to JSON
 #'
-#' @description
-#' Exports all Excel configuration files in the Configurations folder of an esqlabsR project
-#' to a single JSON file. This allows for easier version control and programmatic manipulation.
+#' @description Exports all Excel configuration files in the Configurations
+#' folder of an esqlabsR project to a single JSON file. This allows for easier
+#' version control and programmatic manipulation.
 #'
 #' @family project configuration snapshots
-#' @param projectConfig A ProjectConfiguration object or path to ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".
-#' @param outputDir Directory where the JSON file will be saved. If NULL (default), the JSON file will be created in the same directory as the source Excel file.
+#' @param projectConfig A ProjectConfiguration object or path to
+#'   ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".
+#' @param outputDir Directory where the JSON file will be saved. If NULL
+#'   (default), the JSON file will be created in the same directory as the
+#'   source Excel file.
+#' @param ... Additional arguments. 
 #'
 #' @return Invisibly returns the exported configuration data structure
 #' @export
@@ -153,17 +157,20 @@ snapshotProjectConfiguration <- function(
 
 #' Import project configuration from JSON to Excel files
 #'
-#' @description
-#' Creates Excel configuration files from a JSON configuration file.
-#' This allows for recreating the project configuration from version-controlled JSON.
+#' @description Creates Excel configuration files from a JSON configuration
+#' file. This allows for recreating the project configuration from
+#' version-controlled JSON.
 #'
 #' @family project configuration snapshots
 #'
-#' @param jsonPath Path to the JSON configuration file. Defaults to "ProjectConfiguration.json".
-#' @param outputDir Directory where the Excel files will be created. If NULL (default), the Excel files
-#'   will be created in the same directory as the source JSON file.
+#' @param jsonPath Path to the JSON configuration file. Defaults to
+#'   "ProjectConfiguration.json".
+#' @param outputDir Directory where the Excel files will be created. If NULL
+#'   (default), the Excel files will be created in the same directory as the
+#'   source JSON file.
 #'
-#' @return A ProjectConfiguration object initialized with the regenerated ProjectConfiguration.xlsx
+#' @return A ProjectConfiguration object initialized with the regenerated
+#'   ProjectConfiguration.xlsx
 #' @export
 restoreProjectConfiguration <- function(
   jsonPath = "ProjectConfiguration.json",
@@ -411,22 +418,25 @@ restoreProjectConfiguration <- function(
 
 #' Check if Excel configuration files are in sync with JSON snapshot
 #'
-#' @description
-#' Compares Excel configuration files against their JSON snapshot to determine if they
-#' are synchronized. The JSON snapshot is considered the source of truth.
+#' @description Compares Excel configuration files against their JSON snapshot
+#' to determine if they are synchronized. The JSON snapshot is considered the
+#' source of truth.
 #'
-#' @param projectConfig A ProjectConfiguration object or path to ProjectConfiguration excel file.
-#'   Defaults to "ProjectConfiguration.xlsx".
-#' @param jsonPath Path to the JSON configuration file. If NULL (default), the function
-#'   will look for a JSON file with the same name as the ProjectConfiguration file but with .json extension.
+#' @param projectConfig A ProjectConfiguration object or path to
+#'   ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".
+#' @param jsonPath Path to the JSON configuration file. If NULL (default), the
+#'   function will look for a JSON file with the same name as the
+#'   ProjectConfiguration file but with .json extension.
+#' @param silent Logical indicating whether to suppress informational messages.
+#'   Defaults to FALSE.
 #'
 #' @family project configuration snapshots
-#' @return A list with components:
-#'   \item{in_sync}{Logical indicating whether all files are synchronized}
-#'   \item{details}{A list with detailed comparison results for each file}
-#'   \item{unsaved_changes}{Logical indicating whether the ProjectConfiguration object has unsaved modifications}
+#' @return A list with components: \item{in_sync}{Logical indicating whether all
+#'   files are synchronized} \item{details}{A list with detailed comparison
+#'   results for each file} \item{unsaved_changes}{Logical indicating whether
+#'   the ProjectConfiguration object has unsaved modifications}
 #'
-#'  @import cli
+#' @import cli
 #' @export
 projectConfigurationStatus <- function(
   projectConfig = "ProjectConfiguration.xlsx",

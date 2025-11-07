@@ -2,8 +2,8 @@
 #'
 #' @param folderPath Path to the folder where .R files are located
 #' @param recursive If `TRUE`, the contents of the sub-folders are also sourced,
-#' otherwise only the files located directly in the directory are considered.
-#' Default is `FALSE`.
+#'   otherwise only the files located directly in the directory are considered.
+#'   Default is `FALSE`.
 #' @export
 sourceAll <- function(folderPath, recursive = FALSE) {
   filesPaths <- list.files(folderPath, recursive = recursive)
@@ -43,8 +43,8 @@ pathFromClipboard <- function(path = "clipboard") {
 #' Read XLSX files using `readxl::read_excel` with suppressed warnings
 #'
 #' @param path Full path of an XLS/XLSX file
-#' @param sheet Name or number of the sheet. If `NULL` (default), the first sheet of the
-#'   file is used.
+#' @param sheet Name or number of the sheet. If `NULL` (default), the first
+#'   sheet of the file is used.
 #' @param ... Any other parameters that can be passed to `readxl::read_excel`
 #'
 #' @returns A tibble with the contents of the excel sheet
@@ -61,15 +61,15 @@ readExcel <- function(path, sheet = NULL, ...) {
 #' Write data to excel
 #'
 #' @details Uses `writexl::write_xlsx` to write data to excel by default, or
-#' `openxlsx` for append functionality. If the folder does not exist, creates
-#' folder(s) recursively. If the file exists and append is TRUE, can append
-#' new sheets or append data to existing sheets.
+#'   `openxlsx` for append functionality. If the folder does not exist, creates
+#'   folder(s) recursively. If the file exists and append is TRUE, can append
+#'   new sheets or append data to existing sheets.
 #'
 #' @param data Data frame or named list of data frames that will be sheets in
-#' the xlsx
+#'   the xlsx
 #' @param path Path to the xlsx file
 #' @param append If TRUE and file exists, appends data. If FALSE (default),
-#' overwrites the file.
+#'   overwrites the file.
 #' @inheritParams writexl::write_xlsx
 #' @keywords internal
 #' @noRd

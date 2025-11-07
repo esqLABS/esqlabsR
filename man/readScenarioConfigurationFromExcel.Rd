@@ -7,15 +7,16 @@
 readScenarioConfigurationFromExcel(scenarioNames = NULL, projectConfiguration)
 }
 \arguments{
-\item{scenarioNames}{Character vector. Names of the scenarios that are defined in the Excel file.
-If \code{NULL} (default), all scenarios specified in the Excel file will be
-created.}
+\item{scenarioNames}{Character vector. Names of the scenarios that are
+defined in the Excel file. If \code{NULL} (default), all scenarios specified in
+the Excel file will be created.}
 
-\item{projectConfiguration}{A \code{ProjectConfiguration} object holding base information.}
+\item{projectConfiguration}{A \code{ProjectConfiguration} object holding base
+information.}
 }
 \value{
-A named list of \code{ScenarioConfiguration} objects with the names of the
-list being scenario names.
+A named list of \code{ScenarioConfiguration} objects with the names of
+the list being scenario names.
 }
 \description{
 Read scenario definition(s) from Excel file
@@ -23,15 +24,15 @@ Read scenario definition(s) from Excel file
 \details{
 Reads scenario definition from the Excel file defined in
 \code{ProjectConfiguration} and creates \code{ScenarioConfiguration} objects with new
-information.
-If a scenario that is specified in \code{scenarioNames} is not found in the Excel
-file, an error is thrown.
+information. If a scenario that is specified in \code{scenarioNames} is not
+found in the Excel file, an error is thrown.
 
-The function expects the Excel file to have a "Scenarios" sheet with the following
-columns: \code{Scenario_name}, \code{IndividualId}, \code{PopulationId}, \code{ReadPopulationFromCSV},
-\code{ModelParameterSheets}, \code{ApplicationProtocol}, \code{SimulationTime}, \code{SimulationTimeUnit},
-\code{SteadyState}, \code{SteadyStateTime}, \code{SteadyStateTimeUnit}, \code{ModelFile}, \code{OutputPathsIds}.
-It also expects an "OutputPaths" sheet with \code{OutputPathId} and \code{OutputPath} columns.
+The function expects the Excel file to have a "Scenarios" sheet with the
+following columns: \code{Scenario_name}, \code{IndividualId}, \code{PopulationId},
+\code{ReadPopulationFromCSV}, \code{ModelParameterSheets}, \code{ApplicationProtocol},
+\code{SimulationTime}, \code{SimulationTimeUnit}, \code{SteadyState}, \code{SteadyStateTime},
+\code{SteadyStateTimeUnit}, \code{ModelFile}, \code{OutputPathsIds}. It also expects an
+"OutputPaths" sheet with \code{OutputPathId} and \code{OutputPath} columns.
 }
 \examples{
 \dontrun{
@@ -39,6 +40,9 @@ It also expects an "OutputPaths" sheet with \code{OutputPathId} and \code{Output
 projectConfiguration <- createProjectConfiguration()
 scenarioName <- "MyScenario"
 # Read scenario definition from Excel
-scenarioConfiguration <- readScenarioConfigurationFromExcel(scenarioNames = scenarioName, projectConfiguration)[[scenarioName]]
+scenarioConfiguration <- readScenarioConfigurationFromExcel(
+  scenarioNames = scenarioName,
+  projectConfiguration
+)[[scenarioName]]
 }
 }

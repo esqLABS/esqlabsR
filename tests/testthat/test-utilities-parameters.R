@@ -297,29 +297,29 @@ test_that("exportParametersToXLS appends parameters to existing file", {
     code = {
       xlsPath <- "tmp.xlsx"
       sheet <- "parametersSheet"
-      
+
       # First, export the first parameter
       exportParametersToXLS(
-        parameters = param1, 
-        paramsXLSpath = xlsPath, 
+        parameters = param1,
+        paramsXLSpath = xlsPath,
         sheet = sheet
       )
-      
+
       # Then append the second parameter
       exportParametersToXLS(
-        parameters = param2, 
-        paramsXLSpath = xlsPath, 
+        parameters = param2,
+        paramsXLSpath = xlsPath,
         sheet = sheet,
         append = TRUE
       )
-      
+
       # Load from xls and verify both parameters are there
       params <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet)
-      
+
       expect_equal(length(params$paths), 2)
       expect_true(param1$path %in% params$paths)
       expect_true(param2$path %in% params$paths)
-      
+
       # Check values with tolerance for floating point precision
       param1_idx <- which(params$paths == param1$path)
       param2_idx <- which(params$paths == param2$path)
@@ -335,26 +335,26 @@ test_that("exportParametersToXLS creates new sheet when appending to existing fi
       xlsPath <- "tmp.xlsx"
       sheet1 <- "firstSheet"
       sheet2 <- "secondSheet"
-      
+
       # First, export parameter to first sheet
       exportParametersToXLS(
-        parameters = param1, 
-        paramsXLSpath = xlsPath, 
+        parameters = param1,
+        paramsXLSpath = xlsPath,
         sheet = sheet1
       )
-      
+
       # Then append parameter to a new sheet
       exportParametersToXLS(
-        parameters = param2, 
-        paramsXLSpath = xlsPath, 
+        parameters = param2,
+        paramsXLSpath = xlsPath,
         sheet = sheet2,
         append = TRUE
       )
-      
+
       # Load from both sheets and verify
       params1 <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet1)
       params2 <- readParametersFromXLS(paramsXLSpath = xlsPath, sheets = sheet2)
-      
+
       expect_equal(params1$paths[[1]], param1$path)
       expect_equal(params2$paths[[1]], param2$path)
     }

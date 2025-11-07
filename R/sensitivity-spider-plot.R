@@ -1,48 +1,46 @@
 #' @name sensitivitySpiderPlot
 #' @title Sensitivity Spider Plot for Pharmacokinetic Parameters
 #'
-#' @description
-#' Creates spider plots for sensitivity calculation. A spider plot is a
-#' visualization technique that displays the sensitivity of a model output to
-#' changes in model parameters. Each plot displays the sensitivity of a set of
-#' PK parameters for a single output path to changes in model parameters. The x-axis
-#' represents the value of model parameters (absolute or percent from default value),
-#' and the y-axis represents the sensitivity of the output to changes in the model
-#' parameter.
+#' @description Creates spider plots for sensitivity calculation. A spider plot
+#' is a visualization technique that displays the sensitivity of a model output
+#' to changes in model parameters. Each plot displays the sensitivity of a set
+#' of PK parameters for a single output path to changes in model parameters. The
+#' x-axis represents the value of model parameters (absolute or percent from
+#' default value), and the y-axis represents the sensitivity of the output to
+#' changes in the model parameter.
 #'
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
-#' `sensitivityCalculation()`.
+#'   `sensitivityCalculation()`.
 #' @param outputPaths,parameterPaths,pkParameters A single or a vector of the
-#' output path(s), parameter path(s), and PK parameters to be displayed,
-#' respectively. If `NULL`, all included paths and parameters present in the
-#' supplied `SensitivityCalculation` object will be displayed in the
-#' visualization.
-#' A separate plot will be generated for each output path. Each plot will
-#' contain a spider plot panel for each PK parameter, and the sensitivities
-#' for each parameter will be displayed as lines.
+#'   output path(s), parameter path(s), and PK parameters to be displayed,
+#'   respectively. If `NULL`, all included paths and parameters present in the
+#'   supplied `SensitivityCalculation` object will be displayed in the
+#'   visualization. A separate plot will be generated for each output path. Each
+#'   plot will contain a spider plot panel for each PK parameter, and the
+#'   sensitivities for each parameter will be displayed as lines.
 #' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
-#' (linear scale), to set the x-axis scale. Default is "log".
-#' @param yAxisScale Character string, either "log" or "lin", sets the y-axis scale
-#' similarly to `xAxisScale`. Default is "lin".
+#'   (linear scale), to set the x-axis scale. Default is "log".
+#' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
+#'   scale similarly to `xAxisScale`. Default is "lin".
 #' @param xAxisType Character string, either "percent" (percentage change) or
-#' "absolute" (absolute values) for PK parameter values, for x-axis data normalization.
-#' Default is "percent".
+#'   "absolute" (absolute values) for PK parameter values, for x-axis data
+#'   normalization. Default is "percent".
 #' @param yAxisType Character string, either "percent" (percentage change) or
-#' "absolute" (absolute values) for PK parameter values, for y-axis data normalization.
-#' Default is "percent".
-#' @param yAxisFacetScales Character string, either "fixed" or "free", determines
-#' the scaling across y-axes of different facets. Default is "fixed".
-#' If "fixed", all facetes within one plot will have the same range, which allows
-#' for easier comparison between different PK parameters. If "free", each facet
-#' will have its own range, which allows for better visualization of the single
-#' PK parameters sensitivity.
+#'   "absolute" (absolute values) for PK parameter values, for y-axis data
+#'   normalization. Default is "percent".
+#' @param yAxisFacetScales Character string, either "fixed" or "free",
+#'   determines the scaling across y-axes of different facets. Default is
+#'   "fixed". If "fixed", all facetes within one plot will have the same range,
+#'   which allows for easier comparison between different PK parameters. If
+#'   "free", each facet will have its own range, which allows for better
+#'   visualization of the single PK parameters sensitivity.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#' used to customize plot aesthetics. Plot-specific settings provided directly
-#' to the function, such as `xAxisScale`, will take precedence over any
-#' modifications in `defaultPlotConfiguration`.
+#'   used to customize plot aesthetics. Plot-specific settings provided directly
+#'   to the function, such as `xAxisScale`, will take precedence over any
+#'   modifications in `defaultPlotConfiguration`.
 #'
-#' Supported parameters include:
+#'   Supported parameters include:
 #' - `legendPosition`: Position of the legend on the plot.
 #' - `legendTitle`: Title displayed for the legend.
 #' - `linesAlpha`: Alpha transparency for line elements.
@@ -62,17 +60,17 @@
 #' - `yLabel`: Label text for the y-axis.
 #' - `yValuesLimits`: Numeric vector specifying the limits for y-values.
 #'
-#' Default values are set to provide a standardized look, but each parameter
-#' can be tailored to fit specific visual needs. Modifying these parameters
-#' will directly affect the aesthetics of the output plots.
+#'   Default values are set to provide a standardized look, but each parameter
+#'   can be tailored to fit specific visual needs. Modifying these parameters
+#'   will directly affect the aesthetics of the output plots.
 #'
 #' @import ggplot2
 #'
 #' @family sensitivity-calculation
 #'
 #' @returns A `patchwork` object containing the combined ggplot objects if a
-#' single output path is specified, or a list of `patchwork` objects for
-#' multiple output paths.
+#'   single output path is specified, or a list of `patchwork` objects for
+#'   multiple output paths.
 #'
 #' @examples
 #' \dontrun{

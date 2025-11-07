@@ -10,15 +10,15 @@ readPopulationCharacteristicsFromXLS(XLSpath, populationName, sheet = NULL)
 \arguments{
 \item{XLSpath}{Path to the excel file}
 
-\item{populationName}{Name of the population, as defined in the "PopulationName"
-column}
+\item{populationName}{Name of the population, as defined in the
+"PopulationName" column}
 
-\item{sheet}{Name or the index of the sheet in the excel file.
-If \code{NULL}, the first sheet in the file is used.}
+\item{sheet}{Name or the index of the sheet in the excel file. If \code{NULL}, the
+first sheet in the file is used.}
 }
 \value{
-A \code{PopulationCharacteristics} object based on the information
-in the excel file.
+A \code{PopulationCharacteristics} object based on the information in the
+excel file.
 }
 \description{
 Read an excel file containing information about population and create a

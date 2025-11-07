@@ -7,12 +7,13 @@
 createProjectConfiguration(path = file.path("ProjectConfiguration.xlsx"))
 }
 \arguments{
-\item{path}{path to the \code{ProjectConfiguration.xlsx} file. default to the \code{ProjectConfiguration.xlsx}
-file located in the working directory.}
+\item{path}{path to the \code{ProjectConfiguration.xlsx} file. default to the
+\code{ProjectConfiguration.xlsx} file located in the working directory.}
 }
 \value{
 Object of type \code{ProjectConfiguration}
 }
 \description{
-Create a \code{ProjectConfiguration} based on the \code{"ProjectConfiguration.xlsx"}
+Create a \code{ProjectConfiguration} based on the
+\code{"ProjectConfiguration.xlsx"}
 }

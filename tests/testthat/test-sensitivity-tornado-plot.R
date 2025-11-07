@@ -48,7 +48,7 @@ test_that("sensitivityTornadoPlot fails with incorrect input", {
 test_that("sensitivityTornadoPlot fails with invalid parameterFactor", {
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0),
-    "parameterFactor error"
+    "parameterFactor.*out of the allowed range"
   )
 })
 
@@ -64,7 +64,8 @@ test_that("sensitivityTornadoPlot fails with invalid xAxisZoomRange", {
 test_that("sensitivityTornadoPlot errors if parameterFactor is missing in sensitivity calculation results", {
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0.2),
-    "values of 0.2 and 5 are not included in the sensitivity analysis results"
+    messages$noParameterFactor(results$pkData, parameterFactor = 0.2),
+    fixed = TRUE
   )
 })
 

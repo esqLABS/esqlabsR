@@ -15,7 +15,8 @@ extendPopulationByUserDefinedParams(
 \arguments{
 \item{population}{Object of type \code{Population}}
 
-\item{parameterPaths}{Vector of parameter path for which the variability is to be added.}
+\item{parameterPaths}{Vector of parameter path for which the variability is
+to be added.}
 
 \item{meanValues}{Vector of mean values of the parameters. Must have the same
 length as \code{parameterPaths}. The type of mean (arithmetic, geometric)
@@ -27,8 +28,9 @@ have the same length as \code{parameterPaths}. The type of standard deviation
 depends on the selected \code{distribution}.}
 
 \item{distributions}{Type of distribution from which the random values will
-be sampled. Must have the same length as \code{parameterPaths}.
-A list of supported distributions is defined in \code{Distributions}. Default is \code{"Normal"}.}
+be sampled. Must have the same length as \code{parameterPaths}. A list of
+supported distributions is defined in \code{Distributions}. Default is
+\code{"Normal"}.}
 }
 \description{
 Add user defined variability on parameters to a population.

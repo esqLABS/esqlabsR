@@ -1,43 +1,42 @@
 #' @name sensitivityTimeProfiles
 #' @title Time Profile plots for Sensitivity Analysis
 #'
-#' @description
-#' Creates time profiles for selected outputs generated in a sensitivity analysis.
-#' This function plots time profiles for each specified output path,
-#' illustrating the dynamics of model outputs to parameter variations.
+#' @description Creates time profiles for selected outputs generated in a
+#' sensitivity analysis. This function plots time profiles for each specified
+#' output path, illustrating the dynamics of model outputs to parameter
+#' variations.
 #'
 #' @param sensitivityCalculation The `SensitivityCalculation` object returned by
-#' `sensitivityCalculation()`.
-#' @param outputPaths,parameterPaths A single or a vector of the
-#' output path(s) to be plotted for parameter path(s) which impact is analyzed,
-#' respectively. If `NULL`, all included paths and parameters present in the
-#' supplied `SensitivityCalculation` object will be displayed in the
-#' visualization.
-#' A separate plot will be generated for each output path, and a separate curve
-#' will be generated for each parameter variation. A separate panel is created
-#' for each varied parameter.
+#'   `sensitivityCalculation()`.
+#' @param outputPaths,parameterPaths A single or a vector of the output path(s)
+#'   to be plotted for parameter path(s) which impact is analyzed, respectively.
+#'   If `NULL`, all included paths and parameters present in the supplied
+#'   `SensitivityCalculation` object will be displayed in the visualization. A
+#'   separate plot will be generated for each output path, and a separate curve
+#'   will be generated for each parameter variation. A separate panel is created
+#'   for each varied parameter.
 #' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
-#' (linear scale), to set the x-axis scale. Default is "lin".
+#'   (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
-#' scale similarly to `xAxisScale`. Default is "log".
+#'   scale similarly to `xAxisScale`. Default is "log".
 #' @param xUnits,yUnits Lists of units for the x-axis and y-axis, respectively.
-#' If a list of length one is provided, it will be applied to all `outputPaths`
-#' if conversion is possible. If a list of multiple units is provided, the units
-#' list should correspond to the `outputPaths`, and units conversion will be
-#' applied accordingly. If `NULL`, default units from the simulation results
-#' will be used.
+#'   If a list of length one is provided, it will be applied to all
+#'   `outputPaths` if conversion is possible. If a list of multiple units is
+#'   provided, the units list should correspond to the `outputPaths`, and units
+#'   conversion will be applied accordingly. If `NULL`, default units from the
+#'   simulation results will be used.
 #' @param observedData Optional. A `DataSet` or a list of `DataSet` objects
-#' containing observed data. If provided, observed data will be plotted together
-#' with the simulated data based on `OutputPath` dimension for direct comparison
-#' within the visualizations. Observed data will only be added to plots with
-#' matching y-dimensions.
+#'   containing observed data. If provided, observed data will be plotted
+#'   together with the simulated data based on `OutputPath` dimension for direct
+#'   comparison within the visualizations. Observed data will only be added to
+#'   plots with matching y-dimensions.
 #' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#' used to customize plot aesthetics. Plot-specific settings provided directly
-#' to the function, such as `xAxisScale`, will take precedence over any
-#' modifications in `defaultPlotConfiguration`. If not provided, default
-#' settings are applied.
+#'   used to customize plot aesthetics. Plot-specific settings provided directly
+#'   to the function, such as `xAxisScale`, will take precedence over any
+#'   modifications in `defaultPlotConfiguration`. If not provided, default
+#'   settings are applied.
 #'
-#' Supported parameters for `defaultPlotConfiguration` include:
+#'   Supported parameters for `defaultPlotConfiguration` include:
 #' - `legendPosition`: Specifies the position of the plot legend.
 #' - `legendTitle`: Sets the title displayed for the legend.
 #' - `linesAlpha`: Alpha transparency for the line elements.
@@ -56,8 +55,8 @@
 #' @family sensitivity-calculation
 #'
 #' @returns A `patchwork` object containing the combined ggplot objects if a
-#' single output path is specified, or a list of `patchwork` objects for
-#' multiple output paths.
+#'   single output path is specified, or a list of `patchwork` objects for
+#'   multiple output paths.
 #'
 #' @examples
 #' \dontrun{
@@ -427,17 +426,18 @@ sensitivityTimeProfiles <- function(
 #'
 #' This function performs aggregation from a list of `SimulationResults` objects
 #' as returned by `sensitivityCalculation()` and a list of `DataSet` objects.
-#' `DataSets` are added to each quantity path (`outputPaths`) when the `yDimension`
-#' from `DataSet` can be converted to the x- and y-Dimensions of `SimulationResults`.
+#' `DataSets` are added to each quantity path (`outputPaths`) when the
+#' `yDimension` from `DataSet` can be converted to the x- and y-Dimensions of
+#' `SimulationResults`.
 #'
 #' @param simulationResults A list of `SimulationResults` objects returned by
-#' `sensitivityCalculation()`.
+#'   `sensitivityCalculation()`.
 #' @param dataSets A list of `DataSet` objects containing observed data.
 #' @param parameterPaths A character vector of parameter paths.
 #' @param outputPaths A character vector of output paths.
 #'
 #' @returns A combined `data.frame` containing both simulation results and
-#' observed data.
+#'   observed data.
 #'
 #' @keywords internal
 #' @noRd

@@ -1,9 +1,10 @@
 #' Create a default `ProjectConfiguration`
 #'
-#' @description  Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
+#' @description  Create a `ProjectConfiguration` based on the
+#'   `"ProjectConfiguration.xlsx"`
 #'
-#' @param path path to the `ProjectConfiguration.xlsx` file. Defaults to the `ProjectConfiguration.xlsx`
-#'   file in the working directory.
+#' @param path path to the `ProjectConfiguration.xlsx` file. Defaults to the
+#'   `ProjectConfiguration.xlsx` file in the working directory.
 #'
 #' @returns Object of type `ProjectConfiguration`
 #' @export
@@ -20,10 +21,11 @@ createDefaultProjectConfiguration <- function(
 
 #' Create a `ProjectConfiguration`
 #'
-#' @description  Create a `ProjectConfiguration` based on the `"ProjectConfiguration.xlsx"`
+#' @description  Create a `ProjectConfiguration` based on the
+#'   `"ProjectConfiguration.xlsx"`
 #'
-#' @param path path to the `ProjectConfiguration.xlsx` file. default to the `ProjectConfiguration.xlsx`
-#'  file located in the working directory.
+#' @param path path to the `ProjectConfiguration.xlsx` file. default to the
+#'   `ProjectConfiguration.xlsx` file located in the working directory.
 #'
 #' @returns Object of type `ProjectConfiguration`
 #' @export
@@ -38,14 +40,15 @@ createProjectConfiguration <- function(
 
 #' Check if a directory contains an esqlabsR project
 #'
-#' @description
-#' Checks if a directory already contains an esqlabsR project by looking for
-#' the presence of ProjectConfiguration.xlsx file or Configurations folder.
+#' @description Checks if a directory already contains an esqlabsR project by
+#' looking for the presence of ProjectConfiguration.xlsx file or Configurations
+#' folder.
 #'
-#' @param destination A string defining the path to check for an existing project.
-#' Defaults to current working directory.
+#' @param destination A string defining the path to check for an existing
+#'   project. Defaults to current working directory.
 #'
-#' @returns TRUE if an esqlabsR project exists in the directory, FALSE otherwise.
+#' @returns TRUE if an esqlabsR project exists in the directory, FALSE
+#'   otherwise.
 #' @export
 #' @examples
 #' \dontrun{
@@ -78,13 +81,14 @@ isProjectInitialized <- function(destination = ".") {
 #'
 #' @description
 #'
-#' Creates the default project folder structure with Excel file templates in
-#' the working directory.
+#' Creates the default project folder structure with Excel file templates in the
+#' working directory.
 #'
-#' @param destination A string defining the path where to initialize the project.
-#' default to current working directory.
-#' @param overwrite If TRUE, overwrites existing project without asking for permission.
-#' If FALSE and a project already exists, asks user for permission to overwrite.
+#' @param destination A string defining the path where to initialize the
+#'   project. default to current working directory.
+#' @param overwrite If TRUE, overwrites existing project without asking for
+#'   permission. If FALSE and a project already exists, asks user for permission
+#'   to overwrite.
 #' @export
 initProject <- function(destination = ".", overwrite = FALSE) {
   destination <- fs::path_abs(destination)
@@ -130,7 +134,8 @@ initProject <- function(destination = ".", overwrite = FALSE) {
 
 #' Get the path to example ProjectConfiguration.xlsx
 #'
-#' @returns A string representing the path to the example ProjectConfiguration.xlsx file
+#' @returns A string representing the path to the example
+#'   ProjectConfiguration.xlsx file
 #' @export
 #' @examples
 #' exampleProjectConfigurationPath()
