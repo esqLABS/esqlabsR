@@ -89,7 +89,7 @@ messages$overwriteDestination <- function(path) {
   cliFormat("Overwriting existing esqlabsR project in {path} ")
 }
 
-messages$inconsistentArgumentLenghts <- function(vectorLengths) {
+messages$inconsistentArgumentLengths <- function(vectorLengths) {
   c(
     cliFormat("Inconsistent vector argument lengths:"),
     "x" = cliFormat(
