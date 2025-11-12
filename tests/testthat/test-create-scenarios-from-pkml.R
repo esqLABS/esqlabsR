@@ -1018,7 +1018,7 @@ test_that("Scenarios can be created without PKML file existing for applications"
       scenarioConfigurations = scenarioConfigurations,
       projectConfiguration = projectConfiguration
     ),
-    "PKML.*file cannot be find"
+    "File not found:*"
   )
 })
 
