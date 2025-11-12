@@ -1602,7 +1602,7 @@ addScenarioConfigurationsToExcel <- function(
       return(vector_lengths[1])
     } else {
       # Inconsistent vector lengths
-      cli::cli_abort(messages$inconsistentArgumentLenghts(vector_lengths))
+      cli::cli_abort(messages$inconsistentArgumentLengths(vector_lengths))
     }
   }
 }
