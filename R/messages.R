@@ -1,5 +1,29 @@
 messages <- ospsuite.utils::messages
 
+# Project config####
+messages$oldProjectConfigurationLayout <- function() {
+  c(
+    "!" = cliFormat(
+      "The project configuration file layout used is from an older version of the package."
+    ),
+    "i" = cliFormat(
+      "This version is still supported and will be loaded but it is recommended to update the project configuration file.
+      To do so, use the {.code $save} method of the project configuration object."
+    )
+  )
+}
+
+messages$invalidConfigurationProperty <- function(
+  property,
+  path
+) {
+  c(
+    "x" = cliFormat(
+      "Property {property} is not a valid configuration property for {path}"
+    )
+  )
+}
+
 # Parameters structure####
 messages$errorWrongXLSStructure <- function(
   filePath,
@@ -57,10 +81,91 @@ messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
 
+messages$pathNotFound <- function(path) {
+  cliFormat("The specified destination folder does not exist. ({path}) ")
+}
+
+messages$overwriteDestination <- function(path) {
+  cliFormat("Overwriting existing esqlabsR project in {path} ")
+}
+
+messages$inconsistentArgumentLenghts <- function(vectorLengths) {
+  c(
+    cliFormat("Inconsistent vector argument lengths:"),
+    "x" = cliFormat(
+      "All vector arguments with length > 1 must have the same length"
+    ),
+    "i" = cliFormat(
+      "Found lengths: {paste(unique(vectorLengths), collapse = ', ')}"
+    )
+  )
+}
+
 messages$errorDuplicateScenarioNames <- function(duplicateNames) {
   cliFormat(
     "Duplicate scenario names found: '{paste(duplicateNames, collapse = \"', '\")}'.
     Please provide unique scenario names."
+  )
+}
+
+messages$autocorrectDuplicateScenarioNames <- function(
+  originalScenarioName,
+  scenarioName
+) {
+  c(
+    cliFormat(
+      "Duplicate scenario names found and made unique by adding indices:"
+    ),
+    "i" = cliFormat(
+      "Duplicated names: {.val {originalScenarioName}}, renamed to {.val {scenarioName}}"
+    )
+  )
+}
+
+messages$scenarioConfigurationNotNamedList <- function() {
+  c(
+    cliFormat("Invalid scenarioConfigurations:"),
+    "x" = cliFormat("scenarioConfigurations must be a named list"),
+    "i" = cliFormat("Each scenario configuration must have a unique name")
+  )
+}
+
+
+messages$createdFileSnapshot <- function(inputFile, outputFile) {
+  cliFormat(
+    "Snapshot of {.file {inputFile}} created at {.file {outputFile}}"
+  )
+}
+
+messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
+  cliFormat(
+    "Project configuration from {.file {inputFile}} restored at {.file {outputFile}}"
+  )
+}
+
+messages$hasUnsavedChanges <- function() {
+  c(
+    "!" = cliFormat(
+      "The ProjectConfiguration object has been modified since loading from file."
+    ),
+    "i" = cliFormat(
+      "The object properties don't match the original Excel file."
+    ),
+    ">" = cliFormat(
+      "Consider running {.run projectConfig$save()} to save changes to the Excel file."
+    )
+  )
+}
+
+messages$invalidArgumentLength <- function(noOfOutpaths, noOfScenarios) {
+  c(
+    cliFormat("Invalid argument length:"),
+    "x" = cliFormat(
+      "outputPaths must have length 1 or same length as pkmlFilePaths"
+    ),
+    "i" = cliFormat(
+      "outputPaths has length {noOfOutpaths}, pkmlFilePaths has length {noOfScenarios}"
+    )
   )
 }
 
@@ -97,6 +202,14 @@ messages$errorInvalidMeanMethod <- function() {
 messages$errorOutputMolWeightNeeded <- function() {
   cliFormat(
     "`outputMolWeight` can not be `NULL` when data sets have different molWeights"
+  )
+}
+
+messages$offsetUnitsNotDefined <- function(rows) {
+  c(
+    "x" = cliFormat(
+      "Error in DataCombined {rows}: If x/yOffsets is set, then x/yOffsetsUnits must be defined as well. "
+    )
   )
 }
 
@@ -153,6 +266,22 @@ messages$warningInvalidScenarioName <- function(scenarioNames) {
   cliFormat(
     "The following scenarios are not present in `simulatedScenarios`: 
     {paste(scenarioNames, collapse = \",\n\")}. Data cannot be added to `DataCombined` object."
+  )
+}
+
+messages$invalidArgumentLengthScenarios <- function(
+  argName,
+  arg,
+  noOfScenarios
+) {
+  c(
+    cliFormat("Invalid argument length:"),
+    "x" = cliFormat(
+      "{argName} must have length 1 or same length as pkmlFilePaths"
+    ),
+    "i" = cliFormat(
+      "{argName} has length {length(arg)}, pkmlFilePaths has length {noOfScenarios}"
+    )
   )
 }
 
@@ -525,5 +654,83 @@ messages$warningSensitivityPKParameterNotCalculated <- function(
     "SensitivityPKParameter could not be calculated for",
     "ParameterPath {.envvar {parameterPath}} and PKParameter {.envvar {pkParameter}}.",
     "Possible reason: baseline simulation failure (ParameterFactor = 1.0)."
+  )
+}
+
+messages$excelNoDataRows <- function() {
+  c(
+    "x" = cliFormat(
+      "The specified excel sheet does not contain any rows with data."
+    ),
+    "*" = cliFormat(
+      "Please check the excel sheet name and content and try again."
+    )
+  )
+}
+
+messages$excelUncompleteRows <- function() {
+  c(
+    "x" = cliFormat("The specified excel sheet contains uncomplete row(s)"),
+    "i" = cliFormat("Using only complete rows to define population parameters")
+  )
+}
+
+messages$excelNoCompleteRows <- function() {
+  c(
+    "x" = cliFormat(
+      "The specified excel sheet does not contain any complete row"
+    ),
+    "*" = cliFormat("Please fill all the columns and try again.")
+  )
+}
+
+
+messages$excelSheetEmptyOrInvalid <- function() {
+  c(
+    cliFormat("Excel sheet name was empty or invalid:"),
+    "i" = cliFormat("Using default name 'Sheet'")
+  )
+}
+
+messages$excelSheetSanitized <- function(originalName) {
+  c(
+    cliFormat("Excel sheet name became empty after sanitization:"),
+    "x" = cliFormat("Original name: '{originalName}'"),
+    "i" = cliFormat("Using default name 'Sheet'")
+  )
+}
+
+messages$excelSheetSanitizedInfo <- function(originalName, sanitizedName) {
+  c(
+    cliFormat("Excel sheet name was sanitized to comply with naming rules:"),
+    "x" = cliFormat("Original name: '{originalName}'"),
+    "v" = cliFormat("Sanitized name: '{sanitizedName}'"),
+    "i" = cliFormat(
+      "Excel sheet names must be 31 characters or less and cannot contain: / \\\\ * [ ] : ?"
+    )
+  )
+}
+
+messages$excelNotInSync <- function(message = "") {
+  cliFormat(
+    "The Excel configuration files are NOT in sync with the JSON snapshot. {message}"
+  )
+}
+
+messages$excelInSync <- function() {
+  cliFormat(
+    "Excel configuration files are in sync with JSON snapshot."
+  )
+}
+
+messages$projectConfigUnsavedChanges <- function() {
+  cliFormat(
+    "The ProjectConfiguration object has {.strong unsaved changes} that differ from the Excel file."
+  )
+}
+
+messages$abortedByUser <- function() {
+  cliFormat(
+    "Aborted by user."
   )
 }

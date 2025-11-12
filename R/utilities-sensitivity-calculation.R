@@ -613,7 +613,7 @@ saveSensitivityCalculation <- function(
     contents <- list.files(outputDir, all.files = TRUE, no.. = TRUE)
     if (interactive() && length(contents) > 0) {
       if (!usethis::ui_yeah(messages$promptDeleteOutputDir(outputDir))) {
-        cli::cli_abort("Aborted by user.")
+        cli::cli_abort(messages$abortedByUser())
       }
     }
 

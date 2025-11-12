@@ -529,10 +529,9 @@ createScenarioConfigurationsFromPKML <- function(
         # Recycle single list element to all scenarios
         outputPaths <- rep(outputPaths, nScenarios)
       } else if (length(outputPaths) != nScenarios) {
-        cli::cli_abort(c(
-          "Invalid argument length:",
-          "x" = "outputPaths must have length 1 or same length as pkmlFilePaths",
-          "i" = "outputPaths has length {length(outputPaths)}, pkmlFilePaths has length {nScenarios}"
+        cli::cli_abort(messages$invalidArgumentLength(
+          length(outputPaths),
+          nScenarios
         ))
       }
     } else {
@@ -548,10 +547,9 @@ createScenarioConfigurationsFromPKML <- function(
           nScenarios
         )
       } else {
-        cli::cli_abort(c(
-          "Invalid argument length:",
-          "x" = "outputPaths must have length 1 or same length as pkmlFilePaths",
-          "i" = "outputPaths has length {length(outputPaths)}, pkmlFilePaths has length {nScenarios}"
+        cli::cli_abort(messages$invalidArgumentLength(
+          length(outputPaths),
+          nScenarios
         ))
       }
     }
@@ -595,10 +593,7 @@ createScenarioConfigurationsFromPKML <- function(
     pkmlPath <- pkmlFilePaths[[i]]
     # Check if PKML files exist
     if (!file.exists(pkmlPath)) {
-      cli::cli_abort(c(
-        "File not found:",
-        "x" = "Cannot find PKML file: {.path {pkmlPath}}"
-      ))
+      cli::cli_abort(messages$fileNotFound(pkmlPath))
     }
 
     # Load simulation from PKML file
@@ -623,9 +618,9 @@ createScenarioConfigurationsFromPKML <- function(
       scenarioName <- paste0(scenarioName, "_", existingCount + 1)
 
       # Warn the user
-      cli::cli_warn(c(
-        "Duplicate scenario names found and made unique by adding indices:",
-        "i" = "Duplicated names: {.val {originalScenarioName}}, renamed to {.val {scenarioName}}"
+      cli::cli_warn(messages$autocorrectDuplicateScenarioNames(
+        originalScenarioName,
+        scenarioName
       ))
     }
 
@@ -897,11 +892,7 @@ addScenarioConfigurationsToExcel <- function(
   if (
     !is.list(scenarioConfigurations) || is.null(names(scenarioConfigurations))
   ) {
-    cli::cli_abort(c(
-      "Invalid scenarioConfigurations:",
-      "x" = "scenarioConfigurations must be a named list",
-      "i" = "Each scenario configuration must have a unique name"
-    ))
+    cli::cli_abort(messages$scenarioConfigurationNotNamedList())
   }
 
   # Validate that all entries are ScenarioConfiguration objects
@@ -920,11 +911,7 @@ addScenarioConfigurationsToExcel <- function(
     duplicateNames <- intersect(existingNames, newNames)
 
     if (length(duplicateNames) > 0) {
-      cli::cli_abort(c(
-        "Duplicate scenario names found:",
-        "x" = "Cannot add scenarios with duplicate names to existing configuration",
-        "i" = "Duplicated names: {.val {duplicateNames}}"
-      ))
+      cli::cli_abort(messages$errorDuplicateScenarioNames(duplicateNames))
     }
   }
 
@@ -1041,7 +1028,7 @@ addScenarioConfigurationsToExcel <- function(
             }
           }
         } else {
-          cli::cli_abort("PKML {pkmlPath} file cannot be find.")
+          cli::cli_abort(messages$fileNotFound(pkmlPath))
         }
       }
     }
@@ -1430,10 +1417,7 @@ addScenarioConfigurationsToExcel <- function(
   # If empty after trimming, use default
   if (nchar(sheetName) == 0) {
     if (warn && originalName != "Sheet") {
-      cli::cli_warn(c(
-        "Excel sheet name was empty or invalid:",
-        "i" = "Using default name 'Sheet'"
-      ))
+      cli::cli_warn(messages$excelSheetEmptyOrInvalid())
     }
     return("Sheet")
   }
@@ -1456,23 +1440,14 @@ addScenarioConfigurationsToExcel <- function(
   # Final check - if still empty (unlikely), use default
   if (nchar(trimws(sanitizedName)) == 0) {
     if (warn) {
-      cli::cli_warn(c(
-        "Excel sheet name became empty after sanitization:",
-        "x" = "Original name: '{originalName}'",
-        "i" = "Using default name 'Sheet'"
-      ))
+      cli::cli_warn(messages$excelSheetSanitized(originalName))
     }
     return("Sheet")
   }
 
   # Warn if the name was changed
   if (warn && sanitizedName != originalName) {
-    cli::cli_warn(c(
-      "Excel sheet name was sanitized to comply with naming rules:",
-      "x" = "Original name: '{originalName}'",
-      "v" = "Sanitized name: '{sanitizedName}'",
-      "i" = "Excel sheet names must be 31 characters or less and cannot contain: / \\\\ * [ ] : ?"
-    ))
+    cli::cli_warn(messages$excelSheetSanitizedInfo(originalName, sanitizedName))
   }
 
   return(sanitizedName)
@@ -1627,11 +1602,7 @@ addScenarioConfigurationsToExcel <- function(
       return(vector_lengths[1])
     } else {
       # Inconsistent vector lengths
-      cli::cli_abort(c(
-        "Inconsistent vector argument lengths:",
-        "x" = "All vector arguments with length > 1 must have the same length",
-        "i" = "Found lengths: {paste(unique(vector_lengths), collapse = ', ')}"
-      ))
+      cli::cli_abort(messages$inconsistentArgumentLenghts(vector_lengths))
     }
   }
 }
@@ -1661,10 +1632,10 @@ addScenarioConfigurationsToExcel <- function(
     return(arg)
   } else {
     # Invalid length
-    cli::cli_abort(c(
-      "Invalid argument length:",
-      "x" = "{argName} must have length 1 or same length as pkmlFilePaths",
-      "i" = "{argName} has length {length(arg)}, pkmlFilePaths has length {nScenarios}"
+    cli::cli_abort(messages$invalidArgumentLengthScenarios(
+      argName,
+      arg,
+      nScenarios
     ))
   }
 }
