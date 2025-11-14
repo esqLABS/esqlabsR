@@ -797,7 +797,8 @@ test_that("It throws an error if plotIDs are not unique", {
           projectConfiguration = projectConfigurationLocal,
           stopIfNotFound = TRUE
         ),
-        regexp = messages$PlotIDsMustBeUnique()
+        regexp = messages$PlotIDsMustBeUnique(c("P1")),
+        fixed = TRUE
       )
     }
   )
@@ -837,7 +838,8 @@ test_that("It throws an error if plotGrid names are not unique", {
           projectConfiguration = projectConfigurationLocal,
           stopIfNotFound = TRUE
         ),
-        regexp = messages$PlotGridsNamesMustBeUnique()
+        regexp = messages$PlotGridsNamesMustBeUnique(c("Aciclovir")),
+        fixed = TRUE
       )
     }
   )
@@ -1533,7 +1535,7 @@ test_that("It provides clear error when xValuesLimits uses space instead of comm
         "yUnit" = NA,
         "xAxisScale" = NA,
         "yAxisScale" = NA,
-        "xValuesLimits" = "72 80",  # Space-separated - should trigger clear error
+        "xValuesLimits" = "72 80", # Space-separated - should trigger clear error
         "yValuesLimits" = NA,
         "quantiles" = NA,
         "nsd" = NA,
@@ -1590,8 +1592,8 @@ test_that("It accepts correctly formatted comma-separated axis limits (#848)", {
         "yUnit" = NA,
         "xAxisScale" = NA,
         "yAxisScale" = NA,
-        "xValuesLimits" = "72, 80",  # Correct format
-        "yAxisLimits" = "0,100",     # Also correct (no space after comma)
+        "xValuesLimits" = "72, 80", # Correct format
+        "yAxisLimits" = "0,100", # Also correct (no space after comma)
         "yValuesLimits" = NA,
         "quantiles" = NA,
         "nsd" = NA,
@@ -1647,7 +1649,7 @@ test_that("It provides clear error for wrong number of axis limit values (#848)"
         "xAxisScale" = NA,
         "yAxisScale" = NA,
         "xValuesLimits" = NA,
-        "yValuesLimits" = "100",  # Only one value - should need 2
+        "yValuesLimits" = "100", # Only one value - should need 2
         "quantiles" = NA,
         "nsd" = NA,
         "foldDistance" = NA
