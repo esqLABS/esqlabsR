@@ -33,9 +33,7 @@
       extendPopulationFromXLS(population, PopulationParameters, sheet = "UserDefinedVariability")
     Condition
       Warning:
-      x The specified excel sheet contains uncomplete row(s)
-      i Using only complete rows to define population parameters
+      x The specified excel sheet contains uncomplete row(s) i Using only complete rows to define population parameters
       Error in `extendPopulationFromXLS()`:
-      x The specified excel sheet does not contain any complete row
-      * Please fill all the columns and try again.
+      ! x The specified excel sheet does not contain any complete row * Please fill all the columns and try again.
 

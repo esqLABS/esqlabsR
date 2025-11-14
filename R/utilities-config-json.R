@@ -10,7 +10,7 @@
 #' @param outputDir Directory where the JSON file will be saved. If NULL
 #'   (default), the JSON file will be created in the same directory as the
 #'   source Excel file.
-#' @param ... Additional arguments. 
+#' @param ... Additional arguments.
 #'
 #' @return Invisibly returns the exported configuration data structure
 #' @export
@@ -147,9 +147,10 @@ snapshotProjectConfiguration <- function(
   outputFile <- fs::path_rel(outputPath, start = getwd())
 
   if (interactive() && !isTRUE(extraArguments$silent)) {
-    cli::cli_alert_success(
-      "Snapshot of {.file {inputFile}} created at {.file {outputFile}}"
-    )
+    cli::cli_alert_success(messages$createdFileSnapshot(
+      inputFile,
+      outputFile
+    ))
   }
 
   invisible(configData)
@@ -200,8 +201,9 @@ restoreProjectConfiguration <- function(
     )
     if (!isTRUE(status$in_sync)) {
       cli::cli_alert_warning(
-        "The Excel configuration files are NOT in sync with the JSON snapshot.
-      Restoring will OVERWRITE the Excel files and you may lose unsaved work."
+        messages$excelNotInSync(
+          message = "Restoring will overwrite existing Excel files."
+        )
       )
 
       if (interactive()) {
@@ -211,7 +213,7 @@ restoreProjectConfiguration <- function(
           choices = qs
         )
         if (out == 0L || qs[[out]] != "Yes") {
-          cli::cli_abort("The function was aborted by the user.")
+          cli::cli_abort(messages$abortedByUser())
         }
       }
     }
@@ -408,7 +410,7 @@ restoreProjectConfiguration <- function(
   # Display message with relative path
   if (interactive()) {
     cli::cli_alert_success(
-      "Project configuration from {.file {jsonPath}} restored at {.file {relPath}}"
+      messages$restoredProjectConfiguration(jsonPath, relPath)
     )
   }
 
@@ -458,13 +460,7 @@ projectConfigurationStatus <- function(
   # Check if the project configuration has been modified
   hasUnsavedChanges <- projectConfig$modified
   if (hasUnsavedChanges && !silent) {
-    cli::cli_warn(
-      c(
-        "!" = "The ProjectConfiguration object has been modified since loading from file.",
-        "i" = "The object properties don't match the original Excel file.",
-        ">" = "Consider running {.run projectConfig$save()} to save changes to the Excel file."
-      )
-    )
+    cli::cli_warn(messages$hasUnsavedChanges())
   }
 
   # Determine JSON path if not provided
@@ -514,14 +510,14 @@ projectConfigurationStatus <- function(
     # Display message if interactive
     if (hasUnsavedChanges && !silent) {
       cli::cli_alert_success(
-        "Excel configuration files are in sync with JSON snapshot."
+        messages$excelInSync()
       )
       cli::cli_alert_info(
-        "However, the ProjectConfiguration object has {.strong unsaved changes} that differ from the Excel file."
+        messages$projectConfigUnsavedChanges()
       )
     } else {
       cli::cli_alert_success(
-        "Excel configuration files are in sync with JSON snapshot."
+        messages$excelInSync()
       )
     }
   } else {
@@ -641,11 +637,11 @@ projectConfigurationStatus <- function(
     # Display message
     if (!silent) {
       cli::cli_alert_warning(
-        "Excel configuration files are NOT in sync with JSON snapshot."
+        messages$excelNotInSync()
       )
       if (hasUnsavedChanges & !silent) {
         cli::cli_alert_info(
-          "Additionally, the ProjectConfiguration object has {.strong unsaved changes} that differ from the Excel file."
+          messages$projectConfigUnsavedChanges()
         )
       }
     }

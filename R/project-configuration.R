@@ -242,11 +242,7 @@ ProjectConfiguration <- R6::R6Class(
             names(data)
         )
       ) {
-        cli::cli_warn(c(
-          "!" = "The project configuration file layout used is from an older version of the package.",
-          "i" = "This version is still supported and will be loaded but it is recommended to update the project configuration file.
-                           To do so, use the {.code $save} method of the project configuration object."
-        ))
+        cli::cli_warn(messages$oldProjectConfigurationLayout())
 
         data$configurationsFolder <- data$paramsFolder
         data$modelParamsFile <- data$paramsFile
@@ -270,8 +266,9 @@ ProjectConfiguration <- R6::R6Class(
       # If one of the excel configuration is not expected, return an error.
       for (property in names(data)) {
         if (!(property %in% names(self))) {
-          cli::cli_abort(c(
-            "x" = "Property {property} is not a valid configuration property for {self$projectConfigurationFilePath}"
+          cli::cli_abort(messages$invalidConfigurationProperty(
+            property,
+            self$projectConfigurationFilePath
           ))
         }
       }
@@ -333,7 +330,7 @@ ProjectConfiguration <- R6::R6Class(
 
       # Check whether the generated path exists
       if (!fs::file_exists(abs_path) && must_work == TRUE) {
-        cli::cli_warn("{abs_path} does not exist.")
+        cli::cli_warn(messages$fileNotFound(abs_path))
       }
 
       return(abs_path)

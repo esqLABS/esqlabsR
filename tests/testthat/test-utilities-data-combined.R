@@ -125,7 +125,11 @@ test_that("It warns when scenario is not found in simulatedScenarios", {
       observedData,
       stopIfNotFound = TRUE
     ),
-    regexp = "The following scenarios are not present in `simulatedScenarios`"
+    regexp = messages$warningInvalidScenarioName(c(
+      "NonExistentScenario",
+      "TestScenario"
+    )),
+    fixed = TRUE
   )
 
   # Then test with stopIfNotFound = FALSE
@@ -136,7 +140,11 @@ test_that("It warns when scenario is not found in simulatedScenarios", {
       observedData,
       stopIfNotFound = FALSE
     ),
-    regexp = "The following scenarios are not present in `simulatedScenarios`"
+    regexp = messages$warningInvalidScenarioName(c(
+      "NonExistentScenario",
+      "TestScenario"
+    )),
+    fixed = TRUE
   )
 })
 

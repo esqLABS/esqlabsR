@@ -369,7 +369,8 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
       variationRange = c(0.1, 2, 20),
       customOutputFunctions = list("invalid" = \(x, y, z) x / y * z)
     ),
-    "The user-defined function must have either 'x', 'y', or both 'x' and 'y'"
+    regexp = messages$invalidCustomFunctionParameters(c("x", "y", "z")),
+    fixed = TRUE
   )
 })
 
