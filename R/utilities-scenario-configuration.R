@@ -529,7 +529,7 @@ createScenarioConfigurationsFromPKML <- function(
         # Recycle single list element to all scenarios
         outputPaths <- rep(outputPaths, nScenarios)
       } else if (length(outputPaths) != nScenarios) {
-        cli::cli_abort(messages$invalidArgumentLength(
+        stop(messages$invalidArgumentLength(
           length(outputPaths),
           nScenarios
         ))
@@ -547,7 +547,7 @@ createScenarioConfigurationsFromPKML <- function(
           nScenarios
         )
       } else {
-        cli::cli_abort(messages$invalidArgumentLength(
+        stop(messages$invalidArgumentLength(
           length(outputPaths),
           nScenarios
         ))
@@ -593,7 +593,7 @@ createScenarioConfigurationsFromPKML <- function(
     pkmlPath <- pkmlFilePaths[[i]]
     # Check if PKML files exist
     if (!file.exists(pkmlPath)) {
-      cli::cli_abort(messages$fileNotFound(pkmlPath))
+      stop(messages$fileNotFound(pkmlPath))
     }
 
     # Load simulation from PKML file
@@ -618,7 +618,7 @@ createScenarioConfigurationsFromPKML <- function(
       scenarioName <- paste0(scenarioName, "_", existingCount + 1)
 
       # Warn the user
-      cli::cli_warn(messages$autocorrectDuplicateScenarioNames(
+      warning(messages$autocorrectDuplicateScenarioNames(
         originalScenarioName,
         scenarioName
       ))
@@ -892,7 +892,7 @@ addScenarioConfigurationsToExcel <- function(
   if (
     !is.list(scenarioConfigurations) || is.null(names(scenarioConfigurations))
   ) {
-    cli::cli_abort(messages$scenarioConfigurationNotNamedList())
+    stop(messages$scenarioConfigurationNotNamedList())
   }
 
   # Validate that all entries are ScenarioConfiguration objects
@@ -911,7 +911,7 @@ addScenarioConfigurationsToExcel <- function(
     duplicateNames <- intersect(existingNames, newNames)
 
     if (length(duplicateNames) > 0) {
-      cli::cli_abort(messages$errorDuplicateScenarioNames(duplicateNames))
+      stop(messages$errorDuplicateScenarioNames(duplicateNames))
     }
   }
 
@@ -1028,7 +1028,7 @@ addScenarioConfigurationsToExcel <- function(
             }
           }
         } else {
-          cli::cli_abort(messages$fileNotFound(pkmlPath))
+          stop(messages$fileNotFound(pkmlPath))
         }
       }
     }
@@ -1417,7 +1417,7 @@ addScenarioConfigurationsToExcel <- function(
   # If empty after trimming, use default
   if (nchar(sheetName) == 0) {
     if (warn && originalName != "Sheet") {
-      cli::cli_warn(messages$excelSheetEmptyOrInvalid())
+      warning(messages$excelSheetEmptyOrInvalid())
     }
     return("Sheet")
   }
@@ -1440,14 +1440,14 @@ addScenarioConfigurationsToExcel <- function(
   # Final check - if still empty (unlikely), use default
   if (nchar(trimws(sanitizedName)) == 0) {
     if (warn) {
-      cli::cli_warn(messages$excelSheetSanitized(originalName))
+      warning(messages$excelSheetSanitized(originalName))
     }
     return("Sheet")
   }
 
   # Warn if the name was changed
   if (warn && sanitizedName != originalName) {
-    cli::cli_warn(messages$excelSheetSanitizedInfo(originalName, sanitizedName))
+    warning(messages$excelSheetSanitizedInfo(originalName, sanitizedName))
   }
 
   return(sanitizedName)
@@ -1602,7 +1602,7 @@ addScenarioConfigurationsToExcel <- function(
       return(vector_lengths[1])
     } else {
       # Inconsistent vector lengths
-      cli::cli_abort(messages$inconsistentArgumentLengths(vector_lengths))
+      stop(messages$inconsistentArgumentLengths(vector_lengths))
     }
   }
 }
@@ -1632,7 +1632,7 @@ addScenarioConfigurationsToExcel <- function(
     return(arg)
   } else {
     # Invalid length
-    cli::cli_abort(messages$invalidArgumentLengthScenarios(
+    stop(messages$invalidArgumentLengthScenarios(
       argName,
       arg,
       nScenarios

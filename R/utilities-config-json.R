@@ -213,7 +213,7 @@ restoreProjectConfiguration <- function(
           choices = qs
         )
         if (out == 0L || qs[[out]] != "Yes") {
-          cli::cli_abort(messages$abortedByUser())
+          stop(messages$abortedByUser())
         }
       }
     }
@@ -460,7 +460,7 @@ projectConfigurationStatus <- function(
   # Check if the project configuration has been modified
   hasUnsavedChanges <- projectConfig$modified
   if (hasUnsavedChanges && !silent) {
-    cli::cli_warn(messages$hasUnsavedChanges())
+    warning(messages$hasUnsavedChanges())
   }
 
   # Determine JSON path if not provided

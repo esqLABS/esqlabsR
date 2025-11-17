@@ -185,19 +185,18 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
       data <- readExcel(path = XLSpath, sheet = sheet, col_types = columnTypes)
     },
     error = function(e) {
-      cli::cli_abort(
+      stop(
         message = messages$errorWrongXLSStructure(
           filePath = XLSpath,
           expectedColNames = columnNames
-        ),
-        call = rlang::caller_env(4)
+        )
       )
     }
   )
 
   if (!all(columnNames %in% names(data))) {
-    cli::cli_abort(
-      message = messages$errorWrongXLSStructure(
+    stop(
+      messages$errorWrongXLSStructure(
         filePath = XLSpath,
         expectedColNames = columnNames
       )
@@ -205,8 +204,8 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
   }
 
   if (nrow(data) == 0) {
-    cli::cli_abort(
-      message = messages$excelNoDataRows()
+    stop(
+      messages$excelNoDataRows()
     )
   }
 
@@ -215,14 +214,12 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
     dplyr::filter(!dplyr::if_any(dplyr::everything(), ~ is.na(.)))
 
   if (nrow(complete_data) < nrow(data)) {
-    cli::cli_warn(
-      message = messages$excelUncompleteRows()
-    )
+    warning(messages$excelUncompleteRows())
   }
 
   if (nrow(complete_data) == 0) {
-    cli::cli_abort(
-      message = messages$excelNoCompleteRows()
+    stop(
+      messages$excelNoCompleteRows()
     )
   }
   extendPopulationByUserDefinedParams(

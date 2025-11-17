@@ -242,7 +242,7 @@ ProjectConfiguration <- R6::R6Class(
             names(data)
         )
       ) {
-        cli::cli_warn(messages$oldProjectConfigurationLayout())
+        warning(messages$oldProjectConfigurationLayout())
 
         data$configurationsFolder <- data$paramsFolder
         data$modelParamsFile <- data$paramsFile
@@ -266,7 +266,7 @@ ProjectConfiguration <- R6::R6Class(
       # If one of the excel configuration is not expected, return an error.
       for (property in names(data)) {
         if (!(property %in% names(self))) {
-          cli::cli_abort(messages$invalidConfigurationProperty(
+          stop(messages$invalidConfigurationProperty(
             property,
             self$projectConfigurationFilePath
           ))
@@ -330,7 +330,7 @@ ProjectConfiguration <- R6::R6Class(
 
       # Check whether the generated path exists
       if (!fs::file_exists(abs_path) && must_work == TRUE) {
-        cli::cli_warn(messages$fileNotFound(abs_path))
+        warning(messages$fileNotFound(abs_path))
       }
 
       return(abs_path)

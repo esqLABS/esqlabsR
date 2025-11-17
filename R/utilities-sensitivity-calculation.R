@@ -371,7 +371,7 @@
     # Ensure the lengths of variationRange and parameterPath are equal
     variationRange <- rep(variationRange, length(parameterPaths))
   } else if (length(variationRange) != length(parameterPaths)) {
-    cli::cli_abort(
+    stop(
       messages$invalidVariationRangeLength()
     )
   }
@@ -613,7 +613,7 @@ saveSensitivityCalculation <- function(
     contents <- list.files(outputDir, all.files = TRUE, no.. = TRUE)
     if (interactive() && length(contents) > 0) {
       if (!usethis::ui_yeah(messages$promptDeleteOutputDir(outputDir))) {
-        cli::cli_abort(messages$abortedByUser())
+        stop(messages$abortedByUser())
       }
     }
 

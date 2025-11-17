@@ -94,7 +94,7 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   destination <- fs::path_abs(destination)
 
   if (!fs::dir_exists(destination)) {
-    cli::cli_abort(
+    stop(
       messages$pathNotFound(destination)
     )
   }
@@ -117,7 +117,7 @@ initProject <- function(destination = ".", overwrite = FALSE) {
       )
 
       if (out == 0L || qs[[out]] != "Yes") {
-        cli::cli_abort(messages$abortedByUser())
+        stop(messages$abortedByUser())
       }
 
       cli::cli_inform(messages$overwriteDestination(destination))

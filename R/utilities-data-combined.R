@@ -157,7 +157,7 @@ createDataCombinedFromExcel <- function(
         (!is.na(row[["xOffsets"]]) & is.na(row[["xOffsetsUnits"]])) |
           (!is.na(row[["yOffsets"]]) & is.na(row[["yOffsetsUnits"]]))
       ) {
-        cli::cli_abort(messages$offsetUnitsNotDefined(row[[
+        stop(messages$offsetUnitsNotDefined(row[[
           "DataCombinedName"
         ]]))
       }
