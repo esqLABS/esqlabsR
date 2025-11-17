@@ -530,7 +530,7 @@ messages$invalidCustomFunctionParameters <- function(providedParams) {
 messages$errorNotNamedList <- function(objectName, optionalMessage = "") {
   callingFunction <- ospsuite.utils:::.getCallingFunctionName()
   cliFormat(
-    "{.fn {callingFunction}}: argument {.areg {objectName}} is not a named list! {optionalMessage}"
+    "{.fn {callingFunction}}: argument {.arg {objectName}} is not a named list! {optionalMessage}"
   )
 }
 
