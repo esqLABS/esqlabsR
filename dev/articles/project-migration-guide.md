@@ -1,0 +1,127 @@
+# Migrating Project Structure Versions
+
+## From v5.0.0 to v5.3.0
+
+### Introduction
+
+This vignette describes how to migrate from the old project structure to
+the new structure implemented in [PR
+\#692](https://github.com/esqlabs/esqlabsR/pull/692). The new structure
+provides improved, harmonized, and easier-to-use project organization.
+
+You only need to run the migration if your project was created with
+esqlabsR v5.2.0 or earlier. It is necessary to run the migration process
+only once per project.
+
+### Key Changes
+
+#### Folder Structure Changes
+
+- The `Parameters` folder has been renamed to `Configurations`
+- Population-related files are now stored in `PopulationsCSV` folder
+
+#### File Naming Changes
+
+- `PopulationParameters.xlsx` has been renamed to `Populations.xlsx`
+- Compound properties configuration has been removed from the project
+  configuration
+
+#### Configuration Changes
+
+- `populationParamsFile` field in `ProjectConfiguration` class is now
+  `populationsFile`
+- Project paths can be specified as either absolute or relative paths
+- The `compoundPropertiesFile` property has been removed
+
+### Automatic Migration Support
+
+#### Backwards Compatibility
+
+The package includes built-in support for automatically handling project
+configurations from previous versions (v5). When loading an older
+project configuration file, the package will:
+
+1.  Automatically detect the older format
+2.  Load and convert the configuration to the new format
+3.  Display a warning message informing you that you’re using an older
+    format
+
+#### Updating Your Configuration
+
+To update your project configuration to the new format:
+
+1.  Load your existing configuration:
+
+``` r
+projectConfig <- createProjectConfiguration("path/to/old/ProjectConfiguration.xlsx")
+```
+
+2.  Save it in the new format:
+
+``` r
+projectConfig$save("path/to/new/ProjectConfiguration.xlsx")
+```
+
+This will automatically: - Rename all properties to match the new
+structure - Remove deprecated properties (like
+`compoundPropertiesFile`) - Preserve all your existing paths and
+settings
+
+> **Tip**: While the package can read old configuration files, it’s
+> recommended to update to the new format to ensure compatibility with
+> future versions.
+
+### Manual Migration Steps
+
+1.  **Update Folder Structure**
+
+``` r
+# Old structure
+project/
+  ├── Parameters/
+  │   └── PopulationParameters.xlsx
+  └── ...
+
+# New structure
+project/
+  ├── Configurations/
+  │   └── Populations.xlsx
+  ├── PopulationsCSV/
+  └── ...
+```
+
+2.  **Update Configuration Files**
+
+- Rename `PopulationParameters.xlsx` to `Populations.xlsx`
+- Move configuration files to the new `Configurations` folder
+- Remove any compound property configurations from project configuration
+  files
+
+### Code Updates
+
+Some functions and properties have been renamed, thus project code using
+previous project structure will need to be updated.
+
+``` r
+# Old code
+projectConfig <- createDefaultProjectConfiguration(...)  # Deprecated
+projectConfig$populationParamsFile  # Old property
+
+# New code
+projectConfig <- createProjectConfiguration(...)  # New recommended function
+projectConfig$populationsFile  # New property
+```
+
+### Best Practices
+
+1.  Use the new
+    [`createProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createProjectConfiguration.md)
+    function instead of the deprecated
+    [`createDefaultProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDefaultProjectConfiguration.md)
+2.  Store all configuration files in the `Configurations` folder
+3.  Keep population-related CSV files in the `PopulationsCSV` folder
+
+## Before 5.0.0
+
+Project structure before ESQlabsR v5.0.0 is not supported in latter
+versions.

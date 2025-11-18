@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9011</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9012</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -250,10 +250,10 @@ with names being the names of the plot grids:</p>
 <span><span class="co">#&gt; [1] "Aciclovir"  "Aciclovir2"</span></span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plots</span><span class="op">$</span><span class="va">Aciclovir</span></span></code></pre></div>
-<p><img src="plot-results_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
+<p><img src="plot-results_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" width="672"></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plots</span><span class="op">$</span><span class="va">Aciclovir2</span></span></code></pre></div>
-<p><img src="plot-results_files/figure-html/unnamed-chunk-9-1.png" width="672"></p>
+<p><img src="plot-results_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" width="672"></p>
 <p>Also, calling this function will export the plots as image files if
 the exportConfiguration sheet is setup correctly.</p>
 <p>By default, the function will try to create all plots defined in the
@@ -307,7 +307,7 @@ can use the <code><a href="../reference/createDataCombinedFromExcel.html">create
 <span><span class="va">sumResiduals</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">residuals</span><span class="op">$</span><span class="va">residualValues</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"The sum of linear residuals for is "</span>, <span class="va">sumResiduals</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "The sum of linear residuals for is 47.1770832407613"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "The sum of linear residuals for is 47.1860913931935"</span></span></code></pre></div>
 <p>You can modify the created <code>DataCombined</code>, e.g., by
 changing the offsets, and pass them to the
 <code>createPlotsFromExcel</code> function:</p>
@@ -448,7 +448,7 @@ default configurations.</p>
 <span><span class="va">gridConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"All aciclovir plots"</span></span>
 <span><span class="va">gridPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/tlf/man/plotGrid.html" class="external-link">plotGrid</a></span><span class="op">(</span><span class="va">gridConfig</span><span class="op">)</span></span>
 <span><span class="va">gridPlot</span></span></code></pre></div>
-<p><img src="plot-results_files/figure-html/plot-time-profile-1.png" width="672"></p>
+<p><img src="plot-results_files/figure-html/plot-time-profile-1.png" class="r-plt" width="672"></p>
 </div>
 <div class="section level4">
 <h4 id="export-plots-1">Export Plots<a class="anchor" aria-label="anchor" href="#export-plots-1"></a>
@@ -554,7 +554,7 @@ class</a></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

@@ -1,0 +1,29 @@
+# Advanced Topics
+
+## Object-oriented approach
+
+The [esqlabsR](https://github.com/esqLABS/esqlabsR) package utilizes the
+concept of object-oriented (OO) programming based on the [R6
+system](https://adv-r.hadley.nz/r6.html). While the philosophy of the
+package is to offer a functional programming workflow more common for
+the R users, it is important to understand some basic concepts of the OO
+programming. Many of the functions implemented in
+[esqlabsR](https://github.com/esqLABS/esqlabsR) return an *instance* (or
+an *object*) of a *class*. These objects can be used as inputs for other
+methods. Additionally, each object offers a set of properties (which can
+be other objects) and methods, which are accessible by the `$`
+character:
+
+``` r
+# create an instance of an object
+object1 <- ClassName$new()
+
+# extract a property associated with this object
+aProperty <- object1$property1
+
+# apply a method associated with this object
+resultOfAFunction <- object1$multiply(1,2)
+```
+
+Important information about the object can be printed out by calling
+`print(object)`.
