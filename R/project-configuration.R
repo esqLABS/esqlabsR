@@ -417,7 +417,7 @@ ProjectConfiguration <- R6::R6Class(
 
       if (!isEmpty(private$.replaced_env_vars)) {
         cli::cli_h2("Environment Variables")
-        cli::cli_inform(
+        message(
           "Environment variables were detected and replaced in paths:"
         )
         purrr::iwalk(private$.replaced_env_vars, \(x, idx) {

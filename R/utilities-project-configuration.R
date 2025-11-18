@@ -106,7 +106,7 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   if (isProjectInitialized(destination)) {
     if (overwrite) {
       # Overwrite without asking
-      cli::cli_inform(messages$overwriteDestination(destination))
+      message(messages$overwriteDestination(destination))
     } else {
       # Ask for permission to overwrite
       qs <- sample(c("Absolutely not", "Yes", "No way"))
@@ -120,7 +120,7 @@ initProject <- function(destination = ".", overwrite = FALSE) {
         stop(messages$abortedByUser())
       }
 
-      cli::cli_inform(messages$overwriteDestination(destination))
+      message(messages$overwriteDestination(destination))
     }
   }
 

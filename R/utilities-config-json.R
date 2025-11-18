@@ -147,7 +147,7 @@ snapshotProjectConfiguration <- function(
   outputFile <- fs::path_rel(outputPath, start = getwd())
 
   if (interactive() && !isTRUE(extraArguments$silent)) {
-    cli::cli_alert_success(messages$createdFileSnapshot(
+    message(messages$createdFileSnapshot(
       inputFile,
       outputFile
     ))
@@ -200,7 +200,7 @@ restoreProjectConfiguration <- function(
       silent = TRUE
     )
     if (!isTRUE(status$in_sync)) {
-      cli::cli_alert_warning(
+      warning(
         messages$excelNotInSync(
           message = "Restoring will overwrite existing Excel files."
         )
@@ -409,7 +409,7 @@ restoreProjectConfiguration <- function(
 
   # Display message with relative path
   if (interactive()) {
-    cli::cli_alert_success(
+    message(
       messages$restoredProjectConfiguration(jsonPath, relPath)
     )
   }
@@ -509,14 +509,14 @@ projectConfigurationStatus <- function(
 
     # Display message if interactive
     if (hasUnsavedChanges && !silent) {
-      cli::cli_alert_success(
+      message(
         messages$excelInSync()
       )
-      cli::cli_alert_info(
+      message(
         messages$projectConfigUnsavedChanges()
       )
     } else {
-      cli::cli_alert_success(
+      message(
         messages$excelInSync()
       )
     }
@@ -636,11 +636,11 @@ projectConfigurationStatus <- function(
 
     # Display message
     if (!silent) {
-      cli::cli_alert_warning(
+      warning(
         messages$excelNotInSync()
       )
       if (hasUnsavedChanges & !silent) {
-        cli::cli_alert_info(
+        warning(
           messages$projectConfigUnsavedChanges()
         )
       }
