@@ -514,7 +514,7 @@ messages$sensitivityAnalysisSimulationFailure <- function(
 ) {
   cat(
     cliFormat(
-      "Simulation for {.envvar {parameterPath}} with variation factor {.envvar {parameterFactor}} failed!
+      "Simulation for {.var {parameterPath}} with variation factor {.val {parameterFactor}} failed!
       The results will not be included in the sensitivity calculation."
     )
   )
