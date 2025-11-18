@@ -13,7 +13,7 @@ Authors@R: c(
     person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut"))
   )
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
-Description: The `{esqlabsR}` package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS).  
+Description: The `{esqlabsR}` package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS).
 License: GPL-2
 URL: https://github.com/esqLABS/esqlabsR, https://esqlabs.github.io/esqlabsR/
 BugReports: https://github.com/esqLABS/esqlabsR/issues
@@ -37,13 +37,11 @@ Imports:
     scales,
     stringr,
     tidyr,
-    tlf (>= 1.6.0),
-    ospsuite.utils (>= 1.7.0),
     tools,
     usethis,
     vctrs,
     writexl
-Suggests: 
+Suggests:
     clipr,
     covr,
     devtools,
@@ -56,7 +54,7 @@ Suggests:
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
     withr
-VignetteBuilder: 
+VignetteBuilder:
     knitr
 Config/testthat/edition: 3
 Config/rcmdcheck/ignore-inconsequential-notes: true
@@ -64,7 +62,5 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Remotes:  
-    ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils@*release,
-    tlf=Open-Systems-Pharmacology/TLF-Library@*release,
+Remotes:
     ospsuite=Open-Systems-Pharmacology/OSPSuite-R@*release
