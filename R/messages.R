@@ -536,7 +536,7 @@ messages$errorNotNamedList <- function(objectName, optionalMessage = "") {
 
 messages$invalidVariationRangeLength <- function() {
   cliFormat(
-    "{.var variationRange} must be either a vector or a list equal to the length of {.envvar parameterPaths}."
+    "{.var variationRange} must be either a vector or a list equal to the length of {.var parameterPaths}."
   )
 }
 
