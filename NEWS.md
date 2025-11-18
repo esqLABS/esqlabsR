@@ -1,8 +1,4 @@
-# esqlabsR (development version)
-
-## Breaking changes
-
-## Major changes
+# esqlabsR 5.5.1
 
 ## Minor improvements and bug fixes
 
