@@ -94,8 +94,8 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   destination <- fs::path_abs(destination)
 
   if (!fs::dir_exists(destination)) {
-    cli::cli_abort(
-      "The specified destination folder does not exist. ({destination}) "
+    stop(
+      messages$pathNotFound(destination)
     )
   }
 
@@ -106,7 +106,7 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   if (isProjectInitialized(destination)) {
     if (overwrite) {
       # Overwrite without asking
-      cli::cli_inform("Overwriting existing esqlabsR project in {destination}")
+      message(messages$overwriteDestination(destination))
     } else {
       # Ask for permission to overwrite
       qs <- sample(c("Absolutely not", "Yes", "No way"))
@@ -117,10 +117,10 @@ initProject <- function(destination = ".", overwrite = FALSE) {
       )
 
       if (out == 0L || qs[[out]] != "Yes") {
-        cli::cli_abort("The function was aborted by the user.")
+        stop(messages$abortedByUser())
       }
 
-      cli::cli_inform("Overwriting existing esqlabsR project in {destination}")
+      message(messages$overwriteDestination(destination))
     }
   }
 

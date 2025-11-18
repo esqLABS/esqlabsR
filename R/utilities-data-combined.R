@@ -157,9 +157,9 @@ createDataCombinedFromExcel <- function(
         (!is.na(row[["xOffsets"]]) & is.na(row[["xOffsetsUnits"]])) |
           (!is.na(row[["yOffsets"]]) & is.na(row[["yOffsetsUnits"]]))
       ) {
-        cli::cli_abort(c(
-          "x" = "Error in DataCombined {row[['DataCombinedName']]}: If x/yOffsets is set, then x/yOffsetsUnits must be defined as well. "
-        ))
+        stop(messages$offsetUnitsNotDefined(row[[
+          "DataCombinedName"
+        ]]))
       }
 
       # If offsets are defined, convert them to the default unit of the data

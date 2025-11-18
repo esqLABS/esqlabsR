@@ -242,11 +242,7 @@ ProjectConfiguration <- R6::R6Class(
             names(data)
         )
       ) {
-        cli::cli_warn(c(
-          "!" = "The project configuration file layout used is from an older version of the package.",
-          "i" = "This version is still supported and will be loaded but it is recommended to update the project configuration file.
-                           To do so, use the {.code $save} method of the project configuration object."
-        ))
+        warning(messages$oldProjectConfigurationLayout())
 
         data$configurationsFolder <- data$paramsFolder
         data$modelParamsFile <- data$paramsFile
@@ -270,8 +266,9 @@ ProjectConfiguration <- R6::R6Class(
       # If one of the excel configuration is not expected, return an error.
       for (property in names(data)) {
         if (!(property %in% names(self))) {
-          cli::cli_abort(c(
-            "x" = "Property {property} is not a valid configuration property for {self$projectConfigurationFilePath}"
+          stop(messages$invalidConfigurationProperty(
+            property,
+            self$projectConfigurationFilePath
           ))
         }
       }
@@ -333,7 +330,7 @@ ProjectConfiguration <- R6::R6Class(
 
       # Check whether the generated path exists
       if (!fs::file_exists(abs_path) && must_work == TRUE) {
-        cli::cli_warn("{abs_path} does not exist.")
+        warning(messages$fileNotFound(abs_path))
       }
 
       return(abs_path)
@@ -420,7 +417,7 @@ ProjectConfiguration <- R6::R6Class(
 
       if (!isEmpty(private$.replaced_env_vars)) {
         cli::cli_h2("Environment Variables")
-        cli::cli_inform(
+        message(
           "Environment variables were detected and replaced in paths:"
         )
         purrr::iwalk(private$.replaced_env_vars, \(x, idx) {
