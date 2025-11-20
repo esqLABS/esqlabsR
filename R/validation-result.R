@@ -35,6 +35,9 @@ ValidationResult <- R6::R6Class(
     },
 
     #' @description Add a warning
+    #' @param category Warning category (e.g., "Data", "Structure")
+    #' @param message Warning message
+    #' @param details Optional list with additional details (sheet, row, column)
     add_warning = function(category, message, details = NULL) {
       warning_entry <- list(
         category = category,
@@ -46,6 +49,7 @@ ValidationResult <- R6::R6Class(
     },
 
     #' @description Set validated data
+    #' @param data The validated/processed data to store
     set_data = function(data) {
       self$data <- data
     },
