@@ -9,6 +9,7 @@ validateAllConfigurations <- function(projectConfiguration) {
   if (is.character(projectConfiguration)) {
     results$projectConfiguration <- validateProjectConfiguration(projectConfiguration)
     if (!results$projectConfiguration$is_valid()) {
+      class(results) <- c("ValidationResults", class(results))
       return(results)
     }
     projectConfiguration <- createDefaultProjectConfiguration(projectConfiguration)

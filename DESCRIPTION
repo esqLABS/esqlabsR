@@ -10,7 +10,7 @@ Authors@R: c(
     person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
            comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")),
     person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"),
-    person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut"))
+    person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut")),
     person("Sia", "Mirza", ,"siavash.mirzaee@esqlabs.com", role = c("aut"))
   )
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
