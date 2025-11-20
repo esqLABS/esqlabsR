@@ -527,3 +527,24 @@ messages$warningSensitivityPKParameterNotCalculated <- function(
     "Possible reason: baseline simulation failure (ParameterFactor = 1.0)."
   )
 }
+
+# Validation framework messages ####
+messages$validationFileNotFound <- function(filePath) {
+  cliFormat("File not found: {.file {filePath}}")
+}
+
+messages$validationMissingSheets <- function(sheets) {
+  cliFormat("Missing required sheets: {.val {paste(sheets, collapse = ', ')}}")
+}
+
+messages$validationMissingColumns <- function(sheet, columns) {
+  cliFormat("Missing required columns in sheet {.val {sheet}}: {.val {paste(columns, collapse = ', ')}}")
+}
+
+messages$validationEmptySheet <- function(sheet) {
+  cliFormat("Sheet {.val {sheet}} is empty or contains no data")
+}
+
+messages$validationCrossReference <- function(source, target, missing) {
+  cliFormat("Invalid references from {.val {source}} to {.val {target}}: {.val {paste(missing, collapse = ', ')}}")
+}
