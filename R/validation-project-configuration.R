@@ -1,0 +1,44 @@
+#' Validate project configuration file
+#' @param projectConfigPath Path to ProjectConfiguration.xlsx
+#' @return ValidationResult object
+#' @export
+validateProjectConfiguration <- function(projectConfigPath) {
+  result <- ValidationResult$new()
+
+  # Check file exists
+  if (!file.exists(projectConfigPath)) {
+    result$add_critical_error("File", messages$validationFileNotFound(projectConfigPath))
+    return(result)
+  }
+
+  # Try to load project configuration
+  .safe_validate(
+    quote({
+      config <- createDefaultProjectConfiguration(path = projectConfigPath)
+
+      # Check all referenced files exist
+      files_to_check <- list(
+        scenarios = config$scenariosFile,
+        individuals = config$individualsFile,
+        populations = config$populationsFile,
+        models = config$modelParamsFile,
+        applications = config$applicationsFile,
+        plots = config$plotsFile
+      )
+
+      for (name in names(files_to_check)) {
+        if (!is.na(files_to_check[[name]]) && !file.exists(files_to_check[[name]])) {
+          result$add_warning(
+            "File Reference",
+            paste0("Referenced ", name, " file not found: ", files_to_check[[name]])
+          )
+        }
+      }
+
+      config
+    }),
+    result
+  )
+
+  return(result)
+}
