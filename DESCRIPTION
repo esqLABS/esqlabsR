@@ -62,12 +62,11 @@ VignetteBuilder:
     knitr
 Config/testthat/edition: 3
 Config/rcmdcheck/ignore-inconsequential-notes: true
-Config/cache-version: 1
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Remotes:  
-    ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils@*release,
-    tlf=Open-Systems-Pharmacology/TLF-Library@*release,
-    ospsuite=Open-Systems-Pharmacology/OSPSuite-R@*release
+Remotes:
+    ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
+    tlf=Open-Systems-Pharmacology/TLF-Library,
+    ospsuite=Open-Systems-Pharmacology/OSPSuite-R
