@@ -11,7 +11,7 @@ creates scenario configuration objects that can be used with the esqlabsR workfl
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,9 @@ creates scenario configuration objects that can be used with the esqlabsR workfl
 
 
 <dl><dt id="arg-pkmlfilepaths">pkmlFilePaths<a class="anchor" aria-label="anchor" href="#arg-pkmlfilepaths"></a></dt>
-<dd><p>Character vector of paths to PKML files to create scenarios from.</p></dd>
+<dd><p>Character vector of paths to PKML files to create scenarios from.
+Can be a single string (recycled for all scenarios) or a vector with the same length
+as the number of scenarios being created (determined by the longest vector argument).</p></dd>
 
 
 <dt id="arg-projectconfiguration">projectConfiguration<a class="anchor" aria-label="anchor" href="#arg-projectconfiguration"></a></dt>
@@ -99,60 +101,72 @@ If provided, must have the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 
 <dt id="arg-individualid">individualId<a class="anchor" aria-label="anchor" href="#arg-individualid"></a></dt>
-<dd><p>Character string. Optional individual ID to use for all scenarios. If <code>NULL</code> (default),
-no individual will be specified.</p></dd>
+<dd><p>Character vector. Optional individual IDs to use for scenarios. If <code>NULL</code> (default),
+no individual will be specified. Can be a single string (recycled for all scenarios) or a vector
+with the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 
 <dt id="arg-populationid">populationId<a class="anchor" aria-label="anchor" href="#arg-populationid"></a></dt>
-<dd><p>Character string. Optional population ID to use for all scenarios. If <code>NULL</code> (default),
-no population will be specified. If provided, sets simulation type to "Population".</p></dd>
+<dd><p>Character vector. Optional population IDs to use for scenarios. If <code>NULL</code> (default),
+no population will be specified. If provided, sets simulation type to "Population". Can be a single
+string (recycled for all scenarios) or a vector with the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 
 <dt id="arg-applicationprotocols">applicationProtocols<a class="anchor" aria-label="anchor" href="#arg-applicationprotocols"></a></dt>
 <dd><p>Character vector. Optional application protocol names to use for scenarios.
 If <code>NULL</code> (default), application protocols will be set to the scenario name.
-If provided, can be a single string (applied to all scenarios) or a vector
-with the same length as <code>pkmlFilePaths</code>.</p></dd>
+Can be a single string (recycled for all scenarios) or a vector with the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 
 <dt id="arg-paramsheets">paramSheets<a class="anchor" aria-label="anchor" href="#arg-paramsheets"></a></dt>
 <dd><p>Character vector. Optional parameter sheet names to apply to scenarios.
-If <code>NULL</code> (default), no parameter sheets will be applied.</p></dd>
+If <code>NULL</code> (default), no parameter sheets will be applied. Can be a single string (recycled for all
+scenarios) or a vector with the same length as <code>pkmlFilePaths</code>. If providing multiple sheets per
+scenario, separate them with commas in the string.</p></dd>
 
 
 <dt id="arg-outputpaths">outputPaths<a class="anchor" aria-label="anchor" href="#arg-outputpaths"></a></dt>
-<dd><p>Character vector. Optional output paths to use for scenarios. If <code>NULL</code> (default),
-output paths will be extracted from the PKML files' output selections.</p></dd>
+<dd><p>Character vector or named vector. Optional output paths to use for scenarios. If <code>NULL</code> (default),
+output paths will be extracted from the PKML files' output selections. Can be a single string
+(recycled for all scenarios) or a vector with the same length as <code>pkmlFilePaths</code>. If providing
+multiple paths per scenario, separate them with commas in the string. Named vectors are supported
+where names serve as aliases for the paths, e.g., c("plasma" = "Organism|VenousBlood|Plasma|AKB-9090|Concentration in container").</p></dd>
 
 
 <dt id="arg-simulationtime">simulationTime<a class="anchor" aria-label="anchor" href="#arg-simulationtime"></a></dt>
-<dd><p>Character string. Optional simulation time to use for scenarios as character string containing one or
+<dd><p>Character vector. Optional simulation time to use for scenarios as character strings containing one or
 multiple time intervals separated by a ';'. Each time interval is a triplet of values &lt;StartTime, EndTime, Resolution&gt;,
 where <code>Resolution</code> is the number of simulated points per time unit defined in the <code>simulationTimeUnit</code>. If <code>NULL</code> (default),
-simulation time will be extracted from the PKML files' output schema intervals.</p></dd>
+simulation time will be extracted from the PKML files' output schema intervals. Can be a single string (recycled for all
+scenarios) or a vector with the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 
 <dt id="arg-simulationtimeunit">simulationTimeUnit<a class="anchor" aria-label="anchor" href="#arg-simulationtimeunit"></a></dt>
-<dd><p>Character string. Optional simulation time unit. Only used when <code>simulationTime</code> is provided.
-If <code>NULL</code> (default), will be extracted from the PKML file's output schema intervals, or set to "min" (minutes) if not available.</p></dd>
+<dd><p>Character vector. Optional simulation time units. Only used when <code>simulationTime</code> is provided.
+If <code>NULL</code> (default), will be extracted from the PKML file's output schema intervals, or set to "min" (minutes) if not available.
+Can be a single string (recycled for all scenarios) or a vector with the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 
 <dt id="arg-steadystate">steadyState<a class="anchor" aria-label="anchor" href="#arg-steadystate"></a></dt>
-<dd><p>Logical. Whether to simulate steady-state. Default is <code>FALSE</code>.</p></dd>
+<dd><p>Logical vector. Whether to simulate steady-state for each scenario. Default is <code>FALSE</code>.
+Can be a single logical value (recycled for all scenarios) or a vector with the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 
 <dt id="arg-steadystatetime">steadyStateTime<a class="anchor" aria-label="anchor" href="#arg-steadystatetime"></a></dt>
-<dd><p>Numeric. Steady-state time. Only used when <code>steadyState = TRUE</code>.
-If <code>NULL</code> (default), no steady-state time will be set.</p></dd>
+<dd><p>Numeric vector. Steady-state times. Only used when corresponding <code>steadyState</code> is <code>TRUE</code>.
+If <code>NULL</code> (default), no steady-state time will be set. Can be a single numeric value (recycled for all scenarios)
+or a vector with the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 
 <dt id="arg-steadystatetimeunit">steadyStateTimeUnit<a class="anchor" aria-label="anchor" href="#arg-steadystatetimeunit"></a></dt>
-<dd><p>Character string. Steady-state time unit. Only used when <code>steadyState = TRUE</code> and <code>steadyStateTime</code> is provided.
-If <code>NULL</code> (default), "min" will be used.</p></dd>
+<dd><p>Character vector. Steady-state time units. Only used when <code>steadyState = TRUE</code> and <code>steadyStateTime</code> is provided.
+If <code>NULL</code> (default), "min" will be used. Can be a single string (recycled for all scenarios) or a vector
+with the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 
 <dt id="arg-readpopulationfromcsv">readPopulationFromCSV<a class="anchor" aria-label="anchor" href="#arg-readpopulationfromcsv"></a></dt>
-<dd><p>Logical. Whether to read population from CSV. Default is <code>FALSE</code>.</p></dd>
+<dd><p>Logical vector. Whether to read population from CSV for each scenario. Default is <code>FALSE</code>.
+Can be a single logical value (recycled for all scenarios) or a vector with the same length as <code>pkmlFilePaths</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -166,9 +180,23 @@ the scenario names.</p>
 <li><p><strong>Output paths</strong>: All selected outputs for the simulation from <code>outputSelections$allOutputs</code>.</p></li>
 <li><p><strong>Simulation time</strong>: Time intervals with start time, end time, and resolution from <code>outputSchema$intervals</code>.</p></li>
 <li><p><strong>Simulation time unit</strong>: Time unit from the output schema intervals (e.g., "h" for hours).</p></li>
+</ul><div class="section">
+<h3 id="vector-arguments-and-recycling">Vector Arguments and Recycling<a class="anchor" aria-label="anchor" href="#vector-arguments-and-recycling"></a></h3>
+
+
+<p>All arguments support vectorization to create scenarios with different parameter values:</p><ul><li><p><strong>Length 1</strong>: The value is recycled (applied to all scenarios).</p></li>
+<li><p><strong>Length &gt; 1</strong>: All vector arguments must have the same length, which determines the number of scenarios.</p></li>
+<li><p><strong>Mixed lengths</strong>: An error is thrown if vector arguments have inconsistent lengths.</p></li>
+</ul><p>The number of scenarios created is determined by the longest vector argument. All shorter vectors
+(including <code>pkmlFilePaths</code>) are recycled to match this length.</p>
+<p>This allows you to efficiently create multiple scenarios in several ways:</p><ul><li><p><strong>Same PKML, different settings</strong>: Use a single PKML file with vectors of different parameter values.</p></li>
+<li><p><strong>Different PKMLs, same settings</strong>: Use multiple PKML files with single parameter values.</p></li>
+<li><p><strong>Different PKMLs, different settings</strong>: Use vectors of both PKML files and parameter values.</p></li>
 </ul><p>The function handles duplicate scenario names by appending indices (e.g., "Scenario_1", "Scenario_2").
 It creates scenario configurations but does not write them to Excel files.
 Use <code><a href="addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel()</a></code> to add the scenarios to the project's Excel files.</p>
+</div>
+
     </div>
 
     <div class="section level2">
@@ -203,6 +231,36 @@ Use <code><a href="addScenarioConfigurationsToExcel.html">addScenarioConfigurati
 <span class="r-in"><span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarios</span>,</span></span>
 <span class="r-in"><span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example of vector recycling - single value applied to all scenarios</span></span></span>
+<span class="r-in"><span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu">createScenarioConfigurationsFromPKML</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  pkmlFilePaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"sim1.pkml"</span>, <span class="st">"sim2.pkml"</span>, <span class="st">"sim3.pkml"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span></span>
+<span class="r-in"><span>  individualId <span class="op">=</span> <span class="st">"Individual_001"</span>, <span class="co"># Recycled to all scenarios</span></span></span>
+<span class="r-in"><span>  steadyState <span class="op">=</span> <span class="cn">TRUE</span>,              <span class="co"># Recycled to all scenarios</span></span></span>
+<span class="r-in"><span>  steadyStateTime <span class="op">=</span> <span class="fl">1000</span>           <span class="co"># Recycled to all scenarios</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example of vector arguments - different values per scenario</span></span></span>
+<span class="r-in"><span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu">createScenarioConfigurationsFromPKML</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  pkmlFilePaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pediatric.pkml"</span>, <span class="st">"adult.pkml"</span>, <span class="st">"elderly.pkml"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span></span>
+<span class="r-in"><span>  scenarioNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Pediatric"</span>, <span class="st">"Adult"</span>, <span class="st">"Elderly"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  individualId <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Child_001"</span>, <span class="st">"Adult_001"</span>, <span class="st">"Elderly_001"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  applicationProtocols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Pediatric_Dose"</span>, <span class="st">"Standard_Dose"</span>, <span class="st">"Reduced_Dose"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  steadyState <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">TRUE</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  steadyStateTime <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">2000</span>, <span class="fl">1500</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example of PKML recycling - same model, different settings</span></span></span>
+<span class="r-in"><span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu">createScenarioConfigurationsFromPKML</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  pkmlFilePaths <span class="op">=</span> <span class="st">"base_model.pkml"</span>,                    <span class="co"># Single PKML recycled</span></span></span>
+<span class="r-in"><span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span></span>
+<span class="r-in"><span>  scenarioNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"LowDose"</span>, <span class="st">"MediumDose"</span>, <span class="st">"HighDose"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  individualId <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Patient1"</span>, <span class="st">"Patient2"</span>, <span class="st">"Patient3"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  applicationProtocols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Low_Protocol"</span>, <span class="st">"Med_Protocol"</span>, <span class="st">"High_Protocol"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  steadyState <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">TRUE</span>, <span class="cn">TRUE</span><span class="op">)</span>                   <span class="co"># Different settings per scenario</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
@@ -215,7 +273,7 @@ Use <code><a href="addScenarioConfigurationsToExcel.html">addScenarioConfigurati
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

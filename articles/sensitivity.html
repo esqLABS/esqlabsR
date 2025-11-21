@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -118,9 +118,9 @@ metrics for each variation.</p>
 <em>lipophilicity</em>, <em>dose</em>, and <em>glomerular filtration
 rate (GFR fraction)</em> affect the pharmacokinetics of aciclovir:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/enum.html" class="external-link">enum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  Aciclovir_PVB <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
-<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">parameterPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Lipophilicity"</span> <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span>,</span>
 <span>  <span class="st">"Dose"</span> <span class="op">=</span> <span class="st">"Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span>,</span>
@@ -209,7 +209,7 @@ compare the direction and magnitude of effects.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
-<p><img src="sensitivity_files/figure-html/spider-plot-1.png" width="672"></p>
+<p><img src="sensitivity_files/figure-html/spider-plot-1.png" class="r-plt" width="672"></p>
 <p>In this example, <em>Dose</em> shows a strong and nonlinear effect on
 both <code>C_max</code> and <code>AUC_inf</code>, while
 <code>t_max</code> remains relatively stable. <em>GFR fraction</em> and
@@ -227,7 +227,7 @@ representing the scaling factor: 0.1 = blue, 1.0 = black, 10 = red.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
-<p><img src="sensitivity_files/figure-html/time-profile-1.png" width="672"></p>
+<p><img src="sensitivity_files/figure-html/time-profile-1.png" class="r-plt" width="672"></p>
 <p>Here, increasing the <em>Dose</em> uniformly raises the profile,
 while changes in <em>GFR fraction</em> affect the rate of decline,
 indicating faster or slower elimination. <em>Lipophilicity</em> causes
@@ -248,7 +248,7 @@ they must be included in the <code>variationRange</code> passed to
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
-<p><img src="sensitivity_files/figure-html/tornado-plot-1.png" width="672"></p>
+<p><img src="sensitivity_files/figure-html/tornado-plot-1.png" class="r-plt" width="672"></p>
 <p>The tornado plot confirms the trends seen in previous plots, but
 makes it easier to compare the relative impact of each parameter across
 PK metrics.</p>
@@ -286,19 +286,18 @@ argument, where the names will be used as labels instead of full
 paths.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadSimulation.html" class="external-link">loadSimulation</a></span><span class="op">(</span><span class="va">simulationFilePath</span><span class="op">)</span></span>
-<span><span class="va">customOutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/enum.html" class="external-link">enum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span><span class="va">customOutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  Aciclovir_PVB <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
-<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">customParameterPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Lipophilicity"</span> <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">customAnalysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivityCalculation.html">sensitivityCalculation</a></span><span class="op">(</span></span>
 <span>  <span class="va">simulation</span>,</span>
 <span>  <span class="va">customOutputPaths</span>,</span>
-<span>  pkParameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  pkParameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"C_max"</span><span class="op">)</span>,</span>
 <span>  parameterPaths <span class="op">=</span> <span class="va">customParameterPaths</span>,</span>
 <span>  customOutputFunctions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>AverageConcentration <span class="op">=</span> <span class="va">meanFunction</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Following PK parameters are specified but were not calculated:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">customAnalysis</span><span class="op">$</span><span class="va">pkData</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 11</span></span></span>
 <span><span class="co">#&gt;   OutputPath          ParameterPath ParameterFactor ParameterValue ParameterUnit</span></span>
@@ -321,7 +320,7 @@ aciclovir.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">customAnalysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
-<p><img src="sensitivity_files/figure-html/custom-plot-1.png" width="672"></p>
+<p><img src="sensitivity_files/figure-html/custom-plot-1.png" class="r-plt" width="672"></p>
 </div>
 <div class="section level3">
 <h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
@@ -356,7 +355,7 @@ multiplication factor is 1).</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

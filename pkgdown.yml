@@ -1,5 +1,5 @@
 pandoc: 3.1.11
-pkgdown: 2.1.3
+pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   advanced: advanced.html
@@ -13,7 +13,7 @@ articles:
   sensitivity-plots: sensitivity-plots.html
   sensitivity: sensitivity.html
   workflow-overview: workflow-overview.html
-last_built: 2025-08-18T14:24Z
+last_built: 2025-11-21T13:36Z
 urls:
   reference: https://esqlabs.github.io/esqlabsR/reference
   article: https://esqlabs.github.io/esqlabsR/articles

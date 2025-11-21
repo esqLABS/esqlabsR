@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -269,7 +269,7 @@ package.</p>
 <p>Finally, the plot is generated:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">my_datacombined</span><span class="op">)</span></span></code></pre></div>
-<p><img src="esqlabsR_files/figure-html/unnamed-chunk-12-1.png" width="80%" style="display: block; margin: auto;"></p>
+<p><img src="esqlabsR_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" width="80%" style="display: block; margin: auto;"></p>
 <p>In some cases, we also want to plot the observed experimental data
 (stored in <code>Data/</code>). <code>DataCombined</code> also has the
 ability to store observed data for them to be plotted.</p>
@@ -282,7 +282,7 @@ ability to store observed data for them to be plotted.</p>
 <span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observed_data</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated</a></span><span class="op">(</span><span class="va">my_datacombined</span><span class="op">)</span></span></code></pre></div>
-<p><img src="esqlabsR_files/figure-html/unnamed-chunk-13-1.png" width="80%" style="display: block; margin: auto;"></p>
+<p><img src="esqlabsR_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" width="80%" style="display: block; margin: auto;"></p>
 <p>Many other plot types are available in <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>, read
 <code><a href="../articles/plot-results.html">vignette("plot-results")</a></code> to learn more.</p>
 </div>
@@ -297,7 +297,7 @@ ability to store observed data for them to be plotted.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

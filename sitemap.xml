@@ -43,8 +43,12 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/createScenarios.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-createConfigurationFromRow.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-formatSimulationTimeForExcel.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-getScenarioCount.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-parseExcelMultiValueField.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-parseSimulationTimeIntervals.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-readOntongeniesFromXLS.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-recycleOrValidateVector.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-sanitizeExcelSheetName.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateClassHasField.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateDataCombinedFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateExportConfigurationsFromExcel.html</loc></url>

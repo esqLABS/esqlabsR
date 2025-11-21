@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,6 +75,7 @@
 </div>
 <!-- badges: start -->
 
+<!-- badges: end -->
 <p>The <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the <a href="https://www.open-systems-pharmacology.org/" class="external-link">Open Systems Pharmacology Software</a> (OSPS).</p>
 <p>The <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> package is designed for PBK modelers who use the OSPS suite. By using this package, you can streamline your modeling and simulation (M&amp;S) workflow and ensure standardized and reproducible practices.</p>
 <p>The package provides functions to:</p>
@@ -83,7 +84,7 @@
 <li>Generate standardized plots and other reporting materials,</li>
 <li>Interact with the OSPS features using simple Excel files.</li>
 </ul>
-<p>To get started with the esqlabsR package, please follow the <a href="articles/esqlabsR.html">Get Started tutorial</a>.</p>
+<p>To get started with the esqlabsR package, please follow the <a href="https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html">Get Started tutorial</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -183,7 +184,7 @@
 <span>    projectConfiguration <span class="op">=</span> <span class="va">myProjectConfiguration</span>,</span>
 <span>    sheets <span class="op">=</span> <span class="va">dataSheets</span></span>
 <span>  <span class="op">)</span></span>
-<span>  </span>
+<span></span>
 <span>  <span class="co">########## Create figures defined in the Plots.xlsx file########</span></span>
 <span>  <span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createPlotsFromExcel.html">createPlotsFromExcel</a></span><span class="op">(</span></span>
 <span>    plotGridNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Aciclovir"</span>,</span>
@@ -194,7 +195,7 @@
 <span>    outputFolder <span class="op">=</span> <span class="va">outputFolder</span>,</span>
 <span>    stopIfNotFound <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span>
-<span>  </span>
+<span></span>
 <span>  <span class="va">plots</span><span class="op">$</span><span class="va">Aciclovir</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-6-1.png" width="80%" style="display: block; margin: auto;"></p>
 </div>
@@ -296,7 +297,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

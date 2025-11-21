@@ -11,7 +11,7 @@ This function handles the Excel file operations for adding scenarios to a projec
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,7 +101,9 @@ parameters from PKML files (both Events and Applications parameters).</p></li>
 </ul><p>The function ensures that the Excel files are properly structured with the following sheets:</p><ul><li><p><strong>Scenarios sheet</strong>: Contains scenario definitions with columns for scenario name,
 individual/population IDs, parameter sheets, application protocol, simulation time,
 steady state settings, model file, and output path IDs.</p></li>
-<li><p><strong>OutputPaths sheet</strong>: Contains output path IDs and their corresponding paths.</p></li>
+<li><p><strong>OutputPaths sheet</strong>: Contains output path IDs and their corresponding paths.
+When named vectors are used for <code>outputPaths</code> in scenario configurations, the names
+will be used as OutputPathId values.</p></li>
 <li><p><strong>Applications.xlsx</strong>: Contains application protocol sheets with parameter definitions.</p></li>
 </ul><p>The function handles parameter extraction from PKML files, excluding default parameters
 like "Volume" and "Application rate", and only includes constant parameters.</p>
@@ -134,7 +136,7 @@ like "Volume" and "Application rate", and only includes constant parameters.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>
