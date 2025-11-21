@@ -1,10 +1,10 @@
 #' Safe execution wrapper that captures errors and warnings
 #' @param expr Expression to evaluate
-#' @param result Existing ValidationResult to append to (optional)
+#' @param result Existing validationResult to append to (optional)
 #' @keywords internal
 .safe_validate <- function(expr, result = NULL) {
   if (is.null(result)) {
-    result <- ValidationResult$new()
+    result <- validationResult$new()
   }
 
   tryCatch({

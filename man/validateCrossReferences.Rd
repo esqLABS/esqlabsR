@@ -12,7 +12,7 @@ validateCrossReferences(projectConfiguration, validationResults)
 \item{validationResults}{Previous validation results}
 }
 \value{
-ValidationResult object with cross-reference validation
+validationResult object with cross-reference validation
 }
 \description{
 Validate cross-references between configuration files

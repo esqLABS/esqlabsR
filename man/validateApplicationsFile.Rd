@@ -10,7 +10,7 @@ validateApplicationsFile(filePath)
 \item{filePath}{Path to applications Excel file}
 }
 \value{
-ValidationResult object
+validationResult object
 }
 \description{
 Validate applications configuration file

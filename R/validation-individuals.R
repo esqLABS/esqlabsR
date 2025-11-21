@@ -1,9 +1,9 @@
 #' Validate individuals configuration file
 #' @param filePath Path to individuals Excel file
-#' @return ValidationResult object
+#' @return validationResult object
 #' @export
 validateIndividualsFile <- function(filePath) {
-  result <- ValidationResult$new()
+  result <- validationResult$new()
 
   if (!file.exists(filePath)) {
     result$add_critical_error("File", messages$validationFileNotFound(filePath))

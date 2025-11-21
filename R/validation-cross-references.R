@@ -1,14 +1,14 @@
 #' Validate cross-references between configuration files
 #' @param projectConfiguration ProjectConfiguration object
 #' @param validationResults Previous validation results
-#' @return ValidationResult object with cross-reference validation
+#' @return validationResult object with cross-reference validation
 #' @keywords internal
 #' @export
 validateCrossReferences <- function(projectConfiguration, validationResults) {
-  result <- ValidationResult$new()
+  result <- validationResult$new()
 
   # Skip if previous validations failed
-  if (hasAnyCriticalErrors(validationResults)) {
+  if (isAnyCriticalErrors(validationResults)) {
     result$add_warning("Skipped", "Cross-reference validation skipped due to critical errors")
     return(result)
   }

@@ -1,9 +1,9 @@
 #' Validate populations configuration file
 #' @param filePath Path to populations Excel file
-#' @return ValidationResult object
+#' @return validationResult object
 #' @export
 validatePopulationsFile <- function(filePath) {
-  result <- ValidationResult$new()
+  result <- validationResult$new()
 
   if (!file.exists(filePath)) {
     result$add_critical_error("File", messages$validationFileNotFound(filePath))

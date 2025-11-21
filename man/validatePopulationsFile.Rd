@@ -10,7 +10,7 @@ validatePopulationsFile(filePath)
 \item{filePath}{Path to populations Excel file}
 }
 \value{
-ValidationResult object
+validationResult object
 }
 \description{
 Validate populations configuration file

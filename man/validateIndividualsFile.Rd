@@ -10,7 +10,7 @@ validateIndividualsFile(filePath)
 \item{filePath}{Path to individuals Excel file}
 }
 \value{
-ValidationResult object
+validationResult object
 }
 \description{
 Validate individuals configuration file

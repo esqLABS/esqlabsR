@@ -9,7 +9,7 @@
 \arguments{
 \item{expr}{Expression to evaluate}
 
-\item{result}{Existing ValidationResult to append to (optional)}
+\item{result}{Existing validationResult to append to (optional)}
 }
 \description{
 Safe execution wrapper that captures errors and warnings

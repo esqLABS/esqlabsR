@@ -10,7 +10,7 @@ validatePlotsFile(filePath)
 \item{filePath}{Path to plots Excel file}
 }
 \value{
-ValidationResult object
+validationResult object
 }
 \description{
 Validate plots configuration file

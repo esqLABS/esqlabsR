@@ -1,9 +1,9 @@
 #' Validate models parameter file
 #' @param filePath Path to models Excel file
-#' @return ValidationResult object
+#' @return validationResult object
 #' @export
 validateModelsFile <- function(filePath) {
-  result <- ValidationResult$new()
+  result <- validationResult$new()
 
   if (!file.exists(filePath)) {
     result$add_critical_error("File", messages$validationFileNotFound(filePath))
@@ -45,10 +45,10 @@ validateModelsFile <- function(filePath) {
 
 #' Validate applications configuration file
 #' @param filePath Path to applications Excel file
-#' @return ValidationResult object
+#' @return validationResult object
 #' @export
 validateApplicationsFile <- function(filePath) {
-  result <- ValidationResult$new()
+  result <- validationResult$new()
 
   if (!file.exists(filePath)) {
     result$add_critical_error("File", messages$validationFileNotFound(filePath))

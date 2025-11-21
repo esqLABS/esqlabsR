@@ -1,5 +1,5 @@
-test_that("ValidationResult class works correctly", {
-  result <- ValidationResult$new()
+test_that("validationResult class works correctly", {
+  result <- validationResult$new()
 
   expect_true(result$is_valid())
   expect_false(result$has_critical_errors())
@@ -44,13 +44,13 @@ test_that("validateAllConfigurations processes all files", {
 
 test_that("Cross-reference validation detects invalid references", {
   # Mock validation results with mismatched IDs
-  mock_scenarios <- ValidationResult$new()
+  mock_scenarios <- validationResult$new()
   mock_scenarios$set_data(data.frame(
     IndividualId = c("ID1", "ID2", "INVALID_ID"),
     PopulationId = c("Pop1", "Pop2", "Pop3")
   ))
 
-  mock_individuals <- ValidationResult$new()
+  mock_individuals <- validationResult$new()
   mock_individuals$set_data(data.frame(
     IndividualId = c("ID1", "ID2")
   ))

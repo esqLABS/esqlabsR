@@ -10,7 +10,7 @@ validateProjectConfiguration(projectConfigPath)
 \item{projectConfigPath}{Path to ProjectConfiguration.xlsx}
 }
 \value{
-ValidationResult object
+validationResult object
 }
 \description{
 Validate project configuration file

@@ -1,9 +1,9 @@
 #' Validate scenarios configuration file
 #' @param filePath Path to scenarios Excel file
-#' @return ValidationResult object
+#' @return validationResult object
 #' @export
 validateScenariosFile <- function(filePath) {
-  result <- ValidationResult$new()
+  result <- validationResult$new()
 
   if (!file.exists(filePath)) {
     result$add_critical_error("File", messages$validationFileNotFound(filePath))

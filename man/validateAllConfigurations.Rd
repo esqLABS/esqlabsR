@@ -10,7 +10,7 @@ validateAllConfigurations(projectConfiguration)
 \item{projectConfiguration}{ProjectConfiguration object or path to ProjectConfiguration.xlsx}
 }
 \value{
-Named list of ValidationResult objects
+Named list of validationResult objects
 }
 \description{
 Validate all configuration files in a project

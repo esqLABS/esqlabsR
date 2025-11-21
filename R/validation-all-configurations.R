@@ -1,6 +1,6 @@
 #' Validate all configuration files in a project
 #' @param projectConfiguration ProjectConfiguration object or path to ProjectConfiguration.xlsx
-#' @return Named list of ValidationResult objects
+#' @return Named list of validationResult objects
 #' @export
 validateAllConfigurations <- function(projectConfiguration) {
   results <- list()
@@ -51,9 +51,9 @@ validateAllConfigurations <- function(projectConfiguration) {
 #' @param validationResults Output from validateAllConfigurations
 #' @return Logical indicating if there are critical errors
 #' @export
-hasAnyCriticalErrors <- function(validationResults) {
+isAnyCriticalErrors <- function(validationResults) {
   any(sapply(validationResults, function(r) {
-    if (inherits(r, "ValidationResult")) {
+    if (inherits(r, "validationResult")) {
       r$has_critical_errors()
     } else {
       FALSE
@@ -65,7 +65,7 @@ hasAnyCriticalErrors <- function(validationResults) {
 #' @param validationResults Output from validateAllConfigurations
 #' @return List with summary statistics
 #' @export
-getValidationSummary <- function(validationResults) {
+validationSummary <- function(validationResults) {
   summary <- list(
     total_critical_errors = 0,
     total_warnings = 0,
@@ -75,7 +75,7 @@ getValidationSummary <- function(validationResults) {
 
   for (name in names(validationResults)) {
     result <- validationResults[[name]]
-    if (inherits(result, "ValidationResult")) {
+    if (inherits(result, "validationResult")) {
       if (result$has_critical_errors()) {
         summary$total_critical_errors <- summary$total_critical_errors +
           length(result$critical_errors)

@@ -1,8 +1,8 @@
-#' @title ValidationResult
+#' @title validationResult
 #' @description R6 class for storing validation results from Excel configuration files
 #' @export
-ValidationResult <- R6::R6Class(
-  "ValidationResult",
+validationResult <- R6::R6Class(
+  "validationResult",
   public = list(
     #' @field data Successfully validated/processed data
     data = NULL,

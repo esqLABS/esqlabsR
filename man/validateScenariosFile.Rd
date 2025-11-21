@@ -10,7 +10,7 @@ validateScenariosFile(filePath)
 \item{filePath}{Path to scenarios Excel file}
 }
 \value{
-ValidationResult object
+validationResult object
 }
 \description{
 Validate scenarios configuration file

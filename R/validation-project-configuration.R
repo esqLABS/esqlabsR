@@ -1,9 +1,9 @@
 #' Validate project configuration file
 #' @param projectConfigPath Path to ProjectConfiguration.xlsx
-#' @return ValidationResult object
+#' @return validationResult object
 #' @export
 validateProjectConfiguration <- function(projectConfigPath) {
-  result <- ValidationResult$new()
+  result <- validationResult$new()
 
   # Check file exists
   if (!file.exists(projectConfigPath)) {

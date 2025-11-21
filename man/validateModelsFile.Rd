@@ -10,7 +10,7 @@ validateModelsFile(filePath)
 \item{filePath}{Path to models Excel file}
 }
 \value{
-ValidationResult object
+validationResult object
 }
 \description{
 Validate models parameter file
