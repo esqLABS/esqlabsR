@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.0.9012</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.1.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,14 +51,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
-<div class="section level3">
-<h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="5.5.1" id="esqlabsr-551">esqlabsR 5.5.1<a class="anchor" aria-label="anchor" href="#esqlabsr-551"></a></h2>
 <div class="section level3">
-<h3 id="major-changes-development-version">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-development-version"></a></h3>
-</div>
-<div class="section level3">
-<h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
+<h3 id="minor-improvements-and-bug-fixes-5-5-1">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-5-1"></a></h3>
 <ul><li>Improved Excel validation for plot configurations with clearer error messages (<a href="https://github.com/esqLABS/esqlabsR/issues/848" class="external-link">#848</a>). When axis limits (xAxisLimits, yAxisLimits, xValuesLimits, yValuesLimits) are incorrectly formatted (e.g., space-separated “72 80” instead of comma-separated “72, 80”), users now receive specific error messages indicating the field name, plot ID, and correct format. Uses ospsuite.utils validation functions internally.</li>
 <li>Enhanced <code><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML()</a></code> with vector argument support - all parameters now support named vectors and vector recycling for flexible scenario creation. (<a href="https://github.com/esqLABS/esqlabsR/issues/890" class="external-link">#890</a>)</li>
 <li>Added support for named vectors in <code>outputPaths</code> parameter across scenario functions - names serve as aliases for output paths, e.g., <code>c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration in container")</code>. (<a href="https://github.com/esqLABS/esqlabsR/issues/890" class="external-link">#890</a>)</li>
