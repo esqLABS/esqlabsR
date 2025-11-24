@@ -331,7 +331,7 @@ ProjectConfiguration <- R6::R6Class(
 
       # Check whether the generated path exists
       if (!fs::file_exists(abs_path) && must_work == TRUE) {
-        private$.warnings <- c(
+        private$.warnings <- append(
           private$.warnings,
           messages$fileNotFound(abs_path)
         )
