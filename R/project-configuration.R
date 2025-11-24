@@ -431,7 +431,8 @@ ProjectConfiguration <- R6::R6Class(
 
       if (!isEmpty(private$.warnings)) {
         cli::cli_h2("Warnings")
-        purrr::walk(unique(private$.warnings), ~ cli::cli_alert_warning(.x))
+        unique_warnings <- unique(private$.warnings)
+        purrr::walk(unique_warnings, ~ cli::cli_alert_warning(.x))
       }
 
       invisible(self)
