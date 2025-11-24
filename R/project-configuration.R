@@ -218,6 +218,7 @@ ProjectConfiguration <- R6::R6Class(
     .projectConfigurationFilePath = NULL,
     .projectConfigurationDirPath = NULL,
     .modified = FALSE,
+    # Stores warnings encountered during configuration file resolution
     .warnings = list(),
     .checkProjectConfigurationFile = function() {
       data <- private$.projectConfigurationData
