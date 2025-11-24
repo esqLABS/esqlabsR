@@ -218,6 +218,7 @@ ProjectConfiguration <- R6::R6Class(
     .projectConfigurationFilePath = NULL,
     .projectConfigurationDirPath = NULL,
     .modified = FALSE,
+    .warnings = list(),
     .checkProjectConfigurationFile = function() {
       data <- private$.projectConfigurationData
 
@@ -330,7 +331,10 @@ ProjectConfiguration <- R6::R6Class(
 
       # Check whether the generated path exists
       if (!fs::file_exists(abs_path) && must_work == TRUE) {
-        warning(messages$fileNotFound(abs_path))
+        private$.warnings <- c(
+          private$.warnings,
+          messages$fileNotFound(abs_path)
+        )
       }
 
       return(abs_path)
@@ -424,6 +428,12 @@ ProjectConfiguration <- R6::R6Class(
           cli::cli_li("{idx} to {x}")
         })
       }
+
+      if (!isEmpty(private$.warnings)) {
+        cli::cli_h2("Warnings")
+        purrr::walk(unique(private$.warnings), ~ cli::cli_alert_warning(.x))
+      }
+
       invisible(self)
     },
     #' @description Export ProjectConfiguration object to
