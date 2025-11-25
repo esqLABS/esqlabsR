@@ -3,8 +3,7 @@
 #' @param validationResults Previous validation results
 #' @return validationResult object with cross-reference validation
 #' @keywords internal
-#' @export
-validateCrossReferences <- function(projectConfiguration, validationResults) {
+.validateCrossReferences <- function(projectConfiguration, validationResults) {
   result <- validationResult$new()
 
   # Skip if previous validations failed

@@ -1,8 +1,8 @@
 #' Validate populations configuration file
 #' @param filePath Path to populations Excel file
 #' @return validationResult object
-#' @export
-validatePopulationsFile <- function(filePath) {
+#' @keywords internal
+.validatePopulationsFile <- function(filePath) {
   result <- validationResult$new()
 
   if (!file.exists(filePath)) {

@@ -21,7 +21,8 @@ test_that("validateScenariosFile detects missing sheets", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(list(WrongSheet = data.frame(a = 1)), temp_file)
 
-  result <- validateScenariosFile(temp_file)
+  # Use ::: to access internal function for unit testing
+  result <- esqlabsR:::.validateScenariosFile(temp_file)
   expect_false(result$is_valid())
   expect_true(result$has_critical_errors())
 
@@ -60,6 +61,7 @@ test_that("Cross-reference validation detects invalid references", {
     individuals = mock_individuals
   )
 
-  result <- validateCrossReferences(NULL, validationResults)
+  # Use ::: to access internal function for unit testing
+  result <- esqlabsR:::.validateCrossReferences(NULL, validationResults)
   expect_true(result$has_critical_errors())
 })

@@ -1,8 +1,8 @@
 #' Validate models parameter file
 #' @param filePath Path to models Excel file
 #' @return validationResult object
-#' @export
-validateModelsFile <- function(filePath) {
+#' @keywords internal
+.validateModelsFile <- function(filePath) {
   result <- validationResult$new()
 
   if (!file.exists(filePath)) {
@@ -46,8 +46,8 @@ validateModelsFile <- function(filePath) {
 #' Validate applications configuration file
 #' @param filePath Path to applications Excel file
 #' @return validationResult object
-#' @export
-validateApplicationsFile <- function(filePath) {
+#' @keywords internal
+.validateApplicationsFile <- function(filePath) {
   result <- validationResult$new()
 
   if (!file.exists(filePath)) {

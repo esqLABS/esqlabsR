@@ -1,8 +1,8 @@
 #' Validate individuals configuration file
 #' @param filePath Path to individuals Excel file
 #' @return validationResult object
-#' @export
-validateIndividualsFile <- function(filePath) {
+#' @keywords internal
+.validateIndividualsFile <- function(filePath) {
   result <- validationResult$new()
 
   if (!file.exists(filePath)) {

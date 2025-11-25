@@ -1,8 +1,8 @@
 #' Validate plots configuration file
 #' @param filePath Path to plots Excel file
 #' @return validationResult object
-#' @export
-validatePlotsFile <- function(filePath) {
+#' @keywords internal
+.validatePlotsFile <- function(filePath) {
   result <- validationResult$new()
 
   if (!file.exists(filePath)) {

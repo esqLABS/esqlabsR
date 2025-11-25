@@ -1,8 +1,8 @@
 #' Validate scenarios configuration file
 #' @param filePath Path to scenarios Excel file
 #' @return validationResult object
-#' @export
-validateScenariosFile <- function(filePath) {
+#' @keywords internal
+.validateScenariosFile <- function(filePath) {
   result <- validationResult$new()
 
   if (!file.exists(filePath)) {
