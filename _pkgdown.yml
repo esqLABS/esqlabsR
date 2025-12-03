@@ -81,12 +81,12 @@ articles:
   - design-scenarios
   - run-simulations
   - plot-results
+  - sensitivity
+  - sensitivity-plots
 - title: Miscellaneous
   navbar: Miscellaneous
   contents:
   - presentations
-  - sensitivity
-  - sensitivity-plots
   - advanced
   - project-migration-guide
 

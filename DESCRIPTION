@@ -55,7 +55,8 @@ Suggests:
     showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
-    withr
+    withr,
+    emoji
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3
@@ -64,7 +65,7 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Remotes:  
+Remotes: 
     ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
     tlf=Open-Systems-Pharmacology/TLF-Library,
     ospsuite=Open-Systems-Pharmacology/OSPSuite-R

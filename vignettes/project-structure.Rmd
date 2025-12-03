@@ -1,5 +1,5 @@
 ---
-title: "1. Initialize a Project"
+title: "Project configuration"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{project-structure}
@@ -16,10 +16,17 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
+## Project Configuration Overview
+
+The project configuration is the central piece of any `esqlabsR` project. It defines the structure of your project, specifies where all necessary files are stored, and provides the foundation for all workflows in the package. The project configuration consists of:
+
+- **Project structure**: A standardized folder hierarchy that organizes your models, data, parameters, scenarios, and results
+- **ProjectConfiguration object**: An R object that stores paths to all project files and directories
+- **Configuration files**: Excel files (or JSON snapshots) that define the project setup
 
 ## Initialize the Project Structure
 
-Project Structure can be initialized by calling the function `initProject()`.
+Project structure can be initialized by calling the function `initProject()`.
 
 ```{r, eval=FALSE, message = FALSE}
 library(esqlabsR)
