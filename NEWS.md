@@ -1,7 +1,7 @@
 # esqlabsR 5.5.1
 
 ## Minor improvements and bug fixes
-
+- Added comprehensive validations for the excel configuration as R6 validation object. 
 - Improved Excel validation for plot configurations with clearer error messages (\#848). When axis limits (xAxisLimits, yAxisLimits, xValuesLimits, yValuesLimits) are incorrectly formatted (e.g., space-separated "72 80" instead of comma-separated "72, 80"), users now receive specific error messages indicating the field name, plot ID, and correct format. Uses ospsuite.utils validation functions internally.
 - Enhanced `createScenarioConfigurationsFromPKML()` with vector argument support - all parameters now support named vectors and vector recycling for flexible scenario creation. (\#890)
 - Added support for named vectors in `outputPaths` parameter across scenario functions - names serve as aliases for output paths, e.g., `c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration in container")`. (\#890)

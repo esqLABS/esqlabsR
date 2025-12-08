@@ -9,7 +9,8 @@
 
   tryCatch({
     withCallingHandlers({
-      output <- eval(expr)
+      # Evaluate in the parent environment to preserve variable scope
+      output <- eval(expr, envir = parent.frame())
       result$set_data(output)
     },
     warning = function(w) {

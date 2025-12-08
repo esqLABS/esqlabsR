@@ -11,9 +11,9 @@
     return(result)
   }
 
-  # Try to load project configuration
-  .safe_validate(
-    quote({
+  # Try to load project configuration directly (not using .safe_validate due to scoping issues)
+  tryCatch({
+    withCallingHandlers({
       config <- createDefaultProjectConfiguration(path = projectConfigPath)
 
       # Check all referenced files exist
@@ -35,10 +35,18 @@
         }
       }
 
-      config
-    }),
-    result
-  )
+      result$set_data(config)
+    },
+    warning = function(w) {
+      category <- .categorize_message(conditionMessage(w))
+      result$add_warning(category, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    })
+  },
+  error = function(e) {
+    category <- .categorize_message(conditionMessage(e))
+    result$add_critical_error(category, conditionMessage(e))
+  })
 
   return(result)
 }

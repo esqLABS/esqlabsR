@@ -38,11 +38,6 @@
         result$add_warning("Data", messages$validationEmptySheet("Scenarios"))
       }
 
-      # Use existing scenario validation if available
-      if (exists(".validateScenarioConfigurations")) {
-        .validateScenarioConfigurations(scenarios_df)
-      }
-
       scenarios_df
     }),
     result

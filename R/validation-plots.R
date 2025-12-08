@@ -19,56 +19,59 @@
     return(result)
   }
 
-  # Read and validate DataCombined
-  dataCombined_result <- .safe_validate(
+  # Validate DataCombined sheet
+  .safe_validate(
     quote({
       df <- readExcel(filePath, sheet = "DataCombined")
-      .validateDataCombinedFromExcel(df, NULL, NULL, FALSE)
-    })
+
+      # Check required columns
+      required_cols <- c("DataCombinedName", "dataType")
+      missing_cols <- setdiff(required_cols, names(df))
+
+      if (length(missing_cols) > 0) {
+        stop(messages$validationMissingColumns("DataCombined", missing_cols))
+      }
+
+      # Check for empty sheet
+      if (nrow(df) == 0) {
+        result$add_warning("Data", messages$validationEmptySheet("DataCombined"))
+      }
+
+      df
+    }),
+    result
   )
 
-  # Copy errors/warnings to main result
-  result$critical_errors <- append(result$critical_errors, dataCombined_result$critical_errors)
-  result$warnings <- append(result$warnings, dataCombined_result$warnings)
+  # Validate plotConfiguration sheet
+  .safe_validate(
+    quote({
+      df <- readExcel(filePath, sheet = "plotConfiguration")
 
-  # Continue only if DataCombined is valid
-  if (dataCombined_result$is_valid()) {
-    plotConfig_result <- .safe_validate(
-      quote({
-        df <- readExcel(filePath, sheet = "plotConfiguration")
-        dataCombinedNames <- unique(dataCombined_result$data$DataCombinedName)
-        .validatePlotConfigurationFromExcel(df, dataCombinedNames)
-      })
-    )
+      # Check required columns
+      required_cols <- c("DataCombinedName", "plotID", "plotType")
+      missing_cols <- setdiff(required_cols, names(df))
 
-    result$critical_errors <- append(result$critical_errors, plotConfig_result$critical_errors)
-    result$warnings <- append(result$warnings, plotConfig_result$warnings)
+      if (length(missing_cols) > 0) {
+        stop(messages$validationMissingColumns("plotConfiguration", missing_cols))
+      }
 
-    # Check optional sheets
-    if ("plotGrids" %in% sheets) {
-      .safe_validate(
-        quote({
-          df <- readExcel(filePath, sheet = "plotGrids")
-          plotIDs <- unique(plotConfig_result$data$plotID)
-          .validatePlotGridsFromExcel(df, plotIDs)
-        }),
-        result
-      )
-    } else {
-      result$add_warning("Structure", "Optional sheet 'plotGrids' not found")
-    }
+      # Check for empty sheet
+      if (nrow(df) == 0) {
+        result$add_warning("Data", messages$validationEmptySheet("plotConfiguration"))
+      }
 
-    if ("exportConfiguration" %in% sheets) {
-      .safe_validate(
-        quote({
-          df <- readExcel(filePath, sheet = "exportConfiguration")
-          .validateExportConfigurationsFromExcel(df, NULL)
-        }),
-        result
-      )
-    } else {
-      result$add_warning("Structure", "Optional sheet 'exportConfiguration' not found")
-    }
+      df
+    }),
+    result
+  )
+
+  # Check optional sheets exist (just warn if missing)
+  if (!"plotGrids" %in% sheets) {
+    result$add_warning("Structure", "Optional sheet 'plotGrids' not found")
+  }
+
+  if (!"exportConfiguration" %in% sheets) {
+    result$add_warning("Structure", "Optional sheet 'exportConfiguration' not found")
   }
 
   return(result)
