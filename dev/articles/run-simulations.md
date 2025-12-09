@@ -132,11 +132,11 @@ head(simulatedScenariosResults$TestScenario$outputValues$metaData)
 #> 6            0    5
 #>   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
 #> 1                                                                  0.000000
-#> 2                                                                  2.713221
-#> 3                                                                  7.830511
-#> 4                                                                 13.107336
-#> 5                                                                 18.253706
-#> 6                                                                 23.234205
+#> 2                                                                  2.712934
+#> 3                                                                  7.830330
+#> 4                                                                 13.107402
+#> 5                                                                 18.254025
+#> 6                                                                 23.234768
 #> NULL
 ```
 

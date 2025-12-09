@@ -1,8 +1,22 @@
-# 1. Initialize a Project
+# Project configuration
+
+## Project Configuration Overview
+
+The project configuration is the central piece of any `esqlabsR`
+project. It defines the structure of your project, specifies where all
+necessary files are stored, and provides the foundation for all
+workflows in the package. The project configuration consists of:
+
+- **Project structure**: A standardized folder hierarchy that organizes
+  your models, data, parameters, scenarios, and results
+- **ProjectConfiguration object**: An R object that stores paths to all
+  project files and directories
+- **Configuration files**: Excel files (or JSON snapshots) that define
+  the project setup
 
 ## Initialize the Project Structure
 
-Project Structure can be initialized by calling the function
+Project structure can be initialized by calling the function
 [`initProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/initProject.md).
 
 ``` r
