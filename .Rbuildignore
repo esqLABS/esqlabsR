@@ -50,3 +50,5 @@ references.bib
 _\.new\.png$
 ^[.]?air[.]toml$
 ^\.vscode$
+^AGENTS\.md$
+^.cursor/.

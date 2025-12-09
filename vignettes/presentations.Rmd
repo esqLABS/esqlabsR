@@ -1,7 +1,7 @@
 ---
-title: "Presentations"
+title: "Slide Decks"
 output: rmarkdown::html_vignette
-resource_files: 
+resource_files:
   - presentations/_introduction-to-esqlabsR.html
 vignette: >
   %\VignetteIndexEntry{presentations}
@@ -22,5 +22,3 @@ vignette: >
 [![Introduction to esqlabsR](presentations/introduction-to-esqlabsR-miniature.png)](presentations/_introduction-to-esqlabsR.html)
 
 </div>
-
-
