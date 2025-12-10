@@ -446,3 +446,502 @@ test_that(".validateApplicationsFile handles valid applications file", {
 
   unlink(temp_file)
 })
+
+# Tests for .validateIndividualsFile ----
+
+test_that(".validateIndividualsFile detects missing file", {
+  result <- esqlabsR:::.validateIndividualsFile("nonexistent_file.xlsx")
+  expect_false(result$is_valid())
+  expect_true(result$has_critical_errors())
+})
+
+test_that(".validateIndividualsFile detects missing required sheet", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(list(WrongSheet = data.frame(a = 1)), temp_file)
+
+  result <- esqlabsR:::.validateIndividualsFile(temp_file)
+  expect_false(result$is_valid())
+  expect_true(result$has_critical_errors())
+
+  unlink(temp_file)
+})
+
+test_that(".validateIndividualsFile detects missing required columns", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(IndividualBiometrics = data.frame(
+      IndividualId = "ID1",
+      Species = "Human"
+      # Missing other required columns
+    )),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateIndividualsFile(temp_file)
+  expect_false(result$is_valid())
+
+  unlink(temp_file)
+})
+
+test_that(".validateIndividualsFile detects duplicate IndividualId", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(IndividualBiometrics = data.frame(
+      IndividualId = c("ID1", "ID1"),
+      Species = c("Human", "Human"),
+      Population = c("European", "European"),
+      Gender = c("Male", "Female"),
+      `Age [year(s)]` = c(30, 40),
+      `Height [cm]` = c(175, 165),
+      `Weight [kg]` = c(70, 60),
+      check.names = FALSE
+    )),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateIndividualsFile(temp_file)
+  expect_false(result$is_valid())
+
+  unlink(temp_file)
+})
+
+test_that(".validateIndividualsFile warns about non-numeric columns", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(IndividualBiometrics = data.frame(
+      IndividualId = c("ID1", "ID2"),
+      Species = c("Human", "Human"),
+      Population = c("European", "European"),
+      Gender = c("Male", "Female"),
+      `Age [year(s)]` = c("thirty", "forty"),
+      `Height [cm]` = c(175, 165),
+      `Weight [kg]` = c(70, 60),
+      check.names = FALSE
+    )),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateIndividualsFile(temp_file)
+  expect_true(length(result$warnings) > 0)
+
+  unlink(temp_file)
+})
+
+test_that(".validateIndividualsFile handles valid file", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(IndividualBiometrics = data.frame(
+      IndividualId = c("ID1", "ID2"),
+      Species = c("Human", "Human"),
+      Population = c("European", "European"),
+      Gender = c("Male", "Female"),
+      `Age [year(s)]` = c(30, 40),
+      `Height [cm]` = c(175, 165),
+      `Weight [kg]` = c(70, 60),
+      check.names = FALSE
+    )),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateIndividualsFile(temp_file)
+  expect_true(result$is_valid())
+
+  unlink(temp_file)
+})
+
+# Tests for .validatePopulationsFile ----
+
+test_that(".validatePopulationsFile detects missing file", {
+  result <- esqlabsR:::.validatePopulationsFile("nonexistent_file.xlsx")
+  expect_false(result$is_valid())
+  expect_true(result$has_critical_errors())
+})
+
+test_that(".validatePopulationsFile detects missing required sheet", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(list(WrongSheet = data.frame(a = 1)), temp_file)
+
+  result <- esqlabsR:::.validatePopulationsFile(temp_file)
+  expect_false(result$is_valid())
+  expect_true(result$has_critical_errors())
+
+  unlink(temp_file)
+})
+
+test_that(".validatePopulationsFile detects missing required columns", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(Demographics = data.frame(
+      PopulationName = "Pop1",
+      species = "Human"
+      # Missing other required columns
+    )),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePopulationsFile(temp_file)
+  expect_false(result$is_valid())
+
+  unlink(temp_file)
+})
+
+test_that(".validatePopulationsFile detects duplicate PopulationName", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(Demographics = data.frame(
+      PopulationName = c("Pop1", "Pop1"),
+      species = c("Human", "Human"),
+      population = c("European", "European"),
+      numberOfIndividuals = c(100, 100),
+      proportionOfFemales = c(0.5, 0.5),
+      ageMin = c(20, 20),
+      ageMax = c(60, 60),
+      weightMin = c(50, 50),
+      weightMax = c(100, 100),
+      heightMin = c(150, 150),
+      heightMax = c(200, 200),
+      BMIMin = c(18, 18),
+      BMIMax = c(30, 30)
+    )),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePopulationsFile(temp_file)
+  expect_false(result$is_valid())
+
+  unlink(temp_file)
+})
+
+test_that(".validatePopulationsFile warns about invalid proportionOfFemales", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(Demographics = data.frame(
+      PopulationName = c("Pop1", "Pop2"),
+      species = c("Human", "Human"),
+      population = c("European", "European"),
+      numberOfIndividuals = c(100, 100),
+      proportionOfFemales = c(1.5, -0.1),
+      ageMin = c(20, 20),
+      ageMax = c(60, 60),
+      weightMin = c(50, 50),
+      weightMax = c(100, 100),
+      heightMin = c(150, 150),
+      heightMax = c(200, 200),
+      BMIMin = c(18, 18),
+      BMIMax = c(30, 30)
+    )),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePopulationsFile(temp_file)
+  expect_true(length(result$warnings) > 0)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePopulationsFile handles valid file", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(Demographics = data.frame(
+      PopulationName = c("Pop1", "Pop2"),
+      species = c("Human", "Human"),
+      population = c("European", "European"),
+      numberOfIndividuals = c(100, 100),
+      proportionOfFemales = c(0.5, 0.5),
+      ageMin = c(20, 20),
+      ageMax = c(60, 60),
+      weightMin = c(50, 50),
+      weightMax = c(100, 100),
+      heightMin = c(150, 150),
+      heightMax = c(200, 200),
+      BMIMin = c(18, 18),
+      BMIMax = c(30, 30)
+    )),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePopulationsFile(temp_file)
+  expect_true(result$is_valid())
+
+  unlink(temp_file)
+})
+
+# Tests for .validatePlotsFile ----
+
+test_that(".validatePlotsFile detects missing file", {
+  result <- esqlabsR:::.validatePlotsFile("nonexistent_file.xlsx")
+  expect_false(result$is_valid())
+  expect_true(result$has_critical_errors())
+})
+
+test_that(".validatePlotsFile detects missing required sheets", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(list(WrongSheet = data.frame(a = 1)), temp_file)
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  expect_false(result$is_valid())
+  expect_true(result$has_critical_errors())
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing columns in DataCombined", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(WrongColumn = "value"),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "line"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  expect_false(result$is_valid())
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing columns in plotConfiguration", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated"
+      ),
+      plotConfiguration = data.frame(WrongColumn = "value")
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  expect_false(result$is_valid())
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile warns about missing optional sheets", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "line"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  # Should have warnings about missing plotGrids and exportConfiguration
+  expect_true(length(result$warnings) >= 2)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile warns about empty DataCombined sheet", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = character(),
+        dataType = character()
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "line"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  expect_true(length(result$warnings) > 0)
+
+  unlink(temp_file)
+})
+
+# Tests for .validateScenariosFile ----
+
+test_that(".validateScenariosFile detects missing file", {
+  result <- esqlabsR:::.validateScenariosFile("nonexistent_file.xlsx")
+  expect_false(result$is_valid())
+  expect_true(result$has_critical_errors())
+})
+
+test_that(".validateScenariosFile detects missing required sheets", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(list(WrongSheet = data.frame(a = 1)), temp_file)
+
+  result <- esqlabsR:::.validateScenariosFile(temp_file)
+  expect_false(result$is_valid())
+  expect_true(result$has_critical_errors())
+
+  unlink(temp_file)
+})
+
+test_that(".validateScenariosFile detects missing columns in Scenarios", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Scenarios = data.frame(WrongColumn = "value"),
+      OutputPaths = data.frame(
+        OutputPathId = "OP1",
+        OutputPath = "Path1"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateScenariosFile(temp_file)
+  expect_false(result$is_valid())
+
+  unlink(temp_file)
+})
+
+test_that(".validateScenariosFile detects missing columns in OutputPaths", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Scenarios = data.frame(
+        IndividualId = "ID1",
+        PopulationId = "Pop1",
+        ApplicationProtocol = "App1",
+        SteadyStateTime = 0
+      ),
+      OutputPaths = data.frame(WrongColumn = "value")
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateScenariosFile(temp_file)
+  expect_false(result$is_valid())
+
+  unlink(temp_file)
+})
+
+test_that(".validateScenariosFile detects duplicate OutputPathId", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Scenarios = data.frame(
+        IndividualId = "ID1",
+        PopulationId = "Pop1",
+        ApplicationProtocol = "App1",
+        SteadyStateTime = 0
+      ),
+      OutputPaths = data.frame(
+        OutputPathId = c("OP1", "OP1"),
+        OutputPath = c("Path1", "Path2")
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateScenariosFile(temp_file)
+  expect_false(result$is_valid())
+
+  unlink(temp_file)
+})
+
+test_that(".validateScenariosFile warns about empty Scenarios sheet", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Scenarios = data.frame(
+        IndividualId = character(),
+        PopulationId = character(),
+        ApplicationProtocol = character(),
+        SteadyStateTime = numeric()
+      ),
+      OutputPaths = data.frame(
+        OutputPathId = "OP1",
+        OutputPath = "Path1"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateScenariosFile(temp_file)
+  expect_true(length(result$warnings) > 0)
+
+  unlink(temp_file)
+})
+
+test_that(".validateScenariosFile handles valid file", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Scenarios = data.frame(
+        IndividualId = c("ID1", "ID2"),
+        PopulationId = c("Pop1", "Pop2"),
+        ApplicationProtocol = c("App1", "App2"),
+        SteadyStateTime = c(0, 0)
+      ),
+      OutputPaths = data.frame(
+        OutputPathId = c("OP1", "OP2"),
+        OutputPath = c("Path1", "Path2")
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateScenariosFile(temp_file)
+  expect_true(result$is_valid())
+
+  unlink(temp_file)
+})
+
+# Tests for validationResult class methods ----
+
+test_that("validationResult get_formatted_messages works correctly", {
+  result <- validationResult$new()
+  result$add_critical_error("Structure", "Missing required field")
+  result$add_warning("Data", "Value out of range")
+
+  formatted <- result$get_formatted_messages()
+
+  expect_true(is.list(formatted))
+  expect_true("critical" %in% names(formatted))
+  expect_true("warnings" %in% names(formatted))
+  expect_equal(length(formatted$critical), 1)
+  expect_equal(length(formatted$warnings), 1)
+  expect_true(grepl("Structure", formatted$critical[[1]]))
+  expect_true(grepl("Data", formatted$warnings[[1]]))
+})
+
+test_that("validationResult add_critical_error with details works", {
+  result <- validationResult$new()
+  result$add_critical_error(
+    "Structure",
+    "Missing field",
+    details = list(sheet = "Sheet1", row = 5)
+  )
+
+  expect_equal(length(result$critical_errors), 1)
+  expect_equal(result$critical_errors[[1]]$details$sheet, "Sheet1")
+  expect_equal(result$critical_errors[[1]]$details$row, 5)
+})
+
+test_that("validationResult add_warning with details works", {
+  result <- validationResult$new()
+  result$add_warning(
+    "Data",
+    "Value warning",
+    details = list(column = "Age", value = -5)
+  )
+
+  expect_equal(length(result$warnings), 1)
+  expect_equal(result$warnings[[1]]$details$column, "Age")
+  expect_equal(result$warnings[[1]]$details$value, -5)
+})
