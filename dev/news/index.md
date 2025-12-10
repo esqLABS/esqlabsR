@@ -2,6 +2,24 @@
 
 ## esqlabsR (development version)
 
+### New features
+
+- Added comprehensive three-tier validation system for Excel
+  configuration files. New exported functions:
+  - [`validateAllConfigurations()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateAllConfigurations.md):
+    Validates all project configuration files
+  - [`validationSummary()`](https://esqlabs.github.io/esqlabsR/dev/reference/validationSummary.md):
+    Returns summary of validation results
+  - [`isAnyCriticalErrors()`](https://esqlabs.github.io/esqlabsR/dev/reference/isAnyCriticalErrors.md):
+    Checks if validation found blocking errors
+- Added validation documentation to project-structure vignette
+
+### Minor improvements and bug fixes
+
+- Fixed variable scoping issues in validation functions
+- Simplified validation logic to check data frame structure instead of
+  R6 objects
+
 ## esqlabsR 5.5.1
 
 ### Minor improvements and bug fixes

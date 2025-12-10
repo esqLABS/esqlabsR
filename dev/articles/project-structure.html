@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.1.9002</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.1.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -153,6 +153,104 @@ learn more about <code>ProjectConfiguration</code>, read the following
 sections.</p>
 </div>
 <div class="section level2">
+<h2 id="validating-project-configuration">Validating Project Configuration<a class="anchor" aria-label="anchor" href="#validating-project-configuration"></a>
+</h2>
+<p>Before running simulations, it is recommended to validate your
+project configuration files to catch potential issues early. The
+<code><a href="../reference/validateAllConfigurations.html">validateAllConfigurations()</a></code> function performs comprehensive
+validation across all Excel configuration files and returns structured
+results.</p>
+<div class="section level3">
+<h3 id="validation-process">Validation Process<a class="anchor" aria-label="anchor" href="#validation-process"></a>
+</h3>
+<p>The validation system checks your configuration files for:</p>
+<ul>
+<li>
+<strong>Structural issues</strong>: Missing required sheets or
+columns</li>
+<li>
+<strong>Data integrity</strong>: Empty sheets, invalid data types,
+required fields</li>
+<li>
+<strong>Uniqueness constraints</strong>: Duplicate IDs or names that
+must be unique</li>
+<li>
+<strong>Cross-references</strong>: Invalid references between
+configuration files (e.g., scenarios referencing non-existent
+individuals)</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="three-tier-validation-results">Three-Tier Validation Results<a class="anchor" aria-label="anchor" href="#three-tier-validation-results"></a>
+</h3>
+<p>Validation results are categorized into three levels:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Critical Errors</strong>: Blocking issues that prevent data
+import and must be fixed (e.g., missing required sheets, missing
+required columns)</li>
+<li>
+<strong>Warnings</strong>: Non-blocking issues that allow import but
+indicate potential problems (e.g., empty optional sheets, data type
+mismatches)</li>
+<li>
+<strong>Valid Data</strong>: Successfully validated data ready for
+use</li>
+</ol>
+</div>
+<div class="section level3">
+<h3 id="usage-example">Usage Example<a class="anchor" aria-label="anchor" href="#usage-example"></a>
+</h3>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Validate all configuration files in a project</span></span>
+<span><span class="va">validation_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/validateAllConfigurations.html">validateAllConfigurations</a></span><span class="op">(</span><span class="va">my_project_configuration</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Or validate directly from the Excel file path</span></span>
+<span><span class="va">validation_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/validateAllConfigurations.html">validateAllConfigurations</a></span><span class="op">(</span><span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check if there are any critical errors</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="../reference/isAnyCriticalErrors.html">isAnyCriticalErrors</a></span><span class="op">(</span><span class="va">validation_results</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># Get detailed summary</span></span>
+<span>  <span class="va">summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/validationSummary.html">validationSummary</a></span><span class="op">(</span><span class="va">validation_results</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Critical errors found in:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">summary</span><span class="op">$</span><span class="va">files_with_errors</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Total critical errors:"</span>, <span class="va">summary</span><span class="op">$</span><span class="va">total_critical_errors</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="st">"All validations passed!"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="interpreting-validation-results">Interpreting Validation Results<a class="anchor" aria-label="anchor" href="#interpreting-validation-results"></a>
+</h3>
+<p>The <code><a href="../reference/validateAllConfigurations.html">validateAllConfigurations()</a></code> function returns a named
+list of <code>validationResult</code> objects, one for each
+configuration file validated. Each result contains:</p>
+<ul>
+<li>
+<code>critical_errors</code>: List of blocking issues</li>
+<li>
+<code>warnings</code>: List of non-blocking issues</li>
+<li>
+<code>data</code>: The validated data (if validation succeeded)</li>
+</ul>
+<p>You can access individual file results:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Check scenarios validation</span></span>
+<span><span class="va">scenarios_result</span> <span class="op">&lt;-</span> <span class="va">validation_results</span><span class="op">$</span><span class="va">scenarios</span></span>
+<span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="va">scenarios_result</span><span class="op">$</span><span class="fu">has_critical_errors</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="st">"Scenarios file has critical errors:"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">scenarios_result</span><span class="op">$</span><span class="va">critical_errors</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">scenarios_result</span><span class="op">$</span><span class="va">warnings</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="st">"Scenarios file has warnings:"</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">scenarios_result</span><span class="op">$</span><span class="va">warnings</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>The validation system ensures data quality before simulation, helping
+you identify and fix configuration issues early in your workflow.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a>
 </h2>
 <div class="section level3">
@@ -160,7 +258,7 @@ sections.</p>
 </h3>
 <p>If required, you can change the location of one of the files or
 folders using relative or absolute paths</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># change the location of the output folder</span></span>
 <span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="st">"../anotherOutputFolder"</span></span>
 <span></span>
@@ -222,7 +320,7 @@ JSON format is ideal for version control as it’s:</p>
 <strong>Complete</strong>: Contains all project configuration
 data</li>
 </ul>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a snapshot from a ProjectConfiguration object</span></span>
 <span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration</a></span><span class="op">(</span><span class="va">my_project_configuration</span><span class="op">)</span></span>
@@ -238,7 +336,7 @@ your <code>ProjectConfiguration.xlsx</code> file with the name
 </h4>
 <p>The <code><a href="../reference/restoreProjectConfiguration.html">restoreProjectConfiguration()</a></code> function recreates
 your entire project configuration from a JSON snapshot:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Restore a project from a JSON snapshot</span></span>
 <span><span class="va">restored_config</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/restoreProjectConfiguration.html">restoreProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.json"</span><span class="op">)</span></span></code></pre></div>
 <p>This function will: 1. Create the necessary directory structure 2.
@@ -250,7 +348,7 @@ Regenerate all Excel configuration files 3. Return a new
 </h4>
 <p>Use <code><a href="../reference/projectConfigurationStatus.html">projectConfigurationStatus()</a></code> to check if your Excel
 files are synchronized with your JSON snapshot:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check if files are in sync</span></span>
 <span><span class="va">status</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/projectConfigurationStatus.html">projectConfigurationStatus</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span>, <span class="st">"ProjectConfiguration.json"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">status</span><span class="op">$</span><span class="va">in_sync</span><span class="op">)</span> <span class="co"># TRUE if synchronized, FALSE otherwise</span></span></code></pre></div>
@@ -263,25 +361,25 @@ files are synchronized with your JSON snapshot:</p>
 <li>
 <p><strong>Initial Setup</strong>: Create a snapshot of your project
 configuration</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span><span class="op">)</span></span></code></pre></div>
 </li>
 <li>
 <p><strong>Version Control</strong>: Commit the JSON file to your
 Git repository</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">git</span> add ProjectConfiguration.json</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Add project configuration snapshot"</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">git</span> add ProjectConfiguration.json</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Add project configuration snapshot"</span></span></code></pre></div>
 </li>
 <li>
 <p><strong>Team Sharing</strong>: Team members can restore the
 project</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">restored_config</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/restoreProjectConfiguration.html">restoreProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.json"</span><span class="op">)</span></span></code></pre></div>
 </li>
 </ol>
 <p><strong>Backup Strategy</strong>: Before making significant changes
 to your project:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a backup snapshot</span></span>
 <span><span class="fu"><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span><span class="op">)</span></span>
 <span></span>
@@ -305,7 +403,7 @@ different environments.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/circles.png" style="max-width:33px">esqLABS</a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, <a href="https://github.com/Felixmil" class="external-link">Felix Mil</a>.</p>
+  <p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/circles.png" style="max-width:33px">esqLABS</a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, <a href="https://github.com/Felixmil" class="external-link">Felix Mil</a>, Sia Mirza.</p>
 </div>
 
 <div class="pkgdown-footer-right">
