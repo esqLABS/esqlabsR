@@ -10,7 +10,8 @@ Authors@R: c(
     person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
            comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")),
     person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"),
-    person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut"))
+    person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut")),
+    person("Sia", "Mirza", ,"siavash.mirzaee@esqlabs.com", role = c("aut"))
   )
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: The `{esqlabsR}` package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS).  
@@ -33,6 +34,7 @@ Imports:
     parallel,
     patchwork,
     purrr,
+    R6 (>= 2.5.0),
     readxl,
     scales,
     stringr,
