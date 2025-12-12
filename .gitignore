@@ -57,3 +57,5 @@ tests/testthat/Rplots.pdf
 *.code-workspace
 docs
 pkgdown
+.cursor/*
+AGENTS.md
