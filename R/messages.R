@@ -652,6 +652,10 @@ messages$validationCrossReference <- function(source, target, missing) {
   cliFormat("Invalid references from {.val {source}} to {.val {target}}: {.val {paste(missing, collapse = ', ')}}")
 }
 
+messages$validationRequiredFileNotConfigured <- function(fileName) {
+  cliFormat("Required configuration file {.file {fileName}} is not configured in ProjectConfiguration")
+}
+
 messages$excelNoDataRows <- function() {
   cli::format_message(c(
     "x" = "The specified excel sheet does not contain any rows with data.",

@@ -43,7 +43,7 @@ test_that("validateAllConfigurations processes all files", {
   }
 })
 
-test_that("validateAllConfigurations handles NA file paths", {
+test_that("validateAllConfigurations detects missing required files when paths are NA", {
   # Create a mock ProjectConfiguration with NA values
   mockConfig <- list(
     scenariosFile = NA_character_,
@@ -57,8 +57,79 @@ test_that("validateAllConfigurations handles NA file paths", {
 
   results <- validateAllConfigurations(mockConfig)
   expect_true(inherits(results, "ValidationResults"))
-  # Should only have crossReferences validation when all files are NA
+
+  # All required files should have validation results with critical errors
+  expect_true("scenarios" %in% names(results))
+  expect_true("plots" %in% names(results))
+  expect_true("individuals" %in% names(results))
+  expect_true("populations" %in% names(results))
+  expect_true("models" %in% names(results))
+  expect_true("applications" %in% names(results))
   expect_true("crossReferences" %in% names(results))
+
+  # Each should have critical errors for missing file
+  expect_true(results$scenarios$has_critical_errors())
+  expect_true(results$plots$has_critical_errors())
+  expect_true(results$individuals$has_critical_errors())
+  expect_true(results$populations$has_critical_errors())
+  expect_true(results$models$has_critical_errors())
+  expect_true(results$applications$has_critical_errors())
+
+  # Verify error category is "Missing File"
+  expect_equal(results$scenarios$critical_errors[[1]]$category, "Missing File")
+  expect_equal(results$plots$critical_errors[[1]]$category, "Missing File")
+
+  # isAnyCriticalErrors should return TRUE
+  expect_true(isAnyCriticalErrors(results))
+})
+
+test_that("validateAllConfigurations detects partial missing files", {
+  temp_dir <- tempdir()
+  scenarios_file <- file.path(temp_dir, "Scenarios_test.xlsx")
+
+  # Create only one valid file
+
+  openxlsx::write.xlsx(
+    list(
+      Scenarios = data.frame(
+        IndividualId = "ID1",
+        PopulationId = "Pop1",
+        ApplicationProtocol = "App1",
+        SteadyStateTime = 0
+      ),
+      OutputPaths = data.frame(
+        OutputPathId = "OP1",
+        OutputPath = "Path1"
+      )
+    ),
+    scenarios_file
+  )
+
+  # Create a mock ProjectConfiguration with some NA values
+  mockConfig <- list(
+    scenariosFile = scenarios_file,
+    plotsFile = NA_character_,
+    individualsFile = NA_character_,
+    populationsFile = NA_character_,
+    modelParamsFile = NA_character_,
+    applicationsFile = NA_character_
+  )
+  class(mockConfig) <- c("ProjectConfiguration", class(mockConfig))
+
+  results <- validateAllConfigurations(mockConfig)
+
+  # Scenarios should be valid
+  expect_false(results$scenarios$has_critical_errors())
+
+  # Other files should have "Missing File" errors
+  expect_true(results$plots$has_critical_errors())
+  expect_equal(results$plots$critical_errors[[1]]$category, "Missing File")
+  expect_true(results$individuals$has_critical_errors())
+  expect_true(results$populations$has_critical_errors())
+  expect_true(results$models$has_critical_errors())
+  expect_true(results$applications$has_critical_errors())
+
+  unlink(scenarios_file)
 })
 
 test_that("validateAllConfigurations validates all file types when provided", {

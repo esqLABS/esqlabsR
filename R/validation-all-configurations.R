@@ -15,29 +15,56 @@ validateAllConfigurations <- function(projectConfiguration) {
     projectConfiguration <- createDefaultProjectConfiguration(projectConfiguration)
   }
 
-  # Validate each configuration file
-  if (!is.na(projectConfiguration$scenariosFile)) {
-    results$scenarios <- .validateScenariosFile(projectConfiguration$scenariosFile)
-  }
+  # Define required configuration files with their display names
+  required_files <- list(
+    scenarios = list(
+      path = projectConfiguration$scenariosFile,
+      name = "Scenarios.xlsx",
+      validate = .validateScenariosFile
+    ),
+    plots = list(
+      path = projectConfiguration$plotsFile,
+      name = "Plots.xlsx",
+      validate = .validatePlotsFile
+    ),
+    individuals = list(
+      path = projectConfiguration$individualsFile,
+      name = "Individuals.xlsx",
+      validate = .validateIndividualsFile
+    ),
+    populations = list(
+      path = projectConfiguration$populationsFile,
+      name = "Populations.xlsx",
+      validate = .validatePopulationsFile
+    ),
+    models = list(
+      path = projectConfiguration$modelParamsFile,
+      name = "ModelParameters.xlsx",
+      validate = .validateModelsFile
+    ),
+    applications = list(
+      path = projectConfiguration$applicationsFile,
+      name = "Applications.xlsx",
+      validate = .validateApplicationsFile
+    )
+  )
 
-  if (!is.na(projectConfiguration$plotsFile)) {
-    results$plots <- .validatePlotsFile(projectConfiguration$plotsFile)
-  }
+  # Validate each required configuration file
+  for (config_name in names(required_files)) {
+    file_info <- required_files[[config_name]]
+    file_path <- file_info$path
 
-  if (!is.na(projectConfiguration$individualsFile)) {
-    results$individuals <- .validateIndividualsFile(projectConfiguration$individualsFile)
-  }
-
-  if (!is.na(projectConfiguration$populationsFile)) {
-    results$populations <- .validatePopulationsFile(projectConfiguration$populationsFile)
-  }
-
-  if (!is.na(projectConfiguration$modelParamsFile)) {
-    results$models <- .validateModelsFile(projectConfiguration$modelParamsFile)
-  }
-
-  if (!is.na(projectConfiguration$applicationsFile)) {
-    results$applications <- .validateApplicationsFile(projectConfiguration$applicationsFile)
+    # Check if file path is not configured (NA)
+    if (is.na(file_path)) {
+      results[[config_name]] <- validationResult$new()
+      results[[config_name]]$add_critical_error(
+        category = "Missing File",
+        message = messages$validationRequiredFileNotConfigured(file_info$name)
+      )
+    } else {
+      # Path is configured - validate the file
+      results[[config_name]] <- file_info$validate(file_path)
+    }
   }
 
   # Add cross-reference validation
