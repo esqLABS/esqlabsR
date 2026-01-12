@@ -100,8 +100,8 @@
   )
 
   pkData <- .addParameterColumns(pkData, simulationResults, parameterPath)
-  pkData <- dplyr::group_by(pkData, ParameterPath, PKParameter) %>%
-    dplyr::group_modify(.f = ~ .computePercentChange(.)) %>%
+  pkData <- dplyr::group_by(pkData, ParameterPath, PKParameter) |>
+    dplyr::group_modify(.f = ~ .computePercentChange(.)) |>
     dplyr::ungroup()
 
   pkData <- dplyr::select(pkData, -dplyr::any_of("IndividualId"))
@@ -111,7 +111,7 @@
     dplyr::starts_with("Parameter"),
     dplyr::starts_with("PK"),
     Unit
-  ) %>%
+  ) |>
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 
   return(pkData)
@@ -236,12 +236,12 @@
   }
 
   # baseline values for parameters of interest
-  ParameterBaseValue <- baseDataFrame %>% dplyr::pull(ParameterValue)
-  PKParameterBaseValue <- baseDataFrame %>% dplyr::pull(PKParameterValue)
+  ParameterBaseValue <- baseDataFrame |> dplyr::pull(ParameterValue)
+  PKParameterBaseValue <- baseDataFrame |> dplyr::pull(PKParameterValue)
 
   # add columns with %change and sensitivity
   # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
-  data %>%
+  data |>
     dplyr::mutate(
       PKPercentChange = ((PKParameterValue - PKParameterBaseValue) /
         PKParameterBaseValue) *
@@ -270,15 +270,15 @@
       SensitivityPKParameter
     ),
     names_glue = "{PKParameter}_{.value}"
-  ) %>%
+  ) |>
     dplyr::rename_all(
       ~ stringr::str_remove(.x, "PK$|PKParameter$|_PKParameterValue")
-    ) %>%
+    ) |>
     # metrics for each parameter are grouped together
     dplyr::select(
       dplyr::matches("Output|^Parameter"),
       dplyr::matches(pkParameterNames)
-    ) %>%
+    ) |>
     dplyr::arrange(OutputPath)
 
   return(dataWide)
@@ -307,14 +307,14 @@
     purrr::pluck(simulationResults, 1L, "simulation")
   )
 
-  data %>%
+  data |>
     dplyr::mutate(
       ParameterPath = purrr::pluck(parameter[[1]], "path"),
       ParameterValue = purrr::pluck(parameter[[1]], "value"),
       ParameterUnit = purrr::pluck(parameter[[1]], "unit"),
       ParameterFactor = as.numeric(ParameterFactor),
       ParameterPathUserName = names(parameterPath) %||% NA_character_,
-    ) %>%
+    ) |>
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
 }
 
