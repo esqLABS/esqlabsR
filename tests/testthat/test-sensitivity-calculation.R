@@ -522,7 +522,7 @@ test_that("sensitivityCalculation returns expected results with multiple custom 
   )
 
   # Filter the custom PK data
-  customPKData <- results$pkData %>%
+  customPKData <- results$pkData |>
     dplyr::filter(PKParameter %in% names(customFunctions))
 
   # Expect snapshot

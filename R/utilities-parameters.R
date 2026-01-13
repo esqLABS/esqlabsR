@@ -182,7 +182,7 @@ exportParametersToXLS <- function(
     unlist(parameterName, use.names = FALSE),
     unlist(parameterValue, use.names = FALSE),
     unlist(parameterUnits, use.names = FALSE)
-  ) %>%
+  ) |>
     # Remove rows for which all values are NA
     dplyr::filter(dplyr::if_any(dplyr::everything(), ~ !is.na(.)))
 

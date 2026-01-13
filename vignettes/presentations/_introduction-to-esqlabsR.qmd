@@ -332,7 +332,7 @@ scenarios <-
   readxl::read_xlsx(my_project_configuration$scenariosFile)
 
 reactable::reactable(
-  data = scenarios %>%
+  data = scenarios |>
     select(
       Scenario_name,
       ModelFile,

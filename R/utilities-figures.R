@@ -1041,7 +1041,7 @@ createPlotsFromExcel <- function(
   dfExportConfigurations <- readExcel(
     projectConfiguration$plotsFile,
     sheet = "exportConfiguration"
-  ) %>%
+  ) |>
     dplyr::rename(name = outputName)
 
   # Filter for only specified plot grids
