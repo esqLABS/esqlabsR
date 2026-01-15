@@ -15,7 +15,10 @@
   missing_sheets <- setdiff(required_sheets, sheets)
 
   if (length(missing_sheets) > 0) {
-    result$add_critical_error("Structure", messages$validationMissingSheets(missing_sheets))
+    result$add_critical_error(
+      "Structure",
+      messages$validationMissingSheets(missing_sheets)
+    )
     return(result)
   }
 
@@ -34,7 +37,10 @@
 
       # Check for empty sheet
       if (nrow(df) == 0) {
-        result$add_warning("Data", messages$validationEmptySheet("DataCombined"))
+        result$add_warning(
+          "Data",
+          messages$validationEmptySheet("DataCombined")
+        )
       }
 
       df
@@ -52,12 +58,18 @@
       missing_cols <- setdiff(required_cols, names(df))
 
       if (length(missing_cols) > 0) {
-        stop(messages$validationMissingColumns("plotConfiguration", missing_cols))
+        stop(messages$validationMissingColumns(
+          "plotConfiguration",
+          missing_cols
+        ))
       }
 
       # Check for empty sheet
       if (nrow(df) == 0) {
-        result$add_warning("Data", messages$validationEmptySheet("plotConfiguration"))
+        result$add_warning(
+          "Data",
+          messages$validationEmptySheet("plotConfiguration")
+        )
       }
 
       df
@@ -71,7 +83,10 @@
   }
 
   if (!"exportConfiguration" %in% sheets) {
-    result$add_warning("Structure", "Optional sheet 'exportConfiguration' not found")
+    result$add_warning(
+      "Structure",
+      "Optional sheet 'exportConfiguration' not found"
+    )
   }
 
   return(result)

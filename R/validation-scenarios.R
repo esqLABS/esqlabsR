@@ -16,7 +16,10 @@
   missing_sheets <- setdiff(required_sheets, sheets)
 
   if (length(missing_sheets) > 0) {
-    result$add_critical_error("Structure", messages$validationMissingSheets(missing_sheets))
+    result$add_critical_error(
+      "Structure",
+      messages$validationMissingSheets(missing_sheets)
+    )
     return(result)
   }
 
@@ -26,7 +29,12 @@
       scenarios_df <- readExcel(filePath, sheet = "Scenarios")
 
       # Check required columns
-      required_cols <- c("IndividualId", "PopulationId", "ApplicationProtocol", "SteadyStateTime")
+      required_cols <- c(
+        "IndividualId",
+        "PopulationId",
+        "ApplicationProtocol",
+        "SteadyStateTime"
+      )
       missing_cols <- setdiff(required_cols, names(scenarios_df))
 
       if (length(missing_cols) > 0) {
@@ -58,8 +66,13 @@
 
       # Check for duplicate OutputPathId
       if (any(duplicated(output_paths_df$OutputPathId))) {
-        duplicates <- output_paths_df$OutputPathId[duplicated(output_paths_df$OutputPathId)]
-        stop(paste("Duplicate OutputPathId values:", paste(duplicates, collapse = ", ")))
+        duplicates <- output_paths_df$OutputPathId[duplicated(
+          output_paths_df$OutputPathId
+        )]
+        stop(paste(
+          "Duplicate OutputPathId values:",
+          paste(duplicates, collapse = ", ")
+        ))
       }
 
       output_paths_df

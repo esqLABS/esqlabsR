@@ -7,17 +7,23 @@ validateAllConfigurations <- function(projectConfiguration) {
 
   # Handle both path and object input
   if (is.character(projectConfiguration)) {
-    results$projectConfiguration <- .validateProjectConfiguration(projectConfiguration)
+    results$projectConfiguration <- .validateProjectConfiguration(
+      projectConfiguration
+    )
     if (!results$projectConfiguration$is_valid()) {
       class(results) <- c("ValidationResults", class(results))
       return(results)
     }
-    projectConfiguration <- createDefaultProjectConfiguration(projectConfiguration)
+    projectConfiguration <- createDefaultProjectConfiguration(
+      projectConfiguration
+    )
   }
 
   # Validate each configuration file
   if (!is.na(projectConfiguration$scenariosFile)) {
-    results$scenarios <- .validateScenariosFile(projectConfiguration$scenariosFile)
+    results$scenarios <- .validateScenariosFile(
+      projectConfiguration$scenariosFile
+    )
   }
 
   if (!is.na(projectConfiguration$plotsFile)) {
@@ -25,11 +31,15 @@ validateAllConfigurations <- function(projectConfiguration) {
   }
 
   if (!is.na(projectConfiguration$individualsFile)) {
-    results$individuals <- .validateIndividualsFile(projectConfiguration$individualsFile)
+    results$individuals <- .validateIndividualsFile(
+      projectConfiguration$individualsFile
+    )
   }
 
   if (!is.na(projectConfiguration$populationsFile)) {
-    results$populations <- .validatePopulationsFile(projectConfiguration$populationsFile)
+    results$populations <- .validatePopulationsFile(
+      projectConfiguration$populationsFile
+    )
   }
 
   if (!is.na(projectConfiguration$modelParamsFile)) {
@@ -37,11 +47,16 @@ validateAllConfigurations <- function(projectConfiguration) {
   }
 
   if (!is.na(projectConfiguration$applicationsFile)) {
-    results$applications <- .validateApplicationsFile(projectConfiguration$applicationsFile)
+    results$applications <- .validateApplicationsFile(
+      projectConfiguration$applicationsFile
+    )
   }
 
   # Add cross-reference validation
-  results$crossReferences <- .validateCrossReferences(projectConfiguration, results)
+  results$crossReferences <- .validateCrossReferences(
+    projectConfiguration,
+    results
+  )
 
   class(results) <- c("ValidationResults", class(results))
   return(results)
@@ -82,7 +97,8 @@ validationSummary <- function(validationResults) {
         summary$files_with_errors <- c(summary$files_with_errors, name)
       }
       if (length(result$warnings) > 0) {
-        summary$total_warnings <- summary$total_warnings + length(result$warnings)
+        summary$total_warnings <- summary$total_warnings +
+          length(result$warnings)
         summary$files_with_warnings <- c(summary$files_with_warnings, name)
       }
     }

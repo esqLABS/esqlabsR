@@ -13,7 +13,10 @@
   sheets <- readxl::excel_sheets(filePath)
 
   if (!"Demographics" %in% sheets) {
-    result$add_critical_error("Structure", "Missing required sheet: Demographics")
+    result$add_critical_error(
+      "Structure",
+      "Missing required sheet: Demographics"
+    )
     return(result)
   }
 
@@ -21,9 +24,21 @@
     quote({
       df <- readExcel(filePath, sheet = "Demographics")
 
-      required_cols <- c("PopulationName", "species", "population", "numberOfIndividuals",
-                        "proportionOfFemales", "ageMin", "ageMax", "weightMin", "weightMax",
-                        "heightMin", "heightMax", "BMIMin", "BMIMax")
+      required_cols <- c(
+        "PopulationName",
+        "species",
+        "population",
+        "numberOfIndividuals",
+        "proportionOfFemales",
+        "ageMin",
+        "ageMax",
+        "weightMin",
+        "weightMax",
+        "heightMin",
+        "heightMax",
+        "BMIMin",
+        "BMIMax"
+      )
       missing_cols <- setdiff(required_cols, names(df))
 
       if (length(missing_cols) > 0) {
@@ -33,12 +48,23 @@
       # Check for duplicate PopulationName
       if (any(duplicated(df$PopulationName))) {
         duplicates <- df$PopulationName[duplicated(df$PopulationName)]
-        stop(paste("Duplicate PopulationName values:", paste(duplicates, collapse = ", ")))
+        stop(paste(
+          "Duplicate PopulationName values:",
+          paste(duplicates, collapse = ", ")
+        ))
       }
 
       # Validate proportionOfFemales is between 0 and 1
-      if (any(df$proportionOfFemales < 0 | df$proportionOfFemales > 1, na.rm = TRUE)) {
-        result$add_warning("Data Range", "proportionOfFemales should be between 0 and 1")
+      if (
+        any(
+          df$proportionOfFemales < 0 | df$proportionOfFemales > 1,
+          na.rm = TRUE
+        )
+      ) {
+        result$add_warning(
+          "Data Range",
+          "proportionOfFemales should be between 0 and 1"
+        )
       }
 
       df

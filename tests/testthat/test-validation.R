@@ -39,7 +39,11 @@ test_that("validateAllConfigurations processes all files", {
   if (file.exists(test_config_path)) {
     results <- validateAllConfigurations(test_config_path)
     expect_true(inherits(results, "ValidationResults"))
-    expect_true("scenarios" %in% names(results) || "projectConfiguration" %in% names(results))
+    expect_true(
+      "scenarios" %in%
+        names(results) ||
+        "projectConfiguration" %in% names(results)
+    )
   }
 })
 
@@ -106,18 +110,22 @@ test_that("validateAllConfigurations validates all file types when provided", {
   )
 
   openxlsx::write.xlsx(
-    list(IndividualBiometrics = data.frame(
-      IndividualId = "ID1",
-      Age = 30
-    )),
+    list(
+      IndividualBiometrics = data.frame(
+        IndividualId = "ID1",
+        Age = 30
+      )
+    ),
     individuals_file
   )
 
   openxlsx::write.xlsx(
-    list(Demographics = data.frame(
-      PopulationName = "Pop1",
-      NumberOfIndividuals = 100
-    )),
+    list(
+      Demographics = data.frame(
+        PopulationName = "Pop1",
+        NumberOfIndividuals = 100
+      )
+    ),
     populations_file
   )
 
@@ -154,7 +162,14 @@ test_that("validateAllConfigurations validates all file types when provided", {
   expect_true("crossReferences" %in% names(results))
 
   # Clean up
-  unlink(c(scenarios_file, plots_file, individuals_file, populations_file, models_file, applications_file))
+  unlink(c(
+    scenarios_file,
+    plots_file,
+    individuals_file,
+    populations_file,
+    models_file,
+    applications_file
+  ))
 })
 
 test_that("validateAllConfigurations stops early on invalid project config", {
@@ -388,7 +403,10 @@ test_that(".validateModelsFile handles empty sheets", {
 test_that(".validateModelsFile warns about missing parameter path column", {
   temp_file <- tempfile(fileext = ".xlsx")
   # Create a sheet without parameter path column
-  openxlsx::write.xlsx(list(Model1 = data.frame(values = c(1, 2, 3))), temp_file)
+  openxlsx::write.xlsx(
+    list(Model1 = data.frame(values = c(1, 2, 3))),
+    temp_file
+  )
 
   result <- esqlabsR:::.validateModelsFile(temp_file)
   expect_true(length(result$warnings) > 0)
@@ -400,10 +418,12 @@ test_that(".validateModelsFile handles valid models file", {
   temp_file <- tempfile(fileext = ".xlsx")
   # Create a valid models file
   openxlsx::write.xlsx(
-    list(Model1 = data.frame(
-      paths = c("Param1", "Param2"),
-      values = c(1, 2)
-    )),
+    list(
+      Model1 = data.frame(
+        paths = c("Param1", "Param2"),
+        values = c(1, 2)
+      )
+    ),
     temp_file
   )
 
@@ -434,10 +454,12 @@ test_that(".validateApplicationsFile handles valid applications file", {
   temp_file <- tempfile(fileext = ".xlsx")
   # Create a valid applications file
   openxlsx::write.xlsx(
-    list(Application1 = data.frame(
-      dose = c(100, 200),
-      time = c(0, 24)
-    )),
+    list(
+      Application1 = data.frame(
+        dose = c(100, 200),
+        time = c(0, 24)
+      )
+    ),
     temp_file
   )
 
@@ -469,11 +491,13 @@ test_that(".validateIndividualsFile detects missing required sheet", {
 test_that(".validateIndividualsFile detects missing required columns", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
-    list(IndividualBiometrics = data.frame(
-      IndividualId = "ID1",
-      Species = "Human"
-      # Missing other required columns
-    )),
+    list(
+      IndividualBiometrics = data.frame(
+        IndividualId = "ID1",
+        Species = "Human"
+        # Missing other required columns
+      )
+    ),
     temp_file
   )
 
@@ -486,16 +510,18 @@ test_that(".validateIndividualsFile detects missing required columns", {
 test_that(".validateIndividualsFile detects duplicate IndividualId", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
-    list(IndividualBiometrics = data.frame(
-      IndividualId = c("ID1", "ID1"),
-      Species = c("Human", "Human"),
-      Population = c("European", "European"),
-      Gender = c("Male", "Female"),
-      `Age [year(s)]` = c(30, 40),
-      `Height [cm]` = c(175, 165),
-      `Weight [kg]` = c(70, 60),
-      check.names = FALSE
-    )),
+    list(
+      IndividualBiometrics = data.frame(
+        IndividualId = c("ID1", "ID1"),
+        Species = c("Human", "Human"),
+        Population = c("European", "European"),
+        Gender = c("Male", "Female"),
+        `Age [year(s)]` = c(30, 40),
+        `Height [cm]` = c(175, 165),
+        `Weight [kg]` = c(70, 60),
+        check.names = FALSE
+      )
+    ),
     temp_file
   )
 
@@ -508,16 +534,18 @@ test_that(".validateIndividualsFile detects duplicate IndividualId", {
 test_that(".validateIndividualsFile warns about non-numeric columns", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
-    list(IndividualBiometrics = data.frame(
-      IndividualId = c("ID1", "ID2"),
-      Species = c("Human", "Human"),
-      Population = c("European", "European"),
-      Gender = c("Male", "Female"),
-      `Age [year(s)]` = c("thirty", "forty"),
-      `Height [cm]` = c(175, 165),
-      `Weight [kg]` = c(70, 60),
-      check.names = FALSE
-    )),
+    list(
+      IndividualBiometrics = data.frame(
+        IndividualId = c("ID1", "ID2"),
+        Species = c("Human", "Human"),
+        Population = c("European", "European"),
+        Gender = c("Male", "Female"),
+        `Age [year(s)]` = c("thirty", "forty"),
+        `Height [cm]` = c(175, 165),
+        `Weight [kg]` = c(70, 60),
+        check.names = FALSE
+      )
+    ),
     temp_file
   )
 
@@ -530,16 +558,18 @@ test_that(".validateIndividualsFile warns about non-numeric columns", {
 test_that(".validateIndividualsFile handles valid file", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
-    list(IndividualBiometrics = data.frame(
-      IndividualId = c("ID1", "ID2"),
-      Species = c("Human", "Human"),
-      Population = c("European", "European"),
-      Gender = c("Male", "Female"),
-      `Age [year(s)]` = c(30, 40),
-      `Height [cm]` = c(175, 165),
-      `Weight [kg]` = c(70, 60),
-      check.names = FALSE
-    )),
+    list(
+      IndividualBiometrics = data.frame(
+        IndividualId = c("ID1", "ID2"),
+        Species = c("Human", "Human"),
+        Population = c("European", "European"),
+        Gender = c("Male", "Female"),
+        `Age [year(s)]` = c(30, 40),
+        `Height [cm]` = c(175, 165),
+        `Weight [kg]` = c(70, 60),
+        check.names = FALSE
+      )
+    ),
     temp_file
   )
 
@@ -571,11 +601,13 @@ test_that(".validatePopulationsFile detects missing required sheet", {
 test_that(".validatePopulationsFile detects missing required columns", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
-    list(Demographics = data.frame(
-      PopulationName = "Pop1",
-      species = "Human"
-      # Missing other required columns
-    )),
+    list(
+      Demographics = data.frame(
+        PopulationName = "Pop1",
+        species = "Human"
+        # Missing other required columns
+      )
+    ),
     temp_file
   )
 
@@ -588,21 +620,23 @@ test_that(".validatePopulationsFile detects missing required columns", {
 test_that(".validatePopulationsFile detects duplicate PopulationName", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
-    list(Demographics = data.frame(
-      PopulationName = c("Pop1", "Pop1"),
-      species = c("Human", "Human"),
-      population = c("European", "European"),
-      numberOfIndividuals = c(100, 100),
-      proportionOfFemales = c(0.5, 0.5),
-      ageMin = c(20, 20),
-      ageMax = c(60, 60),
-      weightMin = c(50, 50),
-      weightMax = c(100, 100),
-      heightMin = c(150, 150),
-      heightMax = c(200, 200),
-      BMIMin = c(18, 18),
-      BMIMax = c(30, 30)
-    )),
+    list(
+      Demographics = data.frame(
+        PopulationName = c("Pop1", "Pop1"),
+        species = c("Human", "Human"),
+        population = c("European", "European"),
+        numberOfIndividuals = c(100, 100),
+        proportionOfFemales = c(0.5, 0.5),
+        ageMin = c(20, 20),
+        ageMax = c(60, 60),
+        weightMin = c(50, 50),
+        weightMax = c(100, 100),
+        heightMin = c(150, 150),
+        heightMax = c(200, 200),
+        BMIMin = c(18, 18),
+        BMIMax = c(30, 30)
+      )
+    ),
     temp_file
   )
 
@@ -615,21 +649,23 @@ test_that(".validatePopulationsFile detects duplicate PopulationName", {
 test_that(".validatePopulationsFile warns about invalid proportionOfFemales", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
-    list(Demographics = data.frame(
-      PopulationName = c("Pop1", "Pop2"),
-      species = c("Human", "Human"),
-      population = c("European", "European"),
-      numberOfIndividuals = c(100, 100),
-      proportionOfFemales = c(1.5, -0.1),
-      ageMin = c(20, 20),
-      ageMax = c(60, 60),
-      weightMin = c(50, 50),
-      weightMax = c(100, 100),
-      heightMin = c(150, 150),
-      heightMax = c(200, 200),
-      BMIMin = c(18, 18),
-      BMIMax = c(30, 30)
-    )),
+    list(
+      Demographics = data.frame(
+        PopulationName = c("Pop1", "Pop2"),
+        species = c("Human", "Human"),
+        population = c("European", "European"),
+        numberOfIndividuals = c(100, 100),
+        proportionOfFemales = c(1.5, -0.1),
+        ageMin = c(20, 20),
+        ageMax = c(60, 60),
+        weightMin = c(50, 50),
+        weightMax = c(100, 100),
+        heightMin = c(150, 150),
+        heightMax = c(200, 200),
+        BMIMin = c(18, 18),
+        BMIMax = c(30, 30)
+      )
+    ),
     temp_file
   )
 
@@ -642,21 +678,23 @@ test_that(".validatePopulationsFile warns about invalid proportionOfFemales", {
 test_that(".validatePopulationsFile handles valid file", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
-    list(Demographics = data.frame(
-      PopulationName = c("Pop1", "Pop2"),
-      species = c("Human", "Human"),
-      population = c("European", "European"),
-      numberOfIndividuals = c(100, 100),
-      proportionOfFemales = c(0.5, 0.5),
-      ageMin = c(20, 20),
-      ageMax = c(60, 60),
-      weightMin = c(50, 50),
-      weightMax = c(100, 100),
-      heightMin = c(150, 150),
-      heightMax = c(200, 200),
-      BMIMin = c(18, 18),
-      BMIMax = c(30, 30)
-    )),
+    list(
+      Demographics = data.frame(
+        PopulationName = c("Pop1", "Pop2"),
+        species = c("Human", "Human"),
+        population = c("European", "European"),
+        numberOfIndividuals = c(100, 100),
+        proportionOfFemales = c(0.5, 0.5),
+        ageMin = c(20, 20),
+        ageMax = c(60, 60),
+        weightMin = c(50, 50),
+        weightMax = c(100, 100),
+        heightMin = c(150, 150),
+        heightMax = c(200, 200),
+        BMIMin = c(18, 18),
+        BMIMax = c(30, 30)
+      )
+    ),
     temp_file
   )
 
