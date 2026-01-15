@@ -366,11 +366,11 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @param projectConfigurationFilePath A string representing the path to the
     #'   project configuration file.
-    initialize = function(projectConfigurationFilePath = character()) {
+    initialize = function(projectConfigurationFilePath = NULL) {
       # Initialize as not modified
       private$.modified <- FALSE
 
-      if (!missing(projectConfigurationFilePath)) {
+      if (!is.null(projectConfigurationFilePath)) {
         self$projectConfigurationFilePath <- projectConfigurationFilePath
       } else {
         private$.projectConfigurationDirPath <- NULL
