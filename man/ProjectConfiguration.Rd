@@ -51,6 +51,13 @@ Must be located in the "configurationsFolder".}
 \item{\code{plotsFile}}{Name of the excel file with plot definitions.
 Must be located in the "configurationsFolder".}
 
+\item{\code{analysisFolder}}{Path to the folder containing excel files
+with analysis tasks.}
+
+\item{\code{parameterIdentificationFile}}{Name of the excel file with parameter
+identification definitions.
+Must be located in the "analysisFolder".}
+
 \item{\code{dataFolder}}{Path to the folder where experimental data files are
 located.}
 
@@ -81,7 +88,7 @@ Initialize}
 \if{latex}{\out{\hypertarget{method-ProjectConfiguration-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$new(projectConfigurationFilePath = character())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$new(projectConfigurationFilePath = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

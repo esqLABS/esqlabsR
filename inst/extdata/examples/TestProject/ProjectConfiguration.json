@@ -48,6 +48,16 @@
         "Description": "Name of the excel file with plot definitions. Must be located in the \"paramsFolder\""
       },
       {
+        "Property": "analysisFolder",
+        "Value": "Analysis/",
+        "Description": "Path to the folder containing excel files with analysis task definitions; relative to the location of this file"
+      },
+      {
+        "Property": "parameterIdentificationFile",
+        "Value": "ParameterIdentification.xlsx",
+        "Description": "Name of the excel file with parameter identification task definitions. Must be located in the \"analysesFolder\""
+      },
+      {
         "Property": "dataFolder",
         "Value": "Data/",
         "Description": "Path to the folder where experimental data files are located; relative to the location of this file"
@@ -117,7 +127,16 @@
   },
   "Individuals": {
     "IndividualBiometrics": {
-      "column_names": ["IndividualId", "Species", "Population", "Gender", "Weight [kg]", "Height [cm]", "Age [year(s)]", "Protein Ontogenies"],
+      "column_names": [
+        "IndividualId",
+        "Species",
+        "Population",
+        "Gender",
+        "Weight [kg]",
+        "Height [cm]",
+        "Age [year(s)]",
+        "Protein Ontogenies"
+      ],
       "rows": [
         {
           "IndividualId": "Indiv1",
@@ -145,7 +164,25 @@
   },
   "Populations": {
     "Demographics": {
-      "column_names": ["PopulationName", "species", "population", "numberOfIndividuals", "proportionOfFemales", "weightMin", "weightMax", "weightUnit", "heightMin", "heightMax", "heightUnit", "ageMin", "ageMax", "BMIMin", "BMIMax", "BMIUnit", "Protein Ontogenies"],
+      "column_names": [
+        "PopulationName",
+        "species",
+        "population",
+        "numberOfIndividuals",
+        "proportionOfFemales",
+        "weightMin",
+        "weightMax",
+        "weightUnit",
+        "heightMin",
+        "heightMax",
+        "heightUnit",
+        "ageMin",
+        "ageMax",
+        "BMIMin",
+        "BMIMax",
+        "BMIUnit",
+        "Protein Ontogenies"
+      ],
       "rows": [
         {
           "PopulationName": "TestPopulation",
@@ -188,13 +225,33 @@
       ]
     },
     "UserDefinedVariability": {
-      "column_names": ["Container Path", "Parameter Name", "Mean", "SD", "Distribution"],
+      "column_names": [
+        "Container Path",
+        "Parameter Name",
+        "Mean",
+        "SD",
+        "Distribution"
+      ],
       "rows": []
     }
   },
   "Scenarios": {
     "Scenarios": {
-      "column_names": ["Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile", "OutputPathsIds"],
+      "column_names": [
+        "Scenario_name",
+        "IndividualId",
+        "PopulationId",
+        "ReadPopulationFromCSV",
+        "ModelParameterSheets",
+        "ApplicationProtocol",
+        "SimulationTime",
+        "SimulationTimeUnit",
+        "SteadyState",
+        "SteadyStateTime",
+        "SteadyStateTimeUnit",
+        "ModelFile",
+        "OutputPathsIds"
+      ],
       "rows": [
         {
           "Scenario_name": "TestScenario",
@@ -302,7 +359,21 @@
   },
   "Plots": {
     "DataCombined": {
-      "column_names": ["DataCombinedName", "dataType", "label", "scenario", "path", "dataSet", "group", "xOffsets", "xOffsetsUnits", "yOffsets", "yOffsetsUnits", "xScaleFactors", "yScaleFactors"],
+      "column_names": [
+        "DataCombinedName",
+        "dataType",
+        "label",
+        "scenario",
+        "path",
+        "dataSet",
+        "group",
+        "xOffsets",
+        "xOffsetsUnits",
+        "yOffsets",
+        "yOffsetsUnits",
+        "xScaleFactors",
+        "yScaleFactors"
+      ],
       "rows": [
         {
           "DataCombinedName": "AciclovirPVB",
@@ -367,7 +438,23 @@
       ]
     },
     "plotConfiguration": {
-      "column_names": ["plotID", "DataCombinedName", "plotType", "title", "xUnit", "yUnit", "xAxisScale", "yAxisScale", "xValuesLimits", "yValuesLimits", "aggregation", "quantiles", "nsd", "foldDistance", "subtitle"],
+      "column_names": [
+        "plotID",
+        "DataCombinedName",
+        "plotType",
+        "title",
+        "xUnit",
+        "yUnit",
+        "xAxisScale",
+        "yAxisScale",
+        "xValuesLimits",
+        "yValuesLimits",
+        "aggregation",
+        "quantiles",
+        "nsd",
+        "foldDistance",
+        "subtitle"
+      ],
       "rows": [
         {
           "plotID": "P1",
@@ -504,7 +591,108 @@
   },
   "populationsCSV": {
     "TestPopulation.csv": {
-      "column_names": ["IndividualId", "Gender", "Population", "Organism.Weight", "Organism.BMI", "Organism.BSA", "Organism.Age", "Organism.Gestational.age", "Organism.Height", "Organism.Ontogeny.factor..albumin.", "Organism.Ontogeny.factor..alpha1.acid.glycoprotein.", "Organism.Hematocrit", "Organism.VenousBlood.Volume", "Organism.ArterialBlood.Volume", "Organism.Bone.Specific.blood.flow.rate", "Organism.Bone.Volume", "Organism.Brain.Volume", "Organism.Brain.Specific.blood.flow.rate", "Organism.Fat.Volume", "Organism.Fat.Vf..lipid.", "Organism.Fat.Vf..neutral.lipid..PT", "Organism.Fat.Vf..phospholipid..PT", "Organism.Fat.Fraction.interstitial", "Organism.Fat.Vf..water.", "Organism.Fat.Vf..water..PT", "Organism.Fat.Vf..neutral.lipid..RR", "Organism.Fat.Vf..neutral.lipid..WS", "Organism.Fat.Vf..neutral.phospholipid..RR", "Organism.Fat.Vf..neutral.phospholipid..plasma..WS", "Organism.Fat.Vf..extracellular.water..RR", "Organism.Fat.Vf..intracellular.water..RR", "Organism.Fat.Vf..water..WS", "Organism.Fat.Specific.blood.flow.rate", "Organism.Gonads.Volume", "Organism.Gonads.Specific.blood.flow.rate", "Organism.Heart.Volume", "Organism.Heart.Specific.blood.flow.rate", "Organism.Kidney.Volume", "Organism.Kidney.Age.of.aging.onset", "Organism.Kidney.Aging.half.time", "Organism.Kidney.GFRmat", "Organism.Kidney.Hill.coefficient.for.aging.GFR", "Organism.Kidney.Hill.coefficient.for.GFR", "Organism.Kidney.Maximal.decreasing.rate.factor", "Organism.Kidney.TM50.for.GFR", "Organism.Kidney.Specific.blood.flow.rate", "Organism.Lumen.Effective.surface.area.variability.factor", "Organism.Lumen.Stomach.Distal.radius", "Organism.Lumen.Stomach.Gastric.emptying.time", "Organism.Lumen.Stomach.GET_alpha..Weibull.function..variability.factor", "Organism.Lumen.Stomach.GET_beta..Weibull.function..variability.factor", "Organism.Lumen.Stomach.Length", "Organism.Lumen.Stomach.Proximal.radius", "Organism.Lumen.Duodenum.Effective.surface.area.enhancement.factor", "Organism.Lumen.UpperJejunum.Effective.surface.area.enhancement.factor", "Organism.Lumen.LowerJejunum.Effective.surface.area.enhancement.factor", "Organism.Lumen.UpperIleum.Effective.surface.area.enhancement.factor", "Organism.Lumen.LowerIleum.Effective.surface.area.enhancement.factor", "Organism.Lumen.Caecum.Effective.surface.area.enhancement.factor", "Organism.Lumen.ColonAscendens.Effective.surface.area.enhancement.factor", "Organism.Lumen.ColonTransversum.Effective.surface.area.enhancement.factor", "Organism.Lumen.ColonDescendens.Effective.surface.area.enhancement.factor", "Organism.Lumen.ColonSigmoid.Effective.surface.area.enhancement.factor", "Organism.Lumen.Rectum.Effective.surface.area.enhancement.factor", "Organism.Stomach.Volume", "Organism.Stomach.Specific.blood.flow.rate", "Organism.SmallIntestine.Small.intestinal.transit.time", "Organism.SmallIntestine.Volume", "Organism.SmallIntestine.Specific.blood.flow.rate", "Organism.LargeIntestine.Large.intestinal.transit.time", "Organism.LargeIntestine.Volume", "Organism.LargeIntestine.Specific.blood.flow.rate", "Organism.Liver.Volume", "Organism.Liver.Specific.blood.flow.rate", "Organism.Lung.Volume", "Organism.Lung.Fraction.vascular", "Organism.Muscle.Volume", "Organism.Muscle.Vf..lipid.", "Organism.Muscle.Vf..neutral.lipid..PT", "Organism.Muscle.Vf..phospholipid..PT", "Organism.Muscle.Vf..protein.", "Organism.Muscle.Vf..water.", "Organism.Muscle.Vf..water..PT", "Organism.Muscle.Fraction.interstitial", "Organism.Muscle.Vf..neutral.lipid..RR", "Organism.Muscle.Vf..neutral.lipid..WS", "Organism.Muscle.Vf..neutral.phospholipid..RR", "Organism.Muscle.Vf..neutral.phospholipid..plasma..WS", "Organism.Muscle.Vf..extracellular.water..RR", "Organism.Muscle.Vf..protein..WS", "Organism.Muscle.Vf..intracellular.water..RR", "Organism.Muscle.Vf..water..WS", "Organism.Muscle.Specific.blood.flow.rate", "Organism.Pancreas.Volume", "Organism.Pancreas.Specific.blood.flow.rate", "Organism.PortalVein.Volume", "Organism.Skin.Volume", "Organism.Skin.Specific.blood.flow.rate", "Organism.Spleen.Volume", "Organism.Spleen.Specific.blood.flow.rate"],
+      "column_names": [
+        "IndividualId",
+        "Gender",
+        "Population",
+        "Organism.Weight",
+        "Organism.BMI",
+        "Organism.BSA",
+        "Organism.Age",
+        "Organism.Gestational.age",
+        "Organism.Height",
+        "Organism.Ontogeny.factor..albumin.",
+        "Organism.Ontogeny.factor..alpha1.acid.glycoprotein.",
+        "Organism.Hematocrit",
+        "Organism.VenousBlood.Volume",
+        "Organism.ArterialBlood.Volume",
+        "Organism.Bone.Specific.blood.flow.rate",
+        "Organism.Bone.Volume",
+        "Organism.Brain.Volume",
+        "Organism.Brain.Specific.blood.flow.rate",
+        "Organism.Fat.Volume",
+        "Organism.Fat.Vf..lipid.",
+        "Organism.Fat.Vf..neutral.lipid..PT",
+        "Organism.Fat.Vf..phospholipid..PT",
+        "Organism.Fat.Fraction.interstitial",
+        "Organism.Fat.Vf..water.",
+        "Organism.Fat.Vf..water..PT",
+        "Organism.Fat.Vf..neutral.lipid..RR",
+        "Organism.Fat.Vf..neutral.lipid..WS",
+        "Organism.Fat.Vf..neutral.phospholipid..RR",
+        "Organism.Fat.Vf..neutral.phospholipid..plasma..WS",
+        "Organism.Fat.Vf..extracellular.water..RR",
+        "Organism.Fat.Vf..intracellular.water..RR",
+        "Organism.Fat.Vf..water..WS",
+        "Organism.Fat.Specific.blood.flow.rate",
+        "Organism.Gonads.Volume",
+        "Organism.Gonads.Specific.blood.flow.rate",
+        "Organism.Heart.Volume",
+        "Organism.Heart.Specific.blood.flow.rate",
+        "Organism.Kidney.Volume",
+        "Organism.Kidney.Age.of.aging.onset",
+        "Organism.Kidney.Aging.half.time",
+        "Organism.Kidney.GFRmat",
+        "Organism.Kidney.Hill.coefficient.for.aging.GFR",
+        "Organism.Kidney.Hill.coefficient.for.GFR",
+        "Organism.Kidney.Maximal.decreasing.rate.factor",
+        "Organism.Kidney.TM50.for.GFR",
+        "Organism.Kidney.Specific.blood.flow.rate",
+        "Organism.Lumen.Effective.surface.area.variability.factor",
+        "Organism.Lumen.Stomach.Distal.radius",
+        "Organism.Lumen.Stomach.Gastric.emptying.time",
+        "Organism.Lumen.Stomach.GET_alpha..Weibull.function..variability.factor",
+        "Organism.Lumen.Stomach.GET_beta..Weibull.function..variability.factor",
+        "Organism.Lumen.Stomach.Length",
+        "Organism.Lumen.Stomach.Proximal.radius",
+        "Organism.Lumen.Duodenum.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.UpperJejunum.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.LowerJejunum.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.UpperIleum.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.LowerIleum.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.Caecum.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.ColonAscendens.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.ColonTransversum.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.ColonDescendens.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.ColonSigmoid.Effective.surface.area.enhancement.factor",
+        "Organism.Lumen.Rectum.Effective.surface.area.enhancement.factor",
+        "Organism.Stomach.Volume",
+        "Organism.Stomach.Specific.blood.flow.rate",
+        "Organism.SmallIntestine.Small.intestinal.transit.time",
+        "Organism.SmallIntestine.Volume",
+        "Organism.SmallIntestine.Specific.blood.flow.rate",
+        "Organism.LargeIntestine.Large.intestinal.transit.time",
+        "Organism.LargeIntestine.Volume",
+        "Organism.LargeIntestine.Specific.blood.flow.rate",
+        "Organism.Liver.Volume",
+        "Organism.Liver.Specific.blood.flow.rate",
+        "Organism.Lung.Volume",
+        "Organism.Lung.Fraction.vascular",
+        "Organism.Muscle.Volume",
+        "Organism.Muscle.Vf..lipid.",
+        "Organism.Muscle.Vf..neutral.lipid..PT",
+        "Organism.Muscle.Vf..phospholipid..PT",
+        "Organism.Muscle.Vf..protein.",
+        "Organism.Muscle.Vf..water.",
+        "Organism.Muscle.Vf..water..PT",
+        "Organism.Muscle.Fraction.interstitial",
+        "Organism.Muscle.Vf..neutral.lipid..RR",
+        "Organism.Muscle.Vf..neutral.lipid..WS",
+        "Organism.Muscle.Vf..neutral.phospholipid..RR",
+        "Organism.Muscle.Vf..neutral.phospholipid..plasma..WS",
+        "Organism.Muscle.Vf..extracellular.water..RR",
+        "Organism.Muscle.Vf..protein..WS",
+        "Organism.Muscle.Vf..intracellular.water..RR",
+        "Organism.Muscle.Vf..water..WS",
+        "Organism.Muscle.Specific.blood.flow.rate",
+        "Organism.Pancreas.Volume",
+        "Organism.Pancreas.Specific.blood.flow.rate",
+        "Organism.PortalVein.Volume",
+        "Organism.Skin.Volume",
+        "Organism.Skin.Specific.blood.flow.rate",
+        "Organism.Spleen.Volume",
+        "Organism.Spleen.Specific.blood.flow.rate"
+      ],
       "rows": [
         {
           "IndividualId": "0",
