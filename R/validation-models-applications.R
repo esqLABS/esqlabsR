@@ -13,7 +13,10 @@
   sheets <- readxl::excel_sheets(filePath)
 
   if (length(sheets) == 0) {
-    result$add_critical_error("Structure", "Models file must contain at least one sheet")
+    result$add_critical_error(
+      "Structure",
+      "Models file must contain at least one sheet"
+    )
     return(result)
   }
 
@@ -29,8 +32,10 @@
         } else {
           # Models sheets should have parameter paths and values
           if (!"paths" %in% names(df) && !"ParameterPath" %in% names(df)) {
-            result$add_warning("Structure",
-              paste0("Sheet '", sheet, "' may be missing parameter path column"))
+            result$add_warning(
+              "Structure",
+              paste0("Sheet '", sheet, "' may be missing parameter path column")
+            )
           }
         }
 
@@ -58,7 +63,10 @@
   sheets <- readxl::excel_sheets(filePath)
 
   if (length(sheets) == 0) {
-    result$add_critical_error("Structure", "Applications file must contain at least one sheet")
+    result$add_critical_error(
+      "Structure",
+      "Applications file must contain at least one sheet"
+    )
     return(result)
   }
 

@@ -1,5 +1,10 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+- R version >=4.4 is required
+- ospsuite.utils version >=1.10.0 is required
+
 ## New features
 - Added comprehensive three-tier validation system for Excel configuration files. New exported functions:
   - `validateAllConfigurations()`: Validates all project configuration files
@@ -10,6 +15,7 @@
 ## Minor improvements and bug fixes
 - Fixed variable scoping issues in validation functions
 - Simplified validation logic to check data frame structure instead of R6 objects
+- Using native operator `%||%` instead of importing from the `ospsuite.utils` package.
 
 # esqlabsR 5.5.1
 

@@ -572,9 +572,15 @@ createPlotsFromExcel <- function(
         numericTest <- suppressWarnings(as.numeric(spaceSplit))
         if (!any(is.na(numericTest))) {
           # User likely used spaces instead of commas
-          stop(messages$excelFieldFormatError(
-            fieldName, originalValue, plotID, "comma-separated"
-          ), call. = FALSE)
+          stop(
+            messages$excelFieldFormatError(
+              fieldName,
+              originalValue,
+              plotID,
+              "comma-separated"
+            ),
+            call. = FALSE
+          )
         }
       }
     }
@@ -585,9 +591,16 @@ createPlotsFromExcel <- function(
     tryCatch(
       ospsuite.utils::validateIsOfLength(parsed, expectedLength),
       error = function(e) {
-        stop(messages$excelFieldLengthError(
-          fieldName, originalValue, plotID, expectedLength, length(parsed)
-        ), call. = FALSE)
+        stop(
+          messages$excelFieldLengthError(
+            fieldName,
+            originalValue,
+            plotID,
+            expectedLength,
+            length(parsed)
+          ),
+          call. = FALSE
+        )
       }
     )
   }
@@ -598,9 +611,15 @@ createPlotsFromExcel <- function(
     tryCatch(
       ospsuite.utils::validateIsNumeric(numericParsed),
       error = function(e) {
-        stop(messages$excelFieldTypeError(
-          fieldName, originalValue, plotID, "numeric"
-        ), call. = FALSE)
+        stop(
+          messages$excelFieldTypeError(
+            fieldName,
+            originalValue,
+            plotID,
+            "numeric"
+          ),
+          call. = FALSE
+        )
       }
     )
     return(numericParsed)
@@ -644,7 +663,11 @@ createPlotsFromExcel <- function(
         value <- .parseExcelMultiValueField(
           value = value,
           fieldName = colName,
-          plotID = if ("plotID" %in% names(columns)) columns[["plotID"]] else NULL,
+          plotID = if ("plotID" %in% names(columns)) {
+            columns[["plotID"]]
+          } else {
+            NULL
+          },
           expectedLength = 2,
           expectedType = "numeric"
         )

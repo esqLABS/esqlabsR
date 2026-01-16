@@ -641,7 +641,9 @@ messages$validationMissingSheets <- function(sheets) {
 }
 
 messages$validationMissingColumns <- function(sheet, columns) {
-  cliFormat("Missing required columns in sheet {.val {sheet}}: {.val {paste(columns, collapse = ', ')}}")
+  cliFormat(
+    "Missing required columns in sheet {.val {sheet}}: {.val {paste(columns, collapse = ', ')}}"
+  )
 }
 
 messages$validationEmptySheet <- function(sheet) {
@@ -649,11 +651,15 @@ messages$validationEmptySheet <- function(sheet) {
 }
 
 messages$validationCrossReference <- function(source, target, missing) {
-  cliFormat("Invalid references from {.val {source}} to {.val {target}}: {.val {paste(missing, collapse = ', ')}}")
+  cliFormat(
+    "Invalid references from {.val {source}} to {.val {target}}: {.val {paste(missing, collapse = ', ')}}"
+  )
 }
 
 messages$validationRequiredFileNotConfigured <- function(fileName) {
-  cliFormat("Required configuration file {.file {fileName}} is not configured in ProjectConfiguration")
+  cliFormat(
+    "Required configuration file {.file {fileName}} is not configured in ProjectConfiguration"
+  )
 }
 
 messages$excelNoDataRows <- function() {
