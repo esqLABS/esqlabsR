@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.1.9005</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.1.9006</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,6 +52,11 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
 <div class="section level3">
+<h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
+<ul><li>R version &gt;=4.4 is required</li>
+<li>ospsuite.utils version &gt;=1.10.0 is required</li>
+</ul></div>
+<div class="section level3">
 <h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
 <ul><li>Added comprehensive three-tier validation system for Excel configuration files. New exported functions:
 <ul><li>
@@ -67,6 +72,7 @@
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
 <ul><li>Fixed variable scoping issues in validation functions</li>
 <li>Simplified validation logic to check data frame structure instead of R6 objects</li>
+<li>Using native operator <code>%||%</code> instead of importing from the <code>ospsuite.utils</code> package.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -445,7 +451,7 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/circles.png" style="max-width:33px">esqLABS</a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, <a href="https://github.com/Felixmil" class="external-link">Felix Mil</a>, Sia Mirza.</p>
+  <p>Developed by ESQlabs GmbH, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, <a href="https://github.com/Felixmil" class="external-link">Felix Mil</a>, Sia Mirza.</p>
 </div>
 
 <div class="pkgdown-footer-right">
