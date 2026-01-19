@@ -2,6 +2,8 @@
 
 ## esqlabsR (development version)
 
+## esqlabsR 5.5.2
+
 ### Breaking changes
 
 - R version \>=4.4 is required
