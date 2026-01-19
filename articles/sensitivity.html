@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,15 +37,15 @@
 <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6></li>
     <li><a class="dropdown-item" href="../articles/workflow-overview.html">Overview</a></li>
-    <li><a class="dropdown-item" href="../articles/project-structure.html">1. Initialize a Project</a></li>
+    <li><a class="dropdown-item" href="../articles/project-structure.html">Project configuration</a></li>
     <li><a class="dropdown-item" href="../articles/design-scenarios.html">2. Design Scenarios</a></li>
     <li><a class="dropdown-item" href="../articles/run-simulations.html">3. Run Simulations</a></li>
     <li><a class="dropdown-item" href="../articles/plot-results.html">4. Plot Results</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
-    <li><a class="dropdown-item" href="../articles/presentations.html">Presentations</a></li>
     <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
     <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
+    <li><a class="dropdown-item" href="../articles/presentations.html">Slide Decks</a></li>
     <li><a class="dropdown-item" href="../articles/advanced.html">Advanced Topics</a></li>
     <li><a class="dropdown-item" href="../articles/project-migration-guide.html">Migrating Project Structure Versions</a></li>
   </ul>
@@ -209,7 +209,7 @@ compare the direction and magnitude of effects.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
-<p><img src="sensitivity_files/figure-html/spider-plot-1.png" class="r-plt" width="672"></p>
+<p><img src="sensitivity_files/figure-html/spider-plot-1.png" class="r-plt" alt="" width="672"></p>
 <p>In this example, <em>Dose</em> shows a strong and nonlinear effect on
 both <code>C_max</code> and <code>AUC_inf</code>, while
 <code>t_max</code> remains relatively stable. <em>GFR fraction</em> and
@@ -227,7 +227,7 @@ representing the scaling factor: 0.1 = blue, 1.0 = black, 10 = red.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
-<p><img src="sensitivity_files/figure-html/time-profile-1.png" class="r-plt" width="672"></p>
+<p><img src="sensitivity_files/figure-html/time-profile-1.png" class="r-plt" alt="" width="672"></p>
 <p>Here, increasing the <em>Dose</em> uniformly raises the profile,
 while changes in <em>GFR fraction</em> affect the rate of decline,
 indicating faster or slower elimination. <em>Lipophilicity</em> causes
@@ -248,7 +248,7 @@ they must be included in the <code>variationRange</code> passed to
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
-<p><img src="sensitivity_files/figure-html/tornado-plot-1.png" class="r-plt" width="672"></p>
+<p><img src="sensitivity_files/figure-html/tornado-plot-1.png" class="r-plt" alt="" width="672"></p>
 <p>The tornado plot confirms the trends seen in previous plots, but
 makes it easier to compare the relative impact of each parameter across
 PK metrics.</p>
@@ -320,7 +320,7 @@ aciclovir.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">customAnalysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
-<p><img src="sensitivity_files/figure-html/custom-plot-1.png" class="r-plt" width="672"></p>
+<p><img src="sensitivity_files/figure-html/custom-plot-1.png" class="r-plt" alt="" width="672"></p>
 </div>
 <div class="section level3">
 <h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
@@ -351,7 +351,7 @@ multiplication factor is 1).</li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://esqlabs.com/" class="external-link"><img src="https://esqlabs.github.io/esqlabsR/reference/figures/circles.png" style="max-width:33px">esqLABS</a>, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, <a href="https://github.com/Felixmil" class="external-link">Felix Mil</a>.</p>
+  <p>Developed by ESQlabs GmbH, Pavel Balazki, Johanna Eitel, <a href="https://sites.google.com/site/indrajeetspatilmorality/" class="external-link">Indrajeet Patil</a>, Sergei Vavilov, <a href="https://github.com/Felixmil" class="external-link">Felix Mil</a>, Sia Mirza.</p>
 </div>
 
 <div class="pkgdown-footer-right">

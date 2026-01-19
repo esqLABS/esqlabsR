@@ -112,10 +112,6 @@ names(simulatedScenariosResults)
 
 # Each simulation can be accessed using its name
 simulatedScenariosResults$TestScenario$simulation
-#> <Simulation>
-#>   • Name: TestScenario
-#>   • Source file:
-#>   /home/runner/work/_temp/Library/esqlabsR/extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml
 
 # Of course, it contains simulated results as dataframe
 head(simulatedScenariosResults$TestScenario$outputValues$data)
@@ -123,6 +119,10 @@ head(simulatedScenariosResults$TestScenario$outputValues$data)
 # It also contains dataframe's metadata
 head(simulatedScenariosResults$TestScenario$outputValues$metaData)
 #> [1] "TestScenario"
+#> <Simulation>
+#>   • Name: TestScenario
+#>   • Source file:
+#>   /home/runner/work/_temp/Library/esqlabsR/extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml
 #>   IndividualId Time
 #> 1            0    0
 #> 2            0    1
@@ -132,11 +132,11 @@ head(simulatedScenariosResults$TestScenario$outputValues$metaData)
 #> 6            0    5
 #>   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
 #> 1                                                                  0.000000
-#> 2                                                                  2.712924
-#> 3                                                                  7.830218
-#> 4                                                                 13.107173
-#> 5                                                                 18.253719
-#> 6                                                                 23.234430
+#> 2                                                                  2.712902
+#> 3                                                                  7.830275
+#> 4                                                                 13.107316
+#> 5                                                                 18.253933
+#> 6                                                                 23.234703
 #> NULL
 ```
 

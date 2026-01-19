@@ -397,6 +397,14 @@ By contributing to this project, you agree to abide by its terms.
 
 ## Input validation
 
+- [`validateAllConfigurations()`](https://esqlabs.github.io/esqlabsR/reference/validateAllConfigurations.md)
+  : Validate all configuration files in a project
+- [`validationResult`](https://esqlabs.github.io/esqlabsR/reference/validationResult.md)
+  : validationResult
+- [`validationSummary()`](https://esqlabs.github.io/esqlabsR/reference/validationSummary.md)
+  : Get summary of all validation results
+- [`isAnyCriticalErrors()`](https://esqlabs.github.io/esqlabsR/reference/isAnyCriticalErrors.md)
+  : Check if validation results contain any critical errors
 - [`isParametersEqual()`](https://esqlabs.github.io/esqlabsR/reference/isParametersEqual.md)
   : Check if two parameters are equal with respect to certain
   properties.
@@ -472,22 +480,23 @@ By contributing to this project, you agree to abide by its terms.
 ### esqlabsR Workflow
 
 - [Overview](https://esqlabs.github.io/esqlabsR/articles/workflow-overview.md):
-- [1. Initialize a
-  Project](https://esqlabs.github.io/esqlabsR/articles/project-structure.md):
+- [Project
+  configuration](https://esqlabs.github.io/esqlabsR/articles/project-structure.md):
 - [2. Design
   Scenarios](https://esqlabs.github.io/esqlabsR/articles/design-scenarios.md):
 - [3. Run
   Simulations](https://esqlabs.github.io/esqlabsR/articles/run-simulations.md):
 - [4. Plot
   Results](https://esqlabs.github.io/esqlabsR/articles/plot-results.md):
-
-### Miscellaneous
-
-- [Presentations](https://esqlabs.github.io/esqlabsR/articles/presentations.md):
 - [Sensitivity
   Analysis](https://esqlabs.github.io/esqlabsR/articles/sensitivity.md):
 - [Sensitivity Analysis – Plot
   Customization](https://esqlabs.github.io/esqlabsR/articles/sensitivity-plots.md):
+
+### Miscellaneous
+
+- [Slide
+  Decks](https://esqlabs.github.io/esqlabsR/articles/presentations.md):
 - [Advanced
   Topics](https://esqlabs.github.io/esqlabsR/articles/advanced.md):
 - [Migrating Project Structure

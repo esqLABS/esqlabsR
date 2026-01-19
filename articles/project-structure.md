@@ -1,8 +1,22 @@
-# 1. Initialize a Project
+# Project configuration
+
+## Project Configuration Overview
+
+The project configuration is the central piece of any `esqlabsR`
+project. It defines the structure of your project, specifies where all
+necessary files are stored, and provides the foundation for all
+workflows in the package. The project configuration consists of:
+
+- **Project structure**: A standardized folder hierarchy that organizes
+  your models, data, parameters, scenarios, and results
+- **ProjectConfiguration object**: An R object that stores paths to all
+  project files and directories
+- **Configuration files**: Excel files (or JSON snapshots) that define
+  the project setup
 
 ## Initialize the Project Structure
 
-Project Structure can be initialized by calling the function
+Project structure can be initialized by calling the function
 [`initProject()`](https://esqlabs.github.io/esqlabsR/reference/initProject.md).
 
 ``` r
@@ -56,6 +70,87 @@ Now that the project structure is initialized and the
 [`vignette("design-scenarios")`](https://esqlabs.github.io/esqlabsR/articles/design-scenarios.md)
 to continue the process. To learn more about `ProjectConfiguration`,
 read the following sections.
+
+## Validating Project Configuration
+
+Before running simulations, it is recommended to validate your project
+configuration files to catch potential issues early. The
+[`validateAllConfigurations()`](https://esqlabs.github.io/esqlabsR/reference/validateAllConfigurations.md)
+function performs comprehensive validation across all Excel
+configuration files and returns structured results.
+
+### Validation Process
+
+The validation system checks your configuration files for:
+
+- **Structural issues**: Missing required sheets or columns
+- **Data integrity**: Empty sheets, invalid data types, required fields
+- **Uniqueness constraints**: Duplicate IDs or names that must be unique
+- **Cross-references**: Invalid references between configuration files
+  (e.g., scenarios referencing non-existent individuals)
+
+### Three-Tier Validation Results
+
+Validation results are categorized into three levels:
+
+1.  **Critical Errors**: Blocking issues that prevent data import and
+    must be fixed (e.g., missing required sheets, missing required
+    columns)
+2.  **Warnings**: Non-blocking issues that allow import but indicate
+    potential problems (e.g., empty optional sheets, data type
+    mismatches)
+3.  **Valid Data**: Successfully validated data ready for use
+
+### Usage Example
+
+``` r
+# Validate all configuration files in a project
+validation_results <- validateAllConfigurations(my_project_configuration)
+
+# Or validate directly from the Excel file path
+validation_results <- validateAllConfigurations(exampleProjectConfigurationPath())
+
+# Check if there are any critical errors
+if (isAnyCriticalErrors(validation_results)) {
+  # Get detailed summary
+  summary <- validationSummary(validation_results)
+  print(paste("Critical errors found in:", paste(summary$files_with_errors, collapse = ", ")))
+  print(paste("Total critical errors:", summary$total_critical_errors))
+} else {
+  print("All validations passed!")
+}
+```
+
+### Interpreting Validation Results
+
+The
+[`validateAllConfigurations()`](https://esqlabs.github.io/esqlabsR/reference/validateAllConfigurations.md)
+function returns a named list of `validationResult` objects, one for
+each configuration file validated. Each result contains:
+
+- `critical_errors`: List of blocking issues
+- `warnings`: List of non-blocking issues
+- `data`: The validated data (if validation succeeded)
+
+You can access individual file results:
+
+``` r
+# Check scenarios validation
+scenarios_result <- validation_results$scenarios
+
+if (scenarios_result$has_critical_errors()) {
+  print("Scenarios file has critical errors:")
+  print(scenarios_result$critical_errors)
+}
+
+if (length(scenarios_result$warnings) > 0) {
+  print("Scenarios file has warnings:")
+  print(scenarios_result$warnings)
+}
+```
+
+The validation system ensures data quality before simulation, helping
+you identify and fix configuration issues early in your workflow.
 
 ## Details
 

@@ -43,10 +43,10 @@ for `name`, `path`, `format`, `width`, `height`, `units`, and `dpi`.
 
 Inherited methods
 
-- [`tlf::ExportConfiguration$convertPixels()`](https://esqlabs.github.io/tlf/html/ExportConfiguration.html#method-ExportConfiguration-convertPixels)
-- [`tlf::ExportConfiguration$getFileName()`](https://esqlabs.github.io/tlf/html/ExportConfiguration.html#method-ExportConfiguration-getFileName)
-- [`tlf::ExportConfiguration$initialize()`](https://esqlabs.github.io/tlf/html/ExportConfiguration.html#method-ExportConfiguration-initialize)
-- [`tlf::ExportConfiguration$print()`](https://esqlabs.github.io/tlf/html/ExportConfiguration.html#method-ExportConfiguration-print)
+- [`tlf::ExportConfiguration$convertPixels()`](https://rdrr.io/pkg/tlf/man/ExportConfiguration.html#method-convertPixels)
+- [`tlf::ExportConfiguration$getFileName()`](https://rdrr.io/pkg/tlf/man/ExportConfiguration.html#method-getFileName)
+- [`tlf::ExportConfiguration$initialize()`](https://rdrr.io/pkg/tlf/man/ExportConfiguration.html#method-initialize)
+- [`tlf::ExportConfiguration$print()`](https://rdrr.io/pkg/tlf/man/ExportConfiguration.html#method-print)
 
 ------------------------------------------------------------------------
 

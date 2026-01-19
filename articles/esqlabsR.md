@@ -156,6 +156,28 @@ my_scenarios <- createScenarios(
 )
 ```
 
+    #> <ScenarioConfiguration>
+    #> 
+    #> ── Scenario configuration ──────────────────────────────────────────────────────
+    #>   • Scenario name: TestScenario
+    #>   • Model file name: Aciclovir.pkml
+    #>   • Application protocol: Aciclovir_iv_250mg
+    #>   • Simulation type: Individual
+    #>   • Individual Id: Indiv1
+    #>   • Population Id: NULL
+    #>   • Read population from csv file: FALSE
+    #>   • Parameters sheets: Global
+    #>   • Simulate steady-state: FALSE
+    #>   • Steady-state time: 1000
+    #> 
+    #> ── Simulation time intervals ──
+    #> 
+    #> Interval 1:
+    #>   • Start: 0
+    #>   • End: 24
+    #>   • Resolution: 60
+    #>   • Simulation time intervals unit: h
+
 Then, we run the simulations by passing the scenarios we defined:
 
 ``` r

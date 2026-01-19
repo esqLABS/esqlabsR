@@ -209,6 +209,14 @@
 
 ## Input validation
 
+- [`validateAllConfigurations()`](https://esqlabs.github.io/esqlabsR/reference/validateAllConfigurations.md)
+  : Validate all configuration files in a project
+- [`validationResult`](https://esqlabs.github.io/esqlabsR/reference/validationResult.md)
+  : validationResult
+- [`validationSummary()`](https://esqlabs.github.io/esqlabsR/reference/validationSummary.md)
+  : Get summary of all validation results
+- [`isAnyCriticalErrors()`](https://esqlabs.github.io/esqlabsR/reference/isAnyCriticalErrors.md)
+  : Check if validation results contain any critical errors
 - [`isParametersEqual()`](https://esqlabs.github.io/esqlabsR/reference/isParametersEqual.md)
   : Check if two parameters are equal with respect to certain
   properties.

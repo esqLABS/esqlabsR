@@ -1,5 +1,32 @@
 # Changelog
 
+## esqlabsR 5.5.2
+
+### Breaking changes
+
+- R version \>=4.4 is required
+- ospsuite.utils version \>=1.10.0 is required
+
+### New features
+
+- Added comprehensive three-tier validation system for Excel
+  configuration files. New exported functions:
+  - [`validateAllConfigurations()`](https://esqlabs.github.io/esqlabsR/reference/validateAllConfigurations.md):
+    Validates all project configuration files
+  - [`validationSummary()`](https://esqlabs.github.io/esqlabsR/reference/validationSummary.md):
+    Returns summary of validation results
+  - [`isAnyCriticalErrors()`](https://esqlabs.github.io/esqlabsR/reference/isAnyCriticalErrors.md):
+    Checks if validation found blocking errors
+- Added validation documentation to project-structure vignette
+
+### Minor improvements and bug fixes
+
+- Fixed variable scoping issues in validation functions
+- Simplified validation logic to check data frame structure instead of
+  R6 objects
+- Using native operator `%||%` instead of importing from the
+  `ospsuite.utils` package.
+
 ## esqlabsR 5.5.1
 
 ### Minor improvements and bug fixes

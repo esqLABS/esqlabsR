@@ -233,6 +233,9 @@ dataCombined <- createDataCombinedFromExcel(
 
 print(dataCombined)
 #> $AciclovirPVB
+#> <DataCombined>
+#> 
+#> ── Datasets and groupings: ─────────────────────────────────────────────────────
 #> 
 #> # A tibble: 2 × 3
 #>   name                group         dataType 
@@ -250,7 +253,7 @@ residuals <- calculateResiduals(
 sumResiduals <- sum(residuals$residualValues)
 
 print(paste0("The sum of linear residuals for is ", sumResiduals))
-#> [1] "The sum of linear residuals for is 47.1955055826414"
+#> [1] "The sum of linear residuals for is 47.1850939396566"
 ```
 
 You can modify the created `DataCombined`, e.g., by changing the

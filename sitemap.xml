@@ -41,6 +41,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/createProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/createScenarioConfigurationsFromPKML.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/createScenarios.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-categorize_message.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-createConfigurationFromRow.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-formatSimulationTimeForExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-getScenarioCount.html</loc></url>
@@ -48,14 +49,23 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-parseSimulationTimeIntervals.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-readOntongeniesFromXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-recycleOrValidateVector.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-safe_validate.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-sanitizeExcelSheetName.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateApplicationsFile.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateClassHasField.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateCrossReferences.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateDataCombinedFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateExportConfigurationsFromExcel.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateIndividualsFile.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateModelsFile.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateParametersStructure.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validatePlotConfigurationFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validatePlotGridsFromExcel.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validatePlotsFile.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validatePopulationsFile.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateScenarioConfigurations.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-validateScenariosFile.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/dot-writeScenariosToExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/enumPutList.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/esqlabsColors.html</loc></url>
@@ -76,6 +86,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/index.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/initProject.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/initializeSimulation.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/isAnyCriticalErrors.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/isParametersEqual.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/isProjectInitialized.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/isTableFormulasEqual.html</loc></url>
@@ -90,7 +101,6 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/readParametersFromXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/readPopulationCharacteristicsFromXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/readScenarioConfigurationFromExcel.html</loc></url>
-<url><loc>https://esqlabs.github.io/esqlabsR/reference/reexports.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/removeFromList.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/restoreProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/runScenarios.html</loc></url>
@@ -106,6 +116,9 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/snapshotProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/sourceAll.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/stringToNum.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/validateAllConfigurations.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/validationResult.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/reference/validationSummary.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/writeIndividualToXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/reference/writeParameterStructureToXLS.html</loc></url>
 </urlset>
