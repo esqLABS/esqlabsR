@@ -83,6 +83,11 @@
   It is now possible to create scenarios for each species implemented in PK-Sim
   (except for the experimental cat and cattle) from the base human simulation.
 
+- New function `addPlotsToExcelFromSnapshot()` to add entries for plots defined 
+for all simulations of a PK-Sim snapshot to the `Plots.xlsx` file.
+- New function `createScenarioConfigurationsFromSnapshot()` to create scenario configurations
+for all simulations of a PK-Sim snapshot.
+
 ## Minor improvements and bug fixes
 
 - `readScenarioConfigurationFromExcel()` ignores rows where `Scenario_name` is empty.
