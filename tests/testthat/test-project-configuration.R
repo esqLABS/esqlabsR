@@ -38,41 +38,41 @@ test_that("Project Configuration can be customized but throws warning if path ar
   temp_project2 <- with_temp_project()
   myConfig <- temp_project2$config
   expect_warning({
-    myConfig$dataFolder <- "folder/that/does/not/exist"
+    myConfig$dataFolder <- "folder/data/does/not/exist"
   })
   expect_warning({
-    myConfig$modelFolder <- "folder/that/does/not/exist"
+    myConfig$modelFolder <- "folder/model/does/not/exist"
   })
   expect_warning({
-    myConfig$populationsFolder <- "folder/that/does/not/exist"
+    myConfig$populationsFolder <- "folder/populations/does/not/exist"
   })
 
   # Create a new temporary project for each test to avoid interference
   temp_project3 <- with_temp_project()
   myConfig <- temp_project3$config
   expect_warning({
-    myConfig$modelParamsFile <- "donotexist.xslx"
+    myConfig$modelParamsFile <- "modelparams_donotexist.xlsx"
   })
   expect_warning({
-    myConfig$individualsFile <- "donotexist.xslx"
+    myConfig$individualsFile <- "individuals_donotexist.xlsx"
   })
   expect_warning({
-    myConfig$populationsFile <- "donotexist.xslx"
+    myConfig$populationsFile <- "populations_donotexist.xlsx"
   })
   expect_warning({
-    myConfig$scenariosFile <- "donotexist.xslx"
+    myConfig$scenariosFile <- "scenarios_donotexist.xlsx"
   })
   expect_warning({
-    myConfig$applicationsFile <- "donotexist.xslx"
+    myConfig$applicationsFile <- "applications_donotexist.xlsx"
   })
   expect_warning({
-    myConfig$plotsFile <- "donotexist.xslx"
+    myConfig$plotsFile <- "plots_donotexist.xlsx"
   })
   expect_warning({
-    myConfig$dataFile <- "donotexist.xslx"
+    myConfig$dataFile <- "data_donotexist.xlsx"
   })
   expect_warning({
-    myConfig$dataImporterConfigurationFile <- "donotexist.xslx"
+    myConfig$dataImporterConfigurationFile <- "importer_donotexist.xml"
   })
 })
 
