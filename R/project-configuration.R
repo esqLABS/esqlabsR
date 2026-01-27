@@ -218,6 +218,7 @@ ProjectConfiguration <- R6::R6Class(
     .projectConfigurationFilePath = NULL,
     .projectConfigurationDirPath = NULL,
     .modified = FALSE,
+    .warned_paths = character(),
     .checkProjectConfigurationFile = function() {
       data <- private$.projectConfigurationData
 
@@ -286,6 +287,7 @@ ProjectConfiguration <- R6::R6Class(
       # Reset private variables
       private$.replaced_env_vars <- list()
       private$.projectConfigurationData <- list()
+      private$.warned_paths <- character()
 
       for (property in inputData$Property) {
         private$.projectConfigurationData[[property]] <- list(
@@ -330,7 +332,11 @@ ProjectConfiguration <- R6::R6Class(
 
       # Check whether the generated path exists
       if (!fs::file_exists(abs_path) && must_work == TRUE) {
-        warning(messages$fileNotFound(abs_path))
+        # Only warn if we haven't already warned about this path
+        if (!(abs_path %in% private$.warned_paths)) {
+          warning(messages$fileNotFound(abs_path))
+          private$.warned_paths <- c(private$.warned_paths, abs_path)
+        }
       }
 
       return(abs_path)
