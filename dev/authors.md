@@ -26,13 +26,13 @@ Source:
 [`DESCRIPTION`](https://github.com/esqLABS/esqlabsR/blob/main/DESCRIPTION)
 
 Balazki P, Eitel J, Patil I, Vavilov S, Mil F, Mirza S (2026).
-*esqlabsR: ESQlabs utilities package*. R package version 5.5.2.9001,
+*esqlabsR: ESQlabs utilities package*. R package version 5.5.2.9002,
 <https://github.com/esqLABS/esqlabsR>.
 
     @Manual{,
       title = {esqlabsR: ESQlabs utilities package},
       author = {Pavel Balazki and Johanna Eitel and Indrajeet Patil and Sergei Vavilov and Felix Mil and Sia Mirza},
       year = {2026},
-      note = {R package version 5.5.2.9001},
+      note = {R package version 5.5.2.9002},
       url = {https://github.com/esqLABS/esqlabsR},
     }
