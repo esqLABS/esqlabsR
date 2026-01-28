@@ -700,3 +700,40 @@ messages$abortedByUser <- function() {
     "Aborted by user."
   )
 }
+
+messages$errorPINotFound <- function(type, name, available) {
+  switch(
+    type,
+    "task" = cli::format_message(c(
+      "x" = "PI task(s) not found: {.val {paste(name, collapse = ', ')}}",
+      "i" = "Available PI tasks: {.val {paste(available, collapse = ', ')}}"
+    )),
+    "scenario" = cli::format_message(c(
+      "x" = "Scenario {.val {name}} referenced in PI configuration not found",
+      "i" = "Available scenarios: {.val {paste(available, collapse = ', ')}}"
+    )),
+    cliFormat("Unknown PI not found type: {.val {type}}")
+  )
+}
+
+messages$messagePISheet <- function(
+  type,
+  taskName,
+  sheetName = NULL,
+  filePath = NULL
+) {
+  switch(
+    type,
+    "taskMissing" = cliFormat(
+      "PI task {.val {taskName}} not found in {.val {sheetName}} sheet"
+    ),
+    "duplicate" = cliFormat(
+      "Multiple entries for PI task {.val {taskName}} in {.val {sheetName}} sheet. Using first entry."
+    ),
+    "missingSheets" = cliFormat(
+      "Required sheet(s) missing in {.file {filePath}}: {.val {paste(taskName, collapse = ', ')}}.
+      ParameterIdentification.xlsx must contain: PIConfiguration, PIParameters, PIOutputMappings, AlgorithmOptions, CIOptions"
+    ),
+    cliFormat("Unknown PI sheet message type: {.val {type}}")
+  )
+}

@@ -76,8 +76,8 @@ PITaskConfiguration <- R6::R6Class(
           "PI Task Name" = self$piTaskName,
           "Scenario Name" = self$scenarioName,
           "Model File" = self$modelFile,
-          "Algorithm" = self$piConfiguration$algorithm,
-          "CI Method" = self$piConfiguration$ciMethod,
+          "Algorithm" = self$piConfiguration$Algorithm,
+          "CI Method" = self$piConfiguration$CIMethod,
           "Parameter Count" = length(self$piParameters),
           "Output Mapping Count" = length(self$piOutputMappings)
         ),
