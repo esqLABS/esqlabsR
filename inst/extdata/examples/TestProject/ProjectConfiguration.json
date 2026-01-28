@@ -48,14 +48,9 @@
         "Description": "Name of the excel file with plot definitions. Must be located in the \"paramsFolder\""
       },
       {
-        "Property": "analysisFolder",
-        "Value": "Analysis/",
-        "Description": "Path to the folder containing excel files with analysis task definitions; relative to the location of this file"
-      },
-      {
         "Property": "parameterIdentificationFile",
         "Value": "ParameterIdentification.xlsx",
-        "Description": "Name of the excel file with parameter identification task definitions. Must be located in the \"analysesFolder\""
+        "Description": "Name of the excel file with parameter identification task definitions. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "dataFolder",

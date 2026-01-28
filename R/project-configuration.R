@@ -158,22 +158,9 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field analysisFolder Path to the folder containing excel files
-    #'   with analysis tasks.
-    analysisFolder = function(value) {
-      if (!missing(value)) {
-        private$.projectConfigurationData$analysisFolder$value <-
-          value
-        private$.modified <- TRUE
-      }
-      private$.clean_path(
-        private$.projectConfigurationData$analysisFolder$value,
-        self$projectConfigurationDirPath
-      )
-    },
     #' @field parameterIdentificationFile Name of the excel file with parameter
     #'   identification definitions.
-    #' Must be located in the "analysisFolder".
+    #' Must be located in the "configurationsFolder".
     parameterIdentificationFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$parameterIdentificationFile$value <-
@@ -182,7 +169,7 @@ ProjectConfiguration <- R6::R6Class(
       }
       private$.clean_path(
         private$.projectConfigurationData$parameterIdentificationFile$value,
-        self$analysisFolder
+        self$configurationsFolder
       )
     },
     #' @field dataFolder Path to the folder where experimental data files are
