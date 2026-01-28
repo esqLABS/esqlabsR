@@ -61,6 +61,7 @@ biometrics
 callout
 checkFormulaValues
 cloneable
+configurationsFolder
 crateIndividual
 createImporterConfigurationForFile
 createIndividualCharacteristics
@@ -79,7 +80,6 @@ esqLABS
 esqlabs
 esqlabsEnv
 esqlabsR's
-esqlabsR’s
 exportConfiguration
 exportParametersToXLS
 facetes

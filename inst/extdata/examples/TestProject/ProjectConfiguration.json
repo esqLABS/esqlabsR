@@ -15,17 +15,17 @@
       {
         "Property": "modelParamsFile",
         "Value": "ModelParameters.xlsx",
-        "Description": "Name of the excel file with global model parametrization. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with global model parametrization. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "individualsFile",
         "Value": "Individuals.xlsx",
-        "Description": "Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with individual-specific model parametrization. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "populationsFile",
         "Value": "Populations.xlsx",
-        "Description": "Name of the excel file with population information. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with population information. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "populationsFolder",
@@ -35,17 +35,17 @@
       {
         "Property": "scenariosFile",
         "Value": "Scenarios.xlsx",
-        "Description": "Name of the excel file with scenario definitions. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with scenario definitions. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "applicationsFile",
         "Value": "Applications.xlsx",
-        "Description": "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "plotsFile",
         "Value": "Plots.xlsx",
-        "Description": "Name of the excel file with plot definitions. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with plot definitions. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "parameterIdentificationFile",

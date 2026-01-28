@@ -38,7 +38,7 @@
       [1] "ModelParameters.xlsx"
       
       $projectConfiguration$rows[[3]]$Description
-      [1] "Name of the excel file with global model parametrization. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with global model parametrization. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[4]]
@@ -49,7 +49,7 @@
       [1] "Individuals.xlsx"
       
       $projectConfiguration$rows[[4]]$Description
-      [1] "Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with individual-specific model parametrization. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[5]]
@@ -60,7 +60,7 @@
       [1] "Populations.xlsx"
       
       $projectConfiguration$rows[[5]]$Description
-      [1] "Name of the excel file with population information. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with population information. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[6]]
@@ -82,7 +82,7 @@
       [1] "Scenarios.xlsx"
       
       $projectConfiguration$rows[[7]]$Description
-      [1] "Name of the excel file with scenario definitions. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with scenario definitions. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[8]]
@@ -93,7 +93,7 @@
       [1] "Applications.xlsx"
       
       $projectConfiguration$rows[[8]]$Description
-      [1] "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[9]]
@@ -104,50 +104,61 @@
       [1] "Plots.xlsx"
       
       $projectConfiguration$rows[[9]]$Description
-      [1] "Name of the excel file with plot definitions. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with plot definitions. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[10]]
       $projectConfiguration$rows[[10]]$Property
-      [1] "dataFolder"
+      [1] "parameterIdentificationFile"
       
       $projectConfiguration$rows[[10]]$Value
-      [1] "Data/"
+      [1] "ParameterIdentification.xlsx"
       
       $projectConfiguration$rows[[10]]$Description
-      [1] "Path to the folder where experimental data files are located; relative to the location of this file"
+      [1] "Name of the excel file with parameter identification task definitions. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[11]]
       $projectConfiguration$rows[[11]]$Property
-      [1] "dataFile"
+      [1] "dataFolder"
       
       $projectConfiguration$rows[[11]]$Value
-      [1] "TestProject_TimeValuesData.xlsx"
+      [1] "Data/"
       
       $projectConfiguration$rows[[11]]$Description
-      [1] "Name of the excel file with experimental data. Must be located in the \"dataFolder\""
+      [1] "Path to the folder where experimental data files are located; relative to the location of this file"
       
       
       $projectConfiguration$rows[[12]]
       $projectConfiguration$rows[[12]]$Property
-      [1] "dataImporterConfigurationFile"
+      [1] "dataFile"
       
       $projectConfiguration$rows[[12]]$Value
-      [1] "esqlabs_dataImporter_configuration.xml"
+      [1] "TestProject_TimeValuesData.xlsx"
       
       $projectConfiguration$rows[[12]]$Description
-      [1] "Name of data importer configuration file in xml format used to load the data. Must be located in the \"dataFolder\""
+      [1] "Name of the excel file with experimental data. Must be located in the \"dataFolder\""
       
       
       $projectConfiguration$rows[[13]]
       $projectConfiguration$rows[[13]]$Property
-      [1] "outputFolder"
+      [1] "dataImporterConfigurationFile"
       
       $projectConfiguration$rows[[13]]$Value
-      [1] "Results/"
+      [1] "esqlabs_dataImporter_configuration.xml"
       
       $projectConfiguration$rows[[13]]$Description
+      [1] "Name of data importer configuration file in xml format used to load the data. Must be located in the \"dataFolder\""
+      
+      
+      $projectConfiguration$rows[[14]]
+      $projectConfiguration$rows[[14]]$Property
+      [1] "outputFolder"
+      
+      $projectConfiguration$rows[[14]]$Value
+      [1] "Results/"
+      
+      $projectConfiguration$rows[[14]]$Description
       [1] "Path to the folder where the results should be saved to; relative to the location of this file"
       
       
@@ -639,6 +650,47 @@
       
       $Scenarios$Scenarios$rows[[5]]$OutputPathsIds
       [1] NA
+      
+      
+      $Scenarios$Scenarios$rows[[6]]
+      $Scenarios$Scenarios$rows[[6]]$Scenario_name
+      [1] "PITestScenario"
+      
+      $Scenarios$Scenarios$rows[[6]]$IndividualId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$PopulationId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$ReadPopulationFromCSV
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$ModelParameterSheets
+      [1] "Aciclovir"
+      
+      $Scenarios$Scenarios$rows[[6]]$ApplicationProtocol
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SimulationTime
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SimulationTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SteadyState
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SteadyStateTime
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$ModelFile
+      [1] "Aciclovir.pkml"
+      
+      $Scenarios$Scenarios$rows[[6]]$OutputPathsIds
+      [1] "Aciclovir_PVB"
       
       
       
@@ -1911,24 +1963,26 @@
       7                  scenariosFile                         Scenarios.xlsx
       8               applicationsFile                      Applications.xlsx
       9                      plotsFile                             Plots.xlsx
-      10                    dataFolder                                  Data/
-      11                      dataFile        TestProject_TimeValuesData.xlsx
-      12 dataImporterConfigurationFile esqlabs_dataImporter_configuration.xml
-      13                  outputFolder                               Results/
-                                                                                                                                Description
-      1                                                Path to the folder with pkml simulation files; relative to the location of this file
-      2                                     Path to the folder with excel files with parametrization; relative to the location of this file
-      3                                     Name of the excel file with global model parametrization. Must be located in the "paramsFolder"
-      4                        Name of the excel file with individual-specific model parametrization. Must be located in the "paramsFolder"
-      5                                           Name of the excel file with population information. Must be located in the "paramsFolder"
-      6                                                                           Name of the folder containing population defined in files
-      7                                             Name of the excel file with scenario definitions. Must be located in the "paramsFolder"
-      8  Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the "paramsFolder"
-      9                                                 Name of the excel file with plot definitions. Must be located in the "paramsFolder"
-      10                                Path to the folder where experimental data files are located; relative to the location of this file
-      11                                                 Name of the excel file with experimental data. Must be located in the "dataFolder"
-      12                  Name of data importer configuration file in xml format used to load the data. Must be located in the "dataFolder"
-      13                                     Path to the folder where the results should be saved to; relative to the location of this file
+      10   parameterIdentificationFile           ParameterIdentification.xlsx
+      11                    dataFolder                                  Data/
+      12                      dataFile        TestProject_TimeValuesData.xlsx
+      13 dataImporterConfigurationFile esqlabs_dataImporter_configuration.xml
+      14                  outputFolder                               Results/
+                                                                                                                                        Description
+      1                                                        Path to the folder with pkml simulation files; relative to the location of this file
+      2                                             Path to the folder with excel files with parametrization; relative to the location of this file
+      3                                     Name of the excel file with global model parametrization. Must be located in the "configurationsFolder"
+      4                        Name of the excel file with individual-specific model parametrization. Must be located in the "configurationsFolder"
+      5                                           Name of the excel file with population information. Must be located in the "configurationsFolder"
+      6                                                                                   Name of the folder containing population defined in files
+      7                                             Name of the excel file with scenario definitions. Must be located in the "configurationsFolder"
+      8  Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the "configurationsFolder"
+      9                                                 Name of the excel file with plot definitions. Must be located in the "configurationsFolder"
+      10                       Name of the excel file with parameter identification task definitions. Must be located in the "configurationsFolder"
+      11                                        Path to the folder where experimental data files are located; relative to the location of this file
+      12                                                         Name of the excel file with experimental data. Must be located in the "dataFolder"
+      13                          Name of data importer configuration file in xml format used to load the data. Must be located in the "dataFolder"
+      14                                             Path to the folder where the results should be saved to; relative to the location of this file
       
       
       $modelParameterSets
@@ -2041,24 +2095,28 @@
       3        PopulationScenario       Indiv1 TestPopulation                 FALSE
       4 PopulationScenarioFromCSV       Indiv1 TestPopulation                  TRUE
       5 TestScenario_missingParam       Indiv1           <NA>                  <NA>
+      6            PITestScenario         <NA>           <NA>                  <NA>
                               ModelParameterSheets ApplicationProtocol
       1                                     Global  Aciclovir_iv_250mg
       2 "Global", "Aciclovir", "Sheet, with comma"  Aciclovir_iv_250mg
       3                                     Global  Aciclovir_iv_250mg
       4                                     Global  Aciclovir_iv_250mg
       5                       Global, MissingParam  Aciclovir_iv_250mg
+      6                                  Aciclovir                <NA>
              SimulationTime SimulationTimeUnit SteadyState SteadyStateTime
       1           0, 24, 60                  h        <NA>            <NA>
       2 0, 1, 60; 1, 12, 20                  h        TRUE             500
       3           0, 12, 20                  h       FALSE            <NA>
       4           0, 12, 20                  h       FALSE            <NA>
       5           0, 24, 60                  h        <NA>            <NA>
+      6                <NA>               <NA>        <NA>            <NA>
         SteadyStateTimeUnit      ModelFile                    OutputPathsIds
       1                <NA> Aciclovir.pkml                              <NA>
       2                 min Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
       3                <NA> Aciclovir.pkml                              <NA>
       4                <NA> Aciclovir.pkml                              <NA>
       5                <NA> Aciclovir.pkml                              <NA>
+      6                <NA> Aciclovir.pkml                     Aciclovir_PVB
       
       
       $Scenarios$OutputPaths
@@ -2514,7 +2572,7 @@
       [1] "in-sync"
       
       $file_status$Scenarios
-      [1] "in-sync"
+      [1] "out-of-sync"
       
       $file_status$Applications
       [1] "in-sync"
@@ -2534,7 +2592,9 @@
       
       
       $data_changes
-      NULL
+      $data_changes$Scenarios
+      [1] "Scenarios"
+      
       
 
 # projectConfigurationStatus() detects data-level changes in Excel sheets
