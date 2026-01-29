@@ -51,6 +51,77 @@ createPITasks <- function(piTaskConfigurations) {
   return(piTasks)
 }
 
+#' Run Parameter Identification tasks
+#'
+#' @description Executes parameter identification for all PI tasks.
+#'   Handles failures gracefully - continues with other tasks if one fails.
+#'
+#' @param piTasks Named list of `ParameterIdentification` objects (from createPITasks)
+#'
+#' @returns Named list of PI results. Each result contains:
+#'   - task: Original ParameterIdentification object
+#'   - result: PIResult object from task$run() or NULL if failed
+#'   - finalParameters: Optimized parameter values
+#'   - convergence: Convergence information
+#'   - success: Logical indicating success/failure
+#'   - error: Error message if failed
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # After creating PI tasks
+#' piResults <- runPI(piTasks)
+#' }
+runPI <- function(piTasks) {
+  piTasks <- ospsuite.utils::toList(piTasks)
+  validateIsOfType(piTasks, "list")
+
+  piResults <- list()
+
+  for (piTaskName in names(piTasks)) {
+    piTask <- piTasks[[piTaskName]]
+
+    result <- tryCatch(
+      {
+        piResult <- piTask$run()
+
+        # Extract final parameters
+        finalParams <- sapply(piTask$parameters, function(p) p$currValue)
+
+        # Return success result
+        list(
+          task = piTask,
+          result = piResult,
+          finalParameters = finalParams,
+          convergence = piResult$convergence,
+          success = TRUE
+        )
+      },
+      error = function(e) {
+        warning(messages$warningPIOptimizationFailed(piTaskName, e$message))
+
+        # Return failure result
+        list(
+          task = piTask,
+          result = NULL,
+          finalParameters = NULL,
+          convergence = NULL,
+          success = FALSE,
+          error = e$message
+        )
+      }
+    )
+
+    piResults[[piTaskName]] <- result
+  }
+
+  successCount <- sum(sapply(piResults, function(r) r$success))
+  failCount <- length(piResults) - successCount
+
+  return(piResults)
+}
+
 #' Validate PI task configurations
 #' @param piTaskConfigurations List to validate
 #' @keywords internal

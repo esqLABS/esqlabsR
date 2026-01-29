@@ -780,3 +780,9 @@ messages$errorPITask <- function(errorType) {
     cliFormat("Unknown PI task error type: {.val {errorType}}")
   )
 }
+
+messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
+  cliFormat(
+    "Parameter identification task {.val {piTaskName}} failed: {.emph {errorMessage}}"
+  )
+}
