@@ -737,3 +737,46 @@ messages$messagePISheet <- function(
     cliFormat("Unknown PI sheet message type: {.val {type}}")
   )
 }
+
+messages$errorPIPathNotFound <- function(type, path, contextName) {
+  switch(
+    type,
+    "quantity" = cliFormat(
+      "Output quantity {.path {path}} not found in simulation {.val {contextName}}.
+      Check that the output path exists in the simulation."
+    ),
+    "parameter" = cliFormat(
+      "Parameter {.path {path}} not found in simulation {.val {contextName}}.
+      Check that the parameter path is correct and exists in the simulation."
+    ),
+    cliFormat("Unknown PI path not found type: {.val {type}}")
+  )
+}
+
+messages$errorPIInvalidBounds <- function(paramPath, min, start, max) {
+  cliFormat(
+    "Parameter {.val {paramPath}} has invalid bounds: Min={.val {min}}, Start={.val {start}}, Max={.val {max}}.
+    Expected: Min <= Start <= Max"
+  )
+}
+
+messages$errorPITask <- function(errorType) {
+  switch(
+    errorType,
+    "configurationsNotList" = cliFormat(
+      "Argument {.arg piTaskConfigurations} must be a non-empty named list of {.cls PITaskConfiguration} objects"
+    ),
+    "configurationsInvalidType" = cliFormat(
+      "All elements of {.arg piTaskConfigurations} must be {.cls PITaskConfiguration} objects"
+    ),
+    "scenarioRequired" = cliFormat(
+      "Scenario column is required in {.sheet PIOutputMappings} sheet.
+      Output paths are derived from the scenario configuration in {.file Scenarios.xlsx}."
+    ),
+    "noOutputPath" = cliFormat(
+      "No output paths found for PI output mapping.
+      Ensure the scenario has {.field OutputPathsIds} defined in {.file Scenarios.xlsx}."
+    ),
+    cliFormat("Unknown PI task error type: {.val {errorType}}")
+  )
+}

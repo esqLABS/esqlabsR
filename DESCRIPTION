@@ -30,6 +30,7 @@ Imports:
     jsonlite,
     lifecycle,
     methods,
+    ospsuite.parameteridentification,
     parallel,
     patchwork,
     purrr,
@@ -64,7 +65,8 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Remotes:  
+Remotes:
     ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils@*release,
     tlf=Open-Systems-Pharmacology/TLF-Library@*release,
-    ospsuite=Open-Systems-Pharmacology/OSPSuite-R@*release
+    ospsuite=Open-Systems-Pharmacology/OSPSuite-R@*release,
+    ospsuite.parameteridentification=Open-Systems-Pharmacology/OSPSuite.ParameterIdentification@*release

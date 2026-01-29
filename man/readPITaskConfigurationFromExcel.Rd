@@ -33,7 +33,8 @@ the following columns: \code{PITaskName}, \code{Algorithm}, \code{CIMethod},
 \code{PITaskName}, \code{Scenario}, \verb{Container Path}, \verb{Parameter Name}, \code{Value},
 \code{Units}, \code{MinValue}, \code{MaxValue}, \code{StartValue}, \code{Group} columns, a
 "PIOutputMappings" sheet with \code{PITaskName}, \code{Scenario}, \code{OutputPath},
-\code{ObservedDataSheet}, \code{Scaling}, \code{xOffset}, \code{yOffset}, \code{Weight} columns, an "AlgorithmOptions"
-sheet with \code{PITaskName}, \code{OptionName}, \code{OptionValue} columns, and a
-"CIOptions" sheet with \code{PITaskName}, \code{OptionName}, \code{OptionValue} columns.
+\code{ObservedDataSheet}, \code{Scaling}, \code{xOffset}, \code{yOffset}, \code{Weight} columns, an
+"AlgorithmOptions" sheet with \code{PITaskName}, \code{OptionName}, \code{OptionValue}
+columns, and a "CIOptions" sheet with \code{PITaskName}, \code{OptionName},
+\code{OptionValue} columns.
 }
