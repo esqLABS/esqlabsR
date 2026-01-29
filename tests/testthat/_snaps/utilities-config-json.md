@@ -2572,7 +2572,7 @@
       [1] "in-sync"
       
       $file_status$Scenarios
-      [1] "out-of-sync"
+      [1] "in-sync"
       
       $file_status$Applications
       [1] "in-sync"
@@ -2592,9 +2592,7 @@
       
       
       $data_changes
-      $data_changes$Scenarios
-      [1] "Scenarios"
-      
+      NULL
       
 
 # projectConfigurationStatus() detects data-level changes in Excel sheets

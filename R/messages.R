@@ -709,7 +709,7 @@ messages$errorPINotFound <- function(type, name, available) {
       "i" = "Available PI tasks: {.val {paste(available, collapse = ', ')}}"
     )),
     "scenario" = cli::format_message(c(
-      "x" = "Scenario {.val {name}} referenced in PI configuration not found",
+      "x" = "Scenario {.val {name}} referenced in PI task configuration not found",
       "i" = "Available scenarios: {.val {paste(available, collapse = ', ')}}"
     )),
     cliFormat("Unknown PI not found type: {.val {type}}")
