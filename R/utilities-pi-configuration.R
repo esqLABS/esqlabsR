@@ -112,10 +112,10 @@ readPITaskConfigurationFromExcel <- function(
     .validateSingleRow(taskData$piOutputMappings, taskName, "PIOutputMappings")
 
     # Validate scenarios exist
-    referencedScenarios <- unique(
-      c(taskData$piParameters$Scenario, taskData$piOutputMappings$Scenario)
-    )
-    referencedScenarios <- referencedScenarios[!is.na(referencedScenarios)]
+    referencedScenarios <- unique(c(
+      .splitCommaString(taskData$piParameters$Scenarios),
+      .splitCommaString(taskData$piOutputMappings$Scenarios)
+    ))
     missingScenarios <- setdiff(referencedScenarios, availableScenarios)
     if (length(missingScenarios) > 0) {
       stop(messages$errorPINotFound(
