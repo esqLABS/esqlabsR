@@ -100,18 +100,35 @@ readPITaskConfigurationFromExcel <- function(
     setNames(piTaskNames)
 
   for (taskName in piTaskNames) {
-    # Filter all sheets for this task
+    # Filter all sheets for this task and remove duplicate rows
     taskData <- lapply(
       allSheets,
-      \(df) dplyr::filter(df, PITaskName == taskName)
+      \(df) {
+        filtered <- dplyr::filter(df, PITaskName == taskName)
+        dplyr::distinct(filtered)
+      }
     )
 
-    # Validate task configuration data has 1 required row
-    if (nrow(taskData$piConfiguration) != 0) {
-      .validateSingleRow(taskData$piConfiguration, taskName, "PIConfiguration")
-    }
-    .validateSingleRow(taskData$piParameters, taskName, "PIParameters")
-    .validateSingleRow(taskData$piOutputMappings, taskName, "PIOutputMappings")
+    # Validate row counts for each sheet
+    .validateRowCount(
+      taskData$piConfiguration,
+      taskName,
+      "PIConfiguration",
+      minRows = 0,
+      maxRows = 1
+    )
+    .validateRowCount(
+      taskData$piParameters,
+      taskName,
+      "PIParameters",
+      minRows = 1
+    )
+    .validateRowCount(
+      taskData$piOutputMappings,
+      taskName,
+      "PIOutputMappings",
+      minRows = 1
+    )
 
     # Validate scenarios exist
     referencedScenarios <- unique(c(
@@ -400,18 +417,34 @@ readPITaskConfigurationFromExcel <- function(
   return(result)
 }
 
-#' Validate data frame has at least one row for a PI task
+#' Validate data frame row count for a PI task
 #' @param df Data frame filtered for a specific task
 #' @param taskName Name of the PI task
 #' @param sheetName Name of the sheet for error messages
+#' @param minRows Minimum required rows (default: 1)
+#' @param maxRows Maximum allowed rows (default: Inf for no limit)
 #' @keywords internal
 #' @noRd
-.validateSingleRow <- function(df, taskName, sheetName) {
+.validateRowCount <- function(
+  df,
+  taskName,
+  sheetName,
+  minRows = 1,
+  maxRows = Inf
+) {
   nRows <- nrow(df)
-  if (nRows == 0) {
+
+  if (nRows < minRows) {
     stop(messages$messagePISheet("taskMissing", taskName, sheetName))
   }
-  if (nRows > 1) {
-    warning(messages$messagePISheet("duplicate", taskName, sheetName))
+
+  if (nRows > maxRows) {
+    stop(messages$messagePISheet(
+      "tooManyRows",
+      taskName,
+      sheetName,
+      maxRows = maxRows,
+      nRows = nRows
+    ))
   }
 }

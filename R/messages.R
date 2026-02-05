@@ -720,15 +720,18 @@ messages$messagePISheet <- function(
   type,
   taskName,
   sheetName = NULL,
-  filePath = NULL
+  filePath = NULL,
+  maxRows = NULL,
+  nRows = NULL
 ) {
   switch(
     type,
     "taskMissing" = cliFormat(
       "PI task {.val {taskName}} not found in {.val {sheetName}} sheet"
     ),
-    "duplicate" = cliFormat(
-      "Multiple entries for PI task {.val {taskName}} in {.val {sheetName}} sheet. Using first entry."
+    "tooManyRows" = cliFormat(
+      "Too many entries for PI task {.val {taskName}} in {.val {sheetName}} sheet.
+      Expected at most {.val {maxRows}} row(s), found {.val {nRows}}"
     ),
     "missingSheets" = cliFormat(
       "Required sheet(s) missing in {.file {filePath}}: {.val {paste(taskName, collapse = ', ')}}.
@@ -760,7 +763,7 @@ messages$errorPIInvalidBounds <- function(paramPath, min, start, max) {
   )
 }
 
-messages$errorPITask <- function(errorType) {
+messages$errorPITask <- function(errorType, ...) {
   switch(
     errorType,
     "configurationsNotList" = cliFormat(
@@ -777,6 +780,14 @@ messages$errorPITask <- function(errorType) {
       "No output paths found for PI output mapping.
       Ensure the scenario has {.field OutputPathsIds} defined in {.file Scenarios.xlsx}."
     ),
+    "missingPiDefinitionsKeys" = {
+      args <- list(...)
+      missingKeys <- args$missingKeys
+      cliFormat(
+        "{.arg piDefinitions} must contain: {.val {c('piConfiguration', 'piParameters', 'piOutputMappings')}}.
+        Missing: {.val {paste(missingKeys, collapse = ', ')}}"
+      )
+    },
     cliFormat("Unknown PI task error type: {.val {errorType}}")
   )
 }
