@@ -1,7 +1,7 @@
 #' @title PITaskConfiguration
 #' @docType class
 #' @description An object storing configuration for a parameter identification
-#'   task. This class holds references to PI task settings defined in
+#'   (PI) task. This class holds references to PI task settings defined in
 #'   `ParameterIdentification.xlsx`.
 #' @format NULL
 #' @export
@@ -17,43 +17,100 @@ PITaskConfiguration <- R6::R6Class(
       } else {
         stop(messages$errorPropertyReadOnly("projectConfiguration"))
       }
+    },
+
+    #' @field taskName Name of the PI task. Key for lookup in
+    #'   `ParameterIdentification.xlsx`. Read-only.
+    taskName = function(value) {
+      if (missing(value)) {
+        private$.taskName
+      } else {
+        stop(messages$errorPropertyReadOnly("taskName"))
+      }
+    },
+
+    #' @field scenarioConfiguration Named list of `ScenarioConfiguration`
+    #'   objects for the PI task. Read-only.
+    scenarioConfiguration = function(value) {
+      if (missing(value)) {
+        private$.scenarioConfiguration
+      } else {
+        stop(messages$errorPropertyReadOnly("scenarioConfiguration"))
+      }
+    },
+
+    #' @field piConfiguration Named list of PI settings: algorithm, ciMethod,
+    #'   printEvaluationFeedback, autoEstimateCI, simulationRunOptions,
+    #'   objectiveFunctionOptions, algorithmOptions, ciOptions. Read-only.
+    piConfiguration = function(value) {
+      if (missing(value)) {
+        private$.piConfiguration
+      } else {
+        stop(messages$errorPropertyReadOnly("piConfiguration"))
+      }
+    },
+
+    #' @field piParameters Named list of parameter configurations from
+    #'   PIParameters sheet. Read-only.
+    piParameters = function(value) {
+      if (missing(value)) {
+        private$.piConfiguration
+      } else {
+        stop(messages$errorPropertyReadOnly("piParameters"))
+      }
+    },
+
+    #' @field piOutputMappings Named list of output mapping configurations from
+    #'   PIOutputMappings sheet. Read-only.
+    piOutputMappings = function(value) {
+      if (missing(value)) {
+        private$.piOutputMappings
+      } else {
+        stop(messages$errorPropertyReadOnly("piOutputMappings"))
+      }
     }
   ),
 
   private = list(
-    .projectConfiguration = NULL
+    .projectConfiguration = NULL,
+    .taskName = NULL,
+    .scenarioConfiguration = NULL,
+    .piConfiguration = NULL,
+    .piParameters = NULL,
+    .piOutputMappings = NULL
   ),
 
   public = list(
     #' @description Initialize a new instance of the class
+    #' @param taskName Character. Name of the PI task (key for lookup in Excel).
     #' @param projectConfiguration An object of class `ProjectConfiguration`.
+    #' @param scenarioConfiguration An object of class `ScenarioConfiguration`
+    #'   or a named list of `ScenarioConfiguration` objects.
+    #' @param piDefinitions Named list containing:
+    #'   - `piConfiguration`: Named list of PI settings
+    #'   - `piParameters`: Named list of PI parameter configurations
+    #'   - `piOutputMappings`: Named list of PI output mapping configurations
     #' @returns A new `PITaskConfiguration` object.
-    initialize = function(projectConfiguration) {
+    initialize = function(
+      taskName,
+      projectConfiguration,
+      scenarioConfiguration,
+      piDefinitions = NULL
+    ) {
+      # Validate required parameters
+      validateIsString(taskName)
       validateIsOfType(projectConfiguration, ProjectConfiguration)
+      validateIsOfType(scenarioConfiguration, ScenarioConfiguration)
+      .validateIsNamedList(piDefinitions, nullAllowed = TRUE)
+
+      private$.taskName <- taskName
       private$.projectConfiguration <- projectConfiguration
+      private$.scenarioConfiguration <- toList(scenarioConfiguration)
+
+      private$.piConfiguration <- piDefinitions$piConfiguration
+      private$.piParameters <- piDefinitions$piParameters
+      private$.piOutputMappings <- piDefinitions$piOutputMappings
     },
-    #' @field piTaskName Name of the PI task. Key for lookup in
-    #'   `ParameterIdentification.xlsx`.
-    piTaskName = NULL,
-
-    #' @field scenarioName Name of the simulated scenario (from Scenarios.xlsx).
-    scenarioName = NULL,
-
-    #' @field modelFile Name of the simulation file (from Scenarios.xlsx).
-    modelFile = NULL,
-
-    #' @field piConfiguration Named list of PI settings: algorithm, ciMethod,
-    #'   printEvaluationFeedback, autoEstimateCI, simulationRunOptions,
-    #'   objectiveFunctionOptions, algorithmOptions, ciOptions.
-    piConfiguration = NULL,
-
-    #' @field piParameters Named list of parameter configurations from
-    #'   PIParameters sheet.
-    piParameters = NULL,
-
-    #' @field piOutputMappings Named list of output mapping configurations from
-    #'   PIOutputMappings sheet.
-    piOutputMappings = NULL,
 
     #' @description Print the object to the console
     #' @param className Whether to print the name of the class at the beginning.

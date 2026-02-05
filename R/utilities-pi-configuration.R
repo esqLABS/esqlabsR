@@ -107,7 +107,9 @@ readPITaskConfigurationFromExcel <- function(
     )
 
     # Validate task configuration data has 1 required row
-    .validateSingleRow(taskData$piConfiguration, taskName, "PIConfiguration")
+    if (nrow(taskData$piConfiguration) != 0) {
+      .validateSingleRow(taskData$piConfiguration, taskName, "PIConfiguration")
+    }
     .validateSingleRow(taskData$piParameters, taskName, "PIParameters")
     .validateSingleRow(taskData$piOutputMappings, taskName, "PIOutputMappings")
 
@@ -134,18 +136,17 @@ readPITaskConfigurationFromExcel <- function(
     )
     piConfiguration$ciOptions <- .longFormatToNamedList(taskData$ciOptions)
 
-    # Get scenario info
-    primaryScenario <- referencedScenarios[[1]]
-    scenarioConfig <- scenarioConfigurations[[primaryScenario]]
-
-    # Create PITaskConfiguration object
-    piTaskConfig <- PITaskConfiguration$new(projectConfiguration)
-    piTaskConfig$piTaskName <- taskName
-    piTaskConfig$scenarioName <- primaryScenario
-    piTaskConfig$modelFile <- scenarioConfig$modelFile
-    piTaskConfig$piConfiguration <- piConfiguration
-    piTaskConfig$piParameters <- piParameters
-    piTaskConfig$piOutputMappings <- piOutputMappings
+    # Create PITaskConfiguration object with all parameters
+    piTaskConfig <- PITaskConfiguration$new(
+      taskName = taskName,
+      projectConfiguration = projectConfiguration,
+      scenarioConfiguration = scenarioConfigurations[referencedScenarios],
+      piDefinitions = list(
+        piConfiguration = piConfiguration,
+        piParameters = piParameters,
+        piOutputMappings = piOutputMappings
+      )
+    )
 
     piTaskConfigurations[[taskName]] <- piTaskConfig
   }
@@ -211,7 +212,7 @@ readPITaskConfigurationFromExcel <- function(
 .readPIParametersSheet <- function(piFilePath) {
   expectedColumns <- c(
     "PITaskName",
-    "Scenario",
+    "Scenarios",
     "Container Path",
     "Parameter Name",
     "Value",
@@ -267,7 +268,7 @@ readPITaskConfigurationFromExcel <- function(
 .readPIOutputMappingsSheet <- function(piFilePath) {
   expectedColumns <- c(
     "PITaskName",
-    "Scenario",
+    "Scenarios",
     "ObservedDataSheet",
     "DataSet",
     "Scaling",

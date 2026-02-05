@@ -9,36 +9,30 @@ A new \code{PITaskConfiguration} object.
 }
 \description{
 An object storing configuration for a parameter identification
-task. This class holds references to PI task settings defined in
+(PI) task. This class holds references to PI task settings defined in
 \code{ParameterIdentification.xlsx}.
-}
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{piTaskName}}{Name of the PI task. Key for lookup in
-\code{ParameterIdentification.xlsx}.}
-
-\item{\code{scenarioName}}{Name of the simulated scenario (from Scenarios.xlsx).}
-
-\item{\code{modelFile}}{Name of the simulation file (from Scenarios.xlsx).}
-
-\item{\code{piConfiguration}}{Named list of PI settings: algorithm, ciMethod,
-printEvaluationFeedback, autoEstimateCI, simulationRunOptions,
-objectiveFunctionOptions, algorithmOptions, ciOptions.}
-
-\item{\code{piParameters}}{Named list of parameter configurations from
-PIParameters sheet.}
-
-\item{\code{piOutputMappings}}{Named list of output mapping configurations from
-PIOutputMappings sheet.}
-}
-\if{html}{\out{</div>}}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
 \item{\code{projectConfiguration}}{\code{ProjectConfiguration} that will be used.
 Read-only.}
+
+\item{\code{taskName}}{Name of the PI task. Key for lookup in
+\code{ParameterIdentification.xlsx}. Read-only.}
+
+\item{\code{scenarioConfiguration}}{Named list of \code{ScenarioConfiguration}
+objects for the PI task. Read-only.}
+
+\item{\code{piConfiguration}}{Named list of PI settings: algorithm, ciMethod,
+printEvaluationFeedback, autoEstimateCI, simulationRunOptions,
+objectiveFunctionOptions, algorithmOptions, ciOptions. Read-only.}
+
+\item{\code{piParameters}}{Named list of parameter configurations from
+PIParameters sheet. Read-only.}
+
+\item{\code{piOutputMappings}}{Named list of output mapping configurations from
+PIOutputMappings sheet. Read-only.}
 }
 \if{html}{\out{</div>}}
 }
@@ -56,13 +50,30 @@ Read-only.}
 \subsection{Method \code{new()}}{
 Initialize a new instance of the class
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PITaskConfiguration$new(projectConfiguration)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PITaskConfiguration$new(
+  taskName,
+  projectConfiguration,
+  scenarioConfiguration,
+  piDefinitions
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{taskName}}{Character. Name of the PI task (key for lookup in Excel).}
+
 \item{\code{projectConfiguration}}{An object of class \code{ProjectConfiguration}.}
+
+\item{\code{scenarioConfiguration}}{An object of class \code{ScenarioConfiguration}
+or a named list of \code{ScenarioConfiguration} objects.}
+
+\item{\code{piDefinitions}}{Named list containing:
+\itemize{
+\item \code{piConfiguration}: Named list of PI settings
+\item \code{piParameters}: Named list of PI parameter configurations
+\item \code{piOutputMappings}: Named list of PI output mapping configurations
+}}
 }
 \if{html}{\out{</div>}}
 }
@@ -73,7 +84,11 @@ Initialize a new instance of the class
 \subsection{Method \code{print()}}{
 Print the object to the console
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PITaskConfiguration$print(className = TRUE, projectConfiguration = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PITaskConfiguration$print(
+  className = TRUE,
+  projectConfiguration = FALSE,
+  scenarioConfiguration = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -83,6 +98,9 @@ Print the object to the console
 Default is TRUE.}
 
 \item{\code{projectConfiguration}}{Whether to also print project configuration.
+Default is FALSE.}
+
+\item{\code{scenarioConfiguration}}{Whether to also print scenario configurations.
 Default is FALSE.}
 }
 \if{html}{\out{</div>}}
