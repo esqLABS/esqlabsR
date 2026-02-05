@@ -19,7 +19,9 @@ createPITasks <- function(piTaskConfigurations) {
   observedDataSheets <- unique(unlist(lapply(
     piTaskConfigurations,
     function(config) {
-      config$piOutputMappings$ObservedDataSheet
+      sapply(config$piOutputMappings, function(mapping) {
+        mapping$ObservedDataSheet
+      })
     }
   )))
   observedDataSheets <- observedDataSheets[!is.na(observedDataSheets)]
@@ -196,21 +198,27 @@ runPI <- function(piTasks) {
 }
 
 #' Create PIParameters from configuration
-#' @param piParamsConfig Named list with parameter configuration
+#' @param piParamsConfig List of lists (each inner list is one parameter row)
 #' @param simulation Simulation object
-#' @returns List containing one PIParameters object
+#' @returns List containing `PIParameters`` objects
 #' @keywords internal
 #' @noRd
 .createPIParametersFromConfig <- function(piParamsConfig, simulation) {
-  # Build parameter path
-  containerPath <- piParamsConfig$`Container Path`
-  parameterName <- piParamsConfig$`Parameter Name`
+  # piParamsConfig is a list of parameter definitions (one per row)
+  piParams <- vector("list", length(piParamsConfig))
+
+  for (i in seq_along(piParamsConfig)) {
+    paramRow <- piParamsConfig[[i]]
+
+    # Build parameter path for this row
+    containerPath <- paramRow$`Container Path`
+    parameterName <- paramRow$`Parameter Name`
   paramPath <- paste0(containerPath, "|", parameterName)
 
-  # Validate bounds
-  minValue <- piParamsConfig$MinValue
-  maxValue <- piParamsConfig$MaxValue
-  startValue <- piParamsConfig$StartValue
+    # Validate bounds for this row
+    minValue <- paramRow$MinValue
+    maxValue <- paramRow$MaxValue
+    startValue <- paramRow$StartValue
 
   if (!(minValue <= startValue && startValue <= maxValue)) {
     stop(
@@ -222,7 +230,11 @@ runPI <- function(piTasks) {
   param <- ospsuite::getParameter(paramPath, container = simulation$root)
 
   if (is.null(param)) {
-    stop(messages$errorPIPathNotFound("parameter", paramPath, simulation$name))
+      stop(messages$errorPIPathNotFound(
+        "parameter",
+        paramPath,
+        simulation$name
+      ))
   }
 
   # Create PIParameters object
@@ -234,11 +246,14 @@ runPI <- function(piTasks) {
   piParam$maxValue <- maxValue
   piParam$startValue <- startValue
 
-  return(list(piParam))
+    piParams[[i]] <- piParam
+  }
+
+  return(piParams)
 }
 
 #' Create PIOutputMapping from configuration
-#' @param piOutputConfig Named list with output mapping configuration
+#' @param piOutputConfig List of parameter definition rows.
 #' @param simulation Simulation object
 #' @param observedData Named list of observed DataSet objects
 #' @param scenarioConfigurations Named list of ScenarioConfiguration objects
@@ -252,11 +267,19 @@ runPI <- function(piTasks) {
     observedData,
     scenarioConfigurations,
     projectConfiguration) {
-  scaling <- piOutputConfig$Scaling %||% "log"
-  scenarioName <- piOutputConfig$Scenario
+  # piOutputConfig is a list of output mapping definitions
+  outputMappings <- list()
+
+  for (i in seq_along(piOutputConfig)) {
+    mappingRow <- piOutputConfig[[i]]
+
+    scaling <- mappingRow$Scaling %||% "log"
+    scenarioName <- mappingRow$Scenarios
 
   # Get output paths from scenario configuration
-  if (is.na(scenarioName) || is.null(scenarioName) || nchar(scenarioName) == 0) {
+    if (
+      is.na(scenarioName) || is.null(scenarioName) || nchar(scenarioName) == 0
+    ) {
     stop(messages$errorPITask("scenarioRequired"))
   }
 
@@ -275,9 +298,7 @@ runPI <- function(piTasks) {
     stop(messages$errorPITask("noOutputPath"))
   }
 
-  outputMappings <- list()
-
-  # Create one output mapping per output path
+    # Create one output mapping per output path for this row
   for (outputPath in outputPaths) {
     # Get quantity from simulation
     quantity <- ospsuite::getQuantity(outputPath, container = simulation$root)
@@ -299,6 +320,7 @@ runPI <- function(piTasks) {
     outputMapping$scaling <- scaling
 
     outputMappings[[length(outputMappings) + 1]] <- outputMapping
+    }
   }
 
   return(outputMappings)

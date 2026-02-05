@@ -434,3 +434,55 @@ test_that("readPITaskConfigurationFromExcel validates that referenced scenarios 
     fixed = TRUE
   )
 })
+
+test_that("readPITaskConfigurationFromExcel handles multiple parameter rows correctly", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  # Add second parameter row for same task
+  sheets$PIParameters <- rbind(
+    sheets$PIParameters,
+    data.frame(
+      PITaskName = "Task1",
+      Scenarios = "PITestScenario",
+      `Container Path` = "Neighborhoods|Kidney",
+      `Parameter Name` = "TSspec",
+      Value = 0.5,
+      Units = "1/min",
+      MinValue = 0,
+      MaxValue = 10,
+      StartValue = 0.5,
+      Group = "1",
+      check.names = FALSE
+    )
+  )
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  params <- piTaskConfigurations$Task1$piParameters
+
+  # Check that we have a list of 2 parameter definitions
+  expect_equal(length(params), 2)
+  expect_true(is.list(params[[1]]))
+  expect_true(is.list(params[[2]]))
+
+  # Check first parameter
+  expect_equal(params[[1]]$`Container Path`, "Aciclovir")
+  expect_equal(params[[1]]$`Parameter Name`, "Lipophilicity")
+  expect_equal(params[[1]]$MinValue, -2)
+  expect_equal(params[[1]]$MaxValue, 2)
+
+  # Check second parameter
+  expect_equal(params[[2]]$`Container Path`, "Neighborhoods|Kidney")
+  expect_equal(params[[2]]$`Parameter Name`, "TSspec")
+  expect_equal(params[[2]]$MinValue, 0)
+  expect_equal(params[[2]]$MaxValue, 10)
+})

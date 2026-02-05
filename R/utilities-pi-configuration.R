@@ -146,8 +146,14 @@ readPITaskConfigurationFromExcel <- function(
 
     # Convert sheet data to lists
     piConfiguration <- as.list(taskData$piConfiguration[1, ])
-    piParameters <- as.list(taskData$piParameters[1, ])
-    piOutputMappings <- as.list(taskData$piOutputMappings[1, ])
+    piParameters <- lapply(
+      seq_len(nrow(taskData$piParameters)),
+      function(i) as.list(taskData$piParameters[i, ])
+    )
+    piOutputMappings <- lapply(
+      seq_len(nrow(taskData$piOutputMappings)),
+      function(i) as.list(taskData$piOutputMappings[i, ])
+    )
     piConfiguration$algorithmOptions <- .longFormatToNamedList(
       taskData$algorithmOptions
     )
