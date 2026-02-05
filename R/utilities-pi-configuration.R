@@ -132,8 +132,8 @@ readPITaskConfigurationFromExcel <- function(
 
     # Validate scenarios exist
     referencedScenarios <- unique(c(
-      .splitCommaString(taskData$piParameters$Scenarios),
-      .splitCommaString(taskData$piOutputMappings$Scenarios)
+      unlist(lapply(taskData$piParameters$Scenarios, .splitCommaString)),
+      unlist(lapply(taskData$piOutputMappings$Scenarios, .splitCommaString))
     ))
     missingScenarios <- setdiff(referencedScenarios, availableScenarios)
     if (length(missingScenarios) > 0) {
