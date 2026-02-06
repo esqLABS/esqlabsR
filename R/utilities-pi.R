@@ -9,33 +9,27 @@
 #'
 #' @export
 createPITasks <- function(piTaskConfigurations) {
-  piTaskConfigurations <- ospsuite.utils::toList(piTaskConfigurations)
-  .validatePITaskConfigurations(piTaskConfigurations)
+  validateIsOfType(piTaskConfigurations, PITaskConfiguration)
+  piTaskConfigurations <- toList(piTaskConfigurations)
 
-  # Get project configuration
-  projectConfiguration <- piTaskConfigurations[[1]]$projectConfiguration
-
-  # Collect unique observed data sheets from all task configurations
-  observedDataSheets <- unique(unlist(lapply(
-    piTaskConfigurations,
-    function(config) {
-      sapply(config$piOutputMappings, function(mapping) {
-        mapping$ObservedDataSheet
-      })
+  # Extract all unique scenario configurations from all PI tasks
+  allScenarioConfigs <- list()
+  for (piTaskConfig in piTaskConfigurations) {
+    scenarioConfigs <- piTaskConfig$scenarioConfiguration
+    for (scenarioName in names(scenarioConfigs)) {
+      if (!scenarioName %in% names(allScenarioConfigs)) {
+        allScenarioConfigs[[scenarioName]] <- scenarioConfigs[[scenarioName]]
+      }
     }
-  )))
-  observedDataSheets <- observedDataSheets[!is.na(observedDataSheets)]
+  }
 
-  # Load observed data for specific sheets
-  observedData <- loadObservedData(
-    projectConfiguration,
-    sheets = observedDataSheets
-  )
-
-  # Load scenario configurations for output path resolution
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = NULL,
-    projectConfiguration = projectConfiguration
+  # Create all scenarios
+  if (length(allScenarioConfigs) == 0) {
+    stop(messages$errorPITask("noScenarios"))
+  }
+  scenarios <- createScenarios(
+    scenarioConfigurations = allScenarioConfigs,
+    stopIfParameterNotFound = TRUE
   )
 
   # Create PI task for each configuration
@@ -44,9 +38,8 @@ createPITasks <- function(piTaskConfigurations) {
 
   for (taskName in names(piTaskConfigurations)) {
     piTasks[[taskName]] <- .createSinglePITask(
-      piTaskConfig = piTaskConfigurations[[taskName]],
-      observedData = observedData,
-      scenarioConfigurations = scenarioConfigurations
+      piTaskConfiguration = piTaskConfigurations[[taskName]],
+      scenarios = scenarios
     )
   }
 
@@ -124,71 +117,46 @@ runPI <- function(piTasks) {
   return(piResults)
 }
 
-#' Validate PI task configurations
-#' @param piTaskConfigurations List to validate
-#' @keywords internal
-#' @noRd
-.validatePITaskConfigurations <- function(piTaskConfigurations) {
-  if (!is.list(piTaskConfigurations) || length(piTaskConfigurations) == 0) {
-    stop(messages$errorPITask("configurationsNotList"))
-  }
-
-  for (piConfig in piTaskConfigurations) {
-    if (!isOfType(piConfig, "PITaskConfiguration")) {
-      stop(messages$errorPITask("configurationsInvalidType"))
-    }
-  }
-
-  invisible(TRUE)
-}
-
 #' Create a single PI task
-#' @param piTaskConfig PITaskConfiguration object
-#' @param observedData Named list of observed DataSet objects
-#' @param scenarioConfigurations Named list of ScenarioConfiguration objects
+#' @param piTaskConfiguration PITaskConfiguration object
+#' @param scenarios Named list of Scenario objects
 #' @returns ParameterIdentification object
 #' @keywords internal
 #' @noRd
-.createSinglePITask <- function(
-  piTaskConfig,
-  observedData,
-  scenarioConfigurations
-) {
-  projectConfiguration <- piTaskConfig$projectConfiguration
+.createSinglePITask <- function(piTaskConfiguration, scenarios) {
+  # Get project configuration
+  projectConfiguration <- piTaskConfiguration$projectConfiguration
 
-  # Load simulation directly from model file
-  simulationPath <- file.path(
-    projectConfiguration$modelFolder,
-    piTaskConfig$modelFile
-  )
-  simulation <- ospsuite::loadSimulation(
-    filePath = simulationPath,
-    loadFromCache = FALSE
-  )
+  # Extract simulations from scenarios
+  taskScenarioNames <- names(piTaskConfiguration$scenarioConfiguration)
+  simulations <- vector("list", length(taskScenarioNames)) |>
+    setNames(taskScenarioNames)
+
+  for (scenarioName in taskScenarioNames) {
+    simulations[[scenarioName]] <- scenarios[[scenarioName]]$simulation
+  }
 
   # Create PIParameters
   piParameters <- .createPIParametersFromConfig(
-    piParamsConfig = piTaskConfig$piParameters,
-    simulation = simulation
+    configurations = piTaskConfiguration$piParameters,
+    scenarios = scenarios
   )
 
   # Create PIOutputMapping
   outputMappings <- .createPIOutputMappingFromConfig(
-    piOutputConfig = piTaskConfig$piOutputMappings,
-    simulation = simulation,
-    observedData = observedData,
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
+    configurations = piTaskConfiguration$piOutputMappings,
+    scenarios = scenarios,
+    piTaskConfiguration = piTaskConfiguration
   )
 
   # Create PIConfiguration
   piConfiguration <- .createPIConfigurationFromConfig(
-    configOptions = piTaskConfig$piConfiguration
+    configurations = piTaskConfiguration$piConfiguration
   )
 
-  # Create ParameterIdentification object
+  # Create ParameterIdentification
   piTask <- ospsuite.parameteridentification::ParameterIdentification$new(
-    simulations = simulation,
+    simulations = simulations,
     parameters = piParameters,
     outputMappings = outputMappings,
     configuration = piConfiguration
@@ -198,53 +166,111 @@ runPI <- function(piTasks) {
 }
 
 #' Create PIParameters from configuration
-#' @param piParamsConfig List of lists (each inner list is one parameter row)
-#' @param simulation Simulation object
-#' @returns List containing `PIParameters`` objects
+#' @param configurations List where each element is a parameter row from
+#'   PIParameters sheet
+#' @param scenarios Named list of Scenario objects
+#' @returns List containing PIParameters objects
 #' @keywords internal
 #' @noRd
-.createPIParametersFromConfig <- function(piParamsConfig, simulation) {
-  # piParamsConfig is a list of parameter definitions (one per row)
-  piParams <- vector("list", length(piParamsConfig))
+.createPIParametersFromConfig <- function(configurations, scenarios) {
+  # Extract groups (use row index as unique group if Group is NA)
+  groups <- sapply(seq_along(configurations), function(i) {
+    group <- configurations[[i]]$Group
+    if (is.na(group)) paste0("_ungrouped_", i) else as.character(group)
+  })
+  uniqueGroups <- unique(groups)
 
-  for (i in seq_along(piParamsConfig)) {
-    paramRow <- piParamsConfig[[i]]
+  piParams <- vector("list", length(uniqueGroups))
 
-    # Build parameter path for this row
-    containerPath <- paramRow$`Container Path`
-    parameterName <- paramRow$`Parameter Name`
-  paramPath <- paste0(containerPath, "|", parameterName)
+  for (i in seq_along(uniqueGroups)) {
+    group <- uniqueGroups[i]
+    rowIndices <- which(groups == group)
 
-    # Validate bounds for this row
-    minValue <- paramRow$MinValue
-    maxValue <- paramRow$MaxValue
-    startValue <- paramRow$StartValue
+    # Collect all parameters from all rows in this group
+    allParameters <- list()
+    firstRow <- configurations[[rowIndices[1]]]
 
-  if (!(minValue <= startValue && startValue <= maxValue)) {
-    stop(
-      messages$errorPIInvalidBounds(paramPath, minValue, startValue, maxValue)
-    )
-  }
-
-  # Get parameter from simulation
-  param <- ospsuite::getParameter(paramPath, container = simulation$root)
-
-  if (is.null(param)) {
-      stop(messages$errorPIPathNotFound(
-        "parameter",
-        paramPath,
-        simulation$name
+    # Validate bounds for first row
+    if (
+      !(firstRow$MinValue <= firstRow$StartValue &&
+        firstRow$StartValue <= firstRow$MaxValue)
+    ) {
+      firstPath <- paste0(
+        firstRow$`Container Path`,
+        "|",
+        firstRow$`Parameter Name`
+      )
+      stop(messages$errorPIInvalidBounds(
+        firstPath,
+        firstRow$MinValue,
+        firstRow$StartValue,
+        firstRow$MaxValue
       ))
-  }
+    }
 
-  # Create PIParameters object
-  piParam <- ospsuite.parameteridentification::PIParameters$new(
-    parameters = param
-  )
+    for (rowIdx in rowIndices) {
+      paramRow <- configurations[[rowIdx]]
 
-  piParam$minValue <- minValue
-  piParam$maxValue <- maxValue
-  piParam$startValue <- startValue
+      # Build parameter path
+      containerPath <- paramRow$`Container Path`
+      parameterName <- paramRow$`Parameter Name`
+      paramPath <- paste0(containerPath, "|", parameterName)
+
+      # Validate bounds match within group
+      if (
+        paramRow$MinValue != firstRow$MinValue ||
+          paramRow$MaxValue != firstRow$MaxValue ||
+          paramRow$StartValue != firstRow$StartValue
+      ) {
+        stop(messages$errorPIGroupBoundsMismatch(group, paramPath))
+      }
+
+      # Get scenario names this parameter applies to
+      scenarioNames <- .splitCommaString(paramRow$Scenarios)
+
+      if (length(scenarioNames) == 0) {
+        stop(messages$errorPITask("scenarioRequired"))
+      }
+
+      # Get parameter from each scenario's simulation
+      for (scenarioName in scenarioNames) {
+        scenario <- scenarios[[scenarioName]]
+
+        if (is.null(scenario)) {
+          stop(messages$errorPINotFound(
+            "scenario",
+            scenarioName,
+            names(scenarios)
+          ))
+        }
+
+        simulation <- scenario$simulation
+        param <- ospsuite::getParameter(paramPath, container = simulation)
+
+        if (is.null(param)) {
+          stop(messages$errorPIPathNotFound(
+            "parameter",
+            paramPath,
+            simulation$name
+          ))
+        }
+
+        allParameters[[length(allParameters) + 1]] <- param
+      }
+    }
+
+    # Create one PIParameters for this group
+    piParam <- ospsuite.parameteridentification::PIParameters$new(
+      parameters = if (length(allParameters) == 1) {
+        allParameters[[1]]
+      } else {
+        allParameters
+      }
+    )
+
+    piParam$minValue <- firstRow$MinValue
+    piParam$maxValue <- firstRow$MaxValue
+    piParam$startValue <- firstRow$StartValue
 
     piParams[[i]] <- piParam
   }
@@ -253,73 +279,98 @@ runPI <- function(piTasks) {
 }
 
 #' Create PIOutputMapping from configuration
-#' @param piOutputConfig List of parameter definition rows.
-#' @param simulation Simulation object
-#' @param observedData Named list of observed DataSet objects
-#' @param scenarioConfigurations Named list of ScenarioConfiguration objects
-#' @param projectConfiguration ProjectConfiguration object
+#' @param configurations List where each element is an output mapping row from
+#'   PIOutputMappings sheet
+#' @param scenarios Named list of Scenario objects
+#' @param piTaskConfiguration PITaskConfiguration object
 #' @returns List containing PIOutputMapping objects
 #' @keywords internal
 #' @noRd
 .createPIOutputMappingFromConfig <- function(
-    piOutputConfig,
-    simulation,
-    observedData,
-    scenarioConfigurations,
-    projectConfiguration) {
-  # piOutputConfig is a list of output mapping definitions
+  configurations,
+  scenarios,
+  piTaskConfiguration
+) {
   outputMappings <- list()
 
-  for (i in seq_along(piOutputConfig)) {
-    mappingRow <- piOutputConfig[[i]]
+  # Collect unique observed data sheets from all output mappings
+  observedDataSheets <- unique(sapply(
+    configurations,
+    function(mapping) mapping$ObservedDataSheet
+  ))
+  observedDataSheets <- observedDataSheets[!is.na(observedDataSheets)]
+
+  # Load observed data for specific sheets
+  observedData <- if (length(observedDataSheets) > 0) {
+    loadObservedData(
+      piTaskConfiguration$projectConfiguration,
+      sheets = observedDataSheets
+    )
+  } else {
+    list()
+  }
+
+  for (i in seq_along(configurations)) {
+    mappingRow <- configurations[[i]]
 
     scaling <- mappingRow$Scaling %||% "log"
-    scenarioName <- mappingRow$Scenarios
 
-  # Get output paths from scenario configuration
-    if (
-      is.na(scenarioName) || is.null(scenarioName) || nchar(scenarioName) == 0
-    ) {
-    stop(messages$errorPITask("scenarioRequired"))
-  }
+    # Get scenario names this output mapping applies to
+    scenarioNames <- .splitCommaString(mappingRow$Scenarios)
 
-  if (!scenarioName %in% names(scenarioConfigurations)) {
-    stop(messages$errorPINotFound(
-      "scenario",
-      scenarioName,
-      names(scenarioConfigurations)
-    ))
-  }
-
-  scenarioConfig <- scenarioConfigurations[[scenarioName]]
-  outputPaths <- scenarioConfig$outputPaths
-
-  if (length(outputPaths) == 0) {
-    stop(messages$errorPITask("noOutputPath"))
-  }
-
-    # Create one output mapping per output path for this row
-  for (outputPath in outputPaths) {
-    # Get quantity from simulation
-    quantity <- ospsuite::getQuantity(outputPath, container = simulation$root)
-    if (is.null(quantity)) {
-      stop(
-        messages$errorPIPathNotFound("quantity", outputPath, simulation$name)
-      )
+    if (length(scenarioNames) == 0) {
+      stop(messages$errorPITask("scenarioRequired"))
     }
 
-    # Create PIOutputMapping
-    outputMapping <- ospsuite.parameteridentification::PIOutputMapping$new(
-      quantity = quantity
-    )
+    # Create output mappings for each scenario
+    for (scenarioName in scenarioNames) {
+      scenario <- scenarios[[scenarioName]]
 
-    for (dataSetName in names(observedData)) {
-      outputMapping$addObservedDataSets(observedData[[dataSetName]])
-    }
+      if (is.null(scenario)) {
+        stop(messages$errorPINotFound(
+          "scenario",
+          scenarioName,
+          names(scenarios)
+        ))
+      }
 
-    outputMapping$scaling <- scaling
+      scenarioConfig <- scenario$scenarioConfiguration
+      outputPaths <- scenarioConfig$outputPaths
 
-    outputMappings[[length(outputMappings) + 1]] <- outputMapping
+      if (length(outputPaths) == 0) {
+        stop(messages$errorPITask("noOutputPath"))
+      }
+
+      # Create one output mapping per output path for this scenario
+      for (outputPath in outputPaths) {
+        # Get quantity from this scenario's simulation
+        quantity <- ospsuite::getQuantity(
+          outputPath,
+          container = scenario$simulation
+        )
+
+        if (is.null(quantity)) {
+          stop(messages$errorPIPathNotFound(
+            "quantity",
+            outputPath,
+            scenario$simulation$name
+          ))
+        }
+
+        # Create PIOutputMapping
+        outputMapping <- ospsuite.parameteridentification::PIOutputMapping$new(
+          quantity = quantity
+        )
+
+        # Add all observed data sets
+        for (dataSetName in names(observedData)) {
+          outputMapping$addObservedDataSets(observedData[[dataSetName]])
+        }
+
+        outputMapping$scaling <- scaling
+
+        outputMappings[[length(outputMappings) + 1]] <- outputMapping
+      }
     }
   }
 
@@ -327,11 +378,12 @@ runPI <- function(piTasks) {
 }
 
 #' Create PIConfiguration from configuration options
-#' @param configOptions Named list of configuration options
+#' @param configurations Named list of configuration options from
+#'   PIConfiguration sheet
 #' @returns PIConfiguration object
 #' @keywords internal
 #' @noRd
-.createPIConfigurationFromConfig <- function(configOptions) {
+.createPIConfigurationFromConfig <- function(configurations) {
   piConfig <- ospsuite.parameteridentification::PIConfiguration$new()
 
   # Map column names to PIConfiguration property names
@@ -346,9 +398,11 @@ runPI <- function(piTasks) {
   for (excelName in names(optionMapping)) {
     propName <- optionMapping[[excelName]]
     if (
-      excelName %in% names(configOptions) && !is.na(configOptions[[excelName]])
+      excelName %in%
+        names(configurations) &&
+        !is.na(configurations[[excelName]])
     ) {
-      value <- configOptions[[excelName]]
+      value <- configurations[[excelName]]
       # Dynamic type conversion based on PIConfiguration property type
       currentValue <- piConfig[[propName]]
       if (is.logical(currentValue)) {
@@ -366,7 +420,7 @@ runPI <- function(piTasks) {
     algDefaults <- ospsuite.parameteridentification:::AlgorithmDefaults
     defaultAlgOptions <- algDefaults[[algorithm]] %||% list()
 
-    userAlgOptions <- configOptions$algorithmOptions %||% list()
+    userAlgOptions <- configurations$algorithmOptions %||% list()
     for (optName in names(userAlgOptions)) {
       value <- userAlgOptions[[optName]]
       if (!is.numeric(value)) {
@@ -387,7 +441,7 @@ runPI <- function(piTasks) {
     ciDefaults <- ospsuite.parameteridentification:::CIDefaults
     defaultCIOptions <- ciDefaults[[ciMethod]] %||% list()
 
-    userCIOptions <- configOptions$ciOptions %||% list()
+    userCIOptions <- configurations$ciOptions %||% list()
     for (optName in names(userCIOptions)) {
       value <- userCIOptions[[optName]]
       if (!is.numeric(value)) {

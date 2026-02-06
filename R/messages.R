@@ -763,18 +763,23 @@ messages$errorPIInvalidBounds <- function(paramPath, min, start, max) {
   )
 }
 
+messages$errorPIGroupBoundsMismatch <- function(group, paramPath) {
+  cliFormat(
+    "Parameter {.val {paramPath}} in group {.val {group}} has different bounds.
+    All parameters in a group must have identical bounds."
+  )
+}
+
 messages$errorPITask <- function(errorType, ...) {
   switch(
     errorType,
-    "configurationsNotList" = cliFormat(
-      "Argument {.arg piTaskConfigurations} must be a non-empty named list of {.cls PITaskConfiguration} objects"
-    ),
-    "configurationsInvalidType" = cliFormat(
-      "All elements of {.arg piTaskConfigurations} must be {.cls PITaskConfiguration} objects"
-    ),
     "scenarioRequired" = cliFormat(
       "Scenario column is required in {.sheet PIOutputMappings} sheet.
       Output paths are derived from the scenario configuration in {.file Scenarios.xlsx}."
+    ),
+    "noScenarios" = cliFormat(
+      "No scenarios configured for PI tasks.
+      PI tasks require at least one scenario defined in {.file Scenarios.xlsx}."
     ),
     "noOutputPath" = cliFormat(
       "No output paths found for PI output mapping.
