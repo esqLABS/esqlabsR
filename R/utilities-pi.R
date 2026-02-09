@@ -362,11 +362,22 @@ runPI <- function(piTasks) {
           quantity = quantity
         )
 
-        # Add all observed data sets
-        for (dataSetName in names(observedData)) {
-          outputMapping$addObservedDataSets(observedData[[dataSetName]])
+        # Add observed data set specified in DataSet column
+        dataSetName <- mappingRow$DataSet
+        if (is.null(dataSetName) || is.na(dataSetName) || nchar(dataSetName) == 0) {
+          stop(messages$errorPITask("dataSetRequired"))
         }
 
+        dataSet <- observedData[[dataSetName]]
+        if (is.null(dataSet)) {
+          stop(messages$errorPINotFound(
+            "dataset",
+            dataSetName,
+            names(observedData)
+          ))
+        }
+
+        outputMapping$addObservedDataSets(dataSet)
         outputMapping$scaling <- scaling
 
         outputMappings[[length(outputMappings) + 1]] <- outputMapping
