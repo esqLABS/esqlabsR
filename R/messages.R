@@ -777,6 +777,10 @@ messages$errorPITask <- function(errorType, ...) {
       "Scenario column is required in {.sheet PIOutputMappings} sheet.
       Output paths are derived from the scenario configuration in {.file Scenarios.xlsx}."
     ),
+    "dataSetRequired" = cliFormat(
+      "{.field DataSet} column is required in {.sheet PIOutputMappings} sheet.
+      Specify the exact dataset name to map to the simulation output."
+    ),
     "noScenarios" = cliFormat(
       "No scenarios configured for PI tasks.
       PI tasks require at least one scenario defined in {.file Scenarios.xlsx}."

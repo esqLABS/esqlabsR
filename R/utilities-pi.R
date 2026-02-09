@@ -173,10 +173,18 @@ runPI <- function(piTasks) {
 #' @keywords internal
 #' @noRd
 .createPIParametersFromConfig <- function(configurations, scenarios) {
-  # Extract groups (use row index as unique group if Group is NA)
+  # Extract groups
+  # If all groups are NA: unique group per row
+  # If some groups have values: NA rows share single "_ungrouped" group
+  allNA <- all(sapply(configurations, function(cfg) is.na(cfg$Group)))
+
   groups <- sapply(seq_along(configurations), function(i) {
     group <- configurations[[i]]$Group
-    if (is.na(group)) paste0("_ungrouped_", i) else as.character(group)
+    if (is.na(group)) {
+      if (allNA) paste0("_ungrouped_", i) else "_ungrouped"
+    } else {
+      as.character(group)
+    }
   })
   uniqueGroups <- unique(groups)
 
