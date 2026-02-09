@@ -1,16 +1,17 @@
 Type: Package
 Package: esqlabsR
-Title: esqLABS utilities package
-Version: 5.5.1
+Title: ESQlabs utilities package
+Version: 5.5.2.9002
 Authors@R: c(
-    person("esqLABS GmbH", role = c("cph", "fnd")),
+    person("ESQlabs GmbH", role = c("cph", "fnd")),
     person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
            comment = "https://github.com/PavelBal"),
     person("Johanna", "Eitel", , "https://github.com/hannaei", role = "aut"),
     person("Indrajeet", "Patil", , "patilindrajeet.science@gmail.com", role = "aut",
            comment = c(ORCID = "0000-0003-1995-6531", Twitter = "@patilindrajeets")),
     person("Sergei", "Vavilov", , "https://github.com/svavil", role = "aut"),
-    person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut"))
+    person("Felix", "Mil", , "felix.mil@esqlabs.com", role = c("aut")),
+    person("Sia", "Mirza", ,"siavash.mirzaee@esqlabs.com", role = c("aut"))
   )
 Maintainer: Pavel Balazki <pavel.balazki@esqlabs.com>
 Description: The `{esqlabsR}` package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS).  
@@ -19,7 +20,7 @@ URL: https://github.com/esqLABS/esqlabsR, https://esqlabs.github.io/esqlabsR/
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
     ospsuite (>= 12.2.0),
-    R (>= 4.1)
+    R (>= 4.4)
 Imports:
     colorspace,
     cli,
@@ -34,12 +35,13 @@ Imports:
     parallel,
     patchwork,
     purrr,
+    R6 (>= 2.5.0),
     readxl,
     scales,
     stringr,
     tidyr,
     tlf (>= 1.6.0),
-    ospsuite.utils (>= 1.7.0),
+    ospsuite.utils (>= 1.10.0),
     tools,
     usethis,
     vctrs,
@@ -56,7 +58,8 @@ Suggests:
     showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
-    withr
+    withr,
+    emoji
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3
@@ -65,8 +68,7 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Remotes:
-    ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils@*release,
-    tlf=Open-Systems-Pharmacology/TLF-Library@*release,
-    ospsuite=Open-Systems-Pharmacology/OSPSuite-R@*release,
-    ospsuite.parameteridentification=Open-Systems-Pharmacology/OSPSuite.ParameterIdentification@*release
+Remotes:  
+    ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
+    tlf=Open-Systems-Pharmacology/TLF-Library,
+    ospsuite=Open-Systems-Pharmacology/OSPSuite-R

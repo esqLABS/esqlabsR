@@ -262,7 +262,7 @@ sensitivityTimeProfiles <- function(
 
     # combine original data subset with observed data
     if ("observed" %in% data$dataType) {
-      observedData <- dplyr::filter(data, dataType == "observed") %>%
+      observedData <- dplyr::filter(data, dataType == "observed") |>
         dplyr::select(-ParameterPath, -ParameterPathLabel)
       hasObservedData <- isTRUE(nrow(observedData) != 0)
     } else {
@@ -543,14 +543,14 @@ sensitivityTimeProfiles <- function(
   )
 
   # Convert parameterFactor to numeric for simulated data
-  combinedDf <- dplyr::rowwise(combinedDf) %>%
+  combinedDf <- dplyr::rowwise(combinedDf) |>
     dplyr::mutate(
       ParameterFactor = if (dataType == "simulated") {
         as.numeric(name)
       } else {
         NA_real_
       }
-    ) %>%
+    ) |>
     dplyr::ungroup()
 
   # select and arrange columns
@@ -560,7 +560,7 @@ sensitivityTimeProfiles <- function(
     dplyr::starts_with("Parameter"),
     xValues,
     yValues
-  ) %>%
+  ) |>
     dplyr::select(
       -IndividualId,
       -name

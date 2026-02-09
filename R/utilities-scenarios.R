@@ -167,7 +167,7 @@ createScenarios <- function(
       customParams = customParams,
       stopIfParameterNotFound = stopIfParameterNotFound
     )
-  ) %>%
+  ) |>
     purrr::set_names(purrr::map(scenarioConfigurations, ~ .x$scenarioName))
 
   return(scenarios)

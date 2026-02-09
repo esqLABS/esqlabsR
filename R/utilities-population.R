@@ -210,7 +210,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
   }
 
   complete_data <-
-    data %>%
+    data |>
     dplyr::filter(!dplyr::if_any(dplyr::everything(), ~ is.na(.)))
 
   if (nrow(complete_data) < nrow(data)) {
