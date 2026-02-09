@@ -54,13 +54,7 @@ readPITaskConfigurationFromExcel <- function(
   actualSheets <- readxl::excel_sheets(piFilePath)
   missingSheets <- setdiff(expectedSheets, actualSheets)
   if (length(missingSheets) > 0) {
-    stop(
-      messages$messagePISheet(
-        "missingSheets",
-        missingSheets,
-        filePath = piFilePath
-      )
-    )
+    stop(messages$errorPIMissingSheetsInFile(missingSheets, piFilePath))
   }
 
   # Read all sheets into named list
@@ -84,7 +78,7 @@ readPITaskConfigurationFromExcel <- function(
     # Validate requested PI task names exist
     missingTasks <- setdiff(piTaskNames, allTaskNames)
     if (length(missingTasks) > 0) {
-      stop(messages$errorPINotFound("task", missingTasks, allTaskNames))
+      stop(messages$errorPITaskNotFound(missingTasks, allTaskNames))
     }
   }
 
@@ -137,8 +131,7 @@ readPITaskConfigurationFromExcel <- function(
     ))
     missingScenarios <- setdiff(referencedScenarios, availableScenarios)
     if (length(missingScenarios) > 0) {
-      stop(messages$errorPINotFound(
-        "scenario",
+      stop(messages$errorPIScenarioNotFound(
         missingScenarios[[1]],
         availableScenarios
       ))
@@ -441,16 +434,15 @@ readPITaskConfigurationFromExcel <- function(
   nRows <- nrow(df)
 
   if (nRows < minRows) {
-    stop(messages$messagePISheet("taskMissing", taskName, sheetName))
+    stop(messages$errorPITaskMissingInSheet(taskName, sheetName))
   }
 
   if (nRows > maxRows) {
-    stop(messages$messagePISheet(
-      "tooManyRows",
+    stop(messages$errorPITooManyRowsInSheet(
       taskName,
       sheetName,
-      maxRows = maxRows,
-      nRows = nRows
+      maxRows,
+      nRows
     ))
   }
 }

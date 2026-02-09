@@ -25,7 +25,7 @@ createPITasks <- function(piTaskConfigurations) {
 
   # Create all scenarios
   if (length(allScenarioConfigs) == 0) {
-    stop(messages$errorPITask("noScenarios"))
+    stop(messages$errorPINoScenariosConfigured())
   }
   scenarios <- createScenarios(
     scenarioConfigurations = allScenarioConfigs,
@@ -237,7 +237,7 @@ runPI <- function(piTasks) {
       scenarioNames <- .splitCommaString(paramRow$Scenarios)
 
       if (length(scenarioNames) == 0) {
-        stop(messages$errorPITask("scenarioRequired"))
+        stop(messages$errorPIColumnRequired("Scenarios", "PIParameters"))
       }
 
       # Get parameter from each scenario's simulation
@@ -245,8 +245,7 @@ runPI <- function(piTasks) {
         scenario <- scenarios[[scenarioName]]
 
         if (is.null(scenario)) {
-          stop(messages$errorPINotFound(
-            "scenario",
+          stop(messages$errorPIScenarioNotFound(
             scenarioName,
             names(scenarios)
           ))
@@ -256,8 +255,7 @@ runPI <- function(piTasks) {
         param <- ospsuite::getParameter(paramPath, container = simulation)
 
         if (is.null(param)) {
-          stop(messages$errorPIPathNotFound(
-            "parameter",
+          stop(messages$errorPIParameterNotFound(
             paramPath,
             simulation$name
           ))
@@ -327,7 +325,7 @@ runPI <- function(piTasks) {
     scenarioNames <- .splitCommaString(mappingRow$Scenarios)
 
     if (length(scenarioNames) == 0) {
-      stop(messages$errorPITask("scenarioRequired"))
+      stop(messages$errorPIColumnRequired("Scenarios", "PIOutputMappings"))
     }
 
     # Create output mappings for each scenario
@@ -335,8 +333,7 @@ runPI <- function(piTasks) {
       scenario <- scenarios[[scenarioName]]
 
       if (is.null(scenario)) {
-        stop(messages$errorPINotFound(
-          "scenario",
+        stop(messages$errorPIScenarioNotFound(
           scenarioName,
           names(scenarios)
         ))
@@ -346,7 +343,7 @@ runPI <- function(piTasks) {
       outputPaths <- scenarioConfig$outputPaths
 
       if (length(outputPaths) == 0) {
-        stop(messages$errorPITask("noOutputPath"))
+        stop(messages$errorPINoOutputPathsFound())
       }
 
       # Create one output mapping per output path for this scenario
@@ -358,8 +355,7 @@ runPI <- function(piTasks) {
         )
 
         if (is.null(quantity)) {
-          stop(messages$errorPIPathNotFound(
-            "quantity",
+          stop(messages$errorPIOutputQuantityNotFound(
             outputPath,
             scenario$simulation$name
           ))
@@ -373,13 +369,12 @@ runPI <- function(piTasks) {
         # Add observed data set specified in DataSet column
         dataSetName <- mappingRow$DataSet
         if (is.null(dataSetName) || is.na(dataSetName) || nchar(dataSetName) == 0) {
-          stop(messages$errorPITask("dataSetRequired"))
+          stop(messages$errorPIColumnRequired("DataSet", "PIOutputMappings"))
         }
 
         dataSet <- observedData[[dataSetName]]
         if (is.null(dataSet)) {
-          stop(messages$errorPINotFound(
-            "dataset",
+          stop(messages$errorPIDatasetNotFound(
             dataSetName,
             names(observedData)
           ))
