@@ -1,3 +1,51 @@
+# Helper function to create valid PI configuration sheets
+createValidPISheets <- function() {
+  list(
+    PIConfiguration = data.frame(
+      PITaskName = "Task1",
+      Algorithm = "BOBYQA",
+      CIMethod = "hessian",
+      PrintEvaluationFeedback = TRUE,
+      AutoEstimateCI = FALSE,
+      SimulationRunOptions = NA,
+      ObjectiveFunctionOptions = NA
+    ),
+    PIParameters = data.frame(
+      PITaskName = "Task1",
+      Scenarios = "PITestScenario",
+      `Container Path` = "Aciclovir",
+      `Parameter Name` = "Lipophilicity",
+      Value = -0.1,
+      Units = "Log Units",
+      MinValue = -2,
+      MaxValue = 2,
+      StartValue = -0.1,
+      Group = NA,
+      check.names = FALSE
+    ),
+    PIOutputMappings = data.frame(
+      PITaskName = "Task1",
+      Scenarios = "PITestScenario",
+      ObservedDataSheet = "Laskin 1982.Group A",
+      DataSet = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+      Scaling = "log",
+      xOffset = NA,
+      yOffset = NA,
+      Weight = NA
+    ),
+    AlgorithmOptions = data.frame(
+      PITaskName = character(0),
+      OptionName = character(0),
+      OptionValue = character(0)
+    ),
+    CIOptions = data.frame(
+      PITaskName = character(0),
+      OptionName = character(0),
+      OptionValue = character(0)
+    )
+  )
+}
+
 test_that("createPITasks creates ParameterIdentification objects from configurations", {
   projectConfiguration <- testProjectConfiguration()
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
