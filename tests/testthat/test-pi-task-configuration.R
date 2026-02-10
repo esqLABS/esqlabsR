@@ -74,12 +74,46 @@ test_that("PITaskConfiguration fields are read-only", {
 })
 
 test_that("PITaskConfiguration prints as expected", {
-  projectConfiguration <- ProjectConfiguration$new()
+  piTaskConfigs <- readPITaskConfigurationFromExcel(
+    projectConfiguration = testProjectConfiguration()
+  )
+
+  piTaskConfig <- piTaskConfigs[[1]]
+  expect_snapshot(piTaskConfig$print())
+  expect_snapshot(print(piTaskConfig$piConfiguration))
+  expect_snapshot(print(piTaskConfig$piParameters))
+  expect_snapshot(print(piTaskConfig$piOutputMappings))
+})
+
+test_that("PITaskConfiguration prints multiple scenarios, parameters, and mappings", {
+  projectConfig <- testProjectConfiguration()
+  scenarioConfig1 <- ScenarioConfiguration$new(projectConfig)
+  scenarioConfig1$scenarioName <- "Scenario1"
+  scenarioConfig1$modelFile <- "model1.pkml"
+  scenarioConfig2 <- scenarioConfig1$clone()
+  scenarioConfig2$scenarioName <- "Scenario2"
+  scenarioConfig2$modelFile <- "model2.pkml"
 
   piTaskConfig <- PITaskConfiguration$new(
-    projectConfiguration = projectConfiguration
+    taskName = "multiTest",
+    projectConfiguration = projectConfig,
+    scenarioConfiguration = list(
+      Scenario1 = scenarioConfig1,
+      Scenario2 = scenarioConfig2
+    ),
+    piDefinitions = list(
+      piParameters = list(
+        list(`Container Path` = "A", `Parameter Name` = "P1"),
+        list(`Container Path` = "B", `Parameter Name` = "P2")
+      ),
+      piOutputMappings = list(
+        list(ObservedDataSheet = "Sheet1", Scaling = "lin"),
+        list(ObservedDataSheet = "Sheet2", Scaling = "log")
+      )
+    )
   )
-  piTaskConfig$piTaskName <- "piTestTask"
 
   expect_snapshot(piTaskConfig$print())
+  expect_snapshot(print(piTaskConfig$piParameters))
+  expect_snapshot(print(piTaskConfig$piOutputMappings))
 })

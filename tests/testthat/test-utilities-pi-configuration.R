@@ -114,8 +114,6 @@ test_that("readPITaskConfigurationFromExcel creates correct PI task configuratio
   expect_snapshot_value(piTaskConfiguration$piOutputMappings, style = "deparse")
 })
 
-
-
 test_that("readPITaskConfigurationFromExcel does not fail on empty rows in sheets", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config

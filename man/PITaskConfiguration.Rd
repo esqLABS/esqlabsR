@@ -54,7 +54,7 @@ Initialize a new instance of the class
   taskName,
   projectConfiguration,
   scenarioConfiguration,
-  piDefinitions
+  piDefinitions = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -100,8 +100,8 @@ Default is TRUE.}
 \item{\code{projectConfiguration}}{Whether to also print project configuration.
 Default is FALSE.}
 
-\item{\code{scenarioConfiguration}}{Whether to also print scenario configurations.
-Default is FALSE.}
+\item{\code{scenarioConfiguration}}{Whether to also print scenario
+configurations. Default is FALSE.}
 }
 \if{html}{\out{</div>}}
 }
