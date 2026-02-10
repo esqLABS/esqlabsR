@@ -2,21 +2,19 @@
 % Please edit documentation in R/utilities-figures.R
 \name{.createConfigurationFromRow}
 \alias{.createConfigurationFromRow}
-\title{Create a plotConfiguration or exportConfiguration objects from a row of sheet
-'plotConfiguration' or 'exportConfiguration'}
+\title{Create a plotConfiguration object from a row of sheet 'plotConfiguration'}
 \usage{
 .createConfigurationFromRow(defaultConfiguration, ...)
 }
 \arguments{
-\item{defaultConfiguration}{default plotConfiguration or exportConfiguration}
+\item{defaultConfiguration}{default plotConfiguration}
 
 \item{...}{row with configuration properties}
 }
 \value{
-A customized plot- or exportConfiguration object
+A customized plotConfiguration object
 }
 \description{
-Create a plotConfiguration or exportConfiguration objects from a row of sheet
-'plotConfiguration' or 'exportConfiguration'
+Create a plotConfiguration object from a row of sheet 'plotConfiguration'
 }
 \keyword{internal}

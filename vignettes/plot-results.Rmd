@@ -48,10 +48,6 @@ Each plot to draw is defined in a **plotGrid** which is specified in the
 the plotConfiguration sheet and has many options to customize the layout of the
 plots. More information in the [Drawing Plots](#drawing-plots) section.
 
-plotGrids export options like size, quality, file type etc... are available in
-the **exportConfiguration** sheet. More information in the [Export
-Plot](#export-plots) section.
-
 Once all the excel sheets are setup, just call the `createPlotsFromExcel()`
 function to generate and export the plots.
 
@@ -120,16 +116,7 @@ names(pgc)[!(names(pgc) %in% defaultClassAttributes)][1:15]
 
 ### Export Plots
 
-In order to export plots to image files, the user can use the
-**exportConfiguration** sheet. The plotGrids to export must be added in the
-plotGridName column. Then, the output file name must be specified in the
-outputName column. The output format can be customize using the properties
-listed in the `ExportConfiguration` class. Here is a sample of the available:
-
-```{r, echo=FALSE}
-ec <- ExportConfiguration$new()
-names(ec)[!(names(ec) %in% defaultClassAttributes)][1:5]
-```
+TODO https://github.com/esqLABS/esqlabsR/issues/935
 
 ### Plotting Workflow Example
 
@@ -155,7 +142,10 @@ simulatedScenarios <- runScenarios(
 
 # Load observed data
 dataSheets <- "Laskin 1982.Group A"
-observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+observedData <- loadObservedData(
+  projectConfiguration = projectConfiguration,
+  sheets = dataSheets
+)
 ```
 
 #### Setup the `Plot.xlsx` file
@@ -194,8 +184,7 @@ plots$Aciclovir
 plots$Aciclovir2
 ```
 
-Also, calling this function will export the plots as image files if the
-exportConfiguration sheet is setup correctly.
+TODO https://github.com/esqLABS/esqlabsR/issues/935
 
 By default, the function will try to create all plots defined in the
 **plotGrids** sheet. If any of the simulation results or the observed date
@@ -292,7 +281,10 @@ simulatedScenarios <- runScenarios(
 
 # Load observed data
 dataSheets <- "Laskin 1982.Group A"
-observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+observedData <- loadObservedData(
+  projectConfiguration = projectConfiguration,
+  sheets = dataSheets
+)
 ```
 
 For the following steps, no `Plots.xlsx` file is needed. Instead, we will use
@@ -318,7 +310,8 @@ following code:
 ```{r datacombined}
 dataCombined <- DataCombined$new()
 dataCombined$addDataSets(observedData, names = "Observed", groups = "Aciclovir")
-dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
+dataCombined$addSimulationResults(
+  simulatedScenarios$TestScenario$results,
   names = "Simulated",
   groups = "Aciclovir"
 )
@@ -337,19 +330,13 @@ units, the position of the legend, etc., are done through _plot configurations_
   [`DefaultPlotConfiguration`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html).
   To combine multiple plots into a multi-panel figure, create a
   `PlotGridConfiguration` object, add plots to it, and plot with the `plotGrid()`
-  method. Finally, to export a plot to a file (e.g., `PNG` or `PDF`), use an
-  `ExportConfiguration` object.
+  method.
 
 To use configurations with a similar look and feel in the different `esqLABS`
 projects, create the configurations using the following functions:
 
 - [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html)
 - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html)
-- [`createEsqlabsExportConfiguration(projectConfiguration)`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html)
-
-For the list of supported properties of the `PlotGirdConfiguration`, refer to
-the
-[reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
 
 The next example shows how to create a multi-panel figure using the default
 configurations.
@@ -359,16 +346,28 @@ plotConfig <- createEsqlabsPlotConfiguration()
 gridConfig <- createEsqlabsPlotGridConfiguration()
 
 plotConfig$title <- "Time profile"
-indivPlot <- plotIndividualTimeProfile(dataCombined, defaultPlotConfiguration = plotConfig)
+indivPlot <- plotIndividualTimeProfile(
+  dataCombined,
+  defaultPlotConfiguration = plotConfig
+)
 
 plotConfig$title <- "Observed-vs-simulated"
-obsVsSimPlot <- plotObservedVsSimulated(dataCombined, defaultPlotConfiguration = plotConfig)
+obsVsSimPlot <- plotObservedVsSimulated(
+  dataCombined,
+  defaultPlotConfiguration = plotConfig
+)
 
 plotConfig$title <- "Res-vs-time"
-resVsTimePlot <- plotResidualsVsTime(dataCombined, defaultPlotConfiguration = plotConfig)
+resVsTimePlot <- plotResidualsVsTime(
+  dataCombined,
+  defaultPlotConfiguration = plotConfig
+)
 
 plotConfig$title <- "Res-vs-simulated"
-resVsSimPlot <- plotResidualsVsSimulated(dataCombined, defaultPlotConfiguration = plotConfig)
+resVsSimPlot <- plotResidualsVsSimulated(
+  dataCombined,
+  defaultPlotConfiguration = plotConfig
+)
 
 gridConfig$addPlots(list(indivPlot, obsVsSimPlot, resVsTimePlot, resVsSimPlot))
 gridConfig$title <- "All aciclovir plots"
@@ -378,20 +377,7 @@ gridPlot
 
 #### Export Plots
 
-To save the plot to a `PNG` file, use the
-[`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html).
-Make sure that the `fileName` argument ends with `.png`:
-
-```{r saveToPng}
-exportConfig <- createEsqlabsExportConfiguration(projectConfiguration$outputFolder)
-exportConfig$savePlot(gridPlot, fileName = "All plots.png")
-```
-
-By default, the height of the output figure is calculated from the
-number of rows in the multi-panel plot and the height defined in
-`ExportConfiguration$heightPerRow`. If you want to define a fixed height
-with the parameter `ExportConfiguration$height`, set
-`ExportConfiguration$heightPerRow = NULL`.
+TODO https://github.com/esqLABS/esqlabsR/issues/936
 
 ## Observed Data {#observed-data}
 
@@ -455,4 +441,3 @@ More detailed information on function signatures can be found in the following:
 - `tlf` documentation on:
   - [`PlotGridConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
   - [`plotGrid()`](https://www.open-systems-pharmacology.org/TLF-Library/reference/plotGrid.html)
-  - [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
