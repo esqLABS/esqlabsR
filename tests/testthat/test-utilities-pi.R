@@ -192,6 +192,92 @@ test_that("It runs complete PI workflow from Excel to optimized parameters", {
   }
 })
 
+test_that("Same parameter across scenarios with different bounds in same group fails", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  # Create configuration with same parameter in 2 scenarios with different bounds
+  sheets <- createValidPISheets()
+  sheets$PIParameters <- data.frame(
+    PITaskName = c("Task1", "Task1"),
+    Scenarios = c("PITestScenario", "PIScenario_500mg"),
+    `Container Path` = c("Aciclovir", "Aciclovir"),
+    `Parameter Name` = c("Lipophilicity", "Lipophilicity"),
+    Value = c(-0.1, -0.1),
+    Units = c("Log Units", "Log Units"),
+    MinValue = c(-2, -5), 
+    MaxValue = c(2, 5),
+    StartValue = c(-0.1, -0.1),
+    Group = c(1, 1), 
+    check.names = FALSE
+  )
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  # Should fail because same path in same group must have matching bounds
+  expect_error(
+    createPITasks(piTaskConfigurations),
+    messages$errorPIGroupBoundsMismatch("1", "Aciclovir\\|Lipophilicity")
+  )
+})
+
+test_that("Single scenario with multiple parameters in same group creates separate PIParameters", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+  sheets <- createValidPISheets()
+  
+  sheets$PIParameters <- rbind(
+    sheets$PIParameters,
+    data.frame(
+      PITaskName = "Task1",
+      Scenarios = "PITestScenario",
+      `Container Path` = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS",
+      `Parameter Name` = "TSspec",
+      Value = NA,
+      Units = NA,
+      MinValue = 0,
+      MaxValue = 10,
+      StartValue = 0,
+      Group = 1,
+      check.names = FALSE
+    )
+  )
+
+  # Update first parameter to also have Group=1
+  sheets$PIParameters$Group[1] <- 1
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  expect_no_error(piTasks <- createPITasks(piTaskConfigurations))
+
+  piTask <- piTasks[[1]]
+  piParams <- piTask$parameters
+
+  # Should have 2 separate PIParameters objects (one per parameter path)
+  # even though both have Group=1
+  expect_equal(length(piParams), 2)
+  expect_equal(length(piParams[[1]]$parameters), 1)
+  expect_equal(length(piParams[[2]]$parameters), 1)
+  expect_equal(piParams[[1]]$parameters[[1]]$name, "Lipophilicity")
+  expect_equal(piParams[[2]]$parameters[[1]]$name, "TSspec")
+  expect_equal(piParams[[1]]$minValue, -2) 
+  expect_equal(piParams[[2]]$minValue, 0)
+})
+
 test_that("It runs PI with parameter grouping across multiple scenarios", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config

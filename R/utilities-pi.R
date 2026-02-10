@@ -173,17 +173,21 @@ runPI <- function(piTasks) {
 #' @keywords internal
 #' @noRd
 .createPIParametersFromConfig <- function(configurations, scenarios) {
-  # Extract groups
-  # If all groups are NA: unique group per row
-  # If some groups have values: NA rows share single "_ungrouped" group
+  # Group by combination of Group column, Container Path, and Parameter Name
+  # Same path and group across multiple scenarios creates one PIParameters object
+  # Different paths create separate PIParameters even with same group value
   allNA <- all(sapply(configurations, function(cfg) is.na(cfg$Group)))
 
   groups <- sapply(seq_along(configurations), function(i) {
-    group <- configurations[[i]]$Group
+    cfg <- configurations[[i]]
+    group <- cfg$Group
+    containerPath <- cfg$`Container Path`
+    parameterName <- cfg$`Parameter Name`
+
     if (is.na(group)) {
       if (allNA) paste0("_ungrouped_", i) else "_ungrouped"
     } else {
-      as.character(group)
+      paste(as.character(group), containerPath, parameterName, sep = "__")
     }
   })
   uniqueGroups <- unique(groups)
@@ -191,8 +195,8 @@ runPI <- function(piTasks) {
   piParams <- vector("list", length(uniqueGroups))
 
   for (i in seq_along(uniqueGroups)) {
-    group <- uniqueGroups[i]
-    rowIndices <- which(groups == group)
+    groupKey <- uniqueGroups[i]
+    rowIndices <- which(groups == groupKey)
 
     # Collect all parameters from all rows in this group
     allParameters <- list()
@@ -230,7 +234,12 @@ runPI <- function(piTasks) {
           paramRow$MaxValue != firstRow$MaxValue ||
           paramRow$StartValue != firstRow$StartValue
       ) {
-        stop(messages$errorPIGroupBoundsMismatch(group, paramPath))
+        originalGroup <- if (is.na(paramRow$Group)) {
+          "_ungrouped"
+        } else {
+          as.character(paramRow$Group)
+        }
+        stop(messages$errorPIGroupBoundsMismatch(originalGroup, paramPath))
       }
 
       # Get scenario names this parameter applies to
