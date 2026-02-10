@@ -1,5 +1,14 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+This version updates the figure creation workflow to use the new approach implemented in `{ospsuite}` version 1x. See <link to documentation>
+
+- Removed sheet "exportConfiguration" from the "Plots.xlsx" configuration. Automated export of figures generated from excel sheets to files is not supported any more. To export figures, use `ospsuite.plots::exportPlot()` or the standard `ggplot2` export functions
+- Removed class `ExportConfiguration` that was overriding `ExportConfiguration` from the `tlf` package.
+- Removed function `createEsqlabsExportConfiguration()`
+- Argument `outputFolder` removed from the signature of the function `createPlotsFromExcel()`
+
 # esqlabsR 5.5.2
 
 ## Breaking changes
