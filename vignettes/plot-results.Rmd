@@ -49,7 +49,7 @@ the plotConfiguration sheet and has many options to customize the layout of the
 plots. More information in the [Drawing Plots](#drawing-plots) section.
 
 Once all the excel sheets are setup, just call the `createPlotsFromExcel()`
-function to generate and export the plots.
+function to generate the plots defined in the Excel file.
 
 ![](Figures/plot-workflow.png)
 

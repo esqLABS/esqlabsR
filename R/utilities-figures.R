@@ -931,7 +931,7 @@ createPlotsFromExcel <- function(
 #' @param plotGridNames Names of the plot grid specified in the sheet
 #'   `plotGrids`
 #'
-#' @returns A named list with configurations 'plotGrids' and 'dfPlotConfigurations'
+#' @returns A named list with configurations 'plotGrids' and 'plotConfigurations'
 #' @noRd
 .readPlotConfigurations <- function(projectConfiguration, plotGridNames) {
   # read sheet "plotGrids" with info for plotGridConfigurations

@@ -780,8 +780,8 @@ test_that(".validatePlotsFile warns about missing optional sheets", {
   )
 
   result <- esqlabsR:::.validatePlotsFile(temp_file)
-  # Should have warnings about missing plotGrids
-  expect_true(length(result$warnings) >= 1)
+  # Should have a warning about missing plotGrids
+  expect_true(any(grepl("plotGrids", unlist(result$warnings))))
 
   unlink(temp_file)
 })
