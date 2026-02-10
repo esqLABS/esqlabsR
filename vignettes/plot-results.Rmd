@@ -58,8 +58,8 @@ function to generate the plots defined in the Excel file.
 A `DataCombined` is where the data to plot is stored. It can contain simulated
 results and/or observed data and links them together.
 
-First, the user needs to define the name of the dataCombined. The name need to
-be stored in the `DataCombinedName`. Then, for each `DataCombinedName`, the user
+First, the user needs to define the name of the dataCombined. The name needs to
+be stored in the `DataCombinedName` column. Then, for each `DataCombinedName`, the user
 can attach simulated results (set dataType to `simulated`) and observed data
 (set dataType to `observed`) and give them labels. For Simulated results, the
 user needs to specify the name of the scenario and the output path of the
@@ -113,10 +113,6 @@ defined in the `PlotGridConfiguration` class. Here is a sample of the available:
 pgc <- PlotGridConfiguration$new()
 names(pgc)[!(names(pgc) %in% defaultClassAttributes)][1:15]
 ```
-
-### Export Plots
-
-TODO https://github.com/esqLABS/esqlabsR/issues/935
 
 ### Plotting Workflow Example
 
@@ -184,7 +180,6 @@ plots$Aciclovir
 plots$Aciclovir2
 ```
 
-TODO https://github.com/esqLABS/esqlabsR/issues/935
 
 By default, the function will try to create all plots defined in the
 **plotGrids** sheet. If any of the simulation results or the observed date
@@ -192,6 +187,52 @@ required by these plots cannot be found, an error is thrown. To override this
 behavior, e.g., to only plot the observed data without having the results
 simulated, change the value of the argument `stopIfNotFound` to `FALSE`. You can
 also specify which plots to create with the `plotGridNames` argument.
+
+#### Save plots as PNG (or other file type)
+
+The generated plots are of type `ggplot` and can be saved using the `ospsuite.plots::exportPlot`of the `ggplot2::ggsave()` function. Consider using the following code to save the generated plots in a `Figures` folder in the project directory:
+
+```{r, echo = TRUE, eval = FALSE}
+#' Export plots to PNG files
+#'
+#' Saves the plots created in the report to PNG (or other format, if specified) files in the same folder as the
+#' location of the report plus subfolder "Figures". Names of the files are the names
+#' of the plots, with "\" and "/" replaced by "_".
+#'
+#' @param projectConfiguration The `ProjectConfiguration` used to create the project.
+#' @param plots A named list with the plots to be exported. The names of the list are used as file names for the exported plots, with "\" and "/" replaced by "_".
+#' @inheritDotParams ospsuite.plots::exportPlot
+exportPlotsToPNG <- function(
+  projectConfiguration,
+  plots,
+  ...
+) {
+  ospsuite.utils::validateIsOfType(projectConfiguration, "ProjectConfiguration")
+
+  # Export plots to png
+  # Figures should be saved in the same folder as the location of the report
+  # plus subfolder "Figures"
+  outputPath <- file.path(getwd(), "Figures")
+  # Create a new folder if it does not exist
+  if (!dir.exists(paths = outputPath)) {
+    dir.create(path = outputPath, recursive = TRUE)
+  }
+  # Export each created plot
+  for (plotName in names(plots)) {
+    plot <- plots[[plotName]]
+    # Replace "\" and "/" by "_" so the file name does not result in folders
+    plotName <- gsub(pattern = "\\", "_", plotName, fixed = TRUE)
+    plotName <- gsub(pattern = "/", "_", plotName, fixed = TRUE)
+    # Save plot
+    ospsuite.plots::exportPlot(
+      plot,
+      filepath = outputPath,
+      filename = plotName,
+      ...
+    )
+  }
+}
+```
 
 #### Extract `DataCombined` required for plotting and calculate residuals
 
@@ -374,10 +415,6 @@ gridConfig$title <- "All aciclovir plots"
 gridPlot <- plotGrid(gridConfig)
 gridPlot
 ```
-
-#### Export Plots
-
-TODO https://github.com/esqLABS/esqlabsR/issues/936
 
 ## Observed Data {#observed-data}
 
