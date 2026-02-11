@@ -439,7 +439,7 @@ runPI <- function(piTasks) {
 
   # Apply AlgorithmOptions; get defaults and merge with user options
   algorithm <- piConfig$algorithm
-  if (!is.null(algorithm) && nchar(algorithm) > 0) {
+  if (!is.null(algorithm) && !is.na(algorithm) && nchar(algorithm) > 0) {
     algDefaults <- ospsuite.parameteridentification:::AlgorithmDefaults
     defaultAlgOptions <- algDefaults[[algorithm]] %||% list()
 
@@ -460,7 +460,7 @@ runPI <- function(piTasks) {
 
   # Apply CIOptions; get defaults and merge with user options
   ciMethod <- piConfig$ciMethod
-  if (!is.null(ciMethod) && nchar(ciMethod) > 0) {
+  if (!is.null(ciMethod) && !is.na(ciMethod) && nchar(ciMethod) > 0) {
     ciDefaults <- ospsuite.parameteridentification:::CIDefaults
     defaultCIOptions <- ciDefaults[[ciMethod]] %||% list()
 

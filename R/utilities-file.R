@@ -120,3 +120,23 @@ readExcel <- function(path, sheet = NULL, ...) {
   # Save the workbook
   openxlsx::saveWorkbook(wb, path, overwrite = TRUE)
 }
+
+#' Clean text columns by trimming whitespace and removing special characters
+#' @param df Data frame to clean
+#' @returns Data frame with cleaned text columns
+#' @keywords internal
+#' @noRd
+.cleanTextColumns <- function(df) {
+  char_cols <- sapply(df, is.character)
+
+  if (!any(char_cols)) {
+    return(df)
+  }
+
+  df[char_cols] <- lapply(df[char_cols], function(col) {
+    col <- trimws(col)
+    col <- gsub("[\r\n\t]", "", col)
+    col
+  })
+  df
+}

@@ -212,7 +212,8 @@ readPITaskConfigurationFromExcel <- function(
     path = piFilePath,
     sheet = "PIConfiguration",
     col_types = colTypes
-  )
+  ) |>
+    .cleanTextColumns()
 
   data <- dplyr::filter(data, !dplyr::if_all(dplyr::everything(), is.na))
   data <- dplyr::filter(data, !is.na(PITaskName))
@@ -249,7 +250,7 @@ readPITaskConfigurationFromExcel <- function(
     "numeric", # MinValue
     "numeric", # MaxValue
     "numeric", # StartValue
-    "text"     # Group
+    "numeric"  # Group
   )
 
   # Validate header
@@ -268,7 +269,8 @@ readPITaskConfigurationFromExcel <- function(
     path = piFilePath,
     sheet = "PIParameters",
     col_types = colTypes
-  )
+  ) |>
+    .cleanTextColumns()
 
   data <- dplyr::filter(data, !dplyr::if_all(dplyr::everything(), is.na))
   data <- dplyr::filter(data, !is.na(PITaskName))
@@ -320,7 +322,8 @@ readPITaskConfigurationFromExcel <- function(
     path = piFilePath,
     sheet = "PIOutputMappings",
     col_types = colTypes
-  )
+  ) |>
+    .cleanTextColumns()
 
   data <- dplyr::filter(data, !dplyr::if_all(dplyr::everything(), is.na))
   data <- dplyr::filter(data, !is.na(PITaskName))
@@ -353,7 +356,8 @@ readPITaskConfigurationFromExcel <- function(
     path = piFilePath,
     sheet = "AlgorithmOptions",
     col_types = colTypes
-  )
+  ) |>
+    .cleanTextColumns()
 
   data <- dplyr::filter(data, !dplyr::if_all(dplyr::everything(), is.na))
   data <- dplyr::filter(data, !is.na(PITaskName), !is.na(OptionName))
@@ -405,7 +409,7 @@ readPITaskConfigurationFromExcel <- function(
   }
 
   result <- as.list(df$OptionValue)
-  names(result) <- trimws(df$OptionName)
+  names(result) <- df$OptionName
 
   # Try to convert numeric values
   result <- lapply(result, function(x) {

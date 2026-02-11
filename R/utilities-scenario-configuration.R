@@ -95,7 +95,8 @@ readScenarioConfigurationFromExcel <- function(
     path = projectConfiguration$scenariosFile,
     sheet = "Scenarios",
     col_types = colTypes
-  )
+  ) |>
+    .cleanTextColumns()
 
   # Remove empty rows
   wholeData <- dplyr::filter(
@@ -109,7 +110,8 @@ readScenarioConfigurationFromExcel <- function(
   outputPathsDf <- readExcel(
     path = projectConfiguration$scenariosFile,
     sheet = "OutputPaths"
-  )
+  ) |>
+    .cleanTextColumns()
 
   scenarioNames <- scenarioNames %||% wholeData$Scenario_name
   # Create a scenario configuration for each name
