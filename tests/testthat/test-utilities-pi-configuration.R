@@ -1,7 +1,5 @@
-# Create a project configuration
 projectConfiguration <- testProjectConfiguration()
 
-# Helper function to create valid PI configuration sheets
 createValidPISheets <- function() {
   list(
     PIConfiguration = data.frame(
@@ -50,7 +48,7 @@ createValidPISheets <- function() {
 }
 
 test_that("readPITaskConfigurationFromExcel creates PITaskConfiguration from excel file", {
-  piTaskName <- "AciclovirLinear"
+  piTaskName <- "AciclovirSimple"
   expect_no_error(
     piTaskConfigurations <- readPITaskConfigurationFromExcel(
       piTaskNames = piTaskName,
@@ -61,18 +59,45 @@ test_that("readPITaskConfigurationFromExcel creates PITaskConfiguration from exc
   piTaskConfiguration <- piTaskConfigurations[[1]]
   expect_true(is.list(piTaskConfigurations))
   expect_equal(names(piTaskConfigurations), piTaskName)
-  expect_r6_class(piTaskConfiguration, "PITaskConfiguration")
-  expect_equal(piTaskConfiguration$piTaskName, piTaskName)
+  expect_true(isOfType(piTaskConfiguration, "PITaskConfiguration"))
+  expect_equal(piTaskConfiguration$taskName, piTaskName)
 })
 
-# ERROR readPITaskConfigurationFromExcel(projectConfigurationLocal)
+test_that("readPITaskConfigurationFromExcel creates correct PITaskConfiguration", {
+  piTaskName <- "AciclovirSimple"
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = piTaskName,
+    projectConfiguration = projectConfiguration
+  )
+
+  expect_true(is.list(piTaskConfigurations))
+  expect_equal(names(piTaskConfigurations), piTaskName)
+
+  piTaskConfiguration <- piTaskConfigurations[[piTaskName]]
+  expect_true(isOfType(piTaskConfiguration, "PITaskConfiguration"))
+  expect_equal(piTaskConfiguration$taskName, piTaskName)
+
+  expect_true(is.list(piTaskConfiguration$scenarioConfiguration))
+  expect_equal(
+    names(piTaskConfiguration$scenarioConfiguration),
+    "PITestScenario"
+  )
+  expect_equal(
+    piTaskConfiguration$scenarioConfiguration[[1]]$scenarioName,
+    "PITestScenario"
+  )
+  expect_equal(
+    piTaskConfiguration$scenarioConfiguration[[1]]$modelFile,
+    "Aciclovir.pkml"
+  )
+})
 
 test_that("readPITaskConfigurationFromExcel creates all PI tasks if no name is defined", {
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfiguration
   )
-    
-  piTaskNames <- c("AciclovirLinear", "AciclovirLog")
+
+  piTaskNames <- c("AciclovirSimple", "AciclovirMultiScenario")
   expect_equal(names(piTaskConfigurations), piTaskNames)
 })
 
@@ -90,32 +115,12 @@ test_that("readPITaskConfigurationFromExcel throws an error when wrong PI task n
   )
 })
 
-test_that("readPITaskConfigurationFromExcel creates correct PI task configuration", {
-  piTaskName <- "AciclovirLinear"
-  
-  piTaskConfigurations <- readPITaskConfigurationFromExcel(
-    piTaskNames = piTaskName,
-    projectConfiguration = projectConfiguration
-  )
-  piTaskConfiguration <- piTaskConfigurations[[piTaskName]]
-
-  expect_equal(piTaskConfiguration$piTaskName, piTaskName)
-  expect_equal(piTaskConfiguration$scenarioName, "PITestScenario")
-  expect_equal(piTaskConfiguration$modelFile, "Aciclovir.pkml")
-
-  expect_snapshot_value(piTaskConfiguration$piConfiguration, style = "deparse")
-  expect_snapshot_value(piTaskConfiguration$piParameters, style = "deparse")
-  expect_snapshot_value(piTaskConfiguration$piOutputMappings, style = "deparse")
-})
-
 test_that("readPITaskConfigurationFromExcel does not fail on empty rows in sheets", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config
 
-  # Start with valid sheets and add Task2 with NA row in between
   sheets <- createValidPISheets()
 
-  # Create Task2 rows (different from Task1)
   task2Config <- sheets$PIConfiguration
   task2Config$PITaskName <- "Task2"
   task2Config$Algorithm <- "DEoptim"
@@ -136,7 +141,6 @@ test_that("readPITaskConfigurationFromExcel does not fail on empty rows in sheet
   task2Output$DataSet <- NA
   task2Output$Scaling <- "lin"
 
-  # Add NA rows between Task1 and Task2
   sheets$PIConfiguration <- rbind(sheets$PIConfiguration, NA, task2Config)
   sheets$PIParameters <- rbind(sheets$PIParameters, NA, task2Params)
   sheets$PIOutputMappings <- rbind(sheets$PIOutputMappings, NA, task2Output)
@@ -281,7 +285,7 @@ test_that("readPITaskConfigurationFromExcel validates AlgorithmOptions sheet str
   projectConfigurationLocal <- temp_project$config
 
   sheets <- createValidPISheets()
-  # Replace AlgorithmOptions with wrong structure
+
   sheets$AlgorithmOptions <- data.frame(
     PITaskName = "Task1",
     WrongColumn = "100"
@@ -395,7 +399,6 @@ test_that("readPITaskConfigurationFromExcel handles multiple parameter rows corr
   projectConfigurationLocal <- temp_project$config
 
   sheets <- createValidPISheets()
-  # Add second parameter row for same task
   sheets$PIParameters <- rbind(
     sheets$PIParameters,
     data.frame(
@@ -424,20 +427,144 @@ test_that("readPITaskConfigurationFromExcel handles multiple parameter rows corr
 
   params <- piTaskConfigurations$Task1$piParameters
 
-  # Check that we have a list of 2 parameter definitions
   expect_equal(length(params), 2)
   expect_true(is.list(params[[1]]))
   expect_true(is.list(params[[2]]))
 
-  # Check first parameter
   expect_equal(params[[1]]$`Container Path`, "Aciclovir")
   expect_equal(params[[1]]$`Parameter Name`, "Lipophilicity")
   expect_equal(params[[1]]$MinValue, -2)
   expect_equal(params[[1]]$MaxValue, 2)
 
-  # Check second parameter
   expect_equal(params[[2]]$`Container Path`, "Neighborhoods|Kidney")
   expect_equal(params[[2]]$`Parameter Name`, "TSspec")
   expect_equal(params[[2]]$MinValue, 0)
   expect_equal(params[[2]]$MaxValue, 10)
+})
+
+test_that("readPITaskConfigurationFromExcel throws error when task is missing in one of the sheets", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+
+  sheets$PIConfiguration <- rbind(
+    sheets$PIConfiguration,
+    data.frame(
+      PITaskName = "Task2",
+      Algorithm = "BOBYQA",
+      CIMethod = "hessian",
+      PrintEvaluationFeedback = TRUE,
+      AutoEstimateCI = FALSE,
+      SimulationRunOptions = NA,
+      ObjectiveFunctionOptions = NA
+    )
+  )
+
+  sheets$PIParameters <- rbind(
+    sheets$PIParameters,
+    data.frame(
+      PITaskName = "Task2",
+      Scenarios = "PITestScenario",
+      `Container Path` = "Aciclovir",
+      `Parameter Name` = "Lipophilicity",
+      Value = -0.1,
+      Units = "Log Units",
+      MinValue = -2,
+      MaxValue = 2,
+      StartValue = -0.1,
+      Group = NA,
+      check.names = FALSE
+    )
+  )
+
+  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+
+  expect_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    ),
+    messages$errorPITaskMissingInSheet("Task2", "PIOutputMappings"),
+    fixed = TRUE
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel handles NA values correctly in optional fields", {
+  piTaskName <- "AciclovirSimple"
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = piTaskName,
+    projectConfiguration = projectConfiguration
+  )
+
+  outputMapping <- piTaskConfigurations[[piTaskName]]$piOutputMappings
+  piConfiguration <- piTaskConfigurations[[piTaskName]]$piConfiguration
+
+  expect_true(is.na(outputMapping[[1]]$xOffset))
+  expect_true(is.na(outputMapping[[1]]$Weight))
+  expect_true(is.na(piConfiguration$SimulationRunOptions))
+  expect_true(is.na(piConfiguration$ObjectiveFunctionOptions))
+})
+
+test_that("readPITaskConfigurationFromExcel reads sheets with correct types", {
+  piTaskName <- "AciclovirSimple"
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = piTaskName,
+    projectConfiguration = projectConfiguration
+  )
+
+  piParameter <- piTaskConfigurations[[piTaskName]]$piParameters[[1]]
+  outputMapping <- piTaskConfigurations[[piTaskName]]$piOutputMappings[[1]]
+  piConfiguration <- piTaskConfigurations[[piTaskName]]$piConfiguration
+  algorithmOptions <- piTaskConfigurations[[
+    piTaskName
+  ]]$piConfiguration$algorithmOptions
+  ciOptions <- piTaskConfigurations[[piTaskName]]$piConfiguration$ciOptions
+
+  sheetColumnTypes <- list(
+    piParameters = lapply(piParameter, class),
+    piOutputMappings = lapply(outputMapping, class),
+    piConfiguration = lapply(piConfiguration, class),
+    algortihmOptions = lapply(algorithmOptions, class),
+    ciOptions = lapply(ciOptions, class)
+  )
+
+  expect_snapshot(sheetColumnTypes)
+})
+
+test_that("readPITaskConfigurationFromExcel converts option values from strings to numeric", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$AlgorithmOptions <- data.frame(
+    PITaskName = "Task1",
+    OptionName = c("maxeval", "ftol_rel"),
+    OptionValue = c("1000", "0.001")
+  )
+  sheets$CIOptions <- data.frame(
+    PITaskName = "Task1",
+    OptionName = c("alpha", "max_iter"),
+    OptionValue = c("0.05", "100")
+  )
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  algOptions <- piTaskConfigurations[[1]]$piConfiguration$algorithmOptions
+  expect_true(is.numeric(algOptions$maxeval))
+  expect_equal(algOptions$maxeval, 1000)
+  expect_true(is.numeric(algOptions$ftol_rel))
+  expect_equal(algOptions$ftol_rel, 0.001)
+
+  ciOpts <- piTaskConfigurations[[1]]$piConfiguration$ciOptions
+  expect_true(is.numeric(ciOpts$alpha))
+  expect_equal(ciOpts$alpha, 0.05)
+  expect_true(is.numeric(ciOpts$max_iter))
+  expect_equal(ciOpts$max_iter, 100)
 })

@@ -1,4 +1,5 @@
-# Helper function to create valid PI configuration sheets
+projectConfiguration <- testProjectConfiguration()
+
 createValidPISheets <- function() {
   list(
     PIConfiguration = data.frame(
@@ -47,7 +48,6 @@ createValidPISheets <- function() {
 }
 
 test_that("createPITasks creates ParameterIdentification objects from configurations", {
-  projectConfiguration <- testProjectConfiguration()
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
     piTaskNames = "AciclovirSimple",
     projectConfiguration = projectConfiguration
@@ -68,128 +68,140 @@ test_that("createPITasks creates ParameterIdentification objects from configurat
   expect_true(isOfType(firstTask$configuration, "PIConfiguration"))
 })
 
-test_that("createPITasks filters to specific dataset when DataSet is specified", {
-  projectConfiguration <- testProjectConfiguration()
-
-  piTaskConfigurations <- readPITaskConfigurationFromExcel(
-    piTaskNames = "AciclovirSimple",
-    projectConfiguration = projectConfiguration
-  )
-
-  expect_no_error(piTasks <- createPITasks(piTaskConfigurations))
-  expect_equal(length(piTasks), 1)
-  expect_true(isOfType(piTasks[[1]], "ParameterIdentification"))
-  expect_true(length(piTasks[[1]]$outputMappings) > 0)
-})
-
-test_that("runPI executes single PI task successfully", {
-  projectConfiguration <- testProjectConfiguration()
-
+test_that("createPITasks creates PIParameters with correct bounds", {
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
     piTaskNames = "AciclovirSimple",
     projectConfiguration = projectConfiguration
   )
 
   piTasks <- createPITasks(piTaskConfigurations)
-
-  piResults <- runPI(piTasks)
-
-  result <- piResults[[1]]
-  expect_true(!is.null(result$task))
-  expect_true(!is.null(result$result) || !is.null(result$error))
-  expect_true(is.logical(result$success))
-
-  if (result$success) {
-    expect_true(!is.null(result$finalParameters))
-  }
+  firstTask <- piTasks[[1]]
+  expect_true(length(firstTask$parameters) > 0)
+  firstParam <- firstTask$parameters[[1]]
+  expect_true(!is.null(firstParam$minValue))
+  expect_true(!is.null(firstParam$maxValue))
+  expect_true(!is.null(firstParam$startValue))
+  expect_true(firstParam$minValue <= firstParam$startValue)
+  expect_true(firstParam$startValue <= firstParam$maxValue)
 })
 
-test_that("runPI handles optimization failure gracefully", {
+test_that("createPITasks reuses scenarios across multiple tasks", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIConfiguration <- rbind(
+    sheets$PIConfiguration,
+    sheets$PIConfiguration
+  )
+  sheets$PIConfiguration$PITaskName <- c("Task1", "Task2")
+  sheets$PIParameters <- rbind(sheets$PIParameters, sheets$PIParameters)
+  sheets$PIParameters$PITaskName <- c("Task1", "Task2")
+  sheets$PIOutputMappings <- rbind(
+    sheets$PIOutputMappings,
+    sheets$PIOutputMappings
+  )
+  sheets$PIOutputMappings$PITaskName <- c("Task1", "Task2")
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfiguration$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfiguration
+  )
+  piTasks <- createPITasks(piTaskConfigurations)
+
+  expect_equal(length(piTasks), 2)
+  expect_equal(names(piTasks), c("Task1", "Task2"))
+  expect_true(length(piTasks$Task1$simulations) > 0)
+  expect_true(length(piTasks$Task2$simulations) > 0)
+
+  expect_identical(
+    piTasks$Task1$simulations[[1]]$simulation,
+    piTasks$Task2$simulations[[1]]$simulation
+  )
+})
+
+test_that("createPITasks requires DataSet column to be specified", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config
 
-  # Create PI task with impossible bounds (will fail to optimize)
-  sheets <- list(
-    PIConfiguration = data.frame(
-      PITaskName = "FailingTask",
-      Algorithm = "BOBYQA",
-      CIMethod = "hessian",
-      PrintEvaluationFeedback = FALSE,
-      AutoEstimateCI = FALSE,
-      SimulationRunOptions = NA,
-      ObjectiveFunctionOptions = NA
-    ),
-    PIParameters = data.frame(
-      PITaskName = "FailingTask",
-      Scenarios = "PITestScenario",
-      `Container Path` = "Aciclovir",
-      `Parameter Name` = "Lipophilicity",
-      Value = -0.1,
-      Units = "Log Units",
-      MinValue = 100,  
-      MaxValue = -100,
-      StartValue = 0,
-      Group = NA,
-      check.names = FALSE
-    ),
-    PIOutputMappings = data.frame(
-      PITaskName = "FailingTask",
-      Scenarios = "PITestScenario",
-      ObservedDataSheet = "Laskin 1982.Group A",
-      DataSet = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
-      Scaling = "log",
-      xOffset = NA,
-      yOffset = NA,
-      Weight = NA,
-      check.names = FALSE
-    ),
-    AlgorithmOptions = data.frame(
-      PITaskName = character(0),
-      OptionName = character(0),
-      OptionValue = character(0)
-    ),
-    CIOptions = data.frame(
-      PITaskName = character(0),
-      OptionName = character(0),
-      OptionValue = character(0)
-    )
-  )
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$DataSet <- NA
 
   .writeExcel(
     data = sheets,
     path = projectConfigurationLocal$parameterIdentificationFile
   )
 
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
   expect_error(
-    {
-      piTaskConfigurations <- readPITaskConfigurationFromExcel(
-        projectConfiguration = projectConfigurationLocal
-      )
-      piTasks <- createPITasks(piTaskConfigurations)
-    }
+    createPITasks(piTaskConfigurations),
+    regexp = messages$errorPIColumnRequired("DataSet", "PIOutputMappings")
   )
 })
 
-test_that("It runs complete PI workflow from Excel to optimized parameters", {
-  projectConfiguration <- testProjectConfiguration()
-  piTaskConfigurations <- readPITaskConfigurationFromExcel(
-    piTaskNames = "AciclovirSimple",
-    projectConfiguration = projectConfiguration
-  )
-  
-  expect_no_error(piTasks <- createPITasks(piTaskConfigurations))
-  expect_no_error(piResults <- runPI(piTasks))
-  
-  expect_equal(length(piResults), 1)
-  expect_equal(names(piResults), "AciclovirSimple")
+test_that("createPITasks throws error when DataSet name doesn't exist", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
 
-  result <- piResults[[1]]
-  expect_true(isOfType(result$task, "ParameterIdentification"))
-  expect_true(is.logical(result$success))
-  if (result$success) {
-    expect_true(!is.null(result$finalParameters))
-    expect_true(is.numeric(result$finalParameters))
-  }
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$DataSet <- "NonExistentDataSet"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+  observedData <- loadObservedData(
+    projectConfigurationLocal,
+    sheets = "Laskin 1982.Group A"
+  )
+
+  expect_error(
+    createPITasks(piTaskConfigurations),
+    regexp = messages$errorPIDatasetNotFound(
+      "NonExistentDataSet",
+      names(observedData)
+    )
+  )
+})
+
+test_that("createPITasks throws error when parameter bounds are invalid", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIParameters$MinValue <- 2
+  sheets$PIParameters$MaxValue <- 0
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  expect_error(
+    createPITasks(piTaskConfigurations),
+    regexp = messages$errorPIInvalidBounds(
+      "Aciclovir|Lipophilicity",
+      min = 2,
+      start = -0.1,
+      max = 0
+    ),
+    fixed = TRUE
+  )
 })
 
 test_that("Same parameter across scenarios with different bounds in same group fails", {
@@ -205,10 +217,10 @@ test_that("Same parameter across scenarios with different bounds in same group f
     `Parameter Name` = c("Lipophilicity", "Lipophilicity"),
     Value = c(-0.1, -0.1),
     Units = c("Log Units", "Log Units"),
-    MinValue = c(-2, -5), 
+    MinValue = c(-2, -5),
     MaxValue = c(2, 5),
     StartValue = c(-0.1, -0.1),
-    Group = c(1, 1), 
+    Group = c(1, 1),
     check.names = FALSE
   )
 
@@ -221,18 +233,40 @@ test_that("Same parameter across scenarios with different bounds in same group f
     projectConfiguration = projectConfigurationLocal
   )
 
-  # Should fail because same path in same group must have matching bounds
   expect_error(
     createPITasks(piTaskConfigurations),
     messages$errorPIGroupBoundsMismatch("1", "Aciclovir\\|Lipophilicity")
   )
 })
 
-test_that("Single scenario with multiple parameters in same group creates separate PIParameters", {
+test_that("createPITasks throws error when parameter not found in simulation", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config
+
   sheets <- createValidPISheets()
-  
+  sheets$PIParameters$`Container Path` <- "InvalidPath"
+  sheets$PIParameters$`Parameter Name` <- "InvalidParameter"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  expect_error(
+    createPITasks(piTaskConfigurations),
+    regexp = "InvalidPath\\|InvalidParameter"
+  )
+})
+
+test_that("createPITasks handles all Group values as NA correctly", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
   sheets$PIParameters <- rbind(
     sheets$PIParameters,
     data.frame(
@@ -244,53 +278,45 @@ test_that("Single scenario with multiple parameters in same group creates separa
       Units = NA,
       MinValue = 0,
       MaxValue = 10,
-      StartValue = 0,
-      Group = 1,
+      StartValue = 5,
+      Group = NA,
       check.names = FALSE
     )
   )
-
-  # Update first parameter to also have Group=1
-  sheets$PIParameters$Group[1] <- 1
+  sheets$PIParameters$Group[1] <- NA
 
   .writeExcel(
     data = sheets,
     path = projectConfigurationLocal$parameterIdentificationFile
   )
-
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   )
 
   expect_no_error(piTasks <- createPITasks(piTaskConfigurations))
-
   piTask <- piTasks[[1]]
   piParams <- piTask$parameters
-
-  # Should have 2 separate PIParameters objects (one per parameter path)
-  # even though both have Group=1
   expect_equal(length(piParams), 2)
   expect_equal(length(piParams[[1]]$parameters), 1)
   expect_equal(length(piParams[[2]]$parameters), 1)
-  expect_equal(piParams[[1]]$parameters[[1]]$name, "Lipophilicity")
-  expect_equal(piParams[[2]]$parameters[[1]]$name, "TSspec")
-  expect_equal(piParams[[1]]$minValue, -2) 
-  expect_equal(piParams[[2]]$minValue, 0)
 })
 
-test_that("It runs PI with parameter grouping across multiple scenarios", {
+test_that("createPITasks creates grouped PIParameters across multiple scenarios", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config
 
-  # Step 1: Add high dose observed data
-  dataFile <- file.path(temp_project$path, "Data", "TestProject_TimeValuesData.xlsx")
-  laskinData <- readExcel(dataFile, sheet = "Laskin 1982.Group A")
+  # Add high dose observed data
+  dataFile <- file.path(
+    temp_project$path,
+    "Data",
+    "TestProject_TimeValuesData.xlsx"
+  )
+  obsData <- readExcel(dataFile, sheet = "Laskin 1982.Group A")
 
-  highDoseData <- laskinData
+  highDoseData <- obsData
   highDoseData$Dose <- "5.0 mg/kg"
   highDoseData$Measurement <- highDoseData$Measurement * 1.5
-
-  combinedData <- rbind(laskinData, highDoseData)
+  combinedData <- rbind(obsData, highDoseData)
 
   .writeExcel(
     data = list("Laskin 1982.Group A" = combinedData),
@@ -298,14 +324,18 @@ test_that("It runs PI with parameter grouping across multiple scenarios", {
     append = FALSE
   )
 
-  # Step 2: Update PIOutputMappings to use correct dataset for second scenario
+  # Update PIOutputMappings to use correct dataset for second scenario
   piFile <- projectConfigurationLocal$parameterIdentificationFile
   piOutputMappings <- readExcel(piFile, sheet = "PIOutputMappings")
 
-  piOutputMappings$DataSet[piOutputMappings$PITaskName == "AciclovirMultiScenario" &
-                             piOutputMappings$Scenarios == "PIScenario_500mg"] <-
+  # Update second row to use high-dose dataset
+  piOutputMappings$DataSet[
+    piOutputMappings$PITaskName == "AciclovirMultiScenario" &
+      piOutputMappings$Scenarios == "PIScenario_500mg"
+  ] <-
     "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5.0 mg/kg_iv_"
 
+  # Write back all PI sheets
   piConfiguration <- readExcel(piFile, sheet = "PIConfiguration")
   piParameters <- readExcel(piFile, sheet = "PIParameters")
   algorithmOptions <- readExcel(piFile, sheet = "AlgorithmOptions")
@@ -329,43 +359,165 @@ test_that("It runs PI with parameter grouping across multiple scenarios", {
     projectConfiguration = projectConfigurationLocal
   )
 
+  # Create PI tasks
   expect_no_error(piTasks <- createPITasks(piTaskConfigurations))
 
+  # Verify parameter grouping structure
   piTask <- piTasks[[1]]
   piParams <- piTask$parameters
 
-  # Should have 3 PIParameters objects:
-  # 1. Lipophilicity (Group=1): 2 parameters (shared across both scenarios)
-  # 2. TSspec (Group=2): 1 parameter (250mg scenario)
-  # 3. TSspec (Group=3): 1 parameter (500mg scenario)
   expect_equal(length(piParams), 3)
+  expect_equal(length(piParams[[1]]$parameters), 2)
+  expect_equal(length(piParams[[2]]$parameters), 1)
+  expect_equal(piParams[[1]]$parameters[[1]]$name, "Lipophilicity")
+  expect_equal(piParams[[1]]$parameters[[2]]$name, "Lipophilicity")
+  expect_equal(piParams[[2]]$parameters[[1]]$name, "TSspec")
 
-  # Verify first group has 2 parameters (Lipophilicity from both scenarios)
-  group1Params <- if (is.list(piParams[[1]]$parameters)) {
-    piParams[[1]]$parameters
-  } else {
-    list(piParams[[1]]$parameters)
-  }
-  expect_equal(length(group1Params), 2)
-
-  group2Params <- if (is.list(piParams[[2]]$parameters)) {
-    piParams[[2]]$parameters
-  } else {
-    list(piParams[[2]]$parameters)
-  }
-  expect_equal(length(group2Params), 1)
-
-  group3Params <- if (is.list(piParams[[3]]$parameters)) {
-    piParams[[3]]$parameters
-  } else {
-    list(piParams[[3]]$parameters)
-  }
-  expect_equal(length(group3Params), 1)
+  # Verify output mappings structure (2 scenarios)
   expect_equal(length(piTask$outputMappings), 2)
+  expect_true(
+    grepl("2.5 mg", names(piTask$outputMappings[[1]]$observedDataSets))
+  )
+  expect_true(
+    grepl("5.0 mg", names(piTask$outputMappings[[2]]$observedDataSets))
+  )
+})
 
-  expect_no_error(piResults <- runPI(piTasks))
+test_that("createPITasks throws error when no scenarios are configured", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
 
+  # Create PI configuration with empty scenario configuration
+  piTaskConfig <- PITaskConfiguration$new(
+    taskName = "TestTask",
+    projectConfiguration = projectConfigurationLocal,
+    scenarioConfiguration = list(),
+    piDefinitions = list(
+      piConfiguration = list(),
+      piParameters = list(),
+      piOutputMappings = list()
+    )
+  )
+
+  expect_error(
+    createPITasks(list(TestTask = piTaskConfig)),
+    regexp = messages$errorPINoScenariosConfigured(),
+    fixed = TRUE
+  )
+})
+
+test_that("createPITasks throws error when scenario not found in PIParameters", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIParameters$Scenarios <- "NonExistentScenario"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  expect_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    ),
+    regexp = "NonExistentScenario"
+  )
+})
+
+test_that("createPITasks throws error when scenario not found in PIOutputMappings", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$Scenarios <- "NonExistentScenario"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  expect_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    ),
+    regexp = "NonExistentScenario"
+  )
+})
+
+test_that("runPI executes single PI task successfully", {
+  piTaskName <- "AciclovirSimple"
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = piTaskName,
+    projectConfiguration = projectConfiguration
+  )
+  piTasks <- createPITasks(piTaskConfigurations)
+  piResults <- runPI(piTasks)
+
+  expect_true(is.list(piResults))
   expect_equal(length(piResults), 1)
+  expect_equal(names(piResults), piTaskName)
+
+  result <- piResults[[piTaskName]]
+  expect_true(isOfType(result$task, "ParameterIdentification"))
+  expect_true(isOfType(result$result, "PIResult"))
+  expect_true(is.null(result$error))
+  expect_true(result$success)
+})
+
+test_that("runPI returns failure result with warning when optimization fails", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  piTasks <- createPITasks(piTaskConfigurations)
+
+  # Create mock ParameterIdentification that fails during run
+  PISimFailureTester <- R6::R6Class(
+    classname = "PISimFailureTester",
+    inherit = ospsuite.parameteridentification::ParameterIdentification,
+    cloneable = FALSE,
+    public = list(
+      run = function() {
+        stop("Simulated optimization failure")
+      }
+    )
+  )
+
+  # Replace the PI task with our failing mock
+  mockTask <- PISimFailureTester$new(
+    simulations = piTasks[[1]]$simulations,
+    parameters = piTasks[[1]]$parameters,
+    outputMappings = piTasks[[1]]$outputMappings,
+    configuration = piTasks[[1]]$configuration
+  )
+  piTasks[[1]] <- mockTask
+
+  # Should warn but not error
+  expect_warning(
+    piResults <- runPI(piTasks),
+    messages$warningPIOptimizationFailed(
+      "Task1",
+      "Simulated optimization failure"
+    ),
+    fixed = TRUE
+  )
+
   result <- piResults[[1]]
-  expect_true(is.logical(result$success))
+  expect_false(result$success)
+  expect_null(result$result)
+  expect_null(result$finalParameters)
+  expect_null(result$convergence)
+  expect_equal(result$error, "Simulated optimization failure")
 })

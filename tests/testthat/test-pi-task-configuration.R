@@ -79,6 +79,10 @@ test_that("PITaskConfiguration prints as expected", {
   )
 
   piTaskConfig <- piTaskConfigs[[1]]
+
+  expect_no_error(piTaskConfig$print(projectConfiguration = TRUE))
+  expect_no_error(piTaskConfig$print(scenarioConfiguration = TRUE))
+
   expect_snapshot(piTaskConfig$print())
   expect_snapshot(print(piTaskConfig$piConfiguration))
   expect_snapshot(print(piTaskConfig$piParameters))

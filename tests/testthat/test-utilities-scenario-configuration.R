@@ -346,7 +346,9 @@ test_that("It creates all scenarios if no name is defined", {
       "PopulationScenario",
       "PopulationScenarioFromCSV",
       "TestScenario_missingParam",
-      "PITestScenario"
+      "PITestScenario",
+      "PIScenario_250mg",
+      "PIScenario_500mg"
     )
   )
 })
