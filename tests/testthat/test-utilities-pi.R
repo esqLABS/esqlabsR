@@ -446,6 +446,29 @@ test_that("createPITasks throws error when scenario not found in PIOutputMapping
   )
 })
 
+test_that("createPITasks applies scalar Weight to PIOutputMapping dataWeights", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$Weight <- "2"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+  piTasks <- createPITasks(piTaskConfigurations)
+
+  outputMapping <- piTasks$Task1$outputMappings[[1]]
+  dataSetName <- names(outputMapping$observedDataSets)[[1]]
+
+  expect_true(all(outputMapping$dataWeights[[dataSetName]] == 2))
+})
+
 test_that("runPI executes single PI task successfully", {
   piTaskName <- "AciclovirSimple"
   piTaskConfigurations <- readPITaskConfigurationFromExcel(

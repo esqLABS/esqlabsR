@@ -500,7 +500,7 @@ test_that("readPITaskConfigurationFromExcel handles NA values correctly in optio
   piConfiguration <- piTaskConfigurations[[piTaskName]]$piConfiguration
 
   expect_true(is.na(outputMapping[[1]]$xOffset))
-  expect_true(is.na(outputMapping[[1]]$Weight))
+  expect_null(outputMapping[[1]]$Weight)
   expect_true(is.na(piConfiguration$SimulationRunOptions))
   expect_true(is.na(piConfiguration$ObjectiveFunctionOptions))
 })
@@ -567,4 +567,122 @@ test_that("readPITaskConfigurationFromExcel converts option values from strings 
   expect_equal(ciOpts$alpha, 0.05)
   expect_true(is.numeric(ciOpts$max_iter))
   expect_equal(ciOpts$max_iter, 100)
+})
+
+test_that(".parseWeightString returns NULL for NA or empty input", {
+  expect_null(.parseWeightString(NA))
+  expect_null(.parseWeightString(NA_character_))
+  expect_null(.parseWeightString(""))
+  expect_null(.parseWeightString("  "))
+})
+
+test_that(".parseWeightString parses a scalar weight correctly", {
+  expect_equal(.parseWeightString("2"), 2)
+  expect_equal(.parseWeightString("0.5"), 0.5)
+})
+
+test_that(".parseWeightString parses a comma-separated weight vector correctly", {
+  expect_equal(.parseWeightString("1,2,3"), c(1, 2, 3))
+  expect_equal(.parseWeightString("1, 2, 3"), c(1, 2, 3))
+  expect_equal(.parseWeightString("0.5, 1.5, 2"), c(0.5, 1.5, 2))
+})
+
+test_that(".parseWeightString errors on non-numeric input", {
+  expect_error(
+    .parseWeightString("abc"),
+    messages$errorPIInvalidWeightString("abc"),
+    fixed = TRUE
+  )
+  expect_error(
+    .parseWeightString("1,two,3"),
+    messages$errorPIInvalidWeightString("1,two,3"),
+    fixed = TRUE
+  )
+  expect_error(
+    .parseWeightString("1;3"),
+    messages$errorPIInvalidWeightString("1;3"),
+    fixed = TRUE
+  )
+  expect_error(
+    .parseWeightString("Inf"),
+    messages$errorPIInvalidWeightString("Inf"),
+    fixed = TRUE
+  )
+})
+
+test_that(".parseWeightString accepts zero weight", {
+  expect_equal(.parseWeightString("0"), 0)
+  expect_equal(.parseWeightString("0,1,2"), c(0, 1, 2))
+})
+
+test_that(".parseWeightString errors on negative values", {
+  expect_error(
+    .parseWeightString("-1"),
+    messages$errorPIWeightMustBePositive("-1"),
+    fixed = TRUE
+  )
+  expect_error(
+    .parseWeightString("1,-2,3"),
+    messages$errorPIWeightMustBePositive("1,-2,3"),
+    fixed = TRUE
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel parses scalar Weight into numeric vector", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$Weight <- "2"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  weight <- piTaskConfigurations$Task1$piOutputMappings[[1]]$Weight
+  expect_equal(weight, 2)
+})
+
+test_that("readPITaskConfigurationFromExcel parses vector Weight into numeric vector", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$Weight <- "1,2,3"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  weight <- piTaskConfigurations$Task1$piOutputMappings[[1]]$Weight
+  expect_equal(weight, c(1, 2, 3))
+})
+
+test_that("readPITaskConfigurationFromExcel errors on invalid Weight string", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$Weight <- "invalid"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  expect_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    )
+  )
 })

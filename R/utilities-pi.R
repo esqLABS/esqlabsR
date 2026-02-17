@@ -392,6 +392,11 @@ runPI <- function(piTasks) {
         outputMapping$addObservedDataSets(dataSet)
         outputMapping$scaling <- scaling
 
+        weight <- mappingRow$Weight
+        if (!is.null(weight)) {
+          outputMapping$setDataWeights(setNames(list(weight), dataSetName))
+        }
+
         outputMappings[[length(outputMappings) + 1]] <- outputMapping
       }
     }

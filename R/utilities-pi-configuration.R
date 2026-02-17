@@ -145,7 +145,11 @@ readPITaskConfigurationFromExcel <- function(
     )
     piOutputMappings <- lapply(
       seq_len(nrow(taskData$piOutputMappings)),
-      function(i) as.list(taskData$piOutputMappings[i, ])
+      function(i) {
+        row <- as.list(taskData$piOutputMappings[i, ])
+        row["Weight"] <- list(.parseWeightString(row$Weight))
+        row
+      }
     )
     piConfiguration$algorithmOptions <- .longFormatToNamedList(
       taskData$algorithmOptions
@@ -303,7 +307,7 @@ readPITaskConfigurationFromExcel <- function(
     "text",    # Scaling
     "numeric", # xOffset
     "numeric", # yOffset
-    "numeric"  # Weight
+    "text"     # Weight
   )
 
   # Validate header
@@ -390,7 +394,8 @@ readPITaskConfigurationFromExcel <- function(
     path = piFilePath,
     sheet = "CIOptions",
     col_types = colTypes
-  )
+  ) |>
+    .cleanTextColumns()
 
   data <- dplyr::filter(data, !dplyr::if_all(dplyr::everything(), is.na))
   data <- dplyr::filter(data, !is.na(PITaskName), !is.na(OptionName))
@@ -449,4 +454,33 @@ readPITaskConfigurationFromExcel <- function(
       nRows
     ))
   }
+}
+
+#' Parse a Weight string from the PIOutputMappings Excel column
+#'
+#' @param weightString Character. A string from the Weight column, e.g. `"2"`,
+#'   `"1,2,3"`, or `NA`.
+#' @returns `NULL` if the cell is empty/NA, otherwise a numeric vector.
+#' @keywords internal
+#' @noRd
+.parseWeightString <- function(weightString) {
+  # Empty or NA -> no weight applied
+  if (is.null(weightString) ||
+    is.na(weightString) ||
+    nchar(trimws(as.character(weightString))) == 0) {
+    return(NULL)
+  }
+
+  parts <- trimws(strsplit(as.character(weightString), ",", fixed = TRUE)[[1]])
+  numValues <- suppressWarnings(as.numeric(parts))
+
+  if (any(is.na(numValues)) || any(!is.finite(numValues))) {
+    stop(messages$errorPIInvalidWeightString(weightString))
+  }
+
+  if (any(numValues < 0)) {
+    stop(messages$errorPIWeightMustBePositive(weightString))
+  }
+
+  return(numValues)
 }

@@ -759,6 +759,19 @@ messages$errorPIInvalidBounds <- function(paramPath, min, start, max) {
   )
 }
 
+messages$errorPIInvalidWeightString <- function(weightString) {
+  cliFormat(
+    "Weight value {.val {weightString}} cannot be parsed as numeric.
+    Expected a number or comma-separated numbers, e.g. {.code 1} or {.code 1,2,3}."
+  )
+}
+
+messages$errorPIWeightMustBePositive <- function(weightString) {
+  cliFormat(
+    "Weight values must be non-negative (>= 0). Got: {.val {weightString}}."
+  )
+}
+
 messages$errorPIMissingPiDefinitionsKeys <- function(missingKeys) {
   cliFormat(
     "{.arg piDefinitions} must contain: {.val {c('piConfiguration', 'piParameters', 'piOutputMappings')}}.

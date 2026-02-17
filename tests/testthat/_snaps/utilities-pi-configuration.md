@@ -58,7 +58,7 @@
       [1] "numeric"
       
       $piOutputMappings$Weight
-      [1] "numeric"
+      [1] "NULL"
       
       
       $piConfiguration
