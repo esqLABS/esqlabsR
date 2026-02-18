@@ -7,17 +7,15 @@
 runPI(piTasks)
 }
 \arguments{
-\item{piTasks}{Named list of \code{ParameterIdentification} objects (from createPITasks)}
+\item{piTasks}{Named list of \code{ParameterIdentification} objects usually
+created using \code{createPITasks}}
 }
 \value{
 Named list of PI results. Each result contains:
 \itemize{
-\item task: Original ParameterIdentification object
-\item result: PIResult object from task$run() or NULL if failed
-\item finalParameters: Optimized parameter values
-\item convergence: Convergence information
-\item success: Logical indicating success/failure
-\item error: Error message if failed
+\item task: original \code{ParameterIdentification} object
+\item result: \code{PIResult} object from \code{task$run()}, or NULL if failed
+\item error: Error message string if failed, absent on success
 }
 }
 \description{
