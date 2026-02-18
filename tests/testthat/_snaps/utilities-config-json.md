@@ -666,7 +666,7 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[6]]$ModelParameterSheets
-      [1] "Aciclovir"
+      [1] NA
       
       $Scenarios$Scenarios$rows[[6]]$ApplicationProtocol
       [1] NA
@@ -690,6 +690,88 @@
       [1] "Aciclovir.pkml"
       
       $Scenarios$Scenarios$rows[[6]]$OutputPathsIds
+      [1] "Aciclovir_PVB"
+      
+      
+      $Scenarios$Scenarios$rows[[7]]
+      $Scenarios$Scenarios$rows[[7]]$Scenario_name
+      [1] "PIScenario_250mg"
+      
+      $Scenarios$Scenarios$rows[[7]]$IndividualId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$PopulationId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$ReadPopulationFromCSV
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$ModelParameterSheets
+      [1] "Aciclovir"
+      
+      $Scenarios$Scenarios$rows[[7]]$ApplicationProtocol
+      [1] "Protocol_250mg"
+      
+      $Scenarios$Scenarios$rows[[7]]$SimulationTime
+      [1] "0,120,1"
+      
+      $Scenarios$Scenarios$rows[[7]]$SimulationTimeUnit
+      [1] "h"
+      
+      $Scenarios$Scenarios$rows[[7]]$SteadyState
+      [1] "FALSE"
+      
+      $Scenarios$Scenarios$rows[[7]]$SteadyStateTime
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$ModelFile
+      [1] "Aciclovir.pkml"
+      
+      $Scenarios$Scenarios$rows[[7]]$OutputPathsIds
+      [1] "Aciclovir_PVB"
+      
+      
+      $Scenarios$Scenarios$rows[[8]]
+      $Scenarios$Scenarios$rows[[8]]$Scenario_name
+      [1] "PIScenario_500mg"
+      
+      $Scenarios$Scenarios$rows[[8]]$IndividualId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$PopulationId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$ReadPopulationFromCSV
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$ModelParameterSheets
+      [1] "Aciclovir"
+      
+      $Scenarios$Scenarios$rows[[8]]$ApplicationProtocol
+      [1] "Protocol_500mg"
+      
+      $Scenarios$Scenarios$rows[[8]]$SimulationTime
+      [1] "0,120,1"
+      
+      $Scenarios$Scenarios$rows[[8]]$SimulationTimeUnit
+      [1] "h"
+      
+      $Scenarios$Scenarios$rows[[8]]$SteadyState
+      [1] "FALSE"
+      
+      $Scenarios$Scenarios$rows[[8]]$SteadyStateTime
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$ModelFile
+      [1] "Aciclovir.pkml"
+      
+      $Scenarios$Scenarios$rows[[8]]$OutputPathsIds
       [1] "Aciclovir_PVB"
       
       
@@ -736,6 +818,48 @@
       [1] "250"
       
       $Applications$Aciclovir_iv_250mg$rows[[1]]$Units
+      [1] "mg"
+      
+      
+      
+      
+      $Applications$Protocol_250mg
+      $Applications$Protocol_250mg$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $Applications$Protocol_250mg$rows
+      $Applications$Protocol_250mg$rows[[1]]
+      $Applications$Protocol_250mg$rows[[1]]$`Container Path`
+      [1] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      
+      $Applications$Protocol_250mg$rows[[1]]$`Parameter Name`
+      [1] "Dose"
+      
+      $Applications$Protocol_250mg$rows[[1]]$Value
+      [1] "250"
+      
+      $Applications$Protocol_250mg$rows[[1]]$Units
+      [1] "mg"
+      
+      
+      
+      
+      $Applications$Protocol_500mg
+      $Applications$Protocol_500mg$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $Applications$Protocol_500mg$rows
+      $Applications$Protocol_500mg$rows[[1]]
+      $Applications$Protocol_500mg$rows[[1]]$`Container Path`
+      [1] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      
+      $Applications$Protocol_500mg$rows[[1]]$`Parameter Name`
+      [1] "Dose"
+      
+      $Applications$Protocol_500mg$rows[[1]]$Value
+      [1] "500"
+      
+      $Applications$Protocol_500mg$rows[[1]]$Units
       [1] "mg"
       
       
@@ -2096,13 +2220,17 @@
       4 PopulationScenarioFromCSV       Indiv1 TestPopulation                  TRUE
       5 TestScenario_missingParam       Indiv1           <NA>                  <NA>
       6            PITestScenario         <NA>           <NA>                  <NA>
+      7          PIScenario_250mg         <NA>           <NA>                  <NA>
+      8          PIScenario_500mg         <NA>           <NA>                  <NA>
                               ModelParameterSheets ApplicationProtocol
       1                                     Global  Aciclovir_iv_250mg
       2 "Global", "Aciclovir", "Sheet, with comma"  Aciclovir_iv_250mg
       3                                     Global  Aciclovir_iv_250mg
       4                                     Global  Aciclovir_iv_250mg
       5                       Global, MissingParam  Aciclovir_iv_250mg
-      6                                  Aciclovir                <NA>
+      6                                       <NA>                <NA>
+      7                                  Aciclovir      Protocol_250mg
+      8                                  Aciclovir      Protocol_500mg
              SimulationTime SimulationTimeUnit SteadyState SteadyStateTime
       1           0, 24, 60                  h        <NA>            <NA>
       2 0, 1, 60; 1, 12, 20                  h        TRUE             500
@@ -2110,6 +2238,8 @@
       4           0, 12, 20                  h       FALSE            <NA>
       5           0, 24, 60                  h        <NA>            <NA>
       6                <NA>               <NA>        <NA>            <NA>
+      7             0,120,1                  h       FALSE            <NA>
+      8             0,120,1                  h       FALSE            <NA>
         SteadyStateTimeUnit      ModelFile                    OutputPathsIds
       1                <NA> Aciclovir.pkml                              <NA>
       2                 min Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
@@ -2117,6 +2247,8 @@
       4                <NA> Aciclovir.pkml                              <NA>
       5                <NA> Aciclovir.pkml                              <NA>
       6                <NA> Aciclovir.pkml                     Aciclovir_PVB
+      7                <NA> Aciclovir.pkml                     Aciclovir_PVB
+      8                <NA> Aciclovir.pkml                     Aciclovir_PVB
       
       
       $Scenarios$OutputPaths
@@ -2143,6 +2275,28 @@
       1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose
         Value Units
       1   250    mg
+      
+      
+      $Applications$Protocol_250mg
+      $Applications$Protocol_250mg$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $Applications$Protocol_250mg$rows
+                                                      Container Path Parameter Name
+      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose
+        Value Units
+      1   250    mg
+      
+      
+      $Applications$Protocol_500mg
+      $Applications$Protocol_500mg$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $Applications$Protocol_500mg$rows
+                                                      Container Path Parameter Name
+      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose
+        Value Units
+      1   500    mg
       
       
       

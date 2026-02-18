@@ -470,7 +470,6 @@ ProjectConfiguration <- R6::R6Class(
         "scenariosFile",
         "applicationsFile",
         "plotsFile",
-        "analysisFolder",
         "parameterIdentificationFile",
         "dataFolder",
         "dataFile",
