@@ -51,15 +51,13 @@ createPITasks <- function(piTaskConfigurations) {
 #' @description Executes parameter identification for all PI tasks.
 #'   Handles failures gracefully - continues with other tasks if one fails.
 #'
-#' @param piTasks Named list of `ParameterIdentification` objects (from createPITasks)
+#' @param piTasks Named list of `ParameterIdentification` objects usually
+#'   created using `createPITasks`
 #'
 #' @returns Named list of PI results. Each result contains:
-#'   - task: Original ParameterIdentification object
-#'   - result: PIResult object from task$run() or NULL if failed
-#'   - finalParameters: Optimized parameter values
-#'   - convergence: Convergence information
-#'   - success: Logical indicating success/failure
-#'   - error: Error message if failed
+#'   - task: original `ParameterIdentification` object
+#'   - result: `PIResult` object from `task$run()`, or NULL if failed
+#'   - error: Error message string if failed, absent on success
 #'
 #' @export
 #'
@@ -77,32 +75,23 @@ runPI <- function(piTasks) {
   for (piTaskName in names(piTasks)) {
     piTask <- piTasks[[piTaskName]]
 
+    message(messages$messageRunningPITask(piTaskName))
+
     result <- tryCatch(
       {
         piResult <- piTask$run()
 
-        # Extract final parameters
-        finalParams <- sapply(piTask$parameters, function(p) p$currValue)
-
-        # Return success result
         list(
           task = piTask,
-          result = piResult,
-          finalParameters = finalParams,
-          convergence = piResult$convergence,
-          success = TRUE
+          result = piResult
         )
       },
       error = function(e) {
         warning(messages$warningPIOptimizationFailed(piTaskName, e$message))
 
-        # Return failure result
         list(
           task = piTask,
           result = NULL,
-          finalParameters = NULL,
-          convergence = NULL,
-          success = FALSE,
           error = e$message
         )
       }
@@ -110,9 +99,6 @@ runPI <- function(piTasks) {
 
     piResults[[piTaskName]] <- result
   }
-
-  successCount <- sum(sapply(piResults, function(r) r$success))
-  failCount <- length(piResults) - successCount
 
   return(piResults)
 }
@@ -377,7 +363,11 @@ runPI <- function(piTasks) {
 
         # Add observed data set specified in DataSet column
         dataSetName <- mappingRow$DataSet
-        if (is.null(dataSetName) || is.na(dataSetName) || nchar(dataSetName) == 0) {
+        if (
+          is.null(dataSetName) ||
+            is.na(dataSetName) ||
+            nchar(dataSetName) == 0
+        ) {
           stop(messages$errorPIColumnRequired("DataSet", "PIOutputMappings"))
         }
 

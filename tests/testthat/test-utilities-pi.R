@@ -485,8 +485,7 @@ test_that("runPI executes single PI task successfully", {
   result <- piResults[[piTaskName]]
   expect_true(isOfType(result$task, "ParameterIdentification"))
   expect_true(isOfType(result$result, "PIResult"))
-  expect_true(is.null(result$error))
-  expect_true(result$success)
+  expect_null(result$error)
 })
 
 test_that("runPI returns failure result with warning when optimization fails", {
@@ -538,9 +537,6 @@ test_that("runPI returns failure result with warning when optimization fails", {
   )
 
   result <- piResults[[1]]
-  expect_false(result$success)
   expect_null(result$result)
-  expect_null(result$finalParameters)
-  expect_null(result$convergence)
   expect_equal(result$error, "Simulated optimization failure")
 })

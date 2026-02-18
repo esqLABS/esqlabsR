@@ -512,11 +512,9 @@ messages$sensitivityAnalysisSimulationFailure <- function(
   parameterPath,
   parameterFactor
 ) {
-  cat(
-    cliFormat(
-      "Simulation for {.var {parameterPath}} with variation factor {.val {parameterFactor}} failed!
-      The results will not be included in the sensitivity calculation."
-    )
+  cliFormat(
+    "Simulation for {.var {parameterPath}} with variation factor {.val {parameterFactor}} failed!
+    The results will not be included in the sensitivity calculation."
   )
 }
 
@@ -845,4 +843,8 @@ messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
   cliFormat(
     "Parameter identification task {.val {piTaskName}} failed: {.emph {errorMessage}}"
   )
+}
+
+messages$messageRunningPITask <- function(piTaskName) {
+  cliFormat("Running PI task: {.val {piTaskName}}")
 }
