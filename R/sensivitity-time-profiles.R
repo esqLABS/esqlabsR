@@ -606,8 +606,9 @@ sensitivityTimeProfiles <- function(
     return(rep(list(NULL), length(outputPaths)))
   }
   # validate if units are valid in any dimension
+  allowedUnits <- unlist(ospUnits, use.names = FALSE)
   lapply(units, \(unit) {
-    ospsuite.utils::validateEnumValue(unit, unlist(ospUnits), TRUE)
+    ospsuite.utils::validateEnumValue(unit, allowedUnits, nullAllowed = TRUE)
   })
 
   # check the lengths and extend or add NULL
