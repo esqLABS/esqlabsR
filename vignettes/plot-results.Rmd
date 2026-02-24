@@ -193,16 +193,17 @@ also specify which plots to create with the `plotGridNames` argument.
 The generated plots are of type `ggplot` and can be saved using the `ospsuite.plots::exportPlot`of the `ggplot2::ggsave()` function. Consider using the following code to save the generated plots in a `Figures` folder in the project directory:
 
 ```{r, echo = TRUE, eval = FALSE}
-#' Export plots to PNG files
+#' Export plots to files.
+#'
+#' Uses ospsuite.plots::exportPlot to export the plots.
 #'
 #' Saves the plots created in the report to PNG (or other format, if specified) files in the same folder as the
-#' location of the report plus subfolder "Figures". Names of the files are the names
-#' of the plots, with "\" and "/" replaced by "_".
+#' location of the report plus subfolder "Figures".
 #'
 #' @param projectConfiguration The `ProjectConfiguration` used to create the project.
 #' @param plots A named list with the plots to be exported. The names of the list are used as file names for the exported plots, with "\" and "/" replaced by "_".
 #' @inheritDotParams ospsuite.plots::exportPlot
-exportPlotsToPNG <- function(
+exportPlots <- function(
   projectConfiguration,
   plots,
   ...
@@ -213,16 +214,9 @@ exportPlotsToPNG <- function(
   # Figures should be saved in the same folder as the location of the report
   # plus subfolder "Figures"
   outputPath <- file.path(getwd(), "Figures")
-  # Create a new folder if it does not exist
-  if (!dir.exists(paths = outputPath)) {
-    dir.create(path = outputPath, recursive = TRUE)
-  }
   # Export each created plot
   for (plotName in names(plots)) {
     plot <- plots[[plotName]]
-    # Replace "\" and "/" by "_" so the file name does not result in folders
-    plotName <- gsub(pattern = "\\", "_", plotName, fixed = TRUE)
-    plotName <- gsub(pattern = "/", "_", plotName, fixed = TRUE)
     # Save plot
     ospsuite.plots::exportPlot(
       plot,
