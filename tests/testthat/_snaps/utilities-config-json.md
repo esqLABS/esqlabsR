@@ -1112,14 +1112,6 @@
       
       
       
-      $Plots$exportConfiguration
-      $Plots$exportConfiguration$column_names
-      [1] "plotGridName" "outputName"   "width"       
-      
-      $Plots$exportConfiguration$rows
-      list()
-      
-      
       $Plots$dataTypes
       $Plots$dataTypes$column_names
       [1] "dataType"
@@ -2158,14 +2150,6 @@
       1  Aciclovir P1, P2, P3 GridTitle GridSubtitle
       2 Aciclovir2         P2      <NA>         <NA>
       3 Aciclovir3         P4      <NA>         <NA>
-      
-      
-      $Plots$exportConfiguration
-      $Plots$exportConfiguration$column_names
-      [1] "plotGridName" "outputName"   "width"       
-      
-      $Plots$exportConfiguration$rows
-      list()
       
       
       $Plots$dataTypes
