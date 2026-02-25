@@ -15,10 +15,10 @@
 #'   the following columns: `PITaskName`, `Algorithm`, `CIMethod`,
 #'   `PrintEvaluationFeedback`, `AutoEstimateCI`, `SimulationRunOptions`,
 #'   `ObjectiveFunctionOptions`. It also expects a "PIParameters" sheet with
-#'   `PITaskName`, `Scenario`, `Container Path`, `Parameter Name`, `Value`,
+#'   `PITaskName`, `Scenarios`, `Container Path`, `Parameter Name`, `Value`,
 #'   `Units`, `MinValue`, `MaxValue`, `StartValue`, `Group` columns, a
-#'   "PIOutputMappings" sheet with `PITaskName`, `Scenario`, `OutputPath`,
-#'   `ObservedDataSheet`, `Scaling`, `xOffset`, `yOffset`, `Weight` columns, an
+#'   "PIOutputMappings" sheet with `PITaskName`, `Scenarios`, `ObservedDataSheet`,
+#'   `DataSet`, `Scaling`, `xOffset`, `yOffset`, `xFactor`, `yFactor`, `Weight` columns, an
 #'   "AlgorithmOptions" sheet with `PITaskName`, `OptionName`, `OptionValue`
 #'   columns, and a "CIOptions" sheet with `PITaskName`, `OptionName`,
 #'   `OptionValue` columns.

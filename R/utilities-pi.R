@@ -162,8 +162,7 @@ runPI <- function(piTasks) {
   # Group by combination of Group column, Container Path, and Parameter Name
   # Same path and group across multiple scenarios creates one PIParameters object
   # Different paths create separate PIParameters even with same group value
-  allNA <- all(sapply(configurations, function(cfg) is.na(cfg$Group)))
-
+  # NA Group always creates an independent group (never merged with other NA rows)
   groups <- sapply(seq_along(configurations), function(i) {
     cfg <- configurations[[i]]
     group <- cfg$Group
@@ -171,7 +170,7 @@ runPI <- function(piTasks) {
     parameterName <- cfg$`Parameter Name`
 
     if (is.na(group)) {
-      if (allNA) paste0("_ungrouped_", i) else "_ungrouped"
+      paste0("_ungrouped_", i)
     } else {
       paste(as.character(group), containerPath, parameterName, sep = "__")
     }
@@ -189,6 +188,11 @@ runPI <- function(piTasks) {
     firstRow <- configurations[[rowIndices[1]]]
 
     # Validate bounds for first row
+    for (colName in c("MinValue", "MaxValue", "StartValue")) {
+      if (is.na(firstRow[[colName]])) {
+        stop(messages$errorPIColumnRequired(colName, "PIParameters"))
+      }
+    }
     if (
       !(firstRow$MinValue <= firstRow$StartValue &&
         firstRow$StartValue <= firstRow$MaxValue)

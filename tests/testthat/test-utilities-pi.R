@@ -89,7 +89,7 @@ test_that("createPITasks creates PIParameters with correct bounds", {
 
 test_that("createPITasks reuses scenarios across multiple tasks", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfigurationLocal <- temp_project$config
 
   sheets <- createValidPISheets()
   sheets$PIConfiguration <- rbind(
@@ -107,11 +107,11 @@ test_that("createPITasks reuses scenarios across multiple tasks", {
 
   .writeExcel(
     data = sheets,
-    path = projectConfiguration$parameterIdentificationFile
+    path = projectConfigurationLocal$parameterIdentificationFile
   )
 
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
-    projectConfiguration = projectConfiguration
+    projectConfiguration = projectConfigurationLocal
   )
   piTasks <- createPITasks(piTaskConfigurations)
 
@@ -508,7 +508,7 @@ test_that("runPI executes single PI task successfully", {
     projectConfiguration = projectConfiguration
   )
   piTasks <- createPITasks(piTaskConfigurations)
-  piResults <- runPI(piTasks)
+  invisible(capture.output(suppressMessages(piResults <- runPI(piTasks))))
 
   expect_true(is.list(piResults))
   expect_equal(length(piResults), 1)

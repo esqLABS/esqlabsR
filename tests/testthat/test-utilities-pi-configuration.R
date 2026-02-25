@@ -446,6 +446,47 @@ test_that("readPITaskConfigurationFromExcel handles multiple parameter rows corr
   expect_equal(params[[2]]$MaxValue, 10)
 })
 
+test_that("readPITaskConfigurationFromExcel reads parameter bounds and StartValue correctly", {
+  piTaskName <- "AciclovirSimple"
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = piTaskName,
+    projectConfiguration = projectConfiguration
+  )
+
+  params <- piTaskConfigurations[[piTaskName]]$piParameters
+  expect_true(length(params) > 0)
+  expect_false(is.na(params[[1]]$MinValue))
+  expect_false(is.na(params[[1]]$MaxValue))
+  expect_false(is.na(params[[1]]$StartValue))
+  expect_true(params[[1]]$MinValue <= params[[1]]$StartValue)
+  expect_true(params[[1]]$StartValue <= params[[1]]$MaxValue)
+})
+
+test_that("createPITasks errors with clear message when bounds columns are NA", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  for (colName in c("MinValue", "MaxValue", "StartValue")) {
+    sheets <- createValidPISheets()
+    sheets$PIParameters[[colName]] <- NA
+
+    .writeExcel(
+      data = sheets,
+      path = projectConfigurationLocal$parameterIdentificationFile
+    )
+
+    piTaskConfigurations <- readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    )
+
+    expect_error(
+      createPITasks(piTaskConfigurations),
+      regexp = messages$errorPIColumnRequired(colName, "PIParameters"),
+      fixed = TRUE
+    )
+  }
+})
+
 test_that("readPITaskConfigurationFromExcel throws error when task is missing in one of the sheets", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config

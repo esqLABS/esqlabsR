@@ -265,8 +265,8 @@ print.piConfiguration_view <- function(x, ...) {
     ospsuite.utils::ospPrintItems(paramItems, print_empty = TRUE)
   }
 
-  algorithmOptions <- purrr::pluck(x, "algorithmOptions")
-  ciOptions <- purrr::pluck(x, "ciOptions")
+  algorithmOptions <- purrr::pluck(x, "algorithmOptions", .default = list())
+  ciOptions <- purrr::pluck(x, "ciOptions", .default = list())
 
   if (length(algorithmOptions) > 0) {
     ospsuite.utils::ospPrintHeader("Algorithm Options", level = 3)
