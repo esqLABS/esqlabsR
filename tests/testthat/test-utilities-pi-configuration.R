@@ -32,6 +32,8 @@ createValidPISheets <- function() {
       Scaling = "log",
       xOffset = NA,
       yOffset = NA,
+      xFactor = NA,
+      yFactor = NA,
       Weight = NA
     ),
     AlgorithmOptions = data.frame(
@@ -247,6 +249,8 @@ test_that("readPITaskConfigurationFromExcel validates PIOutputMappings sheet str
     "Scaling",
     "xOffset",
     "yOffset",
+    "xFactor",
+    "yFactor",
     "Weight"
   )
 
@@ -500,6 +504,9 @@ test_that("readPITaskConfigurationFromExcel handles NA values correctly in optio
   piConfiguration <- piTaskConfigurations[[piTaskName]]$piConfiguration
 
   expect_true(is.na(outputMapping[[1]]$xOffset))
+  expect_true(is.na(outputMapping[[1]]$yOffset))
+  expect_true(is.na(outputMapping[[1]]$xFactor))
+  expect_true(is.na(outputMapping[[1]]$yFactor))
   expect_null(outputMapping[[1]]$Weight)
   expect_true(is.na(piConfiguration$SimulationRunOptions))
   expect_true(is.na(piConfiguration$ObjectiveFunctionOptions))

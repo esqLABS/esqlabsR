@@ -382,6 +382,20 @@ runPI <- function(piTasks) {
         outputMapping$addObservedDataSets(dataSet)
         outputMapping$scaling <- scaling
 
+        xOffset <- mappingRow$xOffset
+        yOffset <- mappingRow$yOffset
+        xFactor <- mappingRow$xFactor
+        yFactor <- mappingRow$yFactor
+        if (!all(c(is.na(xOffset), is.na(yOffset), is.na(xFactor), is.na(yFactor)))) {
+          outputMapping$setDataTransformations(
+            labels   = dataSetName,
+            xOffsets = if (is.na(xOffset)) 0 else xOffset,
+            yOffsets = if (is.na(yOffset)) 0 else yOffset,
+            xFactors = if (is.na(xFactor)) 1 else xFactor,
+            yFactors = if (is.na(yFactor)) 1 else yFactor
+          )
+        }
+
         weight <- mappingRow$Weight
         if (!is.null(weight)) {
           outputMapping$setDataWeights(setNames(list(weight), dataSetName))

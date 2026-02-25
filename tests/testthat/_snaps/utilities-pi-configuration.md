@@ -57,6 +57,12 @@
       $piOutputMappings$yOffset
       [1] "numeric"
       
+      $piOutputMappings$xFactor
+      [1] "numeric"
+      
+      $piOutputMappings$yFactor
+      [1] "numeric"
+      
       $piOutputMappings$Weight
       [1] "NULL"
       

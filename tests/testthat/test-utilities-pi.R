@@ -32,6 +32,8 @@ createValidPISheets <- function() {
       Scaling = "log",
       xOffset = NA,
       yOffset = NA,
+      xFactor = NA,
+      yFactor = NA,
       Weight = NA
     ),
     AlgorithmOptions = data.frame(
@@ -467,6 +469,36 @@ test_that("createPITasks applies scalar Weight to PIOutputMapping dataWeights", 
   dataSetName <- names(outputMapping$observedDataSets)[[1]]
 
   expect_true(all(outputMapping$dataWeights[[dataSetName]] == 2))
+})
+
+test_that("createPITasks applies xOffset/yOffset/xFactor/yFactor to PIOutputMapping dataTransformations", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$xOffset <- 0.5
+  sheets$PIOutputMappings$yOffset <- 1.0
+  sheets$PIOutputMappings$xFactor <- 2.0
+  sheets$PIOutputMappings$yFactor <- 0.5
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+  piTasks <- createPITasks(piTaskConfigurations)
+
+  outputMapping <- piTasks$Task1$outputMappings[[1]]
+  dataSetName <- names(outputMapping$observedDataSets)[[1]]
+  transformations <- outputMapping$dataTransformations
+
+  expect_equal(unname(transformations$xOffsets[2]), 0.5)
+  expect_equal(unname(transformations$yOffsets[2]), 1.0)
+  expect_equal(unname(transformations$xFactors[2]), 2.0)
+  expect_equal(unname(transformations$yFactors[2]), 0.5)
 })
 
 test_that("runPI executes single PI task successfully", {

@@ -296,6 +296,8 @@ readPITaskConfigurationFromExcel <- function(
     "Scaling",
     "xOffset",
     "yOffset",
+    "xFactor",
+    "yFactor",
     "Weight"
   )
 
@@ -307,6 +309,8 @@ readPITaskConfigurationFromExcel <- function(
     "text",    # Scaling
     "numeric", # xOffset
     "numeric", # yOffset
+    "numeric", # xFactor
+    "numeric", # yFactor
     "text"     # Weight
   )
 
