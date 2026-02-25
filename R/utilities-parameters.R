@@ -79,19 +79,6 @@ writeParameterStructureToXLS <- function(
   sheet = NULL,
   append = FALSE
 ) {
-  if (isTRUE(append)) {
-    existingData <- readParametersFromXLS(
-      paramsXLSpath = paramsXLSpath,
-      sheets = sheet
-    )
-    parameterStructure$paths <- c(existingData$paths, parameterStructure$paths)
-    parameterStructure$values <- c(
-      existingData$values,
-      parameterStructure$values
-    )
-    parameterStructure$units <- c(existingData$units, parameterStructure$units)
-  }
-
   .validateParametersStructure(parameterStructure, "parameterStructure")
   # Split full parameter paths into container path and parameter name
   containerPaths <- unlist(
@@ -123,7 +110,7 @@ writeParameterStructureToXLS <- function(
   if (!is.null(sheet)) {
     names(data) <- sheet
   }
-  .writeExcel(data = data, path = paramsXLSpath)
+  .writeExcel(data = data, path = paramsXLSpath, append = append)
 }
 
 #' Export simulation parameters to excel
