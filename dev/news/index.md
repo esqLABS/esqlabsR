@@ -2,6 +2,17 @@
 
 ## esqlabsR (development version)
 
+### Minor improvements and bug fixes
+
+- Refactored
+  [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.md)
+  to eliminate code duplication by delegating to
+  [`writeParameterStructureToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/writeParameterStructureToXLS.md).
+  The function now extracts parameter data into a structure and passes
+  it to
+  [`writeParameterStructureToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/writeParameterStructureToXLS.md)
+  for writing. No changes to functionality or API.
+
 ## esqlabsR 5.5.2
 
 ### Breaking changes
