@@ -8,6 +8,7 @@
 - ospsuite.utils version >=1.10.0 is required
 
 ## New features
+
 - Added comprehensive three-tier validation system for Excel configuration files. New exported functions:
   - `validateAllConfigurations()`: Validates all project configuration files
   - `validationSummary()`: Returns summary of validation results
@@ -15,13 +16,16 @@
 - Added validation documentation to project-structure vignette
 
 ## Minor improvements and bug fixes
+
 - Fixed variable scoping issues in validation functions
 - Simplified validation logic to check data frame structure instead of R6 objects
 - Using native operator `%||%` instead of importing from the `ospsuite.utils` package.
+- Remove false warnings whenever a ProjectConfiguration is created (\#964).
 
 # esqlabsR 5.5.1
 
-## Minor improvements and bug fixes 
+## Minor improvements and bug fixes
+
 - Improved Excel validation for plot configurations with clearer error messages (\#848). When axis limits (xAxisLimits, yAxisLimits, xValuesLimits, yValuesLimits) are incorrectly formatted (e.g., space-separated "72 80" instead of comma-separated "72, 80"), users now receive specific error messages indicating the field name, plot ID, and correct format. Uses ospsuite.utils validation functions internally.
 - Enhanced `createScenarioConfigurationsFromPKML()` with vector argument support - all parameters now support named vectors and vector recycling for flexible scenario creation. (\#890)
 - Added support for named vectors in `outputPaths` parameter across scenario functions - names serve as aliases for output paths, e.g., `c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration in container")`. (\#890)
@@ -66,7 +70,6 @@
   were overwritten by the administration protocol (\#817).
 
 - Project Configuration Version Control - Added comprehensive snapshot and restore functionality for project configurations:
-
   - `snapshotProjectConfiguration()` exports all Excel configuration files to a single JSON file for version control
   - `restoreProjectConfiguration()` recreates Excel files from JSON snapshots for easy project sharing
   - `projectConfigurationStatus()` checks synchronization between Excel files and JSON snapshots
@@ -334,7 +337,6 @@ Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
   'aggregation'. The value is passed to the function
   `plotPopulationTimeProfile()`. Supported values are listed in
   `ospsuite::DataAggregationMethods`.
-
   - `arithmetic`: population results are plotted as arithmetic mean +-
     arithmetic standard deviation
   - `geometric`: population results are plotted as geometric mean +-
@@ -508,7 +510,6 @@ Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
 - The package requires R version \>=4.1.
 
 - The package gains new dependencies:
-
   - [`{ospsuite.parameteridentification}`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/)
   - [`{tlf}`](https://www.open-systems-pharmacology.org/TLF-Library/).
 
@@ -526,7 +527,6 @@ Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
 
 - Three new functions to create configuration objects needed for data
   visualization workflows:
-
   - `createEsqlabsPlotConfiguration()`
   - `createEsqlabsPlotGridConfiguration()`
   - `createEsqlabsExportConfiguration()`
@@ -544,13 +544,11 @@ Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
 ## Major changes
 
 - To carry out and visualize sensitivity analysis:
-
   - `sensitivityCalculation()`
   - `sensitivitySpiderPlot()`
   - `sensitivityTimeProfiles()`
 
 - Classes and functions for standard esqLABS simulation workflow:
-
   - `ProjectConfiguration`
   - `ScenarioConfiguration`
   - `createDefaultProjectConfiguration()`
