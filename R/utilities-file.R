@@ -91,10 +91,14 @@ readExcel <- function(path, sheet = NULL, ...) {
   # Load existing workbook
   wb <- openxlsx::loadWorkbook(path)
 
-  # Convert single data frame to named list if necessary
+  # Convert to named list if necessary
   if (is.data.frame(data)) {
     data <- list(data)
     names(data) <- "Sheet1"
+  } else if (is.null(names(data))) {
+    # Unnamed list: map elements to existing sheets by position,
+    # matching readParametersFromXLS(sheets = NULL) which reads by index.
+    names(data) <- names(wb)[seq_along(data)]
   }
 
   # Process each sheet in the new data
