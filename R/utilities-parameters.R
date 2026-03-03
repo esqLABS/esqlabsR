@@ -79,19 +79,6 @@ writeParameterStructureToXLS <- function(
   sheet = NULL,
   append = FALSE
 ) {
-  if (isTRUE(append)) {
-    existingData <- readParametersFromXLS(
-      paramsXLSpath = paramsXLSpath,
-      sheets = sheet
-    )
-    parameterStructure$paths <- c(existingData$paths, parameterStructure$paths)
-    parameterStructure$values <- c(
-      existingData$values,
-      parameterStructure$values
-    )
-    parameterStructure$units <- c(existingData$units, parameterStructure$units)
-  }
-
   .validateParametersStructure(parameterStructure, "parameterStructure")
   # Split full parameter paths into container path and parameter name
   containerPaths <- unlist(
@@ -123,7 +110,7 @@ writeParameterStructureToXLS <- function(
   if (!is.null(sheet)) {
     names(data) <- sheet
   }
-  .writeExcel(data = data, path = paramsXLSpath)
+  .writeExcel(data = data, path = paramsXLSpath, append = append)
 }
 
 #' Export simulation parameters to excel
@@ -155,49 +142,39 @@ exportParametersToXLS <- function(
   # Make sure parameters is a list even if only one parameter is passed
   parameters <- c(parameters)
 
-  parameterContainerPath <-
-    parameterUnits <-
-      parameterName <- vector("character", length(parameters))
-  parameterValue <- vector("numeric", length(parameters))
+  # Extract paths, values, and units from Parameter objects
+  paths <- character(length(parameters))
+  values <- numeric(length(parameters))
+  units <- character(length(parameters))
+
+  # Track which indices should be kept (non-NaN values)
+  keep <- logical(length(parameters))
 
   for (paramIdx in seq_along(parameters)) {
     param <- parameters[[paramIdx]]
     value <- param$value
     if (!is.nan(value)) {
-      parameterContainerPath[[paramIdx]] <- param$parentContainer$path
-      parameterName[[paramIdx]] <- param$name
-      parameterUnits[[paramIdx]] <- param$unit
-      parameterValue[[paramIdx]] <- param$value
-    } else {
-      # Set to NA so these entries are removed
-      parameterContainerPath[[paramIdx]] <- NA
-      parameterName[[paramIdx]] <- NA
-      parameterUnits[[paramIdx]] <- NA
-      parameterValue[[paramIdx]] <- NA
+      paths[[paramIdx]] <- param$path
+      values[[paramIdx]] <- value
+      units[[paramIdx]] <- param$unit
+      keep[[paramIdx]] <- TRUE
     }
   }
 
-  output <- data.frame(
-    unlist(parameterContainerPath, use.names = FALSE),
-    unlist(parameterName, use.names = FALSE),
-    unlist(parameterValue, use.names = FALSE),
-    unlist(parameterUnits, use.names = FALSE)
-  ) |>
-    # Remove rows for which all values are NA
-    dplyr::filter(dplyr::if_any(dplyr::everything(), ~ !is.na(.)))
+  # Filter out NaN values
+  parameterStructure <- list(
+    paths = paths[keep],
+    values = values[keep],
+    units = units[keep]
+  )
 
-  if (length(output) > 0) {
-    colnames(output) <- c("Container Path", "Parameter Name", "Value", "Units")
-  }
-
-  # Write the results into an excel file.
-  # Wrap the output data frame into a list and name the list if sheet name
-  # has been provided
-  data <- list(output)
-  if (!is.null(sheet)) {
-    names(data) <- sheet
-  }
-  .writeExcel(data = data, path = paramsXLSpath, append = append)
+  # Use writeParameterStructureToXLS to write the data
+  writeParameterStructureToXLS(
+    parameterStructure = parameterStructure,
+    paramsXLSpath = paramsXLSpath,
+    sheet = sheet,
+    append = append
+  )
 }
 
 #' Extend parameters structure with new entries

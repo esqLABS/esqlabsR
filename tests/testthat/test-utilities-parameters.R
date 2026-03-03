@@ -292,6 +292,43 @@ test_that("It appends parameters to an already existing parameter excel file", {
   )
 })
 
+test_that("It appends parameters when sheet is NULL (default sheet name)", {
+  withr::with_tempdir(
+    code = {
+      xlsPath <- "tmp.xlsx"
+      params <- list(
+        paths = c("Container1|Path1", "Container|Second|Third|Path2"),
+        values = c(1, 2),
+        units = c("", "µmol")
+      )
+      writeParameterStructureToXLS(
+        parameterStructure = params,
+        paramsXLSpath = xlsPath
+      )
+
+      newParam <- list(
+        paths = c("Container1|Path2"),
+        values = c(10),
+        units = c("")
+      )
+
+      writeParameterStructureToXLS(
+        parameterStructure = newParam,
+        paramsXLSpath = xlsPath,
+        append = TRUE
+      )
+
+      # Load from xls (reads first sheet by default) and compare
+      paramsRead <- readParametersFromXLS(paramsXLSpath = xlsPath)
+
+      expect_equal(length(paramsRead$paths), 3)
+      expect_equal(paramsRead$paths[[3]], newParam$paths[[1]])
+      expect_equal(paramsRead$values[[3]], newParam$values[[1]])
+      expect_equal(paramsRead$units[[3]], newParam$units[[1]])
+    }
+  )
+})
+
 test_that("exportParametersToXLS appends parameters to existing file", {
   withr::with_tempdir(
     code = {
