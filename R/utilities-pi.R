@@ -160,9 +160,11 @@ runPI <- function(piTasks) {
 #' @noRd
 .createPIParametersFromConfig <- function(configurations, scenarios) {
   # Group by combination of Group column, Container Path, and Parameter Name
-  # Same path and group across multiple scenarios creates one PIParameters object
-  # Different paths create separate PIParameters even with same group value
-  # NA Group always creates an independent group (never merged with other NA rows)
+  # Same path and group across multiple scenarios creates one PIParameters
+  # object
+  # Different paths create separate PIParameters even with same group
+  # value NA Group always creates an independent group (never merged with other
+  # NA rows)
   groups <- sapply(seq_along(configurations), function(i) {
     cfg <- configurations[[i]]
     group <- cfg$Group
@@ -390,9 +392,13 @@ runPI <- function(piTasks) {
         yOffset <- mappingRow$yOffset
         xFactor <- mappingRow$xFactor
         yFactor <- mappingRow$yFactor
-        if (!all(c(is.na(xOffset), is.na(yOffset), is.na(xFactor), is.na(yFactor)))) {
+        if (
+          !all(
+            c(is.na(xOffset), is.na(yOffset), is.na(xFactor), is.na(yFactor))
+          )
+        ) {
           outputMapping$setDataTransformations(
-            labels   = dataSetName,
+            labels = dataSetName,
             xOffsets = if (is.na(xOffset)) 0 else xOffset,
             yOffsets = if (is.na(yOffset)) 0 else yOffset,
             xFactors = if (is.na(xFactor)) 1 else xFactor,
@@ -470,6 +476,29 @@ runPI <- function(piTasks) {
 
     piConfig$algorithmOptions <- defaultAlgOptions
   }
+
+  # Apply ObjectiveFunctionOptions; read defaults and merge with user options
+  ofoMapping <- list(
+    "ObjectiveFunctionType" = "objectiveFunctionType",
+    "ResidualWeightingMethod" = "residualWeightingMethod",
+    "RobustMethod" = "robustMethod",
+    "ScaleVar" = "scaleVar",
+    "LinScaleCV" = "linScaleCV",
+    "LogScaleSD" = "logScaleSD"
+  )
+
+  ofoOptions <- piConfig$objectiveFunctionOptions
+  for (excelName in names(ofoMapping)) {
+    propName <- ofoMapping[[excelName]]
+    if (
+      excelName %in%
+        names(configurations) &&
+        !is.na(configurations[[excelName]])
+    ) {
+      ofoOptions[[propName]] <- configurations[[excelName]]
+    }
+  }
+  piConfig$objectiveFunctionOptions <- ofoOptions
 
   # Apply CIOptions; get defaults and merge with user options
   ciMethod <- piConfig$ciMethod

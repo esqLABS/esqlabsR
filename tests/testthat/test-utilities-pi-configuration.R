@@ -9,7 +9,12 @@ createValidPISheets <- function() {
       PrintEvaluationFeedback = TRUE,
       AutoEstimateCI = FALSE,
       SimulationRunOptions = NA,
-      ObjectiveFunctionOptions = NA
+      ObjectiveFunctionType = NA,
+      ResidualWeightingMethod = NA,
+      RobustMethod = NA,
+      ScaleVar = NA,
+      LinScaleCV = NA,
+      LogScaleSD = NA
     ),
     PIParameters = data.frame(
       PITaskName = "Task1",
@@ -167,7 +172,12 @@ test_that("readPITaskConfigurationFromExcel validates PIConfiguration sheet stru
     "PrintEvaluationFeedback",
     "AutoEstimateCI",
     "SimulationRunOptions",
-    "ObjectiveFunctionOptions"
+    "ObjectiveFunctionType",
+    "ResidualWeightingMethod",
+    "RobustMethod",
+    "ScaleVar",
+    "LinScaleCV",
+    "LogScaleSD"
   )
 
   temp_project <- with_temp_project()
@@ -502,7 +512,12 @@ test_that("readPITaskConfigurationFromExcel throws error when task is missing in
       PrintEvaluationFeedback = TRUE,
       AutoEstimateCI = FALSE,
       SimulationRunOptions = NA,
-      ObjectiveFunctionOptions = NA
+      ObjectiveFunctionType = NA,
+      ResidualWeightingMethod = NA,
+      RobustMethod = NA,
+      ScaleVar = NA,
+      LinScaleCV = NA,
+      LogScaleSD = NA
     )
   )
 
@@ -550,7 +565,12 @@ test_that("readPITaskConfigurationFromExcel handles NA values correctly in optio
   expect_true(is.na(outputMapping[[1]]$yFactor))
   expect_null(outputMapping[[1]]$Weight)
   expect_true(is.na(piConfiguration$SimulationRunOptions))
-  expect_true(is.na(piConfiguration$ObjectiveFunctionOptions))
+  expect_true(is.na(piConfiguration$ObjectiveFunctionType))
+  expect_true(is.na(piConfiguration$ResidualWeightingMethod))
+  expect_true(is.na(piConfiguration$RobustMethod))
+  expect_true(is.na(piConfiguration$ScaleVar))
+  expect_true(is.na(piConfiguration$LinScaleCV))
+  expect_true(is.na(piConfiguration$LogScaleSD))
 })
 
 test_that("readPITaskConfigurationFromExcel reads sheets with correct types", {

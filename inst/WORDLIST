@@ -31,7 +31,12 @@ ModelParameters
 OO
 OSPS
 OSPSuite
-ObjectiveFunctionOptions
+LinScaleCV
+LogScaleSD
+ObjectiveFunctionType
+ResidualWeightingMethod
+RobustMethod
+ScaleVar
 ObservedDataSheet
 Ontogenies
 OptionName

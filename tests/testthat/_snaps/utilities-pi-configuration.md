@@ -86,8 +86,23 @@
       $piConfiguration$SimulationRunOptions
       [1] "character"
       
-      $piConfiguration$ObjectiveFunctionOptions
+      $piConfiguration$ObjectiveFunctionType
       [1] "character"
+      
+      $piConfiguration$ResidualWeightingMethod
+      [1] "character"
+      
+      $piConfiguration$RobustMethod
+      [1] "character"
+      
+      $piConfiguration$ScaleVar
+      [1] "logical"
+      
+      $piConfiguration$LinScaleCV
+      [1] "numeric"
+      
+      $piConfiguration$LogScaleSD
+      [1] "numeric"
       
       $piConfiguration$algorithmOptions
       [1] "list"

@@ -9,7 +9,12 @@ createValidPISheets <- function() {
       PrintEvaluationFeedback = TRUE,
       AutoEstimateCI = FALSE,
       SimulationRunOptions = NA,
-      ObjectiveFunctionOptions = NA
+      ObjectiveFunctionType = NA,
+      ResidualWeightingMethod = NA,
+      RobustMethod = NA,
+      ScaleVar = NA,
+      LinScaleCV = NA,
+      LogScaleSD = NA
     ),
     PIParameters = data.frame(
       PITaskName = "Task1",

@@ -211,7 +211,11 @@ print.piParameters_view <- function(x, ...) {
 
     if (length(paramItems) > 0) {
       title <- if (length(x) > 1) paste("Parameter", i) else NULL
-      ospsuite.utils::ospPrintItems(paramItems, print_empty = TRUE, title = title)
+      ospsuite.utils::ospPrintItems(
+        paramItems,
+        print_empty = TRUE,
+        title = title
+      )
     }
   }
 
@@ -235,7 +239,11 @@ print.piOutputMappings_view <- function(x, ...) {
 
     if (length(paramItems) > 0) {
       title <- if (length(x) > 1) paste("Output Mapping", i) else NULL
-      ospsuite.utils::ospPrintItems(paramItems, print_empty = TRUE, title = title)
+      ospsuite.utils::ospPrintItems(
+        paramItems,
+        print_empty = TRUE,
+        title = title
+      )
     }
   }
 
@@ -253,7 +261,12 @@ print.piConfiguration_view <- function(x, ...) {
     "PrintEvaluationFeedback",
     "AutoEstimateCI",
     "SimulationRunOptions",
-    "ObjectiveFunctionOptions"
+    "ObjectiveFunctionType",
+    "ResidualWeightingMethod",
+    "RobustMethod",
+    "ScaleVar",
+    "LinScaleCV",
+    "LogScaleSD"
   )
   paramItems <- x[intersect(displayFields, names(x))]
   paramItems <- purrr::discard(

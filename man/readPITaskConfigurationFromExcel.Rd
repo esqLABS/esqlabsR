@@ -29,12 +29,13 @@ error is thrown.
 The function expects the Excel file to have a "PIConfiguration" sheet with
 the following columns: \code{PITaskName}, \code{Algorithm}, \code{CIMethod},
 \code{PrintEvaluationFeedback}, \code{AutoEstimateCI}, \code{SimulationRunOptions},
-\code{ObjectiveFunctionOptions}. It also expects a "PIParameters" sheet with
-\code{PITaskName}, \code{Scenarios}, \verb{Container Path}, \verb{Parameter Name}, \code{Value},
-\code{Units}, \code{MinValue}, \code{MaxValue}, \code{StartValue}, \code{Group} columns, a
-"PIOutputMappings" sheet with \code{PITaskName}, \code{Scenarios}, \code{ObservedDataSheet},
-\code{DataSet}, \code{Scaling}, \code{xOffset}, \code{yOffset}, \code{xFactor}, \code{yFactor}, \code{Weight} columns, an
-"AlgorithmOptions" sheet with \code{PITaskName}, \code{OptionName}, \code{OptionValue}
-columns, and a "CIOptions" sheet with \code{PITaskName}, \code{OptionName},
-\code{OptionValue} columns.
+\code{ObjectiveFunctionType}, \code{ResidualWeightingMethod}, \code{RobustMethod},
+\code{ScaleVar}, \code{LinScaleCV}, \code{LogScaleSD}. It also expects a "PIParameters"
+sheet with \code{PITaskName}, \code{Scenarios}, \verb{Container Path}, \verb{Parameter Name},
+\code{Value}, \code{Units}, \code{MinValue}, \code{MaxValue}, \code{StartValue}, \code{Group} columns, a
+"PIOutputMappings" sheet with \code{PITaskName}, \code{Scenarios},
+\code{ObservedDataSheet}, \code{DataSet}, \code{Scaling}, \code{xOffset}, \code{yOffset}, \code{xFactor},
+\code{yFactor}, \code{Weight} columns, an "AlgorithmOptions" sheet with \code{PITaskName},
+\code{OptionName}, \code{OptionValue} columns, and a "CIOptions" sheet with
+\code{PITaskName}, \code{OptionName}, \code{OptionValue} columns.
 }
