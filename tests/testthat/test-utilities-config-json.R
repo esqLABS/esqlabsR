@@ -274,7 +274,7 @@ test_that("projectConfigurationStatus() automatically finds JSON file when not s
   expect_true(file.exists(expected_json_path))
 
   # Check status without specifying JSON path - should find it automatically
-  status_result <- projectConfigurationStatus(test_proj$project_config_path)
+  status_result <- projectConfigurationStatus(test_proj$project_config_path, silent = TRUE)
   expect_true(status_result$in_sync)
 })
 
@@ -286,7 +286,8 @@ test_that("projectConfigurationStatus() correctly identifies in-sync files", {
   # Check status - should be in sync
   status_result <- projectConfigurationStatus(
     test_proj$project_config_path,
-    test_proj$snapshot_path
+    test_proj$snapshot_path,
+    silent = TRUE
   )
   expect_true(
     status_result$in_sync,
@@ -636,7 +637,7 @@ test_that("projectConfigurationStatus does not warn about unmodified ProjectConf
 
   # Check status - should not show warning about modification
   expect_no_warning({
-    status_result <- projectConfigurationStatus(projectConfig, jsonPath)
+    status_result <- projectConfigurationStatus(projectConfig, jsonPath, silent = TRUE)
   })
 
   # Status should work normally
@@ -656,7 +657,7 @@ test_that("modifying ProjectConfiguration after snapshotting affects status chec
   jsonPath <- sub("\\.xlsx$", ".json", test_proj$project_config_path)
 
   # Verify initial status is in sync
-  status1 <- projectConfigurationStatus(projectConfig, jsonPath)
+  status1 <- projectConfigurationStatus(projectConfig, jsonPath, silent = TRUE)
   expect_true(status1$in_sync)
 
   # Modify the configuration
