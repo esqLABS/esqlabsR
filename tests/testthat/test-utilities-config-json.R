@@ -271,9 +271,12 @@ test_that("projectConfigurationStatus() correctly identifies in-sync files", {
   test_proj <- local_test_project()
 
   # Check status - should be in sync
-  status_result <- projectConfigurationStatus(
-    test_proj$project_config_path,
-    test_proj$snapshot_path
+  expect_warning(
+    status_result <- projectConfigurationStatus(
+      test_proj$project_config_path,
+      test_proj$snapshot_path
+    ),
+    regexp = messages$excelNotInSync()
   )
   expect_true(
     status_result$in_sync,
@@ -322,9 +325,12 @@ test_that("projectConfigurationStatus() detects sheet-level changes in Excel fil
   expect_true("NewTestSheet" %in% updated_sheets)
 
   # Check status - should detect sheet-level changes
-  status_result <- projectConfigurationStatus(
-    test_proj$project_config_path,
-    test_proj$snapshot_path
+  expect_warning(
+    status_result <- projectConfigurationStatus(
+      test_proj$project_config_path,
+      test_proj$snapshot_path
+    ),
+    regexp = messages$excelNotInSync()
   )
   expect_false(status_result$in_sync)
 
@@ -358,9 +364,12 @@ test_that("projectConfigurationStatus() detects data-level changes in Excel shee
   .writeExcel(new_data, scenarios_path)
 
   # Check status - should detect data-level changes
-  status_result <- projectConfigurationStatus(
-    test_proj$project_config_path,
-    test_proj$snapshot_path
+  expect_warning(
+    status_result <- projectConfigurationStatus(
+      test_proj$project_config_path,
+      test_proj$snapshot_path
+    ),
+    regexp = messages$excelNotInSync()
   )
   expect_false(status_result$in_sync)
 
@@ -415,9 +424,12 @@ test_that("projectConfigurationStatus() handles simultaneous sheet, and data cha
   }
 
   # Check status - should detect all types of changes
-  status_result <- projectConfigurationStatus(
-    test_proj$project_config_path,
-    test_proj$snapshot_path
+  expect_warning(
+    status_result <- projectConfigurationStatus(
+      test_proj$project_config_path,
+      test_proj$snapshot_path
+    ),
+    regexp = messages$excelNotInSync()
   )
   expect_false(status_result$in_sync)
 
@@ -731,6 +743,9 @@ test_that("restoreProjectConfiguration handles out-of-sync files correctly in no
   # successfully restores when files are out of sync in non-interactive mode
   # In interactive mode, it would prompt the user
   expect_no_error(
-    restoreProjectConfiguration(jsonPath, importDir)
+    expect_warning(
+      restoreProjectConfiguration(jsonPath, importDir),
+      regexp = messages$excelNotInSync("Restoring will overwrite existing Excel files.")
+    )
   )
 })
