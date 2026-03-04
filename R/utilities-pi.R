@@ -159,12 +159,12 @@ runPI <- function(piTasks) {
 #' @keywords internal
 #' @noRd
 .createPIParametersFromConfig <- function(configurations, scenarios) {
-  # Group by combination of Group column, Container Path, and Parameter Name
-  # Same path and group across multiple scenarios creates one PIParameters
-  # object
-  # Different paths create separate PIParameters even with same group
-  # value NA Group always creates an independent group (never merged with other
-  # NA rows)
+  # Group rows by (Group, Container Path, Parameter Name). Rows with the same
+  # group and path across multiple scenarios create one PIParameters object;
+  # different paths always create separate objects, even with the same group.
+  # If all Group values are NA, each row is independent. If some rows have an
+  # explicit group, all NA rows are consolidated into a single shared group.
+  allNA <- all(sapply(configurations, function(cfg) is.na(cfg$Group)))
   groups <- sapply(seq_along(configurations), function(i) {
     cfg <- configurations[[i]]
     group <- cfg$Group
@@ -172,7 +172,7 @@ runPI <- function(piTasks) {
     parameterName <- cfg$`Parameter Name`
 
     if (is.na(group)) {
-      paste0("_ungrouped_", i)
+      if (allNA) paste0("_ungrouped_", i) else "_ungrouped"
     } else {
       paste(as.character(group), containerPath, parameterName, sep = "__")
     }
