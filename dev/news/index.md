@@ -39,6 +39,8 @@
   R6 objects
 - Using native operator `%||%` instead of importing from the
   `ospsuite.utils` package.
+- Remove false warnings whenever a ProjectConfiguration is created
+  ([\#964](https://github.com/esqLABS/esqlabsR/issues/964)).
 
 ## esqlabsR 5.5.1
 
@@ -782,22 +784,18 @@
 
 - Three new functions to create configuration objects needed for data
   visualization workflows:
-
   - [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotConfiguration.md)
   - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotGridConfiguration.md)
   - [`createEsqlabsExportConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsExportConfiguration.md)
-
 - New function
   [`getAllApplicationParameters()`](https://esqlabs.github.io/esqlabsR/dev/reference/getAllApplicationParameters.md)
   that returns all parameters of applications in a simulation
-
 - New function
   [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.md)
   to write parameter information into an excel file that can be loaded
   in MoBi or R using the
   [`readParametersFromXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/readParametersFromXLS.md)
   function.
-
 - New function `writeExcel()` that is a wrapper for creating a directory
   (if not present) and writing to excel file using
   [`writexl::write_xlsx()`](https://docs.ropensci.org/writexl//reference/write_xlsx.html).

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -80,6 +80,7 @@
 <ul><li>Fixed variable scoping issues in validation functions</li>
 <li>Simplified validation logic to check data frame structure instead of R6 objects</li>
 <li>Using native operator <code>%||%</code> instead of importing from the <code>ospsuite.utils</code> package.</li>
+<li>Remove false warnings whenever a ProjectConfiguration is created (<a href="https://github.com/esqLABS/esqlabsR/issues/964" class="external-link">#964</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -411,15 +412,14 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 </ul></div>
 <div class="section level3">
 <h3 id="major-changes-4-0-0">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-4-0-0"></a></h3>
-<ul><li>
-<p>Three new functions to create configuration objects needed for data visualization workflows:</p>
+<ul><li>Three new functions to create configuration objects needed for data visualization workflows:
 <ul><li><code><a href="../reference/createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration()</a></code></li>
 <li><code><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration()</a></code></li>
 <li><code><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration()</a></code></li>
 </ul></li>
-<li><p>New function <code><a href="../reference/getAllApplicationParameters.html">getAllApplicationParameters()</a></code> that returns all parameters of applications in a simulation</p></li>
-<li><p>New function <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> to write parameter information into an excel file that can be loaded in MoBi or R using the <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function.</p></li>
-<li><p>New function <code>writeExcel()</code> that is a wrapper for creating a directory (if not present) and writing to excel file using <code><a href="https://docs.ropensci.org/writexl//reference/write_xlsx.html" class="external-link">writexl::write_xlsx()</a></code>.</p></li>
+<li>New function <code><a href="../reference/getAllApplicationParameters.html">getAllApplicationParameters()</a></code> that returns all parameters of applications in a simulation</li>
+<li>New function <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> to write parameter information into an excel file that can be loaded in MoBi or R using the <code><a href="../reference/readParametersFromXLS.html">readParametersFromXLS()</a></code> function.</li>
+<li>New function <code>writeExcel()</code> that is a wrapper for creating a directory (if not present) and writing to excel file using <code><a href="https://docs.ropensci.org/writexl//reference/write_xlsx.html" class="external-link">writexl::write_xlsx()</a></code>.</li>
 </ul></div>
 </div>
     <div class="section level2">
