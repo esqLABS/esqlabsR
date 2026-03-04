@@ -32,7 +32,7 @@
       [1] "numeric"
       
       $piParameters$Group
-      [1] "numeric"
+      [1] "character"
       
       
       $piOutputMappings

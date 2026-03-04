@@ -272,7 +272,7 @@ readPITaskConfigurationFromExcel <- function(
     "numeric", # MinValue
     "numeric", # MaxValue
     "numeric", # StartValue
-    "numeric"  # Group
+    "text"     # Group
   )
 
   # Validate header

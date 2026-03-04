@@ -124,6 +124,7 @@ test_that("PITaskConfiguration prints multiple scenarios, parameters, and mappin
       Scenario2 = scenarioConfig2
     ),
     piDefinitions = list(
+      piConfiguration = list(),
       piParameters = list(
         list(`Container Path` = "A", `Parameter Name` = "P1"),
         list(`Container Path` = "B", `Parameter Name` = "P2")
