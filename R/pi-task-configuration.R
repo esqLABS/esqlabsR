@@ -123,6 +123,13 @@ PITaskConfiguration <- R6::R6Class(
       validateIsOfType(projectConfiguration, ProjectConfiguration)
       validateIsOfType(scenarioConfiguration, ScenarioConfiguration)
       .validateIsNamedList(piDefinitions, nullAllowed = TRUE)
+      if (!is.null(piDefinitions)) {
+        requiredKeys <- c("piConfiguration", "piParameters", "piOutputMappings")
+        missingKeys <- setdiff(requiredKeys, names(piDefinitions))
+        if (length(missingKeys) > 0) {
+          stop(messages$errorPIMissingPiDefinitionsKeys(missingKeys))
+        }
+      }
 
       private$.taskName <- taskName
       private$.projectConfiguration <- projectConfiguration

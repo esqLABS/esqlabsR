@@ -25,6 +25,24 @@ test_that("PITaskConfiguration can be created with required parameters", {
   )
 })
 
+test_that("PITaskConfiguration errors on piDefinitions with missing keys", {
+  projectConfiguration <- ProjectConfiguration$new()
+  scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
+
+  expect_error(
+    PITaskConfiguration$new(
+      taskName = "TestTask",
+      projectConfiguration = projectConfiguration,
+      scenarioConfiguration = scenarioConfiguration,
+      piDefinitions = list(piConfiguration = list())
+    ),
+    regexp = messages$errorPIMissingPiDefinitionsKeys(
+      c("piParameters", "piOutputMappings")
+    ),
+    fixed = TRUE
+  )
+})
+
 test_that("PITaskConfiguration fields are read-only", {
   projectConfiguration <- ProjectConfiguration$new()
   scenarioConfiguration <- ScenarioConfiguration$new(projectConfiguration)
