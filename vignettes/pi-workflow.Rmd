@@ -103,13 +103,17 @@ General settings for each PI task. If omitted, defaults are used.
 | `CIMethod`                 | Confidence interval method (e.g., `hessian`)                       |
 | `PrintEvaluationFeedback`  | Print progress during optimization (`TRUE`/`FALSE`)                |
 | `AutoEstimateCI`           | Automatically estimate confidence intervals (`TRUE`/`FALSE`)       |
-| `SimulationRunOptions`     | Simulation run options (optional)                                  |
+| `numberOfCores`            | Number of CPU cores for parallel simulation runs               |
+| `checkForNegativeValues`   | Check for negative values during simulation (`TRUE`/`FALSE`)   |
 | `ObjectiveFunctionType`    | Error model: `lsq` (default) or `m3`                              |
 | `ResidualWeightingMethod`  | Residual weighting: `none` (default), `std`, `mean`, `error`      |
 | `RobustMethod`             | Robust estimation: `none` (default), `huber`, `bisquare`          |
 | `ScaleVar`                 | Scale variance (`TRUE`/`FALSE`, default `FALSE`)                   |
 | `LinScaleCV`               | Coefficient of variation for linear scale (default `0.2`)         |
 | `LogScaleSD`               | Standard deviation for log scale (default `0.086`)                |
+
+`numberOfCores` and `checkForNegativeValues` correspond to the options of
+`ospsuite::SimulationRunOptions`. Leave them empty to use the defaults.
 
 For background on `ObjectiveFunctionType`, `ResidualWeightingMethod`, and
 `RobustMethod`, see the [`OSPSuite.ParameterIdentification` error calculation

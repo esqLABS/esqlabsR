@@ -83,8 +83,11 @@
       $piConfiguration$AutoEstimateCI
       [1] "logical"
       
-      $piConfiguration$SimulationRunOptions
-      [1] "character"
+      $piConfiguration$numberOfCores
+      [1] "numeric"
+      
+      $piConfiguration$checkForNegativeValues
+      [1] "logical"
       
       $piConfiguration$ObjectiveFunctionType
       [1] "character"

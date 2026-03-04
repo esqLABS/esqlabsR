@@ -456,6 +456,23 @@ runPI <- function(piTasks) {
     }
   }
 
+  # Apply SimulationRunOptions
+  numberOfCores <- configurations[["numberOfCores"]]
+  checkForNegativeValues <- configurations[["checkForNegativeValues"]]
+  hasNumberOfCores <- !is.null(numberOfCores) && !is.na(numberOfCores)
+  hasCheckForNegativeValues <- !is.null(checkForNegativeValues) &&
+    !is.na(checkForNegativeValues)
+  if (hasNumberOfCores || hasCheckForNegativeValues) {
+    simRunOptions <- ospsuite::SimulationRunOptions$new()
+    if (hasNumberOfCores) {
+      simRunOptions$numberOfCores <- as.integer(numberOfCores)
+    }
+    if (hasCheckForNegativeValues) {
+      simRunOptions$checkForNegativeValues <- as.logical(checkForNegativeValues)
+    }
+    piConfig$simulationRunOptions <- simRunOptions
+  }
+
   # Apply AlgorithmOptions; get defaults and merge with user options
   algorithm <- piConfig$algorithm
   if (!is.null(algorithm) && !is.na(algorithm) && nchar(algorithm) > 0) {

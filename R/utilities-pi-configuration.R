@@ -13,16 +13,17 @@
 #'
 #'   The function expects the Excel file to have a "PIConfiguration" sheet with
 #'   the following columns: `PITaskName`, `Algorithm`, `CIMethod`,
-#'   `PrintEvaluationFeedback`, `AutoEstimateCI`, `SimulationRunOptions`,
-#'   `ObjectiveFunctionType`, `ResidualWeightingMethod`, `RobustMethod`,
-#'   `ScaleVar`, `LinScaleCV`, `LogScaleSD`. It also expects a "PIParameters"
-#'   sheet with `PITaskName`, `Scenarios`, `Container Path`, `Parameter Name`,
-#'   `Value`, `Units`, `MinValue`, `MaxValue`, `StartValue`, `Group` columns, a
-#'   "PIOutputMappings" sheet with `PITaskName`, `Scenarios`,
-#'   `ObservedDataSheet`, `DataSet`, `Scaling`, `xOffset`, `yOffset`, `xFactor`,
-#'   `yFactor`, `Weight` columns, an "AlgorithmOptions" sheet with `PITaskName`,
-#'   `OptionName`, `OptionValue` columns, and a "CIOptions" sheet with
-#'   `PITaskName`, `OptionName`, `OptionValue` columns.
+#'   `PrintEvaluationFeedback`, `AutoEstimateCI`, `numberOfCores`,
+#'   `checkForNegativeValues`, `ObjectiveFunctionType`,
+#'   `ResidualWeightingMethod`, `RobustMethod`, `ScaleVar`, `LinScaleCV`,
+#'   `LogScaleSD`. It also expects a "PIParameters" sheet with `PITaskName`,
+#'   `Scenarios`, `Container Path`, `Parameter Name`, `Value`, `Units`,
+#'   `MinValue`, `MaxValue`, `StartValue`, `Group` columns, a "PIOutputMappings"
+#'   sheet with `PITaskName`, `Scenarios`, `ObservedDataSheet`, `DataSet`,
+#'   `Scaling`, `xOffset`, `yOffset`, `xFactor`, `yFactor`, `Weight` columns, an
+#'   "AlgorithmOptions" sheet with `PITaskName`, `OptionName`, `OptionValue`
+#'   columns, and a "CIOptions" sheet with `PITaskName`, `OptionName`,
+#'   `OptionValue` columns.
 #'
 #' @returns A named list of `PITaskConfiguration` objects.
 #'
@@ -187,7 +188,8 @@ readPITaskConfigurationFromExcel <- function(
     "CIMethod",
     "PrintEvaluationFeedback",
     "AutoEstimateCI",
-    "SimulationRunOptions",
+    "numberOfCores",
+    "checkForNegativeValues",
     "ObjectiveFunctionType",
     "ResidualWeightingMethod",
     "RobustMethod",
@@ -202,7 +204,8 @@ readPITaskConfigurationFromExcel <- function(
     "text",    # CIMethod
     "logical", # PrintEvaluationFeedback
     "logical", # AutoEstimateCI
-    "text",    # SimulationRunOptions
+    "numeric", # numberOfCores
+    "logical", # checkForNegativeValues
     "text",    # ObjectiveFunctionType
     "text",    # ResidualWeightingMethod
     "text",    # RobustMethod

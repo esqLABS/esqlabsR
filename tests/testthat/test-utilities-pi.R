@@ -8,7 +8,8 @@ createValidPISheets <- function() {
       CIMethod = "hessian",
       PrintEvaluationFeedback = TRUE,
       AutoEstimateCI = FALSE,
-      SimulationRunOptions = NA,
+      numberOfCores = NA_real_,
+      checkForNegativeValues = NA,
       ObjectiveFunctionType = NA,
       ResidualWeightingMethod = NA,
       RobustMethod = NA,
@@ -504,6 +505,93 @@ test_that("createPITasks applies xOffset/yOffset/xFactor/yFactor to PIOutputMapp
   expect_equal(unname(transformations$yOffsets[2]), 1.0)
   expect_equal(unname(transformations$xFactors[2]), 2.0)
   expect_equal(unname(transformations$yFactors[2]), 0.5)
+})
+
+test_that("createPITasks applies simulationRunOptions from PIConfiguration columns", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+
+  # Both NA: simulationRunOptions stays NULL
+  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  piTasks <- createPITasks(readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  ))
+  expect_null(piTasks$Task1$configuration$simulationRunOptions)
+
+  # Only numberOfCores set
+  sheets$PIConfiguration$numberOfCores <- 2
+  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  piTasks <- createPITasks(readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  ))
+  opts <- piTasks$Task1$configuration$simulationRunOptions
+  expect_false(is.null(opts))
+  expect_equal(opts$numberOfCores, 2L)
+
+  # Only checkForNegativeValues set
+  sheets$PIConfiguration$numberOfCores <- NA_real_
+  sheets$PIConfiguration$checkForNegativeValues <- FALSE
+  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  piTasks <- createPITasks(readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  ))
+  opts <- piTasks$Task1$configuration$simulationRunOptions
+  expect_false(is.null(opts))
+  expect_false(opts$checkForNegativeValues)
+
+  # Both set
+  sheets$PIConfiguration$numberOfCores <- 4
+  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  piTasks <- createPITasks(readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  ))
+  opts <- piTasks$Task1$configuration$simulationRunOptions
+  expect_equal(opts$numberOfCores, 4L)
+  expect_false(opts$checkForNegativeValues)
+})
+
+test_that("createPITasks applies objectiveFunctionOptions from PIConfiguration columns", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+
+  # All NA: defaults are preserved
+  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  piTasks <- createPITasks(readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  ))
+  ofo <- piTasks$Task1$configuration$objectiveFunctionOptions
+  expect_equal(ofo$objectiveFunctionType, "lsq")
+  expect_equal(ofo$residualWeightingMethod, "none")
+  expect_equal(ofo$robustMethod, "none")
+
+  # Set individual fields
+  sheets$PIConfiguration$ObjectiveFunctionType <- "m3"
+  sheets$PIConfiguration$ResidualWeightingMethod <- "std"
+  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  piTasks <- createPITasks(readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  ))
+  ofo <- piTasks$Task1$configuration$objectiveFunctionOptions
+  expect_equal(ofo$objectiveFunctionType, "m3")
+  expect_equal(ofo$residualWeightingMethod, "std")
+  expect_equal(ofo$robustMethod, "none")
+
+  # Numeric options
+  sheets$PIConfiguration$ObjectiveFunctionType <- NA
+  sheets$PIConfiguration$ResidualWeightingMethod <- NA
+  sheets$PIConfiguration$LinScaleCV <- 0.3
+  sheets$PIConfiguration$LogScaleSD <- 0.1
+  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  piTasks <- createPITasks(readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  ))
+  ofo <- piTasks$Task1$configuration$objectiveFunctionOptions
+  expect_equal(ofo$linScaleCV, 0.3)
+  expect_equal(ofo$logScaleSD, 0.1)
 })
 
 test_that("runPI executes single PI task successfully", {

@@ -8,7 +8,8 @@ createValidPISheets <- function() {
       CIMethod = "hessian",
       PrintEvaluationFeedback = TRUE,
       AutoEstimateCI = FALSE,
-      SimulationRunOptions = NA,
+      numberOfCores = NA_real_,
+      checkForNegativeValues = NA,
       ObjectiveFunctionType = NA,
       ResidualWeightingMethod = NA,
       RobustMethod = NA,
@@ -171,7 +172,8 @@ test_that("readPITaskConfigurationFromExcel validates PIConfiguration sheet stru
     "CIMethod",
     "PrintEvaluationFeedback",
     "AutoEstimateCI",
-    "SimulationRunOptions",
+    "numberOfCores",
+    "checkForNegativeValues",
     "ObjectiveFunctionType",
     "ResidualWeightingMethod",
     "RobustMethod",
@@ -511,7 +513,8 @@ test_that("readPITaskConfigurationFromExcel throws error when task is missing in
       CIMethod = "hessian",
       PrintEvaluationFeedback = TRUE,
       AutoEstimateCI = FALSE,
-      SimulationRunOptions = NA,
+      numberOfCores = NA_real_,
+      checkForNegativeValues = NA,
       ObjectiveFunctionType = NA,
       ResidualWeightingMethod = NA,
       RobustMethod = NA,
@@ -564,7 +567,8 @@ test_that("readPITaskConfigurationFromExcel handles NA values correctly in optio
   expect_true(is.na(outputMapping[[1]]$xFactor))
   expect_true(is.na(outputMapping[[1]]$yFactor))
   expect_null(outputMapping[[1]]$Weight)
-  expect_true(is.na(piConfiguration$SimulationRunOptions))
+  expect_true(is.na(piConfiguration$numberOfCores))
+  expect_true(is.na(piConfiguration$checkForNegativeValues))
   expect_true(is.na(piConfiguration$ObjectiveFunctionType))
   expect_true(is.na(piConfiguration$ResidualWeightingMethod))
   expect_true(is.na(piConfiguration$RobustMethod))
