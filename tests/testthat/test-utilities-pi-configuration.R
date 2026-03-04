@@ -577,6 +577,28 @@ test_that("readPITaskConfigurationFromExcel handles NA values correctly in optio
   expect_true(is.na(piConfiguration$LogScaleSD))
 })
 
+test_that("readPITaskConfigurationFromExcel uses defaults when PIConfiguration has 0 rows", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIConfiguration <- sheets$PIConfiguration[0, ]
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  piConfig <- piTaskConfigurations$Task1$piConfiguration
+  expect_null(piConfig$Algorithm)
+  expect_null(piConfig$CIMethod)
+  expect_null(piConfig$numberOfCores)
+})
+
 test_that("readPITaskConfigurationFromExcel reads sheets with correct types", {
   piTaskName <- "AciclovirSimple"
   piTaskConfigurations <- readPITaskConfigurationFromExcel(

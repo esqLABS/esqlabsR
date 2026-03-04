@@ -140,7 +140,11 @@ readPITaskConfigurationFromExcel <- function(
     }
 
     # Convert sheet data to lists
-    piConfiguration <- as.list(taskData$piConfiguration[1, ])
+    piConfiguration <- if (nrow(taskData$piConfiguration) > 0) {
+      as.list(taskData$piConfiguration[1, ])
+    } else {
+      list()
+    }
     piParameters <- lapply(
       seq_len(nrow(taskData$piParameters)),
       function(i) as.list(taskData$piParameters[i, ])

@@ -68,7 +68,7 @@ createPITasks <- function(piTaskConfigurations) {
 #' }
 runPI <- function(piTasks) {
   piTasks <- ospsuite.utils::toList(piTasks)
-  validateIsOfType(piTasks, "list")
+  validateIsOfType(piTasks, "ParameterIdentification")
 
   piResults <- list()
 
