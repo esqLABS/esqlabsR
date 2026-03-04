@@ -165,7 +165,8 @@ test_that("Print method works", {
   )
 
   # Test that print method returns the object invisibly
-  expect_equal(scenario, scenario$print())
+  expect_output(result <- scenario$print())
+  expect_equal(scenario, result)
 })
 
 test_that("Warning is shown when individual characteristics are not found", {
