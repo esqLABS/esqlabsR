@@ -574,6 +574,159 @@
       "rows": []
     }
   },
+  "ParameterIdentification": {
+    "PIConfiguration": {
+      "column_names": ["PITaskName", "Algorithm", "CIMethod", "PrintEvaluationFeedback", "AutoEstimateCI", "numberOfCores", "checkForNegativeValues", "ObjectiveFunctionType", "ResidualWeightingMethod", "RobustMethod", "ScaleVar", "LinScaleCV", "LogScaleSD"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "Algorithm": "BOBYQA",
+          "CIMethod": "hessian",
+          "PrintEvaluationFeedback": "TRUE",
+          "AutoEstimateCI": "FALSE",
+          "numberOfCores": null,
+          "checkForNegativeValues": null,
+          "ObjectiveFunctionType": null,
+          "ResidualWeightingMethod": null,
+          "RobustMethod": null,
+          "ScaleVar": null,
+          "LinScaleCV": null,
+          "LogScaleSD": null
+        }
+      ]
+    },
+    "PIParameters": {
+      "column_names": ["PITaskName", "Scenarios", "Container Path", "Parameter Name", "Value", "Units", "MinValue", "MaxValue", "StartValue", "Group"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "Scenarios": "PITestScenario",
+          "Container Path": "Aciclovir",
+          "Parameter Name": "Lipophilicity",
+          "Value": "-0.1",
+          "Units": "Log Units",
+          "MinValue": "-10",
+          "MaxValue": "10",
+          "StartValue": "1",
+          "Group": "1"
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_250mg",
+          "Container Path": "Aciclovir",
+          "Parameter Name": "Lipophilicity",
+          "Value": "-0.1",
+          "Units": "Log Units",
+          "MinValue": "-10",
+          "MaxValue": "10",
+          "StartValue": "1",
+          "Group": "1"
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_500mg",
+          "Container Path": "Aciclovir",
+          "Parameter Name": "Lipophilicity",
+          "Value": "-0.1",
+          "Units": "Log Units",
+          "MinValue": "-10",
+          "MaxValue": "10",
+          "StartValue": "1",
+          "Group": "1"
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_250mg",
+          "Container Path": "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS",
+          "Parameter Name": "TSspec",
+          "Value": null,
+          "Units": null,
+          "MinValue": "0",
+          "MaxValue": "10",
+          "StartValue": "0.5",
+          "Group": "2"
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_500mg",
+          "Container Path": "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS",
+          "Parameter Name": "TSspec",
+          "Value": null,
+          "Units": null,
+          "MinValue": "0",
+          "MaxValue": "10",
+          "StartValue": "0.5",
+          "Group": "3"
+        }
+      ]
+    },
+    "PIOutputMappings": {
+      "column_names": ["PITaskName", "Scenarios", "ObservedDataSheet", "DataSet", "Scaling", "xOffset", "yOffset", "xFactor", "yFactor", "Weight"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "Scenarios": "PITestScenario",
+          "ObservedDataSheet": "Laskin 1982.Group A",
+          "DataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+          "Scaling": "lin",
+          "xOffset": null,
+          "yOffset": null,
+          "xFactor": null,
+          "yFactor": null,
+          "Weight": null
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_250mg",
+          "ObservedDataSheet": "Laskin 1982.Group A",
+          "DataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+          "Scaling": "log",
+          "xOffset": null,
+          "yOffset": null,
+          "xFactor": null,
+          "yFactor": null,
+          "Weight": null
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_500mg",
+          "ObservedDataSheet": "Laskin 1982.Group A",
+          "DataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5.0 mg/kg_iv_",
+          "Scaling": "log",
+          "xOffset": null,
+          "yOffset": null,
+          "xFactor": null,
+          "yFactor": null,
+          "Weight": null
+        }
+      ]
+    },
+    "AlgorithmOptions": {
+      "column_names": ["PITaskName", "OptionName", "OptionValue"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "OptionName": "maxeval",
+          "OptionValue": "100"
+        },
+        {
+          "PITaskName": "AciclovirSimple",
+          "OptionName": "ftol_rel",
+          "OptionValue": "0"
+        }
+      ]
+    },
+    "CIOptions": {
+      "column_names": ["PITaskName", "OptionName", "OptionValue"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "OptionName": "confLevel",
+          "OptionValue": "0.95"
+        }
+      ]
+    }
+  },
   "populationsCSV": {
     "TestPopulation.csv": {
       "column_names": ["IndividualId", "Gender", "Population", "Organism.Weight", "Organism.BMI", "Organism.BSA", "Organism.Age", "Organism.Gestational.age", "Organism.Height", "Organism.Ontogeny.factor..albumin.", "Organism.Ontogeny.factor..alpha1.acid.glycoprotein.", "Organism.Hematocrit", "Organism.VenousBlood.Volume", "Organism.ArterialBlood.Volume", "Organism.Bone.Specific.blood.flow.rate", "Organism.Bone.Volume", "Organism.Brain.Volume", "Organism.Brain.Specific.blood.flow.rate", "Organism.Fat.Volume", "Organism.Fat.Vf..lipid.", "Organism.Fat.Vf..neutral.lipid..PT", "Organism.Fat.Vf..phospholipid..PT", "Organism.Fat.Fraction.interstitial", "Organism.Fat.Vf..water.", "Organism.Fat.Vf..water..PT", "Organism.Fat.Vf..neutral.lipid..RR", "Organism.Fat.Vf..neutral.lipid..WS", "Organism.Fat.Vf..neutral.phospholipid..RR", "Organism.Fat.Vf..neutral.phospholipid..plasma..WS", "Organism.Fat.Vf..extracellular.water..RR", "Organism.Fat.Vf..intracellular.water..RR", "Organism.Fat.Vf..water..WS", "Organism.Fat.Specific.blood.flow.rate", "Organism.Gonads.Volume", "Organism.Gonads.Specific.blood.flow.rate", "Organism.Heart.Volume", "Organism.Heart.Specific.blood.flow.rate", "Organism.Kidney.Volume", "Organism.Kidney.Age.of.aging.onset", "Organism.Kidney.Aging.half.time", "Organism.Kidney.GFRmat", "Organism.Kidney.Hill.coefficient.for.aging.GFR", "Organism.Kidney.Hill.coefficient.for.GFR", "Organism.Kidney.Maximal.decreasing.rate.factor", "Organism.Kidney.TM50.for.GFR", "Organism.Kidney.Specific.blood.flow.rate", "Organism.Lumen.Effective.surface.area.variability.factor", "Organism.Lumen.Stomach.Distal.radius", "Organism.Lumen.Stomach.Gastric.emptying.time", "Organism.Lumen.Stomach.GET_alpha..Weibull.function..variability.factor", "Organism.Lumen.Stomach.GET_beta..Weibull.function..variability.factor", "Organism.Lumen.Stomach.Length", "Organism.Lumen.Stomach.Proximal.radius", "Organism.Lumen.Duodenum.Effective.surface.area.enhancement.factor", "Organism.Lumen.UpperJejunum.Effective.surface.area.enhancement.factor", "Organism.Lumen.LowerJejunum.Effective.surface.area.enhancement.factor", "Organism.Lumen.UpperIleum.Effective.surface.area.enhancement.factor", "Organism.Lumen.LowerIleum.Effective.surface.area.enhancement.factor", "Organism.Lumen.Caecum.Effective.surface.area.enhancement.factor", "Organism.Lumen.ColonAscendens.Effective.surface.area.enhancement.factor", "Organism.Lumen.ColonTransversum.Effective.surface.area.enhancement.factor", "Organism.Lumen.ColonDescendens.Effective.surface.area.enhancement.factor", "Organism.Lumen.ColonSigmoid.Effective.surface.area.enhancement.factor", "Organism.Lumen.Rectum.Effective.surface.area.enhancement.factor", "Organism.Stomach.Volume", "Organism.Stomach.Specific.blood.flow.rate", "Organism.SmallIntestine.Small.intestinal.transit.time", "Organism.SmallIntestine.Volume", "Organism.SmallIntestine.Specific.blood.flow.rate", "Organism.LargeIntestine.Large.intestinal.transit.time", "Organism.LargeIntestine.Volume", "Organism.LargeIntestine.Specific.blood.flow.rate", "Organism.Liver.Volume", "Organism.Liver.Specific.blood.flow.rate", "Organism.Lung.Volume", "Organism.Lung.Fraction.vascular", "Organism.Muscle.Volume", "Organism.Muscle.Vf..lipid.", "Organism.Muscle.Vf..neutral.lipid..PT", "Organism.Muscle.Vf..phospholipid..PT", "Organism.Muscle.Vf..protein.", "Organism.Muscle.Vf..water.", "Organism.Muscle.Vf..water..PT", "Organism.Muscle.Fraction.interstitial", "Organism.Muscle.Vf..neutral.lipid..RR", "Organism.Muscle.Vf..neutral.lipid..WS", "Organism.Muscle.Vf..neutral.phospholipid..RR", "Organism.Muscle.Vf..neutral.phospholipid..plasma..WS", "Organism.Muscle.Vf..extracellular.water..RR", "Organism.Muscle.Vf..protein..WS", "Organism.Muscle.Vf..intracellular.water..RR", "Organism.Muscle.Vf..water..WS", "Organism.Muscle.Specific.blood.flow.rate", "Organism.Pancreas.Volume", "Organism.Pancreas.Specific.blood.flow.rate", "Organism.PortalVein.Volume", "Organism.Skin.Volume", "Organism.Skin.Specific.blood.flow.rate", "Organism.Spleen.Volume", "Organism.Spleen.Specific.blood.flow.rate"],
