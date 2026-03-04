@@ -271,12 +271,9 @@ test_that("projectConfigurationStatus() correctly identifies in-sync files", {
   test_proj <- local_test_project()
 
   # Check status - should be in sync
-  expect_warning(
-    status_result <- projectConfigurationStatus(
-      test_proj$project_config_path,
-      test_proj$snapshot_path
-    ),
-    regexp = messages$excelNotInSync()
+  status_result <- projectConfigurationStatus(
+    test_proj$project_config_path,
+    test_proj$snapshot_path
   )
   expect_true(
     status_result$in_sync,
