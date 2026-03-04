@@ -278,6 +278,14 @@ ProjectConfiguration <- R6::R6Class(
         data$compoundPropertiesFile <- NULL
       }
 
+      # Add parameterIdentificationFile if missing (pre-PI-workflow projects)
+      if (is.null(data$parameterIdentificationFile)) {
+        data$parameterIdentificationFile <- list(
+          value = NA,
+          description = "Name of the parameter identification configuration file"
+        )
+      }
+
       # If one of the excel configuration is not expected, return an error.
       for (property in names(data)) {
         if (!(property %in% names(self))) {
