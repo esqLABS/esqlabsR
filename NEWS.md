@@ -24,6 +24,7 @@
 - Fixed variable scoping issues in validation functions
 - Simplified validation logic to check data frame structure instead of R6 objects
 - Using native operator `%||%` instead of importing from the `ospsuite.utils` package.
+- Remove false warnings whenever a ProjectConfiguration is created (\#964).
 
 # esqlabsR 5.5.1
 

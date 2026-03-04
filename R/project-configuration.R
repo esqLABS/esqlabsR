@@ -319,12 +319,7 @@ ProjectConfiguration <- R6::R6Class(
       }
 
       private$.checkProjectConfigurationFile()
-
-      for (property in names(private$.projectConfigurationData)) {
-        # Update each private property
-        self[[property]] <- private$.projectConfigurationData[[property]]$value
-      }
-
+      
       # Mark as not modified after loading from file
       private$.modified <- FALSE
     },
