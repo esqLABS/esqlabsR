@@ -170,13 +170,16 @@ snapshotProjectConfiguration <- function(
 #' @param outputDir Directory where the Excel files will be created. If NULL
 #'   (default), the Excel files will be created in the same directory as the
 #'   source JSON file.
+#' @param silent Logical. If `TRUE`, suppresses informational messages.
+#'   Defaults to `FALSE`.
 #'
 #' @return A ProjectConfiguration object initialized with the regenerated
 #'   ProjectConfiguration.xlsx
 #' @export
 restoreProjectConfiguration <- function(
   jsonPath = "ProjectConfiguration.json",
-  outputDir = NULL
+  outputDir = NULL,
+  silent = FALSE
 ) {
   # Check if JSON file exists
   if (!file.exists(jsonPath)) {
@@ -410,7 +413,7 @@ restoreProjectConfiguration <- function(
   relPath <- fs::path_rel(projConfigPath, start = getwd())
 
   # Display message with relative path
-  if (interactive()) {
+  if (interactive() && !silent) {
     message(
       messages$restoredProjectConfiguration(jsonPath, relPath)
     )
@@ -510,17 +513,11 @@ projectConfigurationStatus <- function(
     )
 
     # Display message if interactive
-    if (hasUnsavedChanges && !silent) {
-      message(
-        messages$excelInSync()
-      )
-      message(
-        messages$projectConfigUnsavedChanges()
-      )
-    } else {
-      message(
-        messages$excelInSync()
-      )
+    if (!silent) {
+      message(messages$excelInSync())
+      if (hasUnsavedChanges) {
+        message(messages$projectConfigUnsavedChanges())
+      }
     }
   } else {
     # Files are different, now do a detailed comparison

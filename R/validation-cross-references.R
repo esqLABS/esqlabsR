@@ -29,8 +29,8 @@
     ) {
       individuals_data <- validationResults$individuals$data
       invalid_individuals <- setdiff(
-        scenarios_data$IndividualId,
-        individuals_data$IndividualId
+        scenarios_data[["IndividualId"]],
+        individuals_data[["IndividualId"]]
       )
       if (length(invalid_individuals) > 0) {
         result$add_critical_error(
@@ -51,8 +51,8 @@
     ) {
       populations_data <- validationResults$populations$data
       invalid_populations <- setdiff(
-        scenarios_data$PopulationId,
-        populations_data$PopulationName
+        scenarios_data[["PopulationId"]],
+        populations_data[["PopulationName"]]
       )
       if (length(invalid_populations) > 0) {
         result$add_critical_error(
@@ -78,8 +78,8 @@
     scenarios_data <- validationResults$scenarios$data
 
     # Get scenario names from DataCombined sheet
-    if (!is.null(plots_data$DataCombined)) {
-      simulated_data <- plots_data$DataCombined[
+    if (!is.null(plots_data[["DataCombined"]])) {
+      simulated_data <- plots_data[["DataCombined"]][
         plots_data$DataCombined$dataType == "simulated",
       ]
 
