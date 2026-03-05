@@ -158,6 +158,20 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
+    #' @field parameterIdentificationFile Name of the excel file with parameter
+    #'   identification definitions.
+    #' Must be located in the "configurationsFolder".
+    parameterIdentificationFile = function(value) {
+      if (!missing(value)) {
+        private$.projectConfigurationData$parameterIdentificationFile$value <-
+          value
+        private$.modified <- TRUE
+      }
+      private$.clean_path(
+        private$.projectConfigurationData$parameterIdentificationFile$value,
+        self$configurationsFolder
+      )
+    },
     #' @field dataFolder Path to the folder where experimental data files are
     #'   located.
     dataFolder = function(value) {
@@ -264,6 +278,14 @@ ProjectConfiguration <- R6::R6Class(
         data$compoundPropertiesFile <- NULL
       }
 
+      # Add parameterIdentificationFile if missing (pre-PI-workflow projects)
+      if (is.null(data$parameterIdentificationFile)) {
+        data$parameterIdentificationFile <- list(
+          value = NA,
+          description = "Name of the parameter identification configuration file"
+        )
+      }
+
       # If one of the excel configuration is not expected, return an error.
       for (property in names(data)) {
         if (!(property %in% names(self))) {
@@ -297,7 +319,7 @@ ProjectConfiguration <- R6::R6Class(
       }
 
       private$.checkProjectConfigurationFile()
-
+      
       # Mark as not modified after loading from file
       private$.modified <- FALSE
     },
@@ -367,11 +389,11 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @param projectConfigurationFilePath A string representing the path to the
     #'   project configuration file.
-    initialize = function(projectConfigurationFilePath = character()) {
+    initialize = function(projectConfigurationFilePath = NULL) {
       # Initialize as not modified
       private$.modified <- FALSE
 
-      if (!missing(projectConfigurationFilePath)) {
+      if (!is.null(projectConfigurationFilePath)) {
         self$projectConfigurationFilePath <- projectConfigurationFilePath
       } else {
         private$.projectConfigurationDirPath <- NULL
@@ -410,6 +432,7 @@ ProjectConfiguration <- R6::R6Class(
           "Scenarios File" = self$scenariosFile,
           "Applications File" = self$applicationsFile,
           "Plots File" = self$plotsFile,
+          "Parameter Identification File" = self$parameterIdentificationFile,
           "Data File" = self$dataFile,
           "Data Importer Configuration File" = self$dataImporterConfigurationFile
         ),
@@ -450,6 +473,7 @@ ProjectConfiguration <- R6::R6Class(
         "scenariosFile",
         "applicationsFile",
         "plotsFile",
+        "parameterIdentificationFile",
         "dataFolder",
         "dataFile",
         "dataImporterConfigurationFile",
