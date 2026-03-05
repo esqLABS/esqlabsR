@@ -169,6 +169,8 @@ snapshotProjectConfiguration <- function(
 #' @param outputDir Directory where the Excel files will be created. If NULL
 #'   (default), the Excel files will be created in the same directory as the
 #'   source JSON file.
+#' @param silent Logical. If `TRUE`, suppresses informational messages.
+#'   Defaults to `FALSE`.
 #'
 #' @return A ProjectConfiguration object initialized with the regenerated
 #'   ProjectConfiguration.xlsx
