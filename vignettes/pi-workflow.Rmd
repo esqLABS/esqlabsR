@@ -15,8 +15,7 @@ knitr::opts_chunk$set(
 )
 
 
-devtools::load_all()
-# library(esqlabsR)
+library(esqlabsR)
 ```
 
 ```{css, echo = FALSE}

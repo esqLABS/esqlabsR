@@ -9,7 +9,7 @@ test_that("PITaskConfiguration can be created with required parameters", {
       taskName = "TestTask",
       projectConfiguration = projectConfiguration,
       scenarioConfiguration = scenarioConfiguration,
-      piDefinitions <- list(
+      piDefinitions = list(
         piConfiguration = list(),
         piParameters = list(),
         piOutputMappings = list()
