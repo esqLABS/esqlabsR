@@ -377,6 +377,11 @@ createPlotsFromExcel <- function(
     if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
       plotConfiguration$subtitle <- row[["subtitle"]]
     }
+
+    # Check for log scale with zero in axis limits
+    plotID <- if ("plotID" %in% names(row)) row[["plotID"]] else NULL
+    .validateLogScaleAxisLimits(plotConfiguration, plotID)
+
     return(plotConfiguration)
   })
   names(plotConfigurationList) <- dfPlotConfigurations$plotID
@@ -626,6 +631,36 @@ createPlotsFromExcel <- function(
   }
 
   return(parsed)
+}
+
+#' Validate that log scale axes do not have limits containing zero
+#'
+#' @param plotConfiguration A plot configuration object
+#' @param plotID Optional plot ID for the warning message
+#'
+#' @keywords internal
+#' @noRd
+.validateLogScaleAxisLimits <- function(plotConfiguration, plotID = NULL) {
+  axisChecks <- list(
+    list(scale = "xAxisScale", limits = c("xAxisLimits", "xValuesLimits"), axis = "x"),
+    list(scale = "yAxisScale", limits = c("yAxisLimits", "yValuesLimits"), axis = "y")
+  )
+
+  for (check in axisChecks) {
+    scaleValue <- plotConfiguration[[check$scale]]
+    if (!is.null(scaleValue) && scaleValue == "log") {
+      for (limitsField in check$limits) {
+        limitsValue <- plotConfiguration[[limitsField]]
+        if (!is.null(limitsValue) && any(limitsValue == 0)) {
+          warning(messages$warningLogScaleWithZeroLimit(
+            plotID = plotID,
+            axisLimitsField = limitsField,
+            axis = check$axis
+          ))
+        }
+      }
+    }
+  }
 }
 
 #' Create a plotConfiguration or exportConfiguration objects from a row of sheet
