@@ -462,7 +462,7 @@ sheet must have the following columns:
 
 | Column | Description |
 |--------|-------------|
-| `Container Path` | Path to the container holding the molecule (e.g., `Organism\|Liver\|Intracellular`) |
+| `Container Path` | Path to the container holding the molecule (e.g., `Organism|Liver|Intracellular`) |
 | `Molecule Name` | Name of the molecule (e.g., `DrugA`) |
 | `Is Present` | Logical (`TRUE`/`FALSE`). Rows with `FALSE` are skipped |
 | `Value` | Start value of the molecule |

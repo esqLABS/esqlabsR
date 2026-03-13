@@ -494,7 +494,7 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
 
     # Only include rows where Is Present is not explicitly FALSE
     isPresentCol <- data[["Is Present"]]
-    data <- data[is.na(isPresentCol) | isPresentCol != FALSE, ]
+    data <- data[is.na(isPresentCol) | as.logical(isPresentCol), ]
 
     if (nrow(data) == 0) {
       next

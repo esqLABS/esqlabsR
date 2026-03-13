@@ -94,8 +94,8 @@ a parameter sheet from the list"
       } else {
         stop(paste0(
           messages$errorPropertyReadOnly("initialValuesSheets"),
-          ". Use functions 'addInitialValuesSheets' and 'removeInitialValuesSheets' to add or remove
-an initial values sheet from the list"
+          ". Use functions 'addInitialValuesSheets' and 'removeInitialValuesSheets'",
+          " to add or remove an initial values sheet from the list"
         ))
       }
     },
