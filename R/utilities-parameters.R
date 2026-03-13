@@ -197,12 +197,19 @@ exportParametersToXLS <- function(
 extendParameterStructure <- function(parameters, newParameters) {
   .validateParametersStructure(
     parameterStructure = parameters,
-    argumentName = "parameters"
+    argumentName = "parameters",
+    nullAllowed = TRUE
   )
   .validateParametersStructure(
     parameterStructure = newParameters,
-    argumentName = "newParameters"
+    argumentName = "newParameters",
+    nullAllowed = TRUE
   )
+
+  # Normalize NULL inputs to empty parameter structures
+  emptyStructure <- list(paths = NULL, values = NULL, units = NULL)
+  parameters <- parameters %||% emptyStructure
+  newParameters <- newParameters %||% emptyStructure
 
   # If the parameters structure is empty, return new parameters
   if (isEmpty(parameters$paths)) {
