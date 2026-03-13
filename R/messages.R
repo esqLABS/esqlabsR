@@ -369,10 +369,13 @@ messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
   )
 }
 
-messages$warningLogScaleWithZeroLimit <- function(plotID, axisLimitsField, axis) {
-  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
+messages$warningLogScaleWithZeroLimit <- function(
+  plotID,
+  axisLimitsField,
+  axis
+) {
   cliFormat(
-    "Column {.field {axisLimitsField}}{plotInfo} contains zero, but the {axis}-axis scale is set to {.val log}.
+    "Column {.field {axisLimitsField}} in plot {.val {plotID}} contains zero, but the {axis}-axis scale is set to {.val log}.
     Logarithmic scale cannot display zero values. This may result in empty or unexpected plots."
   )
 }

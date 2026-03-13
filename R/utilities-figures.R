@@ -379,8 +379,7 @@ createPlotsFromExcel <- function(
     }
 
     # Check for log scale with zero in axis limits
-    plotID <- if ("plotID" %in% names(row)) row[["plotID"]] else NULL
-    .validateLogScaleAxisLimits(plotConfiguration, plotID)
+    .validateLogScaleAxisLimits(plotConfiguration, dfPlotConfigurations$plotID)
 
     return(plotConfiguration)
   })
@@ -642,8 +641,16 @@ createPlotsFromExcel <- function(
 #' @noRd
 .validateLogScaleAxisLimits <- function(plotConfiguration, plotID = NULL) {
   axisChecks <- list(
-    list(scale = "xAxisScale", limits = c("xAxisLimits", "xValuesLimits"), axis = "x"),
-    list(scale = "yAxisScale", limits = c("yAxisLimits", "yValuesLimits"), axis = "y")
+    list(
+      scale = "xAxisScale",
+      limits = c("xAxisLimits", "xValuesLimits"),
+      axis = "x"
+    ),
+    list(
+      scale = "yAxisScale",
+      limits = c("yAxisLimits", "yValuesLimits"),
+      axis = "y"
+    )
   )
 
   for (check in axisChecks) {

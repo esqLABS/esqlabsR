@@ -1722,7 +1722,8 @@ test_that("It shows a warning when xAxisScale is log and xAxisLimits contain 0",
           plotID = "P1",
           axisLimitsField = "xAxisLimits",
           axis = "x"
-        )
+        ),
+        fixed = TRUE
       )
     }
   )
@@ -1763,7 +1764,8 @@ test_that("It shows a warning when yAxisScale is log and yAxisLimits contain 0",
           plotID = "P1",
           axisLimitsField = "yAxisLimits",
           axis = "y"
-        )
+        ),
+        fixed = TRUE
       )
     }
   )
@@ -1804,7 +1806,8 @@ test_that("It shows a warning when yAxisScale is log and yValuesLimits contain 0
           plotID = "P1",
           axisLimitsField = "yValuesLimits",
           axis = "y"
-        )
+        ),
+        fixed = TRUE
       )
     }
   )
