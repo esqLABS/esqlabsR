@@ -507,10 +507,15 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
     )
     pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
 
-    pathsUnitsVector[fullPaths] <- tidyr::replace_na(
-      data = as.character(data[["Units"]]),
-      replace = ""
-    )
+    unitsRaw <- as.character(data[["Units"]])
+    missingUnits <- is.na(data[["Units"]]) | trimws(as.character(data[["Units"]])) == ""
+    if (any(missingUnits)) {
+      stop(messages$errorMissingUnitsInInitialValues(
+        filePath = filePath,
+        moleculePaths = fullPaths[missingUnits]
+      ))
+    }
+    pathsUnitsVector[fullPaths] <- unitsRaw
   }
 
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))

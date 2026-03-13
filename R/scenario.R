@@ -206,32 +206,26 @@ Scenario <- R6::R6Class(
         }
       }
 
-      initializeSimulation(
-        simulation = simulation,
-        individualCharacteristics = individualCharacteristics,
-        additionalParams = params,
-        stopIfParameterNotFound = stopIfParameterNotFound
-      )
-
-      # Apply initial values (molecule start values) if defined
+      # Collect initial conditions (molecule start values) if defined
+      initialConditions <- NULL
       initialValuesSheets <- scenarioConfiguration$initialValuesSheets
       if (
         !is.null(initialValuesSheets) &&
           length(enumKeys(initialValuesSheets)) > 0
       ) {
-        initialValues <- readInitialValuesFromXLS(
+        initialConditions <- readInitialValuesFromXLS(
           filePath = scenarioConfiguration$projectConfiguration$modelInitialValuesFile,
           sheets = enumKeys(initialValuesSheets)
         )
-        if (!isEmpty(initialValues$paths)) {
-          ospsuite::setQuantityValuesByPath(
-            quantityPaths = initialValues$paths,
-            values = initialValues$values,
-            units = initialValues$units,
-            simulation = simulation
-          )
-        }
       }
+
+      initializeSimulation(
+        simulation = simulation,
+        individualCharacteristics = individualCharacteristics,
+        additionalParams = params,
+        additionalInitialConditions = initialConditions,
+        stopIfParameterNotFound = stopIfParameterNotFound
+      )
 
       return(simulation)
     },
