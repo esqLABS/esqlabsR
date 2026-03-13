@@ -1,5 +1,13 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+- Added a new mandatory column `InitialValuesSet` to the `Scenarios.xlsx` `Scenarios` sheet. Existing `Scenarios.xlsx` files must be updated to include this column (it can be left empty). The column should appear between `ModelParameterSheets` and `ApplicationProtocol`.
+
+## New features
+
+- Added support for defining initial conditions (molecule start values) in scenarios. A new column `InitialValuesSet` can be added to `Scenarios.xlsx` referencing sheets in a new `ModelInitialValues.xlsx` file. The file uses columns `Container Path`, `Molecule Name`, `Is Present`, `Value`, `Units`, `Scale Divisor`, and `Neg. Values Allowed`. Values are applied during simulation initialization using `ospsuite::setQuantityValuesByPath`. A new property `modelInitialValuesFile` was added to `ProjectConfiguration`. The new file is included in project snapshots (`snapshotProjectConfiguration()` / `restoreProjectConfiguration()`). The new `readInitialValuesFromXLS()` function reads initial values from the Excel file.
+
 ## Minor improvements and bug fixes
 - Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
 

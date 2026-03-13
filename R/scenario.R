@@ -206,10 +206,24 @@ Scenario <- R6::R6Class(
         }
       }
 
+      # Collect initial conditions (molecule start values) if defined
+      initialConditions <- NULL
+      initialValuesSheets <- scenarioConfiguration$initialValuesSheets
+      if (
+        !is.null(initialValuesSheets) &&
+          length(enumKeys(initialValuesSheets)) > 0
+      ) {
+        initialConditions <- readInitialValuesFromXLS(
+          filePath = scenarioConfiguration$projectConfiguration$modelInitialValuesFile,
+          sheets = enumKeys(initialValuesSheets)
+        )
+      }
+
       initializeSimulation(
         simulation = simulation,
         individualCharacteristics = individualCharacteristics,
         additionalParams = params,
+        additionalInitialConditions = initialConditions,
         stopIfParameterNotFound = stopIfParameterNotFound
       )
 

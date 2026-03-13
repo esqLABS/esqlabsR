@@ -18,6 +18,11 @@
         "Description": "Name of the excel file with global model parametrization. Must be located in the \"paramsFolder\""
       },
       {
+        "Property": "modelInitialValuesFile",
+        "Value": "ModelInitialValues.xlsx",
+        "Description": "Name of the excel file with initial conditions (molecule start values). Must be located in the \"configurationsFolder\""
+      },
+      {
         "Property": "individualsFile",
         "Value": "Individuals.xlsx",
         "Description": "Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\""
@@ -115,6 +120,22 @@
       ]
     }
   },
+  "modelInitialValues": {
+    "Global": {
+      "column_names": ["Container Path", "Molecule Name", "Is Present", "Value", "Units", "Scale Divisor", "Neg. Values Allowed"],
+      "rows": [
+        {
+          "Container Path": "Organism|Liver|Periportal|Intracellular",
+          "Molecule Name": "Aciclovir",
+          "Is Present": "TRUE",
+          "Value": "0.5",
+          "Units": "µmol",
+          "Scale Divisor": "1",
+          "Neg. Values Allowed": "FALSE"
+        }
+      ]
+    }
+  },
   "Individuals": {
     "IndividualBiometrics": {
       "column_names": ["IndividualId", "Species", "Population", "Gender", "Weight [kg]", "Height [cm]", "Age [year(s)]", "Protein Ontogenies"],
@@ -194,7 +215,7 @@
   },
   "Scenarios": {
     "Scenarios": {
-      "column_names": ["Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile", "OutputPathsIds"],
+      "column_names": ["Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "InitialValuesSet", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile", "OutputPathsIds"],
       "rows": [
         {
           "Scenario_name": "TestScenario",
@@ -202,6 +223,7 @@
           "PopulationId": null,
           "ReadPopulationFromCSV": null,
           "ModelParameterSheets": "Global",
+          "InitialValuesSet": "Global",
           "ApplicationProtocol": "Aciclovir_iv_250mg",
           "SimulationTime": "0, 24, 60",
           "SimulationTimeUnit": "h",
@@ -217,6 +239,7 @@
           "PopulationId": null,
           "ReadPopulationFromCSV": null,
           "ModelParameterSheets": "\"Global\", \"Aciclovir\", \"Sheet, with comma\"",
+          "InitialValuesSet": null,
           "ApplicationProtocol": "Aciclovir_iv_250mg",
           "SimulationTime": "0, 1, 60; 1, 12, 20",
           "SimulationTimeUnit": "h",
@@ -232,6 +255,7 @@
           "PopulationId": "TestPopulation",
           "ReadPopulationFromCSV": "FALSE",
           "ModelParameterSheets": "Global",
+          "InitialValuesSet": null,
           "ApplicationProtocol": "Aciclovir_iv_250mg",
           "SimulationTime": "0, 12, 20",
           "SimulationTimeUnit": "h",
@@ -247,6 +271,7 @@
           "PopulationId": "TestPopulation",
           "ReadPopulationFromCSV": "TRUE",
           "ModelParameterSheets": "Global",
+          "InitialValuesSet": null,
           "ApplicationProtocol": "Aciclovir_iv_250mg",
           "SimulationTime": "0, 12, 20",
           "SimulationTimeUnit": "h",
@@ -262,6 +287,7 @@
           "PopulationId": null,
           "ReadPopulationFromCSV": null,
           "ModelParameterSheets": "Global, MissingParam",
+          "InitialValuesSet": null,
           "ApplicationProtocol": "Aciclovir_iv_250mg",
           "SimulationTime": "0, 24, 60",
           "SimulationTimeUnit": "h",

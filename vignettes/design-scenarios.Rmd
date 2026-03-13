@@ -61,6 +61,40 @@ You can define simulation parameters in the `ModelParameters.xlsx` file.
 To apply them to the simulation, you need to specify which sheets to
 load in the `ModelParameterSheets` column of the `Scenarios.xlsx` file.
 
+### 4a. Initial Conditions (Molecule Start Values)
+
+You can override the initial conditions (molecule start values) of a
+simulation by defining them in the `ModelInitialValues.xlsx` file.
+To apply initial conditions to a scenario, specify the name of the sheet
+to load in the `InitialValuesSet` column of the `Scenarios.xlsx` file.
+Multiple sheets can be specified as a comma-separated list (e.g.,
+`GlobalInitial, CompoundInitial`).
+
+The `ModelInitialValues.xlsx` file has one or more sheets, each
+containing molecule start values. Each sheet must have the following
+columns:
+
+-   **Container Path**: The path to the container holding the molecule
+    (e.g., `Organism|Liver|Intracellular`).
+-   **Molecule Name**: The name of the molecule (e.g., `DrugA`).
+-   **Is Present**: A logical value (`TRUE`/`FALSE`) indicating whether
+    the molecule is present. Rows where `Is Present` is `FALSE` are
+    skipped.
+-   **Value**: The start value.
+-   **Units**: The unit of the start value (e.g., `µmol`). If empty,
+    the value is assumed to be in base units.
+-   **Scale Divisor**: The scale divisor (for reference; not currently
+    applied).
+-   **Neg. Values Allowed**: Logical indicating if negative values are
+    allowed (for reference; not currently applied).
+
+The full path for each molecule is constructed as
+`Container Path|Molecule Name`. Values are applied using
+`ospsuite::setQuantityValuesByPath()` after all parameters are set.
+
+The path to the `ModelInitialValues.xlsx` file is specified in the
+project configuration under the `modelInitialValuesFile` property.
+
 ### 5. Individuals {#individuals}
 
 If you want to simulate a specific individual with individual
@@ -170,6 +204,7 @@ The relevant Excel files for the definition of the scenarios are:
 
 -   `ApplicationParameters.xlsx`
 -   `Individuals.xlsx`
+-   `ModelInitialValues.xlsx`
 -   `ModelParameters.xlsx`
 -   `PopulationParameters.xlsx`
 -   `Scenarios.xlsx`
@@ -250,6 +285,19 @@ after the parameters defined in the *ModelParameterSheets*. You can use
 an individual in multiple scenarios. This step is ignored if an
 individual is specified in the scenario definition, but no sheet with
 this name exists in the IndividualParameters.xlsx file.
+
+#### InitialValuesSet
+
+A list of sheet names from the `ModelInitialValues.xlsx` file, separated
+by a `,`. Each sheet must contain `Container Path`, `Molecule Name`,
+`Is Present`, `Value`, `Units`, `Scale Divisor`, and
+`Neg. Values Allowed`. Initial conditions from the specified sheets are
+applied to the model after all parameter values have been set, overriding
+the start values of molecules defined in the `.pkml` file. The full path
+to a molecule is constructed as `Container Path|Molecule Name`. Rows
+where **Is Present** is `FALSE` are skipped. If **Units** is empty, the
+value is assumed to be in base units. **InitialValuesSet** may be empty
+if no initial conditions need to be overridden.
 
 #### ApplicationProtocol
 
@@ -399,6 +447,31 @@ file, and parameters specified in the `customParams` argument of the
 The order of parameter sheets of the "ModelParameters.xlsx" file defined
 in the **ModelParameterSheets** column defines the order in which the
 parameters are applied.
+
+Initial conditions defined via the **InitialValuesSet** column are
+applied after all parameter values have been set, overriding the molecule
+start values from the `.pkml` file.
+
+### `ModelInitialValues.xlsx` file structure
+
+The `ModelInitialValues.xlsx` file defines the initial conditions
+(molecule start values) for simulations. The path to this file is defined
+in `ProjectConfiguration$modelInitialValuesFile`. The file can contain
+multiple sheets, each representing a named "initial values set". Each
+sheet must have the following columns:
+
+| Column | Description |
+|--------|-------------|
+| `Container Path` | Path to the container holding the molecule (e.g., `Organism|Liver|Intracellular`) |
+| `Molecule Name` | Name of the molecule (e.g., `DrugA`) |
+| `Is Present` | Logical (`TRUE`/`FALSE`). Rows with `FALSE` are skipped |
+| `Value` | Start value of the molecule |
+| `Units` | Unit of the start value (e.g., `µmol`). Empty means base units |
+| `Scale Divisor` | Scale divisor (for reference) |
+| `Neg. Values Allowed` | Logical indicating if negative values are allowed (for reference) |
+
+The full path of each molecule is constructed as
+`Container Path|Molecule Name`.
 
 <!-- For demonstrating the simulation design process, we will use the example included in the package (which can be accessed using `exampleProjectConfigurationPath`). -->
 
