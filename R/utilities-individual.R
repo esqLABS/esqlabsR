@@ -199,7 +199,7 @@ readIndividualCharacteristicsFromXLS <- function(
         newParameters = setParams
       )
     } else {
-      warning(messages$warningIndividualParameterSetNotFound(
+      stop(messages$errorIndividualParameterSetNotFound(
         scenarioName = scenarioName,
         parameterSetName = paramSet
       ))

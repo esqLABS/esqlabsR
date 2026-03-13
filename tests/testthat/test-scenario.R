@@ -256,15 +256,12 @@ test_that("Warning is shown when an individual parameter set sheet is not found"
   )
   scenarioConfigurations$TestScenario$individualId <- "TestIndiv_bad_set"
 
-  expect_warning(
+  expect_error(
     Scenario$new(
       scenarioConfigurations$TestScenario,
       stopIfParameterNotFound = FALSE
     ),
-    regexp = messages$warningIndividualParameterSetNotFound(
-      "TestScenario",
-      "NonExistentSheet"
-    )
+    regexp = messages$errorIndividualParameterSetNotFound("TestScenario", "NonExistentSheet")
   )
 })
 

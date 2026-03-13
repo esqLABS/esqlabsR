@@ -286,6 +286,15 @@ messages$warningIndividualParameterSetNotFound <- function(
   )
 }
 
+messages$errorIndividualParameterSetNotFound <- function(
+  scenarioName,
+  parameterSetName
+) {
+  cliFormat(
+    "Scenario {.val {scenarioName}}: Individual parameter set {.val {parameterSetName}} not found in the individuals file."
+  )
+}
+
 messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   cliFormat(
     "Simulation type of the scenario with scenario name {.val {scenarioName}} is set to {.val Population},

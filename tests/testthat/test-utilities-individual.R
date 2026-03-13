@@ -68,20 +68,15 @@ test_that("`.readIndividualParameterSetsFromXLS()` returns empty params when 'In
   expect_length(result$units, 0)
 })
 
-test_that("`.readIndividualParameterSetsFromXLS()` returns combined params and warns for missing sheets", {
-  expect_warning(
-    result <- esqlabsR:::.readIndividualParameterSetsFromXLS(
+test_that("`.readIndividualParameterSetsFromXLS()` errors for missing sheets", {
+  expect_error(
+    esqlabsR:::.readIndividualParameterSetsFromXLS(
       XLSpath = XLSpath,
       individualId = "Individual_with_param_sets",
       scenarioName = "TestScenario"
     ),
-    regexp = messages$warningIndividualParameterSetNotFound(
-      "TestScenario",
-      "ParamSet2"
-    )
+    regexp = messages$errorIndividualParameterSetNotFound("TestScenario", "ParamSet2")
   )
-  # ParamSet1 exists in the test XLS, so it should contribute params
-  expect_gt(length(result$paths), 0)
 })
 
 
