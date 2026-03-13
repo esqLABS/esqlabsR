@@ -379,7 +379,7 @@ createPlotsFromExcel <- function(
     }
 
     # Check for log scale with zero in axis limits
-    .validateLogScaleAxisLimits(plotConfiguration, dfPlotConfigurations$plotID)
+    .validateLogScaleAxisLimits(plotConfiguration, row[["plotID"]])
 
     return(plotConfiguration)
   })
