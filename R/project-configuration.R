@@ -211,6 +211,15 @@ ProjectConfiguration <- R6::R6Class(
         self$projectConfigurationDirPath,
         must_work = FALSE
       )
+    },
+    #' @field esqlabsRVersion Version of the esqlabsR package stored in the
+    #'   project configuration. Read-only.
+    esqlabsRVersion = function(value) {
+      if (missing(value)) {
+        private$.projectConfigurationData$esqlabsRVersion$value
+      } else {
+        stop("esqlabsRVersion is readonly")
+      }
     }
   ),
   private = list(
@@ -273,6 +282,16 @@ ProjectConfiguration <- R6::R6Class(
           ))
         }
       }
+
+      # Check esqlabsR version
+      storedVersion <- data$esqlabsRVersion$value
+      currentVersion <- as.character(utils::packageVersion("esqlabsR"))
+      if (is.null(storedVersion) || all(is.na(storedVersion))) {
+        warning(messages$versionNotStored(currentVersion))
+      } else if (!identical(as.character(storedVersion), currentVersion)) {
+        warning(messages$versionMismatch(as.character(storedVersion), currentVersion))
+      }
+
       private$.projectConfigurationData <- data
     },
     .read_config = function(file_path) {
@@ -434,6 +453,12 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @export
     save = function(path) {
+      # Update stored version to current package version
+      private$.projectConfigurationData$esqlabsRVersion <- list(
+        value = as.character(utils::packageVersion("esqlabsR")),
+        description = "Version of the esqlabsR package used to create this configuration"
+      )
+
       df <- data.frame(
         Property = character(),
         Value = character(),
@@ -453,7 +478,8 @@ ProjectConfiguration <- R6::R6Class(
         "dataFolder",
         "dataFile",
         "dataImporterConfigurationFile",
-        "outputFolder"
+        "outputFolder",
+        "esqlabsRVersion"
       )) {
         df <- rbind(
           df,

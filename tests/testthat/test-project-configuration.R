@@ -91,6 +91,59 @@ test_that("Project Configuration can be exported", {
   expect_equal(testProjectConfiguration(), imported_pc)
 })
 
+test_that("esqlabsRVersion is stored in ProjectConfiguration and can be read", {
+  myConfig <- testProjectConfiguration()
+  expect_equal(
+    myConfig$esqlabsRVersion,
+    as.character(utils::packageVersion("esqlabsR"))
+  )
+})
+
+test_that("esqlabsRVersion is read-only", {
+  myConfig <- testProjectConfiguration()
+  expect_error(myConfig$esqlabsRVersion <- "1.0.0", "esqlabsRVersion is readonly")
+})
+
+test_that("esqlabsRVersion is written to Excel when saving", {
+  temp_file <- withr::local_tempfile(fileext = ".xlsx")
+  testProjectConfiguration()$save(path = temp_file)
+  saved_pc <- createProjectConfiguration(path = temp_file)
+  expect_equal(
+    saved_pc$esqlabsRVersion,
+    as.character(utils::packageVersion("esqlabsR"))
+  )
+})
+
+test_that("A warning is raised when the stored version does not match the current package version", {
+  temp_file <- withr::local_tempfile(fileext = ".xlsx")
+  testProjectConfiguration()$save(path = temp_file)
+
+  # Manually set a different version in the file
+  df <- readxl::read_xlsx(temp_file, col_types = "text")
+  df$Value[df$Property == "esqlabsRVersion"] <- "0.0.0"
+  writexl::write_xlsx(df, path = temp_file)
+
+  expect_warning(
+    createProjectConfiguration(path = temp_file),
+    regexp = "does not match"
+  )
+})
+
+test_that("A warning is raised when no version is stored in the project configuration", {
+  temp_file <- withr::local_tempfile(fileext = ".xlsx")
+  testProjectConfiguration()$save(path = temp_file)
+
+  # Remove the esqlabsRVersion row from the file
+  df <- readxl::read_xlsx(temp_file, col_types = "text")
+  df <- df[df$Property != "esqlabsRVersion", ]
+  writexl::write_xlsx(df, path = temp_file)
+
+  expect_warning(
+    createProjectConfiguration(path = temp_file),
+    regexp = "No esqlabsR version"
+  )
+})
+
 test_that("Project Configuration supports environment variable", {
   withr::with_envvar(
     new = c(
