@@ -75,7 +75,10 @@ test_that("`.readIndividualParameterSetsFromXLS()` errors for missing sheets", {
       individualId = "Individual_with_param_sets",
       scenarioName = "TestScenario"
     ),
-    regexp = messages$errorIndividualParameterSetNotFound("TestScenario", "ParamSet2")
+    regexp = messages$errorIndividualParameterSetNotFound(
+      "TestScenario",
+      "ParamSet2"
+    )
   )
 })
 

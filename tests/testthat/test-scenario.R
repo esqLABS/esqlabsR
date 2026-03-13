@@ -261,7 +261,10 @@ test_that("Warning is shown when an individual parameter set sheet is not found"
       scenarioConfigurations$TestScenario,
       stopIfParameterNotFound = FALSE
     ),
-    regexp = messages$errorIndividualParameterSetNotFound("TestScenario", "NonExistentSheet")
+    regexp = messages$errorIndividualParameterSetNotFound(
+      "TestScenario",
+      "NonExistentSheet"
+    )
   )
 })
 
