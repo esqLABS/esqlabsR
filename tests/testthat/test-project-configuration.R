@@ -17,8 +17,8 @@ test_that("`createDefaultProjectConfiguration()` is deprecated", {
 })
 
 
-test_that("Project Configuration can be created from V5 project configuration file but raises a warning", {
-  expect_warning(createProjectConfiguration(test_path(
+test_that("Project Configuration can be created from V5 project configuration file but raises an error", {
+  expect_error(createProjectConfiguration(test_path(
     "..",
     "data",
     "ProjectConfiguration-V5.xlsx"
@@ -114,7 +114,7 @@ test_that("esqlabsRVersion is written to Excel when saving", {
   )
 })
 
-test_that("A warning is raised when the stored version does not match the current package version", {
+test_that("An error is raised when the stored version does not match the current package version", {
   temp_file <- withr::local_tempfile(fileext = ".xlsx")
   testProjectConfiguration()$save(path = temp_file)
 
@@ -123,13 +123,13 @@ test_that("A warning is raised when the stored version does not match the curren
   df$Value[df$Property == "esqlabsRVersion"] <- "0.0.0"
   writexl::write_xlsx(df, path = temp_file)
 
-  expect_warning(
+  expect_error(
     createProjectConfiguration(path = temp_file),
-    regexp = "does not match"
+    regexp = "Aborted by user"
   )
 })
 
-test_that("A warning is raised when no version is stored in the project configuration", {
+test_that("An error is raised when no version is stored in the project configuration", {
   temp_file <- withr::local_tempfile(fileext = ".xlsx")
   testProjectConfiguration()$save(path = temp_file)
 
@@ -138,9 +138,9 @@ test_that("A warning is raised when no version is stored in the project configur
   df <- df[df$Property != "esqlabsRVersion", ]
   writexl::write_xlsx(df, path = temp_file)
 
-  expect_warning(
+  expect_error(
     createProjectConfiguration(path = temp_file),
-    regexp = "No esqlabsR version"
+    regexp = "Aborted by user"
   )
 })
 

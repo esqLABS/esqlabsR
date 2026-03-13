@@ -286,13 +286,47 @@ ProjectConfiguration <- R6::R6Class(
       # Check esqlabsR version
       storedVersion <- data$esqlabsRVersion$value
       currentVersion <- as.character(utils::packageVersion("esqlabsR"))
-      if (is.null(storedVersion) || is.na(storedVersion)) {
-        warning(messages$versionNotStored(currentVersion))
+      versionIssue <- if (is.null(storedVersion) || is.na(storedVersion)) {
+        "notStored"
       } else if (!identical(as.character(storedVersion), currentVersion)) {
-        warning(messages$versionMismatch(as.character(storedVersion), currentVersion))
+        "mismatch"
+      } else {
+        NULL
+      }
+
+      shouldSave <- FALSE
+      if (!is.null(versionIssue)) {
+        if (versionIssue == "notStored") {
+          message(messages$versionNotStored(currentVersion))
+        } else {
+          message(messages$versionMismatch(as.character(storedVersion), currentVersion))
+        }
+
+        if (interactive()) {
+          qs <- sample(c("Absolutely not", "Yes", "No way"))
+          out <- utils::menu(
+            title = "Do you want to update the version in the project configuration and continue?",
+            choices = qs
+          )
+          if (out == 0L || qs[[out]] != "Yes") {
+            stop(messages$abortedByUser())
+          }
+        } else {
+          stop(messages$abortedByUser())
+        }
+
+        # User confirmed: update version in data before saving
+        data$esqlabsRVersion <- list(
+          value = currentVersion,
+          description = "Version of the esqlabsR package used to create this configuration"
+        )
+        shouldSave <- TRUE
       }
 
       private$.projectConfigurationData <- data
+      if (shouldSave) {
+        self$save(private$.projectConfigurationFilePath)
+      }
     },
     .read_config = function(file_path) {
       path <- private$.clean_path(file_path, replace_env_var = FALSE)
