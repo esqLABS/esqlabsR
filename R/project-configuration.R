@@ -76,6 +76,20 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
+    #' @field modelInitialValuesFile Name of the excel file with initial
+    #'   conditions (molecule start values) for the model.
+    #' Must be located in the "configurationsFolder".
+    modelInitialValuesFile = function(value) {
+      if (!missing(value)) {
+        private$.projectConfigurationData$modelInitialValuesFile$value <-
+          value
+        private$.modified <- TRUE
+      }
+      private$.clean_path(
+        private$.projectConfigurationData$modelInitialValuesFile$value,
+        self$configurationsFolder
+      )
+    },
     #' @field individualsFile Name of the excel file with individual-specific
     #'   model parameterization.
     #' Must be located in the "configurationsFolder".
@@ -405,6 +419,7 @@ ProjectConfiguration <- R6::R6Class(
       ospsuite.utils::ospPrintItems(
         list(
           "Model Parameters File" = self$modelParamsFile,
+          "Model Initial Values File" = self$modelInitialValuesFile,
           "Individuals File" = self$individualsFile,
           "Populations File" = self$populationsFile,
           "Scenarios File" = self$scenariosFile,
@@ -444,6 +459,7 @@ ProjectConfiguration <- R6::R6Class(
         "modelFolder",
         "configurationsFolder",
         "modelParamsFile",
+        "modelInitialValuesFile",
         "individualsFile",
         "populationsFile",
         "populationsFolder",

@@ -446,3 +446,72 @@ setParameterValuesByPathWithCondition <- function(
   paramName <- fullPathParts[[length(fullPathParts)]]
   return(list(containerPath = containerPath, parameterName = paramName))
 }
+
+#' Read initial values (molecule start values) from a structured Excel file.
+#'
+#' @description Each excel sheet must consist of columns `Container Path`,
+#'   `Molecule Name`, `Is Present`, `Value`, `Units`, `Scale Divisor`, and
+#'   `Neg. Values Allowed`.
+#'
+#' @param filePath Path to the excel file
+#' @param sheets Names of the excel sheets containing the information about
+#'   the initial values. Multiple sheets can be processed. If no sheets are
+#'   provided, the first one in the Excel file is used.
+#'
+#' @returns A list containing vectors `paths` with the full paths to the
+#'   quantities, `values` the values, and `units` with the units the values
+#'   are in.
+#' @export
+readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
+  columnNames <- c(
+    "Container Path",
+    "Molecule Name",
+    "Is Present",
+    "Value",
+    "Units",
+    "Scale Divisor",
+    "Neg. Values Allowed"
+  )
+  validateIsString(filePath)
+  validateIsString(sheets, nullAllowed = TRUE)
+
+  if (is.null(sheets)) {
+    sheets <- c(1)
+  }
+
+  pathsValuesVector <- vector(mode = "numeric")
+  pathsUnitsVector <- vector(mode = "character")
+
+  for (sheet in sheets) {
+    data <- readExcel(path = filePath, sheet = sheet)
+
+    if (!all(columnNames %in% names(data))) {
+      stop(messages$errorWrongXLSStructure(
+        filePath = filePath,
+        expectedColNames = columnNames
+      ))
+    }
+
+    # Only include rows where Is Present is not explicitly FALSE
+    isPresentCol <- data[["Is Present"]]
+    data <- data[is.na(isPresentCol) | isPresentCol != FALSE, ]
+
+    if (nrow(data) == 0) {
+      next
+    }
+
+    fullPaths <- paste(
+      data[["Container Path"]],
+      data[["Molecule Name"]],
+      sep = "|"
+    )
+    pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
+
+    pathsUnitsVector[fullPaths] <- tidyr::replace_na(
+      data = as.character(data[["Units"]]),
+      replace = ""
+    )
+  }
+
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
+}

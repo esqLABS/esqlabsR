@@ -86,6 +86,19 @@ a parameter sheet from the list"
         ))
       }
     },
+    #' @field initialValuesSheets A named list. Names of the sheets from the
+    #'   model initial values excel file that will be applied to the simulation.
+    initialValuesSheets = function(value) {
+      if (missing(value)) {
+        private$.initialValuesSheets
+      } else {
+        stop(paste0(
+          messages$errorPropertyReadOnly("initialValuesSheets"),
+          ". Use functions 'addInitialValuesSheets' and 'removeInitialValuesSheets' to add or remove
+an initial values sheet from the list"
+        ))
+      }
+    },
     #' @field simulationType Type of the simulation - "Individual" or
     #'   "Population". If "Population", population characteristics are created
     #'   based on information stored in `populationsFile`. Default is
@@ -119,6 +132,7 @@ a parameter sheet from the list"
     .steadyStateTime = 1000,
     .individualCharacteristics = NULL,
     .paramSheets = NULL,
+    .initialValuesSheets = NULL,
     .simulationType = "Individual",
     .readPopulationFromCsv = FALSE
   ),
@@ -129,6 +143,7 @@ a parameter sheet from the list"
     initialize = function(projectConfiguration) {
       private$.projectConfiguration <- projectConfiguration
       private$.paramSheets <- enum(NULL)
+      private$.initialValuesSheets <- enum(NULL)
     },
 
     #' @field scenarioName Name of the simulated scenario
@@ -180,6 +195,31 @@ a parameter sheet from the list"
         )
       }
     },
+    #' @description Add the names of sheets in the model initial values
+    #'   excel-file that will be applied to the simulation
+    #' @param sheetNames A name or a list of names of the excel sheet
+    addInitialValuesSheets = function(sheetNames) {
+      private$.initialValuesSheets <- enumPut(
+        sheetNames,
+        sheetNames,
+        enum = private$.initialValuesSheets,
+        overwrite = TRUE
+      )
+    },
+    #' @description Remove the names of sheets in the model initial values
+    #'   excel-file from the list of sheets `initialValuesSheets`
+    #' @param sheetNames A name or a list of names of the excel sheet. If `NULL`
+    #'   (default), all sheets are removed.
+    removeInitialValuesSheets = function(sheetNames = NULL) {
+      if (is.null(sheetNames)) {
+        private$.initialValuesSheets <- enum(NULL)
+      } else {
+        private$.initialValuesSheets <- enumRemove(
+          keys = sheetNames,
+          enum = private$.initialValuesSheets
+        )
+      }
+    },
     #' @description Print the object to the console
     #' @param projectConfiguration Whether to also print project configuration.
     #'   default to TRUE.
@@ -205,6 +245,7 @@ a parameter sheet from the list"
           "Population Id" = self$populationId,
           "Read population from csv file" = self$readPopulationFromCSV,
           "Parameters sheets" = enumKeys(self$paramSheets),
+          "Initial values sheets" = enumKeys(self$initialValuesSheets),
           "Simulate steady-state" = self$simulateSteadyState,
           "Steady-state time" = self$steadyStateTime
         ),

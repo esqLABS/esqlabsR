@@ -213,6 +213,26 @@ Scenario <- R6::R6Class(
         stopIfParameterNotFound = stopIfParameterNotFound
       )
 
+      # Apply initial values (molecule start values) if defined
+      initialValuesSheets <- scenarioConfiguration$initialValuesSheets
+      if (
+        !is.null(initialValuesSheets) &&
+          length(enumKeys(initialValuesSheets)) > 0
+      ) {
+        initialValues <- readInitialValuesFromXLS(
+          filePath = scenarioConfiguration$projectConfiguration$modelInitialValuesFile,
+          sheets = enumKeys(initialValuesSheets)
+        )
+        if (!isEmpty(initialValues$paths)) {
+          ospsuite::setQuantityValuesByPath(
+            quantityPaths = initialValues$paths,
+            values = initialValues$values,
+            units = initialValues$units,
+            simulation = simulation
+          )
+        }
+      }
+
       return(simulation)
     },
 

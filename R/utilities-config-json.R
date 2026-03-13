@@ -72,6 +72,7 @@ snapshotProjectConfiguration <- function(
   # Define files to export
   excelFiles <- list(
     modelParameterSets = projectConfig$modelParamsFile,
+    modelInitialValues = projectConfig$modelInitialValuesFile,
     Individuals = projectConfig$individualsFile,
     Populations = projectConfig$populationsFile,
     Scenarios = projectConfig$scenariosFile,
@@ -306,6 +307,7 @@ restoreProjectConfiguration <- function(
   # Map file names to their Excel filenames
   fileMapping <- list(
     modelParameterSets = "ModelParameters.xlsx",
+    modelInitialValues = "ModelInitialValues.xlsx",
     Individuals = "Individuals.xlsx",
     Populations = "Populations.xlsx",
     Scenarios = "Scenarios.xlsx",
