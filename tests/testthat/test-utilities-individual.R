@@ -56,8 +56,7 @@ test_that("`readIndividualParameterSetsFromXLS()` returns NULL if individual is 
   ))
 })
 
-test_that("`readIndividualParameterSetsFromXLS()` returns species and NULL parameter sets
-          when 'Individual Parameter Sets' column is empty", {
+test_that("`readIndividualParameterSetsFromXLS()` returns species and NULL parameter sets when 'Individual Parameter Sets' column is empty", {
   result <- readIndividualParameterSetsFromXLS(
     XLSpath = XLSpath,
     individualId = "Vicini_1999"
@@ -66,8 +65,7 @@ test_that("`readIndividualParameterSetsFromXLS()` returns species and NULL param
   expect_null(result$individualParameterSets)
 })
 
-test_that("`readIndividualParameterSetsFromXLS()` returns correct parameter sets
-          when 'Individual Parameter Sets' column is defined", {
+test_that("`readIndividualParameterSetsFromXLS()` returns correct parameter sets when 'Individual Parameter Sets' column is defined", {
   result <- readIndividualParameterSetsFromXLS(
     XLSpath = XLSpath,
     individualId = "Individual_with_param_sets"

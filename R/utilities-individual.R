@@ -174,7 +174,7 @@ readIndividualParameterSetsFromXLS <- function(
   individualParameterSets <- NULL
   if ("Individual Parameter Sets" %in% names(data)) {
     paramSetsStr <- data[["Individual Parameter Sets"]][[rowIdx]]
-    if (!is.na(paramSetsStr) && nchar(trimws(as.character(paramSetsStr))) > 0) {
+    if (!is.na(paramSetsStr) && nzchar(trimws(as.character(paramSetsStr)))) {
       individualParameterSets <- trimws(
         strsplit(as.character(paramSetsStr), ",", fixed = TRUE)[[1]]
       )
