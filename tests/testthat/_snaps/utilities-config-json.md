@@ -242,9 +242,11 @@
       $Individuals
       $Individuals$IndividualBiometrics
       $Individuals$IndividualBiometrics$column_names
-      [1] "IndividualId"       "Species"            "Population"        
-      [4] "Gender"             "Weight [kg]"        "Height [cm]"       
-      [7] "Age [year(s)]"      "Protein Ontogenies"
+      [1] "IndividualId"              "Species"                  
+      [3] "Population"                "Gender"                   
+      [5] "Weight [kg]"               "Height [cm]"              
+      [7] "Age [year(s)]"             "Protein Ontogenies"       
+      [9] "Individual Parameter Sets"
       
       $Individuals$IndividualBiometrics$rows
       $Individuals$IndividualBiometrics$rows[[1]]
@@ -271,6 +273,9 @@
       
       $Individuals$IndividualBiometrics$rows[[1]]$`Protein Ontogenies`
       [1] "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+      
+      $Individuals$IndividualBiometrics$rows[[1]]$`Individual Parameter Sets`
+      [1] "Indiv1"
       
       
       
@@ -1972,15 +1977,17 @@
       $Individuals
       $Individuals$IndividualBiometrics
       $Individuals$IndividualBiometrics$column_names
-      [1] "IndividualId"       "Species"            "Population"        
-      [4] "Gender"             "Weight [kg]"        "Height [cm]"       
-      [7] "Age [year(s)]"      "Protein Ontogenies"
+      [1] "IndividualId"              "Species"                  
+      [3] "Population"                "Gender"                   
+      [5] "Weight [kg]"               "Height [cm]"              
+      [7] "Age [year(s)]"             "Protein Ontogenies"       
+      [9] "Individual Parameter Sets"
       
       $Individuals$IndividualBiometrics$rows
         IndividualId Species         Population Gender Weight [kg] Height [cm]
       1       Indiv1   Human European_ICRP_2002   MALE          73         176
-        Age [year(s)]          Protein Ontogenies
-      1            30 CYP3A4:CYP3A4,CYP2D6:CYP2C8
+        Age [year(s)]          Protein Ontogenies Individual Parameter Sets
+      1            30 CYP3A4:CYP3A4,CYP2D6:CYP2C8                    Indiv1
       
       
       $Individuals$Indiv1

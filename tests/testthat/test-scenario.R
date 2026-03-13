@@ -183,14 +183,88 @@ test_that("Warning is shown when individual characteristics are not found", {
   scenarioConfigurations$TestScenario$individualId <- "NonExistentIndividual"
 
   expect_warning(
-    expect_warning(
-      Scenario$new(
-        scenarioConfigurations$TestScenario,
-        stopIfParameterNotFound = FALSE
-      ),
-      regexp = messages$warningNoIndividualSpecificModelParameters("TestScenario", "NonExistentIndividual")
+    Scenario$new(
+      scenarioConfigurations$TestScenario,
+      stopIfParameterNotFound = FALSE
     ),
-    regexp = messages$warningNoIndividualCharacteristics("TestScenario", "NonExistentIndividual")
+    regexp = messages$warningNoIndividualCharacteristics(
+      "TestScenario",
+      "NonExistentIndividual"
+    )
+  )
+})
+
+test_that("Individual parameter sets from 'Individual Parameter Sets' column are applied", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  scenarioNames <- c("TestScenario")
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+
+  # TestScenario uses Indiv1, whose "Individual Parameter Sets" column points to
+  # the "Indiv1" sheet (GFR = 90 ml/min). Verify this parameter is applied.
+  scenario <- Scenario$new(
+    scenarioConfigurations$TestScenario,
+    stopIfParameterNotFound = FALSE
+  )
+
+  gfrPath <- "Organism|Kidney|GFR"
+  idx <- which(scenario$finalCustomParams$paths == gfrPath)
+  expect_true(length(idx) > 0)
+  expect_equal(scenario$finalCustomParams$values[[idx]], 90)
+  expect_equal(scenario$finalCustomParams$units[[idx]], "ml/min")
+})
+
+test_that("Warning is shown when an individual parameter set sheet is not found", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  individualsFile <- projectConfiguration$individualsFile
+
+  # Add a new individual row with a non-existent parameter set sheet name
+  existingData <- readxl::read_xlsx(
+    individualsFile,
+    sheet = "IndividualBiometrics"
+  )
+  new_row <- data.frame(
+    IndividualId = "TestIndiv_bad_set",
+    Species = "Human",
+    Population = "European_ICRP_2002",
+    Gender = "MALE",
+    `Weight [kg]` = 70,
+    `Height [cm]` = 170,
+    `Age [year(s)]` = 30,
+    `Protein Ontogenies` = NA_character_,
+    `Individual Parameter Sets` = "NonExistentSheet",
+    check.names = FALSE
+  )
+  combined <- rbind(existingData, new_row)
+
+  wb <- openxlsx::loadWorkbook(individualsFile)
+  openxlsx::removeWorksheet(wb, "IndividualBiometrics")
+  openxlsx::addWorksheet(wb, "IndividualBiometrics")
+  openxlsx::writeData(wb, "IndividualBiometrics", combined)
+  openxlsx::saveWorkbook(wb, individualsFile, overwrite = TRUE)
+
+  scenarioNames <- c("TestScenario")
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+  scenarioConfigurations$TestScenario$individualId <- "TestIndiv_bad_set"
+
+  expect_error(
+    Scenario$new(
+      scenarioConfigurations$TestScenario,
+      stopIfParameterNotFound = FALSE
+    ),
+    regexp = messages$errorIndividualParameterSetNotFound(
+      "TestScenario",
+      "NonExistentSheet"
+    )
   )
 })
 
