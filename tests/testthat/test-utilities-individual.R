@@ -49,29 +49,36 @@ test_that("It create IndividualCharacteristics when numerical values are empty",
   expect_equal(individualCharacteristics$gender, "MALE")
 })
 
-test_that("`readIndividualParameterSetsFromXLS()` returns NULL if individual is not found", {
-  expect_null(readIndividualParameterSetsFromXLS(
+test_that("`.readIndividualParameterSetsFromXLS()` returns NULL if individual is not found", {
+  expect_null(esqlabsR:::.readIndividualParameterSetsFromXLS(
     XLSpath = XLSpath,
-    individualId = "notPresent"
+    individualId = "notPresent",
+    scenarioName = "TestScenario"
   ))
 })
 
-test_that("`readIndividualParameterSetsFromXLS()` returns species and NULL parameter sets when 'Individual Parameter Sets' column is empty", {
-  result <- readIndividualParameterSetsFromXLS(
+test_that("`.readIndividualParameterSetsFromXLS()` returns empty params when 'Individual Parameter Sets' is empty", {
+  result <- esqlabsR:::.readIndividualParameterSetsFromXLS(
     XLSpath = XLSpath,
-    individualId = "Vicini_1999"
+    individualId = "Vicini_1999",
+    scenarioName = "TestScenario"
   )
-  expect_equal(result$species, "Human")
-  expect_null(result$individualParameterSets)
+  expect_length(result$paths, 0)
+  expect_length(result$values, 0)
+  expect_length(result$units, 0)
 })
 
-test_that("`readIndividualParameterSetsFromXLS()` returns correct parameter sets when 'Individual Parameter Sets' column is defined", {
-  result <- readIndividualParameterSetsFromXLS(
-    XLSpath = XLSpath,
-    individualId = "Individual_with_param_sets"
+test_that("`.readIndividualParameterSetsFromXLS()` returns combined params and warns for missing sheets", {
+  expect_warning(
+    result <- esqlabsR:::.readIndividualParameterSetsFromXLS(
+      XLSpath = XLSpath,
+      individualId = "Individual_with_param_sets",
+      scenarioName = "TestScenario"
+    ),
+    regexp = messages$warningIndividualParameterSetNotFound("TestScenario", "ParamSet2")
   )
-  expect_equal(result$species, "Human")
-  expect_equal(result$individualParameterSets, c("ParamSet1", "ParamSet2"))
+  # ParamSet1 exists in the test XLS, so it should contribute params
+  expect_gt(length(result$paths), 0)
 })
 
 

@@ -1,5 +1,16 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+- Individual parameter sets in `Individuals.xlsx` must now be specified
+  explicitly via the new required column `Individual Parameter Sets` in the
+  `IndividualBiometrics` sheet. The column must contain a comma-separated list
+  of sheet names (in the same file) whose parameters will be applied to the
+  simulation in order. Previously, a sheet named after the `IndividualId` was
+  applied automatically; this fallback is removed. Existing `Individuals.xlsx`
+  files must be updated to add the `Individual Parameter Sets` column and
+  populate it with the relevant sheet names. (#970)
+
 ## Minor improvements and bug fixes
 - Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
 
