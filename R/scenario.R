@@ -107,22 +107,71 @@ Scenario <- R6::R6Class(
           path = scenarioConfiguration$projectConfiguration$individualsFile
         )
 
-        if (any(excelSheets == scenarioConfiguration$individualId)) {
-          indivModelParams <- readParametersFromXLS(
-            scenarioConfiguration$projectConfiguration$individualsFile,
-            sheets = scenarioConfiguration$individualId
-          )
+        # Read species and individual parameter sets from IndividualBiometrics
+        individualInfo <- readIndividualParameterSetsFromXLS(
+          XLSpath = scenarioConfiguration$projectConfiguration$individualsFile,
+          individualId = scenarioConfiguration$individualId
+        )
 
-          # Add individual model parameters to the parameters structure
+        # Apply species-specific parameters first (lower priority)
+        if (
+          !is.null(individualInfo) &&
+            !is.null(individualInfo$species) &&
+            !is.na(individualInfo$species) &&
+            any(excelSheets == individualInfo$species)
+        ) {
+          speciesParams <- readParametersFromXLS(
+            scenarioConfiguration$projectConfiguration$individualsFile,
+            sheets = individualInfo$species
+          )
           params <- extendParameterStructure(
             parameters = params,
-            newParameters = indivModelParams
+            newParameters = speciesParams
           )
+        }
+
+        # Apply individual parameter sets (higher priority, override species)
+        if (
+          !is.null(individualInfo) &&
+            !is.null(individualInfo$individualParameterSets)
+        ) {
+          # New behavior: apply sheets listed in "Individual Parameter Sets" column
+          for (paramSet in individualInfo$individualParameterSets) {
+            if (any(excelSheets == paramSet)) {
+              setParams <- readParametersFromXLS(
+                scenarioConfiguration$projectConfiguration$individualsFile,
+                sheets = paramSet
+              )
+              params <- extendParameterStructure(
+                parameters = params,
+                newParameters = setParams
+              )
+            } else {
+              warning(messages$warningIndividualParameterSetNotFound(
+                scenarioName = scenarioConfiguration$scenarioName,
+                parameterSetName = paramSet
+              ))
+            }
+          }
         } else {
-          warning(messages$warningNoIndividualSpecificModelParameters(
-            scenarioName = scenarioConfiguration$scenarioName,
-            individualId = scenarioConfiguration$individualId
-          ))
+          # Backward compatibility: look for a sheet named after individualId
+          if (any(excelSheets == scenarioConfiguration$individualId)) {
+            indivModelParams <- readParametersFromXLS(
+              scenarioConfiguration$projectConfiguration$individualsFile,
+              sheets = scenarioConfiguration$individualId
+            )
+
+            # Add individual model parameters to the parameters structure
+            params <- extendParameterStructure(
+              parameters = params,
+              newParameters = indivModelParams
+            )
+          } else {
+            warning(messages$warningNoIndividualSpecificModelParameters(
+              scenarioName = scenarioConfiguration$scenarioName,
+              individualId = scenarioConfiguration$individualId
+            ))
+          }
         }
       }
 

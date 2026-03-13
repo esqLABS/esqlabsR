@@ -136,6 +136,54 @@ readIndividualCharacteristicsFromXLS <- function(
   return(individualCharacteristics)
 }
 
+#' Read individual parameter sets information from file
+#'
+#' @details Read the species and individual parameter sets for a given
+#'   individual from the `IndividualBiometrics` sheet of an Excel file.
+#'   The `Individual Parameter Sets` column is optional and, if present, must
+#'   contain a comma-separated list of sheet names in the same file.
+#'
+#' @param XLSpath Full path to the excel file
+#' @param individualId (String) Id of the individual as stored in the
+#'   `IndividualId` column.
+#' @param sheet Name of the sheet containing individual biometrics. Defaults to
+#'   `"IndividualBiometrics"`.
+#'
+#' @returns A list with elements `species` (character string) and
+#'   `individualParameterSets` (character vector of sheet names, or `NULL` if
+#'   the column is absent or empty). Returns `NULL` if `individualId` is not
+#'   found.
+#' @export
+readIndividualParameterSetsFromXLS <- function(
+  XLSpath, # nolint: object_length_linter.
+  individualId,
+  sheet = "IndividualBiometrics"
+) {
+  validateIsString(c(XLSpath, individualId))
+
+  data <- readExcel(path = XLSpath, sheet = sheet)
+
+  rowIdx <- which(data$IndividualId == individualId)
+  if (length(rowIdx) == 0) {
+    return(NULL)
+  }
+
+  species <- data$Species[[rowIdx]]
+
+  # "Individual Parameter Sets" column is optional
+  individualParameterSets <- NULL
+  if ("Individual Parameter Sets" %in% names(data)) {
+    paramSetsStr <- data[["Individual Parameter Sets"]][[rowIdx]]
+    if (!is.na(paramSetsStr) && nchar(trimws(as.character(paramSetsStr))) > 0) {
+      individualParameterSets <- trimws(
+        strsplit(as.character(paramSetsStr), ",", fixed = TRUE)[[1]]
+      )
+    }
+  }
+
+  return(list(species = species, individualParameterSets = individualParameterSets))
+}
+
 #' Apply an individual to the simulation. For human species, only parameters
 #' that do not override formulas are applied. For other species, all parameters
 #' returned by `createIndividual` are applied.

@@ -49,6 +49,33 @@ test_that("It create IndividualCharacteristics when numerical values are empty",
   expect_equal(individualCharacteristics$gender, "MALE")
 })
 
+test_that("`readIndividualParameterSetsFromXLS()` returns NULL if individual is not found", {
+  expect_null(readIndividualParameterSetsFromXLS(
+    XLSpath = XLSpath,
+    individualId = "notPresent"
+  ))
+})
+
+test_that("`readIndividualParameterSetsFromXLS()` returns species and NULL parameter sets
+          when 'Individual Parameter Sets' column is empty", {
+  result <- readIndividualParameterSetsFromXLS(
+    XLSpath = XLSpath,
+    individualId = "Vicini_1999"
+  )
+  expect_equal(result$species, "Human")
+  expect_null(result$individualParameterSets)
+})
+
+test_that("`readIndividualParameterSetsFromXLS()` returns correct parameter sets
+          when 'Individual Parameter Sets' column is defined", {
+  result <- readIndividualParameterSetsFromXLS(
+    XLSpath = XLSpath,
+    individualId = "Individual_with_param_sets"
+  )
+  expect_equal(result$species, "Human")
+  expect_equal(result$individualParameterSets, c("ParamSet1", "ParamSet2"))
+})
+
 
 test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
   withr::with_tempdir(
