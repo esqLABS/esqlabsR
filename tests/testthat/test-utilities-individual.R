@@ -75,7 +75,10 @@ test_that("`.readIndividualParameterSetsFromXLS()` returns combined params and w
       individualId = "Individual_with_param_sets",
       scenarioName = "TestScenario"
     ),
-    regexp = messages$warningIndividualParameterSetNotFound("TestScenario", "ParamSet2")
+    regexp = messages$warningIndividualParameterSetNotFound(
+      "TestScenario",
+      "ParamSet2"
+    )
   )
   # ParamSet1 exists in the test XLS, so it should contribute params
   expect_gt(length(result$paths), 0)

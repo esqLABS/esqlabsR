@@ -153,6 +153,7 @@ readIndividualCharacteristicsFromXLS <- function(
 #'   combined parameters from all listed individual parameter set sheets.
 #'   Returns `NULL` if `individualId` is not found in the biometrics sheet.
 #' @keywords internal
+#' @noRd
 .readIndividualParameterSetsFromXLS <- function(
   XLSpath, # nolint: object_length_linter.
   individualId,
@@ -172,14 +173,22 @@ readIndividualCharacteristicsFromXLS <- function(
   paramSetsStr <- data[["Individual Parameter Sets"]][[rowIdx]]
 
   # Initialize empty params structure
-  params <- list(paths = character(0), values = numeric(0), units = character(0))
+  params <- list(
+    paths = character(0),
+    values = numeric(0),
+    units = character(0)
+  )
 
   # If empty or NA, return empty params structure
   if (is.na(paramSetsStr) || !nzchar(trimws(as.character(paramSetsStr)))) {
     return(params)
   }
 
-  parameterSets <- trimws(strsplit(as.character(paramSetsStr), ",", fixed = TRUE)[[1]])
+  parameterSets <- trimws(strsplit(
+    as.character(paramSetsStr),
+    ",",
+    fixed = TRUE
+  )[[1]])
   excelSheets <- readxl::excel_sheets(path = XLSpath)
 
   for (paramSet in parameterSets) {

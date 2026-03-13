@@ -187,7 +187,10 @@ test_that("Warning is shown when individual characteristics are not found", {
       scenarioConfigurations$TestScenario,
       stopIfParameterNotFound = FALSE
     ),
-    regexp = messages$warningNoIndividualCharacteristics("TestScenario", "NonExistentIndividual")
+    regexp = messages$warningNoIndividualCharacteristics(
+      "TestScenario",
+      "NonExistentIndividual"
+    )
   )
 })
 
@@ -222,7 +225,10 @@ test_that("Warning is shown when an individual parameter set sheet is not found"
   individualsFile <- projectConfiguration$individualsFile
 
   # Add a new individual row with a non-existent parameter set sheet name
-  existingData <- readxl::read_xlsx(individualsFile, sheet = "IndividualBiometrics")
+  existingData <- readxl::read_xlsx(
+    individualsFile,
+    sheet = "IndividualBiometrics"
+  )
   new_row <- data.frame(
     IndividualId = "TestIndiv_bad_set",
     Species = "Human",
@@ -255,7 +261,10 @@ test_that("Warning is shown when an individual parameter set sheet is not found"
       scenarioConfigurations$TestScenario,
       stopIfParameterNotFound = FALSE
     ),
-    regexp = messages$warningIndividualParameterSetNotFound("TestScenario", "NonExistentSheet")
+    regexp = messages$warningIndividualParameterSetNotFound(
+      "TestScenario",
+      "NonExistentSheet"
+    )
   )
 })
 
