@@ -286,7 +286,7 @@ ProjectConfiguration <- R6::R6Class(
       # Check esqlabsR version
       storedVersion <- data$esqlabsRVersion$value
       currentVersion <- as.character(utils::packageVersion("esqlabsR"))
-      if (is.null(storedVersion) || all(is.na(storedVersion))) {
+      if (is.null(storedVersion) || is.na(storedVersion)) {
         warning(messages$versionNotStored(currentVersion))
       } else if (!identical(as.character(storedVersion), currentVersion)) {
         warning(messages$versionMismatch(as.character(storedVersion), currentVersion))
