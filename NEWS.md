@@ -2,6 +2,7 @@
 
 ## Minor improvements and bug fixes
 - Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
+- `createDataCombinedFromExcel()` now throws an error listing all DataCombined IDs that cannot be found in the Excel file (\#740).
 
 # esqlabsR 5.5.2
 

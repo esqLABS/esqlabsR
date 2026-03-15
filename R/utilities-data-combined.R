@@ -63,6 +63,11 @@ createDataCombinedFromExcel <- function(
     DataCombinedName %in% dataCombinedNames
   )
 
+  missingNames <- setdiff(dataCombinedNames, dfDataCombined$DataCombinedName)
+  if (length(missingNames) > 0) {
+    stop(messages$stopDataCombinedNamesNotFound(missingNames))
+  }
+
   dfDataCombined <- .validateDataCombinedFromExcel(
     dfDataCombined,
     simulatedScenarios,
