@@ -180,3 +180,16 @@ test_that("It warns when dataSet is not found in observedData", {
     regexp = "The following data sets are not present in `observedData`"
   )
 })
+
+test_that("createDataCombinedFromExcel errors when specified DataCombined names are not in the Excel file", {
+  expect_error(
+    createDataCombinedFromExcel(
+      projectConfiguration = projectConfiguration,
+      dataCombinedNames = c("AciclovirPVB", "NonExistentDC1", "NonExistentDC2"),
+      simulatedScenarios = simulatedScenarios,
+      observedData = observedData
+    ),
+    regexp = messages$stopDataCombinedNamesNotFound(c("NonExistentDC1", "NonExistentDC2")),
+    fixed = TRUE
+  )
+})

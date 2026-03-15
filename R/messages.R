@@ -419,6 +419,13 @@ messages$stopInvalidDataCombinedName <- function(dataCombinedNames) {
   )
 }
 
+messages$stopDataCombinedNamesNotFound <- function(dataCombinedNames) {
+  cliFormat(
+    "The following DataCombined names are not defined in the Excel file:
+    {.val {paste(dataCombinedNames, collapse = ', ')}}"
+  )
+}
+
 messages$stopNoPathProvided <- function(dataCombinedName) {
   cliFormat(
     "No output path is defined for the DataCombined {.val {paste(dataCombinedName, collapse = \", \")}}
