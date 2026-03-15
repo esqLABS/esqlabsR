@@ -658,7 +658,7 @@ createPlotsFromExcel <- function(
     if (!is.null(scaleValue) && scaleValue == "log") {
       for (limitsField in check$limits) {
         limitsValue <- plotConfiguration[[limitsField]]
-        if (!is.null(limitsValue) && any(limitsValue == 0)) {
+        if (!is.null(limitsValue) && 0 %in% limitsValue) {
           warning(messages$warningLogScaleWithZeroLimit(
             plotID = plotID,
             axisLimitsField = limitsField,

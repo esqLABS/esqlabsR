@@ -375,7 +375,7 @@ messages$warningLogScaleWithZeroLimit <- function(
   axis
 ) {
   cliFormat(
-    "Column {.field {axisLimitsField}} in plot {.val {plotID}} contains zero, but the {axis}-axis scale is set to {.val log}.
+    "Column {.field {axisLimitsField}} in plot {.val {plotID}} contains zero, but the {.val {axis}}-axis scale is set to {.val log}.
     Logarithmic scale cannot display zero values. This may result in empty or unexpected plots."
   )
 }
