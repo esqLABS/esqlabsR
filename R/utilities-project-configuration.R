@@ -26,14 +26,20 @@ createDefaultProjectConfiguration <- function(
 #'
 #' @param path path to the `ProjectConfiguration.xlsx` file. default to the
 #'   `ProjectConfiguration.xlsx` file located in the working directory.
+#' @param ignoreVersionCheck If `TRUE`, skip the version mismatch check when
+#'   loading the configuration file. Use this in non-interactive contexts such
+#'   as automated tests or scripts running from console where interactive user
+#'   input cannot be assured. Defaults to `FALSE`.
 #'
 #' @returns Object of type `ProjectConfiguration`
 #' @export
 createProjectConfiguration <- function(
-  path = file.path("ProjectConfiguration.xlsx")
+  path = file.path("ProjectConfiguration.xlsx"),
+  ignoreVersionCheck = FALSE
 ) {
   projectConfiguration <- ProjectConfiguration$new(
-    projectConfigurationFilePath = path
+    projectConfigurationFilePath = path,
+    ignoreVersionCheck = ignoreVersionCheck
   )
   return(projectConfiguration)
 }

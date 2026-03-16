@@ -84,7 +84,7 @@ test_that("Project Configuration can be exported", {
 
   # Load the file and compare
   expect_true(file.exists(temp_file1))
-  imported_pc <- createProjectConfiguration(path = temp_file1)
+  imported_pc <- createProjectConfiguration(path = temp_file1, ignoreVersionCheck = TRUE)
 
   imported_pc$projectConfigurationFilePath <- testProjectConfigurationPath()
 
@@ -107,7 +107,7 @@ test_that("esqlabsRVersion is read-only", {
 test_that("esqlabsRVersion is written to Excel when saving", {
   temp_file <- withr::local_tempfile(fileext = ".xlsx")
   testProjectConfiguration()$save(path = temp_file)
-  saved_pc <- createProjectConfiguration(path = temp_file)
+  saved_pc <- createProjectConfiguration(path = temp_file, ignoreVersionCheck = TRUE)
   expect_equal(
     saved_pc$esqlabsRVersion,
     as.character(utils::packageVersion("esqlabsR"))
@@ -153,11 +153,14 @@ test_that("Project Configuration supports environment variable", {
     code = {
       # Using Env Variable in Excel files
       pc <-
-        createProjectConfiguration(test_path(
-          "..",
-          "data",
-          "ProjectConfigurationEnvironmentVariable.xlsx"
-        ))
+        createProjectConfiguration(
+          test_path(
+            "..",
+            "data",
+            "ProjectConfigurationEnvironmentVariable.xlsx"
+          ),
+          ignoreVersionCheck = TRUE
+        )
 
       suppressWarnings(expect_match(
         pc$configurationsFolder,

@@ -228,6 +228,7 @@ ProjectConfiguration <- R6::R6Class(
     .projectConfigurationDirPath = NULL,
     .modified = FALSE,
     .warned_paths = character(),
+    .ignoreVersionCheck = FALSE,
     .checkProjectConfigurationFile = function() {
       data <- private$.projectConfigurationData
 
@@ -284,48 +285,52 @@ ProjectConfiguration <- R6::R6Class(
       }
 
       # Check esqlabsR version
-      storedVersion <- data$esqlabsRVersion$value
-      currentVersion <- as.character(utils::packageVersion("esqlabsR"))
-      versionIssue <- if (is.null(storedVersion) || is.na(storedVersion)) {
-        "notStored"
-      } else if (!identical(as.character(storedVersion), currentVersion)) {
-        "mismatch"
-      } else {
-        NULL
-      }
-
-      shouldSave <- FALSE
-      if (!is.null(versionIssue)) {
-        if (versionIssue == "notStored") {
-          message(messages$versionNotStored(currentVersion))
+      if (!private$.ignoreVersionCheck) {
+        storedVersion <- data$esqlabsRVersion$value
+        currentVersion <- as.character(utils::packageVersion("esqlabsR"))
+        versionIssue <- if (is.null(storedVersion) || is.na(storedVersion)) {
+          "notStored"
+        } else if (!identical(as.character(storedVersion), currentVersion)) {
+          "mismatch"
         } else {
-          message(messages$versionMismatch(as.character(storedVersion), currentVersion))
+          NULL
         }
 
-        if (interactive()) {
-          qs <- sample(c("Absolutely not", "Yes", "No way"))
-          out <- utils::menu(
-            title = "Do you want to update the version in the project configuration and continue?",
-            choices = qs
-          )
-          if (out == 0L || qs[[out]] != "Yes") {
+        shouldSave <- FALSE
+        if (!is.null(versionIssue)) {
+          if (versionIssue == "notStored") {
+            message(messages$versionNotStored(currentVersion))
+          } else {
+            message(messages$versionMismatch(as.character(storedVersion), currentVersion))
+          }
+
+          if (interactive()) {
+            qs <- sample(c("Absolutely not", "Yes", "No way"))
+            out <- utils::menu(
+              title = "Do you want to update the version in the project configuration and continue?",
+              choices = qs
+            )
+            if (out == 0L || qs[[out]] != "Yes") {
+              stop(messages$abortedByUser())
+            }
+          } else {
             stop(messages$abortedByUser())
           }
-        } else {
-          stop(messages$abortedByUser())
+
+          # User confirmed: update version in data before saving
+          data$esqlabsRVersion <- list(
+            value = currentVersion,
+            description = "Version of the esqlabsR package used to create this configuration"
+          )
+          shouldSave <- TRUE
         }
 
-        # User confirmed: update version in data before saving
-        data$esqlabsRVersion <- list(
-          value = currentVersion,
-          description = "Version of the esqlabsR package used to create this configuration"
-        )
-        shouldSave <- TRUE
-      }
-
-      private$.projectConfigurationData <- data
-      if (shouldSave) {
-        self$save(private$.projectConfigurationFilePath)
+        private$.projectConfigurationData <- data
+        if (shouldSave) {
+          self$save(private$.projectConfigurationFilePath)
+        }
+      } else {
+        private$.projectConfigurationData <- data
       }
     },
     .read_config = function(file_path) {
@@ -420,9 +425,15 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @param projectConfigurationFilePath A string representing the path to the
     #'   project configuration file.
-    initialize = function(projectConfigurationFilePath = character()) {
+    #' @param ignoreVersionCheck If `TRUE`, skip the version mismatch check when
+    #'   loading the configuration file. Defaults to `FALSE`.
+    initialize = function(
+      projectConfigurationFilePath = character(),
+      ignoreVersionCheck = FALSE
+    ) {
       # Initialize as not modified
       private$.modified <- FALSE
+      private$.ignoreVersionCheck <- isTRUE(ignoreVersionCheck)
 
       if (!missing(projectConfigurationFilePath)) {
         self$projectConfigurationFilePath <- projectConfigurationFilePath
