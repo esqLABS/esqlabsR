@@ -444,6 +444,10 @@ restoreProjectConfiguration <- function(
 #'   ProjectConfiguration file but with .json extension.
 #' @param silent Logical indicating whether to suppress informational messages.
 #'   Defaults to FALSE.
+#' @param ignoreVersionCheck Logical. If `TRUE`, the version check between the
+#'   stored `esqlabsR` version in the configuration and the currently installed
+#'   version is skipped. Defaults to `TRUE` because this function focuses on
+#'   file synchronization status, not version compatibility.
 #'
 #' @family project configuration snapshots
 #' @return A list with components: \item{in_sync}{Logical indicating whether all
@@ -456,13 +460,14 @@ restoreProjectConfiguration <- function(
 projectConfigurationStatus <- function(
   projectConfig = "ProjectConfiguration.xlsx",
   jsonPath = NULL,
-  silent = FALSE
+  silent = FALSE,
+  ignoreVersionCheck = TRUE
 ) {
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
     projectConfig <- createProjectConfiguration(
       projectConfig,
-      ignoreVersionCheck = TRUE
+      ignoreVersionCheck = ignoreVersionCheck
     )
   }
 
