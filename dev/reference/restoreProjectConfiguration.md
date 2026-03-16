@@ -9,7 +9,8 @@ JSON.
 ``` r
 restoreProjectConfiguration(
   jsonPath = "ProjectConfiguration.json",
-  outputDir = NULL
+  outputDir = NULL,
+  silent = FALSE
 )
 ```
 
@@ -25,6 +26,11 @@ restoreProjectConfiguration(
   Directory where the Excel files will be created. If NULL (default),
   the Excel files will be created in the same directory as the source
   JSON file.
+
+- silent:
+
+  Logical. If `TRUE`, suppresses informational messages. Defaults to
+  `FALSE`.
 
 ## Value
 
