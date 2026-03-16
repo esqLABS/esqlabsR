@@ -260,7 +260,7 @@
       $modelInitialValues$Global$rows
       $modelInitialValues$Global$rows[[1]]
       $modelInitialValues$Global$rows[[1]]$`Container Path`
-      [1] "Organism|PeripheralVenousBlood|Plasma"
+      [1] "Organism|Liver|Periportal|Intracellular"
       
       $modelInitialValues$Global$rows[[1]]$`Molecule Name`
       [1] "Aciclovir"
@@ -269,7 +269,7 @@
       [1] "TRUE"
       
       $modelInitialValues$Global$rows[[1]]$Value
-      [1] "0"
+      [1] "0.5"
       
       $modelInitialValues$Global$rows[[1]]$Units
       [1] "µmol"
@@ -498,7 +498,7 @@
       [1] "Global"
       
       $Scenarios$Scenarios$rows[[1]]$InitialValuesSet
-      [1] NA
+      [1] "Global"
       
       $Scenarios$Scenarios$rows[[1]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
@@ -2039,8 +2039,8 @@
       [7] "Neg. Values Allowed"
       
       $modelInitialValues$Global$rows
-                               Container Path Molecule Name Is Present Value Units
-      1 Organism|PeripheralVenousBlood|Plasma     Aciclovir       TRUE     0  µmol
+                                 Container Path Molecule Name Is Present Value Units
+      1 Organism|Liver|Periportal|Intracellular     Aciclovir       TRUE   0.5  µmol
         Scale Divisor Neg. Values Allowed
       1             1               FALSE
       
@@ -2119,11 +2119,11 @@
       4 PopulationScenarioFromCSV       Indiv1 TestPopulation                  TRUE
       5 TestScenario_missingParam       Indiv1           <NA>                  <NA>
                               ModelParameterSheets InitialValuesSet
-      1                                     Global               NA
-      2 "Global", "Aciclovir", "Sheet, with comma"               NA
-      3                                     Global               NA
-      4                                     Global               NA
-      5                       Global, MissingParam               NA
+      1                                     Global           Global
+      2 "Global", "Aciclovir", "Sheet, with comma"             <NA>
+      3                                     Global             <NA>
+      4                                     Global             <NA>
+      5                       Global, MissingParam             <NA>
         ApplicationProtocol      SimulationTime SimulationTimeUnit SteadyState
       1  Aciclovir_iv_250mg           0, 24, 60                  h        <NA>
       2  Aciclovir_iv_250mg 0, 1, 60; 1, 12, 20                  h        TRUE
@@ -2584,13 +2584,13 @@
       status_result$details
     Output
       $file_status
-      $file_status$modelInitialValues
-      [1] "out-of-sync"
-      
       $file_status$projectConfiguration
-      [1] "out-of-sync"
+      [1] "in-sync"
       
       $file_status$modelParameterSets
+      [1] "in-sync"
+      
+      $file_status$modelInitialValues
       [1] "in-sync"
       
       $file_status$Individuals
@@ -2600,7 +2600,7 @@
       [1] "in-sync"
       
       $file_status$Scenarios
-      [1] "out-of-sync"
+      [1] "in-sync"
       
       $file_status$Applications
       [1] "in-sync"
@@ -2610,9 +2610,7 @@
       
       
       $file_changes
-      $file_changes$modelInitialValues
-      [1] "New Excel file not present in snapshot"
-      
+      NULL
       
       $sheet_changes
       $sheet_changes$Plots
@@ -2622,12 +2620,7 @@
       
       
       $data_changes
-      $data_changes$projectConfiguration
-      [1] "rows"
-      
-      $data_changes$Scenarios
-      [1] "Scenarios"
-      
+      NULL
       
 
 # projectConfigurationStatus() detects data-level changes in Excel sheets
@@ -2636,13 +2629,13 @@
       status_result$details
     Output
       $file_status
-      $file_status$modelInitialValues
-      [1] "out-of-sync"
-      
       $file_status$projectConfiguration
-      [1] "out-of-sync"
+      [1] "in-sync"
       
       $file_status$modelParameterSets
+      [1] "in-sync"
+      
+      $file_status$modelInitialValues
       [1] "in-sync"
       
       $file_status$Individuals
@@ -2662,17 +2655,12 @@
       
       
       $file_changes
-      $file_changes$modelInitialValues
-      [1] "New Excel file not present in snapshot"
-      
+      NULL
       
       $sheet_changes
       NULL
       
       $data_changes
-      $data_changes$projectConfiguration
-      [1] "rows"
-      
       $data_changes$Scenarios
       [1] "Scenarios"
       
@@ -2684,13 +2672,13 @@
       status_result$details
     Output
       $file_status
-      $file_status$modelInitialValues
-      [1] "out-of-sync"
-      
       $file_status$projectConfiguration
-      [1] "out-of-sync"
+      [1] "in-sync"
       
       $file_status$modelParameterSets
+      [1] "in-sync"
+      
+      $file_status$modelInitialValues
       [1] "in-sync"
       
       $file_status$Individuals
@@ -2710,9 +2698,7 @@
       
       
       $file_changes
-      $file_changes$modelInitialValues
-      [1] "New Excel file not present in snapshot"
-      
+      NULL
       
       $sheet_changes
       $sheet_changes$Plots
@@ -2722,9 +2708,6 @@
       
       
       $data_changes
-      $data_changes$projectConfiguration
-      [1] "rows"
-      
       $data_changes$Scenarios
       [1] "Scenarios"
       
