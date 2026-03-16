@@ -1686,3 +1686,129 @@ test_that("It provides clear error for wrong number of axis limit values (#848)"
     }
   )
 })
+
+test_that("It shows a warning when xAxisScale is log and xAxisLimits contain 0", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotConfigurationDfLocal$xAxisScale <- "log"
+      plotConfigurationDfLocal$xAxisLimits <- "0, 100"
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- exportConfigurationDf
+      .writeExcel(
+        data = list(
+          "DataCombined" = dataCombinedDfLocal,
+          "plotConfiguration" = plotConfigurationDfLocal,
+          "plotGrids" = plotGridsDfLocal,
+          "exportConfiguration" = exportConfigurationDfLocal
+        ),
+        path = file.path(tempDir, "Plots.xlsx"),
+      )
+
+      expect_warning(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        ),
+        regexp = messages$warningLogScaleWithZeroLimit(
+          plotID = "P1",
+          axisLimitsField = "xAxisLimits",
+          axis = "x"
+        ),
+        fixed = TRUE
+      )
+    }
+  )
+})
+
+test_that("It shows a warning when yAxisScale is log and yAxisLimits contain 0", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotConfigurationDfLocal$yAxisScale <- "log"
+      plotConfigurationDfLocal$yAxisLimits <- "0, 100"
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- exportConfigurationDf
+      .writeExcel(
+        data = list(
+          "DataCombined" = dataCombinedDfLocal,
+          "plotConfiguration" = plotConfigurationDfLocal,
+          "plotGrids" = plotGridsDfLocal,
+          "exportConfiguration" = exportConfigurationDfLocal
+        ),
+        path = file.path(tempDir, "Plots.xlsx"),
+      )
+
+      expect_warning(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        ),
+        regexp = messages$warningLogScaleWithZeroLimit(
+          plotID = "P1",
+          axisLimitsField = "yAxisLimits",
+          axis = "y"
+        ),
+        fixed = TRUE
+      )
+    }
+  )
+})
+
+test_that("It shows a warning when yAxisScale is log and yValuesLimits contain 0", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Plots.xlsx",
+    tmpdir = tempDir,
+    code = {
+      dataCombinedDfLocal <- dataCombinedDf
+      plotConfigurationDfLocal <- plotConfigurationDf
+      plotConfigurationDfLocal$yAxisScale <- "log"
+      plotConfigurationDfLocal$yValuesLimits <- "0, 100"
+      plotGridsDfLocal <- plotGridsDf
+      exportConfigurationDfLocal <- exportConfigurationDf
+      .writeExcel(
+        data = list(
+          "DataCombined" = dataCombinedDfLocal,
+          "plotConfiguration" = plotConfigurationDfLocal,
+          "plotGrids" = plotGridsDfLocal,
+          "exportConfiguration" = exportConfigurationDfLocal
+        ),
+        path = file.path(tempDir, "Plots.xlsx"),
+      )
+
+      expect_warning(
+        createPlotsFromExcel(
+          simulatedScenarios = simulatedScenarios,
+          observedData = observedData,
+          projectConfiguration = projectConfigurationLocal,
+          stopIfNotFound = TRUE
+        ),
+        regexp = messages$warningLogScaleWithZeroLimit(
+          plotID = "P1",
+          axisLimitsField = "yValuesLimits",
+          axis = "y"
+        ),
+        fixed = TRUE
+      )
+    }
+  )
+})
