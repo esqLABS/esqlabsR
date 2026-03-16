@@ -1,5 +1,10 @@
 # esqlabsR (development version)
 
+## New features
+
+- `ProjectConfiguration` now stores the `esqlabsR` package version it was last saved with. When loading a configuration, the stored version is compared against the currently installed version. On mismatch or missing version, the user is interactively prompted to update the version in the configuration file and continue, or to stop. The user should always consult the [package NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) for breaking changes before confirming the update.
+- Added `ignoreVersionCheck` parameter to `createProjectConfiguration()` and `createDefaultProjectConfiguration()`. When `TRUE`, the version check is skipped. This is intended for non-interactive contexts such as automated tests or scripts run from the console where user input cannot be assured. When using this option, it is the responsibility of the user to ensure that the project is compatible with the currently installed version of `esqlabsR`.
+
 ## Minor improvements and bug fixes
 - Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
 - Added a warning when axis limits contain zero while the corresponding axis scale is set to `log` in `Plots.xlsx`. Previously, this combination silently produced empty plots (\#967).
