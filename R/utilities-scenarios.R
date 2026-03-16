@@ -33,18 +33,18 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     }
 
     if (scenario$scenarioConfiguration$simulateSteadyState) {
-      key <- as.character(
+      ignoreIfFormulaKey <- as.character(
         scenario$scenarioConfiguration$overwriteFormulasInSS
       )
-      if (is.null(steadyStateGroups[[key]])) {
-        steadyStateGroups[[key]] <- list(simulations = list(), times = list())
+      if (is.null(steadyStateGroups[[ignoreIfFormulaKey]])) {
+        steadyStateGroups[[ignoreIfFormulaKey]] <- list(simulations = list(), times = list())
       }
-      steadyStateGroups[[key]]$simulations <- c(
-        steadyStateGroups[[key]]$simulations,
+      steadyStateGroups[[ignoreIfFormulaKey]]$simulations <- c(
+        steadyStateGroups[[ignoreIfFormulaKey]]$simulations,
         scenario$simulation
       )
-      steadyStateGroups[[key]]$times <- c(
-        steadyStateGroups[[key]]$times,
+      steadyStateGroups[[ignoreIfFormulaKey]]$times <- c(
+        steadyStateGroups[[ignoreIfFormulaKey]]$times,
         scenario$scenarioConfiguration$steadyStateTime
       )
     }
@@ -52,21 +52,21 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 
   # Simulate steady-state concurrently, grouped by ignoreIfFormula value
   initialValues <- list()
-  for (key in names(steadyStateGroups)) {
-    group <- steadyStateGroups[[key]]
-    ignoreFormula <- as.logical(key)
+  for (ignoreIfFormulaKey in names(steadyStateGroups)) {
+    group <- steadyStateGroups[[ignoreIfFormulaKey]]
+    ignoreIfFormula <- as.logical(ignoreIfFormulaKey)
     groupValues <- ospsuite::getSteadyState(
       simulations = group$simulations,
       steadyStateTime = group$times,
-      ignoreIfFormula = ignoreFormula,
+      ignoreIfFormula = ignoreIfFormula,
       simulationRunOptions = simulationRunOptions
     )
     initialValues <- c(initialValues, groupValues)
   }
 
   # Set initial values for steady-state simulations
-  for (key in names(steadyStateGroups)) {
-    for (simulation in steadyStateGroups[[key]]$simulations) {
+  for (ignoreIfFormulaKey in names(steadyStateGroups)) {
+    for (simulation in steadyStateGroups[[ignoreIfFormulaKey]]$simulations) {
       ospsuite::setQuantityValuesByPath(
         quantityPaths = initialValues[[simulation$id]]$paths,
         values = initialValues[[simulation$id]]$values,

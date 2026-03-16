@@ -333,6 +333,10 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' @param steadyStateTimeUnit Character vector. Steady-state time units. Only used when `steadyState = TRUE` and `steadyStateTime` is provided.
 #'   If `NULL` (default), "min" will be used. Can be a single string (recycled for all scenarios) or a vector
 #'   with the same length as `pkmlFilePaths`.
+#' @param overwriteFormulasInSS Logical vector. Whether to overwrite formula-defined parameters with
+#'   their steady-state values (corresponds to `ignoreIfFormula` in `ospsuite::getSteadyState()`). Default
+#'   is `FALSE`. Can be a single logical value (recycled for all scenarios) or a vector with the same length
+#'   as `pkmlFilePaths`.
 #' @param readPopulationFromCSV Logical vector. Whether to read population from CSV for each scenario. Default is `FALSE`.
 #'   Can be a single logical value (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
 #'
