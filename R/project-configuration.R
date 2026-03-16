@@ -440,7 +440,8 @@ ProjectConfiguration <- R6::R6Class(
       }
       ospsuite.utils::ospPrintItems(list(
         "Working Directory" = getwd(),
-        "Project Configuration file stored at" = self$projectConfigurationFilePath
+        "Project Configuration file stored at" = self$projectConfigurationFilePath,
+        "esqlabsR version" = self$esqlabsRVersion
       ))
 
       ospsuite.utils::ospPrintHeader("Paths", level = 2)
