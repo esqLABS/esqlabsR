@@ -130,12 +130,25 @@ test_that("sensitivityTimeProfiles works with observed data", {
 # Unit conversion ---------------------------------------------------------
 
 test_that("sensitivityTimeProfiles accepts non-list units", {
-  expect_no_error(
-    sensitivityTimeProfiles(results, xUnits = "h")
-  )
-  expect_no_error(
-    sensitivityTimeProfiles(results, yUnits = "mol/l")
-  )
+  # x-axis units: scalar vs list should result in the same axis range
+  set.seed(123)
+  p_x_list <- sensitivityTimeProfiles(results, xUnits = list("h"))
+  set.seed(123)
+  p_x_scalar <- sensitivityTimeProfiles(results, xUnits = "h")
+
+  x_range_list <- extractAxisRange(p_x_list)$x
+  x_range_scalar <- extractAxisRange(p_x_scalar)$x
+  expect_equal(x_range_scalar, x_range_list)
+
+  # y-axis units: scalar vs list should result in the same axis range
+  set.seed(123)
+  p_y_list <- sensitivityTimeProfiles(results, yUnits = list("mol/l"))
+  set.seed(123)
+  p_y_scalar <- sensitivityTimeProfiles(results, yUnits = "mol/l")
+
+  y_range_list <- extractAxisRange(p_y_list)$y
+  y_range_scalar <- extractAxisRange(p_y_scalar)$y
+  expect_equal(y_range_scalar, y_range_list)
 })
 
 test_that("sensitivityTimeProfiles errors on invalid units", {

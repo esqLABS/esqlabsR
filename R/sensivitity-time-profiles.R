@@ -117,8 +117,12 @@ sensitivityTimeProfiles <- function(
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  if (!is.null(xUnits) && !is.list(xUnits)) xUnits <- as.list(xUnits)
-  if (!is.null(yUnits) && !is.list(yUnits)) yUnits <- as.list(yUnits)
+  if (!is.null(xUnits) && !is.list(xUnits)) {
+    xUnits <- as.list(xUnits)
+  }
+  if (!is.null(yUnits) && !is.list(yUnits)) {
+    yUnits <- as.list(yUnits)
+  }
 
   if (!is.null(observedData)) {
     observedData <- ospsuite.utils::toList(observedData)
