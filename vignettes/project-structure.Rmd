@@ -83,10 +83,10 @@ Do you want to update the version in the project configuration and continue?
 If you confirm, the stored version is updated and you can continue working. If
 you decline, execution stops.
 
-> **Important**: Before confirming the update, always consult the
-> [esqlabsR NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) to review
-> breaking changes between the stored and the currently installed version. Some
-> changes may require manual adjustments to your project files or scripts.
+**Important**: Before confirming the update, always consult the
+[esqlabsR NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) to review
+breaking changes between the stored and the currently installed version. Some
+changes may require manual adjustments to your project files or scripts.
 
 ### Skipping the version check
 
