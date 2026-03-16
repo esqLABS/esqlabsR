@@ -179,14 +179,6 @@ exportParametersToXLS <- function(
 
 #' Extend parameters structure with new entries
 #'
-#' @param parameters A list containing vectors `paths` with the full paths to
-#'   the parameters, `values` the values of the parameters, and `units` with the
-#'   units the values are in. This list will be extended.
-#' @param newParameters A list containing vectors 'paths' with the full paths to
-#'   the parameters, 'values' the values of the parameters, and 'units' with the
-#'   units the values are in. Entries from this list will extend or overwrite
-#'   the list `parameters`
-#'
 #' @param parameters A parameter structure (a list with elements `paths`,
 #'   `values`, and `units`) or `NULL`. If `NULL`, it is treated as an empty
 #'   parameter structure.
