@@ -196,11 +196,17 @@ test_that("ProjectConfiguration can be created from regenerated JSON files", {
   # Try to create a ProjectConfiguration object with a relative path
   relativePath <- excelFilename
   expect_no_error({
-    projectConfig <- createProjectConfiguration(relativePath, ignoreVersionCheck = TRUE)
+    projectConfig <- createProjectConfiguration(
+      relativePath,
+      ignoreVersionCheck = TRUE
+    )
   })
 
   # Verify the created object is of the correct class
-  projectConfig <- createProjectConfiguration(relativePath, ignoreVersionCheck = TRUE)
+  projectConfig <- createProjectConfiguration(
+    relativePath,
+    ignoreVersionCheck = TRUE
+  )
   expect_s3_class(projectConfig, "ProjectConfiguration")
 })
 
@@ -528,7 +534,10 @@ test_that("snapshotProjectConfiguration works with unmodified ProjectConfigurati
   test_proj <- local_test_project()
 
   # Load ProjectConfiguration (should be unmodified)
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path, ignoreVersionCheck = TRUE)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(projectConfig$modified)
 
   # Create output directory
@@ -558,7 +567,10 @@ test_that("snapshotProjectConfiguration works with modified ProjectConfiguration
   test_proj <- local_test_project()
 
   # Load and modify ProjectConfiguration
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path, ignoreVersionCheck = TRUE)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   suppressWarnings(projectConfig$modelFolder <- "modified/model/folder")
   expect_true(projectConfig$modified)
 
@@ -619,7 +631,10 @@ test_that("projectConfigurationStatus warns about modified ProjectConfiguration"
   test_proj <- local_test_project()
 
   # Load and modify ProjectConfiguration
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path, ignoreVersionCheck = TRUE)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   suppressWarnings(projectConfig$modelFolder <- "modified/model/folder")
   expect_true(projectConfig$modified)
 
@@ -643,7 +658,10 @@ test_that("projectConfigurationStatus does not warn about unmodified ProjectConf
   test_proj <- local_test_project()
 
   # Load ProjectConfiguration without modifying
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path, ignoreVersionCheck = TRUE)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(projectConfig$modified)
 
   # Create a JSON snapshot
@@ -668,7 +686,10 @@ test_that("modifying ProjectConfiguration after snapshotting affects status chec
   test_proj <- local_test_project()
 
   # Load ProjectConfiguration
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path, ignoreVersionCheck = TRUE)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(projectConfig$modified)
 
   # Take snapshot of unmodified config
@@ -700,7 +721,10 @@ test_that("JSON roundtrip preserves modified flag behavior", {
   importDir <- withr::local_tempdir("test_roundtrip_import")
 
   # Load original ProjectConfiguration
-  originalConfig <- createProjectConfiguration(test_proj$project_config_path, ignoreVersionCheck = TRUE)
+  originalConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(originalConfig$modified)
 
   # Export to JSON
@@ -748,7 +772,10 @@ test_that("snapshotProjectConfiguration with path string handles modified flag c
   })
 
   # Load the original file to check it wasn't affected
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path, ignoreVersionCheck = TRUE)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(projectConfig$modified)
 
   # JSON file should be created

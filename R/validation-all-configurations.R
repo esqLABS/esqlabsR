@@ -1,11 +1,13 @@
 #' Validate all configuration files in a project
 #' @param projectConfiguration ProjectConfiguration object or path to ProjectConfiguration.xlsx
 #' @param ignoreVersionCheck Logical; if TRUE, skip project configuration version mismatch checks
-#'   when creating a ProjectConfiguration from a path. Defaults to FALSE.
+#'   when creating a ProjectConfiguration from a path. Defaults to TRUE
 #' @return Named list of validationResult objects
 #' @export
-validateAllConfigurations <- function(projectConfiguration,
-                                      ignoreVersionCheck = FALSE) {
+validateAllConfigurations <- function(
+  projectConfiguration,
+  ignoreVersionCheck = TRUE
+) {
   results <- list()
 
   # Handle both path and object input

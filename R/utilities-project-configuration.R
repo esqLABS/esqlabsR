@@ -21,7 +21,10 @@ createDefaultProjectConfiguration <- function(
     with = "createProjectConfiguration()",
     when = "5.3.0"
   )
-  return(createProjectConfiguration(path, ignoreVersionCheck = ignoreVersionCheck))
+  return(createProjectConfiguration(
+    path,
+    ignoreVersionCheck = ignoreVersionCheck
+  ))
 }
 
 #' Create a `ProjectConfiguration`

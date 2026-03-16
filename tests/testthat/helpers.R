@@ -78,7 +78,10 @@ testProjectConfigurationPath <- function() {
 #' config <- testProjectConfiguration()
 #' }
 testProjectConfiguration <- function() {
-  createProjectConfiguration(testProjectConfigurationPath(), ignoreVersionCheck = TRUE)
+  createProjectConfiguration(
+    testProjectConfigurationPath(),
+    ignoreVersionCheck = TRUE
+  )
 }
 
 #' Get path to test configurations directory

@@ -12,7 +12,7 @@
 #'   source Excel file.
 #' @param ignoreVersionCheck Logical indicating whether to ignore version
 #'   mismatch checks when creating the ProjectConfiguration from a file path.
-#'   Defaults to TRUE to preserve existing behavior.
+#'   Defaults to TRUE.
 #' @param ... Additional arguments.
 #'
 #' @return Invisibly returns the exported configuration data structure

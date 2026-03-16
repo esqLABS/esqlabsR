@@ -301,7 +301,10 @@ ProjectConfiguration <- R6::R6Class(
           if (versionIssue == "notStored") {
             message(messages$versionNotStored(currentVersion))
           } else {
-            message(messages$versionMismatch(as.character(storedVersion), currentVersion))
+            message(messages$versionMismatch(
+              as.character(storedVersion),
+              currentVersion
+            ))
           }
 
           if (interactive()) {
