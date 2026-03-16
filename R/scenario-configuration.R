@@ -73,6 +73,23 @@ ScenarioConfiguration <- R6::R6Class(
         private$.steadyStateTime <- value
       }
     },
+    #' @field overwriteFormulasInSS Boolean representing whether formula-defined
+    #'   parameters will be overwritten with their steady-state values.
+    #'   Corresponds to the `ignoreIfFormula` argument of
+    #'   `ospsuite::getSteadyState`. Default is `FALSE`.
+    overwriteFormulasInSS = function(value) {
+      if (missing(value)) {
+        private$.overwriteFormulasInSS
+      } else {
+        validateIsLogical(value)
+        # If the value is `NA`, do not change
+        if (is.na(value)) {
+          invisible()
+        } else {
+          private$.overwriteFormulasInSS <- value
+        }
+      }
+    },
     #' @field paramSheets A named list. Names of the sheets from the
     #'   parameters-excel file that will be applied to the simulation
     paramSheets = function(value) {
@@ -117,6 +134,7 @@ a parameter sheet from the list"
     .simulationTime = NULL,
     .simulationTimeUnit = ospUnits$Time$min,
     .steadyStateTime = 1000,
+    .overwriteFormulasInSS = FALSE,
     .individualCharacteristics = NULL,
     .paramSheets = NULL,
     .simulationType = "Individual",
@@ -206,7 +224,8 @@ a parameter sheet from the list"
           "Read population from csv file" = self$readPopulationFromCSV,
           "Parameters sheets" = enumKeys(self$paramSheets),
           "Simulate steady-state" = self$simulateSteadyState,
-          "Steady-state time" = self$steadyStateTime
+          "Steady-state time" = self$steadyStateTime,
+          "Overwrite formulas in steady-state" = self$overwriteFormulasInSS
         ),
         print_empty = TRUE
       )
@@ -230,7 +249,8 @@ a parameter sheet from the list"
         ospsuite.utils::ospPrintItems(
           list(
             "Simulate steady-state" = self$simulateSteadyState,
-            "Steady-state time" = self$steadyStateTime
+            "Steady-state time" = self$steadyStateTime,
+            "Overwrite formulas in steady-state" = self$overwriteFormulasInSS
           ),
           title = "Steady state"
         )

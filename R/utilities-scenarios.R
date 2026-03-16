@@ -20,11 +20,11 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
   individualSimulations <- list()
   # List of population scenarios
   populationScenarios <- list()
-  # List of simulation with steady-state
-  steadyStateSimulations <- list()
-  # Have to store steady-state times separately, because they are not part of
-  # the simulation object
-  steadyStateTimes <- list()
+  # List of simulations with steady-state, grouped by ignoreIfFormula value
+  # TRUE group: overwriteFormulasInSS = TRUE
+  # FALSE group: overwriteFormulasInSS = FALSE
+  steadyStateGroups <- list()
+
   for (scenario in scenarios) {
     if (scenario$scenarioType == "Individual") {
       individualSimulations <- c(individualSimulations, scenario$simulation)
@@ -33,31 +33,46 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     }
 
     if (scenario$scenarioConfiguration$simulateSteadyState) {
-      steadyStateSimulations <- c(steadyStateSimulations, scenario$simulation)
-      steadyStateTimes <- c(
-        steadyStateTimes,
+      key <- as.character(
+        scenario$scenarioConfiguration$overwriteFormulasInSS
+      )
+      if (is.null(steadyStateGroups[[key]])) {
+        steadyStateGroups[[key]] <- list(simulations = list(), times = list())
+      }
+      steadyStateGroups[[key]]$simulations <- c(
+        steadyStateGroups[[key]]$simulations,
+        scenario$simulation
+      )
+      steadyStateGroups[[key]]$times <- c(
+        steadyStateGroups[[key]]$times,
         scenario$scenarioConfiguration$steadyStateTime
       )
     }
   }
 
-  # Simulate steady-state concurrently
-  if (length(steadyStateSimulations) > 0) {
-    initialValues <- ospsuite::getSteadyState(
-      simulations = steadyStateSimulations,
-      steadyStateTime = steadyStateTimes,
-      ignoreIfFormula = TRUE,
+  # Simulate steady-state concurrently, grouped by ignoreIfFormula value
+  initialValues <- list()
+  for (key in names(steadyStateGroups)) {
+    group <- steadyStateGroups[[key]]
+    ignoreFormula <- as.logical(key)
+    groupValues <- ospsuite::getSteadyState(
+      simulations = group$simulations,
+      steadyStateTime = group$times,
+      ignoreIfFormula = ignoreFormula,
       simulationRunOptions = simulationRunOptions
     )
+    initialValues <- c(initialValues, groupValues)
   }
 
   # Set initial values for steady-state simulations
-  for (simulation in steadyStateSimulations) {
-    ospsuite::setQuantityValuesByPath(
-      quantityPaths = initialValues[[simulation$id]]$paths,
-      values = initialValues[[simulation$id]]$values,
-      simulation = simulation
-    )
+  for (key in names(steadyStateGroups)) {
+    for (simulation in steadyStateGroups[[key]]$simulations) {
+      ospsuite::setQuantityValuesByPath(
+        quantityPaths = initialValues[[simulation$id]]$paths,
+        values = initialValues[[simulation$id]]$values,
+        simulation = simulation
+      )
+    }
   }
 
   # Run invidual simulations

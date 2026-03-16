@@ -1,5 +1,9 @@
 # esqlabsR (development version)
 
+## New features
+
+- Added `overwriteFormulasInSS` property to `ScenarioConfiguration`. When set to `TRUE`, formula-defined parameters will be overwritten with their steady-state values (corresponds to `ignoreIfFormula = TRUE` in `ospsuite::getSteadyState()`). Default is `FALSE`. The property can be set via a new `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx` (placed after `SteadyStateTimeUnit`). Also available as a parameter in `createScenarioConfigurationsFromPKML()`.
+
 ## Minor improvements and bug fixes
 - Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
 - Added a warning when axis limits contain zero while the corresponding axis scale is set to `log` in `Plots.xlsx`. Previously, this combination silently produced empty plots (\#967).

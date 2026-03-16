@@ -24,6 +24,7 @@
         * Parameters sheets: mySheet1, mySheet2
         * Simulate steady-state: TRUE
         * Steady-state time: 5
+        * Overwrite formulas in steady-state: FALSE
       
       -- Simulation time intervals --
       
@@ -35,4 +36,5 @@
       Steady state:
         * Simulate steady-state: TRUE
         * Steady-state time: 5
+        * Overwrite formulas in steady-state: FALSE
 
