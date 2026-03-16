@@ -125,9 +125,14 @@ test_that("An error is raised when the stored version does not match the current
   df$Value[df$Property == "esqlabsRVersion"] <- "0.0.0"
   writexl::write_xlsx(df, path = temp_file)
 
-  expect_error(
-    createProjectConfiguration(path = temp_file),
-    regexp = "Aborted by user"
+  with_mocked_bindings(
+    interactive = function() FALSE,
+    {
+      expect_error(
+        createProjectConfiguration(path = temp_file),
+        regexp = "Aborted by user"
+      )
+    }
   )
 })
 
@@ -140,9 +145,14 @@ test_that("An error is raised when no version is stored in the project configura
   df <- df[df$Property != "esqlabsRVersion", ]
   writexl::write_xlsx(df, path = temp_file)
 
-  expect_error(
-    createProjectConfiguration(path = temp_file),
-    regexp = "Aborted by user"
+  with_mocked_bindings(
+    interactive = function() FALSE,
+    {
+      expect_error(
+        createProjectConfiguration(path = temp_file),
+        regexp = "Aborted by user"
+      )
+    }
   )
 })
 

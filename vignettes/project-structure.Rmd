@@ -75,9 +75,10 @@ i Please review the package NEWS for breaking changes:
 
 Do you want to update the version in the project configuration and continue?
 
-1: Yes
-2: Absolutely not
-3: No way
+Available options (order may vary):
+- Yes
+- Absolutely not
+- No way
 ```
 
 If you confirm, the stored version is updated and you can continue working. If

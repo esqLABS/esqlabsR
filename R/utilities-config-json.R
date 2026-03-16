@@ -10,6 +10,9 @@
 #' @param outputDir Directory where the JSON file will be saved. If NULL
 #'   (default), the JSON file will be created in the same directory as the
 #'   source Excel file.
+#' @param ignoreVersionCheck Logical indicating whether to ignore version
+#'   mismatch checks when creating the ProjectConfiguration from a file path.
+#'   Defaults to TRUE to preserve existing behavior.
 #' @param ... Additional arguments.
 #'
 #' @return Invisibly returns the exported configuration data structure
@@ -17,6 +20,7 @@
 snapshotProjectConfiguration <- function(
   projectConfig = "ProjectConfiguration.xlsx",
   outputDir = NULL,
+  ignoreVersionCheck = TRUE,
   ...
 ) {
   extraArguments <- list(...)
@@ -24,7 +28,7 @@ snapshotProjectConfiguration <- function(
   if (is.character(projectConfig)) {
     projectConfig <- createProjectConfiguration(
       projectConfig,
-      ignoreVersionCheck = TRUE
+      ignoreVersionCheck = ignoreVersionCheck
     )
   }
 
