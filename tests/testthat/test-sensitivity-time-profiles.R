@@ -129,16 +129,12 @@ test_that("sensitivityTimeProfiles works with observed data", {
 
 # Unit conversion ---------------------------------------------------------
 
-test_that("sensitivityTimeProfiles errors for non-list units", {
-  expect_error(
-    sensitivityTimeProfiles(results, xUnits = "h"),
-    regexp = messages$errorWrongType("xUnits", "character", "list"),
-    fixed = TRUE
+test_that("sensitivityTimeProfiles accepts non-list units", {
+  expect_no_error(
+    sensitivityTimeProfiles(results, xUnits = "h")
   )
-  expect_error(
-    sensitivityTimeProfiles(results, yUnits = "mol/l"),
-    regexp = messages$errorWrongType("yUnits", "character", "list"),
-    fixed = TRUE
+  expect_no_error(
+    sensitivityTimeProfiles(results, yUnits = "mol/l")
   )
 })
 
