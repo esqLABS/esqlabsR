@@ -1,11 +1,11 @@
 # Set up simulated scenarios and observed data shared with test-utilities-data-combined.R
-.testSetup <- setupTestSimulatedScenarios()
-projectConfiguration <- .testSetup$projectConfiguration
-scenarioNames <- .testSetup$scenarioNames
-outputPaths <- .testSetup$outputPaths
-simulatedScenarios <- .testSetup$simulatedScenarios
-observedData <- .testSetup$observedData
-rm(.testSetup)
+testSetup <- setupTestSimulatedScenarios()
+projectConfiguration <- testSetup$projectConfiguration
+scenarioNames <- testSetup$scenarioNames
+outputPaths <- testSetup$outputPaths
+simulatedScenarios <- testSetup$simulatedScenarios
+observedData <- testSetup$observedData
+rm(testSetup)
 
 # Load pre-simulated results for the "TestScenario". Required to ensure
 # identify of the results, otherwise numerical noise interferes with snapshot testing

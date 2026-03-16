@@ -218,6 +218,136 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
   )
 }
 
+#' Set up common simulated scenarios and observed data for plot tests
+#'
+#' @description
+#' Creates and returns the common test setup shared between
+#' `test-create-plots-from-excel.R` and `test-utilities-data-combined.R`.
+#' This avoids duplicating the expensive scenario-running code across test files.
+#'
+#' @returns A list containing:
+#'   - `projectConfiguration`: ProjectConfiguration object
+#'   - `scenarioNames`: Vector of scenario names
+#'   - `outputPaths`: Output paths string
+#'   - `simulatedScenarios`: List of simulated scenarios
+#'   - `observedData`: List of observed data sets
+#'
+#' @examples
+#' \dontrun{
+#' setup <- setupTestSimulatedScenarios()
+#' simulatedScenarios <- setup$simulatedScenarios
+#' observedData <- setup$observedData
+#' }
+setupTestSimulatedScenarios <- function() {
+  projectConfiguration <- testProjectConfiguration()
+  scenarioNames <- c("TestScenario", "PopulationScenario")
+  outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = scenarioNames,
+    projectConfiguration = projectConfiguration
+  )
+
+  for (scenarioConfiguration in scenarioConfigurations) {
+    scenarioConfiguration$outputPaths <- outputPaths
+  }
+
+  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+  simulatedScenarios <- runScenarios(scenarios = scenarios)
+
+  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+    configurationFilePath = projectConfiguration$dataImporterConfigurationFile
+  )
+
+  observedData <- esqlabsR::loadObservedData(
+    projectConfiguration = projectConfiguration,
+    sheets = "Laskin 1982.Group A",
+    importerConfiguration = importerConfiguration
+  )
+
+  list(
+    projectConfiguration = projectConfiguration,
+    scenarioNames = scenarioNames,
+    outputPaths = outputPaths,
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData
+  )
+}
+
+#' Create a temporary test setup with a Plots.xlsx file
+#'
+#' @description
+#' Creates a temporary directory containing a `Plots.xlsx` file built from the
+#' provided data frames, and returns a cloned `ProjectConfiguration` whose
+#' `configurationsFolder` points to that directory.  The temporary directory is
+#' automatically cleaned up when the calling test exits (via
+#' `withr::local_tempdir`).
+#'
+#' @param projectConfiguration The base `ProjectConfiguration` object to clone.
+#' @param dataCombinedDf Data frame for the `DataCombined` sheet.
+#' @param plotConfigurationDf Data frame for the `plotConfiguration` sheet.
+#' @param plotGridsDf Data frame for the `plotGrids` sheet.
+#' @param exportConfigurationDf Data frame for the `exportConfiguration` sheet.
+#' @param outputFolder Optional path to set as `outputFolder` on the cloned
+#'   project configuration.  When `NULL` (the default) the field is left
+#'   unchanged.
+#' @param env The environment used for cleanup scheduling.  Defaults to
+#'   `parent.frame()` so that the temporary directory is removed when the
+#'   calling test finishes.
+#'
+#' @returns A list containing:
+#'   - `tempDir`: Path to the temporary directory
+#'   - `projectConfiguration`: Cloned `ProjectConfiguration` object
+#'
+#' @examples
+#' \dontrun{
+#' localDf <- dataCombinedDf
+#' localDf$dataType <- NA
+#' setup <- local_plots_test(
+#'   projectConfiguration,
+#'   dataCombinedDf = localDf,
+#'   plotConfigurationDf = plotConfigurationDf,
+#'   plotGridsDf = plotGridsDf,
+#'   exportConfigurationDf = exportConfigurationDf
+#' )
+#' createPlotsFromExcel(
+#'   simulatedScenarios = simulatedScenarios,
+#'   observedData = observedData,
+#'   projectConfiguration = setup$projectConfiguration
+#' )
+#' }
+local_plots_test <- function(
+  projectConfiguration,
+  dataCombinedDf,
+  plotConfigurationDf,
+  plotGridsDf,
+  exportConfigurationDf,
+  outputFolder = NULL,
+  env = parent.frame()
+) {
+  tempDir <- withr::local_tempdir("plots_test", .local_envir = env)
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  if (!is.null(outputFolder)) {
+    projectConfigurationLocal$outputFolder <- outputFolder
+  }
+
+  .writeExcel(
+    data = list(
+      "DataCombined" = dataCombinedDf,
+      "plotConfiguration" = plotConfigurationDf,
+      "plotGrids" = plotGridsDf,
+      "exportConfiguration" = exportConfigurationDf
+    ),
+    path = file.path(tempDir, "Plots.xlsx")
+  )
+
+  list(
+    tempDir = tempDir,
+    projectConfiguration = projectConfigurationLocal
+  )
+}
+
 # Create a temporary test project directory with proper cleanup
 # This is a test fixture following the pattern from testthat.r-lib.org/articles/test-fixtures.html
 # Returns a list with paths to the project directory and key files

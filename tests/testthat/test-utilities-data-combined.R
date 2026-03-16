@@ -1,38 +1,11 @@
-projectConfiguration <- testProjectConfiguration()
-
-# Define which scenarios to run
-scenarioNames <- c("TestScenario", "PopulationScenario")
-outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = scenarioNames,
-  projectConfiguration = projectConfiguration
-)
-
-# Set output paths for each scenario
-for (scenarioConfiguration in scenarioConfigurations) {
-  scenarioConfiguration$outputPaths <- outputPaths
-}
-
-# Run scenarios
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-
-simulatedScenarios <- runScenarios(
-  scenarios = scenarios
-)
-
-importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-  configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-)
-
-# Load observed data
-dataSheets <- "Laskin 1982.Group A"
-observedData <- esqlabsR::loadObservedData(
-  projectConfiguration = projectConfiguration,
-  sheets = dataSheets,
-  importerConfiguration = importerConfiguration
-)
+# Set up simulated scenarios and observed data shared with test-create-plots-from-excel.R
+testSetup <- setupTestSimulatedScenarios()
+projectConfiguration <- testSetup$projectConfiguration
+scenarioNames <- testSetup$scenarioNames
+outputPaths <- testSetup$outputPaths
+simulatedScenarios <- testSetup$simulatedScenarios
+observedData <- testSetup$observedData
+rm(testSetup)
 
 # Create a proper data frame with paths for all entries
 dataCombinedDf <- data.frame(list(
