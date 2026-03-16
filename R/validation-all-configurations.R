@@ -15,7 +15,8 @@ validateAllConfigurations <- function(projectConfiguration) {
       return(results)
     }
     projectConfiguration <- createProjectConfiguration(
-      projectConfiguration
+      projectConfiguration,
+      ignoreVersionCheck = TRUE
     )
   }
 

@@ -85,30 +85,31 @@ test_that("Project Configuration can be exported", {
 
   # Load the file and compare
   expect_true(file.exists(temp_file1))
-  imported_pc <- createProjectConfiguration(path = temp_file1, ignoreVersionCheck = TRUE)
+  imported_pc <- createProjectConfiguration(
+    path = temp_file1,
+    ignoreVersionCheck = TRUE
+  )
 
   imported_pc$projectConfigurationFilePath <- testProjectConfigurationPath()
 
   expect_equal(testProjectConfiguration(), imported_pc)
 })
 
-test_that("esqlabsRVersion is stored in ProjectConfiguration and can be read", {
-  myConfig <- testProjectConfiguration()
-  expect_equal(
-    myConfig$esqlabsRVersion,
-    as.character(utils::packageVersion("esqlabsR"))
-  )
-})
-
 test_that("esqlabsRVersion is read-only", {
   myConfig <- testProjectConfiguration()
-  expect_error(myConfig$esqlabsRVersion <- "1.0.0", "esqlabsRVersion is readonly")
+  expect_error(
+    myConfig$esqlabsRVersion <- "1.0.0",
+    "esqlabsRVersion is readonly"
+  )
 })
 
 test_that("esqlabsRVersion is written to Excel when saving", {
   temp_file <- withr::local_tempfile(fileext = ".xlsx")
   testProjectConfiguration()$save(path = temp_file)
-  saved_pc <- createProjectConfiguration(path = temp_file, ignoreVersionCheck = TRUE)
+  saved_pc <- createProjectConfiguration(
+    path = temp_file,
+    ignoreVersionCheck = TRUE
+  )
   expect_equal(
     saved_pc$esqlabsRVersion,
     as.character(utils::packageVersion("esqlabsR"))

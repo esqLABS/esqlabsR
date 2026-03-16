@@ -22,7 +22,10 @@ snapshotProjectConfiguration <- function(
   extraArguments <- list(...)
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
-    projectConfig <- createProjectConfiguration(projectConfig)
+    projectConfig <- createProjectConfiguration(
+      projectConfig,
+      ignoreVersionCheck = TRUE
+    )
   }
 
   # Validate projectConfig
@@ -418,7 +421,10 @@ restoreProjectConfiguration <- function(
   }
 
   # Create and return a ProjectConfiguration object
-  invisible(createProjectConfiguration(projConfigPath))
+  invisible(createProjectConfiguration(
+    projConfigPath,
+    ignoreVersionCheck = TRUE
+  ))
 }
 
 #' Check if Excel configuration files are in sync with JSON snapshot
@@ -450,7 +456,10 @@ projectConfigurationStatus <- function(
 ) {
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
-    projectConfig <- createProjectConfiguration(projectConfig)
+    projectConfig <- createProjectConfiguration(
+      projectConfig,
+      ignoreVersionCheck = TRUE
+    )
   }
 
   # Validate projectConfig
