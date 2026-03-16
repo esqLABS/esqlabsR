@@ -414,7 +414,10 @@ test_that("Named outputPaths are exported to Excel with correct OutputPathIds", 
       scenarioNames = "TestScenario",
       outputPaths = namedOutputPaths
     ),
-    regexp = messages$autocorrectDuplicateScenarioNames("TestScenario", "TestScenario_2")
+    regexp = messages$autocorrectDuplicateScenarioNames(
+      "TestScenario",
+      "TestScenario_2"
+    )
   )
 
   # Add to Excel
