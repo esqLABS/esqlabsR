@@ -7,14 +7,14 @@
 extendParameterStructure(parameters, newParameters)
 }
 \arguments{
-\item{parameters}{A list containing vectors \code{paths} with the full paths to
-the parameters, \code{values} the values of the parameters, and \code{units} with the
-units the values are in. This list will be extended.}
+\item{parameters}{A parameter structure (a list with elements \code{paths},
+\code{values}, and \code{units}) or \code{NULL}. If \code{NULL}, it is treated as an empty
+parameter structure.}
 
-\item{newParameters}{A list containing vectors 'paths' with the full paths to
-the parameters, 'values' the values of the parameters, and 'units' with the
-units the values are in. Entries from this list will extend or overwrite
-the list \code{parameters}}
+\item{newParameters}{A parameter structure (a list with elements \code{paths},
+\code{values}, and \code{units}) or \code{NULL}. If \code{NULL}, it is treated as an empty
+parameter structure whose entries will be added to or overwrite those in
+\code{parameters}.}
 }
 \value{
 Updated list of parameter paths, values, and units
