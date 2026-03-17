@@ -10,6 +10,8 @@
 
 ## Minor improvements and bug fixes
 - Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
+- Added a warning when axis limits contain zero while the corresponding axis scale is set to `log` in `Plots.xlsx`. Previously, this combination silently produced empty plots (\#967).
+- `extendParameterStructure()` now supports `NULL` for `parameters` and `newParameters` arguments. When `NULL` is provided, a valid empty structure is returned or combined with the non-NULL argument (#583).
 
 # esqlabsR 5.5.2
 
