@@ -188,9 +188,15 @@ test_that("Warning is shown when individual characteristics are not found", {
         scenarioConfigurations$TestScenario,
         stopIfParameterNotFound = FALSE
       ),
-      regexp = messages$warningNoIndividualSpecificModelParameters("TestScenario", "NonExistentIndividual")
+      regexp = messages$warningNoIndividualSpecificModelParameters(
+        "TestScenario",
+        "NonExistentIndividual"
+      )
     ),
-    regexp = messages$warningNoIndividualCharacteristics("TestScenario", "NonExistentIndividual")
+    regexp = messages$warningNoIndividualCharacteristics(
+      "TestScenario",
+      "NonExistentIndividual"
+    )
   )
 })
 
