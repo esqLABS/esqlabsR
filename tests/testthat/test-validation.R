@@ -689,10 +689,15 @@ test_that(".validatePopulationsFile handles valid file", {
         ageMax = c(60, 60),
         weightMin = c(50, 50),
         weightMax = c(100, 100),
+        weightUnit = c("kg", "kg"),
         heightMin = c(150, 150),
         heightMax = c(200, 200),
+        heightUnit = c("cm", "cm"),
         BMIMin = c(18, 18),
-        BMIMax = c(30, 30)
+        BMIMax = c(30, 30),
+        BMIUnit = c("kg/m2", "kg/m2"),
+        `Protein Ontogenies` = c("CYP3A4:CYP3A4", "CYP3A4:CYP3A4"),
+        check.names = FALSE
       )
     ),
     temp_file
@@ -921,10 +926,19 @@ test_that(".validateScenariosFile handles valid file", {
   openxlsx::write.xlsx(
     list(
       Scenarios = data.frame(
+        Scenario_name = c("S1", "S2"),
         IndividualId = c("ID1", "ID2"),
         PopulationId = c("Pop1", "Pop2"),
+        ReadPopulationFromCSV = c(FALSE, FALSE),
+        ModelParameterSheets = c("Sheet1", "Sheet1"),
         ApplicationProtocol = c("App1", "App2"),
-        SteadyStateTime = c(0, 0)
+        SimulationTime = c("0-24", "0-24"),
+        SimulationTimeUnit = c("h", "h"),
+        SteadyState = c(FALSE, FALSE),
+        SteadyStateTime = c(0, 0),
+        SteadyStateTimeUnit = c("h", "h"),
+        ModelFile = c("model.pkml", "model.pkml"),
+        OutputPathsIds = c("OP1", "OP2")
       ),
       OutputPaths = data.frame(
         OutputPathId = c("OP1", "OP2"),
@@ -1157,7 +1171,7 @@ test_that(".validateScenariosFile detects duplicate scenario names", {
   unlink(temp_file)
 })
 
-test_that(".validateScenariosFile warns about missing full column set", {
+test_that(".validateScenariosFile errors on missing full column set", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
     list(
@@ -1176,15 +1190,19 @@ test_that(".validateScenariosFile warns about missing full column set", {
   )
 
   result <- esqlabsR:::.validateScenariosFile(temp_file)
-  # Should have warnings about missing columns
-  expect_true(length(result$warnings) > 0)
+  # Should have critical errors about missing columns
+  has_structure_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Structure" && grepl("missing columns required", e$message)
+  ))
+  expect_true(has_structure_error)
 
   unlink(temp_file)
 })
 
 # Tests for enhanced .validatePopulationsFile ----
 
-test_that(".validatePopulationsFile warns about missing optional columns", {
+test_that(".validatePopulationsFile errors on missing required columns", {
   temp_file <- tempfile(fileext = ".xlsx")
   openxlsx::write.xlsx(
     list(
@@ -1208,8 +1226,12 @@ test_that(".validatePopulationsFile warns about missing optional columns", {
   )
 
   result <- esqlabsR:::.validatePopulationsFile(temp_file)
-  # Should have warnings about missing weightUnit, heightUnit, etc.
-  expect_true(length(result$warnings) > 0)
+  # Should have critical errors about missing weightUnit, heightUnit, etc.
+  has_structure_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Structure" && grepl("missing columns required", e$message)
+  ))
+  expect_true(has_structure_error)
 
   unlink(temp_file)
 })
@@ -1217,11 +1239,22 @@ test_that(".validatePopulationsFile warns about missing optional columns", {
 # Tests for createProjectConfiguration with validate parameter ----
 
 test_that("createProjectConfiguration accepts validate parameter", {
-  # Just confirm the function signature works without error when validate=FALSE
+  # Confirm the error is specifically about the missing file, not an
+  # unknown argument — proving the validate parameter is accepted
   expect_error(
     createProjectConfiguration(
       path = "nonexistent.xlsx",
       validate = FALSE
-    )
+    ),
+    regexp = "nonexistent\\.xlsx"
+  )
+
+  # Also verify validate=TRUE is accepted (same file error, not argument error)
+  expect_error(
+    createProjectConfiguration(
+      path = "nonexistent.xlsx",
+      validate = TRUE
+    ),
+    regexp = "nonexistent\\.xlsx"
   )
 })

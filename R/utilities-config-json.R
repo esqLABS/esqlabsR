@@ -37,7 +37,7 @@ snapshotProjectConfiguration <- function(
   }
 
   # Run validation before snapshotting
-  if (validate) {
+  if (validate && !isTRUE(extraArguments$silent)) {
     validationResults <- validateAllConfigurations(projectConfig)
     summary <- validationSummary(validationResults)
     message(messages$validationSummaryMessage(

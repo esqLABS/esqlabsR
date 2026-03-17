@@ -59,10 +59,10 @@
       )
       missing_full_cols <- setdiff(expected_full_cols, names(scenarios_df))
       if (length(missing_full_cols) > 0) {
-        result$add_warning(
+        result$add_critical_error(
           "Structure",
           paste0(
-            "Scenarios sheet is missing columns expected by ",
+            "Scenarios sheet is missing columns required by ",
             "readScenarioConfigurationFromExcel: ",
             paste(missing_full_cols, collapse = ", ")
           )

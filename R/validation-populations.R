@@ -45,7 +45,7 @@
         stop(messages$validationMissingColumns("Demographics", missing_cols))
       }
 
-      # Check for columns expected by readPopulationCharacteristicsFromXLS
+      # Check for columns required by readPopulationCharacteristicsFromXLS
       extended_cols <- c(
         "weightUnit",
         "heightUnit",
@@ -54,10 +54,10 @@
       )
       missing_extended <- setdiff(extended_cols, names(df))
       if (length(missing_extended) > 0) {
-        result$add_warning(
+        result$add_critical_error(
           "Structure",
           paste0(
-            "Demographics sheet is missing optional columns used by ",
+            "Demographics sheet is missing columns required by ",
             "readPopulationCharacteristicsFromXLS: ",
             paste(missing_extended, collapse = ", ")
           )
@@ -110,10 +110,10 @@
           )
           missing_extend <- setdiff(extend_cols, names(df))
           if (length(missing_extend) > 0) {
-            result$add_warning(
+            result$add_critical_error(
               "Structure",
               paste0(
-                "Sheet '", sheet, "' is missing columns expected by ",
+                "Sheet '", sheet, "' is missing columns required by ",
                 "extendPopulationFromXLS: ",
                 paste(missing_extend, collapse = ", ")
               )
