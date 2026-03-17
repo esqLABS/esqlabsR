@@ -2,6 +2,15 @@
 
 ## Breaking changes
 
+- Individual parameter sets in `Individuals.xlsx` must now be specified
+  explicitly via the new required column `Individual Parameter Sets` in the
+  `IndividualBiometrics` sheet. The column must contain a comma-separated list
+  of sheet names (in the same file) whose parameters will be applied to the
+  simulation in order. Previously, a sheet named after the `IndividualId` was
+  applied automatically; this fallback is removed. Existing `Individuals.xlsx`
+  files must be updated to add the `Individual Parameter Sets` column and
+  populate it with the relevant sheet names. (#970)
+
 - Added a new mandatory column `InitialValuesSet` to the `Scenarios.xlsx` `Scenarios` sheet. Existing `Scenarios.xlsx` files must be updated to include this column (it can be left empty). The column should appear between `ModelParameterSheets` and `ApplicationProtocol`.
 
 ## New features

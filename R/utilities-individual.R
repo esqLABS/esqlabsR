@@ -136,6 +136,79 @@ readIndividualCharacteristicsFromXLS <- function(
   return(individualCharacteristics)
 }
 
+#' Read individual-specific model parameters from file
+#'
+#' @details Reads the list of individual parameter set sheet names from the
+#'   `Individual Parameter Sets` column in the `IndividualBiometrics` sheet,
+#'   then reads and combines the parameters from each of those sheets.
+#'
+#' @param XLSpath Full path to the excel file.
+#' @param individualId (String) Id of the individual as stored in the
+#'   `IndividualId` column.
+#' @param scenarioName (String) Name of the scenario, used in warning messages.
+#' @param sheet Name of the sheet containing individual biometrics. Defaults to
+#'   `"IndividualBiometrics"`.
+#'
+#' @returns A list with elements `paths`, `values`, and `units` containing the
+#'   combined parameters from all listed individual parameter set sheets.
+#'   Returns `NULL` if `individualId` is not found in the biometrics sheet.
+#' @keywords internal
+#' @noRd
+.readIndividualParameterSetsFromXLS <- function(
+  XLSpath, # nolint: object_length_linter.
+  individualId,
+  scenarioName,
+  sheet = "IndividualBiometrics"
+) {
+  validateIsString(c(XLSpath, individualId))
+
+  data <- readExcel(path = XLSpath, sheet = sheet)
+
+  rowIdx <- which(data$IndividualId == individualId)
+  if (length(rowIdx) == 0) {
+    return(NULL)
+  }
+
+  # "Individual Parameter Sets" column is required
+  paramSetsStr <- data[["Individual Parameter Sets"]][[rowIdx]]
+
+  # Initialize empty params structure
+  params <- list(
+    paths = character(0),
+    values = numeric(0),
+    units = character(0)
+  )
+
+  # If empty or NA, return empty params structure
+  if (is.na(paramSetsStr) || !nzchar(trimws(as.character(paramSetsStr)))) {
+    return(params)
+  }
+
+  parameterSets <- trimws(strsplit(
+    as.character(paramSetsStr),
+    ",",
+    fixed = TRUE
+  )[[1]])
+  excelSheets <- readxl::excel_sheets(path = XLSpath)
+
+  for (paramSet in parameterSets) {
+    if (any(excelSheets == paramSet)) {
+      setParams <- readParametersFromXLS(XLSpath, sheets = paramSet)
+      params <- extendParameterStructure(
+        parameters = params,
+        newParameters = setParams
+      )
+    } else {
+      stop(messages$errorIndividualParameterSetNotFound(
+        scenarioName = scenarioName,
+        parameterSetName = paramSet
+      ))
+    }
+  }
+
+  return(params)
+}
+
 #' Apply an individual to the simulation. For human species, only parameters
 #' that do not override formulas are applied. For other species, all parameters
 #' returned by `createIndividual` are applied.

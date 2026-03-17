@@ -138,7 +138,7 @@
   },
   "Individuals": {
     "IndividualBiometrics": {
-      "column_names": ["IndividualId", "Species", "Population", "Gender", "Weight [kg]", "Height [cm]", "Age [year(s)]", "Protein Ontogenies"],
+      "column_names": ["IndividualId", "Species", "Population", "Gender", "Weight [kg]", "Height [cm]", "Age [year(s)]", "Protein Ontogenies", "Individual Parameter Sets"],
       "rows": [
         {
           "IndividualId": "Indiv1",
@@ -148,7 +148,8 @@
           "Weight [kg]": "73",
           "Height [cm]": "176",
           "Age [year(s)]": "30",
-          "Protein Ontogenies": "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+          "Protein Ontogenies": "CYP3A4:CYP3A4,CYP2D6:CYP2C8",
+          "Individual Parameter Sets": "Indiv1"
         }
       ]
     },
