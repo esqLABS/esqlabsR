@@ -22,6 +22,7 @@
         * Population Id: NULL
         * Read population from csv file: FALSE
         * Parameters sheets: mySheet1, mySheet2
+        * Initial values sheets: <empty vector>
         * Simulate steady-state: TRUE
         * Steady-state time: 5
       

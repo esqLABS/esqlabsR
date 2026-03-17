@@ -13,10 +13,11 @@
 #'
 #'   The function expects the Excel file to have a "Scenarios" sheet with the
 #'   following columns: `Scenario_name`, `IndividualId`, `PopulationId`,
-#'   `ReadPopulationFromCSV`, `ModelParameterSheets`, `ApplicationProtocol`,
-#'   `SimulationTime`, `SimulationTimeUnit`, `SteadyState`, `SteadyStateTime`,
-#'   `SteadyStateTimeUnit`, `ModelFile`, `OutputPathsIds`. It also expects an
-#'   "OutputPaths" sheet with `OutputPathId` and `OutputPath` columns.
+#'   `ReadPopulationFromCSV`, `ModelParameterSheets`, `InitialValuesSet`,
+#'   `ApplicationProtocol`, `SimulationTime`, `SimulationTimeUnit`,
+#'   `SteadyState`, `SteadyStateTime`, `SteadyStateTimeUnit`, `ModelFile`,
+#'   `OutputPathsIds`. It also expects an "OutputPaths" sheet with `OutputPathId`
+#'   and `OutputPath` columns.
 #'
 #' @returns A named list of `ScenarioConfiguration` objects with the names of
 #'   the list being scenario names.
@@ -47,6 +48,7 @@ readScenarioConfigurationFromExcel <- function(
     "PopulationId",
     "ReadPopulationFromCSV",
     "ModelParameterSheets",
+    "InitialValuesSet",
     "ApplicationProtocol",
     "SimulationTime",
     "SimulationTimeUnit",
@@ -62,6 +64,7 @@ readScenarioConfigurationFromExcel <- function(
     "text",
     "text",
     "logical",
+    "text",
     "text",
     "text",
     "text",
@@ -145,6 +148,21 @@ readScenarioConfigurationFromExcel <- function(
         quiet = TRUE
       ))
       scenarioConfiguration$addParamSheets(paramSheets)
+    }
+
+    # Initial values sheets
+    initialValuesSet <- data$InitialValuesSet
+
+    if (!is.na(initialValuesSet)) {
+      # The values can be enclosed in "" in case sheet names contain a ','.
+      # Split the input string by ',' but do not split within ""
+      initialValuesSet <- trimws(scan(
+        text = as.character(initialValuesSet),
+        what = "character",
+        sep = ",",
+        quiet = TRUE
+      ))
+      scenarioConfiguration$addInitialValuesSheets(initialValuesSet)
     }
 
     # Simulation time
@@ -1068,6 +1086,7 @@ addScenarioConfigurationsToExcel <- function(
     PopulationId = character(),
     ReadPopulationFromCSV = logical(),
     ModelParameterSheets = character(),
+    InitialValuesSet = character(),
     ApplicationProtocol = character(),
     SimulationTime = character(),
     SimulationTimeUnit = character(),
@@ -1193,6 +1212,10 @@ addScenarioConfigurationsToExcel <- function(
       ReadPopulationFromCSV = scenarioConfig$readPopulationFromCSV,
       ModelParameterSheets = paste(
         enumKeys(scenarioConfig$paramSheets),
+        collapse = ", "
+      ),
+      InitialValuesSet = paste(
+        enumKeys(scenarioConfig$initialValuesSheets),
         collapse = ", "
       ),
       ApplicationProtocol = ifelse(
@@ -1321,6 +1344,7 @@ addScenarioConfigurationsToExcel <- function(
     "PopulationId",
     "ReadPopulationFromCSV",
     "ModelParameterSheets",
+    "InitialValuesSet",
     "ApplicationProtocol",
     "SimulationTime",
     "SimulationTimeUnit",
@@ -1361,6 +1385,9 @@ addScenarioConfigurationsToExcel <- function(
   )
   scenariosData$ModelParameterSheets <- as.character(
     scenariosData$ModelParameterSheets
+  )
+  scenariosData$InitialValuesSet <- as.character(
+    scenariosData$InitialValuesSet
   )
   scenariosData$ApplicationProtocol <- as.character(
     scenariosData$ApplicationProtocol

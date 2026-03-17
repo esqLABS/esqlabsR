@@ -43,111 +43,122 @@
       
       $projectConfiguration$rows[[4]]
       $projectConfiguration$rows[[4]]$Property
-      [1] "individualsFile"
+      [1] "modelInitialValuesFile"
       
       $projectConfiguration$rows[[4]]$Value
-      [1] "Individuals.xlsx"
+      [1] "ModelInitialValues.xlsx"
       
       $projectConfiguration$rows[[4]]$Description
-      [1] "Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with initial conditions (molecule start values). Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[5]]
       $projectConfiguration$rows[[5]]$Property
-      [1] "populationsFile"
+      [1] "individualsFile"
       
       $projectConfiguration$rows[[5]]$Value
-      [1] "Populations.xlsx"
+      [1] "Individuals.xlsx"
       
       $projectConfiguration$rows[[5]]$Description
-      [1] "Name of the excel file with population information. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\""
       
       
       $projectConfiguration$rows[[6]]
       $projectConfiguration$rows[[6]]$Property
-      [1] "populationsFolder"
+      [1] "populationsFile"
       
       $projectConfiguration$rows[[6]]$Value
-      [1] "PopulationsCSV"
+      [1] "Populations.xlsx"
       
       $projectConfiguration$rows[[6]]$Description
-      [1] "Name of the folder containing population defined in files"
+      [1] "Name of the excel file with population information. Must be located in the \"paramsFolder\""
       
       
       $projectConfiguration$rows[[7]]
       $projectConfiguration$rows[[7]]$Property
-      [1] "scenariosFile"
+      [1] "populationsFolder"
       
       $projectConfiguration$rows[[7]]$Value
-      [1] "Scenarios.xlsx"
+      [1] "PopulationsCSV"
       
       $projectConfiguration$rows[[7]]$Description
-      [1] "Name of the excel file with scenario definitions. Must be located in the \"paramsFolder\""
+      [1] "Name of the folder containing population defined in files"
       
       
       $projectConfiguration$rows[[8]]
       $projectConfiguration$rows[[8]]$Property
-      [1] "applicationsFile"
+      [1] "scenariosFile"
       
       $projectConfiguration$rows[[8]]$Value
-      [1] "Applications.xlsx"
+      [1] "Scenarios.xlsx"
       
       $projectConfiguration$rows[[8]]$Description
-      [1] "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with scenario definitions. Must be located in the \"paramsFolder\""
       
       
       $projectConfiguration$rows[[9]]
       $projectConfiguration$rows[[9]]$Property
-      [1] "plotsFile"
+      [1] "applicationsFile"
       
       $projectConfiguration$rows[[9]]$Value
-      [1] "Plots.xlsx"
+      [1] "Applications.xlsx"
       
       $projectConfiguration$rows[[9]]$Description
-      [1] "Name of the excel file with plot definitions. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"paramsFolder\""
       
       
       $projectConfiguration$rows[[10]]
       $projectConfiguration$rows[[10]]$Property
-      [1] "dataFolder"
+      [1] "plotsFile"
       
       $projectConfiguration$rows[[10]]$Value
-      [1] "Data/"
+      [1] "Plots.xlsx"
       
       $projectConfiguration$rows[[10]]$Description
-      [1] "Path to the folder where experimental data files are located; relative to the location of this file"
+      [1] "Name of the excel file with plot definitions. Must be located in the \"paramsFolder\""
       
       
       $projectConfiguration$rows[[11]]
       $projectConfiguration$rows[[11]]$Property
-      [1] "dataFile"
+      [1] "dataFolder"
       
       $projectConfiguration$rows[[11]]$Value
-      [1] "TestProject_TimeValuesData.xlsx"
+      [1] "Data/"
       
       $projectConfiguration$rows[[11]]$Description
-      [1] "Name of the excel file with experimental data. Must be located in the \"dataFolder\""
+      [1] "Path to the folder where experimental data files are located; relative to the location of this file"
       
       
       $projectConfiguration$rows[[12]]
       $projectConfiguration$rows[[12]]$Property
-      [1] "dataImporterConfigurationFile"
+      [1] "dataFile"
       
       $projectConfiguration$rows[[12]]$Value
-      [1] "esqlabs_dataImporter_configuration.xml"
+      [1] "TestProject_TimeValuesData.xlsx"
       
       $projectConfiguration$rows[[12]]$Description
-      [1] "Name of data importer configuration file in xml format used to load the data. Must be located in the \"dataFolder\""
+      [1] "Name of the excel file with experimental data. Must be located in the \"dataFolder\""
       
       
       $projectConfiguration$rows[[13]]
       $projectConfiguration$rows[[13]]$Property
-      [1] "outputFolder"
+      [1] "dataImporterConfigurationFile"
       
       $projectConfiguration$rows[[13]]$Value
-      [1] "Results/"
+      [1] "esqlabs_dataImporter_configuration.xml"
       
       $projectConfiguration$rows[[13]]$Description
+      [1] "Name of data importer configuration file in xml format used to load the data. Must be located in the \"dataFolder\""
+      
+      
+      $projectConfiguration$rows[[14]]
+      $projectConfiguration$rows[[14]]$Property
+      [1] "outputFolder"
+      
+      $projectConfiguration$rows[[14]]$Value
+      [1] "Results/"
+      
+      $projectConfiguration$rows[[14]]$Description
       [1] "Path to the folder where the results should be saved to; relative to the location of this file"
       
       
@@ -234,6 +245,40 @@
       
       $modelParameterSets$Aciclovir$rows[[1]]$Units
       [1] "Log Units"
+      
+      
+      
+      
+      
+      $modelInitialValues
+      $modelInitialValues$Global
+      $modelInitialValues$Global$column_names
+      [1] "Container Path"      "Molecule Name"       "Is Present"         
+      [4] "Value"               "Units"               "Scale Divisor"      
+      [7] "Neg. Values Allowed"
+      
+      $modelInitialValues$Global$rows
+      $modelInitialValues$Global$rows[[1]]
+      $modelInitialValues$Global$rows[[1]]$`Container Path`
+      [1] "Organism|Liver|Periportal|Intracellular"
+      
+      $modelInitialValues$Global$rows[[1]]$`Molecule Name`
+      [1] "Aciclovir"
+      
+      $modelInitialValues$Global$rows[[1]]$`Is Present`
+      [1] "TRUE"
+      
+      $modelInitialValues$Global$rows[[1]]$Value
+      [1] "0.5"
+      
+      $modelInitialValues$Global$rows[[1]]$Units
+      [1] "µmol"
+      
+      $modelInitialValues$Global$rows[[1]]$`Scale Divisor`
+      [1] "1"
+      
+      $modelInitialValues$Global$rows[[1]]$`Neg. Values Allowed`
+      [1] "FALSE"
       
       
       
@@ -435,10 +480,10 @@
       $Scenarios$Scenarios
       $Scenarios$Scenarios$column_names
        [1] "Scenario_name"         "IndividualId"          "PopulationId"         
-       [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "ApplicationProtocol"  
-       [7] "SimulationTime"        "SimulationTimeUnit"    "SteadyState"          
-      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "ModelFile"            
-      [13] "OutputPathsIds"       
+       [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "InitialValuesSet"     
+       [7] "ApplicationProtocol"   "SimulationTime"        "SimulationTimeUnit"   
+      [10] "SteadyState"           "SteadyStateTime"       "SteadyStateTimeUnit"  
+      [13] "ModelFile"             "OutputPathsIds"       
       
       $Scenarios$Scenarios$rows
       $Scenarios$Scenarios$rows[[1]]
@@ -455,6 +500,9 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[1]]$ModelParameterSheets
+      [1] "Global"
+      
+      $Scenarios$Scenarios$rows[[1]]$InitialValuesSet
       [1] "Global"
       
       $Scenarios$Scenarios$rows[[1]]$ApplicationProtocol
@@ -498,6 +546,9 @@
       $Scenarios$Scenarios$rows[[2]]$ModelParameterSheets
       [1] "\"Global\", \"Aciclovir\", \"Sheet, with comma\""
       
+      $Scenarios$Scenarios$rows[[2]]$InitialValuesSet
+      [1] NA
+      
       $Scenarios$Scenarios$rows[[2]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
       
@@ -538,6 +589,9 @@
       
       $Scenarios$Scenarios$rows[[3]]$ModelParameterSheets
       [1] "Global"
+      
+      $Scenarios$Scenarios$rows[[3]]$InitialValuesSet
+      [1] NA
       
       $Scenarios$Scenarios$rows[[3]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
@@ -580,6 +634,9 @@
       $Scenarios$Scenarios$rows[[4]]$ModelParameterSheets
       [1] "Global"
       
+      $Scenarios$Scenarios$rows[[4]]$InitialValuesSet
+      [1] NA
+      
       $Scenarios$Scenarios$rows[[4]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
       
@@ -620,6 +677,9 @@
       
       $Scenarios$Scenarios$rows[[5]]$ModelParameterSheets
       [1] "Global, MissingParam"
+      
+      $Scenarios$Scenarios$rows[[5]]$InitialValuesSet
+      [1] NA
       
       $Scenarios$Scenarios$rows[[5]]$ApplicationProtocol
       [1] "Aciclovir_iv_250mg"
@@ -1910,30 +1970,32 @@
       1                    modelFolder                    Models/Simulations/
       2           configurationsFolder                        Configurations/
       3                modelParamsFile                   ModelParameters.xlsx
-      4                individualsFile                       Individuals.xlsx
-      5                populationsFile                       Populations.xlsx
-      6              populationsFolder                         PopulationsCSV
-      7                  scenariosFile                         Scenarios.xlsx
-      8               applicationsFile                      Applications.xlsx
-      9                      plotsFile                             Plots.xlsx
-      10                    dataFolder                                  Data/
-      11                      dataFile        TestProject_TimeValuesData.xlsx
-      12 dataImporterConfigurationFile esqlabs_dataImporter_configuration.xml
-      13                  outputFolder                               Results/
+      4         modelInitialValuesFile                ModelInitialValues.xlsx
+      5                individualsFile                       Individuals.xlsx
+      6                populationsFile                       Populations.xlsx
+      7              populationsFolder                         PopulationsCSV
+      8                  scenariosFile                         Scenarios.xlsx
+      9               applicationsFile                      Applications.xlsx
+      10                     plotsFile                             Plots.xlsx
+      11                    dataFolder                                  Data/
+      12                      dataFile        TestProject_TimeValuesData.xlsx
+      13 dataImporterConfigurationFile esqlabs_dataImporter_configuration.xml
+      14                  outputFolder                               Results/
                                                                                                                                 Description
       1                                                Path to the folder with pkml simulation files; relative to the location of this file
       2                                     Path to the folder with excel files with parametrization; relative to the location of this file
       3                                     Name of the excel file with global model parametrization. Must be located in the "paramsFolder"
-      4                        Name of the excel file with individual-specific model parametrization. Must be located in the "paramsFolder"
-      5                                           Name of the excel file with population information. Must be located in the "paramsFolder"
-      6                                                                           Name of the folder containing population defined in files
-      7                                             Name of the excel file with scenario definitions. Must be located in the "paramsFolder"
-      8  Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the "paramsFolder"
-      9                                                 Name of the excel file with plot definitions. Must be located in the "paramsFolder"
-      10                                Path to the folder where experimental data files are located; relative to the location of this file
-      11                                                 Name of the excel file with experimental data. Must be located in the "dataFolder"
-      12                  Name of data importer configuration file in xml format used to load the data. Must be located in the "dataFolder"
-      13                                     Path to the folder where the results should be saved to; relative to the location of this file
+      4               Name of the excel file with initial conditions (molecule start values). Must be located in the "configurationsFolder"
+      5                        Name of the excel file with individual-specific model parametrization. Must be located in the "paramsFolder"
+      6                                           Name of the excel file with population information. Must be located in the "paramsFolder"
+      7                                                                           Name of the folder containing population defined in files
+      8                                             Name of the excel file with scenario definitions. Must be located in the "paramsFolder"
+      9  Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the "paramsFolder"
+      10                                                Name of the excel file with plot definitions. Must be located in the "paramsFolder"
+      11                                Path to the folder where experimental data files are located; relative to the location of this file
+      12                                                 Name of the excel file with experimental data. Must be located in the "dataFolder"
+      13                  Name of data importer configuration file in xml format used to load the data. Must be located in the "dataFolder"
+      14                                     Path to the folder where the results should be saved to; relative to the location of this file
       
       
       $modelParameterSets
@@ -1971,6 +2033,21 @@
       $modelParameterSets$Aciclovir$rows
         Container Path Parameter Name Value     Units
       1      Aciclovir  Lipophilicity  -0.1 Log Units
+      
+      
+      
+      $modelInitialValues
+      $modelInitialValues$Global
+      $modelInitialValues$Global$column_names
+      [1] "Container Path"      "Molecule Name"       "Is Present"         
+      [4] "Value"               "Units"               "Scale Divisor"      
+      [7] "Neg. Values Allowed"
+      
+      $modelInitialValues$Global$rows
+                                 Container Path Molecule Name Is Present Value Units
+      1 Organism|Liver|Periportal|Intracellular     Aciclovir       TRUE   0.5  µmol
+        Scale Divisor Neg. Values Allowed
+      1             1               FALSE
       
       
       
@@ -2036,10 +2113,10 @@
       $Scenarios$Scenarios
       $Scenarios$Scenarios$column_names
        [1] "Scenario_name"         "IndividualId"          "PopulationId"         
-       [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "ApplicationProtocol"  
-       [7] "SimulationTime"        "SimulationTimeUnit"    "SteadyState"          
-      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "ModelFile"            
-      [13] "OutputPathsIds"       
+       [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "InitialValuesSet"     
+       [7] "ApplicationProtocol"   "SimulationTime"        "SimulationTimeUnit"   
+      [10] "SteadyState"           "SteadyStateTime"       "SteadyStateTimeUnit"  
+      [13] "ModelFile"             "OutputPathsIds"       
       
       $Scenarios$Scenarios$rows
                     Scenario_name IndividualId   PopulationId ReadPopulationFromCSV
@@ -2048,24 +2125,30 @@
       3        PopulationScenario       Indiv1 TestPopulation                 FALSE
       4 PopulationScenarioFromCSV       Indiv1 TestPopulation                  TRUE
       5 TestScenario_missingParam       Indiv1           <NA>                  <NA>
-                              ModelParameterSheets ApplicationProtocol
-      1                                     Global  Aciclovir_iv_250mg
-      2 "Global", "Aciclovir", "Sheet, with comma"  Aciclovir_iv_250mg
-      3                                     Global  Aciclovir_iv_250mg
-      4                                     Global  Aciclovir_iv_250mg
-      5                       Global, MissingParam  Aciclovir_iv_250mg
-             SimulationTime SimulationTimeUnit SteadyState SteadyStateTime
-      1           0, 24, 60                  h        <NA>            <NA>
-      2 0, 1, 60; 1, 12, 20                  h        TRUE             500
-      3           0, 12, 20                  h       FALSE            <NA>
-      4           0, 12, 20                  h       FALSE            <NA>
-      5           0, 24, 60                  h        <NA>            <NA>
-        SteadyStateTimeUnit      ModelFile                    OutputPathsIds
-      1                <NA> Aciclovir.pkml                              <NA>
-      2                 min Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
-      3                <NA> Aciclovir.pkml                              <NA>
-      4                <NA> Aciclovir.pkml                              <NA>
-      5                <NA> Aciclovir.pkml                              <NA>
+                              ModelParameterSheets InitialValuesSet
+      1                                     Global           Global
+      2 "Global", "Aciclovir", "Sheet, with comma"             <NA>
+      3                                     Global             <NA>
+      4                                     Global             <NA>
+      5                       Global, MissingParam             <NA>
+        ApplicationProtocol      SimulationTime SimulationTimeUnit SteadyState
+      1  Aciclovir_iv_250mg           0, 24, 60                  h        <NA>
+      2  Aciclovir_iv_250mg 0, 1, 60; 1, 12, 20                  h        TRUE
+      3  Aciclovir_iv_250mg           0, 12, 20                  h       FALSE
+      4  Aciclovir_iv_250mg           0, 12, 20                  h       FALSE
+      5  Aciclovir_iv_250mg           0, 24, 60                  h        <NA>
+        SteadyStateTime SteadyStateTimeUnit      ModelFile
+      1            <NA>                <NA> Aciclovir.pkml
+      2             500                 min Aciclovir.pkml
+      3            <NA>                <NA> Aciclovir.pkml
+      4            <NA>                <NA> Aciclovir.pkml
+      5            <NA>                <NA> Aciclovir.pkml
+                           OutputPathsIds
+      1                              <NA>
+      2 Aciclovir_PVB, Aciclovir_fat_cell
+      3                              <NA>
+      4                              <NA>
+      5                              <NA>
       
       
       $Scenarios$OutputPaths
@@ -2514,6 +2597,9 @@
       $file_status$modelParameterSets
       [1] "in-sync"
       
+      $file_status$modelInitialValues
+      [1] "in-sync"
+      
       $file_status$Individuals
       [1] "in-sync"
       
@@ -2556,6 +2642,9 @@
       $file_status$modelParameterSets
       [1] "in-sync"
       
+      $file_status$modelInitialValues
+      [1] "in-sync"
+      
       $file_status$Individuals
       [1] "in-sync"
       
@@ -2594,6 +2683,9 @@
       [1] "in-sync"
       
       $file_status$modelParameterSets
+      [1] "in-sync"
+      
+      $file_status$modelInitialValues
       [1] "in-sync"
       
       $file_status$Individuals

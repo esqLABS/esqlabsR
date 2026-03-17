@@ -30,6 +30,12 @@ messages$errorWrongXLSStructure <- function(
   )
 }
 
+messages$errorMissingUnitsInInitialValues <- function(filePath, moleculePaths) {
+  cliFormat(
+    "Missing units in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. Units must be specified for all molecule initial values."
+  )
+}
+
 messages$wrongParametersStructure <- function(argumentName) {
   cliFormat(
     "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths` 
