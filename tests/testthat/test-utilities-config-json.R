@@ -847,7 +847,9 @@ test_that("snapshotProjectConfiguration handles PK-Sim exported population CSV f
   expect_true("PKSimPopulation.csv" %in% names(configData$populationsCSV))
 
   # Verify the column names are correctly parsed (not the broken check.names format)
-  pksim_col_names <- configData$populationsCSV[["PKSimPopulation.csv"]]$column_names
+  pksim_col_names <- configData$populationsCSV[[
+    "PKSimPopulation.csv"
+  ]]$column_names
   expect_true("IndividualId" %in% pksim_col_names)
   expect_true("Gender" %in% pksim_col_names)
   # Verify pipe-separated parameter paths are preserved (not converted to dots)
