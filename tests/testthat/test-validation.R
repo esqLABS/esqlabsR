@@ -900,7 +900,8 @@ test_that(".validateScenariosFile warns about empty Scenarios sheet", {
         IndividualId = character(),
         PopulationId = character(),
         ApplicationProtocol = character(),
-        SteadyStateTime = numeric()
+        SteadyStateTime = numeric(),
+        OverwriteFormulasInSS = logical()
       ),
       OutputPaths = data.frame(
         OutputPathId = "OP1",
@@ -924,7 +925,8 @@ test_that(".validateScenariosFile handles valid file", {
         IndividualId = c("ID1", "ID2"),
         PopulationId = c("Pop1", "Pop2"),
         ApplicationProtocol = c("App1", "App2"),
-        SteadyStateTime = c(0, 0)
+        SteadyStateTime = c(0, 0),
+        OverwriteFormulasInSS = c(TRUE, FALSE)
       ),
       OutputPaths = data.frame(
         OutputPathId = c("OP1", "OP2"),

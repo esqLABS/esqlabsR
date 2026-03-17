@@ -37,7 +37,10 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
         scenario$scenarioConfiguration$overwriteFormulasInSS
       )
       if (is.null(steadyStateGroups[[ignoreIfFormulaKey]])) {
-        steadyStateGroups[[ignoreIfFormulaKey]] <- list(simulations = list(), times = list())
+        steadyStateGroups[[ignoreIfFormulaKey]] <- list(
+          simulations = list(),
+          times = list()
+        )
       }
       steadyStateGroups[[ignoreIfFormulaKey]]$simulations <- c(
         steadyStateGroups[[ignoreIfFormulaKey]]$simulations,

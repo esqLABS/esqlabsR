@@ -385,6 +385,7 @@ test_that("It throws an error when reading wrong file structure for scenario con
     "SteadyState",
     "SteadyStateTime",
     "SteadyStateTimeUnit",
+    "OverwriteFormulasInSS",
     "ModelFile",
     "OutputPathsIds"
   )

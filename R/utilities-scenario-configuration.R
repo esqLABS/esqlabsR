@@ -1357,7 +1357,10 @@ addScenarioConfigurationsToExcel <- function(
   for (col in requiredScenarioCols) {
     if (!col %in% colnames(scenariosData)) {
       # Use appropriate NA type
-      if (col %in% c("ReadPopulationFromCSV", "SteadyState", "OverwriteFormulasInSS")) {
+      if (
+        col %in%
+          c("ReadPopulationFromCSV", "SteadyState", "OverwriteFormulasInSS")
+      ) {
         scenariosData[[col]] <- as.logical(NA)
       } else if (col == "SteadyStateTime") {
         scenariosData[[col]] <- as.numeric(NA)
