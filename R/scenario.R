@@ -102,27 +102,18 @@ Scenario <- R6::R6Class(
           ))
         }
 
-        # Find individual-specific model parameters
-        excelSheets <- readxl::excel_sheets(
-          path = scenarioConfiguration$projectConfiguration$individualsFile
+        # Find and apply individual-specific model parameters
+        indivParams <- .readIndividualParameterSetsFromXLS(
+          XLSpath = scenarioConfiguration$projectConfiguration$individualsFile,
+          individualId = scenarioConfiguration$individualId,
+          scenarioName = scenarioConfiguration$scenarioName
         )
 
-        if (any(excelSheets == scenarioConfiguration$individualId)) {
-          indivModelParams <- readParametersFromXLS(
-            scenarioConfiguration$projectConfiguration$individualsFile,
-            sheets = scenarioConfiguration$individualId
-          )
-
-          # Add individual model parameters to the parameters structure
+        if (!is.null(indivParams)) {
           params <- extendParameterStructure(
             parameters = params,
-            newParameters = indivModelParams
+            newParameters = indivParams
           )
-        } else {
-          warning(messages$warningNoIndividualSpecificModelParameters(
-            scenarioName = scenarioConfiguration$scenarioName,
-            individualId = scenarioConfiguration$individualId
-          ))
         }
       }
 

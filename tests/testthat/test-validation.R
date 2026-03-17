@@ -519,6 +519,7 @@ test_that(".validateIndividualsFile detects duplicate IndividualId", {
         `Age [year(s)]` = c(30, 40),
         `Height [cm]` = c(175, 165),
         `Weight [kg]` = c(70, 60),
+        `Individual Parameter Sets` = c(NA_character_, NA_character_),
         check.names = FALSE
       )
     ),
@@ -543,6 +544,7 @@ test_that(".validateIndividualsFile warns about non-numeric columns", {
         `Age [year(s)]` = c("thirty", "forty"),
         `Height [cm]` = c(175, 165),
         `Weight [kg]` = c(70, 60),
+        `Individual Parameter Sets` = c(NA_character_, NA_character_),
         check.names = FALSE
       )
     ),
@@ -567,6 +569,7 @@ test_that(".validateIndividualsFile handles valid file", {
         `Age [year(s)]` = c(30, 40),
         `Height [cm]` = c(175, 165),
         `Weight [kg]` = c(70, 60),
+        `Individual Parameter Sets` = c(NA_character_, NA_character_),
         check.names = FALSE
       )
     ),
