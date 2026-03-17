@@ -268,24 +268,6 @@ messages$warningNoIndividualCharacteristics <- function(
   )
 }
 
-messages$warningNoIndividualSpecificModelParameters <- function(
-  scenarioName,
-  individualId
-) {
-  cliFormat(
-    "Scenario {.val {scenarioName}}: No individual specific model parameters for individual id {.val {individualId}} found."
-  )
-}
-
-messages$warningIndividualParameterSetNotFound <- function(
-  scenarioName,
-  parameterSetName
-) {
-  cliFormat(
-    "Scenario {.val {scenarioName}}: Individual parameter set {.val {parameterSetName}} not found in the individuals file."
-  )
-}
-
 messages$errorIndividualParameterSetNotFound <- function(
   scenarioName,
   parameterSetName
