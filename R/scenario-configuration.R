@@ -82,9 +82,9 @@ ScenarioConfiguration <- R6::R6Class(
         private$.overwriteFormulasInSS
       } else {
         validateIsLogical(value)
-        # If the value is `NA`, do not change
+        # If the value is `NA`, treat as `FALSE`
         if (is.na(value)) {
-          invisible()
+          private$.overwriteFormulasInSS <- FALSE
         } else {
           private$.overwriteFormulasInSS <- value
         }
@@ -222,10 +222,7 @@ a parameter sheet from the list"
           "Individual Id" = self$individualId,
           "Population Id" = self$populationId,
           "Read population from csv file" = self$readPopulationFromCSV,
-          "Parameters sheets" = enumKeys(self$paramSheets),
-          "Simulate steady-state" = self$simulateSteadyState,
-          "Steady-state time" = self$steadyStateTime,
-          "Overwrite formulas in steady-state" = self$overwriteFormulasInSS
+          "Parameters sheets" = enumKeys(self$paramSheets)
         ),
         print_empty = TRUE
       )
