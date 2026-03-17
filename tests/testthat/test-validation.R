@@ -1350,16 +1350,16 @@ test_that(".validatePlotsFile detects NA path for simulated rows", {
   openxlsx::write.xlsx(
     list(
       DataCombined = data.frame(
-        DataCombinedName = "DC1",
-        dataType = "simulated",
-        label = "L1",
-        scenario = "S1",
-        path = NA_character_
+        DataCombinedName = c("DC1", "DC2"),
+        dataType = c("simulated", "simulated"),
+        label = c("L1", "L2"),
+        scenario = c("S1", "S2"),
+        path = c("some/path", NA_character_)
       ),
       plotConfiguration = data.frame(
-        DataCombinedName = "DC1",
-        plotID = "P1",
-        plotType = "individual"
+        DataCombinedName = c("DC1", "DC2"),
+        plotID = c("P1", "P2"),
+        plotType = c("individual", "individual")
       )
     ),
     temp_file
@@ -1408,15 +1408,15 @@ test_that(".validatePlotsFile detects NA dataSet for observed rows", {
   openxlsx::write.xlsx(
     list(
       DataCombined = data.frame(
-        DataCombinedName = "DC1",
-        dataType = "observed",
-        label = "L1",
-        dataSet = NA_character_
+        DataCombinedName = c("DC1", "DC2"),
+        dataType = c("observed", "observed"),
+        label = c("L1", "L2"),
+        dataSet = c("dataset1", NA_character_)
       ),
       plotConfiguration = data.frame(
-        DataCombinedName = "DC1",
-        plotID = "P1",
-        plotType = "individual"
+        DataCombinedName = c("DC1", "DC2"),
+        plotID = c("P1", "P2"),
+        plotType = c("individual", "individual")
       )
     ),
     temp_file
@@ -1444,9 +1444,9 @@ test_that(".validatePlotsFile detects missing DataCombinedName values in plotCon
         path = "some/path"
       ),
       plotConfiguration = data.frame(
-        DataCombinedName = NA_character_,
-        plotID = "P1",
-        plotType = "individual"
+        DataCombinedName = c("DC1", NA_character_),
+        plotID = c("P1", "P2"),
+        plotType = c("individual", "individual")
       )
     ),
     temp_file
@@ -1474,9 +1474,9 @@ test_that(".validatePlotsFile detects missing plotType values in plotConfigurati
         path = "some/path"
       ),
       plotConfiguration = data.frame(
-        DataCombinedName = "DC1",
-        plotID = "P1",
-        plotType = NA_character_
+        DataCombinedName = c("DC1", "DC1"),
+        plotID = c("P1", "P2"),
+        plotType = c("individual", NA_character_)
       )
     ),
     temp_file
@@ -1542,8 +1542,8 @@ test_that(".validatePlotsFile detects missing plotIDs values in plotGrids", {
         plotType = "individual"
       ),
       plotGrids = data.frame(
-        name = "Grid1",
-        plotIDs = NA_character_
+        name = c("Grid1", "Grid2"),
+        plotIDs = c("P1", NA_character_)
       )
     ),
     temp_file
@@ -1726,6 +1726,184 @@ test_that(".validatePopulationsFile accepts valid extendPopulationFromXLS sheets
   )
 
   result <- esqlabsR:::.validatePopulationsFile(temp_file)
+  expect_true(result$is_valid())
+
+  unlink(temp_file)
+})
+
+# Coverage tests for createProjectConfiguration validate=TRUE ----
+
+test_that("createProjectConfiguration with validate=TRUE shows summary", {
+  test_config_path <- system.file(
+    "extdata/examples/TestProject/ProjectConfiguration.xlsx",
+    package = "esqlabsR"
+  )
+  skip_if(!file.exists(test_config_path))
+
+  # Capture both messages and warnings to cover both paths
+  expect_message(
+    withCallingHandlers(
+      config <- createProjectConfiguration(
+        path = test_config_path,
+        validate = TRUE
+      ),
+      warning = function(w) invokeRestart("muffleWarning")
+    ),
+    "Validation"
+  )
+  expect_true(inherits(config, "ProjectConfiguration"))
+})
+
+test_that("snapshotProjectConfiguration validate warns on critical errors", {
+  # Use a mock config object with non-existent file paths to trigger errors
+  mockConfig <- list(
+    scenariosFile = "nonexistent_scenarios.xlsx",
+    plotsFile = "nonexistent_plots.xlsx",
+    individualsFile = NA_character_,
+    populationsFile = NA_character_,
+    modelParamsFile = NA_character_,
+    applicationsFile = NA_character_,
+    projectConfigurationFilePath = "ProjectConfiguration.xlsx",
+    populationsFolder = NA_character_
+  )
+  class(mockConfig) <- c("ProjectConfiguration", class(mockConfig))
+
+  temp_dir <- tempdir()
+  expect_message(
+    expect_warning(
+      snapshotProjectConfiguration(
+        projectConfig = mockConfig,
+        outputDir = temp_dir,
+        validate = TRUE
+      ),
+      "critical"
+    ),
+    "Validation"
+  )
+
+  # Clean up
+  json_file <- file.path(temp_dir, "ProjectConfiguration.json")
+  if (file.exists(json_file)) unlink(json_file)
+})
+
+# Coverage tests for snapshotProjectConfiguration validate=TRUE ----
+
+test_that("snapshotProjectConfiguration with validate=TRUE shows summary", {
+  test_config_path <- system.file(
+    "extdata/examples/TestProject/ProjectConfiguration.xlsx",
+    package = "esqlabsR"
+  )
+  skip_if(!file.exists(test_config_path))
+
+  temp_dir <- tempdir()
+  expect_message(
+    withCallingHandlers(
+      snapshotProjectConfiguration(
+        projectConfig = test_config_path,
+        outputDir = temp_dir,
+        validate = TRUE
+      ),
+      warning = function(w) invokeRestart("muffleWarning")
+    ),
+    "Validation"
+  )
+
+  # Clean up
+  json_file <- file.path(temp_dir, "ProjectConfiguration.json")
+  if (file.exists(json_file)) unlink(json_file)
+})
+
+# Additional coverage tests for validation-plots.R ----
+
+test_that(".validatePlotsFile detects NA scenario values for simulated rows", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = c("DC1", "DC2"),
+        dataType = c("simulated", "simulated"),
+        label = c("L1", "L2"),
+        scenario = c("S1", NA_character_),
+        path = c("some/path", "other/path")
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = c("DC1", "DC2"),
+        plotID = c("P1", "P2"),
+        plotType = c("individual", "individual")
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Missing Fields" && grepl("[Ss]cenario", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile warns about empty plotConfiguration sheet", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1",
+        path = "some/path"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = character(),
+        plotID = character(),
+        plotType = character()
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_warning <- any(sapply(
+    result$warnings,
+    \(e) grepl("plotConfiguration", e$message)
+  ))
+  expect_true(has_warning)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile handles valid cross-references without errors", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = c("DC1", "DC2"),
+        dataType = c("simulated", "observed"),
+        label = c("L1", "L2"),
+        scenario = c("S1", NA),
+        path = c("some/path", NA),
+        dataSet = c(NA, "dataset1")
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = c("DC1", "DC2"),
+        plotID = c("P1", "P2"),
+        plotType = c("individual", "individual")
+      ),
+      plotGrids = data.frame(
+        name = "Grid1",
+        plotIDs = "P1, P2"
+      ),
+      exportConfiguration = data.frame(
+        name = "output1"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
   expect_true(result$is_valid())
 
   unlink(temp_file)
