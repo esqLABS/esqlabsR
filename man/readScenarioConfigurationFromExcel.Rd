@@ -33,6 +33,10 @@ following columns: \code{Scenario_name}, \code{IndividualId}, \code{PopulationId
 \code{SimulationTime}, \code{SimulationTimeUnit}, \code{SteadyState}, \code{SteadyStateTime},
 \code{SteadyStateTimeUnit}, \code{ModelFile}, \code{OutputPathsIds}. It also expects an
 "OutputPaths" sheet with \code{OutputPathId} and \code{OutputPath} columns.
+
+For upfront structural validation of the scenarios Excel file, use
+\code{\link[=validateAllConfigurations]{validateAllConfigurations()}} which checks sheet structure, required
+columns, scenario name uniqueness, and cross-references.
 }
 \examples{
 \dontrun{

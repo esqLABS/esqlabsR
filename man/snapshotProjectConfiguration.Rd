@@ -7,6 +7,7 @@
 snapshotProjectConfiguration(
   projectConfig = "ProjectConfiguration.xlsx",
   outputDir = NULL,
+  validate = TRUE,
   ...
 )
 }
@@ -17,6 +18,10 @@ ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".}
 \item{outputDir}{Directory where the JSON file will be saved. If NULL
 (default), the JSON file will be created in the same directory as the
 source Excel file.}
+
+\item{validate}{Logical. If \code{TRUE} (default), runs
+\code{validateAllConfigurations()} before snapshotting. If critical errors are
+found, a warning is issued but the snapshot proceeds.}
 
 \item{...}{Additional arguments.}
 }

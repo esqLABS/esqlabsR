@@ -212,6 +212,11 @@ createDataCombinedFromExcel <- function(
 
 #' Validate and process the 'DataCombined' sheet
 #'
+#' Performs runtime validation that requires actual simulation/observation data.
+#' For upfront structural validation of Excel files, use
+#' [validateAllConfigurations()] which checks column structure, mandatory fields,
+#' and cross-references without needing runtime data.
+#'
 #' @param dfDataCombined Data frame created by reading the ' DataCombined' sheet
 #' @param simulatedScenarios List of simulated scenarios as created by
 #'   `runScenarios()`

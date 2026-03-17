@@ -4,11 +4,18 @@
 \alias{createProjectConfiguration}
 \title{Create a \code{ProjectConfiguration}}
 \usage{
-createProjectConfiguration(path = file.path("ProjectConfiguration.xlsx"))
+createProjectConfiguration(
+  path = file.path("ProjectConfiguration.xlsx"),
+  validate = FALSE
+)
 }
 \arguments{
 \item{path}{path to the \code{ProjectConfiguration.xlsx} file. default to the
 \code{ProjectConfiguration.xlsx} file located in the working directory.}
+
+\item{validate}{Logical. If \code{TRUE}, runs \code{validateAllConfigurations()} on
+the created configuration and prints the validation summary. If critical
+errors are found, a warning is issued. Defaults to \code{FALSE}.}
 }
 \value{
 Object of type \code{ProjectConfiguration}

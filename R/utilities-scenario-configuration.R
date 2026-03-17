@@ -18,6 +18,10 @@
 #'   `SteadyStateTimeUnit`, `ModelFile`, `OutputPathsIds`. It also expects an
 #'   "OutputPaths" sheet with `OutputPathId` and `OutputPath` columns.
 #'
+#'   For upfront structural validation of the scenarios Excel file, use
+#'   [validateAllConfigurations()] which checks sheet structure, required
+#'   columns, scenario name uniqueness, and cross-references.
+#'
 #' @returns A named list of `ScenarioConfiguration` objects with the names of
 #'   the list being scenario names.
 #' @export

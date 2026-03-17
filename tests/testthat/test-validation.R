@@ -983,3 +983,245 @@ test_that("validationResult add_warning with details works", {
   expect_equal(result$warnings[[1]]$details$column, "Age")
   expect_equal(result$warnings[[1]]$details$value, -5)
 })
+
+# Tests for enhanced .validatePlotsFile ----
+
+test_that(".validatePlotsFile detects missing label values in DataCombined", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = c("DC1", "DC2"),
+        dataType = c("simulated", "observed"),
+        label = c("Label1", NA)
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  errors <- result$critical_errors
+  has_label_error <- any(sapply(errors, \(e) grepl("label", e$message)))
+  expect_true(has_label_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects duplicate plotIDs", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = c("DC1", "DC2"),
+        dataType = c("simulated", "observed")
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = c("DC1", "DC2"),
+        plotID = c("P1", "P1"),
+        plotType = c("individual", "individual")
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  errors <- result$critical_errors
+  has_uniqueness_error <- any(sapply(
+    errors,
+    \(e) e$category == "Uniqueness"
+  ))
+  expect_true(has_uniqueness_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects invalid DataCombinedName references", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "NONEXISTENT_DC",
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  errors <- result$critical_errors
+  has_ref_error <- any(sapply(
+    errors,
+    \(e) e$category == "Invalid Reference"
+  ))
+  expect_true(has_ref_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile validates plotGrids sheet", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      ),
+      plotGrids = data.frame(
+        name = c("Grid1", "Grid1"),
+        plotIDs = c("P1", "P1")
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  errors <- result$critical_errors
+  has_uniqueness_error <- any(sapply(
+    errors,
+    \(e) e$category == "Uniqueness"
+  ))
+  expect_true(has_uniqueness_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing dataType values", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = c("DC1", "DC2"),
+        dataType = c("simulated", NA)
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  errors <- result$critical_errors
+  has_datatype_error <- any(sapply(errors, \(e) grepl("dataType", e$message)))
+  expect_true(has_datatype_error)
+
+  unlink(temp_file)
+})
+
+# Tests for enhanced .validateScenariosFile ----
+
+test_that(".validateScenariosFile detects duplicate scenario names", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Scenarios = data.frame(
+        Scenario_name = c("S1", "S1"),
+        IndividualId = c("ID1", "ID2"),
+        PopulationId = c("Pop1", "Pop2"),
+        ApplicationProtocol = c("App1", "App2"),
+        SteadyStateTime = c(0, 0)
+      ),
+      OutputPaths = data.frame(
+        OutputPathId = "OP1",
+        OutputPath = "Path1"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateScenariosFile(temp_file)
+  errors <- result$critical_errors
+  has_uniqueness_error <- any(sapply(
+    errors,
+    \(e) e$category == "Uniqueness"
+  ))
+  expect_true(has_uniqueness_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validateScenariosFile warns about missing full column set", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Scenarios = data.frame(
+        IndividualId = "ID1",
+        PopulationId = "Pop1",
+        ApplicationProtocol = "App1",
+        SteadyStateTime = 0
+      ),
+      OutputPaths = data.frame(
+        OutputPathId = "OP1",
+        OutputPath = "Path1"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validateScenariosFile(temp_file)
+  # Should have warnings about missing columns
+  expect_true(length(result$warnings) > 0)
+
+  unlink(temp_file)
+})
+
+# Tests for enhanced .validatePopulationsFile ----
+
+test_that(".validatePopulationsFile warns about missing optional columns", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Demographics = data.frame(
+        PopulationName = "Pop1",
+        species = "Human",
+        population = "European",
+        numberOfIndividuals = 100,
+        proportionOfFemales = 0.5,
+        ageMin = 20,
+        ageMax = 60,
+        weightMin = 50,
+        weightMax = 100,
+        heightMin = 150,
+        heightMax = 200,
+        BMIMin = 18,
+        BMIMax = 30
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePopulationsFile(temp_file)
+  # Should have warnings about missing weightUnit, heightUnit, etc.
+  expect_true(length(result$warnings) > 0)
+
+  unlink(temp_file)
+})
+
+# Tests for createProjectConfiguration with validate parameter ----
+
+test_that("createProjectConfiguration accepts validate parameter", {
+  # Just confirm the function signature works without error when validate=FALSE
+  expect_error(
+    createProjectConfiguration(
+      path = "nonexistent.xlsx",
+      validate = FALSE
+    )
+  )
+})

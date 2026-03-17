@@ -673,6 +673,25 @@ messages$validationRequiredFileNotConfigured <- function(fileName) {
   )
 }
 
+messages$validationSummaryMessage <- function(nErrors, nWarnings) {
+  if (nErrors == 0 && nWarnings == 0) {
+    cli::format_message(c(
+      "v" = "All configuration files passed validation."
+    ))
+  } else {
+    cli::format_message(c(
+      "!" = "Validation completed with {.val {nErrors}} critical error(s) and {.val {nWarnings}} warning(s)."
+    ))
+  }
+}
+
+messages$validationCriticalErrorsFound <- function(nErrors) {
+  cli::format_message(c(
+    "x" = "Configuration validation found {.val {nErrors}} critical error(s).",
+    "i" = "Run {.run validateAllConfigurations()} for details."
+  ))
+}
+
 messages$excelNoDataRows <- function() {
   cli::format_message(c(
     "x" = "The specified excel sheet does not contain any rows with data.",

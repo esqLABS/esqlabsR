@@ -17,6 +17,9 @@ the plot configurations}
 Processed \code{dfPlotConfigurations}
 }
 \description{
-Validate and process the 'plotConfiguration' sheet
+Performs runtime validation that requires actual DataCombined names.
+For upfront structural validation of Excel files, use
+\code{\link[=validateAllConfigurations]{validateAllConfigurations()}} which checks column structure, mandatory fields,
+plotID uniqueness, and cross-references without needing runtime data.
 }
 \keyword{internal}

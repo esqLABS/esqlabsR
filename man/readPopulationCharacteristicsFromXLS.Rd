@@ -21,6 +21,7 @@ A \code{PopulationCharacteristics} object based on the information in the
 excel file.
 }
 \description{
-Read an excel file containing information about population and create a
-\code{PopulationCharacteristics} object
+For upfront structural validation of the populations Excel file, use
+\code{\link[=validateAllConfigurations]{validateAllConfigurations()}} which checks required columns, population name
+uniqueness, and data ranges.
 }

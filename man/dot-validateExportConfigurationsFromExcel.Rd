@@ -16,6 +16,7 @@
 Processed \code{dfExportConfigurations}
 }
 \description{
-Validate and process the 'exportConfiguration' sheet
+Performs runtime validation that requires actual plotGrids objects.
+For upfront structural validation, use \code{\link[=validateAllConfigurations]{validateAllConfigurations()}}.
 }
 \keyword{internal}

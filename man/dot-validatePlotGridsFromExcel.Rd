@@ -15,6 +15,7 @@
 Processed \code{dfPlotGrids}
 }
 \description{
-Validate and process the 'plotGrids' sheet
+Performs runtime validation that requires actual plot IDs.
+For upfront structural validation, use \code{\link[=validateAllConfigurations]{validateAllConfigurations()}}.
 }
 \keyword{internal}
