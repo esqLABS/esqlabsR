@@ -154,7 +154,7 @@ PKML file:
 | Extracted from PKML | Corresponding argument | Fallback |
 |---|---|---|
 | Application protocol names | `applicationProtocols` | Scenario name |
-| Output paths (`outputSelections`) | `outputPaths` | (none) |
+| Output paths (`outputSelections`) | `outputPaths` | Simulation outputs defined in the PKML/simulation |
 | Simulation time intervals | `simulationTime` | (none) |
 | Simulation time unit | `simulationTimeUnit` | `"min"` |
 
@@ -167,7 +167,7 @@ The typical workflow for this approach consists of two steps:
 **Step 1 — Create scenario configurations from PKML:**
 
 ```{r, eval=FALSE}
-projectConfiguration <- createDefaultProjectConfiguration(path = "path/to/project")
+projectConfiguration <- createProjectConfiguration("path/to/project/ProjectConfiguration.xlsx")
 
 scenarios <- createScenarioConfigurationsFromPKML(
   pkmlFilePaths = "Models/Simulations/simulation.pkml",
@@ -248,18 +248,18 @@ scenarios <- createScenarioConfigurationsFromPKML(
 
 ### Custom output paths
 
-Supply a **named vector** for `outputPaths` to assign short aliases to the
-full model paths. The names become the `OutputPathId` values in `OutputPaths`
-sheet of `Scenarios.xlsx`:
+Supply a **named vector**, wrapped in a list, for `outputPaths` to assign
+short aliases to the full model paths. The names become the `OutputPathId`
+values in the `OutputPaths` sheet of `Scenarios.xlsx`:
 
 ```{r, eval=FALSE}
 scenarios <- createScenarioConfigurationsFromPKML(
   pkmlFilePaths = "Models/Simulations/simulation.pkml",
   projectConfiguration = projectConfiguration,
-  outputPaths = c(
+  outputPaths = list(c(
     "plasma" = "Organism|PeripheralVenousBlood|Drug|Plasma (Peripheral Venous Blood)",
     "liver"  = "Organism|Liver|Intracellular|Drug|Concentration in container"
-  )
+  ))
 )
 ```
 
@@ -487,8 +487,10 @@ be generated for, separated by a comma, e.g.,
 `Aciclovir_PVB, Aciclovir_fat_cell`.
 
 When creating scenarios programmatically with `createScenarioConfigurationsFromPKML()`,
-you can use a named vector for `outputPaths` where the names become the `OutputPathId`
-values automatically — see [Custom output paths](#custom-output-paths) above.
+you can provide `outputPaths` as a list of named vectors (one element per scenario),
+where the element names become the `OutputPathId` values automatically — see
+[Custom output paths](#custom-output-paths) above. Avoid passing a bare named vector,
+which would be recycled across scenarios.
 
 ### Scenario parameterization hierarchy
 
