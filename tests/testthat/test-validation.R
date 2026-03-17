@@ -1258,3 +1258,475 @@ test_that("createProjectConfiguration accepts validate parameter", {
     regexp = "nonexistent\\.xlsx"
   )
 })
+
+# Additional coverage tests for validation-plots.R ----
+
+test_that(".validatePlotsFile detects missing label column", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Structure" && grepl("label", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing scenario column for simulated rows", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Structure" && grepl("scenario", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing path column for simulated rows", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Structure" && grepl("path", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects NA path for simulated rows", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1",
+        path = NA_character_
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Missing Fields" && grepl("[Pp]ath", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing dataSet column for observed rows", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "observed",
+        label = "L1"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Structure" && grepl("dataSet", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects NA dataSet for observed rows", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "observed",
+        label = "L1",
+        dataSet = NA_character_
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Missing Fields" && grepl("[Dd]ata.?[Ss]et", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing DataCombinedName values in plotConfiguration", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1",
+        path = "some/path"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = NA_character_,
+        plotID = "P1",
+        plotType = "individual"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Missing Fields" && grepl("DataCombinedName", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing plotType values in plotConfiguration", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1",
+        path = "some/path"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = NA_character_
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Missing Fields" && grepl("plotType", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing required columns in plotGrids", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1",
+        path = "some/path"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      ),
+      plotGrids = data.frame(
+        wrongColumn = "value"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Structure" && grepl("plotGrids", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing plotIDs values in plotGrids", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1",
+        path = "some/path"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      ),
+      plotGrids = data.frame(
+        name = "Grid1",
+        plotIDs = NA_character_
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Missing Fields" && grepl("plotIDs", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects invalid plotID references in plotGrids", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1",
+        path = "some/path"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      ),
+      plotGrids = data.frame(
+        name = "Grid1",
+        plotIDs = "P1, NONEXISTENT"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Invalid Reference"
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects missing name column in exportConfiguration", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1",
+        path = "some/path"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      ),
+      exportConfiguration = data.frame(
+        wrongColumn = "value"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Structure" && grepl("exportConfiguration", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePlotsFile detects NA name in exportConfiguration", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      DataCombined = data.frame(
+        DataCombinedName = "DC1",
+        dataType = "simulated",
+        label = "L1",
+        scenario = "S1",
+        path = "some/path"
+      ),
+      plotConfiguration = data.frame(
+        DataCombinedName = "DC1",
+        plotID = "P1",
+        plotType = "individual"
+      ),
+      exportConfiguration = data.frame(
+        name = c("output1", NA_character_),
+        format = c("png", "png")
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePlotsFile(temp_file)
+  has_warning <- any(sapply(
+    result$warnings,
+    \(e) e$category == "Missing Fields"
+  ))
+  expect_true(has_warning)
+
+  unlink(temp_file)
+})
+
+# Additional coverage tests for validation-populations.R ----
+
+test_that(".validatePopulationsFile validates extendPopulationFromXLS sheets", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Demographics = data.frame(
+        PopulationName = "Pop1",
+        species = "Human",
+        population = "European",
+        numberOfIndividuals = 100,
+        proportionOfFemales = 0.5,
+        ageMin = 20, ageMax = 60,
+        weightMin = 50, weightMax = 100, weightUnit = "kg",
+        heightMin = 150, heightMax = 200, heightUnit = "cm",
+        BMIMin = 18, BMIMax = 30, BMIUnit = "kg/m2",
+        `Protein Ontogenies` = "CYP3A4:CYP3A4",
+        check.names = FALSE
+      ),
+      ParamSheet1 = data.frame(
+        WrongCol = "value"
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePopulationsFile(temp_file)
+  has_error <- any(sapply(
+    result$critical_errors,
+    \(e) e$category == "Structure" && grepl("extendPopulationFromXLS", e$message)
+  ))
+  expect_true(has_error)
+
+  unlink(temp_file)
+})
+
+test_that(".validatePopulationsFile accepts valid extendPopulationFromXLS sheets", {
+  temp_file <- tempfile(fileext = ".xlsx")
+  openxlsx::write.xlsx(
+    list(
+      Demographics = data.frame(
+        PopulationName = "Pop1",
+        species = "Human",
+        population = "European",
+        numberOfIndividuals = 100,
+        proportionOfFemales = 0.5,
+        ageMin = 20, ageMax = 60,
+        weightMin = 50, weightMax = 100, weightUnit = "kg",
+        heightMin = 150, heightMax = 200, heightUnit = "cm",
+        BMIMin = 18, BMIMax = 30, BMIUnit = "kg/m2",
+        `Protein Ontogenies` = "CYP3A4:CYP3A4",
+        check.names = FALSE
+      ),
+      ParamSheet1 = data.frame(
+        `Container Path` = "Org|Path",
+        `Parameter Name` = "Param1",
+        Mean = 1.0,
+        SD = 0.1,
+        Distribution = "Normal",
+        check.names = FALSE
+      )
+    ),
+    temp_file
+  )
+
+  result <- esqlabsR:::.validatePopulationsFile(temp_file)
+  expect_true(result$is_valid())
+
+  unlink(temp_file)
+})
