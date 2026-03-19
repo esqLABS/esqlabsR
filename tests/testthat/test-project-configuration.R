@@ -127,7 +127,7 @@ test_that("An error is raised when the stored version does not match the current
 
   expect_error(
     createProjectConfiguration(path = temp_file),
-    regexp = "Aborted by user"
+    regexp = "esqlabsR version mismatch"
   )
 })
 
@@ -142,7 +142,7 @@ test_that("An error is raised when no version is stored in the project configura
 
   expect_error(
     createProjectConfiguration(path = temp_file),
-    regexp = "Aborted by user"
+    regexp = "esqlabsR version mismatch"
   )
 })
 
