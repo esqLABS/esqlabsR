@@ -244,3 +244,60 @@ local_test_project <- function(
     configurations_dir = file.path(temp_dir, "Configurations")
   )
 }
+
+# Creates a minimal valid set of PI Excel sheets (all 5 sheets) for a single
+# task, suitable as a base for tests that manipulate specific fields.
+createValidPISheets <- function() {
+  list(
+    PIConfiguration = data.frame(
+      PITaskName = "Task1",
+      Algorithm = "BOBYQA",
+      CIMethod = "hessian",
+      PrintEvaluationFeedback = TRUE,
+      AutoEstimateCI = FALSE,
+      numberOfCores = NA_real_,
+      checkForNegativeValues = NA,
+      ObjectiveFunctionType = NA,
+      ResidualWeightingMethod = NA,
+      RobustMethod = NA,
+      ScaleVar = NA,
+      LinScaleCV = NA,
+      LogScaleSD = NA
+    ),
+    PIParameters = data.frame(
+      PITaskName = "Task1",
+      Scenarios = "PITestScenario",
+      `Container Path` = "Aciclovir",
+      `Parameter Name` = "Lipophilicity",
+      Value = -0.1,
+      Units = "Log Units",
+      MinValue = -2,
+      MaxValue = 2,
+      StartValue = -0.1,
+      Group = NA,
+      check.names = FALSE
+    ),
+    PIOutputMappings = data.frame(
+      PITaskName = "Task1",
+      Scenarios = "PITestScenario",
+      ObservedDataSheet = "Laskin 1982.Group A",
+      DataSet = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+      Scaling = "log",
+      xOffset = NA,
+      yOffset = NA,
+      xFactor = NA,
+      yFactor = NA,
+      Weight = NA
+    ),
+    AlgorithmOptions = data.frame(
+      PITaskName = character(0),
+      OptionName = character(0),
+      OptionValue = character(0)
+    ),
+    CIOptions = data.frame(
+      PITaskName = character(0),
+      OptionName = character(0),
+      OptionValue = character(0)
+    )
+  )
+}

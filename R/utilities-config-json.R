@@ -76,7 +76,8 @@ snapshotProjectConfiguration <- function(
     Populations = projectConfig$populationsFile,
     Scenarios = projectConfig$scenariosFile,
     Applications = projectConfig$applicationsFile,
-    Plots = projectConfig$plotsFile
+    Plots = projectConfig$plotsFile,
+    ParameterIdentification = projectConfig$parameterIdentificationFile
   )
 
   # Read each Excel file and store its sheets
@@ -310,7 +311,8 @@ restoreProjectConfiguration <- function(
     Populations = "Populations.xlsx",
     Scenarios = "Scenarios.xlsx",
     Applications = "Applications.xlsx",
-    Plots = "Plots.xlsx"
+    Plots = "Plots.xlsx",
+    ParameterIdentification = "ParameterIdentification.xlsx"
   )
 
   # Process each Excel file
