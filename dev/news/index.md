@@ -12,6 +12,10 @@
   it to
   [`writeParameterStructureToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/writeParameterStructureToXLS.md)
   for writing. No changes to functionality or API.
+- [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombinedFromExcel.md)
+  now throws an error listing all DataCombined IDs that cannot be found
+  in the Excel file
+  ([\#740](https://github.com/esqLABS/esqlabsR/issues/740)).
 - Added a warning when axis limits contain zero while the corresponding
   axis scale is set to `log` in `Plots.xlsx`. Previously, this
   combination silently produced empty plots
