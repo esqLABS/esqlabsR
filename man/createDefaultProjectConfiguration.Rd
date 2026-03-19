@@ -5,12 +5,18 @@
 \title{Create a default \code{ProjectConfiguration}}
 \usage{
 createDefaultProjectConfiguration(
-  path = file.path("ProjectConfiguration.xlsx")
+  path = file.path("ProjectConfiguration.xlsx"),
+  ignoreVersionCheck = FALSE
 )
 }
 \arguments{
 \item{path}{path to the \code{ProjectConfiguration.xlsx} file. Defaults to the
 \code{ProjectConfiguration.xlsx} file in the working directory.}
+
+\item{ignoreVersionCheck}{If \code{TRUE}, skip the version mismatch check when
+loading the configuration file. Use this in non-interactive contexts such
+as automated tests or scripts running from console where interactive user
+input cannot be assured. Defaults to \code{FALSE}.}
 }
 \value{
 Object of type \code{ProjectConfiguration}

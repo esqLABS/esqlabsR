@@ -16,7 +16,10 @@ knitr::opts_chunk$set(
 
 library(esqlabsR)
 
-projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
+projectConfiguration <- createProjectConfiguration(
+  exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
 ```
 
 Running scenarios can be divided into three steps:
