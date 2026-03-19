@@ -7,7 +7,8 @@
 projectConfigurationStatus(
   projectConfig = "ProjectConfiguration.xlsx",
   jsonPath = NULL,
-  silent = FALSE
+  silent = FALSE,
+  ignoreVersionCheck = TRUE
 )
 }
 \arguments{
@@ -20,6 +21,11 @@ ProjectConfiguration file but with .json extension.}
 
 \item{silent}{Logical indicating whether to suppress informational messages.
 Defaults to FALSE.}
+
+\item{ignoreVersionCheck}{Logical. If \code{TRUE}, the version check between the
+stored \code{esqlabsR} version in the configuration and the currently installed
+version is skipped. Defaults to \code{TRUE} because this function focuses on
+file synchronization status, not version compatibility.}
 }
 \value{
 A list with components: \item{in_sync}{Logical indicating whether all
