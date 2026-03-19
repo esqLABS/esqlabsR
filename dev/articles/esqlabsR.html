@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9009</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,7 +120,9 @@ location.</p>
 <p>Loading the project configuration is the first step in any workflow
 using <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"path/to/ProjectConfiguration.xlsx"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span></span>
+<span>  path <span class="op">=</span> <span class="st">"path/to/ProjectConfiguration.xlsx"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <pre><code>ProjectConfiguration: 
    ...
    Model folder: Models/Simulations 
@@ -136,7 +138,10 @@ files that are used in the project.</p>
 <p>To create an example <code>ProjectConfiguration</code> and execute
 the rest of this tutorial, run the following:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span></span>
+<span>  path <span class="op">=</span> <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="version-control-and-project-sharing">Version Control and Project Sharing<a class="anchor" aria-label="anchor" href="#version-control-and-project-sharing"></a>
@@ -259,7 +264,8 @@ can import <code>ScenarioConfiguration</code> using
 <code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code> and
 <code><a href="../reference/loadScenarioResults.html">loadScenarioResults()</a></code>.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span><span class="va">myScenarioResults</span>,</span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span></span>
+<span>  <span class="va">myScenarioResults</span>,</span>
 <span>  projectConfiguration <span class="op">=</span> <span class="va">my_project_configuration</span>,</span>
 <span>  outputFolder <span class="op">=</span> <span class="va">my_project_configuration</span><span class="op">$</span><span class="va">outputFolder</span></span>
 <span><span class="op">)</span></span>
@@ -284,7 +290,8 @@ package.</p>
 <code class="sourceCode R"><span><span class="va">my_datacombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Then, simulation result are added to the dataCombined object:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">myScenarioResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
+<code class="sourceCode R"><span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span></span>
+<span>  <span class="va">myScenarioResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
 <span>  names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
 <span>  groups <span class="op">=</span> <span class="st">"Aciclovir"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -301,7 +308,11 @@ ability to store observed data for them to be plotted.</p>
 <span>  sheets <span class="op">=</span> <span class="st">"Laskin 1982.Group A"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observed_data</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
+<span><span class="va">my_datacombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span></span>
+<span>  <span class="va">observed_data</span>,</span>
+<span>  names <span class="op">=</span> <span class="st">"Observed"</span>,</span>
+<span>  groups <span class="op">=</span> <span class="st">"Aciclovir"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated</a></span><span class="op">(</span><span class="va">my_datacombined</span><span class="op">)</span></span></code></pre></div>
 <p><img src="esqlabsR_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="80%" style="display: block; margin: auto;"></p>

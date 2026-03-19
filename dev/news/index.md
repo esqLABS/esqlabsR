@@ -2,6 +2,27 @@
 
 ## esqlabsR (development version)
 
+### New features
+
+- `ProjectConfiguration` now stores the `esqlabsR` package version it
+  was last saved with. When loading a configuration, the stored version
+  is compared against the currently installed version. On mismatch or
+  missing version, the user is interactively prompted to update the
+  version in the configuration file and continue, or to stop. The user
+  should always consult the [package
+  NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) for breaking
+  changes before confirming the update.
+- Added `ignoreVersionCheck` parameter to
+  [`createProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createProjectConfiguration.md)
+  and
+  [`createDefaultProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDefaultProjectConfiguration.md).
+  When `TRUE`, the version check is skipped. This is intended for
+  non-interactive contexts such as automated tests or scripts run from
+  the console where user input cannot be assured. When using this
+  option, it is the responsibility of the user to ensure that the
+  project is compatible with the currently installed version of
+  `esqlabsR`.
+
 ### Minor improvements and bug fixes
 
 - Refactored

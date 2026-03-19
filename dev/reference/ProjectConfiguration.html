@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9009</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -140,7 +140,12 @@ Must be located in the "dataFolder"</p></dd>
 
 <dt><code>outputFolder</code></dt>
 <dd><p>Path to the folder where the results should be saved
-relative to the "Code" folder
+relative to the "Code" folder</p></dd>
+
+
+<dt><code>esqlabsRVersion</code></dt>
+<dd><p>Version of the esqlabsR package stored in the
+project configuration. Read-only.
 Initialize</p></dd>
 
 
@@ -161,14 +166,22 @@ Initialize</p></dd>
 
 <div class="section">
 <h4 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/ProjectConfiguration.html">ProjectConfiguration</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span>projectConfigurationFilePath <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va"><a href="../reference/ProjectConfiguration.html">ProjectConfiguration</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span></span>
+<span>  projectConfigurationFilePath <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  ignoreVersionCheck <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>projectConfigurationFilePath</code></dt>
 <dd><p>A string representing the path to the
-project configuration file.
+project configuration file.</p></dd>
+
+
+<dt><code>ignoreVersionCheck</code></dt>
+<dd><p>If <code>TRUE</code>, skip the version mismatch check when
+loading the configuration file. Defaults to <code>FALSE</code>.
 Print</p></dd>
 
 

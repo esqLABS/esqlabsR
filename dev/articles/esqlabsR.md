@@ -46,7 +46,9 @@ Loading the project configuration is the first step in any workflow
 using [esqlabsR](https://github.com/esqLABS/esqlabsR).
 
 ``` r
-my_project_configuration <- createProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
+my_project_configuration <- createProjectConfiguration(
+  path = "path/to/ProjectConfiguration.xlsx"
+)
 ```
 
     ProjectConfiguration: 
@@ -67,7 +69,10 @@ To create an example `ProjectConfiguration` and execute the rest of this
 tutorial, run the following:
 
 ``` r
-my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath())
+my_project_configuration <- createProjectConfiguration(
+  path = exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
 ```
 
 ## Version Control and Project Sharing
@@ -190,7 +195,8 @@ and
 [`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.md).
 
 ``` r
-saveScenarioResults(myScenarioResults,
+saveScenarioResults(
+  myScenarioResults,
   projectConfiguration = my_project_configuration,
   outputFolder = my_project_configuration$outputFolder
 )
@@ -222,7 +228,8 @@ my_datacombined <- DataCombined$new()
 Then, simulation result are added to the dataCombined object:
 
 ``` r
-my_datacombined$addSimulationResults(myScenarioResults$TestScenario$results,
+my_datacombined$addSimulationResults(
+  myScenarioResults$TestScenario$results,
   names = "Simulated",
   groups = "Aciclovir"
 )
@@ -246,7 +253,11 @@ observed_data <- loadObservedData(
   sheets = "Laskin 1982.Group A"
 )
 
-my_datacombined$addDataSets(observed_data, names = "Observed", groups = "Aciclovir")
+my_datacombined$addDataSets(
+  observed_data,
+  names = "Observed",
+  groups = "Aciclovir"
+)
 
 plotObservedVsSimulated(my_datacombined)
 ```

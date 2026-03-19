@@ -138,7 +138,10 @@ and load the corresponding observed data.
 ``` r
 library(esqlabsR)
 # Create a project configuration
-projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
+projectConfiguration <- createProjectConfiguration(
+  exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   scenarioNames = "TestScenario",
@@ -152,7 +155,10 @@ simulatedScenarios <- runScenarios(
 
 # Load observed data
 dataSheets <- "Laskin 1982.Group A"
-observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+observedData <- loadObservedData(
+  projectConfiguration = projectConfiguration,
+  sheets = dataSheets
+)
 ```
 
 #### Setup the `Plot.xlsx` file
@@ -253,7 +259,7 @@ residuals <- calculateResiduals(
 sumResiduals <- sum(residuals$residualValues)
 
 print(paste0("The sum of linear residuals for is ", sumResiduals))
-#> [1] "The sum of linear residuals for is 47.1932972249463"
+#> [1] "The sum of linear residuals for is 47.1839262332554"
 ```
 
 You can modify the created `DataCombined`, e.g., by changing the
@@ -302,9 +308,11 @@ For the following examples, we will use the same scenario as described
 in the [Example](#example) above.
 
 ``` r
-library(esqlabsR)
 # Create a project configuration
-projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
+projectConfiguration <- createProjectConfiguration(
+  exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   scenarioNames = "TestScenario",
@@ -318,7 +326,10 @@ simulatedScenarios <- runScenarios(
 
 # Load observed data
 dataSheets <- "Laskin 1982.Group A"
-observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+observedData <- loadObservedData(
+  projectConfiguration = projectConfiguration,
+  sheets = dataSheets
+)
 ```
 
 For the following steps, no `Plots.xlsx` file is needed. Instead, we
@@ -349,7 +360,8 @@ following code:
 ``` r
 dataCombined <- DataCombined$new()
 dataCombined$addDataSets(observedData, names = "Observed", groups = "Aciclovir")
-dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
+dataCombined$addSimulationResults(
+  simulatedScenarios$TestScenario$results,
   names = "Simulated",
   groups = "Aciclovir"
 )
@@ -394,16 +406,28 @@ plotConfig <- createEsqlabsPlotConfiguration()
 gridConfig <- createEsqlabsPlotGridConfiguration()
 
 plotConfig$title <- "Time profile"
-indivPlot <- plotIndividualTimeProfile(dataCombined, defaultPlotConfiguration = plotConfig)
+indivPlot <- plotIndividualTimeProfile(
+  dataCombined,
+  defaultPlotConfiguration = plotConfig
+)
 
 plotConfig$title <- "Observed-vs-simulated"
-obsVsSimPlot <- plotObservedVsSimulated(dataCombined, defaultPlotConfiguration = plotConfig)
+obsVsSimPlot <- plotObservedVsSimulated(
+  dataCombined,
+  defaultPlotConfiguration = plotConfig
+)
 
 plotConfig$title <- "Res-vs-time"
-resVsTimePlot <- plotResidualsVsTime(dataCombined, defaultPlotConfiguration = plotConfig)
+resVsTimePlot <- plotResidualsVsTime(
+  dataCombined,
+  defaultPlotConfiguration = plotConfig
+)
 
 plotConfig$title <- "Res-vs-simulated"
-resVsSimPlot <- plotResidualsVsSimulated(dataCombined, defaultPlotConfiguration = plotConfig)
+resVsSimPlot <- plotResidualsVsSimulated(
+  dataCombined,
+  defaultPlotConfiguration = plotConfig
+)
 
 gridConfig$addPlots(list(indivPlot, obsVsSimPlot, resVsTimePlot, resVsSimPlot))
 gridConfig$title <- "All aciclovir plots"
@@ -420,7 +444,9 @@ To save the plot to a `PNG` file, use the
 Make sure that the `fileName` argument ends with `.png`:
 
 ``` r
-exportConfig <- createEsqlabsExportConfiguration(projectConfiguration$outputFolder)
+exportConfig <- createEsqlabsExportConfiguration(
+  projectConfiguration$outputFolder
+)
 exportConfig$savePlot(gridPlot, fileName = "All plots.png")
 ```
 
@@ -449,7 +475,10 @@ and Excel files with observed data are present in the
 data:
 
 ``` r
-projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
+projectConfiguration <- createProjectConfiguration(
+  exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
 
 dataSheets <- "Laskin 1982.Group A"
 

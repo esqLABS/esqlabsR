@@ -80,7 +80,12 @@ An object storing configuration used project-wide
 - `outputFolder`:
 
   Path to the folder where the results should be saved relative to the
-  "Code" folder Initialize
+  "Code" folder
+
+- `esqlabsRVersion`:
+
+  Version of the esqlabsR package stored in the project configuration.
+  Read-only. Initialize
 
 ## Methods
 
@@ -100,14 +105,21 @@ An object storing configuration used project-wide
 
 #### Usage
 
-    ProjectConfiguration$new(projectConfigurationFilePath = character())
+    ProjectConfiguration$new(
+      projectConfigurationFilePath = character(),
+      ignoreVersionCheck = FALSE
+    )
 
 #### Arguments
 
 - `projectConfigurationFilePath`:
 
   A string representing the path to the project configuration file.
-  Print
+
+- `ignoreVersionCheck`:
+
+  If `TRUE`, skip the version mismatch check when loading the
+  configuration file. Defaults to `FALSE`. Print
 
 ------------------------------------------------------------------------
 

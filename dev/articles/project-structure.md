@@ -62,8 +62,62 @@ By printing the `ProjectConfiguration`, we can see the locations of all
 files used in the workflows:
 
 ``` r
-my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath())
+my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath(), ignoreVersionCheck = TRUE)
 ```
+
+### Package version tracking
+
+The `ProjectConfiguration` stores the version of the `esqlabsR` package
+it was last saved with. Every time `$save()` is called, the current
+package version is written into the configuration file.
+
+When loading a configuration file with
+[`createProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createProjectConfiguration.md),
+the stored version is compared against the currently installed version
+of `esqlabsR`. If a mismatch is detected — for example after upgrading
+the package — you will be prompted interactively:
+
+    ! The esqlabsR version stored in the project configuration ('5.4.0') does not
+      match the currently installed version ('5.5.2').
+    i Please review the package NEWS for breaking changes:
+      https://esqlabs.github.io/esqlabsR/news/index.html
+    > To update the version stored in the project configuration, use
+      `projectConfiguration$save()`.
+
+    Do you want to update the version in the project configuration and continue?
+
+    Available options (order may vary):
+    - Yes
+    - Absolutely not
+    - No way
+
+If you confirm, the stored version is updated and you can continue
+working. If you decline, execution stops.
+
+**Important**: Before confirming the update, always consult the
+[esqlabsR NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) to
+review breaking changes between the stored and the currently installed
+version. Some changes may require manual adjustments to your project
+files or scripts.
+
+### Skipping the version check
+
+In non-interactive contexts — such as automated tests or scripts
+executed from the console — user input cannot be provided. Use
+`ignoreVersionCheck = TRUE` to bypass the check entirely in those
+situations:
+
+``` r
+my_project_configuration <- createProjectConfiguration(
+  path = "path/to/ProjectConfiguration.xlsx",
+  ignoreVersionCheck = TRUE
+)
+```
+
+> **Note**: When `ignoreVersionCheck = TRUE`, it is your responsibility
+> to ensure that the project is compatible with the currently installed
+> version of `esqlabsR`. Review the NEWS page for any breaking changes
+> that may affect your project.
 
 Now that the project structure is initialized and the
 `ProjectConfiguration` is created, read
@@ -211,7 +265,7 @@ single JSON file. This JSON format is ideal for version control as it’s:
 
 ``` r
 # Create a snapshot from a ProjectConfiguration object
-my_project_configuration <- createProjectConfiguration("ProjectConfiguration.xlsx")
+my_project_configuration <- createProjectConfiguration("ProjectConfiguration.xlsx", ignoreVersionCheck = TRUE)
 snapshotProjectConfiguration(my_project_configuration)
 
 # Or create a snapshot directly from the Excel file path

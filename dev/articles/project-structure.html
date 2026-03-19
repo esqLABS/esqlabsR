@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9009</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -145,12 +145,64 @@ performing any simulations.</p>
 <p>By printing the <code>ProjectConfiguration</code>, we can see the
 locations of all files used in the workflows:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span>, ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="package-version-tracking">Package version tracking<a class="anchor" aria-label="anchor" href="#package-version-tracking"></a>
+</h3>
+<p>The <code>ProjectConfiguration</code> stores the version of the
+<code>esqlabsR</code> package it was last saved with. Every time
+<code>$save()</code> is called, the current package version is written
+into the configuration file.</p>
+<p>When loading a configuration file with
+<code><a href="../reference/createProjectConfiguration.html">createProjectConfiguration()</a></code>, the stored version is
+compared against the currently installed version of
+<code>esqlabsR</code>. If a mismatch is detected — for example after
+upgrading the package — you will be prompted interactively:</p>
+<pre><code>! The esqlabsR version stored in the project configuration ('5.4.0') does not
+  match the currently installed version ('5.5.2').
+i Please review the package NEWS for breaking changes:
+  https://esqlabs.github.io/esqlabsR/news/index.html
+&gt; To update the version stored in the project configuration, use
+  `projectConfiguration$save()`.
+
+Do you want to update the version in the project configuration and continue?
+
+Available options (order may vary):
+- Yes
+- Absolutely not
+- No way</code></pre>
+<p>If you confirm, the stored version is updated and you can continue
+working. If you decline, execution stops.</p>
+<p><strong>Important</strong>: Before confirming the update, always
+consult the <a href="https://esqlabs.github.io/esqlabsR/news/index.html">esqlabsR
+NEWS</a> to review breaking changes between the stored and the currently
+installed version. Some changes may require manual adjustments to your
+project files or scripts.</p>
+</div>
+<div class="section level3">
+<h3 id="skipping-the-version-check">Skipping the version check<a class="anchor" aria-label="anchor" href="#skipping-the-version-check"></a>
+</h3>
+<p>In non-interactive contexts — such as automated tests or scripts
+executed from the console — user input cannot be provided. Use
+<code>ignoreVersionCheck = TRUE</code> to bypass the check entirely in
+those situations:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span></span>
+<span>  path <span class="op">=</span> <span class="st">"path/to/ProjectConfiguration.xlsx"</span>,</span>
+<span>  ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<blockquote>
+<p><strong>Note</strong>: When <code>ignoreVersionCheck = TRUE</code>,
+it is your responsibility to ensure that the project is compatible with
+the currently installed version of <code>esqlabsR</code>. Review the
+NEWS page for any breaking changes that may affect your project.</p>
+</blockquote>
 <p>Now that the project structure is initialized and the
 <code>ProjectConfiguration</code> is created, read
 <code><a href="../articles/design-scenarios.html">vignette("design-scenarios")</a></code> to continue the process. To
 learn more about <code>ProjectConfiguration</code>, read the following
 sections.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="validating-project-configuration">Validating Project Configuration<a class="anchor" aria-label="anchor" href="#validating-project-configuration"></a>
@@ -201,7 +253,7 @@ use</li>
 <div class="section level3">
 <h3 id="usage-example">Usage Example<a class="anchor" aria-label="anchor" href="#usage-example"></a>
 </h3>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Validate all configuration files in a project</span></span>
 <span><span class="va">validation_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/validateAllConfigurations.html">validateAllConfigurations</a></span><span class="op">(</span><span class="va">my_project_configuration</span><span class="op">)</span></span>
 <span></span>
@@ -233,7 +285,7 @@ configuration file validated. Each result contains:</p>
 <code>data</code>: The validated data (if validation succeeded)</li>
 </ul>
 <p>You can access individual file results:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check scenarios validation</span></span>
 <span><span class="va">scenarios_result</span> <span class="op">&lt;-</span> <span class="va">validation_results</span><span class="op">$</span><span class="va">scenarios</span></span>
 <span></span>
@@ -258,7 +310,7 @@ you identify and fix configuration issues early in your workflow.</p>
 </h3>
 <p>If required, you can change the location of one of the files or
 folders using relative or absolute paths</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># change the location of the output folder</span></span>
 <span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="st">"../anotherOutputFolder"</span></span>
 <span></span>
@@ -320,9 +372,9 @@ JSON format is ideal for version control as it’s:</p>
 <strong>Complete</strong>: Contains all project configuration
 data</li>
 </ul>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a snapshot from a ProjectConfiguration object</span></span>
-<span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span><span class="op">)</span></span>
+<span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span>, ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration</a></span><span class="op">(</span><span class="va">my_project_configuration</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Or create a snapshot directly from the Excel file path</span></span>
@@ -336,7 +388,7 @@ your <code>ProjectConfiguration.xlsx</code> file with the name
 </h4>
 <p>The <code><a href="../reference/restoreProjectConfiguration.html">restoreProjectConfiguration()</a></code> function recreates
 your entire project configuration from a JSON snapshot:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Restore a project from a JSON snapshot</span></span>
 <span><span class="va">restored_config</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/restoreProjectConfiguration.html">restoreProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.json"</span><span class="op">)</span></span></code></pre></div>
 <p>This function will: 1. Create the necessary directory structure 2.
@@ -348,7 +400,7 @@ Regenerate all Excel configuration files 3. Return a new
 </h4>
 <p>Use <code><a href="../reference/projectConfigurationStatus.html">projectConfigurationStatus()</a></code> to check if your Excel
 files are synchronized with your JSON snapshot:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check if files are in sync</span></span>
 <span><span class="va">status</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/projectConfigurationStatus.html">projectConfigurationStatus</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span>, <span class="st">"ProjectConfiguration.json"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">status</span><span class="op">$</span><span class="va">in_sync</span><span class="op">)</span> <span class="co"># TRUE if synchronized, FALSE otherwise</span></span></code></pre></div>
@@ -361,25 +413,25 @@ files are synchronized with your JSON snapshot:</p>
 <li>
 <p><strong>Initial Setup</strong>: Create a snapshot of your project
 configuration</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span><span class="op">)</span></span></code></pre></div>
 </li>
 <li>
 <p><strong>Version Control</strong>: Commit the JSON file to your
 Git repository</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">git</span> add ProjectConfiguration.json</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Add project configuration snapshot"</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">git</span> add ProjectConfiguration.json</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">"Add project configuration snapshot"</span></span></code></pre></div>
 </li>
 <li>
 <p><strong>Team Sharing</strong>: Team members can restore the
 project</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">restored_config</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/restoreProjectConfiguration.html">restoreProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.json"</span><span class="op">)</span></span></code></pre></div>
 </li>
 </ol>
 <p><strong>Backup Strategy</strong>: Before making significant changes
 to your project:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a backup snapshot</span></span>
 <span><span class="fu"><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span><span class="op">)</span></span>
 <span></span>
