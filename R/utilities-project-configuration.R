@@ -26,15 +26,34 @@ createDefaultProjectConfiguration <- function(
 #'
 #' @param path path to the `ProjectConfiguration.xlsx` file. default to the
 #'   `ProjectConfiguration.xlsx` file located in the working directory.
+#' @param validate Logical. If `TRUE`, runs `validateAllConfigurations()` on
+#'   the created configuration and prints the validation summary. If critical
+#'   errors are found, a warning is issued. Defaults to `FALSE`.
 #'
 #' @returns Object of type `ProjectConfiguration`
 #' @export
 createProjectConfiguration <- function(
-  path = file.path("ProjectConfiguration.xlsx")
+  path = file.path("ProjectConfiguration.xlsx"),
+  validate = FALSE
 ) {
   projectConfiguration <- ProjectConfiguration$new(
     projectConfigurationFilePath = path
   )
+
+  if (validate) {
+    validationResults <- validateAllConfigurations(projectConfiguration)
+    summary <- validationSummary(validationResults)
+    message(messages$validationSummaryMessage(
+      summary$total_critical_errors,
+      summary$total_warnings
+    ))
+    if (summary$total_critical_errors > 0) {
+      warning(messages$validationCriticalErrorsFound(
+        summary$total_critical_errors
+      ))
+    }
+  }
+
   return(projectConfiguration)
 }
 

@@ -10,6 +10,9 @@
 #' @param outputDir Directory where the JSON file will be saved. If NULL
 #'   (default), the JSON file will be created in the same directory as the
 #'   source Excel file.
+#' @param validate Logical. If `TRUE` (default), runs
+#'   `validateAllConfigurations()` before snapshotting. If critical errors are
+#'   found, a warning is issued but the snapshot proceeds.
 #' @param ... Additional arguments.
 #'
 #' @return Invisibly returns the exported configuration data structure
@@ -17,6 +20,7 @@
 snapshotProjectConfiguration <- function(
   projectConfig = "ProjectConfiguration.xlsx",
   outputDir = NULL,
+  validate = TRUE,
   ...
 ) {
   extraArguments <- list(...)
@@ -30,6 +34,21 @@ snapshotProjectConfiguration <- function(
     stop(
       "projectConfig must be a ProjectConfiguration object or valid path to ProjectConfiguration.xlsx"
     )
+  }
+
+  # Run validation before snapshotting
+  if (validate && !isTRUE(extraArguments$silent)) {
+    validationResults <- validateAllConfigurations(projectConfig)
+    summary <- validationSummary(validationResults)
+    message(messages$validationSummaryMessage(
+      summary$total_critical_errors,
+      summary$total_warnings
+    ))
+    if (summary$total_critical_errors > 0) {
+      warning(messages$validationCriticalErrorsFound(
+        summary$total_critical_errors
+      ))
+    }
   }
 
   # Determine output filename and path based on source excel filename

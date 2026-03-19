@@ -45,6 +45,25 @@
         stop(messages$validationMissingColumns("Demographics", missing_cols))
       }
 
+      # Check for columns required by readPopulationCharacteristicsFromXLS
+      extended_cols <- c(
+        "weightUnit",
+        "heightUnit",
+        "BMIUnit",
+        "Protein Ontogenies"
+      )
+      missing_extended <- setdiff(extended_cols, names(df))
+      if (length(missing_extended) > 0) {
+        result$add_critical_error(
+          "Structure",
+          paste0(
+            "Demographics sheet is missing columns required by ",
+            "readPopulationCharacteristicsFromXLS: ",
+            paste(missing_extended, collapse = ", ")
+          )
+        )
+      }
+
       # Check for duplicate PopulationName
       if (any(duplicated(df$PopulationName))) {
         duplicates <- df$PopulationName[duplicated(df$PopulationName)]
@@ -71,6 +90,42 @@
     }),
     result
   )
+
+  # Validate additional population parameter sheets if they exist
+  # These are used by extendPopulationFromXLS
+  population_param_sheets <- setdiff(sheets, "Demographics")
+  for (sheet in population_param_sheets) {
+    .safe_validate(
+      quote({
+        df <- readExcel(filePath, sheet = sheet)
+
+        if (nrow(df) > 0) {
+          # Check for columns expected by extendPopulationFromXLS
+          extend_cols <- c(
+            "Container Path",
+            "Parameter Name",
+            "Mean",
+            "SD",
+            "Distribution"
+          )
+          missing_extend <- setdiff(extend_cols, names(df))
+          if (length(missing_extend) > 0) {
+            result$add_critical_error(
+              "Structure",
+              paste0(
+                "Sheet '", sheet, "' is missing columns required by ",
+                "extendPopulationFromXLS: ",
+                paste(missing_extend, collapse = ", ")
+              )
+            )
+          }
+        }
+
+        df
+      }),
+      result
+    )
+  }
 
   return(result)
 }

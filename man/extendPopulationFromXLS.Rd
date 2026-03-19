@@ -19,8 +19,8 @@ be in the base units of the parameters.}
 first sheet in the file is used.}
 }
 \description{
-Add user defined variability on parameters to a population from an excel
-file.
+For upfront structural validation of population parameter sheets, use
+\code{\link[=validateAllConfigurations]{validateAllConfigurations()}} which checks required columns and structure.
 }
 \details{
 The method reads the information from the specified excel sheet(s)

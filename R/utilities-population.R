@@ -1,6 +1,10 @@
 #' Read an excel file containing information about population and create a
 #' `PopulationCharacteristics` object
 #'
+#' For upfront structural validation of the populations Excel file, use
+#' [validateAllConfigurations()] which checks required columns, population name
+#' uniqueness, and data ranges.
+#'
 #' @param XLSpath Path to the excel file
 #' @param populationName Name of the population, as defined in the
 #'   "PopulationName" column
@@ -148,6 +152,9 @@ extendPopulationByUserDefinedParams <- function(
 
 #' Add user defined variability on parameters to a population from an excel
 #' file.
+#'
+#' For upfront structural validation of population parameter sheets, use
+#' [validateAllConfigurations()] which checks required columns and structure.
 #'
 #' @param population Object of type `Population`
 #' @param XLSpath Path to the excel file that stores the information of

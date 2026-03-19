@@ -26,6 +26,9 @@ observed data are not found}
 Processed \code{dfDataCombined}
 }
 \description{
-Validate and process the 'DataCombined' sheet
+Performs runtime validation that requires actual simulation/observation data.
+For upfront structural validation of Excel files, use
+\code{\link[=validateAllConfigurations]{validateAllConfigurations()}} which checks column structure, mandatory fields,
+and cross-references without needing runtime data.
 }
 \keyword{internal}

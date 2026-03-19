@@ -751,6 +751,11 @@ createPlotsFromExcel <- function(
 
 #' Validate and process the 'plotConfiguration' sheet
 #'
+#' Performs runtime validation that requires actual DataCombined names.
+#' For upfront structural validation of Excel files, use
+#' [validateAllConfigurations()] which checks column structure, mandatory fields,
+#' plotID uniqueness, and cross-references without needing runtime data.
+#'
 #' @param dfPlotConfigurations Data frame created by reading the '
 #'   plotConfiguration' sheet
 #' @param dataCombinedNames Names of the 'DataCombined' that are referenced in
@@ -796,6 +801,9 @@ createPlotsFromExcel <- function(
 
 #' Validate and process the 'plotGrids' sheet
 #'
+#' Performs runtime validation that requires actual plot IDs.
+#' For upfront structural validation, use [validateAllConfigurations()].
+#'
 #' @param dfPlotGrids Data frame created by reading the ' plotGrids' sheet
 #' @param plotIDs IDs of the plots that are referenced in the plot grids
 #'
@@ -840,6 +848,9 @@ createPlotsFromExcel <- function(
 }
 
 #' Validate and process the 'exportConfiguration' sheet
+#'
+#' Performs runtime validation that requires actual plotGrids objects.
+#' For upfront structural validation, use [validateAllConfigurations()].
 #'
 #' @param dfExportConfigurations Data frame created by reading the
 #'   'exportConfiguration' sheet
