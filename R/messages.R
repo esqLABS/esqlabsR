@@ -21,16 +21,14 @@ messages$invalidConfigurationProperty <- function(
 messages$versionMismatch <- function(storedVersion, currentVersion) {
   cli::format_message(c(
     "!" = "The esqlabsR version stored in the project configuration ({.val {storedVersion}}) does not match the currently installed version ({.val {currentVersion}}).",
-    "i" = "Please review the package NEWS for breaking changes: {.url https://esqlabs.github.io/esqlabsR/news/index.html}",
-    ">" = "To update the version stored in the project configuration, use {.code projectConfiguration$save()}."
+    "i" = "Please review the package NEWS for breaking changes: {.url https://esqlabs.github.io/esqlabsR/news/index.html}"
   ))
 }
 
 messages$versionNotStored <- function(currentVersion) {
   cli::format_message(c(
     "!" = "No esqlabsR version is stored in the project configuration.",
-    "i" = "The configuration may have been created with an older version of the package.",
-    ">" = "To store the current version ({.val {currentVersion}}) in the project configuration, use {.code projectConfiguration$save()}."
+    "i" = "The configuration may have been created with an older version of the package."
   ))
 }
 
