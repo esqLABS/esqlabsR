@@ -559,7 +559,8 @@ test_that("It trows an error if a plot requires a DataCombined that is not defin
           projectConfiguration = projectConfigurationLocal,
           stopIfNotFound = TRUE
         ),
-        regexp = messages$stopInvalidDataCombinedName("foo")
+        regexp = messages$stopDataCombinedNamesNotFound("foo"),
+        fixed = TRUE
       )
     }
   )
