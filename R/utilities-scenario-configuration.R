@@ -15,7 +15,8 @@
 #'   following columns: `Scenario_name`, `IndividualId`, `PopulationId`,
 #'   `ReadPopulationFromCSV`, `ModelParameterSheets`, `ApplicationProtocol`,
 #'   `SimulationTime`, `SimulationTimeUnit`, `SteadyState`, `SteadyStateTime`,
-#'   `SteadyStateTimeUnit`, `ModelFile`, `OutputPathsIds`. It also expects an
+#'   `SteadyStateTimeUnit`, `OverwriteFormulasInSS`, `ModelFile`,
+#'   `OutputPathsIds`. It also expects an
 #'   "OutputPaths" sheet with `OutputPathId` and `OutputPath` columns.
 #'
 #' @returns A named list of `ScenarioConfiguration` objects with the names of
@@ -53,6 +54,7 @@ readScenarioConfigurationFromExcel <- function(
     "SteadyState",
     "SteadyStateTime",
     "SteadyStateTimeUnit",
+    "OverwriteFormulasInSS",
     "ModelFile",
     "OutputPathsIds"
   )
@@ -69,6 +71,7 @@ readScenarioConfigurationFromExcel <- function(
     "logical",
     "numeric",
     "text",
+    "logical",
     "text",
     "text"
   )
@@ -198,6 +201,11 @@ readScenarioConfigurationFromExcel <- function(
       )
     }
 
+    # Overwrite formulas in steady-state?
+    if (!is.na(data$OverwriteFormulasInSS)) {
+      scenarioConfiguration$overwriteFormulasInSS <- data$OverwriteFormulasInSS
+    }
+
     # Model file
     scenarioConfiguration$modelFile <- data$ModelFile
 
@@ -325,6 +333,11 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' @param steadyStateTimeUnit Character vector. Steady-state time units. Only used when `steadyState = TRUE` and `steadyStateTime` is provided.
 #'   If `NULL` (default), "min" will be used. Can be a single string (recycled for all scenarios) or a vector
 #'   with the same length as `pkmlFilePaths`.
+#' @param overwriteFormulasInSS Logical vector. Whether to overwrite formula-defined parameters with
+#'   their steady-state values. When `TRUE`, corresponds to `ignoreIfFormula = FALSE` in
+#'   `ospsuite::getSteadyState()` (formulas are overwritten). Default is `FALSE` (formula-defined
+#'   parameters are kept unchanged). Can be a single logical value (recycled for all scenarios) or
+#'   a vector with the same length as `pkmlFilePaths`.
 #' @param readPopulationFromCSV Logical vector. Whether to read population from CSV for each scenario. Default is `FALSE`.
 #'   Can be a single logical value (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
 #'
@@ -434,6 +447,7 @@ createScenarioConfigurationsFromPKML <- function(
   steadyState = FALSE,
   steadyStateTime = NULL,
   steadyStateTimeUnit = NULL,
+  overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE
 ) {
   # Validate inputs
@@ -470,6 +484,7 @@ createScenarioConfigurationsFromPKML <- function(
   if (!is.null(steadyStateTimeUnit)) {
     validateIsCharacter(steadyStateTimeUnit)
   }
+  validateIsLogical(overwriteFormulasInSS)
   validateIsLogical(readPopulationFromCSV)
 
   # Get the number of scenarios to create based on vector arguments
@@ -487,6 +502,7 @@ createScenarioConfigurationsFromPKML <- function(
     steadyState,
     steadyStateTime,
     steadyStateTimeUnit,
+    overwriteFormulasInSS,
     readPopulationFromCSV
   )
 
@@ -577,6 +593,11 @@ createScenarioConfigurationsFromPKML <- function(
   steadyStateTimeUnit <- .recycleOrValidateVector(
     steadyStateTimeUnit,
     "steadyStateTimeUnit",
+    nScenarios
+  )
+  overwriteFormulasInSS <- .recycleOrValidateVector(
+    overwriteFormulasInSS,
+    "overwriteFormulasInSS",
     nScenarios
   )
   readPopulationFromCSV <- .recycleOrValidateVector(
@@ -821,6 +842,7 @@ createScenarioConfigurationsFromPKML <- function(
           )
         }
       }
+      scenarioConfiguration$overwriteFormulasInSS <- overwriteFormulasInSS[[i]]
     }
 
     scenarioConfigurations[[scenarioName]] <- scenarioConfiguration
@@ -1074,6 +1096,7 @@ addScenarioConfigurationsToExcel <- function(
     SteadyState = logical(),
     SteadyStateTime = numeric(),
     SteadyStateTimeUnit = character(),
+    OverwriteFormulasInSS = logical(),
     ModelFile = character(),
     OutputPathsIds = character(),
     stringsAsFactors = FALSE
@@ -1221,6 +1244,7 @@ addScenarioConfigurationsToExcel <- function(
         "min",
         ""
       ),
+      OverwriteFormulasInSS = scenarioConfig$overwriteFormulasInSS,
       ModelFile = scenarioConfig$modelFile,
       OutputPathsIds = paste(scenarioOutputPathIds, collapse = ", "),
       stringsAsFactors = FALSE
@@ -1327,13 +1351,17 @@ addScenarioConfigurationsToExcel <- function(
     "SteadyState",
     "SteadyStateTime",
     "SteadyStateTimeUnit",
+    "OverwriteFormulasInSS",
     "ModelFile",
     "OutputPathsIds"
   )
   for (col in requiredScenarioCols) {
     if (!col %in% colnames(scenariosData)) {
       # Use appropriate NA type
-      if (col %in% c("ReadPopulationFromCSV", "SteadyState")) {
+      if (
+        col %in%
+          c("ReadPopulationFromCSV", "SteadyState", "OverwriteFormulasInSS")
+      ) {
         scenariosData[[col]] <- as.logical(NA)
       } else if (col == "SteadyStateTime") {
         scenariosData[[col]] <- as.numeric(NA)
@@ -1373,6 +1401,9 @@ addScenarioConfigurationsToExcel <- function(
   scenariosData$SteadyStateTime <- as.numeric(scenariosData$SteadyStateTime)
   scenariosData$SteadyStateTimeUnit <- as.character(
     scenariosData$SteadyStateTimeUnit
+  )
+  scenariosData$OverwriteFormulasInSS <- as.logical(
+    scenariosData$OverwriteFormulasInSS
   )
   scenariosData$ModelFile <- as.character(scenariosData$ModelFile)
   scenariosData$OutputPathsIds <- as.character(scenariosData$OutputPathsIds)

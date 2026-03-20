@@ -195,7 +195,7 @@
   },
   "Scenarios": {
     "Scenarios": {
-      "column_names": ["Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile", "OutputPathsIds"],
+      "column_names": ["Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "OverwriteFormulasInSS", "ModelFile", "OutputPathsIds"],
       "rows": [
         {
           "Scenario_name": "TestScenario",
@@ -209,6 +209,7 @@
           "SteadyState": null,
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         },
@@ -224,6 +225,7 @@
           "SteadyState": "TRUE",
           "SteadyStateTime": "500",
           "SteadyStateTimeUnit": "min",
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": "Aciclovir_PVB, Aciclovir_fat_cell"
         },
@@ -239,6 +241,7 @@
           "SteadyState": "FALSE",
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         },
@@ -254,6 +257,7 @@
           "SteadyState": "FALSE",
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         },
@@ -269,6 +273,7 @@
           "SteadyState": null,
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         }

@@ -341,6 +341,15 @@ Time for the steady state.
 Unit for `SteadyStateTime`. For supported units, see
 `ospsuite::ospUnits`.
 
+#### OverwriteFormulasInSS
+
+If `TRUE`, formula-defined parameters will be overwritten with their
+steady-state values (corresponds to `ignoreIfFormula = FALSE` in
+`ospsuite::getSteadyState()`). If empty or `FALSE` (default), only
+constant parameters are updated with steady-state values and
+formula-defined parameters are left unchanged (corresponds to
+`ignoreIfFormula = TRUE`).
+
 #### ModelFile
 
 Name of the `pkml` file with the simulation. It must be located in the

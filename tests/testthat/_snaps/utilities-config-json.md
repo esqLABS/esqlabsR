@@ -437,8 +437,8 @@
        [1] "Scenario_name"         "IndividualId"          "PopulationId"         
        [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "ApplicationProtocol"  
        [7] "SimulationTime"        "SimulationTimeUnit"    "SteadyState"          
-      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "ModelFile"            
-      [13] "OutputPathsIds"       
+      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "OverwriteFormulasInSS"
+      [13] "ModelFile"             "OutputPathsIds"       
       
       $Scenarios$Scenarios$rows
       $Scenarios$Scenarios$rows[[1]]
@@ -473,6 +473,9 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[1]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[1]]$OverwriteFormulasInSS
       [1] NA
       
       $Scenarios$Scenarios$rows[[1]]$ModelFile
@@ -516,6 +519,9 @@
       $Scenarios$Scenarios$rows[[2]]$SteadyStateTimeUnit
       [1] "min"
       
+      $Scenarios$Scenarios$rows[[2]]$OverwriteFormulasInSS
+      [1] NA
+      
       $Scenarios$Scenarios$rows[[2]]$ModelFile
       [1] "Aciclovir.pkml"
       
@@ -555,6 +561,9 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[3]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[3]]$OverwriteFormulasInSS
       [1] NA
       
       $Scenarios$Scenarios$rows[[3]]$ModelFile
@@ -598,6 +607,9 @@
       $Scenarios$Scenarios$rows[[4]]$SteadyStateTimeUnit
       [1] NA
       
+      $Scenarios$Scenarios$rows[[4]]$OverwriteFormulasInSS
+      [1] NA
+      
       $Scenarios$Scenarios$rows[[4]]$ModelFile
       [1] "Aciclovir.pkml"
       
@@ -637,6 +649,9 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[5]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[5]]$OverwriteFormulasInSS
       [1] NA
       
       $Scenarios$Scenarios$rows[[5]]$ModelFile
@@ -2038,8 +2053,8 @@
        [1] "Scenario_name"         "IndividualId"          "PopulationId"         
        [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "ApplicationProtocol"  
        [7] "SimulationTime"        "SimulationTimeUnit"    "SteadyState"          
-      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "ModelFile"            
-      [13] "OutputPathsIds"       
+      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "OverwriteFormulasInSS"
+      [13] "ModelFile"             "OutputPathsIds"       
       
       $Scenarios$Scenarios$rows
                     Scenario_name IndividualId   PopulationId ReadPopulationFromCSV
@@ -2060,12 +2075,18 @@
       3           0, 12, 20                  h       FALSE            <NA>
       4           0, 12, 20                  h       FALSE            <NA>
       5           0, 24, 60                  h        <NA>            <NA>
-        SteadyStateTimeUnit      ModelFile                    OutputPathsIds
-      1                <NA> Aciclovir.pkml                              <NA>
-      2                 min Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
-      3                <NA> Aciclovir.pkml                              <NA>
-      4                <NA> Aciclovir.pkml                              <NA>
-      5                <NA> Aciclovir.pkml                              <NA>
+        SteadyStateTimeUnit OverwriteFormulasInSS      ModelFile
+      1                <NA>                    NA Aciclovir.pkml
+      2                 min                    NA Aciclovir.pkml
+      3                <NA>                    NA Aciclovir.pkml
+      4                <NA>                    NA Aciclovir.pkml
+      5                <NA>                    NA Aciclovir.pkml
+                           OutputPathsIds
+      1                              <NA>
+      2 Aciclovir_PVB, Aciclovir_fat_cell
+      3                              <NA>
+      4                              <NA>
+      5                              <NA>
       
       
       $Scenarios$OutputPaths
