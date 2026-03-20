@@ -20,9 +20,7 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
   individualSimulations <- list()
   # List of population scenarios
   populationScenarios <- list()
-  # List of simulations with steady-state, grouped by ignoreIfFormula value
-  # TRUE group: overwriteFormulasInSS = TRUE
-  # FALSE group: overwriteFormulasInSS = FALSE
+  # List of simulations with steady-state, grouped by overwriteFormulasInSS value
   steadyStateGroups <- list()
 
   for (scenario in scenarios) {
@@ -57,7 +55,7 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
   initialValues <- list()
   for (ignoreIfFormulaKey in names(steadyStateGroups)) {
     group <- steadyStateGroups[[ignoreIfFormulaKey]]
-    ignoreIfFormula <- as.logical(ignoreIfFormulaKey)
+    ignoreIfFormula <- !as.logical(ignoreIfFormulaKey)
     groupValues <- ospsuite::getSteadyState(
       simulations = group$simulations,
       steadyStateTime = group$times,

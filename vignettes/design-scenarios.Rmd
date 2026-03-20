@@ -344,10 +344,11 @@ Unit for `SteadyStateTime`. For supported units, see
 #### OverwriteFormulasInSS
 
 If `TRUE`, formula-defined parameters will be overwritten with their
-steady-state values (corresponds to the `ignoreIfFormula` argument of
+steady-state values (corresponds to `ignoreIfFormula = FALSE` in
 `ospsuite::getSteadyState()`). If empty or `FALSE` (default), only
 constant parameters are updated with steady-state values and
-formula-defined parameters are left unchanged.
+formula-defined parameters are left unchanged (corresponds to
+`ignoreIfFormula = TRUE`).
 
 #### ModelFile
 

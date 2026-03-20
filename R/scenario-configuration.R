@@ -75,8 +75,9 @@ ScenarioConfiguration <- R6::R6Class(
     },
     #' @field overwriteFormulasInSS Boolean representing whether formula-defined
     #'   parameters will be overwritten with their steady-state values.
-    #'   Corresponds to the `ignoreIfFormula` argument of
-    #'   `ospsuite::getSteadyState`. Default is `FALSE`.
+    #'   When `TRUE`, corresponds to `ignoreIfFormula = FALSE` in
+    #'   `ospsuite::getSteadyState` (formulas are overwritten). Default is
+    #'   `FALSE` (formula-defined parameters are kept unchanged).
     overwriteFormulasInSS = function(value) {
       if (missing(value)) {
         private$.overwriteFormulasInSS
