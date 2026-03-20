@@ -4,11 +4,19 @@
 \alias{createProjectConfiguration}
 \title{Create a \code{ProjectConfiguration}}
 \usage{
-createProjectConfiguration(path = file.path("ProjectConfiguration.xlsx"))
+createProjectConfiguration(
+  path = file.path("ProjectConfiguration.xlsx"),
+  ignoreVersionCheck = FALSE
+)
 }
 \arguments{
 \item{path}{path to the \code{ProjectConfiguration.xlsx} file. default to the
 \code{ProjectConfiguration.xlsx} file located in the working directory.}
+
+\item{ignoreVersionCheck}{If \code{TRUE}, skip the version mismatch check when
+loading the configuration file. Use this in non-interactive contexts such
+as automated tests or scripts running from console where interactive user
+input cannot be assured. Defaults to \code{FALSE}.}
 }
 \value{
 Object of type \code{ProjectConfiguration}

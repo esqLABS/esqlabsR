@@ -196,11 +196,17 @@ test_that("ProjectConfiguration can be created from regenerated JSON files", {
   # Try to create a ProjectConfiguration object with a relative path
   relativePath <- excelFilename
   expect_no_error({
-    projectConfig <- createProjectConfiguration(relativePath)
+    projectConfig <- createProjectConfiguration(
+      relativePath,
+      ignoreVersionCheck = TRUE
+    )
   })
 
   # Verify the created object is of the correct class
-  projectConfig <- createProjectConfiguration(relativePath)
+  projectConfig <- createProjectConfiguration(
+    relativePath,
+    ignoreVersionCheck = TRUE
+  )
   expect_s3_class(projectConfig, "ProjectConfiguration")
 })
 
@@ -360,7 +366,8 @@ test_that("projectConfigurationStatus() detects data-level changes in Excel shee
 
   # Path to Scenarios.xlsx in the configurations directory
   scenarios_path <- createProjectConfiguration(
-    test_proj$project_config_path
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
   )$scenariosFile
 
   # Get existing sheets in Scenarios.xlsx
@@ -402,7 +409,8 @@ test_that("projectConfigurationStatus() handles simultaneous sheet, and data cha
 
   # 1. Make data change
   scenarios_path <- createProjectConfiguration(
-    test_proj$project_config_path
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
   )$scenariosFile
 
   # Get existing sheets in Scenarios.xlsx
@@ -424,7 +432,8 @@ test_that("projectConfigurationStatus() handles simultaneous sheet, and data cha
 
   # 2. Add a new sheet to an existing Excel file
   plots_path <- createProjectConfiguration(
-    test_proj$project_config_path
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
   )$plotsFile
   if (file.exists(plots_path)) {
     # Create a new sheet
@@ -525,7 +534,10 @@ test_that("snapshotProjectConfiguration works with unmodified ProjectConfigurati
   test_proj <- local_test_project()
 
   # Load ProjectConfiguration (should be unmodified)
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(projectConfig$modified)
 
   # Create output directory
@@ -555,7 +567,10 @@ test_that("snapshotProjectConfiguration works with modified ProjectConfiguration
   test_proj <- local_test_project()
 
   # Load and modify ProjectConfiguration
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   suppressWarnings(projectConfig$modelFolder <- "modified/model/folder")
   expect_true(projectConfig$modified)
 
@@ -616,7 +631,10 @@ test_that("projectConfigurationStatus warns about modified ProjectConfiguration"
   test_proj <- local_test_project()
 
   # Load and modify ProjectConfiguration
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   suppressWarnings(projectConfig$modelFolder <- "modified/model/folder")
   expect_true(projectConfig$modified)
 
@@ -640,7 +658,10 @@ test_that("projectConfigurationStatus does not warn about unmodified ProjectConf
   test_proj <- local_test_project()
 
   # Load ProjectConfiguration without modifying
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(projectConfig$modified)
 
   # Create a JSON snapshot
@@ -665,7 +686,10 @@ test_that("modifying ProjectConfiguration after snapshotting affects status chec
   test_proj <- local_test_project()
 
   # Load ProjectConfiguration
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(projectConfig$modified)
 
   # Take snapshot of unmodified config
@@ -697,7 +721,10 @@ test_that("JSON roundtrip preserves modified flag behavior", {
   importDir <- withr::local_tempdir("test_roundtrip_import")
 
   # Load original ProjectConfiguration
-  originalConfig <- createProjectConfiguration(test_proj$project_config_path)
+  originalConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(originalConfig$modified)
 
   # Export to JSON
@@ -724,7 +751,7 @@ test_that("JSON roundtrip preserves modified flag behavior", {
   expect_false(restoredConfig$modified)
 
   # Load from saved file
-  finalConfig <- createProjectConfiguration(tempFile)
+  finalConfig <- createProjectConfiguration(tempFile, ignoreVersionCheck = TRUE)
   expect_false(finalConfig$modified)
 })
 
@@ -745,7 +772,10 @@ test_that("snapshotProjectConfiguration with path string handles modified flag c
   })
 
   # Load the original file to check it wasn't affected
-  projectConfig <- createProjectConfiguration(test_proj$project_config_path)
+  projectConfig <- createProjectConfiguration(
+    test_proj$project_config_path,
+    ignoreVersionCheck = TRUE
+  )
   expect_false(projectConfig$modified)
 
   # JSON file should be created
