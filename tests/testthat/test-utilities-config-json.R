@@ -837,3 +837,51 @@ test_that("restoreProjectConfiguration handles out-of-sync files correctly in no
     )
   )
 })
+
+test_that("snapshotProjectConfiguration handles PK-Sim exported population CSV files with metadata comment rows", {
+  # Create a test project
+  test_proj <- local_test_project()
+
+  # Add a PK-Sim format CSV (with # metadata comment rows) to the populations folder
+  pksim_csv_path <- file.path(
+    test_proj$configurations_dir,
+    "PopulationsCSV",
+    "PKSimPopulation.csv"
+  )
+
+  # Create PK-Sim format CSV: add PK-Sim metadata comment rows before the header
+  original_csv_path <- file.path(
+    test_proj$configurations_dir,
+    "PopulationsCSV",
+    "TestPopulation.csv"
+  )
+  original_csv_lines <- readLines(original_csv_path)
+  pksim_csv_lines <- c(
+    "#Project: TestProject_V1",
+    "#PK-Sim version: 12.1.222",
+    original_csv_lines
+  )
+  writeLines(pksim_csv_lines, pksim_csv_path)
+
+  # Snapshot should succeed and include the PK-Sim format CSV without error
+  outputDir <- withr::local_tempdir("test_pksim_csv_export")
+  expect_no_error({
+    configData <- snapshotProjectConfiguration(
+      test_proj$project_config_path,
+      outputDir,
+      silent = TRUE
+    )
+  })
+
+  # Verify the PK-Sim CSV was correctly included in the snapshot
+  expect_true("PKSimPopulation.csv" %in% names(configData$populationsCSV))
+
+  # Verify the column names are correctly parsed (not the broken check.names format)
+  pksim_col_names <- configData$populationsCSV[[
+    "PKSimPopulation.csv"
+  ]]$column_names
+  expect_true("IndividualId" %in% pksim_col_names)
+  expect_true("Gender" %in% pksim_col_names)
+  # Verify pipe-separated parameter paths are preserved (not converted to dots)
+  expect_true(any(grepl("\\|", pksim_col_names)))
+})
