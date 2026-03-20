@@ -322,18 +322,14 @@ loadObservedData <- function(
       configurationFilePath = projectConfiguration$dataImporterConfigurationFile
     )
   validateIsString(sheets, nullAllowed = TRUE)
-  # If sheets have been specified, import only those. Otherwise try to import all
-  # sheets
-  importAllSheets <- TRUE
-  if (!is.null(sheets)) {
-    importerConfiguration$sheets <- sheets
-    importAllSheets <- FALSE
-  }
+  # Clear sheets from configuration so that `sheets` parameter takes full
+  # control. If `sheets` is NULL, all sheets will be loaded.
+  importerConfiguration$sheets <- NULL
 
   dataSets <- ospsuite::loadDataSetsFromExcel(
     xlsFilePath = projectConfiguration$dataFile,
     importerConfigurationOrPath = importerConfiguration,
-    importAllSheets = importAllSheets
+    sheets = sheets
   )
 
   return(dataSets)
