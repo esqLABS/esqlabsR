@@ -244,6 +244,8 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
   # nolint: object_length_linter.
   # Specifying the namespace because we want to use the ExportConfiguration
   # from esqlabsR and not from TLF
+  # Specifying the namespace because we want to use the ExportConfiguration
+  # from esqlabsR and not from TLF
   exportConfiguration <- esqlabsR::ExportConfiguration$new()
 
   exportConfiguration$path <- outputFolder
