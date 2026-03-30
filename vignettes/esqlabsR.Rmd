@@ -61,7 +61,9 @@ Loading the project configuration is the first step in any workflow using
 `{esqlabsR}`.
 
 ```{r, eval=FALSE}
-my_project_configuration <- createProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
+my_project_configuration <- createProjectConfiguration(
+  path = "path/to/ProjectConfiguration.xlsx"
+)
 ```
 
 ```         
@@ -84,7 +86,10 @@ To create an example `ProjectConfiguration`  and execute the rest of this tutori
 run the following:
 
 ```{r, warning=FALSE, message = FALSE}
-my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath())
+my_project_configuration <- createProjectConfiguration(
+  path = exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
 ```
 
 ## Version Control and Project Sharing
@@ -167,7 +172,9 @@ my_scenarios <- createScenarios(
 ```
 
 ```{r, echo = FALSE}
-my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FALSE)
+my_scenarios$TestScenario$scenarioConfiguration$print(
+  projectConfiguration = FALSE
+)
 ```
 
 Then, we run the simulations by passing the scenarios we defined:
@@ -180,7 +187,8 @@ Simulation results can be saved for later use: `saveScenarioResults()`
 and `loadScenarioResults()`.
 
 ```{r, eval = FALSE}
-saveScenarioResults(myScenarioResults,
+saveScenarioResults(
+  myScenarioResults,
   projectConfiguration = my_project_configuration,
   outputFolder = my_project_configuration$outputFolder
 )
@@ -210,7 +218,8 @@ my_datacombined <- DataCombined$new()
 Then, simulation result are added to the dataCombined object:
 
 ```{r}
-my_datacombined$addSimulationResults(myScenarioResults$TestScenario$results,
+my_datacombined$addSimulationResults(
+  myScenarioResults$TestScenario$results,
   names = "Simulated",
   groups = "Aciclovir"
 )
@@ -232,7 +241,11 @@ observed_data <- loadObservedData(
   sheets = "Laskin 1982.Group A"
 )
 
-my_datacombined$addDataSets(observed_data, names = "Observed", groups = "Aciclovir")
+my_datacombined$addDataSets(
+  observed_data,
+  names = "Observed",
+  groups = "Aciclovir"
+)
 
 plotObservedVsSimulated(my_datacombined)
 ```
