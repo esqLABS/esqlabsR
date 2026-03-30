@@ -50,7 +50,7 @@ test_that("readPITaskConfigurationFromExcel creates all PI tasks if no name is d
     projectConfiguration = projectConfiguration
   )
 
-  piTaskNames <- c("AciclovirSimple", "AciclovirMultiScenario")
+  piTaskNames <- c("AciclovirSimple", "AciclovirSimplePathId", "AciclovirMultiScenario")
   expect_equal(names(piTaskConfigurations), piTaskNames)
 })
 
@@ -83,7 +83,6 @@ test_that("readPITaskConfigurationFromExcel does not fail on empty rows in sheet
 
   task2Params <- sheets$PIParameters
   task2Params$PITaskName <- "Task2"
-  task2Params$Value <- -0.2
   task2Params$MinValue <- -3
   task2Params$MaxValue <- 1
   task2Params$StartValue <- -0.2
@@ -161,7 +160,6 @@ test_that("readPITaskConfigurationFromExcel validates PIParameters sheet structu
     "Scenarios",
     "Container Path",
     "Parameter Name",
-    "Value",
     "Units",
     "MinValue",
     "MaxValue",
@@ -368,7 +366,6 @@ test_that("readPITaskConfigurationFromExcel handles multiple parameter rows corr
       Scenarios = "PITestScenario",
       `Container Path` = "Neighborhoods|Kidney",
       `Parameter Name` = "TSspec",
-      Value = 0.5,
       Units = "1/min",
       MinValue = 0,
       MaxValue = 10,
@@ -477,7 +474,6 @@ test_that("readPITaskConfigurationFromExcel throws error when task is missing in
       Scenarios = "PITestScenario",
       `Container Path` = "Aciclovir",
       `Parameter Name` = "Lipophilicity",
-      Value = -0.1,
       Units = "Log Units",
       MinValue = -2,
       MaxValue = 2,

@@ -17,11 +17,11 @@
 #'   `checkForNegativeValues`, `ObjectiveFunctionType`,
 #'   `ResidualWeightingMethod`, `RobustMethod`, `ScaleVar`, `LinScaleCV`,
 #'   `LogScaleSD`. It also expects a "PIParameters" sheet with `PITaskName`,
-#'   `Scenarios`, `Container Path`, `Parameter Name`, `Value`, `Units`,
-#'   `MinValue`, `MaxValue`, `StartValue`, `Group` columns, a "PIOutputMappings"
-#'   sheet with `PITaskName`, `Scenarios`, `OutputPath`, `ObservedDataSheet`,
-#'   `DataSet`, `Scaling`, `xOffset`, `yOffset`, `xFactor`, `yFactor`, `Weight`
-#'   columns. `OutputPath` accepts either a full simulation output path or an
+#'   `Scenarios`, `Container Path`, `Parameter Name`, `Units`, `MinValue`,
+#'   `MaxValue`, `StartValue`, `Group` columns, a "PIOutputMappings" sheet with
+#'   `PITaskName`, `Scenarios`, `OutputPath`, `ObservedDataSheet`, `DataSet`,
+#'   `Scaling`, `xOffset`, `yOffset`, `xFactor`, `yFactor`, `Weight` columns.
+#'   `OutputPath` accepts either a full simulation output path or an
 #'   `OutputPathId` defined in the "OutputPaths" sheet of `Scenarios.xlsx`. It
 #'   also expects an "AlgorithmOptions" sheet with `PITaskName`, `OptionName`,
 #'   `OptionValue` columns, and a "CIOptions" sheet with `PITaskName`,
@@ -262,7 +262,6 @@ readPITaskConfigurationFromExcel <- function(
     "Scenarios",
     "Container Path",
     "Parameter Name",
-    "Value",
     "Units",
     "MinValue",
     "MaxValue",
@@ -275,7 +274,6 @@ readPITaskConfigurationFromExcel <- function(
     "text",    # Scenario
     "text",    # Container Path
     "text",    # Parameter Name
-    "numeric", # Value
     "text",    # Units
     "numeric", # MinValue
     "numeric", # MaxValue

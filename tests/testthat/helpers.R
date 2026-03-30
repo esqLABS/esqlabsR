@@ -269,7 +269,6 @@ createValidPISheets <- function() {
       Scenarios = "PITestScenario",
       `Container Path` = "Aciclovir",
       `Parameter Name` = "Lipophilicity",
-      Value = -0.1,
       Units = "Log Units",
       MinValue = -2,
       MaxValue = 2,

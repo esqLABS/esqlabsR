@@ -16,9 +16,6 @@
       $piParameters$`Parameter Name`
       [1] "character"
       
-      $piParameters$Value
-      [1] "numeric"
-      
       $piParameters$Units
       [1] "character"
       
