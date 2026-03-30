@@ -152,14 +152,34 @@ test_that("sensitivityTimeProfiles accepts non-list units", {
 })
 
 test_that("sensitivityTimeProfiles errors on invalid units", {
-  # invalid unit
+  # invalid unit (list form)
   expect_error(
     sensitivityTimeProfiles(results, yUnits = list("mol/kg")),
     regexp = "is not a valid"
   )
-  # invalid x-axis unit
+  # invalid x-axis unit (list form)
   expect_error(
     sensitivityTimeProfiles(results, xUnits = list("mol/l")),
+    regexp = "is not a valid"
+  )
+  # invalid scalar y-units: incompatible dimension
+  expect_error(
+    sensitivityTimeProfiles(results, yUnits = "mol/kg"),
+    regexp = "is not a valid"
+  )
+  # invalid scalar y-units: unrecognised string
+  expect_error(
+    sensitivityTimeProfiles(results, yUnits = "invalid"),
+    regexp = "is not a valid"
+  )
+  # invalid scalar x-units: numeric value
+  expect_error(
+    sensitivityTimeProfiles(results, xUnits = 52),
+    regexp = "is not a valid"
+  )
+  # invalid scalar x-units: logical value
+  expect_error(
+    sensitivityTimeProfiles(results, xUnits = TRUE),
     regexp = "is not a valid"
   )
 })
