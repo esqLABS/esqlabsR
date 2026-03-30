@@ -611,6 +611,24 @@ test_that("runPI returns failure result with warning when optimization fails", {
   expect_equal(result$error, "Simulated optimization failure")
 })
 
+test_that("createPITasks resolves OutputPathId and produces same result as full path", {
+  taskNames <- c("AciclovirSimple", "AciclovirSimplePathId")
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = taskNames,
+    projectConfiguration = projectConfiguration
+  )
+
+  piTasks <- createPITasks(piTaskConfigurations)
+
+  fullPathTask <- piTasks[["AciclovirSimple"]]
+  pathIdTask <- piTasks[["AciclovirSimplePathId"]]
+  
+  expect_equal(
+    fullPathTask$outputMappings[[1]]$quantity$path,
+    pathIdTask$outputMappings[[1]]$quantity$path
+  )
+})
+
 test_that("createPITasks uses OutputPath from row instead of all scenario output paths", {
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
     piTaskNames = "AciclovirSimple",
