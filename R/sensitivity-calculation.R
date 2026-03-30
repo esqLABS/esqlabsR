@@ -231,9 +231,6 @@ sensitivityCalculation <- function(
     simulationRunOptions = simulationRunOptions
   )
 
-  # Call gc() on .NET
-  ospsuite::clearMemory()
-
   # Remove top-level names to flatten the list in the next step
   names(simulationBatchesResults) <- NULL
 
