@@ -280,6 +280,7 @@ createValidPISheets <- function() {
     PIOutputMappings = data.frame(
       PITaskName = "Task1",
       Scenarios = "PITestScenario",
+      OutputPath = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       ObservedDataSheet = "Laskin 1982.Group A",
       DataSet = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
       Scaling = "log",

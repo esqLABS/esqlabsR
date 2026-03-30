@@ -19,11 +19,13 @@
 #'   `LogScaleSD`. It also expects a "PIParameters" sheet with `PITaskName`,
 #'   `Scenarios`, `Container Path`, `Parameter Name`, `Value`, `Units`,
 #'   `MinValue`, `MaxValue`, `StartValue`, `Group` columns, a "PIOutputMappings"
-#'   sheet with `PITaskName`, `Scenarios`, `ObservedDataSheet`, `DataSet`,
-#'   `Scaling`, `xOffset`, `yOffset`, `xFactor`, `yFactor`, `Weight` columns, an
-#'   "AlgorithmOptions" sheet with `PITaskName`, `OptionName`, `OptionValue`
-#'   columns, and a "CIOptions" sheet with `PITaskName`, `OptionName`,
-#'   `OptionValue` columns.
+#'   sheet with `PITaskName`, `Scenarios`, `OutputPath`, `ObservedDataSheet`,
+#'   `DataSet`, `Scaling`, `xOffset`, `yOffset`, `xFactor`, `yFactor`, `Weight`
+#'   columns. `OutputPath` accepts either a full simulation output path or an
+#'   `OutputPathId` defined in the "OutputPaths" sheet of `Scenarios.xlsx`. It
+#'   also expects an "AlgorithmOptions" sheet with `PITaskName`, `OptionName`,
+#'   `OptionValue` columns, and a "CIOptions" sheet with `PITaskName`,
+#'   `OptionName`, `OptionValue` columns.
 #'
 #' @returns A named list of `PITaskConfiguration` objects.
 #'
@@ -90,6 +92,12 @@ readPITaskConfigurationFromExcel <- function(
     projectConfiguration = projectConfiguration
   )
   availableScenarios <- names(scenarioConfigurations)
+
+  # Validate and resolve OutputPath values
+  allSheets$piOutputMappings <- .resolveOutputPaths(
+    allSheets$piOutputMappings,
+    projectConfiguration
+  )
 
   # Create PITaskConfiguration objects for each task
   piTaskConfigurations <- vector("list", length(piTaskNames)) |>
@@ -309,6 +317,7 @@ readPITaskConfigurationFromExcel <- function(
   expectedColumns <- c(
     "PITaskName",
     "Scenarios",
+    "OutputPath",
     "ObservedDataSheet",
     "DataSet",
     "Scaling",
@@ -320,16 +329,17 @@ readPITaskConfigurationFromExcel <- function(
   )
 
   colTypes <- c(
-    "text",    # PITaskName
-    "text",    # Scenario
-    "text",    # ObservedDataSheet
-    "text",    # DataSet
-    "text",    # Scaling
+    "text", # PITaskName
+    "text", # Scenarios
+    "text", # OutputPath
+    "text", # ObservedDataSheet
+    "text", # DataSet
+    "text", # Scaling
     "numeric", # xOffset
     "numeric", # yOffset
     "numeric", # xFactor
     "numeric", # yFactor
-    "text"     # Weight
+    "text" # Weight
   )
 
   # Validate header
@@ -355,6 +365,54 @@ readPITaskConfigurationFromExcel <- function(
   data <- dplyr::filter(data, !is.na(PITaskName))
 
   return(data)
+}
+
+#' Validate and resolve `OutputPath` values in "PIOutputMappings"
+#'
+#' Full simulation output paths are kept as-is. Values that are `OutputPathId`s
+#' are resolved via the "OutputPaths" sheet of `Scenarios.xlsx`.
+#'
+#' @param piOutputMappings Data frame from `.readPIOutputMappingsSheet()`
+#' @param projectConfiguration A `ProjectConfiguration` object
+#' @returns Data frame with all `OutputPath` values resolved to full paths
+#' @keywords internal
+#' @noRd
+.resolveOutputPaths <- function(piOutputMappings, projectConfiguration) {
+  # Validate no NA or empty values
+  naRows <- is.na(piOutputMappings$OutputPath) |
+    nchar(trimws(piOutputMappings$OutputPath)) == 0
+  if (any(naRows)) {
+    stop(messages$errorPIColumnRequired("OutputPath", "PIOutputMappings"))
+  }
+
+  # Identify which values are OutputPathIds (no "|" separator)
+  isId <- !grepl("|", piOutputMappings$OutputPath, fixed = TRUE)
+
+  if (!any(isId)) {
+    return(piOutputMappings)
+  }
+
+  # Read OutputPaths lookup table from Scenarios.xlsx
+  outputPathsDf <- readExcel(
+    path = projectConfiguration$scenariosFile,
+    sheet = "OutputPaths"
+  ) |>
+    .cleanTextColumns()
+
+  # Resolve each OutputPathId
+  for (i in which(isId)) {
+    pathId <- piOutputMappings$OutputPath[i]
+    matched <- outputPathsDf$OutputPath[outputPathsDf$OutputPathId == pathId]
+    if (length(matched) == 0) {
+      stop(messages$errorPIOutputPathIdNotFound(pathId))
+    }
+    if (length(matched) > 1) {
+      stop(messages$errorPIDuplicateOutputPathId(pathId))
+    }
+    piOutputMappings$OutputPath[i] <- matched
+  }
+
+  return(piOutputMappings)
 }
 
 #' Read AlgorithmOptions sheet

@@ -791,6 +791,21 @@ messages$errorPINoOutputPathsFound <- function() {
   )
 }
 
+messages$errorPIOutputPathIdNotFound <- function(outputPathId) {
+  cliFormat(
+    "{.val {outputPathId}} specified in {.field PIOutputMappings} is not a simulation output path and is not
+    present in the {.field OutputPaths} sheet of {.file Scenarios.xlsx}. Define it in the {.field OutputPaths}
+    sheet or use a full simulation output path."
+  )
+}
+
+messages$errorPIDuplicateOutputPathId <- function(outputPathId) {
+  cliFormat(
+    "{.field OutputPathId} {.val {outputPathId}} has multiple entries in the {.sheet OutputPaths} sheet of {.file Scenarios.xlsx}.
+    Each {.field OutputPathId} must be unique."
+  )
+}
+
 messages$errorPINoScenariosConfigured <- function() {
   cliFormat(
     "No scenarios configured for PI tasks.

@@ -317,10 +317,32 @@ runPI <- function(piTasks) {
     list()
   }
 
+  # Collect all PI-specified output paths per scenario and update simulations
+  scenarioOutputPaths <- list()
+  for (i in seq_along(configurations)) {
+    mappingRow <- configurations[[i]]
+    for (scenarioName in .splitCommaString(mappingRow$Scenarios)) {
+      scenarioOutputPaths[[scenarioName]] <- unique(c(
+        scenarioOutputPaths[[scenarioName]],
+        mappingRow$OutputPath
+      ))
+    }
+  }
+  for (scenarioName in names(scenarioOutputPaths)) {
+    scenario <- scenarios[[scenarioName]]
+    if (!is.null(scenario)) {
+      ospsuite::setOutputs(
+        quantitiesOrPaths = scenarioOutputPaths[[scenarioName]],
+        simulation = scenario$simulation
+      )
+    }
+  }
+
   for (i in seq_along(configurations)) {
     mappingRow <- configurations[[i]]
 
     scaling <- mappingRow$Scaling %||% "log"
+    outputPath <- mappingRow$OutputPath
 
     # Get scenario names this output mapping applies to
     scenarioNames <- .splitCommaString(mappingRow$Scenarios)
@@ -329,7 +351,7 @@ runPI <- function(piTasks) {
       stop(messages$errorPIColumnRequired("Scenarios", "PIOutputMappings"))
     }
 
-    # Create output mappings for each scenario
+    # Create one output mapping per scenario for this row's OutputPath
     for (scenarioName in scenarioNames) {
       scenario <- scenarios[[scenarioName]]
 
@@ -340,79 +362,69 @@ runPI <- function(piTasks) {
         ))
       }
 
-      scenarioConfig <- scenario$scenarioConfiguration
-      outputPaths <- scenarioConfig$outputPaths
+      # Get quantity from this scenario's simulation
+      quantity <- ospsuite::getQuantity(
+        outputPath,
+        container = scenario$simulation
+      )
 
-      if (length(outputPaths) == 0) {
-        stop(messages$errorPINoOutputPathsFound())
-      }
-
-      # Create one output mapping per output path for this scenario
-      for (outputPath in outputPaths) {
-        # Get quantity from this scenario's simulation
-        quantity <- ospsuite::getQuantity(
+      if (is.null(quantity)) {
+        stop(messages$errorPIOutputQuantityNotFound(
           outputPath,
-          container = scenario$simulation
-        )
-
-        if (is.null(quantity)) {
-          stop(messages$errorPIOutputQuantityNotFound(
-            outputPath,
-            scenario$simulation$name
-          ))
-        }
-
-        # Create PIOutputMapping
-        outputMapping <- ospsuite.parameteridentification::PIOutputMapping$new(
-          quantity = quantity
-        )
-
-        # Add observed data set specified in DataSet column
-        dataSetName <- mappingRow$DataSet
-        if (
-          is.null(dataSetName) ||
-            is.na(dataSetName) ||
-            nchar(dataSetName) == 0
-        ) {
-          stop(messages$errorPIColumnRequired("DataSet", "PIOutputMappings"))
-        }
-
-        dataSet <- observedData[[dataSetName]]
-        if (is.null(dataSet)) {
-          stop(messages$errorPIDatasetNotFound(
-            dataSetName,
-            names(observedData)
-          ))
-        }
-
-        outputMapping$addObservedDataSets(dataSet)
-        outputMapping$scaling <- scaling
-
-        xOffset <- mappingRow$xOffset
-        yOffset <- mappingRow$yOffset
-        xFactor <- mappingRow$xFactor
-        yFactor <- mappingRow$yFactor
-        if (
-          !all(
-            c(is.na(xOffset), is.na(yOffset), is.na(xFactor), is.na(yFactor))
-          )
-        ) {
-          outputMapping$setDataTransformations(
-            labels = dataSetName,
-            xOffsets = if (is.na(xOffset)) 0 else xOffset,
-            yOffsets = if (is.na(yOffset)) 0 else yOffset,
-            xFactors = if (is.na(xFactor)) 1 else xFactor,
-            yFactors = if (is.na(yFactor)) 1 else yFactor
-          )
-        }
-
-        weight <- mappingRow$Weight
-        if (!is.null(weight)) {
-          outputMapping$setDataWeights(setNames(list(weight), dataSetName))
-        }
-
-        outputMappings[[length(outputMappings) + 1]] <- outputMapping
+          scenario$simulation$name
+        ))
       }
+
+      # Create PIOutputMapping
+      outputMapping <- ospsuite.parameteridentification::PIOutputMapping$new(
+        quantity = quantity
+      )
+
+      # Add observed data set specified in DataSet column
+      dataSetName <- mappingRow$DataSet
+      if (
+        is.null(dataSetName) ||
+          is.na(dataSetName) ||
+          nchar(dataSetName) == 0
+      ) {
+        stop(messages$errorPIColumnRequired("DataSet", "PIOutputMappings"))
+      }
+
+      dataSet <- observedData[[dataSetName]]
+      if (is.null(dataSet)) {
+        stop(messages$errorPIDatasetNotFound(
+          dataSetName,
+          names(observedData)
+        ))
+      }
+
+      outputMapping$addObservedDataSets(dataSet)
+      outputMapping$scaling <- scaling
+
+      xOffset <- mappingRow$xOffset
+      yOffset <- mappingRow$yOffset
+      xFactor <- mappingRow$xFactor
+      yFactor <- mappingRow$yFactor
+      if (
+        !all(
+          c(is.na(xOffset), is.na(yOffset), is.na(xFactor), is.na(yFactor))
+        )
+      ) {
+        outputMapping$setDataTransformations(
+          labels = dataSetName,
+          xOffsets = if (is.na(xOffset)) 0 else xOffset,
+          yOffsets = if (is.na(yOffset)) 0 else yOffset,
+          xFactors = if (is.na(xFactor)) 1 else xFactor,
+          yFactors = if (is.na(yFactor)) 1 else yFactor
+        )
+      }
+
+      weight <- mappingRow$Weight
+      if (!is.null(weight)) {
+        outputMapping$setDataWeights(setNames(list(weight), dataSetName))
+      }
+
+      outputMappings[[length(outputMappings) + 1]] <- outputMapping
     }
   }
 

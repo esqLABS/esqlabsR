@@ -610,3 +610,36 @@ test_that("runPI returns failure result with warning when optimization fails", {
   expect_null(result$result)
   expect_equal(result$error, "Simulated optimization failure")
 })
+
+test_that("createPITasks uses OutputPath from row instead of all scenario output paths", {
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = "AciclovirSimple",
+    projectConfiguration = projectConfiguration
+  )
+
+  piTasks <- createPITasks(piTaskConfigurations)
+  firstTask <- piTasks[[1]]
+
+  # Should have exactly 1 output mapping (1 row = 1 mapping)
+  expect_equal(length(firstTask$outputMappings), 1)
+})
+
+test_that("createPITasks overwrites scenario output paths with PI-specified paths", {
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = "AciclovirSimple",
+    projectConfiguration = projectConfiguration
+  )
+
+  piTasks <- createPITasks(piTaskConfigurations)
+
+  # Get the scenario from the task and check its output paths were updated
+  scenarioConfig <- piTaskConfigurations[["AciclovirSimple"]]$scenarioConfiguration[["PITestScenario"]]
+  # The scenario originally has output paths from Scenarios.xlsx
+  # After createPITasks, the simulation output selections should match PI-specified paths
+  simulation <- piTasks[[1]]$simulations[[1]]
+  outputSelections <- sapply(simulation$outputSelections$allOutputs, function(x) x$path)
+  expect_equal(
+    outputSelections,
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  )
+})

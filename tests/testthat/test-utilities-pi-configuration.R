@@ -201,6 +201,7 @@ test_that("readPITaskConfigurationFromExcel validates PIOutputMappings sheet str
   expectedColumns <- c(
     "PITaskName",
     "Scenarios",
+    "OutputPath",
     "ObservedDataSheet",
     "DataSet",
     "Scaling",
@@ -723,5 +724,82 @@ test_that("readPITaskConfigurationFromExcel errors on invalid Weight string", {
     readPITaskConfigurationFromExcel(
       projectConfiguration = projectConfigurationLocal
     )
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel stores OutputPath in piOutputMappings", {
+  piTaskName <- "AciclovirSimple"
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = piTaskName,
+    projectConfiguration = projectConfiguration
+  )
+
+  outputMapping <- piTaskConfigurations[[piTaskName]]$piOutputMappings[[1]]
+  expect_equal(
+    outputMapping$OutputPath,
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel resolves OutputPathId to full path", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$OutputPath <- "Aciclovir_PVB"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  outputMapping <- piTaskConfigurations[["Task1"]]$piOutputMappings[[1]]
+  expect_equal(
+    outputMapping$OutputPath,
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel errors when OutputPathId not found", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$OutputPath <- "NonExistentId"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  expect_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    ),
+    regexp = "NonExistentId"
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel errors when OutputPath is NA", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$OutputPath <- NA_character_
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  expect_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    ),
+    regexp = "OutputPath"
   )
 })

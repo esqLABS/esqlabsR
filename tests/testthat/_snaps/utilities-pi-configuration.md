@@ -42,6 +42,9 @@
       $piOutputMappings$Scenarios
       [1] "character"
       
+      $piOutputMappings$OutputPath
+      [1] "character"
+      
       $piOutputMappings$ObservedDataSheet
       [1] "character"
       
