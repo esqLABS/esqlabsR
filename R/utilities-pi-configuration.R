@@ -11,21 +11,20 @@
 #'   task that is specified in `piTaskNames` is not found in the Excel file, an
 #'   error is thrown.
 #'
-#'   The function expects the Excel file to have a "PIConfiguration" sheet with
-#'   the following columns: `PITaskName`, `Algorithm`, `CIMethod`,
-#'   `PrintEvaluationFeedback`, `AutoEstimateCI`, `numberOfCores`,
-#'   `checkForNegativeValues`, `ObjectiveFunctionType`,
-#'   `ResidualWeightingMethod`, `RobustMethod`, `ScaleVar`, `LinScaleCV`,
-#'   `LogScaleSD`. It also expects a "PIParameters" sheet with `PITaskName`,
-#'   `Scenarios`, `Container Path`, `Parameter Name`, `Units`, `MinValue`,
-#'   `MaxValue`, `StartValue`, `Group` columns, a "PIOutputMappings" sheet with
+#'   The function expects the Excel file to have a "PIOutputMappings" sheet with
 #'   `PITaskName`, `Scenarios`, `OutputPath`, `ObservedDataSheet`, `DataSet`,
 #'   `Scaling`, `xOffset`, `yOffset`, `xFactor`, `yFactor`, `Weight` columns.
 #'   `OutputPath` accepts either a full simulation output path or an
 #'   `OutputPathId` defined in the "OutputPaths" sheet of `Scenarios.xlsx`. It
-#'   also expects an "AlgorithmOptions" sheet with `PITaskName`, `OptionName`,
-#'   `OptionValue` columns, and a "CIOptions" sheet with `PITaskName`,
-#'   `OptionName`, `OptionValue` columns.
+#'   also expects a "PIParameters" sheet with `PITaskName`, `Scenarios`,
+#'   `Container Path`, `Parameter Name`, `Units`, `MinValue`, `MaxValue`,
+#'   `StartValue`, `Group` columns, an optional "PIConfiguration" sheet with
+#'   `PITaskName`, `Algorithm`, `CIMethod`, `PrintEvaluationFeedback`,
+#'   `AutoEstimateCI`, `numberOfCores`, `checkForNegativeValues`,
+#'   `ObjectiveFunctionType`, `ResidualWeightingMethod`, `RobustMethod`,
+#'   `ScaleVar`, `LinScaleCV`, `LogScaleSD` columns, an "AlgorithmOptions" sheet
+#'   with `PITaskName`, `OptionName`, `OptionValue` columns, and a "CIOptions"
+#'   sheet with `PITaskName`, `OptionName`, `OptionValue` columns.
 #'
 #' @returns A named list of `PITaskConfiguration` objects.
 #'
@@ -47,9 +46,9 @@ readPITaskConfigurationFromExcel <- function(
 
   # Define expected sheets
   expectedSheets <- c(
-    "PIConfiguration",
-    "PIParameters",
     "PIOutputMappings",
+    "PIParameters",
+    "PIConfiguration",
     "AlgorithmOptions",
     "CIOptions"
   )

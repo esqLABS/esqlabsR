@@ -249,6 +249,31 @@ local_test_project <- function(
 # task, suitable as a base for tests that manipulate specific fields.
 createValidPISheets <- function() {
   list(
+    PIOutputMappings = data.frame(
+      PITaskName = "Task1",
+      Scenarios = "PITestScenario",
+      OutputPath = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      ObservedDataSheet = "Laskin 1982.Group A",
+      DataSet = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+      Scaling = "log",
+      xOffset = NA,
+      yOffset = NA,
+      xFactor = NA,
+      yFactor = NA,
+      Weight = NA
+    ),
+    PIParameters = data.frame(
+      PITaskName = "Task1",
+      Scenarios = "PITestScenario",
+      `Container Path` = "Aciclovir",
+      `Parameter Name` = "Lipophilicity",
+      Units = "Log Units",
+      MinValue = -2,
+      MaxValue = 2,
+      StartValue = -0.1,
+      Group = NA,
+      check.names = FALSE
+    ),
     PIConfiguration = data.frame(
       PITaskName = "Task1",
       Algorithm = "BOBYQA",
@@ -263,31 +288,6 @@ createValidPISheets <- function() {
       ScaleVar = NA,
       LinScaleCV = NA,
       LogScaleSD = NA
-    ),
-    PIParameters = data.frame(
-      PITaskName = "Task1",
-      Scenarios = "PITestScenario",
-      `Container Path` = "Aciclovir",
-      `Parameter Name` = "Lipophilicity",
-      Units = "Log Units",
-      MinValue = -2,
-      MaxValue = 2,
-      StartValue = -0.1,
-      Group = NA,
-      check.names = FALSE
-    ),
-    PIOutputMappings = data.frame(
-      PITaskName = "Task1",
-      Scenarios = "PITestScenario",
-      OutputPath = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-      ObservedDataSheet = "Laskin 1982.Group A",
-      DataSet = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
-      Scaling = "log",
-      xOffset = NA,
-      yOffset = NA,
-      xFactor = NA,
-      yFactor = NA,
-      Weight = NA
     ),
     AlgorithmOptions = data.frame(
       PITaskName = character(0),
