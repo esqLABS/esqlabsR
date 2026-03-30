@@ -25,6 +25,15 @@
 
 ### Minor improvements and bug fixes
 
+- [`loadObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedData.md)
+  now passes the `sheets` argument directly to
+  [`ospsuite::loadDataSetsFromExcel()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html),
+  removing the deprecated `importAllSheets` workaround. The `sheets`
+  parameter takes precedence over any sheets defined in
+  `importerConfiguration`: `importerConfiguration$sheets` is always set
+  to `NULL` before loading, so the passed configuration object is
+  mutated as a side effect
+  ([\#962](https://github.com/esqLABS/esqlabsR/issues/962)).
 - Refactored
   [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.md)
   to eliminate code duplication by delegating to
