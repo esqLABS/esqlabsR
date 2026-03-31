@@ -11,7 +11,7 @@ source of truth."><meta property="og:image" content="https://esqlabs.github.io/e
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,8 @@ source of truth.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">projectConfigurationStatus</span><span class="op">(</span></span>
 <span>  projectConfig <span class="op">=</span> <span class="st">"ProjectConfiguration.xlsx"</span>,</span>
 <span>  jsonPath <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  silent <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  silent <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -87,6 +88,13 @@ ProjectConfiguration file but with .json extension.</p></dd>
 <dt id="arg-silent">silent<a class="anchor" aria-label="anchor" href="#arg-silent"></a></dt>
 <dd><p>Logical indicating whether to suppress informational messages.
 Defaults to FALSE.</p></dd>
+
+
+<dt id="arg-ignoreversioncheck">ignoreVersionCheck<a class="anchor" aria-label="anchor" href="#arg-ignoreversioncheck"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, the version check between the
+stored <code>esqlabsR</code> version in the configuration and the currently installed
+version is skipped. Defaults to <code>TRUE</code> because this function focuses on
+file synchronization status, not version compatibility.</p></dd>
 
 </dl></div>
     <div class="section level2">

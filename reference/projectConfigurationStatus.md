@@ -10,7 +10,8 @@ source of truth.
 projectConfigurationStatus(
   projectConfig = "ProjectConfiguration.xlsx",
   jsonPath = NULL,
-  silent = FALSE
+  silent = FALSE,
+  ignoreVersionCheck = TRUE
 )
 ```
 
@@ -31,6 +32,13 @@ projectConfigurationStatus(
 
   Logical indicating whether to suppress informational messages.
   Defaults to FALSE.
+
+- ignoreVersionCheck:
+
+  Logical. If `TRUE`, the version check between the stored `esqlabsR`
+  version in the configuration and the currently installed version is
+  skipped. Defaults to `TRUE` because this function focuses on file
+  synchronization status, not version compatibility.
 
 ## Value
 

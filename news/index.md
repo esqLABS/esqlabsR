@@ -1,5 +1,66 @@
 # Changelog
 
+## esqlabsR 5.6.0
+
+### New features
+
+- `ProjectConfiguration` now stores the `esqlabsR` package version it
+  was last saved with. When loading a configuration, the stored version
+  is compared against the currently installed version. On mismatch or
+  missing version, the user is interactively prompted to update the
+  version in the configuration file and continue, or to stop. The user
+  should always consult the [package
+  NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) for breaking
+  changes before confirming the update.
+- Added `ignoreVersionCheck` parameter to
+  [`createProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createProjectConfiguration.md)
+  and
+  [`createDefaultProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createDefaultProjectConfiguration.md).
+  When `TRUE`, the version check is skipped. This is intended for
+  non-interactive contexts such as automated tests or scripts run from
+  the console where user input cannot be assured. When using this
+  option, it is the responsibility of the user to ensure that the
+  project is compatible with the currently installed version of
+  `esqlabsR`.
+
+### Minor improvements and bug fixes
+
+- [`loadObservedData()`](https://esqlabs.github.io/esqlabsR/reference/loadObservedData.md)
+  now passes the `sheets` argument directly to
+  [`ospsuite::loadDataSetsFromExcel()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html),
+  removing the deprecated `importAllSheets` workaround. The `sheets`
+  parameter takes precedence over any sheets defined in
+  `importerConfiguration`: `importerConfiguration$sheets` is always set
+  to `NULL` before loading, so the passed configuration object is
+  mutated as a side effect
+  ([\#962](https://github.com/esqLABS/esqlabsR/issues/962)).
+- Refactored
+  [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/reference/exportParametersToXLS.md)
+  to eliminate code duplication by delegating to
+  [`writeParameterStructureToXLS()`](https://esqlabs.github.io/esqlabsR/reference/writeParameterStructureToXLS.md).
+  The function now extracts parameter data into a structure and passes
+  it to
+  [`writeParameterStructureToXLS()`](https://esqlabs.github.io/esqlabsR/reference/writeParameterStructureToXLS.md)
+  for writing. No changes to functionality or API.
+- [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/reference/createDataCombinedFromExcel.md)
+  now throws an error listing all DataCombined IDs that cannot be found
+  in the Excel file
+  ([\#740](https://github.com/esqLABS/esqlabsR/issues/740)).
+- Added a warning when axis limits contain zero while the corresponding
+  axis scale is set to `log` in `Plots.xlsx`. Previously, this
+  combination silently produced empty plots
+  ([\#967](https://github.com/esqLABS/esqlabsR/issues/967)).
+- [`extendParameterStructure()`](https://esqlabs.github.io/esqlabsR/reference/extendParameterStructure.md)
+  now supports `NULL` for `parameters` and `newParameters` arguments.
+  When `NULL` is provided, a valid empty structure is returned or
+  combined with the non-NULL argument
+  ([\#583](https://github.com/esqLABS/esqlabsR/issues/583)).
+- [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.md)
+  now accepts `xUnits` and `yUnits` as plain strings (e.g.,
+  `yUnits = "nmol/l"`) in addition to lists. Single string values are
+  automatically coerced to a list
+  ([\#822](https://github.com/esqLABS/esqlabsR/issues/822)).
+
 ## esqlabsR 5.5.2
 
 ### Breaking changes
@@ -26,6 +87,8 @@
   R6 objects
 - Using native operator `%||%` instead of importing from the
   `ospsuite.utils` package.
+- Remove false warnings whenever a ProjectConfiguration is created
+  ([\#964](https://github.com/esqLABS/esqlabsR/issues/964)).
 
 ## esqlabsR 5.5.1
 
@@ -769,22 +832,18 @@
 
 - Three new functions to create configuration objects needed for data
   visualization workflows:
-
   - [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.md)
   - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.md)
   - [`createEsqlabsExportConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.md)
-
 - New function
   [`getAllApplicationParameters()`](https://esqlabs.github.io/esqlabsR/reference/getAllApplicationParameters.md)
   that returns all parameters of applications in a simulation
-
 - New function
   [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/reference/exportParametersToXLS.md)
   to write parameter information into an excel file that can be loaded
   in MoBi or R using the
   [`readParametersFromXLS()`](https://esqlabs.github.io/esqlabsR/reference/readParametersFromXLS.md)
   function.
-
 - New function `writeExcel()` that is a wrapper for creating a directory
   (if not present) and writing to excel file using
   [`writexl::write_xlsx()`](https://docs.ropensci.org/writexl//reference/write_xlsx.html).

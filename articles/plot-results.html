@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -206,7 +206,10 @@ corresponding observed data.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
 <span><span class="co"># Create a project configuration</span></span>
-<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
 <span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
 <span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
@@ -220,7 +223,10 @@ corresponding observed data.</p>
 <span></span>
 <span><span class="co"># Load observed data</span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
-<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>, sheets <span class="op">=</span> <span class="va">dataSheets</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  sheets <span class="op">=</span> <span class="va">dataSheets</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="setup-the-plot-xlsx-file">Setup the <code>Plot.xlsx</code> file<a class="anchor" aria-label="anchor" href="#setup-the-plot-xlsx-file"></a>
@@ -306,7 +312,7 @@ can use the <code><a href="../reference/createDataCombinedFromExcel.html">create
 <span><span class="va">sumResiduals</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">residuals</span><span class="op">$</span><span class="va">residualValues</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"The sum of linear residuals for is "</span>, <span class="va">sumResiduals</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "The sum of linear residuals for is 47.1850939396566"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "The sum of linear residuals for is 10.6277876217989"</span></span></code></pre></div>
 <p>You can modify the created <code>DataCombined</code>, e.g., by
 changing the offsets, and pass them to the
 <code>createPlotsFromExcel</code> function:</p>
@@ -351,9 +357,11 @@ supported plot types and how to customize them.</p>
 <p>For the following examples, we will use the same scenario as
 described in the <a href="#example">Example</a> above.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
-<span><span class="co"># Create a project configuration</span></span>
-<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Create a project configuration</span></span>
+<span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
 <span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
 <span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
@@ -367,7 +375,10 @@ described in the <a href="#example">Example</a> above.</p>
 <span></span>
 <span><span class="co"># Load observed data</span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
-<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span>projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>, sheets <span class="op">=</span> <span class="va">dataSheets</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  sheets <span class="op">=</span> <span class="va">dataSheets</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <p>For the following steps, no <code>Plots.xlsx</code> file is needed.
 Instead, we will use the <code>DataCombined</code> class to store the
 simulated and observed data, use the <a href="https://github.com/open-systems-pharmacology/ospsuite-r" class="external-link">ospsuite</a>’s plotting
@@ -392,7 +403,8 @@ data with the following code:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dataCombined</span> <span class="op">&lt;-</span> <span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html" class="external-link">DataCombined</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addDataSets</span><span class="op">(</span><span class="va">observedData</span>, names <span class="op">=</span> <span class="st">"Observed"</span>, groups <span class="op">=</span> <span class="st">"Aciclovir"</span><span class="op">)</span></span>
-<span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span><span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
+<span><span class="va">dataCombined</span><span class="op">$</span><span class="fu">addSimulationResults</span><span class="op">(</span></span>
+<span>  <span class="va">simulatedScenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">results</span>,</span>
 <span>  names <span class="op">=</span> <span class="st">"Simulated"</span>,</span>
 <span>  groups <span class="op">=</span> <span class="st">"Aciclovir"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -432,16 +444,28 @@ default configurations.</p>
 <span><span class="va">gridConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsPlotGridConfiguration.html">createEsqlabsPlotGridConfiguration</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Time profile"</span></span>
-<span><span class="va">indivPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">indivPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html" class="external-link">plotIndividualTimeProfile</a></span><span class="op">(</span></span>
+<span>  <span class="va">dataCombined</span>,</span>
+<span>  defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Observed-vs-simulated"</span></span>
-<span><span class="va">obsVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">obsVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html" class="external-link">plotObservedVsSimulated</a></span><span class="op">(</span></span>
+<span>  <span class="va">dataCombined</span>,</span>
+<span>  defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Res-vs-time"</span></span>
-<span><span class="va">resVsTimePlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html" class="external-link">plotResidualsVsTime</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">resVsTimePlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html" class="external-link">plotResidualsVsTime</a></span><span class="op">(</span></span>
+<span>  <span class="va">dataCombined</span>,</span>
+<span>  defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">plotConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"Res-vs-simulated"</span></span>
-<span><span class="va">resVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html" class="external-link">plotResidualsVsSimulated</a></span><span class="op">(</span><span class="va">dataCombined</span>, defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span><span class="op">)</span></span>
+<span><span class="va">resVsSimPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html" class="external-link">plotResidualsVsSimulated</a></span><span class="op">(</span></span>
+<span>  <span class="va">dataCombined</span>,</span>
+<span>  defaultPlotConfiguration <span class="op">=</span> <span class="va">plotConfig</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gridConfig</span><span class="op">$</span><span class="fu">addPlots</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">indivPlot</span>, <span class="va">obsVsSimPlot</span>, <span class="va">resVsTimePlot</span>, <span class="va">resVsSimPlot</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">gridConfig</span><span class="op">$</span><span class="va">title</span> <span class="op">&lt;-</span> <span class="st">"All aciclovir plots"</span></span>
@@ -456,7 +480,9 @@ default configurations.</p>
 Make sure that the <code>fileName</code> argument ends with
 <code>.png</code>:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span><span class="va">projectConfiguration</span><span class="op">$</span><span class="va">outputFolder</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">exportConfig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration</a></span><span class="op">(</span></span>
+<span>  <span class="va">projectConfiguration</span><span class="op">$</span><span class="va">outputFolder</span></span>
+<span><span class="op">)</span></span>
 <span><span class="va">exportConfig</span><span class="op">$</span><span class="fu">savePlot</span><span class="op">(</span><span class="va">gridPlot</span>, fileName <span class="op">=</span> <span class="st">"All plots.png"</span><span class="op">)</span></span></code></pre></div>
 <p>By default, the height of the output figure is calculated from the
 number of rows in the multi-panel plot and the height defined in
@@ -482,7 +508,10 @@ files with observed data are present in the
 <code>projectConfiguration$dataFolder</code> folder, the following code
 loads the data:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="st">"Laskin 1982.Group A"</span></span>
 <span></span>

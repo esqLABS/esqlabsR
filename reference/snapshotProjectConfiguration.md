@@ -10,6 +10,7 @@ control and programmatic manipulation.
 snapshotProjectConfiguration(
   projectConfig = "ProjectConfiguration.xlsx",
   outputDir = NULL,
+  ignoreVersionCheck = TRUE,
   ...
 )
 ```
@@ -26,6 +27,11 @@ snapshotProjectConfiguration(
   Directory where the JSON file will be saved. If NULL (default), the
   JSON file will be created in the same directory as the source Excel
   file.
+
+- ignoreVersionCheck:
+
+  Logical indicating whether to ignore version mismatch checks when
+  creating the ProjectConfiguration from a file path. Defaults to TRUE.
 
 - ...:
 
