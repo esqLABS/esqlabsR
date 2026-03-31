@@ -1,4 +1,4 @@
-# esqlabsR (development version)
+# esqlabsR 5.6.0
 
 ## New features
 
