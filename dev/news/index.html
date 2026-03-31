@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9013</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9014</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,6 +67,8 @@
 <li>Added a warning when axis limits contain zero while the corresponding axis scale is set to <code>log</code> in <code>Plots.xlsx</code>. Previously, this combination silently produced empty plots (<a href="https://github.com/esqLABS/esqlabsR/issues/967" class="external-link">#967</a>).</li>
 <li>
 <code><a href="../reference/extendParameterStructure.html">extendParameterStructure()</a></code> now supports <code>NULL</code> for <code>parameters</code> and <code>newParameters</code> arguments. When <code>NULL</code> is provided, a valid empty structure is returned or combined with the non-NULL argument (<a href="https://github.com/esqLABS/esqlabsR/issues/583" class="external-link">#583</a>).</li>
+<li>
+<code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> now accepts <code>xUnits</code> and <code>yUnits</code> as plain strings (e.g., <code>yUnits = "nmol/l"</code>) in addition to lists. Single string values are automatically coerced to a list (<a href="https://github.com/esqLABS/esqlabsR/issues/822" class="external-link">#822</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">

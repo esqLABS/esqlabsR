@@ -55,6 +55,11 @@
   When `NULL` is provided, a valid empty structure is returned or
   combined with the non-NULL argument
   ([\#583](https://github.com/esqLABS/esqlabsR/issues/583)).
+- [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md)
+  now accepts `xUnits` and `yUnits` as plain strings (e.g.,
+  `yUnits = "nmol/l"`) in addition to lists. Single string values are
+  automatically coerced to a list
+  ([\#822](https://github.com/esqLABS/esqlabsR/issues/822)).
 
 ## esqlabsR 5.5.2
 
