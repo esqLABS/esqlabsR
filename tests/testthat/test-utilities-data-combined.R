@@ -189,7 +189,10 @@ test_that("createDataCombinedFromExcel errors when specified DataCombined names 
       simulatedScenarios = simulatedScenarios,
       observedData = observedData
     ),
-    regexp = messages$stopDataCombinedNamesNotFound(c("NonExistentDC1", "NonExistentDC2")),
+    regexp = messages$stopDataCombinedNamesNotFound(c(
+      "NonExistentDC1",
+      "NonExistentDC2"
+    )),
     fixed = TRUE
   )
 })
