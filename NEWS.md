@@ -11,6 +11,7 @@
 - `createDataCombinedFromExcel()` now throws an error listing all DataCombined IDs that cannot be found in the Excel file (\#740).
 - Added a warning when axis limits contain zero while the corresponding axis scale is set to `log` in `Plots.xlsx`. Previously, this combination silently produced empty plots (\#967).
 - `extendParameterStructure()` now supports `NULL` for `parameters` and `newParameters` arguments. When `NULL` is provided, a valid empty structure is returned or combined with the non-NULL argument (#583).
+- `sensitivityTimeProfiles()` now accepts `xUnits` and `yUnits` as plain strings (e.g., `yUnits = "nmol/l"`) in addition to lists. Single string values are automatically coerced to a list (\#822).
 
 # esqlabsR 5.5.2
 
