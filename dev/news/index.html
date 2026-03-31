@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9014</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,14 +51,17 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="5.6.0" id="esqlabsr-560">esqlabsR 5.6.0<a class="anchor" aria-label="anchor" href="#esqlabsr-560"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-5-6-0">New features<a class="anchor" aria-label="anchor" href="#new-features-5-6-0"></a></h3>
 <ul><li>
 <code>ProjectConfiguration</code> now stores the <code>esqlabsR</code> package version it was last saved with. When loading a configuration, the stored version is compared against the currently installed version. On mismatch or missing version, the user is interactively prompted to update the version in the configuration file and continue, or to stop. The user should always consult the <a href="https://esqlabs.github.io/esqlabsR/news/index.html">package NEWS</a> for breaking changes before confirming the update.</li>
 <li>Added <code>ignoreVersionCheck</code> parameter to <code><a href="../reference/createProjectConfiguration.html">createProjectConfiguration()</a></code> and <code><a href="../reference/createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code>. When <code>TRUE</code>, the version check is skipped. This is intended for non-interactive contexts such as automated tests or scripts run from the console where user input cannot be assured. When using this option, it is the responsibility of the user to ensure that the project is compatible with the currently installed version of <code>esqlabsR</code>.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
+<h3 id="minor-improvements-and-bug-fixes-5-6-0">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-6-0"></a></h3>
 <ul><li>
 <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> now passes the <code>sheets</code> argument directly to <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html" class="external-link">ospsuite::loadDataSetsFromExcel()</a></code>, removing the deprecated <code>importAllSheets</code> workaround. The <code>sheets</code> parameter takes precedence over any sheets defined in <code>importerConfiguration</code>: <code>importerConfiguration$sheets</code> is always set to <code>NULL</code> before loading, so the passed configuration object is mutated as a side effect (<a href="https://github.com/esqLABS/esqlabsR/issues/962" class="external-link">#962</a>).</li>
 <li>Refactored <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> to eliminate code duplication by delegating to <code><a href="../reference/writeParameterStructureToXLS.html">writeParameterStructureToXLS()</a></code>. The function now extracts parameter data into a structure and passes it to <code><a href="../reference/writeParameterStructureToXLS.html">writeParameterStructureToXLS()</a></code> for writing. No changes to functionality or API.</li>

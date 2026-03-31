@@ -15,7 +15,7 @@ projectConfiguration$dataImporterConfigurationFile."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.5.2.9014</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,14 +86,19 @@ the necessary information.</p></dd>
 
 <dt id="arg-sheets">sheets<a class="anchor" aria-label="anchor" href="#arg-sheets"></a></dt>
 <dd><p>String or a list of strings defining which sheets to load. If
-<code>NULL</code> (default), all sheets within the file are loaded.</p></dd>
+<code>NULL</code> (default), all sheets within the file are loaded. This parameter
+takes precedence over any sheets defined in <code>importerConfiguration</code>: the
+function always sets <code>importerConfiguration$sheets</code> to <code>NULL</code> before
+calling <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html" class="external-link">ospsuite::loadDataSetsFromExcel()</a></code>, so the passed
+<code>importerConfiguration</code> object is mutated as a side effect.</p></dd>
 
 
 <dt id="arg-importerconfiguration">importerConfiguration<a class="anchor" aria-label="anchor" href="#arg-importerconfiguration"></a></dt>
 <dd><p><code>DataImporterConfiguration</code> object used to load
 the data. If <code>NULL</code> (default), default esqlabs importer configuration as
 defined in <code>projectConfiguration$dataImporterConfigurationFile</code> will be
-used.</p></dd>
+used. Note: the <code>sheets</code> property of this object is always set to <code>NULL</code>
+by this function (see the <code>sheets</code> parameter description).</p></dd>
 
 </dl></div>
     <div class="section level2">

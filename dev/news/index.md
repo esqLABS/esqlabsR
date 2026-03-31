@@ -2,6 +2,8 @@
 
 ## esqlabsR (development version)
 
+## esqlabsR 5.6.0
+
 ### New features
 
 - `ProjectConfiguration` now stores the `esqlabsR` package version it

@@ -50,8 +50,9 @@ sensitivityTimeProfiles(
 
 - xUnits, yUnits:
 
-  Lists of units for the x-axis and y-axis, respectively. If a list of
-  length one is provided, it will be applied to all `outputPaths` if
+  Units for the x-axis and y-axis, respectively. Can be provided as a
+  single string (e.g., `"nmol/l"`) or a list of strings. A single string
+  or a list of length one will be applied to all `outputPaths` if
   conversion is possible. If a list of multiple units is provided, the
   units list should correspond to the `outputPaths`, and units
   conversion will be applied accordingly. If `NULL`, default units from
