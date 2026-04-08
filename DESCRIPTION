@@ -19,7 +19,7 @@ License: GPL-2
 URL: https://github.com/esqLABS/esqlabsR, https://esqlabs.github.io/esqlabsR/
 BugReports: https://github.com/esqLABS/esqlabsR/issues
 Depends:
-    ospsuite (>= 12.2.0),
+    ospsuite (>= 12.4.0),
     R (>= 4.4)
 Imports:
     colorspace,
@@ -39,12 +39,12 @@ Imports:
     scales,
     stringr,
     tidyr,
-    tlf (>= 1.6.0),
     ospsuite.utils (>= 1.10.0),
     tools,
     usethis,
     vctrs,
-    writexl
+    writexl,
+    ospsuite.plots (>= 1.0.1.9009)
 Suggests: 
     clipr,
     covr,
@@ -68,4 +68,6 @@ Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Remotes:  
-    ospsuite=Open-Systems-Pharmacology/OSPSuite-R
+    ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
+    ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
+    ospsuite.plots=Open-Systems-Pharmacology/OSPSuite.Plots
