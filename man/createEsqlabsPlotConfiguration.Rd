@@ -2,16 +2,15 @@
 % Please edit documentation in R/utilities-figures.R
 \name{createEsqlabsPlotConfiguration}
 \alias{createEsqlabsPlotConfiguration}
-\title{Create an instance of \code{DefaultPlotConfiguration} R6 class}
+\title{Create a \code{DefaultPlotConfiguration} list of properties}
 \usage{
-createEsqlabsPlotConfiguration()
+createEsqlabsPlotConfiguration(plotType = NULL)
 }
 \value{
-An instance of \code{DefaultPlotConfiguration} R6 class.
+A named list
 }
 \description{
-An instance of \code{DefaultPlotConfiguration} R6 class from \code{{tlf}} package is
-needed for creating visualizations with the \code{{ospsuite}} package.
+An list of plot properties needed for creating visualizations with the \code{{ospsuite}} package.
 
 The default attributes of the class are chosen to reflect the corporate
 standards adopted by esqLABS GmbH.

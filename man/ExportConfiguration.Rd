@@ -7,20 +7,28 @@
 The file name of the exported plot
 }
 \description{
-R6 class extending \link[tlf:ExportConfiguration]{tlf::ExportConfiguration} with row-aware
-height.
+R6 class defining and managing how to export/save ggplot objects
+with row-aware height.
 }
-\details{
-Inherits fields and behavior from \link[tlf:ExportConfiguration]{tlf::ExportConfiguration}.
-}
-\section{Inherited fields}{
- See \link[tlf:ExportConfiguration]{tlf::ExportConfiguration} for \code{name}, \code{path},
-\code{format}, \code{width}, \code{height}, \code{units}, and \code{dpi}.
-}
-
 \concept{PlotConfiguration classes}
-\section{Super class}{
-\code{\link[tlf:ExportConfiguration]{tlf::ExportConfiguration}} -> \code{ExportConfiguration}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{name}}{file name of exported figures}
+
+\item{\code{path}}{directory path where figures are exported}
+
+\item{\code{format}}{character defining the format/device of the file to be saved}
+
+\item{\code{width}}{numeric values defining the width in \code{units} of the plot dimensions after saving}
+
+\item{\code{height}}{numeric values defining the height in \code{units} of the plot dimensions after saving}
+
+\item{\code{units}}{character defining the unit of the saving dimension}
+
+\item{\code{dpi}}{(dots per inch) numeric value defining plot resolution}
+}
+\if{html}{\out{</div>}}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -36,20 +44,65 @@ property.}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-ExportConfiguration-new}{\code{ExportConfiguration$new()}}
+\item \href{#method-ExportConfiguration-print}{\code{ExportConfiguration$print()}}
 \item \href{#method-ExportConfiguration-savePlot}{\code{ExportConfiguration$savePlot()}}
 \item \href{#method-ExportConfiguration-clone}{\code{ExportConfiguration$clone()}}
 }
 }
-\if{html}{\out{
-<details open><summary>Inherited methods</summary>
-<ul>
-<li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="convertPixels"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-convertPixels'><code>tlf::ExportConfiguration$convertPixels()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="getFileName"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-getFileName'><code>tlf::ExportConfiguration$getFileName()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="initialize"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-initialize'><code>tlf::ExportConfiguration$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="print"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-print'><code>tlf::ExportConfiguration$print()</code></a></span></li>
-</ul>
-</details>
-}}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ExportConfiguration-new"></a>}}
+\if{latex}{\out{\hypertarget{method-ExportConfiguration-new}{}}}
+\subsection{Method \code{new()}}{
+Create a new \code{ExportConfiguration} object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ExportConfiguration$new(
+  name = NULL,
+  path = NULL,
+  format = NULL,
+  width = NULL,
+  height = NULL,
+  units = NULL,
+  dpi = NULL
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{file name of exported figures}
+
+\item{\code{path}}{directory path where figures are exported}
+
+\item{\code{format}}{character defining the format of the file to be saved}
+
+\item{\code{width}}{numeric values defining the width in \code{units} of the plot dimensions after saving}
+
+\item{\code{height}}{numeric values defining the height in \code{units} of the plot dimensions after saving}
+
+\item{\code{units}}{character defining the unit of the saving dimension}
+
+\item{\code{dpi}}{numeric value defining plot resolution (dots per inch)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new \code{ExportConfiguration} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ExportConfiguration-print"></a>}}
+\if{latex}{\out{\hypertarget{method-ExportConfiguration-print}{}}}
+\subsection{Method \code{print()}}{
+Print properties of export configuration
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ExportConfiguration$print()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Export configuration properties
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ExportConfiguration-savePlot"></a>}}
 \if{latex}{\out{\hypertarget{method-ExportConfiguration-savePlot}{}}}

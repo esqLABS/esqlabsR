@@ -130,23 +130,8 @@ sensitivityTornadoPlot <- function(
   }
 
   # Plot configuration setup -----------------------------
-
-  tornadoPlotConfiguration <- list(
-    legendPosition = "right",
-    legendTitle = "Parameter Factor",
-    subtitle = NULL,
-    title = NULL,
-    titleSize = 14,
-    xLabel = "Change in PK parameter [% relative to baseline]",
-    yLabel = "Parameter"
-  )
-
-  # apply configuration overrides and validate
-  customPlotConfiguration <- .applyPlotConfiguration(
-    defaultPlotConfiguration = defaultPlotConfiguration,
-    plotOverrideConfig = tornadoPlotConfiguration
-  )
-
+  customPlotConfiguration <- defaultPlotConfiguration %||% .plotConfigurationFromType("tornadoPlot")
+  
   # Prepare data -----------------------------------------
 
   data <- .filterPlottingData(
@@ -214,12 +199,9 @@ sensitivityTornadoPlot <- function(
   defaultPlotConfiguration
 ) {
   # update data dependent plot configuration
-  plotConfiguration <- defaultPlotConfiguration$clone()
-  plotConfiguration <- .updatePlotConfiguration(
-    plotConfiguration,
-    list(title = unique(data$OutputPath))
-  )
-
+  plotConfiguration <- defaultPlotConfiguration
+  plotConfiguration$title = unique(data$OutputPath)
+  
   # adjust x-axis limits to be symmetric around 0
   pLimits <- .calculateLimits(data$PKPercentChange)
   pLimits[1] <- -1 * max(abs(pLimits))
@@ -234,29 +216,30 @@ sensitivityTornadoPlot <- function(
 
     # Basic plot setup -----------------------------------
 
-    plot <- ggplot(
+    plot <- ggplot2::ggplot(
       dataSubset,
-      aes(
+      ggplot2::aes(
         x = PKPercentChange,
         y = ParameterPathLabel,
         fill = as.factor(ParameterFactor)
       )
     ) +
-      geom_col(
+      ggplot2::geom_col(
         color = "grey",
         width = 0.9,
+        alpha = 1,
         na.rm = TRUE
       )
 
     plot <- plot +
-      geom_vline(
+      ggplot2::geom_vline(
         xintercept = 0,
         color = "grey",
         linewidth = 1
       )
 
     plot <- plot +
-      scale_x_continuous(
+      ggplot2::scale_x_continuous(
         limits = pLimits,
         breaks = scales::breaks_extended(),
         labels = scales::label_number_auto()
@@ -265,21 +248,21 @@ sensitivityTornadoPlot <- function(
     # Finalize plot --------------------------------------
 
     plot <- plot +
-      facet_wrap(~PKParameter, scales = "fixed") +
-      labs(
+      ggplot2::facet_wrap(~PKParameter, scales = "fixed") +
+      ggplot2::labs(
         x = plotConfiguration$xLabel,
         y = plotConfiguration$yLabel,
         title = NULL,
         fill = plotConfiguration$legendTitle
       ) +
-      theme_light(
+      ggplot2::theme_light(
         base_size = 11
       ) +
-      theme(
+      ggplot2::theme(
         legend.position = plotConfiguration$legendPosition,
-        panel.grid.minor = element_blank(),
-        text = element_text(size = 11),
-        axis.text.y = element_text(margin = margin(l = 20, unit = "pt"))
+        panel.grid.minor = ggplot2::element_blank(),
+        text = ggplot2::element_text(size = 11),
+        axis.text.y = ggplot2::element_text(margin = margin(l = 20, unit = "pt"))
       )
 
     # apply color scales
@@ -290,15 +273,13 @@ sensitivityTornadoPlot <- function(
       pColor <- plotConfiguration$linesColor[seq_along(pLevels)]
       names(pColor) <- pLevels
       plot <- plot +
-        scale_fill_manual(
-          values = colorspace::lighten(pColor, amount = 0.2)
-        )
+        ggplot2::scale_fill_manual(values = colorspace::lighten(pColor, amount = 0.2))
     }
 
     # apply x-axis zoom range if specified
     if (!is.null(xAxisZoomRange)) {
       plot <- plot +
-        coord_cartesian(
+        ggplot2::coord_cartesian(
           xlim = xAxisZoomRange,
           expand = TRUE,
           clip = "on"

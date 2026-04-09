@@ -139,31 +139,11 @@ sensitivitySpiderPlot <- function(
   .validateCharVector(pkParameters, nullAllowed = TRUE)
 
   # Plot configuration setup -----------------------------
+  customPlotConfiguration <- defaultPlotConfiguration %||% .plotConfigurationFromType("spiderPlot")
+  customPlotConfiguration$xAxisScale <- xAxisScale %||% customPlotConfiguration$xAxisScale
+  customPlotConfiguration$yAxisScale <- yAxisScale %||% customPlotConfiguration$yAxisScale
 
-  spiderPlotConfiguration <- list(
-    legendPosition = "bottom",
-    legendTitle = "Parameter",
-    linesSize = 1.4,
-    pointsShape = 21L,
-    pointsSize = 2,
-    title = NULL,
-    titleSize = 14,
-    xAxisScale = "log",
-    xLabel = NULL,
-    yAxisScale = "lin",
-    yAxisTicks = 10L,
-    yLabel = NULL
-  )
-
-  # apply configuration overrides and validate
-  customPlotConfiguration <- .applyPlotConfiguration(
-    defaultPlotConfiguration = defaultPlotConfiguration,
-    plotOverrideConfig = spiderPlotConfiguration,
-    xAxisScale = xAxisScale,
-    yAxisScale = yAxisScale
-  )
-
-  # validate separately as not supported by DefaultPlotConfiguration
+    # validate separately as not supported by DefaultPlotConfiguration
   validateIsOption(
     list(
       yAxisFacetScales = yAxisFacetScales,
@@ -227,11 +207,8 @@ sensitivitySpiderPlot <- function(
   defaultPlotConfiguration
 ) {
   # update data dependent plot configuration
-  plotConfiguration <- defaultPlotConfiguration$clone()
-  plotConfiguration <- .updatePlotConfiguration(
-    plotConfiguration,
-    list(title = unique(data$OutputPath))
-  )
+  plotConfiguration <- defaultPlotConfiguration
+  plotConfiguration$title = unique(data$OutputPath)
 
   # select percent or absolute column for y-axis
   if (xAxisType == "percent") {
@@ -280,11 +257,9 @@ sensitivitySpiderPlot <- function(
       pLimits <- .calculateLimits(unlist(data[, yColumn]))
     } else {
       # free y-axis scale
-      plotConfiguration$yLabel <- paste0(
-        dataSubset$PKParameter[1],
-        " [",
-        dataSubset$Unit[1],
-        "]"
+      plotConfiguration$yLabel <- ospsuite.plots::constructLabelWithUnit(
+        label = dataSubset$PKParameter[1], 
+        unit = dataSubset$Unit[1]
       )
       pLimits <- NULL
     }
@@ -305,21 +280,21 @@ sensitivitySpiderPlot <- function(
 
     # Basic plot setup -----------------------------------
 
-    plot <- ggplot(
+    plot <- ggplot2::ggplot(
       dataSubset,
-      aes(
+      ggplot2::aes(
         x = .data[[xColumn]],
         y = .data[[yColumn]],
         group = ParameterPathLabel
       )
     ) +
-      geom_line(
-        aes(group = ParameterPathLabel, color = as.factor(ParameterPathLabel)),
+      ggplot2::geom_line(
+        ggplot2::aes(group = ParameterPathLabel, color = as.factor(ParameterPathLabel)),
         linewidth = plotConfiguration$linesSize,
         alpha = plotConfiguration$linesAlpha,
         na.rm = TRUE
       ) +
-      geom_point(
+      ggplot2::geom_point(
         size = plotConfiguration$pointsSize,
         shape = plotConfiguration$pointsShape[1],
         na.rm = TRUE
@@ -327,12 +302,12 @@ sensitivitySpiderPlot <- function(
 
     # adjusting axis scales
     if (isTRUE(plotConfiguration$xAxisScale == "log")) {
-      plot <- plot + scale_x_log10()
+      plot <- plot + ggplot2::scale_x_log10()
     }
 
     if (isTRUE(plotConfiguration$yAxisScale == "log")) {
       plot <- plot +
-        scale_y_log10(
+        ggplot2::scale_y_log10(
           limits = pLimits,
           expand = expansion(mult = c(0.01, 0.1)),
           breaks = scales::breaks_log(
@@ -342,18 +317,16 @@ sensitivitySpiderPlot <- function(
         )
     } else {
       plot <- plot +
-        scale_y_continuous(
+        ggplot2::scale_y_continuous(
           limits = pLimits,
-          breaks = scales::breaks_extended(
-            n = plotConfiguration$yAxisTicks
-          ),
+          breaks = scales::breaks_extended(n = plotConfiguration$yAxisTicks),
           labels = scales::label_number_auto()
         )
     }
 
     # initial parameter value reference marker
     plot <- plot +
-      geom_hline(
+      ggplot2::geom_hline(
         data = baseDataSubset,
         aes(yintercept = .data[[yColumn]]),
         linetype = "dotted",
@@ -365,7 +338,7 @@ sensitivitySpiderPlot <- function(
     # vertical line only for percent x-axis at 100
     if (xAxisType == "percent") {
       plot <- plot +
-        geom_vline(
+        ggplot2::geom_vline(
           xintercept = 100,
           linetype = "dotted",
           linewidth = 0.5,
@@ -377,21 +350,22 @@ sensitivitySpiderPlot <- function(
     # Finalize plot --------------------------------------
 
     plot <- plot +
-      facet_wrap(~PKParameter, scales = yAxisFacetScales) +
-      labs(
+      ggplot2::facet_wrap(~PKParameter, scales = yAxisFacetScales) +
+      ggplot2::labs(
         x = plotConfiguration$xLabel,
         y = plotConfiguration$yLabel,
         title = NULL,
         color = plotConfiguration$legendTitle
       ) +
-      theme_bw(base_size = 11) +
-      theme(
+      ggplot2::theme_bw(base_size = 11) +
+      ggplot2::theme(
         legend.position = plotConfiguration$legendPosition,
-        panel.grid.minor = element_blank(),
-        text = element_text(size = 11)
+        legend.justification = plotConfiguration$legendJustification,
+        panel.grid.minor = ggplot2::element_blank(),
+        text = ggplot2::element_text(size = 11)
       ) +
-      guides(
-        col = guide_legend(
+      ggplot2::guides(
+        col = ggplot2::guide_legend(
           nrow = length(unique(data$PKParameter)),
           title.position = "top"
         )
@@ -399,11 +373,11 @@ sensitivitySpiderPlot <- function(
 
     # apply color scales
     if (is.null(plotConfiguration$linesColor)) {
-      plot <- plot + scale_color_brewer(palette = "Dark2")
+      plot <- plot + ggplot2::scale_color_brewer(palette = "Dark2")
     } else {
-      plot <- plot + scale_color_manual(values = plotConfiguration$linesColor)
+      plot <- plot + ggplot2::scale_color_manual(values = plotConfiguration$linesColor)
     }
-
+    
     plotList[[param]] <- plot
   }
 
@@ -422,7 +396,10 @@ sensitivitySpiderPlot <- function(
       axes = "collect",
       ncol = length(plotList)
     ) &
-    theme(legend.position = plotConfiguration$legendPosition)
+    ggplot2::theme(
+      legend.position = plotConfiguration$legendPosition,
+      legend.justification = plotConfiguration$legendJustification
+      )
 
   return(plotPatchwork)
 }
