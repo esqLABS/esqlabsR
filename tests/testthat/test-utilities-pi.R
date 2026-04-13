@@ -214,6 +214,30 @@ test_that("createPITasks throws error when parameter not found in simulation", {
   )
 })
 
+test_that("createPITasks passes stopIfParameterNotFound to createScenarios", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$Scenarios <- "TestScenario_missingParam"
+  sheets$PIParameters$Scenarios <- "TestScenario_missingParam"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  expect_error(createPITasks(piTaskConfigurations))
+  expect_no_error(createPITasks(
+    piTaskConfigurations,
+    stopIfParameterNotFound = FALSE
+  ))
+})
+
 test_that("createPITasks handles all Group values as NA correctly", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config
@@ -457,7 +481,10 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   sheets <- createValidPISheets()
 
   # Both NA: simulationRunOptions stays NULL
-  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
   piTasks <- createPITasks(readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   ))
@@ -465,7 +492,10 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
 
   # Only numberOfCores set
   sheets$PIConfiguration$numberOfCores <- 2
-  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
   piTasks <- createPITasks(readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   ))
@@ -476,7 +506,10 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   # Only checkForNegativeValues set
   sheets$PIConfiguration$numberOfCores <- NA_real_
   sheets$PIConfiguration$checkForNegativeValues <- FALSE
-  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
   piTasks <- createPITasks(readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   ))
@@ -486,7 +519,10 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
 
   # Both set
   sheets$PIConfiguration$numberOfCores <- 4
-  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
   piTasks <- createPITasks(readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   ))
@@ -502,7 +538,10 @@ test_that("createPITasks applies objectiveFunctionOptions from PIConfiguration c
   sheets <- createValidPISheets()
 
   # All NA: defaults are preserved
-  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
   piTasks <- createPITasks(readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   ))
@@ -514,7 +553,10 @@ test_that("createPITasks applies objectiveFunctionOptions from PIConfiguration c
   # Set individual fields
   sheets$PIConfiguration$ObjectiveFunctionType <- "m3"
   sheets$PIConfiguration$ResidualWeightingMethod <- "std"
-  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
   piTasks <- createPITasks(readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   ))
@@ -528,7 +570,10 @@ test_that("createPITasks applies objectiveFunctionOptions from PIConfiguration c
   sheets$PIConfiguration$ResidualWeightingMethod <- NA
   sheets$PIConfiguration$LinScaleCV <- 0.3
   sheets$PIConfiguration$LogScaleSD <- 0.1
-  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
   piTasks <- createPITasks(readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   ))
@@ -620,7 +665,7 @@ test_that("createPITasks resolves OutputPathId and produces same result as full 
 
   fullPathTask <- piTasks[["AciclovirSimple"]]
   pathIdTask <- piTasks[["AciclovirSimplePathId"]]
-  
+
   expect_equal(
     fullPathTask$outputMappings[[1]]$quantity$path,
     pathIdTask$outputMappings[[1]]$quantity$path
@@ -649,11 +694,16 @@ test_that("createPITasks overwrites scenario output paths with PI-specified path
   piTasks <- createPITasks(piTaskConfigurations)
 
   # Get the scenario from the task and check its output paths were updated
-  scenarioConfig <- piTaskConfigurations[["AciclovirSimple"]]$scenarioConfiguration[["PITestScenario"]]
+  scenarioConfig <- piTaskConfigurations[[
+    "AciclovirSimple"
+  ]]$scenarioConfiguration[["PITestScenario"]]
   # The scenario originally has output paths from Scenarios.xlsx
   # After createPITasks, the simulation output selections should match PI-specified paths
   simulation <- piTasks[[1]]$simulations[[1]]
-  outputSelections <- sapply(simulation$outputSelections$allOutputs, function(x) x$path)
+  outputSelections <- sapply(
+    simulation$outputSelections$allOutputs,
+    function(x) x$path
+  )
   expect_equal(
     outputSelections,
     "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"

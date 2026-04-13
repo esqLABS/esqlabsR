@@ -4,11 +4,18 @@
 #'   Each PITaskConfiguration produces one ParameterIdentification object.
 #'
 #' @param piTaskConfigurations Named list of `PITaskConfiguration` objects
+#' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
+#'   thrown when a parameter defined in the scenario configuration cannot be
+#'   found in the simulation. Set to `FALSE` to continue silently when scenario
+#'   parameters are absent from the model.
 #'
 #' @returns Named list of `ParameterIdentification` objects
 #'
 #' @export
-createPITasks <- function(piTaskConfigurations) {
+createPITasks <- function(
+  piTaskConfigurations,
+  stopIfParameterNotFound = TRUE
+) {
   validateIsOfType(piTaskConfigurations, PITaskConfiguration)
   piTaskConfigurations <- toList(piTaskConfigurations)
 
@@ -29,7 +36,7 @@ createPITasks <- function(piTaskConfigurations) {
   }
   scenarios <- createScenarios(
     scenarioConfigurations = allScenarioConfigs,
-    stopIfParameterNotFound = TRUE
+    stopIfParameterNotFound = stopIfParameterNotFound
   )
 
   # Create PI task for each configuration
