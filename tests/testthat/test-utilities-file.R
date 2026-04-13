@@ -59,27 +59,30 @@ test_that("readExcel trims whitespace and removes special characters from text c
       testPath <- "test_text_cleaning.xlsx"
       .writeExcel(testData, testPath)
 
-      result <- readExcel(testPath) |> 
+      result <- readExcel(testPath) |>
         .cleanTextColumns()
 
       expect_equal(result$ScenarioName[1], "Scenario1")
       expect_equal(result$ScenarioName[2], "Scenario2")
       expect_equal(result$ScenarioName[3], "Scenario3")
-      
+
       expect_equal(result$ModelParamSheets[1], "Global")
-      expect_equal(result$ModelParamSheets[2], '"Global", "Aciclovir", "Sheet, with comma"')
+      expect_equal(
+        result$ModelParamSheets[2],
+        '"Global", "Aciclovir", "Sheet, with comma"'
+      )
       expect_equal(result$ModelParamSheets[3], "Global, MissingParam")
-      
+
       expect_equal(result$SimulationTime[1], "0, 24, 60")
       expect_equal(result$SimulationTime[2], "0, 24, 60")
       expect_equal(result$SimulationTime[3], "0, 12")
-      
+
       expect_equal(result$`Container Path`[1], "Organism|Liver")
       expect_equal(result$`Container Path`[2], "Organism|Kidney")
       expect_equal(result$`Container Path`[3], "Organism|Heart")
-      
+
       expect_equal(result$MinValue, c(-2.0, -1.0, 0.0))
-      
+
       expect_equal(result$SteadyState[1], TRUE)
       expect_true(is.na(result$SteadyState[2]))
       expect_equal(result$SteadyState[3], FALSE)

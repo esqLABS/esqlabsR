@@ -319,7 +319,7 @@ ProjectConfiguration <- R6::R6Class(
       }
 
       private$.checkProjectConfigurationFile()
-      
+
       # Mark as not modified after loading from file
       private$.modified <- FALSE
     },

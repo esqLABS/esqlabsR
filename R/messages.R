@@ -847,7 +847,12 @@ messages$errorPITaskNotFound <- function(taskNames, availableTasks) {
   ))
 }
 
-messages$errorPITooManyRowsInSheet <- function(taskName, sheetName, maxRows, nRows) {
+messages$errorPITooManyRowsInSheet <- function(
+  taskName,
+  sheetName,
+  maxRows,
+  nRows
+) {
   cliFormat(
     "Too many entries for PI task {.val {taskName}} in {.val {sheetName}} sheet.
     Expected at most {.val {maxRows}} row(s), found {.val {nRows}}"

@@ -210,23 +210,23 @@ readPITaskConfigurationFromExcel <- function(
   )
 
   colTypes <- c(
-    "text",    # PITaskName
-    "text",    # Algorithm
-    "text",    # CIMethod
+    "text", # PITaskName
+    "text", # Algorithm
+    "text", # CIMethod
     "logical", # PrintEvaluationFeedback
     "logical", # AutoEstimateCI
     "numeric", # numberOfCores
     "logical", # checkForNegativeValues
-    "text",    # ObjectiveFunctionType
-    "text",    # ResidualWeightingMethod
-    "text",    # RobustMethod
+    "text", # ObjectiveFunctionType
+    "text", # ResidualWeightingMethod
+    "text", # RobustMethod
     "logical", # ScaleVar
     "numeric", # LinScaleCV
-    "numeric"  # LogScaleSD
+    "numeric" # LogScaleSD
   )
 
   # Validate header
- header <- readExcel(path = piFilePath, sheet = "PIConfiguration", n_max = 0)
+  header <- readExcel(path = piFilePath, sheet = "PIConfiguration", n_max = 0)
 
   if (!identical(names(header), expectedColumns)) {
     stop(messages$errorWrongXLSStructure(
@@ -269,15 +269,15 @@ readPITaskConfigurationFromExcel <- function(
   )
 
   colTypes <- c(
-    "text",    # PITaskName
-    "text",    # Scenario
-    "text",    # Container Path
-    "text",    # Parameter Name
-    "text",    # Units
+    "text", # PITaskName
+    "text", # Scenario
+    "text", # Container Path
+    "text", # Parameter Name
+    "text", # Units
     "numeric", # MinValue
     "numeric", # MaxValue
     "numeric", # StartValue
-    "text"     # Group
+    "text" # Group
   )
 
   # Validate header
@@ -542,9 +542,11 @@ readPITaskConfigurationFromExcel <- function(
 #' @noRd
 .parseWeightString <- function(weightString) {
   # Empty or NA -> no weight applied
-  if (is.null(weightString) ||
-    is.na(weightString) ||
-    nchar(trimws(as.character(weightString))) == 0) {
+  if (
+    is.null(weightString) ||
+      is.na(weightString) ||
+      nchar(trimws(as.character(weightString))) == 0
+  ) {
     return(NULL)
   }
 

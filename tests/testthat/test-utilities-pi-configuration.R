@@ -50,7 +50,11 @@ test_that("readPITaskConfigurationFromExcel creates all PI tasks if no name is d
     projectConfiguration = projectConfiguration
   )
 
-  piTaskNames <- c("AciclovirSimple", "AciclovirSimplePathId", "AciclovirMultiScenario")
+  piTaskNames <- c(
+    "AciclovirSimple",
+    "AciclovirSimplePathId",
+    "AciclovirMultiScenario"
+  )
   expect_equal(names(piTaskConfigurations), piTaskNames)
 })
 
@@ -150,7 +154,7 @@ test_that("readPITaskConfigurationFromExcel validates PIConfiguration sheet stru
       optionalMessage = testSheet
     ),
     fixed = TRUE
-  ) 
+  )
 })
 
 test_that("readPITaskConfigurationFromExcel validates PIParameters sheet structure", {
@@ -309,7 +313,7 @@ test_that("readPITaskConfigurationFromExcel throws an error when missing require
     "AlgorithmOptions",
     "CIOptions"
   )
-  
+
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config
 
@@ -325,7 +329,7 @@ test_that("readPITaskConfigurationFromExcel throws an error when missing require
     readPITaskConfigurationFromExcel(
       projectConfiguration = projectConfigurationLocal
     )
-  )  
+  )
 })
 
 test_that("readPITaskConfigurationFromExcel validates that referenced scenarios exist", {
@@ -483,7 +487,10 @@ test_that("readPITaskConfigurationFromExcel throws error when task is missing in
     )
   )
 
-  .writeExcel(data = sheets, path = projectConfigurationLocal$parameterIdentificationFile)
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
 
   expect_error(
     readPITaskConfigurationFromExcel(
