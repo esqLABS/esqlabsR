@@ -10,6 +10,9 @@
 #' @param outputDir Directory where the JSON file will be saved. If NULL
 #'   (default), the JSON file will be created in the same directory as the
 #'   source Excel file.
+#' @param ignoreVersionCheck Logical indicating whether to ignore version
+#'   mismatch checks when creating the ProjectConfiguration from a file path.
+#'   Defaults to TRUE.
 #' @param ... Additional arguments.
 #'
 #' @return Invisibly returns the exported configuration data structure
@@ -17,12 +20,16 @@
 snapshotProjectConfiguration <- function(
   projectConfig = "ProjectConfiguration.xlsx",
   outputDir = NULL,
+  ignoreVersionCheck = TRUE,
   ...
 ) {
   extraArguments <- list(...)
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
-    projectConfig <- createProjectConfiguration(projectConfig)
+    projectConfig <- createProjectConfiguration(
+      projectConfig,
+      ignoreVersionCheck = ignoreVersionCheck
+    )
   }
 
   # Validate projectConfig
@@ -420,7 +427,10 @@ restoreProjectConfiguration <- function(
   }
 
   # Create and return a ProjectConfiguration object
-  invisible(createProjectConfiguration(projConfigPath))
+  invisible(createProjectConfiguration(
+    projConfigPath,
+    ignoreVersionCheck = TRUE
+  ))
 }
 
 #' Check if Excel configuration files are in sync with JSON snapshot
@@ -436,6 +446,10 @@ restoreProjectConfiguration <- function(
 #'   ProjectConfiguration file but with .json extension.
 #' @param silent Logical indicating whether to suppress informational messages.
 #'   Defaults to FALSE.
+#' @param ignoreVersionCheck Logical. If `TRUE`, the version check between the
+#'   stored `esqlabsR` version in the configuration and the currently installed
+#'   version is skipped. Defaults to `TRUE` because this function focuses on
+#'   file synchronization status, not version compatibility.
 #'
 #' @family project configuration snapshots
 #' @return A list with components: \item{in_sync}{Logical indicating whether all
@@ -448,11 +462,15 @@ restoreProjectConfiguration <- function(
 projectConfigurationStatus <- function(
   projectConfig = "ProjectConfiguration.xlsx",
   jsonPath = NULL,
-  silent = FALSE
+  silent = FALSE,
+  ignoreVersionCheck = TRUE
 ) {
   # Convert to ProjectConfiguration object if path is provided
   if (is.character(projectConfig)) {
-    projectConfig <- createProjectConfiguration(projectConfig)
+    projectConfig <- createProjectConfiguration(
+      projectConfig,
+      ignoreVersionCheck = ignoreVersionCheck
+    )
   }
 
   # Validate projectConfig
@@ -774,8 +792,11 @@ projectConfigurationStatus <- function(
 #' @keywords internal
 #' @noRd
 .csvToListStructure <- function(filePath) {
-  # Read the CSV data
-  csvDf <- utils::read.csv(filePath, stringsAsFactors = FALSE)
+  # Load population using ospsuite, which correctly handles PK-Sim exported
+  # files that may contain metadata comment lines (starting with '#') before
+  # the actual column headers.
+  population <- ospsuite::loadPopulation(filePath)
+  csvDf <- ospsuite::populationToDataFrame(population)
 
   # Convert to simple list format
   csvData <- list(

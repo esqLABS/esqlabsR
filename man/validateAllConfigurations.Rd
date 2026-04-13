@@ -4,10 +4,13 @@
 \alias{validateAllConfigurations}
 \title{Validate all configuration files in a project}
 \usage{
-validateAllConfigurations(projectConfiguration)
+validateAllConfigurations(projectConfiguration, ignoreVersionCheck = TRUE)
 }
 \arguments{
 \item{projectConfiguration}{ProjectConfiguration object or path to ProjectConfiguration.xlsx}
+
+\item{ignoreVersionCheck}{Logical; if TRUE, skip project configuration version mismatch checks
+when creating a ProjectConfiguration from a path. Defaults to TRUE}
 }
 \value{
 Named list of validationResult objects

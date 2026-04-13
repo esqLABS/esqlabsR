@@ -78,7 +78,10 @@ testProjectConfigurationPath <- function() {
 #' config <- testProjectConfiguration()
 #' }
 testProjectConfiguration <- function() {
-  createProjectConfiguration(testProjectConfigurationPath())
+  createProjectConfiguration(
+    testProjectConfigurationPath(),
+    ignoreVersionCheck = TRUE
+  )
 }
 
 #' Get path to test configurations directory
@@ -206,10 +209,10 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
   initProject(destination = temp_dir, overwrite = overwrite)
 
   # Load project configuration
-  project_config <- createProjectConfiguration(file.path(
-    temp_dir,
-    "ProjectConfiguration.xlsx"
-  ))
+  project_config <- createProjectConfiguration(
+    file.path(temp_dir, "ProjectConfiguration.xlsx"),
+    ignoreVersionCheck = TRUE
+  )
 
   # Return list with path and config
   list(

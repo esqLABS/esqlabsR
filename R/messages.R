@@ -18,6 +18,20 @@ messages$invalidConfigurationProperty <- function(
   ))
 }
 
+messages$versionMismatch <- function(storedVersion, currentVersion) {
+  cli::format_message(c(
+    "!" = "The esqlabsR version stored in the project configuration ({.val {storedVersion}}) does not match the currently installed version ({.val {currentVersion}}).",
+    "i" = "Please review the package NEWS for breaking changes: {.url https://esqlabs.github.io/esqlabsR/news/index.html}"
+  ))
+}
+
+messages$versionNotStored <- function(currentVersion) {
+  cli::format_message(c(
+    "!" = "No esqlabsR version is stored in the project configuration.",
+    "i" = "The configuration may have been created with an older version of the package."
+  ))
+}
+
 # Parameters structure####
 messages$errorWrongXLSStructure <- function(
   filePath,
@@ -369,6 +383,17 @@ messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
   )
 }
 
+messages$warningLogScaleWithZeroLimit <- function(
+  plotID,
+  axisLimitsField,
+  axis
+) {
+  cliFormat(
+    "Column {.field {axisLimitsField}} in plot {.val {plotID}} contains zero, but the {.val {axis}}-axis scale is set to {.val log}.
+    Logarithmic scale cannot display zero values. This may result in empty or unexpected plots."
+  )
+}
+
 messages$errorInvalidPlotID <- function(plotIDs) {
   cliFormat(
     "The plots with plotIDs {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
@@ -415,6 +440,13 @@ messages$missingDataCombinedName <- function() {
 messages$stopInvalidDataCombinedName <- function(dataCombinedNames) {
   cliFormat(
     "The following DataCombined are used in {.var plotConfiguration} sheet but are not present in {.var DataCombined} sheet:
+    {.val {paste(dataCombinedNames, collapse = ', ')}}"
+  )
+}
+
+messages$stopDataCombinedNamesNotFound <- function(dataCombinedNames) {
+  cliFormat(
+    "The following DataCombined names are not defined in the Excel file:
     {.val {paste(dataCombinedNames, collapse = ', ')}}"
   )
 }

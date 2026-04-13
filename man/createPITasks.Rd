@@ -4,10 +4,15 @@
 \alias{createPITasks}
 \title{Create Parameter Identification tasks}
 \usage{
-createPITasks(piTaskConfigurations)
+createPITasks(piTaskConfigurations, stopIfParameterNotFound = TRUE)
 }
 \arguments{
 \item{piTaskConfigurations}{Named list of \code{PITaskConfiguration} objects}
+
+\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), an error is
+thrown when a parameter defined in the scenario configuration cannot be
+found in the simulation. Set to \code{FALSE} to continue silently when scenario
+parameters are absent from the model.}
 }
 \value{
 Named list of \code{ParameterIdentification} objects

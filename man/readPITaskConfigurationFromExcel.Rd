@@ -26,17 +26,18 @@ Reads PI task configuration from the Excel file defined in
 task that is specified in \code{piTaskNames} is not found in the Excel file, an
 error is thrown.
 
-The function expects the Excel file to have a "PIConfiguration" sheet with
-the following columns: \code{PITaskName}, \code{Algorithm}, \code{CIMethod},
-\code{PrintEvaluationFeedback}, \code{AutoEstimateCI}, \code{numberOfCores},
-\code{checkForNegativeValues}, \code{ObjectiveFunctionType},
-\code{ResidualWeightingMethod}, \code{RobustMethod}, \code{ScaleVar}, \code{LinScaleCV},
-\code{LogScaleSD}. It also expects a "PIParameters" sheet with \code{PITaskName},
-\code{Scenarios}, \verb{Container Path}, \verb{Parameter Name}, \code{Value}, \code{Units},
-\code{MinValue}, \code{MaxValue}, \code{StartValue}, \code{Group} columns, a "PIOutputMappings"
-sheet with \code{PITaskName}, \code{Scenarios}, \code{ObservedDataSheet}, \code{DataSet},
-\code{Scaling}, \code{xOffset}, \code{yOffset}, \code{xFactor}, \code{yFactor}, \code{Weight} columns, an
-"AlgorithmOptions" sheet with \code{PITaskName}, \code{OptionName}, \code{OptionValue}
-columns, and a "CIOptions" sheet with \code{PITaskName}, \code{OptionName},
-\code{OptionValue} columns.
+The function expects the Excel file to have a "PIOutputMappings" sheet with
+\code{PITaskName}, \code{Scenarios}, \code{OutputPath}, \code{ObservedDataSheet}, \code{DataSet},
+\code{Scaling}, \code{xOffset}, \code{yOffset}, \code{xFactor}, \code{yFactor}, \code{Weight} columns.
+\code{OutputPath} accepts either a full simulation output path or an
+\code{OutputPathId} defined in the "OutputPaths" sheet of \code{Scenarios.xlsx}. It
+also expects a "PIParameters" sheet with \code{PITaskName}, \code{Scenarios},
+\verb{Container Path}, \verb{Parameter Name}, \code{Units}, \code{MinValue}, \code{MaxValue},
+\code{StartValue}, \code{Group} columns, an optional "PIConfiguration" sheet with
+\code{PITaskName}, \code{Algorithm}, \code{CIMethod}, \code{PrintEvaluationFeedback},
+\code{AutoEstimateCI}, \code{numberOfCores}, \code{checkForNegativeValues},
+\code{ObjectiveFunctionType}, \code{ResidualWeightingMethod}, \code{RobustMethod},
+\code{ScaleVar}, \code{LinScaleCV}, \code{LogScaleSD} columns, an "AlgorithmOptions" sheet
+with \code{PITaskName}, \code{OptionName}, \code{OptionValue} columns, and a "CIOptions"
+sheet with \code{PITaskName}, \code{OptionName}, \code{OptionValue} columns.
 }

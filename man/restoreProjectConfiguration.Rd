@@ -6,7 +6,8 @@
 \usage{
 restoreProjectConfiguration(
   jsonPath = "ProjectConfiguration.json",
-  outputDir = NULL
+  outputDir = NULL,
+  silent = FALSE
 )
 }
 \arguments{
@@ -16,6 +17,9 @@ restoreProjectConfiguration(
 \item{outputDir}{Directory where the Excel files will be created. If NULL
 (default), the Excel files will be created in the same directory as the
 source JSON file.}
+
+\item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
+Defaults to \code{FALSE}.}
 }
 \value{
 A ProjectConfiguration object initialized with the regenerated
