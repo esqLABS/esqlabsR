@@ -360,7 +360,7 @@ runPI <- function(piTasks) {
   for (i in seq_along(configurations)) {
     mappingRow <- configurations[[i]]
 
-    scaling <- mappingRow$Scaling %||% "log"
+    scaling <- mappingRow$Scaling
     outputPath <- mappingRow$OutputPath
 
     # Get scenario names this output mapping applies to
@@ -418,7 +418,9 @@ runPI <- function(piTasks) {
       }
 
       outputMapping$addObservedDataSets(dataSet)
-      outputMapping$scaling <- scaling
+      if (!is.null(scaling) && !is.na(scaling)) {
+        outputMapping$scaling <- scaling
+      }
 
       xOffset <- mappingRow$xOffset
       yOffset <- mappingRow$yOffset
