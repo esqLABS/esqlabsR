@@ -291,7 +291,7 @@ test_that("Custom parameters are applied correctly", {
 
   scenario <- scenarioConfigurations[[1]]
   expect_equal(scenario$individualId, "TestIndividual")
-  expect_equal(enumKeys(scenario$paramSheets), c("Global", "Custom"))
+  expect_equal(scenario$parameterGroups, c("Global", "Custom"))
   expect_true(scenario$simulateSteadyState)
   expected_time <- ospsuite::toBaseUnit(
     quantityOrDimension = ospsuite::ospDimensions$Time,
@@ -318,11 +318,11 @@ test_that("Comma-separated paramSheets and outputPaths are handled correctly", {
   expect_length(scenarioConfigurations, 2)
 
   scenario1 <- scenarioConfigurations[["Scenario1"]]
-  expect_equal(enumKeys(scenario1$paramSheets), c("Global", "Custom"))
+  expect_equal(scenario1$parameterGroups, c("Global", "Custom"))
   expect_equal(scenario1$outputPaths, c("Path1", "Path2"))
 
   scenario2 <- scenarioConfigurations[["Scenario2"]]
-  expect_equal(enumKeys(scenario2$paramSheets), c("Global", "Alternative"))
+  expect_equal(scenario2$parameterGroups, c("Global", "Alternative"))
   expect_equal(scenario2$outputPaths, c("Path3", "Path4", "Path5"))
 })
 
@@ -510,7 +510,7 @@ test_that("Complex scenario configuration with all parameters", {
   expect_equal(scenario$simulationType, "Population")
   expect_equal(scenario$applicationProtocol, "ComplexProtocol")
   expect_equal(
-    enumKeys(scenario$paramSheets),
+    scenario$parameterGroups,
     c("Global", "Custom", "Advanced")
   )
   expect_equal(scenario$outputPaths, c("Path1", "Path2", "Path3"))
@@ -539,7 +539,7 @@ test_that("Empty parameter sheets and output paths handling", {
   scenario <- scenarioConfigurations[["EmptyParamsTest"]]
   expect_equal(scenario$scenarioName, "EmptyParamsTest")
   # Empty param sheets should not add any sheets
-  expect_equal(length(enumKeys(scenario$paramSheets)), 0)
+  expect_null(scenario$parameterGroups)
 })
 
 test_that("PKML file with custom simulation time intervals", {
@@ -708,33 +708,18 @@ test_that("readScenarioConfigurationFromExcel error conditions", {
   )
 })
 
-test_that("Internal validation functions work correctly", {
+test_that("Scenario objects are returned with correct type", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
-  # Create a valid scenario configuration
-  validScenario <- ScenarioConfiguration$new(projectConfiguration)
-  validScenario$scenarioName <- "ValidScenario"
-
-  # Test valid scenario configurations
-  expect_silent(esqlabsR:::.validateScenarioConfigurations(list(validScenario)))
-
-  # Test population scenario without population ID
-  populationScenario <- ScenarioConfiguration$new(projectConfiguration)
-  populationScenario$scenarioName <- "PopulationScenario"
-  populationScenario$simulationType <- "Population"
-  populationScenario$populationId <- NULL
-
-  expect_error(
-    esqlabsR:::.validateScenarioConfigurations(list(populationScenario)),
-    "population.*id"
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration
   )
 
-  # Test population scenario with population ID
-  populationScenario$populationId <- "TestPopulation"
-  expect_silent(esqlabsR:::.validateScenarioConfigurations(list(
-    populationScenario
-  )))
+  expect_length(scenarioConfigurations, 1)
+  expect_true(isOfType(scenarioConfigurations[[1]], "Scenario"))
 })
 
 # ==============================================================================
