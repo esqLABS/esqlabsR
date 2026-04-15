@@ -16,13 +16,8 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
     package = "ospsuite"
   ))
 
-  dataFolder <- getTestDataFilePath("")
-  paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
-  sheets <- c("EmptySheet")
-  params <- readParametersFromXLS(
-    paramsXLSpath = paramsXLSpath,
-    sheets = sheets
-  )
+  # Construct the empty parameter structure directly (readParametersFromXLS was removed)
+  params <- list(paths = character(0), values = numeric(0), units = character(0))
 
   initializeSimulation(simulation, additionalParams = params)
   simulationResults <- runSimulations(simulation)

@@ -673,40 +673,8 @@ test_that("Duplicate scenario names are handled correctly", {
   )
 })
 
-test_that("readScenarioConfigurationFromExcel error conditions", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  # Test with non-existent scenarios file
-  expect_error(
-    readScenarioConfigurationFromExcel(
-      scenarioNames = "NonExistent",
-      projectConfiguration = projectConfiguration
-    ),
-    "Scenario.*not specified"
-  )
-
-  # Create an invalid Excel file structure
-  invalidData <- data.frame(
-    WrongColumn1 = "test",
-    WrongColumn2 = "test2"
-  )
-  wb <- openxlsx::createWorkbook()
-  openxlsx::addWorksheet(wb, "Scenarios")
-  openxlsx::writeData(wb, "Scenarios", invalidData)
-  openxlsx::saveWorkbook(
-    wb,
-    projectConfiguration$scenariosFile,
-    overwrite = TRUE
-  )
-
-  expect_error(
-    readScenarioConfigurationFromExcel(
-      projectConfiguration = projectConfiguration
-    ),
-    "wrong structure"
-  )
-})
+# readScenarioConfigurationFromExcel was removed — scenarios are now loaded
+# directly from JSON via ProjectConfiguration$new(). No replacement test needed here.
 
 test_that("Scenario objects are returned with correct type", {
   temp_project <- with_temp_project()

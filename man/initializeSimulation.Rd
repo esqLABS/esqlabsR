@@ -38,7 +38,7 @@ humanIndividualCharacteristics <- createIndividualCharacteristics(
   species = Species$Human, population = HumanPopulation$European_ICRP_2002,
   gender = Gender$Male, weight = 70
 )
-userParams <- readParametersFromXLS(parameterXLSPath)
+userParams <- list(paths = c("path/to/param"), values = c(1.0), units = c("mol/l"))
 initializeSimulation(simulation, humanIndividualCharacteristics, userParams)
 simulationResults <- runSimulations(simulation = simulation)
 }

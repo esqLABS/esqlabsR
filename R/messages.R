@@ -110,11 +110,11 @@ messages$autocorrectDuplicateScenarioNames <- function(
   ))
 }
 
-messages$scenarioConfigurationNotNamedList <- function() {
+messages$scenariosNotNamedList <- function() {
   cli::format_message(c(
-    "Invalid scenarioConfigurations:",
-    "x" = "scenarioConfigurations must be a named list",
-    "i" = "Each scenario configuration must have a unique name"
+    "Invalid scenarios:",
+    "x" = "scenarios must be a named list",
+    "i" = "Each scenario must have a unique name"
   ))
 }
 

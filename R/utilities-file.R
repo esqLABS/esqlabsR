@@ -97,7 +97,7 @@ readExcel <- function(path, sheet = NULL, ...) {
     names(data) <- "Sheet1"
   } else if (is.null(names(data))) {
     # Unnamed list: map elements to existing sheets by position,
-    # matching readParametersFromXLS(sheets = NULL) which reads by index.
+    # Unnamed list: map elements to existing sheets by position.
     names(data) <- names(wb)[seq_along(data)]
   }
 

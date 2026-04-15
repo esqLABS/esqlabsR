@@ -811,8 +811,8 @@ projectConfigurationStatus <- function(
   do.call(rbind, rows)
 }
 
-#' Convert ScenarioConfiguration objects to an Excel data frame
-#' @param scenarioConfigs Named list of ScenarioConfiguration objects
+#' Convert Scenario objects to an Excel data frame
+#' @param scenarioConfigs Named list of Scenario objects
 #' @returns A data frame
 #' @keywords internal
 #' @noRd

@@ -90,7 +90,7 @@ test_that("JSON workflow: round-trip JSON -> Excel -> JSON preserves data", {
   pc2 <- ProjectConfiguration$new(file.path(exportDir, "ProjectConfiguration.json"))
 
   # Compare key data structures
-  expect_equal(names(pc1$scenarioConfigurations), names(pc2$scenarioConfigurations))
+  expect_equal(names(pc1$scenarios), names(pc2$scenarios))
   expect_equal(names(pc1$modelParameters), names(pc2$modelParameters))
   expect_equal(length(pc1$individuals), length(pc2$individuals))
   expect_equal(length(pc1$populations), length(pc2$populations))
