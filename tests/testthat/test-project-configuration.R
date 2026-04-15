@@ -196,3 +196,49 @@ test_that("pc$scenarios replaces pc$scenarioConfigurations", {
   pc <- testProjectConfigurationJSON()
   expect_true(!is.null(pc$scenarios))
 })
+
+# Print method ----
+
+test_that("print() shows category counts for loaded project", {
+  pc <- testProjectConfigurationJSON()
+  output <- capture.output(print(pc))
+  output_text <- paste(output, collapse = "\n")
+
+  expect_match(output_text, "Scenarios:\\s+5")
+  expect_match(output_text, "Individuals:\\s+1")
+  expect_match(output_text, "Populations:\\s+2")
+  expect_match(output_text, "Model Parameters:\\s+4 groups")
+  expect_match(output_text, "Applications:\\s+1")
+  expect_match(output_text, "Output Paths:\\s+2")
+  expect_match(output_text, "4 dataCombined")
+  expect_match(output_text, "4 plotConfiguration")
+  expect_match(output_text, "3 plotGrids")
+})
+
+test_that("print() does not show folder paths or Excel file paths", {
+  pc <- testProjectConfigurationJSON()
+  output <- capture.output(print(pc))
+  output_text <- paste(output, collapse = "\n")
+
+  expect_no_match(output_text, "Model Folder")
+  expect_no_match(output_text, "Configurations Folder")
+  expect_no_match(output_text, "Data Folder")
+  expect_no_match(output_text, "Output Folder")
+  expect_no_match(output_text, "Populations Folder")
+  expect_no_match(output_text, "\\.xlsx")
+  expect_no_match(output_text, "Environment Variables")
+})
+
+test_that("print() shows 0 counts for empty ProjectConfiguration", {
+  pc <- ProjectConfiguration$new()
+  output <- capture.output(print(pc))
+  output_text <- paste(output, collapse = "\n")
+
+  expect_match(output_text, "Scenarios:\\s+0")
+  expect_match(output_text, "Individuals:\\s+0")
+  expect_match(output_text, "Populations:\\s+0")
+  expect_match(output_text, "Model Parameters:\\s+0 groups")
+  expect_match(output_text, "Applications:\\s+0")
+  expect_match(output_text, "Output Paths:\\s+0")
+  expect_match(output_text, "Plots:\\s+0")
+})
