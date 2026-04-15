@@ -1,41 +1,37 @@
-#' Create a default `ProjectConfiguration`
+#' Load a project from a JSON configuration file
 #'
-#' @description  Create a `ProjectConfiguration` based on the
-#'   `"ProjectConfiguration.xlsx"`
+#' @description Load a `ProjectConfiguration` from a JSON file. This is the
+#'   primary entry point for working with esqlabsR projects.
 #'
-#' @param path path to the `ProjectConfiguration.xlsx` file. Defaults to the
-#'   `ProjectConfiguration.xlsx` file in the working directory.
+#' @param path Path to the `ProjectConfiguration.json` file. Defaults to
+#'   `ProjectConfiguration.json` in the working directory.
 #'
 #' @returns Object of type `ProjectConfiguration`
 #' @export
-createDefaultProjectConfiguration <- function(
-  path = file.path("ProjectConfiguration.xlsx")
-) {
-  lifecycle::deprecate_soft(
-    what = "createDefaultProjectConfiguration()",
-    with = "createProjectConfiguration()",
-    when = "5.3.0"
-  )
-  return(createProjectConfiguration(path))
+loadProject <- function(path = "ProjectConfiguration.json") {
+  ProjectConfiguration$new(projectConfigurationFilePath = path)
 }
 
-#' Create a `ProjectConfiguration`
-#'
-#' @description  Create a `ProjectConfiguration` based on the
-#'   `"ProjectConfiguration.xlsx"`
-#'
-#' @param path path to the `ProjectConfiguration.xlsx` file. default to the
-#'   `ProjectConfiguration.xlsx` file located in the working directory.
-#'
-#' @returns Object of type `ProjectConfiguration`
+#' @rdname loadProject
 #' @export
-createProjectConfiguration <- function(
-  path = file.path("ProjectConfiguration.xlsx")
-) {
-  projectConfiguration <- ProjectConfiguration$new(
-    projectConfigurationFilePath = path
+createProjectConfiguration <- function(path = "ProjectConfiguration.json") {
+  lifecycle::deprecate_soft(
+    what = "createProjectConfiguration()",
+    with = "loadProject()",
+    when = "6.0.0"
   )
-  return(projectConfiguration)
+  loadProject(path)
+}
+
+#' @rdname loadProject
+#' @export
+createDefaultProjectConfiguration <- function(path = "ProjectConfiguration.json") {
+  lifecycle::deprecate_soft(
+    what = "createDefaultProjectConfiguration()",
+    with = "loadProject()",
+    when = "5.3.0"
+  )
+  loadProject(path)
 }
 
 #' Check if a directory contains an esqlabsR project

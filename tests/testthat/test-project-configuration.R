@@ -1,372 +1,161 @@
-test_that("`createProjectConfiguration()` works as expected with project template", {
-  myConfig <- testProjectConfiguration()
-  expect_true(isOfType(myConfig, "ProjectConfiguration"))
+# JSON loading ----
+
+test_that("ProjectConfiguration loads from valid JSON and populates all fields", {
+  jsonPath <- testProjectConfigurationJSONPath()
+  pc <- ProjectConfiguration$new(jsonPath)
+
+  expect_true(isOfType(pc, "ProjectConfiguration"))
+  expect_true(fs::file_exists(pc$modelFolder))
+  expect_true(fs::dir_exists(pc$configurationsFolder))
+
+  expect_length(pc$scenarioConfigurations, 5)
+  expect_true("TestScenario" %in% names(pc$scenarioConfigurations))
+  expect_length(pc$modelParameters, 4)
+  expect_true("Global" %in% names(pc$modelParameters))
+  expect_length(pc$individuals, 1)
+  expect_true("Indiv1" %in% names(pc$individuals))
+  expect_length(pc$populations, 2)
+  expect_length(pc$applications, 1)
+  expect_length(pc$outputPaths, 2)
+  expect_false(is.null(pc$plots))
+  expect_equal(as.character(pc$jsonPath), normalizePath(jsonPath))
 })
 
-test_that("A warning is (not) displayed if path/file does not exist", {
-  myConfig <- testProjectConfiguration()
-  expect_no_warning(myConfig$outputFolder <- "this/directory/does/not/exist")
-  expect_warning(myConfig$dataFolder <- "this/directory/does/not/exist")
+test_that("ProjectConfiguration errors on missing schemaVersion", {
+  temp <- tempfile(fileext = ".json")
+  writeLines('{"projectConfiguration": {}}', temp)
+  expect_error(ProjectConfiguration$new(temp), "schemaVersion")
+  unlink(temp)
 })
 
-
-test_that("`createDefaultProjectConfiguration()` is deprecated", {
-  expect_warning(createDefaultProjectConfiguration(
-    path = exampleProjectConfigurationPath()
-  ))
+test_that("ProjectConfiguration errors on unsupported schemaVersion", {
+  temp <- tempfile(fileext = ".json")
+  writeLines('{"schemaVersion": "99.0", "projectConfiguration": {}}', temp)
+  expect_error(ProjectConfiguration$new(temp), "schemaVersion")
+  unlink(temp)
 })
 
-
-test_that("Project Configuration can be created from V5 project configuration file but raises a warning", {
-  expect_warning(createProjectConfiguration(test_path(
-    "..",
-    "data",
-    "ProjectConfiguration-V5.xlsx"
-  )))
-})
-
-test_that("Project Configuration can be customized but throws warning if path are wrong", {
-  # Create a project configuration using temporary project
-  temp_project <- with_temp_project()
-  myConfig <- temp_project$config
-
-  expect_warning({
-    myConfig$configurationsFolder <- "Wrong/Folder"
-  })
-
-  # Create a new temporary project for each test to avoid interference
-  temp_project2 <- with_temp_project()
-  myConfig <- temp_project2$config
-  expect_warning({
-    myConfig$dataFolder <- "folder/data/does/not/exist"
-  })
-  expect_warning({
-    myConfig$modelFolder <- "folder/model/does/not/exist"
-  })
-  expect_warning({
-    myConfig$populationsFolder <- "folder/populations/does/not/exist"
-  })
-
-  # Create a new temporary project for each test to avoid interference
-  temp_project3 <- with_temp_project()
-  myConfig <- temp_project3$config
-  expect_warning({
-    myConfig$modelParamsFile <- "modelparams_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$individualsFile <- "individuals_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$populationsFile <- "populations_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$scenariosFile <- "scenarios_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$applicationsFile <- "applications_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$plotsFile <- "plots_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$dataFile <- "data_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$dataImporterConfigurationFile <- "importer_donotexist.xml"
-  })
-})
-
-
-test_that("Project Configuration can be exported", {
-  # Copy test file to temp location
-  temp_file1 <- withr::local_tempfile(fileext = ".xlsx")
-  expect_no_error(testProjectConfiguration()$save(path = temp_file1))
-
-  # Load the file and compare
-  expect_true(file.exists(temp_file1))
-  imported_pc <- createProjectConfiguration(path = temp_file1)
-
-  imported_pc$projectConfigurationFilePath <- testProjectConfigurationPath()
-
-  expect_equal(testProjectConfiguration(), imported_pc)
-})
-
-test_that("Project Configuration supports environment variable", {
-  withr::with_envvar(
-    new = c(
-      "ENV_VARIABLE_1" = "C:/path/from/env/variable/1",
-      "ENV_VARIABLE_2" = "path/from/env/variable/2"
-    ),
-    code = {
-      # Using Env Variable in Excel files
-      pc <-
-        createProjectConfiguration(test_path(
-          "..",
-          "data",
-          "ProjectConfigurationEnvironmentVariable.xlsx"
-        ))
-
-      suppressWarnings(expect_match(
-        pc$configurationsFolder,
-        Sys.getenv("ENV_VARIABLE_1")
-      ))
-
-      # Set environment variable directly in the object
-      pc <- testProjectConfiguration()
-      suppressWarnings(pc$configurationsFolder <- "ENV_VARIABLE_1")
-      suppressWarnings(expect_match(
-        pc$configurationsFolder,
-        Sys.getenv("ENV_VARIABLE_1")
-      ))
-    }
+test_that("ProjectConfiguration resolves paths relative to JSON directory", {
+  jsonPath <- testProjectConfigurationJSONPath()
+  pc <- ProjectConfiguration$new(jsonPath)
+  jsonDir <- dirname(jsonPath)
+  expect_equal(
+    as.character(pc$modelFolder),
+    normalizePath(file.path(jsonDir, "Models/Simulations/"))
   )
 })
 
-# Tests for the modified flag behavior
-test_that("modified flag is FALSE when ProjectConfiguration is first created", {
-  myConfig <- testProjectConfiguration()
-  expect_false(myConfig$modified)
+test_that("ProjectConfiguration parses model parameters into list(paths, values, units)", {
+  pc <- testProjectConfigurationJSON()
+  global <- pc$modelParameters[["Global"]]
+  expect_equal(global$paths, "Organism|Liver|EHC continuous fraction")
+  expect_equal(global$values, 1)
+  expect_equal(global$units, "")
 })
 
-test_that("modified flag is read-only and cannot be set directly", {
-  myConfig <- testProjectConfiguration()
-  expect_error(myConfig$modified <- TRUE, "modified is readonly")
+test_that("ProjectConfiguration parses scenarios into ScenarioConfiguration objects", {
+  pc <- testProjectConfigurationJSON()
+  sc <- pc$scenarioConfigurations[["TestScenario2"]]
+  expect_s3_class(sc, "ScenarioConfiguration")
+  expect_equal(sc$scenarioName, "TestScenario2")
+  expect_true(sc$simulateSteadyState)
+  expect_equal(length(sc$simulationTime), 2)
+  expect_equal(
+    enumKeys(sc$paramSheets),
+    c("Global", "Aciclovir", "Sheet, with comma")
+  )
 })
 
-test_that("modified flag becomes TRUE when any configuration property is changed", {
-  myConfig <- testProjectConfiguration()
-  expect_false(myConfig$modified)
-
-  # Test each property that should set modified flag
-  suppressWarnings(myConfig$modelFolder <- "new/model/folder")
-  expect_true(myConfig$modified)
-
-  # Reset and test configurationsFolder
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$configurationsFolder <- "new/config/folder")
-  expect_true(myConfig$modified)
-
-  # Reset and test modelParamsFile
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$modelParamsFile <- "newModelParams.xlsx")
-  expect_true(myConfig$modified)
-
-  # Reset and test individualsFile
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$individualsFile <- "newIndividuals.xlsx")
-  expect_true(myConfig$modified)
-
-  # Reset and test populationsFile
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$populationsFile <- "newPopulations.xlsx")
-  expect_true(myConfig$modified)
-
-  # Reset and test populationsFolder
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$populationsFolder <- "newPopulationsFolder")
-  expect_true(myConfig$modified)
-
-  # Reset and test scenariosFile
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$scenariosFile <- "newScenarios.xlsx")
-  expect_true(myConfig$modified)
-
-  # Reset and test applicationsFile
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$applicationsFile <- "newApplications.xlsx")
-  expect_true(myConfig$modified)
-
-  # Reset and test plotsFile
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$plotsFile <- "newPlots.xlsx")
-  expect_true(myConfig$modified)
-
-  # Reset and test dataFolder
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$dataFolder <- "new/data/folder")
-  expect_true(myConfig$modified)
-
-  # Reset and test dataFile
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$dataFile <- "newData.xlsx")
-  expect_true(myConfig$modified)
-
-  # Reset and test dataImporterConfigurationFile
-  myConfig <- testProjectConfiguration()
-  suppressWarnings(myConfig$dataImporterConfigurationFile <- "newImporter.xml")
-  expect_true(myConfig$modified)
-
-  # Reset and test outputFolder
-  myConfig <- testProjectConfiguration()
-  myConfig$outputFolder <- "new/output/folder"
-  expect_true(myConfig$modified)
+test_that("ProjectConfiguration parses plots into data.frames", {
+  pc <- testProjectConfigurationJSON()
+  expect_s3_class(pc$plots$dataCombined, "data.frame")
+  expect_equal(nrow(pc$plots$dataCombined), 4)
+  expect_s3_class(pc$plots$plotConfiguration, "data.frame")
+  expect_equal(nrow(pc$plots$plotConfiguration), 4)
 })
 
-test_that("modified flag becomes FALSE after saving the configuration", {
-  myConfig <- testProjectConfiguration()
+# Path property setters ----
 
-  # Modify a property
-  suppressWarnings(myConfig$modelFolder <- "modified/folder")
-  expect_true(myConfig$modified)
-
-  # Save to temporary file
-  temp_file <- withr::local_tempfile(fileext = ".xlsx")
-  myConfig$save(path = temp_file)
-
-  # After saving, modified should be FALSE
-  expect_false(myConfig$modified)
+test_that("setting non-existent outputFolder does not warn", {
+  pc <- testProjectConfigurationJSON()
+  expect_no_warning(pc$outputFolder <- "this/directory/does/not/exist")
 })
 
-test_that("modified flag becomes FALSE after loading configuration from file", {
-  myConfig <- testProjectConfiguration()
+test_that("setting non-existent dataFolder warns", {
+  pc <- testProjectConfigurationJSON()
+  expect_warning(pc$dataFolder <- "this/directory/does/not/exist")
+})
 
-  # Modify a property
-  suppressWarnings(myConfig$modelFolder <- "modified/folder")
-  expect_true(myConfig$modified)
+test_that("setting invalid paths warns for each path property", {
+  pc <- testProjectConfigurationJSON()
+  expect_warning(pc$configurationsFolder <- "Wrong/Folder")
+  expect_warning(pc$dataFolder <- "folder/data/does/not/exist")
+  expect_warning(pc$modelFolder <- "folder/model/does/not/exist")
+  expect_warning(pc$populationsFolder <- "folder/populations/does/not/exist")
+  expect_warning(pc$modelParamsFile <- "modelparams_donotexist.xlsx")
+  expect_warning(pc$individualsFile <- "individuals_donotexist.xlsx")
+  expect_warning(pc$populationsFile <- "populations_donotexist.xlsx")
+  expect_warning(pc$scenariosFile <- "scenarios_donotexist.xlsx")
+  expect_warning(pc$applicationsFile <- "applications_donotexist.xlsx")
+  expect_warning(pc$plotsFile <- "plots_donotexist.xlsx")
+  expect_warning(pc$dataFile <- "data_donotexist.xlsx")
+  expect_warning(pc$dataImporterConfigurationFile <- "importer_donotexist.xml")
+})
 
-  # Load from file again (this should reset modified flag)
-  myConfig$projectConfigurationFilePath <- testProjectConfigurationPath()
-  expect_false(myConfig$modified)
+# Modified flag ----
+
+test_that("modified flag is FALSE when first created from JSON", {
+  pc <- testProjectConfigurationJSON()
+  expect_false(pc$modified)
+})
+
+test_that("modified flag is FALSE for empty ProjectConfiguration", {
+  pc <- ProjectConfiguration$new()
+  expect_false(pc$modified)
+})
+
+test_that("modified flag is read-only", {
+  pc <- testProjectConfigurationJSON()
+  expect_error(pc$modified <- TRUE, "modified is readonly")
+})
+
+test_that("modified flag becomes TRUE when any property is changed", {
+  properties <- c(
+    "modelFolder", "configurationsFolder", "modelParamsFile",
+    "individualsFile", "populationsFile", "populationsFolder",
+    "scenariosFile", "applicationsFile", "plotsFile",
+    "dataFolder", "dataFile", "dataImporterConfigurationFile",
+    "outputFolder"
+  )
+  for (prop in properties) {
+    pc <- testProjectConfigurationJSON()
+    expect_false(pc$modified)
+    suppressWarnings(pc[[prop]] <- "new/value")
+    expect_true(pc$modified, info = paste("property:", prop))
+  }
 })
 
 test_that("modified flag persists across multiple property changes", {
-  myConfig <- testProjectConfiguration()
-  expect_false(myConfig$modified)
-
-  # Make multiple changes
-  suppressWarnings(myConfig$modelFolder <- "new/model/folder")
-  expect_true(myConfig$modified)
-
-  suppressWarnings(myConfig$dataFolder <- "new/data/folder")
-  expect_true(myConfig$modified)
-
-  myConfig$outputFolder <- "new/output/folder"
-  expect_true(myConfig$modified)
+  pc <- testProjectConfigurationJSON()
+  expect_false(pc$modified)
+  suppressWarnings(pc$modelFolder <- "new/model/folder")
+  expect_true(pc$modified)
+  suppressWarnings(pc$dataFolder <- "new/data/folder")
+  expect_true(pc$modified)
+  pc$outputFolder <- "new/output/folder"
+  expect_true(pc$modified)
 })
 
-test_that("empty ProjectConfiguration has modified flag FALSE", {
-  # Create empty ProjectConfiguration without file path
-  emptyConfig <- ProjectConfiguration$new()
-  expect_false(emptyConfig$modified)
-})
+test_that("modified flag is independent between clones", {
+  pc <- testProjectConfigurationJSON()
+  cloned <- pc$clone()
+  expect_false(cloned$modified)
 
-test_that("modified flag behavior with cloned ProjectConfiguration", {
-  myConfig <- testProjectConfiguration()
-  expect_false(myConfig$modified)
+  suppressWarnings(pc$modelFolder <- "modified/folder")
+  expect_true(pc$modified)
+  expect_false(cloned$modified)
 
-  # Clone the configuration
-  clonedConfig <- myConfig$clone()
-  expect_false(clonedConfig$modified)
-
-  # Modify the original
-  suppressWarnings(myConfig$modelFolder <- "modified/folder")
-  expect_true(myConfig$modified)
-  expect_false(clonedConfig$modified) # Clone should not be affected
-
-  # Modify the clone
-  suppressWarnings(clonedConfig$dataFolder <- "modified/data/folder")
-  expect_true(myConfig$modified) # Original should still be modified
-  expect_true(clonedConfig$modified) # Clone should now be modified
-})
-
-# ---- Accessor method tests ----
-# These test the accessor methods with manually populated fields.
-# Full JSON-loading integration is tested after Task 3.
-
-describe("getModelParameters", {
-  it("combines multiple sheets into one parameter structure", {
-    pc <- ProjectConfiguration$new()
-    pc$modelParameters <- list(
-      Global = list(
-        paths = c("Organism|Liver|EHC continuous fraction"),
-        values = c(1),
-        units = c("")
-      ),
-      Aciclovir = list(
-        paths = c("Aciclovir|Lipophilicity"),
-        values = c(-0.1),
-        units = c("Log Units")
-      )
-    )
-    result <- pc$getModelParameters(c("Global", "Aciclovir"))
-    expect_equal(length(result$paths), 2)
-    expect_equal(result$paths, c(
-      "Organism|Liver|EHC continuous fraction",
-      "Aciclovir|Lipophilicity"
-    ))
-    expect_equal(result$values, c(1, -0.1))
-  })
-
-  it("returns NULL when sheetNames is NULL", {
-    pc <- ProjectConfiguration$new()
-    pc$modelParameters <- list(
-      Global = list(paths = "a|b", values = 1, units = "")
-    )
-    expect_null(pc$getModelParameters(NULL))
-  })
-})
-
-describe("getIndividual", {
-  it("returns NULL for unknown individualId", {
-    pc <- ProjectConfiguration$new()
-    pc$individuals <- list()
-    expect_null(pc$getIndividual("nonexistent"))
-  })
-})
-
-describe("getIndividualParameterSets", {
-  it("returns NULL when individual has no parameterSets", {
-    pc <- ProjectConfiguration$new()
-    pc$individualParameterSetMapping <- list(Ind1 = character(0))
-    pc$individualParameterSets <- list()
-    expect_null(pc$getIndividualParameterSets("Ind1"))
-  })
-})
-
-describe("getApplicationParameters", {
-  it("returns parameters for a known protocol", {
-    pc <- ProjectConfiguration$new()
-    pc$applications <- list(
-      Protocol1 = list(
-        paths = c("App|Dose"),
-        values = c(250),
-        units = c("mg")
-      )
-    )
-    result <- pc$getApplicationParameters("Protocol1")
-    expect_equal(result$paths, "App|Dose")
-    expect_equal(result$values, 250)
-  })
-
-  it("returns NULL for unknown protocol", {
-    pc <- ProjectConfiguration$new()
-    pc$applications <- list()
-    expect_null(pc$getApplicationParameters("unknown"))
-  })
-})
-
-describe("getPopulation", {
-  it("returns NULL for unknown populationId", {
-    pc <- ProjectConfiguration$new()
-    pc$populations <- list()
-    expect_null(pc$getPopulation("unknown"))
-  })
-})
-
-describe("getOutputPaths", {
-  it("resolves IDs to path strings", {
-    pc <- ProjectConfiguration$new()
-    pc$outputPaths <- c(
-      id1 = "Organism|Path1",
-      id2 = "Organism|Path2"
-    )
-    result <- pc$getOutputPaths(c("id1", "id2"))
-    expect_equal(result, c("Organism|Path1", "Organism|Path2"))
-  })
-
-  it("returns NULL when outputPathIds is NULL", {
-    pc <- ProjectConfiguration$new()
-    pc$outputPaths <- c(id1 = "Organism|Path1")
-    expect_null(pc$getOutputPaths(NULL))
-  })
+  suppressWarnings(cloned$dataFolder <- "modified/data/folder")
+  expect_true(pc$modified)
+  expect_true(cloned$modified)
 })

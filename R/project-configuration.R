@@ -15,8 +15,7 @@ ProjectConfiguration <- R6::R6Class(
       if (missing(value)) {
         private$.projectConfigurationFilePath
       } else {
-        private$.read_config(value)
-        self
+        stop("projectConfigurationFilePath is readonly")
       }
     },
     #' @field projectConfigurationDirPath Path to the folder that serve as base
@@ -219,88 +218,6 @@ ProjectConfiguration <- R6::R6Class(
     .projectConfigurationDirPath = NULL,
     .modified = FALSE,
     .warned_paths = character(),
-    .checkProjectConfigurationFile = function() {
-      data <- private$.projectConfigurationData
-
-      # Check if read data is from V5, if yes, load and rename the objects to
-      # make it compatible with v6.
-      if (
-        all(
-          c(
-            "paramsFolder",
-            "paramsFile",
-            "individualsFile",
-            "populationParamsFile",
-            "scenarioDefinitionFile",
-            "scenarioApplicationsFile",
-            "plotsFile",
-            "dataFolder",
-            "dataFile",
-            "dataImporterConfigurationFile",
-            "compoundPropertiesFile",
-            "outputFolder"
-          ) %in%
-            names(data)
-        )
-      ) {
-        warning(messages$oldProjectConfigurationLayout())
-
-        data$configurationsFolder <- data$paramsFolder
-        data$modelParamsFile <- data$paramsFile
-        data$populationsFile <- data$populationParamsFile
-        data$scenariosFile <- data$scenarioDefinitionFile
-        data$applicationsFile <- data$scenarioApplicationsFile
-        data$populationsFolder <- list(
-          value = NA,
-          description = "Name of the folder containing population defined in files"
-        )
-
-        # Delete previous properties
-        data$paramsFolder <- NULL
-        data$paramsFile <- NULL
-        data$populationParamsFile <- NULL
-        data$scenarioDefinitionFile <- NULL
-        data$scenarioApplicationsFile <- NULL
-        data$compoundPropertiesFile <- NULL
-      }
-
-      # If one of the excel configuration is not expected, return an error.
-      for (property in names(data)) {
-        if (!(property %in% names(self))) {
-          stop(messages$invalidConfigurationProperty(
-            property,
-            self$projectConfigurationFilePath
-          ))
-        }
-      }
-      private$.projectConfigurationData <- data
-    },
-    .read_config = function(file_path) {
-      path <- private$.clean_path(file_path, replace_env_var = FALSE)
-
-      # Update private values
-      private$.projectConfigurationFilePath <- path
-      private$.projectConfigurationDirPath <- dirname(path)
-
-      inputData <- readExcel(path = path)
-
-      # Reset private variables
-      private$.replaced_env_vars <- list()
-      private$.projectConfigurationData <- list()
-      private$.warned_paths <- character()
-
-      for (property in inputData$Property) {
-        private$.projectConfigurationData[[property]] <- list(
-          value = inputData$Value[inputData$Property == property],
-          description = inputData$Description[inputData$Property == property]
-        )
-      }
-
-      private$.checkProjectConfigurationFile()
-
-      # Mark as not modified after loading from file
-      private$.modified <- FALSE
-    },
     .clean_path = function(
       path,
       parent = NULL,
@@ -360,7 +277,253 @@ ProjectConfiguration <- R6::R6Class(
       path <- paste(path_split, collapse = "/")
       return(path)
     },
-    .replaced_env_vars = list()
+    .replaced_env_vars = list(),
+
+    .read_json = function(jsonPath) {
+      jsonPath <- fs::path_abs(jsonPath)
+      if (!fs::file_exists(jsonPath)) {
+        stop(messages$fileNotFound(jsonPath))
+      }
+
+      jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+
+      # Validate schema version
+      if (is.null(jsonData$schemaVersion) || jsonData$schemaVersion != "2.0") {
+        stop(paste0(
+          "Unsupported or missing schemaVersion. Expected '2.0', got '",
+          jsonData$schemaVersion %||% "NULL", "'."
+        ))
+      }
+
+      # Check esqlabsRVersion for compatibility warning
+      if (!is.null(jsonData$esqlabsRVersion)) {
+        jsonMajor <- as.integer(strsplit(jsonData$esqlabsRVersion, "\\.")[[1]][[1]])
+        pkgMajor <- as.integer(strsplit(
+          as.character(utils::packageVersion("esqlabsR")), "\\."
+        )[[1]][[1]])
+        if (jsonMajor != pkgMajor) {
+          warning(paste0(
+            "JSON was created with esqlabsR v", jsonData$esqlabsRVersion,
+            " but current version is v", utils::packageVersion("esqlabsR"),
+            ". Some fields may not be compatible."
+          ))
+        }
+      }
+
+      self$jsonPath <- jsonPath
+      private$.projectConfigurationFilePath <- jsonPath
+      private$.projectConfigurationDirPath <- dirname(jsonPath)
+
+      # Parse projectConfiguration paths
+      pcData <- jsonData$projectConfiguration
+      private$.projectConfigurationData <- list()
+      for (prop in names(pcData)) {
+        private$.projectConfigurationData[[prop]] <- list(
+          value = pcData[[prop]],
+          description = ""
+        )
+      }
+
+      # Parse outputPaths
+      if (!is.null(jsonData$outputPaths)) {
+        self$outputPaths <- unlist(jsonData$outputPaths)
+      }
+
+      # Parse modelParameters
+      self$modelParameters <- private$.parseParameterGroups(
+        jsonData$modelParameters
+      )
+
+      # Parse individualParameterSets
+      self$individualParameterSets <- private$.parseParameterGroups(
+        jsonData$individualParameterSets
+      )
+
+      # Parse applications
+      self$applications <- private$.parseParameterGroups(
+        jsonData$applications
+      )
+
+      # Parse individuals
+      self$individuals <- private$.parseIndividuals(jsonData$individuals)
+
+      # Parse individual parameter set mapping
+      self$individualParameterSetMapping <- private$.parseIndividualParameterSetMapping(
+        jsonData$individuals
+      )
+
+      # Parse populations
+      self$populations <- private$.parsePopulations(jsonData$populations)
+
+      # Parse scenarios
+      self$scenarioConfigurations <- private$.parseScenarios(jsonData$scenarios)
+
+      # Parse plots
+      self$plots <- private$.parsePlots(jsonData$plots)
+
+      private$.modified <- FALSE
+    },
+
+    .parseParameterGroups = function(groups) {
+      if (is.null(groups)) return(list())
+      result <- list()
+      for (name in names(groups)) {
+        entries <- groups[[name]]
+        paths <- character(0)
+        values <- numeric(0)
+        units <- character(0)
+        for (entry in entries) {
+          paths <- c(paths, paste(
+            entry$containerPath, entry$parameterName, sep = "|"
+          ))
+          values <- c(values, as.numeric(entry$value))
+          units <- c(units, entry$units %||% "")
+        }
+        result[[name]] <- list(paths = paths, values = values, units = units)
+      }
+      result
+    },
+
+    .parseIndividuals = function(individualsData) {
+      if (is.null(individualsData)) return(list())
+      result <- list()
+      for (entry in individualsData) {
+        moleculeOntogenies <- .readOntongeniesFromList(
+          entry$proteinOntogenies
+        )
+        indivChar <- ospsuite::createIndividualCharacteristics(
+          species = entry$species,
+          population = entry$population,
+          gender = entry$gender,
+          weight = as.double(entry$weight),
+          height = as.double(entry$height),
+          age = as.double(entry$age),
+          moleculeOntogenies = moleculeOntogenies
+        )
+        result[[entry$individualId]] <- indivChar
+      }
+      result
+    },
+
+    .parseIndividualParameterSetMapping = function(individualsData) {
+      if (is.null(individualsData)) return(list())
+      result <- list()
+      for (entry in individualsData) {
+        setNames <- unlist(entry$parameterSets)
+        result[[entry$individualId]] <- setNames %||% character(0)
+      }
+      result
+    },
+
+    .parsePopulations = function(populationsData) {
+      if (is.null(populationsData)) return(list())
+      numericFields <- c(
+        "numberOfIndividuals", "proportionOfFemales",
+        "weightMin", "weightMax", "heightMin", "heightMax",
+        "ageMin", "ageMax", "BMIMin", "BMIMax"
+      )
+      result <- list()
+      for (entry in populationsData) {
+        args <- list()
+        for (field in names(entry)) {
+          if (field == "populationId" || field == "proteinOntogenies") next
+          val <- entry[[field]]
+          if (!is.null(val)) {
+            if (field %in% numericFields) {
+              val <- as.double(val)
+            }
+            args[[field]] <- val
+          }
+        }
+        args[["moleculeOntogenies"]] <- .readOntongeniesFromList(
+          entry$proteinOntogenies
+        )
+        popChar <- do.call(createPopulationCharacteristics, args)
+        result[[entry$populationId]] <- popChar
+      }
+      result
+    },
+
+    .parseScenarios = function(scenariosData) {
+      if (is.null(scenariosData)) return(list())
+      result <- list()
+      for (entry in scenariosData) {
+        sc <- ScenarioConfiguration$new(self)
+        sc$scenarioName <- entry$name
+        sc$modelFile <- entry$modelFile
+        sc$applicationProtocol <- entry$applicationProtocol %||% NA
+        sc$individualId <- entry$individualId
+
+        if (!is.null(entry$populationId)) {
+          sc$populationId <- entry$populationId
+          sc$simulationType <- "Population"
+        }
+        if (!is.null(entry$readPopulationFromCSV)) {
+          sc$readPopulationFromCSV <- entry$readPopulationFromCSV
+        }
+        if (!is.null(entry$modelParameterSheets)) {
+          sc$addParamSheets(unlist(entry$modelParameterSheets))
+        }
+        if (!is.null(entry$simulationTime)) {
+          sc$simulationTime <- entry$simulationTime
+          sc$simulationTimeUnit <- entry$simulationTimeUnit
+        }
+        if (!is.null(entry$steadyState) && isTRUE(entry$steadyState)) {
+          sc$simulateSteadyState <- TRUE
+        }
+        if (!is.null(entry$steadyStateTime)) {
+          sc$steadyStateTime <- ospsuite::toBaseUnit(
+            quantityOrDimension = ospDimensions$Time,
+            values = entry$steadyStateTime,
+            unit = entry$steadyStateTimeUnit
+          )
+        }
+        if (!is.null(entry$overwriteFormulasInSS)) {
+          sc$overwriteFormulasInSS <- entry$overwriteFormulasInSS
+        }
+        # Resolve output paths
+        if (!is.null(entry$outputPathIds)) {
+          pathIds <- unlist(entry$outputPathIds)
+          sc$outputPaths <- unname(self$outputPaths[pathIds])
+        }
+        result[[entry$name]] <- sc
+      }
+      result
+    },
+
+    .parsePlots = function(plotsData) {
+      if (is.null(plotsData)) return(NULL)
+      list(
+        dataCombined = private$.listOfListsToDataFrame(
+          plotsData$dataCombined
+        ),
+        plotConfiguration = private$.listOfListsToDataFrame(
+          plotsData$plotConfiguration
+        ),
+        plotGrids = private$.listOfListsToDataFrame(
+          plotsData$plotGrids
+        ),
+        exportConfiguration = private$.listOfListsToDataFrame(
+          plotsData$exportConfiguration
+        )
+      )
+    },
+
+    .listOfListsToDataFrame = function(data) {
+      if (is.null(data) || length(data) == 0) {
+        return(data.frame())
+      }
+      allCols <- unique(unlist(lapply(data, names)))
+      rows <- lapply(data, function(entry) {
+        row <- lapply(allCols, function(col) {
+          val <- entry[[col]]
+          if (is.null(val)) NA else val
+        })
+        names(row) <- allCols
+        as.data.frame(row, stringsAsFactors = FALSE)
+      })
+      do.call(rbind, rows)
+    }
   ),
   public = list(
     #' Initialize
@@ -368,11 +531,9 @@ ProjectConfiguration <- R6::R6Class(
     #' @param projectConfigurationFilePath A string representing the path to the
     #'   project configuration file.
     initialize = function(projectConfigurationFilePath = character()) {
-      # Initialize as not modified
       private$.modified <- FALSE
-
       if (!missing(projectConfigurationFilePath)) {
-        self$projectConfigurationFilePath <- projectConfigurationFilePath
+        private$.read_json(projectConfigurationFilePath)
       } else {
         private$.projectConfigurationDirPath <- NULL
       }
@@ -427,50 +588,6 @@ ProjectConfiguration <- R6::R6Class(
       }
       invisible(self)
     },
-    #' @description Export ProjectConfiguration object to
-    #'   ProjectConfiguration.xlsx
-    #' @param path a string representing the path or file name where to save the
-    #'   file. Can be absolute or relative (to working directory).
-    #'
-    #' @export
-    save = function(path) {
-      df <- data.frame(
-        Property = character(),
-        Value = character(),
-        Description = character(),
-        stringsAsFactors = FALSE
-      )
-      for (prop in c(
-        "modelFolder",
-        "configurationsFolder",
-        "modelParamsFile",
-        "individualsFile",
-        "populationsFile",
-        "populationsFolder",
-        "scenariosFile",
-        "applicationsFile",
-        "plotsFile",
-        "dataFolder",
-        "dataFile",
-        "dataImporterConfigurationFile",
-        "outputFolder"
-      )) {
-        df <- rbind(
-          df,
-          data.frame(
-            Property = prop,
-            Value = private$.projectConfigurationData[[prop]]$value,
-            Description = private$.projectConfigurationData[[prop]]$description
-          )
-        )
-      }
-
-      .writeExcel(df, path = path %||% self$projectConfigurationFilePath)
-
-      # Mark as not modified after saving
-      private$.modified <- FALSE
-    },
-
     #' @field scenarioConfigurations Named list of `ScenarioConfiguration`
     #'   objects, keyed by scenario name. Populated by JSON loading.
     scenarioConfigurations = NULL,
@@ -500,68 +617,6 @@ ProjectConfiguration <- R6::R6Class(
     jsonPath = NULL,
     #' @field individualParameterSetMapping Named list mapping individualId
     #'   to a character vector of parameter set names.
-    individualParameterSetMapping = NULL,
-
-    #' @description Get combined model parameters from named sheets.
-    #' @param sheetNames Character vector of sheet names. If NULL, returns NULL.
-    #' @returns A list with `paths`, `values`, `units` or NULL.
-    getModelParameters = function(sheetNames) {
-      if (is.null(sheetNames)) return(NULL)
-      params <- list(paths = character(0), values = numeric(0), units = character(0))
-      for (sheet in sheetNames) {
-        sheetParams <- self$modelParameters[[sheet]]
-        if (is.null(sheetParams)) {
-          stop(messages$errorParameterSheetNotFound(sheet))
-        }
-        params <- extendParameterStructure(params, sheetParams)
-      }
-      params
-    },
-
-    #' @description Get IndividualCharacteristics by ID.
-    #' @param individualId Character. The individual ID.
-    #' @returns An `IndividualCharacteristics` object or NULL.
-    getIndividual = function(individualId) {
-      self$individuals[[individualId]]
-    },
-
-    #' @description Get merged individual parameter sets for an individual.
-    #' @param individualId Character. The individual ID.
-    #' @returns A list with `paths`, `values`, `units` or NULL.
-    getIndividualParameterSets = function(individualId) {
-      setNames <- self$individualParameterSetMapping[[individualId]]
-      if (is.null(setNames) || length(setNames) == 0) return(NULL)
-      params <- list(paths = character(0), values = numeric(0), units = character(0))
-      for (setName in setNames) {
-        setParams <- self$individualParameterSets[[setName]]
-        if (!is.null(setParams)) {
-          params <- extendParameterStructure(params, setParams)
-        }
-      }
-      if (length(params$paths) == 0) return(NULL)
-      params
-    },
-
-    #' @description Get application parameters by protocol name.
-    #' @param protocolName Character. The protocol name.
-    #' @returns A list with `paths`, `values`, `units` or NULL.
-    getApplicationParameters = function(protocolName) {
-      self$applications[[protocolName]]
-    },
-
-    #' @description Get PopulationCharacteristics by ID.
-    #' @param populationId Character. The population ID.
-    #' @returns A `PopulationCharacteristics` object or NULL.
-    getPopulation = function(populationId) {
-      self$populations[[populationId]]
-    },
-
-    #' @description Resolve output path IDs to path strings.
-    #' @param outputPathIds Character vector of IDs. If NULL, returns NULL.
-    #' @returns Character vector of output path strings or NULL.
-    getOutputPaths = function(outputPathIds) {
-      if (is.null(outputPathIds)) return(NULL)
-      unname(self$outputPaths[outputPathIds])
-    }
+    individualParameterSetMapping = NULL
   )
 )

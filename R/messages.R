@@ -217,12 +217,6 @@ messages$UnknownPlotConfiguration <- function(name) {
 }
 
 # scenario####
-messages$errorParameterSheetNotFound <- function(sheetName) {
-  cliFormat(
-    "Parameter sheet {.val {sheetName}} not found in the project configuration."
-  )
-}
-
 messages$errorApplicationProtocolNotFound <- function(
   scenarioName,
   applicationProtocol

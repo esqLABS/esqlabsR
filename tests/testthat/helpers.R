@@ -78,7 +78,17 @@ testProjectConfigurationPath <- function() {
 #' config <- testProjectConfiguration()
 #' }
 testProjectConfiguration <- function() {
-  createProjectConfiguration(testProjectConfigurationPath())
+  loadProject(testProjectConfigurationJSONPath())
+}
+
+#' Get path to test project configuration JSON
+testProjectConfigurationJSONPath <- function() {
+  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.json")
+}
+
+#' Create test project configuration from JSON
+testProjectConfigurationJSON <- function() {
+  loadProject(testProjectConfigurationJSONPath())
 }
 
 #' Get path to test configurations directory
@@ -205,10 +215,10 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
   # Initialize project
   initProject(destination = temp_dir, overwrite = overwrite)
 
-  # Load project configuration
-  project_config <- createProjectConfiguration(file.path(
+  # Load project configuration from JSON
+  project_config <- loadProject(file.path(
     temp_dir,
-    "ProjectConfiguration.xlsx"
+    "ProjectConfiguration.json"
   ))
 
   # Return list with path and config

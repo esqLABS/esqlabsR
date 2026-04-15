@@ -251,3 +251,36 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     stopIfNotFound = FALSE
   )
 }
+
+#' Parse protein ontogenies from a string
+#'
+#' @param ontogenyString A string in the format
+#'   "Molecule1:Ontogeny1,Molecule2:Ontogeny2" or NULL.
+#'
+#' @returns A list of `MoleculeOntogeny` objects, or NULL.
+#' @keywords internal
+#' @noRd
+.readOntongeniesFromList <- function(ontogenyString) {
+  if (is.null(ontogenyString) || is.na(ontogenyString) || ontogenyString == "") {
+    return(NULL)
+  }
+  # Reuse the same parsing logic as .readOntongeniesFromXLS
+  # The string format is "Molecule1:Ontogeny1,Molecule2:Ontogeny2"
+  ontogeniesSplit <- unlist(strsplit(ontogenyString, split = ",", fixed = TRUE))
+  ontogeniesSplit <- trimws(ontogeniesSplit)
+  moleculeOntogenies <- vector("list", length(ontogeniesSplit))
+  for (i in seq_along(ontogeniesSplit)) {
+    parts <- unlist(strsplit(ontogeniesSplit[[i]], split = ":", fixed = TRUE))
+    if (length(parts) != 2) {
+      stop(messages$errorWrongOntogenyStructure(ontogeniesSplit[[i]]))
+    }
+    protein <- parts[[1]]
+    ontogeny <- parts[[2]]
+    validateEnumValue(value = ontogeny, enum = ospsuite::StandardOntogeny)
+    moleculeOntogenies[[i]] <- ospsuite::MoleculeOntogeny$new(
+      molecule = protein,
+      ontogeny = ospsuite::StandardOntogeny[[ontogeny]]
+    )
+  }
+  moleculeOntogenies
+}
