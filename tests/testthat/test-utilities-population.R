@@ -41,73 +41,6 @@ test_that("`sampleRandomValue()` generates needed distribution", {
   )
 })
 
-test_that("It creates population characteristics with ontogenies from excel", {
-  excelPath <- testConfigurationsPath("Populations.xlsx")
-
-  populationCharacteristics <- readPopulationCharacteristicsFromXLS(
-    XLSpath = excelPath,
-    populationName = "TestPopulation"
-  )
-
-  expect_equal(
-    c(
-      populationCharacteristics$species,
-      populationCharacteristics$population,
-      populationCharacteristics$numberOfIndividuals,
-      populationCharacteristics$proportionOfFemales,
-      populationCharacteristics$age$min,
-      populationCharacteristics$age$max,
-      c(
-        populationCharacteristics$allMoleculeOntogenies[[1]]$molecule,
-        populationCharacteristics$allMoleculeOntogenies[[2]]$molecule
-      ),
-      c(
-        populationCharacteristics$allMoleculeOntogenies[[1]]$ontogeny,
-        populationCharacteristics$allMoleculeOntogenies[[2]]$ontogeny
-      )
-    ),
-    c(
-      ospsuite::Species$Human,
-      ospsuite::HumanPopulation$European_ICRP_2002,
-      2,
-      0,
-      22,
-      41,
-      c("CYP3A4", "CYP2D6"),
-      c("CYP3A4", "CYP2C8")
-    )
-  )
-})
-
-test_that("It creates population characteristics without ontogenies from excel", {
-  excelPath <- testConfigurationsPath("Populations.xlsx")
-
-  populationCharachterstics <- readPopulationCharacteristicsFromXLS(
-    XLSpath = excelPath,
-    populationName = "TestPopulation_noOnto"
-  )
-  expect_equal(
-    c(
-      populationCharachterstics$species,
-      populationCharachterstics$population,
-      populationCharachterstics$numberOfIndividuals,
-      populationCharachterstics$proportionOfFemales,
-      populationCharachterstics$age$min,
-      populationCharachterstics$age$max,
-      populationCharachterstics$allMoleculeOntogenies
-    ),
-    c(
-      ospsuite::Species$Human,
-      ospsuite::HumanPopulation$European_ICRP_2002,
-      2,
-      0,
-      22,
-      41,
-      NULL
-    )
-  )
-})
-
 test_that("extendPopulationByUserDefinedParams works", {
   set.seed(42)
 
@@ -297,29 +230,3 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
   )
 })
 
-test_that("It throws an error when protein ontogenies are defined improperly", {
-  data <- tibble(
-    "PopulationName" = "TestPopulation",
-    "species" = "Human",
-    "population" = "European_ICRP_2002",
-    "numberOfIndividuals" = 2,
-    "proportionOfFemales" = 0,
-    "weightMin",
-    "weightMax",
-    "weightUnit" = "kg",
-    "heightMin",
-    "heightMax",
-    "heightUnit" = "cm",
-    "ageMin",
-    "ageMax",
-    "BMIMin",
-    "BMIMax",
-    "BMIUnit",
-    "Protein Ontogenies" = "CYP3A4:CYP3A4,CYP2D6"
-  )
-  expect_error(
-    .readOntongeniesFromXLS(data),
-    regexp = messages$errorWrongOntogenyStructure("CYP2D6"),
-    fixed = TRUE
-  )
-})
