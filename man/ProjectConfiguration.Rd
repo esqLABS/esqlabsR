@@ -95,17 +95,40 @@ file in xml format used to load the data.
 Must be located in the "dataFolder"}
 
 \item{\code{outputFolder}}{Path to the folder where the results should be saved
-relative to the "Code" folder
-Initialize}
+relative to the "Code" folder}
 }
 \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-ProjectConfiguration-addScenario}{\code{ProjectConfiguration$addScenario()}}
 \item \href{#method-ProjectConfiguration-new}{\code{ProjectConfiguration$new()}}
 \item \href{#method-ProjectConfiguration-print}{\code{ProjectConfiguration$print()}}
 \item \href{#method-ProjectConfiguration-clone}{\code{ProjectConfiguration$clone()}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ProjectConfiguration-addScenario"></a>}}
+\if{latex}{\out{\hypertarget{method-ProjectConfiguration-addScenario}{}}}
+\subsection{Method \code{addScenario()}}{
+Add a scenario programmatically.
+Delegates to the standalone \code{\link[=addScenario]{addScenario()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$addScenario(scenarioName, modelFile, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{scenarioName}}{Character. Name for the new scenario.}
+
+\item{\code{modelFile}}{Character. Name of the \code{.pkml} model file.}
+
+\item{\code{...}}{Additional arguments passed to \code{\link[=addScenario]{addScenario()}}.
+Initialize}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}

@@ -8,6 +8,10 @@ Plain data class holding scenario configuration fields.
 Does not create or hold ospsuite runtime objects. Used by \code{runScenarios()}
 which handles all object creation.
 }
+\seealso{
+Other scenario: 
+\code{\link{addScenario}()}
+}
 \concept{scenario}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
