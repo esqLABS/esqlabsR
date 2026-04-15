@@ -634,7 +634,7 @@ test_that("readPITaskConfigurationFromExcel reads sheets with correct types", {
     piParameters = lapply(piParameter, class),
     piOutputMappings = lapply(outputMapping, class),
     piConfiguration = lapply(piConfiguration, class),
-    algortihmOptions = lapply(algorithmOptions, class),
+    algorithmOptions = lapply(algorithmOptions, class),
     ciOptions = lapply(ciOptions, class)
   )
 

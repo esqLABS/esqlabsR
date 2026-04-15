@@ -114,11 +114,11 @@
       [1] "list"
       
       
-      $algortihmOptions
-      $algortihmOptions$maxeval
+      $algorithmOptions
+      $algorithmOptions$maxeval
       [1] "numeric"
       
-      $algortihmOptions$ftol_rel
+      $algorithmOptions$ftol_rel
       [1] "numeric"
       
       
