@@ -112,8 +112,8 @@ simulations as `.*pkml` and, optionally, the applied population as
 `*.csv` file and load them for further processing to avoid re-simulating
 every time, e.g., a change to a figure showing the simulation results is
 required. The convenient function for saving the results of a scenario
-run is `saveScenarioResults`. Then, you will be able to restore the
-results using `loadScenarioResults`.
+run is `exportScenarioResults`. Then, you will be able to restore the
+results using `importScenarioResults`.
 
 Now that the results have been generated, you can proceed to the next
 step in the `vignette("plot-results")`.

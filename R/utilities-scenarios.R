@@ -423,7 +423,7 @@ runScenarios <- function(
   return(returnList)
 }
 
-#' Save results of scenario simulations to csv.
+#' Export results of scenario simulations to csv.
 #'
 #' @param simulatedScenariosResults Named list with `simulation`, `results`, `outputValues`,
 #' and `population` as produced by `runScenarios()`.
@@ -436,7 +436,7 @@ runScenarios <- function(
 #'
 #' @details For each scenario, a separate csv file will be created. If the scenario
 #' is a population simulation, a population is stored along with the results with
-#' the file name suffix `_population`. Results can be read with the `loadScenarioResults()` function.
+#' the file name suffix `_population`. Results can be read with the `importScenarioResults()` function.
 #'
 #' @export
 #'
@@ -447,9 +447,9 @@ runScenarios <- function(
 #' simulatedScenariosResults <- runScenarios(
 #'   projectConfiguration = projectConfiguration
 #' )
-#' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
+#' exportScenarioResults(simulatedScenariosResults, projectConfiguration)
 #' }
-saveScenarioResults <- function(
+exportScenarioResults <- function(
   simulatedScenariosResults,
   projectConfiguration,
   outputFolder = NULL,
@@ -515,7 +515,7 @@ saveScenarioResults <- function(
   return(outputFolder)
 }
 
-#' Load simulated scenarios from csv and pkml.
+#' Import simulated scenarios from csv and pkml.
 #'
 #' @param scenarioNames Names of simulated scenarios
 #' @param resultsFolder Path to the folder where simulation results as csv and
@@ -538,15 +538,15 @@ saveScenarioResults <- function(
 #' simulatedScenariosResults <- runScenarios(
 #'   projectConfiguration = projectConfiguration
 #' )
-#' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
+#' exportScenarioResults(simulatedScenariosResults, projectConfiguration)
 #'
 #' # Now load the results
-#' simulatedScenariosResults <- loadScenarioResults(
+#' simulatedScenariosResults <- importScenarioResults(
 #'   scenarioNames = c("Scenario1", "Scenario2"),
 #'   resultsFolder = pathToTheFolder
 #' )
 #' }
-loadScenarioResults <- function(scenarioNames, resultsFolder) {
+importScenarioResults <- function(scenarioNames, resultsFolder) {
   simulatedScenariosResults <- list()
   for (i in seq_along(scenarioNames)) {
     scenarioName <- scenarioNames[[i]]
@@ -580,6 +580,41 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
   }
 
   return(simulatedScenariosResults)
+}
+
+#' @rdname exportScenarioResults
+#' @export
+saveScenarioResults <- function(
+  simulatedScenariosResults,
+  projectConfiguration,
+  outputFolder = NULL,
+  saveSimulationsToPKML = TRUE
+) {
+  lifecycle::deprecate_soft(
+    what = "saveScenarioResults()",
+    with = "exportScenarioResults()",
+    when = "6.0.0"
+  )
+  exportScenarioResults(
+    simulatedScenariosResults = simulatedScenariosResults,
+    projectConfiguration = projectConfiguration,
+    outputFolder = outputFolder,
+    saveSimulationsToPKML = saveSimulationsToPKML
+  )
+}
+
+#' @rdname importScenarioResults
+#' @export
+loadScenarioResults <- function(scenarioNames, resultsFolder) {
+  lifecycle::deprecate_soft(
+    what = "loadScenarioResults()",
+    with = "importScenarioResults()",
+    when = "6.0.0"
+  )
+  importScenarioResults(
+    scenarioNames = scenarioNames,
+    resultsFolder = resultsFolder
+  )
 }
 
 #' Create scenario configurations from PKML files

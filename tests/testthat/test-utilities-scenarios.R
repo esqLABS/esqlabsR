@@ -94,7 +94,75 @@ test_that("It runs population and individual scenarios", {
 })
 
 
-test_that("It saves and loads scenario results for scenario names with forbidden characters", {
+# exportScenarioResults / importScenarioResults ----
+
+test_that("exportScenarioResults saves results to csv and pkml", {
+  pc <- testProjectConfigurationJSON()
+
+  simulatedScenarios <- runScenarios(
+    projectConfiguration = pc,
+    scenarioNames = "TestScenario"
+  )
+
+  tempdir <- tempdir()
+  withr::with_tempdir(
+    code = {
+      outputFolder <- exportScenarioResults(
+        simulatedScenariosResults = simulatedScenarios,
+        projectConfiguration = pc,
+        outputFolder = tempdir
+      )
+      expect_true(file.exists(file.path(tempdir, "TestScenario.pkml")))
+      expect_true(file.exists(file.path(tempdir, "TestScenario.csv")))
+      expect_equal(outputFolder, tempdir)
+    },
+    tmpdir = tempdir
+  )
+})
+
+test_that("importScenarioResults loads results from csv and pkml", {
+  pc <- testProjectConfigurationJSON()
+
+  simulatedScenarios <- runScenarios(
+    projectConfiguration = pc,
+    scenarioNames = "TestScenario"
+  )
+
+  tempdir <- tempdir()
+  withr::with_tempdir(
+    code = {
+      exportScenarioResults(
+        simulatedScenariosResults = simulatedScenarios,
+        projectConfiguration = pc,
+        outputFolder = tempdir
+      )
+
+      loaded <- importScenarioResults(
+        scenarioNames = "TestScenario",
+        resultsFolder = tempdir
+      )
+
+      expect_equal(names(loaded), "TestScenario")
+      expect_false(is.null(loaded$TestScenario$simulation))
+      expect_false(is.null(loaded$TestScenario$results))
+      expect_false(is.null(loaded$TestScenario$outputValues))
+    },
+    tmpdir = tempdir
+  )
+})
+
+test_that("importScenarioResults throws an error when files don't exist", {
+  nonExistentFolder <- file.path(tempdir(), "non-existent-folder")
+
+  expect_error(
+    importScenarioResults(
+      scenarioNames = "TestScenario",
+      resultsFolder = nonExistentFolder
+    )
+  )
+})
+
+test_that("export/import handles scenario names with forbidden characters", {
   pc <- testProjectConfigurationJSON()
 
   simulatedScenarios <- runScenarios(
@@ -108,7 +176,7 @@ test_that("It saves and loads scenario results for scenario names with forbidden
   withr::with_tempdir(
     code = {
       # Save results using temp folder
-      outputFolder <- saveScenarioResults(
+      outputFolder <- exportScenarioResults(
         simulatedScenariosResults = simulatedScenarios,
         projectConfiguration = pc,
         outputFolder = tempdir
@@ -123,11 +191,11 @@ test_that("It saves and loads scenario results for scenario names with forbidden
         "TestScenario_with_slash.csv"
       )))
 
-      # Check that the correted output folder path is returned
+      # Check that the corrected output folder path is returned
       expect_equal(outputFolder, tempdir)
 
       # Load results using temp folder
-      simulatedScenarioResults <- loadScenarioResults(
+      simulatedScenarioResults <- importScenarioResults(
         scenarioNames = "TestScenario/with/slash",
         resultsFolder = tempdir
       )
@@ -171,14 +239,15 @@ test_that("customParams in runScenarios overrides default parameters", {
   )
 })
 
-test_that("loadScenarioResults throws an error when files don't exist", {
-  # Use a non-existent folder to trigger an error
+test_that("deprecated loadScenarioResults still works", {
   nonExistentFolder <- file.path(tempdir(), "non-existent-folder")
 
-  expect_error(
-    loadScenarioResults(
-      scenarioNames = "TestScenario",
-      resultsFolder = nonExistentFolder
+  lifecycle::expect_deprecated(
+    expect_error(
+      loadScenarioResults(
+        scenarioNames = "TestScenario",
+        resultsFolder = nonExistentFolder
+      )
     )
   )
 })

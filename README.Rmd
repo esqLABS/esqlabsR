@@ -147,7 +147,7 @@ simulatedScenariosResults <- runScenarios(
 )
 
 # Save results and store the path to the results for later re-use
-outputFolder <- saveScenarioResults(simulatedScenariosResults, myProjectConfiguration)
+outputFolder <- exportScenarioResults(simulatedScenariosResults, myProjectConfiguration)
 
 # Load observed data using the default importer configuration provided with the package. Alternatively, you can load a custom data importer configuration.
 dataSheets <- c("Laskin 1982.Group A")

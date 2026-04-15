@@ -176,16 +176,16 @@ Then, we run the simulations by passing the scenarios we defined:
 myScenarioResults <- runScenarios(my_scenarios)
 ```
 
-Simulation results can be saved for later use: `saveScenarioResults()`
-and `loadScenarioResults()`.
+Simulation results can be saved for later use: `exportScenarioResults()`
+and `importScenarioResults()`.
 
 ```{r, eval = FALSE}
-saveScenarioResults(myScenarioResults,
+exportScenarioResults(myScenarioResults,
   projectConfiguration = my_project_configuration,
   outputFolder = my_project_configuration$outputFolder
 )
 
-myScenarioResults <- loadScenarioResults(
+myScenarioResults <- importScenarioResults(
   scenarioNames = "TestScenario",
   resultsFolder = my_project_configuration$outputFolder
 )
