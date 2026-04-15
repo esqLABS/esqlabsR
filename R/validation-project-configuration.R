@@ -28,7 +28,8 @@
             populations = config$populationsFile,
             models = config$modelParamsFile,
             applications = config$applicationsFile,
-            plots = config$plotsFile
+            plots = config$plotsFile,
+            parameterIdentification = config$parameterIdentificationFile
           )
 
           for (name in names(files_to_check)) {
