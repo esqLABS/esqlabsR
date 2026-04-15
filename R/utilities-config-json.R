@@ -559,7 +559,7 @@ projectConfigurationStatus <- function(
       individualId = .naToNull(as.character(row$IndividualId)),
       populationId = .naToNull(as.character(row$PopulationId)),
       readPopulationFromCSV = .naToNull(as.logical(row$ReadPopulationFromCSV)),
-      modelParameterSheets = .parseCommaListToArray(row$ModelParameterSheets),
+      modelParameterGroups = .parseCommaListToArray(row$ModelParameterSheets),
       applicationProtocol = .naToNull(as.character(row$ApplicationProtocol)),
       simulationTime = .naToNull(as.character(row$SimulationTime)),
       simulationTimeUnit = .naToNull(as.character(row$SimulationTimeUnit)),
@@ -812,9 +812,9 @@ projectConfigurationStatus <- function(
   rows <- list()
   for (name in names(scenarioConfigs)) {
     sc <- scenarioConfigs[[name]]
-    paramSheetNames <- sc$modelParameterSets
-    paramSheetsStr <- if (!is.null(paramSheetNames) && length(paramSheetNames) > 0) {
-      paste(paramSheetNames, collapse = ", ")
+    paramGroupNames <- sc$parameterGroups
+    paramGroupsStr <- if (!is.null(paramGroupNames) && length(paramGroupNames) > 0) {
+      paste(paramGroupNames, collapse = ", ")
     } else {
       NA
     }
@@ -850,7 +850,7 @@ projectConfigurationStatus <- function(
         NA
       },
       ReadPopulationFromCSV = sc$readPopulationFromCSV %||% FALSE,
-      ModelParameterSheets = paramSheetsStr,
+      ModelParameterSheets = paramGroupsStr,
       ApplicationProtocol = sc$applicationProtocol %||% NA,
       SimulationTime = simTimeStr,
       SimulationTimeUnit = sc$simulationTimeUnit %||% NA,

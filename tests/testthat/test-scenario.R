@@ -13,7 +13,7 @@ test_that("Scenario has correct default field values", {
   expect_null(s$simulationTimeUnit)
   expect_equal(s$steadyStateTime, 1000)
   expect_false(s$overwriteFormulasInSS)
-  expect_null(s$paramSheets)
+  expect_null(s$parameterGroups)
 })
 
 test_that("Scenario fields can be set", {
@@ -21,11 +21,11 @@ test_that("Scenario fields can be set", {
   s$scenarioName <- "MyScenario"
   s$modelFile <- "model.pkml"
   s$individualId <- "Indiv1"
-  s$paramSheets <- c("Global", "Sheet2")
+  s$parameterGroups <- c("Global", "Sheet2")
   expect_equal(s$scenarioName, "MyScenario")
   expect_equal(s$modelFile, "model.pkml")
   expect_equal(s$individualId, "Indiv1")
-  expect_equal(s$paramSheets, c("Global", "Sheet2"))
+  expect_equal(s$parameterGroups, c("Global", "Sheet2"))
 })
 
 test_that("Scenario is cloneable", {

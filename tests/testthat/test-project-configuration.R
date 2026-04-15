@@ -60,7 +60,7 @@ test_that("ProjectConfiguration parses scenarios into Scenario objects", {
   expect_equal(sc$scenarioName, "TestScenario2")
   expect_true(sc$simulateSteadyState)
   expect_equal(length(sc$simulationTime), 2)
-  expect_equal(sc$modelParameterSets, c("Global", "Aciclovir", "Sheet, with comma"))
+  expect_equal(sc$parameterGroups, c("Global", "Aciclovir", "Sheet, with comma"))
 })
 
 test_that("Individuals are stored as plain lists", {
@@ -189,7 +189,7 @@ test_that("Scenarios are parsed as Scenario objects (not ScenarioConfiguration)"
   expect_s3_class(sc, "Scenario")
   expect_equal(sc$scenarioName, "TestScenario")
   expect_false(is.null(sc$modelFile))
-  expect_equal(sc$modelParameterSets, c("Global"))
+  expect_equal(sc$parameterGroups, c("Global"))
 })
 
 test_that("pc$scenarios replaces pc$scenarioConfigurations", {

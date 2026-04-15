@@ -451,8 +451,8 @@ ProjectConfiguration <- R6::R6Class(
         if (!is.null(entry$readPopulationFromCSV)) {
           sc$readPopulationFromCSV <- entry$readPopulationFromCSV
         }
-        if (!is.null(entry$modelParameterSheets)) {
-          sc$modelParameterSets <- unlist(entry$modelParameterSheets)
+        if (!is.null(entry$modelParameterGroups)) {
+          sc$parameterGroups <- unlist(entry$modelParameterGroups)
         }
         if (!is.null(entry$simulationTime)) {
           sc$simulationTime <- .parseSimulationTimeIntervals(entry$simulationTime)
