@@ -710,8 +710,6 @@ test_that("createPITasks overwrites scenario output paths with PI-specified path
   )
 })
 
-projectConfiguration <- testProjectConfiguration()
-
 test_that("createPITasks accepts observedData parameter and uses provided datasets", {
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
     piTaskNames = "AciclovirSimple",

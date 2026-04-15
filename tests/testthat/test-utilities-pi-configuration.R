@@ -304,21 +304,12 @@ test_that("readPITaskConfigurationFromExcel validates CIOptions sheet structure"
   )
 })
 
-test_that("readPITaskConfigurationFromExcel throws an error when missing required sheets", {
-  testMissingSheet <- "PIConfiguration"
-  expectedSheets <- c(
-    "PIConfiguration",
-    "PIParameters",
-    "PIOutputMappings",
-    "AlgorithmOptions",
-    "CIOptions"
-  )
-
+test_that("readPITaskConfigurationFromExcel throws an error when PIParameters sheet is missing", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config
 
   sheets <- createValidPISheets()
-  sheets[testMissingSheet] <- NULL
+  sheets["PIParameters"] <- NULL
 
   .writeExcel(
     data = sheets,
@@ -326,6 +317,82 @@ test_that("readPITaskConfigurationFromExcel throws an error when missing require
   )
 
   expect_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    )
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel throws an error when PIOutputMappings sheet is missing", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets["PIOutputMappings"] <- NULL
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  expect_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    )
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel succeeds when PIConfiguration sheet is absent", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets["PIConfiguration"] <- NULL
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  expect_no_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    )
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel succeeds when AlgorithmOptions sheet is absent", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets["AlgorithmOptions"] <- NULL
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  expect_no_error(
+    readPITaskConfigurationFromExcel(
+      projectConfiguration = projectConfigurationLocal
+    )
+  )
+})
+
+test_that("readPITaskConfigurationFromExcel succeeds when CIOptions sheet is absent", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets["CIOptions"] <- NULL
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  expect_no_error(
     readPITaskConfigurationFromExcel(
       projectConfiguration = projectConfigurationLocal
     )

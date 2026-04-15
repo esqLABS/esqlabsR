@@ -44,29 +44,36 @@ readPITaskConfigurationFromExcel <- function(
     stop(messages$fileNotFound(piFilePath))
   }
 
-  # Define expected sheets
-  expectedSheets <- c(
-    "PIOutputMappings",
-    "PIParameters",
-    "PIConfiguration",
-    "AlgorithmOptions",
-    "CIOptions"
-  )
+  # Define required and optional sheets
+  requiredSheets <- c("PIOutputMappings", "PIParameters")
+  optionalSheets <- c("PIConfiguration", "AlgorithmOptions", "CIOptions")
 
   # Validate required sheets exist
   actualSheets <- readxl::excel_sheets(piFilePath)
-  missingSheets <- setdiff(expectedSheets, actualSheets)
+  missingSheets <- setdiff(requiredSheets, actualSheets)
   if (length(missingSheets) > 0) {
     stop(messages$errorPIMissingSheetsInFile(missingSheets, piFilePath))
   }
 
-  # Read all sheets into named list
+  # Read all sheets into named list; optional sheets return NULL if absent
   allSheets <- list(
-    piConfiguration = .readPIConfigurationSheet(piFilePath),
+    piConfiguration = if ("PIConfiguration" %in% actualSheets) {
+      .readPIConfigurationSheet(piFilePath)
+    } else {
+      NULL
+    },
     piParameters = .readPIParametersSheet(piFilePath),
     piOutputMappings = .readPIOutputMappingsSheet(piFilePath),
-    algorithmOptions = .readAlgorithmOptionsSheet(piFilePath),
-    ciOptions = .readCIOptionsSheet(piFilePath)
+    algorithmOptions = if ("AlgorithmOptions" %in% actualSheets) {
+      .readAlgorithmOptionsSheet(piFilePath)
+    } else {
+      NULL
+    },
+    ciOptions = if ("CIOptions" %in% actualSheets) {
+      .readCIOptionsSheet(piFilePath)
+    } else {
+      NULL
+    }
   )
 
   # Get all PI task names from mandatory sheets (PIParameters, PIOutputMappings)
@@ -107,6 +114,9 @@ readPITaskConfigurationFromExcel <- function(
     taskData <- lapply(
       allSheets,
       \(df) {
+        if (is.null(df)) {
+          return(NULL)
+        }
         filtered <- dplyr::filter(df, PITaskName == taskName)
         dplyr::distinct(filtered)
       }
@@ -147,7 +157,9 @@ readPITaskConfigurationFromExcel <- function(
     }
 
     # Convert sheet data to lists
-    piConfiguration <- if (nrow(taskData$piConfiguration) > 0) {
+    piConfiguration <- if (
+      !is.null(taskData$piConfiguration) && nrow(taskData$piConfiguration) > 0
+    ) {
       as.list(taskData$piConfiguration[1, ])
     } else {
       list()
@@ -486,7 +498,7 @@ readPITaskConfigurationFromExcel <- function(
 #' @keywords internal
 #' @noRd
 .longFormatToNamedList <- function(df) {
-  if (nrow(df) == 0) {
+  if (is.null(df) || nrow(df) == 0) {
     return(NULL)
   }
 
@@ -517,7 +529,7 @@ readPITaskConfigurationFromExcel <- function(
   minRows = 1,
   maxRows = Inf
 ) {
-  nRows <- nrow(df)
+  nRows <- nrow(df) %||% 0L
 
   if (nRows < minRows) {
     stop(messages$errorPITaskMissingInSheet(taskName, sheetName))
