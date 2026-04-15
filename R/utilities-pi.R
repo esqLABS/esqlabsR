@@ -169,9 +169,7 @@ runPI <- function(piTasks) {
   # Group rows by (Group, Container Path, Parameter Name). Rows with the same
   # group and path across multiple scenarios create one PIParameters object;
   # different paths always create separate objects, even with the same group.
-  # If all Group values are NA, each row is independent. If some rows have an
-  # explicit group, all NA rows are consolidated into a single shared group.
-  allNA <- all(sapply(configurations, function(cfg) is.na(cfg$Group)))
+  # Rows with Group = NA are always independent of each other.
   groups <- sapply(seq_along(configurations), function(i) {
     cfg <- configurations[[i]]
     group <- cfg$Group
@@ -179,7 +177,7 @@ runPI <- function(piTasks) {
     parameterName <- cfg$`Parameter Name`
 
     if (is.na(group)) {
-      if (allNA) paste0("_ungrouped_", i) else "_ungrouped"
+      paste0("_ungrouped_", i)
     } else {
       paste(as.character(group), containerPath, parameterName, sep = "__")
     }
@@ -233,12 +231,10 @@ runPI <- function(piTasks) {
           paramRow$MaxValue != firstRow$MaxValue ||
           paramRow$StartValue != firstRow$StartValue
       ) {
-        originalGroup <- if (is.na(paramRow$Group)) {
-          "_ungrouped"
-        } else {
-          as.character(paramRow$Group)
-        }
-        stop(messages$errorPIGroupBoundsMismatch(originalGroup, paramPath))
+        stop(messages$errorPIGroupBoundsMismatch(
+          as.character(paramRow$Group),
+          paramPath
+        ))
       }
 
       # Get scenario names this parameter applies to
