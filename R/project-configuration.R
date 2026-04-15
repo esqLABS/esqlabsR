@@ -438,7 +438,7 @@ ProjectConfiguration <- R6::R6Class(
         args[["moleculeOntogenies"]] <- .readOntongeniesFromList(
           entry$proteinOntogenies
         )
-        popChar <- do.call(createPopulationCharacteristics, args)
+        popChar <- do.call(ospsuite::createPopulationCharacteristics, args)
         result[[entry$populationId]] <- popChar
       }
       result

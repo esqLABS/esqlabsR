@@ -134,8 +134,7 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
 messages$hasUnsavedChanges <- function() {
   cli::format_message(c(
     "!" = "The ProjectConfiguration object has been modified since loading from file.",
-    "i" = "The object properties don't match the original Excel file.",
-    ">" = "Consider running {.run projectConfig$save()} to save changes to the Excel file."
+    "i" = "The object properties don't match the original configuration file."
   ))
 }
 
@@ -222,8 +221,7 @@ messages$errorApplicationProtocolNotFound <- function(
   applicationProtocol
 ) {
   cliFormat(
-    "Application protocol {.var {applicationProtocol}} defined in scenario {.var {scenarioName}} not found
-    in the excel file {.file ApplicationProtocols.xlsx}"
+    "Application protocol {.var {applicationProtocol}} defined in scenario {.var {scenarioName}} not found in the project configuration."
   )
 }
 messages$wrongSimulationType <- function() {

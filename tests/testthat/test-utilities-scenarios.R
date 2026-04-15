@@ -216,10 +216,9 @@ test_that("runScenarios errors on unknown scenario name", {
   )
 })
 
-test_that("runScenarios runs all scenarios when scenarioNames is NULL", {
+test_that("runScenarios filters to specified scenarioNames", {
   pc <- testProjectConfigurationJSON()
-  # Only run individual scenarios to keep test fast
-  # Filter to just TestScenario to avoid population scenarios being slow
   results <- runScenarios(pc, scenarioNames = "TestScenario")
   expect_length(results, 1)
+  expect_equal(names(results), "TestScenario")
 })
