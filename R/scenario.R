@@ -1,283 +1,73 @@
 #' @title Scenario
-#' @docType class
-#' @description Simulation scenario
-#' @format NULL
+#'
+#' @description Plain data class holding scenario configuration fields.
+#' Does not create or hold ospsuite runtime objects. Used by `runScenarios()`
+#' which handles all object creation.
+#'
+#' @field scenarioName Character. Name of the scenario.
+#' @field modelFile Character. Name of the `.pkml` model file (relative to model folder).
+#' @field applicationProtocol Character or NA. Name of the application protocol.
+#' @field individualId Character. ID of the individual from the individuals section.
+#' @field populationId Character. ID of the population from the populations section.
+#' @field outputPaths Character vector. Simulation output paths.
+#' @field simulationType Character. `"Individual"` or `"Population"`.
+#' @field readPopulationFromCSV Logical. If `TRUE`, load population from CSV file.
+#' @field simulateSteadyState Logical. If `TRUE`, run steady-state before simulation.
+#' @field simulationTime List of numeric vectors. Each vector has 3 elements:
+#'   `c(start, end, resolution)`. `NULL` means use model default.
+#' @field simulationTimeUnit Character. Time unit for simulationTime values.
+#' @field steadyStateTime Numeric. Steady-state simulation time in minutes.
+#' @field overwriteFormulasInSS Logical. If `TRUE`, overwrite formula parameters
+#'   during steady-state.
+#' @field paramSheets Character vector. Names of model parameter sheets to apply.
+#'
 #' @export
+#' @family scenario
 Scenario <- R6::R6Class(
   "Scenario",
-  cloneable = FALSE,
-  active = list(
-    #' @field scenarioConfiguration `scenarioConfiguration` used for creation of
-    #'   this scenario. Read-only.
-    scenarioConfiguration = function(value) {
-      if (missing(value)) {
-        private$.scenarioConfiguration
-      } else {
-        stop(messages$errorPropertyReadOnly("scenarioConfiguration"))
-      }
-    },
-    #' @field finalCustomParams Custom parameters to be used for the simulation.
-    #'   Read-only.
-    #' @description Custom parameters to be used for the simulation. The final
-    #'   custom parameters are a combination of parametrization through the
-    #'   excel files and the custom parameters specified by the user through the
-    #'   `customParams` argument of the `Scenario` constructor.
-    finalCustomParams = function(value) {
-      if (missing(value)) {
-        private$.finalCustomParams
-      } else {
-        stop(messages$errorPropertyReadOnly("finalCustomParams"))
-      }
-    },
-    #' @field simulation Simulation object created from the
-    #'   `ScenarioConfiguration`. Read-only
-    #' @description Simulation object. Read-only.
-    simulation = function(value) {
-      if (missing(value)) {
-        private$.simulation
-      } else {
-        stop(messages$errorPropertyReadOnly("simulation"))
-      }
-    },
-    #' @field population Population object in case the scenario is a population
-    #'   simulation. Read-only.
-    population = function(value) {
-      if (missing(value)) {
-        private$.population
-      } else {
-        stop(messages$errorPropertyReadOnly("population"))
-      }
-    },
-
-    #' @field scenarioType Type of the scenario - individual or population.
-    #'   Read-only
-    scenarioType = function(value) {
-      if (missing(value)) {
-        if (isOfType(private$.population, "Population")) {
-          "Population"
-        } else {
-          "Individual"
-        }
-      } else {
-        stop(messages$errorPropertyReadOnly("scenarioType"))
-      }
-    }
-  ),
-  private = list(
-    .scenarioConfiguration = NULL,
-    .finalCustomParams = NULL,
-    .simulation = NULL,
-    .population = NA,
-
-    # Private function for initialization of the scenario from the configuration
-    .initializeFromConfiguration = function(
-      customParams = NULL,
-      stopIfParameterNotFound = TRUE
-    ) {
-      scenarioConfiguration <- private$.scenarioConfiguration
-      pc <- scenarioConfiguration$projectConfiguration
-
-      # Read model parameters from ProjectConfiguration fields
-      params <- NULL
-      for (groupName in enumKeys(scenarioConfiguration$paramSheets)) {
-        groupParams <- pc$modelParameters[[groupName]]
-        if (!is.null(groupParams)) {
-          params <- extendParameterStructure(
-            parameters = params,
-            newParameters = groupParams
-          )
-        }
-      }
-
-      # Apply individual physiology, if specified
-      individualCharacteristics <- NULL
-      # Check for 'NULL' and 'NA'. 'NA' happens when no individual is defined in
-      # the excel file.
-      if (
-        !is.null(scenarioConfiguration$individualId) &&
-          !is.na(scenarioConfiguration$individualId)
-      ) {
-        individualCharacteristics <- pc$individuals[[scenarioConfiguration$individualId]]
-
-        if (is.null(individualCharacteristics)) {
-          warning(messages$warningNoIndividualCharacteristics(
-            scenarioName = scenarioConfiguration$scenarioName,
-            individualId = scenarioConfiguration$individualId
-          ))
-        }
-
-        # Find and apply individual-specific model parameters
-        individualId <- scenarioConfiguration$individualId
-        setNames <- pc$individualParameterSetMapping[[individualId]]
-
-        if (!is.null(setNames)) {
-          for (setName in setNames) {
-            setParams <- pc$individualParameterSets[[setName]]
-            if (!is.null(setParams)) {
-              params <- extendParameterStructure(
-                parameters = params,
-                newParameters = setParams
-              )
-            } else {
-              stop(messages$errorIndividualParameterSetNotFound(
-                scenarioName = scenarioConfiguration$scenarioName,
-                parameterSetName = setName
-              ))
-            }
-          }
-        }
-      }
-
-      # Set administration protocols
-      # Checking for 'NA' if administration protocol is not set.
-      if (!is.na(scenarioConfiguration$applicationProtocol)) {
-        protocol <- scenarioConfiguration$applicationProtocol
-        applicationParams <- pc$applications[[protocol]]
-        if (is.null(applicationParams)) {
-          stop(messages$errorApplicationProtocolNotFound(
-            scenarioName = scenarioConfiguration$scenarioName,
-            applicationProtocol = protocol
-          ))
-        }
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = applicationParams
-        )
-      }
-
-      if (!is.null(customParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = customParams
-        )
-      }
-
-      # Save the final custom parameters
-      private$.finalCustomParams <- params
-
-      # Load simulation
-      simulation <- ospsuite::loadSimulation(
-        filePath = file.path(
-          scenarioConfiguration$projectConfiguration$modelFolder,
-          scenarioConfiguration$modelFile
-        ),
-        loadFromCache = FALSE
-      )
-      # Set simulation name
-      simulation$name <- scenarioConfiguration$scenarioName
-      # Set the outputs, if new were specified
-      if (!is.null(scenarioConfiguration$outputPaths)) {
-        setOutputs(
-          quantitiesOrPaths = scenarioConfiguration$outputPaths,
-          simulation = simulation
-        )
-      }
-      # Set simulation time if defined by the user.
-      if (!is.null(scenarioConfiguration$simulationTime)) {
-        # clear output intervals
-        clearOutputIntervals(simulation)
-        # Iterate through all output intervals and add them to simulation
-        for (i in seq_along(scenarioConfiguration$simulationTime)) {
-          addOutputInterval(
-            simulation = simulation,
-            startTime = toBaseUnit(
-              quantityOrDimension = ospDimensions$Time,
-              values = scenarioConfiguration$simulationTime[[i]][1],
-              unit = scenarioConfiguration$simulationTimeUnit
-            ),
-            endTime = toBaseUnit(
-              quantityOrDimension = ospDimensions$Time,
-              values = scenarioConfiguration$simulationTime[[i]][2],
-              unit = scenarioConfiguration$simulationTimeUnit
-            ),
-            resolution = scenarioConfiguration$simulationTime[[i]][3] /
-              toBaseUnit(
-                quantityOrDimension = ospDimensions$Time,
-                values = 1,
-                unit = scenarioConfiguration$simulationTimeUnit
-              )
-          )
-        }
-      }
-
-      initializeSimulation(
-        simulation = simulation,
-        individualCharacteristics = individualCharacteristics,
-        additionalParams = params,
-        stopIfParameterNotFound = stopIfParameterNotFound
-      )
-
-      return(simulation)
-    },
-
-    # Private function to create population from the configuration
-    .initializePopulationFromConfiguration = function() {
-      scenarioConfiguration <- private$.scenarioConfiguration
-      pc <- scenarioConfiguration$projectConfiguration
-      # Defining an empty population as `NA` because test for `NULL` is painful
-      population <- NA
-
-      # Create a population for population scenarios
-      if (scenarioConfiguration$simulationType == "Population") {
-        if (is.null(scenarioConfiguration$populationId)) {
-          stop(messages$noPopulationIdForPopulationScenario(
-            scenarioConfiguration$scenarioName
-          ))
-        }
-        if (scenarioConfiguration$readPopulationFromCSV) {
-          populationPath <- paste0(
-            file.path(
-              pc$populationsFolder,
-              scenarioConfiguration$populationId
-            ),
-            ".csv"
-          )
-          population <- loadPopulation(populationPath)
-        } else {
-          popCharacteristics <- pc$populations[[scenarioConfiguration$populationId]]
-          population <- createPopulation(
-            populationCharacteristics = popCharacteristics
-          )
-          # Create population returns a list, in contrast to load population,
-          # where the object is returned!
-          population <- population$population
-        }
-      }
-      private$.population <- population
-    }
-  ),
+  cloneable = TRUE,
   public = list(
-    #' @description Initialize a new instance of the class. Initializes the
-    #' scenario from `ScenarioConfiguration` object.
-    #' @param scenarioConfiguration An object of class `ScenarioConfiguration`.
-    #' @param customParams Custom parameters to be used for the simulation. A
-    #'   list containing vectors 'paths' with the full paths to the parameters,
-    #'   'values' the values of the parameters, and 'units' with the units the
-    #'   values are in.
-    #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
-    #'   thrown if any of the custom defined parameter does not exist. If
-    #'   `FALSE`, non-existent parameters are  ignored.
-    #' @returns A new `Scenario` object.
-    initialize = function(
-      scenarioConfiguration,
-      customParams = NULL,
-      stopIfParameterNotFound = TRUE
-    ) {
-      private$.scenarioConfiguration <- scenarioConfiguration
-      private$.simulation <- private$.initializeFromConfiguration(
-        customParams = customParams,
-        stopIfParameterNotFound = stopIfParameterNotFound
-      )
-      private$.initializePopulationFromConfiguration()
-    },
-    #' @description Print the object to the console
-    #' @param ... Rest arguments.
+    scenarioName = NULL,
+    modelFile = NULL,
+    applicationProtocol = NULL,
+    individualId = NULL,
+    populationId = NULL,
+    outputPaths = NULL,
+    simulationType = "Individual",
+    readPopulationFromCSV = FALSE,
+    simulateSteadyState = FALSE,
+    simulationTime = NULL,
+    simulationTimeUnit = NULL,
+    steadyStateTime = 1000,
+    overwriteFormulasInSS = FALSE,
+    paramSheets = NULL,
+
+    #' @description Create a new Scenario.
+    initialize = function() {},
+
+    #' @description Print scenario summary.
     print = function(...) {
-      ospsuite.utils::ospPrintClass(self)
-      ospsuite.utils::ospPrintItems(list(
-        "Scenario type" = self$scenarioType
-      ))
-      self$scenarioConfiguration$print(className = FALSE)
+      cat("<Scenario>", "\n")
+      cat("  Name:           ", self$scenarioName %||% "(none)", "\n")
+      cat("  Model:          ", self$modelFile %||% "(none)", "\n")
+      cat("  Type:           ", self$simulationType, "\n")
+      cat("  Individual:     ", self$individualId %||% "(none)", "\n")
+      if (self$simulationType == "Population") {
+        cat("  Population:     ", self$populationId %||% "(none)", "\n")
+        cat("  CSV Population: ", self$readPopulationFromCSV, "\n")
+      }
+      if (!is.null(self$applicationProtocol) && !is.na(self$applicationProtocol)) {
+        cat("  Protocol:       ", self$applicationProtocol, "\n")
+      }
+      if (!is.null(self$paramSheets)) {
+        cat("  Param sheets:   ", paste(self$paramSheets, collapse = ", "), "\n")
+      }
+      if (!is.null(self$outputPaths)) {
+        cat("  Output paths:   ", length(self$outputPaths), "path(s)\n")
+      }
+      if (self$simulateSteadyState) {
+        cat("  Steady state:    TRUE (time=", self$steadyStateTime, "min)\n")
+      }
       invisible(self)
     }
   )
