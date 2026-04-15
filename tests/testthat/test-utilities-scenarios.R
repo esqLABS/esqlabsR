@@ -350,3 +350,142 @@ test_that("addScenario errors on empty scenarioName", {
     "non-empty string"
   )
 })
+
+# Happy path ----
+
+test_that("addScenario adds a valid scenario with correct fields", {
+  pc <- testProjectConfigurationJSON()
+  original_count <- length(pc$scenarios)
+
+  addScenario(
+    pc,
+    scenarioName = "ProgrammaticScenario",
+    modelFile = "Aciclovir.pkml",
+    individualId = "Indiv1"
+  )
+
+  expect_length(pc$scenarios, original_count + 1)
+  expect_true("ProgrammaticScenario" %in% names(pc$scenarios))
+
+  sc <- pc$scenarios[["ProgrammaticScenario"]]
+  expect_s3_class(sc, "Scenario")
+  expect_equal(sc$scenarioName, "ProgrammaticScenario")
+  expect_equal(sc$modelFile, "Aciclovir.pkml")
+  expect_equal(sc$individualId, "Indiv1")
+  expect_equal(sc$simulationType, "Individual")
+})
+
+test_that("addScenario with populationId sets simulationType to Population", {
+  pc <- testProjectConfigurationJSON()
+  pop_name <- names(pc$populations)[[1]]
+
+  addScenario(
+    pc,
+    scenarioName = "PopScenario",
+    modelFile = "Aciclovir.pkml",
+    populationId = pop_name
+  )
+
+  sc <- pc$scenarios[["PopScenario"]]
+  expect_equal(sc$simulationType, "Population")
+  expect_equal(sc$populationId, pop_name)
+})
+
+test_that("addScenario parses simulationTime string into list of vectors", {
+  pc <- testProjectConfigurationJSON()
+
+  addScenario(
+    pc,
+    scenarioName = "TimeScenario",
+    modelFile = "Aciclovir.pkml",
+    simulationTime = "0, 100, 1",
+    simulationTimeUnit = "h"
+  )
+
+  sc <- pc$scenarios[["TimeScenario"]]
+  expect_equal(sc$simulationTime, list(c(0, 100, 1)))
+  expect_equal(sc$simulationTimeUnit, "h")
+})
+
+test_that("addScenario resolves outputPathIds to output path strings", {
+  pc <- testProjectConfigurationJSON()
+  path_ids <- names(pc$outputPaths)
+
+  addScenario(
+    pc,
+    scenarioName = "OutputScenario",
+    modelFile = "Aciclovir.pkml",
+    outputPathIds = path_ids
+  )
+
+  sc <- pc$scenarios[["OutputScenario"]]
+  expect_equal(sc$outputPaths, unname(pc$outputPaths[path_ids]))
+})
+
+test_that("addScenario sets modified flag to TRUE", {
+  pc <- testProjectConfigurationJSON()
+  expect_false(pc$modified)
+
+  addScenario(
+    pc,
+    scenarioName = "ModifiedScenario",
+    modelFile = "Aciclovir.pkml"
+  )
+
+  expect_true(pc$modified)
+})
+
+test_that("pc$addScenario() delegates to standalone addScenario()", {
+  pc <- testProjectConfigurationJSON()
+
+  pc$addScenario(
+    scenarioName = "MethodScenario",
+    modelFile = "Aciclovir.pkml",
+    individualId = "Indiv1"
+  )
+
+  expect_true("MethodScenario" %in% names(pc$scenarios))
+  sc <- pc$scenarios[["MethodScenario"]]
+  expect_equal(sc$individualId, "Indiv1")
+})
+
+test_that("addScenario populates all optional fields correctly", {
+  pc <- testProjectConfigurationJSON()
+  param_group <- names(pc$modelParameters)[[1]]
+
+  addScenario(
+    pc,
+    scenarioName = "FullScenario",
+    modelFile = "Aciclovir.pkml",
+    individualId = "Indiv1",
+    applicationProtocol = names(pc$applications)[[1]],
+    parameterGroups = param_group,
+    simulationTime = "0, 50, 1; 50, 100, 2",
+    simulationTimeUnit = "min",
+    steadyState = TRUE,
+    steadyStateTime = 500,
+    overwriteFormulasInSS = TRUE,
+    readPopulationFromCSV = FALSE
+  )
+
+  sc <- pc$scenarios[["FullScenario"]]
+  expect_equal(sc$applicationProtocol, names(pc$applications)[[1]])
+  expect_equal(sc$parameterGroups, param_group)
+  expect_equal(sc$simulationTime, list(c(0, 50, 1), c(50, 100, 2)))
+  expect_equal(sc$simulationTimeUnit, "min")
+  expect_true(sc$simulateSteadyState)
+  expect_equal(sc$steadyStateTime, 500)
+  expect_true(sc$overwriteFormulasInSS)
+  expect_false(sc$readPopulationFromCSV)
+})
+
+test_that("addScenario returns projectConfiguration invisibly", {
+  pc <- testProjectConfigurationJSON()
+  result <- withVisible(addScenario(
+    pc,
+    scenarioName = "InvisibleScenario",
+    modelFile = "Aciclovir.pkml"
+  ))
+  expect_false(result$visible)
+  expect_identical(result$value, pc)
+})
