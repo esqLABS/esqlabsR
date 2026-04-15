@@ -25,33 +25,20 @@ createPITasks <- function(
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   piTaskConfigurations <- toList(piTaskConfigurations)
 
-  # Extract all unique scenario configurations from all PI tasks
-  allScenarioConfigs <- list()
-  for (piTaskConfig in piTaskConfigurations) {
-    scenarioConfigs <- piTaskConfig$scenarioConfiguration
-    for (scenarioName in names(scenarioConfigs)) {
-      if (!scenarioName %in% names(allScenarioConfigs)) {
-        allScenarioConfigs[[scenarioName]] <- scenarioConfigs[[scenarioName]]
-      }
-    }
-  }
-
-  # Create all scenarios
-  if (length(allScenarioConfigs) == 0) {
-    stop(messages$errorPINoScenariosConfigured())
-  }
-  scenarios <- createScenarios(
-    scenarioConfigurations = allScenarioConfigs,
-    stopIfParameterNotFound = stopIfParameterNotFound
-  )
-
-  # Create PI task for each configuration
   piTasks <- vector("list", length(piTaskConfigurations)) |>
     setNames(names(piTaskConfigurations))
 
   for (taskName in names(piTaskConfigurations)) {
+    taskConfig <- piTaskConfigurations[[taskName]]
+    if (length(taskConfig$scenarioConfiguration) == 0) {
+      stop(messages$errorPINoScenariosConfigured())
+    }
+    scenarios <- createScenarios(
+      scenarioConfigurations = taskConfig$scenarioConfiguration,
+      stopIfParameterNotFound = stopIfParameterNotFound
+    )
     piTasks[[taskName]] <- .createSinglePITask(
-      piTaskConfiguration = piTaskConfigurations[[taskName]],
+      piTaskConfiguration = taskConfig,
       scenarios = scenarios,
       observedData = observedData
     )
