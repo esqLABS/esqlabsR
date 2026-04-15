@@ -1,25 +1,10 @@
 projectConfiguration <- testProjectConfiguration()
 
-# Define which scenarios to run
 scenarioNames <- c("TestScenario", "PopulationScenario")
-outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = scenarioNames,
-  projectConfiguration = projectConfiguration
-)
-
-# Set output paths for each scenario
-for (scenarioConfiguration in scenarioConfigurations) {
-  scenarioConfiguration$outputPaths <- outputPaths
-}
-
-# Run scenarios
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
 
 simulatedScenarios <- runScenarios(
-  scenarios = scenarios
+  projectConfiguration,
+  scenarioNames = scenarioNames
 )
 
 importerConfiguration <- ospsuite::loadDataImporterConfiguration(

@@ -1115,16 +1115,16 @@ test_that("Created scenarios are runnable", {
     projectConfiguration = projectConfiguration
   )
 
-  # Read back and run
+  # Read back and add to projectConfiguration
   scenarioName <- "Vergin 1995 IV"
   scenarios <- readScenarioConfigurationFromExcel(
     scenarioNames = scenarioName,
     projectConfiguration = projectConfiguration
   )
+  projectConfiguration$scenarioConfigurations <- scenarios
 
   # Test that the scenario is runnable
-  runnableScenarios <- createScenarios(scenarioConfigurations = scenarios)
-  simulatedScenarios <- runScenarios(scenarios = runnableScenarios)
+  simulatedScenarios <- runScenarios(projectConfiguration, scenarioNames = scenarioName)
 
   expect_length(simulatedScenarios, 1)
   expect_equal(names(simulatedScenarios), scenarioName)

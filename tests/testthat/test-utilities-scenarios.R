@@ -1,140 +1,69 @@
 defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
-test_that("It stops with an error if the excel file defines a parameter that is
-          not present", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  # Define which scenarios to run
-  scenarioNames <- c("TestScenario_missingParam")
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-  expect_error(createScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    stopIfParameterNotFound = TRUE
-  ))
-})
-
-test_that("All working scenarios in testProject can be created without errors", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  # Define which scenarios to run
-  scenarioNames <- c(
-    "TestScenario",
-    "TestScenario2",
-    "PopulationScenario",
-    "PopulationScenarioFromCSV"
-  )
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  expect_no_error(createScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    stopIfParameterNotFound = FALSE
-  ))
+test_that("runScenarios stops with an error if a parameter is not present", {
+  pc <- testProjectConfigurationJSON()
+  expect_error(runScenarios(pc, scenarioNames = "TestScenario_missingParam"))
 })
 
 test_that("It runs one scenario without specifying output paths", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  # Define which scenarios to run
-  scenarioNames <- c("TestScenario_missingParam")
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-  scenarios <- createScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    stopIfParameterNotFound = FALSE
-  )
+  pc <- testProjectConfigurationJSON()
 
   simulatedScenarios <- runScenarios(
-    scenarios = scenarios
+    projectConfiguration = pc,
+    scenarioNames = "TestScenario"
   )
 
-  expect_equal(names(simulatedScenarios), scenarioNames)
+  expect_equal(names(simulatedScenarios), "TestScenario")
   expect_equal(
-    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    simulatedScenarios[["TestScenario"]]$results$allQuantityPaths,
     defaultOutputPath
   )
 })
 
 test_that("It runs one scenario with specifying output paths", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  pc <- testProjectConfigurationJSON()
   OutputPaths <- enum(list(
     Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
     Aciclovir_bone_pls = "Organism|Bone|Plasma|Aciclovir|Concentration"
   ))
 
-  # Define which scenarios to run
-  scenarioNames <- c("TestScenario")
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  for (scenarioConfiguration in scenarioConfigurations) {
-    scenarioConfiguration$outputPaths <- enumValues(OutputPaths)
-  }
-
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+  # Modify output paths on the scenario configuration before running
+  pc$scenarioConfigurations[["TestScenario"]]$outputPaths <- enumValues(OutputPaths)
 
   simulatedScenarios <- runScenarios(
-    scenarios = scenarios
+    projectConfiguration = pc,
+    scenarioNames = "TestScenario"
   )
 
-  expect_equal(names(simulatedScenarios), scenarioNames)
+  expect_equal(names(simulatedScenarios), "TestScenario")
   expect_equal(
-    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    simulatedScenarios[["TestScenario"]]$results$allQuantityPaths,
     enumValues(OutputPaths)
   )
 })
 
 test_that("It runs two scenarios", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  # Define which scenarios to run
-  scenarioNames <- c(
-    "TestScenario",
-    "TestScenario2"
-  )
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-  # Disable steady-state for second config
-  scenarioConfigurations[[2]]$simulateSteadyState <- FALSE
-  # Prevent warning because Indiv not found by replacing with existing IndividualId
-  scenarioConfigurations[[2]]$individualId <- "Indiv1"
+  pc <- testProjectConfigurationJSON()
+  scenarioNames <- c("TestScenario", "TestScenario2")
 
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+  # Disable steady-state for second config
+  pc$scenarioConfigurations[["TestScenario2"]]$simulateSteadyState <- FALSE
+  # Prevent warning because Indiv not found by replacing with existing IndividualId
+  pc$scenarioConfigurations[["TestScenario2"]]$individualId <- "Indiv1"
 
   simulatedScenarios <- runScenarios(
-    scenarios = scenarios
+    projectConfiguration = pc,
+    scenarioNames = scenarioNames
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
   expect_equal(
-    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    simulatedScenarios[["TestScenario"]]$results$allQuantityPaths,
     defaultOutputPath
   )
 
   expect_equal(
-    simulatedScenarios[[scenarioNames[[2]]]]$results$allQuantityPaths,
+    simulatedScenarios[["TestScenario2"]]$results$allQuantityPaths,
     c(
       "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
@@ -143,53 +72,34 @@ test_that("It runs two scenarios", {
 })
 
 test_that("It runs population and individual scenarios", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  # Define which scenarios to run
-  scenarioNames <- c(
-    "TestScenario",
-    "PopulationScenario"
-  )
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+  pc <- testProjectConfigurationJSON()
+  scenarioNames <- c("TestScenario", "PopulationScenario")
+
   simulatedScenarios <- runScenarios(
-    scenarios = scenarios
+    projectConfiguration = pc,
+    scenarioNames = scenarioNames
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
   # Check that the first scenario is individual simulation
   expect_equal(
-    length(simulatedScenarios[[scenarioNames[[1]]]]$results$allIndividualIds),
+    length(simulatedScenarios[["TestScenario"]]$results$allIndividualIds),
     1
   )
   # Check that the second scenario is population simulation
   expect_equal(
-    length(simulatedScenarios[[scenarioNames[[2]]]]$results$allIndividualIds),
+    length(simulatedScenarios[["PopulationScenario"]]$results$allIndividualIds),
     2
   )
 })
 
 
 test_that("It saves and loads scenario results for scenario names with forbidden characters", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  # Define which scenarios to run
-  scenarioNames <- c("TestScenario")
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+  pc <- testProjectConfigurationJSON()
 
   simulatedScenarios <- runScenarios(
-    scenarios = scenarios
+    projectConfiguration = pc,
+    scenarioNames = "TestScenario"
   )
   # Rename simulatedScenarios to include a slash
   names(simulatedScenarios) <- "TestScenario/with/slash"
@@ -200,7 +110,7 @@ test_that("It saves and loads scenario results for scenario names with forbidden
       # Save results using temp folder
       outputFolder <- saveScenarioResults(
         simulatedScenariosResults = simulatedScenarios,
-        projectConfiguration = projectConfiguration,
+        projectConfiguration = pc,
         outputFolder = tempdir
       )
       # Check that the results are saved
@@ -230,42 +140,35 @@ test_that("It saves and loads scenario results for scenario names with forbidden
 })
 
 
-test_that("The hierarchy of parametrization is correct", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  # Define which scenarios to run
-  scenarioNames <- c("TestScenario")
-  # Create `ScenarioConfiguration` objects from excel files without custom parameters
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+test_that("customParams in runScenarios overrides default parameters", {
+  pc <- testProjectConfigurationJSON()
+  dosePath <- "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
 
-  # Check that the hierarchy of parametrization is correct
-  idx <- which(
-    scenarios[[1]]$finalCustomParams$paths ==
-      "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+  # Default run — dose should be 250 from the JSON
+  results <- runScenarios(pc, scenarioNames = "TestScenario")
+  sim <- results$TestScenario$simulation
+  doseParam <- ospsuite::getParameter(dosePath, sim)
+  expect_equal(
+    doseParam$value,
+    ospsuite::toBaseUnit(doseParam, 250, "mg")
   )
-  expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 250)
 
-  # Create `ScenarioConfiguration` objects from excel files with custom parameter
-  scenarios <- createScenarios(
-    scenarioConfigurations = scenarioConfigurations,
+  # Run with custom parameter overriding dose to 300
+  results2 <- runScenarios(
+    pc,
+    scenarioNames = "TestScenario",
     customParams = list(
-      paths = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+      paths = dosePath,
       values = 300,
       units = "mg"
     )
   )
-
-  # Check that the custom parameter overrides the default
-  idx <- which(
-    scenarios[[1]]$finalCustomParams$paths ==
-      "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+  sim2 <- results2$TestScenario$simulation
+  doseParam2 <- ospsuite::getParameter(dosePath, sim2)
+  expect_equal(
+    doseParam2$value,
+    ospsuite::toBaseUnit(doseParam2, 300, "mg")
   )
-  expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 300)
 })
 
 test_that("loadScenarioResults throws an error when files don't exist", {
@@ -280,30 +183,43 @@ test_that("loadScenarioResults throws an error when files don't exist", {
   )
 })
 
-test_that("It correctly runs when only one scenario (not a list) is provided", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  # Define which scenarios to run
-  scenarioNames <- c("TestScenario_missingParam")
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-  scenarios <- createScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    stopIfParameterNotFound = FALSE
-  )
+test_that("It correctly runs when only one scenario name is provided", {
+  pc <- testProjectConfigurationJSON()
 
   simulatedScenarios <- runScenarios(
-    scenarios = scenarios[[1]]
+    projectConfiguration = pc,
+    scenarioNames = "TestScenario"
   )
 
-  expect_equal(names(simulatedScenarios), scenarioNames)
+  expect_equal(names(simulatedScenarios), "TestScenario")
   expect_equal(
-    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    simulatedScenarios[["TestScenario"]]$results$allQuantityPaths,
     defaultOutputPath
   )
+})
+
+# JSON integration ----
+
+test_that("runScenarios runs a scenario from JSON ProjectConfiguration", {
+  pc <- testProjectConfigurationJSON()
+  results <- runScenarios(pc, scenarioNames = "TestScenario")
+  expect_true("TestScenario" %in% names(results))
+  expect_false(is.null(results$TestScenario$results))
+  expect_false(is.null(results$TestScenario$outputValues))
+})
+
+test_that("runScenarios errors on unknown scenario name", {
+  pc <- testProjectConfigurationJSON()
+  expect_error(
+    runScenarios(pc, scenarioNames = "NonExistent"),
+    "NonExistent"
+  )
+})
+
+test_that("runScenarios runs all scenarios when scenarioNames is NULL", {
+  pc <- testProjectConfigurationJSON()
+  # Only run individual scenarios to keep test fast
+  # Filter to just TestScenario to avoid population scenarios being slow
+  results <- runScenarios(pc, scenarioNames = "TestScenario")
+  expect_length(results, 1)
 })

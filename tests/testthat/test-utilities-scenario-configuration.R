@@ -353,20 +353,12 @@ test_that("It creates all scenarios if no name is defined", {
 
 
 test_that("It throws an error when no population is specified for a population scenario", {
-  scenarioNames <- c(
-    "TestScenario",
-    "PopulationScenario"
-  )
-
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  scenarioConfigurations$PopulationScenario$populationId <- NULL
+  pc <- testProjectConfigurationJSON()
+  sc <- pc$scenarioConfigurations[["PopulationScenario"]]
+  sc$populationId <- NULL
 
   expect_error(
-    createScenarios(scenarioConfigurations = scenarioConfigurations),
+    Scenario$new(sc),
     regexp = messages$noPopulationIdForPopulationScenario("PopulationScenario"),
     fixed = TRUE
   )

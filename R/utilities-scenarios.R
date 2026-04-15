@@ -1,8 +1,14 @@
 #' Run a set of scenarios.
 #'
+#' @param projectConfiguration An object of type `ProjectConfiguration` loaded
+#'   from JSON. Its `scenarioConfigurations` field is used to select and create
+#'   scenarios.
+#' @param scenarioNames Optional character vector of scenario names to run. If
+#'   `NULL` (default), all scenarios defined in `projectConfiguration` are run.
+#' @param customParams A list containing vectors `paths`, `values`, and `units`
+#'   that will be applied to all scenarios. See [.createScenarios] for details.
 #' @param simulationRunOptions Object of type `SimulationRunOptions` that will
 #'   be passed to simulation runs. If `NULL`, default options are used.
-#' @param scenarios List of `Scenario` objects to be simulated.
 #'
 #' @returns A named list, where the names are scenario names, and the values are
 #'   lists with the entries `simulation` being the initialized `Simulation`
@@ -14,7 +20,39 @@
 #' `outputValues` for this scenario is `NULL`.
 #'
 #' @export
-runScenarios <- function(scenarios, simulationRunOptions = NULL) {
+runScenarios <- function(
+  projectConfiguration,
+  scenarioNames = NULL,
+  customParams = NULL,
+  simulationRunOptions = NULL
+) {
+  validateIsOfType(projectConfiguration, "ProjectConfiguration")
+  .validateParametersStructure(
+    parameterStructure = customParams,
+    argumentName = "customParams",
+    nullAllowed = TRUE
+  )
+
+  allConfigs <- projectConfiguration$scenarioConfigurations
+  if (is.null(scenarioNames)) {
+    scenarioNames <- names(allConfigs)
+  }
+
+  # Validate scenario names
+  unknownNames <- setdiff(scenarioNames, names(allConfigs))
+  if (length(unknownNames) > 0) {
+    stop(paste0(
+      "Unknown scenario names: ",
+      paste(unknownNames, collapse = ", ")
+    ))
+  }
+
+  selectedConfigs <- allConfigs[scenarioNames]
+  scenarios <- .createScenarios(
+    scenarioConfigurations = selectedConfigs,
+    customParams = customParams
+  )
+
   scenarios <- ospsuite.utils::toList(scenarios)
   # List of individiaul simulations
   individualSimulations <- list()
@@ -154,7 +192,7 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 #' outputs. Set simulation time. initializeSimulation(). Create population
 #'
 #' @param scenarioConfigurations List of `ScenarioConfiguration` objects to be
-#'   simulated. See [createScenarios()] for details.
+#'   simulated. See [.createScenarios] for details.
 #' @param customParams A list containing vectors 'paths' with the full paths to
 #'   the parameters, 'values' the values of the parameters, and 'units' with the
 #'   units the values are in. The values will be applied to all scenarios.
@@ -163,8 +201,8 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
 #'   parameters are ignored.
 #'
 #' @returns Named list of `Scenario` objects.
-#' @export
-createScenarios <- function(
+#' @keywords internal
+.createScenarios <- function(
   scenarioConfigurations,
   customParams = NULL,
   stopIfParameterNotFound = TRUE
@@ -209,13 +247,9 @@ createScenarios <- function(
 #' @returns `outputFolder` or the created output folder path, if no `outputFolder` was provided.
 #'
 #' @examples \dontrun{
-#' projectConfiguration <- esqlabsR::createProjectConfiguration()
-#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
-#'   projectConfiguration = projectConfiguration
-#' )
-#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+#' projectConfiguration <- loadProject("path/to/ProjectConfiguration.json")
 #' simulatedScenariosResults <- runScenarios(
-#'   scenarios = scenarios
+#'   projectConfiguration = projectConfiguration
 #' )
 #' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
 #' }
@@ -304,20 +338,15 @@ saveScenarioResults <- function(
 #'
 #' @examples \dontrun{
 #' # First simulate scenarios and save the results
-#' projectConfiguration <- esqlabsR::createProjectConfiguration()
-#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
+#' projectConfiguration <- loadProject("path/to/ProjectConfiguration.json")
+#' simulatedScenariosResults <- runScenarios(
 #'   projectConfiguration = projectConfiguration
 #' )
-#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-#' simulatedScenariosResults <- runScenarios(
-#'   scenarios = scenarios
-#' )
-#' saveResults(simulatedScenariosResults, projectConfiguration)
+#' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
 #'
 #' # Now load the results
-#' scnarioNames <- names(scenarios)
 #' simulatedScenariosResults <- loadScenarioResults(
-#'   scnarioNames = scnarioNames,
+#'   scenarioNames = c("Scenario1", "Scenario2"),
 #'   resultsFolder = pathToTheFolder
 #' )
 #' }
