@@ -27,8 +27,8 @@ test_that("It runs one scenario with specifying output paths", {
     Aciclovir_bone_pls = "Organism|Bone|Plasma|Aciclovir|Concentration"
   ))
 
-  # Modify output paths on the scenario configuration before running
-  pc$scenarioConfigurations[["TestScenario"]]$outputPaths <- enumValues(OutputPaths)
+  # Modify output paths on the scenario before running
+  pc$scenarios[["TestScenario"]]$outputPaths <- enumValues(OutputPaths)
 
   simulatedScenarios <- runScenarios(
     projectConfiguration = pc,
@@ -46,10 +46,10 @@ test_that("It runs two scenarios", {
   pc <- testProjectConfigurationJSON()
   scenarioNames <- c("TestScenario", "TestScenario2")
 
-  # Disable steady-state for second config
-  pc$scenarioConfigurations[["TestScenario2"]]$simulateSteadyState <- FALSE
+  # Disable steady-state for second scenario
+  pc$scenarios[["TestScenario2"]]$simulateSteadyState <- FALSE
   # Prevent warning because Indiv not found by replacing with existing IndividualId
-  pc$scenarioConfigurations[["TestScenario2"]]$individualId <- "Indiv1"
+  pc$scenarios[["TestScenario2"]]$individualId <- "Indiv1"
 
   simulatedScenarios <- runScenarios(
     projectConfiguration = pc,

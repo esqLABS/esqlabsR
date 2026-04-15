@@ -1,17 +1,19 @@
-#' Execute a single scenario
+#' Prepare a single scenario for simulation
 #'
 #' @description Loads simulation, creates ospsuite objects (with caching),
-#' merges parameters, runs the simulation, and returns results.
+#' merges parameters, sets outputs, sets time intervals, initialises the
+#' simulation, handles steady-state, and creates the population object.
+#' Does NOT run the simulation.
 #'
 #' @param scenario A `Scenario` object (plain data class).
 #' @param pc A `ProjectConfiguration` object.
 #' @param customParams Optional parameter structure from the caller.
 #' @param cache An environment with `$individuals` and `$populations` named lists.
-#' @param simulationRunOptions Optional `SimulationRunOptions`.
+#' @param simulationRunOptions Optional `SimulationRunOptions` (used for steady-state).
 #'
-#' @returns A list with `simulation`, `results`, `outputValues`, `population`.
+#' @returns A list with `simulation` and `population` (NULL for individual scenarios).
 #' @keywords internal
-.executeScenario <- function(scenario, pc, customParams, cache, simulationRunOptions) {
+.prepareScenario <- function(scenario, pc, customParams, cache, simulationRunOptions) {
   # 1. Load simulation
   simulation <- ospsuite::loadSimulation(
     filePath = file.path(pc$modelFolder, scenario$modelFile),
@@ -204,7 +206,37 @@
     )
   }
 
-  # 8. Run simulation
+  list(
+    simulation = simulation,
+    population = population
+  )
+}
+
+#' Execute a single scenario
+#'
+#' @description Prepares and runs a single scenario, returning results.
+#' Delegates setup to `.prepareScenario()`.
+#'
+#' @param scenario A `Scenario` object (plain data class).
+#' @param pc A `ProjectConfiguration` object.
+#' @param customParams Optional parameter structure from the caller.
+#' @param cache An environment with `$individuals` and `$populations` named lists.
+#' @param simulationRunOptions Optional `SimulationRunOptions`.
+#'
+#' @returns A list with `simulation`, `results`, `outputValues`, `population`.
+#' @keywords internal
+.executeScenario <- function(scenario, pc, customParams, cache, simulationRunOptions) {
+  prepared <- .prepareScenario(
+    scenario = scenario,
+    pc = pc,
+    customParams = customParams,
+    cache = cache,
+    simulationRunOptions = simulationRunOptions
+  )
+  simulation <- prepared$simulation
+  population <- prepared$population
+
+  # Run simulation
   if (is.null(population)) {
     simulationResults <- runSimulations(
       simulations = simulation,
@@ -220,7 +252,7 @@
 
   results <- simulationResults[[simulation$id]]
 
-  # 9. Get output values
+  # Get output values
   outputQuantities <- NULL
   if (!is.null(scenario$outputPaths)) {
     outputQuantities <- getAllQuantitiesMatching(
@@ -252,18 +284,17 @@
 #' Run a set of scenarios.
 #'
 #' @param projectConfiguration An object of type `ProjectConfiguration` loaded
-#'   from JSON. Its `scenarios` field is used to select and create
-#'   scenarios.
+#'   from JSON. Its `scenarios` field is used to select and run scenarios.
 #' @param scenarioNames Optional character vector of scenario names to run. If
 #'   `NULL` (default), all scenarios defined in `projectConfiguration` are run.
 #' @param customParams A list containing vectors `paths`, `values`, and `units`
-#'   that will be applied to all scenarios. See [.createScenarios] for details.
+#'   that will be applied to all scenarios.
 #' @param simulationRunOptions Object of type `SimulationRunOptions` that will
 #'   be passed to simulation runs. If `NULL`, default options are used.
 #'
 #' @returns A named list, where the names are scenario names, and the values are
 #'   lists with the entries `simulation` being the initialized `Simulation`
-#'   object with applied parameters, `results` being `SimulatioResults` object
+#'   object with applied parameters, `results` being `SimulationResults` object
 #'   produced by running the simulation, `outputValues` the output values of the
 #'   `SimulationResults`, and `population` the `Population` object if the
 #'   scenario is a population simulation.
@@ -284,13 +315,13 @@ runScenarios <- function(
     nullAllowed = TRUE
   )
 
-  allConfigs <- projectConfiguration$scenarios
+  allScenarios <- projectConfiguration$scenarios
   if (is.null(scenarioNames)) {
-    scenarioNames <- names(allConfigs)
+    scenarioNames <- names(allScenarios)
   }
 
   # Validate scenario names
-  unknownNames <- setdiff(scenarioNames, names(allConfigs))
+  unknownNames <- setdiff(scenarioNames, names(allScenarios))
   if (length(unknownNames) > 0) {
     stop(paste0(
       "Unknown scenario names: ",
@@ -298,119 +329,75 @@ runScenarios <- function(
     ))
   }
 
-  selectedConfigs <- allConfigs[scenarioNames]
-  scenarios <- .createScenarios(
-    scenarioConfigurations = selectedConfigs,
-    customParams = customParams
-  )
+  # Run-scoped cache for ospsuite objects
+  cache <- new.env(parent = emptyenv())
+  cache$individuals <- list()
+  cache$populations <- list()
 
-  scenarios <- ospsuite.utils::toList(scenarios)
-  # List of individiaul simulations
+  # Prepare all scenarios (load sim, apply params, set outputs/time, init, SS)
+  preparedList <- vector("list", length(scenarioNames))
+  for (idx in seq_along(scenarioNames)) {
+    scenarioName <- scenarioNames[[idx]]
+    scenario <- allScenarios[[scenarioName]]
+    preparedList[[idx]] <- .prepareScenario(
+      scenario = scenario,
+      pc = projectConfiguration,
+      customParams = customParams,
+      cache = cache,
+      simulationRunOptions = simulationRunOptions
+    )
+    names(preparedList)[[idx]] <- scenarioName
+  }
+
+  # Run all individual simulations in one batch (ospsuite runs them in parallel)
   individualSimulations <- list()
-  # List of population scenarios
-  populationScenarios <- list()
-  # List of simulations with steady-state, grouped by overwriteFormulasInSS value
-  steadyStateGroups <- list()
-
-  for (scenario in scenarios) {
-    if (scenario$scenarioType == "Individual") {
-      individualSimulations <- c(individualSimulations, scenario$simulation)
-    } else {
-      populationScenarios <- c(populationScenarios, scenario)
-    }
-
-    if (scenario$scenarioConfiguration$simulateSteadyState) {
-      ignoreIfFormulaKey <- as.character(
-        scenario$scenarioConfiguration$overwriteFormulasInSS
-      )
-      if (is.null(steadyStateGroups[[ignoreIfFormulaKey]])) {
-        steadyStateGroups[[ignoreIfFormulaKey]] <- list(
-          simulations = list(),
-          times = list()
-        )
-      }
-      steadyStateGroups[[ignoreIfFormulaKey]]$simulations <- c(
-        steadyStateGroups[[ignoreIfFormulaKey]]$simulations,
-        scenario$simulation
-      )
-      steadyStateGroups[[ignoreIfFormulaKey]]$times <- c(
-        steadyStateGroups[[ignoreIfFormulaKey]]$times,
-        scenario$scenarioConfiguration$steadyStateTime
+  for (idx in seq_along(scenarioNames)) {
+    if (is.null(preparedList[[idx]]$population)) {
+      individualSimulations <- c(
+        individualSimulations,
+        preparedList[[idx]]$simulation
       )
     }
   }
-
-  # Simulate steady-state concurrently, grouped by ignoreIfFormula value
-  initialValues <- list()
-  for (ignoreIfFormulaKey in names(steadyStateGroups)) {
-    group <- steadyStateGroups[[ignoreIfFormulaKey]]
-    ignoreIfFormula <- !as.logical(ignoreIfFormulaKey)
-    groupValues <- ospsuite::getSteadyState(
-      simulations = group$simulations,
-      steadyStateTime = group$times,
-      ignoreIfFormula = ignoreIfFormula,
+  simulationResults <- list()
+  if (length(individualSimulations) > 0) {
+    simulationResults <- runSimulations(
+      simulations = individualSimulations,
       simulationRunOptions = simulationRunOptions
     )
-    initialValues <- c(initialValues, groupValues)
   }
 
-  # Set initial values for steady-state simulations
-  for (ignoreIfFormulaKey in names(steadyStateGroups)) {
-    for (simulation in steadyStateGroups[[ignoreIfFormulaKey]]$simulations) {
-      ospsuite::setQuantityValuesByPath(
-        quantityPaths = initialValues[[simulation$id]]$paths,
-        values = initialValues[[simulation$id]]$values,
-        simulation = simulation
+  # Run population simulations sequentially and append their results
+  for (idx in seq_along(scenarioNames)) {
+    prepared <- preparedList[[idx]]
+    if (!is.null(prepared$population)) {
+      populationResults <- runSimulations(
+        simulations = prepared$simulation,
+        population = prepared$population,
+        simulationRunOptions = simulationRunOptions
       )
+      simulationResults <- c(simulationResults, populationResults)
     }
   }
 
-  # Run invidual simulations
-  simulationResults <- runSimulations(
-    simulations = individualSimulations,
-    simulationRunOptions = simulationRunOptions
-  )
+  # Collect output values for each scenario
+  returnList <- vector("list", length(scenarioNames))
+  for (idx in seq_along(scenarioNames)) {
+    scenarioName <- scenarioNames[[idx]]
+    scenario <- allScenarios[[scenarioName]]
+    prepared <- preparedList[[idx]]
+    simulation <- prepared$simulation
+    population <- prepared$population
+    results <- simulationResults[[simulation$id]]
 
-  # Run population simulations sequentially and add the to the list of
-  # simulation results
-  for (scenario in populationScenarios) {
-    populationResults <- runSimulations(
-      simulations = scenario$simulation,
-      population = scenario$population,
-      simulationRunOptions = simulationRunOptions
-    )
-    simulationResults <- c(simulationResults, populationResults)
-  }
-
-  # Create output list with simulation results, simulation objects, and
-  # population objects
-  returnList <- vector("list", length(simulationResults))
-  for (idx in seq_along(scenarios)) {
-    scenario <- scenarios[[idx]]
-    scenarioName <- scenario$scenarioConfiguration$scenarioName
-    simulation <- scenario$simulation
-    id <- simulation$id
-    results <- simulationResults[[id]]
-    population <- scenario$population
-    # For the cases when population is set to NA, convert it to NULL
-    if (
-      !is.null(population) &&
-        !isOfType(population, "Population") &&
-        is.na(population)
-    ) {
-      population <- NULL
-    }
-
-    # Retrieving quantities from paths to support pattern matching with '*'
     outputQuantities <- NULL
-    if (!is.null(scenario$scenarioConfiguration$outputPaths)) {
+    if (!is.null(scenario$outputPaths)) {
       outputQuantities <- getAllQuantitiesMatching(
-        scenario$scenarioConfiguration$outputPaths,
+        scenario$outputPaths,
         simulation
       )
     }
 
-    # If results could not be calculated, show a warning and return NULL
     if (is.null(results)) {
       warning(messages$missingResultsForScenario(scenarioName))
       outputValues <- NULL
@@ -422,6 +409,7 @@ runScenarios <- function(
         addMetaData = FALSE
       )
     }
+
     returnList[[idx]] <- list(
       simulation = simulation,
       results = results,
@@ -431,51 +419,8 @@ runScenarios <- function(
     names(returnList)[[idx]] <- scenarioName
   }
 
-  # Call gc() on .NET
   ospsuite::clearMemory()
   return(returnList)
-}
-
-#' Create `Scenario` objects from `ScenarioConfiguration` objects
-#'
-#' @description Load simulation. Apply parameters from global XLS. Apply
-#' individual physiology. Apply individual model parameters. Set simulation
-#' outputs. Set simulation time. initializeSimulation(). Create population
-#'
-#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to be
-#'   simulated. See [.createScenarios] for details.
-#' @param customParams A list containing vectors 'paths' with the full paths to
-#'   the parameters, 'values' the values of the parameters, and 'units' with the
-#'   units the values are in. The values will be applied to all scenarios.
-#' @param stopIfParameterNotFound Boolean. If `TRUE` (default) and a custom
-#'   parameter is not found, an error is thrown. If `FALSE`, non-existing
-#'   parameters are ignored.
-#'
-#' @returns Named list of `Scenario` objects.
-#' @keywords internal
-.createScenarios <- function(
-  scenarioConfigurations,
-  customParams = NULL,
-  stopIfParameterNotFound = TRUE
-) {
-  .validateScenarioConfigurations(scenarioConfigurations)
-  .validateParametersStructure(
-    parameterStructure = customParams,
-    argumentName = "customParams",
-    nullAllowed = TRUE
-  )
-
-  scenarios <- purrr::map(
-    scenarioConfigurations,
-    ~ Scenario$new(
-      .x,
-      customParams = customParams,
-      stopIfParameterNotFound = stopIfParameterNotFound
-    )
-  ) |>
-    purrr::set_names(purrr::map(scenarioConfigurations, ~ .x$scenarioName))
-
-  return(scenarios)
 }
 
 #' Save results of scenario simulations to csv.
