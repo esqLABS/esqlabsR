@@ -46,6 +46,7 @@ Scenario <- R6::R6Class(
     initialize = function() {},
 
     #' @description Print scenario summary.
+    #' @param ... Ignored.
     print = function(...) {
       cat("<Scenario>", "\n")
       cat("  Name:           ", self$scenarioName %||% "(none)", "\n")

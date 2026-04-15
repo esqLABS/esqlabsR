@@ -71,6 +71,13 @@ Print scenario summary.
 \if{html}{\out{<div class="r">}}\preformatted{Scenario$print(...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{Ignored.}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Scenario-clone"></a>}}
