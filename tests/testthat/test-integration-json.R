@@ -1,0 +1,97 @@
+# Full JSON workflow integration tests ----
+
+test_that("JSON workflow: load project, run scenario, get results", {
+  pc <- testProjectConfigurationJSON()
+
+  results <- runScenarios(pc, scenarioNames = "TestScenario")
+
+  expect_true("TestScenario" %in% names(results))
+  expect_false(is.null(results$TestScenario$results))
+  expect_false(is.null(results$TestScenario$outputValues))
+})
+
+test_that("JSON workflow: run multiple scenarios", {
+  pc <- testProjectConfigurationJSON()
+
+  results <- runScenarios(
+    pc,
+    scenarioNames = c("TestScenario", "TestScenario2")
+  )
+
+  expect_equal(sort(names(results)), c("TestScenario", "TestScenario2"))
+  expect_false(is.null(results$TestScenario$results))
+  expect_false(is.null(results$TestScenario2$results))
+})
+
+test_that("JSON workflow: createDataCombined produces DataCombined objects", {
+  pc <- testProjectConfigurationJSON()
+
+  results <- runScenarios(pc, scenarioNames = "TestScenario")
+
+  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+    configurationFilePath = pc$dataImporterConfigurationFile
+  )
+  observedData <- loadObservedData(
+    projectConfiguration = pc,
+    sheets = "Laskin 1982.Group A",
+    importerConfiguration = importerConfiguration
+  )
+
+  dcList <- createDataCombined(
+    projectConfiguration = pc,
+    dataCombinedNames = "AciclovirPVB",
+    simulatedScenarios = results,
+    observedData = observedData
+  )
+
+  expect_true("AciclovirPVB" %in% names(dcList))
+  expect_true(inherits(dcList$AciclovirPVB, "DataCombined"))
+})
+
+test_that("JSON workflow: createPlots produces plot output", {
+  pc <- testProjectConfigurationJSON()
+
+  results <- runScenarios(pc, scenarioNames = "TestScenario")
+
+  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
+    configurationFilePath = pc$dataImporterConfigurationFile
+  )
+  observedData <- loadObservedData(
+    projectConfiguration = pc,
+    sheets = "Laskin 1982.Group A",
+    importerConfiguration = importerConfiguration
+  )
+
+  plotOutput <- createPlots(
+    plotGridNames = "Aciclovir",
+    simulatedScenarios = results,
+    observedData = observedData,
+    projectConfiguration = pc
+  )
+
+  expect_false(is.null(plotOutput))
+})
+
+test_that("JSON workflow: round-trip JSON -> Excel -> JSON preserves data", {
+  testProject <- local_test_project()
+
+  # Load from JSON
+  pc1 <- ProjectConfiguration$new(testProject$snapshot_path)
+
+  # Export to Excel
+  exportDir <- withr::local_tempdir("roundtrip_export")
+  exportProjectConfigurationToExcel(pc1, outputDir = exportDir, silent = TRUE)
+
+  # Import back to JSON
+  excelPath <- file.path(exportDir, "ProjectConfiguration.xlsx")
+  importProjectConfigurationFromExcel(excelPath, outputDir = exportDir, silent = TRUE)
+
+  # Load the round-tripped JSON
+  pc2 <- ProjectConfiguration$new(file.path(exportDir, "ProjectConfiguration.json"))
+
+  # Compare key data structures
+  expect_equal(names(pc1$scenarioConfigurations), names(pc2$scenarioConfigurations))
+  expect_equal(names(pc1$modelParameters), names(pc2$modelParameters))
+  expect_equal(length(pc1$individuals), length(pc2$individuals))
+  expect_equal(length(pc1$populations), length(pc2$populations))
+})

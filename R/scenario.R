@@ -219,6 +219,11 @@ Scenario <- R6::R6Class(
 
       # Create a population for population scenarios
       if (scenarioConfiguration$simulationType == "Population") {
+        if (is.null(scenarioConfiguration$populationId)) {
+          stop(messages$noPopulationIdForPopulationScenario(
+            scenarioConfiguration$scenarioName
+          ))
+        }
         if (scenarioConfiguration$readPopulationFromCSV) {
           populationPath <- paste0(
             file.path(
