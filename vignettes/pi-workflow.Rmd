@@ -14,8 +14,8 @@ knitr::opts_chunk$set(
   fig.showtext = TRUE
 )
 
-
-library(esqlabsR)
+devtools::load_all()
+# library(esqlabsR)
 ```
 
 ```{css, echo = FALSE}
@@ -66,7 +66,6 @@ scenario and specifies bounds for the optimization.
 | `Scenarios`      | Name of the scenario (must exist in `Scenarios.xlsx`)         |
 | `Container Path` | Container path of the parameter in the simulation             |
 | `Parameter Name` | Name of the parameter                                        |
-| `Value`          | Current value (optional, for reference)                       |
 | `Units`          | Unit of the parameter value (optional)                        |
 | `MinValue`       | Lower bound for optimization                                  |
 | `MaxValue`       | Upper bound for optimization                                  |
@@ -82,6 +81,7 @@ function.
 |:--------------------|:-----------------------------------------------------------|
 | `PITaskName`        | Name of the PI task                                        |
 | `Scenarios`         | Name of the scenario (must exist in `Scenarios.xlsx`)      |
+| `OutputPath`        | Simulation output path or `OutputPathId` from `Scenarios.xlsx` |
 | `ObservedDataSheet` | Sheet name in the observed data Excel file                 |
 | `DataSet`           | Name of the specific data set within the sheet             |
 | `Scaling`           | Residual scaling: `lin` (linear) or `log` (logarithmic)   |
@@ -166,7 +166,8 @@ Excel:
 
 ```{r readProjectConfiguration}
 projectConfiguration <- createProjectConfiguration(
-  path = exampleProjectConfigurationPath()
+  path = exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
 )
 
 piTaskConfigurations <- readPITaskConfigurationFromExcel(
@@ -226,7 +227,7 @@ piFile <- system.file(
 )
 piParams <- readExcel(piFile, sheet = "PIParameters")
 piParams <- dplyr::filter(piParams, PITaskName == "AciclovirMultiScenario")
-piParams <- dplyr::select(piParams, -Value, -Units)
+piParams <- dplyr::select(piParams, -Units)
 
 knitr::kable(piParams)
 ```
