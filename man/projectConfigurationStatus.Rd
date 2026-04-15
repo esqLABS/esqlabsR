@@ -2,39 +2,30 @@
 % Please edit documentation in R/utilities-config-json.R
 \name{projectConfigurationStatus}
 \alias{projectConfigurationStatus}
-\title{Check if Excel configuration files are in sync with JSON snapshot}
+\title{Check if Excel configuration files are in sync with JSON}
 \usage{
 projectConfigurationStatus(
-  projectConfig = "ProjectConfiguration.xlsx",
+  projectConfigPath = "ProjectConfiguration.xlsx",
   jsonPath = NULL,
   silent = FALSE
 )
 }
 \arguments{
-\item{projectConfig}{A ProjectConfiguration object or path to
-ProjectConfiguration excel file. Defaults to "ProjectConfiguration.xlsx".}
+\item{projectConfigPath}{Path to a \code{ProjectConfiguration.xlsx} file.
+Defaults to \code{"ProjectConfiguration.xlsx"}.}
 
-\item{jsonPath}{Path to the JSON configuration file. If NULL (default), the
-function will look for a JSON file with the same name as the
-ProjectConfiguration file but with .json extension.}
+\item{jsonPath}{Path to the JSON configuration file. If \code{NULL} (default),
+the function looks for a JSON file with the same base name.}
 
 \item{silent}{Logical indicating whether to suppress informational messages.
-Defaults to FALSE.}
+Defaults to \code{FALSE}.}
 }
 \value{
-A list with components: \item{in_sync}{Logical indicating whether all
-files are synchronized} \item{details}{A list with detailed comparison
-results for each file} \item{unsaved_changes}{Logical indicating whether
-the ProjectConfiguration object has unsaved modifications}
+A list with components: \item{in_sync}{Logical indicating whether
+all files are synchronized} \item{details}{A list with detailed comparison
+results}
 }
 \description{
-Compares Excel configuration files against their JSON snapshot
-to determine if they are synchronized. The JSON snapshot is considered the
-source of truth.
+Compares Excel configuration files against their JSON
+configuration to determine if they are synchronized.
 }
-\seealso{
-Other project configuration snapshots: 
-\code{\link{restoreProjectConfiguration}()},
-\code{\link{snapshotProjectConfiguration}()}
-}
-\concept{project configuration snapshots}
