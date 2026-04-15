@@ -446,7 +446,7 @@ II Design Scenarios
 #| code-line-numbers: "3"
 my_scenarios <- createScenarios(
   readScenarioConfigurationFromExcel(
-    scenarioNames = "TestScenario",
+    scenarioNames = "Aciclovir_iv",
     projectConfiguration = my_project_configuration
   )
 )
@@ -463,7 +463,7 @@ my_scenarios
 ```
 
 ```{r, echo = FALSE}
-my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FALSE)
+my_scenarios$Aciclovir_iv$scenarioConfiguration$print(projectConfiguration = FALSE)
 ```
 
 ::: footer
@@ -480,7 +480,7 @@ myScenarioResults <- runScenarios(my_scenarios)
 
 ```{r, echo = FALSE}
 reactable::reactable(
-  data = head(myScenarioResults$TestScenario$outputValues$data),
+  data = head(myScenarioResults$Aciclovir_iv$outputValues$data),
   columns = list(
     "IndividualId" = reactable::colDef(minWidth = 50),
     "Time" = reactable::colDef(minWidth = 50),
@@ -508,7 +508,7 @@ Simulation results are compatible with `{ospsuite}` plotting workflow.
 ```{r, cache = FALSE}
 my_datacombined <- DataCombined$new()
 
-my_datacombined$addSimulationResults(myScenarioResults$TestScenario$results,
+my_datacombined$addSimulationResults(myScenarioResults$Aciclovir_iv$results,
   names = "Simulated",
   groups = "Aciclovir"
 )

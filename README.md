@@ -90,7 +90,7 @@ myProjectConfiguration <-
   createProjectConfiguration(configurationPath)
 
 # Define which scenarios to run
-scenarioNames <- c("TestScenario")
+scenarioNames <- c("Aciclovir_iv")
 # Set scenario names to NULL if you want to simulate all scenarios defined in the
 # excel file
 # scenarioNames <- NULL

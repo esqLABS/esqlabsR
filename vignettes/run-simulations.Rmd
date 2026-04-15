@@ -34,19 +34,19 @@ to create scenario configurations from the Excel files by calling the
 `readScenarioConfigurationFromExcel()` function. A
 `ScenarioConfiguration` is based on the `ProjectConfiguration`, which
 has to be provided as an argument to the function. To create the
-configuration for the *'TestScenario'* scenario defined in the
+configuration for the *'Aciclovir_iv'* scenario defined in the
 `Scenarios.xlsx` file, we call:
 
 ```{r createScenarioConfigurations}
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = "TestScenario",
+  scenarioNames = "Aciclovir_iv",
   projectConfiguration = projectConfiguration
 )
 ```
 
 ```{r, echo = FALSE}
-scenarioConfigurations$TestScenario$print(projectConfiguration = FALSE)
+scenarioConfigurations$Aciclovir_iv$print(projectConfiguration = FALSE)
 ```
 
 Alternatively, we can create configurations for all scenarios defined in
@@ -77,7 +77,7 @@ You can view the final parametrization that is applied to the simulation
 by calling the `finalCustomParams` property:
 
 ```{r}
-scenarios$TestScenario$finalCustomParams
+scenarios$Aciclovir_iv$finalCustomParams
 ```
 
 ### Running scenarios
@@ -98,13 +98,13 @@ simulatedScenariosResults <- runScenarios(
 names(simulatedScenariosResults)
 
 # Each simulation can be accessed using its name
-simulatedScenariosResults$TestScenario$simulation
+simulatedScenariosResults$Aciclovir_iv$simulation
 
 # Of course, it contains simulated results as dataframe
-head(simulatedScenariosResults$TestScenario$outputValues$data)
+head(simulatedScenariosResults$Aciclovir_iv$outputValues$data)
 
 # It also contains dataframe's metadata
-head(simulatedScenariosResults$TestScenario$outputValues$metaData)
+head(simulatedScenariosResults$Aciclovir_iv$outputValues$metaData)
 ```
 
 It is a good idea to store simulation results as `*.csv` along with

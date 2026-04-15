@@ -45,12 +45,8 @@ print(pc)
 # ---------------------------------------------------------------------------
 # Scenarios are defined in the JSON. Run one, some, or all of them.
 
-simulatedScenarios <- runScenarios(pc, scenarioNames = "TestScenario")
+simulatedScenarios <- runScenarios(pc)
 
-# The result is a named list. Each entry contains:
-#   $simulation    — the initialized Simulation object
-#   $results       — SimulationResults
-#   $outputValues  — extracted output values
 cat("Simulated scenarios:", paste(names(simulatedScenarios), collapse = ", "), "\n")
 
 # ---------------------------------------------------------------------------
@@ -66,7 +62,7 @@ cat("Simulated scenarios:", paste(names(simulatedScenarios), collapse = ", "), "
 
 dcList <- createDataCombined(
   projectConfiguration = pc,
-  dataCombinedNames = "AciclovirPVB",
+  dataCombinedNames = "Aciclovir_individual",
   simulatedScenarios = simulatedScenarios
 )
 
@@ -80,7 +76,7 @@ cat("DataCombined objects:", paste(names(dcList), collapse = ", "), "\n")
 
 plots <- createPlots(
   projectConfiguration = pc,
-  plotGridNames = "Aciclovir",
+  plotGridNames = "Individual_diagnostics",
   simulatedScenarios = simulatedScenarios
 )
 
@@ -109,7 +105,7 @@ cat("All plot grids:", paste(names(allPlots), collapse = ", "), "\n")
 # The full workflow is now 3 lines:
 #
 #   pc      <- loadProject("ProjectConfiguration.json")
-#   results <- runScenarios(pc, scenarioNames = "TestScenario")
+#   results <- runScenarios(pc, scenarioNames = "Aciclovir_iv")
 #   plots   <- createPlots(pc, simulatedScenarios = results)
 #
 # Everything else — observed data loading, data combination, plot

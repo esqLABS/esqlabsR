@@ -160,14 +160,14 @@ import `ScenarioConfiguration` using `readScenarioConfigurationFromExcel()` and 
 ```{r}
 my_scenarios <- createScenarios(
   readScenarioConfigurationFromExcel(
-    scenarioNames = "TestScenario",
+    scenarioNames = "Aciclovir_iv",
     projectConfiguration = my_project_configuration
   )
 )
 ```
 
 ```{r, echo = FALSE}
-my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FALSE)
+my_scenarios$Aciclovir_iv$scenarioConfiguration$print(projectConfiguration = FALSE)
 ```
 
 Then, we run the simulations by passing the scenarios we defined:
@@ -186,7 +186,7 @@ exportScenarioResults(myScenarioResults,
 )
 
 myScenarioResults <- importScenarioResults(
-  scenarioNames = "TestScenario",
+  scenarioNames = "Aciclovir_iv",
   resultsFolder = my_project_configuration$outputFolder
 )
 ```
@@ -210,7 +210,7 @@ my_datacombined <- DataCombined$new()
 Then, simulation result are added to the dataCombined object:
 
 ```{r}
-my_datacombined$addSimulationResults(myScenarioResults$TestScenario$results,
+my_datacombined$addSimulationResults(myScenarioResults$Aciclovir_iv$results,
   names = "Simulated",
   groups = "Aciclovir"
 )

@@ -144,7 +144,7 @@ library(esqlabsR)
 projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = "TestScenario",
+  scenarioNames = "Aciclovir_iv",
   projectConfiguration = projectConfiguration
 )
 # Run scenario configuration
@@ -281,7 +281,7 @@ library(esqlabsR)
 projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = "TestScenario",
+  scenarioNames = "Aciclovir_iv",
   projectConfiguration = projectConfiguration
 )
 # Run scenario configuration
@@ -318,7 +318,7 @@ following code:
 ```{r datacombined}
 dataCombined <- DataCombined$new()
 dataCombined$addDataSets(observedData, names = "Observed", groups = "Aciclovir")
-dataCombined$addSimulationResults(simulatedScenarios$TestScenario$results,
+dataCombined$addSimulationResults(simulatedScenarios$Aciclovir_iv$results,
   names = "Simulated",
   groups = "Aciclovir"
 )
