@@ -1,3 +1,254 @@
+#' Execute a single scenario
+#'
+#' @description Loads simulation, creates ospsuite objects (with caching),
+#' merges parameters, runs the simulation, and returns results.
+#'
+#' @param scenario A `Scenario` object (plain data class).
+#' @param pc A `ProjectConfiguration` object.
+#' @param customParams Optional parameter structure from the caller.
+#' @param cache An environment with `$individuals` and `$populations` named lists.
+#' @param simulationRunOptions Optional `SimulationRunOptions`.
+#'
+#' @returns A list with `simulation`, `results`, `outputValues`, `population`.
+#' @keywords internal
+.executeScenario <- function(scenario, pc, customParams, cache, simulationRunOptions) {
+  # 1. Load simulation
+  simulation <- ospsuite::loadSimulation(
+    filePath = file.path(pc$modelFolder, scenario$modelFile),
+    loadFromCache = FALSE
+  )
+  simulation$name <- scenario$scenarioName
+
+  # 2. Build merged parameter structure
+  params <- NULL
+
+  # 2a. Model parameter groups
+  if (!is.null(scenario$parameterGroups)) {
+    for (groupName in scenario$parameterGroups) {
+      groupParams <- pc$modelParameters[[groupName]]
+      if (!is.null(groupParams)) {
+        params <- extendParameterStructure(
+          parameters = params,
+          newParameters = groupParams
+        )
+      }
+    }
+  }
+
+  # 2b. Individual characteristics + species parameters
+  individualCharacteristics <- NULL
+  if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
+    indivData <- pc$individuals[[scenario$individualId]]
+
+    if (is.null(indivData)) {
+      warning(messages$warningNoIndividualCharacteristics(
+        scenarioName = scenario$scenarioName,
+        individualId = scenario$individualId
+      ))
+    } else {
+      # Create or retrieve IndividualCharacteristics from cache
+      if (!is.null(cache$individuals[[scenario$individualId]])) {
+        individualCharacteristics <- cache$individuals[[scenario$individualId]]
+      } else {
+        moleculeOntogenies <- .readOntongeniesFromList(indivData$proteinOntogenies)
+        individualCharacteristics <- ospsuite::createIndividualCharacteristics(
+          species = indivData$species,
+          population = indivData$population,
+          gender = indivData$gender,
+          weight = as.double(indivData$weight),
+          height = as.double(indivData$height),
+          age = as.double(indivData$age),
+          moleculeOntogenies = moleculeOntogenies
+        )
+        cache$individuals[[scenario$individualId]] <- individualCharacteristics
+      }
+
+      # 2c. Species parameters (from modelParameters, applied after individual)
+      speciesParams <- pc$modelParameters[[indivData$species]]
+      if (!is.null(speciesParams)) {
+        params <- extendParameterStructure(
+          parameters = params,
+          newParameters = speciesParams
+        )
+      }
+
+      # 2d. Individual parameter sets
+      setNames <- pc$individualParameterSetMapping[[scenario$individualId]]
+      if (!is.null(setNames)) {
+        for (setName in setNames) {
+          setParams <- pc$individualParameterSets[[setName]]
+          if (!is.null(setParams)) {
+            params <- extendParameterStructure(
+              parameters = params,
+              newParameters = setParams
+            )
+          } else {
+            stop(messages$errorIndividualParameterSetNotFound(
+              scenarioName = scenario$scenarioName,
+              parameterSetName = setName
+            ))
+          }
+        }
+      }
+    }
+  }
+
+  # 2e. Application parameters
+  if (!is.na(scenario$applicationProtocol)) {
+    applicationParams <- pc$applications[[scenario$applicationProtocol]]
+    if (is.null(applicationParams)) {
+      stop(messages$errorApplicationProtocolNotFound(
+        scenarioName = scenario$scenarioName,
+        applicationProtocol = scenario$applicationProtocol
+      ))
+    }
+    params <- extendParameterStructure(
+      parameters = params,
+      newParameters = applicationParams
+    )
+  }
+
+  # 2f. Custom parameters from caller
+  if (!is.null(customParams)) {
+    params <- extendParameterStructure(
+      parameters = params,
+      newParameters = customParams
+    )
+  }
+
+  # 3. Set outputs
+  if (!is.null(scenario$outputPaths)) {
+    setOutputs(
+      quantitiesOrPaths = scenario$outputPaths,
+      simulation = simulation
+    )
+  }
+
+  # 4. Set simulation time intervals
+  if (!is.null(scenario$simulationTime)) {
+    clearOutputIntervals(simulation)
+    for (i in seq_along(scenario$simulationTime)) {
+      addOutputInterval(
+        simulation = simulation,
+        startTime = toBaseUnit(
+          quantityOrDimension = ospDimensions$Time,
+          values = scenario$simulationTime[[i]][1],
+          unit = scenario$simulationTimeUnit
+        ),
+        endTime = toBaseUnit(
+          quantityOrDimension = ospDimensions$Time,
+          values = scenario$simulationTime[[i]][2],
+          unit = scenario$simulationTimeUnit
+        ),
+        resolution = scenario$simulationTime[[i]][3] /
+          toBaseUnit(
+            quantityOrDimension = ospDimensions$Time,
+            values = 1,
+            unit = scenario$simulationTimeUnit
+          )
+      )
+    }
+  }
+
+  # 5. Initialize simulation (apply individual + all params)
+  initializeSimulation(
+    simulation = simulation,
+    individualCharacteristics = individualCharacteristics,
+    additionalParams = params,
+    stopIfParameterNotFound = TRUE
+  )
+
+  # 6. Create population (for population scenarios)
+  population <- NULL
+  if (scenario$simulationType == "Population") {
+    if (is.null(scenario$populationId)) {
+      stop(messages$noPopulationIdForPopulationScenario(scenario$scenarioName))
+    }
+    if (scenario$readPopulationFromCSV) {
+      populationPath <- paste0(
+        file.path(pc$populationsFolder, scenario$populationId),
+        ".csv"
+      )
+      population <- loadPopulation(populationPath)
+    } else {
+      # Create or retrieve from cache
+      if (!is.null(cache$populations[[scenario$populationId]])) {
+        population <- cache$populations[[scenario$populationId]]
+      } else {
+        popData <- pc$populations[[scenario$populationId]]
+        moleculeOntogenies <- .readOntongeniesFromList(popData$proteinOntogenies)
+        popArgs <- popData
+        popArgs$proteinOntogenies <- NULL
+        popArgs$moleculeOntogenies <- moleculeOntogenies
+        popResult <- do.call(ospsuite::createPopulationCharacteristics, popArgs)
+        popObj <- createPopulation(populationCharacteristics = popResult)
+        population <- popObj$population
+        cache$populations[[scenario$populationId]] <- population
+      }
+    }
+  }
+
+  # 7. Handle steady state
+  if (scenario$simulateSteadyState) {
+    ignoreIfFormula <- !scenario$overwriteFormulasInSS
+    initialValues <- ospsuite::getSteadyState(
+      simulations = list(simulation),
+      steadyStateTime = list(scenario$steadyStateTime),
+      ignoreIfFormula = ignoreIfFormula,
+      simulationRunOptions = simulationRunOptions
+    )
+    ospsuite::setQuantityValuesByPath(
+      quantityPaths = initialValues[[simulation$id]]$paths,
+      values = initialValues[[simulation$id]]$values,
+      simulation = simulation
+    )
+  }
+
+  # 8. Run simulation
+  if (is.null(population)) {
+    simulationResults <- runSimulations(
+      simulations = simulation,
+      simulationRunOptions = simulationRunOptions
+    )
+  } else {
+    simulationResults <- runSimulations(
+      simulations = simulation,
+      population = population,
+      simulationRunOptions = simulationRunOptions
+    )
+  }
+
+  results <- simulationResults[[simulation$id]]
+
+  # 9. Get output values
+  outputQuantities <- NULL
+  if (!is.null(scenario$outputPaths)) {
+    outputQuantities <- getAllQuantitiesMatching(
+      scenario$outputPaths,
+      simulation
+    )
+  }
+
+  outputValues <- NULL
+  if (is.null(results)) {
+    warning(messages$missingResultsForScenario(scenario$scenarioName))
+  } else {
+    outputValues <- getOutputValues(
+      results,
+      quantitiesOrPaths = outputQuantities,
+      population = population,
+      addMetaData = FALSE
+    )
+  }
+
+  list(
+    simulation = simulation,
+    results = results,
+    outputValues = outputValues,
+    population = population
+  )
+}
+
 #' Run a set of scenarios.
 #'
 #' @param projectConfiguration An object of type `ProjectConfiguration` loaded

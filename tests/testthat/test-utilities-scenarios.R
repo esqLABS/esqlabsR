@@ -222,3 +222,84 @@ test_that("runScenarios filters to specified scenarioNames", {
   expect_length(results, 1)
   expect_equal(names(results), "TestScenario")
 })
+
+# .executeScenario tests ----
+
+test_that(".executeScenario initializes and runs an individual scenario", {
+  pc <- testProjectConfigurationJSON()
+  scenario <- pc$scenarios[["TestScenario"]]
+  cache <- new.env(parent = emptyenv())
+  cache$individuals <- list()
+  cache$populations <- list()
+
+  result <- esqlabsR:::.executeScenario(
+    scenario = scenario,
+    pc = pc,
+    customParams = NULL,
+    cache = cache,
+    simulationRunOptions = NULL
+  )
+
+  expect_true(!is.null(result$simulation))
+  expect_true(!is.null(result$results))
+  expect_true(!is.null(result$outputValues))
+  expect_null(result$population)
+  expect_equal(result$simulation$name, "TestScenario")
+})
+
+test_that(".executeScenario caches IndividualCharacteristics", {
+  pc <- testProjectConfigurationJSON()
+  scenario <- pc$scenarios[["TestScenario"]]
+  cache <- new.env(parent = emptyenv())
+  cache$individuals <- list()
+  cache$populations <- list()
+
+  esqlabsR:::.executeScenario(
+    scenario = scenario,
+    pc = pc,
+    customParams = NULL,
+    cache = cache,
+    simulationRunOptions = NULL
+  )
+
+  # IndividualCharacteristics should now be cached
+  expect_true(scenario$individualId %in% names(cache$individuals))
+  expect_s3_class(
+    cache$individuals[[scenario$individualId]],
+    "IndividualCharacteristics"
+  )
+})
+
+test_that(".executeScenario reuses cached IndividualCharacteristics", {
+  pc <- testProjectConfigurationJSON()
+  scenario <- pc$scenarios[["TestScenario"]]
+  cache <- new.env(parent = emptyenv())
+
+  # Pre-populate cache
+  indivData <- pc$individuals[[scenario$individualId]]
+  indivChar <- ospsuite::createIndividualCharacteristics(
+    species = indivData$species,
+    population = indivData$population,
+    gender = indivData$gender,
+    weight = indivData$weight,
+    height = indivData$height,
+    age = indivData$age
+  )
+  cache$individuals <- list()
+  cache$individuals[[scenario$individualId]] <- indivChar
+  cache$populations <- list()
+
+  result <- esqlabsR:::.executeScenario(
+    scenario = scenario,
+    pc = pc,
+    customParams = NULL,
+    cache = cache,
+    simulationRunOptions = NULL
+  )
+
+  # Should have used the cached one
+  expect_identical(
+    cache$individuals[[scenario$individualId]],
+    indivChar
+  )
+})
