@@ -66,6 +66,20 @@ test_that("ProjectConfiguration parses scenarios into ScenarioConfiguration obje
   )
 })
 
+test_that("Individuals are stored as plain lists", {
+  pc <- testProjectConfigurationJSON()
+  indiv <- pc$individuals[["Indiv1"]]
+  expect_type(indiv, "list")
+  expect_true("species" %in% names(indiv))
+  expect_true("population" %in% names(indiv))
+  expect_true("gender" %in% names(indiv))
+  expect_true("weight" %in% names(indiv))
+  expect_true("height" %in% names(indiv))
+  expect_true("age" %in% names(indiv))
+  # NOT an IndividualCharacteristics object
+  expect_false(isOfType(indiv, "IndividualCharacteristics"))
+})
+
 test_that("ProjectConfiguration parses plots into data.frames", {
   pc <- testProjectConfigurationJSON()
   expect_s3_class(pc$plots$dataCombined, "data.frame")

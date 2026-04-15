@@ -386,19 +386,15 @@ ProjectConfiguration <- R6::R6Class(
       if (is.null(individualsData)) return(list())
       result <- list()
       for (entry in individualsData) {
-        moleculeOntogenies <- .readOntongeniesFromList(
-          entry$proteinOntogenies
-        )
-        indivChar <- ospsuite::createIndividualCharacteristics(
+        result[[entry$individualId]] <- list(
           species = entry$species,
           population = entry$population,
           gender = entry$gender,
           weight = as.double(entry$weight),
           height = as.double(entry$height),
           age = as.double(entry$age),
-          moleculeOntogenies = moleculeOntogenies
+          proteinOntogenies = entry$proteinOntogenies
         )
-        result[[entry$individualId]] <- indivChar
       }
       result
     },
