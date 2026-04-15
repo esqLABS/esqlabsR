@@ -1,13 +1,13 @@
-#' Get path to esqlabsR examples
+#' Get path to esqlabsR project templates
 #'
-#' esqlabsR comes bundled with some example Project in its `inst/extdata`
-#' directory. This function make them easy to access.
+#' esqlabsR comes bundled with project templates in its `inst/extdata`
+#' directory. This function makes them easy to access.
 #'
-#' @param name Name of example project. If `NULL`, the example names will be
+#' @param name Name of project directory. If `NULL`, the available names will be
 #'   listed.
 #' @keywords internal
-exampleDirectory <- function(name = NULL) {
-  directory <- system.file("extdata", "examples", package = "esqlabsR")
+projectDirectory <- function(name = NULL) {
+  directory <- system.file("extdata", "projects", package = "esqlabsR")
   if (!is.null(name)) {
     directory <- file.path(directory, name)
   }

@@ -164,7 +164,7 @@ Each one of these folders contains a series of .xlsx files with specific purpose
 
 ```{r, echo = FALSE, eval=FALSE}
 # rerun this if project structure change and paste below
-file_tree <- fs::dir_tree(esqlabsR:::exampleDirectory("TestProject"), glob = "*.md|*.R", invert = TRUE)
+file_tree <- fs::dir_tree(esqlabsR:::projectDirectory("Example"), glob = "*.md|*.R", invert = TRUE)
 ```
 
 ```{.sh}
@@ -276,11 +276,11 @@ my_project_configuration
 
 ```
 ProjectConfiguration:
-Project Configuration File: TestProject/ProjectConfiguration.xlsx
-Model folder: TestProject/Models/Simulations
-Configurations folder: TestProject/Configurations
-Model parameters file: TestProject/Configurations/ModelParameters.xlsx
-Individuals file: TestProject/Configurations/Individuals.xlsx
+Project Configuration File: Example/ProjectConfiguration.xlsx
+Model folder: Example/Models/Simulations
+Configurations folder: Example/Configurations
+Model parameters file: Example/Configurations/ModelParameters.xlsx
+Individuals file: Example/Configurations/Individuals.xlsx
 ...
 ```
 ::: footer

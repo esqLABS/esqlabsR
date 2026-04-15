@@ -30,9 +30,9 @@ test_that("validateScenariosFile detects missing sheets", {
 })
 
 test_that("validateAllConfigurations processes all files", {
-  # Use existing test data from inst/extdata/examples/TestProject
+  # Use existing test data from inst/extdata/projects/Example
   test_config_path <- system.file(
-    "extdata/examples/TestProject/ProjectConfiguration.xlsx",
+    "extdata/projects/Example/ProjectConfiguration.xlsx",
     package = "esqlabsR"
   )
 

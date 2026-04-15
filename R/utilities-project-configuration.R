@@ -96,7 +96,7 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   }
 
   type <- "example"
-  source_folder <- switch(type, "example" = exampleDirectory("TestProject"))
+  source_folder <- switch(type, "example" = projectDirectory("Blank"))
 
   # Check if project already exists
   if (isProjectInitialized(destination)) {
@@ -120,12 +120,32 @@ initProject <- function(destination = ".", overwrite = FALSE) {
     }
   }
 
+  # Copy Blank template files (just the JSON)
   res <- file.copy(
     list.files(source_folder, full.names = TRUE),
     destination,
     recursive = TRUE,
     overwrite = TRUE
   )
+
+  # Create empty directory structure
+  dirs_to_create <- c(
+    "Models/Simulations",
+    "Data",
+    "Configurations/PopulationsCSV",
+    "Results/Figures",
+    "Results/SimulationResults"
+  )
+  for (d in dirs_to_create) {
+    dir.create(file.path(destination, d), recursive = TRUE, showWarnings = FALSE)
+  }
+
+  # Generate Excel configuration files from JSON
+  jsonPath <- file.path(destination, "ProjectConfiguration.json")
+  pc <- loadProject(jsonPath)
+  exportProjectConfigurationToExcel(pc, outputDir = destination, silent = TRUE)
+
+  invisible(destination)
 }
 
 #' Get the path to example ProjectConfiguration.xlsx
@@ -136,6 +156,5 @@ initProject <- function(destination = ".", overwrite = FALSE) {
 #' @examples
 #' exampleProjectConfigurationPath()
 exampleProjectConfigurationPath <- function() {
-  # Returns the path to the example project configuration file in TestProject
-  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
+  file.path(projectDirectory("Example"), "ProjectConfiguration.xlsx")
 }

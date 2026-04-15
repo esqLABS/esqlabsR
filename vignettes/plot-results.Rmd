@@ -163,7 +163,7 @@ observedData <- loadObservedData(projectConfiguration = projectConfiguration, sh
 Then, the `Plot.xlsx` file is setup to define the `DataCombined`, customize
 plots, specify plotGrids and export options. The `Plot.xlsx` file used in this
 example can be found
-[here](https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/examples/TestProject/Configurations/Plots.xlsx).
+[here](https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/projects/Example/Configurations/Plots.xlsx).
 
 #### Use `createPlotsFromExcel()`
 

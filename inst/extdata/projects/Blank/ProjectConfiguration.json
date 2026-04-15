@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "2.0",
+  "esqlabsRVersion": "6.0.0",
+  "projectConfiguration": {
+    "modelFolder": "Models/Simulations/",
+    "configurationsFolder": "Configurations/",
+    "modelParamsFile": "ModelParameters.xlsx",
+    "individualsFile": "Individuals.xlsx",
+    "populationsFile": "Populations.xlsx",
+    "populationsFolder": "PopulationsCSV",
+    "scenariosFile": "Scenarios.xlsx",
+    "applicationsFile": "Applications.xlsx",
+    "plotsFile": "Plots.xlsx",
+    "dataFolder": "Data/",
+    "dataFile": null,
+    "dataImporterConfigurationFile": null,
+    "outputFolder": "Results/"
+  },
+  "observedData": [],
+  "outputPaths": {},
+  "scenarios": [],
+  "modelParameters": {},
+  "individuals": [],
+  "individualParameterSets": {},
+  "populations": [],
+  "applications": {},
+  "plots": {
+    "dataCombined": [],
+    "plotConfiguration": [],
+    "plotGrids": [],
+    "exportConfiguration": []
+  }
+}

@@ -1,5 +1,4 @@
 test_that("isProjectInitialized correctly identifies project directories", {
-  # Create temporary directory for testing
   tempDir <- withr::local_tempdir(pattern = "test_project_check")
 
   # Should return FALSE for empty directory
@@ -15,65 +14,55 @@ test_that("isProjectInitialized correctly identifies project directories", {
 })
 
 test_that("isProjectInitialized handles non-existent directories", {
-  # Should return FALSE for non-existent directory
   expect_false(isProjectInitialized("non_existent_directory"))
 })
 
 test_that("initProject with overwrite = TRUE doesn't ask for permission", {
-  # Create temporary project using helper function
-  temp_project <- with_temp_project()
+  temp_dir <- withr::local_tempdir("test_init_overwrite")
 
-  # The project should already be initialized
-  expect_true(isProjectInitialized(temp_project$path))
+  initProject(destination = temp_dir, overwrite = TRUE)
+  expect_true(isProjectInitialized(temp_dir))
 
-  # Initialize again with overwrite = TRUE - should not ask for permission
-  initProject(destination = temp_project$path, overwrite = TRUE)
-  expect_true(isProjectInitialized(temp_project$path))
+  # Initialize again with overwrite = TRUE — should not ask for permission
+  initProject(destination = temp_dir, overwrite = TRUE)
+  expect_true(isProjectInitialized(temp_dir))
 })
 
 test_that("initProject creates proper project structure", {
-  # Create temporary project using helper function
-  temp_project <- with_temp_project()
+  temp_dir <- withr::local_tempdir("test_init_structure")
 
-  # Check that project structure was created
-  expect_true(file.exists(file.path(
-    temp_project$path,
-    "ProjectConfiguration.xlsx"
-  )))
-  expect_true(dir.exists(file.path(temp_project$path, "Configurations")))
-  expect_true(dir.exists(file.path(temp_project$path, "Models")))
-  expect_true(dir.exists(file.path(temp_project$path, "Data")))
-  expect_true(dir.exists(file.path(temp_project$path, "Results")))
+  initProject(destination = temp_dir, overwrite = TRUE)
 
-  # Check that configuration files exist
-  expect_true(file.exists(file.path(
-    temp_project$path,
-    "Configurations",
-    "ModelParameters.xlsx"
-  )))
-  expect_true(file.exists(file.path(
-    temp_project$path,
-    "Configurations",
-    "Individuals.xlsx"
-  )))
-  # expect_true(file.exists(file.path(
-  #   temp_project$path,
-  #   "Configurations",
-  #   "ApplicationParameters.xlsx"
-  # )))
-  expect_true(file.exists(file.path(
-    temp_project$path,
-    "Configurations",
-    "Scenarios.xlsx"
-  )))
-  expect_true(file.exists(file.path(
-    temp_project$path,
-    "Configurations",
-    "Plots.xlsx"
-  )))
-  expect_true(file.exists(file.path(
-    temp_project$path,
-    "Configurations",
-    "Populations.xlsx"
-  )))
+  # JSON should exist (copied from Blank project template)
+  expect_true(file.exists(file.path(temp_dir, "ProjectConfiguration.json")))
+
+  # Excel files should be generated from JSON
+  expect_true(file.exists(file.path(temp_dir, "ProjectConfiguration.xlsx")))
+  expect_true(dir.exists(file.path(temp_dir, "Configurations")))
+
+  # Directory structure should exist
+  expect_true(dir.exists(file.path(temp_dir, "Models", "Simulations")))
+  expect_true(dir.exists(file.path(temp_dir, "Data")))
+  expect_true(dir.exists(file.path(temp_dir, "Results", "Figures")))
+  expect_true(dir.exists(file.path(temp_dir, "Results", "SimulationResults")))
+  expect_true(dir.exists(file.path(temp_dir, "Configurations", "PopulationsCSV")))
+})
+
+test_that("initProject creates project from Blank template with no scenarios", {
+  temp_dir <- withr::local_tempdir("test_init_blank")
+
+  initProject(destination = temp_dir, overwrite = TRUE)
+
+  # The generated project should be loadable
+  pc <- loadProject(file.path(temp_dir, "ProjectConfiguration.json"))
+  expect_s3_class(pc, "ProjectConfiguration")
+
+  # Blank project should have no scenarios
+  expect_equal(length(pc$scenarios), 0)
+})
+
+test_that("exampleProjectConfigurationPath points to Example project", {
+  path <- exampleProjectConfigurationPath()
+  expect_true(grepl("Example", path))
+  expect_true(file.exists(path))
 })

@@ -41,7 +41,7 @@ We begin by loading a simulation of aciclovir from the package example data:
 library(esqlabsR)
 
 simulationFilePath <- system.file(
-  "extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml",
+  "extdata/projects/Example/Models/Simulations/Aciclovir.pkml",
   package = "esqlabsR"
 )
 

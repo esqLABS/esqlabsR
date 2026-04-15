@@ -49,11 +49,27 @@ executeWithTestFile <- function(actionWithFile) {
   file.remove(newFile)
 }
 
+#' Get path to test data directory
+#'
+#' @description
+#' Returns the path to the test data directory under tests/testthat/data/.
+#' Unlike projectDirectory(), this points to test-specific data that is not
+#' part of the installed package.
+#'
+#' @param name Optional subdirectory name within the test data directory.
+#' @returns Full path to the test data directory or subdirectory.
+testDataDirectory <- function(name = NULL) {
+  directory <- testthat::test_path("data")
+  if (!is.null(name)) {
+    directory <- file.path(directory, name)
+  }
+  directory
+}
+
 #' Get path to test project configuration
 #'
 #' @description
 #' Returns the path to the test project configuration file.
-#' Currently targets the TestProject as it serves both as an example and test project.
 #'
 #' @returns Full path to the test project configuration file.
 #'
@@ -62,8 +78,7 @@ executeWithTestFile <- function(actionWithFile) {
 #' config_path <- testProjectConfigurationPath()
 #' }
 testProjectConfigurationPath <- function() {
-  # for now it targets TestProject as it is both an example and a test project
-  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
+  file.path(testDataDirectory("TestProject"), "ProjectConfiguration.xlsx")
 }
 
 #' Create test project configuration
@@ -83,7 +98,7 @@ testProjectConfiguration <- function() {
 
 #' Get path to test project configuration JSON
 testProjectConfigurationJSONPath <- function() {
-  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.json")
+  file.path(testDataDirectory("TestProject"), "ProjectConfiguration.json")
 }
 
 #' Create test project configuration from JSON
@@ -110,7 +125,7 @@ testProjectConfigurationJSON <- function() {
 #' }
 testConfigurationsPath <- function(...) {
   normalizePath(
-    file.path(exampleDirectory("TestProject"), "Configurations", ...),
+    file.path(testDataDirectory("TestProject"), "Configurations", ...),
     mustWork = TRUE
   )
 }
@@ -212,19 +227,23 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
   # Ensure cleanup after test
   withr::defer(unlink(temp_dir, recursive = TRUE), envir = parent.frame())
 
-  # Initialize project
-  initProject(destination = temp_dir, overwrite = overwrite)
-
-  # Load project configuration from JSON
-  project_config <- loadProject(file.path(
+  # Copy test project to temp directory
+  source_dir <- testDataDirectory("TestProject")
+  file.copy(
+    list.files(source_dir, full.names = TRUE),
     temp_dir,
-    "ProjectConfiguration.json"
-  ))
+    recursive = TRUE
+  )
+
+  # Generate Excel files from JSON
+  jsonPath <- file.path(temp_dir, "ProjectConfiguration.json")
+  pc <- loadProject(jsonPath)
+  exportProjectConfigurationToExcel(pc, outputDir = temp_dir, silent = TRUE)
 
   # Return list with path and config
   list(
     path = temp_dir,
-    config = project_config
+    config = pc
   )
 }
 
@@ -238,13 +257,18 @@ local_test_project <- function(
   # Create temp directory for test
   temp_dir <- withr::local_tempdir("test_project", .local_envir = env)
 
-  # Copy example project to temp directory to avoid modifying the original
-  example_dir <- exampleDirectory(project_name)
+  # Copy test project to temp directory to avoid modifying the original
+  source_dir <- testDataDirectory(project_name)
   file.copy(
-    list.files(example_dir, full.names = TRUE),
+    list.files(source_dir, full.names = TRUE),
     temp_dir,
     recursive = TRUE
   )
+
+  # Generate Excel files from JSON in the temp copy
+  jsonPath <- file.path(temp_dir, "ProjectConfiguration.json")
+  pc <- loadProject(jsonPath)
+  exportProjectConfigurationToExcel(pc, outputDir = temp_dir, silent = TRUE)
 
   # Return the paths needed for testing
   list(
