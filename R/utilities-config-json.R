@@ -754,22 +754,17 @@ projectConfigurationStatus <- function(
     } else {
       NA
     }
-    # Reconstruct ontogenies string
-    ontoStr <- NA
-    if (!is.null(ic$moleculeOntogenies) && length(ic$moleculeOntogenies) > 0) {
-      parts <- vapply(ic$moleculeOntogenies, function(mo) {
-        paste0(mo$molecule, ":", mo$ontogeny)
-      }, character(1))
-      ontoStr <- paste(parts, collapse = ",")
-    }
+    ontoStr <- ic$proteinOntogenies %||% NA
+    if (is.na(ontoStr)) ontoStr <- NA
+
     rows[[length(rows) + 1]] <- data.frame(
       IndividualId = indivId,
       Species = as.character(ic$species),
       Population = as.character(ic$population %||% NA),
       Gender = as.character(ic$gender),
-      `Weight [kg]` = .extractNumericValue(ic$weight),
-      `Height [cm]` = .extractNumericValue(ic$height),
-      `Age [year(s)]` = .extractNumericValue(ic$age),
+      `Weight [kg]` = as.double(ic$weight %||% NA),
+      `Height [cm]` = as.double(ic$height %||% NA),
+      `Age [year(s)]` = as.double(ic$age %||% NA),
       `Protein Ontogenies` = ontoStr,
       `Individual Parameter Sets` = paramSetsStr,
       check.names = FALSE,
@@ -787,35 +782,27 @@ projectConfigurationStatus <- function(
 .populationsToExcelDf <- function(populations) {
   rows <- list()
   for (popId in names(populations)) {
-    popChar <- populations[[popId]]
-    # Reconstruct ontogenies string
-    ontoStr <- NA
-    if (
-      !is.null(popChar$moleculeOntogenies) &&
-        length(popChar$moleculeOntogenies) > 0
-    ) {
-      parts <- vapply(popChar$moleculeOntogenies, function(mo) {
-        paste0(mo$molecule, ":", mo$ontogeny)
-      }, character(1))
-      ontoStr <- paste(parts, collapse = ",")
-    }
+    popData <- populations[[popId]]
+    ontoStr <- popData$proteinOntogenies %||% NA
+    if (is.na(ontoStr)) ontoStr <- NA
+
     rows[[length(rows) + 1]] <- data.frame(
       PopulationName = popId,
-      species = as.character(popChar$species),
-      population = as.character(popChar$population %||% NA),
-      numberOfIndividuals = .extractNumericValue(popChar$numberOfIndividuals),
-      proportionOfFemales = .extractNumericValue(popChar$proportionOfFemales),
-      weightMin = .extractNumericValue(popChar$weightMin),
-      weightMax = .extractNumericValue(popChar$weightMax),
-      weightUnit = .extractCharValue(popChar$weightUnit),
-      heightMin = .extractNumericValue(popChar$heightMin),
-      heightMax = .extractNumericValue(popChar$heightMax),
-      heightUnit = .extractCharValue(popChar$heightUnit),
-      ageMin = .extractNumericValue(popChar$ageMin),
-      ageMax = .extractNumericValue(popChar$ageMax),
-      BMIMin = .extractNumericValue(popChar$BMIMin),
-      BMIMax = .extractNumericValue(popChar$BMIMax),
-      BMIUnit = .extractCharValue(popChar$BMIUnit),
+      species = as.character(popData$species),
+      population = as.character(popData$population %||% NA),
+      numberOfIndividuals = as.double(popData$numberOfIndividuals %||% NA),
+      proportionOfFemales = as.double(popData$proportionOfFemales %||% NA),
+      weightMin = as.double(popData$weightMin %||% NA),
+      weightMax = as.double(popData$weightMax %||% NA),
+      weightUnit = as.character(popData$weightUnit %||% NA),
+      heightMin = as.double(popData$heightMin %||% NA),
+      heightMax = as.double(popData$heightMax %||% NA),
+      heightUnit = as.character(popData$heightUnit %||% NA),
+      ageMin = as.double(popData$ageMin %||% NA),
+      ageMax = as.double(popData$ageMax %||% NA),
+      BMIMin = as.double(popData$BMIMin %||% NA),
+      BMIMax = as.double(popData$BMIMax %||% NA),
+      BMIUnit = as.character(popData$BMIUnit %||% NA),
       `Protein Ontogenies` = ontoStr,
       check.names = FALSE,
       stringsAsFactors = FALSE

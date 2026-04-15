@@ -65,7 +65,7 @@ test_that("importProjectConfigurationFromExcel JSON can be loaded by ProjectConf
   })
 
   expect_s3_class(pc, "ProjectConfiguration")
-  expect_true(length(pc$scenarioConfigurations) > 0)
+  expect_true(length(pc$scenarios) > 0)
   expect_true(length(pc$modelParameters) > 0)
   expect_true(length(pc$individuals) > 0)
 })
@@ -121,6 +121,16 @@ test_that("exportProjectConfigurationToExcel creates Excel files from ProjectCon
   expect_true(file.exists(file.path(configDir, "Scenarios.xlsx")))
   expect_true(file.exists(file.path(configDir, "Individuals.xlsx")))
   expect_true(file.exists(file.path(configDir, "Applications.xlsx")))
+})
+
+test_that("exportProjectConfigurationToExcel works with plain-data individuals and scenarios", {
+  pc <- testProjectConfigurationJSON()
+  tempDir <- withr::local_tempdir()
+  exportProjectConfigurationToExcel(pc, outputDir = tempDir, silent = TRUE)
+
+  # Check that key files were created
+  expect_true(file.exists(file.path(tempDir, "Configurations", "Scenarios.xlsx")))
+  expect_true(file.exists(file.path(tempDir, "Configurations", "Individuals.xlsx")))
 })
 
 test_that("exportProjectConfigurationToExcel preserves model parameters", {
