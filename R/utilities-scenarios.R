@@ -1324,17 +1324,18 @@ addScenario <- function(
     steadyStateTime = 1000,
     overwriteFormulasInSS = FALSE,
     readPopulationFromCSV = FALSE) {
+  validateIsOfType(projectConfiguration, "ProjectConfiguration")
   pc <- projectConfiguration
   errors <- character()
 
   # Validate required args
-  if (!is.character(scenarioName) || length(scenarioName) != 1 || nchar(scenarioName) == 0) {
+  if (!is.character(scenarioName) || length(scenarioName) != 1 || is.na(scenarioName) || nchar(scenarioName) == 0) {
     errors <- c(errors, "scenarioName must be a non-empty string")
   } else if (scenarioName %in% names(pc$scenarios)) {
     errors <- c(errors, paste0("scenario '", scenarioName, "' already exists"))
   }
 
-  if (!is.character(modelFile) || length(modelFile) != 1 || nchar(modelFile) == 0) {
+  if (!is.character(modelFile) || length(modelFile) != 1 || is.na(modelFile) || nchar(modelFile) == 0) {
     errors <- c(errors, "modelFile must be a non-empty string")
   }
 
