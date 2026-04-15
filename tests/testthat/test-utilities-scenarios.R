@@ -303,3 +303,50 @@ test_that(".executeScenario reuses cached IndividualCharacteristics", {
     indivChar
   )
 })
+
+# addScenario ----
+
+test_that("addScenario errors on duplicate scenario name", {
+  pc <- testProjectConfigurationJSON()
+  existing_name <- names(pc$scenarios)[[1]]
+  expect_error(
+    addScenario(pc, scenarioName = existing_name, modelFile = "model.pkml"),
+    "already exists"
+  )
+})
+
+test_that("addScenario errors on invalid individualId", {
+  pc <- testProjectConfigurationJSON()
+  expect_error(
+    addScenario(
+      pc,
+      scenarioName = "NewScenario",
+      modelFile = "model.pkml",
+      individualId = "NonExistent"
+    ),
+    "individualId.*NonExistent.*not found"
+  )
+})
+
+test_that("addScenario collects all validation errors in one message", {
+  pc <- testProjectConfigurationJSON()
+  expect_error(
+    addScenario(
+      pc,
+      scenarioName = "NewScenario",
+      modelFile = "model.pkml",
+      individualId = "BadIndiv",
+      populationId = "BadPop",
+      applicationProtocol = "BadApp"
+    ),
+    "BadIndiv.*BadPop.*BadApp"
+  )
+})
+
+test_that("addScenario errors on empty scenarioName", {
+  pc <- testProjectConfigurationJSON()
+  expect_error(
+    addScenario(pc, scenarioName = "", modelFile = "model.pkml"),
+    "non-empty string"
+  )
+})
