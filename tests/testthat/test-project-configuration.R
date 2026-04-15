@@ -80,6 +80,17 @@ test_that("Individuals are stored as plain lists", {
   expect_false(isOfType(indiv, "IndividualCharacteristics"))
 })
 
+test_that("Populations are stored as plain lists", {
+  pc <- testProjectConfigurationJSON()
+  pop <- pc$populations[["TestPopulation"]]
+  expect_type(pop, "list")
+  expect_true("species" %in% names(pop))
+  expect_true("population" %in% names(pop))
+  expect_true("numberOfIndividuals" %in% names(pop))
+  # NOT a PopulationCharacteristics object
+  expect_false(isOfType(pop, "PopulationCharacteristics"))
+})
+
 test_that("ProjectConfiguration parses plots into data.frames", {
   pc <- testProjectConfigurationJSON()
   expect_s3_class(pc$plots$dataCombined, "data.frame")

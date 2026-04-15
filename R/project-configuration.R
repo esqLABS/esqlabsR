@@ -411,29 +411,25 @@ ProjectConfiguration <- R6::R6Class(
 
     .parsePopulations = function(populationsData) {
       if (is.null(populationsData)) return(list())
-      numericFields <- c(
-        "numberOfIndividuals", "proportionOfFemales",
-        "weightMin", "weightMax", "heightMin", "heightMax",
-        "ageMin", "ageMax", "BMIMin", "BMIMax"
-      )
       result <- list()
       for (entry in populationsData) {
-        args <- list()
+        popData <- list()
         for (field in names(entry)) {
-          if (field == "populationId" || field == "proteinOntogenies") next
+          if (field == "populationId") next
           val <- entry[[field]]
           if (!is.null(val)) {
+            numericFields <- c(
+              "numberOfIndividuals", "proportionOfFemales",
+              "weightMin", "weightMax", "heightMin", "heightMax",
+              "ageMin", "ageMax", "BMIMin", "BMIMax"
+            )
             if (field %in% numericFields) {
               val <- as.double(val)
             }
-            args[[field]] <- val
+            popData[[field]] <- val
           }
         }
-        args[["moleculeOntogenies"]] <- .readOntongeniesFromList(
-          entry$proteinOntogenies
-        )
-        popChar <- do.call(ospsuite::createPopulationCharacteristics, args)
-        result[[entry$populationId]] <- popChar
+        result[[entry$populationId]] <- popData
       }
       result
     },
