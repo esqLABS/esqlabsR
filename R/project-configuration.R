@@ -537,44 +537,41 @@ ProjectConfiguration <- R6::R6Class(
       }
       ospsuite.utils::ospPrintItems(list(
         "Working Directory" = getwd(),
-        "Project Configuration file stored at" = self$projectConfigurationFilePath
+        "Configuration file" = self$projectConfigurationFilePath
       ))
 
-      ospsuite.utils::ospPrintHeader("Paths", level = 2)
-      ospsuite.utils::ospPrintItems(
-        list(
-          "Configurations Folder" = self$configurationsFolder,
-          "Model Folder" = self$modelFolder,
-          "Data Folder" = self$dataFolder,
-          "Output Folder" = self$outputFolder,
-          "Populations Folder" = self$populationsFolder
-        ),
-        title = "Folders"
+      # Count plots breakdown
+      plotCounts <- vapply(
+        c("dataCombined", "plotConfiguration", "plotGrids", "exportConfiguration"),
+        function(name) {
+          df <- self$plots[[name]]
+          if (is.null(df)) 0L else nrow(df)
+        },
+        integer(1)
       )
-
-      ospsuite.utils::ospPrintItems(
-        list(
-          "Model Parameters File" = self$modelParamsFile,
-          "Individuals File" = self$individualsFile,
-          "Populations File" = self$populationsFile,
-          "Scenarios File" = self$scenariosFile,
-          "Applications File" = self$applicationsFile,
-          "Plots File" = self$plotsFile,
-          "Data File" = self$dataFile,
-          "Data Importer Configuration File" = self$dataImporterConfigurationFile
-        ),
-        title = "Files"
-      )
-
-      if (!isEmpty(private$.replaced_env_vars)) {
-        cli::cli_h2("Environment Variables")
-        message(
-          "Environment variables were detected and replaced in paths:"
+      # Only include non-zero plot sub-sections
+      nonZero <- plotCounts[plotCounts > 0]
+      if (length(nonZero) > 0) {
+        plotsLabel <- paste(
+          paste(nonZero, names(nonZero)),
+          collapse = ", "
         )
-        purrr::iwalk(private$.replaced_env_vars, \(x, idx) {
-          cli::cli_li("{idx} to {x}")
-        })
+      } else {
+        plotsLabel <- "0"
       }
+
+      ospsuite.utils::ospPrintItems(
+        list(
+          "Scenarios" = length(self$scenarios),
+          "Individuals" = length(self$individuals),
+          "Populations" = length(self$populations),
+          "Model Parameters" = paste(length(self$modelParameters), "groups"),
+          "Applications" = length(self$applications),
+          "Output Paths" = length(self$outputPaths),
+          "Plots" = plotsLabel
+        ),
+        title = "Contents"
+      )
       invisible(self)
     },
     #' @field scenarios Named list of `Scenario` objects, keyed by scenario
