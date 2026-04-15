@@ -44,11 +44,9 @@ test_that("`sampleRandomValue()` generates needed distribution", {
 test_that("extendPopulationByUserDefinedParams works", {
   set.seed(42)
 
-  population <- ospsuite::loadPopulation(system.file(
-    "extdata",
-    "SimResults_pop.csv",
-    package = "ospsuite"
-  ))
+  population <- ospsuite::loadPopulation(
+    test_path("data", "SimResults_pop.csv")
+  )
 
   esqlabsR::extendPopulationByUserDefinedParams(
     population = population,
@@ -82,11 +80,9 @@ test_that("extendPopulationFromXLS works", {
         )
       )
 
-      population <- ospsuite::loadPopulation(system.file(
-        "extdata",
-        "SimResults_pop.csv",
-        package = "ospsuite"
-      ))
+      population <- ospsuite::loadPopulation(
+        test_path("data", "SimResults_pop.csv")
+      )
 
       set.seed(42)
       extendPopulationFromXLS(
@@ -115,11 +111,9 @@ test_that("extendPopulationFromXLS throws an error if the sheet has wrong struct
     new = "PopulationParameters",
     fileext = ".xlsx",
     code = {
-      population <- ospsuite::loadPopulation(system.file(
-        "extdata",
-        "SimResults_pop.csv",
-        package = "ospsuite"
-      ))
+      population <- ospsuite::loadPopulation(
+        test_path("data", "SimResults_pop.csv")
+      )
 
       .writeExcel(
         path = PopulationParameters,
@@ -189,11 +183,9 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
         )
       )
 
-      population <- ospsuite::loadPopulation(system.file(
-        "extdata",
-        "SimResults_pop.csv",
-        package = "ospsuite"
-      ))
+      population <- ospsuite::loadPopulation(
+        test_path("data", "SimResults_pop.csv")
+      )
 
       expect_error(
         extendPopulationFromXLS(
