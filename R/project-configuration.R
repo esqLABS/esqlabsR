@@ -469,6 +469,99 @@ ProjectConfiguration <- R6::R6Class(
 
       # Mark as not modified after saving
       private$.modified <- FALSE
+    },
+
+    #' @field scenarioConfigurations Named list of `ScenarioConfiguration`
+    #'   objects, keyed by scenario name. Populated by JSON loading.
+    scenarioConfigurations = NULL,
+    #' @field modelParameters Named list of parameter structures, keyed by
+    #'   sheet name. Each is a list with `paths`, `values`, `units` vectors.
+    modelParameters = NULL,
+    #' @field individuals Named list of `IndividualCharacteristics` objects,
+    #'   keyed by individualId.
+    individuals = NULL,
+    #' @field individualParameterSets Named list of parameter structures,
+    #'   keyed by set name. Each is a list with `paths`, `values`, `units`.
+    individualParameterSets = NULL,
+    #' @field populations Named list of `PopulationCharacteristics` objects,
+    #'   keyed by populationId.
+    populations = NULL,
+    #' @field applications Named list of parameter structures, keyed by
+    #'   protocol name. Each is a list with `paths`, `values`, `units`.
+    applications = NULL,
+    #' @field outputPaths Named character vector. Names are IDs, values are
+    #'   output path strings.
+    outputPaths = NULL,
+    #' @field plots List with 4 data.frame elements: `dataCombined`,
+    #'   `plotConfiguration`, `plotGrids`, `exportConfiguration`.
+    plots = NULL,
+    #' @field jsonPath Path to the source JSON file, or NULL if not loaded
+    #'   from JSON.
+    jsonPath = NULL,
+    #' @field individualParameterSetMapping Named list mapping individualId
+    #'   to a character vector of parameter set names.
+    individualParameterSetMapping = NULL,
+
+    #' @description Get combined model parameters from named sheets.
+    #' @param sheetNames Character vector of sheet names. If NULL, returns NULL.
+    #' @returns A list with `paths`, `values`, `units` or NULL.
+    getModelParameters = function(sheetNames) {
+      if (is.null(sheetNames)) return(NULL)
+      params <- list(paths = character(0), values = numeric(0), units = character(0))
+      for (sheet in sheetNames) {
+        sheetParams <- self$modelParameters[[sheet]]
+        if (is.null(sheetParams)) {
+          stop(messages$errorParameterSheetNotFound(sheet))
+        }
+        params <- extendParameterStructure(params, sheetParams)
+      }
+      params
+    },
+
+    #' @description Get IndividualCharacteristics by ID.
+    #' @param individualId Character. The individual ID.
+    #' @returns An `IndividualCharacteristics` object or NULL.
+    getIndividual = function(individualId) {
+      self$individuals[[individualId]]
+    },
+
+    #' @description Get merged individual parameter sets for an individual.
+    #' @param individualId Character. The individual ID.
+    #' @returns A list with `paths`, `values`, `units` or NULL.
+    getIndividualParameterSets = function(individualId) {
+      setNames <- self$individualParameterSetMapping[[individualId]]
+      if (is.null(setNames) || length(setNames) == 0) return(NULL)
+      params <- list(paths = character(0), values = numeric(0), units = character(0))
+      for (setName in setNames) {
+        setParams <- self$individualParameterSets[[setName]]
+        if (!is.null(setParams)) {
+          params <- extendParameterStructure(params, setParams)
+        }
+      }
+      if (length(params$paths) == 0) return(NULL)
+      params
+    },
+
+    #' @description Get application parameters by protocol name.
+    #' @param protocolName Character. The protocol name.
+    #' @returns A list with `paths`, `values`, `units` or NULL.
+    getApplicationParameters = function(protocolName) {
+      self$applications[[protocolName]]
+    },
+
+    #' @description Get PopulationCharacteristics by ID.
+    #' @param populationId Character. The population ID.
+    #' @returns A `PopulationCharacteristics` object or NULL.
+    getPopulation = function(populationId) {
+      self$populations[[populationId]]
+    },
+
+    #' @description Resolve output path IDs to path strings.
+    #' @param outputPathIds Character vector of IDs. If NULL, returns NULL.
+    #' @returns Character vector of output path strings or NULL.
+    getOutputPaths = function(outputPathIds) {
+      if (is.null(outputPathIds)) return(NULL)
+      unname(self$outputPaths[outputPathIds])
     }
   )
 )

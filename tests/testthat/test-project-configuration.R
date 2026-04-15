@@ -268,3 +268,105 @@ test_that("modified flag behavior with cloned ProjectConfiguration", {
   expect_true(myConfig$modified) # Original should still be modified
   expect_true(clonedConfig$modified) # Clone should now be modified
 })
+
+# ---- Accessor method tests ----
+# These test the accessor methods with manually populated fields.
+# Full JSON-loading integration is tested after Task 3.
+
+describe("getModelParameters", {
+  it("combines multiple sheets into one parameter structure", {
+    pc <- ProjectConfiguration$new()
+    pc$modelParameters <- list(
+      Global = list(
+        paths = c("Organism|Liver|EHC continuous fraction"),
+        values = c(1),
+        units = c("")
+      ),
+      Aciclovir = list(
+        paths = c("Aciclovir|Lipophilicity"),
+        values = c(-0.1),
+        units = c("Log Units")
+      )
+    )
+    result <- pc$getModelParameters(c("Global", "Aciclovir"))
+    expect_equal(length(result$paths), 2)
+    expect_equal(result$paths, c(
+      "Organism|Liver|EHC continuous fraction",
+      "Aciclovir|Lipophilicity"
+    ))
+    expect_equal(result$values, c(1, -0.1))
+  })
+
+  it("returns NULL when sheetNames is NULL", {
+    pc <- ProjectConfiguration$new()
+    pc$modelParameters <- list(
+      Global = list(paths = "a|b", values = 1, units = "")
+    )
+    expect_null(pc$getModelParameters(NULL))
+  })
+})
+
+describe("getIndividual", {
+  it("returns NULL for unknown individualId", {
+    pc <- ProjectConfiguration$new()
+    pc$individuals <- list()
+    expect_null(pc$getIndividual("nonexistent"))
+  })
+})
+
+describe("getIndividualParameterSets", {
+  it("returns NULL when individual has no parameterSets", {
+    pc <- ProjectConfiguration$new()
+    pc$individualParameterSetMapping <- list(Ind1 = character(0))
+    pc$individualParameterSets <- list()
+    expect_null(pc$getIndividualParameterSets("Ind1"))
+  })
+})
+
+describe("getApplicationParameters", {
+  it("returns parameters for a known protocol", {
+    pc <- ProjectConfiguration$new()
+    pc$applications <- list(
+      Protocol1 = list(
+        paths = c("App|Dose"),
+        values = c(250),
+        units = c("mg")
+      )
+    )
+    result <- pc$getApplicationParameters("Protocol1")
+    expect_equal(result$paths, "App|Dose")
+    expect_equal(result$values, 250)
+  })
+
+  it("returns NULL for unknown protocol", {
+    pc <- ProjectConfiguration$new()
+    pc$applications <- list()
+    expect_null(pc$getApplicationParameters("unknown"))
+  })
+})
+
+describe("getPopulation", {
+  it("returns NULL for unknown populationId", {
+    pc <- ProjectConfiguration$new()
+    pc$populations <- list()
+    expect_null(pc$getPopulation("unknown"))
+  })
+})
+
+describe("getOutputPaths", {
+  it("resolves IDs to path strings", {
+    pc <- ProjectConfiguration$new()
+    pc$outputPaths <- c(
+      id1 = "Organism|Path1",
+      id2 = "Organism|Path2"
+    )
+    result <- pc$getOutputPaths(c("id1", "id2"))
+    expect_equal(result, c("Organism|Path1", "Organism|Path2"))
+  })
+
+  it("returns NULL when outputPathIds is NULL", {
+    pc <- ProjectConfiguration$new()
+    pc$outputPaths <- c(id1 = "Organism|Path1")
+    expect_null(pc$getOutputPaths(NULL))
+  })
+})
