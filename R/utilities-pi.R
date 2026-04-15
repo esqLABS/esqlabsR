@@ -4,6 +4,10 @@
 #'   Each PITaskConfiguration produces one ParameterIdentification object.
 #'
 #' @param piTaskConfigurations Named list of `PITaskConfiguration` objects
+#' @param observedData Named list of `DataSet` objects. When provided, datasets
+#'   are looked up by the name in the `DataSet` column of `PIOutputMappings`.
+#'   When `NULL` (default), observed data is loaded internally using the
+#'   `ObservedDataSheet` column.
 #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
 #'   thrown when a parameter defined in the scenario configuration cannot be
 #'   found in the simulation. Set to `FALSE` to continue silently when scenario
@@ -14,9 +18,11 @@
 #' @export
 createPITasks <- function(
   piTaskConfigurations,
+  observedData = NULL,
   stopIfParameterNotFound = TRUE
 ) {
   validateIsOfType(piTaskConfigurations, PITaskConfiguration)
+  validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   piTaskConfigurations <- toList(piTaskConfigurations)
 
   # Extract all unique scenario configurations from all PI tasks
@@ -46,7 +52,8 @@ createPITasks <- function(
   for (taskName in names(piTaskConfigurations)) {
     piTasks[[taskName]] <- .createSinglePITask(
       piTaskConfiguration = piTaskConfigurations[[taskName]],
-      scenarios = scenarios
+      scenarios = scenarios,
+      observedData = observedData
     )
   }
 
@@ -113,10 +120,15 @@ runPI <- function(piTasks) {
 #' Create a single PI task
 #' @param piTaskConfiguration PITaskConfiguration object
 #' @param scenarios Named list of Scenario objects
+#' @param observedData Named list of DataSet objects, or NULL
 #' @returns ParameterIdentification object
 #' @keywords internal
 #' @noRd
-.createSinglePITask <- function(piTaskConfiguration, scenarios) {
+.createSinglePITask <- function(
+  piTaskConfiguration,
+  scenarios,
+  observedData = NULL
+) {
   # Get project configuration
   projectConfiguration <- piTaskConfiguration$projectConfiguration
 
@@ -139,7 +151,8 @@ runPI <- function(piTasks) {
   outputMappings <- .createPIOutputMappingFromConfig(
     configurations = piTaskConfiguration$piOutputMappings,
     scenarios = scenarios,
-    piTaskConfiguration = piTaskConfiguration
+    piTaskConfiguration = piTaskConfiguration,
+    observedData = observedData
   )
 
   # Create PIConfiguration
@@ -297,31 +310,47 @@ runPI <- function(piTasks) {
 #'   PIOutputMappings sheet
 #' @param scenarios Named list of Scenario objects
 #' @param piTaskConfiguration PITaskConfiguration object
+#' @param observedData Named list of DataSet objects, or NULL
 #' @returns List containing PIOutputMapping objects
 #' @keywords internal
 #' @noRd
 .createPIOutputMappingFromConfig <- function(
   configurations,
   scenarios,
-  piTaskConfiguration
+  piTaskConfiguration,
+  observedData = NULL
 ) {
   outputMappings <- list()
 
-  # Collect unique observed data sheets from all output mappings
-  observedDataSheets <- unique(sapply(
-    configurations,
-    function(mapping) mapping$ObservedDataSheet
-  ))
-  observedDataSheets <- observedDataSheets[!is.na(observedDataSheets)]
-
-  # Load observed data for specific sheets
-  observedData <- if (length(observedDataSheets) > 0) {
-    loadObservedData(
-      piTaskConfiguration$projectConfiguration,
-      sheets = observedDataSheets
-    )
+  if (!is.null(observedData)) {
+    # Validate all referenced DataSet names exist in the provided list
+    dataSetNames <- unique(Filter(
+      function(x) !is.na(x) && nchar(trimws(x)) > 0,
+      sapply(configurations, function(m) m$DataSet)
+    ))
+    missingDataSets <- setdiff(dataSetNames, names(observedData))
+    if (length(missingDataSets) > 0) {
+      stop(messages$errorPIDatasetNotFound(
+        missingDataSets[[1]],
+        names(observedData)
+      ))
+    }
   } else {
-    list()
+    # Load observed data internally using ObservedDataSheet column
+    observedDataSheets <- unique(sapply(
+      configurations,
+      function(mapping) mapping$ObservedDataSheet
+    ))
+    observedDataSheets <- observedDataSheets[!is.na(observedDataSheets)]
+
+    observedData <- if (length(observedDataSheets) > 0) {
+      loadObservedData(
+        piTaskConfiguration$projectConfiguration,
+        sheets = observedDataSheets
+      )
+    } else {
+      list()
+    }
   }
 
   # Collect all PI-specified output paths per scenario and update simulations

@@ -709,3 +709,85 @@ test_that("createPITasks overwrites scenario output paths with PI-specified path
     "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
   )
 })
+
+projectConfiguration <- testProjectConfiguration()
+
+test_that("createPITasks accepts observedData parameter and uses provided datasets", {
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    piTaskNames = "AciclovirSimple",
+    projectConfiguration = projectConfiguration
+  )
+
+  observedData <- loadObservedData(
+    projectConfiguration,
+    sheets = "Laskin 1982.Group A"
+  )
+
+  expect_no_error(
+    piTasks <- createPITasks(piTaskConfigurations, observedData = observedData)
+  )
+  expect_true(isOfType(
+    piTasks[[1]]$outputMappings[[1]]$observedDataSets[[1]],
+    "DataSet"
+  ))
+})
+
+test_that("createPITasks with observedData errors when DataSet not in provided list", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$DataSet <- "NonExistentDataSet"
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  observedData <- loadObservedData(
+    projectConfigurationLocal,
+    sheets = "Laskin 1982.Group A"
+  )
+
+  expect_error(
+    createPITasks(piTaskConfigurations, observedData = observedData),
+    regexp = messages$errorPIDatasetNotFound(
+      "NonExistentDataSet",
+      names(observedData)
+    )
+  )
+})
+
+test_that("createPITasks with observedData allows NA ObservedDataSheet", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  sheets <- createValidPISheets()
+  sheets$PIOutputMappings$ObservedDataSheet <- NA_character_
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  observedData <- loadObservedData(
+    projectConfigurationLocal,
+    sheets = "Laskin 1982.Group A"
+  )
+
+  expect_no_error(
+    piTasks <- createPITasks(piTaskConfigurations, observedData = observedData)
+  )
+  expect_true(isOfType(
+    piTasks[[1]]$outputMappings[[1]]$observedDataSets[[1]],
+    "DataSet"
+  ))
+})
