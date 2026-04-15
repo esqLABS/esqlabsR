@@ -4,10 +4,22 @@
 \alias{runScenarios}
 \title{Run a set of scenarios.}
 \usage{
-runScenarios(scenarios, simulationRunOptions = NULL)
+runScenarios(
+  projectConfiguration,
+  scenarioNames = NULL,
+  customParams = NULL,
+  simulationRunOptions = NULL
+)
 }
 \arguments{
-\item{scenarios}{List of \code{Scenario} objects to be simulated.}
+\item{projectConfiguration}{An object of type \code{ProjectConfiguration} loaded
+from JSON. Its \code{scenarios} field is used to select and run scenarios.}
+
+\item{scenarioNames}{Optional character vector of scenario names to run. If
+\code{NULL} (default), all scenarios defined in \code{projectConfiguration} are run.}
+
+\item{customParams}{A list containing vectors \code{paths}, \code{values}, and \code{units}
+that will be applied to all scenarios.}
 
 \item{simulationRunOptions}{Object of type \code{SimulationRunOptions} that will
 be passed to simulation runs. If \code{NULL}, default options are used.}
@@ -15,7 +27,7 @@ be passed to simulation runs. If \code{NULL}, default options are used.}
 \value{
 A named list, where the names are scenario names, and the values are
 lists with the entries \code{simulation} being the initialized \code{Simulation}
-object with applied parameters, \code{results} being \code{SimulatioResults} object
+object with applied parameters, \code{results} being \code{SimulationResults} object
 produced by running the simulation, \code{outputValues} the output values of the
 \code{SimulationResults}, and \code{population} the \code{Population} object if the
 scenario is a population simulation.

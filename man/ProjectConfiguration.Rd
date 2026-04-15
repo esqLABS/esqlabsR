@@ -7,6 +7,41 @@
 \description{
 An object storing configuration used project-wide
 }
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{scenarios}}{Named list of \code{Scenario} objects, keyed by scenario
+name. Populated by JSON loading.}
+
+\item{\code{modelParameters}}{Named list of parameter structures, keyed by
+sheet name. Each is a list with \code{paths}, \code{values}, \code{units} vectors.}
+
+\item{\code{individuals}}{Named list of \code{IndividualCharacteristics} objects,
+keyed by individualId.}
+
+\item{\code{individualParameterSets}}{Named list of parameter structures,
+keyed by set name. Each is a list with \code{paths}, \code{values}, \code{units}.}
+
+\item{\code{populations}}{Named list of \code{PopulationCharacteristics} objects,
+keyed by populationId.}
+
+\item{\code{applications}}{Named list of parameter structures, keyed by
+protocol name. Each is a list with \code{paths}, \code{values}, \code{units}.}
+
+\item{\code{outputPaths}}{Named character vector. Names are IDs, values are
+output path strings.}
+
+\item{\code{plots}}{List with 4 data.frame elements: \code{dataCombined},
+\code{plotConfiguration}, \code{plotGrids}, \code{exportConfiguration}.}
+
+\item{\code{jsonPath}}{Path to the source JSON file, or NULL if not loaded
+from JSON.}
+
+\item{\code{individualParameterSetMapping}}{Named list mapping individualId
+to a character vector of parameter set names.}
+}
+\if{html}{\out{</div>}}
+}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
@@ -23,39 +58,37 @@ have been modified since loading from file. Read-only.}
 
 \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
 
-\item{\code{configurationsFolder}}{Path to the folder containing excel files
-with model parameterization.}
+\item{\code{configurationsFolder}}{Path to the folder containing configuration
+files. Used by the Excel import/export bridge.}
 
-\item{\code{modelParamsFile}}{Name of the excel file with global model
-parameterization. Must be located in the "configurationsFolder".}
+\item{\code{modelParamsFile}}{Path to the Excel file with global model
+parameterization. Used by the Excel import/export bridge.}
 
-\item{\code{individualsFile}}{Name of the excel file with individual-specific
-model parameterization.
-Must be located in the "configurationsFolder".}
+\item{\code{individualsFile}}{Path to the Excel file with individual-specific
+model parameterization. Used by the Excel import/export bridge.}
 
-\item{\code{populationsFile}}{Name of the excel file with population
-information.
-Must be located in the "configurationsFolder".}
+\item{\code{populationsFile}}{Path to the Excel file with population
+information. Used by the Excel import/export bridge.}
 
 \item{\code{populationsFolder}}{Name of the folder containing population defined
 through csv files.
 Must be located in the "configurationsFolder".}
 
-\item{\code{scenariosFile}}{Name of the excel file with scenario definitions.
-Must be located in the "configurationsFolder".}
+\item{\code{scenariosFile}}{Path to the Excel file with scenario definitions.
+Used by the Excel import/export bridge.}
 
-\item{\code{applicationsFile}}{Name of the excel file scenario-specific
-parameters such as application protocol parameters.
-Must be located in the "configurationsFolder".}
+\item{\code{applicationsFile}}{Path to the Excel file with scenario-specific
+parameters such as application protocol parameters. Used by the
+Excel import/export bridge.}
 
-\item{\code{plotsFile}}{Name of the excel file with plot definitions.
-Must be located in the "configurationsFolder".}
+\item{\code{plotsFile}}{Path to the Excel file with plot definitions. Used by
+the Excel import/export bridge.}
 
 \item{\code{dataFolder}}{Path to the folder where experimental data files are
 located.}
 
-\item{\code{dataFile}}{Name of the excel file with experimental data.
-Must be located in the "dataFolder"}
+\item{\code{dataFile}}{Path to the Excel file with experimental (observed) data.
+Must be located in the "dataFolder".}
 
 \item{\code{dataImporterConfigurationFile}}{Name of data importer configuration
 file in xml format used to load the data.
@@ -72,7 +105,6 @@ Initialize}
 \itemize{
 \item \href{#method-ProjectConfiguration-new}{\code{ProjectConfiguration$new()}}
 \item \href{#method-ProjectConfiguration-print}{\code{ProjectConfiguration$print()}}
-\item \href{#method-ProjectConfiguration-save}{\code{ProjectConfiguration$save()}}
 \item \href{#method-ProjectConfiguration-clone}{\code{ProjectConfiguration$clone()}}
 }
 }
@@ -108,25 +140,6 @@ print prints a summary of the Project Configuration.
 \describe{
 \item{\code{className}}{Whether to print the name of the class at the beginning.
 default to TRUE.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ProjectConfiguration-save"></a>}}
-\if{latex}{\out{\hypertarget{method-ProjectConfiguration-save}{}}}
-\subsection{Method \code{save()}}{
-Export ProjectConfiguration object to
-ProjectConfiguration.xlsx
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$save(path)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{path}}{a string representing the path or file name where to save the
-file. Can be absolute or relative (to working directory).}
 }
 \if{html}{\out{</div>}}
 }

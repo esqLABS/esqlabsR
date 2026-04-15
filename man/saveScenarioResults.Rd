@@ -37,13 +37,9 @@ the file name suffix \verb{_population}. Results can be read with the \code{load
 }
 \examples{
 \dontrun{
-projectConfiguration <- esqlabsR::createProjectConfiguration()
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  projectConfiguration = projectConfiguration
-)
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+projectConfiguration <- loadProject("path/to/ProjectConfiguration.json")
 simulatedScenariosResults <- runScenarios(
-  scenarios = scenarios
+  projectConfiguration = projectConfiguration
 )
 saveScenarioResults(simulatedScenariosResults, projectConfiguration)
 }
