@@ -49,8 +49,8 @@ ProjectConfiguration <- R6::R6Class(
         self$projectConfigurationDirPath
       )
     },
-    #' @field configurationsFolder Path to the folder containing excel files
-    #'   with model parameterization.
+    #' @field configurationsFolder Path to the folder containing configuration
+    #'   files. Used by the Excel import/export bridge.
     configurationsFolder = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$configurationsFolder$value <-
@@ -62,8 +62,8 @@ ProjectConfiguration <- R6::R6Class(
         self$projectConfigurationDirPath
       )
     },
-    #' @field modelParamsFile Name of the excel file with global model
-    #'   parameterization. Must be located in the "configurationsFolder".
+    #' @field modelParamsFile Path to the Excel file with global model
+    #'   parameterization. Used by the Excel import/export bridge.
     modelParamsFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$modelParamsFile$value <-
@@ -75,9 +75,8 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field individualsFile Name of the excel file with individual-specific
-    #'   model parameterization.
-    #' Must be located in the "configurationsFolder".
+    #' @field individualsFile Path to the Excel file with individual-specific
+    #'   model parameterization. Used by the Excel import/export bridge.
     individualsFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$individualsFile$value <-
@@ -89,9 +88,8 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field populationsFile Name of the excel file with population
-    #'   information.
-    #' Must be located in the "configurationsFolder".
+    #' @field populationsFile Path to the Excel file with population
+    #'   information. Used by the Excel import/export bridge.
     populationsFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$populationsFile$value <-
@@ -117,8 +115,8 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field scenariosFile Name of the excel file with scenario definitions.
-    #' Must be located in the "configurationsFolder".
+    #' @field scenariosFile Path to the Excel file with scenario definitions.
+    #'   Used by the Excel import/export bridge.
     scenariosFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$scenariosFile$value <-
@@ -130,9 +128,9 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field applicationsFile Name of the excel file scenario-specific
-    #'   parameters such as application protocol parameters.
-    #' Must be located in the "configurationsFolder".
+    #' @field applicationsFile Path to the Excel file with scenario-specific
+    #'   parameters such as application protocol parameters. Used by the
+    #'   Excel import/export bridge.
     applicationsFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$applicationsFile$value <-
@@ -144,8 +142,8 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field plotsFile Name of the excel file with plot definitions.
-    #' Must be located in the "configurationsFolder".
+    #' @field plotsFile Path to the Excel file with plot definitions. Used by
+    #'   the Excel import/export bridge.
     plotsFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$plotsFile$value <-
@@ -170,8 +168,8 @@ ProjectConfiguration <- R6::R6Class(
         self$projectConfigurationDirPath
       )
     },
-    #' @field dataFile Name of the excel file with experimental data.
-    #' Must be located in the "dataFolder"
+    #' @field dataFile Path to the Excel file with experimental (observed) data.
+    #'   Must be located in the "dataFolder".
     dataFile = function(value) {
       if (!missing(value)) {
         private$.projectConfigurationData$dataFile$value <-

@@ -284,7 +284,7 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
 
 messages$stopScenarioNameNonUnique <- function(scenarioName) {
   cliFormat(
-    "Scenario {.val {scenarioName}} is defined multiple times! Make sure that each scenario defined in the excel file has a unique name."
+    "Scenario {.val {scenarioName}} is defined multiple times! Make sure that each scenario has a unique name."
   )
 }
 
@@ -358,7 +358,7 @@ messages$warningInvalidDataSetName <- function(dataSetNames) {
   )
 }
 
-# Plots.xlsx####
+# Plot configuration ####
 messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
   cliFormat(
     "The plots with plotIDs {.val {paste(plotIDs, collapse = ',\n')}} could not be added to plot grid
@@ -456,14 +456,14 @@ messages$stopInvalidDataSetName <- function(dataSetNames) {
   )
 }
 
-messages$invalidConfigurationPropertyFromExcel <- function(
+messages$invalidConfigurationProperty <- function(
   propertyName,
   configurationType
 ) {
   cliFormat(
-    "Trying to apply property {.arg {propertyName}} that is not supported by 
-    the configuration {.var {configurationType}}! Check column names in the 
-    excel file defining plot configurations."
+    "Trying to apply property {.arg {propertyName}} that is not supported by
+    the configuration {.var {configurationType}}! Check field names in the
+    plot configuration."
   )
 }
 
@@ -581,8 +581,8 @@ messages$promptDeleteOutputDir <- function(outputDir) {
   )
 }
 
-# Excel field validation error messages ####
-messages$excelFieldFormatError <- function(
+# Field validation error messages ####
+messages$fieldFormatError <- function(
   fieldName,
   value,
   plotID,
@@ -590,14 +590,14 @@ messages$excelFieldFormatError <- function(
 ) {
   plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
   cliFormat(
-    "Excel validation error{plotInfo}: Invalid format for {.field {fieldName}}.
+    "Validation error{plotInfo}: Invalid format for {.field {fieldName}}.
     Provided: {.val {value}}
     Expected: Values separated by commas (not spaces)
     Example: '72, 80' or '72,80' (not '72 80')"
   )
 }
 
-messages$excelFieldLengthError <- function(
+messages$fieldLengthError <- function(
   fieldName,
   value,
   plotID,
@@ -608,14 +608,14 @@ messages$excelFieldLengthError <- function(
   valuePlural <- if (actual != 1) "s" else ""
   expectedPlural <- if (expected != 1) "s" else ""
   cliFormat(
-    "Excel validation error{plotInfo}: Wrong number of values for {.field {fieldName}}.
+    "Validation error{plotInfo}: Wrong number of values for {.field {fieldName}}.
     Provided: {.val {value}} ({actual} value{valuePlural})
     Expected: {expected} comma-separated value{expectedPlural}
     Example: '72, 80'"
   )
 }
 
-messages$excelFieldTypeError <- function(
+messages$fieldTypeError <- function(
   fieldName,
   value,
   plotID,
@@ -623,7 +623,7 @@ messages$excelFieldTypeError <- function(
 ) {
   plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
   cliFormat(
-    "Excel validation error{plotInfo}: Invalid {.field {fieldName}} value.
+    "Validation error{plotInfo}: Invalid {.field {fieldName}} value.
     Provided: {.val {value}}
     Expected: {expectedType} values"
   )

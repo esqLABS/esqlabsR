@@ -104,9 +104,9 @@ test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
 # single observed and simulated datasets
 oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
 
-test_that(".parseExcelMultiValueField numeric conversion path is covered", {
+test_that(".parseMultiValueField numeric conversion path is covered", {
   # Direct test to ensure numeric conversion code path is covered
-  result <- esqlabsR:::.parseExcelMultiValueField(
+  result <- esqlabsR:::.parseMultiValueField(
     value = "72.5, 80.5",
     fieldName = "test",
     plotID = "P1",
@@ -118,7 +118,7 @@ test_that(".parseExcelMultiValueField numeric conversion path is covered", {
 
   # Test space-separated numeric values trigger correct error
   expect_error(
-    esqlabsR:::.parseExcelMultiValueField(
+    esqlabsR:::.parseMultiValueField(
       value = "72 80",
       fieldName = "test",
       plotID = "P1",

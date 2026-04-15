@@ -1,14 +1,14 @@
-#' Generate DataCombined objects as defined in excel file
+#' Generate DataCombined objects from a ProjectConfiguration
 #'
 #' @param dataCombinedNames Names of the DataCombined objects that will be
-#'   created. If a DataCombined with a given name is not defined in the Excel
-#'   file, an error is thrown. Can be used together with `plotGridNames`.
-#' @param plotGridNames Names of the plot grid specified in the sheet
-#'   `plotGrids`. Each data combined used by the specified plot grids will be
+#'   created. If a DataCombined with a given name is not defined in the
+#'   project configuration, an error is thrown. Can be used together with
+#'   `plotGridNames`.
+#' @param plotGridNames Names of the plot grid specified in the plot
+#'   configuration. Each data combined used by the specified plot grids will be
 #'   created. Can be used together with `dataCombinedNames`.
 #' @param projectConfiguration Object of class `ProjectConfiguration` that
-#'   contains information about the output paths and the excel file where plots
-#'   are defined.
+#'   contains information about the output paths and plots configuration.
 #' @param simulatedScenarios A list of simulated scenarios as returned by
 #'   `runScenarios()`
 #' @param observedData A list of `DataSet` objects
@@ -23,7 +23,7 @@
 #' @import tidyr
 #'
 #' @export
-createDataCombinedFromExcel <- function(
+createDataCombined <- function(
   projectConfiguration,
   dataCombinedNames = NULL,
   plotGridNames = NULL,
@@ -54,16 +54,13 @@ createDataCombinedFromExcel <- function(
     )
   }
 
-  dfDataCombined <- readExcel(
-    path = projectConfiguration$plotsFile,
-    sheet = "DataCombined"
-  )
+  dfDataCombined <- projectConfiguration$plots$dataCombined
   dfDataCombined <- dplyr::filter(
     dfDataCombined,
     DataCombinedName %in% dataCombinedNames
   )
 
-  dfDataCombined <- .validateDataCombinedFromExcel(
+  dfDataCombined <- .validateDataCombined(
     dfDataCombined,
     simulatedScenarios,
     observedData,
@@ -143,7 +140,7 @@ createDataCombinedFromExcel <- function(
       !is.na(xScaleFactors) |
       !is.na(yScaleFactors)
   )
-  # Apply data transformations if specified in the excel file
+  # Apply data transformations if specified
   if (dim(dfTransform)[[1]] != 0) {
     apply(dfTransform, 1, \(row) {
       # Get the data frame of the Data combined to retrieve units and MW
@@ -210,9 +207,9 @@ createDataCombinedFromExcel <- function(
   return(dataCombinedList)
 }
 
-#' Validate and process the 'DataCombined' sheet
+#' Validate and process a DataCombined data frame
 #'
-#' @param dfDataCombined Data frame created by reading the ' DataCombined' sheet
+#' @param dfDataCombined Data frame with DataCombined definitions
 #' @param simulatedScenarios List of simulated scenarios as created by
 #'   `runScenarios()`
 #' @param observedData Observed data objects
@@ -221,7 +218,7 @@ createDataCombinedFromExcel <- function(
 #'
 #' @returns Processed `dfDataCombined`
 #' @keywords internal
-.validateDataCombinedFromExcel <- function(
+.validateDataCombined <- function(
   dfDataCombined,
   simulatedScenarios,
   observedData,
@@ -272,7 +269,6 @@ createDataCombinedFromExcel <- function(
   # empty data combined can still be created.
   dcNames <- unique(dfDataCombined$DataCombinedName)
 
-  # warnings for invalid data in plot definitions from excel
   # scenario not present in simulatedScenarios
   missingScenarios <- setdiff(
     setdiff(dfDataCombined$scenario, names(simulatedScenarios)),
@@ -315,11 +311,10 @@ createDataCombinedFromExcel <- function(
 
 #' Extract names of DataCombined required for the creation of specified plots
 #'
-#' @param plotGridNames Names of the plot grid specified in the sheet
-#'   `plotGrids`.
+#' @param plotGridNames Names of the plot grid specified in the plot
+#'   configuration.
 #' @param projectConfiguration Object of class `ProjectConfiguration` that
-#'   contains information about the output paths and the excel file where plots
-#'   are defined.
+#'   contains information about the output paths and plots configuration.
 #'
 #' @returns A list with the names of required DataCombined
 #' @noRd
@@ -327,11 +322,24 @@ createDataCombinedFromExcel <- function(
   projectConfiguration,
   plotGridNames
 ) {
-  dfPlotConfigurations <- .readPlotConfigurations(
+  plotConfigurations <- .getPlotConfigurations(
     projectConfiguration = projectConfiguration,
     plotGridNames = plotGridNames
-  )$plotConfigurations
+  )
+  dfPlotConfigurations <- plotConfigurations$plotConfigurations
   dataCombinedNames <- unique(dfPlotConfigurations$DataCombinedName)
 
   return(dataCombinedNames)
+}
+
+
+#' @rdname createDataCombined
+#' @export
+createDataCombinedFromExcel <- function(...) {
+  lifecycle::deprecate_soft(
+    what = "createDataCombinedFromExcel()",
+    with = "createDataCombined()",
+    when = "6.0.0"
+  )
+  createDataCombined(...)
 }

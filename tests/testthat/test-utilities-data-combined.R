@@ -1,6 +1,7 @@
 projectConfiguration <- testProjectConfiguration()
 
 scenarioNames <- c("TestScenario", "PopulationScenario")
+outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 simulatedScenarios <- runScenarios(
   projectConfiguration,
@@ -57,7 +58,7 @@ test_that("It returns correct names of data combined when a path is not specifie
   df_missing_path$path[3] <- NA
 
   expect_error(
-    .validateDataCombinedFromExcel(df_missing_path, list(), observedData),
+    .validateDataCombined(df_missing_path, list(), observedData),
     regexp = messages$stopNoPathProvided("DC_missingPath")
   )
 })
@@ -66,7 +67,7 @@ test_that("It errors when label is missing", {
   df_missing_label <- dataCombinedDf
   df_missing_label$label[1] <- NA
   expect_error(
-    .validateDataCombinedFromExcel(df_missing_label, list(), observedData),
+    .validateDataCombined(df_missing_label, list(), observedData),
     regexp = messages$missingLabel()
   )
 })
@@ -75,7 +76,7 @@ test_that("It errors when dataType is missing", {
   df_missing_dataType <- dataCombinedDf
   df_missing_dataType$dataType[1] <- NA
   expect_error(
-    .validateDataCombinedFromExcel(df_missing_dataType, list(), observedData),
+    .validateDataCombined(df_missing_dataType, list(), observedData),
     regexp = messages$missingDataType()
   )
 })
@@ -84,7 +85,7 @@ test_that("It errors when scenario is missing for simulated dataType", {
   df_missing_scenario <- dataCombinedDf
   df_missing_scenario$scenario[1] <- NA
   expect_error(
-    .validateDataCombinedFromExcel(df_missing_scenario, list(), observedData),
+    .validateDataCombined(df_missing_scenario, list(), observedData),
     regexp = messages$missingScenarioName()
   )
 })
@@ -93,7 +94,7 @@ test_that("It errors when dataSet is missing for observed dataType", {
   df_missing_dataSet <- dataCombinedDf
   df_missing_dataSet$dataSet[2] <- NA
   expect_error(
-    .validateDataCombinedFromExcel(df_missing_dataSet, list(), observedData),
+    .validateDataCombined(df_missing_dataSet, list(), observedData),
     regexp = messages$stopNoDataSetProvided("AciclovirPVB")
   )
 })
@@ -104,7 +105,7 @@ test_that("It warns when scenario is not found in simulatedScenarios", {
 
   # First test with stopIfNotFound = TRUE
   expect_error(
-    .validateDataCombinedFromExcel(
+    .validateDataCombined(
       df_invalid_scenario,
       list(),
       observedData,
@@ -119,7 +120,7 @@ test_that("It warns when scenario is not found in simulatedScenarios", {
 
   # Then test with stopIfNotFound = FALSE
   expect_warning(
-    .validateDataCombinedFromExcel(
+    .validateDataCombined(
       df_invalid_scenario,
       list(),
       observedData,
@@ -145,7 +146,7 @@ test_that("It warns when dataSet is not found in observedData", {
 
   # First test with stopIfNotFound = TRUE
   expect_error(
-    .validateDataCombinedFromExcel(
+    .validateDataCombined(
       df_invalid_dataSet,
       mock_scenario,
       list(),
@@ -156,7 +157,7 @@ test_that("It warns when dataSet is not found in observedData", {
 
   # Then test with stopIfNotFound = FALSE
   expect_warning(
-    .validateDataCombinedFromExcel(
+    .validateDataCombined(
       df_invalid_dataSet,
       mock_scenario,
       list(),
