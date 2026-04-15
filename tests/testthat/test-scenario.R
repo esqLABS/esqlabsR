@@ -218,36 +218,22 @@ test_that("Individual parameter sets from 'Individual Parameter Sets' column are
   expect_equal(scenario$finalCustomParams$units[[idx]], "ml/min")
 })
 
-test_that("Warning is shown when an individual parameter set sheet is not found", {
+test_that("Error is thrown when an individual parameter set is not found", {
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
 
-  individualsFile <- projectConfiguration$individualsFile
-
-  # Add a new individual row with a non-existent parameter set sheet name
-  existingData <- readxl::read_xlsx(
-    individualsFile,
-    sheet = "IndividualBiometrics"
-  )
-  new_row <- data.frame(
-    IndividualId = "TestIndiv_bad_set",
-    Species = "Human",
-    Population = "European_ICRP_2002",
-    Gender = "MALE",
-    `Weight [kg]` = 70,
-    `Height [cm]` = 170,
-    `Age [year(s)]` = 30,
-    `Protein Ontogenies` = NA_character_,
-    `Individual Parameter Sets` = "NonExistentSheet",
-    check.names = FALSE
-  )
-  combined <- rbind(existingData, new_row)
-
-  wb <- openxlsx::loadWorkbook(individualsFile)
-  openxlsx::removeWorksheet(wb, "IndividualBiometrics")
-  openxlsx::addWorksheet(wb, "IndividualBiometrics")
-  openxlsx::writeData(wb, "IndividualBiometrics", combined)
-  openxlsx::saveWorkbook(wb, individualsFile, overwrite = TRUE)
+  # Add a fake individual with a mapping to a non-existent parameter set
+  projectConfiguration$individuals[["TestIndiv_bad_set"]] <-
+    ospsuite::createIndividualCharacteristics(
+      species = ospsuite::Species$Human,
+      population = ospsuite::HumanPopulation$European_ICRP_2002,
+      gender = ospsuite::Gender$Male,
+      weight = 70,
+      height = 170,
+      age = 30
+    )
+  projectConfiguration$individualParameterSetMapping[["TestIndiv_bad_set"]] <-
+    "NonExistentSheet"
 
   scenarioNames <- c("TestScenario")
   scenarioConfigurations <- readScenarioConfigurationFromExcel(
@@ -313,4 +299,23 @@ test_that("The name of a scenario is set as simulation name", {
 
   # Check if the name of the simulation is set to the name of the scenario
   expect_equal(scenarios[[1]]$simulation$name, scenarioNames[[1]])
+})
+
+# JSON integration ----
+
+test_that("Scenario initializes from JSON-loaded ProjectConfiguration", {
+  pc <- testProjectConfigurationJSON()
+  sc <- pc$scenarioConfigurations[["TestScenario"]]
+  scenario <- Scenario$new(sc)
+  expect_s3_class(scenario, "Scenario")
+  expect_false(is.null(scenario$simulation))
+  expect_equal(scenario$scenarioConfiguration$scenarioName, "TestScenario")
+})
+
+test_that("Scenario initializes with steady state and multiple param groups", {
+  pc <- testProjectConfigurationJSON()
+  sc <- pc$scenarioConfigurations[["TestScenario2"]]
+  scenario <- Scenario$new(sc)
+  expect_s3_class(scenario, "Scenario")
+  expect_equal(length(scenario$scenarioConfiguration$simulationTime), 2)
 })

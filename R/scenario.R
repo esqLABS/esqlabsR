@@ -75,11 +75,19 @@ Scenario <- R6::R6Class(
       stopIfParameterNotFound = TRUE
     ) {
       scenarioConfiguration <- private$.scenarioConfiguration
-      # Read parameters from the parameters file
-      params <- readParametersFromXLS(
-        scenarioConfiguration$projectConfiguration$modelParamsFile,
-        scenarioConfiguration$paramSheets
-      )
+      pc <- scenarioConfiguration$projectConfiguration
+
+      # Read model parameters from ProjectConfiguration fields
+      params <- NULL
+      for (groupName in enumKeys(scenarioConfiguration$paramSheets)) {
+        groupParams <- pc$modelParameters[[groupName]]
+        if (!is.null(groupParams)) {
+          params <- extendParameterStructure(
+            parameters = params,
+            newParameters = groupParams
+          )
+        }
+      }
 
       # Apply individual physiology, if specified
       individualCharacteristics <- NULL
@@ -89,11 +97,7 @@ Scenario <- R6::R6Class(
         !is.null(scenarioConfiguration$individualId) &&
           !is.na(scenarioConfiguration$individualId)
       ) {
-        individualCharacteristics <- readIndividualCharacteristicsFromXLS(
-          XLSpath = scenarioConfiguration$projectConfiguration$individualsFile,
-          individualId = scenarioConfiguration$individualId,
-          nullIfNotFound = TRUE
-        )
+        individualCharacteristics <- pc$individuals[[scenarioConfiguration$individualId]]
 
         if (is.null(individualCharacteristics)) {
           warning(messages$warningNoIndividualCharacteristics(
@@ -103,39 +107,38 @@ Scenario <- R6::R6Class(
         }
 
         # Find and apply individual-specific model parameters
-        indivParams <- .readIndividualParameterSetsFromXLS(
-          XLSpath = scenarioConfiguration$projectConfiguration$individualsFile,
-          individualId = scenarioConfiguration$individualId,
-          scenarioName = scenarioConfiguration$scenarioName
-        )
+        individualId <- scenarioConfiguration$individualId
+        setNames <- pc$individualParameterSetMapping[[individualId]]
 
-        if (!is.null(indivParams)) {
-          params <- extendParameterStructure(
-            parameters = params,
-            newParameters = indivParams
-          )
+        if (!is.null(setNames)) {
+          for (setName in setNames) {
+            setParams <- pc$individualParameterSets[[setName]]
+            if (!is.null(setParams)) {
+              params <- extendParameterStructure(
+                parameters = params,
+                newParameters = setParams
+              )
+            } else {
+              stop(messages$errorIndividualParameterSetNotFound(
+                scenarioName = scenarioConfiguration$scenarioName,
+                parameterSetName = setName
+              ))
+            }
+          }
         }
       }
 
       # Set administration protocols
-      excelFilePath <- scenarioConfiguration$projectConfiguration$applicationsFile
-      # Checking for 'NA' if administration protocol is not set in excel file.
+      # Checking for 'NA' if administration protocol is not set.
       if (!is.na(scenarioConfiguration$applicationProtocol)) {
-        if (
-          !any(
-            readxl::excel_sheets(excelFilePath) ==
-              scenarioConfiguration$applicationProtocol
-          )
-        ) {
+        protocol <- scenarioConfiguration$applicationProtocol
+        applicationParams <- pc$applications[[protocol]]
+        if (is.null(applicationParams)) {
           stop(messages$errorApplicationProtocolNotFound(
             scenarioName = scenarioConfiguration$scenarioName,
-            applicationProtocol = scenarioConfiguration$applicationProtocol
+            applicationProtocol = protocol
           ))
         }
-        applicationParams <- readParametersFromXLS(
-          excelFilePath,
-          scenarioConfiguration$applicationProtocol
-        )
         params <- extendParameterStructure(
           parameters = params,
           newParameters = applicationParams
@@ -210,6 +213,7 @@ Scenario <- R6::R6Class(
     # Private function to create population from the configuration
     .initializePopulationFromConfiguration = function() {
       scenarioConfiguration <- private$.scenarioConfiguration
+      pc <- scenarioConfiguration$projectConfiguration
       # Defining an empty population as `NA` because test for `NULL` is painful
       population <- NA
 
@@ -218,18 +222,14 @@ Scenario <- R6::R6Class(
         if (scenarioConfiguration$readPopulationFromCSV) {
           populationPath <- paste0(
             file.path(
-              scenarioConfiguration$projectConfiguration$populationsFolder,
+              pc$populationsFolder,
               scenarioConfiguration$populationId
             ),
             ".csv"
           )
           population <- loadPopulation(populationPath)
         } else {
-          popCharacteristics <- readPopulationCharacteristicsFromXLS(
-            XLSpath = scenarioConfiguration$projectConfiguration$populationsFile,
-            populationName = scenarioConfiguration$populationId,
-            sheet = "Demographics"
-          )
+          popCharacteristics <- pc$populations[[scenarioConfiguration$populationId]]
           population <- createPopulation(
             populationCharacteristics = popCharacteristics
           )
