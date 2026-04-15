@@ -70,6 +70,32 @@ test_that("importProjectConfigurationFromExcel JSON can be loaded by ProjectConf
   expect_true(length(pc$individuals) > 0)
 })
 
+test_that("importProjectConfigurationFromExcel includes species parameters in modelParameters", {
+  temp_project <- local_test_project()
+  jsonPath <- importProjectConfigurationFromExcel(
+    temp_project$project_config_path,
+    silent = TRUE
+  )
+  jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+
+  # SpeciesParameters.xlsx should have species sheets (Rat, Rabbit, Monkey, etc.)
+  # which should now appear in modelParameters
+  speciesFile <- system.file("extdata", "SpeciesParameters.xlsx", package = "esqlabsR")
+  speciesSheets <- readxl::excel_sheets(speciesFile)
+
+  # At least one species sheet should be merged into modelParameters
+  speciesInModel <- intersect(speciesSheets, names(jsonData$modelParameters))
+  expect_true(length(speciesInModel) > 0)
+
+  # Verify the species sheet has the standard parameter structure
+  for (sheetName in speciesInModel) {
+    sheet <- jsonData$modelParameters[[sheetName]]
+    expect_true(length(sheet) > 0)
+    first <- sheet[[1]]
+    expect_true(all(c("containerPath", "parameterName", "value") %in% names(first)))
+  }
+})
+
 # ---- exportProjectConfigurationToExcel tests ----
 
 test_that("exportProjectConfigurationToExcel creates Excel files from ProjectConfiguration", {

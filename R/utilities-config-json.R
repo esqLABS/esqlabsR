@@ -91,6 +91,27 @@ importProjectConfigurationFromExcel <- function(
     jsonData$modelParameters <- .excelParameterSheetsToV2(modelParamsFile)
   }
 
+  # --- Merge species parameters from SpeciesParameters.xlsx ---
+  speciesParamsFile <- system.file(
+    "extdata", "SpeciesParameters.xlsx", package = "esqlabsR"
+  )
+  if (file.exists(speciesParamsFile)) {
+    speciesSheets <- readxl::excel_sheets(speciesParamsFile)
+    speciesParams <- .excelParameterSheetsToV2(
+      speciesParamsFile, sheetNames = speciesSheets
+    )
+    if (is.null(jsonData$modelParameters)) {
+      jsonData$modelParameters <- speciesParams
+    } else {
+      # Only add species sheets that don't already exist (user overrides win)
+      for (sheetName in names(speciesParams)) {
+        if (is.null(jsonData$modelParameters[[sheetName]])) {
+          jsonData$modelParameters[[sheetName]] <- speciesParams[[sheetName]]
+        }
+      }
+    }
+  }
+
   # --- Individuals ---
   individualsFile <- resolveConfigFile(pcProps[["individualsFile"]])
   if (!is.null(individualsFile) && file.exists(individualsFile)) {
