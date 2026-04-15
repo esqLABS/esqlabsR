@@ -225,7 +225,12 @@ runPI <- function(piTasks) {
       parameterName <- paramRow$`Parameter Name`
       paramPath <- paste0(containerPath, "|", parameterName)
 
-      # Validate bounds match within group
+      # Validate bounds are present and match within group
+      for (colName in c("MinValue", "MaxValue", "StartValue")) {
+        if (is.na(paramRow[[colName]])) {
+          stop(messages$errorPIColumnRequired(colName, "PIParameters"))
+        }
+      }
       if (
         paramRow$MinValue != firstRow$MinValue ||
           paramRow$MaxValue != firstRow$MaxValue ||
