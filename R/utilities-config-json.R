@@ -280,11 +280,11 @@ exportProjectConfigurationToExcel <- function(
   # --- Scenarios.xlsx ---
   scenSheets <- list()
   if (
-    !is.null(pc$scenarioConfigurations) &&
-      length(pc$scenarioConfigurations) > 0
+    !is.null(pc$scenarios) &&
+      length(pc$scenarios) > 0
   ) {
     scenSheets[["Scenarios"]] <- .scenarioConfigurationsToExcelDf(
-      pc$scenarioConfigurations
+      pc$scenarios
     )
   }
   if (!is.null(pc$outputPaths) && length(pc$outputPaths) > 0) {
@@ -812,8 +812,8 @@ projectConfigurationStatus <- function(
   rows <- list()
   for (name in names(scenarioConfigs)) {
     sc <- scenarioConfigs[[name]]
-    paramSheetNames <- enumKeys(sc$paramSheets)
-    paramSheetsStr <- if (length(paramSheetNames) > 0) {
+    paramSheetNames <- sc$modelParameterSets
+    paramSheetsStr <- if (!is.null(paramSheetNames) && length(paramSheetNames) > 0) {
       paste(paramSheetNames, collapse = ", ")
     } else {
       NA

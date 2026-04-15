@@ -354,7 +354,7 @@ ProjectConfiguration <- R6::R6Class(
       self$populations <- private$.parsePopulations(jsonData$populations)
 
       # Parse scenarios
-      self$scenarioConfigurations <- private$.parseScenarios(jsonData$scenarios)
+      self$scenarios <- private$.parseScenarios(jsonData$scenarios)
 
       # Parse plots
       self$plots <- private$.parsePlots(jsonData$plots)
@@ -438,7 +438,7 @@ ProjectConfiguration <- R6::R6Class(
       if (is.null(scenariosData)) return(list())
       result <- list()
       for (entry in scenariosData) {
-        sc <- ScenarioConfiguration$new(self)
+        sc <- Scenario$new()
         sc$scenarioName <- entry$name
         sc$modelFile <- entry$modelFile
         sc$applicationProtocol <- entry$applicationProtocol %||% NA
@@ -452,10 +452,10 @@ ProjectConfiguration <- R6::R6Class(
           sc$readPopulationFromCSV <- entry$readPopulationFromCSV
         }
         if (!is.null(entry$modelParameterSheets)) {
-          sc$addParamSheets(unlist(entry$modelParameterSheets))
+          sc$modelParameterSets <- unlist(entry$modelParameterSheets)
         }
         if (!is.null(entry$simulationTime)) {
-          sc$simulationTime <- entry$simulationTime
+          sc$simulationTime <- .parseSimulationTimeIntervals(entry$simulationTime)
           sc$simulationTimeUnit <- entry$simulationTimeUnit
         }
         if (!is.null(entry$steadyState) && isTRUE(entry$steadyState)) {
@@ -471,7 +471,6 @@ ProjectConfiguration <- R6::R6Class(
         if (!is.null(entry$overwriteFormulasInSS)) {
           sc$overwriteFormulasInSS <- entry$overwriteFormulasInSS
         }
-        # Resolve output paths
         if (!is.null(entry$outputPathIds)) {
           pathIds <- unlist(entry$outputPathIds)
           sc$outputPaths <- unname(self$outputPaths[pathIds])
@@ -578,9 +577,9 @@ ProjectConfiguration <- R6::R6Class(
       }
       invisible(self)
     },
-    #' @field scenarioConfigurations Named list of `ScenarioConfiguration`
-    #'   objects, keyed by scenario name. Populated by JSON loading.
-    scenarioConfigurations = NULL,
+    #' @field scenarios Named list of `Scenario` objects, keyed by scenario
+    #'   name. Populated by JSON loading.
+    scenarios = NULL,
     #' @field modelParameters Named list of parameter structures, keyed by
     #'   sheet name. Each is a list with `paths`, `values`, `units` vectors.
     modelParameters = NULL,
@@ -610,3 +609,40 @@ ProjectConfiguration <- R6::R6Class(
     individualParameterSetMapping = NULL
   )
 )
+
+#' Parse simulation time intervals from a string
+#' @param simulationTimeIntervalsString A string with format "start,end,res" or
+#'   "start1,end1,res1;start2,end2,res2"
+#' @returns A list of numeric vectors, or NULL if input is NULL.
+#' @keywords internal
+#' @noRd
+.parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
+  if (is.null(simulationTimeIntervalsString)) {
+    return(NULL)
+  }
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervalsString,
+    split = ";",
+    fixed = TRUE
+  )[[1]]
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervals,
+    split = ",",
+    fixed = TRUE
+  )
+  simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
+  validateIsNumeric(simulationTimeIntervals)
+  if (any(unlist(simulationTimeIntervals) < 0)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  if (any(sapply(simulationTimeIntervals, length) != 3)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  if (any(sapply(simulationTimeIntervals, function(x) x[3] <= 0))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  if (any(sapply(simulationTimeIntervals, function(x) x[1] >= x[2]))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  return(simulationTimeIntervals)
+}

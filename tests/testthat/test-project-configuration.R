@@ -8,8 +8,8 @@ test_that("ProjectConfiguration loads from valid JSON and populates all fields",
   expect_true(fs::file_exists(pc$modelFolder))
   expect_true(fs::dir_exists(pc$configurationsFolder))
 
-  expect_length(pc$scenarioConfigurations, 5)
-  expect_true("TestScenario" %in% names(pc$scenarioConfigurations))
+  expect_length(pc$scenarios, 5)
+  expect_true("TestScenario" %in% names(pc$scenarios))
   expect_length(pc$modelParameters, 4)
   expect_true("Global" %in% names(pc$modelParameters))
   expect_length(pc$individuals, 1)
@@ -53,17 +53,14 @@ test_that("ProjectConfiguration parses model parameters into list(paths, values,
   expect_equal(global$units, "")
 })
 
-test_that("ProjectConfiguration parses scenarios into ScenarioConfiguration objects", {
+test_that("ProjectConfiguration parses scenarios into Scenario objects", {
   pc <- testProjectConfigurationJSON()
-  sc <- pc$scenarioConfigurations[["TestScenario2"]]
-  expect_s3_class(sc, "ScenarioConfiguration")
+  sc <- pc$scenarios[["TestScenario2"]]
+  expect_s3_class(sc, "Scenario")
   expect_equal(sc$scenarioName, "TestScenario2")
   expect_true(sc$simulateSteadyState)
   expect_equal(length(sc$simulationTime), 2)
-  expect_equal(
-    enumKeys(sc$paramSheets),
-    c("Global", "Aciclovir", "Sheet, with comma")
-  )
+  expect_equal(sc$modelParameterSets, c("Global", "Aciclovir", "Sheet, with comma"))
 })
 
 test_that("Individuals are stored as plain lists", {
@@ -183,4 +180,19 @@ test_that("modified flag is independent between clones", {
   suppressWarnings(cloned$dataFolder <- "modified/data/folder")
   expect_true(pc$modified)
   expect_true(cloned$modified)
+})
+
+test_that("Scenarios are parsed as Scenario objects (not ScenarioConfiguration)", {
+  pc <- testProjectConfigurationJSON()
+  expect_true(length(pc$scenarios) > 0)
+  sc <- pc$scenarios[["TestScenario"]]
+  expect_s3_class(sc, "Scenario")
+  expect_equal(sc$scenarioName, "TestScenario")
+  expect_false(is.null(sc$modelFile))
+  expect_equal(sc$modelParameterSets, c("Global"))
+})
+
+test_that("pc$scenarios replaces pc$scenarioConfigurations", {
+  pc <- testProjectConfigurationJSON()
+  expect_true(!is.null(pc$scenarios))
 })

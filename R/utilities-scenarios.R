@@ -1,7 +1,7 @@
 #' Run a set of scenarios.
 #'
 #' @param projectConfiguration An object of type `ProjectConfiguration` loaded
-#'   from JSON. Its `scenarioConfigurations` field is used to select and create
+#'   from JSON. Its `scenarios` field is used to select and create
 #'   scenarios.
 #' @param scenarioNames Optional character vector of scenario names to run. If
 #'   `NULL` (default), all scenarios defined in `projectConfiguration` are run.
@@ -33,7 +33,7 @@ runScenarios <- function(
     nullAllowed = TRUE
   )
 
-  allConfigs <- projectConfiguration$scenarioConfigurations
+  allConfigs <- projectConfiguration$scenarios
   if (is.null(scenarioNames)) {
     scenarioNames <- names(allConfigs)
   }

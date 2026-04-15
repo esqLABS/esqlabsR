@@ -19,7 +19,7 @@
 #' @field steadyStateTime Numeric. Steady-state simulation time in minutes.
 #' @field overwriteFormulasInSS Logical. If `TRUE`, overwrite formula parameters
 #'   during steady-state.
-#' @field paramSheets Character vector. Names of model parameter sheets to apply.
+#' @field modelParameterSets Character vector. Names of model parameter groups to apply.
 #'
 #' @export
 #' @family scenario
@@ -40,7 +40,7 @@ Scenario <- R6::R6Class(
     simulationTimeUnit = NULL,
     steadyStateTime = 1000,
     overwriteFormulasInSS = FALSE,
-    paramSheets = NULL,
+    modelParameterSets = NULL,
 
     #' @description Create a new Scenario.
     initialize = function() {},
@@ -59,8 +59,8 @@ Scenario <- R6::R6Class(
       if (!is.null(self$applicationProtocol) && !is.na(self$applicationProtocol)) {
         cat("  Protocol:       ", self$applicationProtocol, "\n")
       }
-      if (!is.null(self$paramSheets)) {
-        cat("  Param sheets:   ", paste(self$paramSheets, collapse = ", "), "\n")
+      if (!is.null(self$modelParameterSets)) {
+        cat("  Param groups:   ", paste(self$modelParameterSets, collapse = ", "), "\n")
       }
       if (!is.null(self$outputPaths)) {
         cat("  Output paths:   ", length(self$outputPaths), "path(s)\n")
