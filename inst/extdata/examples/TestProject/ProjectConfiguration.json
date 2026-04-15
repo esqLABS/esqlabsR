@@ -16,6 +16,12 @@
     "dataImporterConfigurationFile": "esqlabs_dataImporter_configuration.xml",
     "outputFolder": "Results/"
   },
+  "observedData": [
+    {
+      "type": "excel",
+      "sheets": ["Laskin 1982.Group A"]
+    }
+  ],
   "outputPaths": {
     "Aciclovir_PVB": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
     "Aciclovir_fat_cell": "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
