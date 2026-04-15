@@ -515,6 +515,19 @@ ProjectConfiguration <- R6::R6Class(
     }
   ),
   public = list(
+    #' @description Add a scenario programmatically.
+    #' Delegates to the standalone [addScenario()] function.
+    #' @param scenarioName Character. Name for the new scenario.
+    #' @param modelFile Character. Name of the `.pkml` model file.
+    #' @param ... Additional arguments passed to [addScenario()].
+    addScenario = function(scenarioName, modelFile, ...) {
+      addScenario(
+        projectConfiguration = self,
+        scenarioName = scenarioName,
+        modelFile = modelFile,
+        ...
+      )
+    },
     #' Initialize
     #'
     #' @param projectConfigurationFilePath A string representing the path to the
