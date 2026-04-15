@@ -28,6 +28,18 @@
 #'
 #' @returns A named list of `PITaskConfiguration` objects.
 #'
+#' @examples
+#' \dontrun{
+#' projectConfiguration <- createProjectConfiguration(
+#'   exampleProjectConfigurationPath(),
+#'   ignoreVersionCheck = TRUE
+#' )
+#' piTaskConfigurations <- readPITaskConfigurationFromExcel(
+#'   piTaskNames = "AciclovirSimple",
+#'   projectConfiguration = projectConfiguration
+#' )
+#' }
+#'
 #' @export
 readPITaskConfigurationFromExcel <- function(
   piTaskNames = NULL,

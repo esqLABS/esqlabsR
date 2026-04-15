@@ -15,6 +15,18 @@
 #'
 #' @returns Named list of `ParameterIdentification` objects
 #'
+#' @examples
+#' \dontrun{
+#' projectConfiguration <- createProjectConfiguration(
+#'   exampleProjectConfigurationPath(),
+#'   ignoreVersionCheck = TRUE
+#' )
+#' piTaskConfigurations <- readPITaskConfigurationFromExcel(
+#'   projectConfiguration = projectConfiguration
+#' )
+#' piTasks <- createPITasks(piTaskConfigurations)
+#' }
+#'
 #' @export
 createPITasks <- function(
   piTaskConfigurations,

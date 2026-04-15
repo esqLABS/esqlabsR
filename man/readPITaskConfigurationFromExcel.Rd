@@ -41,3 +41,16 @@ also expects a "PIParameters" sheet with \code{PITaskName}, \code{Scenarios},
 with \code{PITaskName}, \code{OptionName}, \code{OptionValue} columns, and a "CIOptions"
 sheet with \code{PITaskName}, \code{OptionName}, \code{OptionValue} columns.
 }
+\examples{
+\dontrun{
+projectConfiguration <- createProjectConfiguration(
+  exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
+piTaskConfigurations <- readPITaskConfigurationFromExcel(
+  piTaskNames = "AciclovirSimple",
+  projectConfiguration = projectConfiguration
+)
+}
+
+}

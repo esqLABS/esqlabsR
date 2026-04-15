@@ -4,10 +4,19 @@
 \alias{createPITasks}
 \title{Create Parameter Identification tasks}
 \usage{
-createPITasks(piTaskConfigurations, stopIfParameterNotFound = TRUE)
+createPITasks(
+  piTaskConfigurations,
+  observedData = NULL,
+  stopIfParameterNotFound = TRUE
+)
 }
 \arguments{
 \item{piTaskConfigurations}{Named list of \code{PITaskConfiguration} objects}
+
+\item{observedData}{Named list of \code{DataSet} objects. When provided, datasets
+are looked up by the name in the \code{DataSet} column of \code{PIOutputMappings}.
+When \code{NULL} (default), observed data is loaded internally using the
+\code{ObservedDataSheet} column.}
 
 \item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), an error is
 thrown when a parameter defined in the scenario configuration cannot be
@@ -20,4 +29,17 @@ Named list of \code{ParameterIdentification} objects
 \description{
 Creates ParameterIdentification objects from PI configurations.
 Each PITaskConfiguration produces one ParameterIdentification object.
+}
+\examples{
+\dontrun{
+projectConfiguration <- createProjectConfiguration(
+  exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
+piTaskConfigurations <- readPITaskConfigurationFromExcel(
+  projectConfiguration = projectConfiguration
+)
+piTasks <- createPITasks(piTaskConfigurations)
+}
+
 }

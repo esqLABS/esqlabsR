@@ -812,7 +812,7 @@ messages$errorPIMissingPiDefinitionsKeys <- function(missingKeys) {
 messages$errorPIMissingSheetsInFile <- function(missingSheets, filePath) {
   cliFormat(
     "Required sheet(s) missing in {.file {filePath}}: {.val {paste(missingSheets, collapse = ', ')}}.
-    ParameterIdentification.xlsx must contain: PIOutputMappings, PIParameters, PIConfiguration, AlgorithmOptions, CIOptions"
+    ParameterIdentification.xlsx must contain: PIOutputMappings, PIParameters"
   )
 }
 
