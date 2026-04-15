@@ -1271,3 +1271,142 @@ createScenarioConfigurationsFromPKML <- function(
     ))
   }
 }
+
+#' Add a scenario programmatically to a ProjectConfiguration
+#'
+#' @description Creates a new `Scenario` and adds it to the
+#'   `projectConfiguration$scenarios` list after validating all references.
+#'
+#' @param projectConfiguration A `ProjectConfiguration` object.
+#' @param scenarioName Character. Name for the new scenario. Must not already
+#'   exist in `projectConfiguration$scenarios`.
+#' @param modelFile Character. Name of the `.pkml` model file (relative to
+#'   model folder).
+#' @param individualId Character or NULL. ID referencing
+#'   `projectConfiguration$individuals`.
+#' @param populationId Character or NULL. ID referencing
+#'   `projectConfiguration$populations`.
+#' @param applicationProtocol Character or NULL. Protocol name referencing
+#'   `projectConfiguration$applications`.
+#' @param parameterGroups Character vector or NULL. Group names referencing
+#'   `projectConfiguration$modelParameters`.
+#' @param outputPathIds Character vector or NULL. IDs referencing
+#'   `projectConfiguration$outputPaths`.
+#' @param simulationTime Character or NULL. Format `"start, end, resolution"`
+#'   or `"start, end, resolution; start, end, resolution"` for multiple
+#'   intervals.
+#' @param simulationTimeUnit Character. Time unit string. Default `"h"`.
+#' @param steadyState Logical. Whether to simulate steady state. Default
+#'   `FALSE`.
+#' @param steadyStateTime Numeric. Steady-state time in minutes. Default
+#'   `1000`.
+#' @param overwriteFormulasInSS Logical. Overwrite formulas during steady
+#'   state. Default `FALSE`.
+#' @param readPopulationFromCSV Logical. Load population from CSV. Default
+#'   `FALSE`.
+#'
+#' @returns The `projectConfiguration` object, invisibly.
+#'
+#' @export
+#' @family scenario
+addScenario <- function(
+    projectConfiguration,
+    scenarioName,
+    modelFile,
+    individualId = NULL,
+    populationId = NULL,
+    applicationProtocol = NULL,
+    parameterGroups = NULL,
+    outputPathIds = NULL,
+    simulationTime = NULL,
+    simulationTimeUnit = "h",
+    steadyState = FALSE,
+    steadyStateTime = 1000,
+    overwriteFormulasInSS = FALSE,
+    readPopulationFromCSV = FALSE) {
+  pc <- projectConfiguration
+  errors <- character()
+
+  # Validate required args
+  if (!is.character(scenarioName) || length(scenarioName) != 1 || nchar(scenarioName) == 0) {
+    errors <- c(errors, "scenarioName must be a non-empty string")
+  } else if (scenarioName %in% names(pc$scenarios)) {
+    errors <- c(errors, paste0("scenario '", scenarioName, "' already exists"))
+  }
+
+  if (!is.character(modelFile) || length(modelFile) != 1 || nchar(modelFile) == 0) {
+    errors <- c(errors, "modelFile must be a non-empty string")
+  }
+
+  # Validate optional references
+  if (!is.null(individualId) && !(individualId %in% names(pc$individuals))) {
+    errors <- c(errors, paste0("individualId '", individualId, "' not found in individuals"))
+  }
+  if (!is.null(populationId) && !(populationId %in% names(pc$populations))) {
+    errors <- c(errors, paste0("populationId '", populationId, "' not found in populations"))
+  }
+  if (!is.null(applicationProtocol) && !(applicationProtocol %in% names(pc$applications))) {
+    errors <- c(errors, paste0("applicationProtocol '", applicationProtocol, "' not found in applications"))
+  }
+  if (!is.null(parameterGroups)) {
+    bad <- setdiff(parameterGroups, names(pc$modelParameters))
+    if (length(bad) > 0) {
+      errors <- c(errors, paste0(
+        "parameterGroups not found in modelParameters: ",
+        paste(bad, collapse = ", ")
+      ))
+    }
+  }
+  if (!is.null(outputPathIds)) {
+    bad <- setdiff(outputPathIds, names(pc$outputPaths))
+    if (length(bad) > 0) {
+      errors <- c(errors, paste0(
+        "outputPathIds not found in outputPaths: ",
+        paste(bad, collapse = ", ")
+      ))
+    }
+  }
+
+  if (length(errors) > 0) {
+    stop(paste0(
+      "Cannot add scenario '", scenarioName, "':\n- ",
+      paste(errors, collapse = "\n- ")
+    ))
+  }
+
+  # Build Scenario object
+  sc <- Scenario$new()
+  sc$scenarioName <- scenarioName
+  sc$modelFile <- modelFile
+  sc$individualId <- individualId
+  sc$applicationProtocol <- applicationProtocol %||% NA
+
+  if (!is.null(populationId)) {
+    sc$populationId <- populationId
+    sc$simulationType <- "Population"
+  }
+
+  sc$parameterGroups <- parameterGroups
+  sc$readPopulationFromCSV <- readPopulationFromCSV
+
+  if (!is.null(outputPathIds)) {
+    sc$outputPaths <- unname(pc$outputPaths[outputPathIds])
+  }
+
+  if (!is.null(simulationTime)) {
+    sc$simulationTime <- .parseSimulationTimeIntervals(simulationTime)
+    sc$simulationTimeUnit <- simulationTimeUnit
+  }
+
+  sc$simulateSteadyState <- steadyState
+  sc$steadyStateTime <- steadyStateTime
+  sc$overwriteFormulasInSS <- overwriteFormulasInSS
+
+  # Add to configuration
+  pc$scenarios[[scenarioName]] <- sc
+  # Access private via environment to set modified flag
+  pc_env <- pc$.__enclos_env__$private
+  pc_env$.modified <- TRUE
+
+  invisible(pc)
+}
