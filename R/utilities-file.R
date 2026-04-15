@@ -139,7 +139,7 @@ readExcel <- function(path, sheet = NULL, ...) {
 
   df[char_cols] <- lapply(df[char_cols], function(col) {
     col <- trimws(col)
-    col <- gsub("[\r\n\t]", "", col)
+    col <- gsub("[\r\n\t]+", "", col)
     col
   })
   df
