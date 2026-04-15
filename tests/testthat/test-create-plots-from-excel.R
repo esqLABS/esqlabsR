@@ -1,4 +1,4 @@
-projectConfiguration <- testProjectConfiguration()
+projectConfiguration <- testProjectConfigurationJSON()
 
 scenarioNames <- c("TestScenario", "PopulationScenario")
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -19,17 +19,8 @@ simulatedScenarios$TestScenario$outputValues <- getOutputValues(
   simulationResults = preSimulatedResults
 )
 
-importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-  configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-)
-
-# Load observed data
-dataSheets <- "Laskin 1982.Group A"
-observedData <- esqlabsR::loadObservedData(
-  projectConfiguration = projectConfiguration,
-  sheets = dataSheets,
-  importerConfiguration = importerConfiguration
-)
+# Load observed data internally for test data setup only
+observedDataForSetup <- .loadObservedData(projectConfiguration)
 
 dataCombinedDf <- data.frame(list(
   "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
@@ -37,7 +28,7 @@ dataCombinedDf <- data.frame(list(
   "label" = c("Aciclovir simulated", "Aciclovir observed"),
   "scenario" = c(scenarioNames[1], NA),
   "path" = c(outputPaths, NA),
-  "dataSet" = c(NA, names(observedData)),
+  "dataSet" = c(NA, names(observedDataForSetup)),
   "group" = c("Aciclovir PVB", "Aciclovir PVB"),
   "xOffsets" = c(NA, NA),
   "xOffsetsUnits" = c(NA, NA),
@@ -104,9 +95,8 @@ test_that("It trows an error if mandatory field dataType is not filled out", {
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$missingDataType()
@@ -120,9 +110,8 @@ test_that("It trows an error if mandatory field label is not filled out", {
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$missingLabel()
@@ -136,9 +125,8 @@ test_that("It trows an error if no scenario is specified for a simulated data", 
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$missingScenarioName()
@@ -152,9 +140,8 @@ test_that("It trows an error if no output path is specified for a simulated data
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$stopNoPathProvided("AciclovirPVB")
@@ -168,9 +155,8 @@ test_that("It trows an error if wrong output path is specified for a simulated d
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$stopWrongOutputPath(
@@ -188,9 +174,8 @@ test_that("It trows an error if no data set is specified for observed data", {
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$stopNoDataSetProvided("AciclovirPVB")
@@ -204,9 +189,8 @@ test_that("It trows an error if defined scenario is missing and stopIfNotFound i
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$warningInvalidScenarioName("foo")
@@ -220,9 +204,8 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
 
   expect_warning(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = FALSE
     ),
     regexp = messages$warningInvalidScenarioName("foo")
@@ -231,14 +214,13 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
 
 test_that("It trows an error if defined data set is missing and stopIfNotFound is TRUE", {
   dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedData))
+  dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedDataForSetup))
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$stopInvalidDataSetName(scenarioNames[1])
@@ -247,14 +229,13 @@ test_that("It trows an error if defined data set is missing and stopIfNotFound i
 
 test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", {
   dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedData))
+  dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedDataForSetup))
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
 
   expect_warning(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = FALSE
     ),
     regexp = messages$warningInvalidDataSetName(scenarioNames[1])
@@ -268,9 +249,8 @@ test_that("It trows an error if mandatory field DataCombinedName is not filled o
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$missingDataCombinedName()
@@ -284,9 +264,8 @@ test_that("It trows an error if mandatory field plotType is not filled out", {
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$missingPlotType()
@@ -300,9 +279,8 @@ test_that("It trows an error if a plot requires a DataCombined that is not defin
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$stopInvalidDataCombinedName("foo")
@@ -319,9 +297,8 @@ test_that("It returns NULL if no plotGrids are defined", {
   pcLocal <- .withPlots(plotGrids = plotGridsDfLocal)
 
   plots <- createPlots(
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
     projectConfiguration = pcLocal,
+    simulatedScenarios = simulatedScenarios,
     stopIfNotFound = TRUE
   )
   expect_null(plots)
@@ -329,9 +306,8 @@ test_that("It returns NULL if no plotGrids are defined", {
 
 test_that("It creates plots for all plot grids when plotGridNames is NULL", {
   plots <- createPlots(
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
     projectConfiguration = projectConfiguration,
+    simulatedScenarios = simulatedScenarios,
     stopIfNotFound = TRUE
   )
   expect_equal(names(plots), c("Aciclovir", "Aciclovir2", "Aciclovir3"))
@@ -341,17 +317,15 @@ test_that("When custom DataCombined is passed, it is used instead of the one fro
   dataCombinedList <- createDataCombined(
     projectConfiguration = projectConfiguration,
     plotGridNames = c("Aciclovir", "Aciclovir2", "Aciclovir3"),
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData
+    simulatedScenarios = simulatedScenarios
   )
 
   # Change the x-offset of a data combined
   dataCombinedList$AciclovirPVB$setDataTransformations(xOffsets = 0)
 
   plots <- createPlots(
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
     projectConfiguration = projectConfiguration,
+    simulatedScenarios = simulatedScenarios,
     dataCombinedList = dataCombinedList,
     stopIfNotFound = TRUE
   )
@@ -363,8 +337,7 @@ test_that("It can create plots when custom data combined are passed that are mis
   dataCombinedList <- createDataCombined(
     projectConfiguration = projectConfiguration,
     plotGridNames = c("Aciclovir", "Aciclovir2", "Aciclovir3"),
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData
+    simulatedScenarios = simulatedScenarios
   )
 
   emptyDataCombinedDf <- data.frame(list(
@@ -386,9 +359,8 @@ test_that("It can create plots when custom data combined are passed that are mis
   pcLocal <- .withPlots(dataCombined = emptyDataCombinedDf)
 
   plots <- createPlots(
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
     projectConfiguration = pcLocal,
+    simulatedScenarios = simulatedScenarios,
     dataCombinedList = dataCombinedList,
     stopIfNotFound = TRUE
   )
@@ -398,9 +370,8 @@ test_that("It can create plots when custom data combined are passed that are mis
 test_that("It creates plots only for specified plotGrids", {
   plots <- createPlots(
     plotGridNames = "Aciclovir",
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
     projectConfiguration = projectConfiguration,
+    simulatedScenarios = simulatedScenarios,
     stopIfNotFound = TRUE
   )
   expect_equal(names(plots), c("Aciclovir"))
@@ -410,9 +381,8 @@ test_that("It trows an error when specified plot grid names are not defined", {
   expect_error(
     createPlots(
       plotGridNames = c("foo", "Aciclovir", "bar"),
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = projectConfiguration,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     messages$invalidPlotGridNames(c("foo", "bar"))
@@ -426,9 +396,8 @@ test_that("It throws an error if mandatory field plotIDs is not filled out", {
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$missingPlotIDs()
@@ -456,9 +425,8 @@ test_that("It throws an error if plotIDs are not unique", {
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$PlotIDsMustBeUnique(c("P1")),
@@ -476,9 +444,8 @@ test_that("It throws an error if plotGrid names are not unique", {
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$PlotGridsNamesMustBeUnique(c("Aciclovir")),
@@ -493,9 +460,8 @@ test_that("It trows an error if a plot grid requires a plot id that is not defin
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$errorInvalidPlotID("foo")
@@ -512,9 +478,8 @@ test_that("It exports plot grids as defined in exportConfiguration", {
   pcLocal$outputFolder <- tempdir()
 
   createPlots(
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
     projectConfiguration = pcLocal,
+    simulatedScenarios = simulatedScenarios,
     stopIfNotFound = TRUE
   )
   # Get the most recently created/modified folder in the Figures directory
@@ -533,9 +498,8 @@ test_that("It exports plot grids with specified output folder", {
   pcLocal$outputFolder <- tempdir()
 
   createPlots(
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
     projectConfiguration = pcLocal,
+    simulatedScenarios = simulatedScenarios,
     stopIfNotFound = TRUE,
     outputFolder = tempdir()
   )
@@ -552,9 +516,8 @@ test_that("It throws an error when trying to set a property that is not supporte
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$invalidConfigurationProperty(
@@ -582,9 +545,8 @@ test_that("It correctly treats names with underscores", {
   pcLocal$outputFolder <- tempdir()
 
   createPlots(
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
     projectConfiguration = pcLocal,
+    simulatedScenarios = simulatedScenarios,
     stopIfNotFound = TRUE
   )
 
@@ -605,7 +567,7 @@ test_that("It correctly treats empty rows", {
     "label" = c("Aciclovir simulated", NA, "Aciclovir observed"),
     "scenario" = c(scenarioNames[1], NA, NA),
     "path" = c(outputPaths, NA, NA),
-    "dataSet" = c(NA, NA, names(observedData)),
+    "dataSet" = c(NA, NA, names(observedDataForSetup)),
     "group" = c("Aciclovir PVB", NA, "Aciclovir PVB"),
     "xOffsets" = NA,
     "xOffsetsUnits" = NA,
@@ -652,9 +614,8 @@ test_that("It correctly treats empty rows", {
 
   expect_no_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     )
   )
@@ -670,9 +631,8 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     )
   )
@@ -685,9 +645,8 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
 
   expect_no_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     )
   )
@@ -700,9 +659,8 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     )
   )
@@ -715,9 +673,8 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
 
   expect_no_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     )
   )
@@ -732,9 +689,8 @@ test_that("It throws a warning when trying to export non-existent plot grid to f
 
   expect_warning(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$missingPlotGrids(
@@ -752,9 +708,8 @@ test_that("It throws a warning when output name is missing in exportConfiguratio
 
   expect_warning(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$missingOutputFileName()
@@ -801,9 +756,8 @@ test_that("It ignores a title argument in plotGrids when the title column is not
 
   expect_no_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     )
   )
@@ -840,9 +794,8 @@ test_that("It provides clear error when xValuesLimits uses space instead of comm
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = "Validation error.*xValuesLimits",
@@ -881,9 +834,8 @@ test_that("It accepts correctly formatted comma-separated axis limits (#848)", {
 
   expect_no_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     )
   )
@@ -919,9 +871,8 @@ test_that("It provides clear error for wrong number of axis limit values (#848)"
 
   expect_error(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = "Validation error.*yValuesLimits.*Expected: 2",
@@ -937,9 +888,8 @@ test_that("It shows a warning when xAxisScale is log and xAxisLimits contain 0",
 
   expect_warning(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$warningLogScaleWithZeroLimit(
@@ -959,9 +909,8 @@ test_that("It shows a warning when yAxisScale is log and yAxisLimits contain 0",
 
   expect_warning(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$warningLogScaleWithZeroLimit(
@@ -981,9 +930,8 @@ test_that("It shows a warning when yAxisScale is log and yValuesLimits contain 0
 
   expect_warning(
     createPlots(
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData,
       projectConfiguration = pcLocal,
+      simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
     regexp = messages$warningLogScaleWithZeroLimit(

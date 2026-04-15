@@ -242,3 +242,25 @@ test_that("print() shows 0 counts for empty ProjectConfiguration", {
   expect_match(output_text, "Output Paths:\\s+0")
   expect_match(output_text, "Plots:\\s+0")
 })
+
+# observedData parsing ----
+
+test_that("observedData field is populated from JSON", {
+  pc <- testProjectConfigurationJSON()
+  expect_type(pc$observedData, "list")
+  expect_true(length(pc$observedData) > 0)
+  expect_equal(pc$observedData[[1]]$type, "excel")
+  expect_equal(pc$observedData[[1]]$sheets, list("Laskin 1982.Group A"))
+})
+
+test_that("observedData is empty list when JSON has no observedData", {
+  tmp <- tempfile(fileext = ".json")
+  writeLines(
+    '{"schemaVersion": "2.0", "projectConfiguration": {}}',
+    tmp
+  )
+  pc <- ProjectConfiguration$new(tmp)
+  expect_type(pc$observedData, "list")
+  expect_length(pc$observedData, 0)
+  unlink(tmp)
+})

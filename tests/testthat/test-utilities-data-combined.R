@@ -1,4 +1,4 @@
-projectConfiguration <- testProjectConfiguration()
+projectConfiguration <- testProjectConfigurationJSON()
 
 scenarioNames <- c("TestScenario", "PopulationScenario")
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -8,17 +8,8 @@ simulatedScenarios <- runScenarios(
   scenarioNames = scenarioNames
 )
 
-importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-  configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-)
-
-# Load observed data
-dataSheets <- "Laskin 1982.Group A"
-observedData <- esqlabsR::loadObservedData(
-  projectConfiguration = projectConfiguration,
-  sheets = dataSheets,
-  importerConfiguration = importerConfiguration
-)
+# Load observed data internally for test data setup only
+observedDataForSetup <- .loadObservedData(projectConfiguration)
 
 # Create a proper data frame with paths for all entries
 dataCombinedDf <- data.frame(list(
@@ -37,7 +28,7 @@ dataCombinedDf <- data.frame(list(
   ),
   "scenario" = c(scenarioNames[1], NA, scenarioNames[1], NA),
   "path" = c(outputPaths, NA, outputPaths, NA),
-  "dataSet" = c(NA, names(observedData), NA, names(observedData)),
+  "dataSet" = c(NA, names(observedDataForSetup), NA, names(observedDataForSetup)),
   "group" = c(
     "Aciclovir PVB",
     "Aciclovir PVB",
@@ -58,7 +49,7 @@ test_that("It returns correct names of data combined when a path is not specifie
   df_missing_path$path[3] <- NA
 
   expect_error(
-    .validateDataCombined(df_missing_path, list(), observedData),
+    .validateDataCombined(df_missing_path, list(), observedDataForSetup),
     regexp = messages$stopNoPathProvided("DC_missingPath")
   )
 })
@@ -67,7 +58,7 @@ test_that("It errors when label is missing", {
   df_missing_label <- dataCombinedDf
   df_missing_label$label[1] <- NA
   expect_error(
-    .validateDataCombined(df_missing_label, list(), observedData),
+    .validateDataCombined(df_missing_label, list(), observedDataForSetup),
     regexp = messages$missingLabel()
   )
 })
@@ -76,7 +67,7 @@ test_that("It errors when dataType is missing", {
   df_missing_dataType <- dataCombinedDf
   df_missing_dataType$dataType[1] <- NA
   expect_error(
-    .validateDataCombined(df_missing_dataType, list(), observedData),
+    .validateDataCombined(df_missing_dataType, list(), observedDataForSetup),
     regexp = messages$missingDataType()
   )
 })
@@ -85,7 +76,7 @@ test_that("It errors when scenario is missing for simulated dataType", {
   df_missing_scenario <- dataCombinedDf
   df_missing_scenario$scenario[1] <- NA
   expect_error(
-    .validateDataCombined(df_missing_scenario, list(), observedData),
+    .validateDataCombined(df_missing_scenario, list(), observedDataForSetup),
     regexp = messages$missingScenarioName()
   )
 })
@@ -94,7 +85,7 @@ test_that("It errors when dataSet is missing for observed dataType", {
   df_missing_dataSet <- dataCombinedDf
   df_missing_dataSet$dataSet[2] <- NA
   expect_error(
-    .validateDataCombined(df_missing_dataSet, list(), observedData),
+    .validateDataCombined(df_missing_dataSet, list(), observedDataForSetup),
     regexp = messages$stopNoDataSetProvided("AciclovirPVB")
   )
 })
@@ -108,7 +99,7 @@ test_that("It warns when scenario is not found in simulatedScenarios", {
     .validateDataCombined(
       df_invalid_scenario,
       list(),
-      observedData,
+      observedDataForSetup,
       stopIfNotFound = TRUE
     ),
     regexp = messages$warningInvalidScenarioName(c(
@@ -123,7 +114,7 @@ test_that("It warns when scenario is not found in simulatedScenarios", {
     .validateDataCombined(
       df_invalid_scenario,
       list(),
-      observedData,
+      observedDataForSetup,
       stopIfNotFound = FALSE
     ),
     regexp = messages$warningInvalidScenarioName(c(
@@ -165,4 +156,14 @@ test_that("It warns when dataSet is not found in observedData", {
     ),
     regexp = "The following data sets are not present in `observedData`"
   )
+})
+
+test_that("createDataCombined loads observed data automatically from ProjectConfiguration", {
+  dcList <- createDataCombined(
+    projectConfiguration = projectConfiguration,
+    dataCombinedNames = "AciclovirPVB",
+    simulatedScenarios = simulatedScenarios
+  )
+  expect_true("AciclovirPVB" %in% names(dcList))
+  expect_true(inherits(dcList$AciclovirPVB, "DataCombined"))
 })

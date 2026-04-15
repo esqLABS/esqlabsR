@@ -28,20 +28,10 @@ test_that("JSON workflow: createDataCombined produces DataCombined objects", {
 
   results <- runScenarios(pc, scenarioNames = "TestScenario")
 
-  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-    configurationFilePath = pc$dataImporterConfigurationFile
-  )
-  observedData <- loadObservedData(
-    projectConfiguration = pc,
-    sheets = "Laskin 1982.Group A",
-    importerConfiguration = importerConfiguration
-  )
-
   dcList <- createDataCombined(
     projectConfiguration = pc,
     dataCombinedNames = "AciclovirPVB",
-    simulatedScenarios = results,
-    observedData = observedData
+    simulatedScenarios = results
   )
 
   expect_true("AciclovirPVB" %in% names(dcList))
@@ -53,20 +43,10 @@ test_that("JSON workflow: createPlots produces plot output", {
 
   results <- runScenarios(pc, scenarioNames = "TestScenario")
 
-  importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-    configurationFilePath = pc$dataImporterConfigurationFile
-  )
-  observedData <- loadObservedData(
-    projectConfiguration = pc,
-    sheets = "Laskin 1982.Group A",
-    importerConfiguration = importerConfiguration
-  )
-
   plotOutput <- createPlots(
+    projectConfiguration = pc,
     plotGridNames = "Aciclovir",
-    simulatedScenarios = results,
-    observedData = observedData,
-    projectConfiguration = pc
+    simulatedScenarios = results
   )
 
   expect_false(is.null(plotOutput))

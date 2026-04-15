@@ -39,6 +39,10 @@ from JSON.}
 
 \item{\code{individualParameterSetMapping}}{Named list mapping individualId
 to a character vector of parameter set names.}
+
+\item{\code{observedData}}{List of observed data source declarations parsed from
+JSON. Each entry is a list with \code{type} ("excel" or "pkml") and
+source-specific fields. See the JSON schema documentation for details.}
 }
 \if{html}{\out{</div>}}
 }

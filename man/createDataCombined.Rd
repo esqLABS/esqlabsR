@@ -10,7 +10,6 @@ createDataCombined(
   dataCombinedNames = NULL,
   plotGridNames = NULL,
   simulatedScenarios = NULL,
-  observedData = NULL,
   stopIfNotFound = TRUE
 )
 
@@ -31,8 +30,6 @@ created. Can be used together with \code{dataCombinedNames}.}
 
 \item{simulatedScenarios}{A list of simulated scenarios as returned by
 \code{runScenarios()}}
-
-\item{observedData}{A list of \code{DataSet} objects}
 
 \item{stopIfNotFound}{If TRUE (default), the function stops if any of the
 simulated results or observed data are not found. If FALSE a warning is

@@ -285,113 +285,49 @@ LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 #' @export
 ULOQMode <- enum(list("ULOQ", "ignore"))
 
-#' Load data from excel
-#'
-#' @description Loads data sets from excel. The excel file containing the data
-#'   must be located in the folder `projectConfiguration$dataFolder` and be
-#'   named `projectConfiguration$dataFile`. Importer configuration file must be
-#'   located in the same folder and named
-#'   `projectConfiguration$dataImporterConfigurationFile`.
-#'
-#' @param projectConfiguration Object of class `ProjectConfiguration` containing
-#'   the necessary information.
-#' @param sheets String or a list of strings defining which sheets to load. If
-#'   `NULL` (default), all sheets within the file are loaded.
-#' @param importerConfiguration `DataImporterConfiguration` object used to load
-#'   the data. If `NULL` (default), default esqlabs importer configuration as
-#'   defined in `projectConfiguration$dataImporterConfigurationFile` will be
-#'   used.
-#'
-#' @returns A named list of `DataSet` objects, with names being the names of the
-#' data sets.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Create default project configuration
-#' projectConfiguration <- createProjectConfiguration()
-#' dataSets <- loadObservedData(projectConfiguration)
-#' }
-loadObservedData <- function(
-  projectConfiguration,
-  sheets = NULL,
-  importerConfiguration = NULL
-) {
-  importerConfiguration <- importerConfiguration %||%
-    ospsuite::loadDataImporterConfiguration(
-      configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-    )
-  validateIsString(sheets, nullAllowed = TRUE)
-  # If sheets have been specified, import only those. Otherwise try to import all
-  # sheets
-  importAllSheets <- TRUE
-  if (!is.null(sheets)) {
-    importerConfiguration$sheets <- sheets
-    importAllSheets <- FALSE
-  }
-
-  dataSets <- ospsuite::loadDataSetsFromExcel(
-    xlsFilePath = projectConfiguration$dataFile,
-    importerConfigurationOrPath = importerConfiguration,
-    importAllSheets = importAllSheets
-  )
-
-  return(dataSets)
-}
-
-#' Load data from pkml
-#'
-#' @description Loads data sets that are exported as pkml. The files must be
-#'   located in the folder `projectConfiguration$dataFolder`, subfolder `pkml`.
-#'   and be named `projectConfiguration$dataFile`.
-#'
-#' @param projectConfiguration Object of class `ProjectConfiguration` containing
-#'   the necessary information.
-#' @param obsDataNames String or a list of strings defining data sets to load If
-#'   `NULL` (default), all data sets located in the folder are loaded. Must not
-#'   contain the ".pkml" file extension.
-#'
-#' @returns A named list of `DataSet` objects, with names being the names of the
-#' data sets.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Create default project configuration
-#' projectConfiguration <- createProjectConfiguration()
-#' dataSets <- loadObservedData(projectConfiguration)
-#' }
-loadObservedDataFromPKML <- function(
-  projectConfiguration,
-  obsDataNames = NULL
-) {
-  ospsuite.utils::validateIsString(obsDataNames, nullAllowed = TRUE)
-  # If data sets have been specified, import only those. Otherwise try to import all
-  # files
-  if (!is.null(obsDataNames)) {
-    allFiles <- paste0(obsDataNames, ".pkml")
+.resolveDataPath <- function(entryValue, projectDefault, dataFolder) {
+  if (!is.null(entryValue)) {
+    file.path(dataFolder, entryValue)
   } else {
-    allFiles <- list.files(
-      path = file.path(
-        projectConfiguration$dataFolder,
-        "pkml"
-      ),
-      pattern = "*.pkml"
-    )
+    projectDefault
   }
-
-  dataSets <- lapply(allFiles, function(fileName) {
-    ospsuite::loadDataSetFromPKML(
-      filePath = file.path(
-        projectConfiguration$dataFolder,
-        "pkml",
-        fileName
-      )
-    )
-  })
-  names(dataSets) <- lapply(dataSets, function(x) {
-    x$name
-  })
-
-  return(dataSets)
 }
+
+.loadObservedData <- function(projectConfiguration) {
+  if (is.null(projectConfiguration$observedData)) return(list())
+
+  allDataSets <- list()
+  for (entry in projectConfiguration$observedData) {
+    dataSets <- switch(entry$type,
+      "excel" = {
+        filePath <- .resolveDataPath(
+          entry$file,
+          projectConfiguration$dataFile,
+          projectConfiguration$dataFolder
+        )
+        importerPath <- .resolveDataPath(
+          entry$importerConfiguration,
+          projectConfiguration$dataImporterConfigurationFile,
+          projectConfiguration$dataFolder
+        )
+        importerConfig <- ospsuite::loadDataImporterConfiguration(
+          configurationFilePath = importerPath
+        )
+        importerConfig$sheets <- unlist(entry$sheets)
+        ospsuite::loadDataSetsFromExcel(
+          xlsFilePath = filePath,
+          importerConfigurationOrPath = importerConfig,
+          importAllSheets = FALSE
+        )
+      },
+      "pkml" = {
+        filePath <- file.path(projectConfiguration$dataFolder, entry$file)
+        ds <- ospsuite::loadDataSetFromPKML(filePath = filePath)
+        stats::setNames(list(ds), ds$name)
+      }
+    )
+    allDataSets <- c(allDataSets, dataSets)
+  }
+  allDataSets
+}
+

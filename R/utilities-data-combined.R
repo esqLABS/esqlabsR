@@ -11,7 +11,6 @@
 #'   contains information about the output paths and plots configuration.
 #' @param simulatedScenarios A list of simulated scenarios as returned by
 #'   `runScenarios()`
-#' @param observedData A list of `DataSet` objects
 #' @param stopIfNotFound If TRUE (default), the function stops if any of the
 #'   simulated results or observed data are not found. If FALSE a warning is
 #'   printed.
@@ -28,11 +27,10 @@ createDataCombined <- function(
   dataCombinedNames = NULL,
   plotGridNames = NULL,
   simulatedScenarios = NULL,
-  observedData = NULL,
   stopIfNotFound = TRUE
 ) {
-  validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
+  observedData <- .loadObservedData(projectConfiguration)
   validateIsString(plotGridNames, nullAllowed = TRUE)
 
   # Exit early if no data combined names or plot grid names are provided

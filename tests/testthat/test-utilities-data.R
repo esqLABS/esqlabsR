@@ -307,25 +307,43 @@ test_that("It sets the LLOQ if it is given for any of the original data sets", {
   expect_equal(meanDataSet$LLOQ, 1.5, tolerance = 1e-06)
 })
 
-test_that("loadObservedData loads data correctly from test project", {
-  # Create a project configuration using temporary project
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+test_that(".loadObservedData returns empty list when observedData is NULL", {
+  pc <- testProjectConfigurationJSON()
+  pc$observedData <- NULL
+  result <- .loadObservedData(pc)
+  expect_type(result, "list")
+  expect_length(result, 0)
+})
 
-  # Load all sheets
-  dataSets <- loadObservedData(projectConfiguration)
-  expect_type(dataSets, "list")
-  expect_true(length(dataSets) > 0)
-  expect_true(all(sapply(dataSets, function(ds) inherits(ds, "DataSet"))))
+test_that(".loadObservedData loads Excel data using project defaults", {
+  pc <- testProjectConfigurationJSON()
+  result <- .loadObservedData(pc)
+  expect_type(result, "list")
+  expect_true(length(result) > 0)
+  expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
+})
 
-  # Load specific sheet
-  sheetName <- "Laskin 1982.Group A"
-  singleDataSet <- loadObservedData(projectConfiguration, sheets = sheetName)
-  expect_type(singleDataSet, "list")
-  expect_equal(length(singleDataSet), 1)
-  expect_true(inherits(singleDataSet[[1]], "DataSet"))
+test_that(".loadObservedData loads Excel data with explicit file overrides", {
+  pc <- testProjectConfigurationJSON()
+  pc$observedData <- list(list(
+    type = "excel",
+    file = "TestProject_TimeValuesData.xlsx",
+    importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+    sheets = list("Laskin 1982.Group A")
+  ))
+  result <- .loadObservedData(pc)
+  expect_type(result, "list")
+  expect_true(length(result) > 0)
+  expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
+})
 
-  # Check that data matches between both loads for the specific sheet
-  expect_equal(singleDataSet[[1]]$xValues, dataSets[[2]]$xValues)
-  expect_equal(singleDataSet[[1]]$yValues, dataSets[[2]]$yValues)
+test_that(".loadObservedData merges datasets from multiple entries", {
+  pc <- testProjectConfigurationJSON()
+  pc$observedData <- list(
+    list(type = "excel", sheets = list("Laskin 1982.Group A")),
+    list(type = "excel", sheets = list("Laskin 1982.Group A"))
+  )
+  result <- .loadObservedData(pc)
+  expect_type(result, "list")
+  expect_true(length(result) >= 2)
 })

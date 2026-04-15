@@ -6,11 +6,10 @@
 \title{Generate plots from a ProjectConfiguration}
 \usage{
 createPlots(
+  projectConfiguration,
   plotGridNames = NULL,
   simulatedScenarios = NULL,
-  observedData = NULL,
   dataCombinedList = NULL,
-  projectConfiguration,
   outputFolder = NULL,
   stopIfNotFound = TRUE
 )
@@ -18,6 +17,9 @@ createPlots(
 createPlotsFromExcel(...)
 }
 \arguments{
+\item{projectConfiguration}{Object of class \code{ProjectConfiguration} that
+contains information about the output paths and plots configuration.}
+
 \item{plotGridNames}{Names of the plot grids for which the figures will be
 created. If \code{NULL} (default), all plot grids will be created. If a plot
 grid with a given name does not exist, an error is thrown.}
@@ -26,17 +28,11 @@ grid with a given name does not exist, an error is thrown.}
 \code{runScenarios()}. Can be \code{NULL} if no simulated data is required for the
 plots.}
 
-\item{observedData}{A list of \code{DataSet} objects. Can be \code{NULL} if no observed
-data is required for the plots.}
-
 \item{dataCombinedList}{A (named) list of \code{DataCombined} objects as input to
 create plots defined in the \code{plotGridNames} argument. Missing
 \code{DataCombined} will be created from the project configuration (default
 behavior). Defaults to \code{NULL}, in which case all \code{DataCombined} are
 created from the project configuration.}
-
-\item{projectConfiguration}{Object of class \code{ProjectConfiguration} that
-contains information about the output paths and plots configuration.}
 
 \item{outputFolder}{Optional - path to the folder where the results will be
 stored. If \code{NULL} (default), \code{projectConfiguration$outputFolder} is used.

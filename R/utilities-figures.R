@@ -260,13 +260,11 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 
 #' Generate plots from a ProjectConfiguration
 #'
+#' @param projectConfiguration Object of class `ProjectConfiguration` that
+#'   contains information about the output paths and plots configuration.
 #' @param simulatedScenarios A list of simulated scenarios as returned by
 #'   `runScenarios()`. Can be `NULL` if no simulated data is required for the
 #'   plots.
-#' @param observedData A list of `DataSet` objects. Can be `NULL` if no observed
-#'   data is required for the plots.
-#' @param projectConfiguration Object of class `ProjectConfiguration` that
-#'   contains information about the output paths and plots configuration.
 #' @param stopIfNotFound If TRUE (default), the function stops if any of the
 #'   simulated results or observed data are not found. If FALSE a warning is
 #'   printed.
@@ -290,15 +288,13 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 #'
 #' @export
 createPlots <- function(
+  projectConfiguration,
   plotGridNames = NULL,
   simulatedScenarios = NULL,
-  observedData = NULL,
   dataCombinedList = NULL,
-  projectConfiguration,
   outputFolder = NULL,
   stopIfNotFound = TRUE
 ) {
-  validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
   validateIsOfType(dataCombinedList, "DataCombined", nullAllowed = TRUE)
@@ -329,7 +325,6 @@ createPlots <- function(
     projectConfiguration = projectConfiguration,
     dataCombinedNames = dataCombinedNames,
     simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
     stopIfNotFound = stopIfNotFound
   )
   # Add entries from the provided list of DataCombined.

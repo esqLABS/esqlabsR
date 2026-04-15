@@ -356,6 +356,9 @@ ProjectConfiguration <- R6::R6Class(
       # Parse scenarios
       self$scenarios <- private$.parseScenarios(jsonData$scenarios)
 
+      # Parse observedData
+      self$observedData <- private$.parseObservedData(jsonData$observedData)
+
       # Parse plots
       self$plots <- private$.parsePlots(jsonData$plots)
 
@@ -478,6 +481,22 @@ ProjectConfiguration <- R6::R6Class(
         result[[entry$name]] <- sc
       }
       result
+    },
+
+    .parseObservedData = function(observedDataConfig) {
+      if (is.null(observedDataConfig)) return(list())
+      for (entry in observedDataConfig) {
+        if (is.null(entry$type) || !entry$type %in% c("excel", "pkml")) {
+          stop("Each observedData entry must have a 'type' of 'excel' or 'pkml'.")
+        }
+        if (entry$type == "excel" && is.null(entry$sheets)) {
+          stop("Excel observedData entries must have a 'sheets' field.")
+        }
+        if (entry$type == "pkml" && is.null(entry$file)) {
+          stop("PKML observedData entries must have a 'file' field.")
+        }
+      }
+      observedDataConfig
     },
 
     .parsePlots = function(plotsData) {
@@ -616,7 +635,11 @@ ProjectConfiguration <- R6::R6Class(
     jsonPath = NULL,
     #' @field individualParameterSetMapping Named list mapping individualId
     #'   to a character vector of parameter set names.
-    individualParameterSetMapping = NULL
+    individualParameterSetMapping = NULL,
+    #' @field observedData List of observed data source declarations parsed from
+    #'   JSON. Each entry is a list with `type` ("excel" or "pkml") and
+    #'   source-specific fields. See the JSON schema documentation for details.
+    observedData = NULL
   )
 )
 
