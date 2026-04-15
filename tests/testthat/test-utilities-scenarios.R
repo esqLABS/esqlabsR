@@ -142,7 +142,7 @@ test_that("It saves and loads scenario results for scenario names with forbidden
 
 test_that("customParams in runScenarios overrides default parameters", {
   pc <- testProjectConfigurationJSON()
-  dosePath <- "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+  dosePath <- "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
 
   # Default run — dose should be 250 from the JSON
   results <- runScenarios(pc, scenarioNames = "TestScenario")

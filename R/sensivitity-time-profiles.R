@@ -65,8 +65,8 @@
 #' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 #' parameterPaths <- c(
 #'   "Aciclovir|Lipophilicity",
-#'   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#'   "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 #' )
 #'
 #' results <- sensitivityCalculation(
@@ -90,8 +90,8 @@
 #' # Use named parameter paths to customize facet labels
 #' namedParameterPaths <- c(
 #'   "Lipophilicity" = "Aciclovir|Lipophilicity",
-#'   "Dose" = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#'   "Dose" = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 #' )
 #'
 #' resultsNamed <- sensitivityCalculation(
