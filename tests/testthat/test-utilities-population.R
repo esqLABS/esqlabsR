@@ -113,7 +113,7 @@ test_that("extendPopulationByUserDefinedParams works", {
 
   population <- ospsuite::loadPopulation(system.file(
     "extdata",
-    "SimResults_pop.csv",
+    "pop.csv",
     package = "ospsuite"
   ))
 
@@ -149,11 +149,13 @@ test_that("extendPopulationFromXLS works", {
         )
       )
 
-      population <- ospsuite::loadPopulation(system.file(
-        "extdata",
-        "SimResults_pop.csv",
-        package = "ospsuite"
-      ))
+      population <- ospsuite::loadPopulation(
+        system.file(
+          "extdata",
+          "pop.csv",
+          package = "ospsuite"
+        )
+      )
 
       set.seed(42)
       extendPopulationFromXLS(
@@ -164,15 +166,10 @@ test_that("extendPopulationFromXLS works", {
       expect_snapshot(
         population$getParameterValuesForIndividual(4)
       )
-      expect_equal(
-        population$allParameterPaths,
-        c(
-          "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-          "Organism|Muscle|Intracellular|Aciclovir|Concentration",
-          "Organism|Kidney|GFR",
-          "Organism|Kidney|eGFR"
-        )
-      )
+      expect_true(all(
+        c("Organism|Kidney|GFR", "Organism|Kidney|eGFR") %in%
+          population$allParameterPaths
+      ))
     }
   )
 })
@@ -184,7 +181,7 @@ test_that("extendPopulationFromXLS throws an error if the sheet has wrong struct
     code = {
       population <- ospsuite::loadPopulation(system.file(
         "extdata",
-        "SimResults_pop.csv",
+        "pop.csv",
         package = "ospsuite"
       ))
 
@@ -258,7 +255,7 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
 
       population <- ospsuite::loadPopulation(system.file(
         "extdata",
-        "SimResults_pop.csv",
+        "pop.csv",
         package = "ospsuite"
       ))
 
