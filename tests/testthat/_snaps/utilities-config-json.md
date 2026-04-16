@@ -151,6 +151,17 @@
       [1] "Path to the folder where the results should be saved to; relative to the location of this file"
       
       
+      $projectConfiguration$rows[[14]]
+      $projectConfiguration$rows[[14]]$Property
+      [1] "esqlabsRVersion"
+      
+      $projectConfiguration$rows[[14]]$Value
+      [1] "5.6.0.9002"
+      
+      $projectConfiguration$rows[[14]]$Description
+      [1] "Version of the esqlabsR package used to create this configuration"
+      
+      
       
       
       $modelParameterSets
@@ -675,7 +686,7 @@
       $Applications$Aciclovir_iv_250mg$rows
       $Applications$Aciclovir_iv_250mg$rows[[1]]
       $Applications$Aciclovir_iv_250mg$rows[[1]]$`Container Path`
-      [1] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      [1] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem"
       
       $Applications$Aciclovir_iv_250mg$rows[[1]]$`Parameter Name`
       [1] "Dose"
@@ -1915,6 +1926,7 @@
       11                      dataFile        TestProject_TimeValuesData.xlsx
       12 dataImporterConfigurationFile esqlabs_dataImporter_configuration.xml
       13                  outputFolder                               Results/
+      14               esqlabsRVersion                             5.6.0.9002
                                                                                                                                 Description
       1                                                Path to the folder with pkml simulation files; relative to the location of this file
       2                                     Path to the folder with excel files with parametrization; relative to the location of this file
@@ -1929,6 +1941,7 @@
       11                                                 Name of the excel file with experimental data. Must be located in the "dataFolder"
       12                  Name of data importer configuration file in xml format used to load the data. Must be located in the "dataFolder"
       13                                     Path to the folder where the results should be saved to; relative to the location of this file
+      14                                                                  Version of the esqlabsR package used to create this configuration
       
       
       $modelParameterSets
@@ -2081,10 +2094,10 @@
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
       $Applications$Aciclovir_iv_250mg$rows
-                                                      Container Path Parameter Name
-      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose
-        Value Units
-      1   250    mg
+                                                Container Path Parameter Name Value
+      1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   250
+        Units
+      1    mg
       
       
       

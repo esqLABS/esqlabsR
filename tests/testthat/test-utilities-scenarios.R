@@ -63,7 +63,7 @@ test_that("It runs one scenario without specifying output paths", {
 
   expect_equal(names(simulatedScenarios), scenarioNames)
   expect_equal(
-    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths[[1]],
     defaultOutputPath
   )
 })
@@ -129,7 +129,7 @@ test_that("It runs two scenarios", {
 
   expect_equal(names(simulatedScenarios), scenarioNames)
   expect_equal(
-    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths[[1]],
     defaultOutputPath
   )
 
@@ -173,7 +173,6 @@ test_that("It runs population and individual scenarios", {
     2
   )
 })
-
 
 test_that("It saves and loads scenario results for scenario names with forbidden characters", {
   # Create a fresh temporary project for this test
@@ -229,7 +228,6 @@ test_that("It saves and loads scenario results for scenario names with forbidden
   )
 })
 
-
 test_that("The hierarchy of parametrization is correct", {
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
@@ -246,7 +244,7 @@ test_that("The hierarchy of parametrization is correct", {
   # Check that the hierarchy of parametrization is correct
   idx <- which(
     scenarios[[1]]$finalCustomParams$paths ==
-      "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+      "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
   )
   expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 250)
 
@@ -254,7 +252,7 @@ test_that("The hierarchy of parametrization is correct", {
   scenarios <- createScenarios(
     scenarioConfigurations = scenarioConfigurations,
     customParams = list(
-      paths = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+      paths = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
       values = 300,
       units = "mg"
     )
@@ -263,7 +261,7 @@ test_that("The hierarchy of parametrization is correct", {
   # Check that the custom parameter overrides the default
   idx <- which(
     scenarios[[1]]$finalCustomParams$paths ==
-      "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+      "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
   )
   expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 300)
 })
@@ -303,7 +301,7 @@ test_that("It correctly runs when only one scenario (not a list) is provided", {
 
   expect_equal(names(simulatedScenarios), scenarioNames)
   expect_equal(
-    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
+    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths[[1]],
     defaultOutputPath
   )
 })
