@@ -1,6 +1,6 @@
 ---
 title: "Get Started"
-output: 
+output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
@@ -22,51 +22,15 @@ library(esqlabsR)
 
 ## Introduction
 
-`{esqlabsR}` is designed to make life easier for OSPS users. The workflows
-implemented in this package rely on simple concepts:
+`{esqlabsR}` is built around a single configuration file — `Project.json` — that
+defines everything your project needs: where files are stored, which scenarios to
+run, what observed data to load, and how to generate plots. Loading it with
+`loadProject()` gives you a `Project` object that all other functions operate on.
 
-  - a predefined project folder structure,
-  - a JSON configuration file for definition of simulation scenarios and outputs.
+To follow along with this tutorial, load the example project included in the
+package:
 
-## Initialize Project
-
-`{esqlabsR}` facilitates modeling and simulation workflows with OSPS relying on
-a well defined project structure. The project is configured through a
-`Project.json` file and supporting Excel files for detailed
-parametrization (model parameters, individuals, populations, etc.).
-
-A new project folder can be initialized with the `initProject()`
-function.
-
-```{r, eval=FALSE}
-library(esqlabsR)
-
-initProject()
-```
-
-It will create the expected simulation project's folder structure, which is described
-in details in `vignette("project-structure")`.
-
-The project is configured through a `Project.json` file
-located in the root of the project folder. This file defines *where* all the
-necessary files are stored, which scenarios to run, and how observed data is
-loaded. Supporting Excel files (e.g., `ModelParameters.xlsx`,
-`Individuals.xlsx`) provide detailed parametrization for scenarios.
-
-Loading the project configuration is the first step in any workflow using
-`{esqlabsR}`.
-
-```{r, eval=FALSE}
-myProject <- loadProject(path = "path/to/Project.json")
-```
-
-Note that the `Project` stores paths to other files that
-are used in the project.
-
-To create an example `Project` and execute the rest of this tutorial,
-run the following:
-
-```{r, warning=FALSE, message = FALSE}
+```{r}
 projectConfigPath <- system.file(
   "extdata", "projects", "Example", "Project.json",
   package = "esqlabsR"
@@ -74,126 +38,140 @@ projectConfigPath <- system.file(
 myProject <- loadProject(projectConfigPath)
 ```
 
-## Version Control and Project Sharing
+## Project
 
-Since `Project.json` is a text-based format, it works naturally
-with version control systems like Git. You can track changes, share projects
-with team members, and ensure reproducibility across environments.
+`Project.json` is the single source of truth for your project. It opens with a
+`filePaths` block that tells `{esqlabsR}` where to find every supporting file:
 
-If you have an existing Excel-based project, you can migrate it to JSON:
+```json
+"filePaths": {
+  "modelFolder": "Models/Simulations/",
+  "configurationsFolder": "Configurations/",
+  "modelParamsFile": "ModelParameters.xlsx",
+  "individualsFile": "Individuals.xlsx",
+  "populationsFile": "Populations.xlsx",
+  "applicationsFile": "Applications.xlsx",
+  "plotsFile": "Plots.xlsx",
+  "dataFolder": "Data/",
+  "outputFolder": "Results/"
+  // ... (additional keys omitted)
+}
+```
+
+`loadProject()` reads these paths and resolves them relative to the JSON file's
+location. Printing the resulting `Project` object shows all resolved paths.
+
+For full details on the folder layout, validation, and version control workflows,
+see `vignette("project-structure")`.
+
+## Scenarios
+
+A scenario is the core unit of simulation. Each scenario entry in the `scenarios`
+array links together a model file, parameter groups, individual or population
+settings, application protocol, and simulation time window:
+
+```json
+{
+  "name": "Aciclovir_iv",
+  "modelFile": "Aciclovir.pkml",
+  "individualId": "Adult_male",
+  "modelParameterGroups": ["Global", "Aciclovir"],
+  "applicationProtocol": "Aciclovir_iv_250mg",
+  "simulationTime": "0, 24, 60",
+  "simulationTimeUnit": "h"
+}
+```
+
+To run scenarios, pass the `Project` object to `runScenarios()`:
 
 ```{r, eval=FALSE}
-# Migrate Excel project to JSON
-importProjectFromExcel("Project.xlsx")
-
-# Export back to Excel if needed
-exportProjectToExcel(myProject)
+myScenarioResults <- runScenarios(myProject, scenarioNames = "Aciclovir_iv")
 ```
 
-For comprehensive information about version control features, workflows, and best practices, see the "Version Control and Project Sharing" section in `vignette("project-structure")`.
+`runScenarios()` returns a named list — results for each scenario are accessible
+by name, e.g. `myScenarioResults$Aciclovir_iv`.
 
-## Design Scenarios
-
-Now that the project's file structure is ready, the next step is to run
-simulations. In `{esqlabsR}`, simulations are run by defining and
-executing multiple **scenarios**.
-
-Scenarios are defined in the `scenarios` section of the
-`Project.json` file. Each scenario entry specifies:
-
--   `modelFile`: the name of the `.pkml` file that can be found in the
-    `Models/` directory.
--   `parameterSheets`: the names of the *sheets* in
-    `ModelParameters.xlsx` that contain the parameters to apply to the model,
--   `applicationProtocol`: the name of the *sheet* in
-    `Applications.xlsx` that specifies the simulated
-    administration protocol,
--   `simulationTime` and `simulationTimeUnit`: define the time range to
-    simulate,
--   `individualId`: the id of the individual to simulate. The id and
-    settings for individuals are defined in `Individuals.xlsx`,
--   `populationId`: the id of the *population* to simulate. The id and
-    settings for populations are defined in `Populations.xlsx`.
-
-Detailed parametrization (model parameters, individuals, populations,
-application protocols) is still stored in Excel files referenced by the
-JSON configuration.
-
-For more information on all the scenario parameters that can be set up,
-read `vignette("design-scenarios")`.
-
-## Run Scenarios
-
-Once all the scenario properties are set up, we run the simulations by
-passing the `Project` object to `runScenarios()`. We can
-optionally specify which scenarios to run:
-
-```{r}
-myScenarioResults <- runScenarios(
-  myProject,
-  scenarioNames = "Aciclovir_iv"
-)
-```
-
-Simulation results can be saved for later use: `exportScenarioResults()`
-and `importScenarioResults()`.
-
-```{r, eval = FALSE}
-exportScenarioResults(myScenarioResults,
-  project = myProject,
-  outputFolder = myProject$outputFolder
-)
-
-myScenarioResults <- importScenarioResults(
-  scenarioNames = "Aciclovir_iv",
-  resultsFolder = myProject$outputFolder
-)
-```
-
-Learn more on how to run simulations in
+For a full description of all scenario parameters (steady-state, population
+simulations, output paths, etc.), see `vignette("design-scenarios")` and
 `vignette("run-simulations")`.
 
-## Plot Results
+## Data
 
-The simulation results can now be plotted. For this, the package relies
-on on the concept of combining multiple simulation results and observed
-data using the `DataCombined` class and creating figures using functions
-implemented in the `{ospsuite}` package.
+Observed data is declared in the `observedData` section of `Project.json` and
+loaded automatically when you call `loadProject()` — no separate import step
+needed:
 
-First, a `DataCombined` object is initialized:
-
-```{r}
-my_datacombined <- DataCombined$new()
+```json
+"observedData": [
+  {
+    "type": "excel",
+    "sheets": ["Laskin 1982.Group A"]
+  }
+]
 ```
 
-Then, simulation result are added to the dataCombined object:
+The Excel file that is read is the one declared under `dataFile` in the `filePaths` section of `Project.json`.
+The loaded datasets are available via `myProject$observedData`, a named list of
+`DataSet` objects. When plotting, observed data is combined with simulation
+results using a `DataCombined` object — the `plots` section of `Project.json`
+handles this automatically. See `vignette("plot-results")` for details on
+`DataCombined` and data transformations.
 
-```{r}
-my_datacombined$addSimulationResults(myScenarioResults$Aciclovir_iv$results,
-  names = "Simulated",
-  groups = "Aciclovir"
+## Plots
+
+Plots are fully driven by the `plots` section of `Project.json`. It contains
+three sub-sections:
+
+- **`dataCombined`** — which simulation outputs and observed datasets to combine,
+- **`plotConfiguration`** — what type of plot to generate for each data combined,
+- **`plotGrids`** — how to arrange plots into figures and export them.
+
+A `plotConfiguration` entry looks like this:
+
+```json
+{
+  "plotID": "P1",
+  "DataCombinedName": "Aciclovir_individual",
+  "plotType": "individual",
+  "title": "Aciclovir IV 250 mg"
+}
+```
+
+To generate all plots defined in the JSON, call `createPlots()`:
+
+```{r, echo=FALSE}
+myScenarioResults <- runScenarios(myProject, scenarioNames = c("Aciclovir_iv", "Aciclovir_iv_female"))
+```
+
+```{r, out.width="100%", fig.align="center"}
+plots <- createPlots(myProject, simulatedScenarios = myScenarioResults)
+plots$Individual_diagnostics
+```
+
+`createPlots()` returns a named list of plot grid objects — one per `plotGrids`
+entry. If `exportConfiguration` is defined in the JSON, figures are also written
+to disk in `Results/Figures/`.
+
+For the full schema of all plot types, grid layout options, and export
+configuration, see `vignette("plot-results")`.
+
+## Full Workflow
+
+Here is the complete end-to-end workflow:
+
+```{r, eval=FALSE}
+library(esqlabsR)
+
+# Load the project
+projectConfigPath <- system.file(
+  "extdata", "projects", "Example", "Project.json",
+  package = "esqlabsR"
 )
+myProject <- loadProject(projectConfigPath)
+
+# Run scenarios (omit scenarioNames to run all scenarios defined in Project.json)
+myScenarioResults <- runScenarios(myProject, scenarioNames = "Aciclovir_iv")
+
+# Generate and export all plots
+createPlots(myProject, simulatedScenarios = myScenarioResults)
 ```
-
-Finally, the plot is generated:
-
-```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-plotIndividualTimeProfile(my_datacombined)
-```
-
-In some cases, we also want to plot the observed experimental data.
-Observed data is declared in the `observedData` section of the
-`Project.json` file and loaded automatically when the
-project is loaded. The data is available via the
-`Project$observedData` field.
-
-```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-observed_data <- myProject$observedData
-
-my_datacombined$addDataSets(observed_data, names = "Observed", groups = "Aciclovir")
-
-plotObservedVsSimulated(my_datacombined)
-```
-
-Many other plot types are available in `{esqlabsR}`, read
-`vignette("plot-results")` to learn more.

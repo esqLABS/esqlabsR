@@ -73,103 +73,41 @@ Note: For projects created for version 3 of `esqlabsR` package, refer to [`esqla
 
 ## Usage
 
-```{r, include=FALSE}
-showtext::showtext_opts(dpi = 300)
-```
-
 You can start with the "Get Started" vignette: `vignette("esqlabsR")`.
 
-`{esqlabsR}` workflows require a specific project structure. You can initialize a new project by running:
+`{esqlabsR}` workflows require a specific project structure. You can initialize a
+new project by running:
 
 ```{r, eval=FALSE}
 esqlabsR::initProject()
 ```
 
-This will create the required folder structure and files for your project in the 
-working directory from where you run the command.
+This creates the required folder structure and a `Project.json` configuration file
+in your working directory.
 
-Below is a simple example of how to work with the package:
+Below is a simple example of the complete workflow:
 
-```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-# load esqlabsR
+```{r, include=FALSE}
+showtext::showtext_opts(dpi = 300)
+```
+
+```{r, out.width="80%", fig.align="center", fig.width=7, fig.asp=0.618, dpi=300}
 library(esqlabsR)
 
-# Load project configuration
-# The function `exampleProjectPath()` returns the path to the example project
-# configuration included in the package. Replace the variable `projectPath`
-# with the path to your project configuration file.
+# Load the project
+# projectPath <- "path/to/Project.json"  # replace with your project path
 projectPath <- exampleProjectPath()
+myProject <- loadProject(projectPath)
 
-myProject <-
-  loadProject(projectPath)
-
-# Define which scenarios to run
-scenarioNames <- c("Aciclovir_iv")
-# Set scenario names to NULL if you want to simulate all scenarios defined in the
-# excel file
-# scenarioNames <- NULL
-
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = scenarioNames,
-  project = myProject
+# Run scenarios
+myScenarioResults <- runScenarios(
+  myProject,
+  scenarioNames = c("Aciclovir_iv", "Aciclovir_iv_female")
 )
 
-# Define custom parameters for the scenarios. These parameter will be applied
-# additionally to the paremetrization specified in the Excel files.
-customParam <- list(
-  paths = c(
-    "Aciclovir|Lipophilicity"
-  ),
-  values = c(
-    -0.1
-  ),
-  units = c(
-    "Log Units"
-  )
-)
-
-# Create simulation scenarios defined in the excel files and apply the custom parameters
-myScenarios <- createScenarios(
-  scenarioConfigurations = scenarioConfigurations,
-  customParams = customParam
-)
-
-# Adjust simulation run options, if necessary.
-# E.g. disable check for negative values if required
-simulationRunOptions <- ospsuite::SimulationRunOptions$new()
-simulationRunOptions$checkForNegativeValues <- FALSE
-
-# Run simulations
-simulatedScenariosResults <- runScenarios(
-  scenarios = myScenarios,
-  simulationRunOptions = simulationRunOptions
-)
-
-# Save results and store the path to the results for later re-use
-outputFolder <- exportScenarioResults(simulatedScenariosResults, myProject)
-
-# Load observed data using the default importer configuration provided with the package. Alternatively, you can load a custom data importer configuration.
-dataSheets <- c("Laskin 1982.Group A")
-observedData <- esqlabsR::loadObservedData(
-  project = myProject,
-  sheets = dataSheets
-)
-
-########## Create figures defined in the Plots.xlsx file########
-plots <- createPlotsFromExcel(
-  plotGridNames = c(
-    "Aciclovir",
-    "Aciclovir2"
-  ),
-  simulatedScenarios = simulatedScenariosResults,
-  observedData = observedData,
-  project = myProject,
-  outputFolder = outputFolder,
-  stopIfNotFound = TRUE
-)
-
-plots$Aciclovir
+# Generate plots
+plots <- createPlots(myProject, simulatedScenarios = myScenarioResults)
+plots$Individual_diagnostics
 ```
 
 ## Learn More
