@@ -3,10 +3,10 @@
 \name{createDataCombined}
 \alias{createDataCombined}
 \alias{createDataCombinedFromExcel}
-\title{Generate DataCombined objects from a ProjectConfiguration}
+\title{Generate DataCombined objects from a Project}
 \usage{
 createDataCombined(
-  projectConfiguration,
+  project,
   dataCombinedNames = NULL,
   plotGridNames = NULL,
   simulatedScenarios = NULL,
@@ -16,7 +16,7 @@ createDataCombined(
 createDataCombinedFromExcel(...)
 }
 \arguments{
-\item{projectConfiguration}{Object of class \code{ProjectConfiguration} that
+\item{project}{Object of class \code{Project} that
 contains information about the output paths and plots configuration.}
 
 \item{dataCombinedNames}{Names of the DataCombined objects that will be
@@ -40,5 +40,5 @@ A list of \code{DataCombined} objects, or an empty list if both
 \code{dataCombinedNames} and \code{plotGridNames} are \code{NULL} or \code{stopIfNotFound = TRUE} and the specified \code{DataCombined} could not be created.
 }
 \description{
-Generate DataCombined objects from a ProjectConfiguration
+Generate DataCombined objects from a Project
 }

@@ -1,7 +1,7 @@
 # Full JSON workflow integration tests ----
 
 test_that("JSON workflow: load project, run scenario, get results", {
-  pc <- testProjectConfiguration()
+  pc <- testProject()
 
   results <- runScenarios(pc, scenarioNames = "TestScenario")
 
@@ -11,7 +11,7 @@ test_that("JSON workflow: load project, run scenario, get results", {
 })
 
 test_that("JSON workflow: run multiple scenarios", {
-  pc <- testProjectConfiguration()
+  pc <- testProject()
 
   results <- runScenarios(
     pc,
@@ -24,12 +24,12 @@ test_that("JSON workflow: run multiple scenarios", {
 })
 
 test_that("JSON workflow: createDataCombined produces DataCombined objects", {
-  pc <- testProjectConfiguration()
+  pc <- testProject()
 
   results <- runScenarios(pc, scenarioNames = "TestScenario")
 
   dcList <- createDataCombined(
-    projectConfiguration = pc,
+    project = pc,
     dataCombinedNames = "AciclovirPVB",
     simulatedScenarios = results
   )
@@ -39,12 +39,12 @@ test_that("JSON workflow: createDataCombined produces DataCombined objects", {
 })
 
 test_that("JSON workflow: createPlots produces plot output", {
-  pc <- testProjectConfiguration()
+  pc <- testProject()
 
   results <- runScenarios(pc, scenarioNames = "TestScenario")
 
   plotOutput <- createPlots(
-    projectConfiguration = pc,
+    project = pc,
     plotGridNames = "Aciclovir",
     simulatedScenarios = results
   )
@@ -56,18 +56,18 @@ test_that("JSON workflow: round-trip JSON -> Excel -> JSON preserves data", {
   testProject <- local_test_project()
 
   # Load from JSON
-  pc1 <- ProjectConfiguration$new(testProject$snapshot_path)
+  pc1 <- Project$new(testProject$snapshot_path)
 
   # Export to Excel
   exportDir <- withr::local_tempdir("roundtrip_export")
-  exportProjectConfigurationToExcel(pc1, outputDir = exportDir, silent = TRUE)
+  exportProjectToExcel(pc1, outputDir = exportDir, silent = TRUE)
 
   # Import back to JSON
-  excelPath <- file.path(exportDir, "ProjectConfiguration.xlsx")
-  importProjectConfigurationFromExcel(excelPath, outputDir = exportDir, silent = TRUE)
+  excelPath <- file.path(exportDir, "Project.xlsx")
+  importProjectFromExcel(excelPath, outputDir = exportDir, silent = TRUE)
 
   # Load the round-tripped JSON
-  pc2 <- ProjectConfiguration$new(file.path(exportDir, "ProjectConfiguration.json"))
+  pc2 <- Project$new(file.path(exportDir, "Project.json"))
 
   # Compare key data structures
   expect_equal(names(pc1$scenarios), names(pc2$scenarios))
@@ -81,7 +81,7 @@ test_that("JSON workflow: round-trip JSON -> Excel -> JSON preserves data", {
 test_that("JSON workflow: round-trip preserves scenario outputPaths", {
   testProject <- local_test_project()
 
-  pc1 <- ProjectConfiguration$new(testProject$snapshot_path)
+  pc1 <- Project$new(testProject$snapshot_path)
 
   # Pick a scenario that has outputPaths set via outputPathIds
   scenarioName <- "TestScenario2"
@@ -89,14 +89,14 @@ test_that("JSON workflow: round-trip preserves scenario outputPaths", {
 
   # Export to Excel
   exportDir <- withr::local_tempdir("roundtrip_outputpaths")
-  exportProjectConfigurationToExcel(pc1, outputDir = exportDir, silent = TRUE)
+  exportProjectToExcel(pc1, outputDir = exportDir, silent = TRUE)
 
   # Import back to JSON
-  excelPath <- file.path(exportDir, "ProjectConfiguration.xlsx")
-  importProjectConfigurationFromExcel(excelPath, outputDir = exportDir, silent = TRUE)
+  excelPath <- file.path(exportDir, "Project.xlsx")
+  importProjectFromExcel(excelPath, outputDir = exportDir, silent = TRUE)
 
   # Load the round-tripped JSON
-  pc2 <- ProjectConfiguration$new(file.path(exportDir, "ProjectConfiguration.json"))
+  pc2 <- Project$new(file.path(exportDir, "Project.json"))
 
   # The outputPaths should be preserved through round-trip
   roundTrippedOutputPaths <- pc2$scenarios[[scenarioName]]$outputPaths

@@ -32,11 +32,11 @@ the names of the scenarios.
 \examples{
 \dontrun{
 # First simulate scenarios and save the results
-projectConfiguration <- loadProject("path/to/ProjectConfiguration.json")
+project <- loadProject("path/to/Project.json")
 simulatedScenariosResults <- runScenarios(
-  projectConfiguration = projectConfiguration
+  project = project
 )
-exportScenarioResults(simulatedScenariosResults, projectConfiguration)
+exportScenarioResults(simulatedScenariosResults, project)
 
 # Now load the results
 simulatedScenariosResults <- importScenarioResults(

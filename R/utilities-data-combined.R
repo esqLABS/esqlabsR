@@ -1,4 +1,4 @@
-#' Generate DataCombined objects from a ProjectConfiguration
+#' Generate DataCombined objects from a Project
 #'
 #' @param dataCombinedNames Names of the DataCombined objects that will be
 #'   created. If a DataCombined with a given name is not defined in the
@@ -7,7 +7,7 @@
 #' @param plotGridNames Names of the plot grid specified in the plot
 #'   configuration. Each data combined used by the specified plot grids will be
 #'   created. Can be used together with `dataCombinedNames`.
-#' @param projectConfiguration Object of class `ProjectConfiguration` that
+#' @param project Object of class `Project` that
 #'   contains information about the output paths and plots configuration.
 #' @param simulatedScenarios A list of simulated scenarios as returned by
 #'   `runScenarios()`
@@ -23,14 +23,14 @@
 #'
 #' @export
 createDataCombined <- function(
-  projectConfiguration,
+  project,
   dataCombinedNames = NULL,
   plotGridNames = NULL,
   simulatedScenarios = NULL,
   stopIfNotFound = TRUE
 ) {
-  validateIsOfType(projectConfiguration, "ProjectConfiguration")
-  observedData <- .loadObservedData(projectConfiguration)
+  validateIsOfType(project, "Project")
+  observedData <- .loadObservedData(project)
   validateIsString(plotGridNames, nullAllowed = TRUE)
 
   # Exit early if no data combined names or plot grid names are provided
@@ -46,13 +46,13 @@ createDataCombined <- function(
     dataCombinedNames <- union(
       dataCombinedNames,
       .extractDataCombinedNamesForPlots(
-        projectConfiguration = projectConfiguration,
+        project = project,
         plotGridNames = plotGridNames
       )
     )
   }
 
-  dfDataCombined <- projectConfiguration$plots$dataCombined
+  dfDataCombined <- project$plots$dataCombined
   dfDataCombined <- dplyr::filter(
     dfDataCombined,
     DataCombinedName %in% dataCombinedNames
@@ -311,17 +311,17 @@ createDataCombined <- function(
 #'
 #' @param plotGridNames Names of the plot grid specified in the plot
 #'   configuration.
-#' @param projectConfiguration Object of class `ProjectConfiguration` that
+#' @param project Object of class `Project` that
 #'   contains information about the output paths and plots configuration.
 #'
 #' @returns A list with the names of required DataCombined
 #' @noRd
 .extractDataCombinedNamesForPlots <- function(
-  projectConfiguration,
+  project,
   plotGridNames
 ) {
   plotConfigurations <- .getPlotConfigurations(
-    projectConfiguration = projectConfiguration,
+    project = project,
     plotGridNames = plotGridNames
   )
   dfPlotConfigurations <- plotConfigurations$plotConfigurations

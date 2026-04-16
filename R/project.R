@@ -1,31 +1,31 @@
-#' @title ProjectConfiguration
+#' @title Project
 #' @docType class
-#' @description An object storing configuration used project-wide
+#' @description An R6 class representing an esqlabsR project
 #' @format NULL
 #' @import fs
 #' @export
-ProjectConfiguration <- R6::R6Class(
-  "ProjectConfiguration",
+Project <- R6::R6Class(
+  "Project",
   cloneable = TRUE,
   active = list(
-    #' @field projectConfigurationFilePath Path to the file that serve as base
+    #' @field projectFilePath Path to the file that serve as base
     #' path for other parameters. If NULL, then, other paths should be absolute
     #'  paths.
-    projectConfigurationFilePath = function(value) {
+    projectFilePath = function(value) {
       if (missing(value)) {
-        private$.projectConfigurationFilePath
+        private$.projectFilePath
       } else {
-        stop("projectConfigurationFilePath is readonly")
+        stop("projectFilePath is readonly")
       }
     },
-    #' @field projectConfigurationDirPath Path to the folder that serve as base
+    #' @field projectDirPath Path to the folder that serve as base
     #' path for other paths. If NULL, then, other paths should be absolute
     #' paths.
-    projectConfigurationDirPath = function(value) {
+    projectDirPath = function(value) {
       if (missing(value)) {
-        private$.projectConfigurationDirPath
+        private$.projectDirPath
       } else {
-        stop("projectConfigurationDirPath is readonly")
+        stop("projectDirPath is readonly")
       }
     },
     #' @field modified Logical indicating whether any configuration properties
@@ -41,38 +41,38 @@ ProjectConfiguration <- R6::R6Class(
     #' @field modelFolder Path to the folder containing pkml simulation files.
     modelFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$modelFolder$value <-
+        private$.filePathsData$modelFolder$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$modelFolder$value,
-        self$projectConfigurationDirPath
+        private$.filePathsData$modelFolder$value,
+        self$projectDirPath
       )
     },
     #' @field configurationsFolder Path to the folder containing configuration
     #'   files. Used by the Excel import/export bridge.
     configurationsFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$configurationsFolder$value <-
+        private$.filePathsData$configurationsFolder$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$configurationsFolder$value,
-        self$projectConfigurationDirPath
+        private$.filePathsData$configurationsFolder$value,
+        self$projectDirPath
       )
     },
     #' @field modelParamsFile Path to the Excel file with global model
     #'   parameterization. Used by the Excel import/export bridge.
     modelParamsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$modelParamsFile$value <-
+        private$.filePathsData$modelParamsFile$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$modelParamsFile$value,
+        private$.filePathsData$modelParamsFile$value,
         self$configurationsFolder
       )
     },
@@ -80,12 +80,12 @@ ProjectConfiguration <- R6::R6Class(
     #'   model parameterization. Used by the Excel import/export bridge.
     individualsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$individualsFile$value <-
+        private$.filePathsData$individualsFile$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$individualsFile$value,
+        private$.filePathsData$individualsFile$value,
         self$configurationsFolder
       )
     },
@@ -93,12 +93,12 @@ ProjectConfiguration <- R6::R6Class(
     #'   information. Used by the Excel import/export bridge.
     populationsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$populationsFile$value <-
+        private$.filePathsData$populationsFile$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$populationsFile$value,
+        private$.filePathsData$populationsFile$value,
         self$configurationsFolder
       )
     },
@@ -107,12 +107,12 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "configurationsFolder".
     populationsFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$populationsFolder$value <-
+        private$.filePathsData$populationsFolder$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$populationsFolder$value,
+        private$.filePathsData$populationsFolder$value,
         self$configurationsFolder
       )
     },
@@ -120,12 +120,12 @@ ProjectConfiguration <- R6::R6Class(
     #'   Used by the Excel import/export bridge.
     scenariosFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$scenariosFile$value <-
+        private$.filePathsData$scenariosFile$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$scenariosFile$value,
+        private$.filePathsData$scenariosFile$value,
         self$configurationsFolder
       )
     },
@@ -134,12 +134,12 @@ ProjectConfiguration <- R6::R6Class(
     #'   Excel import/export bridge.
     applicationsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$applicationsFile$value <-
+        private$.filePathsData$applicationsFile$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$applicationsFile$value,
+        private$.filePathsData$applicationsFile$value,
         self$configurationsFolder
       )
     },
@@ -147,12 +147,12 @@ ProjectConfiguration <- R6::R6Class(
     #'   the Excel import/export bridge.
     plotsFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$plotsFile$value <-
+        private$.filePathsData$plotsFile$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$plotsFile$value,
+        private$.filePathsData$plotsFile$value,
         self$configurationsFolder
       )
     },
@@ -160,25 +160,25 @@ ProjectConfiguration <- R6::R6Class(
     #'   located.
     dataFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$dataFolder$value <-
+        private$.filePathsData$dataFolder$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$dataFolder$value,
-        self$projectConfigurationDirPath
+        private$.filePathsData$dataFolder$value,
+        self$projectDirPath
       )
     },
     #' @field dataFile Path to the Excel file with experimental (observed) data.
     #'   Must be located in the "dataFolder".
     dataFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$dataFile$value <-
+        private$.filePathsData$dataFile$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$dataFile$value,
+        private$.filePathsData$dataFile$value,
         self$dataFolder
       )
     },
@@ -187,12 +187,12 @@ ProjectConfiguration <- R6::R6Class(
     #' Must be located in the "dataFolder"
     dataImporterConfigurationFile = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$dataImporterConfigurationFile$value <-
+        private$.filePathsData$dataImporterConfigurationFile$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$dataImporterConfigurationFile$value,
+        private$.filePathsData$dataImporterConfigurationFile$value,
         self$dataFolder
       )
     },
@@ -200,21 +200,21 @@ ProjectConfiguration <- R6::R6Class(
     #'   relative to the "Code" folder
     outputFolder = function(value) {
       if (!missing(value)) {
-        private$.projectConfigurationData$outputFolder$value <-
+        private$.filePathsData$outputFolder$value <-
           value
         private$.modified <- TRUE
       }
       private$.clean_path(
-        private$.projectConfigurationData$outputFolder$value,
-        self$projectConfigurationDirPath,
+        private$.filePathsData$outputFolder$value,
+        self$projectDirPath,
         must_work = FALSE
       )
     }
   ),
   private = list(
-    .projectConfigurationData = NULL,
-    .projectConfigurationFilePath = NULL,
-    .projectConfigurationDirPath = NULL,
+    .filePathsData = NULL,
+    .projectFilePath = NULL,
+    .projectDirPath = NULL,
     .modified = FALSE,
     .warned_paths = character(),
     .clean_path = function(
@@ -310,14 +310,14 @@ ProjectConfiguration <- R6::R6Class(
       }
 
       self$jsonPath <- jsonPath
-      private$.projectConfigurationFilePath <- jsonPath
-      private$.projectConfigurationDirPath <- dirname(jsonPath)
+      private$.projectFilePath <- jsonPath
+      private$.projectDirPath <- dirname(jsonPath)
 
-      # Parse projectConfiguration paths
-      pcData <- jsonData$projectConfiguration
-      private$.projectConfigurationData <- list()
+      # Parse filePaths
+      pcData <- jsonData$filePaths
+      private$.filePathsData <- list()
       for (prop in names(pcData)) {
-        private$.projectConfigurationData[[prop]] <- list(
+        private$.filePathsData[[prop]] <- list(
           value = pcData[[prop]],
           description = ""
         )
@@ -549,7 +549,7 @@ ProjectConfiguration <- R6::R6Class(
     #' @param ... Additional arguments passed to [addScenario()].
     addScenario = function(scenarioName, modelFile, ...) {
       addScenario(
-        projectConfiguration = self,
+        project = self,
         scenarioName = scenarioName,
         modelFile = modelFile,
         ...
@@ -557,18 +557,18 @@ ProjectConfiguration <- R6::R6Class(
     },
     #' Initialize
     #'
-    #' @param projectConfigurationFilePath A string representing the path to the
+    #' @param projectFilePath A string representing the path to the
     #'   project configuration file.
-    initialize = function(projectConfigurationFilePath = character()) {
+    initialize = function(projectFilePath = character()) {
       private$.modified <- FALSE
-      if (!missing(projectConfigurationFilePath)) {
-        private$.read_json(projectConfigurationFilePath)
+      if (!missing(projectFilePath)) {
+        private$.read_json(projectFilePath)
       } else {
-        private$.projectConfigurationDirPath <- NULL
+        private$.projectDirPath <- NULL
       }
     },
     #' Print
-    #' @description print prints a summary of the Project Configuration.
+    #' @description print prints a summary of the Project.
     #' @param className Whether to print the name of the class at the beginning.
     #'   default to TRUE.
     print = function(className = TRUE) {
@@ -577,7 +577,7 @@ ProjectConfiguration <- R6::R6Class(
       }
       ospsuite.utils::ospPrintItems(list(
         "Working Directory" = getwd(),
-        "Configuration file" = self$projectConfigurationFilePath
+        "Configuration file" = self$projectFilePath
       ))
 
       # Count plots breakdown
@@ -650,6 +650,27 @@ ProjectConfiguration <- R6::R6Class(
     #'   JSON. Each entry is a list with `type` ("excel" or "pkml") and
     #'   source-specific fields. See the JSON schema documentation for details.
     observedData = NULL
+  )
+)
+
+#' @rdname Project
+#' @usage NULL
+#' @export
+ProjectConfiguration <- R6::R6Class(
+  "ProjectConfiguration",
+  inherit = Project,
+  public = list(
+    #' @description Deprecated. Use `Project$new()` instead.
+    #' @param projectConfigurationFilePath Path to the project file.
+    #' @param ... Additional arguments passed to `Project$new()`.
+    initialize = function(projectConfigurationFilePath = character(), ...) {
+      lifecycle::deprecate_soft(
+        what = "ProjectConfiguration()",
+        with = "Project()",
+        when = "7.0.0"
+      )
+      super$initialize(projectFilePath = projectConfigurationFilePath, ...)
+    }
   )
 )
 

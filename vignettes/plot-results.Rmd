@@ -142,19 +142,19 @@ For the following examples, we will simulate an example scenario as described in
 library(esqlabsR)
 # Load the project configuration from JSON
 projectConfigPath <- system.file(
-  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  "extdata", "projects", "Example", "Project.json",
   package = "esqlabsR"
 )
-projectConfiguration <- loadProject(projectConfigPath)
+project <- loadProject(projectConfigPath)
 
 # Run the scenario
 simulatedScenarios <- runScenarios(
-  projectConfiguration,
+  project,
   scenarioNames = "Aciclovir_iv"
 )
 
 # Observed data is auto-loaded from the JSON configuration
-observedData <- projectConfiguration$observedData
+observedData <- project$observedData
 ```
 
 #### Setup the `Plot.xlsx` file
@@ -171,7 +171,7 @@ the project configuration and simulated results:
 
 ```{r, echo = TRUE}
 plots <- createPlots(
-  projectConfiguration = projectConfiguration,
+  project = project,
   plotGridNames = c("Aciclovir", "Aciclovir2"),
   simulatedScenarios = simulatedScenarios
 )
@@ -213,7 +213,7 @@ for plotting. To do so, you can use the `createDataCombined()` function:
 ```{r}
 # Create DataCombined used in the plots "Aciclovir" and "Aciclovir2"
 dataCombined <- createDataCombined(
-  projectConfiguration = projectConfiguration,
+  project = project,
   plotGridNames = c("Aciclovir", "Aciclovir2"),
   simulatedScenarios = simulatedScenarios
 )
@@ -240,7 +240,7 @@ them to the `createPlots()` function:
 dataCombined[[1]]$setDataTransformations(xOffsets = 0)
 # Create the plots using the modified DataCombined
 plots <- createPlots(
-  projectConfiguration = projectConfiguration,
+  project = project,
   plotGridNames = c("Aciclovir", "Aciclovir2"),
   simulatedScenarios = simulatedScenarios,
   dataCombinedList = dataCombined
@@ -275,19 +275,19 @@ For the following examples, we will use the same scenario as described in the
 library(esqlabsR)
 # Load the project configuration from JSON
 projectConfigPath <- system.file(
-  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  "extdata", "projects", "Example", "Project.json",
   package = "esqlabsR"
 )
-projectConfiguration <- loadProject(projectConfigPath)
+project <- loadProject(projectConfigPath)
 
 # Run the scenario
 simulatedScenarios <- runScenarios(
-  projectConfiguration,
+  project,
   scenarioNames = "Aciclovir_iv"
 )
 
 # Observed data is auto-loaded from the JSON configuration
-observedData <- projectConfiguration$observedData
+observedData <- project$observedData
 ```
 
 For the following steps, no `Plots.xlsx` file is needed. Instead, we will use
@@ -340,7 +340,7 @@ projects, create the configurations using the following functions:
 
 - [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html)
 - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html)
-- [`createEsqlabsExportConfiguration(projectConfiguration)`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html)
+- [`createEsqlabsExportConfiguration(project)`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html)
 
 For the list of supported properties of the `PlotGirdConfiguration`, refer to
 the
@@ -378,7 +378,7 @@ To save the plot to a `PNG` file, use the
 Make sure that the `fileName` argument ends with `.png`:
 
 ```{r saveToPng}
-exportConfig <- createEsqlabsExportConfiguration(projectConfiguration$outputFolder)
+exportConfig <- createEsqlabsExportConfiguration(project$outputFolder)
 exportConfig$savePlot(gridPlot, fileName = "All plots.png")
 ```
 
@@ -397,20 +397,20 @@ data](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed
 for information on loading data from Excel or `*.pkml` files.
 
 In `{esqlabsR}` v6.0.0+, observed data is declared in the `observedData`
-section of the `ProjectConfiguration.json` file and loaded automatically
+section of the `Project.json` file and loaded automatically
 when the project is loaded with `loadProject()`. The data supports both
 `"excel"` and `"pkml"` types with per-entry file, sheet, and importer
 configuration settings.
 
 ```{r loadObservedData}
 projectConfigPath <- system.file(
-  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  "extdata", "projects", "Example", "Project.json",
   package = "esqlabsR"
 )
-projectConfiguration <- loadProject(projectConfigPath)
+project <- loadProject(projectConfigPath)
 
 # Observed data is automatically loaded from the JSON configuration
-observedData <- projectConfiguration$observedData
+observedData <- project$observedData
 
 print(names(observedData))
 ```

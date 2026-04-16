@@ -1,9 +1,9 @@
 #' Validate cross-references between configuration files
-#' @param projectConfiguration ProjectConfiguration object
+#' @param project Project object
 #' @param validationResults Previous validation results
 #' @return validationResult object with cross-reference validation
 #' @keywords internal
-.validateCrossReferences <- function(projectConfiguration, validationResults) {
+.validateCrossReferences <- function(project, validationResults) {
   result <- validationResult$new()
 
   # Skip if previous validations failed

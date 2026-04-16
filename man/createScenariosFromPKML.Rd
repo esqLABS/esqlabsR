@@ -7,7 +7,7 @@
 \usage{
 createScenariosFromPKML(
   pkmlFilePaths,
-  projectConfiguration,
+  project,
   scenarioNames = NULL,
   individualId = NULL,
   populationId = NULL,
@@ -31,7 +31,7 @@ createScenarioConfigurationsFromPKML(...)
 Can be a single string (recycled for all scenarios) or a vector with the same length
 as the number of scenarios being created (determined by the longest vector argument).}
 
-\item{projectConfiguration}{A \code{ProjectConfiguration} object holding base information.}
+\item{project}{A \code{Project} object holding base information.}
 
 \item{scenarioNames}{Character vector. Optional custom names for the scenarios. If \code{NULL} (default),
 scenario names will be extracted from the simulation names in the PKML files.
@@ -132,24 +132,24 @@ The function handles duplicate scenario names by appending indices (e.g., "Scena
 }
 \examples{
 \dontrun{
-# Load project configuration
-pc <- loadProject("ProjectConfiguration.json")
+# Load project
+pc <- loadProject("Project.json")
 
 # Create scenarios from a single PKML file
 pkmlPath <- "path/to/simulation.pkml"
 scenarios <- createScenariosFromPKML(
   pkmlFilePaths = pkmlPath,
-  projectConfiguration = pc
+  project = pc
 )
 
-# Add to project configuration and run
+# Add to project and run
 pc$scenarios <- c(pc$scenarios, scenarios)
 results <- runScenarios(pc, scenarioNames = names(scenarios))
 
 # Example of vector recycling - single value applied to all scenarios
 scenarios <- createScenariosFromPKML(
   pkmlFilePaths = c("sim1.pkml", "sim2.pkml", "sim3.pkml"),
-  projectConfiguration = projectConfiguration,
+  project = project,
   individualId = "Individual_001", # Recycled to all scenarios
   steadyState = TRUE,              # Recycled to all scenarios
   steadyStateTime = 1000           # Recycled to all scenarios
@@ -158,7 +158,7 @@ scenarios <- createScenariosFromPKML(
 # Example of vector arguments - different values per scenario
 scenarios <- createScenariosFromPKML(
   pkmlFilePaths = c("pediatric.pkml", "adult.pkml", "elderly.pkml"),
-  projectConfiguration = projectConfiguration,
+  project = project,
   scenarioNames = c("Pediatric", "Adult", "Elderly"),
   individualId = c("Child_001", "Adult_001", "Elderly_001"),
   applicationProtocols = c("Pediatric_Dose", "Standard_Dose", "Reduced_Dose"),
@@ -169,7 +169,7 @@ scenarios <- createScenariosFromPKML(
 # Example of PKML recycling - same model, different settings
 scenarios <- createScenariosFromPKML(
   pkmlFilePaths = "base_model.pkml",                    # Single PKML recycled
-  projectConfiguration = projectConfiguration,
+  project = project,
   scenarioNames = c("LowDose", "MediumDose", "HighDose"),
   individualId = c("Patient1", "Patient2", "Patient3"),
   applicationProtocols = c("Low_Protocol", "Med_Protocol", "High_Protocol"),

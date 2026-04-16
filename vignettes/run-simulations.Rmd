@@ -17,10 +17,10 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 
 projectConfigPath <- system.file(
-  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  "extdata", "projects", "Example", "Project.json",
   package = "esqlabsR"
 )
-projectConfiguration <- loadProject(projectConfigPath)
+project <- loadProject(projectConfigPath)
 ```
 
 Running scenarios with `{esqlabsR}` is straightforward: load the project
@@ -28,18 +28,18 @@ configuration and call `runScenarios()`.
 
 ### Loading the project
 
-A `ProjectConfiguration` object holds all information about the project,
+A `Project` object holds all information about the project,
 including scenarios, individuals, populations, model parameters, and
-observed data. It is created by loading a `ProjectConfiguration.json`
+observed data. It is created by loading a `Project.json`
 file with `loadProject()`:
 
 ```{r, eval=FALSE}
-projectConfiguration <- loadProject("path/to/ProjectConfiguration.json")
+project <- loadProject("path/to/Project.json")
 ```
 
 ### Running scenarios
 
-The `runScenarios()` function accepts a `ProjectConfiguration` object
+The `runScenarios()` function accepts a `Project` object
 and runs the scenarios defined in it. You can optionally specify which
 scenarios to run by name. The output is a named list, where the names
 are scenario names, and the values are lists containing the simulation,
@@ -48,7 +48,7 @@ scenario is a population simulation).
 
 ```{r runScenarios, results='hold'}
 simulatedScenariosResults <- runScenarios(
-  projectConfiguration,
+  project,
   scenarioNames = "Aciclovir_iv"
 )
 
@@ -71,7 +71,7 @@ You can pass custom parameters directly to `runScenarios()`:
 
 ```{r, eval=FALSE}
 results <- runScenarios(
-  projectConfiguration,
+  project,
   scenarioNames = "Aciclovir_iv",
   customParams = customParams
 )

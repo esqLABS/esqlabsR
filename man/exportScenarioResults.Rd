@@ -7,14 +7,14 @@
 \usage{
 exportScenarioResults(
   simulatedScenariosResults,
-  projectConfiguration,
+  project,
   outputFolder = NULL,
   saveSimulationsToPKML = TRUE
 )
 
 saveScenarioResults(
   simulatedScenariosResults,
-  projectConfiguration,
+  project,
   outputFolder = NULL,
   saveSimulationsToPKML = TRUE
 )
@@ -23,11 +23,11 @@ saveScenarioResults(
 \item{simulatedScenariosResults}{Named list with \code{simulation}, \code{results}, \code{outputValues},
 and \code{population} as produced by \code{runScenarios()}.}
 
-\item{projectConfiguration}{An instance of \code{ProjectConfiguration}}
+\item{project}{An instance of \code{Project}}
 
 \item{outputFolder}{Optional - path to the folder where the results will be
 stored. If \code{NULL} (default), a sub-folder in
-\verb{ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>}.}
+\verb{Project$outputFolder/SimulationResults/<DateSuffix>}.}
 
 \item{saveSimulationsToPKML}{If \code{TRUE} (default), simulations corresponding to
 the results are saved to PKML along with the results.}
@@ -45,10 +45,10 @@ the file name suffix \verb{_population}. Results can be read with the \code{impo
 }
 \examples{
 \dontrun{
-projectConfiguration <- loadProject("path/to/ProjectConfiguration.json")
+project <- loadProject("path/to/Project.json")
 simulatedScenariosResults <- runScenarios(
-  projectConfiguration = projectConfiguration
+  project = project
 )
-exportScenarioResults(simulatedScenariosResults, projectConfiguration)
+exportScenarioResults(simulatedScenariosResults, project)
 }
 }

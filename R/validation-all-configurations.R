@@ -1,60 +1,60 @@
 #' Validate all configuration files in a project
-#' @param projectConfiguration ProjectConfiguration object or path to ProjectConfiguration.xlsx
+#' @param project Project object or path to Project.xlsx
 #' @return Named list of validationResult objects
 #' @export
-validateAllConfigurations <- function(projectConfiguration) {
+validateAllConfigurations <- function(project) {
   results <- list()
 
   # Handle both path and object input
-  if (is.character(projectConfiguration)) {
-    results$projectConfiguration <- .validateProjectConfiguration(
-      projectConfiguration
+  if (is.character(project)) {
+    results$project <- .validateProject(
+      project
     )
-    if (!results$projectConfiguration$is_valid()) {
+    if (!results$project$is_valid()) {
       class(results) <- c("ValidationResults", class(results))
       return(results)
     }
-    projectConfiguration <- loadProject(
-      path = projectConfiguration
+    project <- loadProject(
+      path = project
     )
   }
 
   # Validate each configuration file
-  if (!is.na(projectConfiguration$scenariosFile)) {
+  if (!is.na(project$scenariosFile)) {
     results$scenarios <- .validateScenariosFile(
-      projectConfiguration$scenariosFile
+      project$scenariosFile
     )
   }
 
-  if (!is.na(projectConfiguration$plotsFile)) {
-    results$plots <- .validatePlotsFile(projectConfiguration$plotsFile)
+  if (!is.na(project$plotsFile)) {
+    results$plots <- .validatePlotsFile(project$plotsFile)
   }
 
-  if (!is.na(projectConfiguration$individualsFile)) {
+  if (!is.na(project$individualsFile)) {
     results$individuals <- .validateIndividualsFile(
-      projectConfiguration$individualsFile
+      project$individualsFile
     )
   }
 
-  if (!is.na(projectConfiguration$populationsFile)) {
+  if (!is.na(project$populationsFile)) {
     results$populations <- .validatePopulationsFile(
-      projectConfiguration$populationsFile
+      project$populationsFile
     )
   }
 
-  if (!is.na(projectConfiguration$modelParamsFile)) {
-    results$models <- .validateModelsFile(projectConfiguration$modelParamsFile)
+  if (!is.na(project$modelParamsFile)) {
+    results$models <- .validateModelsFile(project$modelParamsFile)
   }
 
-  if (!is.na(projectConfiguration$applicationsFile)) {
+  if (!is.na(project$applicationsFile)) {
     results$applications <- .validateApplicationsFile(
-      projectConfiguration$applicationsFile
+      project$applicationsFile
     )
   }
 
   # Add cross-reference validation
   results$crossReferences <- .validateCrossReferences(
-    projectConfiguration,
+    project,
     results
   )
 

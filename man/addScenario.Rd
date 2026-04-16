@@ -2,10 +2,10 @@
 % Please edit documentation in R/utilities-scenarios.R
 \name{addScenario}
 \alias{addScenario}
-\title{Add a scenario programmatically to a ProjectConfiguration}
+\title{Add a scenario programmatically to a Project}
 \usage{
 addScenario(
-  projectConfiguration,
+  project,
   scenarioName,
   modelFile,
   individualId = NULL,
@@ -22,28 +22,28 @@ addScenario(
 )
 }
 \arguments{
-\item{projectConfiguration}{A \code{ProjectConfiguration} object.}
+\item{project}{A \code{Project} object.}
 
 \item{scenarioName}{Character. Name for the new scenario. Must not already
-exist in \code{projectConfiguration$scenarios}.}
+exist in \code{project$scenarios}.}
 
 \item{modelFile}{Character. Name of the \code{.pkml} model file (relative to
 model folder).}
 
 \item{individualId}{Character or NULL. ID referencing
-\code{projectConfiguration$individuals}.}
+\code{project$individuals}.}
 
 \item{populationId}{Character or NULL. ID referencing
-\code{projectConfiguration$populations}.}
+\code{project$populations}.}
 
 \item{applicationProtocol}{Character or NULL. Protocol name referencing
-\code{projectConfiguration$applications}.}
+\code{project$applications}.}
 
 \item{parameterGroups}{Character vector or NULL. Group names referencing
-\code{projectConfiguration$modelParameters}.}
+\code{project$modelParameters}.}
 
 \item{outputPathIds}{Character vector or NULL. IDs referencing
-\code{projectConfiguration$outputPaths}.}
+\code{project$outputPaths}.}
 
 \item{simulationTime}{Character or NULL. Format \code{"start, end, resolution"}
 or \code{"start, end, resolution; start, end, resolution"} for multiple
@@ -64,11 +64,11 @@ state. Default \code{FALSE}.}
 \code{FALSE}.}
 }
 \value{
-The \code{projectConfiguration} object, invisibly.
+The \code{project} object, invisibly.
 }
 \description{
 Creates a new \code{Scenario} and adds it to the
-\code{projectConfiguration$scenarios} list after validating all references.
+\code{project$scenarios} list after validating all references.
 }
 \seealso{
 Other scenario: 

@@ -4,7 +4,7 @@
 #
 # This script demonstrates the new JSON-driven workflow where the entire
 # project — scenarios, observed data, plots — is described in a single
-# ProjectConfiguration.json file.
+# Project.json file.
 #
 # Key improvement: observed data sources are declared in the JSON.
 # `createDataCombined()` and `createPlots()` load them automatically —
@@ -19,12 +19,12 @@ library(esqlabsR)
 # individuals, populations, observed data sources, and plot definitions.
 
 projectConfigPath <- system.file(
-  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  "extdata", "projects", "Example", "Project.json",
   package = "esqlabsR"
 )
 
-pc <- loadProject(projectConfigPath)
-print(pc)
+project <- loadProject(projectConfigPath)
+print(project)
 
 # The observed data section in the JSON looks like:
 #
@@ -45,7 +45,7 @@ print(pc)
 # ---------------------------------------------------------------------------
 # Scenarios are defined in the JSON. Run one, some, or all of them.
 
-simulatedScenarios <- runScenarios(pc)
+simulatedScenarios <- runScenarios(project)
 
 cat("Simulated scenarios:", paste(names(simulatedScenarios), collapse = ", "), "\n")
 
@@ -55,13 +55,13 @@ cat("Simulated scenarios:", paste(names(simulatedScenarios), collapse = ", "), "
 # This is where the magic happens. The old workflow required:
 #
 #   importerConfig <- ospsuite::loadDataImporterConfiguration(...)
-#   observedData   <- loadObservedData(pc, sheets = ..., importerConfiguration = ...)
-#   dcList         <- createDataCombined(pc, ..., observedData = observedData)
+#   observedData   <- loadObservedData(project, sheets = ..., importerConfiguration = ...)
+#   dcList         <- createDataCombined(project, ..., observedData = observedData)
 #
 # Now it's just:
 
 dcList <- createDataCombined(
-  projectConfiguration = pc,
+  project = project,
   dataCombinedNames = "Aciclovir_individual",
   simulatedScenarios = simulatedScenarios
 )
@@ -71,11 +71,11 @@ cat("DataCombined objects:", paste(names(dcList), collapse = ", "), "\n")
 # ---------------------------------------------------------------------------
 # 4. Create plots
 # ---------------------------------------------------------------------------
-# Same simplification — no observedData parameter, and projectConfiguration
+# Same simplification — no observedData parameter, and project
 # is now the first argument.
 
 plots <- createPlots(
-  projectConfiguration = pc,
+  project = project,
   plotGridNames = "Individual_diagnostics",
   simulatedScenarios = simulatedScenarios
 )
@@ -92,7 +92,7 @@ print(plots[[1]])
 # Use stopIfNotFound = FALSE to skip plots whose scenarios weren't simulated.
 
 allPlots <- createPlots(
-  projectConfiguration = pc,
+  project = project,
   simulatedScenarios = simulatedScenarios,
   stopIfNotFound = FALSE
 )
@@ -104,9 +104,9 @@ cat("All plot grids:", paste(names(allPlots), collapse = ", "), "\n")
 # ---------------------------------------------------------------------------
 # The full workflow is now 3 lines:
 #
-#   pc      <- loadProject("ProjectConfiguration.json")
-#   results <- runScenarios(pc, scenarioNames = "Aciclovir_iv")
-#   plots   <- createPlots(pc, simulatedScenarios = results)
+#   project <- loadProject("Project.json")
+#   results <- runScenarios(project, scenarioNames = "Aciclovir_iv")
+#   plots   <- createPlots(project, simulatedScenarios = results)
 #
 # Everything else — observed data loading, data combination, plot
 # configuration — is driven by the JSON.

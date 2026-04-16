@@ -5,18 +5,18 @@
 \title{Run a set of scenarios.}
 \usage{
 runScenarios(
-  projectConfiguration,
+  project,
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL
 )
 }
 \arguments{
-\item{projectConfiguration}{An object of type \code{ProjectConfiguration} loaded
+\item{project}{An object of type \code{Project} loaded
 from JSON. Its \code{scenarios} field is used to select and run scenarios.}
 
 \item{scenarioNames}{Optional character vector of scenario names to run. If
-\code{NULL} (default), all scenarios defined in \code{projectConfiguration} are run.}
+\code{NULL} (default), all scenarios defined in \code{project} are run.}
 
 \item{customParams}{A list containing vectors \code{paths}, \code{values}, and \code{units}
 that will be applied to all scenarios.}

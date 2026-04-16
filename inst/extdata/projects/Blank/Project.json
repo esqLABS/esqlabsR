@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0",
   "esqlabsRVersion": "6.0.0",
-  "projectConfiguration": {
+  "filePaths": {
     "modelFolder": "Models/Simulations/",
     "configurationsFolder": "Configurations/",
     "modelParamsFile": "ModelParameters.xlsx",

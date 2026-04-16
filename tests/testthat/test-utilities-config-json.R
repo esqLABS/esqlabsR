@@ -1,11 +1,11 @@
-# ---- importProjectConfigurationFromExcel tests ----
+# ---- importProjectFromExcel tests ----
 
-test_that("importProjectConfigurationFromExcel creates v2.0 JSON from Excel files", {
+test_that("importProjectFromExcel creates v2.0 JSON from Excel files", {
   paths <- local_test_project()
 
   outputDir <- withr::local_tempdir("test_import")
 
-  jsonPath <- importProjectConfigurationFromExcel(
+  jsonPath <- importProjectFromExcel(
     paths$project_config_path,
     outputDir,
     silent = TRUE
@@ -15,7 +15,7 @@ test_that("importProjectConfigurationFromExcel creates v2.0 JSON from Excel file
 
   jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
   expect_equal(jsonData$schemaVersion, "2.0")
-  expect_true("projectConfiguration" %in% names(jsonData))
+  expect_true("filePaths" %in% names(jsonData))
   expect_true("scenarios" %in% names(jsonData))
   expect_true("modelParameters" %in% names(jsonData))
   expect_true("individuals" %in% names(jsonData))
@@ -36,10 +36,10 @@ test_that("importProjectConfigurationFromExcel creates v2.0 JSON from Excel file
   expect_true(!is.null(firstSheet[[1]]$containerPath))
 })
 
-test_that("importProjectConfigurationFromExcel creates JSON in source dir by default", {
+test_that("importProjectFromExcel creates JSON in source dir by default", {
   paths <- local_test_project()
 
-  jsonPath <- importProjectConfigurationFromExcel(
+  jsonPath <- importProjectFromExcel(
     paths$project_config_path,
     silent = TRUE
   )
@@ -49,12 +49,12 @@ test_that("importProjectConfigurationFromExcel creates JSON in source dir by def
   expect_true(file.exists(jsonPath))
 })
 
-test_that("importProjectConfigurationFromExcel JSON can be loaded by ProjectConfiguration", {
+test_that("importProjectFromExcel JSON can be loaded by Project", {
   paths <- local_test_project()
 
   outputDir <- withr::local_tempdir("test_loadable")
 
-  jsonPath <- importProjectConfigurationFromExcel(
+  jsonPath <- importProjectFromExcel(
     paths$project_config_path,
     outputDir,
     silent = TRUE
@@ -64,15 +64,15 @@ test_that("importProjectConfigurationFromExcel JSON can be loaded by ProjectConf
     pc <- loadProject(jsonPath)
   })
 
-  expect_s3_class(pc, "ProjectConfiguration")
+  expect_s3_class(pc, "Project")
   expect_true(length(pc$scenarios) > 0)
   expect_true(length(pc$modelParameters) > 0)
   expect_true(length(pc$individuals) > 0)
 })
 
-test_that("importProjectConfigurationFromExcel includes species parameters in modelParameters", {
+test_that("importProjectFromExcel includes species parameters in modelParameters", {
   temp_project <- local_test_project()
-  jsonPath <- importProjectConfigurationFromExcel(
+  jsonPath <- importProjectFromExcel(
     temp_project$project_config_path,
     silent = TRUE
   )
@@ -96,20 +96,20 @@ test_that("importProjectConfigurationFromExcel includes species parameters in mo
   }
 })
 
-# ---- exportProjectConfigurationToExcel tests ----
+# ---- exportProjectToExcel tests ----
 
-test_that("exportProjectConfigurationToExcel creates Excel files from ProjectConfiguration", {
-  pc <- testProjectConfiguration()
+test_that("exportProjectToExcel creates Excel files from Project", {
+  pc <- testProject()
 
   outputDir <- withr::local_tempdir("test_export")
 
-  projConfigPath <- exportProjectConfigurationToExcel(
+  projConfigPath <- exportProjectToExcel(
     pc,
     outputDir = outputDir,
     silent = TRUE
   )
 
-  # Check that ProjectConfiguration.xlsx was created
+  # Check that Project.xlsx was created
   expect_true(file.exists(projConfigPath))
 
   # Check configurations directory was created
@@ -123,21 +123,21 @@ test_that("exportProjectConfigurationToExcel creates Excel files from ProjectCon
   expect_true(file.exists(file.path(configDir, "Applications.xlsx")))
 })
 
-test_that("exportProjectConfigurationToExcel works with plain-data individuals and scenarios", {
-  pc <- testProjectConfiguration()
+test_that("exportProjectToExcel works with plain-data individuals and scenarios", {
+  pc <- testProject()
   tempDir <- withr::local_tempdir()
-  exportProjectConfigurationToExcel(pc, outputDir = tempDir, silent = TRUE)
+  exportProjectToExcel(pc, outputDir = tempDir, silent = TRUE)
 
   # Check that key files were created
   expect_true(file.exists(file.path(tempDir, "Configurations", "Scenarios.xlsx")))
   expect_true(file.exists(file.path(tempDir, "Configurations", "Individuals.xlsx")))
 })
 
-test_that("exportProjectConfigurationToExcel preserves model parameters", {
-  pc <- testProjectConfiguration()
+test_that("exportProjectToExcel preserves model parameters", {
+  pc <- testProject()
 
   outputDir <- withr::local_tempdir("test_export_params")
-  exportProjectConfigurationToExcel(pc, outputDir = outputDir, silent = TRUE)
+  exportProjectToExcel(pc, outputDir = outputDir, silent = TRUE)
 
   # Read back the ModelParameters.xlsx
   paramsFile <- file.path(outputDir, "Configurations", "ModelParameters.xlsx")
@@ -150,23 +150,23 @@ test_that("exportProjectConfigurationToExcel preserves model parameters", {
   expect_true("Value" %in% names(globalDf))
 })
 
-# ---- projectConfigurationStatus tests ----
+# ---- projectStatus tests ----
 
-test_that("projectConfigurationStatus correctly handles missing JSON file", {
+test_that("projectStatus correctly handles missing JSON file", {
   test_proj <- local_test_project()
 
   json_path <- file.path(test_proj$dir, "NonExistent.json")
   expect_error(
-    projectConfigurationStatus(test_proj$project_config_path, json_path),
+    projectStatus(test_proj$project_config_path, json_path),
     "JSON file does not exist"
   )
 })
 
-test_that("projectConfigurationStatus detects in-sync state after fresh import", {
+test_that("projectStatus detects in-sync state after fresh import", {
   test_proj <- local_test_project()
 
   # Import fresh JSON from Excel
-  importProjectConfigurationFromExcel(
+  importProjectFromExcel(
     test_proj$project_config_path,
     silent = TRUE
   )
@@ -174,7 +174,7 @@ test_that("projectConfigurationStatus detects in-sync state after fresh import",
   jsonPath <- sub("\\.xlsx$", ".json", test_proj$project_config_path)
   expect_true(file.exists(jsonPath))
 
-  status_result <- projectConfigurationStatus(
+  status_result <- projectStatus(
     test_proj$project_config_path,
     jsonPath,
     silent = TRUE
@@ -182,11 +182,11 @@ test_that("projectConfigurationStatus detects in-sync state after fresh import",
   expect_true(status_result$in_sync)
 })
 
-test_that("projectConfigurationStatus detects out-of-sync state when JSON is modified", {
+test_that("projectStatus detects out-of-sync state when JSON is modified", {
   test_proj <- local_test_project()
 
   # Import fresh JSON from Excel to ensure a baseline in-sync state
-  importProjectConfigurationFromExcel(
+  importProjectFromExcel(
     test_proj$project_config_path,
     silent = TRUE
   )
@@ -203,7 +203,7 @@ test_that("projectConfigurationStatus detects out-of-sync state when JSON is mod
     jsonPath
   )
 
-  status_result <- projectConfigurationStatus(
+  status_result <- projectStatus(
     test_proj$project_config_path,
     jsonPath,
     silent = TRUE

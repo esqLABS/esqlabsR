@@ -4,10 +4,10 @@
 \alias{.validateCrossReferences}
 \title{Validate cross-references between configuration files}
 \usage{
-.validateCrossReferences(projectConfiguration, validationResults)
+.validateCrossReferences(project, validationResults)
 }
 \arguments{
-\item{projectConfiguration}{ProjectConfiguration object}
+\item{project}{Project object}
 
 \item{validationResults}{Previous validation results}
 }

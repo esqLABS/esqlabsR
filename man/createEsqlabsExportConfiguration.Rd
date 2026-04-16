@@ -20,7 +20,7 @@ The default attributes of the class are chosen to reflect the corporate
 standards adopted by esqLABS GmbH.
 }
 \examples{
-myProjConfig <- ProjectConfiguration$new()
+myProjConfig <- Project$new()
 createEsqlabsExportConfiguration(myProjConfig$outputFolder)
 
 }

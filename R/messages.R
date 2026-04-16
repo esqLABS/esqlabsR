@@ -1,11 +1,11 @@
 messages <- ospsuite.utils::messages
 
 # Project config####
-messages$oldProjectConfigurationLayout <- function() {
+messages$oldProjectLayout <- function() {
   cli::format_message(c(
-    "!" = "The project configuration file layout used is from an older version of the package.",
-    "i" = "This version is still supported and will be loaded but it is recommended to update the project configuration file.
-      To do so, use the {.code $save} method of the project configuration object."
+    "!" = "The project file layout used is from an older version of the package.",
+    "i" = "This version is still supported and will be loaded but it is recommended to update the project file.
+      To do so, use the {.code $save} method of the project object."
   ))
 }
 
@@ -125,15 +125,15 @@ messages$createdFileSnapshot <- function(inputFile, outputFile) {
   )
 }
 
-messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
+messages$restoredProject <- function(inputFile, outputFile) {
   cliFormat(
-    "Project configuration from {.file {inputFile}} restored at {.file {outputFile}}"
+    "Project from {.file {inputFile}} restored at {.file {outputFile}}"
   )
 }
 
 messages$hasUnsavedChanges <- function() {
   cli::format_message(c(
-    "!" = "The ProjectConfiguration object has been modified since loading from file.",
+    "!" = "The Project object has been modified since loading from file.",
     "i" = "The object properties don't match the original configuration file."
   ))
 }
@@ -667,7 +667,7 @@ messages$validationCrossReference <- function(source, target, missing) {
 
 messages$validationRequiredFileNotConfigured <- function(fileName) {
   cliFormat(
-    "Required configuration file {.file {fileName}} is not configured in ProjectConfiguration"
+    "Required configuration file {.file {fileName}} is not configured in Project"
   )
 }
 
@@ -731,7 +731,7 @@ messages$excelInSync <- function() {
 
 messages$projectConfigUnsavedChanges <- function() {
   cliFormat(
-    "The ProjectConfiguration object has {.strong unsaved changes} that differ from the Excel file."
+    "The Project object has {.strong unsaved changes} that differ from the Excel file."
   )
 }
 

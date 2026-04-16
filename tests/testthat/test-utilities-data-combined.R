@@ -1,15 +1,15 @@
-projectConfiguration <- testProjectConfiguration()
+project <- testProject()
 
 scenarioNames <- c("TestScenario", "PopulationScenario")
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 simulatedScenarios <- runScenarios(
-  projectConfiguration,
+  project,
   scenarioNames = scenarioNames
 )
 
 # Load observed data internally for test data setup only
-observedDataForSetup <- .loadObservedData(projectConfiguration)
+observedDataForSetup <- .loadObservedData(project)
 
 # Create a proper data frame with paths for all entries
 dataCombinedDf <- data.frame(list(
@@ -158,9 +158,9 @@ test_that("It warns when dataSet is not found in observedData", {
   )
 })
 
-test_that("createDataCombined loads observed data automatically from ProjectConfiguration", {
+test_that("createDataCombined loads observed data automatically from Project", {
   dcList <- createDataCombined(
-    projectConfiguration = projectConfiguration,
+    project = project,
     dataCombinedNames = "AciclovirPVB",
     simulatedScenarios = simulatedScenarios
   )

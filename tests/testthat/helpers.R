@@ -66,24 +66,24 @@ testDataDirectory <- function(name = NULL) {
   directory
 }
 
-#' Create test project configuration
+#' Create test project
 #'
 #' @description
-#' Creates a ProjectConfiguration object from the test project configuration file.
+#' Creates a Project object from the test project file.
 #'
-#' @returns ProjectConfiguration object for testing.
+#' @returns Project object for testing.
 #'
 #' @examples
 #' \dontrun{
-#' config <- testProjectConfiguration()
+#' project <- testProject()
 #' }
-testProjectConfiguration <- function() {
-  loadProject(testProjectConfigurationJSONPath())
+testProject <- function() {
+  loadProject(testProjectJSONPath())
 }
 
-#' Get path to test project configuration JSON
-testProjectConfigurationJSONPath <- function() {
-  file.path(testDataDirectory("TestProject"), "ProjectConfiguration.json")
+#' Get path to test project JSON
+testProjectJSONPath <- function() {
+  file.path(testDataDirectory("TestProject"), "Project.json")
 }
 
 #' Get path to test configurations directory
@@ -180,7 +180,7 @@ summarizer <- function(data, path) {
 #'
 #' @returns A list containing:
 #'   - `path`: Path to the temporary project directory
-#'   - `config`: ProjectConfiguration object for the project
+#'   - `config`: Project object for the project
 #'
 #' @examples
 #' \dontrun{
@@ -216,9 +216,9 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
   )
 
   # Generate Excel files from JSON
-  jsonPath <- file.path(temp_dir, "ProjectConfiguration.json")
+  jsonPath <- file.path(temp_dir, "Project.json")
   pc <- loadProject(jsonPath)
-  exportProjectConfigurationToExcel(pc, outputDir = temp_dir, silent = TRUE)
+  exportProjectToExcel(pc, outputDir = temp_dir, silent = TRUE)
 
   # Return list with path and config
   list(
@@ -246,15 +246,15 @@ local_test_project <- function(
   )
 
   # Generate Excel files from JSON in the temp copy
-  jsonPath <- file.path(temp_dir, "ProjectConfiguration.json")
+  jsonPath <- file.path(temp_dir, "Project.json")
   pc <- loadProject(jsonPath)
-  exportProjectConfigurationToExcel(pc, outputDir = temp_dir, silent = TRUE)
+  exportProjectToExcel(pc, outputDir = temp_dir, silent = TRUE)
 
   # Return the paths needed for testing
   list(
     dir = temp_dir,
-    project_config_path = file.path(temp_dir, "ProjectConfiguration.xlsx"),
-    snapshot_path = file.path(temp_dir, "ProjectConfiguration.json"),
+    project_config_path = file.path(temp_dir, "Project.xlsx"),
+    snapshot_path = file.path(temp_dir, "Project.json"),
     configurations_dir = file.path(temp_dir, "Configurations")
   )
 }

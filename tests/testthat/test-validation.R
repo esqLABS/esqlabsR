@@ -32,7 +32,7 @@ test_that("validateScenariosFile detects missing sheets", {
 test_that("validateAllConfigurations processes all files", {
   # Use existing test data from inst/extdata/projects/Example
   test_config_path <- system.file(
-    "extdata/projects/Example/ProjectConfiguration.xlsx",
+    "extdata/projects/Example/Project.xlsx",
     package = "esqlabsR"
   )
 
@@ -42,13 +42,13 @@ test_that("validateAllConfigurations processes all files", {
     expect_true(
       "scenarios" %in%
         names(results) ||
-        "projectConfiguration" %in% names(results)
+        "project" %in% names(results)
     )
   }
 })
 
 test_that("validateAllConfigurations handles NA file paths", {
-  # Create a mock ProjectConfiguration with NA values
+  # Create a mock Project with NA values
   mockConfig <- list(
     scenariosFile = NA_character_,
     plotsFile = NA_character_,
@@ -57,7 +57,7 @@ test_that("validateAllConfigurations handles NA file paths", {
     modelParamsFile = NA_character_,
     applicationsFile = NA_character_
   )
-  class(mockConfig) <- c("ProjectConfiguration", class(mockConfig))
+  class(mockConfig) <- c("Project", class(mockConfig))
 
   results <- validateAllConfigurations(mockConfig)
   expect_true(inherits(results, "ValidationResults"))
@@ -148,7 +148,7 @@ test_that("validateAllConfigurations validates all file types when provided", {
     modelParamsFile = models_file,
     applicationsFile = applications_file
   )
-  class(mockConfig) <- c("ProjectConfiguration", class(mockConfig))
+  class(mockConfig) <- c("Project", class(mockConfig))
 
   results <- validateAllConfigurations(mockConfig)
 
@@ -177,8 +177,8 @@ test_that("validateAllConfigurations stops early on invalid project config", {
   results <- validateAllConfigurations("nonexistent_config.xlsx")
 
   expect_true(inherits(results, "ValidationResults"))
-  expect_true("projectConfiguration" %in% names(results))
-  expect_false(results$projectConfiguration$is_valid())
+  expect_true("project" %in% names(results))
+  expect_false(results$project$is_valid())
   # Should not have other validation results if project config is invalid
   expect_false("scenarios" %in% names(results))
 })

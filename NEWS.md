@@ -3,10 +3,17 @@
 ## Breaking changes
 
 - **JSON is now the primary project configuration format.** Projects are
-  defined in a `ProjectConfiguration.json` file (v2.0 schema) instead of a
+  defined in a `Project.json` file (v2.0 schema) instead of a
   collection of Excel files. Use `loadProject()` to load a project. Existing
-  Excel-based projects can be migrated with `importProjectConfigurationFromExcel()`.
+  Excel-based projects can be migrated with `importProjectFromExcel()`.
   (#908)
+
+- **`ProjectConfiguration` class renamed to `Project`.** The JSON section key
+  `"projectConfiguration"` is now `"filePaths"`, and config files are renamed
+  from `ProjectConfiguration.json`/`.xlsx` to `Project.json`/`.xlsx`.
+  All associated functions are renamed: `exportProjectToExcel()`,
+  `importProjectFromExcel()`, `projectStatus()`, `exampleProjectPath()`.
+  Old names are soft-deprecated and will be removed in a future version. (#908)
 
 - **`ScenarioConfiguration` class removed.** The class and all associated
   utilities (`readScenarioConfigurationFromExcel()`,
@@ -20,7 +27,7 @@
   `outputPaths`, `parameterGroups`, etc.). (#908)
 
 - **`runScenarios()` signature changed.** The function now accepts a
-  `ProjectConfiguration` object (or scenario names and custom params) instead
+  `Project` object (or scenario names and custom params) instead
   of a list of pre-built `Scenario` objects. (#908)
 
 - **`createScenarios()` is no longer exported.** Scenarios are now created
@@ -32,7 +39,7 @@
 
 - **`createPlotsFromExcel()` renamed to `createPlots()`.** The old name is
   deprecated. The `observedData` parameter is removed and
-  `projectConfiguration` is now the first argument. (#908)
+  `project` is now the first argument. (#908)
 
 - **`loadObservedData()` and `loadObservedDataFromPKML()` removed.** Observed
   data is now declared in the `observedData` section of the JSON configuration
@@ -56,29 +63,29 @@
 ## New features
 
 - **`loadProject()` is the new primary entry point.** Reads a v2.0
-  `ProjectConfiguration.json` file and returns a fully populated
-  `ProjectConfiguration` object with parsed scenarios, individuals,
+  `Project.json` file and returns a fully populated
+  `Project` object with parsed scenarios, individuals,
   populations, output paths, model parameters, applications, and observed data.
   (#908)
 
-- **`addScenario()` function and `ProjectConfiguration$addScenario()` method
-  added.** Programmatically add scenarios to a loaded project configuration
+- **`addScenario()` function and `Project$addScenario()` method
+  added.** Programmatically add scenarios to a loaded project
   with validation. (#908)
 
-- **`importProjectConfigurationFromExcel()` added.** Migrates an Excel-based
+- **`importProjectFromExcel()` added.** Migrates an Excel-based
   project to a v2.0 JSON configuration file, including auto-merging species
   parameters into the `modelParameters` section. Replaces
   `snapshotProjectConfiguration()` (deprecated). (#908)
 
-- **`exportProjectConfigurationToExcel()` added.** Writes Excel configuration
-  files from a `ProjectConfiguration` object. Replaces
+- **`exportProjectToExcel()` added.** Writes Excel configuration
+  files from a `Project` object. Replaces
   `restoreProjectConfiguration()` (deprecated). (#908)
 
 - **Observed data auto-loading from JSON.** The `observedData` section in the
   JSON configuration supports both `"excel"` and `"pkml"` types with per-entry
   file, sheet, and importer configuration settings. (#908)
 
-- **`ProjectConfiguration$print()` rewritten** to show category counts (e.g.,
+- **`Project$print()` rewritten** to show category counts (e.g.,
   number of scenarios, individuals, populations) instead of raw file paths.
   (#908)
 
@@ -98,8 +105,8 @@ removed in a future release:
 
 - `createProjectConfiguration()` -- use `loadProject()` instead.
 - `createDefaultProjectConfiguration()` -- use `loadProject()` instead.
-- `snapshotProjectConfiguration()` -- use `importProjectConfigurationFromExcel()` instead.
-- `restoreProjectConfiguration()` -- use `exportProjectConfigurationToExcel()` instead.
+- `snapshotProjectConfiguration()` -- use `importProjectFromExcel()` instead.
+- `restoreProjectConfiguration()` -- use `exportProjectToExcel()` instead.
 - `createDataCombinedFromExcel()` -- use `createDataCombined()` instead.
 - `createPlotsFromExcel()` -- use `createPlots()` instead.
 - `createScenarioConfigurationsFromPKML()` -- use `createScenariosFromPKML()`

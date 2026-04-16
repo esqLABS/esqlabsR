@@ -9,7 +9,7 @@
 \arguments{
 \item{scenario}{A \code{Scenario} object (plain data class).}
 
-\item{pc}{A \code{ProjectConfiguration} object.}
+\item{pc}{A \code{Project} object.}
 
 \item{customParams}{Optional parameter structure from the caller.}
 

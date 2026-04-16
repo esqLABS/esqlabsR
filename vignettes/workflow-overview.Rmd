@@ -33,10 +33,10 @@ you fine tune your simulation and plots using simple code and excel files.
 This first step is to initialize the specific directories and file 
 structure required for the workflows.
 
-The output is a `ProjectConfiguration` object that will be used 
+The output is a `Project` object that will be used
 in many steps during the rest of the process.
 
-**Version Control**: JSON is the primary project configuration format, making it easy to track changes in Git. Use `importProjectConfigurationFromExcel()` to migrate existing Excel projects and `exportProjectConfigurationToExcel()` to generate Excel files when needed.
+**Version Control**: JSON is the primary project configuration format, making it easy to track changes in Git. Use `importProjectFromExcel()` to migrate existing Excel projects and `exportProjectToExcel()` to generate Excel files when needed.
 
 Learn more in `vignette("project-structure")`.
 

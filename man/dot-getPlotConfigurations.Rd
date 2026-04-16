@@ -2,12 +2,12 @@
 % Please edit documentation in R/utilities-figures.R
 \name{.getPlotConfigurations}
 \alias{.getPlotConfigurations}
-\title{Read plot configurations from a ProjectConfiguration object}
+\title{Read plot configurations from a Project object}
 \usage{
-.getPlotConfigurations(projectConfiguration, plotGridNames)
+.getPlotConfigurations(project, plotGridNames)
 }
 \arguments{
-\item{projectConfiguration}{Object of class \code{ProjectConfiguration}}
+\item{project}{Object of class \code{Project}}
 
 \item{plotGridNames}{Names of the plot grids to filter for. If \code{NULL},
 all plot grids are returned.}
@@ -18,6 +18,6 @@ A list with elements \code{plotGrids}, \code{exportConfigurations}, and
 }
 \description{
 Reads plot grids, plot configurations, and export configurations from
-\code{projectConfiguration$plots} instead of Excel files.
+\code{project$plots} instead of Excel files.
 }
 \keyword{internal}

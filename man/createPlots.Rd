@@ -3,10 +3,10 @@
 \name{createPlots}
 \alias{createPlots}
 \alias{createPlotsFromExcel}
-\title{Generate plots from a ProjectConfiguration}
+\title{Generate plots from a Project}
 \usage{
 createPlots(
-  projectConfiguration,
+  project,
   plotGridNames = NULL,
   simulatedScenarios = NULL,
   dataCombinedList = NULL,
@@ -17,7 +17,7 @@ createPlots(
 createPlotsFromExcel(...)
 }
 \arguments{
-\item{projectConfiguration}{Object of class \code{ProjectConfiguration} that
+\item{project}{Object of class \code{Project} that
 contains information about the output paths and plots configuration.}
 
 \item{plotGridNames}{Names of the plot grids for which the figures will be
@@ -35,7 +35,7 @@ behavior). Defaults to \code{NULL}, in which case all \code{DataCombined} are
 created from the project configuration.}
 
 \item{outputFolder}{Optional - path to the folder where the results will be
-stored. If \code{NULL} (default), \code{projectConfiguration$outputFolder} is used.
+stored. If \code{NULL} (default), \code{project$outputFolder} is used.
 Only relevant for plots specified for export in the export configuration.}
 
 \item{stopIfNotFound}{If TRUE (default), the function stops if any of the
@@ -46,5 +46,5 @@ printed.}
 A list of \code{ggplot} objects
 }
 \description{
-Generate plots from a ProjectConfiguration
+Generate plots from a Project
 }

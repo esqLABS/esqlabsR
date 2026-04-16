@@ -21,7 +21,7 @@ library(esqlabsR)
 The project configuration is the central piece of any `esqlabsR` project. It defines the structure of your project, specifies where all necessary files are stored, and provides the foundation for all workflows in the package. The project configuration consists of:
 
 - **Project structure**: A standardized folder hierarchy that organizes your models, data, parameters, scenarios, and results
-- **ProjectConfiguration object**: An R object that stores paths to all project files and directories
+- **Project object**: An R object that stores paths to all project files and directories
 - **Configuration files**: A JSON configuration file and supporting Excel files that define the project setup
 
 ## Initialize the Project Structure
@@ -41,28 +41,28 @@ structure.
 ```{r, echo = FALSE}
 fs::dir_tree(path = esqlabsR:::projectDirectory("Example"), glob = "*.md|*.R", invert = TRUE)
 ```
-## Create a ProjectConfiguration
+## Create a Project
 
-The `ProjectConfiguration` stores the paths to the model-, data-, and other files
-and directories. It will be used at several steps in `esqlabsR` workflows so it 
+The `Project` stores the paths to the model-, data-, and other files
+and directories. It will be used at several steps in `esqlabsR` workflows so it
 needs to be created before performing any simulations.
 
-By printing the `ProjectConfiguration`, we can see the locations of all files 
+By printing the `Project`, we can see the locations of all files
 used in the workflows:
 
 ```{r, eval = TRUE}
 projectConfigPath <- system.file(
-  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  "extdata", "projects", "Example", "Project.json",
   package = "esqlabsR"
 )
-my_project_configuration <- loadProject(projectConfigPath)
+my_project <- loadProject(projectConfigPath)
 ```
 
-Now that the project structure is initialized and the `ProjectConfiguration` is
+Now that the project structure is initialized and the `Project` is
 created, read `vignette("design-scenarios")` to continue the process.
-To learn more about `ProjectConfiguration`, read the following sections.
+To learn more about `Project`, read the following sections.
 
-## Validating Project Configuration
+## Validating Project
 
 Before running simulations, it is recommended to validate your project configuration
 files to catch potential issues early. The `validateAllConfigurations()` function
@@ -90,10 +90,10 @@ Validation results are categorized into three levels:
 
 ```{r, eval=FALSE}
 # Validate all configuration files in a project
-validation_results <- validateAllConfigurations(my_project_configuration)
+validation_results <- validateAllConfigurations(my_project)
 
 # Or validate directly from the Excel file path
-validation_results <- validateAllConfigurations(exampleProjectConfigurationPath())
+validation_results <- validateAllConfigurations(exampleProjectPath())
 
 # Check if there are any critical errors
 if (isAnyCriticalErrors(validation_results)) {
@@ -137,40 +137,40 @@ and fix configuration issues early in your workflow.
 
 ## Details
 
-### Change ProjectConfiguration from R
+### Change Project from R
 
 If required, you can change the location of one of the files or folders using relative or absolute paths
 
 ```{r, eval=FALSE}
 # change the location of the output folder
-projectConfiguration$outputFolder <- "../anotherOutputFolder"
+project$outputFolder <- "../anotherOutputFolder"
 
 # change the location of the model parameters file
-projectConfiguration$modelParametersFile <- "absolute/path/to/anotherModelParameters.xlsx"
+project$modelParametersFile <- "absolute/path/to/anotherModelParameters.xlsx"
 ```
 
 
-### About `ProjectConfiguration.json`
+### About `Project.json`
 
-The `ProjectConfiguration.json` file is the primary configuration file used by
-`esqlabsR` to generate a `ProjectConfiguration` object which is the central
+The `Project.json` file is the primary configuration file used by
+`esqlabsR` to generate a `Project` object which is the central
 piece of a project. It should be located in the root folder of the project.
 
 This file defines *where* all the necessary files are stored in the project
 folder, which scenarios to run, and how observed data is loaded. Paths specified
-in the JSON should be *relative* to the `ProjectConfiguration.json` location.
+in the JSON should be *relative* to the `Project.json` location.
 
 Supporting Excel files (e.g., `ModelParameters.xlsx`, `Individuals.xlsx`,
 `Populations.xlsx`) provide detailed parametrization for scenarios. These files
 have a specific purpose and template and are described in the next sections.
 
-A `ProjectConfiguration.xlsx` file is also present for backwards compatibility
-and can be used with `importProjectConfigurationFromExcel()` to generate or
+A `Project.xlsx` file is also present for backwards compatibility
+and can be used with `importProjectFromExcel()` to generate or
 update the JSON configuration.
 
 ### Version Control and Project Sharing
 
-Since `ProjectConfiguration.json` is a text-based format, it works naturally
+Since `Project.json` is a text-based format, it works naturally
 with version control systems like Git. This means you can:
 
 - **Track changes** to your project configuration in version control systems like Git
@@ -180,28 +180,28 @@ with version control systems like Git. This means you can:
 
 #### Migrating from Excel to JSON
 
-If you have an existing Excel-based project, `importProjectConfigurationFromExcel()`
+If you have an existing Excel-based project, `importProjectFromExcel()`
 converts your Excel configuration files into a single JSON file:
 
 ```{r, eval=FALSE}
 # Migrate an Excel-based project to JSON
-importProjectConfigurationFromExcel("ProjectConfiguration.xlsx")
+importProjectFromExcel("Project.xlsx")
 ```
 
 By default, the JSON file will be created in the same directory as your
-`ProjectConfiguration.xlsx` file with the name `ProjectConfiguration.json`.
+`Project.xlsx` file with the name `Project.json`.
 
 #### Exporting back to Excel
 
-The `exportProjectConfigurationToExcel()` function regenerates Excel configuration
-files from a `ProjectConfiguration` object:
+The `exportProjectToExcel()` function regenerates Excel configuration
+files from a `Project` object:
 
 ```{r, eval=FALSE}
 # Load the project from JSON
-pc <- loadProject("ProjectConfiguration.json")
+pc <- loadProject("Project.json")
 
 # Export back to Excel files
-exportProjectConfigurationToExcel(pc)
+exportProjectToExcel(pc)
 ```
 
 This function will:
@@ -214,25 +214,25 @@ This function will:
 
 1. **Initial Setup**: Load and commit the JSON project configuration
    ```{r, eval=FALSE}
-pc <- loadProject("ProjectConfiguration.json")
+pc <- loadProject("Project.json")
    ```
 
 2. **Version Control**: Commit the JSON file to your Git repository
    ```bash
-   git add ProjectConfiguration.json
+   git add Project.json
    git commit -m "Add project configuration"
    ```
 
 3. **Team Sharing**: Team members clone the repo and load the project
    ```{r, eval=FALSE}
-pc <- loadProject("ProjectConfiguration.json")
+pc <- loadProject("Project.json")
    ```
 
 4. **Working with Excel**: If Excel editing is needed, export and re-import
    ```{r, eval=FALSE}
-exportProjectConfigurationToExcel(pc)
+exportProjectToExcel(pc)
 # Edit Excel files...
-importProjectConfigurationFromExcel("ProjectConfiguration.xlsx")
+importProjectFromExcel("Project.xlsx")
    ```
 
 The version control features in `esqlabsR` provide a robust foundation for team collaboration and project management. By using JSON as the primary format, you can maintain project history in version control systems, share configurations easily with team members, create reliable backups before making changes, and ensure reproducibility across different environments.

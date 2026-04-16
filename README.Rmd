@@ -94,14 +94,14 @@ Below is a simple example of how to work with the package:
 # load esqlabsR
 library(esqlabsR)
 
-# Load excel-based configuration
-# The function `exampleProjectConfigurationPath()` returns the path to the example project
-# configuration included in the package. Replace the variable `configurationPath`
-# with the path to you project configuration file.
-configurationPath <- exampleProjectConfigurationPath()
+# Load project configuration
+# The function `exampleProjectPath()` returns the path to the example project
+# configuration included in the package. Replace the variable `projectPath`
+# with the path to your project configuration file.
+projectPath <- exampleProjectPath()
 
-myProjectConfiguration <-
-  createProjectConfiguration(configurationPath)
+myProject <-
+  loadProject(projectPath)
 
 # Define which scenarios to run
 scenarioNames <- c("Aciclovir_iv")
@@ -112,7 +112,7 @@ scenarioNames <- c("Aciclovir_iv")
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   scenarioNames = scenarioNames,
-  projectConfiguration = myProjectConfiguration
+  project = myProject
 )
 
 # Define custom parameters for the scenarios. These parameter will be applied
@@ -147,12 +147,12 @@ simulatedScenariosResults <- runScenarios(
 )
 
 # Save results and store the path to the results for later re-use
-outputFolder <- exportScenarioResults(simulatedScenariosResults, myProjectConfiguration)
+outputFolder <- exportScenarioResults(simulatedScenariosResults, myProject)
 
 # Load observed data using the default importer configuration provided with the package. Alternatively, you can load a custom data importer configuration.
 dataSheets <- c("Laskin 1982.Group A")
 observedData <- esqlabsR::loadObservedData(
-  projectConfiguration = myProjectConfiguration,
+  project = myProject,
   sheets = dataSheets
 )
 
@@ -164,7 +164,7 @@ plots <- createPlotsFromExcel(
   ),
   simulatedScenarios = simulatedScenariosResults,
   observedData = observedData,
-  projectConfiguration = myProjectConfiguration,
+  project = myProject,
   outputFolder = outputFolder,
   stopIfNotFound = TRUE
 )

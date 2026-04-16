@@ -32,7 +32,7 @@ implemented in this package rely on simple concepts:
 
 `{esqlabsR}` facilitates modeling and simulation workflows with OSPS relying on
 a well defined project structure. The project is configured through a
-`ProjectConfiguration.json` file and supporting Excel files for detailed
+`Project.json` file and supporting Excel files for detailed
 parametrization (model parameters, individuals, populations, etc.).
 
 A new project folder can be initialized with the `initProject()`
@@ -47,7 +47,7 @@ initProject()
 It will create the expected simulation project's folder structure, which is described
 in details in `vignette("project-structure")`.
 
-The project is configured through a `ProjectConfiguration.json` file
+The project is configured through a `Project.json` file
 located in the root of the project folder. This file defines *where* all the
 necessary files are stored, which scenarios to run, and how observed data is
 loaded. Supporting Excel files (e.g., `ModelParameters.xlsx`,
@@ -57,26 +57,26 @@ Loading the project configuration is the first step in any workflow using
 `{esqlabsR}`.
 
 ```{r, eval=FALSE}
-my_project_configuration <- loadProject(path = "path/to/ProjectConfiguration.json")
+myProject <- loadProject(path = "path/to/Project.json")
 ```
 
-Note that the `ProjectConfiguration` stores paths to other files that
+Note that the `Project` stores paths to other files that
 are used in the project.
 
-To create an example `ProjectConfiguration` and execute the rest of this tutorial,
+To create an example `Project` and execute the rest of this tutorial,
 run the following:
 
 ```{r, warning=FALSE, message = FALSE}
 projectConfigPath <- system.file(
-  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  "extdata", "projects", "Example", "Project.json",
   package = "esqlabsR"
 )
-my_project_configuration <- loadProject(projectConfigPath)
+myProject <- loadProject(projectConfigPath)
 ```
 
 ## Version Control and Project Sharing
 
-Since `ProjectConfiguration.json` is a text-based format, it works naturally
+Since `Project.json` is a text-based format, it works naturally
 with version control systems like Git. You can track changes, share projects
 with team members, and ensure reproducibility across environments.
 
@@ -84,10 +84,10 @@ If you have an existing Excel-based project, you can migrate it to JSON:
 
 ```{r, eval=FALSE}
 # Migrate Excel project to JSON
-importProjectConfigurationFromExcel("ProjectConfiguration.xlsx")
+importProjectFromExcel("Project.xlsx")
 
 # Export back to Excel if needed
-exportProjectConfigurationToExcel(my_project_configuration)
+exportProjectToExcel(myProject)
 ```
 
 For comprehensive information about version control features, workflows, and best practices, see the "Version Control and Project Sharing" section in `vignette("project-structure")`.
@@ -99,7 +99,7 @@ simulations. In `{esqlabsR}`, simulations are run by defining and
 executing multiple **scenarios**.
 
 Scenarios are defined in the `scenarios` section of the
-`ProjectConfiguration.json` file. Each scenario entry specifies:
+`Project.json` file. Each scenario entry specifies:
 
 -   `modelFile`: the name of the `.pkml` file that can be found in the
     `Models/` directory.
@@ -125,12 +125,12 @@ read `vignette("design-scenarios")`.
 ## Run Scenarios
 
 Once all the scenario properties are set up, we run the simulations by
-passing the `ProjectConfiguration` object to `runScenarios()`. We can
+passing the `Project` object to `runScenarios()`. We can
 optionally specify which scenarios to run:
 
 ```{r}
 myScenarioResults <- runScenarios(
-  my_project_configuration,
+  myProject,
   scenarioNames = "Aciclovir_iv"
 )
 ```
@@ -140,13 +140,13 @@ and `importScenarioResults()`.
 
 ```{r, eval = FALSE}
 exportScenarioResults(myScenarioResults,
-  projectConfiguration = my_project_configuration,
-  outputFolder = my_project_configuration$outputFolder
+  project = myProject,
+  outputFolder = myProject$outputFolder
 )
 
 myScenarioResults <- importScenarioResults(
   scenarioNames = "Aciclovir_iv",
-  resultsFolder = my_project_configuration$outputFolder
+  resultsFolder = myProject$outputFolder
 )
 ```
 
@@ -183,12 +183,12 @@ plotIndividualTimeProfile(my_datacombined)
 
 In some cases, we also want to plot the observed experimental data.
 Observed data is declared in the `observedData` section of the
-`ProjectConfiguration.json` file and loaded automatically when the
+`Project.json` file and loaded automatically when the
 project is loaded. The data is available via the
-`ProjectConfiguration$observedData` field.
+`Project$observedData` field.
 
 ```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-observed_data <- my_project_configuration$observedData
+observed_data <- myProject$observedData
 
 my_datacombined$addDataSets(observed_data, names = "Observed", groups = "Aciclovir")
 

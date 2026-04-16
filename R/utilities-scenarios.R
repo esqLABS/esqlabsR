@@ -6,7 +6,7 @@
 #' Does NOT run the simulation.
 #'
 #' @param scenario A `Scenario` object (plain data class).
-#' @param pc A `ProjectConfiguration` object.
+#' @param pc A `Project` object.
 #' @param customParams Optional parameter structure from the caller.
 #' @param cache An environment with `$individuals` and `$populations` named lists.
 #' @param simulationRunOptions Optional `SimulationRunOptions` (used for steady-state).
@@ -185,7 +185,7 @@
           stop(paste0(
             "Population '", scenario$populationId,
             "' referenced by scenario '", scenario$scenarioName,
-            "' not found in project configuration."
+            "' not found in project."
           ))
         }
         moleculeOntogenies <- .readOntongeniesFromList(popData$proteinOntogenies)
@@ -271,7 +271,7 @@
 #' `.collectScenarioResult()`.
 #'
 #' @param scenario A `Scenario` object (plain data class).
-#' @param pc A `ProjectConfiguration` object.
+#' @param pc A `Project` object.
 #' @param customParams Optional parameter structure from the caller.
 #' @param cache An environment with `$individuals` and `$populations` named lists.
 #' @param simulationRunOptions Optional `SimulationRunOptions`.
@@ -315,10 +315,10 @@
 
 #' Run a set of scenarios.
 #'
-#' @param projectConfiguration An object of type `ProjectConfiguration` loaded
+#' @param project An object of type `Project` loaded
 #'   from JSON. Its `scenarios` field is used to select and run scenarios.
 #' @param scenarioNames Optional character vector of scenario names to run. If
-#'   `NULL` (default), all scenarios defined in `projectConfiguration` are run.
+#'   `NULL` (default), all scenarios defined in `project` are run.
 #' @param customParams A list containing vectors `paths`, `values`, and `units`
 #'   that will be applied to all scenarios.
 #' @param simulationRunOptions Object of type `SimulationRunOptions` that will
@@ -335,19 +335,19 @@
 #'
 #' @export
 runScenarios <- function(
-  projectConfiguration,
+  project,
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL
 ) {
-  validateIsOfType(projectConfiguration, "ProjectConfiguration")
+  validateIsOfType(project, "Project")
   .validateParametersStructure(
     parameterStructure = customParams,
     argumentName = "customParams",
     nullAllowed = TRUE
   )
 
-  allScenarios <- projectConfiguration$scenarios
+  allScenarios <- project$scenarios
   if (is.null(scenarioNames)) {
     scenarioNames <- names(allScenarios)
   }
@@ -373,7 +373,7 @@ runScenarios <- function(
     scenario <- allScenarios[[scenarioName]]
     preparedList[[idx]] <- .prepareScenario(
       scenario = scenario,
-      pc = projectConfiguration,
+      pc = project,
       customParams = customParams,
       cache = cache,
       simulationRunOptions = simulationRunOptions
@@ -436,10 +436,10 @@ runScenarios <- function(
 #'
 #' @param simulatedScenariosResults Named list with `simulation`, `results`, `outputValues`,
 #' and `population` as produced by `runScenarios()`.
-#' @param projectConfiguration An instance of `ProjectConfiguration`
+#' @param project An instance of `Project`
 #' @param outputFolder Optional - path to the folder where the results will be
 #' stored. If `NULL` (default), a sub-folder in
-#' `ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>`.
+#' `Project$outputFolder/SimulationResults/<DateSuffix>`.
 #' @param saveSimulationsToPKML If `TRUE` (default), simulations corresponding to
 #' the results are saved to PKML along with the results.
 #'
@@ -452,15 +452,15 @@ runScenarios <- function(
 #' @returns `outputFolder` or the created output folder path, if no `outputFolder` was provided.
 #'
 #' @examples \dontrun{
-#' projectConfiguration <- loadProject("path/to/ProjectConfiguration.json")
+#' project <- loadProject("path/to/Project.json")
 #' simulatedScenariosResults <- runScenarios(
-#'   projectConfiguration = projectConfiguration
+#'   project = project
 #' )
-#' exportScenarioResults(simulatedScenariosResults, projectConfiguration)
+#' exportScenarioResults(simulatedScenariosResults, project)
 #' }
 exportScenarioResults <- function(
   simulatedScenariosResults,
-  projectConfiguration,
+  project,
   outputFolder = NULL,
   saveSimulationsToPKML = TRUE
 ) {
@@ -468,7 +468,7 @@ exportScenarioResults <- function(
 
   outputFolder <- outputFolder %||%
     file.path(
-      projectConfiguration$outputFolder,
+      project$outputFolder,
       "SimulationResults",
       format(Sys.time(), "%F %H-%M")
     )
@@ -543,11 +543,11 @@ exportScenarioResults <- function(
 #'
 #' @examples \dontrun{
 #' # First simulate scenarios and save the results
-#' projectConfiguration <- loadProject("path/to/ProjectConfiguration.json")
+#' project <- loadProject("path/to/Project.json")
 #' simulatedScenariosResults <- runScenarios(
-#'   projectConfiguration = projectConfiguration
+#'   project = project
 #' )
-#' exportScenarioResults(simulatedScenariosResults, projectConfiguration)
+#' exportScenarioResults(simulatedScenariosResults, project)
 #'
 #' # Now load the results
 #' simulatedScenariosResults <- importScenarioResults(
@@ -595,7 +595,7 @@ importScenarioResults <- function(scenarioNames, resultsFolder) {
 #' @export
 saveScenarioResults <- function(
   simulatedScenariosResults,
-  projectConfiguration,
+  project,
   outputFolder = NULL,
   saveSimulationsToPKML = TRUE
 ) {
@@ -606,7 +606,7 @@ saveScenarioResults <- function(
   )
   exportScenarioResults(
     simulatedScenariosResults = simulatedScenariosResults,
-    projectConfiguration = projectConfiguration,
+    project = project,
     outputFolder = outputFolder,
     saveSimulationsToPKML = saveSimulationsToPKML
   )
@@ -636,7 +636,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' @param pkmlFilePaths Character vector of paths to PKML files to create scenarios from.
 #'   Can be a single string (recycled for all scenarios) or a vector with the same length
 #'   as the number of scenarios being created (determined by the longest vector argument).
-#' @param projectConfiguration A `ProjectConfiguration` object holding base information.
+#' @param project A `Project` object holding base information.
 #' @param scenarioNames Character vector. Optional custom names for the scenarios. If `NULL` (default),
 #'   scenario names will be extracted from the simulation names in the PKML files.
 #'   If provided, must have the same length as `pkmlFilePaths`.
@@ -712,24 +712,24 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #'
 #' @examples
 #' \dontrun{
-#' # Load project configuration
-#' pc <- loadProject("ProjectConfiguration.json")
+#' # Load project
+#' pc <- loadProject("Project.json")
 #'
 #' # Create scenarios from a single PKML file
 #' pkmlPath <- "path/to/simulation.pkml"
 #' scenarios <- createScenariosFromPKML(
 #'   pkmlFilePaths = pkmlPath,
-#'   projectConfiguration = pc
+#'   project = pc
 #' )
 #'
-#' # Add to project configuration and run
+#' # Add to project and run
 #' pc$scenarios <- c(pc$scenarios, scenarios)
 #' results <- runScenarios(pc, scenarioNames = names(scenarios))
 #'
 #' # Example of vector recycling - single value applied to all scenarios
 #' scenarios <- createScenariosFromPKML(
 #'   pkmlFilePaths = c("sim1.pkml", "sim2.pkml", "sim3.pkml"),
-#'   projectConfiguration = projectConfiguration,
+#'   project = project,
 #'   individualId = "Individual_001", # Recycled to all scenarios
 #'   steadyState = TRUE,              # Recycled to all scenarios
 #'   steadyStateTime = 1000           # Recycled to all scenarios
@@ -738,7 +738,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' # Example of vector arguments - different values per scenario
 #' scenarios <- createScenariosFromPKML(
 #'   pkmlFilePaths = c("pediatric.pkml", "adult.pkml", "elderly.pkml"),
-#'   projectConfiguration = projectConfiguration,
+#'   project = project,
 #'   scenarioNames = c("Pediatric", "Adult", "Elderly"),
 #'   individualId = c("Child_001", "Adult_001", "Elderly_001"),
 #'   applicationProtocols = c("Pediatric_Dose", "Standard_Dose", "Reduced_Dose"),
@@ -749,7 +749,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' # Example of PKML recycling - same model, different settings
 #' scenarios <- createScenariosFromPKML(
 #'   pkmlFilePaths = "base_model.pkml",                    # Single PKML recycled
-#'   projectConfiguration = projectConfiguration,
+#'   project = project,
 #'   scenarioNames = c("LowDose", "MediumDose", "HighDose"),
 #'   individualId = c("Patient1", "Patient2", "Patient3"),
 #'   applicationProtocols = c("Low_Protocol", "Med_Protocol", "High_Protocol"),
@@ -758,7 +758,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' }
 createScenariosFromPKML <- function(
   pkmlFilePaths,
-  projectConfiguration,
+  project,
   scenarioNames = NULL,
   individualId = NULL,
   populationId = NULL,
@@ -786,7 +786,7 @@ createScenariosFromPKML <- function(
 
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
-  validateIsOfType(projectConfiguration, ProjectConfiguration)
+  validateIsOfType(project, Project)
   if (!is.null(scenarioNames)) {
     validateIsCharacter(scenarioNames)
   }
@@ -822,7 +822,7 @@ createScenariosFromPKML <- function(
   validateIsLogical(readPopulationFromCSV)
 
   # Get the number of scenarios to create based on vector arguments
-  # Note: projectConfiguration is excluded as it should always be a single object
+  # Note: project is excluded as it should always be a single object
   nScenarios <- .getScenarioCount(
     pkmlFilePaths,
     scenarioNames,
@@ -988,7 +988,7 @@ createScenariosFromPKML <- function(
     sc$scenarioName <- scenarioName
     sc$modelFile <- path_rel(
       pkmlPath,
-      start = projectConfiguration$modelFolder
+      start = project$modelFolder
     )
 
     # Set individual ID
@@ -1338,26 +1338,26 @@ createScenarioConfigurationsFromPKML <- function(...) {
   }
 }
 
-#' Add a scenario programmatically to a ProjectConfiguration
+#' Add a scenario programmatically to a Project
 #'
 #' @description Creates a new `Scenario` and adds it to the
-#'   `projectConfiguration$scenarios` list after validating all references.
+#'   `project$scenarios` list after validating all references.
 #'
-#' @param projectConfiguration A `ProjectConfiguration` object.
+#' @param project A `Project` object.
 #' @param scenarioName Character. Name for the new scenario. Must not already
-#'   exist in `projectConfiguration$scenarios`.
+#'   exist in `project$scenarios`.
 #' @param modelFile Character. Name of the `.pkml` model file (relative to
 #'   model folder).
 #' @param individualId Character or NULL. ID referencing
-#'   `projectConfiguration$individuals`.
+#'   `project$individuals`.
 #' @param populationId Character or NULL. ID referencing
-#'   `projectConfiguration$populations`.
+#'   `project$populations`.
 #' @param applicationProtocol Character or NULL. Protocol name referencing
-#'   `projectConfiguration$applications`.
+#'   `project$applications`.
 #' @param parameterGroups Character vector or NULL. Group names referencing
-#'   `projectConfiguration$modelParameters`.
+#'   `project$modelParameters`.
 #' @param outputPathIds Character vector or NULL. IDs referencing
-#'   `projectConfiguration$outputPaths`.
+#'   `project$outputPaths`.
 #' @param simulationTime Character or NULL. Format `"start, end, resolution"`
 #'   or `"start, end, resolution; start, end, resolution"` for multiple
 #'   intervals.
@@ -1371,12 +1371,12 @@ createScenarioConfigurationsFromPKML <- function(...) {
 #' @param readPopulationFromCSV Logical. Load population from CSV. Default
 #'   `FALSE`.
 #'
-#' @returns The `projectConfiguration` object, invisibly.
+#' @returns The `project` object, invisibly.
 #'
 #' @export
 #' @family scenario
 addScenario <- function(
-    projectConfiguration,
+    project,
     scenarioName,
     modelFile,
     individualId = NULL,
@@ -1390,8 +1390,8 @@ addScenario <- function(
     steadyStateTime = 1000,
     overwriteFormulasInSS = FALSE,
     readPopulationFromCSV = FALSE) {
-  validateIsOfType(projectConfiguration, "ProjectConfiguration")
-  pc <- projectConfiguration
+  validateIsOfType(project, "Project")
+  pc <- project
   errors <- character()
 
   # Validate required args

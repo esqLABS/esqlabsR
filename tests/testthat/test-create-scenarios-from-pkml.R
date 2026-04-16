@@ -4,13 +4,13 @@
 
 test_that("Basic scenario creation from single PKML file", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   # Create scenarios from PKML
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration
+    project = project
   )
 
   expect_length(scenarioConfigurations, 1)
@@ -27,12 +27,12 @@ test_that("Basic scenario creation from single PKML file", {
 
 test_that("Scenario creation with custom names", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = "CustomScenario"
   )
 
@@ -46,12 +46,12 @@ test_that("Scenario creation with custom names", {
 
 test_that("Time unit extraction from PKML file", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration
+    project = project
   )
 
   expect_equal(scenarioConfigurations[[1]]$simulationTimeUnit, "h")
@@ -59,12 +59,12 @@ test_that("Time unit extraction from PKML file", {
 
 test_that("Custom time unit overrides PKML time unit", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     simulationTimeUnit = "min"
   )
 
@@ -77,12 +77,12 @@ test_that("Custom time unit overrides PKML time unit", {
 
 test_that("Case 1: Single PKML, no other arguments (original behavior)", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration
+    project = project
   )
 
   expect_length(scenarioConfigurations, 1)
@@ -91,12 +91,12 @@ test_that("Case 1: Single PKML, no other arguments (original behavior)", {
 
 test_that("Case 2: Single PKML with single-value arguments", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = "CustomScenario",
     individualId = "Individual001",
     steadyState = TRUE,
@@ -114,12 +114,12 @@ test_that("Case 2: Single PKML with single-value arguments", {
 
 test_that("Case 3: Single PKML with vector arguments (PKML recycled)", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = c("LowDose", "MediumDose", "HighDose"),
     individualId = c("Patient1", "Patient2", "Patient3"),
     applicationProtocols = c("Protocol1", "Protocol2", "Protocol3"),
@@ -146,13 +146,13 @@ test_that("Case 3: Single PKML with vector arguments (PKML recycled)", {
 
 test_that("Case 4: Multiple PKMLs with single-value arguments (arguments recycled)", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
   pkmlPaths <- rep(pkmlPath, 3)
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPaths,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = c("Model1", "Model2", "Model3"),
     individualId = "SharedIndividual",
     applicationProtocols = "SharedProtocol",
@@ -174,13 +174,13 @@ test_that("Case 4: Multiple PKMLs with single-value arguments (arguments recycle
 
 test_that("Case 5: Multiple PKMLs with vector arguments", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
   pkmlPaths <- rep(pkmlPath, 3)
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPaths,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = c("Pediatric", "Adult", "Elderly"),
     individualId = c("Child001", "Adult001", "Elder001"),
     applicationProtocols = c("PedProtocol", "AdultProtocol", "ElderProtocol"),
@@ -206,13 +206,13 @@ test_that("Case 5: Multiple PKMLs with vector arguments", {
 
 test_that("Vector recycling works for single values", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
   pkmlPaths <- rep(pkmlPath, 3)
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPaths,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = c("Scenario1", "Scenario2", "Scenario3"),
     individualId = "TestIndividual",
     steadyState = TRUE,
@@ -240,13 +240,13 @@ test_that("Vector recycling works for single values", {
 
 test_that("Mixed NULL and vector arguments work correctly", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
   pkmlPaths <- rep(pkmlPath, 2)
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPaths,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = c("Test1", "Test2"),
     individualId = NULL,
     populationId = c("Pop1", "Pop2"),
@@ -276,12 +276,12 @@ test_that("Mixed NULL and vector arguments work correctly", {
 
 test_that("Custom parameters are applied correctly", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     individualId = "TestIndividual",
     parameterGroups = "Global,Custom",
     steadyState = TRUE,
@@ -303,13 +303,13 @@ test_that("Custom parameters are applied correctly", {
 
 test_that("Comma-separated parameterGroups and outputPaths are handled correctly", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
   pkmlPaths <- rep(pkmlPath, 2)
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPaths,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = c("Scenario1", "Scenario2"),
     parameterGroups = c("Global,Custom", "Global,Alternative"),
     outputPaths = c("Path1,Path2", "Path3,Path4,Path5")
@@ -328,7 +328,7 @@ test_that("Comma-separated parameterGroups and outputPaths are handled correctly
 
 test_that("Named outputPaths vectors are handled correctly", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
   pkmlPaths <- rep(pkmlPath, 2)
 
@@ -343,7 +343,7 @@ test_that("Named outputPaths vectors are handled correctly", {
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPaths,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = c("Scenario1", "Scenario2"),
     outputPaths = namedOutputPaths
   )
@@ -368,7 +368,7 @@ test_that("Named outputPaths vectors are handled correctly", {
 
 test_that("Single named outputPath vector is recycled correctly", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
   pkmlPaths <- rep(pkmlPath, 2)
 
@@ -379,7 +379,7 @@ test_that("Single named outputPath vector is recycled correctly", {
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPaths,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = c("Scenario1", "Scenario2"),
     outputPaths = singleNamedOutputPath
   )
@@ -398,13 +398,13 @@ test_that("Single named outputPath vector is recycled correctly", {
 
 test_that("Vectorized simulation time parameters work correctly", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
   pkmlPaths <- rep(pkmlPath, 2)
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPaths,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = c("ShortSim", "LongSim"),
     simulationTime = c("0, 24, 100", "0, 168, 200"),
     simulationTimeUnit = c("h", "h")
@@ -425,13 +425,13 @@ test_that("Vectorized simulation time parameters work correctly", {
 
 test_that("NULL defaults for steady state parameters work correctly", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   # Default behavior
   scenarioConfigurations1 <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration
+    project = project
   )
 
   scenario1 <- scenarioConfigurations1[[1]]
@@ -440,7 +440,7 @@ test_that("NULL defaults for steady state parameters work correctly", {
   # Steady state enabled but no time provided
   scenarioConfigurations2 <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = "TestSteadyStateNullTime",
     steadyState = TRUE
   )
@@ -451,13 +451,13 @@ test_that("NULL defaults for steady state parameters work correctly", {
 
 test_that("Application protocol names are handled correctly", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   # Default protocol name should be scenario name
   scenarioConfigurations1 <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = "MyCustomScenario"
   )
 
@@ -469,7 +469,7 @@ test_that("Application protocol names are handled correctly", {
   # Explicit protocol name should be used
   scenarioConfigurations2 <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = "TestExplicitProtocol",
     applicationProtocols = "CustomProtocolName"
   )
@@ -482,13 +482,13 @@ test_that("Application protocol names are handled correctly", {
 
 test_that("Complex scenario configuration with all parameters", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   # Test scenario with all possible parameters set
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = "ComplexScenario",
     individualId = "Individual123",
     populationId = "Population456",
@@ -524,13 +524,13 @@ test_that("Complex scenario configuration with all parameters", {
 
 test_that("Empty parameter sheets and output paths handling", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   # Test with empty parameter sheets
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = "EmptyParamsTest",
     parameterGroups = "",
     outputPaths = ""
@@ -544,13 +544,13 @@ test_that("Empty parameter sheets and output paths handling", {
 
 test_that("PKML file with custom simulation time intervals", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   # Test with custom simulation time that overrides PKML
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = "CustomTimeTest",
     simulationTime = "0,12,50;12,24,25",
     simulationTimeUnit = "h"
@@ -602,12 +602,12 @@ test_that(".parseSimulationTimeIntervals internal function works correctly", {
 
 test_that("Non-existent PKML file throws error", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
 
   expect_error(
     createScenariosFromPKML(
       pkmlFilePaths = "non_existent_file.pkml",
-      projectConfiguration = projectConfiguration
+      project = project
     ),
     "File not found"
   )
@@ -615,7 +615,7 @@ test_that("Non-existent PKML file throws error", {
 
 test_that("Invalid vector lengths throw errors", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
   pkmlPaths <- rep(pkmlPath, 3) # 3 scenarios
 
@@ -623,7 +623,7 @@ test_that("Invalid vector lengths throw errors", {
   expect_error(
     createScenariosFromPKML(
       pkmlFilePaths = pkmlPaths,
-      projectConfiguration = projectConfiguration,
+      project = project,
       individualId = c("Ind1", "Ind2") # Length 2, but pkmlPaths is length 3
     ),
     "Inconsistent vector argument lengths"
@@ -633,7 +633,7 @@ test_that("Invalid vector lengths throw errors", {
   expect_error(
     createScenariosFromPKML(
       pkmlFilePaths = pkmlPaths,
-      projectConfiguration = projectConfiguration,
+      project = project,
       steadyState = c(TRUE, FALSE) # Length 2, but pkmlPaths is length 3
     ),
     "Inconsistent vector argument lengths"
@@ -643,7 +643,7 @@ test_that("Invalid vector lengths throw errors", {
   expect_error(
     createScenariosFromPKML(
       pkmlFilePaths = pkmlPath, # Length 1
-      projectConfiguration = projectConfiguration,
+      project = project,
       scenarioNames = c("S1", "S2"), # Length 2
       individualId = c("I1", "I2", "I3") # Length 3 - inconsistent!
     ),
@@ -653,14 +653,14 @@ test_that("Invalid vector lengths throw errors", {
 
 test_that("Duplicate scenario names are handled correctly", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   # Test with duplicate custom scenario names
   expect_warning(
     scenarioConfigurations <- createScenariosFromPKML(
       pkmlFilePaths = c(pkmlPath, pkmlPath, pkmlPath),
-      projectConfiguration = projectConfiguration,
+      project = project,
       scenarioNames = c("DuplicateName", "DuplicateName", "UniqueName")
     ),
     "Duplicate scenario names found and made unique by adding indices"
@@ -674,16 +674,16 @@ test_that("Duplicate scenario names are handled correctly", {
 })
 
 # readScenarioConfigurationFromExcel was removed — scenarios are now loaded
-# directly from JSON via ProjectConfiguration$new(). No replacement test needed here.
+# directly from JSON via Project$new(). No replacement test needed here.
 
 test_that("Scenario objects are returned with correct type", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration
+    project = project
   )
 
   expect_length(scenarioConfigurations, 1)
@@ -696,11 +696,11 @@ test_that("Scenario objects are returned with correct type", {
 
 test_that("Function has no side effects on Excel files", {
   temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
 
   # Record initial state
-  applicationsFile <- projectConfiguration$applicationsFile
+  applicationsFile <- project$applicationsFile
   initialExists <- file.exists(applicationsFile)
   initialSheets <- character(0)
   if (initialExists) {
@@ -710,7 +710,7 @@ test_that("Function has no side effects on Excel files", {
   # Create scenarios (should have no side effects)
   scenarioConfigurations <- createScenariosFromPKML(
     pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
+    project = project,
     scenarioNames = "TestNoSideEffects"
   )
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0",
   "esqlabsRVersion": "6.0.0",
-  "projectConfiguration": {
+  "filePaths": {
     "modelFolder": "Models/Simulations/",
     "configurationsFolder": "Configurations/",
     "modelParamsFile": "ModelParameters.xlsx",
@@ -12,7 +12,7 @@
     "applicationsFile": "Applications.xlsx",
     "plotsFile": "Plots.xlsx",
     "dataFolder": "Data/",
-    "dataFile": "Aciclovir_TimeValuesData.xlsx",
+    "dataFile": "TestProject_TimeValuesData.xlsx",
     "dataImporterConfigurationFile": "esqlabs_dataImporter_configuration.xml",
     "outputFolder": "Results/"
   },
@@ -28,11 +28,11 @@
   },
   "scenarios": [
     {
-      "name": "Aciclovir_iv",
-      "individualId": "Adult_male",
+      "name": "TestScenario",
+      "individualId": "Indiv1",
       "populationId": null,
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global", "Aciclovir"],
+      "modelParameterGroups": ["Global"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -41,30 +41,62 @@
       "steadyStateTimeUnit": null,
       "overwriteFormulasInSS": false,
       "modelFile": "Aciclovir.pkml",
-      "outputPathIds": ["Aciclovir_PVB"]
+      "outputPathIds": null
     },
     {
-      "name": "Aciclovir_iv_female",
-      "individualId": "Adult_female",
+      "name": "TestScenario2",
+      "individualId": "Indiv1",
       "populationId": null,
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global", "Aciclovir"],
+      "modelParameterGroups": ["Global", "Aciclovir", "Sheet, with comma"],
       "applicationProtocol": "Aciclovir_iv_250mg",
-      "simulationTime": "0, 24, 60",
+      "simulationTime": "0, 1, 60; 1, 12, 20",
       "simulationTimeUnit": "h",
-      "steadyState": false,
-      "steadyStateTime": null,
-      "steadyStateTimeUnit": null,
+      "steadyState": true,
+      "steadyStateTime": 500,
+      "steadyStateTimeUnit": "min",
       "overwriteFormulasInSS": false,
       "modelFile": "Aciclovir.pkml",
-      "outputPathIds": ["Aciclovir_PVB"]
+      "outputPathIds": ["Aciclovir_PVB", "Aciclovir_fat_cell"]
     },
     {
-      "name": "Aciclovir_iv_population",
-      "individualId": "Adult_male",
-      "populationId": "European_adults",
+      "name": "PopulationScenario",
+      "individualId": "Indiv1",
+      "populationId": "TestPopulation",
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global", "Aciclovir"],
+      "modelParameterGroups": ["Global"],
+      "applicationProtocol": "Aciclovir_iv_250mg",
+      "simulationTime": "0, 12, 20",
+      "simulationTimeUnit": "h",
+      "steadyState": false,
+      "steadyStateTime": null,
+      "steadyStateTimeUnit": null,
+      "overwriteFormulasInSS": false,
+      "modelFile": "Aciclovir.pkml",
+      "outputPathIds": null
+    },
+    {
+      "name": "PopulationScenarioFromCSV",
+      "individualId": "Indiv1",
+      "populationId": "TestPopulation",
+      "readPopulationFromCSV": true,
+      "modelParameterGroups": ["Global"],
+      "applicationProtocol": "Aciclovir_iv_250mg",
+      "simulationTime": "0, 12, 20",
+      "simulationTimeUnit": "h",
+      "steadyState": false,
+      "steadyStateTime": null,
+      "steadyStateTimeUnit": null,
+      "overwriteFormulasInSS": false,
+      "modelFile": "Aciclovir.pkml",
+      "outputPathIds": null
+    },
+    {
+      "name": "TestScenario_missingParam",
+      "individualId": "Indiv1",
+      "populationId": null,
+      "readPopulationFromCSV": false,
+      "modelParameterGroups": ["Global", "MissingParam"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -73,7 +105,7 @@
       "steadyStateTimeUnit": null,
       "overwriteFormulasInSS": false,
       "modelFile": "Aciclovir.pkml",
-      "outputPathIds": ["Aciclovir_PVB"]
+      "outputPathIds": null
     }
   ],
   "modelParameters": {
@@ -82,6 +114,22 @@
         "containerPath": "Organism|Liver",
         "parameterName": "EHC continuous fraction",
         "value": 1,
+        "units": null
+      }
+    ],
+    "Sheet, with comma": [
+      {
+        "containerPath": "Organism|Liver",
+        "parameterName": "EHC continuous fraction",
+        "value": 1,
+        "units": null
+      }
+    ],
+    "MissingParam": [
+      {
+        "containerPath": "foo",
+        "parameterName": "bar",
+        "value": 2,
         "units": null
       }
     ],
@@ -96,30 +144,19 @@
   },
   "individuals": [
     {
-      "individualId": "Adult_male",
+      "individualId": "Indiv1",
       "species": "Human",
       "population": "European_ICRP_2002",
       "gender": "MALE",
       "weight": 73,
       "height": 176,
       "age": 30,
-      "proteinOntogenies": "CYP3A4:CYP3A4",
-      "parameterSets": ["Renal"]
-    },
-    {
-      "individualId": "Adult_female",
-      "species": "Human",
-      "population": "European_ICRP_2002",
-      "gender": "FEMALE",
-      "weight": 60,
-      "height": 165,
-      "age": 28,
-      "proteinOntogenies": "CYP3A4:CYP3A4",
-      "parameterSets": ["Renal"]
+      "proteinOntogenies": "CYP3A4:CYP3A4,CYP2D6:CYP2C8",
+      "parameterSets": ["Indiv1"]
     }
   ],
   "individualParameterSets": {
-    "Renal": [
+    "Indiv1": [
       {
         "containerPath": "Organism|Kidney",
         "parameterName": "GFR",
@@ -130,23 +167,42 @@
   },
   "populations": [
     {
-      "populationId": "European_adults",
+      "populationId": "TestPopulation",
       "species": "Human",
       "population": "European_ICRP_2002",
-      "numberOfIndividuals": 50,
-      "proportionOfFemales": 50,
+      "numberOfIndividuals": 2,
+      "proportionOfFemales": 0,
       "weightMin": null,
       "weightMax": null,
       "weightUnit": "kg",
       "heightMin": null,
       "heightMax": null,
       "heightUnit": "cm",
-      "ageMin": 18,
-      "ageMax": 65,
+      "ageMin": 22,
+      "ageMax": 41,
       "BMIMin": null,
       "BMIMax": null,
       "BMIUnit": "kg/m\u00b2",
-      "proteinOntogenies": "CYP3A4:CYP3A4"
+      "proteinOntogenies": "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+    },
+    {
+      "populationId": "TestPopulation_noOnto",
+      "species": "Human",
+      "population": "European_ICRP_2002",
+      "numberOfIndividuals": 2,
+      "proportionOfFemales": 0,
+      "weightMin": null,
+      "weightMax": null,
+      "weightUnit": "kg",
+      "heightMin": null,
+      "heightMax": null,
+      "heightUnit": "cm",
+      "ageMin": 22,
+      "ageMax": 41,
+      "BMIMin": null,
+      "BMIMax": null,
+      "BMIUnit": "kg/m\u00b2",
+      "proteinOntogenies": null
     }
   ],
   "applications": {
@@ -162,75 +218,60 @@
   "plots": {
     "dataCombined": [
       {
-        "DataCombinedName": "Aciclovir_individual",
-        "dataType": "simulated",
-        "label": "Aciclovir simulated (male)",
-        "scenario": "Aciclovir_iv",
-        "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-        "dataSet": null,
-        "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
-        "yOffsets": null,
-        "yOffsetsUnits": null,
-        "xScaleFactors": null,
-        "yScaleFactors": null
-      },
-      {
-        "DataCombinedName": "Aciclovir_individual",
-        "dataType": "simulated",
-        "label": "Aciclovir simulated (female)",
-        "scenario": "Aciclovir_iv_female",
-        "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-        "dataSet": null,
-        "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
-        "yOffsets": null,
-        "yOffsetsUnits": null,
-        "xScaleFactors": null,
-        "yScaleFactors": null
-      },
-      {
-        "DataCombinedName": "Aciclovir_individual",
-        "dataType": "observed",
-        "label": "Aciclovir observed",
-        "scenario": null,
-        "path": null,
-        "dataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
-        "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
-        "yOffsets": null,
-        "yOffsetsUnits": null,
-        "xScaleFactors": null,
-        "yScaleFactors": null
-      },
-      {
-        "DataCombinedName": "Aciclovir_population",
+        "DataCombinedName": "AciclovirPVB",
         "dataType": "simulated",
         "label": "Aciclovir simulated",
-        "scenario": "Aciclovir_iv_population",
+        "scenario": "TestScenario",
         "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
         "dataSet": null,
         "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
+        "xOffsets": 1,
+        "xOffsetsUnits": "h",
         "yOffsets": null,
         "yOffsetsUnits": null,
         "xScaleFactors": null,
         "yScaleFactors": null
       },
       {
-        "DataCombinedName": "Aciclovir_population",
+        "DataCombinedName": "AciclovirPVB",
         "dataType": "observed",
         "label": "Aciclovir observed",
         "scenario": null,
         "path": null,
         "dataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
         "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
+        "xOffsets": 1,
+        "xOffsetsUnits": "min",
+        "yOffsets": null,
+        "yOffsetsUnits": null,
+        "xScaleFactors": null,
+        "yScaleFactors": null
+      },
+      {
+        "DataCombinedName": "AciclovirPop",
+        "dataType": "simulated",
+        "label": "Aciclovir simulated",
+        "scenario": "PopulationScenario",
+        "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+        "dataSet": null,
+        "group": "AciclovirPop",
+        "xOffsets": 1,
+        "xOffsetsUnits": "h",
+        "yOffsets": null,
+        "yOffsetsUnits": null,
+        "xScaleFactors": null,
+        "yScaleFactors": null
+      },
+      {
+        "DataCombinedName": "AciclovirPop",
+        "dataType": "observed",
+        "label": "Aciclovir observed",
+        "scenario": null,
+        "path": null,
+        "dataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+        "group": "AciclovirPop",
+        "xOffsets": 1,
+        "xOffsetsUnits": "min",
         "yOffsets": null,
         "yOffsetsUnits": null,
         "xScaleFactors": null,
@@ -240,10 +281,10 @@
     "plotConfiguration": [
       {
         "plotID": "P1",
-        "DataCombinedName": "Aciclovir_individual",
+        "DataCombinedName": "AciclovirPVB",
         "plotType": "individual",
-        "title": "Aciclovir IV 250 mg",
-        "subtitle": "Individual time profiles",
+        "title": "PlotTitle",
+        "subtitle": "PlotSubtitle",
         "xUnit": "h",
         "yUnit": null,
         "xAxisScale": null,
@@ -257,9 +298,9 @@
       },
       {
         "plotID": "P2",
-        "DataCombinedName": "Aciclovir_individual",
+        "DataCombinedName": "AciclovirPVB",
         "plotType": "observedVsSimulated",
-        "title": "Observed vs Simulated",
+        "title": null,
         "subtitle": null,
         "xUnit": null,
         "yUnit": null,
@@ -274,9 +315,9 @@
       },
       {
         "plotID": "P3",
-        "DataCombinedName": "Aciclovir_individual",
+        "DataCombinedName": "AciclovirPVB",
         "plotType": "residualsVsSimulated",
-        "title": "Residuals",
+        "title": null,
         "subtitle": null,
         "xUnit": null,
         "yUnit": null,
@@ -291,10 +332,10 @@
       },
       {
         "plotID": "P4",
-        "DataCombinedName": "Aciclovir_population",
+        "DataCombinedName": "AciclovirPop",
         "plotType": "population",
-        "title": "Population simulation",
-        "subtitle": "Aciclovir IV 250 mg — 50 European adults",
+        "title": null,
+        "subtitle": null,
         "xUnit": "h",
         "yUnit": null,
         "xAxisScale": null,
@@ -309,34 +350,24 @@
     ],
     "plotGrids": [
       {
-        "name": "Individual_diagnostics",
+        "name": "Aciclovir",
         "plotIDs": "P1, P2, P3",
-        "title": "Aciclovir — Individual Diagnostics",
-        "subtitle": null
+        "title": "GridTitle",
+        "subtitle": "GridSubtitle"
       },
       {
-        "name": "Observed_vs_simulated",
+        "name": "Aciclovir2",
         "plotIDs": "P2",
         "title": null,
         "subtitle": null
       },
       {
-        "name": "Population_time_profile",
+        "name": "Aciclovir3",
         "plotIDs": "P4",
         "title": null,
         "subtitle": null
       }
     ],
-    "exportConfiguration": [
-      {
-        "plotGridName": "Individual_diagnostics",
-        "outputName": "Aciclovir_diagnostics",
-        "format": "png",
-        "width": 20,
-        "height": 15,
-        "units": "cm",
-        "dpi": 300
-      }
-    ]
+    "exportConfiguration": []
   }
 }

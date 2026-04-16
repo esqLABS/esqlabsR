@@ -4,10 +4,10 @@
 \alias{validateAllConfigurations}
 \title{Validate all configuration files in a project}
 \usage{
-validateAllConfigurations(projectConfiguration)
+validateAllConfigurations(project)
 }
 \arguments{
-\item{projectConfiguration}{ProjectConfiguration object or path to ProjectConfiguration.xlsx}
+\item{project}{Project object or path to Project.xlsx}
 }
 \value{
 Named list of validationResult objects

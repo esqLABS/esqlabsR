@@ -4,8 +4,8 @@
 #' produces a single v2.0 JSON file. This is the migration path from
 #' Excel-based projects to the JSON-primary workflow.
 #'
-#' @param projectConfigPath Path to the `ProjectConfiguration.xlsx` file.
-#'   Defaults to `"ProjectConfiguration.xlsx"`.
+#' @param projectConfigPath Path to the `Project.xlsx` file.
+#'   Defaults to `"Project.xlsx"`.
 #' @param outputDir Directory where the JSON file will be saved. If `NULL`
 #'   (default), the JSON file is created in the same directory as the source
 #'   Excel file.
@@ -14,8 +14,8 @@
 #'
 #' @return Invisibly returns the path to the created JSON file.
 #' @export
-importProjectConfigurationFromExcel <- function(
-  projectConfigPath = "ProjectConfiguration.xlsx",
+importProjectFromExcel <- function(
+  projectConfigPath = "Project.xlsx",
   outputDir = NULL,
   silent = FALSE
 ) {
@@ -25,7 +25,7 @@ importProjectConfigurationFromExcel <- function(
     stop(messages$fileNotFound(projectConfigPath))
   }
 
-  # Read the ProjectConfiguration.xlsx to get path settings
+  # Read the Project.xlsx to get path settings
   pcExcel <- readExcel(projectConfigPath)
   pcDir <- dirname(fs::path_abs(projectConfigPath))
 
@@ -61,8 +61,8 @@ importProjectConfigurationFromExcel <- function(
     esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
   )
 
-  # projectConfiguration section — raw path properties
-  jsonData$projectConfiguration <- as.list(pcProps)
+  # filePaths section — raw path properties
+  jsonData$filePaths <- as.list(pcProps)
 
   # --- OutputPaths ---
   scenariosFile <- resolveConfigFile(pcProps[["scenariosFile"]])
@@ -183,42 +183,53 @@ importProjectConfigurationFromExcel <- function(
   invisible(outputPath)
 }
 
-#' @rdname importProjectConfigurationFromExcel
-#' @param ... Arguments passed to `importProjectConfigurationFromExcel()`.
+#' @rdname importProjectFromExcel
+#' @param ... Arguments passed to `importProjectFromExcel()`.
 #' @export
 snapshotProjectConfiguration <- function(...) {
   lifecycle::deprecate_soft(
     what = "snapshotProjectConfiguration()",
-    with = "importProjectConfigurationFromExcel()",
+    with = "importProjectFromExcel()",
     when = "6.0.0"
   )
-  importProjectConfigurationFromExcel(...)
+  importProjectFromExcel(...)
 }
 
-#' Export a ProjectConfiguration to Excel files
+#' @rdname importProjectFromExcel
+#' @export
+importProjectConfigurationFromExcel <- function(...) {
+  lifecycle::deprecate_soft(
+    what = "importProjectConfigurationFromExcel()",
+    with = "importProjectFromExcel()",
+    when = "7.0.0"
+  )
+  importProjectFromExcel(...)
+}
+
+#' Export a Project to Excel files
 #'
-#' @description Writes Excel configuration files from a `ProjectConfiguration`
+#' @description Writes Excel configuration files from a `Project`
 #' object (typically loaded from JSON). This is the reverse of
-#' `importProjectConfigurationFromExcel()`.
+#' `importProjectFromExcel()`.
 #'
-#' @param projectConfiguration A `ProjectConfiguration` object.
+#' @param project A `Project` object.
 #' @param outputDir Directory where the Excel files will be created. Defaults
 #'   to the directory of the source JSON file.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
 #' @return Invisibly returns the path to the created
-#'   `ProjectConfiguration.xlsx`.
+#'   `Project.xlsx`.
 #' @export
-exportProjectConfigurationToExcel <- function(
-  projectConfiguration,
+exportProjectToExcel <- function(
+  project,
   outputDir = NULL,
   silent = FALSE
 ) {
-  validateIsOfType(projectConfiguration, "ProjectConfiguration")
+  validateIsOfType(project, "Project")
 
   if (is.null(outputDir)) {
-    outputDir <- projectConfiguration$projectConfigurationDirPath %||% "."
+    outputDir <- project$projectDirPath %||% "."
   }
 
   if (!dir.exists(outputDir)) {
@@ -230,14 +241,14 @@ exportProjectConfigurationToExcel <- function(
     dir.create(configDir, recursive = TRUE, showWarnings = FALSE)
   }
 
-  pc <- projectConfiguration
+  pc <- project
 
-  # --- ProjectConfiguration.xlsx ---
+  # --- Project.xlsx ---
   # Build a data.frame from the raw stored values
   props <- character(0)
   vals <- character(0)
   descs <- character(0)
-  pcInternal <- .extractProjectConfigurationData(pc)
+  pcInternal <- .extractFilePathsData(pc)
   for (propName in names(pcInternal)) {
     props <- c(props, propName)
     vals <- c(vals, pcInternal[[propName]]$value %||% "")
@@ -249,7 +260,7 @@ exportProjectConfigurationToExcel <- function(
     Description = descs,
     stringsAsFactors = FALSE
   )
-  projConfigPath <- file.path(outputDir, "ProjectConfiguration.xlsx")
+  projConfigPath <- file.path(outputDir, "Project.xlsx")
   .writeExcel(projConfigDf, projConfigPath)
 
   # --- ModelParameters.xlsx ---
@@ -329,8 +340,8 @@ exportProjectConfigurationToExcel <- function(
 
   if (interactive() && !silent) {
     relPath <- fs::path_rel(projConfigPath, start = getwd())
-    message(messages$restoredProjectConfiguration(
-      pc$jsonPath %||% "ProjectConfiguration",
+    message(messages$restoredProject(
+      pc$jsonPath %||% "Project",
       relPath
     ))
   }
@@ -338,29 +349,40 @@ exportProjectConfigurationToExcel <- function(
   invisible(projConfigPath)
 }
 
-#' @rdname exportProjectConfigurationToExcel
+#' @rdname exportProjectToExcel
 #' @param jsonPath Path to the JSON configuration file. Defaults to
-#'   `"ProjectConfiguration.json"`.
+#'   `"Project.json"`.
 #' @param ... Additional arguments (unused).
 #' @export
 restoreProjectConfiguration <- function(
-  jsonPath = "ProjectConfiguration.json",
+  jsonPath = "Project.json",
   outputDir = NULL,
   silent = FALSE,
   ...
 ) {
   lifecycle::deprecate_soft(
     what = "restoreProjectConfiguration()",
-    with = "exportProjectConfigurationToExcel()",
+    with = "exportProjectToExcel()",
     when = "6.0.0"
   )
   pc <- loadProject(jsonPath)
-  exportProjectConfigurationToExcel(
-    projectConfiguration = pc,
+  exportProjectToExcel(
+    project = pc,
     outputDir = outputDir,
     silent = silent
   )
   invisible(pc)
+}
+
+#' @rdname exportProjectToExcel
+#' @export
+exportProjectConfigurationToExcel <- function(...) {
+  lifecycle::deprecate_soft(
+    what = "exportProjectConfigurationToExcel()",
+    with = "exportProjectToExcel()",
+    when = "7.0.0"
+  )
+  exportProjectToExcel(...)
 }
 
 #' Check if Excel configuration files are in sync with JSON
@@ -368,8 +390,8 @@ restoreProjectConfiguration <- function(
 #' @description Compares Excel configuration files against their JSON
 #' configuration to determine if they are synchronized.
 #'
-#' @param projectConfigPath Path to a `ProjectConfiguration.xlsx` file.
-#'   Defaults to `"ProjectConfiguration.xlsx"`.
+#' @param projectConfigPath Path to a `Project.xlsx` file.
+#'   Defaults to `"Project.xlsx"`.
 #' @param jsonPath Path to the JSON configuration file. If `NULL` (default),
 #'   the function looks for a JSON file with the same base name.
 #' @param silent Logical indicating whether to suppress informational messages.
@@ -381,17 +403,17 @@ restoreProjectConfiguration <- function(
 #'
 #' @import cli
 #' @export
-projectConfigurationStatus <- function(
-  projectConfigPath = "ProjectConfiguration.xlsx",
+projectStatus <- function(
+  projectConfigPath = "Project.xlsx",
   jsonPath = NULL,
   silent = FALSE
 ) {
-  # Accept either a path string or a ProjectConfiguration object for
+  # Accept either a path string or a Project object for
   # backwards compatibility
-  if (inherits(projectConfigPath, "ProjectConfiguration")) {
+  if (inherits(projectConfigPath, "Project")) {
     pcObj <- projectConfigPath
-    # projectConfigurationFilePath stores the JSON path; derive the Excel path
-    pcJsonPath <- pcObj$projectConfigurationFilePath
+    # projectFilePath stores the JSON path; derive the Excel path
+    pcJsonPath <- pcObj$projectFilePath
     projectConfigPath <- sub("\\.json$", ".xlsx", pcJsonPath)
     if (is.null(jsonPath)) {
       jsonPath <- pcJsonPath
@@ -417,7 +439,7 @@ projectConfigurationStatus <- function(
   on.exit(unlink(tempDir, recursive = TRUE), add = TRUE)
 
   tempJsonPath <- file.path(tempDir, basename(jsonPath))
-  importProjectConfigurationFromExcel(
+  importProjectFromExcel(
     projectConfigPath,
     outputDir = tempDir,
     silent = TRUE
@@ -508,16 +530,27 @@ projectConfigurationStatus <- function(
       cli::cli_text("To resolve these differences, you can:")
       cli::cli_ul()
       cli::cli_li(
-        "{.run importProjectConfigurationFromExcel()} - Update JSON from Excel files."
+        "{.run importProjectFromExcel()} - Update JSON from Excel files."
       )
       cli::cli_li(
-        "{.run exportProjectConfigurationToExcel()} - Recreate Excel files from JSON."
+        "{.run exportProjectToExcel()} - Recreate Excel files from JSON."
       )
       cli::cli_end()
     }
   }
 
   invisible(result)
+}
+
+#' @rdname projectStatus
+#' @export
+projectConfigurationStatus <- function(...) {
+  lifecycle::deprecate_soft(
+    what = "projectConfigurationStatus()",
+    with = "projectStatus()",
+    when = "7.0.0"
+  )
+  projectStatus(...)
 }
 
 # ===========================================================================
@@ -806,7 +839,7 @@ projectConfigurationStatus <- function(
 #' Convert Scenario objects to an Excel data frame
 #' @param scenarioConfigs Named list of Scenario objects
 #' @param outputPaths Named character vector of output paths (names are IDs,
-#'   values are path strings) from `ProjectConfiguration$outputPaths`.
+#'   values are path strings) from `Project$outputPaths`.
 #'   Used to reverse-lookup scenario output paths back to IDs.
 #' @returns A data frame
 #' @keywords internal
@@ -880,15 +913,15 @@ projectConfigurationStatus <- function(
   do.call(rbind, rows)
 }
 
-#' Extract private .projectConfigurationData from a ProjectConfiguration
-#' @param pc ProjectConfiguration object
+#' Extract private .filePathsData from a Project
+#' @param pc Project object
 #' @returns Named list of property data
 #' @keywords internal
 #' @noRd
-.extractProjectConfigurationData <- function(pc) {
-  # Access via the environment since .projectConfigurationData is private
+.extractFilePathsData <- function(pc) {
+  # Access via the environment since .filePathsData is private
   pcEnv <- pc$.__enclos_env__$private
-  pcEnv$.projectConfigurationData
+  pcEnv$.filePathsData
 }
 
 # ===========================================================================

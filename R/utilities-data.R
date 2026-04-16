@@ -293,22 +293,22 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
   }
 }
 
-.loadObservedData <- function(projectConfiguration) {
-  if (is.null(projectConfiguration$observedData)) return(list())
+.loadObservedData <- function(project) {
+  if (is.null(project$observedData)) return(list())
 
   allDataSets <- list()
-  for (entry in projectConfiguration$observedData) {
+  for (entry in project$observedData) {
     dataSets <- switch(entry$type,
       "excel" = {
         filePath <- .resolveDataPath(
           entry$file,
-          projectConfiguration$dataFile,
-          projectConfiguration$dataFolder
+          project$dataFile,
+          project$dataFolder
         )
         importerPath <- .resolveDataPath(
           entry$importerConfiguration,
-          projectConfiguration$dataImporterConfigurationFile,
-          projectConfiguration$dataFolder
+          project$dataImporterConfigurationFile,
+          project$dataFolder
         )
         importerConfig <- ospsuite::loadDataImporterConfiguration(
           configurationFilePath = importerPath
@@ -321,7 +321,7 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
         )
       },
       "pkml" = {
-        filePath <- file.path(projectConfiguration$dataFolder, entry$file)
+        filePath <- file.path(project$dataFolder, entry$file)
         ds <- ospsuite::loadDataSetFromPKML(filePath = filePath)
         stats::setNames(list(ds), ds$name)
       }

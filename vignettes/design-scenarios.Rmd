@@ -139,11 +139,11 @@ configuration without manually editing the JSON file:
 
 ```{r, eval=FALSE}
 # Load the project
-projectConfiguration <- loadProject("ProjectConfiguration.json")
+project <- loadProject("Project.json")
 
 # Add a new scenario programmatically
 addScenario(
-  projectConfiguration,
+  project,
   scenarioName = "MyNewScenario",
   modelFile = "MyModel.pkml",
   outputPaths = c(
@@ -320,7 +320,7 @@ formula-defined parameters are left unchanged (corresponds to
 #### ModelFile
 
 Name of the `pkml` file with the simulation. It must be located in the
-folder defined in `ProjectConfiguration$modelFolder`.
+folder defined in `Project$modelFolder`.
 
 #### OutputPathsIds
 
@@ -370,6 +370,6 @@ The order of parameter sheets of the "ModelParameters.xlsx" file defined
 in the **ModelParameterSheets** column defines the order in which the
 parameters are applied.
 
-<!-- For demonstrating the simulation design process, we will use the example included in the package (which can be accessed using `exampleProjectConfigurationPath`). -->
+<!-- For demonstrating the simulation design process, we will use the example included in the package (which can be accessed using `exampleProjectPath`). -->
 
-<!-- projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath()) -->
+<!-- project <- loadProject(exampleProjectPath()) -->

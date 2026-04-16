@@ -1,20 +1,20 @@
 #' Load a project from a JSON configuration file
 #'
-#' @description Load a `ProjectConfiguration` from a JSON file. This is the
+#' @description Load a `Project` from a JSON file. This is the
 #'   primary entry point for working with esqlabsR projects.
 #'
-#' @param path Path to the `ProjectConfiguration.json` file. Defaults to
-#'   `ProjectConfiguration.json` in the working directory.
+#' @param path Path to the `Project.json` file. Defaults to
+#'   `Project.json` in the working directory.
 #'
-#' @returns Object of type `ProjectConfiguration`
+#' @returns Object of type `Project`
 #' @export
-loadProject <- function(path = "ProjectConfiguration.json") {
-  ProjectConfiguration$new(projectConfigurationFilePath = path)
+loadProject <- function(path = "Project.json") {
+  Project$new(projectFilePath = path)
 }
 
 #' @rdname loadProject
 #' @export
-createProjectConfiguration <- function(path = "ProjectConfiguration.json") {
+createProjectConfiguration <- function(path = "Project.json") {
   lifecycle::deprecate_soft(
     what = "createProjectConfiguration()",
     with = "loadProject()",
@@ -25,7 +25,7 @@ createProjectConfiguration <- function(path = "ProjectConfiguration.json") {
 
 #' @rdname loadProject
 #' @export
-createDefaultProjectConfiguration <- function(path = "ProjectConfiguration.json") {
+createDefaultProjectConfiguration <- function(path = "Project.json") {
   lifecycle::deprecate_soft(
     what = "createDefaultProjectConfiguration()",
     with = "loadProject()",
@@ -37,7 +37,7 @@ createDefaultProjectConfiguration <- function(path = "ProjectConfiguration.json"
 #' Check if a directory contains an esqlabsR project
 #'
 #' @description Checks if a directory already contains an esqlabsR project by
-#' looking for the presence of ProjectConfiguration.xlsx file or Configurations
+#' looking for the presence of Project.xlsx file or Configurations
 #' folder.
 #'
 #' @param destination A string defining the path to check for an existing
@@ -61,9 +61,9 @@ isProjectInitialized <- function(destination = ".") {
     return(FALSE)
   }
 
-  # Check for ProjectConfiguration.xlsx file
+  # Check for Project.xlsx file
   hasConfigFile <- any(stringr::str_detect(
-    "ProjectConfiguration.*xlsx$",
+    "Project.*xlsx$",
     fs::dir_ls(destination)
   ))
 
@@ -141,20 +141,31 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   }
 
   # Generate Excel configuration files from JSON
-  jsonPath <- file.path(destination, "ProjectConfiguration.json")
+  jsonPath <- file.path(destination, "Project.json")
   pc <- loadProject(jsonPath)
-  exportProjectConfigurationToExcel(pc, outputDir = destination, silent = TRUE)
+  exportProjectToExcel(pc, outputDir = destination, silent = TRUE)
 
   invisible(destination)
 }
 
-#' Get the path to example ProjectConfiguration.xlsx
+#' Get the path to example Project.xlsx
 #'
 #' @returns A string representing the path to the example
-#'   ProjectConfiguration.xlsx file
+#'   Project.xlsx file
 #' @export
 #' @examples
-#' exampleProjectConfigurationPath()
+#' exampleProjectPath()
+exampleProjectPath <- function() {
+  file.path(projectDirectory("Example"), "Project.xlsx")
+}
+
+#' @rdname exampleProjectPath
+#' @export
 exampleProjectConfigurationPath <- function() {
-  file.path(projectDirectory("Example"), "ProjectConfiguration.xlsx")
+  lifecycle::deprecate_soft(
+    what = "exampleProjectConfigurationPath()",
+    with = "exampleProjectPath()",
+    when = "7.0.0"
+  )
+  exampleProjectPath()
 }

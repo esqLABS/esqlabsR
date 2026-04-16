@@ -12,23 +12,23 @@ vignette: >
 ### Introduction
 
 esqlabsR v6.0.0 moves from an Excel-primary to a JSON-primary project
-configuration. Projects are now defined in a `ProjectConfiguration.json` file
+configuration. Projects are now defined in a `Project.json` file
 instead of a collection of Excel files. This guide walks through migrating an
 existing v5.x project.
 
 ### Step 1: Generate the JSON configuration
 
-Run `importProjectConfigurationFromExcel()` on your existing
-`ProjectConfiguration.xlsx` to generate a `ProjectConfiguration.json` file:
+Run `importProjectFromExcel()` on your existing
+`Project.xlsx` to generate a `Project.json` file:
 
 ```r
 library(esqlabsR)
-importProjectConfigurationFromExcel("path/to/ProjectConfiguration.xlsx")
+importProjectFromExcel("path/to/Project.xlsx")
 ```
 
 This reads all your Excel configuration files (scenarios, individuals,
 populations, model parameters, applications, observed data) and writes a single
-`ProjectConfiguration.json` in the same directory. The Excel files are left
+`Project.json` in the same directory. The Excel files are left
 unchanged.
 
 ### Step 2: Update your R code
@@ -46,7 +46,7 @@ results <- runScenarios(scenarios)
 observedData <- loadObservedData(projectConfiguration = pc, sheets = "Sheet1")
 
 # New (v6.0.0)
-pc <- loadProject("ProjectConfiguration.json")
+pc <- loadProject("Project.json")
 results <- runScenarios(pc, scenarioNames = "MyScenario")
 observedData <- pc$observedData
 ```
@@ -105,8 +105,13 @@ removed in a future release:
 |---|---|
 | `createProjectConfiguration()` | `loadProject()` |
 | `createDefaultProjectConfiguration()` | `loadProject()` |
-| `snapshotProjectConfiguration()` | `importProjectConfigurationFromExcel()` |
-| `restoreProjectConfiguration()` | `exportProjectConfigurationToExcel()` |
+| `snapshotProjectConfiguration()` | `importProjectFromExcel()` |
+| `restoreProjectConfiguration()` | `exportProjectToExcel()` |
+| `importProjectConfigurationFromExcel()` | `importProjectFromExcel()` |
+| `exportProjectConfigurationToExcel()` | `exportProjectToExcel()` |
+| `projectConfigurationStatus()` | `projectStatus()` |
+| `exampleProjectConfigurationPath()` | `exampleProjectPath()` |
+| `ProjectConfiguration` | `Project` |
 | `createDataCombinedFromExcel()` | `createDataCombined()` |
 | `createPlotsFromExcel()` | `createPlots()` |
 | `saveScenarioResults()` | `exportScenarioResults()` |
@@ -199,14 +204,14 @@ projectConfig <- createDefaultProjectConfiguration(...)  # Deprecated
 projectConfig$populationParamsFile  # Old property
 
 # New code
-projectConfig <- createProjectConfiguration(...)  # New recommended function
-projectConfig$populationsFile  # New property
+project <- loadProject(...)  # New recommended function
+project$populationsFile  # New property
 ```
 
 
 ### Best Practices
 
-1. Use the new `createProjectConfiguration()` function instead of the deprecated `createDefaultProjectConfiguration()`
+1. Use the new `loadProject()` function instead of the deprecated `createDefaultProjectConfiguration()`
 2. Store all configuration files in the `Configurations` folder
 3. Keep population-related CSV files in the `PopulationsCSV` folder
 

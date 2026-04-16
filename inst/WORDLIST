@@ -39,7 +39,6 @@ PlotConfiguration
 PopulationId
 PopulationName
 PopulationParameters
-ProjectConfiguration
 QSP
 ReadPopulationFromCSV
 ScenarioConfiguration
@@ -83,6 +82,7 @@ esqlabsR’s
 exportConfiguration
 exportParametersToXLS
 facetes
+filePaths
 frac
 getAllApplicationParameters
 ggplot
@@ -124,7 +124,6 @@ plotGridName
 plotGrids
 plotIDs
 plotgrids
-projectConfiguration
 rSharp
 readScenarioConfigurationFromExcel
 repo

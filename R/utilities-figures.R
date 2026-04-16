@@ -234,7 +234,7 @@ createEsqlabsPlotGridConfiguration <- function() {
 #' @returns An instance of `ExportConfiguration` R6 class.
 #'
 #' @examples
-#' myProjConfig <- ProjectConfiguration$new()
+#' myProjConfig <- Project$new()
 #' createEsqlabsExportConfiguration(myProjConfig$outputFolder)
 #'
 #' @family create-plotting-configurations
@@ -249,7 +249,7 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
   exportConfiguration$path <- outputFolder
   exportConfiguration$dpi <- 300
   # NULL is not supported by ExportConfiguration, so we should assign here
-  # something useful. NULL in the ProjectConfiguration currently means "do not
+  # something useful. NULL in the Project currently means "do not
   # export".
   exportConfiguration$format <- "png"
   exportConfiguration$width <- 18
@@ -258,9 +258,9 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
   return(exportConfiguration)
 }
 
-#' Generate plots from a ProjectConfiguration
+#' Generate plots from a Project
 #'
-#' @param projectConfiguration Object of class `ProjectConfiguration` that
+#' @param project Object of class `Project` that
 #'   contains information about the output paths and plots configuration.
 #' @param simulatedScenarios A list of simulated scenarios as returned by
 #'   `runScenarios()`. Can be `NULL` if no simulated data is required for the
@@ -274,7 +274,7 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 #'   grid with a given name does not exist, an error is thrown.
 #'
 #' @param outputFolder Optional - path to the folder where the results will be
-#'   stored. If `NULL` (default), `projectConfiguration$outputFolder` is used.
+#'   stored. If `NULL` (default), `project$outputFolder` is used.
 #'   Only relevant for plots specified for export in the export configuration.
 #' @param dataCombinedList A (named) list of `DataCombined` objects as input to
 #'   create plots defined in the `plotGridNames` argument. Missing
@@ -288,21 +288,21 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 #'
 #' @export
 createPlots <- function(
-  projectConfiguration,
+  project,
   plotGridNames = NULL,
   simulatedScenarios = NULL,
   dataCombinedList = NULL,
   outputFolder = NULL,
   stopIfNotFound = TRUE
 ) {
-  validateIsOfType(projectConfiguration, "ProjectConfiguration")
+  validateIsOfType(project, "Project")
   validateIsString(plotGridNames, nullAllowed = TRUE)
   validateIsOfType(dataCombinedList, "DataCombined", nullAllowed = TRUE)
   if (!typeof(dataCombinedList) %in% c("list", "NULL")) {
     stop(messages$errorDataCombinedListMustBeList(typeof(dataCombinedList)))
   }
   plotConfigurations <- .getPlotConfigurations(
-    projectConfiguration = projectConfiguration,
+    project = project,
     plotGridNames = plotGridNames
   )
   dfPlotConfigurations <- plotConfigurations$plotConfigurations
@@ -322,7 +322,7 @@ createPlots <- function(
   }
   # Filter and validate only used data combined
   dataCombinedListFromConfig <- createDataCombined(
-    projectConfiguration = projectConfiguration,
+    project = project,
     dataCombinedNames = dataCombinedNames,
     simulatedScenarios = simulatedScenarios,
     stopIfNotFound = stopIfNotFound
@@ -500,7 +500,7 @@ createPlots <- function(
     # create a list of ExportConfiguration objects from dfExportConfigurations
     outputFolder <- outputFolder %||%
       file.path(
-        projectConfiguration$outputFolder,
+        project$outputFolder,
         "Figures",
         format(Sys.time(), "%F %H-%M")
       )
@@ -1094,21 +1094,21 @@ createPlotsFromExcel <- function(...) {
   return(plotConfigurationOptions[names])
 }
 
-#' Read plot configurations from a ProjectConfiguration object
+#' Read plot configurations from a Project object
 #'
 #' Reads plot grids, plot configurations, and export configurations from
-#' `projectConfiguration$plots` instead of Excel files.
+#' `project$plots` instead of Excel files.
 #'
-#' @param projectConfiguration Object of class `ProjectConfiguration`
+#' @param project Object of class `Project`
 #' @param plotGridNames Names of the plot grids to filter for. If `NULL`,
 #'   all plot grids are returned.
 #'
 #' @returns A list with elements `plotGrids`, `exportConfigurations`, and
 #'   `plotConfigurations`, or `NULL` if no plot grids are defined.
 #' @keywords internal
-.getPlotConfigurations <- function(projectConfiguration, plotGridNames) {
-  dfPlotGrids <- projectConfiguration$plots$plotGrids
-  dfExportConfigurations <- projectConfiguration$plots$exportConfiguration
+.getPlotConfigurations <- function(project, plotGridNames) {
+  dfPlotGrids <- project$plots$plotGrids
+  dfExportConfigurations <- project$plots$exportConfiguration
 
   # Handle empty export configurations (no columns)
   if (ncol(dfExportConfigurations) == 0) {
@@ -1145,7 +1145,7 @@ createPlotsFromExcel <- function(...) {
     return()
   }
 
-  dfPlotConfigurations <- projectConfiguration$plots$plotConfiguration
+  dfPlotConfigurations <- project$plots$plotConfiguration
 
   # Filter and validate plotGrids
   dfPlotGrids <- dplyr::filter(
