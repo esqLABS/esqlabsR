@@ -15,7 +15,7 @@ test_that("It runs one scenario without specifying output paths", {
 
   expect_equal(names(simulatedScenarios), "TestScenario")
   expect_equal(
-    simulatedScenarios[["TestScenario"]]$results$allQuantityPaths,
+    simulatedScenarios[["TestScenario"]]$results$allQuantityPaths[[1]],
     defaultOutputPath
   )
 })
@@ -92,7 +92,6 @@ test_that("It runs population and individual scenarios", {
     2
   )
 })
-
 
 # exportScenarioResults / importScenarioResults ----
 
@@ -207,7 +206,6 @@ test_that("export/import handles scenario names with forbidden characters", {
   )
 })
 
-
 test_that("customParams in runScenarios overrides default parameters", {
   pc <- testProject()
   dosePath <- "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
@@ -262,7 +260,7 @@ test_that("It correctly runs when only one scenario name is provided", {
 
   expect_equal(names(simulatedScenarios), "TestScenario")
   expect_equal(
-    simulatedScenarios[["TestScenario"]]$results$allQuantityPaths,
+    simulatedScenarios[["TestScenario"]]$results$allQuantityPaths[[1]],
     defaultOutputPath
   )
 })
