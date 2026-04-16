@@ -129,7 +129,7 @@ test_that("It runs two scenarios", {
 
   expect_equal(names(simulatedScenarios), scenarioNames)
   expect_equal(
-    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths[[1]],
+    simulatedScenarios[[scenarioNames[[1]]]]$results$allQuantityPaths,
     defaultOutputPath
   )
 

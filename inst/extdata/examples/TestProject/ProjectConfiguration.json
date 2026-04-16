@@ -214,7 +214,7 @@
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
           "ModelFile": "Aciclovir.pkml",
-          "OutputPathsIds": null
+          "OutputPathsIds": "Aciclovir_PVB"
         },
         {
           "Scenario_name": "TestScenario2",
