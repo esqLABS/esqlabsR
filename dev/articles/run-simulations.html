@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9002</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -154,9 +154,9 @@ simulation by calling the <code>finalCustomParams</code> property:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">finalCustomParams</span></span>
 <span><span class="co">#&gt; $paths</span></span>
-<span><span class="co">#&gt; [1] "Organism|Liver|EHC continuous fraction"                           </span></span>
-<span><span class="co">#&gt; [2] "Organism|Kidney|GFR"                                              </span></span>
-<span><span class="co">#&gt; [3] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span></span>
+<span><span class="co">#&gt; [1] "Organism|Liver|EHC continuous fraction"                     </span></span>
+<span><span class="co">#&gt; [2] "Organism|Kidney|GFR"                                        </span></span>
+<span><span class="co">#&gt; [3] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $values</span></span>
 <span><span class="co">#&gt; [1]   1  90 250</span></span>
@@ -204,11 +204,11 @@ if the scenario is a population simulation.</p>
 <span><span class="co">#&gt; 6            0    5</span></span>
 <span><span class="co">#&gt;   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span></span>
 <span><span class="co">#&gt; 1                                                                  0.000000</span></span>
-<span><span class="co">#&gt; 2                                                                  2.713026</span></span>
-<span><span class="co">#&gt; 3                                                                  7.830378</span></span>
-<span><span class="co">#&gt; 4                                                                 13.107352</span></span>
-<span><span class="co">#&gt; 5                                                                 18.253891</span></span>
-<span><span class="co">#&gt; 6                                                                 23.234573</span></span>
+<span><span class="co">#&gt; 2                                                                  2.712821</span></span>
+<span><span class="co">#&gt; 3                                                                  7.829996</span></span>
+<span><span class="co">#&gt; 4                                                                 13.106873</span></span>
+<span><span class="co">#&gt; 5                                                                 18.253431</span></span>
+<span><span class="co">#&gt; 6                                                                 23.234045</span></span>
 <span><span class="co">#&gt; NULL</span></span></code></pre></div>
 <p>It is a good idea to store simulation results as <code>*.csv</code>
 along with simulations as <code>.*pkml</code> and, optionally, the

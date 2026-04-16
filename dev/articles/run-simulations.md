@@ -80,9 +80,9 @@ by calling the `finalCustomParams` property:
 ``` r
 scenarios$TestScenario$finalCustomParams
 #> $paths
-#> [1] "Organism|Liver|EHC continuous fraction"                           
-#> [2] "Organism|Kidney|GFR"                                              
-#> [3] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+#> [1] "Organism|Liver|EHC continuous fraction"                     
+#> [2] "Organism|Kidney|GFR"                                        
+#> [3] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
 #> 
 #> $values
 #> [1]   1  90 250
@@ -132,11 +132,11 @@ head(simulatedScenariosResults$TestScenario$outputValues$metaData)
 #> 6            0    5
 #>   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
 #> 1                                                                  0.000000
-#> 2                                                                  2.713026
-#> 3                                                                  7.830378
-#> 4                                                                 13.107352
-#> 5                                                                 18.253891
-#> 6                                                                 23.234573
+#> 2                                                                  2.712821
+#> 3                                                                  7.829996
+#> 4                                                                 13.106873
+#> 5                                                                 18.253431
+#> 6                                                                 23.234045
 #> NULL
 ```
 

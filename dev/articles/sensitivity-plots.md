@@ -41,7 +41,7 @@ outputPaths <- c(
 # Use named parameter paths to customize facet labels
 namedParameterPaths <- c(
   "Lipophilicity" = "Aciclovir|Lipophilicity",
-  "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+  "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 
 analysis <- sensitivityCalculation(

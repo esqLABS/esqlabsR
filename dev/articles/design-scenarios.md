@@ -267,8 +267,7 @@ print(applicationParams)
 #> [[1]]
 #> <Parameter>
 #>   • Quantity Type: Parameter
-#>   • Path: Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Start
-#>   time
+#>   • Path: Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Start time
 #>   • Value: 0.00e+00 [min]
 #> 
 #> ── Formula ──
@@ -278,7 +277,7 @@ print(applicationParams)
 #> [[2]]
 #> <Parameter>
 #>   • Quantity Type: Parameter
-#>   • Path: Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
+#>   • Path: Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
 #>   • Value: 2.50e-04 [kg]
 #> 
 #> ── Formula ──
@@ -288,7 +287,7 @@ print(applicationParams)
 #> [[3]]
 #> <Parameter>
 #>   • Quantity Type: Parameter
-#>   • Path: Applications|IV 250mg
+#>   • Path: Events|IV 250mg
 #>   10min|Application_1|ProtocolSchemaItem|DosePerBodySurfaceArea
 #>   • Value: 0.00e+00 [kg/dm²]
 #> 
@@ -299,7 +298,7 @@ print(applicationParams)
 #> [[4]]
 #> <Parameter>
 #>   • Quantity Type: Parameter
-#>   • Path: Applications|IV 250mg
+#>   • Path: Events|IV 250mg
 #>   10min|Application_1|ProtocolSchemaItem|DosePerBodyWeight
 #>   • Value: 0.00e+00 [kg/kg]
 #> 
@@ -310,8 +309,7 @@ print(applicationParams)
 #> [[5]]
 #> <Parameter>
 #>   • Quantity Type: Parameter
-#>   • Path: Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Infusion
-#>   time
+#>   • Path: Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Infusion time
 #>   • Value: 10.00 [min]
 #> 
 #> ── Formula ──
