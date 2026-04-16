@@ -485,7 +485,7 @@
       [1] "Aciclovir.pkml"
       
       $Scenarios$Scenarios$rows[[1]]$OutputPathsIds
-      [1] NA
+      [1] "Aciclovir_PVB"
       
       
       $Scenarios$Scenarios$rows[[2]]
@@ -2067,7 +2067,7 @@
       4           0, 12, 20                  h       FALSE            <NA>
       5           0, 24, 60                  h        <NA>            <NA>
         SteadyStateTimeUnit      ModelFile                    OutputPathsIds
-      1                <NA> Aciclovir.pkml                              <NA>
+      1                <NA> Aciclovir.pkml                     Aciclovir_PVB
       2                 min Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
       3                <NA> Aciclovir.pkml                              <NA>
       4                <NA> Aciclovir.pkml                              <NA>
