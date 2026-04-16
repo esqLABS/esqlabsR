@@ -317,7 +317,9 @@ ProjectConfiguration <- R6::R6Class(
               stop(messages$abortedByUser())
             }
           } else {
-            stop("esqlabsR version mismatch. You must update the version in the project configuration before continuing.")
+            stop(
+              "esqlabsR version mismatch. You must update the version in the project configuration before continuing."
+            )
           }
 
           # User confirmed: update version in data before saving

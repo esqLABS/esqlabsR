@@ -790,8 +790,11 @@ projectConfigurationStatus <- function(
 #' @keywords internal
 #' @noRd
 .csvToListStructure <- function(filePath) {
-  # Read the CSV data
-  csvDf <- utils::read.csv(filePath, stringsAsFactors = FALSE)
+  # Load population using ospsuite, which correctly handles PK-Sim exported
+  # files that may contain metadata comment lines (starting with '#') before
+  # the actual column headers.
+  population <- ospsuite::loadPopulation(filePath)
+  csvDf <- ospsuite::populationToDataFrame(population)
 
   # Convert to simple list format
   csvData <- list(
