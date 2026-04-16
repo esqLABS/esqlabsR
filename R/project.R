@@ -309,6 +309,9 @@ Project <- R6::R6Class(
         }
       }
 
+      self$schemaVersion <- jsonData$schemaVersion
+      self$esqlabsRVersion <- jsonData$esqlabsRVersion
+
       self$jsonPath <- jsonPath
       private$.projectFilePath <- jsonPath
       private$.projectDirPath <- dirname(jsonPath)
@@ -576,8 +579,14 @@ Project <- R6::R6Class(
         ospsuite.utils::ospPrintClass(self)
       }
       ospsuite.utils::ospPrintItems(list(
+        "Schema version" = self$schemaVersion %||% "unknown",
         "Working Directory" = getwd(),
-        "Configuration file" = self$projectFilePath
+        "Configuration file" = self$projectFilePath,
+        "Model folder" = self$modelFolder,
+        "Data folder" = self$dataFolder,
+        "Data file" = self$dataFile,
+        "Data importer configuration" = self$dataImporterConfigurationFile,
+        "Output folder" = self$outputFolder
       ))
 
       # Count plots breakdown
@@ -614,6 +623,11 @@ Project <- R6::R6Class(
       )
       invisible(self)
     },
+    #' @field schemaVersion Project structure schema version (e.g. "2.0").
+    #'   Shared between JSON and Excel representations.
+    schemaVersion = NULL,
+    #' @field esqlabsRVersion The esqlabsR version that created the JSON file.
+    esqlabsRVersion = NULL,
     #' @field scenarios Named list of `Scenario` objects, keyed by scenario
     #'   name. Populated by JSON loading.
     scenarios = NULL,

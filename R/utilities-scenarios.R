@@ -65,8 +65,8 @@
         cache$individuals[[scenario$individualId]] <- individualCharacteristics
       }
 
-      # 2c. Species parameters (from modelParameters, applied after individual)
-      speciesParams <- pc$modelParameters[[indivData$species]]
+      # 2c. Species parameters (from bundled SpeciesParameters.xlsx)
+      speciesParams <- .getSpeciesParameters(indivData$species)
       if (!is.null(speciesParams)) {
         params <- extendParameterStructure(
           parameters = params,
@@ -1474,4 +1474,29 @@ addScenario <- function(
   pc$modified <- TRUE
 
   invisible(pc)
+}
+
+
+#' Read species-specific parameters from the bundled SpeciesParameters.xlsx
+#'
+#' @param species Character scalar — the species name (e.g. "Rat", "Mouse").
+#' @returns A parameter structure list (`paths`, `values`, `units`) or `NULL`
+#'   if no sheet matches the species.
+#' @keywords internal
+#' @noRd
+.getSpeciesParameters <- function(species) {
+  filePath <- system.file(
+    "extdata", "SpeciesParameters.xlsx",
+    package = "esqlabsR"
+  )
+  if (!file.exists(filePath)) {
+    return(NULL)
+  }
+
+  sheets <- readxl::excel_sheets(filePath)
+  if (!species %in% sheets) {
+    return(NULL)
+  }
+
+  .readParametersFromXLS(paramsXLSpath = filePath, sheets = species)
 }

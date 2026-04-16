@@ -35,6 +35,14 @@ importProjectFromExcel <- function(
     as.character(pcExcel$Property)
   )
 
+  # Read version metadata (with fallback for old Excel files)
+  schemaVersion <- pcProps[["schemaVersion"]] %||% "2.0"
+  esqlabsRVersion <- pcProps[["esqlabsRVersion"]] %||%
+    as.character(utils::packageVersion("esqlabsR"))
+
+  # Remove version metadata from file path properties
+  pcProps <- pcProps[!names(pcProps) %in% c("schemaVersion", "esqlabsRVersion")]
+
   # Resolve the configurations folder relative to the Excel file
   configsFolder <- pcProps[["configurationsFolder"]]
   if (!is.null(configsFolder) && !is.na(configsFolder)) {
@@ -55,9 +63,10 @@ importProjectFromExcel <- function(
     normalizePath(file.path(configsFolder, fileName), mustWork = FALSE)
   }
 
-  # Build the v2.0 JSON structure
+  # Build the JSON structure — schemaVersion comes from the Excel source;
+  # if the Excel predates versioning, default to "2.0".
   jsonData <- list(
-    schemaVersion = "2.0",
+    schemaVersion = schemaVersion,
     esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
   )
 
@@ -84,35 +93,14 @@ importProjectFromExcel <- function(
     if ("Scenarios" %in% sheets) {
       scenarioDf <- readExcel(scenariosFile, sheet = "Scenarios")
       scenarioDf <- dplyr::filter(scenarioDf, !is.na(Scenario_name))
-      jsonData$scenarios <- .excelScenariosToV2(scenarioDf)
+      jsonData$scenarios <- .parseExcelScenarios(scenarioDf, schemaVersion)
     }
   }
 
   # --- ModelParameters ---
   modelParamsFile <- resolveConfigFile(pcProps[["modelParamsFile"]])
   if (!is.null(modelParamsFile) && file.exists(modelParamsFile)) {
-    jsonData$modelParameters <- .excelParameterSheetsToV2(modelParamsFile)
-  }
-
-  # --- Merge species parameters from SpeciesParameters.xlsx ---
-  speciesParamsFile <- system.file(
-    "extdata", "SpeciesParameters.xlsx", package = "esqlabsR"
-  )
-  if (file.exists(speciesParamsFile)) {
-    speciesSheets <- readxl::excel_sheets(speciesParamsFile)
-    speciesParams <- .excelParameterSheetsToV2(
-      speciesParamsFile, sheetNames = speciesSheets
-    )
-    if (is.null(jsonData$modelParameters)) {
-      jsonData$modelParameters <- speciesParams
-    } else {
-      # Only add species sheets that don't already exist (user overrides win)
-      for (sheetName in names(speciesParams)) {
-        if (is.null(jsonData$modelParameters[[sheetName]])) {
-          jsonData$modelParameters[[sheetName]] <- speciesParams[[sheetName]]
-        }
-      }
-    }
+    jsonData$modelParameters <- .parseExcelParameterSheets(modelParamsFile, schemaVersion = schemaVersion)
   }
 
   # --- Individuals ---
@@ -121,14 +109,15 @@ importProjectFromExcel <- function(
     sheets <- readxl::excel_sheets(individualsFile)
     if ("IndividualBiometrics" %in% sheets) {
       indivDf <- readExcel(individualsFile, sheet = "IndividualBiometrics")
-      jsonData$individuals <- .excelIndividualsToV2(indivDf)
+      jsonData$individuals <- .parseExcelIndividuals(indivDf, schemaVersion)
     }
     # Individual parameter sets — all sheets except IndividualBiometrics
     paramSetSheets <- setdiff(sheets, "IndividualBiometrics")
     if (length(paramSetSheets) > 0) {
-      jsonData$individualParameterSets <- .excelParameterSheetsToV2(
+      jsonData$individualParameterSets <- .parseExcelParameterSheets(
         individualsFile,
-        sheetNames = paramSetSheets
+        sheetNames = paramSetSheets,
+        schemaVersion = schemaVersion
       )
     }
   }
@@ -137,19 +126,19 @@ importProjectFromExcel <- function(
   populationsFile <- resolveConfigFile(pcProps[["populationsFile"]])
   if (!is.null(populationsFile) && file.exists(populationsFile)) {
     popDf <- readExcel(populationsFile, sheet = 1)
-    jsonData$populations <- .excelPopulationsToV2(popDf)
+    jsonData$populations <- .parseExcelPopulations(popDf, schemaVersion)
   }
 
   # --- Applications ---
   applicationsFile <- resolveConfigFile(pcProps[["applicationsFile"]])
   if (!is.null(applicationsFile) && file.exists(applicationsFile)) {
-    jsonData$applications <- .excelParameterSheetsToV2(applicationsFile)
+    jsonData$applications <- .parseExcelParameterSheets(applicationsFile, schemaVersion = schemaVersion)
   }
 
   # --- Plots ---
   plotsFile <- resolveConfigFile(pcProps[["plotsFile"]])
   if (!is.null(plotsFile) && file.exists(plotsFile)) {
-    jsonData$plots <- .excelPlotsToV2(plotsFile)
+    jsonData$plots <- .parseExcelPlots(plotsFile, schemaVersion)
   }
 
   # --- Determine output path ---
@@ -244,10 +233,12 @@ exportProjectToExcel <- function(
   pc <- project
 
   # --- Project.xlsx ---
-  # Build a data.frame from the raw stored values
-  props <- character(0)
-  vals <- character(0)
-  descs <- character(0)
+  # Version metadata rows
+  props <- c("schemaVersion", "esqlabsRVersion")
+  vals <- c("2.0", as.character(utils::packageVersion("esqlabsR")))
+  descs <- c("Project structure schema version", "esqlabsR version used to generate this file")
+
+  # File path property rows
   pcInternal <- .extractFilePathsData(pc)
   for (propName in names(pcInternal)) {
     props <- c(props, propName)
@@ -554,16 +545,18 @@ projectConfigurationStatus <- function(...) {
 }
 
 # ===========================================================================
-# v2.0 JSON conversion helpers — Excel → JSON
+# Excel → JSON conversion helpers
 # ===========================================================================
 
-#' Convert parameter Excel sheets to v2.0 JSON format
+#' Parse parameter sheets from an Excel file into JSON structure
 #' @param filePath Path to the Excel file
 #' @param sheetNames Sheets to read. If NULL, reads all sheets.
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
 #' @returns Named list of parameter arrays
 #' @keywords internal
 #' @noRd
-.excelParameterSheetsToV2 <- function(filePath, sheetNames = NULL) {
+.parseExcelParameterSheets <- function(filePath, sheetNames = NULL, schemaVersion = "2.0") {
   if (is.null(sheetNames)) {
     sheetNames <- readxl::excel_sheets(filePath)
   }
@@ -593,12 +586,14 @@ projectConfigurationStatus <- function(...) {
   result
 }
 
-#' Convert Scenarios Excel sheet to v2.0 JSON format
+#' Parse Scenarios Excel sheet into JSON structure
 #' @param scenarioDf Data frame from the Scenarios sheet
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
 #' @returns List of scenario objects
 #' @keywords internal
 #' @noRd
-.excelScenariosToV2 <- function(scenarioDf) {
+.parseExcelScenarios <- function(scenarioDf, schemaVersion = "2.0") {
   scenarios <- list()
   for (i in seq_len(nrow(scenarioDf))) {
     row <- scenarioDf[i, ]
@@ -623,12 +618,14 @@ projectConfigurationStatus <- function(...) {
   scenarios
 }
 
-#' Convert IndividualBiometrics Excel sheet to v2.0 JSON format
+#' Parse IndividualBiometrics Excel sheet into JSON structure
 #' @param indivDf Data frame from the IndividualBiometrics sheet
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
 #' @returns List of individual objects
 #' @keywords internal
 #' @noRd
-.excelIndividualsToV2 <- function(indivDf) {
+.parseExcelIndividuals <- function(indivDf, schemaVersion = "2.0") {
   individuals <- list()
   for (i in seq_len(nrow(indivDf))) {
     row <- indivDf[i, ]
@@ -653,12 +650,14 @@ projectConfigurationStatus <- function(...) {
   individuals
 }
 
-#' Convert Populations Excel sheet to v2.0 JSON format
+#' Parse Populations Excel sheet into JSON structure
 #' @param popDf Data frame from the Demographics sheet
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
 #' @returns List of population objects
 #' @keywords internal
 #' @noRd
-.excelPopulationsToV2 <- function(popDf) {
+.parseExcelPopulations <- function(popDf, schemaVersion = "2.0") {
   populations <- list()
   for (i in seq_len(nrow(popDf))) {
     row <- popDf[i, ]
@@ -686,13 +685,15 @@ projectConfigurationStatus <- function(...) {
   populations
 }
 
-#' Convert Plots Excel file to v2.0 JSON format
+#' Parse Plots Excel file into JSON structure
 #' @param plotsFile Path to the Plots.xlsx file
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
 #' @returns Named list with dataCombined, plotConfiguration, plotGrids,
 #'   exportConfiguration
 #' @keywords internal
 #' @noRd
-.excelPlotsToV2 <- function(plotsFile) {
+.parseExcelPlots <- function(plotsFile, schemaVersion = "2.0") {
   sheets <- readxl::excel_sheets(plotsFile)
   result <- list()
   for (sheet in sheets) {
