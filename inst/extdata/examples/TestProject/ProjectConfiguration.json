@@ -71,6 +71,11 @@
         "Property": "outputFolder",
         "Value": "Results/",
         "Description": "Path to the folder where the results should be saved to; relative to the location of this file"
+      },
+      {
+        "Property": "esqlabsRVersion",
+        "Value": "5.6.0.9002",
+        "Description": "Version of the esqlabsR package used to create this configuration"
       }
     ]
   },

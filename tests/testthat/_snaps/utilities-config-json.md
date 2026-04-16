@@ -162,6 +162,17 @@
       [1] "Path to the folder where the results should be saved to; relative to the location of this file"
       
       
+      $projectConfiguration$rows[[15]]
+      $projectConfiguration$rows[[15]]$Property
+      [1] "esqlabsRVersion"
+      
+      $projectConfiguration$rows[[15]]$Value
+      [1] "5.6.0.9002"
+      
+      $projectConfiguration$rows[[15]]$Description
+      [1] "Version of the esqlabsR package used to create this configuration"
+      
+      
       
       
       $modelParameterSets
@@ -2528,6 +2539,7 @@
       12                      dataFile        TestProject_TimeValuesData.xlsx
       13 dataImporterConfigurationFile esqlabs_dataImporter_configuration.xml
       14                  outputFolder                               Results/
+      15               esqlabsRVersion                             5.6.0.9002
                                                                                                                                         Description
       1                                                        Path to the folder with pkml simulation files; relative to the location of this file
       2                                             Path to the folder with excel files with parametrization; relative to the location of this file
@@ -2543,6 +2555,7 @@
       12                                                         Name of the excel file with experimental data. Must be located in the "dataFolder"
       13                          Name of data importer configuration file in xml format used to load the data. Must be located in the "dataFolder"
       14                                             Path to the folder where the results should be saved to; relative to the location of this file
+      15                                                                          Version of the esqlabsR package used to create this configuration
       
       
       $modelParameterSets
