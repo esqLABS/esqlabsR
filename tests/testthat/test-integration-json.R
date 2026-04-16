@@ -77,3 +77,28 @@ test_that("JSON workflow: round-trip JSON -> Excel -> JSON preserves data", {
   expect_equal(length(pc1$individuals), length(pc2$individuals))
   expect_equal(length(pc1$populations), length(pc2$populations))
 })
+
+test_that("JSON workflow: round-trip preserves scenario outputPaths", {
+  testProject <- local_test_project()
+
+  pc1 <- ProjectConfiguration$new(testProject$snapshot_path)
+
+  # Pick a scenario that has outputPaths set via outputPathIds
+  scenarioName <- "TestScenario2"
+  originalOutputPaths <- pc1$scenarios[[scenarioName]]$outputPaths
+
+  # Export to Excel
+  exportDir <- withr::local_tempdir("roundtrip_outputpaths")
+  exportProjectConfigurationToExcel(pc1, outputDir = exportDir, silent = TRUE)
+
+  # Import back to JSON
+  excelPath <- file.path(exportDir, "ProjectConfiguration.xlsx")
+  importProjectConfigurationFromExcel(excelPath, outputDir = exportDir, silent = TRUE)
+
+  # Load the round-tripped JSON
+  pc2 <- ProjectConfiguration$new(file.path(exportDir, "ProjectConfiguration.json"))
+
+  # The outputPaths should be preserved through round-trip
+  roundTrippedOutputPaths <- pc2$scenarios[[scenarioName]]$outputPaths
+  expect_equal(roundTrippedOutputPaths, originalOutputPaths)
+})

@@ -137,7 +137,7 @@ For more advanced users or when working programmatically, `esqlabsR` provides
 functions to create scenario configurations directly from PKML files, bypassing 
 the need to manually create Excel files:
 
-- `createScenarioConfigurationsFromPKML()`: Creates scenario configurations from 
+- `createScenariosFromPKML()`: Creates scenario configurations from 
   PKML files by extracting simulation settings, applications, and output paths.
 - `addScenarioConfigurationsToExcel()`: Adds scenario configurations to the 
   project Excel files for later use.
@@ -151,7 +151,7 @@ Example usage:
 
 ```{r, eval=FALSE}
 # Create scenarios from PKML files
-scenarioConfigs <- createScenarioConfigurationsFromPKML(
+scenarioConfigs <- createScenariosFromPKML(
   pkmlFilePaths = c("Model1.pkml", "Model2.pkml"),
   projectConfiguration = projectConfiguration,
   scenarioNames = c("Scenario1", "Scenario2"),
@@ -383,7 +383,7 @@ outputPaths <- c(
 )
 ```
 
-This approach is particularly useful with the new `createScenarioConfigurationsFromPKML()` function.
+This approach is particularly useful with the new `createScenariosFromPKML()` function.
 
 ### Scenario parameterization hierarchy
 

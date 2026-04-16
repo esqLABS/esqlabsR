@@ -419,7 +419,6 @@ runScenarios <- function(
     names(returnList)[[idx]] <- scenarioName
   }
 
-  ospsuite::clearMemory()
   return(returnList)
 }
 
@@ -640,10 +639,11 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' @param applicationProtocols Character vector. Optional application protocol names to use for scenarios.
 #'   If `NULL` (default), application protocols will be set to the scenario name.
 #'   Can be a single string (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
-#' @param paramSheets Character vector. Optional parameter sheet names to apply to scenarios.
-#'   If `NULL` (default), no parameter sheets will be applied. Can be a single string (recycled for all
-#'   scenarios) or a vector with the same length as `pkmlFilePaths`. If providing multiple sheets per
+#' @param parameterGroups Character vector. Optional parameter group names to apply to scenarios.
+#'   If `NULL` (default), no parameter groups will be applied. Can be a single string (recycled for all
+#'   scenarios) or a vector with the same length as `pkmlFilePaths`. If providing multiple groups per
 #'   scenario, separate them with commas in the string.
+#' @param paramSheets `r lifecycle::badge("deprecated")` Use `parameterGroups` instead.
 #' @param outputPaths Character vector or named vector. Optional output paths to use for scenarios. If `NULL` (default),
 #'   output paths will be extracted from the PKML files' output selections. Can be a single string
 #'   (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`. If providing
@@ -707,7 +707,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #'
 #' # Create scenarios from a single PKML file
 #' pkmlPath <- "path/to/simulation.pkml"
-#' scenarios <- createScenarioConfigurationsFromPKML(
+#' scenarios <- createScenariosFromPKML(
 #'   pkmlFilePaths = pkmlPath,
 #'   projectConfiguration = pc
 #' )
@@ -717,7 +717,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' results <- runScenarios(pc, scenarioNames = names(scenarios))
 #'
 #' # Example of vector recycling - single value applied to all scenarios
-#' scenarios <- createScenarioConfigurationsFromPKML(
+#' scenarios <- createScenariosFromPKML(
 #'   pkmlFilePaths = c("sim1.pkml", "sim2.pkml", "sim3.pkml"),
 #'   projectConfiguration = projectConfiguration,
 #'   individualId = "Individual_001", # Recycled to all scenarios
@@ -726,7 +726,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' )
 #'
 #' # Example of vector arguments - different values per scenario
-#' scenarios <- createScenarioConfigurationsFromPKML(
+#' scenarios <- createScenariosFromPKML(
 #'   pkmlFilePaths = c("pediatric.pkml", "adult.pkml", "elderly.pkml"),
 #'   projectConfiguration = projectConfiguration,
 #'   scenarioNames = c("Pediatric", "Adult", "Elderly"),
@@ -737,7 +737,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' )
 #'
 #' # Example of PKML recycling - same model, different settings
-#' scenarios <- createScenarioConfigurationsFromPKML(
+#' scenarios <- createScenariosFromPKML(
 #'   pkmlFilePaths = "base_model.pkml",                    # Single PKML recycled
 #'   projectConfiguration = projectConfiguration,
 #'   scenarioNames = c("LowDose", "MediumDose", "HighDose"),
@@ -746,14 +746,14 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #'   steadyState = c(FALSE, TRUE, TRUE)                   # Different settings per scenario
 #' )
 #' }
-createScenarioConfigurationsFromPKML <- function(
+createScenariosFromPKML <- function(
   pkmlFilePaths,
   projectConfiguration,
   scenarioNames = NULL,
   individualId = NULL,
   populationId = NULL,
   applicationProtocols = NULL,
-  paramSheets = NULL,
+  parameterGroups = NULL,
   outputPaths = NULL,
   simulationTime = NULL,
   simulationTimeUnit = NULL,
@@ -761,8 +761,19 @@ createScenarioConfigurationsFromPKML <- function(
   steadyStateTime = NULL,
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
-  readPopulationFromCSV = FALSE
+  readPopulationFromCSV = FALSE,
+  paramSheets = lifecycle::deprecated()
 ) {
+  # Handle deprecated paramSheets argument
+  if (lifecycle::is_present(paramSheets)) {
+    lifecycle::deprecate_soft(
+      what = "createScenariosFromPKML(paramSheets)",
+      with = "createScenariosFromPKML(parameterGroups)",
+      when = "6.0.0"
+    )
+    parameterGroups <- parameterGroups %||% paramSheets
+  }
+
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
   validateIsOfType(projectConfiguration, ProjectConfiguration)
@@ -778,8 +789,8 @@ createScenarioConfigurationsFromPKML <- function(
   if (!is.null(applicationProtocols)) {
     validateIsCharacter(applicationProtocols)
   }
-  if (!is.null(paramSheets)) {
-    validateIsCharacter(paramSheets)
+  if (!is.null(parameterGroups)) {
+    validateIsCharacter(parameterGroups)
   }
   if (!is.null(outputPaths)) {
     validateIsCharacter(outputPaths)
@@ -808,7 +819,7 @@ createScenarioConfigurationsFromPKML <- function(
     individualId,
     populationId,
     applicationProtocols,
-    paramSheets,
+    parameterGroups,
     outputPaths,
     simulationTime,
     simulationTimeUnit,
@@ -845,9 +856,9 @@ createScenarioConfigurationsFromPKML <- function(
     "applicationProtocols",
     nScenarios
   )
-  paramSheets <- .recycleOrValidateVector(
-    paramSheets,
-    "paramSheets",
+  parameterGroups <- .recycleOrValidateVector(
+    parameterGroups,
+    "parameterGroups",
     nScenarios
   )
   # Special handling for outputPaths to preserve named vectors
@@ -920,7 +931,7 @@ createScenarioConfigurationsFromPKML <- function(
   )
 
   # Initialize variables
-  scenarioConfigurations <- list()
+  scenarios <- list()
   allScenarioNames <- c()
 
   for (i in seq_along(pkmlFilePaths)) {
@@ -985,21 +996,20 @@ createScenarioConfigurationsFromPKML <- function(
     sc$readPopulationFromCSV <- readPopulationFromCSV[[i]]
 
     # Set parameter groups
-    if (!is.null(paramSheets)) {
-      # paramSheets can be a character vector for this scenario
-      scenarioParamSheets <- paramSheets[[i]]
+    if (!is.null(parameterGroups)) {
+      scenarioParamGroups <- parameterGroups[[i]]
       if (
-        !is.null(scenarioParamSheets) &&
-          !is.na(scenarioParamSheets) &&
-          nchar(scenarioParamSheets) > 0
+        !is.null(scenarioParamGroups) &&
+          !is.na(scenarioParamGroups) &&
+          nchar(scenarioParamGroups) > 0
       ) {
-        # Split by comma if it's a single string with multiple sheets
+        # Split by comma if it's a single string with multiple groups
         if (
-          is.character(scenarioParamSheets) && length(scenarioParamSheets) == 1
+          is.character(scenarioParamGroups) && length(scenarioParamGroups) == 1
         ) {
-          scenarioParamSheets <- trimws(strsplit(scenarioParamSheets, ",")[[1]])
+          scenarioParamGroups <- trimws(strsplit(scenarioParamGroups, ",")[[1]])
         }
-        sc$parameterGroups <- scenarioParamSheets
+        sc$parameterGroups <- scenarioParamGroups
       }
     }
 
@@ -1158,10 +1168,21 @@ createScenarioConfigurationsFromPKML <- function(
       sc$overwriteFormulasInSS <- overwriteFormulasInSS[[i]]
     }
 
-    scenarioConfigurations[[scenarioName]] <- sc
+    scenarios[[scenarioName]] <- sc
   }
 
-  return(scenarioConfigurations)
+  return(scenarios)
+}
+
+#' @rdname createScenariosFromPKML
+#' @export
+createScenarioConfigurationsFromPKML <- function(...) {
+  lifecycle::deprecate_soft(
+    what = "createScenarioConfigurationsFromPKML()",
+    with = "createScenariosFromPKML()",
+    when = "6.0.0"
+  )
+  createScenariosFromPKML(...)
 }
 
 #' Sanitize a string to be a valid Excel sheet name

@@ -305,7 +305,8 @@ exportProjectConfigurationToExcel <- function(
       length(pc$scenarios) > 0
   ) {
     scenSheets[["Scenarios"]] <- .scenarioConfigurationsToExcelDf(
-      pc$scenarios
+      pc$scenarios,
+      outputPaths = pc$outputPaths
     )
   }
   if (!is.null(pc$outputPaths) && length(pc$outputPaths) > 0) {
@@ -813,10 +814,13 @@ projectConfigurationStatus <- function(
 
 #' Convert Scenario objects to an Excel data frame
 #' @param scenarioConfigs Named list of Scenario objects
+#' @param outputPaths Named character vector of output paths (names are IDs,
+#'   values are path strings) from `ProjectConfiguration$outputPaths`.
+#'   Used to reverse-lookup scenario output paths back to IDs.
 #' @returns A data frame
 #' @keywords internal
 #' @noRd
-.scenarioConfigurationsToExcelDf <- function(scenarioConfigs) {
+.scenarioConfigurationsToExcelDf <- function(scenarioConfigs, outputPaths = NULL) {
   rows <- list()
   for (name in names(scenarioConfigs)) {
     sc <- scenarioConfigs[[name]]
@@ -834,8 +838,15 @@ projectConfigurationStatus <- function(
       }, character(1))
       simTimeStr <- paste(intervals, collapse = "; ")
     }
-    # outputPaths → IDs string (we don't have IDs here, leave NA)
+    # outputPaths → reverse-lookup IDs from pc$outputPaths
     outputPathIdsStr <- NA
+    if (!is.null(sc$outputPaths) && !is.null(outputPaths)) {
+      matchedIds <- names(outputPaths)[match(sc$outputPaths, outputPaths)]
+      matchedIds <- matchedIds[!is.na(matchedIds)]
+      if (length(matchedIds) > 0) {
+        outputPathIdsStr <- paste(matchedIds, collapse = ", ")
+      }
+    }
 
     # Reconstruct steadyStateTime back to the unit
     ssTime <- NA

@@ -612,14 +612,16 @@ ProjectConfiguration <- R6::R6Class(
     #' @field modelParameters Named list of parameter structures, keyed by
     #'   sheet name. Each is a list with `paths`, `values`, `units` vectors.
     modelParameters = NULL,
-    #' @field individuals Named list of `IndividualCharacteristics` objects,
-    #'   keyed by individualId.
+    #' @field individuals Named list of plain lists, keyed by individualId.
+    #'   Each entry contains `species`, `population`, `gender`, `weight`,
+    #'   `height`, `age`, and optionally `proteinOntogenies`.
     individuals = NULL,
     #' @field individualParameterSets Named list of parameter structures,
     #'   keyed by set name. Each is a list with `paths`, `values`, `units`.
     individualParameterSets = NULL,
-    #' @field populations Named list of `PopulationCharacteristics` objects,
-    #'   keyed by populationId.
+    #' @field populations Named list of plain lists, keyed by populationId.
+    #'   Each entry contains population creation arguments such as `species`,
+    #'   `population`, `numberOfIndividuals`, etc.
     populations = NULL,
     #' @field applications Named list of parameter structures, keyed by
     #'   protocol name. Each is a list with `paths`, `values`, `units`.
