@@ -36,7 +36,7 @@ structure required for the workflows.
 The output is a `ProjectConfiguration` object that will be used 
 in many steps during the rest of the process.
 
-**Version Control**: You can create JSON snapshots of your project configuration for team collaboration and version control using `snapshotProjectConfiguration()` and `restoreProjectConfiguration()`.
+**Version Control**: JSON is the primary project configuration format, making it easy to track changes in Git. Use `importProjectConfigurationFromExcel()` to migrate existing Excel projects and `exportProjectConfigurationToExcel()` to generate Excel files when needed.
 
 Learn more in `vignette("project-structure")`.
 

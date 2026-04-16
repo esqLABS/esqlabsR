@@ -96,7 +96,7 @@
   }
 
   # 2e. Application parameters
-  if (!is.na(scenario$applicationProtocol)) {
+  if (!is.null(scenario$applicationProtocol) && !is.na(scenario$applicationProtocol)) {
     applicationParams <- pc$applications[[scenario$applicationProtocol]]
     if (is.null(applicationParams)) {
       stop(messages$errorApplicationProtocolNotFound(
@@ -128,6 +128,9 @@
 
   # 4. Set simulation time intervals
   if (!is.null(scenario$simulationTime)) {
+    if (is.null(scenario$simulationTimeUnit)) {
+      stop(messages$stopScenarioMissingTimeUnit(scenario$scenarioName))
+    }
     clearOutputIntervals(simulation)
     for (i in seq_along(scenario$simulationTime)) {
       addOutputInterval(
@@ -178,6 +181,13 @@
         population <- cache$populations[[scenario$populationId]]
       } else {
         popData <- pc$populations[[scenario$populationId]]
+        if (is.null(popData)) {
+          stop(paste0(
+            "Population '", scenario$populationId,
+            "' referenced by scenario '", scenario$scenarioName,
+            "' not found in project configuration."
+          ))
+        }
         moleculeOntogenies <- .readOntongeniesFromList(popData$proteinOntogenies)
         popArgs <- popData
         popArgs$proteinOntogenies <- NULL
@@ -212,10 +222,53 @@
   )
 }
 
+#' Collect output values for a single completed scenario
+#'
+#' @description Given a scenario's simulation, raw results, and population,
+#' resolves output quantities and builds the standard return list used by both
+#' `runScenarios()` and `.executeScenario()`.
+#'
+#' @param scenario A `Scenario` object (plain data class).
+#' @param simulation The initialised `Simulation` object.
+#' @param results The `SimulationResults` for this simulation (may be `NULL`).
+#' @param population The `Population` object (`NULL` for individual scenarios).
+#'
+#' @returns A list with `simulation`, `results`, `outputValues`, `population`.
+#' @keywords internal
+.collectScenarioResult <- function(scenario, simulation, results, population) {
+  outputQuantities <- NULL
+  if (!is.null(scenario$outputPaths)) {
+    outputQuantities <- getAllQuantitiesMatching(
+      scenario$outputPaths,
+      simulation
+    )
+  }
+
+  outputValues <- NULL
+  if (is.null(results)) {
+    warning(messages$missingResultsForScenario(scenario$scenarioName))
+  } else {
+    outputValues <- getOutputValues(
+      results,
+      quantitiesOrPaths = outputQuantities,
+      population = population,
+      addMetaData = FALSE
+    )
+  }
+
+  list(
+    simulation = simulation,
+    results = results,
+    outputValues = outputValues,
+    population = population
+  )
+}
+
 #' Execute a single scenario
 #'
 #' @description Prepares and runs a single scenario, returning results.
-#' Delegates setup to `.prepareScenario()`.
+#' Delegates setup to `.prepareScenario()` and output collection to
+#' `.collectScenarioResult()`.
 #'
 #' @param scenario A `Scenario` object (plain data class).
 #' @param pc A `ProjectConfiguration` object.
@@ -252,31 +305,10 @@
 
   results <- simulationResults[[simulation$id]]
 
-  # Get output values
-  outputQuantities <- NULL
-  if (!is.null(scenario$outputPaths)) {
-    outputQuantities <- getAllQuantitiesMatching(
-      scenario$outputPaths,
-      simulation
-    )
-  }
-
-  outputValues <- NULL
-  if (is.null(results)) {
-    warning(messages$missingResultsForScenario(scenario$scenarioName))
-  } else {
-    outputValues <- getOutputValues(
-      results,
-      quantitiesOrPaths = outputQuantities,
-      population = population,
-      addMetaData = FALSE
-    )
-  }
-
-  list(
+  .collectScenarioResult(
+    scenario = scenario,
     simulation = simulation,
     results = results,
-    outputValues = outputValues,
     population = population
   )
 }
@@ -386,35 +418,13 @@ runScenarios <- function(
     scenarioName <- scenarioNames[[idx]]
     scenario <- allScenarios[[scenarioName]]
     prepared <- preparedList[[idx]]
-    simulation <- prepared$simulation
-    population <- prepared$population
-    results <- simulationResults[[simulation$id]]
+    results <- simulationResults[[prepared$simulation$id]]
 
-    outputQuantities <- NULL
-    if (!is.null(scenario$outputPaths)) {
-      outputQuantities <- getAllQuantitiesMatching(
-        scenario$outputPaths,
-        simulation
-      )
-    }
-
-    if (is.null(results)) {
-      warning(messages$missingResultsForScenario(scenarioName))
-      outputValues <- NULL
-    } else {
-      outputValues <- getOutputValues(
-        results,
-        quantitiesOrPaths = outputQuantities,
-        population = population,
-        addMetaData = FALSE
-      )
-    }
-
-    returnList[[idx]] <- list(
-      simulation = simulation,
+    returnList[[idx]] <- .collectScenarioResult(
+      scenario = scenario,
+      simulation = prepared$simulation,
       results = results,
-      outputValues = outputValues,
-      population = population
+      population = prepared$population
     )
     names(returnList)[[idx]] <- scenarioName
   }
@@ -1461,9 +1471,7 @@ addScenario <- function(
 
   # Add to configuration
   pc$scenarios[[scenarioName]] <- sc
-  # Access private via environment to set modified flag
-  pc_env <- pc$.__enclos_env__$private
-  pc_env$.modified <- TRUE
+  pc$modified <- TRUE
 
   invisible(pc)
 }

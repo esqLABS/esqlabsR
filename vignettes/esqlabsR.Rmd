@@ -18,7 +18,6 @@ knitr::opts_chunk$set(
   fig.showtext = TRUE
 )
 library(esqlabsR)
-require(readxl)
 ```
 
 ## Introduction
@@ -27,13 +26,14 @@ require(readxl)
 implemented in this package rely on simple concepts:
 
   - a predefined project folder structure,
-  - Excel files for definition of simulation scenarios out outputs.
+  - a JSON configuration file for definition of simulation scenarios and outputs.
 
 ## Initialize Project
 
 `{esqlabsR}` facilitates modeling and simulation workflows with OSPS relying on
-a well defined project structure based on Excel files. These files are organized
-in different folders and their structure must not be altered.
+a well defined project structure. The project is configured through a
+`ProjectConfiguration.json` file and supporting Excel files for detailed
+parametrization (model parameters, individuals, populations, etc.).
 
 A new project folder can be initialized with the `initProject()`
 function.
@@ -44,65 +44,50 @@ library(esqlabsR)
 initProject()
 ```
 
-It will create the expected simulation project's folder structure, which is described 
+It will create the expected simulation project's folder structure, which is described
 in details in `vignette("project-structure")`.
 
-Each one of these folders contains a series of `.xlsx` files with
-specific purpose. They are all linked to the project through the
-`ProjectConfiguration.xlsx` file located in the root of the project folder.
-
-This file defines *where* all the necessary files are stored in the
-project folder. This file is already preconfigured and should not be changed in
-most cases. However, if target files would come to change location, 
-`ProjectConfiguration.xlsx` should reflect that. All the path specified in the 
-`Value` column should be *relative* to the `ProjectConfiguration.xlsx` location. 
+The project is configured through a `ProjectConfiguration.json` file
+located in the root of the project folder. This file defines *where* all the
+necessary files are stored, which scenarios to run, and how observed data is
+loaded. Supporting Excel files (e.g., `ModelParameters.xlsx`,
+`Individuals.xlsx`) provide detailed parametrization for scenarios.
 
 Loading the project configuration is the first step in any workflow using
 `{esqlabsR}`.
 
 ```{r, eval=FALSE}
-my_project_configuration <- createProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
-```
-
-```         
-ProjectConfiguration: 
-   ...
-   Model folder: Models/Simulations 
-   Configurations folder: Configurations 
-   Model Parameters: Configurations/ModelParameters.xlsx 
-   Individuals: Configurations/Individuals.xlsx 
-   Populations: Configurations/Populations.xlsx 
-   Populations Folder: Configurations/PopulationsCSV 
-   Scenarios: Configurations/Scenarios.xlsx 
-...
+my_project_configuration <- loadProject(path = "path/to/ProjectConfiguration.json")
 ```
 
 Note that the `ProjectConfiguration` stores paths to other files that
 are used in the project.
 
-To create an example `ProjectConfiguration`  and execute the rest of this tutorial,
+To create an example `ProjectConfiguration` and execute the rest of this tutorial,
 run the following:
 
 ```{r, warning=FALSE, message = FALSE}
-my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath())
+projectConfigPath <- system.file(
+  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  package = "esqlabsR"
+)
+my_project_configuration <- loadProject(projectConfigPath)
 ```
 
 ## Version Control and Project Sharing
 
-`esqlabsR` provides powerful version control capabilities through project configuration snapshots. This allows you to:
+Since `ProjectConfiguration.json` is a text-based format, it works naturally
+with version control systems like Git. You can track changes, share projects
+with team members, and ensure reproducibility across environments.
 
-- **Track changes** to your project configuration in version control systems like Git
-- **Share projects** with team members easily  
-- **Create backups** before making significant changes
-- **Ensure reproducibility** across different environments
+If you have an existing Excel-based project, you can migrate it to JSON:
 
 ```{r, eval=FALSE}
-# Create a JSON snapshot of your project configuration
-snapshotProjectConfiguration(my_project_configuration)
+# Migrate Excel project to JSON
+importProjectConfigurationFromExcel("ProjectConfiguration.xlsx")
 
-# Share the JSON file with team members or commit to version control
-# Later, restore the project configuration from the snapshot
-restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
+# Export back to Excel if needed
+exportProjectConfigurationToExcel(my_project_configuration)
 ```
 
 For comprehensive information about version control features, workflows, and best practices, see the "Version Control and Project Sharing" section in `vignette("project-structure")`.
@@ -110,70 +95,44 @@ For comprehensive information about version control features, workflows, and bes
 ## Design Scenarios
 
 Now that the project's file structure is ready, the next step is to run
-simulations. In `{esqlabsR}`, simulation are run by defining and
+simulations. In `{esqlabsR}`, simulations are run by defining and
 executing multiple **scenarios**.
 
-To modify, add or delete a scenario, edit the
-`Parameters/Scenarios.xslx` file. Each row of this file defines a simulation scenario.
+Scenarios are defined in the `scenarios` section of the
+`ProjectConfiguration.json` file. Each scenario entry specifies:
 
-The main properties that can be defined for a scenario are:
-
--   `ModelFile` is the name of the `.pkml` file that can be found in the
+-   `modelFile`: the name of the `.pkml` file that can be found in the
     `Models/` directory.
--   `ModelParameterSheets` are the names of the *sheets* in
-    `Parameters/ModelParameters.xlsx` that contain the parameters to
-    apply to the model,
--   `ApplicationProtocol` is the name of the *sheet* in
-    `Parameters/ApplicationParameters.xlsx` that specify the simulated
+-   `parameterSheets`: the names of the *sheets* in
+    `ModelParameters.xlsx` that contain the parameters to apply to the model,
+-   `applicationProtocol`: the name of the *sheet* in
+    `Applications.xlsx` that specifies the simulated
     administration protocol,
--   `SimulationTime` and `SimulationTimeUnit` define the time range to
-    simulate, it should be three numbers for `{start, end, resolution}`
--   `Individuald`: the id of the individual to simulate. The id and
-    settings for individuals are defined in
-    `Parameters/Individuals.xlsx`,
--   `PopulationId`: the id of the *population* to simulate. The id and
-    settings for populations are defined in
-    `Parameters/PopulationParameters.xlsx`.
+-   `simulationTime` and `simulationTimeUnit`: define the time range to
+    simulate,
+-   `individualId`: the id of the individual to simulate. The id and
+    settings for individuals are defined in `Individuals.xlsx`,
+-   `populationId`: the id of the *population* to simulate. The id and
+    settings for populations are defined in `Populations.xlsx`.
 
-Note that multiple aspects of a simulation scenario are defined in other
-excel files, and the `Scenarios.xslx` file links to the specific sheets
-or other information stored in those files.
+Detailed parametrization (model parameters, individuals, populations,
+application protocols) is still stored in Excel files referenced by the
+JSON configuration.
 
-![](Figures/scenarios_links_files.png)
-
-For example, if we want to change the characteristic of the individual
-used in the simulation, we must add a new row with a different
-`IndividualId` in the `IndividualBiometrics` sheet of
-the`Individuals.xlsx` file and/or specify a parameter sheet with this
-`IndividualId` in the same file.
-
-For more information on all the scenario parameters that can be setup,
+For more information on all the scenario parameters that can be set up,
 read `vignette("design-scenarios")`.
 
 ## Run Scenarios
 
-Once all the scenario properties are set up in the excel files, we can
-import `ScenarioConfiguration` using `readScenarioConfigurationFromExcel()` and create 
-`Scenario` objects with `createScenarios()`:
-
+Once all the scenario properties are set up, we run the simulations by
+passing the `ProjectConfiguration` object to `runScenarios()`. We can
+optionally specify which scenarios to run:
 
 ```{r}
-my_scenarios <- createScenarios(
-  readScenarioConfigurationFromExcel(
-    scenarioNames = "Aciclovir_iv",
-    projectConfiguration = my_project_configuration
-  )
+myScenarioResults <- runScenarios(
+  my_project_configuration,
+  scenarioNames = "Aciclovir_iv"
 )
-```
-
-```{r, echo = FALSE}
-my_scenarios$Aciclovir_iv$scenarioConfiguration$print(projectConfiguration = FALSE)
-```
-
-Then, we run the simulations by passing the scenarios we defined:
-
-```{r}
-myScenarioResults <- runScenarios(my_scenarios)
 ```
 
 Simulation results can be saved for later use: `exportScenarioResults()`
@@ -222,15 +181,14 @@ Finally, the plot is generated:
 plotIndividualTimeProfile(my_datacombined)
 ```
 
-In some cases, we also want to plot the observed experimental data
-(stored in `Data/`). `DataCombined` also has the ability to store
-observed data for them to be plotted.
+In some cases, we also want to plot the observed experimental data.
+Observed data is declared in the `observedData` section of the
+`ProjectConfiguration.json` file and loaded automatically when the
+project is loaded. The data is available via the
+`ProjectConfiguration$observedData` field.
 
 ```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-observed_data <- loadObservedData(
-  projectConfiguration = my_project_configuration,
-  sheets = "Laskin 1982.Group A"
-)
+observed_data <- my_project_configuration$observedData
 
 my_datacombined$addDataSets(observed_data, names = "Observed", groups = "Aciclovir")
 

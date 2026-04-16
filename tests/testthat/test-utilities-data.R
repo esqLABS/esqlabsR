@@ -308,7 +308,7 @@ test_that("It sets the LLOQ if it is given for any of the original data sets", {
 })
 
 test_that(".loadObservedData returns empty list when observedData is NULL", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   pc$observedData <- NULL
   result <- .loadObservedData(pc)
   expect_type(result, "list")
@@ -316,7 +316,7 @@ test_that(".loadObservedData returns empty list when observedData is NULL", {
 })
 
 test_that(".loadObservedData loads Excel data using project defaults", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   result <- .loadObservedData(pc)
   expect_type(result, "list")
   expect_true(length(result) > 0)
@@ -324,7 +324,7 @@ test_that(".loadObservedData loads Excel data using project defaults", {
 })
 
 test_that(".loadObservedData loads Excel data with explicit file overrides", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   pc$observedData <- list(list(
     type = "excel",
     file = "TestProject_TimeValuesData.xlsx",
@@ -338,7 +338,7 @@ test_that(".loadObservedData loads Excel data with explicit file overrides", {
 })
 
 test_that(".loadObservedData merges datasets from multiple entries", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   pc$observedData <- list(
     list(type = "excel", sheets = list("Laskin 1982.Group A")),
     list(type = "excel", sheets = list("Laskin 1982.Group A"))

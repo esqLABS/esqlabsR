@@ -1,7 +1,7 @@
 # Full JSON workflow integration tests ----
 
 test_that("JSON workflow: load project, run scenario, get results", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
 
   results <- runScenarios(pc, scenarioNames = "TestScenario")
 
@@ -11,7 +11,7 @@ test_that("JSON workflow: load project, run scenario, get results", {
 })
 
 test_that("JSON workflow: run multiple scenarios", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
 
   results <- runScenarios(
     pc,
@@ -24,7 +24,7 @@ test_that("JSON workflow: run multiple scenarios", {
 })
 
 test_that("JSON workflow: createDataCombined produces DataCombined objects", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
 
   results <- runScenarios(pc, scenarioNames = "TestScenario")
 
@@ -39,7 +39,7 @@ test_that("JSON workflow: createDataCombined produces DataCombined objects", {
 })
 
 test_that("JSON workflow: createPlots produces plot output", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
 
   results <- runScenarios(pc, scenarioNames = "TestScenario")
 

@@ -66,21 +66,6 @@ testDataDirectory <- function(name = NULL) {
   directory
 }
 
-#' Get path to test project configuration
-#'
-#' @description
-#' Returns the path to the test project configuration file.
-#'
-#' @returns Full path to the test project configuration file.
-#'
-#' @examples
-#' \dontrun{
-#' config_path <- testProjectConfigurationPath()
-#' }
-testProjectConfigurationPath <- function() {
-  file.path(testDataDirectory("TestProject"), "ProjectConfiguration.xlsx")
-}
-
 #' Create test project configuration
 #'
 #' @description
@@ -99,11 +84,6 @@ testProjectConfiguration <- function() {
 #' Get path to test project configuration JSON
 testProjectConfigurationJSONPath <- function() {
   file.path(testDataDirectory("TestProject"), "ProjectConfiguration.json")
-}
-
-#' Create test project configuration from JSON
-testProjectConfigurationJSON <- function() {
-  loadProject(testProjectConfigurationJSONPath())
 }
 
 #' Get path to test configurations directory

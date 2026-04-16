@@ -131,42 +131,33 @@ Now that you designed your own simulation, read
 `vignette("run-simulations")` to continue the process. To learn more
 about simulation design, read the following sections.
 
-## Alternative: Creating scenarios directly from PKML files
+## Alternative: Adding scenarios programmatically
 
-For more advanced users or when working programmatically, `esqlabsR` provides 
-functions to create scenario configurations directly from PKML files, bypassing 
-the need to manually create Excel files:
-
-- `createScenariosFromPKML()`: Creates scenario configurations from 
-  PKML files by extracting simulation settings, applications, and output paths.
-- `addScenarioConfigurationsToExcel()`: Adds scenario configurations to the 
-  project Excel files for later use.
-
-This approach is particularly useful when:
-- You have multiple PKML files to convert into scenarios
-- You want to automate scenario creation
-- You're working with simulation files that already contain the needed configuration
-
-Example usage:
+For more advanced users or when working programmatically, `esqlabsR` provides
+the `addScenario()` function to add scenarios directly to a loaded project
+configuration without manually editing the JSON file:
 
 ```{r, eval=FALSE}
-# Create scenarios from PKML files
-scenarioConfigs <- createScenariosFromPKML(
-  pkmlFilePaths = c("Model1.pkml", "Model2.pkml"),
-  projectConfiguration = projectConfiguration,
-  scenarioNames = c("Scenario1", "Scenario2"),
+# Load the project
+projectConfiguration <- loadProject("ProjectConfiguration.json")
+
+# Add a new scenario programmatically
+addScenario(
+  projectConfiguration,
+  scenarioName = "MyNewScenario",
+  modelFile = "MyModel.pkml",
   outputPaths = c(
     "plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration",
     "liver" = "Organism|Liver|Intracellular|Drug|Concentration"
   )
 )
-
-# Add them to the project Excel files
-addScenarioConfigurationsToExcel(
-  scenarioConfigurations = scenarioConfigs,
-  projectConfiguration = projectConfiguration
-)
 ```
+
+This approach is particularly useful when:
+
+- You want to automate scenario creation
+- You need to add scenarios based on runtime conditions
+- You are setting up batch simulations programmatically
 
 ## Details
 
@@ -272,32 +263,8 @@ applicationParams <- getAllApplicationParameters(sim)
 print(applicationParams)
 ```
 
-And export the parameters to an Excel file using the
-`exportParametersToXLS()` function:
-
-```{r, eval=FALSE}
-exportParametersToXLS(
-  parameters = applicationParams,
-  paramsXLSpath = "../Applications.xlsx"
-)
-```
-
-If you need to add more parameters to an existing Excel file without overwriting it, 
-you can use the `append` parameter:
-
-```{r, eval=FALSE}
-# Add more parameters to existing file
-exportParametersToXLS(
-  parameters = additionalParams,
-  paramsXLSpath = "../Applications.xlsx",
-  sheet = "AdditionalProtocol",
-  append = TRUE
-)
-```
-
-The created Excel file will have the same structure as all
-Parameter-files and can be directly loaded in MoBi or R using the
-`readParametersFromXLS()` function.
+The returned data frame contains the parameter paths, values, and units that
+can be used to populate the `Applications.xlsx` file for your project.
 
 #### SimulationTime
 
@@ -397,7 +364,7 @@ If a parameter path is defined in multiple steps, its value will be
 overwritten by the subsequent steps. That means individual parameter
 values will overwrite the values defined in the "ModelParameters.xlsx"
 file, and parameters specified in the `customParams` argument of the
-`createScenarios()` function will overwrite everything else.
+`runScenarios()` function will overwrite everything else.
 
 The order of parameter sheets of the "ModelParameters.xlsx" file defined
 in the **ModelParameterSheets** column defines the order in which the

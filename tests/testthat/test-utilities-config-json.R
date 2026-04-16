@@ -99,7 +99,7 @@ test_that("importProjectConfigurationFromExcel includes species parameters in mo
 # ---- exportProjectConfigurationToExcel tests ----
 
 test_that("exportProjectConfigurationToExcel creates Excel files from ProjectConfiguration", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
 
   outputDir <- withr::local_tempdir("test_export")
 
@@ -124,7 +124,7 @@ test_that("exportProjectConfigurationToExcel creates Excel files from ProjectCon
 })
 
 test_that("exportProjectConfigurationToExcel works with plain-data individuals and scenarios", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   tempDir <- withr::local_tempdir()
   exportProjectConfigurationToExcel(pc, outputDir = tempDir, silent = TRUE)
 
@@ -134,7 +134,7 @@ test_that("exportProjectConfigurationToExcel works with plain-data individuals a
 })
 
 test_that("exportProjectConfigurationToExcel preserves model parameters", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
 
   outputDir <- withr::local_tempdir("test_export_params")
   exportProjectConfigurationToExcel(pc, outputDir = outputDir, silent = TRUE)
@@ -180,6 +180,35 @@ test_that("projectConfigurationStatus detects in-sync state after fresh import",
     silent = TRUE
   )
   expect_true(status_result$in_sync)
+})
+
+test_that("projectConfigurationStatus detects out-of-sync state when JSON is modified", {
+  test_proj <- local_test_project()
+
+  # Import fresh JSON from Excel to ensure a baseline in-sync state
+  importProjectConfigurationFromExcel(
+    test_proj$project_config_path,
+    silent = TRUE
+  )
+
+  jsonPath <- sub("\\.xlsx$", ".json", test_proj$project_config_path)
+  expect_true(file.exists(jsonPath))
+
+  # Modify the JSON to make it out of sync with Excel
+  jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  original_name <- jsonData$scenarios[[1]]$name
+  jsonData$scenarios[[1]]$name <- paste0(original_name, "_MODIFIED")
+  writeLines(
+    jsonlite::toJSON(jsonData, auto_unbox = TRUE, pretty = TRUE),
+    jsonPath
+  )
+
+  status_result <- projectConfigurationStatus(
+    test_proj$project_config_path,
+    jsonPath,
+    silent = TRUE
+  )
+  expect_false(status_result$in_sync)
 })
 
 # ---- Deprecated wrapper tests ----

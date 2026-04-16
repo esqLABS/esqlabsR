@@ -1,4 +1,4 @@
-projectConfiguration <- testProjectConfigurationJSON()
+projectConfiguration <- testProjectConfiguration()
 
 scenarioNames <- c("TestScenario", "PopulationScenario")
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -88,7 +88,7 @@ exportConfigurationDf <- data.frame(list(
 }
 
 # Validation DataCombined
-test_that("It trows an error if mandatory field dataType is not filled out", {
+test_that("It throws an error if mandatory field dataType is not filled out", {
   dataCombinedDfLocal <- dataCombinedDf
   dataCombinedDfLocal$dataType <- NA
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
@@ -103,7 +103,7 @@ test_that("It trows an error if mandatory field dataType is not filled out", {
   )
 })
 
-test_that("It trows an error if mandatory field label is not filled out", {
+test_that("It throws an error if mandatory field label is not filled out", {
   dataCombinedDfLocal <- dataCombinedDf
   dataCombinedDfLocal$label <- NA
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
@@ -118,7 +118,7 @@ test_that("It trows an error if mandatory field label is not filled out", {
   )
 })
 
-test_that("It trows an error if no scenario is specified for a simulated data", {
+test_that("It throws an error if no scenario is specified for a simulated data", {
   dataCombinedDfLocal <- dataCombinedDf
   dataCombinedDfLocal$scenario <- NA
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
@@ -133,7 +133,7 @@ test_that("It trows an error if no scenario is specified for a simulated data", 
   )
 })
 
-test_that("It trows an error if no output path is specified for a simulated data", {
+test_that("It throws an error if no output path is specified for a simulated data", {
   dataCombinedDfLocal <- dataCombinedDf
   dataCombinedDfLocal$path <- NA
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
@@ -148,7 +148,7 @@ test_that("It trows an error if no output path is specified for a simulated data
   )
 })
 
-test_that("It trows an error if wrong output path is specified for a simulated data", {
+test_that("It throws an error if wrong output path is specified for a simulated data", {
   dataCombinedDfLocal <- dataCombinedDf
   dataCombinedDfLocal$path <- "foo"
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
@@ -167,7 +167,7 @@ test_that("It trows an error if wrong output path is specified for a simulated d
   )
 })
 
-test_that("It trows an error if no data set is specified for observed data", {
+test_that("It throws an error if no data set is specified for observed data", {
   dataCombinedDfLocal <- dataCombinedDf
   dataCombinedDfLocal$dataSet <- NA
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
@@ -182,7 +182,7 @@ test_that("It trows an error if no data set is specified for observed data", {
   )
 })
 
-test_that("It trows an error if defined scenario is missing and stopIfNotFound is TRUE", {
+test_that("It throws an error if defined scenario is missing and stopIfNotFound is TRUE", {
   dataCombinedDfLocal <- dataCombinedDf
   dataCombinedDfLocal$scenario <- c("TestScenario", "foo")
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
@@ -212,7 +212,7 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
   )
 })
 
-test_that("It trows an error if defined data set is missing and stopIfNotFound is TRUE", {
+test_that("It throws an error if defined data set is missing and stopIfNotFound is TRUE", {
   dataCombinedDfLocal <- dataCombinedDf
   dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedDataForSetup))
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
@@ -242,7 +242,7 @@ test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", 
   )
 })
 
-test_that("It trows an error if mandatory field DataCombinedName is not filled out", {
+test_that("It throws an error if mandatory field DataCombinedName is not filled out", {
   plotConfigurationDfLocal <- plotConfigurationDf
   plotConfigurationDfLocal$DataCombinedName <- NA
   pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
@@ -257,7 +257,7 @@ test_that("It trows an error if mandatory field DataCombinedName is not filled o
   )
 })
 
-test_that("It trows an error if mandatory field plotType is not filled out", {
+test_that("It throws an error if mandatory field plotType is not filled out", {
   plotConfigurationDfLocal <- plotConfigurationDf
   plotConfigurationDfLocal$plotType <- NA
   pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
@@ -272,7 +272,7 @@ test_that("It trows an error if mandatory field plotType is not filled out", {
   )
 })
 
-test_that("It trows an error if a plot requires a DataCombined that is not defined", {
+test_that("It throws an error if a plot requires a DataCombined that is not defined", {
   plotConfigurationDfLocal <- plotConfigurationDf
   plotConfigurationDfLocal$DataCombinedName <- "foo"
   pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
@@ -377,7 +377,7 @@ test_that("It creates plots only for specified plotGrids", {
   expect_equal(names(plots), c("Aciclovir"))
 })
 
-test_that("It trows an error when specified plot grid names are not defined", {
+test_that("It throws an error when specified plot grid names are not defined", {
   expect_error(
     createPlots(
       plotGridNames = c("foo", "Aciclovir", "bar"),
@@ -453,7 +453,7 @@ test_that("It throws an error if plotGrid names are not unique", {
   )
 })
 
-test_that("It trows an error if a plot grid requires a plot id that is not defined", {
+test_that("It throws an error if a plot grid requires a plot id that is not defined", {
   plotGridsDfLocal <- plotGridsDf
   plotGridsDfLocal$plotIDs <- "foo"
   pcLocal <- .withPlots(plotGrids = plotGridsDfLocal)

@@ -29,12 +29,13 @@ ProjectConfiguration <- R6::R6Class(
       }
     },
     #' @field modified Logical indicating whether any configuration properties
-    #' have been modified since loading from file. Read-only.
+    #' have been modified since loading from file.
     modified = function(value) {
       if (missing(value)) {
         private$.modified
       } else {
-        stop("modified is readonly")
+        stopifnot(is.logical(value), length(value) == 1L)
+        private$.modified <- value
       }
     },
     #' @field modelFolder Path to the folder containing pkml simulation files.
@@ -465,11 +466,18 @@ ProjectConfiguration <- R6::R6Class(
           sc$simulateSteadyState <- TRUE
         }
         if (!is.null(entry$steadyStateTime)) {
+          if (is.null(entry$steadyStateTimeUnit)) {
+            stop(
+              "Scenario '", entry$name, "' has 'steadyStateTime' set but ",
+              "'steadyStateTimeUnit' is null. Please specify a unit (e.g. \"min\")."
+            )
+          }
           sc$steadyStateTime <- ospsuite::toBaseUnit(
             quantityOrDimension = ospDimensions$Time,
             values = entry$steadyStateTime,
             unit = entry$steadyStateTimeUnit
           )
+          sc$steadyStateTimeUnit <- entry$steadyStateTimeUnit
         }
         if (!is.null(entry$overwriteFormulasInSS)) {
           sc$overwriteFormulasInSS <- entry$overwriteFormulasInSS

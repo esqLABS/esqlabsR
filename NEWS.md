@@ -2,6 +2,48 @@
 
 ## Breaking changes
 
+- **JSON is now the primary project configuration format.** Projects are
+  defined in a `ProjectConfiguration.json` file (v2.0 schema) instead of a
+  collection of Excel files. Use `loadProject()` to load a project. Existing
+  Excel-based projects can be migrated with `importProjectConfigurationFromExcel()`.
+  (#908)
+
+- **`ScenarioConfiguration` class removed.** The class and all associated
+  utilities (`readScenarioConfigurationFromExcel()`,
+  `addScenarioConfigurationsToExcel()`, etc.) have been deleted. Scenarios are
+  now defined as entries in the JSON configuration and represented as plain-data
+  `Scenario` objects. (#908)
+
+- **`Scenario` class rewritten as a plain data class.** The old R6 class with
+  active bindings and runtime logic is replaced by a simple data holder with
+  public fields (`scenarioName`, `modelFile`, `individualId`, `populationId`,
+  `outputPaths`, `parameterGroups`, etc.). (#908)
+
+- **`runScenarios()` signature changed.** The function now accepts a
+  `ProjectConfiguration` object (or scenario names and custom params) instead
+  of a list of pre-built `Scenario` objects. (#908)
+
+- **`createScenarios()` is no longer exported.** Scenarios are now created
+  internally by `runScenarios()`. (#908)
+
+- **`createDataCombinedFromExcel()` renamed to `createDataCombined()`.** The
+  old name is deprecated. The `observedData` parameter is removed; observed
+  data is now auto-loaded from the JSON configuration. (#908)
+
+- **`createPlotsFromExcel()` renamed to `createPlots()`.** The old name is
+  deprecated. The `observedData` parameter is removed and
+  `projectConfiguration` is now the first argument. (#908)
+
+- **`loadObservedData()` and `loadObservedDataFromPKML()` removed.** Observed
+  data is now declared in the `observedData` section of the JSON configuration
+  and loaded automatically. (#908)
+
+- The following Excel I/O functions have been removed:
+  `readParametersFromXLS()`, `readIndividualCharacteristicsFromXLS()`,
+  `readPopulationCharacteristicsFromXLS()`, `writeIndividualToXLS()`,
+  `writeParameterStructureToXLS()`, `exportParametersToXLS()`,
+  `setApplications()`. (#908)
+
 - Individual parameter sets in `Individuals.xlsx` must now be specified
   explicitly via the new required column `Individual Parameter Sets` in the
   `IndividualBiometrics` sheet. The column must contain a comma-separated list
@@ -13,19 +55,70 @@
 
 ## New features
 
-- Added `overwriteFormulasInSS` property to `ScenarioConfiguration`. When set to `TRUE`, formula-defined parameters will be overwritten with their steady-state values (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`). Default is `FALSE` (formula-defined parameters are kept, i.e. `ignoreIfFormula = TRUE`). The property can be set via a new `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx` (placed after `SteadyStateTimeUnit`). Also available as a parameter in `createScenarioConfigurationsFromPKML()`.
+- **`loadProject()` is the new primary entry point.** Reads a v2.0
+  `ProjectConfiguration.json` file and returns a fully populated
+  `ProjectConfiguration` object with parsed scenarios, individuals,
+  populations, output paths, model parameters, applications, and observed data.
+  (#908)
 
-## Renamed functions
+- **`addScenario()` function and `ProjectConfiguration$addScenario()` method
+  added.** Programmatically add scenarios to a loaded project configuration
+  with validation. (#908)
 
-- `saveScenarioResults()` is now `exportScenarioResults()`. The old name is
-  deprecated and will be removed in a future release.
-- `loadScenarioResults()` is now `importScenarioResults()`. The old name is
-  deprecated and will be removed in a future release.
+- **`importProjectConfigurationFromExcel()` added.** Migrates an Excel-based
+  project to a v2.0 JSON configuration file, including auto-merging species
+  parameters into the `modelParameters` section. Replaces
+  `snapshotProjectConfiguration()` (deprecated). (#908)
+
+- **`exportProjectConfigurationToExcel()` added.** Writes Excel configuration
+  files from a `ProjectConfiguration` object. Replaces
+  `restoreProjectConfiguration()` (deprecated). (#908)
+
+- **Observed data auto-loading from JSON.** The `observedData` section in the
+  JSON configuration supports both `"excel"` and `"pkml"` types with per-entry
+  file, sheet, and importer configuration settings. (#908)
+
+- **`ProjectConfiguration$print()` rewritten** to show category counts (e.g.,
+  number of scenarios, individuals, populations) instead of raw file paths.
+  (#908)
+
+- Added `overwriteFormulasInSS` property to `Scenario`. When set to `TRUE`,
+  formula-defined parameters will be overwritten with their steady-state values
+  (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`).
+  Default is `FALSE` (formula-defined parameters are kept, i.e.
+  `ignoreIfFormula = TRUE`). The property can be set via a new
+  `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx`
+  (placed after `SteadyStateTimeUnit`). Also available as a parameter in
+  `createScenariosFromPKML()`. (#981)
+
+## Deprecated
+
+The following functions still work but emit deprecation warnings and will be
+removed in a future release:
+
+- `createProjectConfiguration()` -- use `loadProject()` instead.
+- `createDefaultProjectConfiguration()` -- use `loadProject()` instead.
+- `snapshotProjectConfiguration()` -- use `importProjectConfigurationFromExcel()` instead.
+- `restoreProjectConfiguration()` -- use `exportProjectConfigurationToExcel()` instead.
+- `createDataCombinedFromExcel()` -- use `createDataCombined()` instead.
+- `createPlotsFromExcel()` -- use `createPlots()` instead.
+- `createScenarioConfigurationsFromPKML()` -- use `createScenariosFromPKML()`
+  instead. The `paramSheets` argument is also deprecated in favor of
+  `parameterGroups`.
+
+## Renamed
+
+- `saveScenarioResults()` is now `exportScenarioResults()`.
+- `loadScenarioResults()` is now `importScenarioResults()`.
 
 ## Minor improvements and bug fixes
-- Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
-- Added a warning when axis limits contain zero while the corresponding axis scale is set to `log` in `Plots.xlsx`. Previously, this combination silently produced empty plots (\#967).
-- `extendParameterStructure()` now supports `NULL` for `parameters` and `newParameters` arguments. When `NULL` is provided, a valid empty structure is returned or combined with the non-NULL argument (#583).
+
+- Added a warning when axis limits contain zero while the corresponding axis
+  scale is set to `log` in `Plots.xlsx`. Previously, this combination silently
+  produced empty plots (\#967).
+- `extendParameterStructure()` now supports `NULL` for `parameters` and
+  `newParameters` arguments. When `NULL` is provided, a valid empty structure
+  is returned or combined with the non-NULL argument (#583).
 
 # esqlabsR 5.5.2
 

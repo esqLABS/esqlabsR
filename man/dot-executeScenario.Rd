@@ -22,6 +22,7 @@ A list with \code{simulation}, \code{results}, \code{outputValues}, \code{popula
 }
 \description{
 Prepares and runs a single scenario, returning results.
-Delegates setup to \code{.prepareScenario()}.
+Delegates setup to \code{.prepareScenario()} and output collection to
+\code{.collectScenarioResult()}.
 }
 \keyword{internal}

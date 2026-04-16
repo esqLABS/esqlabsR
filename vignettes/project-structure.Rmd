@@ -22,7 +22,7 @@ The project configuration is the central piece of any `esqlabsR` project. It def
 
 - **Project structure**: A standardized folder hierarchy that organizes your models, data, parameters, scenarios, and results
 - **ProjectConfiguration object**: An R object that stores paths to all project files and directories
-- **Configuration files**: Excel files (or JSON snapshots) that define the project setup
+- **Configuration files**: A JSON configuration file and supporting Excel files that define the project setup
 
 ## Initialize the Project Structure
 
@@ -51,7 +51,11 @@ By printing the `ProjectConfiguration`, we can see the locations of all files
 used in the workflows:
 
 ```{r, eval = TRUE}
-my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath())
+projectConfigPath <- system.file(
+  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  package = "esqlabsR"
+)
+my_project_configuration <- loadProject(projectConfigPath)
 ```
 
 Now that the project structure is initialized and the `ProjectConfiguration` is
@@ -146,118 +150,89 @@ projectConfiguration$modelParametersFile <- "absolute/path/to/anotherModelParame
 ```
 
 
-### About `ProjectConfiguration.xlsx`
+### About `ProjectConfiguration.json`
 
-The `ProjectConfiguration.xlsx` file will be used by `esqlabsR` to generate a
-`ProjectConfiguration` object which is the central piece of a project. It should 
-be located in the root folder of the project.
+The `ProjectConfiguration.json` file is the primary configuration file used by
+`esqlabsR` to generate a `ProjectConfiguration` object which is the central
+piece of a project. It should be located in the root folder of the project.
 
-This file defines *where* all the necessary files are stored in the project 
-folder. All the path specified in the `Value` column should be *relative* to the
-`ProjectConfiguration.xlsx` location.
+This file defines *where* all the necessary files are stored in the project
+folder, which scenarios to run, and how observed data is loaded. Paths specified
+in the JSON should be *relative* to the `ProjectConfiguration.json` location.
 
-All these directories and files have a specific purpose and template and are 
-describe in next sections.
+Supporting Excel files (e.g., `ModelParameters.xlsx`, `Individuals.xlsx`,
+`Populations.xlsx`) provide detailed parametrization for scenarios. These files
+have a specific purpose and template and are described in the next sections.
 
-```{r, echo = FALSE}
-ProjectConfiguration_excel <- readxl::read_xlsx(exampleProjectConfigurationPath())
-
-reactable::reactable(ProjectConfiguration_excel,
-  columns = list(
-    "Property" = reactable::colDef(minWidth = 50),
-    "Value" = reactable::colDef(show = FALSE),
-    "Description" = reactable::colDef(minWidth = 100)
-  ),
-  outlined = TRUE,
-  pagination = FALSE,
-  highlight = TRUE
-)
-```
+A `ProjectConfiguration.xlsx` file is also present for backwards compatibility
+and can be used with `importProjectConfigurationFromExcel()` to generate or
+update the JSON configuration.
 
 ### Version Control and Project Sharing
 
-While Excel provides an excellent interface for quickly editing and creating new entries in your project configuration, it has limitations when it comes to version control and team collaboration - Excel files are binary and don't work well with Git, making it cumbersome to share changes between team members.
-
-`esqlabsR` addresses these limitations by providing powerful version control and project sharing capabilities through its snapshot and restore functionality. This allows you to:
+Since `ProjectConfiguration.json` is a text-based format, it works naturally
+with version control systems like Git. This means you can:
 
 - **Track changes** to your project configuration in version control systems like Git
 - **Share projects** with team members easily
 - **Create backups** before making significant changes
 - **Ensure reproducibility** across different environments
 
-#### Creating Project Snapshots
+#### Migrating from Excel to JSON
 
-The `snapshotProjectConfiguration()` function exports all Excel configuration files in your project to a single JSON file. This JSON format is ideal for version control as it's:
-
-- **Text-based**: Easy to track changes in Git
-- **Human-readable**: Can be reviewed and compared
-- **Complete**: Contains all project configuration data
+If you have an existing Excel-based project, `importProjectConfigurationFromExcel()`
+converts your Excel configuration files into a single JSON file:
 
 ```{r, eval=FALSE}
-# Create a snapshot from a ProjectConfiguration object
-my_project_configuration <- createProjectConfiguration("ProjectConfiguration.xlsx")
-snapshotProjectConfiguration(my_project_configuration)
-
-# Or create a snapshot directly from the Excel file path
-snapshotProjectConfiguration("ProjectConfiguration.xlsx")
+# Migrate an Excel-based project to JSON
+importProjectConfigurationFromExcel("ProjectConfiguration.xlsx")
 ```
 
-By default, the JSON file will be created in the same directory as your `ProjectConfiguration.xlsx` file with the name `ProjectConfiguration.json`.
+By default, the JSON file will be created in the same directory as your
+`ProjectConfiguration.xlsx` file with the name `ProjectConfiguration.json`.
 
-#### Restoring from Snapshots
+#### Exporting back to Excel
 
-The `restoreProjectConfiguration()` function recreates your entire project configuration from a JSON snapshot:
+The `exportProjectConfigurationToExcel()` function regenerates Excel configuration
+files from a `ProjectConfiguration` object:
 
 ```{r, eval=FALSE}
-# Restore a project from a JSON snapshot
-restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
+# Load the project from JSON
+pc <- loadProject("ProjectConfiguration.json")
+
+# Export back to Excel files
+exportProjectConfigurationToExcel(pc)
 ```
 
 This function will:
 1. Create the necessary directory structure
 2. Regenerate all Excel configuration files
-3. Return a new `ProjectConfiguration` object
-
-#### Checking Project Status
-
-Use `projectConfigurationStatus()` to check if your Excel files are synchronized with your JSON snapshot:
-
-```{r, eval=FALSE}
-# Check if files are in sync
-status <- projectConfigurationStatus("ProjectConfiguration.xlsx", "ProjectConfiguration.json")
-print(status$in_sync) # TRUE if synchronized, FALSE otherwise
-```
 
 #### Workflow Examples
 
 **Team Collaboration**: When working with a team:
 
-1. **Initial Setup**: Create a snapshot of your project configuration
+1. **Initial Setup**: Load and commit the JSON project configuration
    ```{r, eval=FALSE}
-snapshotProjectConfiguration("ProjectConfiguration.xlsx")
+pc <- loadProject("ProjectConfiguration.json")
    ```
 
 2. **Version Control**: Commit the JSON file to your Git repository
    ```bash
    git add ProjectConfiguration.json
-   git commit -m "Add project configuration snapshot"
+   git commit -m "Add project configuration"
    ```
 
-3. **Team Sharing**: Team members can restore the project
+3. **Team Sharing**: Team members clone the repo and load the project
    ```{r, eval=FALSE}
-restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
+pc <- loadProject("ProjectConfiguration.json")
    ```
 
-**Backup Strategy**: Before making significant changes to your project:
+4. **Working with Excel**: If Excel editing is needed, export and re-import
+   ```{r, eval=FALSE}
+exportProjectConfigurationToExcel(pc)
+# Edit Excel files...
+importProjectConfigurationFromExcel("ProjectConfiguration.xlsx")
+   ```
 
-```{r, eval=FALSE}
-# Create a backup snapshot
-snapshotProjectConfiguration("ProjectConfiguration.xlsx")
-
-# Make your changes...
-
-# If something goes wrong, restore from the snapshot
-restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
-```
-
-The version control features in `esqlabsR` provide a robust foundation for team collaboration and project management. By using snapshots, you can maintain project history in version control systems, share configurations easily with team members, create reliable backups before making changes, and ensure reproducibility across different environments.
+The version control features in `esqlabsR` provide a robust foundation for team collaboration and project management. By using JSON as the primary format, you can maintain project history in version control systems, share configurations easily with team members, create reliable backups before making changes, and ensure reproducibility across different environments.

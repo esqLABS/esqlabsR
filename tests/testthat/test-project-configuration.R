@@ -46,7 +46,7 @@ test_that("ProjectConfiguration resolves paths relative to JSON directory", {
 })
 
 test_that("ProjectConfiguration parses model parameters into list(paths, values, units)", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   global <- pc$modelParameters[["Global"]]
   expect_equal(global$paths, "Organism|Liver|EHC continuous fraction")
   expect_equal(global$values, 1)
@@ -54,7 +54,7 @@ test_that("ProjectConfiguration parses model parameters into list(paths, values,
 })
 
 test_that("ProjectConfiguration parses scenarios into Scenario objects", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   sc <- pc$scenarios[["TestScenario2"]]
   expect_s3_class(sc, "Scenario")
   expect_equal(sc$scenarioName, "TestScenario2")
@@ -64,7 +64,7 @@ test_that("ProjectConfiguration parses scenarios into Scenario objects", {
 })
 
 test_that("Individuals are stored as plain lists", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   indiv <- pc$individuals[["Indiv1"]]
   expect_type(indiv, "list")
   expect_true("species" %in% names(indiv))
@@ -78,7 +78,7 @@ test_that("Individuals are stored as plain lists", {
 })
 
 test_that("Populations are stored as plain lists", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   pop <- pc$populations[["TestPopulation"]]
   expect_type(pop, "list")
   expect_true("species" %in% names(pop))
@@ -89,7 +89,7 @@ test_that("Populations are stored as plain lists", {
 })
 
 test_that("ProjectConfiguration parses plots into data.frames", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   expect_s3_class(pc$plots$dataCombined, "data.frame")
   expect_equal(nrow(pc$plots$dataCombined), 4)
   expect_s3_class(pc$plots$plotConfiguration, "data.frame")
@@ -99,17 +99,17 @@ test_that("ProjectConfiguration parses plots into data.frames", {
 # Path property setters ----
 
 test_that("setting non-existent outputFolder does not warn", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   expect_no_warning(pc$outputFolder <- "this/directory/does/not/exist")
 })
 
 test_that("setting non-existent dataFolder warns", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   expect_warning(pc$dataFolder <- "this/directory/does/not/exist")
 })
 
 test_that("setting invalid paths warns for each path property", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   expect_warning(pc$configurationsFolder <- "Wrong/Folder")
   expect_warning(pc$dataFolder <- "folder/data/does/not/exist")
   expect_warning(pc$modelFolder <- "folder/model/does/not/exist")
@@ -127,7 +127,7 @@ test_that("setting invalid paths warns for each path property", {
 # Modified flag ----
 
 test_that("modified flag is FALSE when first created from JSON", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   expect_false(pc$modified)
 })
 
@@ -136,9 +136,13 @@ test_that("modified flag is FALSE for empty ProjectConfiguration", {
   expect_false(pc$modified)
 })
 
-test_that("modified flag is read-only", {
-  pc <- testProjectConfigurationJSON()
-  expect_error(pc$modified <- TRUE, "modified is readonly")
+test_that("modified flag can be set to a logical value", {
+  pc <- testProjectConfiguration()
+  expect_false(pc$modified)
+  pc$modified <- TRUE
+  expect_true(pc$modified)
+  pc$modified <- FALSE
+  expect_false(pc$modified)
 })
 
 test_that("modified flag becomes TRUE when any property is changed", {
@@ -150,7 +154,7 @@ test_that("modified flag becomes TRUE when any property is changed", {
     "outputFolder"
   )
   for (prop in properties) {
-    pc <- testProjectConfigurationJSON()
+    pc <- testProjectConfiguration()
     expect_false(pc$modified)
     suppressWarnings(pc[[prop]] <- "new/value")
     expect_true(pc$modified, info = paste("property:", prop))
@@ -158,7 +162,7 @@ test_that("modified flag becomes TRUE when any property is changed", {
 })
 
 test_that("modified flag persists across multiple property changes", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   expect_false(pc$modified)
   suppressWarnings(pc$modelFolder <- "new/model/folder")
   expect_true(pc$modified)
@@ -169,7 +173,7 @@ test_that("modified flag persists across multiple property changes", {
 })
 
 test_that("modified flag is independent between clones", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   cloned <- pc$clone()
   expect_false(cloned$modified)
 
@@ -183,7 +187,7 @@ test_that("modified flag is independent between clones", {
 })
 
 test_that("Scenarios are parsed as Scenario objects (not ScenarioConfiguration)", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   expect_true(length(pc$scenarios) > 0)
   sc <- pc$scenarios[["TestScenario"]]
   expect_s3_class(sc, "Scenario")
@@ -193,14 +197,14 @@ test_that("Scenarios are parsed as Scenario objects (not ScenarioConfiguration)"
 })
 
 test_that("pc$scenarios replaces pc$scenarioConfigurations", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   expect_true(!is.null(pc$scenarios))
 })
 
 # Print method ----
 
 test_that("print() shows category counts for loaded project", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   output <- capture.output(print(pc))
   output_text <- paste(output, collapse = "\n")
 
@@ -216,7 +220,7 @@ test_that("print() shows category counts for loaded project", {
 })
 
 test_that("print() does not show folder paths or Excel file paths", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   output <- capture.output(print(pc))
   output_text <- paste(output, collapse = "\n")
 
@@ -246,7 +250,7 @@ test_that("print() shows 0 counts for empty ProjectConfiguration", {
 # observedData parsing ----
 
 test_that("observedData field is populated from JSON", {
-  pc <- testProjectConfigurationJSON()
+  pc <- testProjectConfiguration()
   expect_type(pc$observedData, "list")
   expect_true(length(pc$observedData) > 0)
   expect_equal(pc$observedData[[1]]$type, "excel")
@@ -263,4 +267,39 @@ test_that("observedData is empty list when JSON has no observedData", {
   expect_type(pc$observedData, "list")
   expect_length(pc$observedData, 0)
   unlink(tmp)
+})
+
+# loadProject error paths ----
+
+test_that("loadProject errors on non-existent file path", {
+  expect_error(
+    loadProject("/non/existent/path/ProjectConfiguration.json"),
+    "File not found"
+  )
+})
+
+test_that("loadProject errors on non-JSON file content", {
+  tmp <- tempfile(fileext = ".json")
+  writeLines("This is not valid JSON content", tmp)
+  expect_error(loadProject(tmp))
+  unlink(tmp)
+})
+
+test_that("loadProject errors when steadyStateTime is set but steadyStateTimeUnit is null", {
+  jsonPath <- testProjectConfigurationJSONPath()
+  cfg <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+
+  # Set steadyStateTime but leave steadyStateTimeUnit as NULL
+
+  cfg$scenarios[[1]]$steadyStateTime <- 500
+  cfg$scenarios[[1]]$steadyStateTimeUnit <- NULL
+
+  tmpDir <- withr::local_tempdir()
+  tmpJson <- file.path(tmpDir, "ProjectConfiguration.json")
+  jsonlite::write_json(cfg, tmpJson, auto_unbox = TRUE, null = "null")
+
+  expect_error(
+    loadProject(tmpJson),
+    "steadyStateTimeUnit.*null"
+  )
 })

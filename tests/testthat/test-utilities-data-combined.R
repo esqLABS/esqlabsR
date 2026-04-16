@@ -1,4 +1,4 @@
-projectConfiguration <- testProjectConfigurationJSON()
+projectConfiguration <- testProjectConfiguration()
 
 scenarioNames <- c("TestScenario", "PopulationScenario")
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"

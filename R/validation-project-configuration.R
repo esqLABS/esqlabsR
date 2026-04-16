@@ -19,7 +19,7 @@
     {
       withCallingHandlers(
         {
-          config <- createDefaultProjectConfiguration(path = projectConfigPath)
+          config <- loadProject(path = projectConfigPath)
 
           # Check all referenced files exist
           files_to_check <- list(

@@ -49,6 +49,9 @@ importProjectConfigurationFromExcel <- function(
     if (is.null(fileName) || is.na(fileName) || fileName == "") {
       return(NULL)
     }
+    if (is.null(configsFolder)) {
+      return(NULL)
+    }
     normalizePath(file.path(configsFolder, fileName), mustWork = FALSE)
   }
 
@@ -230,22 +233,6 @@ exportProjectConfigurationToExcel <- function(
   pc <- projectConfiguration
 
   # --- ProjectConfiguration.xlsx ---
-  pcData <- list(
-    modelFolder = "modelFolder",
-    configurationsFolder = "configurationsFolder",
-    modelParamsFile = "modelParamsFile",
-    individualsFile = "individualsFile",
-    populationsFile = "populationsFile",
-    populationsFolder = "populationsFolder",
-    scenariosFile = "scenariosFile",
-    applicationsFile = "applicationsFile",
-    plotsFile = "plotsFile",
-    dataFolder = "dataFolder",
-    dataFile = "dataFile",
-    dataImporterConfigurationFile = "dataImporterConfigurationFile",
-    outputFolder = "outputFolder"
-  )
-
   # Build a data.frame from the raw stored values
   props <- character(0)
   vals <- character(0)
@@ -403,7 +390,12 @@ projectConfigurationStatus <- function(
   # backwards compatibility
   if (inherits(projectConfigPath, "ProjectConfiguration")) {
     pcObj <- projectConfigPath
-    projectConfigPath <- pcObj$projectConfigurationFilePath
+    # projectConfigurationFilePath stores the JSON path; derive the Excel path
+    pcJsonPath <- pcObj$projectConfigurationFilePath
+    projectConfigPath <- sub("\\.json$", ".xlsx", pcJsonPath)
+    if (is.null(jsonPath)) {
+      jsonPath <- pcJsonPath
+    }
   }
 
   if (!file.exists(projectConfigPath)) {
@@ -431,11 +423,16 @@ projectConfigurationStatus <- function(
     silent = TRUE
   )
 
-  # Load both JSON files for comparison
-  originalJson <- readLines(jsonPath, warn = FALSE)
-  currentJson <- readLines(tempJsonPath, warn = FALSE)
+  # Load both JSON files as lists so we can strip volatile fields
+  originalJsonObj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  currentJsonObj <- jsonlite::fromJSON(tempJsonPath, simplifyVector = FALSE)
 
-  if (identical(originalJson, currentJson)) {
+  # Remove esqlabsRVersion — it changes with package updates and would cause
+  # false out-of-sync reports
+  originalJsonObj[["esqlabsRVersion"]] <- NULL
+  currentJsonObj[["esqlabsRVersion"]] <- NULL
+
+  if (identical(originalJsonObj, currentJsonObj)) {
     result <- list(
       in_sync = TRUE,
       details = list(),
@@ -445,11 +442,7 @@ projectConfigurationStatus <- function(
       message(messages$excelInSync())
     }
   } else {
-    originalJsonObj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-    currentJsonObj <- jsonlite::fromJSON(tempJsonPath, simplifyVector = FALSE)
-
     fileChanges <- list()
-    sheetChanges <- list()
     dataChanges <- list()
     fileStatus <- list()
 
@@ -756,7 +749,6 @@ projectConfigurationStatus <- function(
       NA
     }
     ontoStr <- ic$proteinOntogenies %||% NA
-    if (is.na(ontoStr)) ontoStr <- NA
 
     rows[[length(rows) + 1]] <- data.frame(
       IndividualId = indivId,
@@ -785,7 +777,6 @@ projectConfigurationStatus <- function(
   for (popId in names(populations)) {
     popData <- populations[[popId]]
     ontoStr <- popData$proteinOntogenies %||% NA
-    if (is.na(ontoStr)) ontoStr <- NA
 
     rows[[length(rows) + 1]] <- data.frame(
       PopulationName = popId,
@@ -848,16 +839,19 @@ projectConfigurationStatus <- function(
       }
     }
 
-    # Reconstruct steadyStateTime back to the unit
+    # Reconstruct steadyStateTime back to the original unit
     ssTime <- NA
     ssTimeUnit <- NA
     if (
       !is.null(sc$steadyStateTime) && !is.na(sc$steadyStateTime) &&
         sc$steadyStateTime > 0
     ) {
-      # steadyStateTime is stored in base units (min), convert back
-      ssTimeUnit <- "min"
-      ssTime <- sc$steadyStateTime
+      ssTimeUnit <- sc$steadyStateTimeUnit %||% "min"
+      ssTime <- ospsuite::toUnit(
+        quantityOrDimension = ospDimensions$Time,
+        values = sc$steadyStateTime,
+        targetUnit = ssTimeUnit
+      )
     }
 
     rows[[length(rows) + 1]] <- data.frame(
@@ -900,27 +894,6 @@ projectConfigurationStatus <- function(
 # ===========================================================================
 # Generic helpers
 # ===========================================================================
-
-#' Extract a numeric value from an R6 SnapshotParameter or plain value
-#' @keywords internal
-#' @noRd
-.extractNumericValue <- function(x) {
-  if (is.null(x)) return(NA_real_)
-  if (R6::is.R6(x) && !is.null(x$value)) return(as.numeric(x$value))
-  as.numeric(x)
-}
-
-#' Extract a character value from an R6 object or plain value
-#' @keywords internal
-#' @noRd
-.extractCharValue <- function(x) {
-  if (is.null(x)) return(NA_character_)
-  if (R6::is.R6(x)) {
-    if (!is.null(x$displayName)) return(as.character(x$displayName))
-    if (!is.null(x$value)) return(as.character(x$value))
-  }
-  as.character(x)
-}
 
 #' Convert NA to NULL for JSON serialization
 #' @keywords internal

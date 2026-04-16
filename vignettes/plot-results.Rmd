@@ -32,8 +32,8 @@ code](#plotting-with-code).
 ## Plotting Workflow
 
 This process relies on filling a **`Plots.xlsx`** file in order to specify all
-the figures that need to be created. Then, `createPlotsFromExcel()` will
-translate the information in the excel file into plots !
+the figures that need to be created. Then, `createPlots()` will
+translate the information in the excel file into plots!
 
 First, `DataCombined` are defined with simulation results coming from simulated
 scenarios and observed data sets in the **DataCombined** sheet. More information
@@ -52,7 +52,7 @@ plotGrids export options like size, quality, file type etc... are available in
 the **exportConfiguration** sheet. More information in the [Export
 Plot](#export-plots) section.
 
-Once all the excel sheets are setup, just call the `createPlotsFromExcel()`
+Once all the excel sheets are setup, just call the `createPlots()`
 function to generate and export the plots.
 
 ![](Figures/plot-workflow.png)
@@ -140,22 +140,21 @@ For the following examples, we will simulate an example scenario as described in
 
 ```{r, echo = TRUE}
 library(esqlabsR)
-# Create a project configuration
-projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = "Aciclovir_iv",
-  projectConfiguration = projectConfiguration
+# Load the project configuration from JSON
+projectConfigPath <- system.file(
+  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  package = "esqlabsR"
 )
-# Run scenario configuration
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+projectConfiguration <- loadProject(projectConfigPath)
+
+# Run the scenario
 simulatedScenarios <- runScenarios(
-  scenarios = scenarios
+  projectConfiguration,
+  scenarioNames = "Aciclovir_iv"
 )
 
-# Load observed data
-dataSheets <- "Laskin 1982.Group A"
-observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+# Observed data is auto-loaded from the JSON configuration
+observedData <- projectConfiguration$observedData
 ```
 
 #### Setup the `Plot.xlsx` file
@@ -165,17 +164,16 @@ plots, specify plotGrids and export options. The `Plot.xlsx` file used in this
 example can be found
 [here](https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/projects/Example/Configurations/Plots.xlsx).
 
-#### Use `createPlotsFromExcel()`
+#### Use `createPlots()`
 
-In the next step, the user calls the function `createPlotsFromExcel()`, passing
-the generated data:
+In the next step, the user calls the function `createPlots()`, passing
+the project configuration and simulated results:
 
 ```{r, echo = TRUE}
-plots <- createPlotsFromExcel(
-  simulatedScenarios = simulatedScenarios,
-  observedData = observedData,
+plots <- createPlots(
+  projectConfiguration = projectConfiguration,
   plotGridNames = c("Aciclovir", "Aciclovir2"),
-  projectConfiguration = projectConfiguration
+  simulatedScenarios = simulatedScenarios
 )
 ```
 
@@ -206,19 +204,18 @@ also specify which plots to create with the `plotGridNames` argument.
 
 #### Extract `DataCombined` required for plotting and calculate residuals
 
-The `createPlotsFromExcel()` function automatically creates all `DataCombined`
-required for the specified plots. In some cases it is usefull to get the `DataCombined`
+The `createPlots()` function automatically creates all `DataCombined`
+required for the specified plots. In some cases it is useful to get the `DataCombined`
 objects before plotting. E.g., you could calculate the residuals between all
 groups defined in the `DataCombined` (see [`{ospsuite}` documentation](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations) for more details), or modify the `DataCombined` before using them
-for plotting. To do so, you can use the `createDataCombinedFromExcel()` function:
+for plotting. To do so, you can use the `createDataCombined()` function:
 
 ```{r}
-# Create DataCombined used inthe plots "Aciclovir" and "Aciclovir2"
-dataCombined <- createDataCombinedFromExcel(
+# Create DataCombined used in the plots "Aciclovir" and "Aciclovir2"
+dataCombined <- createDataCombined(
   projectConfiguration = projectConfiguration,
   plotGridNames = c("Aciclovir", "Aciclovir2"),
-  simulatedScenarios = simulatedScenarios,
-  observedData = observedData
+  simulatedScenarios = simulatedScenarios
 )
 
 print(dataCombined)
@@ -236,17 +233,16 @@ print(paste0("The sum of linear residuals for is ", sumResiduals))
 ```
 
 You can modify the created `DataCombined`, e.g., by changing the offsets, and pass
-them to the `createPlotsFromExcel` function:
+them to the `createPlots()` function:
 
 ```{r}
 # Change the offset of the first group
 dataCombined[[1]]$setDataTransformations(xOffsets = 0)
 # Create the plots using the modified DataCombined
-plots <- createPlotsFromExcel(
-  simulatedScenarios = simulatedScenarios,
-  observedData = observedData,
-  plotGridNames = c("Aciclovir", "Aciclovir2"),
+plots <- createPlots(
   projectConfiguration = projectConfiguration,
+  plotGridNames = c("Aciclovir", "Aciclovir2"),
+  simulatedScenarios = simulatedScenarios,
   dataCombinedList = dataCombined
 )
 ```
@@ -277,22 +273,21 @@ For the following examples, we will use the same scenario as described in the
 
 ```{r}
 library(esqlabsR)
-# Create a project configuration
-projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = "Aciclovir_iv",
-  projectConfiguration = projectConfiguration
+# Load the project configuration from JSON
+projectConfigPath <- system.file(
+  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  package = "esqlabsR"
 )
-# Run scenario configuration
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
+projectConfiguration <- loadProject(projectConfigPath)
+
+# Run the scenario
 simulatedScenarios <- runScenarios(
-  scenarios = scenarios
+  projectConfiguration,
+  scenarioNames = "Aciclovir_iv"
 )
 
-# Load observed data
-dataSheets <- "Laskin 1982.Group A"
-observedData <- loadObservedData(projectConfiguration = projectConfiguration, sheets = dataSheets)
+# Observed data is auto-loaded from the JSON configuration
+observedData <- projectConfiguration$observedData
 ```
 
 For the following steps, no `Plots.xlsx` file is needed. Instead, we will use
@@ -325,7 +320,7 @@ dataCombined$addSimulationResults(simulatedScenarios$Aciclovir_iv$results,
 ```
 
 You can also return the `DataCombined` objects defined in the `DataCombined`
-sheet with the function `createDataCombinedFromExcel()`, read (this
+sheet with the function `createDataCombined()`, read (this
 section)[#specify-a-datacombined] for more information.
 
 #### Customize and generate plots
@@ -400,31 +395,28 @@ Functionalities of `esqlabsR` require observed data to be present as
 objects. Please refer to the article [Observed
 data](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/articles/observed-data.html)
 for information on loading data from Excel or `*.pkml` files.
-`{esqlabsR}` offers a convenience function `loadObservedData()` that
-facilitates loading data in `esqLABS` projects. Assuming the standard
-project folder structure is followed, and a valid `ProjectConfiguration`
-(see [Standard workflow](standard-workflow.html)) and Excel files with
-observed data are present in the `projectConfiguration$dataFolder`
-folder, the following code loads the data:
+
+In `{esqlabsR}` v6.0.0+, observed data is declared in the `observedData`
+section of the `ProjectConfiguration.json` file and loaded automatically
+when the project is loaded with `loadProject()`. The data supports both
+`"excel"` and `"pkml"` types with per-entry file, sheet, and importer
+configuration settings.
 
 ```{r loadObservedData}
-projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath())
-
-dataSheets <- "Laskin 1982.Group A"
-
-observedData <- loadObservedData(
-  projectConfiguration = projectConfiguration,
-  sheets = dataSheets
+projectConfigPath <- system.file(
+  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  package = "esqlabsR"
 )
+projectConfiguration <- loadProject(projectConfigPath)
+
+# Observed data is automatically loaded from the JSON configuration
+observedData <- projectConfiguration$observedData
 
 print(names(observedData))
 ```
 
-The function loads the data from the file
-`projectConfiguration$dataFile` from the folder
-`projectConfiguration$dataFolder` and returns a list of
-`DataSet`objects. The resulting object can be used to plot results to
-compare simulated and observed data.
+The resulting object is a list of `DataSet` objects that can be used to
+plot results and compare simulated and observed data.
 
 ## Troubleshooting
 

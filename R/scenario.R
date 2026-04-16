@@ -39,6 +39,9 @@ Scenario <- R6::R6Class(
     simulationTime = NULL,
     simulationTimeUnit = NULL,
     steadyStateTime = 1000,
+    #' @field steadyStateTimeUnit Character. Original unit for steadyStateTime
+    #'   from the JSON configuration. Used to convert back during Excel export.
+    steadyStateTimeUnit = NULL,
     overwriteFormulasInSS = FALSE,
     parameterGroups = NULL,
 

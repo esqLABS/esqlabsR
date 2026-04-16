@@ -32,8 +32,11 @@ library(showtext)
 
 showtext::showtext_opts(dpi = 300)
 
-my_project_configuration <-
-  createProjectConfiguration(path = exampleProjectConfigurationPath())
+projectConfigPath <- system.file(
+  "extdata", "projects", "Example", "ProjectConfiguration.json",
+  package = "esqlabsR"
+)
+my_project_configuration <- loadProject(projectConfigPath)
 ```
 
 ```{css, echo = FALSE}
@@ -194,9 +197,9 @@ I Project Configuration
 
 ## Project Structure {auto-animate=true}
 
-Project's files are linked by the `ProjectConfiguration.xlsx` file.
+Project's files are linked by the `ProjectConfiguration.json` file.
 
-```{.sh code-line-numbers="2"}
+```{.sh code-line-numbers="3"}
 my_project
 ├── ProjectConfiguration.xlsx
 ├── ProjectConfiguration.json
@@ -248,10 +251,10 @@ I Project Configuration
 <br>
 
 :::{.center}
-`createProjectConfiguration(path)`
+`loadProject(path)`
 :::
 
-- targets `ProjectConfiguration.xlsx` file,
+- targets `ProjectConfiguration.json` file,
 - creates a `ProjectConfiguration` object,
 - Needed for all next steps !
 
@@ -259,7 +262,7 @@ I Project Configuration
 
 ```{r, eval = FALSE}
 my_project_configuration <-
-  createProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
+  loadProject(path = "path/to/ProjectConfiguration.json")
 ```
 
 ::: footer
@@ -291,16 +294,16 @@ I Project Configuration
 
 <br>
 
-**JSON Snapshots** for version control and team collaboration
+**JSON as primary format** for version control and team collaboration
 
 <br>
 
 ```{r, eval = FALSE}
-# Create snapshot
-snapshotProjectConfiguration("ProjectConfiguration.xlsx")
+# Migrate from Excel to JSON
+importProjectConfigurationFromExcel("ProjectConfiguration.xlsx")
 
-# Restore from snapshot
-restoreProjectConfiguration("ProjectConfiguration.json")
+# Export back to Excel if needed
+exportProjectConfigurationToExcel(my_project_configuration)
 ```
 
 <br>
@@ -440,40 +443,13 @@ II Design Scenarios
 
 # III. Run Simulations
 
-## Read Scenarios
+## Run Scenarios
 
 ```{r, cache = FALSE}
-#| code-line-numbers: "3"
-my_scenarios <- createScenarios(
-  readScenarioConfigurationFromExcel(
-    scenarioNames = "Aciclovir_iv",
-    projectConfiguration = my_project_configuration
-  )
+myScenarioResults <- runScenarios(
+  my_project_configuration,
+  scenarioNames = "Aciclovir_iv"
 )
-```
-
-::: footer
-III Run Simulations
-:::
-
-## Scenarios Recap
-
-```{r, eval = FALSE}
-my_scenarios
-```
-
-```{r, echo = FALSE}
-my_scenarios$Aciclovir_iv$scenarioConfiguration$print(projectConfiguration = FALSE)
-```
-
-::: footer
-III Run Simulations
-:::
-
-## Run Simulations
-
-```{r, cache = FALSE}
-myScenarioResults <- runScenarios(my_scenarios)
 ```
 
 <br>
@@ -534,12 +510,12 @@ IV Plot Results
 
 :::{.center}
 
-Create plots (or plotgrids) from excel files using `createPlotsFromExcel()`.
+Create plots (or plotgrids) from excel files using `createPlots()`.
 
 <br>
 
 ```{r, eval = FALSE}
-plots <- createPlotsFromExcel(
+plots <- createPlots(
   projectConfiguration = my_project_configuration
 )
 ```

@@ -45,6 +45,9 @@ Other scenario:
 during steady-state.}
 
 \item{\code{parameterGroups}}{Character vector. Names of model parameter groups to apply.}
+
+\item{\code{steadyStateTimeUnit}}{Character. Original unit for steadyStateTime
+from the JSON configuration. Used to convert back during Excel export.}
 }
 \if{html}{\out{</div>}}
 }

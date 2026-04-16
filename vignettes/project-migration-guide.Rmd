@@ -7,6 +7,112 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+## From v5.x to v6.0.0
+
+### Introduction
+
+esqlabsR v6.0.0 moves from an Excel-primary to a JSON-primary project
+configuration. Projects are now defined in a `ProjectConfiguration.json` file
+instead of a collection of Excel files. This guide walks through migrating an
+existing v5.x project.
+
+### Step 1: Generate the JSON configuration
+
+Run `importProjectConfigurationFromExcel()` on your existing
+`ProjectConfiguration.xlsx` to generate a `ProjectConfiguration.json` file:
+
+```r
+library(esqlabsR)
+importProjectConfigurationFromExcel("path/to/ProjectConfiguration.xlsx")
+```
+
+This reads all your Excel configuration files (scenarios, individuals,
+populations, model parameters, applications, observed data) and writes a single
+`ProjectConfiguration.json` in the same directory. The Excel files are left
+unchanged.
+
+### Step 2: Update your R code
+
+Replace the old function calls with the new API:
+
+```r
+# Old (v5.x)
+pc <- createProjectConfiguration("ProjectConfiguration.xlsx")
+scenarioConfigs <- readScenarioConfigurationFromExcel(
+  scenarioNames = "MyScenario", projectConfiguration = pc
+)
+scenarios <- createScenarios(scenarioConfigs)
+results <- runScenarios(scenarios)
+observedData <- loadObservedData(projectConfiguration = pc, sheets = "Sheet1")
+
+# New (v6.0.0)
+pc <- loadProject("ProjectConfiguration.json")
+results <- runScenarios(pc, scenarioNames = "MyScenario")
+observedData <- pc$observedData
+```
+
+For plotting:
+
+```r
+# Old (v5.x)
+dataCombined <- createDataCombinedFromExcel(
+  projectConfiguration = pc, simulatedScenarios = results, observedData = observedData
+)
+plots <- createPlotsFromExcel(
+  simulatedScenarios = results, observedData = observedData,
+  projectConfiguration = pc
+)
+
+# New (v6.0.0)
+dataCombined <- createDataCombined(pc, simulatedScenarios = results)
+plots <- createPlots(pc, simulatedScenarios = results)
+```
+
+### Step 3: Update save/load calls
+
+```r
+# Old
+saveScenarioResults(results, ...)
+loadScenarioResults(...)
+
+# New
+exportScenarioResults(results, ...)
+importScenarioResults(...)
+```
+
+### Removed functions
+
+The following functions have been removed in v6.0.0 and have no direct
+replacement. Their functionality is handled by the JSON configuration or other
+new functions:
+
+- `readScenarioConfigurationFromExcel()` -- scenarios are read from JSON by `loadProject()`
+- `createScenarios()` -- scenarios are created internally by `runScenarios()`
+- `loadObservedData()` / `loadObservedDataFromPKML()` -- observed data is auto-loaded from JSON
+- `ScenarioConfiguration` class -- replaced by plain-data `Scenario` objects
+- `exportParametersToXLS()` / `readParametersFromXLS()`
+- `writeIndividualToXLS()` / `writeParameterStructureToXLS()`
+- `setApplications()`
+- `addScenarioConfigurationsToExcel()` -- use `addScenario()` instead
+- `exampleDirectory()`
+
+### Deprecated wrappers
+
+The following old names still work but emit deprecation warnings and will be
+removed in a future release:
+
+| Old name | New name |
+|---|---|
+| `createProjectConfiguration()` | `loadProject()` |
+| `createDefaultProjectConfiguration()` | `loadProject()` |
+| `snapshotProjectConfiguration()` | `importProjectConfigurationFromExcel()` |
+| `restoreProjectConfiguration()` | `exportProjectConfigurationToExcel()` |
+| `createDataCombinedFromExcel()` | `createDataCombined()` |
+| `createPlotsFromExcel()` | `createPlots()` |
+| `saveScenarioResults()` | `exportScenarioResults()` |
+| `loadScenarioResults()` | `importScenarioResults()` |
+| `createScenarioConfigurationsFromPKML()` | `createScenariosFromPKML()` |
+
 ## From v5.0.0 to v5.3.0
 
 ### Introduction

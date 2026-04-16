@@ -14,8 +14,8 @@ validateAllConfigurations <- function(projectConfiguration) {
       class(results) <- c("ValidationResults", class(results))
       return(results)
     }
-    projectConfiguration <- createProjectConfiguration(
-      projectConfiguration
+    projectConfiguration <- loadProject(
+      path = projectConfiguration
     )
   }
 
