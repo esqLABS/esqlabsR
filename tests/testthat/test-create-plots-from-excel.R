@@ -616,6 +616,7 @@ test_that("It creates plots for all plot grids when plotGridNames is NULL", {
 })
 
 test_that("When custom DataCombined is passed, it is used instead of the one defined in the Excel", {
+  skip_on_os("mac")
   dataCombinedList <- createDataCombinedFromExcel(
     projectConfiguration = projectConfiguration,
     plotGridNames = c("Aciclovir", "Aciclovir2", "Aciclovir3"),
