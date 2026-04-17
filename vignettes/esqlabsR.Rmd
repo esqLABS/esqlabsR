@@ -4,7 +4,7 @@ output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Introduction to esqlabsR}
+  %\VignetteIndexEntry{Get Started}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -110,21 +110,24 @@ needed:
 ]
 ```
 
-The Excel file that is read is the one declared under `dataFile` in the `filePaths` section of `Project.json`.
-The loaded datasets are available via `myProject$observedData`, a named list of
-`DataSet` objects. When plotting, observed data is combined with simulation
-results using a `DataCombined` object — the `plots` section of `Project.json`
-handles this automatically. See `vignette("plot-results")` for details on
-`DataCombined` and data transformations.
+Excel entries read from the file declared under `dataFile` in the `filePaths` section of `Project.json`; PKML entries read from the per-entry `file` path.
+To access the loaded datasets directly, call `loadObservedData(myProject)`,
+which returns a named list of `DataSet` objects. The raw declarations are
+available at `myProject$observedData`. When plotting, observed data is
+combined with simulation results using a `DataCombined` object — the `plots`
+section of `Project.json` handles this automatically. See
+`vignette("plot-results")` for details on `DataCombined` and data
+transformations.
 
 ## Plots
 
 Plots are fully driven by the `plots` section of `Project.json`. It contains
-three sub-sections:
+four sub-sections:
 
 - **`dataCombined`** — which simulation outputs and observed datasets to combine,
 - **`plotConfiguration`** — what type of plot to generate for each data combined,
-- **`plotGrids`** — how to arrange plots into figures and export them.
+- **`plotGrids`** — how to arrange plots into figures,
+- **`exportConfiguration`** — how to export the resulting figures to image files.
 
 A `plotConfiguration` entry looks like this:
 
@@ -140,7 +143,7 @@ A `plotConfiguration` entry looks like this:
 To generate all plots defined in the JSON, call `createPlots()`:
 
 ```{r, echo=FALSE}
-myScenarioResults <- runScenarios(myProject, scenarioNames = c("Aciclovir_iv", "Aciclovir_iv_female"))
+myScenarioResults <- runScenarios(myProject)
 ```
 
 ```{r, out.width="100%", fig.align="center"}

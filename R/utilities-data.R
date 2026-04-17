@@ -293,6 +293,26 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
   }
 }
 
+#' Load observed data declared in a Project
+#'
+#' Reads the `observedData` declarations from a `Project` object and returns
+#' the corresponding `DataSet` objects. Excel sheets are loaded via the
+#' configured data importer; PKML files are loaded directly.
+#'
+#' @param project A `Project` object (see [loadProject()]).
+#' @return A named list of `ospsuite::DataSet` objects. Empty list if no
+#'   observed data is declared.
+#' @examples
+#' \dontrun{
+#' project <- loadProject(exampleProjectPath())
+#' dataSets <- loadObservedData(project)
+#' }
+#' @export
+loadObservedData <- function(project) {
+  validateIsOfType(project, "Project")
+  .loadObservedData(project)
+}
+
 .loadObservedData <- function(project) {
   if (is.null(project$observedData)) return(list())
 

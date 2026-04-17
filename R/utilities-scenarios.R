@@ -1391,6 +1391,10 @@ addScenario <- function(
     overwriteFormulasInSS = FALSE,
     readPopulationFromCSV = FALSE) {
   validateIsOfType(project, "Project")
+  # TODO: persist scenario changes to Project.json
+  # addScenario() currently mutates the in-memory Project only; a
+  # saveProject() / writeProjectJSON() function is needed to round-trip
+  # programmatic scenario edits back to disk. See follow-up issue.
   pc <- project
   errors <- character()
 

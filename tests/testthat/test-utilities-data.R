@@ -347,3 +347,31 @@ test_that(".loadObservedData merges datasets from multiple entries", {
   expect_type(result, "list")
   expect_true(length(result) >= 2)
 })
+
+test_that("loadObservedData returns named list of DataSet objects for Example project", {
+  project <- testProject()
+  dataSets <- loadObservedData(project)
+
+  expect_type(dataSets, "list")
+  expect_true(length(dataSets) > 0)
+  expect_true(all(nzchar(names(dataSets))))
+  expect_true(all(vapply(
+    dataSets,
+    function(ds) inherits(ds, "DataSet"),
+    logical(1)
+  )))
+})
+
+test_that("loadObservedData returns empty list when project declares no observed data", {
+  project <- testProject()
+  project$observedData <- NULL
+
+  expect_identical(loadObservedData(project), list())
+})
+
+test_that("loadObservedData errors on non-Project input", {
+  expect_error(
+    loadObservedData("not a project"),
+    regexp = "Project"
+  )
+})

@@ -24,8 +24,9 @@ esqlabsR's projects are set up in a four steps process:
 4. Plot Results
 
 
-While step 1 need to be done just once, you will be able to iterate easily as
-you fine tune your simulation and plots using simple code and excel files.
+While step 1 needs to be done just once, you can iterate easily as you
+fine-tune your simulation and plots by editing `Project.json` (or the
+optional Excel files synced via `importProjectFromExcel()`).
 
 ![esqlabsR Workflow](Figures/esqlabs-workflow.png)
 

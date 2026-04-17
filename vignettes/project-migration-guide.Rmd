@@ -48,7 +48,7 @@ observedData <- loadObservedData(projectConfiguration = pc, sheets = "Sheet1")
 # New (v6.0.0)
 pc <- loadProject("Project.json")
 results <- runScenarios(pc, scenarioNames = "MyScenario")
-observedData <- pc$observedData
+observedData <- loadObservedData(pc)
 ```
 
 For plotting:
@@ -89,12 +89,20 @@ new functions:
 - `readScenarioConfigurationFromExcel()` -- scenarios are read from JSON by `loadProject()`
 - `createScenarios()` -- scenarios are created internally by `runScenarios()`
 - `loadObservedData()` / `loadObservedDataFromPKML()` -- observed data is auto-loaded from JSON
-- `ScenarioConfiguration` class -- replaced by plain-data `Scenario` objects
+- `ScenarioConfiguration` class -- removed without a deprecated wrapper.
+  Scenarios are now plain-data `Scenario` objects. Any
+  `ScenarioConfiguration$new(...)` call must be rewritten as either a
+  `scenarios[]` entry in `Project.json` (preferred) or as an `addScenario()`
+  call — see `vignette("design-scenarios")`.
 - `exportParametersToXLS()` / `readParametersFromXLS()`
 - `writeIndividualToXLS()` / `writeParameterStructureToXLS()`
 - `setApplications()`
 - `addScenarioConfigurationsToExcel()` -- use `addScenario()` instead
 - `exampleDirectory()`
+
+> For projects that still live in Excel-only form, run
+> `importProjectFromExcel()` once to generate `Project.json`, then use
+> `loadProject()` in subsequent sessions.
 
 ### Deprecated wrappers
 
@@ -118,6 +126,10 @@ removed in a future release:
 | `loadScenarioResults()` | `importScenarioResults()` |
 | `createScenarioConfigurationsFromPKML()` | `createScenariosFromPKML()` |
 
+Note that `ProjectConfiguration` in the last row is a **class alias** (not a
+function). It is preserved so existing `is(x, "ProjectConfiguration")` checks
+continue to pass. Migrate to `is(x, "Project")` where possible.
+
 ## From v5.0.0 to v5.3.0
 
 ### Introduction
@@ -131,7 +143,7 @@ You only need to run the migration if your project was created with esqlabsR v5.
 
 #### Folder Structure Changes
 - The `Parameters` folder has been renamed to `Configurations`
-- Population-related files are now stored in `PopulationsCSV` folder
+- Population CSV files are now stored in `Populations` folder (at root level)
 
 #### File Naming Changes
 - `PopulationParameters.xlsx` has been renamed to `Populations.xlsx`
@@ -143,6 +155,11 @@ You only need to run the migration if your project was created with esqlabsR v5.
 - The `compoundPropertiesFile` property has been removed
 
 ### Automatic Migration Support
+
+> **Note:** As of esqlabsR v6.0.0, the automatic v5→v5.3 format detection
+> inside `createProjectConfiguration()` may not cover all edge cases.
+> Projects older than v5.3 should be migrated manually; see Manual Migration
+> Steps below.
 
 #### Backwards Compatibility
 The package includes built-in support for automatically handling project configurations from previous versions (v5). When loading an older project configuration file, the package will:
@@ -156,12 +173,14 @@ To update your project configuration to the new format:
 
 1. Load your existing configuration:
 ```r
+# Load the existing (v5.x) configuration
 projectConfig <- createProjectConfiguration("path/to/old/ProjectConfiguration.xlsx")
 ```
 
 2. Save it in the new format:
 ```r
-projectConfig$save("path/to/new/ProjectConfiguration.xlsx")
+# Re-export to Excel in the new layout (or edit Project.json directly)
+exportProjectToExcel(projectConfig, outputDir = "path/to/new/")
 ```
 
 This will automatically:
@@ -185,7 +204,7 @@ project/
 project/
   ├── Configurations/
   │   └── Populations.xlsx
-  ├── PopulationsCSV/
+  ├── Populations/
   └── ...
 ```
 
@@ -213,8 +232,8 @@ project$populationsFile  # New property
 
 1. Use the new `loadProject()` function instead of the deprecated `createDefaultProjectConfiguration()`
 2. Store all configuration files in the `Configurations` folder
-3. Keep population-related CSV files in the `PopulationsCSV` folder
+3. Keep population-related CSV files in the `Populations` folder
 
 ## Before 5.0.0
 
-Project structure before ESQlabsR v5.0.0 is not supported in latter versions.
+Project structure before ESQlabsR v5.0.0 is not supported in later versions.

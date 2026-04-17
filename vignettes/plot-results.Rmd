@@ -24,94 +24,136 @@ library(esqlabsR)
 ```
 
 Plotting the simulation results is an integral part of model diagnostics and
-quality control. `{esqlabsR}` implements an excel-based [Plotting
-Workflow](#plotting-workflow) for figure creation directly from simulated
-scenarios. It is also possible to use `{esqlabsR}`'s functions to [plot using R
-code](#plotting-with-code).
+quality control. `{esqlabsR}` implements a JSON-driven [Plotting
+Workflow](#plotting-workflow) that reads plot definitions from `Project.json`
+and renders figures directly from simulated scenarios. It is also possible
+to [plot using R code](#plotting-with-code) when you need ad-hoc control.
 
 ## Plotting Workflow
 
-This process relies on filling a **`Plots.xlsx`** file in order to specify all
-the figures that need to be created. Then, `createPlots()` will
-translate the information in the excel file into plots!
+Plots are defined in the `plots` section of `Project.json`. The `plots` block
+contains four sub-sections:
 
-First, `DataCombined` are defined with simulation results coming from simulated
-scenarios and observed data sets in the **DataCombined** sheet. More information
-in the [Create a Datacombined](#specify-a-datacombined) section.
+```json
+"plots": {
+  "dataCombined":        [ /* ... */ ],
+  "plotConfiguration":   [ /* ... */ ],
+  "plotGrids":           [ /* ... */ ],
+  "exportConfiguration": [ /* ... */ ]
+}
+```
 
-From each `DataCombined`, multiple plots of different types can be defined using
-the **plotConfiguration** sheet. More information in the [Customizing
-Plots](#customizing-plots) section.
+- **`dataCombined`** declares which simulation outputs and observed datasets
+  should be paired for each named data combination. More information in the
+  [Specify a DataCombined](#specify-a-datacombined) section.
+- **`plotConfiguration`** specifies how each `dataCombined` entry should be
+  rendered (plot type, axes, titles, colours). More information in the
+  [Customizing Plots](#customizing-plots) section.
+- **`plotGrids`** arranges individual plots into figure grids, with options
+  to customize the layout. More information in the [Drawing Plots](#drawing-plots)
+  section.
+- **`exportConfiguration`** controls file output (format, size, directory).
+  More information in the [Export Plots](#export-plots) section.
 
-Each plot to draw is defined in a **plotGrid** which is specified in the
-**plotGrids** sheet. A **plotGrid** can contain one or several plots defined in
-the plotConfiguration sheet and has many options to customize the layout of the
-plots. More information in the [Drawing Plots](#drawing-plots) section.
-
-plotGrids export options like size, quality, file type etc... are available in
-the **exportConfiguration** sheet. More information in the [Export
-Plot](#export-plots) section.
-
-Once all the excel sheets are setup, just call the `createPlots()`
-function to generate and export the plots.
+Once these JSON sections are populated, call `createPlots()` to generate and
+optionally export the plots.
 
 ![](Figures/plot-workflow.png)
 
 ### Specify a `DataCombined`
 
-A `DataCombined` is where the data to plot is stored. It can contain simulated
-results and/or observed data and links them together.
+A `DataCombined` pairs simulation results with observed data under a shared
+group label. The `dataCombined` section is a flat array of objects, each
+describing one data series:
 
-First, the user needs to define the name of the dataCombined. The name need to
-be stored in the `DataCombinedName`. Then, for each `DataCombinedName`, the user
-can attach simulated results (set dataType to `simulated`) and observed data
-(set dataType to `observed`) and give them labels. For Simulated results, the
-user needs to specify the name of the scenario and the output path of the
-simulation. For observed data, the user needs to specify the name of the dataset
-to use. Finally, both type of data can be linked together if they share the same
-value in the `groups` column.
+```json
+"dataCombined": [
+  {
+    "DataCombinedName": "Aciclovir_individual",
+    "dataType": "simulated",
+    "label": "Aciclovir simulated (male)",
+    "scenario": "Aciclovir_iv",
+    "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+    "group": "Aciclovir PVB"
+  },
+  {
+    "DataCombinedName": "Aciclovir_individual",
+    "dataType": "observed",
+    "label": "Laskin 1982.Group A",
+    "dataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+    "group": "Aciclovir PVB"
+  }
+]
+```
 
-Other columns available in this sheet are relative to the data transformations
-that can be performed by `dataCombined`. For more information on this, please
-refer to the `{ospsuite}` documentation about it
-[here](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations).
+Each element of the `dataCombined` array is one data series. Series with
+the same `DataCombinedName` are collected into one `DataCombined` object.
+For `"simulated"` series, specify the `scenario` and `path`. For
+`"observed"` series, set `dataType` to `"observed"` and point `dataSet` at
+the importer-generated dataset name (see `loadObservedData(project)` to
+discover the names available in your project). Simulated and observed
+series sharing the same `group` value are linked together in the plot.
+
+Additional transformation fields (`xOffsets`, `yOffsets`, `xScaleFactors`,
+`yScaleFactors`, …) map 1:1 to the corresponding Excel columns; see the
+[`{ospsuite}` DataCombined
+article](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations)
+for their meaning.
 
 ### Customizing Plots
 
-The default `Plot.xlsx` file already contains the most common columns required
-to customize plots. However, the user can add all the necessary columns that are
-needed to reach the desired result. The list of available variables can be
-explored in a `defaultPlotConfiguration` object.
+The `plotConfiguration` section is a flat array of objects, each controlling
+how one data combination is rendered. Fields map to properties of
+`DefaultPlotConfiguration`:
 
-Here is a sample of the available plot settings:
+```json
+"plotConfiguration": [
+  {
+    "plotID": "P1",
+    "DataCombinedName": "Aciclovir_individual",
+    "plotType": "individual",
+    "title": "Aciclovir IV 250 mg",
+    "subtitle": "Individual time profiles",
+    "xUnit": "h",
+    "xValuesLimits": "0, 24"
+  }
+]
+```
+
+Here is a sample of the available plot settings (full list in
+`DefaultPlotConfiguration$new()`):
 
 ```{r, echo=FALSE}
 dpc <- DefaultPlotConfiguration$new()
 names(dpc)[!(names(dpc) %in% defaultClassAttributes)][1:15]
 ```
 
-You can access the full list by running `DefaultPlotConfiguration$new()`
-
-For instance, if the subtitle needs to be changed, the user can add a column
-named `subtitle` and fill it with the desired value for each plot.
-
-Leaving a cell empty will result in the default value being used.
-
-For properties that accept a list of values (e.g. `xAxisLimits`), the values
-should be separated by a `,`. If an entry itself contains a `,`, enclose it
-between parenthesis.
+Omitted (or `null`) fields fall back to the `DefaultPlotConfiguration`
+value. Properties that accept multiple values (e.g. `xValuesLimits`,
+`yValuesLimits`) take a comma-separated string, not a JSON array:
+`"xValuesLimits": "0, 24"`.
 
 ### Drawing Plots
 
-`plotGrids` are the objects that will be used to draw the plots. They are
-defined in the **plotGrids** sheet. The user needs to define a name for each
-plotGrid. For single panel plot, only one plot must be listed in the plotIDs
-column. `{esqlabsR}` also provide a simple way to combined several plots in a
-multi-panel figure, in this case, the user needs to list all the plotIDs to
-combine in the plotIDs column, separated by a `,`.
+The `plotGrids` section is a flat array of objects, each arranging one or
+more `plotConfiguration` entries into a figure grid:
 
-To customize the plotGrid, the user can add all the necessary columns that are
-defined in the `PlotGridConfiguration` class. Here is a sample of the available:
+```json
+"plotGrids": [
+  {
+    "name": "Individual_diagnostics",
+    "plotIDs": "P1, P2, P3",
+    "title": "Aciclovir — Individual Diagnostics"
+  }
+]
+```
+
+Each entry has a `name` (the grid ID used as the key elsewhere) and a
+`plotIDs` field. `plotIDs` is a **comma-separated string** of
+`plotConfiguration` IDs — even for a single-panel grid: `"plotIDs": "P1"`.
+For multi-panel figures, list multiple comma-separated IDs:
+`"plotIDs": "P1, P2, P3"`. Additional fields map to `PlotGridConfiguration`
+properties — a sample:
 
 ```{r, echo=FALSE}
 pgc <- PlotGridConfiguration$new()
@@ -120,11 +162,27 @@ names(pgc)[!(names(pgc) %in% defaultClassAttributes)][1:15]
 
 ### Export Plots
 
-In order to export plots to image files, the user can use the
-**exportConfiguration** sheet. The plotGrids to export must be added in the
-plotGridName column. Then, the output file name must be specified in the
-outputName column. The output format can be customize using the properties
-listed in the `ExportConfiguration` class. Here is a sample of the available:
+The optional `plots.exportConfiguration` section controls file output. When
+present, `createPlots()` writes each plot grid to disk under the project's
+`outputFolder`. The `plotGridName` field links each entry to a name from
+`plotGrids`, and that linkage is how `createPlots()` knows which grid to
+export:
+
+```json
+"exportConfiguration": [
+  {
+    "plotGridName": "Individual_diagnostics",
+    "outputName": "Aciclovir_diagnostics",
+    "format": "png",
+    "width": 20,
+    "height": 15,
+    "units": "cm",
+    "dpi": 300
+  }
+]
+```
+
+Additional fields map to `ExportConfiguration` properties — a sample:
 
 ```{r, echo=FALSE}
 ec <- ExportConfiguration$new()
@@ -147,22 +205,23 @@ projectConfigPath <- system.file(
 )
 project <- loadProject(projectConfigPath)
 
-# Run the scenario
-simulatedScenarios <- runScenarios(
-  project,
-  scenarioNames = "Aciclovir_iv"
-)
+# Run all scenarios
+simulatedScenarios <- runScenarios(project)
 
-# Observed data is auto-loaded from the JSON configuration
-observedData <- project$observedData
+# Load the observed data DataSet objects
+observedData <- loadObservedData(project)
 ```
 
-#### Setup the `Plot.xlsx` file
+#### Define plots in `Project.json`
 
-Then, the `Plot.xlsx` file is setup to define the `DataCombined`, customize
-plots, specify plotGrids and export options. The `Plot.xlsx` file used in this
-example can be found
-[here](https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/projects/Example/Configurations/Plots.xlsx).
+The `plots` section of `Project.json` defines the `DataCombined` entries,
+`plotConfiguration` entries, `plotGrids`, and (optionally) `exportConfiguration`.
+The example project used above has the canonical entries — inspect
+`Project.json` in the Example project directory for reference syntax.
+
+If you prefer to edit in Excel, `importProjectFromExcel()` and
+`exportProjectToExcel()` round-trip the `plots` section through a
+`Plots.xlsx` file. See `vignette("project-structure")` for the Excel bridge.
 
 #### Use `createPlots()`
 
@@ -172,7 +231,7 @@ the project configuration and simulated results:
 ```{r, echo = TRUE}
 plots <- createPlots(
   project = project,
-  plotGridNames = c("Aciclovir", "Aciclovir2"),
+  plotGridNames = c("Individual_diagnostics", "Observed_vs_simulated"),
   simulatedScenarios = simulatedScenarios
 )
 ```
@@ -185,18 +244,18 @@ names(plots)
 ```
 
 ```{r}
-plots$Aciclovir
+plots$Individual_diagnostics
 ```
 
 ```{r}
-plots$Aciclovir2
+plots$Observed_vs_simulated
 ```
 
 Also, calling this function will export the plots as image files if the
-exportConfiguration sheet is setup correctly.
+`exportConfiguration` entry in `Project.json` is populated.
 
 By default, the function will try to create all plots defined in the
-**plotGrids** sheet. If any of the simulation results or the observed date
+`plotGrids` section of `Project.json`. If any of the simulation results or the observed data
 required by these plots cannot be found, an error is thrown. To override this
 behavior, e.g., to only plot the observed data without having the results
 simulated, change the value of the argument `stopIfNotFound` to `FALSE`. You can
@@ -211,10 +270,10 @@ groups defined in the `DataCombined` (see [`{ospsuite}` documentation](https://w
 for plotting. To do so, you can use the `createDataCombined()` function:
 
 ```{r}
-# Create DataCombined used in the plots "Aciclovir" and "Aciclovir2"
+# Create DataCombined used in the plots "Individual_diagnostics" and "Observed_vs_simulated"
 dataCombined <- createDataCombined(
   project = project,
-  plotGridNames = c("Aciclovir", "Aciclovir2"),
+  plotGridNames = c("Individual_diagnostics", "Observed_vs_simulated"),
   simulatedScenarios = simulatedScenarios
 )
 
@@ -241,7 +300,7 @@ dataCombined[[1]]$setDataTransformations(xOffsets = 0)
 # Create the plots using the modified DataCombined
 plots <- createPlots(
   project = project,
-  plotGridNames = c("Aciclovir", "Aciclovir2"),
+  plotGridNames = c("Individual_diagnostics", "Observed_vs_simulated"),
   simulatedScenarios = simulatedScenarios,
   dataCombinedList = dataCombined
 )
@@ -269,7 +328,7 @@ covers the basics of creating supported plot types and how to customize them.
 ### Using esqlabsR
 
 For the following examples, we will use the same scenario as described in the
-[Example](#example) above.
+[Example](#example-scenario) above.
 
 ```{r}
 library(esqlabsR)
@@ -286,8 +345,8 @@ simulatedScenarios <- runScenarios(
   scenarioNames = "Aciclovir_iv"
 )
 
-# Observed data is auto-loaded from the JSON configuration
-observedData <- project$observedData
+# Load the observed data DataSet objects
+observedData <- loadObservedData(project)
 ```
 
 For the following steps, no `Plots.xlsx` file is needed. Instead, we will use
@@ -319,9 +378,9 @@ dataCombined$addSimulationResults(simulatedScenarios$Aciclovir_iv$results,
 )
 ```
 
-You can also return the `DataCombined` objects defined in the `DataCombined`
-sheet with the function `createDataCombined()`, read (this
-section)[#specify-a-datacombined] for more information.
+You can also return the `DataCombined` objects defined in the `dataCombined`
+entry of `Project.json` with the function `createDataCombined()` — see
+[Specify a DataCombined](#specify-a-datacombined) for more information.
 
 #### Customize and generate plots
 
@@ -388,7 +447,7 @@ number of rows in the multi-panel plot and the height defined in
 with the parameter `ExportConfiguration$height`, set
 `ExportConfiguration$heightPerRow = NULL`.
 
-## Observed Data {#observed-data}
+## Observed Data
 
 Functionalities of `esqlabsR` require observed data to be present as
 [`DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
@@ -409,8 +468,8 @@ projectConfigPath <- system.file(
 )
 project <- loadProject(projectConfigPath)
 
-# Observed data is automatically loaded from the JSON configuration
-observedData <- project$observedData
+# Load the observed data DataSet objects
+observedData <- loadObservedData(project)
 
 print(names(observedData))
 ```

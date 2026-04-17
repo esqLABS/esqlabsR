@@ -100,10 +100,7 @@ projectPath <- exampleProjectPath()
 myProject <- loadProject(projectPath)
 
 # Run scenarios
-myScenarioResults <- runScenarios(
-  myProject,
-  scenarioNames = c("Aciclovir_iv", "Aciclovir_iv_female")
-)
+myScenarioResults <- runScenarios(myProject)
 
 # Generate plots
 plots <- createPlots(myProject, simulatedScenarios = myScenarioResults)

@@ -66,16 +66,26 @@ head(simulatedScenariosResults$Aciclovir_iv$outputValues$metaData)
 ```
 
 During the model development/fitting phase, you might want to test
-parameter values before storing them in the Excel files.
-You can pass custom parameters directly to `runScenarios()`:
+parameter values before storing them in your project configuration.
+You can pass custom parameters directly to `runScenarios()` via the
+`customParams` argument — a named list of parameter paths to values:
 
 ```{r, eval=FALSE}
+customParams <- list(
+  "Organism|Liver|Intracellular|pH" = 7.0,
+  "Aciclovir|Lipophilicity" = 0.5
+)
+
 results <- runScenarios(
   project,
   scenarioNames = "Aciclovir_iv",
   customParams = customParams
 )
 ```
+
+These values override any parameter set through `modelParameters` groups or
+individual parameter sets — see the parameterization hierarchy in
+`vignette("design-scenarios")`.
 
 It is a good idea to store simulation results as `*.csv` along with
 simulations as `.*pkml` and, optionally, the applied population as
@@ -87,4 +97,3 @@ results using `importScenarioResults`.
 
 Now that the results have been generated, you can proceed to the next
 step in the `vignette("plot-results")`.
-<!-- Read the following sections to learn more about the options for running simulations. -->

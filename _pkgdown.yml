@@ -42,7 +42,6 @@ reference:
   - LLOQMode
   - ULOQMode
   - loadObservedData
-  - loadObservedDataFromPKML
 - title: Helpers for plotting
   contents:
   - matches("^plot")
@@ -87,6 +86,5 @@ articles:
   navbar: Miscellaneous
   contents:
   - presentations
-  - advanced
   - project-migration-guide
 
