@@ -219,17 +219,18 @@ test_that("print() shows category counts for loaded project", {
   expect_match(output_text, "3 plotGrids")
 })
 
-test_that("print() does not show folder paths or Excel file paths", {
+test_that("print() does not show Excel configuration file paths", {
   pc <- testProject()
   output <- capture.output(print(pc))
   output_text <- paste(output, collapse = "\n")
 
-  expect_no_match(output_text, "Model Folder")
-  expect_no_match(output_text, "Configurations Folder")
-  expect_no_match(output_text, "Data Folder")
-  expect_no_match(output_text, "Output Folder")
-  expect_no_match(output_text, "Populations Folder")
-  expect_no_match(output_text, "\\.xlsx")
+  expect_no_match(output_text, "Model params file")
+  expect_no_match(output_text, "Individuals file")
+  expect_no_match(output_text, "Populations file")
+  expect_no_match(output_text, "Scenarios file")
+  expect_no_match(output_text, "Applications file")
+  expect_no_match(output_text, "Plots file")
+  expect_no_match(output_text, "Configurations folder")
   expect_no_match(output_text, "Environment Variables")
 })
 
@@ -245,6 +246,17 @@ test_that("print() shows 0 counts for empty Project", {
   expect_match(output_text, "Applications:\\s+0")
   expect_match(output_text, "Output Paths:\\s+0")
   expect_match(output_text, "Plots:\\s+0")
+})
+
+test_that("print() shows relative paths instead of absolute paths", {
+  pc <- testProject()
+  output <- capture.output(print(pc))
+  output_text <- paste(output, collapse = "\n")
+
+  expect_match(output_text, "Model folder:\\s+Models/Simulations")
+  expect_match(output_text, "Data folder:\\s+Data")
+  expect_match(output_text, "Output folder:\\s+Results")
+  expect_no_match(output_text, pc$projectDirPath, fixed = TRUE)
 })
 
 # observedData parsing ----
@@ -302,4 +314,123 @@ test_that("loadProject errors when steadyStateTime is set but steadyStateTimeUni
     loadProject(tmpJson),
     "steadyStateTimeUnit.*null"
   )
+})
+
+# data accessor ----
+
+test_that("data accessor returns complete project structure as list", {
+  pc <- testProject()
+  data <- pc$data
+
+  expect_type(data, "list")
+  expect_equal(data$schemaVersion, "2.0")
+  expect_true("filePaths" %in% names(data))
+  expect_true("scenarios" %in% names(data))
+  expect_true("modelParameters" %in% names(data))
+  expect_true("individuals" %in% names(data))
+  expect_true("populations" %in% names(data))
+  expect_true("applications" %in% names(data))
+  expect_true("outputPaths" %in% names(data))
+  expect_true("plots" %in% names(data))
+})
+
+test_that("data accessor is read-only", {
+  pc <- testProject()
+  expect_error(pc$data <- list(), "readonly")
+})
+
+test_that("data accessor preserves schemaVersion from source JSON", {
+  jsonPath <- testProjectJSONPath()
+  rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  pc <- Project$new(jsonPath)
+
+  expect_equal(pc$data$schemaVersion, rawJson$schemaVersion)
+})
+
+test_that("data accessor preserves filePaths values from source JSON", {
+  jsonPath <- testProjectJSONPath()
+  rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  pc <- Project$new(jsonPath)
+
+  for (field in names(rawJson$filePaths)) {
+    raw_val <- rawJson$filePaths[[field]]
+    data_val <- pc$data$filePaths[[field]]
+    if (!is.null(raw_val)) {
+      expect_equal(
+        gsub("/$", "", as.character(data_val)),
+        gsub("/$", "", as.character(raw_val)),
+        info = paste("filePaths field:", field)
+      )
+    }
+  }
+})
+
+test_that("data accessor preserves scenario count from source JSON", {
+  jsonPath <- testProjectJSONPath()
+  rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  pc <- Project$new(jsonPath)
+
+  expect_equal(length(pc$data$scenarios), length(rawJson$scenarios))
+})
+
+test_that("data accessor preserves scenario names from source JSON", {
+  jsonPath <- testProjectJSONPath()
+  rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  pc <- Project$new(jsonPath)
+
+  rawNames <- vapply(rawJson$scenarios, function(s) s$name, character(1))
+  dataNames <- vapply(pc$data$scenarios, function(s) s$name, character(1))
+  expect_equal(sort(unname(dataNames)), sort(unname(rawNames)))
+})
+
+test_that("data accessor preserves modelParameters from source JSON", {
+  jsonPath <- testProjectJSONPath()
+  rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  pc <- Project$new(jsonPath)
+
+  expect_equal(names(pc$data$modelParameters), names(rawJson$modelParameters))
+})
+
+test_that("data accessor preserves individuals from source JSON", {
+  jsonPath <- testProjectJSONPath()
+  rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  pc <- Project$new(jsonPath)
+
+  expect_equal(length(pc$data$individuals), length(rawJson$individuals))
+})
+
+test_that("data accessor preserves populations from source JSON", {
+  jsonPath <- testProjectJSONPath()
+  rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  pc <- Project$new(jsonPath)
+
+  expect_equal(length(pc$data$populations), length(rawJson$populations))
+})
+
+test_that("data accessor preserves outputPaths from source JSON", {
+  jsonPath <- testProjectJSONPath()
+  rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  pc <- Project$new(jsonPath)
+
+  expect_equal(pc$data$outputPaths, rawJson$outputPaths)
+})
+
+test_that("data accessor reflects in-memory changes after addScenario", {
+  pc <- testProject()
+  originalCount <- length(pc$data$scenarios)
+
+  addScenario(pc, "NewTestScenario", "Aciclovir.pkml", individualId = "Indiv1")
+
+  expect_equal(length(pc$data$scenarios), originalCount + 1)
+  newNames <- vapply(pc$data$scenarios, function(s) s$name, character(1))
+  expect_true("NewTestScenario" %in% newNames)
+})
+
+test_that("data accessor returns default structure for empty Project", {
+  pc <- Project$new()
+  data <- pc$data
+  expect_equal(data$schemaVersion, "2.0")
+  expect_equal(length(data$scenarios), 0)
+  expect_equal(length(data$individuals), 0)
+  expect_equal(length(data$populations), 0)
 })

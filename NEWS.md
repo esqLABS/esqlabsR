@@ -86,8 +86,8 @@
   file, sheet, and importer configuration settings. (#908)
 
 - **`Project$print()` rewritten** to show category counts (e.g.,
-  number of scenarios, individuals, populations) instead of raw file paths.
-  (#908)
+  number of scenarios, individuals, populations) and display file paths
+  relative to the project directory for readability. (#908)
 
 - Added `overwriteFormulasInSS` property to `Scenario`. When set to `TRUE`,
   formula-defined parameters will be overwritten with their steady-state values

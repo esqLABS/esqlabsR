@@ -209,6 +209,15 @@ Project <- R6::R6Class(
         self$projectDirPath,
         must_work = FALSE
       )
+    },
+    #' @field data Returns the current project data structure as a list
+    #'   matching the JSON schema. Reflects any in-memory modifications.
+    #'   Read-only.
+    data = function(value) {
+      if (!missing(value)) {
+        stop("data is readonly")
+      }
+      .projectToJson(self)
     }
   ),
   private = list(
@@ -216,6 +225,7 @@ Project <- R6::R6Class(
     .projectFilePath = NULL,
     .projectDirPath = NULL,
     .modified = FALSE,
+    .rawData = NULL,
     .warned_paths = character(),
     .clean_path = function(
       path,
@@ -278,6 +288,13 @@ Project <- R6::R6Class(
     },
     .replaced_env_vars = list(),
 
+    .to_relative_path = function(path) {
+      if (is.null(path) || is.null(self$projectDirPath)) {
+        return(path)
+      }
+      fs::path_rel(path, self$projectDirPath)
+    },
+
     .read_json = function(jsonPath) {
       jsonPath <- fs::path_abs(jsonPath)
       if (!fs::file_exists(jsonPath)) {
@@ -285,6 +302,7 @@ Project <- R6::R6Class(
       }
 
       jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+      private$.rawData <- jsonData
 
       # Validate schema version
       if (is.null(jsonData$schemaVersion) || jsonData$schemaVersion != "2.0") {
@@ -578,15 +596,16 @@ Project <- R6::R6Class(
       if (className) {
         ospsuite.utils::ospPrintClass(self)
       }
+      rel <- function(p) private$.to_relative_path(p)
       ospsuite.utils::ospPrintItems(list(
         "Schema version" = self$schemaVersion %||% "unknown",
         "Working Directory" = getwd(),
-        "Configuration file" = self$projectFilePath,
-        "Model folder" = self$modelFolder,
-        "Data folder" = self$dataFolder,
-        "Data file" = self$dataFile,
-        "Data importer configuration" = self$dataImporterConfigurationFile,
-        "Output folder" = self$outputFolder
+        "Configuration file" = rel(self$projectFilePath),
+        "Model folder" = rel(self$modelFolder),
+        "Data folder" = rel(self$dataFolder),
+        "Data file" = rel(self$dataFile),
+        "Data importer configuration" = rel(self$dataImporterConfigurationFile),
+        "Output folder" = rel(self$outputFolder)
       ))
 
       # Count plots breakdown
