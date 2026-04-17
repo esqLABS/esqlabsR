@@ -213,7 +213,7 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
 
 test_that("It throws an error if defined data set is missing and stopIfNotFound is TRUE", {
   dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedDataForSetup))
+  dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedDataForSetup)[1])
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
 
   expect_error(
@@ -228,7 +228,7 @@ test_that("It throws an error if defined data set is missing and stopIfNotFound 
 
 test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", {
   dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedDataForSetup))
+  dataCombinedDfLocal$dataSet <- c(scenarioNames[1], names(observedDataForSetup)[1])
   pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
 
   expect_warning(
@@ -566,7 +566,7 @@ test_that("It correctly treats empty rows", {
     "label" = c("Aciclovir simulated", NA, "Aciclovir observed"),
     "scenario" = c(scenarioNames[1], NA, NA),
     "path" = c(outputPaths, NA, NA),
-    "dataSet" = c(NA, NA, names(observedDataForSetup)),
+    "dataSet" = c(NA, NA, names(observedDataForSetup)[1]),
     "group" = c("Aciclovir PVB", NA, "Aciclovir PVB"),
     "xOffsets" = NA,
     "xOffsetsUnits" = NA,
