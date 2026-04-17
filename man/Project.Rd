@@ -109,7 +109,8 @@ Must be located in the "dataFolder"}
 \item{\code{outputFolder}}{Path to the folder where the results should be saved
 relative to the "Code" folder}
 
-\item{\code{data}}{Returns the raw project data structure as loaded from JSON.
+\item{\code{data}}{Returns the current project data structure as a list
+matching the JSON schema. Reflects any in-memory modifications.
 Read-only.}
 }
 \if{html}{\out{</div>}}

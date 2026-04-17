@@ -3,7 +3,7 @@
 \name{exampleProjectPath}
 \alias{exampleProjectPath}
 \alias{exampleProjectConfigurationPath}
-\title{Get the path to example Project.xlsx}
+\title{Get the path to the example Project.json}
 \usage{
 exampleProjectPath()
 
@@ -11,10 +11,10 @@ exampleProjectConfigurationPath()
 }
 \value{
 A string representing the path to the example
-Project.xlsx file
+\code{Project.json} file shipped with the package.
 }
 \description{
-Get the path to example Project.xlsx
+Get the path to the example Project.json
 }
 \examples{
 exampleProjectPath()
