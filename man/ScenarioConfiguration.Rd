@@ -63,8 +63,9 @@ steady-state. May be \code{NULL}.}
 
 \item{\code{overwriteFormulasInSS}}{Boolean representing whether formula-defined
 parameters will be overwritten with their steady-state values.
-Corresponds to the \code{ignoreIfFormula} argument of
-\code{ospsuite::getSteadyState}. Default is \code{FALSE}.}
+When \code{TRUE}, corresponds to \code{ignoreIfFormula = FALSE} in
+\code{ospsuite::getSteadyState} (formulas are overwritten). Default is
+\code{FALSE} (formula-defined parameters are kept unchanged).}
 
 \item{\code{paramSheets}}{A named list. Names of the sheets from the
 parameters-excel file that will be applied to the simulation}
