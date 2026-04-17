@@ -19,7 +19,13 @@
   "observedData": [
     {
       "type": "excel",
+      "file": "TestProject_TimeValuesData.xlsx",
+      "importerConfiguration": "esqlabs_dataImporter_configuration.xml",
       "sheets": ["Laskin 1982.Group A"]
+    },
+    {
+      "type": "pkml",
+      "file": "ObsDataAciclovir_1.pkml"
     }
   ],
   "outputPaths": {

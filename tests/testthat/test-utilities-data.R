@@ -400,3 +400,28 @@ test_that("loadObservedData loads mixed Excel and PKML data", {
   expect_true(length(result) >= 2)
   expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
 })
+
+test_that("loadObservedData loads from JSON with explicit file and importerConfiguration", {
+  pc <- testProject()
+  result <- loadObservedData(pc)
+  expect_type(result, "list")
+  expect_length(result, 2)
+  expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
+  excelName <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  pkmlName <- "Vergin 1995.Iv"
+  expect_true(excelName %in% names(result))
+  expect_true(pkmlName %in% names(result))
+})
+
+test_that("Project$observedData preserves file and importerConfiguration from JSON", {
+  pc <- testProject()
+  expect_length(pc$observedData, 2)
+  excelEntry <- pc$observedData[[1]]
+  expect_equal(excelEntry$type, "excel")
+  expect_equal(excelEntry$file, "TestProject_TimeValuesData.xlsx")
+  expect_equal(excelEntry$importerConfiguration, "esqlabs_dataImporter_configuration.xml")
+  expect_equal(excelEntry$sheets, list("Laskin 1982.Group A"))
+  pkmlEntry <- pc$observedData[[2]]
+  expect_equal(pkmlEntry$type, "pkml")
+  expect_equal(pkmlEntry$file, "ObsDataAciclovir_1.pkml")
+})
