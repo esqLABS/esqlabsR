@@ -642,6 +642,19 @@ Project <- R6::R6Class(
       )
       invisible(self)
     },
+    #' Check synchronization status
+    #' @description Compares in-memory project state with source files.
+    #' @param silent Logical. If `TRUE`, suppresses informational messages.
+    #'   Defaults to `FALSE`.
+    #' @return A list with components:
+    #'   \item{in_sync}{Logical. `TRUE` if all sources are synchronized.}
+    #'   \item{unsaved_changes}{Logical. `TRUE` if in-memory differs from JSON.}
+    #'   \item{json_modified}{Logical. `TRUE` if JSON file differs from loaded.}
+    #'   \item{excel_modified}{Logical. `TRUE` if Excel files differ from JSON.}
+    #'   \item{details}{List with detailed comparison results.}
+    sync = function(silent = FALSE) {
+      .projectSync(self, silent = silent)
+    },
     #' @field schemaVersion Project structure schema version (e.g. "2.0").
     #'   Shared between JSON and Excel representations.
     schemaVersion = NULL,

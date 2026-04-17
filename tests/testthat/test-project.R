@@ -434,3 +434,66 @@ test_that("data accessor returns default structure for empty Project", {
   expect_equal(length(data$individuals), 0)
   expect_equal(length(data$populations), 0)
 })
+
+# sync method ----
+
+test_that("sync returns in_sync TRUE for freshly loaded project", {
+  pc <- testProject()
+  result <- pc$sync(silent = TRUE)
+
+  expect_type(result, "list")
+  expect_true(result$in_sync)
+  expect_false(result$unsaved_changes)
+})
+
+test_that("sync detects unsaved changes after modification", {
+  pc <- testProject()
+  addScenario(pc, "NewScenario", "Aciclovir.pkml", individualId = "Indiv1")
+
+  result <- pc$sync(silent = TRUE)
+
+  expect_false(result$in_sync)
+  expect_true(result$unsaved_changes)
+})
+
+test_that("sync shows unsaved_changes FALSE after saveProject", {
+  temp_proj <- local_test_project()
+  pc <- loadProject(temp_proj$snapshot_path)
+  addScenario(pc, "NewScenario", "Aciclovir.pkml", individualId = "Indiv1")
+
+  saveProject(pc)
+  result <- pc$sync(silent = TRUE)
+
+  expect_false(result$unsaved_changes)
+  expect_false(result$json_modified)
+  expect_true(result$excel_modified)
+})
+
+test_that("sync detects external JSON file changes", {
+  temp_proj <- local_test_project()
+  pc <- loadProject(temp_proj$snapshot_path)
+
+  cfg <- jsonlite::fromJSON(temp_proj$snapshot_path, simplifyVector = FALSE)
+  cfg$scenarios[[1]]$name <- "RenamedByExternalEdit"
+  jsonlite::write_json(cfg, temp_proj$snapshot_path, auto_unbox = TRUE, null = "null")
+
+  result <- pc$sync(silent = TRUE)
+
+  expect_false(result$in_sync)
+  expect_true(result$json_modified)
+})
+
+test_that("sync reports excel_modified when Excel differs from JSON", {
+  temp_proj <- local_test_project()
+  pc <- loadProject(temp_proj$snapshot_path)
+
+  scenariosXlsx <- file.path(temp_proj$configurations_dir, "Scenarios.xlsx")
+  scenariosDf <- readExcel(scenariosXlsx, sheet = "Scenarios")
+  scenariosDf$Scenario_name[[1]] <- "ModifiedInExcel"
+  .writeExcel(list(Scenarios = scenariosDf), scenariosXlsx)
+
+  result <- pc$sync(silent = TRUE)
+
+  expect_false(result$in_sync)
+  expect_true(result$excel_modified)
+})
