@@ -765,9 +765,7 @@ ProjectConfiguration <- R6::R6Class(
   )
 )
 
-# ==============================================================================
-# Public API Functions
-# ==============================================================================
+# Public Functions ----
 
 #' Load a project from a JSON configuration file
 #'
@@ -1004,9 +1002,7 @@ exampleProjectConfigurationPath <- function() {
   exampleProjectPath()
 }
 
-# ==============================================================================
-# Internal Helper Functions
-# ==============================================================================
+# Internal Helper Functions ----
 
 #' Convert a Project object to a JSON-serializable list
 #' @param project A `Project` object.
