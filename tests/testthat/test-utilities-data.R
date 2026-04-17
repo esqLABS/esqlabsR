@@ -307,23 +307,23 @@ test_that("It sets the LLOQ if it is given for any of the original data sets", {
   expect_equal(meanDataSet$LLOQ, 1.5, tolerance = 1e-06)
 })
 
-test_that(".loadObservedData returns empty list when observedData is NULL", {
+test_that("loadObservedData returns empty list when observedData is NULL", {
   pc <- testProject()
   pc$observedData <- NULL
-  result <- .loadObservedData(pc)
+  result <- loadObservedData(pc)
   expect_type(result, "list")
   expect_length(result, 0)
 })
 
-test_that(".loadObservedData loads Excel data using project defaults", {
+test_that("loadObservedData loads Excel data using project defaults", {
   pc <- testProject()
-  result <- .loadObservedData(pc)
+  result <- loadObservedData(pc)
   expect_type(result, "list")
   expect_true(length(result) > 0)
   expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
 })
 
-test_that(".loadObservedData loads Excel data with explicit file overrides", {
+test_that("loadObservedData loads Excel data with explicit file overrides", {
   pc <- testProject()
   pc$observedData <- list(list(
     type = "excel",
@@ -331,19 +331,19 @@ test_that(".loadObservedData loads Excel data with explicit file overrides", {
     importerConfiguration = "esqlabs_dataImporter_configuration.xml",
     sheets = list("Laskin 1982.Group A")
   ))
-  result <- .loadObservedData(pc)
+  result <- loadObservedData(pc)
   expect_type(result, "list")
   expect_true(length(result) > 0)
   expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
 })
 
-test_that(".loadObservedData merges datasets from multiple entries", {
+test_that("loadObservedData merges datasets from multiple entries", {
   pc <- testProject()
   pc$observedData <- list(
     list(type = "excel", sheets = list("Laskin 1982.Group A")),
     list(type = "excel", sheets = list("Laskin 1982.Group A"))
   )
-  result <- .loadObservedData(pc)
+  result <- loadObservedData(pc)
   expect_type(result, "list")
   expect_true(length(result) >= 2)
 })
@@ -374,4 +374,29 @@ test_that("loadObservedData errors on non-Project input", {
     loadObservedData("not a project"),
     regexp = "Project"
   )
+})
+
+test_that("loadObservedData loads PKML data", {
+  pc <- testProject()
+  pc$observedData <- list(list(
+    type = "pkml",
+    file = "ObsDataAciclovir_1.pkml"
+  ))
+  result <- loadObservedData(pc)
+  expect_type(result, "list")
+  expect_length(result, 1)
+  expect_true(inherits(result[[1]], "DataSet"))
+  expect_equal(names(result), result[[1]]$name)
+})
+
+test_that("loadObservedData loads mixed Excel and PKML data", {
+  pc <- testProject()
+  pc$observedData <- list(
+    list(type = "excel", sheets = list("Laskin 1982.Group A")),
+    list(type = "pkml", file = "ObsDataAciclovir_1.pkml")
+  )
+  result <- loadObservedData(pc)
+  expect_type(result, "list")
+  expect_true(length(result) >= 2)
+  expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
 })

@@ -8,8 +8,7 @@ simulatedScenarios <- runScenarios(
   scenarioNames = scenarioNames
 )
 
-# Load observed data internally for test data setup only
-observedDataForSetup <- .loadObservedData(project)
+observedDataForSetup <- loadObservedData(project)
 
 # Create a proper data frame with paths for all entries
 dataCombinedDf <- data.frame(list(

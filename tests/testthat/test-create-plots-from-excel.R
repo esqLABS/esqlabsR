@@ -19,8 +19,7 @@ simulatedScenarios$TestScenario$outputValues <- getOutputValues(
   simulationResults = preSimulatedResults
 )
 
-# Load observed data internally for test data setup only
-observedDataForSetup <- .loadObservedData(project)
+observedDataForSetup <- loadObservedData(project)
 
 dataCombinedDf <- data.frame(list(
   "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),

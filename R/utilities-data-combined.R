@@ -30,7 +30,7 @@ createDataCombined <- function(
   stopIfNotFound = TRUE
 ) {
   validateIsOfType(project, "Project")
-  observedData <- .loadObservedData(project)
+  observedData <- loadObservedData(project)
   validateIsString(plotGridNames, nullAllowed = TRUE)
 
   # Exit early if no data combined names or plot grid names are provided

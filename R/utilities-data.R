@@ -310,11 +310,10 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' @export
 loadObservedData <- function(project) {
   validateIsOfType(project, "Project")
-  .loadObservedData(project)
-}
 
-.loadObservedData <- function(project) {
-  if (is.null(project$observedData)) return(list())
+  if (is.null(project$observedData)) {
+    return(list())
+  }
 
   allDataSets <- list()
   for (entry in project$observedData) {
