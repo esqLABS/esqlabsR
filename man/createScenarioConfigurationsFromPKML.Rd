@@ -18,6 +18,7 @@ createScenarioConfigurationsFromPKML(
   steadyState = FALSE,
   steadyStateTime = NULL,
   steadyStateTimeUnit = NULL,
+  overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE
 )
 }
@@ -75,6 +76,11 @@ or a vector with the same length as \code{pkmlFilePaths}.}
 \item{steadyStateTimeUnit}{Character vector. Steady-state time units. Only used when \code{steadyState = TRUE} and \code{steadyStateTime} is provided.
 If \code{NULL} (default), "min" will be used. Can be a single string (recycled for all scenarios) or a vector
 with the same length as \code{pkmlFilePaths}.}
+
+\item{overwriteFormulasInSS}{Logical vector. Whether to overwrite formula-defined parameters with
+their steady-state values (corresponds to \code{ignoreIfFormula} in \code{ospsuite::getSteadyState()}). Default
+is \code{FALSE}. Can be a single logical value (recycled for all scenarios) or a vector with the same length
+as \code{pkmlFilePaths}.}
 
 \item{readPopulationFromCSV}{Logical vector. Whether to read population from CSV for each scenario. Default is \code{FALSE}.
 Can be a single logical value (recycled for all scenarios) or a vector with the same length as \code{pkmlFilePaths}.}

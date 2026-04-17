@@ -13,7 +13,8 @@ test_that("snapshotProjectConfiguration exports project configuration to JSON wi
   # Export to JSON with explicit outputDir
   configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    outputDir
+    outputDir,
+    silent = TRUE
   )
 
   # Check JSON content with snapshot
@@ -41,7 +42,8 @@ test_that("restoreProjectConfiguration creates Excel files from JSON with correc
 
   configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    exportDir
+    exportDir,
+    silent = TRUE
   )
 
   # Get the actual JSON path
@@ -51,7 +53,11 @@ test_that("restoreProjectConfiguration creates Excel files from JSON with correc
   expect_true(file.exists(jsonPath))
 
   # Import from JSON with explicit outputDir
-  projectConfig <- restoreProjectConfiguration(jsonPath, importDir)
+  projectConfig <- restoreProjectConfiguration(
+    jsonPath,
+    importDir,
+    silent = TRUE
+  )
 
   # Check that a ProjectConfiguration object is returned
   expect_s3_class(projectConfig, "ProjectConfiguration")
@@ -93,14 +99,15 @@ test_that("Excel files in Configurations folder preserve content after JSON roun
 
   configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    exportDir
+    exportDir,
+    silent = TRUE
   )
 
   # Get the actual JSON path
   jsonPath <- file.path(exportDir, jsonFilename)
 
   # Import from JSON with explicit outputDir
-  restoreProjectConfiguration(jsonPath, importDir)
+  restoreProjectConfiguration(jsonPath, importDir, silent = TRUE)
 
   # Configurations directory in the import directory
   configDir <- file.path(importDir, "Configurations")
@@ -164,12 +171,13 @@ test_that("ProjectConfiguration can be created from regenerated JSON files", {
   jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
   configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    exportDir
+    exportDir,
+    silent = TRUE
   )
   jsonPath <- file.path(exportDir, jsonFilename)
 
   # Import from JSON with explicit outputDir
-  restoreProjectConfiguration(jsonPath, importDir)
+  restoreProjectConfiguration(jsonPath, importDir, silent = TRUE)
 
   # Path to regenerated ProjectConfiguration.xlsx (in root directory, not in Configurations)
   regeneratedProjectConfigPath <- file.path(
@@ -211,12 +219,17 @@ test_that("ProjectConfiguration.xlsx data is preserved in JSON round-trip", {
   jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
   configData <- snapshotProjectConfiguration(
     paths$project_config_path,
-    exportDir
+    exportDir,
+    silent = TRUE
   )
   jsonPath <- file.path(exportDir, jsonFilename)
 
   # Import from JSON with explicit outputDir
-  regeneratedConfig <- restoreProjectConfiguration(jsonPath, importDir)
+  regeneratedConfig <- restoreProjectConfiguration(
+    jsonPath,
+    importDir,
+    silent = TRUE
+  )
 
   # Check that a ProjectConfiguration object was returned
   expect_s3_class(regeneratedConfig, "ProjectConfiguration")
@@ -254,14 +267,17 @@ test_that("projectConfigurationStatus() automatically finds JSON file when not s
   test_proj <- local_test_project()
 
   # Take a snapshot of the current configuration using default name
-  snapshotProjectConfiguration(test_proj$project_config_path)
+  snapshotProjectConfiguration(test_proj$project_config_path, silent = TRUE)
 
   # Default JSON path should be in the same directory as the Excel file
   expected_json_path <- sub("\\.xlsx$", ".json", test_proj$project_config_path)
   expect_true(file.exists(expected_json_path))
 
   # Check status without specifying JSON path - should find it automatically
-  status_result <- projectConfigurationStatus(test_proj$project_config_path)
+  status_result <- projectConfigurationStatus(
+    test_proj$project_config_path,
+    silent = TRUE
+  )
   expect_true(status_result$in_sync)
 })
 
@@ -273,7 +289,8 @@ test_that("projectConfigurationStatus() correctly identifies in-sync files", {
   # Check status - should be in sync
   status_result <- projectConfigurationStatus(
     test_proj$project_config_path,
-    test_proj$snapshot_path
+    test_proj$snapshot_path,
+    silent = TRUE
   )
   expect_true(
     status_result$in_sync,
@@ -322,9 +339,15 @@ test_that("projectConfigurationStatus() detects sheet-level changes in Excel fil
   expect_true("NewTestSheet" %in% updated_sheets)
 
   # Check status - should detect sheet-level changes
-  status_result <- projectConfigurationStatus(
-    test_proj$project_config_path,
-    test_proj$snapshot_path
+  capture.output(
+    expect_warning(
+      status_result <- projectConfigurationStatus(
+        test_proj$project_config_path,
+        test_proj$snapshot_path
+      ),
+      regexp = messages$excelNotInSync()
+    ),
+    type = "message"
   )
   expect_false(status_result$in_sync)
 
@@ -358,9 +381,15 @@ test_that("projectConfigurationStatus() detects data-level changes in Excel shee
   .writeExcel(new_data, scenarios_path)
 
   # Check status - should detect data-level changes
-  status_result <- projectConfigurationStatus(
-    test_proj$project_config_path,
-    test_proj$snapshot_path
+  capture.output(
+    expect_warning(
+      status_result <- projectConfigurationStatus(
+        test_proj$project_config_path,
+        test_proj$snapshot_path
+      ),
+      regexp = messages$excelNotInSync()
+    ),
+    type = "message"
   )
   expect_false(status_result$in_sync)
 
@@ -415,9 +444,15 @@ test_that("projectConfigurationStatus() handles simultaneous sheet, and data cha
   }
 
   # Check status - should detect all types of changes
-  status_result <- projectConfigurationStatus(
-    test_proj$project_config_path,
-    test_proj$snapshot_path
+  capture.output(
+    expect_warning(
+      status_result <- projectConfigurationStatus(
+        test_proj$project_config_path,
+        test_proj$snapshot_path
+      ),
+      regexp = messages$excelNotInSync()
+    ),
+    type = "message"
   )
   expect_false(status_result$in_sync)
 
@@ -453,13 +488,17 @@ test_that("snapshotProjectConfiguration and restoreProjectConfiguration handle a
   exportDir <- withr::local_tempdir("test_export_added_col_plotconfig")
   excelFilename <- basename(paths$project_config_path)
   jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
-  snapshotProjectConfiguration(paths$project_config_path, exportDir)
+  snapshotProjectConfiguration(
+    paths$project_config_path,
+    exportDir,
+    silent = TRUE
+  )
   jsonPath <- file.path(exportDir, jsonFilename)
   expect_true(file.exists(jsonPath))
 
   # Restore from JSON to a new directory
   importDir <- withr::local_tempdir("test_import_added_col_plotconfig")
-  restoreProjectConfiguration(jsonPath, importDir)
+  restoreProjectConfiguration(jsonPath, importDir, silent = TRUE)
 
   # Path to restored Plots.xlsx
   restored_plots_path <- file.path(importDir, "Configurations", "Plots.xlsx")
@@ -494,7 +533,11 @@ test_that("snapshotProjectConfiguration works with unmodified ProjectConfigurati
 
   # Snapshot should work without issues
   expect_no_error({
-    configData <- snapshotProjectConfiguration(projectConfig, outputDir)
+    configData <- snapshotProjectConfiguration(
+      projectConfig,
+      outputDir,
+      silent = TRUE
+    )
   })
 
   # Original config should still be unmodified
@@ -521,7 +564,11 @@ test_that("snapshotProjectConfiguration works with modified ProjectConfiguration
 
   # Snapshot should work even with modified config
   expect_no_error({
-    configData <- snapshotProjectConfiguration(projectConfig, outputDir)
+    configData <- snapshotProjectConfiguration(
+      projectConfig,
+      outputDir,
+      silent = TRUE
+    )
   })
 
   # Original config should still be modified (snapshot doesn't change this)
@@ -545,11 +592,19 @@ test_that("restoreProjectConfiguration returns ProjectConfiguration with modifie
   # Export to JSON
   excelFilename <- basename(test_proj$project_config_path)
   jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
-  snapshotProjectConfiguration(test_proj$project_config_path, exportDir)
+  snapshotProjectConfiguration(
+    test_proj$project_config_path,
+    exportDir,
+    silent = TRUE
+  )
   jsonPath <- file.path(exportDir, jsonFilename)
 
   # Restore from JSON
-  restoredConfig <- restoreProjectConfiguration(jsonPath, importDir)
+  restoredConfig <- restoreProjectConfiguration(
+    jsonPath,
+    importDir,
+    silent = TRUE
+  )
 
   # Restored config should have modified=FALSE (freshly loaded from file)
   expect_false(restoredConfig$modified)
@@ -589,12 +644,16 @@ test_that("projectConfigurationStatus does not warn about unmodified ProjectConf
   expect_false(projectConfig$modified)
 
   # Create a JSON snapshot
-  snapshotProjectConfiguration(test_proj$project_config_path)
+  snapshotProjectConfiguration(test_proj$project_config_path, silent = TRUE)
   jsonPath <- sub("\\.xlsx$", ".json", test_proj$project_config_path)
 
   # Check status - should not show warning about modification
   expect_no_warning({
-    status_result <- projectConfigurationStatus(projectConfig, jsonPath)
+    status_result <- projectConfigurationStatus(
+      projectConfig,
+      jsonPath,
+      silent = TRUE
+    )
   })
 
   # Status should work normally
@@ -610,11 +669,11 @@ test_that("modifying ProjectConfiguration after snapshotting affects status chec
   expect_false(projectConfig$modified)
 
   # Take snapshot of unmodified config
-  snapshotProjectConfiguration(projectConfig)
+  snapshotProjectConfiguration(projectConfig, silent = TRUE)
   jsonPath <- sub("\\.xlsx$", ".json", test_proj$project_config_path)
 
   # Verify initial status is in sync
-  status1 <- projectConfigurationStatus(projectConfig, jsonPath)
+  status1 <- projectConfigurationStatus(projectConfig, jsonPath, silent = TRUE)
   expect_true(status1$in_sync)
 
   # Modify the configuration
@@ -644,11 +703,15 @@ test_that("JSON roundtrip preserves modified flag behavior", {
   # Export to JSON
   excelFilename <- basename(test_proj$project_config_path)
   jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
-  snapshotProjectConfiguration(originalConfig, exportDir)
+  snapshotProjectConfiguration(originalConfig, exportDir, silent = TRUE)
   jsonPath <- file.path(exportDir, jsonFilename)
 
   # Restore from JSON
-  restoredConfig <- restoreProjectConfiguration(jsonPath, importDir)
+  restoredConfig <- restoreProjectConfiguration(
+    jsonPath,
+    importDir,
+    silent = TRUE
+  )
   expect_false(restoredConfig$modified)
 
   # Modify the restored config
@@ -676,7 +739,8 @@ test_that("snapshotProjectConfiguration with path string handles modified flag c
   expect_no_error({
     configData <- snapshotProjectConfiguration(
       test_proj$project_config_path,
-      outputDir
+      outputDir,
+      silent = TRUE
     )
   })
 
@@ -700,7 +764,11 @@ test_that("restoreProjectConfiguration handles out-of-sync files correctly in no
   # Export to JSON
   excelFilename <- basename(paths$project_config_path)
   jsonFilename <- sub("\\.xlsx$", ".json", excelFilename)
-  snapshotProjectConfiguration(paths$project_config_path, exportDir)
+  snapshotProjectConfiguration(
+    paths$project_config_path,
+    exportDir,
+    silent = TRUE
+  )
   jsonPath <- file.path(exportDir, jsonFilename)
 
   # Create the complete project structure in importDir to avoid path validation warnings
@@ -731,6 +799,11 @@ test_that("restoreProjectConfiguration handles out-of-sync files correctly in no
   # successfully restores when files are out of sync in non-interactive mode
   # In interactive mode, it would prompt the user
   expect_no_error(
-    restoreProjectConfiguration(jsonPath, importDir)
+    expect_warning(
+      restoreProjectConfiguration(jsonPath, importDir, silent = TRUE),
+      regexp = messages$excelNotInSync(
+        "Restoring will overwrite existing Excel files."
+      )
+    )
   )
 })

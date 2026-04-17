@@ -268,12 +268,12 @@ messages$warningNoIndividualCharacteristics <- function(
   )
 }
 
-messages$warningNoIndividualSpecificModelParameters <- function(
+messages$errorIndividualParameterSetNotFound <- function(
   scenarioName,
-  individualId
+  parameterSetName
 ) {
   cliFormat(
-    "Scenario {.val {scenarioName}}: No individual specific model parameters for individual id {.val {individualId}} found."
+    "Scenario {.val {scenarioName}}: Individual parameter set {.val {parameterSetName}} not found in the individuals file."
   )
 }
 
@@ -366,6 +366,17 @@ messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
     "The plots with plotIDs {.val {paste(plotIDs, collapse = ',\n')}} could not be added to plot grid
     {.field {plotGridTitle}}. Please check if they are defined in sheet {.var plotConfiguration} and data is added in
     sheet {.var DataCombined}."
+  )
+}
+
+messages$warningLogScaleWithZeroLimit <- function(
+  plotID,
+  axisLimitsField,
+  axis
+) {
+  cliFormat(
+    "Column {.field {axisLimitsField}} in plot {.val {plotID}} contains zero, but the {.val {axis}}-axis scale is set to {.val log}.
+    Logarithmic scale cannot display zero values. This may result in empty or unexpected plots."
   )
 }
 

@@ -2,12 +2,30 @@
 
 ## Breaking changes
 
-This version updates the figure creation workflow to use the new approach implemented in `{ospsuite}` version 1x. See <link to documentation>
+This version updates the figure creation workflow to use the new approach implemented in `{ospsuite}` version 12.4.2. See ["Plotting with ospsuite.plots"](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/plotting-with-ospsuite-plots.html) for more details.
 
 - Removed sheet "exportConfiguration" from the "Plots.xlsx" configuration. Automated export of figures generated from excel sheets to files is not supported any more. To export figures, use `ospsuite.plots::exportPlot()` or the standard `ggplot2` export functions
 - Removed class `ExportConfiguration` that was overriding `ExportConfiguration` from the `tlf` package.
 - Removed function `createEsqlabsExportConfiguration()`
 - Argument `outputFolder` removed from the signature of the function `createPlotsFromExcel()`
+
+- Individual parameter sets in `Individuals.xlsx` must now be specified
+  explicitly via the new required column `Individual Parameter Sets` in the
+  `IndividualBiometrics` sheet. The column must contain a comma-separated list
+  of sheet names (in the same file) whose parameters will be applied to the
+  simulation in order. Previously, a sheet named after the `IndividualId` was
+  applied automatically; this fallback is removed. Existing `Individuals.xlsx`
+  files must be updated to add the `Individual Parameter Sets` column and
+  populate it with the relevant sheet names. (#970)
+
+## New features
+
+- Added `overwriteFormulasInSS` property to `ScenarioConfiguration`. When set to `TRUE`, formula-defined parameters will be overwritten with their steady-state values (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`). Default is `FALSE` (formula-defined parameters are kept, i.e. `ignoreIfFormula = TRUE`). The property can be set via a new `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx` (placed after `SteadyStateTimeUnit`). Also available as a parameter in `createScenarioConfigurationsFromPKML()`.
+
+## Minor improvements and bug fixes
+- Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
+- Added a warning when axis limits contain zero while the corresponding axis scale is set to `log` in `Plots.xlsx`. Previously, this combination silently produced empty plots (\#967).
+- `extendParameterStructure()` now supports `NULL` for `parameters` and `newParameters` arguments. When `NULL` is provided, a valid empty structure is returned or combined with the non-NULL argument (#583).
 
 # esqlabsR 5.5.2
 
@@ -17,6 +35,7 @@ This version updates the figure creation workflow to use the new approach implem
 - ospsuite.utils version >=1.10.0 is required
 
 ## New features
+
 - Added comprehensive three-tier validation system for Excel configuration files. New exported functions:
   - `validateAllConfigurations()`: Validates all project configuration files
   - `validationSummary()`: Returns summary of validation results
@@ -24,13 +43,16 @@ This version updates the figure creation workflow to use the new approach implem
 - Added validation documentation to project-structure vignette
 
 ## Minor improvements and bug fixes
+
 - Fixed variable scoping issues in validation functions
 - Simplified validation logic to check data frame structure instead of R6 objects
 - Using native operator `%||%` instead of importing from the `ospsuite.utils` package.
+- Remove false warnings whenever a ProjectConfiguration is created (\#964).
 
 # esqlabsR 5.5.1
 
-## Minor improvements and bug fixes 
+## Minor improvements and bug fixes
+
 - Improved Excel validation for plot configurations with clearer error messages (\#848). When axis limits (xAxisLimits, yAxisLimits, xValuesLimits, yValuesLimits) are incorrectly formatted (e.g., space-separated "72 80" instead of comma-separated "72, 80"), users now receive specific error messages indicating the field name, plot ID, and correct format. Uses ospsuite.utils validation functions internally.
 - Enhanced `createScenarioConfigurationsFromPKML()` with vector argument support - all parameters now support named vectors and vector recycling for flexible scenario creation. (\#890)
 - Added support for named vectors in `outputPaths` parameter across scenario functions - names serve as aliases for output paths, e.g., `c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration in container")`. (\#890)
@@ -75,7 +97,6 @@ This version updates the figure creation workflow to use the new approach implem
   were overwritten by the administration protocol (\#817).
 
 - Project Configuration Version Control - Added comprehensive snapshot and restore functionality for project configurations:
-
   - `snapshotProjectConfiguration()` exports all Excel configuration files to a single JSON file for version control
   - `restoreProjectConfiguration()` recreates Excel files from JSON snapshots for easy project sharing
   - `projectConfigurationStatus()` checks synchronization between Excel files and JSON snapshots
@@ -343,7 +364,6 @@ Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
   'aggregation'. The value is passed to the function
   `plotPopulationTimeProfile()`. Supported values are listed in
   `ospsuite::DataAggregationMethods`.
-
   - `arithmetic`: population results are plotted as arithmetic mean +-
     arithmetic standard deviation
   - `geometric`: population results are plotted as geometric mean +-
@@ -517,7 +537,6 @@ Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
 - The package requires R version \>=4.1.
 
 - The package gains new dependencies:
-
   - [`{ospsuite.parameteridentification}`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification/)
   - [`{tlf}`](https://www.open-systems-pharmacology.org/TLF-Library/).
 
@@ -535,7 +554,6 @@ Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
 
 - Three new functions to create configuration objects needed for data
   visualization workflows:
-
   - `createEsqlabsPlotConfiguration()`
   - `createEsqlabsPlotGridConfiguration()`
   - `createEsqlabsExportConfiguration()`
@@ -553,13 +571,11 @@ Id}_{Species}_{Organ}_{Compartment}_{Dose}_{Route}_{Group Id}`
 ## Major changes
 
 - To carry out and visualize sensitivity analysis:
-
   - `sensitivityCalculation()`
   - `sensitivitySpiderPlot()`
   - `sensitivityTimeProfiles()`
 
 - Classes and functions for standard esqLABS simulation workflow:
-
   - `ProjectConfiguration`
   - `ScenarioConfiguration`
   - `createDefaultProjectConfiguration()`

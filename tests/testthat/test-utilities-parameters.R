@@ -86,6 +86,49 @@ test_that("It trows an error if wrong structure is provideed", {
   )
 })
 
+test_that("It accepts NULL for parameters and returns newParameters", {
+  newParams <- list(
+    paths = c("Path1", "Path2"),
+    values = c(1, 2),
+    units = c("", "µmol")
+  )
+
+  extended <- extendParameterStructure(
+    parameters = NULL,
+    newParameters = newParams
+  )
+
+  expect_equal(extended$paths, newParams$paths)
+  expect_equal(extended$values, newParams$values)
+  expect_equal(extended$units, newParams$units)
+})
+
+test_that("It accepts NULL for newParameters and returns parameters", {
+  params <- list(
+    paths = c("Path1", "Path2"),
+    values = c(1, 2),
+    units = c("", "µmol")
+  )
+
+  extended <- extendParameterStructure(
+    parameters = params,
+    newParameters = NULL
+  )
+
+  expect_equal(extended$paths, params$paths)
+  expect_equal(extended$values, params$values)
+  expect_equal(extended$units, params$units)
+})
+
+test_that("It returns an empty valid structure when both parameters and newParameters are NULL", {
+  extended <- extendParameterStructure(
+    parameters = NULL,
+    newParameters = NULL
+  )
+
+  expect_equal(extended, list(paths = NULL, values = NULL, units = NULL))
+})
+
 test_that("It extends an empty structure by new values", {
   params <- list(paths = NULL, values = NULL, units = NULL)
   newParams <- list(
@@ -285,6 +328,43 @@ test_that("It appends parameters to an already existing parameter excel file", {
         sheets = sheet
       )
 
+      expect_equal(paramsRead$paths[[3]], newParam$paths[[1]])
+      expect_equal(paramsRead$values[[3]], newParam$values[[1]])
+      expect_equal(paramsRead$units[[3]], newParam$units[[1]])
+    }
+  )
+})
+
+test_that("It appends parameters when sheet is NULL (default sheet name)", {
+  withr::with_tempdir(
+    code = {
+      xlsPath <- "tmp.xlsx"
+      params <- list(
+        paths = c("Container1|Path1", "Container|Second|Third|Path2"),
+        values = c(1, 2),
+        units = c("", "µmol")
+      )
+      writeParameterStructureToXLS(
+        parameterStructure = params,
+        paramsXLSpath = xlsPath
+      )
+
+      newParam <- list(
+        paths = c("Container1|Path2"),
+        values = c(10),
+        units = c("")
+      )
+
+      writeParameterStructureToXLS(
+        parameterStructure = newParam,
+        paramsXLSpath = xlsPath,
+        append = TRUE
+      )
+
+      # Load from xls (reads first sheet by default) and compare
+      paramsRead <- readParametersFromXLS(paramsXLSpath = xlsPath)
+
+      expect_equal(length(paramsRead$paths), 3)
       expect_equal(paramsRead$paths[[3]], newParam$paths[[1]])
       expect_equal(paramsRead$values[[3]], newParam$values[[1]])
       expect_equal(paramsRead$units[[3]], newParam$units[[1]])

@@ -71,8 +71,14 @@ file.
 
 a)  To create a new individual with specific biometrics, create a new
     row in the `IndividualBiometrics` sheet.
-b)  To define an individual-specific parametrization, create a new sheet
-    and name it as the individual's ID.
+b)  To define individual-specific model parametrization, create one or
+    more sheets in `Individuals.xlsx` and list their names (separated by
+    a `,`) in the `Individual Parameter Sets` column of the
+    `IndividualBiometrics` row for that individual. Parameters from the
+    listed sheets are applied to the simulation in the order they appear
+    in the column. Each subsequent sheet overrides parameters set by
+    previous sheets. The `Individual Parameter Sets` column is required;
+    leave it empty if no individual-specific model parameters are needed.
 
 If your model contains proteins (e.g., enzymes or transporters), you
 have to specify their ontogenies in the column 'Protein Ontogenies' as
@@ -187,13 +193,12 @@ name](https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f).
 Name (ID) of an individual. This name refers to the name of the
 individual as used in Excel file `Individuals.xlsx` for the definition
 of the biometric properties (sheet `IndividualBiometrics`) of the
-simulated individual individual-specific model parameters. For the
-latter, create a separate sheet in the `Individuals.xlsx` files with the
-sheet name being the `IndividualId`. The structure of these sheets is
-the same as the structure of the sheets in the `ModelParameter.xlsx`
-file, see description below. **IndividualId** may be empty. In this
-case, the individual as defined in the `pkml` simulation without any
-individual-specific model parameters will be simulated. The same
+simulated individual. Individual-specific model parameters are defined
+in sheets listed in the `Individual Parameter Sets` column of the
+`IndividualBiometrics` row for that individual (see
+Section [5. Individuals](#individuals)). **IndividualId** may be empty.
+In this case, the individual as defined in the `pkml` simulation without
+any individual-specific model parameters will be simulated. The same
 individual can be used in multiple scenarios. It is possible to scale
 from a human model to the species **Beagle**, **Dog**, **Minipig**,
 **Mouse**, **Rat**, **Rabbit**, and **Monkey** by applying the
@@ -238,18 +243,7 @@ required. Note that the specified sheets must be present in the
 parameters that can be applied to most scenarios and a separate set of
 parameters for, e.g., different *disease states* (parameter sheets
 `Healthy` and `CKD`) or separate parametrization of different
-*compounds* (sheet `Aciclovir`).\
-You can further refine the parametrization of the scenario by specifying
-the individual parameters in the `IndividualParameters.xlsx` file.
-Create a sheet with the name as the *IndividualId* specified for the
-respective scenario with the same structure as the
-`ModelParameters.xlsx` file. This way, you can define, e.g.,
-individual-specific clearance values or, as in the example case, the
-glomerular filtration rate. Individual-specific parameters are applied
-after the parameters defined in the *ModelParameterSheets*. You can use
-an individual in multiple scenarios. This step is ignored if an
-individual is specified in the scenario definition, but no sheet with
-this name exists in the IndividualParameters.xlsx file.
+*compounds* (sheet `Aciclovir`).
 
 #### ApplicationProtocol
 
@@ -346,6 +340,15 @@ Time for the steady state.
 
 Unit for `SteadyStateTime`. For supported units, see
 `ospsuite::ospUnits`.
+
+#### OverwriteFormulasInSS
+
+If `TRUE`, formula-defined parameters will be overwritten with their
+steady-state values (corresponds to `ignoreIfFormula = FALSE` in
+`ospsuite::getSteadyState()`). If empty or `FALSE` (default), only
+constant parameters are updated with steady-state values and
+formula-defined parameters are left unchanged (corresponds to
+`ignoreIfFormula = TRUE`).
 
 #### ModelFile
 

@@ -117,7 +117,7 @@
   },
   "Individuals": {
     "IndividualBiometrics": {
-      "column_names": ["IndividualId", "Species", "Population", "Gender", "Weight [kg]", "Height [cm]", "Age [year(s)]", "Protein Ontogenies"],
+      "column_names": ["IndividualId", "Species", "Population", "Gender", "Weight [kg]", "Height [cm]", "Age [year(s)]", "Protein Ontogenies", "Individual Parameter Sets"],
       "rows": [
         {
           "IndividualId": "Indiv1",
@@ -127,7 +127,8 @@
           "Weight [kg]": "73",
           "Height [cm]": "176",
           "Age [year(s)]": "30",
-          "Protein Ontogenies": "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+          "Protein Ontogenies": "CYP3A4:CYP3A4,CYP2D6:CYP2C8",
+          "Individual Parameter Sets": "Indiv1"
         }
       ]
     },
@@ -194,7 +195,7 @@
   },
   "Scenarios": {
     "Scenarios": {
-      "column_names": ["Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile", "OutputPathsIds"],
+      "column_names": ["Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "OverwriteFormulasInSS", "ModelFile", "OutputPathsIds"],
       "rows": [
         {
           "Scenario_name": "TestScenario",
@@ -208,6 +209,7 @@
           "SteadyState": null,
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         },
@@ -223,6 +225,7 @@
           "SteadyState": "TRUE",
           "SteadyStateTime": "500",
           "SteadyStateTimeUnit": "min",
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": "Aciclovir_PVB, Aciclovir_fat_cell"
         },
@@ -238,6 +241,7 @@
           "SteadyState": "FALSE",
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         },
@@ -253,6 +257,7 @@
           "SteadyState": "FALSE",
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         },
@@ -268,6 +273,7 @@
           "SteadyState": null,
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         }

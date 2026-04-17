@@ -407,11 +407,17 @@ test_that("Named outputPaths are exported to Excel with correct OutputPathIds", 
     "liver" = "Organism|Liver|Intracellular|compound|Concentration"
   )
 
-  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
-    pkmlFilePaths = pkmlPath,
-    projectConfiguration = projectConfiguration,
-    scenarioNames = "TestScenario",
-    outputPaths = namedOutputPaths
+  expect_warning(
+    scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+      pkmlFilePaths = pkmlPath,
+      projectConfiguration = projectConfiguration,
+      scenarioNames = "TestScenario",
+      outputPaths = namedOutputPaths
+    ),
+    regexp = messages$autocorrectDuplicateScenarioNames(
+      "TestScenario",
+      "TestScenario_2"
+    )
   )
 
   # Add to Excel
@@ -1041,9 +1047,12 @@ test_that("Empty applications file creation works correctly", {
   }
 
   # This should create the applications file
-  addScenarioConfigurationsToExcel(
-    scenarioConfigurations = scenarioConfigurations,
-    projectConfiguration = projectConfiguration
+  expect_warning(
+    addScenarioConfigurationsToExcel(
+      scenarioConfigurations = scenarioConfigurations,
+      projectConfiguration = projectConfiguration
+    ),
+    regexp = messages$fileNotFound(applicationsFile)
   )
 
   expect_true(file.exists(applicationsFile))
