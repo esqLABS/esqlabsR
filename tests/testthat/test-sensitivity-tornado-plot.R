@@ -17,8 +17,8 @@ simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
-  "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 variationRange <- c(0.1, 2, 10) # 1.0 is deliberately left out for testing
 
@@ -161,8 +161,8 @@ outputPaths <- c(
 )
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
-  "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 
 resultsMultiple <- sensitivityCalculation(

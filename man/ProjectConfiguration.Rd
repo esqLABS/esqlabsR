@@ -62,7 +62,10 @@ file in xml format used to load the data.
 Must be located in the "dataFolder"}
 
 \item{\code{outputFolder}}{Path to the folder where the results should be saved
-relative to the "Code" folder
+relative to the "Code" folder}
+
+\item{\code{esqlabsRVersion}}{Version of the esqlabsR package stored in the
+project configuration. Read-only.
 Initialize}
 }
 \if{html}{\out{</div>}}
@@ -81,14 +84,20 @@ Initialize}
 \if{latex}{\out{\hypertarget{method-ProjectConfiguration-new}{}}}
 \subsection{Method \code{new()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$new(projectConfigurationFilePath = character())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$new(
+  projectConfigurationFilePath = character(),
+  ignoreVersionCheck = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{projectConfigurationFilePath}}{A string representing the path to the
-project configuration file.
+project configuration file.}
+
+\item{\code{ignoreVersionCheck}}{If \code{TRUE}, skip the version mismatch check when
+loading the configuration file. Defaults to \code{FALSE}.
 Print}
 }
 \if{html}{\out{</div>}}

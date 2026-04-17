@@ -130,7 +130,7 @@ test_that("Custom parameters are correctly applied", {
 
   # Define custom parameter
   customParams <- list(
-    paths = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+    paths = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
     values = 500,
     units = "mg"
   )
@@ -144,7 +144,7 @@ test_that("Custom parameters are correctly applied", {
   # Check that the custom parameter was applied
   idx <- which(
     scenario$finalCustomParams$paths ==
-      "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+      "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
   )
   expect_equal(scenario$finalCustomParams$values[[idx]], 500)
 })
@@ -183,9 +183,15 @@ test_that("Warning is shown when individual characteristics are not found", {
   scenarioConfigurations$TestScenario$individualId <- "NonExistentIndividual"
 
   expect_warning(
-    Scenario$new(
-      scenarioConfigurations$TestScenario,
-      stopIfParameterNotFound = FALSE
+    expect_warning(
+      Scenario$new(
+        scenarioConfigurations$TestScenario,
+        stopIfParameterNotFound = FALSE
+      ),
+      regexp = messages$warningNoIndividualSpecificModelParameters(
+        "TestScenario",
+        "NonExistentIndividual"
+      )
     ),
     regexp = messages$warningNoIndividualCharacteristics(
       "TestScenario",

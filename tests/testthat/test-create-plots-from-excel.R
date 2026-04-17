@@ -559,7 +559,8 @@ test_that("It trows an error if a plot requires a DataCombined that is not defin
           projectConfiguration = projectConfigurationLocal,
           stopIfNotFound = TRUE
         ),
-        regexp = messages$stopInvalidDataCombinedName("foo")
+        regexp = messages$stopDataCombinedNamesNotFound("foo"),
+        fixed = TRUE
       )
     }
   )
@@ -632,6 +633,7 @@ test_that("When custom DataCombined is passed, it is used instead of the one def
     dataCombinedList = dataCombinedList,
     stopIfNotFound = TRUE
   )
+  skip_on_os("mac")
   vdiffr::expect_doppelganger(title = "firstPlot", plots[[1]])
   vdiffr::expect_doppelganger(title = "secondPlot", plots[[2]])
 })

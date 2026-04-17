@@ -26,7 +26,7 @@
 #' @examples
 #' \dontrun{
 #' # Create default ProjectConfiguration
-#' projectConfiguration <- createProjectConfiguration()
+#' projectConfiguration <- createProjectConfiguration(ignoreVersionCheck = TRUE)
 #' scenarioName <- "MyScenario"
 #' # Read scenario definition from Excel
 #' scenarioConfiguration <- readScenarioConfigurationFromExcel(
