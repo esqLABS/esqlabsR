@@ -82,12 +82,18 @@ isProjectInitialized <- function(destination = ".") {
 #'
 #' @param destination A string defining the path where to initialize the
 #'   project. default to current working directory.
+#' @param type Type of project to create: `"minimal"` (default) creates an empty
+#'   project with just the directory structure, `"example"` creates a project
+#'   with example data, models, and configurations.
+#' @param createExcel If `TRUE` (default), generates Excel configuration files
+#'   from the JSON. Set to `FALSE` for a JSON-only workflow.
 #' @param overwrite If TRUE, overwrites existing project without asking for
 #'   permission. If FALSE and a project already exists, asks user for permission
 #'   to overwrite.
 #' @export
-initProject <- function(destination = ".", overwrite = FALSE) {
+initProject <- function(destination = ".", type = c("minimal", "example"), createExcel = TRUE, overwrite = FALSE) {
   destination <- fs::path_abs(destination)
+  type <- match.arg(type)
 
   if (!fs::dir_exists(destination)) {
     stop(
@@ -95,8 +101,10 @@ initProject <- function(destination = ".", overwrite = FALSE) {
     )
   }
 
-  type <- "example"
-  source_folder <- switch(type, "example" = projectDirectory("Blank"))
+  source_folder <- switch(type,
+    "minimal" = projectDirectory("Blank"),
+    "example" = projectDirectory("Example")
+  )
 
   # Check if project already exists
   if (isProjectInitialized(destination)) {
@@ -132,7 +140,7 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   dirs_to_create <- c(
     "Models/Simulations",
     "Data",
-    "Configurations/PopulationsCSV",
+    "Populations",
     "Results/Figures",
     "Results/SimulationResults"
   )
@@ -140,23 +148,24 @@ initProject <- function(destination = ".", overwrite = FALSE) {
     dir.create(file.path(destination, d), recursive = TRUE, showWarnings = FALSE)
   }
 
-  # Generate Excel configuration files from JSON
-  jsonPath <- file.path(destination, "Project.json")
-  pc <- loadProject(jsonPath)
-  exportProjectToExcel(pc, outputDir = destination, silent = TRUE)
+  if (createExcel) {
+    jsonPath <- file.path(destination, "Project.json")
+    pc <- loadProject(jsonPath)
+    exportProjectToExcel(pc, outputDir = destination, silent = TRUE)
+  }
 
   invisible(destination)
 }
 
-#' Get the path to example Project.xlsx
+#' Get the path to the example Project.json
 #'
 #' @returns A string representing the path to the example
-#'   Project.xlsx file
+#'   `Project.json` file shipped with the package.
 #' @export
 #' @examples
 #' exampleProjectPath()
 exampleProjectPath <- function() {
-  file.path(projectDirectory("Example"), "Project.xlsx")
+  file.path(projectDirectory("Example"), "Project.json")
 }
 
 #' @rdname exampleProjectPath

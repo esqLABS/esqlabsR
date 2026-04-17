@@ -11,6 +11,11 @@ An R6 class representing an esqlabsR project
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
+\item{\code{schemaVersion}}{Project structure schema version (e.g. "2.0").
+Shared between JSON and Excel representations.}
+
+\item{\code{esqlabsRVersion}}{The esqlabsR version that created the JSON file.}
+
 \item{\code{scenarios}}{Named list of \code{Scenario} objects, keyed by scenario
 name. Populated by JSON loading.}
 

@@ -98,6 +98,11 @@
   (placed after `SteadyStateTimeUnit`). Also available as a parameter in
   `createScenariosFromPKML()`. (#981)
 
+- New `loadObservedData()` function returns a named list of `DataSet` objects loaded from a `Project`'s declared observed data sources.
+- `initProject()` now accepts `type` parameter (`"minimal"` or `"example"`) and `createExcel` parameter (`TRUE`/`FALSE`) for flexible project scaffolding.
+- Population CSV files are now stored in `Populations/` folder at project root (previously `Configurations/PopulationsCSV/`).
+- Documentation: vignettes rewritten for the JSON-primary workflow; the `advanced` vignette has been removed.
+
 ## Deprecated
 
 The following functions still work but emit deprecation warnings and will be

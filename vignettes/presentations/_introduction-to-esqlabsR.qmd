@@ -180,9 +180,9 @@ my_project
 │   ├── ModelParameters.xlsx
 │   ├── Plots.xlsx
 │   ├── Populations.xlsx
-│   ├── PopulationsCSV
-│   │   └── TestPopulation.csv
 │   └── Scenarios.xlsx
+├── Populations
+│   └── TestPopulation.csv
 ├── Data
 ├── Models
 │   └── Simulations
@@ -209,9 +209,9 @@ my_project
 │   ├── ModelParameters.xlsx
 │   ├── Plots.xlsx
 │   ├── Populations.xlsx
-│   ├── PopulationsCSV
-│   │   └── TestPopulation.csv
 │   └── Scenarios.xlsx
+├── Populations
+│   └── TestPopulation.csv
 ├── Data
 ├── Models
 │   └── Simulations

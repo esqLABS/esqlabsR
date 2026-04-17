@@ -45,7 +45,7 @@ test_that("initProject creates proper project structure", {
   expect_true(dir.exists(file.path(temp_dir, "Data")))
   expect_true(dir.exists(file.path(temp_dir, "Results", "Figures")))
   expect_true(dir.exists(file.path(temp_dir, "Results", "SimulationResults")))
-  expect_true(dir.exists(file.path(temp_dir, "Configurations", "PopulationsCSV")))
+  expect_true(dir.exists(file.path(temp_dir, "Populations")))
 })
 
 test_that("initProject creates project from Blank template with no scenarios", {

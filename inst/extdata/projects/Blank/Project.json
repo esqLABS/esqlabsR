@@ -7,7 +7,7 @@
     "modelParamsFile": "ModelParameters.xlsx",
     "individualsFile": "Individuals.xlsx",
     "populationsFile": "Populations.xlsx",
-    "populationsFolder": "PopulationsCSV",
+    "populationsFolder": "Populations",
     "scenariosFile": "Scenarios.xlsx",
     "applicationsFile": "Applications.xlsx",
     "plotsFile": "Plots.xlsx",

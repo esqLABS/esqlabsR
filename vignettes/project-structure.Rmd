@@ -39,7 +39,7 @@ structure.
 
 
 ```{r, echo = FALSE}
-fs::dir_tree(path = esqlabsR:::projectDirectory("Example"), glob = "*.md|*.R", invert = TRUE)
+fs::dir_tree(path = dirname(exampleProjectPath()), glob = "*.md|*.R", invert = TRUE)
 ```
 ## Create a Project
 
@@ -56,6 +56,7 @@ projectConfigPath <- system.file(
   package = "esqlabsR"
 )
 my_project <- loadProject(projectConfigPath)
+my_project
 ```
 
 Now that the project structure is initialized and the `Project` is
@@ -64,10 +65,11 @@ To learn more about `Project`, read the following sections.
 
 ## Validating Project
 
-Before running simulations, it is recommended to validate your project configuration
-files to catch potential issues early. The `validateAllConfigurations()` function
-performs comprehensive validation across all Excel configuration files and returns
-structured results.
+Before running simulations, it is recommended to validate your project
+configuration to catch potential issues early. The `validateAllConfigurations()`
+function accepts either a loaded `Project` object or a path to a `Project.xlsx`
+file, performs comprehensive validation across all configuration files, and
+returns structured results.
 
 ### Validation Process
 
@@ -92,8 +94,10 @@ Validation results are categorized into three levels:
 # Validate all configuration files in a project
 validation_results <- validateAllConfigurations(my_project)
 
-# Or validate directly from the Excel file path
-validation_results <- validateAllConfigurations(exampleProjectPath())
+# Or validate directly from a Project.xlsx path
+validation_results <- validateAllConfigurations(
+  file.path(dirname(exampleProjectPath()), "Project.xlsx")
+)
 
 # Check if there are any critical errors
 if (isAnyCriticalErrors(validation_results)) {
@@ -146,7 +150,7 @@ If required, you can change the location of one of the files or folders using re
 project$outputFolder <- "../anotherOutputFolder"
 
 # change the location of the model parameters file
-project$modelParametersFile <- "absolute/path/to/anotherModelParameters.xlsx"
+project$modelParamsFile <- "absolute/path/to/anotherModelParameters.xlsx"
 ```
 
 
@@ -160,13 +164,16 @@ This file defines *where* all the necessary files are stored in the project
 folder, which scenarios to run, and how observed data is loaded. Paths specified
 in the JSON should be *relative* to the `Project.json` location.
 
-Supporting Excel files (e.g., `ModelParameters.xlsx`, `Individuals.xlsx`,
-`Populations.xlsx`) provide detailed parametrization for scenarios. These files
-have a specific purpose and template and are described in the next sections.
+Excel files (`ModelParameters.xlsx`, `Individuals.xlsx`, `Populations.xlsx`,
+`Applications.xlsx`, `Scenarios.xlsx`, `Plots.xlsx`) are an **optional**
+editing surface for the same content that lives in `Project.json`. Edit them,
+then sync back to JSON with `importProjectFromExcel()`. `Project.json` remains
+the authoritative store.
 
-A `Project.xlsx` file is also present for backwards compatibility
-and can be used with `importProjectFromExcel()` to generate or
-update the JSON configuration.
+A `Project.xlsx` file can be generated from any JSON project via
+`exportProjectToExcel()`; it is optional and not committed by default.
+`importProjectFromExcel()` performs the reverse direction — generating or
+updating `Project.json` from an Excel-based project.
 
 ### Version Control and Project Sharing
 
@@ -188,8 +195,10 @@ converts your Excel configuration files into a single JSON file:
 importProjectFromExcel("Project.xlsx")
 ```
 
-By default, the JSON file will be created in the same directory as your
-`Project.xlsx` file with the name `Project.json`.
+By default, `importProjectFromExcel()` writes the JSON output next to the
+input file, using the same basename with `.xlsx` replaced by `.json` — so
+`Project.xlsx` yields `Project.json` in the same directory. Pass the
+`outputDir` argument to write elsewhere.
 
 #### Exporting back to Excel
 
@@ -207,6 +216,12 @@ exportProjectToExcel(pc)
 This function will:
 1. Create the necessary directory structure
 2. Regenerate all Excel configuration files
+
+> **Known gaps in the Excel round-trip:** Some `Project.json` content is not
+> reproduced in Excel form — species-level parameters and other internal
+> fields stay JSON-only. An export → edit-in-Excel → re-import round-trip
+> preserves the user-facing configuration but may drop internal metadata.
+> Prefer editing `Project.json` directly when fidelity matters.
 
 #### Workflow Examples
 
