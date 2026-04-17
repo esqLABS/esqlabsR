@@ -121,6 +121,7 @@ Read-only.}
 \item \href{#method-Project-addScenario}{\code{Project$addScenario()}}
 \item \href{#method-Project-new}{\code{Project$new()}}
 \item \href{#method-Project-print}{\code{Project$print()}}
+\item \href{#method-Project-sync}{\code{Project$sync()}}
 \item \href{#method-Project-clone}{\code{Project$clone()}}
 }
 }
@@ -178,9 +179,36 @@ print prints a summary of the Project.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{className}}{Whether to print the name of the class at the beginning.
-default to TRUE.}
+default to TRUE.
+Check synchronization status}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-sync"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-sync}{}}}
+\subsection{Method \code{sync()}}{
+Compares in-memory project state with source files.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$sync(silent = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{silent}}{Logical. If \code{TRUE}, suppresses informational messages.
+Defaults to \code{FALSE}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A list with components:
+\item{in_sync}{Logical. \code{TRUE} if all sources are synchronized.}
+\item{unsaved_changes}{Logical. \code{TRUE} if in-memory differs from JSON.}
+\item{json_modified}{Logical. \code{TRUE} if JSON file differs from loaded.}
+\item{excel_modified}{Logical. \code{TRUE} if Excel files differ from JSON.}
+\item{details}{List with detailed comparison results.}
 }
 }
 \if{html}{\out{<hr>}}
@@ -216,6 +244,7 @@ The objects of this class are cloneable with this method.
 <ul>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addScenario"><a href='../../esqlabsR/html/Project.html#method-Project-addScenario'><code>esqlabsR::Project$addScenario()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="print"><a href='../../esqlabsR/html/Project.html#method-Project-print'><code>esqlabsR::Project$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="sync"><a href='../../esqlabsR/html/Project.html#method-Project-sync'><code>esqlabsR::Project$sync()</code></a></span></li>
 </ul>
 </details>
 }}

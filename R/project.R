@@ -308,20 +308,26 @@ Project <- R6::R6Class(
       if (is.null(jsonData$schemaVersion) || jsonData$schemaVersion != "2.0") {
         stop(paste0(
           "Unsupported or missing schemaVersion. Expected '2.0', got '",
-          jsonData$schemaVersion %||% "NULL", "'."
+          jsonData$schemaVersion %||% "NULL",
+          "'."
         ))
       }
 
       # Check esqlabsRVersion for compatibility warning
       if (!is.null(jsonData$esqlabsRVersion)) {
-        jsonMajor <- as.integer(strsplit(jsonData$esqlabsRVersion, "\\.")[[1]][[1]])
+        jsonMajor <- as.integer(strsplit(jsonData$esqlabsRVersion, "\\.")[[1]][[
+          1
+        ]])
         pkgMajor <- as.integer(strsplit(
-          as.character(utils::packageVersion("esqlabsR")), "\\."
+          as.character(utils::packageVersion("esqlabsR")),
+          "\\."
         )[[1]][[1]])
         if (jsonMajor != pkgMajor) {
           warning(paste0(
-            "JSON was created with esqlabsR v", jsonData$esqlabsRVersion,
-            " but current version is v", utils::packageVersion("esqlabsR"),
+            "JSON was created with esqlabsR v",
+            jsonData$esqlabsRVersion,
+            " but current version is v",
+            utils::packageVersion("esqlabsR"),
             ". Some fields may not be compatible."
           ))
         }
@@ -388,7 +394,9 @@ Project <- R6::R6Class(
     },
 
     .parseParameterGroups = function(groups) {
-      if (is.null(groups)) return(list())
+      if (is.null(groups)) {
+        return(list())
+      }
       result <- list()
       for (name in names(groups)) {
         entries <- groups[[name]]
@@ -396,9 +404,14 @@ Project <- R6::R6Class(
         values <- numeric(0)
         units <- character(0)
         for (entry in entries) {
-          paths <- c(paths, paste(
-            entry$containerPath, entry$parameterName, sep = "|"
-          ))
+          paths <- c(
+            paths,
+            paste(
+              entry$containerPath,
+              entry$parameterName,
+              sep = "|"
+            )
+          )
           values <- c(values, as.numeric(entry$value))
           units <- c(units, entry$units %||% "")
         }
@@ -408,7 +421,9 @@ Project <- R6::R6Class(
     },
 
     .parseIndividuals = function(individualsData) {
-      if (is.null(individualsData)) return(list())
+      if (is.null(individualsData)) {
+        return(list())
+      }
       result <- list()
       for (entry in individualsData) {
         result[[entry$individualId]] <- list(
@@ -425,7 +440,9 @@ Project <- R6::R6Class(
     },
 
     .parseIndividualParameterSetMapping = function(individualsData) {
-      if (is.null(individualsData)) return(list())
+      if (is.null(individualsData)) {
+        return(list())
+      }
       result <- list()
       for (entry in individualsData) {
         setNames <- unlist(entry$parameterSets)
@@ -435,18 +452,29 @@ Project <- R6::R6Class(
     },
 
     .parsePopulations = function(populationsData) {
-      if (is.null(populationsData)) return(list())
+      if (is.null(populationsData)) {
+        return(list())
+      }
       result <- list()
       for (entry in populationsData) {
         popData <- list()
         for (field in names(entry)) {
-          if (field == "populationId") next
+          if (field == "populationId") {
+            next
+          }
           val <- entry[[field]]
           if (!is.null(val)) {
             numericFields <- c(
-              "numberOfIndividuals", "proportionOfFemales",
-              "weightMin", "weightMax", "heightMin", "heightMax",
-              "ageMin", "ageMax", "BMIMin", "BMIMax"
+              "numberOfIndividuals",
+              "proportionOfFemales",
+              "weightMin",
+              "weightMax",
+              "heightMin",
+              "heightMax",
+              "ageMin",
+              "ageMax",
+              "BMIMin",
+              "BMIMax"
             )
             if (field %in% numericFields) {
               val <- as.double(val)
@@ -460,7 +488,9 @@ Project <- R6::R6Class(
     },
 
     .parseScenarios = function(scenariosData) {
-      if (is.null(scenariosData)) return(list())
+      if (is.null(scenariosData)) {
+        return(list())
+      }
       result <- list()
       for (entry in scenariosData) {
         sc <- Scenario$new()
@@ -480,7 +510,9 @@ Project <- R6::R6Class(
           sc$parameterGroups <- unlist(entry$modelParameterGroups)
         }
         if (!is.null(entry$simulationTime)) {
-          sc$simulationTime <- .parseSimulationTimeIntervals(entry$simulationTime)
+          sc$simulationTime <- .parseSimulationTimeIntervals(
+            entry$simulationTime
+          )
           sc$simulationTimeUnit <- entry$simulationTimeUnit
         }
         if (!is.null(entry$steadyState) && isTRUE(entry$steadyState)) {
@@ -489,7 +521,9 @@ Project <- R6::R6Class(
         if (!is.null(entry$steadyStateTime)) {
           if (is.null(entry$steadyStateTimeUnit)) {
             stop(
-              "Scenario '", entry$name, "' has 'steadyStateTime' set but ",
+              "Scenario '",
+              entry$name,
+              "' has 'steadyStateTime' set but ",
               "'steadyStateTimeUnit' is null. Please specify a unit (e.g. \"min\")."
             )
           }
@@ -513,10 +547,14 @@ Project <- R6::R6Class(
     },
 
     .parseObservedData = function(observedDataConfig) {
-      if (is.null(observedDataConfig)) return(list())
+      if (is.null(observedDataConfig)) {
+        return(list())
+      }
       for (entry in observedDataConfig) {
         if (is.null(entry$type) || !entry$type %in% c("excel", "pkml")) {
-          stop("Each observedData entry must have a 'type' of 'excel' or 'pkml'.")
+          stop(
+            "Each observedData entry must have a 'type' of 'excel' or 'pkml'."
+          )
         }
         if (entry$type == "excel" && is.null(entry$sheets)) {
           stop("Excel observedData entries must have a 'sheets' field.")
@@ -529,7 +567,9 @@ Project <- R6::R6Class(
     },
 
     .parsePlots = function(plotsData) {
-      if (is.null(plotsData)) return(NULL)
+      if (is.null(plotsData)) {
+        return(NULL)
+      }
       list(
         dataCombined = private$.listOfListsToDataFrame(
           plotsData$dataCombined
@@ -610,7 +650,12 @@ Project <- R6::R6Class(
 
       # Count plots breakdown
       plotCounts <- vapply(
-        c("dataCombined", "plotConfiguration", "plotGrids", "exportConfiguration"),
+        c(
+          "dataCombined",
+          "plotConfiguration",
+          "plotGrids",
+          "exportConfiguration"
+        ),
         function(name) {
           df <- self$plots[[name]]
           if (is.null(df)) 0L else nrow(df)
@@ -720,39 +765,649 @@ ProjectConfiguration <- R6::R6Class(
   )
 )
 
-#' Parse simulation time intervals from a string
-#' @param simulationTimeIntervalsString A string with format "start,end,res" or
-#'   "start1,end1,res1;start2,end2,res2"
-#' @returns A list of numeric vectors, or NULL if input is NULL.
+# ==============================================================================
+# Public API Functions
+# ==============================================================================
+
+#' Load a project from a JSON configuration file
+#'
+#' @description Load a `Project` from a JSON file. This is the
+#'   primary entry point for working with esqlabsR projects.
+#'
+#' @param path Path to the `Project.json` file. Defaults to
+#'   `Project.json` in the working directory.
+#'
+#' @returns Object of type `Project`
+#' @export
+loadProject <- function(path = "Project.json") {
+  Project$new(projectFilePath = path)
+}
+
+#' Save a project to a JSON file
+#'
+#' @description Serializes the in-memory `Project` object back to JSON with
+#'   round-trip fidelity. This allows persisting changes made programmatically
+#'   (e.g., via [addScenario()]).
+#'
+#' @param project A `Project` object.
+#' @param path Path where the JSON file should be written. If `NULL` (default),
+#'   uses `project$jsonPath` (the path the project was loaded from).
+#'
+#' @returns Invisibly returns the path where the file was written.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' addScenario(project, "NewScenario", "Model.pkml", individualId = "Indiv1")
+#' saveProject(project)
+#' }
+saveProject <- function(project, path = NULL) {
+  validateIsOfType(project, "Project")
+
+  if (is.null(path)) {
+    path <- project$jsonPath
+    if (is.null(path)) {
+      stop(
+        "No path specified and project has no jsonPath. Provide a path argument."
+      )
+    }
+  }
+
+  jsonData <- .projectToJson(project)
+  jsonlite::write_json(
+    jsonData,
+    path,
+    auto_unbox = TRUE,
+    null = "null",
+    pretty = TRUE
+  )
+
+  project$modified <- FALSE
+  invisible(path)
+}
+
+#' @rdname loadProject
+#' @export
+createProjectConfiguration <- function(path = "Project.json") {
+  lifecycle::deprecate_soft(
+    what = "createProjectConfiguration()",
+    with = "loadProject()",
+    when = "6.0.0"
+  )
+  loadProject(path)
+}
+
+#' @rdname loadProject
+#' @export
+createDefaultProjectConfiguration <- function(path = "Project.json") {
+  lifecycle::deprecate_soft(
+    what = "createDefaultProjectConfiguration()",
+    with = "loadProject()",
+    when = "5.3.0"
+  )
+  loadProject(path)
+}
+
+#' Check if a directory contains an esqlabsR project
+#'
+#' @description Checks if a directory already contains an esqlabsR project by
+#' looking for the presence of Project.xlsx file or Configurations
+#' folder.
+#'
+#' @param destination A string defining the path to check for an existing
+#'   project. Defaults to current working directory.
+#'
+#' @returns TRUE if an esqlabsR project exists in the directory, FALSE
+#'   otherwise.
+#' @export
+#' @examples
+#' \dontrun{
+#' # Check if current directory has a project
+#' hasProject <- isProjectInitialized()
+#'
+#' # Check if specific directory has a project
+#' hasProject <- isProjectInitialized("path/to/project")
+#' }
+isProjectInitialized <- function(destination = ".") {
+  destination <- fs::path_abs(destination)
+
+  if (!fs::dir_exists(destination)) {
+    return(FALSE)
+  }
+
+  # Check for Project.xlsx file
+  hasConfigFile <- any(stringr::str_detect(
+    "Project.*xlsx$",
+    fs::dir_ls(destination)
+  ))
+
+  # Check for Configurations folder
+  hasConfigFolder <- fs::dir_exists(file.path(destination, "Configurations"))
+
+  return(hasConfigFile || hasConfigFolder)
+}
+
+#' Initialize esqlabsR Project Folders and required Files
+#'
+#' @description
+#'
+#' Creates the default project folder structure with Excel file templates in the
+#' working directory.
+#'
+#' @param destination A string defining the path where to initialize the
+#'   project. default to current working directory.
+#' @param type Type of project to create: `"minimal"` (default) creates an empty
+#'   project with just the directory structure, `"example"` creates a project
+#'   with example data, models, and configurations.
+#' @param createExcel If `TRUE` (default), generates Excel configuration files
+#'   from the JSON. Set to `FALSE` for a JSON-only workflow.
+#' @param overwrite If TRUE, overwrites existing project without asking for
+#'   permission. If FALSE and a project already exists, asks user for permission
+#'   to overwrite.
+#' @export
+initProject <- function(
+  destination = ".",
+  type = c("minimal", "example"),
+  createExcel = TRUE,
+  overwrite = FALSE
+) {
+  destination <- fs::path_abs(destination)
+  type <- match.arg(type)
+
+  if (!fs::dir_exists(destination)) {
+    stop(
+      messages$pathNotFound(destination)
+    )
+  }
+
+  source_folder <- switch(
+    type,
+    "minimal" = projectDirectory("Blank"),
+    "example" = projectDirectory("Example")
+  )
+
+  # Check if project already exists
+  if (isProjectInitialized(destination)) {
+    if (overwrite) {
+      # Overwrite without asking
+      message(messages$overwriteDestination(destination))
+    } else {
+      # Ask for permission to overwrite
+      qs <- sample(c("Absolutely not", "Yes", "No way"))
+
+      out <- utils::menu(
+        title = "The destination folder seems to already contain an esqlabsR project. Do you want to overwrite it?",
+        choices = qs
+      )
+
+      if (out == 0L || qs[[out]] != "Yes") {
+        stop(messages$abortedByUser())
+      }
+
+      message(messages$overwriteDestination(destination))
+    }
+  }
+
+  # Copy Blank template files (just the JSON)
+  res <- file.copy(
+    list.files(source_folder, full.names = TRUE),
+    destination,
+    recursive = TRUE,
+    overwrite = TRUE
+  )
+
+  # Create empty directory structure
+  dirs_to_create <- c(
+    "Models/Simulations",
+    "Data",
+    "Populations",
+    "Results/Figures",
+    "Results/SimulationResults"
+  )
+  for (d in dirs_to_create) {
+    dir.create(
+      file.path(destination, d),
+      recursive = TRUE,
+      showWarnings = FALSE
+    )
+  }
+
+  if (createExcel) {
+    jsonPath <- file.path(destination, "Project.json")
+    pc <- loadProject(jsonPath)
+    exportProjectToExcel(pc, outputDir = destination, silent = TRUE)
+  }
+
+  invisible(destination)
+}
+
+#' Get the path to the example Project.json
+#'
+#' @returns A string representing the path to the example
+#'   `Project.json` file shipped with the package.
+#' @export
+#' @examples
+#' exampleProjectPath()
+exampleProjectPath <- function() {
+  file.path(projectDirectory("Example"), "Project.json")
+}
+
+#' @rdname exampleProjectPath
+#' @export
+exampleProjectConfigurationPath <- function() {
+  lifecycle::deprecate_soft(
+    what = "exampleProjectConfigurationPath()",
+    with = "exampleProjectPath()",
+    when = "7.0.0"
+  )
+  exampleProjectPath()
+}
+
+# ==============================================================================
+# Internal Helper Functions
+# ==============================================================================
+
+#' Convert a Project object to a JSON-serializable list
+#' @param project A `Project` object.
+#' @returns A list matching the Project.json schema.
 #' @keywords internal
 #' @noRd
-.parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
-  if (is.null(simulationTimeIntervalsString)) {
+.projectToJson <- function(project) {
+  list(
+    schemaVersion = project$schemaVersion %||% "2.0",
+    esqlabsRVersion = as.character(utils::packageVersion("esqlabsR")),
+    filePaths = .filePathsToJson(project),
+    observedData = project$observedData %||% list(),
+    outputPaths = as.list(project$outputPaths) %||% list(),
+    scenarios = .scenariosToJson(project$scenarios, project$outputPaths),
+    modelParameters = .parameterGroupsToJson(project$modelParameters),
+    individuals = .individualsToJson(
+      project$individuals,
+      project$individualParameterSetMapping
+    ),
+    individualParameterSets = .parameterGroupsToJson(
+      project$individualParameterSets
+    ),
+    populations = .populationsToJson(project$populations),
+    applications = .parameterGroupsToJson(project$applications),
+    plots = .plotsToJson(project$plots)
+  )
+}
+
+#' @keywords internal
+#' @noRd
+.filePathsToJson <- function(project) {
+  list(
+    modelFolder = .relativePathOrNull(project, "modelFolder"),
+    configurationsFolder = .relativePathOrNull(project, "configurationsFolder"),
+    modelParamsFile = .relativeFilename(project, "modelParamsFile"),
+    individualsFile = .relativeFilename(project, "individualsFile"),
+    populationsFile = .relativeFilename(project, "populationsFile"),
+    populationsFolder = .relativeFilename(project, "populationsFolder"),
+    scenariosFile = .relativeFilename(project, "scenariosFile"),
+    applicationsFile = .relativeFilename(project, "applicationsFile"),
+    plotsFile = .relativeFilename(project, "plotsFile"),
+    dataFolder = .relativePathOrNull(project, "dataFolder"),
+    dataFile = .relativeFilename(project, "dataFile"),
+    dataImporterConfigurationFile = .relativeFilename(
+      project,
+      "dataImporterConfigurationFile"
+    ),
+    outputFolder = .relativePathOrNull(project, "outputFolder")
+  )
+}
+
+#' @keywords internal
+#' @noRd
+.relativePathOrNull <- function(project, fieldName) {
+  absPath <- suppressWarnings(project[[fieldName]])
+  if (is.null(absPath)) {
     return(NULL)
   }
-  simulationTimeIntervals <- strsplit(
-    x = simulationTimeIntervalsString,
-    split = ";",
-    fixed = TRUE
-  )[[1]]
-  simulationTimeIntervals <- strsplit(
-    x = simulationTimeIntervals,
-    split = ",",
-    fixed = TRUE
+  if (is.null(project$projectDirPath)) {
+    return(absPath)
+  }
+  fs::path_rel(absPath, project$projectDirPath)
+}
+
+#' @keywords internal
+#' @noRd
+.relativeFilename <- function(project, fieldName) {
+  absPath <- suppressWarnings(project[[fieldName]])
+  if (is.null(absPath)) {
+    return(NULL)
+  }
+  basename(absPath)
+}
+
+#' @keywords internal
+#' @noRd
+.scenariosToJson <- function(scenarios, outputPaths) {
+  if (is.null(scenarios) || length(scenarios) == 0) {
+    return(list())
+  }
+
+  lapply(scenarios, function(sc) {
+    outputPathIds <- NULL
+    if (
+      !is.null(sc$outputPaths) &&
+        length(sc$outputPaths) > 0 &&
+        !is.null(outputPaths)
+    ) {
+      outputPathIds <- names(outputPaths)[match(sc$outputPaths, outputPaths)]
+      outputPathIds <- outputPathIds[!is.na(outputPathIds)]
+      if (length(outputPathIds) == 0) outputPathIds <- NULL
+    }
+
+    simTimeStr <- NULL
+    if (!is.null(sc$simulationTime)) {
+      intervals <- vapply(
+        sc$simulationTime,
+        function(int) {
+          paste(int, collapse = ", ")
+        },
+        character(1)
+      )
+      simTimeStr <- paste(intervals, collapse = "; ")
+    }
+
+    list(
+      name = sc$scenarioName,
+      individualId = sc$individualId,
+      populationId = if (sc$simulationType == "Population") {
+        sc$populationId
+      } else {
+        NULL
+      },
+      readPopulationFromCSV = sc$readPopulationFromCSV,
+      modelParameterGroups = as.list(sc$parameterGroups),
+      applicationProtocol = if (
+        is.null(sc$applicationProtocol) || is.na(sc$applicationProtocol)
+      ) {
+        NULL
+      } else {
+        sc$applicationProtocol
+      },
+      simulationTime = simTimeStr,
+      simulationTimeUnit = sc$simulationTimeUnit,
+      steadyState = sc$simulateSteadyState,
+      steadyStateTime = if (
+        sc$simulateSteadyState && !is.null(sc$steadyStateTime)
+      ) {
+        ospsuite::toUnit(
+          quantityOrDimension = ospsuite::ospDimensions$Time,
+          values = sc$steadyStateTime,
+          targetUnit = sc$steadyStateTimeUnit %||% "min"
+        )
+      } else {
+        NULL
+      },
+      steadyStateTimeUnit = if (sc$simulateSteadyState) {
+        sc$steadyStateTimeUnit
+      } else {
+        NULL
+      },
+      overwriteFormulasInSS = sc$overwriteFormulasInSS,
+      modelFile = sc$modelFile,
+      outputPathIds = if (!is.null(outputPathIds)) {
+        as.list(outputPathIds)
+      } else {
+        NULL
+      }
+    )
+  })
+}
+
+#' @keywords internal
+#' @noRd
+.parameterGroupsToJson <- function(groups) {
+  if (is.null(groups) || length(groups) == 0) {
+    return(list())
+  }
+
+  result <- list()
+  for (name in names(groups)) {
+    group <- groups[[name]]
+    entries <- list()
+    for (i in seq_along(group$paths)) {
+      pathParts <- strsplit(group$paths[i], "\\|")[[1]]
+      containerPath <- paste(pathParts[-length(pathParts)], collapse = "|")
+      parameterName <- pathParts[length(pathParts)]
+      entries[[i]] <- list(
+        containerPath = containerPath,
+        parameterName = parameterName,
+        value = group$values[i],
+        units = if (group$units[i] == "") NULL else group$units[i]
+      )
+    }
+    result[[name]] <- entries
+  }
+  result
+}
+
+#' @keywords internal
+#' @noRd
+.individualsToJson <- function(individuals, parameterSetMapping) {
+  if (is.null(individuals) || length(individuals) == 0) {
+    return(list())
+  }
+
+  lapply(names(individuals), function(id) {
+    indiv <- individuals[[id]]
+    paramSets <- parameterSetMapping[[id]]
+    list(
+      individualId = id,
+      species = indiv$species,
+      population = indiv$population,
+      gender = indiv$gender,
+      weight = indiv$weight,
+      height = indiv$height,
+      age = indiv$age,
+      proteinOntogenies = indiv$proteinOntogenies,
+      parameterSets = if (!is.null(paramSets) && length(paramSets) > 0) {
+        as.list(paramSets)
+      } else {
+        NULL
+      }
+    )
+  })
+}
+
+#' @keywords internal
+#' @noRd
+.populationsToJson <- function(populations) {
+  if (is.null(populations) || length(populations) == 0) {
+    return(list())
+  }
+
+  lapply(names(populations), function(id) {
+    pop <- populations[[id]]
+    c(list(populationId = id), pop)
+  })
+}
+
+#' @keywords internal
+#' @noRd
+.plotsToJson <- function(plots) {
+  if (is.null(plots)) {
+    return(list(
+      dataCombined = list(),
+      plotConfiguration = list(),
+      plotGrids = list(),
+      exportConfiguration = list()
+    ))
+  }
+
+  list(
+    dataCombined = .dataFrameToListOfLists(plots$dataCombined),
+    plotConfiguration = .dataFrameToListOfLists(plots$plotConfiguration),
+    plotGrids = .dataFrameToListOfLists(plots$plotGrids),
+    exportConfiguration = .dataFrameToListOfLists(plots$exportConfiguration)
   )
-  simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
-  validateIsNumeric(simulationTimeIntervals)
-  if (any(unlist(simulationTimeIntervals) < 0)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+}
+
+#' @keywords internal
+#' @noRd
+.dataFrameToListOfLists <- function(df) {
+  if (is.null(df) || nrow(df) == 0) {
+    return(list())
   }
-  if (any(sapply(simulationTimeIntervals, length) != 3)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+
+  lapply(seq_len(nrow(df)), function(i) {
+    row <- as.list(df[i, , drop = FALSE])
+    row <- lapply(row, function(x) if (is.na(x)) NULL else x)
+    row
+  })
+}
+
+#' Check synchronization status of a Project
+#' @param project A `Project` object.
+#' @param silent Logical. If `TRUE`, suppresses messages.
+#' @returns A list with sync status details.
+#' @keywords internal
+#' @noRd
+.projectSync <- function(project, silent = FALSE) {
+  result <- list(
+    in_sync = TRUE,
+    unsaved_changes = FALSE,
+    json_modified = FALSE,
+    excel_modified = FALSE,
+    details = list()
+  )
+
+  jsonPath <- project$jsonPath
+  if (is.null(jsonPath) || !file.exists(jsonPath)) {
+    result$in_sync <- project$modified == FALSE
+    result$unsaved_changes <- project$modified
+    if (!silent && result$unsaved_changes) {
+      message("Project has unsaved changes (no JSON file to compare).")
+    }
+    return(invisible(result))
   }
-  if (any(sapply(simulationTimeIntervals, function(x) x[3] <= 0))) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+
+  if (project$modified) {
+    result$unsaved_changes <- TRUE
+    result$in_sync <- FALSE
+  } else {
+    fileProject <- loadProject(jsonPath)
+    currentJson <- jsonlite::toJSON(
+      .projectToJson(project),
+      auto_unbox = TRUE,
+      null = "null"
+    )
+    fileJson <- jsonlite::toJSON(
+      .projectToJson(fileProject),
+      auto_unbox = TRUE,
+      null = "null"
+    )
+
+    if (!identical(currentJson, fileJson)) {
+      result$json_modified <- TRUE
+      result$in_sync <- FALSE
+    }
   }
-  if (any(sapply(simulationTimeIntervals, function(x) x[1] >= x[2]))) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+
+  excelPath <- sub("\\.json$", ".xlsx", jsonPath)
+  if (file.exists(excelPath)) {
+    excelStatus <- tryCatch(
+      projectStatus(
+        projectConfigPath = excelPath,
+        jsonPath = jsonPath,
+        silent = TRUE
+      ),
+      error = function(e) list(in_sync = TRUE)
+    )
+    if (!isTRUE(excelStatus$in_sync)) {
+      result$excel_modified <- TRUE
+      result$in_sync <- FALSE
+      result$details$excel <- excelStatus$details
+    }
   }
-  return(simulationTimeIntervals)
+
+  if (!silent) {
+    if (result$in_sync) {
+      message("Project is in sync with all source files.")
+    } else {
+      if (result$unsaved_changes) {
+        cli::cli_alert_warning("In-memory changes not saved to JSON.")
+      }
+      if (result$json_modified) {
+        cli::cli_alert_warning("JSON file has been modified externally.")
+      }
+      if (result$excel_modified) {
+        cli::cli_alert_warning("Excel files differ from JSON.")
+      }
+    }
+  }
+
+  invisible(result)
+}
+
+#' Validate project file
+#' @param projectConfigPath Path to Project.xlsx
+#' @return validationResult object
+#' @keywords internal
+.validateProject <- function(projectConfigPath) {
+  result <- validationResult$new()
+
+  # Check file exists
+  if (!file.exists(projectConfigPath)) {
+    result$add_critical_error(
+      "File",
+      messages$validationFileNotFound(projectConfigPath)
+    )
+    return(result)
+  }
+
+  # Try to load project configuration directly (not using .safe_validate due to scoping issues)
+  tryCatch(
+    {
+      withCallingHandlers(
+        {
+          config <- loadProject(path = projectConfigPath)
+
+          # Check all referenced files exist
+          files_to_check <- list(
+            scenarios = config$scenariosFile,
+            individuals = config$individualsFile,
+            populations = config$populationsFile,
+            models = config$modelParamsFile,
+            applications = config$applicationsFile,
+            plots = config$plotsFile
+          )
+
+          for (name in names(files_to_check)) {
+            if (
+              !is.na(files_to_check[[name]]) &&
+                !file.exists(files_to_check[[name]])
+            ) {
+              result$add_warning(
+                "File Reference",
+                paste0(
+                  "Referenced ",
+                  name,
+                  " file not found: ",
+                  files_to_check[[name]]
+                )
+              )
+            }
+          }
+
+          result$set_data(config)
+        },
+        warning = function(w) {
+          category <- .categorize_message(conditionMessage(w))
+          result$add_warning(category, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      )
+    },
+    error = function(e) {
+      category <- .categorize_message(conditionMessage(e))
+      result$add_critical_error(category, conditionMessage(e))
+    }
+  )
+
+  return(result)
 }

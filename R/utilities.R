@@ -125,3 +125,40 @@ compareWithNA <- function(v1, v2) {
   same[is.na(same)] <- FALSE
   return(same)
 }
+
+#' Parse simulation time intervals from a string
+#' @param simulationTimeIntervalsString A string with format "start,end,res" or
+#'   "start1,end1,res1;start2,end2,res2"
+#' @returns A list of numeric vectors, or NULL if input is NULL.
+#' @keywords internal
+#' @noRd
+.parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
+  if (is.null(simulationTimeIntervalsString)) {
+    return(NULL)
+  }
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervalsString,
+    split = ";",
+    fixed = TRUE
+  )[[1]]
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervals,
+    split = ",",
+    fixed = TRUE
+  )
+  simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
+  validateIsNumeric(simulationTimeIntervals)
+  if (any(unlist(simulationTimeIntervals) < 0)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  if (any(sapply(simulationTimeIntervals, length) != 3)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  if (any(sapply(simulationTimeIntervals, function(x) x[3] <= 0))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  if (any(sapply(simulationTimeIntervals, function(x) x[1] >= x[2]))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  return(simulationTimeIntervals)
+}
