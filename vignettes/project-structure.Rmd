@@ -66,19 +66,19 @@ To learn more about `Project`, read the following sections.
 ## Validating Project
 
 Before running simulations, it is recommended to validate your project
-configuration to catch potential issues early. The `validateAllConfigurations()`
-function accepts either a loaded `Project` object or a path to a `Project.xlsx`
-file, performs comprehensive validation across all configuration files, and
+configuration to catch potential issues early. The `validateProject()`
+function accepts either a loaded `Project` object or a path to a `Project.json`
+file, performs comprehensive validation across all project sections, and
 returns structured results.
 
 ### Validation Process
 
-The validation system checks your configuration files for:
+The validation system checks your project for:
 
-- **Structural issues**: Missing required sheets or columns
-- **Data integrity**: Empty sheets, invalid data types, required fields
+- **Required fields**: Missing required fields in individuals, populations, scenarios
+- **Data integrity**: Invalid data types, values out of range
 - **Uniqueness constraints**: Duplicate IDs or names that must be unique
-- **Cross-references**: Invalid references between configuration files (e.g., scenarios referencing non-existent individuals)
+- **Cross-references**: Invalid references between sections (e.g., scenarios referencing non-existent individuals or populations)
 
 ### Three-Tier Validation Results
 
@@ -91,13 +91,11 @@ Validation results are categorized into three levels:
 ### Usage Example
 
 ```{r, eval=FALSE}
-# Validate all configuration files in a project
-validation_results <- validateAllConfigurations(my_project)
+# Validate a loaded project
+validation_results <- validateProject(my_project)
 
-# Or validate directly from a Project.xlsx path
-validation_results <- validateAllConfigurations(
-  file.path(dirname(exampleProjectPath()), "Project.xlsx")
-)
+# Or validate directly from a Project.json path
+validation_results <- validateProject("Project.json")
 
 # Check if there are any critical errors
 if (isAnyCriticalErrors(validation_results)) {
@@ -112,28 +110,31 @@ if (isAnyCriticalErrors(validation_results)) {
 
 ### Interpreting Validation Results
 
-The `validateAllConfigurations()` function returns a named list of `validationResult`
-objects, one for each configuration file validated. Each result contains:
+The `validateProject()` function returns a named list of `validationResult`
+objects, one for each project section validated. Each result contains:
 
 - `critical_errors`: List of blocking issues
 - `warnings`: List of non-blocking issues
 - `data`: The validated data (if validation succeeded)
 
-You can access individual file results:
+You can access individual section results:
 
 ```{r, eval=FALSE}
 # Check scenarios validation
 scenarios_result <- validation_results$scenarios
 
 if (scenarios_result$has_critical_errors()) {
-  print("Scenarios file has critical errors:")
+  print("Scenarios section has critical errors:")
   print(scenarios_result$critical_errors)
 }
 
 if (length(scenarios_result$warnings) > 0) {
-  print("Scenarios file has warnings:")
+  print("Scenarios section has warnings:")
   print(scenarios_result$warnings)
 }
+
+# Available sections: individuals, populations, scenarios, outputPaths,
+# modelParameters, applications, plots, crossReferences
 ```
 
 The validation system ensures data quality before simulation, helping you identify

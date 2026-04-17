@@ -2,6 +2,12 @@
 
 ## Breaking changes
 
+- **`validateAllConfigurations()` replaced by `validateProject()`.** Validation
+  now operates on loaded `Project` objects or `Project.json` files directly,
+  instead of Excel files. The new function validates all project sections
+  (individuals, populations, scenarios, outputPaths, modelParameters,
+  applications, plots) and cross-references between them. (#908)
+
 - **JSON is now the primary project configuration format.** Projects are
   defined in a `Project.json` file (v2.0 schema) instead of a
   collection of Excel files. Use `loadProject()` to load a project. Existing
