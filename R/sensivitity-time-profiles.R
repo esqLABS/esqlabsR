@@ -101,7 +101,7 @@
 #'   parameterPaths = namedParameterPaths
 #' )
 #'
-#' sensitivitySpiderPlot(resultsNamed)
+#' sensitivityTimeProfiles(resultsNamed)
 #' }
 #' @export
 sensitivityTimeProfiles <- function(

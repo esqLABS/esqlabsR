@@ -14,12 +14,14 @@ options(ospsuite.plots.watermarkEnabled = FALSE)
 )
 .testFixtures$aciclovirSaVariationRange <- c(0.1, 2, 20)
 
-set.seed(123)
-.testFixtures$aciclovirSaResults <- sensitivityCalculation(
-  simulation = aciclovirSim(),
-  outputPaths = .testFixtures$aciclovirSaOutputPath,
-  parameterPaths = .testFixtures$aciclovirSaParameterPaths,
-  variationRange = .testFixtures$aciclovirSaVariationRange
+.testFixtures$aciclovirSaResults <- withr::with_seed(
+  123,
+  sensitivityCalculation(
+    simulation = aciclovirSim(),
+    outputPaths = .testFixtures$aciclovirSaOutputPath,
+    parameterPaths = .testFixtures$aciclovirSaParameterPaths,
+    variationRange = .testFixtures$aciclovirSaVariationRange
+  )
 )
 
 # Shared TestProject scenarios ------------------------------------------------

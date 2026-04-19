@@ -123,7 +123,7 @@ resultsNamed <- sensitivityCalculation(
   parameterPaths = namedParameterPaths
 )
 
-sensitivitySpiderPlot(resultsNamed)
+sensitivityTimeProfiles(resultsNamed)
 }
 }
 \seealso{
