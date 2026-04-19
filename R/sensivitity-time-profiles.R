@@ -19,12 +19,13 @@
 #'   (linear scale), to set the x-axis scale. Default is "lin".
 #' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
 #'   scale similarly to `xAxisScale`. Default is "log".
-#' @param xUnits,yUnits Lists of units for the x-axis and y-axis, respectively.
-#'   If a list of length one is provided, it will be applied to all
-#'   `outputPaths` if conversion is possible. If a list of multiple units is
-#'   provided, the units list should correspond to the `outputPaths`, and units
-#'   conversion will be applied accordingly. If `NULL`, default units from the
-#'   simulation results will be used.
+#' @param xUnits,yUnits Units for the x-axis and y-axis, respectively. Can be
+#'   provided as a single string (e.g., `"nmol/l"`) or a list of strings. A
+#'   single string or a list of length one will be applied to all `outputPaths`
+#'   if conversion is possible. If a list of multiple units is provided, the
+#'   units list should correspond to the `outputPaths`, and units conversion
+#'   will be applied accordingly. If `NULL`, default units from the simulation
+#'   results will be used.
 #' @param observedData Optional. A `DataSet` or a list of `DataSet` objects
 #'   containing observed data. If provided, observed data will be plotted
 #'   together with the simulated data based on `OutputPath` dimension for direct
@@ -65,8 +66,8 @@
 #' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 #' parameterPaths <- c(
 #'   "Aciclovir|Lipophilicity",
-#'   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#'   "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 #' )
 #'
 #' results <- sensitivityCalculation(
@@ -90,8 +91,8 @@
 #' # Use named parameter paths to customize facet labels
 #' namedParameterPaths <- c(
 #'   "Lipophilicity" = "Aciclovir|Lipophilicity",
-#'   "Dose" = "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#'   "Dose" = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 #' )
 #'
 #' resultsNamed <- sensitivityCalculation(
@@ -117,8 +118,12 @@ sensitivityTimeProfiles <- function(
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  validateIsOfType(xUnits, "list", nullAllowed = TRUE)
-  validateIsOfType(yUnits, "list", nullAllowed = TRUE)
+  if (!is.null(xUnits)) {
+    xUnits <- ospsuite.utils::toList(xUnits)
+  }
+  if (!is.null(yUnits)) {
+    yUnits <- ospsuite.utils::toList(yUnits)
+  }
 
   if (!is.null(observedData)) {
     observedData <- ospsuite.utils::toList(observedData)

@@ -45,7 +45,7 @@ To update your project configuration to the new format:
 
 1. Load your existing configuration:
 ```r
-projectConfig <- createProjectConfiguration("path/to/old/ProjectConfiguration.xlsx")
+projectConfig <- createProjectConfiguration("path/to/old/ProjectConfiguration.xlsx", ignoreVersionCheck = TRUE)
 ```
 
 2. Save it in the new format:

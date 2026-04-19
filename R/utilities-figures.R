@@ -270,7 +270,7 @@ createPlotsFromExcel <- function(
   dfPlotConfigurations <- plotConfigurations$plotConfigurations
   dfPlotGrids <- plotConfigurations$plotGrids
 
-  # Exit early if not plotGrids are defined
+  # Exit early if no plotGrids are defined
   if (is.null(dfPlotGrids)) {
     return(NULL)
   }

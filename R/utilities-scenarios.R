@@ -142,8 +142,6 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     names(returnList)[[idx]] <- scenarioName
   }
 
-  # Call gc() on .NET
-  ospsuite::clearMemory()
   return(returnList)
 }
 

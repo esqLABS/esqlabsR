@@ -296,11 +296,16 @@ ULOQMode <- enum(list("ULOQ", "ignore"))
 #' @param projectConfiguration Object of class `ProjectConfiguration` containing
 #'   the necessary information.
 #' @param sheets String or a list of strings defining which sheets to load. If
-#'   `NULL` (default), all sheets within the file are loaded.
+#'   `NULL` (default), all sheets within the file are loaded. This parameter
+#'   takes precedence over any sheets defined in `importerConfiguration`: the
+#'   function always sets `importerConfiguration$sheets` to `NULL` before
+#'   calling `ospsuite::loadDataSetsFromExcel()`, so the passed
+#'   `importerConfiguration` object is mutated as a side effect.
 #' @param importerConfiguration `DataImporterConfiguration` object used to load
 #'   the data. If `NULL` (default), default esqlabs importer configuration as
 #'   defined in `projectConfiguration$dataImporterConfigurationFile` will be
-#'   used.
+#'   used. Note: the `sheets` property of this object is always set to `NULL`
+#'   by this function (see the `sheets` parameter description).
 #'
 #' @returns A named list of `DataSet` objects, with names being the names of the
 #' data sets.
@@ -322,18 +327,14 @@ loadObservedData <- function(
       configurationFilePath = projectConfiguration$dataImporterConfigurationFile
     )
   validateIsString(sheets, nullAllowed = TRUE)
-  # If sheets have been specified, import only those. Otherwise try to import all
-  # sheets
-  importAllSheets <- TRUE
-  if (!is.null(sheets)) {
-    importerConfiguration$sheets <- sheets
-    importAllSheets <- FALSE
-  }
+  # Clear sheets from configuration so that `sheets` parameter takes full
+  # control. If `sheets` is NULL, all sheets will be loaded.
+  importerConfiguration$sheets <- NULL
 
   dataSets <- ospsuite::loadDataSetsFromExcel(
     xlsFilePath = projectConfiguration$dataFile,
     importerConfigurationOrPath = importerConfiguration,
-    importAllSheets = importAllSheets
+    sheets = sheets
   )
 
   return(dataSets)
