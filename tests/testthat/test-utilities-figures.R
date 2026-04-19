@@ -102,6 +102,8 @@ test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
 })
 
 # single observed and simulated datasets
+# Read from RDS (not via oneObsSimDC() accessor) to avoid numerical noise from
+# re-simulating, which shifts the snapshot plot.
 oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
 
 test_that(".parseExcelMultiValueField numeric conversion path is covered", {

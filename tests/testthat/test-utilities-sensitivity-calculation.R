@@ -1,21 +1,9 @@
-# Load simulation and set paths for tests
-simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
-outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-parameterPaths <- c(
-  "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
-)
-variationRange <- c(0.1, 2, 20) # 1.0 is deliberately left out for testing
-
-set.seed(123)
-results <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = variationRange
-)
+# Shared simulation + sensitivity result (precomputed in setup.R)
+simulation <- aciclovirSim()
+outputPaths <- aciclovirSaOutputPath()
+parameterPaths <- aciclovirSaParameterPaths()
+variationRange <- aciclovirSaVariationRange() # 1.0 is deliberately left out for testing
+results <- aciclovirSaResults()
 
 
 test_that("saveSensitivityCalculation() writes files and respects overwrite flag", {

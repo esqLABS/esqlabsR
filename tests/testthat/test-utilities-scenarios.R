@@ -2,9 +2,7 @@ defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Periphera
 
 test_that("It stops with an error if the excel file defines a parameter that is
           not present", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfiguration <- testProjectConfiguration()
   # Define which scenarios to run
   scenarioNames <- c("TestScenario_missingParam")
   # Create `ScenarioConfiguration` objects from excel files
@@ -19,9 +17,7 @@ test_that("It stops with an error if the excel file defines a parameter that is
 })
 
 test_that("All working scenarios in testProject can be created without errors", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfiguration <- testProjectConfiguration()
   # Define which scenarios to run
   scenarioNames <- c(
     "TestScenario",
@@ -42,9 +38,7 @@ test_that("All working scenarios in testProject can be created without errors", 
 })
 
 test_that("It runs one scenario without specifying output paths", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfiguration <- testProjectConfiguration()
   # Define which scenarios to run
   scenarioNames <- c("TestScenario_missingParam")
   # Create `ScenarioConfiguration` objects from excel files
@@ -69,9 +63,7 @@ test_that("It runs one scenario without specifying output paths", {
 })
 
 test_that("It runs one scenario with specifying output paths", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfiguration <- testProjectConfiguration()
   OutputPaths <- enum(list(
     Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
     Aciclovir_bone_pls = "Organism|Bone|Plasma|Aciclovir|Concentration"
@@ -103,9 +95,7 @@ test_that("It runs one scenario with specifying output paths", {
 })
 
 test_that("It runs two scenarios", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfiguration <- testProjectConfiguration()
   # Define which scenarios to run
   scenarioNames <- c(
     "TestScenario",
@@ -143,9 +133,7 @@ test_that("It runs two scenarios", {
 })
 
 test_that("It runs population and individual scenarios", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfiguration <- testProjectConfiguration()
   # Define which scenarios to run
   scenarioNames <- c(
     "TestScenario",
@@ -175,9 +163,7 @@ test_that("It runs population and individual scenarios", {
 })
 
 test_that("It saves and loads scenario results for scenario names with forbidden characters", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfiguration <- testProjectConfiguration()
   # Define which scenarios to run
   scenarioNames <- c("TestScenario")
   # Create `ScenarioConfiguration` objects from excel files
@@ -229,9 +215,7 @@ test_that("It saves and loads scenario results for scenario names with forbidden
 })
 
 test_that("The hierarchy of parametrization is correct", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfiguration <- testProjectConfiguration()
   # Define which scenarios to run
   scenarioNames <- c("TestScenario")
   # Create `ScenarioConfiguration` objects from excel files without custom parameters
@@ -279,9 +263,7 @@ test_that("loadScenarioResults throws an error when files don't exist", {
 })
 
 test_that("It correctly runs when only one scenario (not a list) is provided", {
-  # Create a fresh temporary project for this test
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
+  projectConfiguration <- testProjectConfiguration()
 
   # Define which scenarios to run
   scenarioNames <- c("TestScenario_missingParam")

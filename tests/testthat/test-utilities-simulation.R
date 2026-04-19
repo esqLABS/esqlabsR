@@ -1,23 +1,14 @@
 test_that("`initializeSimulation()` loads a simulation at the minimum", {
-  simulation <- loadSimulation(system.file(
-    "extdata",
-    "simple.pkml",
-    package = "ospsuite"
-  ))
+  simulation <- loadTestSimulation("simple")
   initializeSimulation(simulation)
   simulationResults <- runSimulations(simulation)
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
 test_that("`initializeSimulation()` does not fail when additionalParams is empty", {
-  simulation <- loadSimulation(system.file(
-    "extdata",
-    "simple.pkml",
-    package = "ospsuite"
-  ))
+  simulation <- loadTestSimulation("simple")
 
-  dataFolder <- getTestDataFilePath("")
-  paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
+  paramsXLSpath <- getTestDataFilePath("Parameters.xlsx")
   sheets <- c("EmptySheet")
   params <- readParametersFromXLS(
     paramsXLSpath = paramsXLSpath,
@@ -31,9 +22,8 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
 
 
 test_that("`compareSimulations()` produces no differences with identical simulations", {
-  simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
-  sim1 <- loadSimulation(simPath)
-  sim2 <- loadSimulation(simPath)
+  sim1 <- loadTestSimulation("simple")
+  sim2 <- loadTestSimulation("simple")
 
   res <- compareSimulations(sim1, sim2)
   enmptyNamedList <- list()
@@ -51,8 +41,8 @@ test_that("`compareSimulations()` produces no differences with identical simulat
 })
 
 test_that("`compareSimulations()` lists differencies on parameter correctly", {
-  sim1 <- loadSimulation(testthat::test_path("../data/simple.pkml"))
-  sim2 <- loadSimulation(testthat::test_path("../data/simple2.pkml"))
+  sim1 <- loadTestSimulation("simple")
+  sim2 <- loadTestSimulation("simple2")
 
   res <- compareSimulations(sim1, sim2)
   in1notIn2Paths <- c("Organism|RHSParameter")
@@ -79,8 +69,7 @@ test_that("`compareSimulations()` lists differencies on parameter correctly", {
 })
 # getAllApplicationParameters
 
-simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
+simulation <- aciclovirSim()
 
 test_that("It returns application parameters when no molecules are defined", {
   applicationParams <- getAllApplicationParameters(simulation = simulation)

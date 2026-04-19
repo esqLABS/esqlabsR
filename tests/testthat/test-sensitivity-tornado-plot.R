@@ -11,15 +11,12 @@ options(
 
 # Single output path ------------------------------------------------------
 
-# run time-consuming simulations just once
-simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
-outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-parameterPaths <- c(
-  "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
-)
+# Shared simulation (precomputed in setup.R); this file uses a distinct
+# variationRange, so the calculation itself cannot be shared with the other
+# sensitivity test files.
+simulation <- aciclovirSim()
+outputPaths <- aciclovirSaOutputPath()
+parameterPaths <- aciclovirSaParameterPaths()
 variationRange <- c(0.1, 2, 10) # 1.0 is deliberately left out for testing
 
 set.seed(123)

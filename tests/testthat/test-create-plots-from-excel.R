@@ -1,29 +1,10 @@
 projectConfiguration <- testProjectConfiguration()
-
-# Define which scenarios to run
 scenarioNames <- c("TestScenario", "PopulationScenario")
-outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+outputPaths <- aciclovirSaOutputPath()
+simulatedScenarios <- testSimulatedScenarios()
 
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = scenarioNames,
-  projectConfiguration = projectConfiguration
-)
-
-# Set output paths for each scenario
-for (scenarioConfiguration in scenarioConfigurations) {
-  scenarioConfiguration$outputPaths <- outputPaths
-}
-
-# Run scenarios
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-
-simulatedScenarios <- runScenarios(
-  scenarios = scenarios
-)
-
-# Load pre-simulated results for the "TestScenario". Required to ensure
-# identify of the results, otherwise numerical noise interferes with snapshot testing
+# Override TestScenario results with pre-simulated CSV so snapshot tests are
+# deterministic (raw simulation introduces numerical noise).
 preSimulatedResults <- ospsuite::importResultsFromCSV(
   simulation = simulatedScenarios$TestScenario$simulation,
   filePaths = getTestDataFilePath("TestScenario_results.csv")
@@ -33,33 +14,8 @@ simulatedScenarios$TestScenario$outputValues <- getOutputValues(
   simulationResults = preSimulatedResults
 )
 
-importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-  configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-)
-
-# Load observed data
-dataSheets <- "Laskin 1982.Group A"
-observedData <- esqlabsR::loadObservedData(
-  projectConfiguration = projectConfiguration,
-  sheets = dataSheets,
-  importerConfiguration = importerConfiguration
-)
-
-dataCombinedDf <- data.frame(list(
-  "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
-  "dataType" = c("simulated", "observed"),
-  "label" = c("Aciclovir simulated", "Aciclovir observed"),
-  "scenario" = c(scenarioNames[1], NA),
-  "path" = c(outputPaths, NA),
-  "dataSet" = c(NA, names(observedData)),
-  "group" = c("Aciclovir PVB", "Aciclovir PVB"),
-  "xOffsets" = c(NA, NA),
-  "xOffsetsUnits" = c(NA, NA),
-  "yOffsets" = c(NA, NA),
-  "yOffsetsUnits" = c(NA, NA),
-  "xScaleFactors" = c(NA, NA),
-  "yScaleFactors" = c(NA, NA)
-))
+observedData <- aciclovirObsData()
+dataCombinedDf <- dataCombinedSpecSingle()
 plotConfigurationDf <- data.frame(list(
   "plotID" = "P1",
   "DataCombinedName" = "AciclovirPVB",
