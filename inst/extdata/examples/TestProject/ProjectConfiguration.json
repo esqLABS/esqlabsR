@@ -219,7 +219,7 @@
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
           "ModelFile": "Aciclovir.pkml",
-          "OutputPathsIds": null
+          "OutputPathsIds": "Aciclovir_PVB"
         },
         {
           "Scenario_name": "TestScenario2",
@@ -347,7 +347,7 @@
       "column_names": ["Container Path", "Parameter Name", "Value", "Units"],
       "rows": [
         {
-          "Container Path": "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "Container Path": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
           "Parameter Name": "Dose",
           "Value": "250",
           "Units": "mg"
@@ -358,7 +358,7 @@
       "column_names": ["Container Path", "Parameter Name", "Value", "Units"],
       "rows": [
         {
-          "Container Path": "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "Container Path": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
           "Parameter Name": "Dose",
           "Value": "250",
           "Units": "mg"
@@ -369,7 +369,7 @@
       "column_names": ["Container Path", "Parameter Name", "Value", "Units"],
       "rows": [
         {
-          "Container Path": "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "Container Path": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
           "Parameter Name": "Dose",
           "Value": "500",
           "Units": "mg"

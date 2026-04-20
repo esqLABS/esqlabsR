@@ -496,7 +496,7 @@
       [1] "Aciclovir.pkml"
       
       $Scenarios$Scenarios$rows[[1]]$OutputPathsIds
-      [1] NA
+      [1] "Aciclovir_PVB"
       
       
       $Scenarios$Scenarios$rows[[2]]
@@ -820,7 +820,7 @@
       $Applications$Aciclovir_iv_250mg$rows
       $Applications$Aciclovir_iv_250mg$rows[[1]]
       $Applications$Aciclovir_iv_250mg$rows[[1]]$`Container Path`
-      [1] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      [1] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem"
       
       $Applications$Aciclovir_iv_250mg$rows[[1]]$`Parameter Name`
       [1] "Dose"
@@ -841,7 +841,7 @@
       $Applications$Protocol_250mg$rows
       $Applications$Protocol_250mg$rows[[1]]
       $Applications$Protocol_250mg$rows[[1]]$`Container Path`
-      [1] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      [1] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem"
       
       $Applications$Protocol_250mg$rows[[1]]$`Parameter Name`
       [1] "Dose"
@@ -862,7 +862,7 @@
       $Applications$Protocol_500mg$rows
       $Applications$Protocol_500mg$rows[[1]]
       $Applications$Protocol_500mg$rows[[1]]$`Container Path`
-      [1] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      [1] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem"
       
       $Applications$Protocol_500mg$rows[[1]]$`Parameter Name`
       [1] "Dose"
@@ -2690,7 +2690,7 @@
       7             0,120,1                  h       FALSE            <NA>
       8             0,120,1                  h       FALSE            <NA>
         SteadyStateTimeUnit      ModelFile                    OutputPathsIds
-      1                <NA> Aciclovir.pkml                              <NA>
+      1                <NA> Aciclovir.pkml                     Aciclovir_PVB
       2                 min Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
       3                <NA> Aciclovir.pkml                              <NA>
       4                <NA> Aciclovir.pkml                              <NA>
@@ -2720,10 +2720,10 @@
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
       $Applications$Aciclovir_iv_250mg$rows
-                                                      Container Path Parameter Name
-      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose
-        Value Units
-      1   250    mg
+                                                Container Path Parameter Name Value
+      1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   250
+        Units
+      1    mg
       
       
       $Applications$Protocol_250mg
@@ -2731,10 +2731,10 @@
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
       $Applications$Protocol_250mg$rows
-                                                      Container Path Parameter Name
-      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose
-        Value Units
-      1   250    mg
+                                                Container Path Parameter Name Value
+      1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   250
+        Units
+      1    mg
       
       
       $Applications$Protocol_500mg
@@ -2742,10 +2742,10 @@
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
       $Applications$Protocol_500mg$rows
-                                                      Container Path Parameter Name
-      1 Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose
-        Value Units
-      1   500    mg
+                                                Container Path Parameter Name Value
+      1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   500
+        Units
+      1    mg
       
       
       
