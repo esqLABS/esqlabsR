@@ -81,16 +81,14 @@ refer to the `{ospsuite}` documentation about it
 The default `Plot.xlsx` file already contains the most common columns required
 to customize plots. However, the user can add all the necessary columns that are
 needed to reach the desired result. The list of available variables can be
-explored in a `defaultPlotConfiguration` object.
+explored in objects created from the function `createEsqlabsPlotConfiguration()`.
 
 Here is a sample of the available plot settings:
 
 ```{r, echo=FALSE}
-dpc <- DefaultPlotConfiguration$new()
-names(dpc)[!(names(dpc) %in% defaultClassAttributes)][1:15]
+dpc <- createEsqlabsPlotConfiguration()
+names(dpc)
 ```
-
-You can access the full list by running `DefaultPlotConfiguration$new()`
 
 For instance, if the subtitle needs to be changed, the user can add a column
 named `subtitle` and fill it with the desired value for each plot.
@@ -342,57 +340,43 @@ section)[#specify-a-datacombined] for more information.
 
 #### Customize and generate plots
 
-Customization of the generated figures - specifying title, axes ranges, axes
-units, the position of the legend, etc., are done through _plot configurations_
+The plotting functions return standard `ggplot2` objects. Customization —
+specifying titles, axis labels, axis limits, theme settings, etc. — can be
+applied using the standard `ggplot2` `+` operator (e.g., `+ ggplot2::labs(title = ...)`)
+or via `ospsuite.plots::setDefaults()` for workspace-wide defaults.
 
-- objects of the class
-  [`DefaultPlotConfiguration`](https://www.open-systems-pharmacology.org/OSPSuite-R/dev/reference/DefaultPlotConfiguration.html).
-  To combine multiple plots into a multi-panel figure, create a
-  `PlotGridConfiguration` object, add plots to it, and plot with the `plotGrid()`
-  method. Finally, to export a plot to a file (e.g., `PNG` or `PDF`), use an
-  `ExportConfiguration` object.
+To combine multiple plots into a multi-panel figure, create a
+`PlotGridConfiguration` object, add plots to it, and plot with the `plotGrid()`
+method. To export a plot to a file (e.g., `PNG` or `PDF`), use an
+`ExportConfiguration` object.
 
 To use configurations with a similar look and feel in the different `esqLABS`
-projects, create the configurations using the following functions:
+projects, create the grid and export configurations using:
 
-- [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html)
 - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html)
 - [`createEsqlabsExportConfiguration(projectConfiguration)`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsExportConfiguration.html)
 
-For the list of supported properties of the `PlotGirdConfiguration`, refer to
+For the list of supported properties of the `PlotGridConfiguration`, refer to
 the
-[reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
+[reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
 
 The next example shows how to create a multi-panel figure using the default
 configurations.
 
 ```{r plot-time-profile, fig.asp=1}
-plotConfig <- createEsqlabsPlotConfiguration()
 gridConfig <- createEsqlabsPlotGridConfiguration()
 
-plotConfig$title <- "Time profile"
-indivPlot <- plotIndividualTimeProfile(
-  dataCombined,
-  defaultPlotConfiguration = plotConfig
-)
+indivPlot <- plotTimeProfile(dataCombined) +
+  ggplot2::labs(title = "Time profile")
 
-plotConfig$title <- "Observed-vs-simulated"
-obsVsSimPlot <- plotObservedVsSimulated(
-  dataCombined,
-  defaultPlotConfiguration = plotConfig
-)
+obsVsSimPlot <- plotPredictedVsObserved(dataCombined) +
+  ggplot2::labs(title = "Predicted-vs-observed")
 
-plotConfig$title <- "Res-vs-time"
-resVsTimePlot <- plotResidualsVsTime(
-  dataCombined,
-  defaultPlotConfiguration = plotConfig
-)
+resVsTimePlot <- plotResidualsVsCovariate(dataCombined, xAxis = "time") +
+  ggplot2::labs(title = "Res-vs-time")
 
-plotConfig$title <- "Res-vs-simulated"
-resVsSimPlot <- plotResidualsVsSimulated(
-  dataCombined,
-  defaultPlotConfiguration = plotConfig
-)
+resVsSimPlot <- plotResidualsVsCovariate(dataCombined, xAxis = "predicted") +
+  ggplot2::labs(title = "Res-vs-predicted")
 
 gridConfig$addPlots(list(indivPlot, obsVsSimPlot, resVsTimePlot, resVsSimPlot))
 gridConfig$title <- "All aciclovir plots"
@@ -403,7 +387,7 @@ gridPlot
 #### Export Plots
 
 To save the plot to a `PNG` file, use the
-[`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html).
+[`ExportConfiguration`](https://esqlabs.github.io/esqlabsR/reference/ExportConfiguration.html).
 Make sure that the `fileName` argument ends with `.png`:
 
 ```{r saveToPng}
@@ -477,11 +461,13 @@ More detailed information on function signatures can be found in the following:
   - [saveDataSetToPKML()](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/saveDataSetToPKML.html)
   - [`DataCombined`
     class](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataCombined.html)
-  - [`plotIndividualTimeProfile()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotIndividualTimeProfile.html)
-  - [`plotObservedVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotObservedVsSimulated.html)
-  - [`plotResidualsVsSimulated()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsSimulated.html)
-  - [`plotResidualsVsTime()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsTime.html)
+  - [`plotTimeProfile()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotTimeProfile.html)
+  - [`plotPredictedVsObserved()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotPredictedVsObserved.html)
+  - [`plotResidualsVsCovariate()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/plotResidualsVsCovariate.html)
+- `esqlabsR` documentation on:
+  - [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotConfiguration.html)
+  - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/createEsqlabsPlotGridConfiguration.html)
+  - [`ExportConfiguration`](https://esqlabs.github.io/esqlabsR/reference/ExportConfiguration.html)
 - `tlf` documentation on:
   - [`PlotGridConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotGridConfiguration.html)
   - [`plotGrid()`](https://www.open-systems-pharmacology.org/TLF-Library/reference/plotGrid.html)
-  - [`ExportConfiguration`](https://www.open-systems-pharmacology.org/TLF-Library/reference/ExportConfiguration.html)
