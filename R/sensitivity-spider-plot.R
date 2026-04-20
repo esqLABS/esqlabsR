@@ -139,11 +139,14 @@ sensitivitySpiderPlot <- function(
   .validateCharVector(pkParameters, nullAllowed = TRUE)
 
   # Plot configuration setup -----------------------------
-  customPlotConfiguration <- defaultPlotConfiguration %||% .plotConfigurationFromType("spiderPlot")
-  customPlotConfiguration$xAxisScale <- xAxisScale %||% customPlotConfiguration$xAxisScale
-  customPlotConfiguration$yAxisScale <- yAxisScale %||% customPlotConfiguration$yAxisScale
+  customPlotConfiguration <- defaultPlotConfiguration %||%
+    .plotConfigurationFromType("spiderPlot")
+  customPlotConfiguration$xAxisScale <- xAxisScale %||%
+    customPlotConfiguration$xAxisScale
+  customPlotConfiguration$yAxisScale <- yAxisScale %||%
+    customPlotConfiguration$yAxisScale
 
-    # validate separately as not supported by DefaultPlotConfiguration
+  # validate separately as not supported by DefaultPlotConfiguration
   validateIsOption(
     list(
       yAxisFacetScales = yAxisFacetScales,
@@ -258,7 +261,7 @@ sensitivitySpiderPlot <- function(
     } else {
       # free y-axis scale
       plotConfiguration$yLabel <- ospsuite.plots::constructLabelWithUnit(
-        label = dataSubset$PKParameter[1], 
+        label = dataSubset$PKParameter[1],
         unit = dataSubset$Unit[1]
       )
       pLimits <- NULL
@@ -289,7 +292,10 @@ sensitivitySpiderPlot <- function(
       )
     ) +
       ggplot2::geom_line(
-        ggplot2::aes(group = ParameterPathLabel, color = as.factor(ParameterPathLabel)),
+        ggplot2::aes(
+          group = ParameterPathLabel,
+          color = as.factor(ParameterPathLabel)
+        ),
         linewidth = plotConfiguration$linesSize,
         alpha = plotConfiguration$linesAlpha,
         na.rm = TRUE
@@ -375,9 +381,10 @@ sensitivitySpiderPlot <- function(
     if (is.null(plotConfiguration$linesColor)) {
       plot <- plot + ggplot2::scale_color_brewer(palette = "Dark2")
     } else {
-      plot <- plot + ggplot2::scale_color_manual(values = plotConfiguration$linesColor)
+      plot <- plot +
+        ggplot2::scale_color_manual(values = plotConfiguration$linesColor)
     }
-    
+
     plotList[[param]] <- plot
   }
 
@@ -399,7 +406,7 @@ sensitivitySpiderPlot <- function(
     ggplot2::theme(
       legend.position = plotConfiguration$legendPosition,
       legend.justification = plotConfiguration$legendJustification
-      )
+    )
 
   return(plotPatchwork)
 }

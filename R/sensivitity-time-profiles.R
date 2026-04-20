@@ -105,15 +105,16 @@
 #' }
 #' @export
 sensitivityTimeProfiles <- function(
-    sensitivityCalculation,
-    outputPaths = NULL,
-    parameterPaths = NULL,
-    xAxisScale = NULL,
-    yAxisScale = NULL,
-    xUnits = NULL,
-    yUnits = NULL,
-    observedData = NULL,
-    defaultPlotConfiguration = NULL) {
+  sensitivityCalculation,
+  outputPaths = NULL,
+  parameterPaths = NULL,
+  xAxisScale = NULL,
+  yAxisScale = NULL,
+  xUnits = NULL,
+  yUnits = NULL,
+  observedData = NULL,
+  defaultPlotConfiguration = NULL
+) {
   # Input validation -------------------------------------
 
   validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
@@ -133,9 +134,12 @@ sensitivityTimeProfiles <- function(
   .validateCharVector(parameterPaths, nullAllowed = TRUE)
 
   # Plot configuration setup -----------------------------
-  customPlotConfiguration <- defaultPlotConfiguration %||% .plotConfigurationFromType("timeProfiles")
-  customPlotConfiguration$xAxisScale <- xAxisScale %||% customPlotConfiguration$xAxisScale
-  customPlotConfiguration$yAxisScale <- yAxisScale %||% customPlotConfiguration$yAxisScale
+  customPlotConfiguration <- defaultPlotConfiguration %||%
+    .plotConfigurationFromType("timeProfiles")
+  customPlotConfiguration$xAxisScale <- xAxisScale %||%
+    customPlotConfiguration$xAxisScale
+  customPlotConfiguration$yAxisScale <- yAxisScale %||%
+    customPlotConfiguration$yAxisScale
 
   # Prepare data -----------------------------------------
   data <- .aggregateSimulationAndObservedData(
@@ -196,7 +200,7 @@ sensitivityTimeProfiles <- function(
   # create axis labels
   if (is.null(plotConfiguration$xLabel)) {
     plotConfiguration$xLabel <- ospsuite.plots::constructLabelWithUnit(
-      label = unique(data$xDimension), 
+      label = unique(data$xDimension),
       unit = unique(data$xUnit)
     )
   }
@@ -204,7 +208,7 @@ sensitivityTimeProfiles <- function(
   yDimensionForPlot <- ospsuite::getDimensionForUnit(yUnitForPlot)
   if (is.null(plotConfiguration$yLabel)) {
     plotConfiguration$yLabel <- ospsuite.plots::constructLabelWithUnit(
-      label = yDimensionForPlot, 
+      label = yDimensionForPlot,
       unit = yUnitForPlot
     )
   }
@@ -384,7 +388,9 @@ sensitivityTimeProfiles <- function(
     patchwork::plot_annotation(
       title = plotConfiguration$title,
       subtitle = plotConfiguration$subtitle,
-      theme = ggplot2::theme(plot.title = element_text(size = plotConfiguration$titleSize))
+      theme = ggplot2::theme(
+        plot.title = element_text(size = plotConfiguration$titleSize)
+      )
     ) +
     patchwork::plot_layout(
       guides = "collect",
@@ -394,7 +400,7 @@ sensitivityTimeProfiles <- function(
     ggplot2::theme(
       legend.position = plotConfiguration$legendPosition,
       legend.justification = plotConfiguration$legendJustification
-      )
+    )
 
   return(plotPatchwork)
 }
@@ -420,12 +426,13 @@ sensitivityTimeProfiles <- function(
 #' @keywords internal
 #' @noRd
 .aggregateSimulationAndObservedData <- function(
-    simulationResults,
-    dataSets,
-    parameterPaths,
-    outputPaths,
-    xUnits,
-    yUnits) {
+  simulationResults,
+  dataSets,
+  parameterPaths,
+  outputPaths,
+  xUnits,
+  yUnits
+) {
   if (!identical(names(simulationResults), unname(parameterPaths))) {
     stop(messages$invalidSimulationResultNames(
       names(simulationResults),

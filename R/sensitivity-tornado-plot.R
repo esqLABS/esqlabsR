@@ -130,8 +130,9 @@ sensitivityTornadoPlot <- function(
   }
 
   # Plot configuration setup -----------------------------
-  customPlotConfiguration <- defaultPlotConfiguration %||% .plotConfigurationFromType("tornadoPlot")
-  
+  customPlotConfiguration <- defaultPlotConfiguration %||%
+    .plotConfigurationFromType("tornadoPlot")
+
   # Prepare data -----------------------------------------
 
   data <- .filterPlottingData(
@@ -201,7 +202,7 @@ sensitivityTornadoPlot <- function(
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration
   plotConfiguration$title <- unique(data$OutputPath)
-  
+
   # adjust x-axis limits to be symmetric around 0
   pLimits <- .calculateLimits(data$PKPercentChange)
   pLimits[1] <- -1 * max(abs(pLimits))
@@ -262,7 +263,9 @@ sensitivityTornadoPlot <- function(
         legend.position = plotConfiguration$legendPosition,
         panel.grid.minor = ggplot2::element_blank(),
         text = ggplot2::element_text(size = 11),
-        axis.text.y = ggplot2::element_text(margin = margin(l = 20, unit = "pt"))
+        axis.text.y = ggplot2::element_text(
+          margin = margin(l = 20, unit = "pt")
+        )
       )
 
     # apply color scales
@@ -273,7 +276,9 @@ sensitivityTornadoPlot <- function(
       pColor <- plotConfiguration$linesColor[seq_along(pLevels)]
       names(pColor) <- pLevels
       plot <- plot +
-        ggplot2::scale_fill_manual(values = colorspace::lighten(pColor, amount = 0.2))
+        ggplot2::scale_fill_manual(
+          values = colorspace::lighten(pColor, amount = 0.2)
+        )
     }
 
     # apply x-axis zoom range if specified
