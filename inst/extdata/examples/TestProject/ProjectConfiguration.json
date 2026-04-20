@@ -687,7 +687,7 @@
         {
           "PITaskName": "AciclovirMultiScenario",
           "Scenarios": "PIScenario_250mg",
-          "Container Path": "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS",
+          "Container Path": "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir",
           "Parameter Name": "TSspec",
           "Units": null,
           "MinValue": "0",
@@ -698,7 +698,7 @@
         {
           "PITaskName": "AciclovirMultiScenario",
           "Scenarios": "PIScenario_500mg",
-          "Container Path": "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS",
+          "Container Path": "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir",
           "Parameter Name": "TSspec",
           "Units": null,
           "MinValue": "0",

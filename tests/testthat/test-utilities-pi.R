@@ -248,7 +248,7 @@ test_that("createPITasks handles all Group values as NA correctly", {
     data.frame(
       PITaskName = "Task1",
       Scenarios = "PITestScenario",
-      `Container Path` = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS",
+      `Container Path` = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir",
       `Parameter Name` = "TSspec",
       Units = NA,
       MinValue = 0,
