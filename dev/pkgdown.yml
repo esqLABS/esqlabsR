@@ -5,6 +5,7 @@ articles:
   advanced: advanced.html
   design-scenarios: design-scenarios.html
   esqlabsR: esqlabsR.html
+  pi-workflow: pi-workflow.html
   plot-results: plot-results.html
   presentations: presentations.html
   project-migration-guide: project-migration-guide.html
@@ -13,7 +14,7 @@ articles:
   sensitivity-plots: sensitivity-plots.html
   sensitivity: sensitivity.html
   workflow-overview: workflow-overview.html
-last_built: 2026-04-16T16:31Z
+last_built: 2026-04-20T19:32Z
 urls:
   reference: https://esqlabs.github.io/esqlabsR/reference
   article: https://esqlabs.github.io/esqlabsR/articles

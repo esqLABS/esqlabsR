@@ -81,6 +81,17 @@
   - [`isAnyCriticalErrors()`](https://esqlabs.github.io/esqlabsR/dev/reference/isAnyCriticalErrors.md):
     Checks if validation found blocking errors
 - Added validation documentation to project-structure vignette
+- Added Excel-based parameter identification (PI) workflow:
+  [`readPITaskConfigurationFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/readPITaskConfigurationFromExcel.md),
+  [`createPITasks()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPITasks.md),
+  and
+  [`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md)
+  enable defining and running PI tasks from
+  `ParameterIdentification.xlsx`. Supports multi-scenario fitting,
+  parameter grouping, residual scaling, and optional confidence interval
+  estimation. See
+  [`vignette("pi-workflow")`](https://esqlabs.github.io/esqlabsR/dev/articles/pi-workflow.md)
+  ([\#928](https://github.com/esqLABS/esqlabsR/issues/928)).
 
 ### Minor improvements and bug fixes
 
@@ -386,7 +397,8 @@
   - `ApplicationParameters.xslx` file is now `Applications.xlsx`
   - `PopulationParameters.xslx` file is now `Populations.xlsx`
   - Previous directory structure is still supported but deprecated.
-- `{ospsuite.parameteridentification}` is not longer a dependency of
+- [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
+  is not longer a dependency of
   [esqlabsR](https://github.com/esqLABS/esqlabsR).
 
 ### Minor improvements and bug fixes
@@ -818,7 +830,8 @@
 
 - Function
   [`getSteadyState()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getSteadyState.html)
-  has been moved to package `{ospsuite.parameteridentification}`.
+  has been moved to package
+  [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification).
 
 - Function
   [`loadObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedData.md)

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,6 +28,9 @@
     <li><a class="dropdown-item" href="../articles/plot-results.html">4. Plot Results</a></li>
     <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
     <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Parameter Identification</h6></li>
+    <li><a class="dropdown-item" href="../articles/pi-workflow.html">Parameter Identification</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
     <li><a class="dropdown-item" href="../articles/presentations.html">Slide Decks</a></li>
@@ -92,6 +95,7 @@
 <code><a href="../reference/isAnyCriticalErrors.html">isAnyCriticalErrors()</a></code>: Checks if validation found blocking errors</li>
 </ul></li>
 <li>Added validation documentation to project-structure vignette</li>
+<li>Added Excel-based parameter identification (PI) workflow: <code><a href="../reference/readPITaskConfigurationFromExcel.html">readPITaskConfigurationFromExcel()</a></code>, <code><a href="../reference/createPITasks.html">createPITasks()</a></code>, and <code><a href="../reference/runPI.html">runPI()</a></code> enable defining and running PI tasks from <code>ParameterIdentification.xlsx</code>. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See <code><a href="../articles/pi-workflow.html">vignette("pi-workflow")</a></code> (<a href="https://github.com/esqLABS/esqlabsR/issues/928" class="external-link">#928</a>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-5-5-2">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-5-2"></a></h3>
@@ -235,7 +239,7 @@
 <li>Previous directory structure is still supported but deprecated.</li>
 </ul></li>
 <li>
-<code>{ospsuite.parameteridentification}</code> is not longer a dependency of <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</li>
+<a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification" class="external-link">ospsuite.parameteridentification</a> is not longer a dependency of <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-5-3-0">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-5-3-0"></a></h3>
@@ -424,7 +428,7 @@ In the <code>Scenarios</code> sheet, enter the IDs of all paths the outputs shou
 <li>
 <a href="https://www.open-systems-pharmacology.org/TLF-Library/" class="external-link"><code>{tlf}</code></a>.</li>
 </ul></li>
-<li><p>Function <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getSteadyState.html" class="external-link">getSteadyState()</a></code> has been moved to package <code>{ospsuite.parameteridentification}</code>.</p></li>
+<li><p>Function <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getSteadyState.html" class="external-link">getSteadyState()</a></code> has been moved to package <a href="https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification" class="external-link">ospsuite.parameteridentification</a>.</p></li>
 <li><p>Function <code><a href="../reference/loadObservedData.html">loadObservedData()</a></code> requires a <code>ProjectConfiguration</code> instead of a <code>ScenarioConfiguration</code>.</p></li>
 <li><p><code>DataMapping</code>, <code>DataMappingConfiguration</code>, <code>XYData</code>, <code>DataConfiguration</code> and associated functions for creating standard figures are moved to <code>esqlabsRLegacy</code> <a href="https://esqlabs.github.io/esqlabsRLegacy/">package</a>.</p></li>
 </ul></div>

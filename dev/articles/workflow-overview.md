@@ -55,3 +55,10 @@ plots for visual representation of simulation results.
 
 Learn more in
 [`vignette("plot-results")`](https://esqlabs.github.io/esqlabsR/dev/articles/plot-results.md).
+
+## Parameter Identification
+
+For fitting model parameters to observed data, `esqlabsR` provides a
+separate excel-based workflow for parameter identification. Learn more
+in
+[`vignette("pi-workflow")`](https://esqlabs.github.io/esqlabsR/dev/articles/pi-workflow.md).

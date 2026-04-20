@@ -63,6 +63,11 @@ An object storing configuration used project-wide
   Name of the excel file with plot definitions. Must be located in the
   "configurationsFolder".
 
+- `parameterIdentificationFile`:
+
+  Name of the excel file with parameter identification definitions. Must
+  be located in the "configurationsFolder".
+
 - `dataFolder`:
 
   Path to the folder where experimental data files are located.

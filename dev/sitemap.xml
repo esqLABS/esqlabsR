@@ -5,6 +5,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/design-scenarios.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/index.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/pi-workflow.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/plot-results.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/presentations/_introduction-to-esqlabsR.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/articles/presentations.html</loc></url>
@@ -21,6 +22,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/ExportConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/GenderInt.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/LLOQMode.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/PITaskConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/ProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/Scenario.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/ScenarioConfiguration.html</loc></url>
@@ -36,6 +38,7 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsExportConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotGridConfiguration.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createPITasks.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createPlotsFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createProjectConfiguration.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.html</loc></url>
@@ -97,11 +100,13 @@
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/projectConfigurationStatus.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readIndividualCharacteristicsFromXLS.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readPITaskConfigurationFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readParametersFromXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readPopulationCharacteristicsFromXLS.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/readScenarioConfigurationFromExcel.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/removeFromList.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/restoreProjectConfiguration.html</loc></url>
+<url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/runPI.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/sampleRandomValue.html</loc></url>
 <url><loc>https://esqlabs.github.io/esqlabsR/dev/reference/saveScenarioResults.html</loc></url>
