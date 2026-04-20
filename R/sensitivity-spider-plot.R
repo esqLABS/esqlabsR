@@ -208,7 +208,7 @@ sensitivitySpiderPlot <- function(
 ) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration
-  plotConfiguration$title = unique(data$OutputPath)
+  plotConfiguration$title <- unique(data$OutputPath)
 
   # select percent or absolute column for y-axis
   if (xAxisType == "percent") {

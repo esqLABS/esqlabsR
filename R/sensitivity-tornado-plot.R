@@ -200,7 +200,7 @@ sensitivityTornadoPlot <- function(
 ) {
   # update data dependent plot configuration
   plotConfiguration <- defaultPlotConfiguration
-  plotConfiguration$title = unique(data$OutputPath)
+  plotConfiguration$title <- unique(data$OutputPath)
   
   # adjust x-axis limits to be symmetric around 0
   pLimits <- .calculateLimits(data$PKPercentChange)

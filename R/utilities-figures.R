@@ -183,6 +183,7 @@ createEsqlabsPlotConfiguration <- function(plotType = NULL) {
   
   # Add specific default properties for spiderPlot, tornadoPlot and timeProfiles
   plotConfigurationForType <- .plotConfigurationFromType(plotType)
+  ospsuite.utils::validateIsOfType(defaultPlotConfiguration, "list")
   for(propertyName in names(plotConfigurationForType)){
     defaultPlotConfiguration[[propertyName]] <- defaultPlotConfiguration[[propertyName]] %||%
       plotConfigurationForType[[propertyName]]
