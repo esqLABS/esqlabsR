@@ -585,8 +585,8 @@ createPlotsFromExcel <- function(
   }
 }
 
-#' Create a plotConfiguration or exportConfiguration objects from a row of sheet
-#' 'plotConfiguration' or 'exportConfiguration'
+#' Create a plotConfiguration object from a row of sheet
+#' 'plotConfiguration'
 #'
 #' @param defaultConfiguration default plotConfiguration
 #' @param ... row with configuration properties

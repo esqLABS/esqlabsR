@@ -1429,13 +1429,11 @@ test_that("It shows a warning when xAxisScale is log and xAxisLimits contain 0",
       plotConfigurationDfLocal$xAxisScale <- "log"
       plotConfigurationDfLocal$xAxisLimits <- "0, 100"
       plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
       .writeExcel(
         data = list(
           "DataCombined" = dataCombinedDfLocal,
           "plotConfiguration" = plotConfigurationDfLocal,
-          "plotGrids" = plotGridsDfLocal,
-          "exportConfiguration" = exportConfigurationDfLocal
+          "plotGrids" = plotGridsDfLocal
         ),
         path = file.path(tempDir, "Plots.xlsx"),
       )
@@ -1471,13 +1469,11 @@ test_that("It shows a warning when yAxisScale is log and yAxisLimits contain 0",
       plotConfigurationDfLocal$yAxisScale <- "log"
       plotConfigurationDfLocal$yAxisLimits <- "0, 100"
       plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
       .writeExcel(
         data = list(
           "DataCombined" = dataCombinedDfLocal,
           "plotConfiguration" = plotConfigurationDfLocal,
-          "plotGrids" = plotGridsDfLocal,
-          "exportConfiguration" = exportConfigurationDfLocal
+          "plotGrids" = plotGridsDfLocal
         ),
         path = file.path(tempDir, "Plots.xlsx"),
       )
@@ -1513,13 +1509,11 @@ test_that("It shows a warning when yAxisScale is log and yValuesLimits contain 0
       plotConfigurationDfLocal$yAxisScale <- "log"
       plotConfigurationDfLocal$yValuesLimits <- "0, 100"
       plotGridsDfLocal <- plotGridsDf
-      exportConfigurationDfLocal <- exportConfigurationDf
       .writeExcel(
         data = list(
           "DataCombined" = dataCombinedDfLocal,
           "plotConfiguration" = plotConfigurationDfLocal,
-          "plotGrids" = plotGridsDfLocal,
-          "exportConfiguration" = exportConfigurationDfLocal
+          "plotGrids" = plotGridsDfLocal
         ),
         path = file.path(tempDir, "Plots.xlsx"),
       )

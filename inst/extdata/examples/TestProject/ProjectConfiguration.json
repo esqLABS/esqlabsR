@@ -472,41 +472,6 @@
           "subtitle": null
         }
       ]
-    },
-    "dataTypes": {
-      "column_names": "dataType",
-      "rows": [
-        {
-          "dataType": "observed"
-        },
-        {
-          "dataType": "simulated"
-        }
-      ]
-    },
-    "plotTypes": {
-      "column_names": "plotType",
-      "rows": [
-        {
-          "plotType": "individual"
-        },
-        {
-          "plotType": "population"
-        },
-        {
-          "plotType": "observedVsSimulated"
-        },
-        {
-          "plotType": "residualsVsSimulated"
-        },
-        {
-          "plotType": "residualsVsTime"
-        }
-      ]
-    },
-    "ObservedDataNames": {
-      "column_names": [],
-      "rows": []
     }
   },
   "populationsCSV": {

@@ -1143,63 +1143,6 @@
       
       
       
-      $Plots$dataTypes
-      $Plots$dataTypes$column_names
-      [1] "dataType"
-      
-      $Plots$dataTypes$rows
-      $Plots$dataTypes$rows[[1]]
-      $Plots$dataTypes$rows[[1]]$dataType
-      [1] "observed"
-      
-      
-      $Plots$dataTypes$rows[[2]]
-      $Plots$dataTypes$rows[[2]]$dataType
-      [1] "simulated"
-      
-      
-      
-      
-      $Plots$plotTypes
-      $Plots$plotTypes$column_names
-      [1] "plotType"
-      
-      $Plots$plotTypes$rows
-      $Plots$plotTypes$rows[[1]]
-      $Plots$plotTypes$rows[[1]]$plotType
-      [1] "individual"
-      
-      
-      $Plots$plotTypes$rows[[2]]
-      $Plots$plotTypes$rows[[2]]$plotType
-      [1] "population"
-      
-      
-      $Plots$plotTypes$rows[[3]]
-      $Plots$plotTypes$rows[[3]]$plotType
-      [1] "observedVsSimulated"
-      
-      
-      $Plots$plotTypes$rows[[4]]
-      $Plots$plotTypes$rows[[4]]$plotType
-      [1] "residualsVsSimulated"
-      
-      
-      $Plots$plotTypes$rows[[5]]
-      $Plots$plotTypes$rows[[5]]$plotType
-      [1] "residualsVsTime"
-      
-      
-      
-      
-      $Plots$ObservedDataNames
-      $Plots$ObservedDataNames$column_names
-      character(0)
-      
-      $Plots$ObservedDataNames$rows
-      list()
-      
-      
       
       $populationsCSV
       $populationsCSV$TestPopulation.csv
@@ -2191,37 +2134,6 @@
       1  Aciclovir P1, P2, P3 GridTitle GridSubtitle
       2 Aciclovir2         P2      <NA>         <NA>
       3 Aciclovir3         P4      <NA>         <NA>
-      
-      
-      $Plots$dataTypes
-      $Plots$dataTypes$column_names
-      [1] "dataType"
-      
-      $Plots$dataTypes$rows
-         dataType
-      1  observed
-      2 simulated
-      
-      
-      $Plots$plotTypes
-      $Plots$plotTypes$column_names
-      [1] "plotType"
-      
-      $Plots$plotTypes$rows
-                    plotType
-      1           individual
-      2           population
-      3  observedVsSimulated
-      4 residualsVsSimulated
-      5      residualsVsTime
-      
-      
-      $Plots$ObservedDataNames
-      $Plots$ObservedDataNames$column_names
-      list()
-      
-      $Plots$ObservedDataNames$rows
-      list()
       
       
       
