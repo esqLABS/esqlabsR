@@ -66,6 +66,11 @@
         "Property": "outputFolder",
         "Value": "Results/",
         "Description": "Path to the folder where the results should be saved to; relative to the location of this file"
+      },
+      {
+        "Property": "esqlabsRVersion",
+        "Value": "5.6.0.9002",
+        "Description": "Version of the esqlabsR package used to create this configuration"
       }
     ]
   },
@@ -209,7 +214,7 @@
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
           "ModelFile": "Aciclovir.pkml",
-          "OutputPathsIds": null
+          "OutputPathsIds": "Aciclovir_PVB"
         },
         {
           "Scenario_name": "TestScenario2",
@@ -292,7 +297,7 @@
       "column_names": ["Container Path", "Parameter Name", "Value", "Units"],
       "rows": [
         {
-          "Container Path": "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "Container Path": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
           "Parameter Name": "Dose",
           "Value": "250",
           "Units": "mg"
