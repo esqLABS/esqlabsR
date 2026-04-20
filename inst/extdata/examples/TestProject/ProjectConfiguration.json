@@ -467,10 +467,6 @@
         }
       ]
     },
-    "exportConfiguration": {
-      "column_names": ["plotGridName", "outputName", "width"],
-      "rows": []
-    },
     "dataTypes": {
       "column_names": "dataType",
       "rows": [
