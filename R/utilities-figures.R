@@ -180,12 +180,14 @@ createEsqlabsPlotConfiguration <- function(plotType = NULL) {
   defaultPlotConfiguration$pointsColor <- esqlabsEnv$colorPalette
   defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
   defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
-  
+
   # Add specific default properties for spiderPlot, tornadoPlot and timeProfiles
   plotConfigurationForType <- .plotConfigurationFromType(plotType)
   ospsuite.utils::validateIsOfType(defaultPlotConfiguration, "list")
-  for(propertyName in names(plotConfigurationForType)){
-    defaultPlotConfiguration[[propertyName]] <- defaultPlotConfiguration[[propertyName]] %||%
+  for (propertyName in names(plotConfigurationForType)) {
+    defaultPlotConfiguration[[propertyName]] <- defaultPlotConfiguration[[
+      propertyName
+    ]] %||%
       plotConfigurationForType[[propertyName]]
   }
   return(defaultPlotConfiguration)
@@ -224,37 +226,6 @@ createEsqlabsPlotGridConfiguration <- function() {
   return(plotGridConfiguration)
 }
 
-#' @param outputFolder Path to the folder where the results will be stored.
-#'
-#' @title Create an instance of `ExportConfiguration` R6 class
-#' @rdname createEsqlabsExportConfiguration
-#'
-#' @description
-#'
-#' An instance of `ExportConfiguration` R6 class from `{tlf}` package is needed
-#' for saving the plots and plot grids created using the `{ospsuite}` package.
-#'
-#' The default attributes of the class are chosen to reflect the corporate
-#' standards adopted by esqLABS GmbH.
-#'
-#' @returns An instance of `ExportConfiguration` R6 class.
-#'
-#' @examples
-#' myProjConfig <- ProjectConfiguration$new()
-#' createEsqlabsExportConfiguration(myProjConfig$outputFolder)
-#'
-#' @family create-plotting-configurations
-#'
-#' @export
-createEsqlabsExportConfiguration <- function(outputFolder) {
-  # nolint: object_length_linter.
-  # Specifying the namespace because we want to use the ExportConfiguration
-  # from esqlabsR and not from TLF
-  # TODO: when TLF is removed from dependency, remove "esqlabsR::"
-  exportConfiguration <- esqlabsR::ExportConfiguration$new(path = outputFolder)
-  return(exportConfiguration)
-}
-
 #' Generate plots as defined in excel file `projectConfiguration$plotsFile`
 #'
 #' @param simulatedScenarios A list of simulated scenarios as returned by
@@ -290,13 +261,14 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 #'
 #' @export
 createPlotsFromExcel <- function(
-    plotGridNames = NULL,
-    simulatedScenarios = NULL,
-    observedData = NULL,
-    dataCombinedList = NULL,
-    projectConfiguration,
-    outputFolder = NULL,
-    stopIfNotFound = TRUE) {
+  plotGridNames = NULL,
+  simulatedScenarios = NULL,
+  observedData = NULL,
+  dataCombinedList = NULL,
+  projectConfiguration,
+  outputFolder = NULL,
+  stopIfNotFound = TRUE
+) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
@@ -350,20 +322,48 @@ createPlotsFromExcel <- function(
       if (is.null(plotConfigurationRow$DataCombinedName)) {
         return()
       }
-      .validateLogScaleAxisLimits(plotConfigurationRow, plotID = plotConfigurationRow$plotID)
+      .validateLogScaleAxisLimits(
+        plotConfigurationRow,
+        plotID = plotConfigurationRow$plotID
+      )
       dataCombined <- dataCombinedList[[plotConfigurationRow$DataCombinedName]]
-      switch(dfPlotConfigurations$plotType[rowIndex],
+      switch(
+        dfPlotConfigurations$plotType[rowIndex],
         # Individual time profile
         individual = {
           defaultConfiguration <- formals(ospsuite::plotTimeProfile)
           ospsuite::plotTimeProfile(
             plotData = dataCombined,
-            xUnit = .fieldFromExcel("xUnit", plotConfigurationRow, defaultConfiguration),
-            yUnit = .fieldFromExcel("yUnit", plotConfigurationRow, defaultConfiguration),
-            xScale = .fieldFromExcel("xAxisScale", plotConfigurationRow, defaultConfiguration),
-            xScaleArgs = .fieldFromExcel("xValuesLimits", plotConfigurationRow, defaultConfiguration),
-            yScale = .fieldFromExcel("yAxisScale", plotConfigurationRow, defaultConfiguration),
-            yScaleArgs = .fieldFromExcel("yValuesLimits", plotConfigurationRow, defaultConfiguration)
+            xUnit = .fieldFromExcel(
+              "xUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            xScale = .fieldFromExcel(
+              "xAxisScale",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            xScaleArgs = .fieldFromExcel(
+              "xValuesLimits",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yScale = .fieldFromExcel(
+              "yAxisScale",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yScaleArgs = .fieldFromExcel(
+              "yValuesLimits",
+              plotConfigurationRow,
+              defaultConfiguration
+            )
           )
         },
         # Population time profile
@@ -371,28 +371,64 @@ createPlotsFromExcel <- function(
           defaultConfiguration <- formals(ospsuite::plotTimeProfile)
           ospsuite::plotTimeProfile(
             plotData = dataCombined,
-            xUnit = .fieldFromExcel("xUnit", plotConfigurationRow, defaultConfiguration),
-            yUnit = .fieldFromExcel("yUnit", plotConfigurationRow, defaultConfiguration),
-            aggregation = .fieldFromExcel("aggregation", plotConfigurationRow, defaultConfiguration),
-            quantiles = .fieldFromExcel("quantiles", plotConfigurationRow, defaultConfiguration),
-            nsd = .fieldFromExcel("nsd", plotConfigurationRow, defaultConfiguration)
+            xUnit = .fieldFromExcel(
+              "xUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            aggregation = .fieldFromExcel(
+              "aggregation",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            quantiles = .fieldFromExcel(
+              "quantiles",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            nsd = .fieldFromExcel(
+              "nsd",
+              plotConfigurationRow,
+              defaultConfiguration
+            )
           )
         },
         observedVsSimulated = {
           defaultConfiguration <- formals(ospsuite::plotPredictedVsObserved)
           ospsuite::plotPredictedVsObserved(
             plotData = dataCombined,
-            yUnit = .fieldFromExcel("yUnit", plotConfigurationRow, defaultConfiguration),
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
             # xyScale = .fieldFromExcel("xAxisScale", plotConfigurationRow, defaultConfiguration),
-            comparisonLineVector = .fieldFromExcel("foldDistance", plotConfigurationRow, defaultConfiguration)
+            comparisonLineVector = .fieldFromExcel(
+              "foldDistance",
+              plotConfigurationRow,
+              defaultConfiguration
+            )
           )
         },
         residualsVsSimulated = {
           defaultConfiguration <- formals(ospsuite::plotResidualsVsCovariate)
           ospsuite::plotResidualsVsCovariate(
             plotData = dataCombined,
-            xUnit = .fieldFromExcel("xUnit", plotConfigurationRow, defaultConfiguration),
-            yUnit = .fieldFromExcel("yUnit", plotConfigurationRow, defaultConfiguration),
+            xUnit = .fieldFromExcel(
+              "xUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
             xAxis = "predicted"
           )
         },
@@ -400,8 +436,16 @@ createPlotsFromExcel <- function(
           defaultConfiguration <- formals(ospsuite::plotResidualsVsCovariate)
           ospsuite::plotResidualsVsCovariate(
             plotData = dataCombined,
-            xUnit = .fieldFromExcel("xUnit", plotConfigurationRow, defaultConfiguration),
-            yUnit = .fieldFromExcel("yUnit", plotConfigurationRow, defaultConfiguration),
+            xUnit = .fieldFromExcel(
+              "xUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
             xAxis = "time"
           )
         }
@@ -514,11 +558,12 @@ createPlotsFromExcel <- function(
 #' @returns Parsed and validated vector
 #' @keywords internal
 .parseExcelMultiValueField <- function(
-    value,
-    fieldName,
-    plotID = NULL,
-    expectedLength = NULL,
-    expectedType = "numeric") {
+  value,
+  fieldName,
+  plotID = NULL,
+  expectedLength = NULL,
+  expectedType = "numeric"
+) {
   originalValue <- value
 
   # Parse using scan (existing method)
@@ -618,34 +663,34 @@ createPlotsFromExcel <- function(
   for (check in axisChecks) {
     scaleValue <- plotConfiguration[[check$scale]]
     for (limitsField in check$limits) {
-        limitsValue <- plotConfiguration[[limitsField]]
-        if (is.null(limitsValue)) {
-          next
-        }
-        if (is.na(limitsValue)) {
-          next
-        }
-        limitsValue <- .parseExcelMultiValueField(
-          limitsValue, 
+      limitsValue <- plotConfiguration[[limitsField]]
+      if (is.null(limitsValue)) {
+        next
+      }
+      if (is.na(limitsValue)) {
+        next
+      }
+      limitsValue <- .parseExcelMultiValueField(
+        limitsValue,
+        plotID = plotID,
+        fieldName = limitsField,
+        expectedLength = 2
+      )
+      if (is.null(scaleValue)) {
+        next
+      }
+      if (is.na(scaleValue)) {
+        next
+      }
+      if (all(scaleValue == "log", 0 %in% limitsValue)) {
+        warning(messages$warningLogScaleWithZeroLimit(
           plotID = plotID,
-          fieldName = limitsField, 
-          expectedLength = 2
-          )
-        if (is.null(scaleValue)) {
-          next
-        }
-        if (is.na(scaleValue)) {
-          next
-        }
-        if (all(scaleValue == "log", 0 %in% limitsValue)) {
-          warning(messages$warningLogScaleWithZeroLimit(
-            plotID = plotID,
-            axisLimitsField = limitsField,
-            axis = check$axis
-          ))
-        }
+          axisLimitsField = limitsField,
+          axis = check$axis
+        ))
       }
     }
+  }
   return(invisible())
 }
 
@@ -738,8 +783,9 @@ createPlotsFromExcel <- function(
 #' @returns Processed `dfPlotConfigurations`
 #' @keywords internal
 .validatePlotConfigurationFromExcel <- function(
-    dfPlotConfigurations,
-    dataCombinedNames) {
+  dfPlotConfigurations,
+  dataCombinedNames
+) {
   # mandatory column DataCombinedName is empty - throw error
   missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
   if (missingLabel > 0) {
@@ -826,8 +872,9 @@ createPlotsFromExcel <- function(
 #' @returns Processed `dfExportConfigurations`
 #' @keywords internal
 .validateExportConfigurationsFromExcel <- function(
-    dfExportConfigurations,
-    plotGrids) {
+  dfExportConfigurations,
+  plotGrids
+) {
   # mandatory column outputName is empty - throw warning, remove rows
   missingName <- sum(is.na(dfExportConfigurations$name))
   if (missingName > 0) {
@@ -904,9 +951,10 @@ createPlotsFromExcel <- function(
 #' @keywords internal
 #' @noRd
 .applyPlotConfiguration <- function(
-    defaultPlotConfiguration = NULL,
-    plotOverrideConfig = NULL,
-    ...) {
+  defaultPlotConfiguration = NULL,
+  plotOverrideConfig = NULL,
+  ...
+) {
   # validate input defaultPlotConfiguration
   if (is.null(defaultPlotConfiguration)) {
     defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
@@ -1147,8 +1195,14 @@ setESQTheme <- function() {
   # Elements to update to follow ESQLabs default convention
   ggplot2::theme_update(
     plot.title = ggplot2::element_text(size = 10, hjust = 0),
-    axis.title.x = ggplot2::element_text(size = 9, margin = ggplot2::margin(t = 10)),
-    axis.title.y = ggplot2::element_text(size = 9, margin = ggplot2::margin(r = 10)),
+    axis.title.x = ggplot2::element_text(
+      size = 9,
+      margin = ggplot2::margin(t = 10)
+    ),
+    axis.title.y = ggplot2::element_text(
+      size = 9,
+      margin = ggplot2::margin(r = 10)
+    ),
     # tick labels cannot use markdown because they need to be vectorised
     axis.text.x = ggplot2::element_text(size = 8),
     axis.text.y = ggplot2::element_text(size = 8, angle = 0),
@@ -1169,13 +1223,19 @@ setESQTheme <- function() {
 #' @param plotConfigurationRow Plot configuration table row
 #' @param defaultConfiguration Default ESQLabs values for the configuration
 #' @keywords internal
-.fieldFromExcel <- function(fieldName, plotConfigurationRow, defaultConfiguration = NULL) {
+.fieldFromExcel <- function(
+  fieldName,
+  plotConfigurationRow,
+  defaultConfiguration = NULL
+) {
   # Specific properties to assess and wrap
   if (fieldName %in% "foldDistance") {
     if (is.na(plotConfigurationRow[["foldDistance"]])) {
       return(defaultConfiguration[["comparisonLineVector"]])
     }
-    foldDistance <- .parseExcelMultiValueField(plotConfigurationRow[["foldDistance"]])
+    foldDistance <- .parseExcelMultiValueField(plotConfigurationRow[[
+      "foldDistance"
+    ]])
     return(ospsuite.plots::getFoldDistanceList(folds = foldDistance))
   }
   if (fieldName %in% c("xAxisScale", "yAxisScale")) {
@@ -1190,7 +1250,9 @@ setESQTheme <- function() {
     if (is.na(plotConfigurationRow[[fieldName]])) {
       return(list())
     }
-    valuesLimits <- .parseExcelMultiValueField(plotConfigurationRow[[fieldName]])
+    valuesLimits <- .parseExcelMultiValueField(plotConfigurationRow[[
+      fieldName
+    ]])
     return(list(limits = valuesLimits))
   }
   undefinedField <- any(
@@ -1198,7 +1260,7 @@ setESQTheme <- function() {
     is.na(plotConfigurationRow[[fieldName]])
   )
   if (undefinedField) {
-    if(is.language(defaultConfiguration[[fieldName]])){
+    if (is.language(defaultConfiguration[[fieldName]])) {
       return(eval(defaultConfiguration[[fieldName]]))
     }
     return(defaultConfiguration[[fieldName]])
@@ -1213,7 +1275,7 @@ setESQTheme <- function() {
 #' @returns A list
 #' @keywords internal
 .plotConfigurationFromType <- function(plotType = NULL) {
-  if(is.null(plotType)){
+  if (is.null(plotType)) {
     return(NULL)
   }
   if (plotType %in% "timeProfiles") {
