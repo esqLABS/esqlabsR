@@ -158,6 +158,20 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
+    #' @field parameterIdentificationFile Name of the excel file with parameter
+    #'   identification definitions.
+    #' Must be located in the "configurationsFolder".
+    parameterIdentificationFile = function(value) {
+      if (!missing(value)) {
+        private$.projectConfigurationData$parameterIdentificationFile$value <-
+          value
+        private$.modified <- TRUE
+      }
+      private$.clean_path(
+        private$.projectConfigurationData$parameterIdentificationFile$value,
+        self$configurationsFolder
+      )
+    },
     #' @field dataFolder Path to the folder where experimental data files are
     #'   located.
     dataFolder = function(value) {
@@ -272,6 +286,14 @@ ProjectConfiguration <- R6::R6Class(
         data$scenarioDefinitionFile <- NULL
         data$scenarioApplicationsFile <- NULL
         data$compoundPropertiesFile <- NULL
+      }
+
+      # Add parameterIdentificationFile if missing (pre-PI-workflow projects)
+      if (is.null(data$parameterIdentificationFile)) {
+        data$parameterIdentificationFile <- list(
+          value = NA,
+          description = "Name of the parameter identification configuration file"
+        )
       }
 
       # If one of the excel configuration is not expected, return an error.
@@ -480,6 +502,7 @@ ProjectConfiguration <- R6::R6Class(
           "Scenarios File" = self$scenariosFile,
           "Applications File" = self$applicationsFile,
           "Plots File" = self$plotsFile,
+          "Parameter Identification File" = self$parameterIdentificationFile,
           "Data File" = self$dataFile,
           "Data Importer Configuration File" = self$dataImporterConfigurationFile
         ),
@@ -526,6 +549,7 @@ ProjectConfiguration <- R6::R6Class(
         "scenariosFile",
         "applicationsFile",
         "plotsFile",
+        "parameterIdentificationFile",
         "dataFolder",
         "dataFile",
         "dataImporterConfigurationFile",

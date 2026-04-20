@@ -283,17 +283,9 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
     return(NULL)
   }
 
-  # Calling 'as.character' as sometimes empty cells in Excel are not recognized
-  # as chr NA, but some other NA, and strsplit fails.
-  proteinOntogenyMappings <- as.character(proteinOntogenyMappings)
   # Proteins/ontogenies mappings are separated by a ','
-  proteinOntogenyMappings <- unlist(strsplit(
-    x = proteinOntogenyMappings,
-    split = ",",
-    fixed = TRUE
-  ))
-  # Remove whitespaces
-  proteinOntogenyMappings <- trimws(proteinOntogenyMappings)
+  # Split comma-separated protein-ontogeny mappings
+  proteinOntogenyMappings <- .splitCommaString(proteinOntogenyMappings)
 
   moleculeOntogenies <- vector("list", length(proteinOntogenyMappings))
   for (i in seq_along(proteinOntogenyMappings)) {

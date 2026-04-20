@@ -51,6 +51,10 @@ Must be located in the "configurationsFolder".}
 \item{\code{plotsFile}}{Name of the excel file with plot definitions.
 Must be located in the "configurationsFolder".}
 
+\item{\code{parameterIdentificationFile}}{Name of the excel file with parameter
+identification definitions.
+Must be located in the "configurationsFolder".}
+
 \item{\code{dataFolder}}{Path to the folder where experimental data files are
 located.}
 

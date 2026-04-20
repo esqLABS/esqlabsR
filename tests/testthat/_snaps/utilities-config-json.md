@@ -38,7 +38,7 @@
       [1] "ModelParameters.xlsx"
       
       $projectConfiguration$rows[[3]]$Description
-      [1] "Name of the excel file with global model parametrization. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with global model parametrization. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[4]]
@@ -49,7 +49,7 @@
       [1] "Individuals.xlsx"
       
       $projectConfiguration$rows[[4]]$Description
-      [1] "Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with individual-specific model parametrization. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[5]]
@@ -60,7 +60,7 @@
       [1] "Populations.xlsx"
       
       $projectConfiguration$rows[[5]]$Description
-      [1] "Name of the excel file with population information. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with population information. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[6]]
@@ -82,7 +82,7 @@
       [1] "Scenarios.xlsx"
       
       $projectConfiguration$rows[[7]]$Description
-      [1] "Name of the excel file with scenario definitions. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with scenario definitions. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[8]]
@@ -93,7 +93,7 @@
       [1] "Applications.xlsx"
       
       $projectConfiguration$rows[[8]]$Description
-      [1] "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[9]]
@@ -104,61 +104,72 @@
       [1] "Plots.xlsx"
       
       $projectConfiguration$rows[[9]]$Description
-      [1] "Name of the excel file with plot definitions. Must be located in the \"paramsFolder\""
+      [1] "Name of the excel file with plot definitions. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[10]]
       $projectConfiguration$rows[[10]]$Property
-      [1] "dataFolder"
+      [1] "parameterIdentificationFile"
       
       $projectConfiguration$rows[[10]]$Value
-      [1] "Data/"
+      [1] "ParameterIdentification.xlsx"
       
       $projectConfiguration$rows[[10]]$Description
-      [1] "Path to the folder where experimental data files are located; relative to the location of this file"
+      [1] "Name of the excel file with parameter identification task definitions. Must be located in the \"configurationsFolder\""
       
       
       $projectConfiguration$rows[[11]]
       $projectConfiguration$rows[[11]]$Property
-      [1] "dataFile"
+      [1] "dataFolder"
       
       $projectConfiguration$rows[[11]]$Value
-      [1] "TestProject_TimeValuesData.xlsx"
+      [1] "Data/"
       
       $projectConfiguration$rows[[11]]$Description
-      [1] "Name of the excel file with experimental data. Must be located in the \"dataFolder\""
+      [1] "Path to the folder where experimental data files are located; relative to the location of this file"
       
       
       $projectConfiguration$rows[[12]]
       $projectConfiguration$rows[[12]]$Property
-      [1] "dataImporterConfigurationFile"
+      [1] "dataFile"
       
       $projectConfiguration$rows[[12]]$Value
-      [1] "esqlabs_dataImporter_configuration.xml"
+      [1] "TestProject_TimeValuesData.xlsx"
       
       $projectConfiguration$rows[[12]]$Description
-      [1] "Name of data importer configuration file in xml format used to load the data. Must be located in the \"dataFolder\""
+      [1] "Name of the excel file with experimental data. Must be located in the \"dataFolder\""
       
       
       $projectConfiguration$rows[[13]]
       $projectConfiguration$rows[[13]]$Property
-      [1] "outputFolder"
+      [1] "dataImporterConfigurationFile"
       
       $projectConfiguration$rows[[13]]$Value
-      [1] "Results/"
+      [1] "esqlabs_dataImporter_configuration.xml"
       
       $projectConfiguration$rows[[13]]$Description
-      [1] "Path to the folder where the results should be saved to; relative to the location of this file"
+      [1] "Name of data importer configuration file in xml format used to load the data. Must be located in the \"dataFolder\""
       
       
       $projectConfiguration$rows[[14]]
       $projectConfiguration$rows[[14]]$Property
-      [1] "esqlabsRVersion"
+      [1] "outputFolder"
       
       $projectConfiguration$rows[[14]]$Value
-      [1] "5.6.0.9002"
+      [1] "Results/"
       
       $projectConfiguration$rows[[14]]$Description
+      [1] "Path to the folder where the results should be saved to; relative to the location of this file"
+      
+      
+      $projectConfiguration$rows[[15]]
+      $projectConfiguration$rows[[15]]$Property
+      [1] "esqlabsRVersion"
+      
+      $projectConfiguration$rows[[15]]$Value
+      [1] "5.6.0.9002"
+      
+      $projectConfiguration$rows[[15]]$Description
       [1] "Version of the esqlabsR package used to create this configuration"
       
       
@@ -652,6 +663,129 @@
       [1] NA
       
       
+      $Scenarios$Scenarios$rows[[6]]
+      $Scenarios$Scenarios$rows[[6]]$Scenario_name
+      [1] "PITestScenario"
+      
+      $Scenarios$Scenarios$rows[[6]]$IndividualId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$PopulationId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$ReadPopulationFromCSV
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$ModelParameterSheets
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$ApplicationProtocol
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SimulationTime
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SimulationTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SteadyState
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SteadyStateTime
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[6]]$ModelFile
+      [1] "Aciclovir.pkml"
+      
+      $Scenarios$Scenarios$rows[[6]]$OutputPathsIds
+      [1] NA
+      
+      
+      $Scenarios$Scenarios$rows[[7]]
+      $Scenarios$Scenarios$rows[[7]]$Scenario_name
+      [1] "PIScenario_250mg"
+      
+      $Scenarios$Scenarios$rows[[7]]$IndividualId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$PopulationId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$ReadPopulationFromCSV
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$ModelParameterSheets
+      [1] "Aciclovir"
+      
+      $Scenarios$Scenarios$rows[[7]]$ApplicationProtocol
+      [1] "Protocol_250mg"
+      
+      $Scenarios$Scenarios$rows[[7]]$SimulationTime
+      [1] "0,120,1"
+      
+      $Scenarios$Scenarios$rows[[7]]$SimulationTimeUnit
+      [1] "h"
+      
+      $Scenarios$Scenarios$rows[[7]]$SteadyState
+      [1] "FALSE"
+      
+      $Scenarios$Scenarios$rows[[7]]$SteadyStateTime
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$ModelFile
+      [1] "Aciclovir.pkml"
+      
+      $Scenarios$Scenarios$rows[[7]]$OutputPathsIds
+      [1] NA
+      
+      
+      $Scenarios$Scenarios$rows[[8]]
+      $Scenarios$Scenarios$rows[[8]]$Scenario_name
+      [1] "PIScenario_500mg"
+      
+      $Scenarios$Scenarios$rows[[8]]$IndividualId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$PopulationId
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$ReadPopulationFromCSV
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$ModelParameterSheets
+      [1] "Aciclovir"
+      
+      $Scenarios$Scenarios$rows[[8]]$ApplicationProtocol
+      [1] "Protocol_500mg"
+      
+      $Scenarios$Scenarios$rows[[8]]$SimulationTime
+      [1] "0,120,1"
+      
+      $Scenarios$Scenarios$rows[[8]]$SimulationTimeUnit
+      [1] "h"
+      
+      $Scenarios$Scenarios$rows[[8]]$SteadyState
+      [1] "FALSE"
+      
+      $Scenarios$Scenarios$rows[[8]]$SteadyStateTime
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[8]]$ModelFile
+      [1] "Aciclovir.pkml"
+      
+      $Scenarios$Scenarios$rows[[8]]$OutputPathsIds
+      [1] NA
+      
+      
       
       
       $Scenarios$OutputPaths
@@ -695,6 +829,48 @@
       [1] "250"
       
       $Applications$Aciclovir_iv_250mg$rows[[1]]$Units
+      [1] "mg"
+      
+      
+      
+      
+      $Applications$Protocol_250mg
+      $Applications$Protocol_250mg$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $Applications$Protocol_250mg$rows
+      $Applications$Protocol_250mg$rows[[1]]
+      $Applications$Protocol_250mg$rows[[1]]$`Container Path`
+      [1] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      
+      $Applications$Protocol_250mg$rows[[1]]$`Parameter Name`
+      [1] "Dose"
+      
+      $Applications$Protocol_250mg$rows[[1]]$Value
+      [1] "250"
+      
+      $Applications$Protocol_250mg$rows[[1]]$Units
+      [1] "mg"
+      
+      
+      
+      
+      $Applications$Protocol_500mg
+      $Applications$Protocol_500mg$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $Applications$Protocol_500mg$rows
+      $Applications$Protocol_500mg$rows[[1]]
+      $Applications$Protocol_500mg$rows[[1]]$`Container Path`
+      [1] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      
+      $Applications$Protocol_500mg$rows[[1]]$`Parameter Name`
+      [1] "Dose"
+      
+      $Applications$Protocol_500mg$rows[[1]]$Value
+      [1] "500"
+      
+      $Applications$Protocol_500mg$rows[[1]]$Units
       [1] "mg"
       
       
@@ -1186,6 +1362,442 @@
       
       $Plots$ObservedDataNames$rows
       list()
+      
+      
+      
+      $ParameterIdentification
+      $ParameterIdentification$PIOutputMappings
+      $ParameterIdentification$PIOutputMappings$column_names
+       [1] "PITaskName"        "Scenarios"         "OutputPath"       
+       [4] "ObservedDataSheet" "DataSet"           "Scaling"          
+       [7] "xOffset"           "yOffset"           "xFactor"          
+      [10] "yFactor"           "Weight"           
+      
+      $ParameterIdentification$PIOutputMappings$rows
+      $ParameterIdentification$PIOutputMappings$rows[[1]]
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$PITaskName
+      [1] "AciclovirSimple"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$Scenarios
+      [1] "PITestScenario"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$OutputPath
+      [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$ObservedDataSheet
+      [1] "Laskin 1982.Group A"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$DataSet
+      [1] "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$Scaling
+      [1] "lin"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$xOffset
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$yOffset
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$xFactor
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$yFactor
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[1]]$Weight
+      [1] NA
+      
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$PITaskName
+      [1] "AciclovirSimplePathId"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$Scenarios
+      [1] "PITestScenario"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$OutputPath
+      [1] "Aciclovir_PVB"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$ObservedDataSheet
+      [1] "Laskin 1982.Group A"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$DataSet
+      [1] "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$Scaling
+      [1] "lin"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$xOffset
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$yOffset
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$xFactor
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$yFactor
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[2]]$Weight
+      [1] NA
+      
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$PITaskName
+      [1] "AciclovirMultiScenario"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$Scenarios
+      [1] "PIScenario_250mg"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$OutputPath
+      [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$ObservedDataSheet
+      [1] "Laskin 1982.Group A"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$DataSet
+      [1] "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$Scaling
+      [1] "log"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$xOffset
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$yOffset
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$xFactor
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$yFactor
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[3]]$Weight
+      [1] NA
+      
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$PITaskName
+      [1] "AciclovirMultiScenario"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$Scenarios
+      [1] "PIScenario_500mg"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$OutputPath
+      [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$ObservedDataSheet
+      [1] "Laskin 1982.Group A"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$DataSet
+      [1] "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5.0 mg/kg_iv_"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$Scaling
+      [1] "log"
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$xOffset
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$yOffset
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$xFactor
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$yFactor
+      [1] NA
+      
+      $ParameterIdentification$PIOutputMappings$rows[[4]]$Weight
+      [1] NA
+      
+      
+      
+      
+      $ParameterIdentification$PIParameters
+      $ParameterIdentification$PIParameters$column_names
+      [1] "PITaskName"     "Scenarios"      "Container Path" "Parameter Name"
+      [5] "Units"          "MinValue"       "MaxValue"       "StartValue"    
+      [9] "Group"         
+      
+      $ParameterIdentification$PIParameters$rows
+      $ParameterIdentification$PIParameters$rows[[1]]
+      $ParameterIdentification$PIParameters$rows[[1]]$PITaskName
+      [1] "AciclovirSimple"
+      
+      $ParameterIdentification$PIParameters$rows[[1]]$Scenarios
+      [1] "PITestScenario"
+      
+      $ParameterIdentification$PIParameters$rows[[1]]$`Container Path`
+      [1] "Aciclovir"
+      
+      $ParameterIdentification$PIParameters$rows[[1]]$`Parameter Name`
+      [1] "Lipophilicity"
+      
+      $ParameterIdentification$PIParameters$rows[[1]]$Units
+      [1] "Log Units"
+      
+      $ParameterIdentification$PIParameters$rows[[1]]$MinValue
+      [1] "-10"
+      
+      $ParameterIdentification$PIParameters$rows[[1]]$MaxValue
+      [1] "10"
+      
+      $ParameterIdentification$PIParameters$rows[[1]]$StartValue
+      [1] "1"
+      
+      $ParameterIdentification$PIParameters$rows[[1]]$Group
+      [1] "1"
+      
+      
+      $ParameterIdentification$PIParameters$rows[[2]]
+      $ParameterIdentification$PIParameters$rows[[2]]$PITaskName
+      [1] "AciclovirSimplePathId"
+      
+      $ParameterIdentification$PIParameters$rows[[2]]$Scenarios
+      [1] "PITestScenario"
+      
+      $ParameterIdentification$PIParameters$rows[[2]]$`Container Path`
+      [1] "Aciclovir"
+      
+      $ParameterIdentification$PIParameters$rows[[2]]$`Parameter Name`
+      [1] "Lipophilicity"
+      
+      $ParameterIdentification$PIParameters$rows[[2]]$Units
+      [1] "Log Units"
+      
+      $ParameterIdentification$PIParameters$rows[[2]]$MinValue
+      [1] "-10"
+      
+      $ParameterIdentification$PIParameters$rows[[2]]$MaxValue
+      [1] "10"
+      
+      $ParameterIdentification$PIParameters$rows[[2]]$StartValue
+      [1] "1"
+      
+      $ParameterIdentification$PIParameters$rows[[2]]$Group
+      [1] "1"
+      
+      
+      $ParameterIdentification$PIParameters$rows[[3]]
+      $ParameterIdentification$PIParameters$rows[[3]]$PITaskName
+      [1] "AciclovirMultiScenario"
+      
+      $ParameterIdentification$PIParameters$rows[[3]]$Scenarios
+      [1] "PIScenario_250mg"
+      
+      $ParameterIdentification$PIParameters$rows[[3]]$`Container Path`
+      [1] "Aciclovir"
+      
+      $ParameterIdentification$PIParameters$rows[[3]]$`Parameter Name`
+      [1] "Lipophilicity"
+      
+      $ParameterIdentification$PIParameters$rows[[3]]$Units
+      [1] "Log Units"
+      
+      $ParameterIdentification$PIParameters$rows[[3]]$MinValue
+      [1] "-10"
+      
+      $ParameterIdentification$PIParameters$rows[[3]]$MaxValue
+      [1] "10"
+      
+      $ParameterIdentification$PIParameters$rows[[3]]$StartValue
+      [1] "1"
+      
+      $ParameterIdentification$PIParameters$rows[[3]]$Group
+      [1] "1"
+      
+      
+      $ParameterIdentification$PIParameters$rows[[4]]
+      $ParameterIdentification$PIParameters$rows[[4]]$PITaskName
+      [1] "AciclovirMultiScenario"
+      
+      $ParameterIdentification$PIParameters$rows[[4]]$Scenarios
+      [1] "PIScenario_500mg"
+      
+      $ParameterIdentification$PIParameters$rows[[4]]$`Container Path`
+      [1] "Aciclovir"
+      
+      $ParameterIdentification$PIParameters$rows[[4]]$`Parameter Name`
+      [1] "Lipophilicity"
+      
+      $ParameterIdentification$PIParameters$rows[[4]]$Units
+      [1] "Log Units"
+      
+      $ParameterIdentification$PIParameters$rows[[4]]$MinValue
+      [1] "-10"
+      
+      $ParameterIdentification$PIParameters$rows[[4]]$MaxValue
+      [1] "10"
+      
+      $ParameterIdentification$PIParameters$rows[[4]]$StartValue
+      [1] "1"
+      
+      $ParameterIdentification$PIParameters$rows[[4]]$Group
+      [1] "1"
+      
+      
+      $ParameterIdentification$PIParameters$rows[[5]]
+      $ParameterIdentification$PIParameters$rows[[5]]$PITaskName
+      [1] "AciclovirMultiScenario"
+      
+      $ParameterIdentification$PIParameters$rows[[5]]$Scenarios
+      [1] "PIScenario_250mg"
+      
+      $ParameterIdentification$PIParameters$rows[[5]]$`Container Path`
+      [1] "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir"
+      
+      $ParameterIdentification$PIParameters$rows[[5]]$`Parameter Name`
+      [1] "TSspec"
+      
+      $ParameterIdentification$PIParameters$rows[[5]]$Units
+      [1] NA
+      
+      $ParameterIdentification$PIParameters$rows[[5]]$MinValue
+      [1] "0"
+      
+      $ParameterIdentification$PIParameters$rows[[5]]$MaxValue
+      [1] "10"
+      
+      $ParameterIdentification$PIParameters$rows[[5]]$StartValue
+      [1] "0.5"
+      
+      $ParameterIdentification$PIParameters$rows[[5]]$Group
+      [1] "2"
+      
+      
+      $ParameterIdentification$PIParameters$rows[[6]]
+      $ParameterIdentification$PIParameters$rows[[6]]$PITaskName
+      [1] "AciclovirMultiScenario"
+      
+      $ParameterIdentification$PIParameters$rows[[6]]$Scenarios
+      [1] "PIScenario_500mg"
+      
+      $ParameterIdentification$PIParameters$rows[[6]]$`Container Path`
+      [1] "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir"
+      
+      $ParameterIdentification$PIParameters$rows[[6]]$`Parameter Name`
+      [1] "TSspec"
+      
+      $ParameterIdentification$PIParameters$rows[[6]]$Units
+      [1] NA
+      
+      $ParameterIdentification$PIParameters$rows[[6]]$MinValue
+      [1] "0"
+      
+      $ParameterIdentification$PIParameters$rows[[6]]$MaxValue
+      [1] "10"
+      
+      $ParameterIdentification$PIParameters$rows[[6]]$StartValue
+      [1] "0.5"
+      
+      $ParameterIdentification$PIParameters$rows[[6]]$Group
+      [1] "3"
+      
+      
+      
+      
+      $ParameterIdentification$PIConfiguration
+      $ParameterIdentification$PIConfiguration$column_names
+       [1] "PITaskName"              "Algorithm"              
+       [3] "CIMethod"                "PrintEvaluationFeedback"
+       [5] "AutoEstimateCI"          "numberOfCores"          
+       [7] "checkForNegativeValues"  "ObjectiveFunctionType"  
+       [9] "ResidualWeightingMethod" "RobustMethod"           
+      [11] "ScaleVar"                "LinScaleCV"             
+      [13] "LogScaleSD"             
+      
+      $ParameterIdentification$PIConfiguration$rows
+      $ParameterIdentification$PIConfiguration$rows[[1]]
+      $ParameterIdentification$PIConfiguration$rows[[1]]$PITaskName
+      [1] "AciclovirSimple"
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$Algorithm
+      [1] "BOBYQA"
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$CIMethod
+      [1] "hessian"
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$PrintEvaluationFeedback
+      [1] "TRUE"
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$AutoEstimateCI
+      [1] "FALSE"
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$numberOfCores
+      [1] NA
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$checkForNegativeValues
+      [1] NA
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$ObjectiveFunctionType
+      [1] NA
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$ResidualWeightingMethod
+      [1] NA
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$RobustMethod
+      [1] NA
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$ScaleVar
+      [1] NA
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$LinScaleCV
+      [1] NA
+      
+      $ParameterIdentification$PIConfiguration$rows[[1]]$LogScaleSD
+      [1] NA
+      
+      
+      
+      
+      $ParameterIdentification$AlgorithmOptions
+      $ParameterIdentification$AlgorithmOptions$column_names
+      [1] "PITaskName"  "OptionName"  "OptionValue"
+      
+      $ParameterIdentification$AlgorithmOptions$rows
+      $ParameterIdentification$AlgorithmOptions$rows[[1]]
+      $ParameterIdentification$AlgorithmOptions$rows[[1]]$PITaskName
+      [1] "AciclovirSimple"
+      
+      $ParameterIdentification$AlgorithmOptions$rows[[1]]$OptionName
+      [1] "maxeval"
+      
+      $ParameterIdentification$AlgorithmOptions$rows[[1]]$OptionValue
+      [1] "100"
+      
+      
+      $ParameterIdentification$AlgorithmOptions$rows[[2]]
+      $ParameterIdentification$AlgorithmOptions$rows[[2]]$PITaskName
+      [1] "AciclovirSimple"
+      
+      $ParameterIdentification$AlgorithmOptions$rows[[2]]$OptionName
+      [1] "ftol_rel"
+      
+      $ParameterIdentification$AlgorithmOptions$rows[[2]]$OptionValue
+      [1] "0"
+      
+      
+      
+      
+      $ParameterIdentification$CIOptions
+      $ParameterIdentification$CIOptions$column_names
+      [1] "PITaskName"  "OptionName"  "OptionValue"
+      
+      $ParameterIdentification$CIOptions$rows
+      $ParameterIdentification$CIOptions$rows[[1]]
+      $ParameterIdentification$CIOptions$rows[[1]]$PITaskName
+      [1] "AciclovirSimple"
+      
+      $ParameterIdentification$CIOptions$rows[[1]]$OptionName
+      [1] "confLevel"
+      
+      $ParameterIdentification$CIOptions$rows[[1]]$OptionValue
+      [1] "0.95"
+      
+      
       
       
       
@@ -1922,26 +2534,28 @@
       7                  scenariosFile                         Scenarios.xlsx
       8               applicationsFile                      Applications.xlsx
       9                      plotsFile                             Plots.xlsx
-      10                    dataFolder                                  Data/
-      11                      dataFile        TestProject_TimeValuesData.xlsx
-      12 dataImporterConfigurationFile esqlabs_dataImporter_configuration.xml
-      13                  outputFolder                               Results/
-      14               esqlabsRVersion                             5.6.0.9002
-                                                                                                                                Description
-      1                                                Path to the folder with pkml simulation files; relative to the location of this file
-      2                                     Path to the folder with excel files with parametrization; relative to the location of this file
-      3                                     Name of the excel file with global model parametrization. Must be located in the "paramsFolder"
-      4                        Name of the excel file with individual-specific model parametrization. Must be located in the "paramsFolder"
-      5                                           Name of the excel file with population information. Must be located in the "paramsFolder"
-      6                                                                           Name of the folder containing population defined in files
-      7                                             Name of the excel file with scenario definitions. Must be located in the "paramsFolder"
-      8  Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the "paramsFolder"
-      9                                                 Name of the excel file with plot definitions. Must be located in the "paramsFolder"
-      10                                Path to the folder where experimental data files are located; relative to the location of this file
-      11                                                 Name of the excel file with experimental data. Must be located in the "dataFolder"
-      12                  Name of data importer configuration file in xml format used to load the data. Must be located in the "dataFolder"
-      13                                     Path to the folder where the results should be saved to; relative to the location of this file
-      14                                                                  Version of the esqlabsR package used to create this configuration
+      10   parameterIdentificationFile           ParameterIdentification.xlsx
+      11                    dataFolder                                  Data/
+      12                      dataFile        TestProject_TimeValuesData.xlsx
+      13 dataImporterConfigurationFile esqlabs_dataImporter_configuration.xml
+      14                  outputFolder                               Results/
+      15               esqlabsRVersion                             5.6.0.9002
+                                                                                                                                        Description
+      1                                                        Path to the folder with pkml simulation files; relative to the location of this file
+      2                                             Path to the folder with excel files with parametrization; relative to the location of this file
+      3                                     Name of the excel file with global model parametrization. Must be located in the "configurationsFolder"
+      4                        Name of the excel file with individual-specific model parametrization. Must be located in the "configurationsFolder"
+      5                                           Name of the excel file with population information. Must be located in the "configurationsFolder"
+      6                                                                                   Name of the folder containing population defined in files
+      7                                             Name of the excel file with scenario definitions. Must be located in the "configurationsFolder"
+      8  Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the "configurationsFolder"
+      9                                                 Name of the excel file with plot definitions. Must be located in the "configurationsFolder"
+      10                       Name of the excel file with parameter identification task definitions. Must be located in the "configurationsFolder"
+      11                                        Path to the folder where experimental data files are located; relative to the location of this file
+      12                                                         Name of the excel file with experimental data. Must be located in the "dataFolder"
+      13                          Name of data importer configuration file in xml format used to load the data. Must be located in the "dataFolder"
+      14                                             Path to the folder where the results should be saved to; relative to the location of this file
+      15                                                                          Version of the esqlabsR package used to create this configuration
       
       
       $modelParameterSets
@@ -2054,24 +2668,36 @@
       3        PopulationScenario       Indiv1 TestPopulation                 FALSE
       4 PopulationScenarioFromCSV       Indiv1 TestPopulation                  TRUE
       5 TestScenario_missingParam       Indiv1           <NA>                  <NA>
+      6            PITestScenario         <NA>           <NA>                  <NA>
+      7          PIScenario_250mg         <NA>           <NA>                  <NA>
+      8          PIScenario_500mg         <NA>           <NA>                  <NA>
                               ModelParameterSheets ApplicationProtocol
       1                                     Global  Aciclovir_iv_250mg
       2 "Global", "Aciclovir", "Sheet, with comma"  Aciclovir_iv_250mg
       3                                     Global  Aciclovir_iv_250mg
       4                                     Global  Aciclovir_iv_250mg
       5                       Global, MissingParam  Aciclovir_iv_250mg
+      6                                       <NA>                <NA>
+      7                                  Aciclovir      Protocol_250mg
+      8                                  Aciclovir      Protocol_500mg
              SimulationTime SimulationTimeUnit SteadyState SteadyStateTime
       1           0, 24, 60                  h        <NA>            <NA>
       2 0, 1, 60; 1, 12, 20                  h        TRUE             500
       3           0, 12, 20                  h       FALSE            <NA>
       4           0, 12, 20                  h       FALSE            <NA>
       5           0, 24, 60                  h        <NA>            <NA>
+      6                <NA>               <NA>        <NA>            <NA>
+      7             0,120,1                  h       FALSE            <NA>
+      8             0,120,1                  h       FALSE            <NA>
         SteadyStateTimeUnit      ModelFile                    OutputPathsIds
       1                <NA> Aciclovir.pkml                     Aciclovir_PVB
       2                 min Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
       3                <NA> Aciclovir.pkml                              <NA>
       4                <NA> Aciclovir.pkml                              <NA>
       5                <NA> Aciclovir.pkml                              <NA>
+      6                <NA> Aciclovir.pkml                              <NA>
+      7                <NA> Aciclovir.pkml                              <NA>
+      8                <NA> Aciclovir.pkml                              <NA>
       
       
       $Scenarios$OutputPaths
@@ -2096,6 +2722,28 @@
       $Applications$Aciclovir_iv_250mg$rows
                                                 Container Path Parameter Name Value
       1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   250
+        Units
+      1    mg
+      
+      
+      $Applications$Protocol_250mg
+      $Applications$Protocol_250mg$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $Applications$Protocol_250mg$rows
+                                                Container Path Parameter Name Value
+      1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   250
+        Units
+      1    mg
+      
+      
+      $Applications$Protocol_500mg
+      $Applications$Protocol_500mg$column_names
+      [1] "Container Path" "Parameter Name" "Value"          "Units"         
+      
+      $Applications$Protocol_500mg$rows
+                                                Container Path Parameter Name Value
+      1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   500
         Units
       1    mg
       
@@ -2210,6 +2858,111 @@
       
       $Plots$ObservedDataNames$rows
       list()
+      
+      
+      
+      $ParameterIdentification
+      $ParameterIdentification$PIOutputMappings
+      $ParameterIdentification$PIOutputMappings$column_names
+       [1] "PITaskName"        "Scenarios"         "OutputPath"       
+       [4] "ObservedDataSheet" "DataSet"           "Scaling"          
+       [7] "xOffset"           "yOffset"           "xFactor"          
+      [10] "yFactor"           "Weight"           
+      
+      $ParameterIdentification$PIOutputMappings$rows
+                    PITaskName        Scenarios
+      1        AciclovirSimple   PITestScenario
+      2  AciclovirSimplePathId   PITestScenario
+      3 AciclovirMultiScenario PIScenario_250mg
+      4 AciclovirMultiScenario PIScenario_500mg
+                                                                       OutputPath
+      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+      2                                                             Aciclovir_PVB
+      3 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+      4 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+          ObservedDataSheet
+      1 Laskin 1982.Group A
+      2 Laskin 1982.Group A
+      3 Laskin 1982.Group A
+      4 Laskin 1982.Group A
+                                                                                      DataSet
+      1 Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_
+      2 Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_
+      3 Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_
+      4 Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5.0 mg/kg_iv_
+        Scaling xOffset yOffset xFactor yFactor Weight
+      1     lin      NA      NA      NA      NA     NA
+      2     lin      NA      NA      NA      NA     NA
+      3     log      NA      NA      NA      NA     NA
+      4     log      NA      NA      NA      NA     NA
+      
+      
+      $ParameterIdentification$PIParameters
+      $ParameterIdentification$PIParameters$column_names
+      [1] "PITaskName"     "Scenarios"      "Container Path" "Parameter Name"
+      [5] "Units"          "MinValue"       "MaxValue"       "StartValue"    
+      [9] "Group"         
+      
+      $ParameterIdentification$PIParameters$rows
+                    PITaskName        Scenarios
+      1        AciclovirSimple   PITestScenario
+      2  AciclovirSimplePathId   PITestScenario
+      3 AciclovirMultiScenario PIScenario_250mg
+      4 AciclovirMultiScenario PIScenario_500mg
+      5 AciclovirMultiScenario PIScenario_250mg
+      6 AciclovirMultiScenario PIScenario_500mg
+                                                                    Container Path
+      1                                                                  Aciclovir
+      2                                                                  Aciclovir
+      3                                                                  Aciclovir
+      4                                                                  Aciclovir
+      5 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir
+      6 Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir
+        Parameter Name     Units MinValue MaxValue StartValue Group
+      1  Lipophilicity Log Units      -10       10          1     1
+      2  Lipophilicity Log Units      -10       10          1     1
+      3  Lipophilicity Log Units      -10       10          1     1
+      4  Lipophilicity Log Units      -10       10          1     1
+      5         TSspec      <NA>        0       10        0.5     2
+      6         TSspec      <NA>        0       10        0.5     3
+      
+      
+      $ParameterIdentification$PIConfiguration
+      $ParameterIdentification$PIConfiguration$column_names
+       [1] "PITaskName"              "Algorithm"              
+       [3] "CIMethod"                "PrintEvaluationFeedback"
+       [5] "AutoEstimateCI"          "numberOfCores"          
+       [7] "checkForNegativeValues"  "ObjectiveFunctionType"  
+       [9] "ResidualWeightingMethod" "RobustMethod"           
+      [11] "ScaleVar"                "LinScaleCV"             
+      [13] "LogScaleSD"             
+      
+      $ParameterIdentification$PIConfiguration$rows
+             PITaskName Algorithm CIMethod PrintEvaluationFeedback AutoEstimateCI
+      1 AciclovirSimple    BOBYQA  hessian                    TRUE          FALSE
+        numberOfCores checkForNegativeValues ObjectiveFunctionType
+      1            NA                     NA                    NA
+        ResidualWeightingMethod RobustMethod ScaleVar LinScaleCV LogScaleSD
+      1                      NA           NA       NA         NA         NA
+      
+      
+      $ParameterIdentification$AlgorithmOptions
+      $ParameterIdentification$AlgorithmOptions$column_names
+      [1] "PITaskName"  "OptionName"  "OptionValue"
+      
+      $ParameterIdentification$AlgorithmOptions$rows
+             PITaskName OptionName OptionValue
+      1 AciclovirSimple    maxeval         100
+      2 AciclovirSimple   ftol_rel           0
+      
+      
+      $ParameterIdentification$CIOptions
+      $ParameterIdentification$CIOptions$column_names
+      [1] "PITaskName"  "OptionName"  "OptionValue"
+      
+      $ParameterIdentification$CIOptions$rows
+             PITaskName OptionName OptionValue
+      1 AciclovirSimple  confLevel        0.95
       
       
       
@@ -2535,6 +3288,9 @@
       $file_status$Plots
       [1] "out-of-sync"
       
+      $file_status$ParameterIdentification
+      [1] "in-sync"
+      
       
       $file_changes
       NULL
@@ -2577,6 +3333,9 @@
       $file_status$Plots
       [1] "in-sync"
       
+      $file_status$ParameterIdentification
+      [1] "in-sync"
+      
       
       $file_changes
       NULL
@@ -2616,6 +3375,9 @@
       
       $file_status$Plots
       [1] "out-of-sync"
+      
+      $file_status$ParameterIdentification
+      [1] "in-sync"
       
       
       $file_changes
