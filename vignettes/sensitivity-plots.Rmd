@@ -142,7 +142,7 @@ To explicitly control the appearance of your plots, create and modify a
 configuration object as shown below:
 
 ```{r plot-config}
-myConfiguration <- createEsqlabsPlotConfiguration()
+myConfiguration <- createEsqlabsPlotConfiguration("spiderPlot")
 
 myConfiguration$linesColor <- c("#4D8076", "#C34A36")
 myConfiguration$title <- "Aciclovir - Peripheral Venous Blood"
