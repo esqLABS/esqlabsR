@@ -116,37 +116,160 @@ following sections.
 
 For more advanced users or when working programmatically, `esqlabsR`
 provides functions to create scenario configurations directly from PKML
-files, bypassing the need to manually create Excel files:
+files, bypassing the need to manually fill in Excel files:
 
 - [`createScenarioConfigurationsFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.md):
-  Creates scenario configurations from PKML files by extracting
-  simulation settings, applications, and output paths.
+  Creates scenario configurations from PKML files by automatically
+  extracting simulation settings, applications, and output paths.
 - [`addScenarioConfigurationsToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenarioConfigurationsToExcel.md):
-  Adds scenario configurations to the project Excel files for later use.
+  Writes those configurations to the project’s Excel files
+  (`Scenarios.xlsx` and `Applications.xlsx`) so they can be used in the
+  standard `esqlabsR` workflow.
 
-This approach is particularly useful when: - You have multiple PKML
-files to convert into scenarios - You want to automate scenario
-creation - You’re working with simulation files that already contain the
-needed configuration
+This approach is particularly useful when:
 
-Example usage:
+- You have multiple PKML files to convert into scenarios at once.
+- You want to automate or script scenario creation.
+- Your simulation files already contain the settings you need
+  (applications, output paths, simulation time).
+
+### What is automatically extracted from the PKML file
+
+When you call
+[`createScenarioConfigurationsFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.md)
+without providing an argument for a particular setting, the function
+reads it directly from the PKML file:
+
+| Extracted from PKML               | Corresponding argument | Fallback                                          |
+|-----------------------------------|------------------------|---------------------------------------------------|
+| Application protocol names        | `applicationProtocols` | Scenario name                                     |
+| Output paths (`outputSelections`) | `outputPaths`          | Simulation outputs defined in the PKML/simulation |
+| Simulation time intervals         | `simulationTime`       | (none)                                            |
+| Simulation time unit              | `simulationTimeUnit`   | `"min"`                                           |
+
+You can override any of these by supplying the corresponding argument
+explicitly.
+
+### Basic workflow
+
+The typical workflow for this approach consists of two steps:
+
+**Step 1 — Create scenario configurations from PKML:**
 
 ``` r
-# Create scenarios from PKML files
-scenarioConfigs <- createScenarioConfigurationsFromPKML(
-  pkmlFilePaths = c("Model1.pkml", "Model2.pkml"),
+projectConfiguration <- createProjectConfiguration("path/to/project/ProjectConfiguration.xlsx")
+
+scenarios <- createScenarioConfigurationsFromPKML(
+  pkmlFilePaths = "Models/Simulations/simulation.pkml",
+  projectConfiguration = projectConfiguration
+)
+```
+
+**Step 2 — Write them to the project Excel files:**
+
+``` r
+addScenarioConfigurationsToExcel(
+  scenarioConfigurations = scenarios,
+  projectConfiguration = projectConfiguration
+)
+```
+
+That’s all. After calling
+[`addScenarioConfigurationsToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenarioConfigurationsToExcel.md),
+the scenario appears in `Scenarios.xlsx` and any application protocol
+parameters are written to `Applications.xlsx`, ready to be used with
+[`createScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarios.md).
+
+### Working with multiple PKML files
+
+Pass a character vector of paths to create one scenario per file. Use
+`scenarioNames` to give each scenario a meaningful name (otherwise the
+simulation name stored inside the PKML is used):
+
+``` r
+scenarios <- createScenarioConfigurationsFromPKML(
+  pkmlFilePaths = c(
+    "Models/Simulations/adult.pkml",
+    "Models/Simulations/pediatric.pkml"
+  ),
   projectConfiguration = projectConfiguration,
-  scenarioNames = c("Scenario1", "Scenario2"),
-  outputPaths = c(
-    "plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration",
-    "liver" = "Organism|Liver|Intracellular|Drug|Concentration"
-  )
+  scenarioNames = c("Adult", "Pediatric")
 )
 
-# Add them to the project Excel files
 addScenarioConfigurationsToExcel(
-  scenarioConfigurations = scenarioConfigs,
+  scenarioConfigurations = scenarios,
   projectConfiguration = projectConfiguration
+)
+```
+
+### Vector recycling — same PKML, different settings
+
+All arguments support vectorization. A **length-1** value is recycled to
+every scenario, and **longer vectors** must match the total number of
+scenarios. This makes it easy to create many scenarios from a single
+base model:
+
+``` r
+# Three scenarios from the same PKML file, each with a different protocol
+scenarios <- createScenarioConfigurationsFromPKML(
+  pkmlFilePaths = "Models/Simulations/base_model.pkml",  # recycled to all 3
+  projectConfiguration = projectConfiguration,
+  scenarioNames = c("LowDose", "MediumDose", "HighDose"),
+  applicationProtocols = c("Low_Protocol", "Med_Protocol", "High_Protocol")
+)
+```
+
+### Different settings per scenario
+
+You can fully control every setting for each scenario individually:
+
+``` r
+scenarios <- createScenarioConfigurationsFromPKML(
+  pkmlFilePaths = c(
+    "Models/Simulations/pediatric.pkml",
+    "Models/Simulations/adult.pkml",
+    "Models/Simulations/elderly.pkml"
+  ),
+  projectConfiguration = projectConfiguration,
+  scenarioNames = c("Pediatric", "Adult", "Elderly"),
+  individualId = c("Child_001", "Adult_001", "Elderly_001"),
+  applicationProtocols = c("Pediatric_Dose", "Standard_Dose", "Reduced_Dose"),
+  steadyState = c(FALSE, TRUE, TRUE),
+  steadyStateTime = c(NA, 2000, 1500)
+)
+```
+
+### Custom output paths
+
+Supply a **named vector**, wrapped in a list, for `outputPaths` to
+assign short aliases to the full model paths. The names become the
+`OutputPathId` values in the `OutputPaths` sheet of `Scenarios.xlsx`:
+
+``` r
+scenarios <- createScenarioConfigurationsFromPKML(
+  pkmlFilePaths = "Models/Simulations/simulation.pkml",
+  projectConfiguration = projectConfiguration,
+  outputPaths = list(c(
+    "plasma" = "Organism|PeripheralVenousBlood|Drug|Plasma (Peripheral Venous Blood)",
+    "liver"  = "Organism|Liver|Intracellular|Drug|Concentration in container"
+  ))
+)
+```
+
+### Appending vs. replacing scenarios
+
+By default,
+[`addScenarioConfigurationsToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenarioConfigurationsToExcel.md)
+**appends** new scenarios to the existing content of `Scenarios.xlsx`.
+Set `appendToExisting = FALSE` to overwrite the file completely with
+only the new scenarios:
+
+``` r
+# Replace all existing scenarios with the new ones
+addScenarioConfigurationsToExcel(
+  scenarioConfigurations = scenarios,
+  projectConfiguration = projectConfiguration,
+  appendToExisting = FALSE
 )
 ```
 
@@ -411,20 +534,13 @@ In the `Scenarios` sheet, enter the IDs of all paths the outputs should
 be generated for, separated by a comma, e.g.,
 `Aciclovir_PVB, Aciclovir_fat_cell`.
 
-**Alternative approach:** When programmatically creating scenarios, you
-can also use named vectors for output paths, where names serve as
-aliases:
-
-``` r
-outputPaths <- c(
-  "plasma" = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-  "fat_cell" = "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
-)
-```
-
-This approach is particularly useful with the new
-[`createScenarioConfigurationsFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.md)
-function.
+When creating scenarios programmatically with
+[`createScenarioConfigurationsFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.md),
+you can provide `outputPaths` as a list of named vectors (one element
+per scenario), where the element names become the `OutputPathId` values
+automatically — see [Custom output paths](#custom-output-paths) above.
+Avoid passing a bare named vector, which would be recycled across
+scenarios.
 
 ### Scenario parameterization hierarchy
 

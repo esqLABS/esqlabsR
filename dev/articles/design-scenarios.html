@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -216,38 +216,182 @@ learn more about simulation design, read the following sections.</p>
 <p>For more advanced users or when working programmatically,
 <code>esqlabsR</code> provides functions to create scenario
 configurations directly from PKML files, bypassing the need to manually
-create Excel files:</p>
+fill in Excel files:</p>
 <ul>
 <li>
 <code><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML()</a></code>: Creates
-scenario configurations from PKML files by extracting simulation
-settings, applications, and output paths.</li>
+scenario configurations from PKML files by automatically extracting
+simulation settings, applications, and output paths.</li>
 <li>
-<code><a href="../reference/addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel()</a></code>: Adds scenario
-configurations to the project Excel files for later use.</li>
+<code><a href="../reference/addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel()</a></code>: Writes those
+configurations to the project’s Excel files (<code>Scenarios.xlsx</code>
+and <code>Applications.xlsx</code>) so they can be used in the standard
+<code>esqlabsR</code> workflow.</li>
 </ul>
-<p>This approach is particularly useful when: - You have multiple PKML
-files to convert into scenarios - You want to automate scenario creation
-- You’re working with simulation files that already contain the needed
-configuration</p>
-<p>Example usage:</p>
+<p>This approach is particularly useful when:</p>
+<ul>
+<li>You have multiple PKML files to convert into scenarios at once.</li>
+<li>You want to automate or script scenario creation.</li>
+<li>Your simulation files already contain the settings you need
+(applications, output paths, simulation time).</li>
+</ul>
+<div class="section level3">
+<h3 id="what-is-automatically-extracted-from-the-pkml-file">What is automatically extracted from the PKML file<a class="anchor" aria-label="anchor" href="#what-is-automatically-extracted-from-the-pkml-file"></a>
+</h3>
+<p>When you call <code><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML()</a></code>
+without providing an argument for a particular setting, the function
+reads it directly from the PKML file:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>Extracted from PKML</th>
+<th>Corresponding argument</th>
+<th>Fallback</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Application protocol names</td>
+<td><code>applicationProtocols</code></td>
+<td>Scenario name</td>
+</tr>
+<tr class="even">
+<td>Output paths (<code>outputSelections</code>)</td>
+<td><code>outputPaths</code></td>
+<td>Simulation outputs defined in the PKML/simulation</td>
+</tr>
+<tr class="odd">
+<td>Simulation time intervals</td>
+<td><code>simulationTime</code></td>
+<td>(none)</td>
+</tr>
+<tr class="even">
+<td>Simulation time unit</td>
+<td><code>simulationTimeUnit</code></td>
+<td><code>"min"</code></td>
+</tr>
+</tbody>
+</table>
+<p>You can override any of these by supplying the corresponding argument
+explicitly.</p>
+</div>
+<div class="section level3">
+<h3 id="basic-workflow">Basic workflow<a class="anchor" aria-label="anchor" href="#basic-workflow"></a>
+</h3>
+<p>The typical workflow for this approach consists of two steps:</p>
+<p><strong>Step 1 — Create scenario configurations from
+PKML:</strong></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create scenarios from PKML files</span></span>
-<span><span class="va">scenarioConfigs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML</a></span><span class="op">(</span></span>
-<span>  pkmlFilePaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Model1.pkml"</span>, <span class="st">"Model2.pkml"</span><span class="op">)</span>,</span>
-<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
-<span>  scenarioNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Scenario1"</span>, <span class="st">"Scenario2"</span><span class="op">)</span>,</span>
-<span>  outputPaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="st">"plasma"</span> <span class="op">=</span> <span class="st">"Organism|VenousBlood|Plasma|Drug|Concentration"</span>,</span>
-<span>    <span class="st">"liver"</span> <span class="op">=</span> <span class="st">"Organism|Liver|Intracellular|Drug|Concentration"</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">projectConfiguration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="st">"path/to/project/ProjectConfiguration.xlsx"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Add them to the project Excel files</span></span>
-<span><span class="fu"><a href="../reference/addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel</a></span><span class="op">(</span></span>
-<span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarioConfigs</span>,</span>
+<span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML</a></span><span class="op">(</span></span>
+<span>  pkmlFilePaths <span class="op">=</span> <span class="st">"Models/Simulations/simulation.pkml"</span>,</span>
 <span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p><strong>Step 2 — Write them to the project Excel files:</strong></p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel</a></span><span class="op">(</span></span>
+<span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarios</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>That’s all. After calling
+<code><a href="../reference/addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel()</a></code>, the scenario appears in
+<code>Scenarios.xlsx</code> and any application protocol parameters are
+written to <code>Applications.xlsx</code>, ready to be used with
+<code><a href="../reference/createScenarios.html">createScenarios()</a></code>.</p>
+</div>
+<div class="section level3">
+<h3 id="working-with-multiple-pkml-files">Working with multiple PKML files<a class="anchor" aria-label="anchor" href="#working-with-multiple-pkml-files"></a>
+</h3>
+<p>Pass a character vector of paths to create one scenario per file. Use
+<code>scenarioNames</code> to give each scenario a meaningful name
+(otherwise the simulation name stored inside the PKML is used):</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML</a></span><span class="op">(</span></span>
+<span>  pkmlFilePaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Models/Simulations/adult.pkml"</span>,</span>
+<span>    <span class="st">"Models/Simulations/pediatric.pkml"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  scenarioNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Adult"</span>, <span class="st">"Pediatric"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel</a></span><span class="op">(</span></span>
+<span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarios</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="vector-recycling-same-pkml-different-settings">Vector recycling — same PKML, different settings<a class="anchor" aria-label="anchor" href="#vector-recycling-same-pkml-different-settings"></a>
+</h3>
+<p>All arguments support vectorization. A <strong>length-1</strong>
+value is recycled to every scenario, and <strong>longer vectors</strong>
+must match the total number of scenarios. This makes it easy to create
+many scenarios from a single base model:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Three scenarios from the same PKML file, each with a different protocol</span></span>
+<span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML</a></span><span class="op">(</span></span>
+<span>  pkmlFilePaths <span class="op">=</span> <span class="st">"Models/Simulations/base_model.pkml"</span>,  <span class="co"># recycled to all 3</span></span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  scenarioNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"LowDose"</span>, <span class="st">"MediumDose"</span>, <span class="st">"HighDose"</span><span class="op">)</span>,</span>
+<span>  applicationProtocols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Low_Protocol"</span>, <span class="st">"Med_Protocol"</span>, <span class="st">"High_Protocol"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="different-settings-per-scenario">Different settings per scenario<a class="anchor" aria-label="anchor" href="#different-settings-per-scenario"></a>
+</h3>
+<p>You can fully control every setting for each scenario
+individually:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML</a></span><span class="op">(</span></span>
+<span>  pkmlFilePaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Models/Simulations/pediatric.pkml"</span>,</span>
+<span>    <span class="st">"Models/Simulations/adult.pkml"</span>,</span>
+<span>    <span class="st">"Models/Simulations/elderly.pkml"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  scenarioNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Pediatric"</span>, <span class="st">"Adult"</span>, <span class="st">"Elderly"</span><span class="op">)</span>,</span>
+<span>  individualId <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Child_001"</span>, <span class="st">"Adult_001"</span>, <span class="st">"Elderly_001"</span><span class="op">)</span>,</span>
+<span>  applicationProtocols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Pediatric_Dose"</span>, <span class="st">"Standard_Dose"</span>, <span class="st">"Reduced_Dose"</span><span class="op">)</span>,</span>
+<span>  steadyState <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">TRUE</span>, <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>  steadyStateTime <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">2000</span>, <span class="fl">1500</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="custom-output-paths">Custom output paths<a class="anchor" aria-label="anchor" href="#custom-output-paths"></a>
+</h3>
+<p>Supply a <strong>named vector</strong>, wrapped in a list, for
+<code>outputPaths</code> to assign short aliases to the full model
+paths. The names become the <code>OutputPathId</code> values in the
+<code>OutputPaths</code> sheet of <code>Scenarios.xlsx</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML</a></span><span class="op">(</span></span>
+<span>  pkmlFilePaths <span class="op">=</span> <span class="st">"Models/Simulations/simulation.pkml"</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  outputPaths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"plasma"</span> <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Drug|Plasma (Peripheral Venous Blood)"</span>,</span>
+<span>    <span class="st">"liver"</span>  <span class="op">=</span> <span class="st">"Organism|Liver|Intracellular|Drug|Concentration in container"</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="appending-vs--replacing-scenarios">Appending vs. replacing scenarios<a class="anchor" aria-label="anchor" href="#appending-vs--replacing-scenarios"></a>
+</h3>
+<p>By default, <code><a href="../reference/addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel()</a></code>
+<strong>appends</strong> new scenarios to the existing content of
+<code>Scenarios.xlsx</code>. Set <code>appendToExisting = FALSE</code>
+to overwrite the file completely with only the new scenarios:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Replace all existing scenarios with the new ones</span></span>
+<span><span class="fu"><a href="../reference/addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel</a></span><span class="op">(</span></span>
+<span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarios</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span>,</span>
+<span>  appendToExisting <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a>
@@ -370,7 +514,7 @@ getAllApplicationParameters() function to get a list of all (constant)
 parameters in the <code>Applications</code> container. In the following
 example, we will extract application parameters for the molecule
 <code>Aciclovir</code> from the example simulation:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadSimulation.html" class="external-link">loadSimulation</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
 <span>  <span class="st">"extdata"</span>,</span>
 <span>  <span class="st">"Aciclovir.pkml"</span>,</span>
@@ -431,14 +575,14 @@ example, we will extract application parameters for the molecule
 <span><span class="co">#&gt;   • isConstant: TRUE</span></span></code></pre></div>
 <p>And export the parameters to an Excel file using the
 <code><a href="../reference/exportParametersToXLS.html">exportParametersToXLS()</a></code> function:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/exportParametersToXLS.html">exportParametersToXLS</a></span><span class="op">(</span></span>
 <span>  parameters <span class="op">=</span> <span class="va">applicationParams</span>,</span>
 <span>  paramsXLSpath <span class="op">=</span> <span class="st">"../Applications.xlsx"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>If you need to add more parameters to an existing Excel file without
 overwriting it, you can use the <code>append</code> parameter:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Add more parameters to existing file</span></span>
 <span><span class="fu"><a href="../reference/exportParametersToXLS.html">exportParametersToXLS</a></span><span class="op">(</span></span>
 <span>  parameters <span class="op">=</span> <span class="va">additionalParams</span>,</span>
@@ -538,16 +682,13 @@ Blood)</td>
 <p>In the <code>Scenarios</code> sheet, enter the IDs of all paths the
 outputs should be generated for, separated by a comma, e.g.,
 <code>Aciclovir_PVB, Aciclovir_fat_cell</code>.</p>
-<p><strong>Alternative approach:</strong> When programmatically creating
-scenarios, you can also use named vectors for output paths, where names
-serve as aliases:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="st">"plasma"</span> <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span>,</span>
-<span>  <span class="st">"fat_cell"</span> <span class="op">=</span> <span class="st">"Organism|Fat|Intracellular|Aciclovir|Concentration in container"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>This approach is particularly useful with the new
-<code><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML()</a></code> function.</p>
+<p>When creating scenarios programmatically with
+<code><a href="../reference/createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML()</a></code>, you can provide
+<code>outputPaths</code> as a list of named vectors (one element per
+scenario), where the element names become the <code>OutputPathId</code>
+values automatically — see <a href="#custom-output-paths">Custom output
+paths</a> above. Avoid passing a bare named vector, which would be
+recycled across scenarios.</p>
 </div>
 </div>
 <div class="section level3">
