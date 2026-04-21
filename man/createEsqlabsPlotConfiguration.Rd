@@ -10,7 +10,7 @@ createEsqlabsPlotConfiguration(plotType = NULL)
 A named list
 }
 \description{
-An list of plot properties needed for creating visualizations with the \code{{ospsuite}} package.
+A list of plot properties needed for creating visualizations with the \code{{ospsuite}} package.
 
 The default attributes of the class are chosen to reflect the corporate
 standards adopted by esqLABS GmbH.
