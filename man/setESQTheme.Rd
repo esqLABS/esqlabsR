@@ -4,7 +4,20 @@
 \alias{setESQTheme}
 \title{Set ospsuite.plots defaults settings for ESQLabs workflows}
 \usage{
-setESQTheme()
+setESQTheme(
+  legendPosition = "top",
+  legendJustification = "left",
+  watermarkEnabled = FALSE
+)
+}
+\arguments{
+\item{legendPosition}{Default position of legends as defined in \code{ggplot2::theme}
+One of "none", "left", "right", "bottom", "top"}
+
+\item{legendJustification}{Default alignment/justification of legends as defined in \code{ggplot2::theme}
+One of "left", "right", "center"}
+
+\item{watermarkEnabled}{Logical allowing whether ospsuite.plots watermark is enabled}
 }
 \description{
 Set ospsuite.plots defaults settings for ESQLabs workflows

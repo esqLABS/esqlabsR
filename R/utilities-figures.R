@@ -251,6 +251,9 @@ createEsqlabsPlotGridConfiguration <- function() {
 #'   Defaults to `NULL`, in which case all `DataCombined` are created from
 #'   Excel.
 #'
+#' @param applyTheme A logical defining whether to use a ggplot theme 
+#' that uses esqlabsR default settings
+#'
 #' @returns A list of `ggplot` objects
 #'
 #' @import tidyr
@@ -262,12 +265,14 @@ createPlotsFromExcel <- function(
   observedData = NULL,
   dataCombinedList = NULL,
   projectConfiguration,
-  stopIfNotFound = TRUE
+  stopIfNotFound = TRUE,
+  applyTheme = TRUE
 ) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
   validateIsOfType(dataCombinedList, "DataCombined", nullAllowed = TRUE)
+  validateIsLogical(applyTheme)
   if (!typeof(dataCombinedList) %in% c("list", "NULL")) {
     stop(messages$errorDataCombinedListMustBeList(typeof(dataCombinedList)))
   }
@@ -308,7 +313,9 @@ createPlotsFromExcel <- function(
   )
 
   # Set default plot settings prior updating based on  sheet "plotConfiguration"
-  setESQTheme()
+  if(applyTheme){
+    setESQTheme()
+  }
   plotList <- lapply(
     seq_along(dfPlotConfigurations$plotID),
     function(rowIndex) {
@@ -1090,13 +1097,24 @@ createPlotsFromExcel <- function(
 
 
 #' Set ospsuite.plots defaults settings for ESQLabs workflows
-#'
-setESQTheme <- function() {
+#' 
+#' @param legendPosition Default position of legends as defined in `ggplot2::theme`
+#' One of "none", "left", "right", "bottom", "top"
+#' 
+#' @param legendJustification Default alignment/justification of legends as defined in `ggplot2::theme`
+#' One of "left", "right", "center"
+#' 
+#' @param watermarkEnabled Logical allowing whether ospsuite.plots watermark is enabled
+#' 
+#' @export
+setESQTheme <- function(legendPosition = "top", 
+                        legendJustification = "left", 
+                        watermarkEnabled = FALSE) {
   # Base settings = ospsuite.plots theme
   # colorMapList argument does not accept functions yet,
   # esqlabsR::esqlabsColors needs to be set at ggplot2 level
   ospsuite.plots::setDefaults(colorMapList = list(esqlabsR::esqlabsColors(10)))
-  options(ospsuite.plots.watermarkEnabled = FALSE)
+  options(ospsuite.plots.watermarkEnabled = watermarkEnabled)
   # Elements to update to follow ESQLabs default convention
   ggplot2::theme_update(
     plot.title = ggplot2::element_text(size = 10, hjust = 0),
@@ -1113,8 +1131,8 @@ setESQTheme <- function() {
     axis.text.y = ggplot2::element_text(size = 8, angle = 0),
     # Legend
     legend.key.size = ggplot2::unit(6, "pt"),
-    legend.position = "top",
-    legend.justification = "left"
+    legend.position = legendPosition,
+    legend.justification = legendJustification
     # ESQLabs color palette used as default when adding scale_color_discrete()
     # palette.colour.discrete = esqlabsR::esqlabsColors
   )
