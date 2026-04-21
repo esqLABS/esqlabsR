@@ -309,7 +309,7 @@ sensitivitySpiderPlot <- function(
       plot <- plot +
         ggplot2::scale_y_log10(
           limits = pLimits,
-          expand = expansion(mult = c(0.01, 0.1)),
+          expand = ggplot2::expansion(mult = c(0.01, 0.1)),
           breaks = scales::breaks_log(
             n = plotConfiguration$yAxisTicks
           ),
@@ -328,7 +328,7 @@ sensitivitySpiderPlot <- function(
     plot <- plot +
       ggplot2::geom_hline(
         data = baseDataSubset,
-        aes(yintercept = .data[[yColumn]]),
+        ggplot2::aes(yintercept = .data[[yColumn]]),
         linetype = "dotted",
         linewidth = 0.5,
         color = "black",
@@ -387,8 +387,8 @@ sensitivitySpiderPlot <- function(
     patchwork::plot_annotation(
       title = plotConfiguration$title,
       subtitle = plotConfiguration$subtitle,
-      theme = theme(
-        plot.title = element_text(size = plotConfiguration$titleSize)
+      theme = ggplot2::theme(
+        plot.title = ggplot2::element_text(size = plotConfiguration$titleSize)
       )
     ) +
     patchwork::plot_layout(
