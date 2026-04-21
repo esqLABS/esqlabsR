@@ -203,7 +203,7 @@ test_that("projectStatus detects out-of-sync state when JSON is modified", {
 
 # ---- Deprecated wrapper tests ----
 
-test_that("snapshotProjectConfiguration calls importProjectConfigurationFromExcel with deprecation", {
+test_that("snapshotProjectConfiguration emits deprecation warning", {
   paths <- local_test_project()
   outputDir <- withr::local_tempdir("test_deprecated_snapshot")
 
@@ -216,7 +216,7 @@ test_that("snapshotProjectConfiguration calls importProjectConfigurationFromExce
   )
 })
 
-test_that("restoreProjectConfiguration calls exportProjectConfigurationToExcel with deprecation", {
+test_that("restoreProjectConfiguration emits deprecation warning", {
   paths <- local_test_project()
 
   lifecycle::expect_deprecated(
@@ -226,4 +226,45 @@ test_that("restoreProjectConfiguration calls exportProjectConfigurationToExcel w
       silent = TRUE
     )
   )
+})
+
+test_that("createProjectConfiguration emits deprecation warning", {
+  pc <- testProject()
+  lifecycle::expect_deprecated(
+    createProjectConfiguration(pc$projectFilePath)
+  )
+})
+
+# Keep test for PK-Sim CSV handling - valuable edge case
+test_that("importProjectFromExcel handles PK-Sim exported population CSV files with metadata comment rows", {
+  test_proj <- local_test_project()
+
+  # Create PopulationsCSV directory if needed
+  pop_csv_dir <- file.path(test_proj$configurations_dir, "PopulationsCSV")
+  if (!dir.exists(pop_csv_dir)) {
+    dir.create(pop_csv_dir, recursive = TRUE)
+  }
+
+  # Add a PK-Sim format CSV (with # metadata comment rows)
+  pksim_csv_path <- file.path(pop_csv_dir, "PKSimPopulation.csv")
+
+  # Create PK-Sim format CSV with metadata comment rows
+  pksim_csv_lines <- c(
+    "#Project: TestProject_V1",
+    "#PK-Sim version: 12.1.222",
+    "IndividualId,Gender,Organism|Weight",
+    "1,Male,70",
+    "2,Female,60"
+  )
+  writeLines(pksim_csv_lines, pksim_csv_path)
+
+  # Import should succeed without error
+  outputDir <- withr::local_tempdir("test_pksim_csv")
+  expect_no_error({
+    jsonPath <- importProjectFromExcel(
+      test_proj$project_config_path,
+      outputDir,
+      silent = TRUE
+    )
+  })
 })

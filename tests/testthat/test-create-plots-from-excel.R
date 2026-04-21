@@ -282,7 +282,7 @@ test_that("It throws an error if a plot requires a DataCombined that is not defi
       simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     ),
-    regexp = messages$stopInvalidDataCombinedName("foo")
+    regexp = messages$stopDataCombinedNamesNotFound("foo")
   )
 })
 

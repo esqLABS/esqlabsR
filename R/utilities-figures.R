@@ -309,7 +309,7 @@ createPlots <- function(
   dfPlotGrids <- plotConfigurations$plotGrids
   dfExportConfigurations <- plotConfigurations$exportConfigurations
 
-  # Exit early if not plotGrids are defined
+  # Exit early if no plotGrids are defined
   if (is.null(dfPlotGrids)) {
     return(NULL)
   }

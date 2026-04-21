@@ -166,3 +166,18 @@ test_that("createDataCombined loads observed data automatically from Project", {
   expect_true("AciclovirPVB" %in% names(dcList))
   expect_true(inherits(dcList$AciclovirPVB, "DataCombined"))
 })
+
+test_that("createDataCombined errors when specified DataCombined names are not found", {
+  expect_error(
+    createDataCombined(
+      project = project,
+      dataCombinedNames = c("AciclovirPVB", "NonExistentDC1", "NonExistentDC2"),
+      simulatedScenarios = simulatedScenarios
+    ),
+    regexp = messages$stopDataCombinedNamesNotFound(c(
+      "NonExistentDC1",
+      "NonExistentDC2"
+    )),
+    fixed = TRUE
+  )
+})

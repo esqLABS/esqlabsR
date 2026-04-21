@@ -397,7 +397,8 @@ exportProjectConfigurationToExcel <- function(...) {
 projectStatus <- function(
   projectConfigPath = "Project.xlsx",
   jsonPath = NULL,
-  silent = FALSE
+  silent = FALSE,
+  ignoreVersionCheck = TRUE
 ) {
   # Accept either a path string or a Project object for
   # backwards compatibility

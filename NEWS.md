@@ -129,6 +129,13 @@ removed in a future release:
 - `saveScenarioResults()` is now `exportScenarioResults()`.
 - `loadScenarioResults()` is now `importScenarioResults()`.
 
+# esqlabsR 5.6.0
+
+## New features
+
+- `ProjectConfiguration` now stores the `esqlabsR` package version it was last saved with. When loading a configuration, the stored version is compared against the currently installed version. On mismatch or missing version, the user is interactively prompted to update the version in the configuration file and continue, or to stop. The user should always consult the [package NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) for breaking changes before confirming the update.
+- Added `ignoreVersionCheck` parameter to `createProjectConfiguration()` and `createDefaultProjectConfiguration()`. When `TRUE`, the version check is skipped. This is intended for non-interactive contexts such as automated tests or scripts run from the console where user input cannot be assured. When using this option, it is the responsibility of the user to ensure that the project is compatible with the currently installed version of `esqlabsR`.
+
 ## Minor improvements and bug fixes
 
 - Added a warning when axis limits contain zero while the corresponding axis
@@ -137,6 +144,7 @@ removed in a future release:
 - `extendParameterStructure()` now supports `NULL` for `parameters` and
   `newParameters` arguments. When `NULL` is provided, a valid empty structure
   is returned or combined with the non-NULL argument (#583).
+- `sensitivityTimeProfiles()` now accepts `xUnits` and `yUnits` as plain strings (e.g., `yUnits = "nmol/l"`) in addition to lists. Single string values are automatically coerced to a list (\#822).
 
 # esqlabsR 5.5.2
 

@@ -58,6 +58,14 @@ createDataCombined <- function(
     DataCombinedName %in% dataCombinedNames
   )
 
+  missingNames <- setdiff(
+    dataCombinedNames[!is.na(dataCombinedNames)],
+    dfDataCombined$DataCombinedName
+  )
+  if (length(missingNames) > 0) {
+    stop(messages$stopDataCombinedNamesNotFound(missingNames))
+  }
+
   dfDataCombined <- .validateDataCombined(
     dfDataCombined,
     simulatedScenarios,

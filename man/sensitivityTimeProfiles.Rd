@@ -34,12 +34,13 @@ for each varied parameter.}
 \item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis
 scale similarly to \code{xAxisScale}. Default is "log".}
 
-\item{xUnits, yUnits}{Lists of units for the x-axis and y-axis, respectively.
-If a list of length one is provided, it will be applied to all
-\code{outputPaths} if conversion is possible. If a list of multiple units is
-provided, the units list should correspond to the \code{outputPaths}, and units
-conversion will be applied accordingly. If \code{NULL}, default units from the
-simulation results will be used.}
+\item{xUnits, yUnits}{Units for the x-axis and y-axis, respectively. Can be
+provided as a single string (e.g., \code{"nmol/l"}) or a list of strings. A
+single string or a list of length one will be applied to all \code{outputPaths}
+if conversion is possible. If a list of multiple units is provided, the
+units list should correspond to the \code{outputPaths}, and units conversion
+will be applied accordingly. If \code{NULL}, default units from the simulation
+results will be used.}
 
 \item{observedData}{Optional. A \code{DataSet} or a list of \code{DataSet} objects
 containing observed data. If provided, observed data will be plotted

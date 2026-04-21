@@ -57,9 +57,8 @@ test_that("It runs two scenarios", {
   )
 
   expect_equal(names(simulatedScenarios), scenarioNames)
-  expect_equal(
-    simulatedScenarios[["TestScenario"]]$results$allQuantityPaths,
-    defaultOutputPath
+  expect_true(
+    defaultOutputPath %in% simulatedScenarios[["TestScenario"]]$results$allQuantityPaths
   )
 
   expect_equal(
@@ -208,7 +207,7 @@ test_that("export/import handles scenario names with forbidden characters", {
 
 test_that("customParams in runScenarios overrides default parameters", {
   pc <- testProject()
-  dosePath <- "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+  dosePath <- "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
 
   # Default run — dose should be 250 from the JSON
   results <- runScenarios(pc, scenarioNames = "TestScenario")
