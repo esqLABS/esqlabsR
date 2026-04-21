@@ -472,3 +472,74 @@ test_that("validationSummary correctly counts errors and warnings", {
   expect_true("scenarios" %in% summary$files_with_errors)
   expect_true("plots" %in% summary$files_with_warnings)
 })
+
+test_that(".validateObservedData warns when no observedData defined", {
+  result <- esqlabsR:::.validateObservedData(NULL, tempdir())
+  expect_true(result$is_valid())
+  expect_true(length(result$warnings) > 0)
+})
+
+test_that(".validateObservedData detects missing type field", {
+  observedData <- list(list(file = "test.xlsx"))
+  result <- esqlabsR:::.validateObservedData(observedData, tempdir())
+  expect_false(result$is_valid())
+  expect_true(any(grepl("type", unlist(result$critical_errors))))
+})
+
+test_that(".validateObservedData detects invalid type", {
+  observedData <- list(list(type = "invalid"))
+  result <- esqlabsR:::.validateObservedData(observedData, tempdir())
+  expect_false(result$is_valid())
+  expect_true(any(grepl("invalid", unlist(result$critical_errors))))
+})
+
+test_that(".validateObservedData detects missing excel required fields", {
+  observedData <- list(list(type = "excel"))
+  result <- esqlabsR:::.validateObservedData(observedData, tempdir())
+  expect_false(result$is_valid())
+  errors <- unlist(result$critical_errors)
+  expect_true(any(grepl("file", errors)))
+  expect_true(any(grepl("importerConfiguration", errors)))
+  expect_true(any(grepl("sheets", errors)))
+})
+
+test_that(".validateObservedData detects missing pkml/script file field", {
+  observedData <- list(
+    list(type = "pkml"),
+    list(type = "script")
+  )
+  result <- esqlabsR:::.validateObservedData(observedData, tempdir())
+  expect_false(result$is_valid())
+  expect_equal(length(result$critical_errors), 2)
+})
+
+test_that(".validateObservedData warns for non-existent files", {
+  observedData <- list(list(
+    type = "excel",
+    file = "nonexistent.xlsx",
+    importerConfiguration = "nonexistent.xml",
+    sheets = list("Sheet1")
+  ))
+  result <- esqlabsR:::.validateObservedData(observedData, tempdir())
+  expect_true(result$is_valid())
+  expect_equal(length(result$warnings), 2)
+})
+
+test_that(".validateObservedData passes for valid programmatic entry", {
+  observedData <- list(list(type = "programmatic"))
+  result <- esqlabsR:::.validateObservedData(observedData, tempdir())
+  expect_true(result$is_valid())
+  expect_equal(length(result$critical_errors), 0)
+})
+
+test_that("validateProject includes observedData in results", {
+  project_path <- system.file(
+    "extdata/projects/Example/Project.json",
+    package = "esqlabsR"
+  )
+  skip_if_not(file.exists(project_path))
+
+  results <- validateProject(project_path)
+  expect_true("observedData" %in% names(results))
+  expect_true(inherits(results$observedData, "validationResult"))
+})

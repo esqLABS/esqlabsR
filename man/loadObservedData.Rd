@@ -15,8 +15,13 @@ observed data is declared.
 }
 \description{
 Reads the \code{observedData} declarations from a \code{Project} object and returns
-the corresponding \code{DataSet} objects. Excel sheets are loaded via the
-configured data importer; PKML files are loaded directly.
+the corresponding \code{DataSet} objects. Supports multiple source types:
+\itemize{
+\item \strong{excel}: loaded via the configured data importer
+\item \strong{pkml}: loaded directly from PKML files
+\item \strong{script}: R scripts are sourced and must return DataSet or list of DataSet objects
+\item \strong{programmatic}: DataSets added via \code{project$addObservedData()}
+}
 }
 \examples{
 \dontrun{

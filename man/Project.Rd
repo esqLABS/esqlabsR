@@ -8,6 +8,7 @@
 \description{
 An R6 class representing an esqlabsR project
 }
+\keyword{internal}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -99,13 +100,6 @@ the Excel import/export bridge.}
 \item{\code{dataFolder}}{Path to the folder where experimental data files are
 located.}
 
-\item{\code{dataFile}}{Path to the Excel file with experimental (observed) data.
-Must be located in the "dataFolder".}
-
-\item{\code{dataImporterConfigurationFile}}{Name of data importer configuration
-file in xml format used to load the data.
-Must be located in the "dataFolder"}
-
 \item{\code{outputFolder}}{Path to the folder where the results should be saved
 relative to the "Code" folder}
 
@@ -118,12 +112,54 @@ Read-only.}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-Project-.getProgrammaticDataSets}{\code{Project$.getProgrammaticDataSets()}}
+\item \href{#method-Project-.cacheObservedDataNames}{\code{Project$.cacheObservedDataNames()}}
+\item \href{#method-Project-.getObservedDataNamesCache}{\code{Project$.getObservedDataNamesCache()}}
 \item \href{#method-Project-addScenario}{\code{Project$addScenario()}}
+\item \href{#method-Project-addObservedData}{\code{Project$addObservedData()}}
 \item \href{#method-Project-new}{\code{Project$new()}}
 \item \href{#method-Project-print}{\code{Project$print()}}
 \item \href{#method-Project-sync}{\code{Project$sync()}}
 \item \href{#method-Project-clone}{\code{Project$clone()}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.getProgrammaticDataSets"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.getProgrammaticDataSets}{}}}
+\subsection{Method \code{.getProgrammaticDataSets()}}{
+Internal method to retrieve all programmatic DataSets.
+Not intended for end-user use.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.getProgrammaticDataSets()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.cacheObservedDataNames"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.cacheObservedDataNames}{}}}
+\subsection{Method \code{.cacheObservedDataNames()}}{
+Internal method to cache observed data names.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.cacheObservedDataNames(names)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{names}}{Character vector of DataSet names.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.getObservedDataNamesCache"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.getObservedDataNamesCache}{}}}
+\subsection{Method \code{.getObservedDataNamesCache()}}{
+Internal method to get cached observed data names.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.getObservedDataNamesCache()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Project-addScenario"></a>}}
@@ -142,10 +178,39 @@ Delegates to the standalone \code{\link[=addScenario]{addScenario()}} function.
 
 \item{\code{modelFile}}{Character. Name of the \code{.pkml} model file.}
 
-\item{\code{...}}{Additional arguments passed to \code{\link[=addScenario]{addScenario()}}.
-Initialize}
+\item{\code{...}}{Additional arguments passed to \code{\link[=addScenario]{addScenario()}}.}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addObservedData"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addObservedData}{}}}
+\subsection{Method \code{addObservedData()}}{
+Add observed data programmatically
+
+Add an observedData entry to the project. Accepts either:
+\itemize{
+\item A \code{DataSet} object directly (creates a "programmatic" entry, uses \code{dataSet$name})
+\item A configuration list with \code{type} and relevant fields (excel, pkml, script)
+}
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addObservedData(entry)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{entry}}{Either a \code{DataSet} object or a list with observedData config.
+For DataSet: stored internally using \code{dataSet$name} as the key.
+For config list: must include \code{type} ("excel", "pkml", "script") and
+relevant fields (e.g., \code{file}, \code{importerConfiguration}, \code{sheets}).}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns self for chaining
+Initialize
 }
 }
 \if{html}{\out{<hr>}}
@@ -240,8 +305,12 @@ The objects of this class are cloneable with this method.
 }
 }
 \if{html}{\out{
-<details open><summary>Inherited methods</summary>
+<details><summary>Inherited methods</summary>
 <ul>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id=".cacheObservedDataNames"><a href='../../esqlabsR/html/Project.html#method-Project-.cacheObservedDataNames'><code>esqlabsR::Project$.cacheObservedDataNames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id=".getObservedDataNamesCache"><a href='../../esqlabsR/html/Project.html#method-Project-.getObservedDataNamesCache'><code>esqlabsR::Project$.getObservedDataNamesCache()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id=".getProgrammaticDataSets"><a href='../../esqlabsR/html/Project.html#method-Project-.getProgrammaticDataSets'><code>esqlabsR::Project$.getProgrammaticDataSets()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addObservedData"><a href='../../esqlabsR/html/Project.html#method-Project-addObservedData'><code>esqlabsR::Project$addObservedData()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addScenario"><a href='../../esqlabsR/html/Project.html#method-Project-addScenario'><code>esqlabsR::Project$addScenario()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="print"><a href='../../esqlabsR/html/Project.html#method-Project-print'><code>esqlabsR::Project$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="sync"><a href='../../esqlabsR/html/Project.html#method-Project-sync'><code>esqlabsR::Project$sync()</code></a></span></li>

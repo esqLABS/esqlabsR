@@ -12,13 +12,13 @@
     "applicationsFile": "Applications.xlsx",
     "plotsFile": "Plots.xlsx",
     "dataFolder": "Data/",
-    "dataFile": "Aciclovir_TimeValuesData.xlsx",
-    "dataImporterConfigurationFile": "esqlabs_dataImporter_configuration.xml",
     "outputFolder": "Results/"
   },
   "observedData": [
     {
       "type": "excel",
+      "file": "Aciclovir_TimeValuesData.xlsx",
+      "importerConfiguration": "esqlabs_dataImporter_configuration.xml",
       "sheets": ["Laskin 1982.Group A"]
     }
   ],

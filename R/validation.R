@@ -734,6 +734,116 @@ validationResult <- R6::R6Class(
   result
 }
 
+#' Validate observedData section of a Project
+#' @param observedData List of observedData entries from project$observedData
+#' @param dataFolder Path to the project's data folder
+#' @return validationResult object
+#' @keywords internal
+.validateObservedData <- function(observedData, dataFolder) {
+  result <- validationResult$new()
+
+  if (is.null(observedData) || length(observedData) == 0) {
+    result$add_warning("Data", "No observedData defined")
+    return(result)
+  }
+
+  validTypes <- c("excel", "pkml", "script", "programmatic")
+
+  for (i in seq_along(observedData)) {
+    entry <- observedData[[i]]
+    entryLabel <- paste0("observedData entry ", i)
+
+    # Check type field
+    if (is.null(entry$type)) {
+      result$add_critical_error(
+        "Missing Fields",
+        paste0(entryLabel, " is missing required field 'type'")
+      )
+      next
+    }
+
+    if (!entry$type %in% validTypes) {
+      result$add_critical_error(
+        "Invalid Value",
+        paste0(
+          entryLabel,
+          " has invalid type '",
+          entry$type,
+          "'. Must be one of: ",
+          paste(validTypes, collapse = ", ")
+        )
+      )
+      next
+    }
+
+    # Type-specific validation
+    if (entry$type == "excel") {
+      if (is.null(entry$file)) {
+        result$add_critical_error(
+          "Missing Fields",
+          paste0(entryLabel, " (excel) is missing required field 'file'")
+        )
+      } else {
+        filePath <- file.path(dataFolder, entry$file)
+        if (!file.exists(filePath)) {
+          result$add_warning(
+            "File Not Found",
+            paste0(entryLabel, " references non-existent file: ", entry$file)
+          )
+        }
+      }
+
+      if (is.null(entry$importerConfiguration)) {
+        result$add_critical_error(
+          "Missing Fields",
+          paste0(
+            entryLabel,
+            " (excel) is missing required field 'importerConfiguration'"
+          )
+        )
+      } else {
+        importerPath <- file.path(dataFolder, entry$importerConfiguration)
+        if (!file.exists(importerPath)) {
+          result$add_warning(
+            "File Not Found",
+            paste0(
+              entryLabel,
+              " references non-existent importer config: ",
+              entry$importerConfiguration
+            )
+          )
+        }
+      }
+
+      if (is.null(entry$sheets) || length(entry$sheets) == 0) {
+        result$add_critical_error(
+          "Missing Fields",
+          paste0(entryLabel, " (excel) is missing required field 'sheets'")
+        )
+      }
+    }
+
+    if (entry$type %in% c("pkml", "script")) {
+      if (is.null(entry$file)) {
+        result$add_critical_error(
+          "Missing Fields",
+          paste0(entryLabel, " (", entry$type, ") is missing required field 'file'")
+        )
+      } else {
+        filePath <- file.path(dataFolder, entry$file)
+        if (!file.exists(filePath)) {
+          result$add_warning(
+            "File Not Found",
+            paste0(entryLabel, " references non-existent file: ", entry$file)
+          )
+        }
+      }
+    }
+  }
+
+  result
+}
+
 # Public API ----
 
 #' Validate a Project
@@ -808,6 +918,11 @@ validateProject <- function(project) {
   results$applications <- .validateApplications(project$applications)
 
   results$plots <- .validatePlots(project$plots)
+
+  results$observedData <- .validateObservedData(
+    project$observedData,
+    project$dataFolder
+  )
 
   results$crossReferences <- .validateCrossReferences(project, results)
 

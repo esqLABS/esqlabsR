@@ -120,8 +120,6 @@ test_that("setting invalid paths warns for each path property", {
   expect_warning(pc$scenariosFile <- "scenarios_donotexist.xlsx")
   expect_warning(pc$applicationsFile <- "applications_donotexist.xlsx")
   expect_warning(pc$plotsFile <- "plots_donotexist.xlsx")
-  expect_warning(pc$dataFile <- "data_donotexist.xlsx")
-  expect_warning(pc$dataImporterConfigurationFile <- "importer_donotexist.xml")
 })
 
 # Modified flag ----
@@ -150,8 +148,7 @@ test_that("modified flag becomes TRUE when any property is changed", {
     "modelFolder", "configurationsFolder", "modelParamsFile",
     "individualsFile", "populationsFile", "populationsFolder",
     "scenariosFile", "applicationsFile", "plotsFile",
-    "dataFolder", "dataFile", "dataImporterConfigurationFile",
-    "outputFolder"
+    "dataFolder", "outputFolder"
   )
   for (prop in properties) {
     pc <- testProject()

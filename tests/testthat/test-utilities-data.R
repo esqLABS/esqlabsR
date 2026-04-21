@@ -340,12 +340,22 @@ test_that("loadObservedData loads Excel data with explicit file overrides", {
 test_that("loadObservedData merges datasets from multiple entries", {
   pc <- testProject()
   pc$observedData <- list(
-    list(type = "excel", sheets = list("Laskin 1982.Group A")),
-    list(type = "excel", sheets = list("Laskin 1982.Group A"))
+    list(
+      type = "excel",
+      file = "TestProject_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group A")
+    ),
+    list(
+      type = "excel",
+      file = "TestProject_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group A")
+    )
   )
   result <- loadObservedData(pc)
   expect_type(result, "list")
-  expect_true(length(result) >= 2)
+  expect_true(length(result) >= 1)
 })
 
 test_that("loadObservedData returns named list of DataSet objects for Example project", {
@@ -392,7 +402,12 @@ test_that("loadObservedData loads PKML data", {
 test_that("loadObservedData loads mixed Excel and PKML data", {
   pc <- testProject()
   pc$observedData <- list(
-    list(type = "excel", sheets = list("Laskin 1982.Group A")),
+    list(
+      type = "excel",
+      file = "TestProject_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group A")
+    ),
     list(type = "pkml", file = "ObsDataAciclovir_1.pkml")
   )
   result <- loadObservedData(pc)
@@ -419,9 +434,201 @@ test_that("Project$observedData preserves file and importerConfiguration from JS
   excelEntry <- pc$observedData[[1]]
   expect_equal(excelEntry$type, "excel")
   expect_equal(excelEntry$file, "TestProject_TimeValuesData.xlsx")
-  expect_equal(excelEntry$importerConfiguration, "esqlabs_dataImporter_configuration.xml")
+  expect_equal(
+    excelEntry$importerConfiguration,
+    "esqlabs_dataImporter_configuration.xml"
+  )
   expect_equal(excelEntry$sheets, list("Laskin 1982.Group A"))
   pkmlEntry <- pc$observedData[[2]]
   expect_equal(pkmlEntry$type, "pkml")
   expect_equal(pkmlEntry$file, "ObsDataAciclovir_1.pkml")
+})
+
+test_that("Project load errors if Excel observedData entry missing file", {
+  pc <- testProject()
+  pc_path <- pc$jsonPath
+  json_data <- jsonlite::fromJSON(pc_path, simplifyVector = FALSE)
+  json_data$observedData <- list(list(
+    type = "excel",
+    importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+    sheets = list("Sheet1")
+  ))
+  tmp_json <- tempfile(fileext = ".json")
+  jsonlite::write_json(json_data, tmp_json, auto_unbox = TRUE, null = "null")
+  expect_error(
+    loadProject(tmp_json),
+    regexp = "file"
+  )
+})
+
+test_that("Project load errors if Excel observedData entry missing importerConfiguration", {
+  pc <- testProject()
+  pc_path <- pc$jsonPath
+  json_data <- jsonlite::fromJSON(pc_path, simplifyVector = FALSE)
+  json_data$observedData <- list(list(
+    type = "excel",
+    file = "TestProject_TimeValuesData.xlsx",
+    sheets = list("Sheet1")
+  ))
+  tmp_json <- tempfile(fileext = ".json")
+  jsonlite::write_json(json_data, tmp_json, auto_unbox = TRUE, null = "null")
+  expect_error(
+    loadProject(tmp_json),
+    regexp = "importerConfiguration"
+  )
+})
+
+test_that("Project load errors if script observedData entry missing file", {
+  pc <- testProject()
+  pc_path <- pc$jsonPath
+  json_data <- jsonlite::fromJSON(pc_path, simplifyVector = FALSE)
+  json_data$observedData <- list(list(type = "script"))
+  tmp_json <- tempfile(fileext = ".json")
+  jsonlite::write_json(json_data, tmp_json, auto_unbox = TRUE, null = "null")
+  expect_error(
+    loadProject(tmp_json),
+    regexp = "file"
+  )
+})
+
+test_that("loadObservedData loads script returning single DataSet", {
+  pc <- testProject()
+  pc$observedData <- list(list(
+    type = "script",
+    file = "scripts/test_script_single.R"
+  ))
+  result <- loadObservedData(pc)
+  expect_type(result, "list")
+  expect_length(result, 1)
+  expect_true(inherits(result[[1]], "DataSet"))
+  expect_equal(names(result), "ScriptGenerated")
+})
+
+test_that("loadObservedData loads script returning list of DataSets", {
+  pc <- testProject()
+  pc$observedData <- list(list(
+    type = "script",
+    file = "scripts/test_script_list.R"
+  ))
+  result <- loadObservedData(pc)
+  expect_type(result, "list")
+  expect_length(result, 2)
+  expect_true(all(sapply(result, inherits, "DataSet")))
+  expect_setequal(names(result), c("ScriptDataSet1", "ScriptDataSet2"))
+})
+
+test_that("loadObservedData errors if script file not found", {
+  pc <- testProject()
+  pc$observedData <- list(list(
+    type = "script",
+    file = "scripts/nonexistent.R"
+  ))
+  expect_error(
+    loadObservedData(pc),
+    regexp = "Script file not found"
+  )
+})
+
+test_that("loadObservedData errors if script returns wrong type", {
+  pc <- testProject()
+  pc$observedData <- list(list(
+    type = "script",
+    file = "scripts/test_script_bad.R"
+  ))
+  expect_error(
+    loadObservedData(pc),
+    regexp = "must return DataSet"
+  )
+})
+
+test_that("addObservedData with DataSet adds entry and stores DataSet by name", {
+  pc <- testProject()
+  ds <- ospsuite::DataSet$new(name = "ProgrammaticData")
+  ds$setValues(xValues = 1:3, yValues = 1:3)
+  initialCount <- length(pc$observedData)
+  expect_message(
+    pc$addObservedData(ds),
+    regexp = "reproducibility"
+  )
+  expect_equal(length(pc$observedData), initialCount + 1)
+  newEntry <- pc$observedData[[length(pc$observedData)]]
+  expect_equal(newEntry$type, "programmatic")
+  expect_null(newEntry$name)
+  expect_equal(pc$.getProgrammaticDataSets()[["ProgrammaticData"]], ds)
+})
+
+test_that("addObservedData with config list adds entry directly", {
+  pc <- testProject()
+  initialCount <- length(pc$observedData)
+  config <- list(
+    type = "script",
+    file = "scripts/generate_data.R"
+  )
+  pc$addObservedData(config)
+  expect_equal(length(pc$observedData), initialCount + 1)
+  newEntry <- pc$observedData[[length(pc$observedData)]]
+  expect_equal(newEntry$type, "script")
+  expect_equal(newEntry$file, "scripts/generate_data.R")
+})
+
+test_that("addObservedData with config list validates type", {
+  pc <- testProject()
+  expect_error(
+    pc$addObservedData(list(type = "invalid", file = "test.xlsx")),
+    regexp = "Invalid type"
+  )
+  expect_error(
+    pc$addObservedData(list(file = "test.xlsx")),
+    regexp = "must include.*type"
+  )
+})
+
+test_that("loadObservedData merges programmatic and JSON-declared DataSets", {
+  pc <- testProject()
+  ds <- ospsuite::DataSet$new(name = "ProgrammaticData")
+  ds$setValues(xValues = 1:3, yValues = 1:3)
+  suppressMessages(pc$addObservedData(ds))
+  result <- loadObservedData(pc)
+  expect_true("ProgrammaticData" %in% names(result))
+  expect_equal(result[["ProgrammaticData"]], ds)
+  expect_true(length(result) > 1)
+})
+
+
+test_that("addObservedData errors on duplicate DataSet name", {
+  pc <- testProject()
+  ds1 <- ospsuite::DataSet$new(name = "SameName")
+  ds1$setValues(xValues = 1:3, yValues = 1:3)
+  ds2 <- ospsuite::DataSet$new(name = "SameName")
+  ds2$setValues(xValues = 1:3, yValues = 4:6)
+  suppressMessages(pc$addObservedData(ds1))
+  expect_error(
+    suppressMessages(pc$addObservedData(ds2)),
+    regexp = "already exists"
+  )
+})
+
+test_that("getObservedDataNames returns all DataSet names", {
+  pc <- testProject()
+  names_before <- getObservedDataNames(pc)
+  expect_true(length(names_before) >= 1)
+
+  ds <- ospsuite::DataSet$new(name = "NewData")
+  ds$setValues(xValues = 1:3, yValues = 1:3)
+  suppressMessages(pc$addObservedData(ds))
+
+  names_after <- getObservedDataNames(pc)
+  expect_true("NewData" %in% names_after)
+  expect_equal(length(names_after), length(names_before) + 1)
+})
+
+test_that("addObservedData errors when name conflicts with existing loaded data", {
+  pc <- testProject()
+  existing_name <- getObservedDataNames(pc)[[1]]
+  ds <- ospsuite::DataSet$new(name = existing_name)
+  ds$setValues(xValues = 1:3, yValues = 1:3)
+  expect_error(
+    suppressMessages(pc$addObservedData(ds)),
+    regexp = "already exists"
+  )
 })

@@ -12,8 +12,6 @@
     "applicationsFile": "Applications.xlsx",
     "plotsFile": "Plots.xlsx",
     "dataFolder": "Data/",
-    "dataFile": null,
-    "dataImporterConfigurationFile": null,
     "outputFolder": "Results/"
   },
   "observedData": [],

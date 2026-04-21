@@ -761,3 +761,51 @@ messages$abortedByUser <- function() {
     "Aborted by user."
   )
 }
+
+messages$scriptFileNotFound <- function(path) {
+  cliFormat(
+    "Script file not found: {.file {path}}"
+  )
+}
+
+messages$scriptWrongReturnType <- function(path, actualClass) {
+  cliFormat(
+    "Script {.file {path}} must return DataSet or list of DataSet objects, got {.cls {actualClass}}"
+  )
+}
+
+messages$excelEntryMissingFile <- function() {
+  cliFormat(
+    "Excel observedData entry must have a {.field file} field specifying the Excel file path."
+  )
+}
+
+messages$excelEntryMissingImporter <- function() {
+  cliFormat(
+    "Excel observedData entry must have an {.field importerConfiguration} field specifying the importer XML file."
+  )
+}
+
+messages$excelEntryMissingSheets <- function() {
+  cliFormat(
+    "Excel observedData entry must have a {.field sheets} field specifying which sheets to load."
+  )
+}
+
+messages$entryMissingFile <- function(type) {
+  cliFormat(
+    "{.val {type}} observedData entry must have a {.field file} field."
+  )
+}
+
+messages$observedDataNameExists <- function(name) {
+  cliFormat(
+    "Observed data with name {.val {name}} already exists. Use a different name."
+  )
+}
+
+messages$observedDataNameOverwritten <- function(name) {
+  cliFormat(
+    "Programmatically added observed data {.val {name}} overwrites a JSON-declared entry with the same name."
+  )
+}

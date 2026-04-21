@@ -104,6 +104,79 @@ new functions:
 > `importProjectFromExcel()` once to generate `Project.json`, then use
 > `loadProject()` in subsequent sessions.
 
+### Observed Data Configuration Changes
+
+As of v6.0.0, the observed data structure has been simplified. The old
+`filePaths` entries `dataFile` and `dataImporterConfigurationFile` have been
+removed. Each observed data source must now be declared explicitly in the
+`observedData` array of `Project.json`.
+
+#### Old Structure (v5.x)
+```json
+{
+  "filePaths": {
+    "dataFile": "Data/ObservedData.xlsx",
+    "dataImporterConfigurationFile": "Data/dataImporter.xml"
+  }
+}
+```
+
+#### New Structure (v6.0.0+)
+Each observed data source must now specify its type and location:
+
+```json
+{
+  "observedData": [
+    {
+      "type": "excel",
+      "file": "ObservedData.xlsx",
+      "importerConfiguration": "dataImporter.xml",
+      "sheets": ["Sheet1", "Sheet2"]
+    },
+    {
+      "type": "pkml",
+      "file": "ObservedData.pkml"
+    },
+    {
+      "type": "script",
+      "file": "scripts/load_data.R"
+    }
+  ]
+}
+```
+
+#### Supported Types
+
+- **`excel`**: Load data from Excel files. Requires:
+  - `file`: Path to the Excel file (relative to data folder or absolute)
+  - `importerConfiguration`: Path to the data importer XML configuration
+  - `sheets`: Array of sheet names to import
+
+- **`pkml`**: Load data from PKML files. Requires:
+  - `file`: Path to the PKML file (relative to data folder or absolute)
+
+- **`script`**: Load data from an R script. Requires:
+  - `file`: Path to an R script file (relative to project root or absolute)
+  - The script must return a `DataSet` or a named list of `DataSet` objects
+
+#### Programmatic Data Injection
+
+For cases where observed data cannot be declared in JSON, use the
+`addObservedData()` method on the `Project` object:
+
+```r
+project <- loadProject("Project.json")
+# Create or load your DataSet
+myDataSet <- createObservedData(...)
+# Add it to the project
+project$addObservedData("MyDataSet", myDataSet)
+# Load both JSON and programmatically-added data
+dataSets <- loadObservedData(project)
+```
+
+Note: For reproducibility, prefer using `type: "script"` in your JSON
+configuration over programmatic injection.
+
 ### Deprecated wrappers
 
 The following old names still work but emit deprecation warnings and will be

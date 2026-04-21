@@ -27,7 +27,12 @@ dataCombinedDf <- data.frame(list(
   ),
   "scenario" = c(scenarioNames[1], NA, scenarioNames[1], NA),
   "path" = c(outputPaths, NA, outputPaths, NA),
-  "dataSet" = c(NA, names(observedDataForSetup)[1], NA, names(observedDataForSetup)[1]),
+  "dataSet" = c(
+    NA,
+    names(observedDataForSetup)[1],
+    NA,
+    names(observedDataForSetup)[1]
+  ),
   "group" = c(
     "Aciclovir PVB",
     "Aciclovir PVB",

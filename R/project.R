@@ -169,33 +169,6 @@ Project <- R6::R6Class(
         self$projectDirPath
       )
     },
-    #' @field dataFile Path to the Excel file with experimental (observed) data.
-    #'   Must be located in the "dataFolder".
-    dataFile = function(value) {
-      if (!missing(value)) {
-        private$.filePathsData$dataFile$value <-
-          value
-        private$.modified <- TRUE
-      }
-      private$.clean_path(
-        private$.filePathsData$dataFile$value,
-        self$dataFolder
-      )
-    },
-    #' @field dataImporterConfigurationFile Name of data importer configuration
-    #'   file in xml format used to load the data.
-    #' Must be located in the "dataFolder"
-    dataImporterConfigurationFile = function(value) {
-      if (!missing(value)) {
-        private$.filePathsData$dataImporterConfigurationFile$value <-
-          value
-        private$.modified <- TRUE
-      }
-      private$.clean_path(
-        private$.filePathsData$dataImporterConfigurationFile$value,
-        self$dataFolder
-      )
-    },
     #' @field outputFolder Path to the folder where the results should be saved
     #'   relative to the "Code" folder
     outputFolder = function(value) {
@@ -227,6 +200,8 @@ Project <- R6::R6Class(
     .modified = FALSE,
     .rawData = NULL,
     .warned_paths = character(),
+    .programmaticDataSets = list(),
+    .observedDataNamesCache = NULL,
     .clean_path = function(
       path,
       parent = NULL,
@@ -551,16 +526,25 @@ Project <- R6::R6Class(
         return(list())
       }
       for (entry in observedDataConfig) {
-        if (is.null(entry$type) || !entry$type %in% c("excel", "pkml")) {
+        if (
+          is.null(entry$type) ||
+            !entry$type %in% c("excel", "pkml", "script", "programmatic")
+        ) {
           stop(
-            "Each observedData entry must have a 'type' of 'excel' or 'pkml'."
+            "Each observedData entry must have a 'type' of 'excel', 'pkml', 'script', or 'programmatic'."
           )
         }
-        if (entry$type == "excel" && is.null(entry$sheets)) {
-          stop("Excel observedData entries must have a 'sheets' field.")
+        if (entry$type == "excel") {
+          if (is.null(entry$file)) {
+            stop(messages$excelEntryMissingFile())
+          }
+          if (is.null(entry$importerConfiguration)) {
+            stop(messages$excelEntryMissingImporter())
+          }
+          if (is.null(entry$sheets)) stop(messages$excelEntryMissingSheets())
         }
-        if (entry$type == "pkml" && is.null(entry$file)) {
-          stop("PKML observedData entries must have a 'file' field.")
+        if (entry$type %in% c("pkml", "script")) {
+          if (is.null(entry$file)) stop(messages$entryMissingFile(entry$type))
         }
       }
       observedDataConfig
@@ -603,6 +587,23 @@ Project <- R6::R6Class(
     }
   ),
   public = list(
+    #' @description Internal method to retrieve all programmatic DataSets.
+    #' Not intended for end-user use.
+    #' @keywords internal
+    .getProgrammaticDataSets = function() {
+      private$.programmaticDataSets
+    },
+    #' @description Internal method to cache observed data names.
+    #' @param names Character vector of DataSet names.
+    #' @keywords internal
+    .cacheObservedDataNames = function(names) {
+      private$.observedDataNamesCache <- names
+    },
+    #' @description Internal method to get cached observed data names.
+    #' @keywords internal
+    .getObservedDataNamesCache = function() {
+      private$.observedDataNamesCache
+    },
     #' @description Add a scenario programmatically.
     #' Delegates to the standalone [addScenario()] function.
     #' @param scenarioName Character. Name for the new scenario.
@@ -615,6 +616,63 @@ Project <- R6::R6Class(
         modelFile = modelFile,
         ...
       )
+    },
+    #' @description Add observed data programmatically
+    #'
+    #' Add an observedData entry to the project. Accepts either:
+    #' - A `DataSet` object directly (creates a "programmatic" entry, uses `dataSet$name`)
+    #' - A configuration list with `type` and relevant fields (excel, pkml, script)
+    #'
+    #' @param entry Either a `DataSet` object or a list with observedData config.
+    #'   For DataSet: stored internally using `dataSet$name` as the key.
+    #'   For config list: must include `type` ("excel", "pkml", "script") and
+    #'   relevant fields (e.g., `file`, `importerConfiguration`, `sheets`).
+    #' @return Invisibly returns self for chaining
+    addObservedData = function(entry) {
+      if (inherits(entry, "DataSet")) {
+        # DataSet object - use dataSet$name as key
+        name <- entry$name
+        existingNames <- getObservedDataNames(self)
+        if (name %in% existingNames) {
+          stop(messages$observedDataNameExists(name))
+        }
+        private$.programmaticDataSets[[name]] <- entry
+        # Update cache with new name
+        private$.observedDataNamesCache <- c(
+          private$.observedDataNamesCache,
+          name
+        )
+        newEntry <- list(type = "programmatic")
+        self$observedData <- c(self$observedData, list(newEntry))
+        private$.modified <- TRUE
+        cli::cli_inform(c(
+          "i" = paste0(
+            "For reproducibility, consider declaring this DataSet via a script ",
+            "in your Project.json using the observedData field with ",
+            "type = \"script\" and file = \"scripts/your_script.R\"."
+          )
+        ))
+      } else if (is.list(entry)) {
+        # Config list - validate and add directly
+        if (is.null(entry$type)) {
+          stop("Config list must include 'type' field")
+        }
+        validTypes <- c("excel", "pkml", "script")
+        if (!(entry$type %in% validTypes)) {
+          stop(sprintf(
+            "Invalid type '%s'. Must be one of: %s",
+            entry$type,
+            paste(validTypes, collapse = ", ")
+          ))
+        }
+        # Invalidate cache since we don't know the name until load
+        private$.observedDataNamesCache <- NULL
+        self$observedData <- c(self$observedData, list(entry))
+        private$.modified <- TRUE
+      } else {
+        stop("'entry' must be a DataSet object or a configuration list")
+      }
+      invisible(self)
     },
     #' Initialize
     #'
@@ -643,8 +701,6 @@ Project <- R6::R6Class(
         "Configuration file" = rel(self$projectFilePath),
         "Model folder" = rel(self$modelFolder),
         "Data folder" = rel(self$dataFolder),
-        "Data file" = rel(self$dataFile),
-        "Data importer configuration" = rel(self$dataImporterConfigurationFile),
         "Output folder" = rel(self$outputFolder)
       ))
 
@@ -1045,11 +1101,6 @@ exampleProjectConfigurationPath <- function() {
     applicationsFile = .relativeFilename(project, "applicationsFile"),
     plotsFile = .relativeFilename(project, "plotsFile"),
     dataFolder = .relativePathOrNull(project, "dataFolder"),
-    dataFile = .relativeFilename(project, "dataFile"),
-    dataImporterConfigurationFile = .relativeFilename(
-      project,
-      "dataImporterConfigurationFile"
-    ),
     outputFolder = .relativePathOrNull(project, "outputFolder")
   )
 }

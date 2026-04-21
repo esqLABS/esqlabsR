@@ -176,6 +176,76 @@ A `Project.xlsx` file can be generated from any JSON project via
 `importProjectFromExcel()` performs the reverse direction — generating or
 updating `Project.json` from an Excel-based project.
 
+### Observed Data
+
+The `observedData` section in `Project.json` declares data sources that are
+loaded via `loadObservedData()`. Each entry specifies a source type and the
+information needed to load it.
+
+#### Source Types
+
+**Excel files** — loaded via a data importer configuration:
+
+```json
+{
+  "type": "excel",
+  "file": "StudyData.xlsx",
+  "importerConfiguration": "importer_config.xml",
+  "sheets": ["Group A", "Group B"]
+}
+```
+
+**PKML files** — loaded directly:
+
+```json
+{
+  "type": "pkml",
+  "file": "observed_data.pkml"
+}
+```
+
+**R scripts** — sourced at load time, must return a `DataSet` or list of `DataSet` objects:
+```json
+{
+  "type": "script",
+  "file": "scripts/generate_data.R"
+}
+```
+
+All file paths are relative to `dataFolder`.
+
+#### Loading Observed Data
+
+```{r, eval=FALSE}
+project <- loadProject("Project.json")
+
+# Get all DataSet names (loads data on first call, then cached)
+getObservedDataNames(project)
+
+# Load all DataSets
+dataSets <- loadObservedData(project)
+```
+
+#### Adding Data Programmatically
+
+You can add observed data entries at runtime using `addObservedData()`:
+
+```{r, eval=FALSE}
+# Add a DataSet directly (uses dataSet$name as key)
+my_data <- ospsuite::DataSet$new(name = "MyPKData")
+my_data$setValues(xValues = c(0, 1, 2, 4), yValues = c(0, 10, 8, 5))
+project$addObservedData(my_data)
+
+# Add a config entry (e.g., a script to be loaded later)
+project$addObservedData(list(
+  type = "script",
+  file = "scripts/additional_data.R"
+))
+```
+
+When adding a `DataSet` directly, duplicate names are checked against all
+existing DataSet names (including those from Excel, PKML, and script sources).
+
 ### Version Control and Project Sharing
 
 Since `Project.json` is a text-based format, it works naturally

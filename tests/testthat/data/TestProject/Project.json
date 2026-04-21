@@ -12,8 +12,6 @@
     "applicationsFile": "Applications.xlsx",
     "plotsFile": "Plots.xlsx",
     "dataFolder": "Data/",
-    "dataFile": "TestProject_TimeValuesData.xlsx",
-    "dataImporterConfigurationFile": "esqlabs_dataImporter_configuration.xml",
     "outputFolder": "Results/"
   },
   "observedData": [
