@@ -544,11 +544,9 @@ messages$sensitivityAnalysisSimulationFailure <- function(
   parameterPath,
   parameterFactor
 ) {
-  cat(
-    cliFormat(
-      "Simulation for {.var {parameterPath}} with variation factor {.val {parameterFactor}} failed!
-      The results will not be included in the sensitivity calculation."
-    )
+  cliFormat(
+    "Simulation for {.var {parameterPath}} with variation factor {.val {parameterFactor}} failed!
+    The results will not be included in the sensitivity calculation."
   )
 }
 
@@ -762,4 +760,143 @@ messages$abortedByUser <- function() {
   cliFormat(
     "Aborted by user."
   )
+}
+
+messages$errorPIColumnRequired <- function(columnName, sheetName) {
+  cliFormat(
+    "{.field {columnName}} column is required in {.sheet {sheetName}} sheet."
+  )
+}
+
+messages$errorPIDatasetNotFound <- function(datasetName, availableDatasets) {
+  cli::format_message(c(
+    "x" = "Dataset {.val {datasetName}} not found",
+    "i" = "Available datasets: {.val {paste(availableDatasets, collapse = ', ')}}"
+  ))
+}
+
+messages$errorPIGroupBoundsMismatch <- function(group, paramPath) {
+  cliFormat(
+    "Parameter {.val {paramPath}} in group {.val {group}} has different bounds.
+    All parameters in a group must have identical bounds."
+  )
+}
+
+messages$errorPIInvalidBounds <- function(paramPath, min, start, max) {
+  cliFormat(
+    "Parameter {.val {paramPath}} has invalid bounds: Min={.val {min}}, Start={.val {start}}, Max={.val {max}}.
+    Expected: Min <= Start <= Max"
+  )
+}
+
+messages$errorPIInvalidWeightString <- function(weightString) {
+  cliFormat(
+    "Weight value {.val {weightString}} cannot be parsed as numeric.
+    Expected a number or comma-separated numbers, e.g. {.code 1} or {.code 1,2,3}."
+  )
+}
+
+messages$errorPIWeightMustBePositive <- function(weightString) {
+  cliFormat(
+    "Weight values must be non-negative (>= 0). Got: {.val {weightString}}."
+  )
+}
+
+messages$errorPIMissingPiDefinitionsKeys <- function(missingKeys) {
+  cliFormat(
+    "{.arg piDefinitions} must contain: {.val {c('piConfiguration', 'piParameters', 'piOutputMappings')}}.
+    Missing: {.val {paste(missingKeys, collapse = ', ')}}"
+  )
+}
+
+messages$errorPIMissingSheetsInFile <- function(missingSheets, filePath) {
+  cliFormat(
+    "Required sheet(s) missing in {.file {filePath}}: {.val {paste(missingSheets, collapse = ', ')}}.
+    ParameterIdentification.xlsx must contain: PIOutputMappings, PIParameters"
+  )
+}
+
+messages$errorPINoOutputPathsFound <- function() {
+  cliFormat(
+    "No output paths found for PI output mapping.
+    Ensure the scenario has {.field OutputPathsIds} defined in {.file Scenarios.xlsx}."
+  )
+}
+
+messages$errorPIOutputPathIdNotFound <- function(outputPathId) {
+  cliFormat(
+    "{.val {outputPathId}} specified in {.field PIOutputMappings} is not a simulation output path and is not
+    present in the {.field OutputPaths} sheet of {.file Scenarios.xlsx}. Define it in the {.field OutputPaths}
+    sheet or use a full simulation output path."
+  )
+}
+
+messages$errorPIDuplicateOutputPathId <- function(outputPathId) {
+  cliFormat(
+    "{.field OutputPathId} {.val {outputPathId}} has multiple entries in the {.sheet OutputPaths} sheet of {.file Scenarios.xlsx}.
+    Each {.field OutputPathId} must be unique."
+  )
+}
+
+messages$errorPINoScenariosConfigured <- function() {
+  cliFormat(
+    "No scenarios configured for PI tasks.
+    PI tasks require at least one scenario defined in {.file Scenarios.xlsx}."
+  )
+}
+
+messages$errorPIOutputQuantityNotFound <- function(path, simulationName) {
+  cliFormat(
+    "Output quantity {.path {path}} not found in simulation {.val {simulationName}}.
+    Check that the output path exists in the simulation."
+  )
+}
+
+messages$errorPIParameterNotFound <- function(path, simulationName) {
+  cliFormat(
+    "Parameter {.path {path}} not found in simulation {.val {simulationName}}.
+    Check that the parameter path is correct and exists in the simulation."
+  )
+}
+
+messages$errorPIScenarioNotFound <- function(scenarioName, availableScenarios) {
+  cli::format_message(c(
+    "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
+    "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
+  ))
+}
+
+messages$errorPITaskMissingInSheet <- function(taskName, sheetName) {
+  cliFormat(
+    "PI task {.val {taskName}} not found in {.val {sheetName}} sheet"
+  )
+}
+
+messages$errorPITaskNotFound <- function(taskNames, availableTasks) {
+  cli::format_message(c(
+    "x" = "PI task(s) not found: {.val {paste(taskNames, collapse = ', ')}}",
+    "i" = "Available PI tasks: {.val {paste(availableTasks, collapse = ', ')}}"
+  ))
+}
+
+messages$errorPITooManyRowsInSheet <- function(
+  taskName,
+  sheetName,
+  maxRows,
+  nRows
+) {
+  cliFormat(
+    "Too many entries for PI task {.val {taskName}} in {.val {sheetName}} sheet.
+    Expected at most {.val {maxRows}} row(s), found {.val {nRows}}"
+  )
+}
+
+messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
+  cliFormat(
+    "Parameter identification task {.val {piTaskName}} failed: {.emph {errorMessage}}"
+  )
+}
+
+messages$messageRunningPITask <- function(piTaskName) {
+  cliFormat("Running PI task: {.val {piTaskName}}")
 }

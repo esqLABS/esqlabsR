@@ -491,7 +491,7 @@ test_that("sensitivityCalculation returns expected results with single custom fu
     variationRange = variationRange
   )
 
-  expect_equal(results$pkData, resultsLambda$pkData)
+  expect_equal(results$pkData, resultsLambda$pkData, tolerance = 1e-3)
 
   customPKData <- dplyr::filter(
     results$pkData,

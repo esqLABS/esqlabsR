@@ -1,7 +1,7 @@
 Type: Package
 Package: esqlabsR
 Title: ESQlabs utilities package
-Version: 5.6.0.9003
+Version: 5.6.0.9004
 Authors@R: c(
     person("ESQlabs GmbH", role = c("cph", "fnd")),
     person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
@@ -31,6 +31,7 @@ Imports:
     jsonlite,
     lifecycle,
     methods,
+    ospsuite.parameteridentification,
     parallel,
     patchwork,
     purrr,
@@ -67,7 +68,8 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Remotes: 
+Remotes:
     ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
     ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
-    tlf=Open-Systems-Pharmacology/TLF-Library
+    tlf=Open-Systems-Pharmacology/TLF-Library,
+    ospsuite.parameteridentification=Open-Systems-Pharmacology/OSPSuite.ParameterIdentification

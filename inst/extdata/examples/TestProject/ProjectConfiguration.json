@@ -15,17 +15,17 @@
       {
         "Property": "modelParamsFile",
         "Value": "ModelParameters.xlsx",
-        "Description": "Name of the excel file with global model parametrization. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with global model parametrization. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "individualsFile",
         "Value": "Individuals.xlsx",
-        "Description": "Name of the excel file with individual-specific model parametrization. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with individual-specific model parametrization. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "populationsFile",
         "Value": "Populations.xlsx",
-        "Description": "Name of the excel file with population information. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with population information. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "populationsFolder",
@@ -35,17 +35,22 @@
       {
         "Property": "scenariosFile",
         "Value": "Scenarios.xlsx",
-        "Description": "Name of the excel file with scenario definitions. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with scenario definitions. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "applicationsFile",
         "Value": "Applications.xlsx",
-        "Description": "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file scenario-specific parameters such as application protocol parameters. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "plotsFile",
         "Value": "Plots.xlsx",
-        "Description": "Name of the excel file with plot definitions. Must be located in the \"paramsFolder\""
+        "Description": "Name of the excel file with plot definitions. Must be located in the \"configurationsFolder\""
+      },
+      {
+        "Property": "parameterIdentificationFile",
+        "Value": "ParameterIdentification.xlsx",
+        "Description": "Name of the excel file with parameter identification task definitions. Must be located in the \"configurationsFolder\""
       },
       {
         "Property": "dataFolder",
@@ -275,6 +280,51 @@
           "SteadyStateTimeUnit": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
+        },
+        {
+          "Scenario_name": "PITestScenario",
+          "IndividualId": null,
+          "PopulationId": null,
+          "ReadPopulationFromCSV": null,
+          "ModelParameterSheets": null,
+          "ApplicationProtocol": null,
+          "SimulationTime": null,
+          "SimulationTimeUnit": null,
+          "SteadyState": null,
+          "SteadyStateTime": null,
+          "SteadyStateTimeUnit": null,
+          "ModelFile": "Aciclovir.pkml",
+          "OutputPathsIds": null
+        },
+        {
+          "Scenario_name": "PIScenario_250mg",
+          "IndividualId": null,
+          "PopulationId": null,
+          "ReadPopulationFromCSV": null,
+          "ModelParameterSheets": "Aciclovir",
+          "ApplicationProtocol": "Protocol_250mg",
+          "SimulationTime": "0,120,1",
+          "SimulationTimeUnit": "h",
+          "SteadyState": "FALSE",
+          "SteadyStateTime": null,
+          "SteadyStateTimeUnit": null,
+          "ModelFile": "Aciclovir.pkml",
+          "OutputPathsIds": null
+        },
+        {
+          "Scenario_name": "PIScenario_500mg",
+          "IndividualId": null,
+          "PopulationId": null,
+          "ReadPopulationFromCSV": null,
+          "ModelParameterSheets": "Aciclovir",
+          "ApplicationProtocol": "Protocol_500mg",
+          "SimulationTime": "0,120,1",
+          "SimulationTimeUnit": "h",
+          "SteadyState": "FALSE",
+          "SteadyStateTime": null,
+          "SteadyStateTimeUnit": null,
+          "ModelFile": "Aciclovir.pkml",
+          "OutputPathsIds": null
         }
       ]
     },
@@ -300,6 +350,28 @@
           "Container Path": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
           "Parameter Name": "Dose",
           "Value": "250",
+          "Units": "mg"
+        }
+      ]
+    },
+    "Protocol_250mg": {
+      "column_names": ["Container Path", "Parameter Name", "Value", "Units"],
+      "rows": [
+        {
+          "Container Path": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "Parameter Name": "Dose",
+          "Value": "250",
+          "Units": "mg"
+        }
+      ]
+    },
+    "Protocol_500mg": {
+      "column_names": ["Container Path", "Parameter Name", "Value", "Units"],
+      "rows": [
+        {
+          "Container Path": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "Parameter Name": "Dose",
+          "Value": "500",
           "Units": "mg"
         }
       ]
@@ -505,6 +577,181 @@
     "ObservedDataNames": {
       "column_names": [],
       "rows": []
+    }
+  },
+  "ParameterIdentification": {
+    "PIOutputMappings": {
+      "column_names": ["PITaskName", "Scenarios", "OutputPath", "ObservedDataSheet", "DataSet", "Scaling", "xOffset", "yOffset", "xFactor", "yFactor", "Weight"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "Scenarios": "PITestScenario",
+          "OutputPath": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+          "ObservedDataSheet": "Laskin 1982.Group A",
+          "DataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+          "Scaling": "lin",
+          "xOffset": null,
+          "yOffset": null,
+          "xFactor": null,
+          "yFactor": null,
+          "Weight": null
+        },
+        {
+          "PITaskName": "AciclovirSimplePathId",
+          "Scenarios": "PITestScenario",
+          "OutputPath": "Aciclovir_PVB",
+          "ObservedDataSheet": "Laskin 1982.Group A",
+          "DataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+          "Scaling": "lin",
+          "xOffset": null,
+          "yOffset": null,
+          "xFactor": null,
+          "yFactor": null,
+          "Weight": null
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_250mg",
+          "OutputPath": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+          "ObservedDataSheet": "Laskin 1982.Group A",
+          "DataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+          "Scaling": "log",
+          "xOffset": null,
+          "yOffset": null,
+          "xFactor": null,
+          "yFactor": null,
+          "Weight": null
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_500mg",
+          "OutputPath": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+          "ObservedDataSheet": "Laskin 1982.Group A",
+          "DataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5.0 mg/kg_iv_",
+          "Scaling": "log",
+          "xOffset": null,
+          "yOffset": null,
+          "xFactor": null,
+          "yFactor": null,
+          "Weight": null
+        }
+      ]
+    },
+    "PIParameters": {
+      "column_names": ["PITaskName", "Scenarios", "Container Path", "Parameter Name", "Units", "MinValue", "MaxValue", "StartValue", "Group"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "Scenarios": "PITestScenario",
+          "Container Path": "Aciclovir",
+          "Parameter Name": "Lipophilicity",
+          "Units": "Log Units",
+          "MinValue": "-10",
+          "MaxValue": "10",
+          "StartValue": "1",
+          "Group": "1"
+        },
+        {
+          "PITaskName": "AciclovirSimplePathId",
+          "Scenarios": "PITestScenario",
+          "Container Path": "Aciclovir",
+          "Parameter Name": "Lipophilicity",
+          "Units": "Log Units",
+          "MinValue": "-10",
+          "MaxValue": "10",
+          "StartValue": "1",
+          "Group": "1"
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_250mg",
+          "Container Path": "Aciclovir",
+          "Parameter Name": "Lipophilicity",
+          "Units": "Log Units",
+          "MinValue": "-10",
+          "MaxValue": "10",
+          "StartValue": "1",
+          "Group": "1"
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_500mg",
+          "Container Path": "Aciclovir",
+          "Parameter Name": "Lipophilicity",
+          "Units": "Log Units",
+          "MinValue": "-10",
+          "MaxValue": "10",
+          "StartValue": "1",
+          "Group": "1"
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_250mg",
+          "Container Path": "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir",
+          "Parameter Name": "TSspec",
+          "Units": null,
+          "MinValue": "0",
+          "MaxValue": "10",
+          "StartValue": "0.5",
+          "Group": "2"
+        },
+        {
+          "PITaskName": "AciclovirMultiScenario",
+          "Scenarios": "PIScenario_500mg",
+          "Container Path": "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Renal Clearances-TS-Aciclovir",
+          "Parameter Name": "TSspec",
+          "Units": null,
+          "MinValue": "0",
+          "MaxValue": "10",
+          "StartValue": "0.5",
+          "Group": "3"
+        }
+      ]
+    },
+    "PIConfiguration": {
+      "column_names": ["PITaskName", "Algorithm", "CIMethod", "PrintEvaluationFeedback", "AutoEstimateCI", "numberOfCores", "checkForNegativeValues", "ObjectiveFunctionType", "ResidualWeightingMethod", "RobustMethod", "ScaleVar", "LinScaleCV", "LogScaleSD"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "Algorithm": "BOBYQA",
+          "CIMethod": "hessian",
+          "PrintEvaluationFeedback": "TRUE",
+          "AutoEstimateCI": "FALSE",
+          "numberOfCores": null,
+          "checkForNegativeValues": null,
+          "ObjectiveFunctionType": null,
+          "ResidualWeightingMethod": null,
+          "RobustMethod": null,
+          "ScaleVar": null,
+          "LinScaleCV": null,
+          "LogScaleSD": null
+        }
+      ]
+    },
+    "AlgorithmOptions": {
+      "column_names": ["PITaskName", "OptionName", "OptionValue"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "OptionName": "maxeval",
+          "OptionValue": "100"
+        },
+        {
+          "PITaskName": "AciclovirSimple",
+          "OptionName": "ftol_rel",
+          "OptionValue": "0"
+        }
+      ]
+    },
+    "CIOptions": {
+      "column_names": ["PITaskName", "OptionName", "OptionValue"],
+      "rows": [
+        {
+          "PITaskName": "AciclovirSimple",
+          "OptionName": "confLevel",
+          "OptionValue": "0.95"
+        }
+      ]
     }
   },
   "populationsCSV": {
