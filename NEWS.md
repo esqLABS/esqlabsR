@@ -2,6 +2,8 @@
 
 ## Breaking changes
 
+- `dataCombined` JSON structure changed from flat array to nested structure with `simulated` and `observed` sub-arrays. The new format groups entries by DataCombined name and separates simulated/observed data into typed arrays (#1001).
+
 - **`validateAllConfigurations()` replaced by `validateProject()`.** Validation
   now operates on loaded `Project` objects or `Project.json` files directly,
   instead of Excel files. The new function validates all project sections

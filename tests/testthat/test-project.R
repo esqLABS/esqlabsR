@@ -494,3 +494,138 @@ test_that("sync reports excel_modified when Excel differs from JSON", {
   expect_false(result$in_sync)
   expect_true(result$excel_modified)
 })
+
+test_that(".parseNestedDataCombined converts nested structure to flat data.frame", {
+  nested <- list(
+    list(
+      name = "DC1",
+      simulated = list(
+        list(
+          label = "Sim1",
+          scenario = "Scenario1",
+          path = "Path1",
+          group = "Group1",
+          xOffsets = NULL,
+          xOffsetsUnits = NULL,
+          yOffsets = NULL,
+          yOffsetsUnits = NULL,
+          xScaleFactors = NULL,
+          yScaleFactors = NULL
+        )
+      ),
+      observed = list(
+        list(
+          label = "Obs1",
+          dataSet = "DataSet1",
+          group = "Group1",
+          xOffsets = 1,
+          xOffsetsUnits = "h",
+          yOffsets = NULL,
+          yOffsetsUnits = NULL,
+          xScaleFactors = NULL,
+          yScaleFactors = NULL
+        )
+      )
+    )
+  )
+
+  result <- .parseNestedDataCombined(nested)
+
+  expect_s3_class(result, "data.frame")
+  expect_equal(nrow(result), 2)
+  expect_equal(result$DataCombinedName, c("DC1", "DC1"))
+  expect_equal(result$dataType, c("simulated", "observed"))
+  expect_equal(result$label, c("Sim1", "Obs1"))
+  expect_equal(result$scenario, c("Scenario1", NA))
+  expect_equal(result$path, c("Path1", NA))
+  expect_equal(result$dataSet, c(NA, "DataSet1"))
+  expect_equal(result$xOffsets, c(NA, 1))
+  expect_equal(result$xOffsetsUnits, c(NA, "h"))
+})
+
+test_that(".parseNestedDataCombined handles empty input", {
+  expect_equal(nrow(.parseNestedDataCombined(NULL)), 0)
+  expect_equal(nrow(.parseNestedDataCombined(list())), 0)
+})
+
+test_that(".dataCombinedToNestedJson converts flat data.frame to nested structure", {
+  df <- data.frame(
+    DataCombinedName = c("DC1", "DC1", "DC2"),
+    dataType = c("simulated", "observed", "simulated"),
+    label = c("Sim1", "Obs1", "Sim2"),
+    scenario = c("Scenario1", NA, "Scenario2"),
+    path = c("Path1", NA, "Path2"),
+    dataSet = c(NA, "DataSet1", NA),
+    group = c("Group1", "Group1", "Group2"),
+    xOffsets = c(NA, 1, NA),
+    xOffsetsUnits = c(NA, "h", NA),
+    yOffsets = c(NA, NA, NA),
+    yOffsetsUnits = c(NA, NA, NA),
+    xScaleFactors = c(NA, NA, NA),
+    yScaleFactors = c(NA, NA, NA),
+    stringsAsFactors = FALSE
+  )
+
+  result <- .dataCombinedToNestedJson(df)
+
+  expect_length(result, 2)
+  expect_equal(result[[1]]$name, "DC1")
+  expect_length(result[[1]]$simulated, 1)
+  expect_length(result[[1]]$observed, 1)
+  expect_equal(result[[1]]$simulated[[1]]$label, "Sim1")
+  expect_equal(result[[1]]$simulated[[1]]$scenario, "Scenario1")
+  expect_equal(result[[1]]$observed[[1]]$dataSet, "DataSet1")
+  expect_equal(result[[1]]$observed[[1]]$xOffsets, 1)
+  expect_equal(result[[2]]$name, "DC2")
+  expect_length(result[[2]]$simulated, 1)
+  expect_length(result[[2]]$observed, 0)
+})
+
+test_that(".dataCombinedToNestedJson handles empty input", {
+  expect_equal(.dataCombinedToNestedJson(NULL), list())
+  expect_equal(.dataCombinedToNestedJson(data.frame()), list())
+})
+
+test_that("dataCombined round-trip: nested JSON -> flat df -> nested JSON", {
+  original <- list(
+    list(
+      name = "DC1",
+      simulated = list(
+        list(
+          label = "Sim1",
+          scenario = "Scenario1",
+          path = "Path1",
+          group = "Group1",
+          xOffsets = NULL,
+          xOffsetsUnits = NULL,
+          yOffsets = NULL,
+          yOffsetsUnits = NULL,
+          xScaleFactors = NULL,
+          yScaleFactors = NULL
+        )
+      ),
+      observed = list(
+        list(
+          label = "Obs1",
+          dataSet = "DataSet1",
+          group = "Group1",
+          xOffsets = 1,
+          xOffsetsUnits = "h",
+          yOffsets = NULL,
+          yOffsetsUnits = NULL,
+          xScaleFactors = NULL,
+          yScaleFactors = NULL
+        )
+      )
+    )
+  )
+
+  flat <- .parseNestedDataCombined(original)
+  roundtrip <- .dataCombinedToNestedJson(flat)
+
+  expect_equal(roundtrip[[1]]$name, original[[1]]$name)
+  expect_equal(roundtrip[[1]]$simulated[[1]]$label, original[[1]]$simulated[[1]]$label)
+  expect_equal(roundtrip[[1]]$simulated[[1]]$scenario, original[[1]]$simulated[[1]]$scenario)
+  expect_equal(roundtrip[[1]]$observed[[1]]$dataSet, original[[1]]$observed[[1]]$dataSet)
+  expect_equal(roundtrip[[1]]$observed[[1]]$xOffsets, original[[1]]$observed[[1]]$xOffsets)
+})

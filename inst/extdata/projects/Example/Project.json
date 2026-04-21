@@ -162,79 +162,76 @@
   "plots": {
     "dataCombined": [
       {
-        "DataCombinedName": "Aciclovir_individual",
-        "dataType": "simulated",
-        "label": "Aciclovir simulated (male)",
-        "scenario": "Aciclovir_iv",
-        "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-        "dataSet": null,
-        "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
-        "yOffsets": null,
-        "yOffsetsUnits": null,
-        "xScaleFactors": null,
-        "yScaleFactors": null
+        "name": "Aciclovir_individual",
+        "simulated": [
+          {
+            "label": "Aciclovir simulated (male)",
+            "scenario": "Aciclovir_iv",
+            "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+            "group": "Aciclovir PVB",
+            "xOffsets": null,
+            "xOffsetsUnits": null,
+            "yOffsets": null,
+            "yOffsetsUnits": null,
+            "xScaleFactors": null,
+            "yScaleFactors": null
+          },
+          {
+            "label": "Aciclovir simulated (female)",
+            "scenario": "Aciclovir_iv_female",
+            "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+            "group": "Aciclovir PVB",
+            "xOffsets": null,
+            "xOffsetsUnits": null,
+            "yOffsets": null,
+            "yOffsetsUnits": null,
+            "xScaleFactors": null,
+            "yScaleFactors": null
+          }
+        ],
+        "observed": [
+          {
+            "label": "Aciclovir observed",
+            "dataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+            "group": "Aciclovir PVB",
+            "xOffsets": null,
+            "xOffsetsUnits": null,
+            "yOffsets": null,
+            "yOffsetsUnits": null,
+            "xScaleFactors": null,
+            "yScaleFactors": null
+          }
+        ]
       },
       {
-        "DataCombinedName": "Aciclovir_individual",
-        "dataType": "simulated",
-        "label": "Aciclovir simulated (female)",
-        "scenario": "Aciclovir_iv_female",
-        "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-        "dataSet": null,
-        "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
-        "yOffsets": null,
-        "yOffsetsUnits": null,
-        "xScaleFactors": null,
-        "yScaleFactors": null
-      },
-      {
-        "DataCombinedName": "Aciclovir_individual",
-        "dataType": "observed",
-        "label": "Aciclovir observed",
-        "scenario": null,
-        "path": null,
-        "dataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
-        "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
-        "yOffsets": null,
-        "yOffsetsUnits": null,
-        "xScaleFactors": null,
-        "yScaleFactors": null
-      },
-      {
-        "DataCombinedName": "Aciclovir_population",
-        "dataType": "simulated",
-        "label": "Aciclovir simulated",
-        "scenario": "Aciclovir_iv_population",
-        "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-        "dataSet": null,
-        "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
-        "yOffsets": null,
-        "yOffsetsUnits": null,
-        "xScaleFactors": null,
-        "yScaleFactors": null
-      },
-      {
-        "DataCombinedName": "Aciclovir_population",
-        "dataType": "observed",
-        "label": "Aciclovir observed",
-        "scenario": null,
-        "path": null,
-        "dataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
-        "group": "Aciclovir PVB",
-        "xOffsets": null,
-        "xOffsetsUnits": null,
-        "yOffsets": null,
-        "yOffsetsUnits": null,
-        "xScaleFactors": null,
-        "yScaleFactors": null
+        "name": "Aciclovir_population",
+        "simulated": [
+          {
+            "label": "Aciclovir simulated",
+            "scenario": "Aciclovir_iv_population",
+            "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+            "group": "Aciclovir PVB",
+            "xOffsets": null,
+            "xOffsetsUnits": null,
+            "yOffsets": null,
+            "yOffsetsUnits": null,
+            "xScaleFactors": null,
+            "yScaleFactors": null
+          }
+        ],
+        "observed": [
+          {
+            "label": "Aciclovir observed",
+            "dataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+            "group": "Aciclovir PVB",
+            "xOffsets": null,
+            "xOffsetsUnits": null,
+            "yOffsets": null,
+            "yOffsetsUnits": null,
+            "xScaleFactors": null,
+            "yScaleFactors": null
+          }
+        ]
       }
     ],
     "plotConfiguration": [

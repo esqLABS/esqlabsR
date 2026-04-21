@@ -555,7 +555,7 @@ Project <- R6::R6Class(
         return(NULL)
       }
       list(
-        dataCombined = private$.listOfListsToDataFrame(
+        dataCombined = .parseNestedDataCombined(
           plotsData$dataCombined
         ),
         plotConfiguration = private$.listOfListsToDataFrame(
@@ -820,6 +820,73 @@ ProjectConfiguration <- R6::R6Class(
     }
   )
 )
+
+# Internal Helper Functions ----
+
+#' Parse nested dataCombined JSON to flat data.frame
+#' @param nestedData List of dataCombined objects with simulated/observed arrays
+#' @returns data.frame with DataCombinedName, dataType, and all entry fields
+#' @keywords internal
+#' @noRd
+.parseNestedDataCombined <- function(nestedData) {
+  if (is.null(nestedData) || length(nestedData) == 0) {
+    return(data.frame())
+  }
+
+  transformCols <- c(
+    "xOffsets", "xOffsetsUnits", "yOffsets", "yOffsetsUnits",
+    "xScaleFactors", "yScaleFactors"
+  )
+
+  rows <- list()
+  for (dc in nestedData) {
+    dcName <- dc$name
+
+    # Process simulated entries
+    if (!is.null(dc$simulated) && length(dc$simulated) > 0) {
+      for (entry in dc$simulated) {
+        row <- list(
+          DataCombinedName = dcName,
+          dataType = "simulated",
+          label = entry$label,
+          scenario = entry$scenario,
+          path = entry$path,
+          dataSet = NA,
+          group = entry$group %||% NA
+        )
+        for (col in transformCols) {
+          row[[col]] <- entry[[col]] %||% NA
+        }
+        rows[[length(rows) + 1]] <- as.data.frame(row, stringsAsFactors = FALSE)
+      }
+    }
+
+    # Process observed entries
+    if (!is.null(dc$observed) && length(dc$observed) > 0) {
+      for (entry in dc$observed) {
+        row <- list(
+          DataCombinedName = dcName,
+          dataType = "observed",
+          label = entry$label,
+          scenario = NA,
+          path = NA,
+          dataSet = entry$dataSet,
+          group = entry$group %||% NA
+        )
+        for (col in transformCols) {
+          row[[col]] <- entry[[col]] %||% NA
+        }
+        rows[[length(rows) + 1]] <- as.data.frame(row, stringsAsFactors = FALSE)
+      }
+    }
+  }
+
+  if (length(rows) == 0) {
+    return(data.frame())
+  }
+
+  do.call(rbind, rows)
+}
 
 # Public Functions ----
 
@@ -1274,6 +1341,64 @@ exampleProjectConfigurationPath <- function() {
   })
 }
 
+#' Convert flat dataCombined data.frame to nested JSON structure
+#' @param df data.frame with DataCombinedName, dataType, and entry fields
+#' @returns List of dataCombined objects with simulated/observed arrays
+#' @keywords internal
+#' @noRd
+.dataCombinedToNestedJson <- function(df) {
+  if (is.null(df) || nrow(df) == 0) {
+    return(list())
+  }
+
+  transformCols <- c(
+    "xOffsets", "xOffsetsUnits", "yOffsets", "yOffsetsUnits",
+    "xScaleFactors", "yScaleFactors"
+  )
+
+  dcNames <- unique(df$DataCombinedName)
+
+  lapply(dcNames, function(dcName) {
+    dcRows <- df[df$DataCombinedName == dcName, , drop = FALSE]
+
+    simRows <- dcRows[dcRows$dataType == "simulated", , drop = FALSE]
+    obsRows <- dcRows[dcRows$dataType == "observed", , drop = FALSE]
+
+    simulated <- lapply(seq_len(nrow(simRows)), function(i) {
+      row <- simRows[i, ]
+      entry <- list(
+        label = row$label,
+        scenario = row$scenario,
+        path = row$path,
+        group = if (is.na(row$group)) NULL else row$group
+      )
+      for (col in transformCols) {
+        entry[[col]] <- if (is.na(row[[col]])) NULL else row[[col]]
+      }
+      entry
+    })
+
+    observed <- lapply(seq_len(nrow(obsRows)), function(i) {
+      row <- obsRows[i, ]
+      entry <- list(
+        label = row$label,
+        dataSet = row$dataSet,
+        group = if (is.na(row$group)) NULL else row$group
+      )
+      for (col in transformCols) {
+        entry[[col]] <- if (is.na(row[[col]])) NULL else row[[col]]
+      }
+      entry
+    })
+
+    list(
+      name = dcName,
+      simulated = simulated,
+      observed = observed
+    )
+  })
+}
+
 #' @keywords internal
 #' @noRd
 .plotsToJson <- function(plots) {
@@ -1287,7 +1412,7 @@ exampleProjectConfigurationPath <- function() {
   }
 
   list(
-    dataCombined = .dataFrameToListOfLists(plots$dataCombined),
+    dataCombined = .dataCombinedToNestedJson(plots$dataCombined),
     plotConfiguration = .dataFrameToListOfLists(plots$plotConfiguration),
     plotGrids = .dataFrameToListOfLists(plots$plotGrids),
     exportConfiguration = .dataFrameToListOfLists(plots$exportConfiguration)
