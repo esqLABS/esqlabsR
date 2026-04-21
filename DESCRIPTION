@@ -71,6 +71,6 @@ RoxygenNote: 7.3.3
 Remotes:  
     ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
     ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
-    ospsuite.plots=Open-Systems-Pharmacology/OSPSuite.Plots
+    ospsuite.plots=Open-Systems-Pharmacology/OSPSuite.Plots,
     tlf=Open-Systems-Pharmacology/TLF-Library,
     ospsuite.parameteridentification=Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
