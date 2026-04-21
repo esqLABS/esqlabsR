@@ -4,7 +4,8 @@ template:
 authors:
   esqLABS GmbH:
     href: https://esqlabs.com/
-    html: <img src='https://esqlabs.github.io/esqlabsR/reference/figures/circles.png'
+    html:
+      <img src='https://esqlabs.github.io/esqlabsR/reference/figures/circles.png'
       style='max-width:33px'>esqLABS
   Indrajeet Patil:
     href: https://sites.google.com/site/indrajeetspatilmorality/
@@ -13,78 +14,88 @@ authors:
 development:
   mode: auto
 reference:
-- title: Project workflow
-  contents:
-  - contains("Project")
-  - contains("Scenario")
-  - projectConfigurationStatus
-  - createPlotsFromExcel
-  - initProject
-- title: Helpers for data import, wrangling, and export
-  contents:
-  - matches("^read")
-  - matches("^extend")
-  - matches("^set")
-  - matches("^write")
-  - matches("^export")
-  - createDataCombinedFromExcel
-- title: Helpers for modeling and simulation
-  contents:
-  - matches("^compare")
-  - matches("^calculate")
-  - contains("Simulation")
-  - ends_with("Function")
-  - contains("Quantiles")
-  - matches("^geo")
-  - sampleRandomValue
-  - applyIndividualParameters
-  - Distributions
-  - LLOQMode
-  - ULOQMode
-  - loadObservedData
-  - loadObservedDataFromPKML
-- title: Helpers for plotting
-  contents:
-  - matches("^plot")
-  - matches("^col")
-  - matches("[Cc]olor")
-  - has_concept("create-plotting-configurations")
-  - createDataCombinedFromExcel
-- title: Input validation
-  contents:
-  - matches("^valid")
-  - matches("^is")
-  - stringToNum
-  - GenderInt
-  - contains("Types")
-- title: Sensitivity analysis
-  contents: matches("[Ss]ensitivity")
-- title: Shiny applications
-  contents: matches("^start")
-- title: Miscellaneous
-  contents:
-  - matches("^enum")
-  - matches("^get")
-  - executeInParallel
-  - pathFromClipboard
-  - removeFromList
-  - sourceAll
-  - esqlabsRSettingNames
+  - title: Project workflow
+    contents:
+      - contains("Project")
+      - contains("Scenario")
+      - projectConfigurationStatus
+      - createPlotsFromExcel
+      - initProject
+  - title: Parameter identification workflow
+    contents:
+      - PITaskConfiguration
+      - createPITasks
+      - runPI
+  - title: Helpers for data import, wrangling, and export
+    contents:
+      - matches("^read")
+      - matches("^extend")
+      - matches("^set")
+      - matches("^write")
+      - matches("^export")
+      - createDataCombinedFromExcel
+  - title: Helpers for modeling and simulation
+    contents:
+      - matches("^compare")
+      - matches("^calculate")
+      - contains("Simulation")
+      - ends_with("Function")
+      - contains("Quantiles")
+      - matches("^geo")
+      - sampleRandomValue
+      - applyIndividualParameters
+      - Distributions
+      - LLOQMode
+      - ULOQMode
+      - loadObservedData
+      - loadObservedDataFromPKML
+  - title: Helpers for plotting
+    contents:
+      - matches("^plot")
+      - matches("^col")
+      - matches("[Cc]olor")
+      - has_concept("create-plotting-configurations")
+      - createDataCombinedFromExcel
+  - title: Input validation
+    contents:
+      - matches("^valid")
+      - matches("^is")
+      - stringToNum
+      - GenderInt
+      - contains("Types")
+  - title: Sensitivity analysis
+    contents: matches("[Ss]ensitivity")
+  - title: Shiny applications
+    contents: matches("^start")
+  - title: Miscellaneous
+    contents:
+      - matches("^enum")
+      - matches("^get")
+      - executeInParallel
+      - pathFromClipboard
+      - removeFromList
+      - sourceAll
+      - esqlabsRSettingNames
+  - title: Inherited classes
+    contents: ExportConfiguration
 articles:
-- title: esqlabsR Workflow
-  navbar: esqlabsR Workflow
-  contents:
-  - workflow-overview
-  - project-structure
-  - design-scenarios
-  - run-simulations
-  - plot-results
-  - sensitivity
-  - sensitivity-plots
-- title: Miscellaneous
-  navbar: Miscellaneous
-  contents:
-  - presentations
-  - advanced
-  - project-migration-guide
-
+  - title: esqlabsR Workflow
+    navbar: esqlabsR Workflow
+    contents:
+      - workflow-overview
+      - project-structure
+      - design-scenarios
+      - run-simulations
+      - plot-results
+      - sensitivity
+      - sensitivity-plots
+  - title: Parameter Identification
+    navbar: Parameter Identification
+    contents:
+      - pi-workflow
+  - title: Miscellaneous
+    navbar: Miscellaneous
+    contents:
+      - presentations
+      - advanced
+      - project-migration-guide

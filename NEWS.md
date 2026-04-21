@@ -38,6 +38,7 @@ This version updates the figure creation workflow to use the new approach implem
   - `validationSummary()`: Returns summary of validation results
   - `isAnyCriticalErrors()`: Checks if validation found blocking errors
 - Added validation documentation to project-structure vignette
+- Added Excel-based parameter identification (PI) workflow: `readPITaskConfigurationFromExcel()`, `createPITasks()`, and `runPI()` enable defining and running PI tasks from `ParameterIdentification.xlsx`. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See `vignette("pi-workflow")` (\#928).
 
 ## Minor improvements and bug fixes
 
