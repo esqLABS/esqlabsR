@@ -263,14 +263,12 @@ sensitivityTornadoPlot <- function(
         legend.position = plotConfiguration$legendPosition,
         panel.grid.minor = ggplot2::element_blank(),
         text = ggplot2::element_text(size = 11),
-        axis.text.y = ggplot2::element_text(
-          margin = margin(l = 20, unit = "pt")
-        )
+        axis.text.y = ggplot2::element_text(margin = ggplot2::margin(l = 20, unit = "pt"))
       )
 
     # apply color scales
     if (is.null(plotConfiguration$linesColor)) {
-      plot <- plot + scale_fill_brewer(palette = "Set2")
+      plot <- plot + ggplot2::scale_fill_brewer(palette = "Set2")
     } else {
       pLevels <- levels(as.factor(data$ParameterFactor))
       pColor <- plotConfiguration$linesColor[seq_along(pLevels)]
@@ -300,8 +298,8 @@ sensitivityTornadoPlot <- function(
     patchwork::plot_annotation(
       title = plotConfiguration$title,
       subtitle = plotConfiguration$subtitle,
-      theme = theme(
-        plot.title = element_text(size = plotConfiguration$titleSize)
+      theme = ggplot2::theme(
+        plot.title = ggplot2::element_text(size = plotConfiguration$titleSize)
       )
     ) +
     patchwork::plot_layout(
@@ -309,7 +307,7 @@ sensitivityTornadoPlot <- function(
       axes = "collect",
       ncol = 1
     ) &
-    theme(legend.position = plotConfiguration$legendPosition)
+    ggplot2::theme(legend.position = plotConfiguration$legendPosition)
 
   return(plotPatchwork)
 }
