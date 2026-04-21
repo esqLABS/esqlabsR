@@ -64,14 +64,6 @@ test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defau
   expect_equal(myPGC$tagLevels, "a")
 })
 
-test_that("createEsqlabsExportConfiguration() creates object with chosen defaults", {
-  myProjConfig <- ProjectConfiguration$new()
-  myEC <- createEsqlabsExportConfiguration(myProjConfig$outputFolder)
-  expect_true(isOfType(myEC, "ExportConfiguration"))
-  expect_equal(myEC$units, "cm")
-})
-
-
 test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
   skip("Skipping due to migration towards ospsuite.plots")
   defaultConfig <- ospsuite::DefaultPlotConfiguration$new()

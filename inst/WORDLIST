@@ -10,7 +10,6 @@ Datacombined
 EB
 EndTime
 Enum
-ExportConfiguration
 GFR
 GitHub
 GmbH
@@ -80,7 +79,6 @@ esqlabs
 esqlabsEnv
 esqlabsR's
 esqlabsR’s
-exportConfiguration
 exportParametersToXLS
 facetes
 frac
