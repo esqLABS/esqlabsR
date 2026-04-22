@@ -408,7 +408,11 @@ createPlotsFromExcel <- function(
               plotConfigurationRow,
               defaultConfiguration
             ),
-            # xyScale = .fieldFromExcel("xAxisScale", plotConfigurationRow, defaultConfiguration),
+            xyScale = .fieldFromExcel(
+              "xyScale", 
+              plotConfigurationRow, 
+              defaultConfiguration
+              ),
             comparisonLineVector = .fieldFromExcel(
               "foldDistance",
               plotConfigurationRow,
@@ -1168,6 +1172,31 @@ setESQTheme <- function(legendPosition = "top",
     }
     return(plotConfigurationRow[[fieldName]])
   }
+  # Default value for a axis scale is linear
+  if (fieldName %in% "xyScale") {
+    xyScale <- c(
+      plotConfigurationRow[["xAxisScale"]], 
+      plotConfigurationRow[["yAxisScale"]]
+      ) |>
+      na.exclude() |>
+      unique()
+    # Default value for xyScale is log creating log-log obs vs simulated
+    if(isEmpty(xyScale)){
+      return(defaultConfiguration[[fieldName]])
+    }
+    # Note that at this stage .validateLogScaleAxisLimits was already assessed
+    tryCatch(
+      ospsuite.utils::validateIsOfLength(xyScale, 1),
+      error = function(e) {
+        stop(
+          messages$conflictingAxesScales(plotConfigurationRow$plotID),
+          call. = FALSE
+        )
+      }
+    )
+    return(xyScale)
+  }
+  
   if (fieldName %in% c("xValuesLimits", "yValuesLimits")) {
     # Default value for axis limits values is empty list
     if (is.na(plotConfigurationRow[[fieldName]])) {

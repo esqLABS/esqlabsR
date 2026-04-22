@@ -886,3 +886,10 @@ messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
 messages$messageRunningPITask <- function(piTaskName) {
   cliFormat("Running PI task: {.val {piTaskName}}")
 }
+
+messages$conflictingAxesScales <- function(plotID) {
+  cli::format_message(c(
+    "x" = "{.strong observedVsSimulated} plot with plotID {.val {plotID}} has conflicting {.field xAxisScale} and {.field yAxisScale}",
+    "i" = "Use either {.val linear} or {.val log} in both columns"
+  ))
+}
