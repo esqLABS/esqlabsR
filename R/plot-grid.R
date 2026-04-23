@@ -1,3 +1,21 @@
+#' Convert angle into label orientation
+#' 
+#' @param angle numeric angle in degrees
+#' 
+#' @keywords internal
+.convertAngleToOrientation <- function(angle) {
+  # use modulo 360 to in case minus angles were provided
+  return(
+    switch(
+      as.character(angle %% 360),
+      "0" = "upright",
+      "90" = "left-rotated",
+      "180" = "right-rotated",
+      "270" = "inverted"
+    )
+  )
+}
+
 #' List of default text sizes for plot annotations.
 #' 
 #' @keywords internal
