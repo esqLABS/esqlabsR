@@ -7,7 +7,7 @@
 .plotConfigurationFromType(plotType = NULL)
 }
 \arguments{
-\item{plotType}{One of \code{"timeProfiles"}, \code{"spiderPlot"}, \verb{"tornadoPlot}}
+\item{plotType}{One of \code{"timeProfiles"}, \code{"spiderPlot"}, \code{"tornadoPlot"}}
 }
 \value{
 A list

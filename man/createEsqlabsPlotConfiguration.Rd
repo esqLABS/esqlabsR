@@ -6,6 +6,9 @@
 \usage{
 createEsqlabsPlotConfiguration(plotType = NULL)
 }
+\arguments{
+\item{plotType}{Optional one of \code{"timeProfiles"}, \code{"spiderPlot"}, \verb{"tornadoPlot} adding plot type specific settings}
+}
 \value{
 A named list
 }

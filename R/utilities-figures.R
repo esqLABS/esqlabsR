@@ -136,6 +136,8 @@ col2hsv <- function(color) {
 #' The default attributes of the class are chosen to reflect the corporate
 #' standards adopted by esqLABS GmbH.
 #'
+#' @param plotType Optional one of `"timeProfiles"`, `"spiderPlot"`, `"tornadoPlot` adding plot type specific settings
+#'
 #' @returns A named list
 #'
 #' @examples
@@ -1149,6 +1151,7 @@ setESQTheme <- function(legendPosition = "top",
 #' @param fieldName Name of field to query from Excel table
 #' @param plotConfigurationRow Plot configuration table row
 #' @param defaultConfiguration Default ESQLabs values for the configuration
+#' @importFrom stats na.exclude
 #' @keywords internal
 .fieldFromExcel <- function(
   fieldName,
@@ -1223,7 +1226,7 @@ setESQTheme <- function(legendPosition = "top",
 
 #' Return list of properties from a plot type
 #'
-#' @param plotType One of `"timeProfiles"`, `"spiderPlot"`, `"tornadoPlot`
+#' @param plotType One of `"timeProfiles"`, `"spiderPlot"`, `"tornadoPlot"`
 #' @returns A list
 #' @keywords internal
 .plotConfigurationFromType <- function(plotType = NULL) {
