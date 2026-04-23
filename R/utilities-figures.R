@@ -200,7 +200,7 @@ createEsqlabsPlotConfiguration <- function(plotType = NULL) {
 #'
 #' @description
 #'
-#' An instance of `PlotGridConfiguration` R6 class from `{tlf}` package is
+#' An instance of `PlotGridConfiguration` R6 class is
 #' needed for creating a grid of multiple visualizations created using the
 #' `{ospsuite}` package.
 #'
@@ -217,7 +217,7 @@ createEsqlabsPlotConfiguration <- function(plotType = NULL) {
 #' @export
 createEsqlabsPlotGridConfiguration <- function() {
   # nolint: object_length_linter.
-  plotGridConfiguration <- tlf::PlotGridConfiguration$new()
+  plotGridConfiguration <- PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
   plotGridConfiguration$tagSize <- 11
@@ -417,6 +417,11 @@ createPlotsFromExcel <- function(
               ),
             comparisonLineVector = .fieldFromExcel(
               "foldDistance",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            lloqOnBothAxes = .fieldFromExcel(
+              "lloqOnBothAxes",
               plotConfigurationRow,
               defaultConfiguration
             )
@@ -1198,6 +1203,17 @@ setESQTheme <- function(legendPosition = "top",
       }
     )
     return(xyScale)
+  }
+  # Issue #991: default value should be TRUE
+  if (fieldName %in% "lloqOnBothAxes"){
+    undefinedLLOQ <- any(
+      is.null(plotConfigurationRow[["lloqOnBothAxes"]]),
+      is.na(plotConfigurationRow[["lloqOnBothAxes"]])
+    )
+    if(undefinedLLOQ){
+      return(TRUE)
+    }
+    return(as.logical(plotConfigurationRow[["lloqOnBothAxes"]]))
   }
   
   if (fieldName %in% c("xValuesLimits", "yValuesLimits")) {
