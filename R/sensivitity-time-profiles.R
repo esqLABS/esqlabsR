@@ -276,7 +276,7 @@ sensitivityTimeProfiles <- function(
     # add symbols for observed data
     if (hasObservedData) {
       plot <- plot +
-        ggplot2::geom_point(
+        ospsuite.plots::geom_point_osp(
           data = observedData,
           ggplot2::aes(xValues, yValues, shape = `Study Id`)
         ) +

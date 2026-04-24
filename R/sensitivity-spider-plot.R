@@ -300,7 +300,7 @@ sensitivitySpiderPlot <- function(
         alpha = plotConfiguration$linesAlpha,
         na.rm = TRUE
       ) +
-      ggplot2::geom_point(
+      ospsuite.plots::geom_point_osp(
         size = plotConfiguration$pointsSize,
         shape = plotConfiguration$pointsShape[1],
         na.rm = TRUE

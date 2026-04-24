@@ -1128,7 +1128,8 @@ setESQTheme <- function(legendPosition = "top",
   options(ospsuite.plots.watermarkEnabled = watermarkEnabled)
   # Elements to update to follow ESQLabs default convention
   ggplot2::theme_update(
-    plot.title = ggplot2::element_text(size = 10, hjust = 0),
+    # element_textbox_simple wraps and break line if title is too long
+    plot.title = ggtext::element_textbox_simple(size = 10, hjust = 0),
     axis.title.x = ggplot2::element_text(
       size = 9,
       margin = ggplot2::margin(t = 10)
@@ -1257,7 +1258,7 @@ setESQTheme <- function(legendPosition = "top",
       linesAlpha = 0.7,
       linesSize = 1.4,
       # linesColor = colorspace::diverging_hcl(2, palette = "Berlin"),
-      pointsShape = 19:15,
+      pointsShape = ospsuite.plots::ospShapeNames,
       title = NULL,
       titleSize = 14,
       xAxisScale = "lin",
@@ -1275,7 +1276,7 @@ setESQTheme <- function(legendPosition = "top",
       linesSize = 1.4,
       linesAlpha = 0.75,
       linesColor = esqlabsEnv$colorPalette,
-      pointsShape = 21L,
+      pointsShape = "circle",
       pointsSize = 2,
       title = NULL,
       titleSize = 14,
