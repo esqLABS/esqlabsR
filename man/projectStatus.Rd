@@ -8,7 +8,8 @@
 projectStatus(
   projectConfigPath = "Project.xlsx",
   jsonPath = NULL,
-  silent = FALSE
+  silent = FALSE,
+  ignoreVersionCheck = TRUE
 )
 
 projectConfigurationStatus(...)

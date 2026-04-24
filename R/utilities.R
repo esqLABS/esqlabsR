@@ -162,3 +162,47 @@ compareWithNA <- function(v1, v2) {
   }
   return(simulationTimeIntervals)
 }
+
+#' Warn if a removed entity is still referenced by any scenario
+#'
+#' @param project A `Project` object.
+#' @param entityType One of "individual", "population", "application",
+#'   "modelParameterGroup", "outputPath".
+#' @param id The ID/name being removed.
+#' @returns `invisible(NULL)`; emits a `cli::cli_warn()` if any scenario
+#'   still references `id`.
+#' @keywords internal
+#' @noRd
+.warnIfReferenced <- function(project, entityType, id) {
+  scenarios <- project$scenarios %||% list()
+  if (length(scenarios) == 0) {
+    return(invisible(NULL))
+  }
+
+  refs <- character()
+  for (name in names(scenarios)) {
+    sc <- scenarios[[name]]
+    hit <- switch(
+      entityType,
+      "individual" = identical(sc$individualId, id),
+      "population" = identical(sc$populationId, id),
+      "application" = identical(sc$applicationProtocol, id),
+      "modelParameterGroup" = isTRUE(id %in% sc$parameterGroups),
+      "outputPath" = {
+        pathValue <- project$outputPaths[[id]]
+        isTRUE(pathValue %in% sc$outputPaths)
+      },
+      FALSE
+    )
+    if (isTRUE(hit)) refs <- c(refs, name)
+  }
+
+  if (length(refs) > 0) {
+    cli::cli_warn(c(
+      "Removed {entityType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
+      "*" = "{refs}",
+      "i" = "These scenarios now have a dangling reference. Update or remove them."
+    ))
+  }
+  invisible(NULL)
+}

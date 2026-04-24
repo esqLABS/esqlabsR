@@ -80,6 +80,15 @@
   added.** Programmatically add scenarios to a loaded project
   with validation. (#908)
 
+- **New `add*()` and `remove*()` functions for programmatic project
+  editing** (#908): `addIndividual()`, `addPopulation()`,
+  `addModelParameterGroup()`, `addApplicationGroup()`, `addOutputPath()`,
+  plus `removeScenario()`, `removeIndividual()`, `removePopulation()`,
+  `removeModelParameterGroup()`, `removeApplicationGroup()`,
+  `removeObservedData()`, `removeOutputPath()`. Each has a matching R6
+  method on `Project`. `addObservedData()` is now also available as a
+  standalone function; the existing R6 method delegates to it.
+
 - **`importProjectFromExcel()` added.** Migrates an Excel-based
   project to a v2.0 JSON configuration file, including auto-merging species
   parameters into the `modelParameters` section. Replaces

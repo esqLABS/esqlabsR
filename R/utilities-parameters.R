@@ -327,3 +327,168 @@ setParameterValuesByPathWithCondition <- function(
   paramName <- fullPathParts[[length(fullPathParts)]]
   return(list(containerPath = containerPath, parameterName = paramName))
 }
+
+#' Add a model parameter group to a Project
+#'
+#' @param project A `Project` object.
+#' @param group Character scalar, unique group name.
+#' @param paths Character vector of parameter paths (length >= 1).
+#' @param values Numeric vector, same length as `paths`.
+#' @param units Character vector, same length as `paths`.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addModelParameterGroup <- function(project, group, paths, values, units) {
+  validateIsOfType(project, "Project")
+  .addParameterGroupImpl(
+    project,
+    group,
+    paths,
+    values,
+    units,
+    field = "modelParameters",
+    label = "model parameter group"
+  )
+}
+
+#' Remove a model parameter group from a Project
+#' @inheritParams addModelParameterGroup
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeModelParameterGroup <- function(project, group) {
+  validateIsOfType(project, "Project")
+  .removeParameterGroupImpl(
+    project,
+    group,
+    field = "modelParameters",
+    label = "model parameter group",
+    refType = "modelParameterGroup"
+  )
+}
+
+#' Add an application (protocol) parameter group to a Project
+#'
+#' @param project A `Project` object.
+#' @param protocol Character scalar, unique protocol name.
+#' @param paths Character vector of parameter paths.
+#' @param values Numeric vector, same length as `paths`.
+#' @param units Character vector, same length as `paths`.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family application
+addApplicationGroup <- function(project, protocol, paths, values, units) {
+  validateIsOfType(project, "Project")
+  .addParameterGroupImpl(
+    project,
+    protocol,
+    paths,
+    values,
+    units,
+    field = "applications",
+    label = "application"
+  )
+}
+
+#' Remove an application (protocol) from a Project
+#' @inheritParams addApplicationGroup
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family application
+removeApplicationGroup <- function(project, protocol) {
+  validateIsOfType(project, "Project")
+  .removeParameterGroupImpl(
+    project,
+    protocol,
+    field = "applications",
+    label = "application",
+    refType = "application"
+  )
+}
+
+#' @keywords internal
+#' @noRd
+.addParameterGroupImpl <- function(
+  project,
+  name,
+  paths,
+  values,
+  units,
+  field,
+  label
+) {
+  errors <- character()
+
+  if (
+    !is.character(name) || length(name) != 1 || is.na(name) || nchar(name) == 0
+  ) {
+    errors <- c(errors, paste0(label, " name must be a non-empty string"))
+  } else if (name %in% names(project[[field]])) {
+    errors <- c(errors, paste0(label, " '", name, "' already exists"))
+  }
+
+  if (
+    !is.character(paths) ||
+      length(paths) < 1 ||
+      any(is.na(paths)) ||
+      any(nchar(paths) == 0)
+  ) {
+    errors <- c(
+      errors,
+      "paths must be a non-empty character vector with no NA or empty entries"
+    )
+  }
+  if (!is.numeric(values) || any(!is.finite(values))) {
+    errors <- c(
+      errors,
+      "values must be numeric with no NA, NaN, or Inf entries"
+    )
+  }
+  if (!is.character(units) || any(is.na(units))) {
+    errors <- c(errors, "units must be a character vector with no NA entries")
+  }
+  if (is.character(paths) && is.numeric(values) && is.character(units)) {
+    if (!(length(paths) == length(values) && length(paths) == length(units))) {
+      errors <- c(errors, "paths, values, and units must have the same length")
+    }
+  }
+
+  if (length(errors) > 0) {
+    stop(paste0(
+      "Cannot add ",
+      label,
+      " '",
+      name,
+      "':\n- ",
+      paste(errors, collapse = "\n- ")
+    ))
+  }
+
+  project[[field]][[name]] <- list(
+    paths = paths,
+    values = as.double(values),
+    units = units
+  )
+  project$modified <- TRUE
+  invisible(project)
+}
+
+#' @keywords internal
+#' @noRd
+.removeParameterGroupImpl <- function(project, name, field, label, refType) {
+  if (
+    !is.character(name) || length(name) != 1 || is.na(name) || nchar(name) == 0
+  ) {
+    stop(paste0(label, " name must be a non-empty string"))
+  }
+  if (!(name %in% names(project[[field]]))) {
+    cli::cli_warn("{label} {.val {name}} not found; no-op.")
+    return(invisible(project))
+  }
+  .warnIfReferenced(project, refType, name)
+  project[[field]][[name]] <- NULL
+  project$modified <- TRUE
+  invisible(project)
+}

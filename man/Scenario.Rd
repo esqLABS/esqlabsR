@@ -10,7 +10,10 @@ which handles all object creation.
 }
 \seealso{
 Other scenario: 
-\code{\link{addScenario}()}
+\code{\link{addOutputPath}()},
+\code{\link{addScenario}()},
+\code{\link{removeOutputPath}()},
+\code{\link{removeScenario}()}
 }
 \concept{scenario}
 \section{Public fields}{

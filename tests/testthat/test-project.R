@@ -60,7 +60,10 @@ test_that("Project parses scenarios into Scenario objects", {
   expect_equal(sc$scenarioName, "TestScenario2")
   expect_true(sc$simulateSteadyState)
   expect_equal(length(sc$simulationTime), 2)
-  expect_equal(sc$parameterGroups, c("Global", "Aciclovir", "Sheet, with comma"))
+  expect_equal(
+    sc$parameterGroups,
+    c("Global", "Aciclovir", "Sheet, with comma")
+  )
 })
 
 test_that("Individuals are stored as plain lists", {
@@ -145,10 +148,17 @@ test_that("modified flag can be set to a logical value", {
 
 test_that("modified flag becomes TRUE when any property is changed", {
   properties <- c(
-    "modelFolder", "configurationsFolder", "modelParamsFile",
-    "individualsFile", "populationsFile", "populationsFolder",
-    "scenariosFile", "applicationsFile", "plotsFile",
-    "dataFolder", "outputFolder"
+    "modelFolder",
+    "configurationsFolder",
+    "modelParamsFile",
+    "individualsFile",
+    "populationsFile",
+    "populationsFolder",
+    "scenariosFile",
+    "applicationsFile",
+    "plotsFile",
+    "dataFolder",
+    "outputFolder"
   )
   for (prop in properties) {
     pc <- testProject()
@@ -472,7 +482,12 @@ test_that("sync detects external JSON file changes", {
 
   cfg <- jsonlite::fromJSON(temp_proj$snapshot_path, simplifyVector = FALSE)
   cfg$scenarios[[1]]$name <- "RenamedByExternalEdit"
-  jsonlite::write_json(cfg, temp_proj$snapshot_path, auto_unbox = TRUE, null = "null")
+  jsonlite::write_json(
+    cfg,
+    temp_proj$snapshot_path,
+    auto_unbox = TRUE,
+    null = "null"
+  )
 
   result <- pc$sync(silent = TRUE)
 
@@ -624,8 +639,85 @@ test_that("dataCombined round-trip: nested JSON -> flat df -> nested JSON", {
   roundtrip <- .dataCombinedToNestedJson(flat)
 
   expect_equal(roundtrip[[1]]$name, original[[1]]$name)
-  expect_equal(roundtrip[[1]]$simulated[[1]]$label, original[[1]]$simulated[[1]]$label)
-  expect_equal(roundtrip[[1]]$simulated[[1]]$scenario, original[[1]]$simulated[[1]]$scenario)
-  expect_equal(roundtrip[[1]]$observed[[1]]$dataSet, original[[1]]$observed[[1]]$dataSet)
-  expect_equal(roundtrip[[1]]$observed[[1]]$xOffsets, original[[1]]$observed[[1]]$xOffsets)
+  expect_equal(
+    roundtrip[[1]]$simulated[[1]]$label,
+    original[[1]]$simulated[[1]]$label
+  )
+  expect_equal(
+    roundtrip[[1]]$simulated[[1]]$scenario,
+    original[[1]]$simulated[[1]]$scenario
+  )
+  expect_equal(
+    roundtrip[[1]]$observed[[1]]$dataSet,
+    original[[1]]$observed[[1]]$dataSet
+  )
+  expect_equal(
+    roundtrip[[1]]$observed[[1]]$xOffsets,
+    original[[1]]$observed[[1]]$xOffsets
+  )
+})
+
+test_that("full project can be built programmatically using add* functions", {
+  pc <- Project$new()
+  pc$modelFolder <- testProjectJSONPath() |>
+    dirname() |>
+    file.path("Models")
+  pc$dataFolder <- testProjectJSONPath() |>
+    dirname() |>
+    file.path("Data")
+  pc$outputFolder <- tempdir()
+
+  addIndividual(
+    pc,
+    "I1",
+    species = "Human",
+    weight = 70,
+    height = 175,
+    age = 30
+  )
+  addPopulation(pc, "P1", species = "Human", numberOfIndividuals = 5)
+  addModelParameterGroup(
+    pc,
+    "G1",
+    paths = "Organism|Liver|Volume",
+    values = 1.8,
+    units = "L"
+  )
+  addApplicationGroup(
+    pc,
+    "Oral",
+    paths = "Applications|Oral|Dose",
+    values = 10,
+    units = "mg"
+  )
+  addOutputPath(
+    pc,
+    "Out1",
+    "Organism|PeripheralVenousBlood|Aciclovir|Concentration in container"
+  )
+  addScenario(
+    pc,
+    "S1",
+    "Aciclovir.pkml",
+    individualId = "I1",
+    applicationProtocol = "Oral",
+    parameterGroups = "G1",
+    outputPathIds = "Out1"
+  )
+
+  expect_true(pc$modified)
+  expect_equal(length(pc$individuals), 1)
+  expect_equal(length(pc$populations), 1)
+  expect_equal(length(pc$modelParameters), 1)
+  expect_equal(length(pc$applications), 1)
+  expect_equal(length(pc$outputPaths), 1)
+  expect_equal(length(pc$scenarios), 1)
+
+  # Round-trip
+  tmp <- tempfile(fileext = ".json")
+  saveProject(pc, tmp)
+  reloaded <- loadProject(tmp)
+  expect_equal(names(reloaded$individuals), "I1")
+  expect_equal(names(reloaded$scenarios), "S1")
+  expect_equal(reloaded$scenarios[["S1"]]$individualId, "I1")
 })

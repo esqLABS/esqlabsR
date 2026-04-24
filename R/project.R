@@ -617,6 +617,86 @@ Project <- R6::R6Class(
         ...
       )
     },
+    #' @description Add an individual programmatically.
+    #' Delegates to the standalone [addIndividual()] function.
+    #' @param individualId Character. Unique ID.
+    #' @param species Character. Species name.
+    #' @param ... Additional fields passed to [addIndividual()].
+    addIndividual = function(individualId, species, ...) {
+      addIndividual(
+        project = self,
+        individualId = individualId,
+        species = species,
+        ...
+      )
+    },
+    #' @description Remove an individual programmatically.
+    #' Delegates to the standalone [removeIndividual()] function.
+    #' @param individualId Character.
+    removeIndividual = function(individualId) {
+      removeIndividual(project = self, individualId = individualId)
+    },
+    #' @description Add a population programmatically.
+    #' @param populationId Character.
+    #' @param species Character.
+    #' @param numberOfIndividuals Integer.
+    #' @param ... Passed to [addPopulation()].
+    addPopulation = function(populationId, species, numberOfIndividuals, ...) {
+      addPopulation(
+        project = self,
+        populationId = populationId,
+        species = species,
+        numberOfIndividuals = numberOfIndividuals,
+        ...
+      )
+    },
+    #' @description Remove a population programmatically.
+    #' @param populationId Character.
+    removePopulation = function(populationId) {
+      removePopulation(project = self, populationId = populationId)
+    },
+    #' @description Add a model parameter group programmatically.
+    #' @param group Character.
+    #' @param paths Character vector.
+    #' @param values Numeric vector.
+    #' @param units Character vector.
+    addModelParameterGroup = function(group, paths, values, units) {
+      addModelParameterGroup(self, group, paths, values, units)
+    },
+    #' @description Remove a model parameter group programmatically.
+    #' @param group Character.
+    removeModelParameterGroup = function(group) {
+      removeModelParameterGroup(self, group)
+    },
+    #' @description Add an application group programmatically.
+    #' @param protocol Character.
+    #' @param paths Character vector.
+    #' @param values Numeric vector.
+    #' @param units Character vector.
+    addApplicationGroup = function(protocol, paths, values, units) {
+      addApplicationGroup(self, protocol, paths, values, units)
+    },
+    #' @description Remove an application group programmatically.
+    #' @param protocol Character.
+    removeApplicationGroup = function(protocol) {
+      removeApplicationGroup(self, protocol)
+    },
+    #' @description Add one or more output paths programmatically.
+    #' @param id Character vector.
+    #' @param path Character vector.
+    addOutputPath = function(id, path) {
+      addOutputPath(self, id, path)
+    },
+    #' @description Remove an output path programmatically.
+    #' @param id Character.
+    removeOutputPath = function(id) {
+      removeOutputPath(self, id)
+    },
+    #' @description Remove a scenario programmatically.
+    #' @param name Character.
+    removeScenario = function(name) {
+      removeScenario(self, name)
+    },
     #' @description Add observed data programmatically
     #'
     #' Add an observedData entry to the project. Accepts either:
@@ -629,50 +709,13 @@ Project <- R6::R6Class(
     #'   relevant fields (e.g., `file`, `importerConfiguration`, `sheets`).
     #' @return Invisibly returns self for chaining
     addObservedData = function(entry) {
-      if (inherits(entry, "DataSet")) {
-        # DataSet object - use dataSet$name as key
-        name <- entry$name
-        existingNames <- getObservedDataNames(self)
-        if (name %in% existingNames) {
-          stop(messages$observedDataNameExists(name))
-        }
-        private$.programmaticDataSets[[name]] <- entry
-        # Update cache with new name
-        private$.observedDataNamesCache <- c(
-          private$.observedDataNamesCache,
-          name
-        )
-        newEntry <- list(type = "programmatic")
-        self$observedData <- c(self$observedData, list(newEntry))
-        private$.modified <- TRUE
-        cli::cli_inform(c(
-          "i" = paste0(
-            "For reproducibility, consider declaring this DataSet via a script ",
-            "in your Project.json using the observedData field with ",
-            "type = \"script\" and file = \"scripts/your_script.R\"."
-          )
-        ))
-      } else if (is.list(entry)) {
-        # Config list - validate and add directly
-        if (is.null(entry$type)) {
-          stop("Config list must include 'type' field")
-        }
-        validTypes <- c("excel", "pkml", "script")
-        if (!(entry$type %in% validTypes)) {
-          stop(sprintf(
-            "Invalid type '%s'. Must be one of: %s",
-            entry$type,
-            paste(validTypes, collapse = ", ")
-          ))
-        }
-        # Invalidate cache since we don't know the name until load
-        private$.observedDataNamesCache <- NULL
-        self$observedData <- c(self$observedData, list(entry))
-        private$.modified <- TRUE
-      } else {
-        stop("'entry' must be a DataSet object or a configuration list")
-      }
-      invisible(self)
+      addObservedData(project = self, entry = entry)
+    },
+    #' @description Remove observed data programmatically.
+    #' Delegates to the standalone [removeObservedData()] function.
+    #' @param name DataSet name or config entry file basename.
+    removeObservedData = function(name) {
+      removeObservedData(project = self, name = name)
     },
     #' Initialize
     #'
@@ -834,8 +877,12 @@ ProjectConfiguration <- R6::R6Class(
   }
 
   transformCols <- c(
-    "xOffsets", "xOffsetsUnits", "yOffsets", "yOffsetsUnits",
-    "xScaleFactors", "yScaleFactors"
+    "xOffsets",
+    "xOffsetsUnits",
+    "yOffsets",
+    "yOffsetsUnits",
+    "xScaleFactors",
+    "yScaleFactors"
   )
 
   rows <- list()
@@ -1352,8 +1399,12 @@ exampleProjectConfigurationPath <- function() {
   }
 
   transformCols <- c(
-    "xOffsets", "xOffsetsUnits", "yOffsets", "yOffsetsUnits",
-    "xScaleFactors", "yScaleFactors"
+    "xOffsets",
+    "xOffsetsUnits",
+    "yOffsets",
+    "yOffsetsUnits",
+    "xScaleFactors",
+    "yScaleFactors"
   )
 
   dcNames <- unique(df$DataCombinedName)

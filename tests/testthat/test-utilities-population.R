@@ -225,3 +225,106 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
   )
 })
 
+test_that("addPopulation adds entry with required fields", {
+  pc <- testProject()
+  initial <- length(pc$populations)
+  addPopulation(pc, "NewPop", species = "Human", numberOfIndividuals = 10)
+  expect_equal(length(pc$populations), initial + 1)
+  entry <- pc$populations[["NewPop"]]
+  expect_equal(entry$species, "Human")
+  expect_equal(entry$numberOfIndividuals, 10)
+  expect_true(pc$modified)
+})
+
+test_that("addPopulation accepts range fields via ...", {
+  pc <- testProject()
+  addPopulation(
+    pc,
+    "Pop2",
+    species = "Human",
+    numberOfIndividuals = 20,
+    weightMin = 50,
+    weightMax = 90,
+    ageMin = 18,
+    ageMax = 65,
+    proportionOfFemales = 50
+  )
+  entry <- pc$populations[["Pop2"]]
+  expect_equal(entry$weightMin, 50)
+  expect_equal(entry$ageMax, 65)
+  expect_equal(entry$proportionOfFemales, 50)
+})
+
+test_that("addPopulation errors on duplicate id", {
+  pc <- testProject()
+  existing <- names(pc$populations)[[1]]
+  expect_error(
+    addPopulation(pc, existing, species = "Human", numberOfIndividuals = 5),
+    regexp = "already exists"
+  )
+})
+
+test_that("addPopulation errors on unknown ... field", {
+  pc <- testProject()
+  expect_error(
+    addPopulation(
+      pc,
+      "BadPop",
+      species = "Human",
+      numberOfIndividuals = 10,
+      mango = 42
+    ),
+    regexp = "mango"
+  )
+})
+
+test_that("addPopulation errors on non-positive numberOfIndividuals", {
+  pc <- testProject()
+  expect_error(
+    addPopulation(pc, "Zero", species = "Human", numberOfIndividuals = 0),
+    regexp = "numberOfIndividuals"
+  )
+})
+
+test_that("removePopulation removes entry and sets modified", {
+  pc <- testProject()
+  addPopulation(pc, "Gone", species = "Human", numberOfIndividuals = 5)
+  pc$modified <- FALSE
+  removePopulation(pc, "Gone")
+  expect_false("Gone" %in% names(pc$populations))
+  expect_true(pc$modified)
+})
+
+test_that("removePopulation warns on missing id", {
+  pc <- testProject()
+  expect_warning(
+    removePopulation(pc, "NoSuchPop_QQQ"),
+    regexp = "not found"
+  )
+})
+
+test_that("project$addPopulation delegates to standalone", {
+  pc1 <- testProject()
+  pc2 <- testProject()
+  addPopulation(pc1, "Via1", species = "Human", numberOfIndividuals = 8)
+  pc2$addPopulation("Via1", species = "Human", numberOfIndividuals = 8)
+  expect_equal(pc1$populations[["Via1"]], pc2$populations[["Via1"]])
+})
+
+test_that("addPopulation survives round-trip", {
+  pc <- testProject()
+  addPopulation(
+    pc,
+    "RT",
+    species = "Human",
+    numberOfIndividuals = 10,
+    weightMin = 50,
+    weightMax = 90
+  )
+  tmp <- tempfile(fileext = ".json")
+  saveProject(pc, tmp)
+  reloaded <- loadProject(tmp)
+  entry <- reloaded$populations[["RT"]]
+  expect_equal(entry$numberOfIndividuals, 10)
+  expect_equal(entry$weightMin, 50)
+})

@@ -58,7 +58,8 @@ test_that("It runs two scenarios", {
 
   expect_equal(names(simulatedScenarios), scenarioNames)
   expect_true(
-    defaultOutputPath %in% simulatedScenarios[["TestScenario"]]$results$allQuantityPaths
+    defaultOutputPath %in%
+      simulatedScenarios[["TestScenario"]]$results$allQuantityPaths
   )
 
   expect_equal(
@@ -632,4 +633,153 @@ test_that(".prepareScenario does not crash on is.na(NULL) when applicationProtoc
     # If no error, the guard was handled gracefully
     expect_true(!is.null(result$simulation))
   }
+})
+
+# .warnIfReferenced ----
+
+test_that(".warnIfReferenced flags scenarios referencing an individual", {
+  pc <- testProject()
+  # Seed a scenario referencing Indiv1 (already exists in TestProject)
+  scNames <- names(pc$scenarios)[vapply(
+    pc$scenarios,
+    function(s) identical(s$individualId, "Indiv1"),
+    logical(1)
+  )]
+  expect_true(length(scNames) >= 1)
+  expect_warning(
+    .warnIfReferenced(pc, "individual", "Indiv1"),
+    regexp = paste(scNames, collapse = "|")
+  )
+})
+
+test_that(".warnIfReferenced is silent when nothing references the id", {
+  pc <- testProject()
+  expect_no_warning(
+    .warnIfReferenced(pc, "individual", "DoesNotExist_XYZ")
+  )
+})
+
+test_that("addOutputPath adds single entry", {
+  pc <- testProject()
+  initial <- length(pc$outputPaths)
+  addOutputPath(pc, id = "MyOut", path = "Organism|PeripheralVenousBlood|C")
+  expect_equal(length(pc$outputPaths), initial + 1)
+  expect_equal(pc$outputPaths[["MyOut"]], "Organism|PeripheralVenousBlood|C")
+  expect_true(pc$modified)
+})
+
+test_that("addOutputPath accepts vectors of equal length", {
+  pc <- testProject()
+  addOutputPath(
+    pc,
+    id = c("O1", "O2"),
+    path = c("Organism|Liver|C", "Organism|Kidney|C")
+  )
+  expect_equal(pc$outputPaths[["O1"]], "Organism|Liver|C")
+  expect_equal(pc$outputPaths[["O2"]], "Organism|Kidney|C")
+})
+
+test_that("addOutputPath errors on length mismatch", {
+  pc <- testProject()
+  expect_error(
+    addOutputPath(pc, c("A", "B"), c("Organism|Liver|C")),
+    regexp = "same length"
+  )
+})
+
+test_that("addOutputPath errors on duplicate id within call", {
+  pc <- testProject()
+  expect_error(
+    addOutputPath(pc, c("Dup", "Dup"), c("a", "b")),
+    regexp = "duplicate"
+  )
+})
+
+test_that("addOutputPath errors on existing id", {
+  pc <- testProject()
+  existing <- names(pc$outputPaths)[[1]]
+  expect_error(
+    addOutputPath(pc, existing, "Organism|Liver|C"),
+    regexp = "already exists"
+  )
+})
+
+test_that("removeOutputPath removes entry", {
+  pc <- testProject()
+  addOutputPath(pc, "GoingAway", "Organism|Liver|C")
+  pc$modified <- FALSE
+  removeOutputPath(pc, "GoingAway")
+  expect_false("GoingAway" %in% names(pc$outputPaths))
+  expect_true(pc$modified)
+})
+
+test_that("removeOutputPath warns on missing id", {
+  pc <- testProject()
+  expect_warning(
+    removeOutputPath(pc, "NoSuchPath_ZZ"),
+    regexp = "not found"
+  )
+})
+
+test_that("removeScenario removes scenario", {
+  pc <- testProject()
+  addScenario(pc, "TempScenario", "Aciclovir.pkml", individualId = "Indiv1")
+  pc$modified <- FALSE
+  removeScenario(pc, "TempScenario")
+  expect_false("TempScenario" %in% names(pc$scenarios))
+  expect_true(pc$modified)
+})
+
+test_that("removeScenario warns on missing", {
+  pc <- testProject()
+  expect_warning(
+    removeScenario(pc, "NoSuchScenario_ZZ"),
+    regexp = "not found"
+  )
+})
+
+test_that("project$addOutputPath / removeOutputPath / removeScenario delegate", {
+  pc1 <- testProject()
+  pc2 <- testProject()
+  addOutputPath(pc1, "M1", "Organism|Liver|C")
+  pc2$addOutputPath("M1", "Organism|Liver|C")
+  expect_equal(pc1$outputPaths[["M1"]], pc2$outputPaths[["M1"]])
+
+  removeOutputPath(pc1, "M1")
+  pc2$removeOutputPath("M1")
+  expect_false("M1" %in% names(pc1$outputPaths))
+  expect_false("M1" %in% names(pc2$outputPaths))
+})
+
+test_that("addOutputPath survives round-trip", {
+  pc <- testProject()
+  addOutputPath(pc, "RTPath", "Organism|Liver|C")
+  tmp <- tempfile(fileext = ".json")
+  saveProject(pc, tmp)
+  reloaded <- loadProject(tmp)
+  expect_equal(reloaded$outputPaths[["RTPath"]], "Organism|Liver|C")
+})
+
+test_that("removeOutputPath warns when referenced by a scenario", {
+  pc <- testProject()
+  # Find any outputPath referenced by at least one scenario (fixture-dependent)
+  refId <- NULL
+  for (id in names(pc$outputPaths)) {
+    hit <- vapply(
+      pc$scenarios,
+      function(s) pc$outputPaths[[id]] %in% s$outputPaths,
+      logical(1)
+    )
+    if (any(hit)) {
+      refId <- id
+      break
+    }
+  }
+  skip_if(is.null(refId), "no referenced outputPath in test fixture")
+
+  expect_warning(
+    removeOutputPath(pc, refId),
+    regexp = "referenced"
+  )
+  expect_false(refId %in% names(pc$outputPaths))
 })

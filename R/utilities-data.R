@@ -170,7 +170,8 @@ calculateMeanDataSet <- function(
   switch(
     lloqMode,
     # nothing to do for LLOQ/2
-    "LLOQ/2" = {},
+    "LLOQ/2" = {
+    },
     # set all data points with lloq that are smaller than it to value of lloq
     "LLOQ" = df[ind, "yValues"] <- df[ind, "lloq"],
     # set all data points with lloq to 0
@@ -320,10 +321,14 @@ loadObservedData <- function(project) {
 
   allDataSets <- list()
   for (entry in project$observedData) {
-    dataSets <- switch(entry$type,
+    dataSets <- switch(
+      entry$type,
       "excel" = {
         filePath <- file.path(project$dataFolder, entry$file)
-        importerPath <- file.path(project$dataFolder, entry$importerConfiguration)
+        importerPath <- file.path(
+          project$dataFolder,
+          entry$importerConfiguration
+        )
         importerConfig <- ospsuite::loadDataImporterConfiguration(
           configurationFilePath = importerPath
         )
@@ -347,7 +352,9 @@ loadObservedData <- function(project) {
         result <- source(filePath, local = TRUE)$value
         if (inherits(result, "DataSet")) {
           stats::setNames(list(result), result$name)
-        } else if (is.list(result) && all(sapply(result, inherits, "DataSet"))) {
+        } else if (
+          is.list(result) && all(sapply(result, inherits, "DataSet"))
+        ) {
           result
         } else {
           stop(messages$scriptWrongReturnType(filePath, class(result)[[1]]))
@@ -396,3 +403,120 @@ getObservedDataNames <- function(project) {
   project$.getObservedDataNamesCache()
 }
 
+#' Add observed data to a Project
+#'
+#' @description Add an observedData entry. Accepts either a `DataSet`
+#' (creates a `type="programmatic"` entry keyed by `dataSet$name`) or a
+#' configuration list with `type` field ("excel", "pkml", or "script")
+#' plus source-specific fields.
+#'
+#' @param project A `Project` object.
+#' @param entry Either a `DataSet` object or a configuration list.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family observedData
+addObservedData <- function(project, entry) {
+  validateIsOfType(project, "Project")
+
+  if (inherits(entry, "DataSet")) {
+    name <- entry$name
+    existingNames <- getObservedDataNames(project)
+    if (name %in% existingNames) {
+      stop(messages$observedDataNameExists(name))
+    }
+    project$.__enclos_env__$private$.programmaticDataSets[[name]] <- entry
+    existingCache <- project$.__enclos_env__$private$.observedDataNamesCache
+    project$.__enclos_env__$private$.observedDataNamesCache <-
+      c(existingCache, name)
+    newEntry <- list(type = "programmatic")
+    project$observedData <- c(project$observedData, list(newEntry))
+    project$modified <- TRUE
+    cli::cli_inform(c(
+      "i" = paste0(
+        "For reproducibility, consider declaring this DataSet via a script ",
+        "in your Project.json using the observedData field with ",
+        "type = \"script\" and file = \"scripts/your_script.R\"."
+      )
+    ))
+  } else if (is.list(entry)) {
+    if (is.null(entry$type)) {
+      stop("Config list must include 'type' field")
+    }
+    validTypes <- c("excel", "pkml", "script")
+    if (!(entry$type %in% validTypes)) {
+      stop(sprintf(
+        "Invalid type '%s'. Must be one of: %s",
+        entry$type,
+        paste(validTypes, collapse = ", ")
+      ))
+    }
+    project$.__enclos_env__$private$.observedDataNamesCache <- NULL
+    project$observedData <- c(project$observedData, list(entry))
+    project$modified <- TRUE
+  } else {
+    stop("'entry' must be a DataSet object or a configuration list")
+  }
+  invisible(project)
+}
+
+#' Remove observed data from a Project
+#'
+#' @description Removes by DataSet name (for `type="programmatic"` entries)
+#' or by `file` basename (for `type="excel"/"pkml"/"script"` entries).
+#'
+#' @param project A `Project` object.
+#' @param name DataSet name or config entry file basename.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family observedData
+removeObservedData <- function(project, name) {
+  validateIsOfType(project, "Project")
+  if (
+    !is.character(name) ||
+      length(name) != 1 ||
+      is.na(name) ||
+      nchar(name) == 0
+  ) {
+    stop("name must be a non-empty string")
+  }
+
+  progDS <- project$.getProgrammaticDataSets()
+  if (name %in% names(progDS)) {
+    project$.__enclos_env__$private$.programmaticDataSets[[name]] <- NULL
+    # Remove the first programmatic entry in observedData (there is no
+    # reliable per-entry name on programmatic entries; removing first
+    # programmatic matches the semantics that there is only one
+    # programmatic entry per DataSet).
+    programIdx <- which(vapply(
+      project$observedData,
+      function(e) {
+        identical(e$type, "programmatic")
+      },
+      logical(1)
+    ))
+    if (length(programIdx) > 0) {
+      project$observedData <- project$observedData[-programIdx[[1]]]
+    }
+    project$.__enclos_env__$private$.observedDataNamesCache <- NULL
+    project$modified <- TRUE
+    return(invisible(project))
+  }
+
+  matchIdx <- which(vapply(
+    project$observedData,
+    function(e) {
+      !is.null(e$file) && identical(basename(e$file), name)
+    },
+    logical(1)
+  ))
+
+  if (length(matchIdx) == 0) {
+    cli::cli_warn("observed data {.val {name}} not found; no-op.")
+    return(invisible(project))
+  }
+
+  project$observedData <- project$observedData[-matchIdx[[1]]]
+  project$.__enclos_env__$private$.observedDataNamesCache <- NULL
+  project$modified <- TRUE
+  invisible(project)
+}

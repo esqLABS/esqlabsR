@@ -13,7 +13,13 @@
 #'
 #' @returns A list with `simulation` and `population` (NULL for individual scenarios).
 #' @keywords internal
-.prepareScenario <- function(scenario, pc, customParams, cache, simulationRunOptions) {
+.prepareScenario <- function(
+  scenario,
+  pc,
+  customParams,
+  cache,
+  simulationRunOptions
+) {
   # 1. Load simulation
   simulation <- ospsuite::loadSimulation(
     filePath = file.path(pc$modelFolder, scenario$modelFile),
@@ -52,7 +58,9 @@
       if (!is.null(cache$individuals[[scenario$individualId]])) {
         individualCharacteristics <- cache$individuals[[scenario$individualId]]
       } else {
-        moleculeOntogenies <- .readOntongeniesFromList(indivData$proteinOntogenies)
+        moleculeOntogenies <- .readOntongeniesFromList(
+          indivData$proteinOntogenies
+        )
         individualCharacteristics <- ospsuite::createIndividualCharacteristics(
           species = indivData$species,
           population = indivData$population,
@@ -96,7 +104,10 @@
   }
 
   # 2e. Application parameters
-  if (!is.null(scenario$applicationProtocol) && !is.na(scenario$applicationProtocol)) {
+  if (
+    !is.null(scenario$applicationProtocol) &&
+      !is.na(scenario$applicationProtocol)
+  ) {
     applicationParams <- pc$applications[[scenario$applicationProtocol]]
     if (is.null(applicationParams)) {
       stop(messages$errorApplicationProtocolNotFound(
@@ -183,12 +194,16 @@
         popData <- pc$populations[[scenario$populationId]]
         if (is.null(popData)) {
           stop(paste0(
-            "Population '", scenario$populationId,
-            "' referenced by scenario '", scenario$scenarioName,
+            "Population '",
+            scenario$populationId,
+            "' referenced by scenario '",
+            scenario$scenarioName,
             "' not found in project."
           ))
         }
-        moleculeOntogenies <- .readOntongeniesFromList(popData$proteinOntogenies)
+        moleculeOntogenies <- .readOntongeniesFromList(
+          popData$proteinOntogenies
+        )
         popArgs <- popData
         popArgs$proteinOntogenies <- NULL
         popArgs$moleculeOntogenies <- moleculeOntogenies
@@ -278,7 +293,13 @@
 #'
 #' @returns A list with `simulation`, `results`, `outputValues`, `population`.
 #' @keywords internal
-.executeScenario <- function(scenario, pc, customParams, cache, simulationRunOptions) {
+.executeScenario <- function(
+  scenario,
+  pc,
+  customParams,
+  cache,
+  simulationRunOptions
+) {
   prepared <- .prepareScenario(
     scenario = scenario,
     pc = pc,
@@ -1376,67 +1397,102 @@ createScenarioConfigurationsFromPKML <- function(...) {
 #' @export
 #' @family scenario
 addScenario <- function(
-    project,
-    scenarioName,
-    modelFile,
-    individualId = NULL,
-    populationId = NULL,
-    applicationProtocol = NULL,
-    parameterGroups = NULL,
-    outputPathIds = NULL,
-    simulationTime = NULL,
-    simulationTimeUnit = "h",
-    steadyState = FALSE,
-    steadyStateTime = 1000,
-    overwriteFormulasInSS = FALSE,
-    readPopulationFromCSV = FALSE) {
+  project,
+  scenarioName,
+  modelFile,
+  individualId = NULL,
+  populationId = NULL,
+  applicationProtocol = NULL,
+  parameterGroups = NULL,
+  outputPathIds = NULL,
+  simulationTime = NULL,
+  simulationTimeUnit = "h",
+  steadyState = FALSE,
+  steadyStateTime = 1000,
+  overwriteFormulasInSS = FALSE,
+  readPopulationFromCSV = FALSE
+) {
   validateIsOfType(project, "Project")
   pc <- project
   errors <- character()
 
   # Validate required args
-  if (!is.character(scenarioName) || length(scenarioName) != 1 || is.na(scenarioName) || nchar(scenarioName) == 0) {
+  if (
+    !is.character(scenarioName) ||
+      length(scenarioName) != 1 ||
+      is.na(scenarioName) ||
+      nchar(scenarioName) == 0
+  ) {
     errors <- c(errors, "scenarioName must be a non-empty string")
   } else if (scenarioName %in% names(pc$scenarios)) {
     errors <- c(errors, paste0("scenario '", scenarioName, "' already exists"))
   }
 
-  if (!is.character(modelFile) || length(modelFile) != 1 || is.na(modelFile) || nchar(modelFile) == 0) {
+  if (
+    !is.character(modelFile) ||
+      length(modelFile) != 1 ||
+      is.na(modelFile) ||
+      nchar(modelFile) == 0
+  ) {
     errors <- c(errors, "modelFile must be a non-empty string")
   }
 
   # Validate optional references
   if (!is.null(individualId) && !(individualId %in% names(pc$individuals))) {
-    errors <- c(errors, paste0("individualId '", individualId, "' not found in individuals"))
+    errors <- c(
+      errors,
+      paste0("individualId '", individualId, "' not found in individuals")
+    )
   }
   if (!is.null(populationId) && !(populationId %in% names(pc$populations))) {
-    errors <- c(errors, paste0("populationId '", populationId, "' not found in populations"))
+    errors <- c(
+      errors,
+      paste0("populationId '", populationId, "' not found in populations")
+    )
   }
-  if (!is.null(applicationProtocol) && !(applicationProtocol %in% names(pc$applications))) {
-    errors <- c(errors, paste0("applicationProtocol '", applicationProtocol, "' not found in applications"))
+  if (
+    !is.null(applicationProtocol) &&
+      !(applicationProtocol %in% names(pc$applications))
+  ) {
+    errors <- c(
+      errors,
+      paste0(
+        "applicationProtocol '",
+        applicationProtocol,
+        "' not found in applications"
+      )
+    )
   }
   if (!is.null(parameterGroups)) {
     bad <- setdiff(parameterGroups, names(pc$modelParameters))
     if (length(bad) > 0) {
-      errors <- c(errors, paste0(
-        "parameterGroups not found in modelParameters: ",
-        paste(bad, collapse = ", ")
-      ))
+      errors <- c(
+        errors,
+        paste0(
+          "parameterGroups not found in modelParameters: ",
+          paste(bad, collapse = ", ")
+        )
+      )
     }
   }
   if (!is.null(outputPathIds)) {
     bad <- setdiff(outputPathIds, names(pc$outputPaths))
     if (length(bad) > 0) {
-      errors <- c(errors, paste0(
-        "outputPathIds not found in outputPaths: ",
-        paste(bad, collapse = ", ")
-      ))
+      errors <- c(
+        errors,
+        paste0(
+          "outputPathIds not found in outputPaths: ",
+          paste(bad, collapse = ", ")
+        )
+      )
     }
   }
 
   if (length(errors) > 0) {
     stop(paste0(
-      "Cannot add scenario '", scenarioName, "':\n- ",
+      "Cannot add scenario '",
+      scenarioName,
+      "':\n- ",
       paste(errors, collapse = "\n- ")
     ))
   }
@@ -1486,7 +1542,8 @@ addScenario <- function(
 #' @noRd
 .getSpeciesParameters <- function(species) {
   filePath <- system.file(
-    "extdata", "SpeciesParameters.xlsx",
+    "extdata",
+    "SpeciesParameters.xlsx",
     package = "esqlabsR"
   )
   if (!file.exists(filePath)) {
@@ -1499,4 +1556,110 @@ addScenario <- function(
   }
 
   .readParametersFromXLS(paramsXLSpath = filePath, sheets = species)
+}
+
+#' Add output paths to a Project
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of output path IDs (unique within the call
+#'   and not already present in `project$outputPaths`).
+#' @param path Character vector of output paths, same length as `id`.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+addOutputPath <- function(project, id, path) {
+  validateIsOfType(project, "Project")
+  errors <- character()
+
+  if (
+    !is.character(id) || length(id) < 1 || any(is.na(id)) || any(nchar(id) == 0)
+  ) {
+    errors <- c(errors, "id must be a non-empty character vector")
+  }
+  if (!is.character(path) || length(path) != length(id)) {
+    errors <- c(
+      errors,
+      "id and path must be character vectors of the same length"
+    )
+  }
+  if (is.character(id) && any(duplicated(id))) {
+    errors <- c(
+      errors,
+      paste0(
+        "duplicate ids within call: ",
+        paste(unique(id[duplicated(id)]), collapse = ", ")
+      )
+    )
+  }
+  if (is.character(id)) {
+    collisions <- intersect(id, names(project$outputPaths))
+    if (length(collisions) > 0) {
+      errors <- c(
+        errors,
+        paste0(
+          "outputPath id already exists: ",
+          paste(collisions, collapse = ", ")
+        )
+      )
+    }
+  }
+
+  if (length(errors) > 0) {
+    stop(paste0(
+      "Cannot add outputPath:\n- ",
+      paste(errors, collapse = "\n- ")
+    ))
+  }
+
+  newPaths <- path
+  names(newPaths) <- id
+  project$outputPaths <- c(project$outputPaths, newPaths)
+  project$modified <- TRUE
+  invisible(project)
+}
+
+#' Remove an output path from a Project
+#' @param project A `Project` object.
+#' @param id Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+removeOutputPath <- function(project, id) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1 || is.na(id) || nchar(id) == 0) {
+    stop("id must be a non-empty string")
+  }
+  if (!(id %in% names(project$outputPaths))) {
+    cli::cli_warn("outputPath {.val {id}} not found; no-op.")
+    return(invisible(project))
+  }
+  .warnIfReferenced(project, "outputPath", id)
+  project$outputPaths <- project$outputPaths[setdiff(
+    names(project$outputPaths),
+    id
+  )]
+  project$modified <- TRUE
+  invisible(project)
+}
+
+#' Remove a scenario from a Project
+#' @param project A `Project` object.
+#' @param name Character scalar, scenario name.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+removeScenario <- function(project, name) {
+  validateIsOfType(project, "Project")
+  if (
+    !is.character(name) || length(name) != 1 || is.na(name) || nchar(name) == 0
+  ) {
+    stop("name must be a non-empty string")
+  }
+  if (!(name %in% names(project$scenarios))) {
+    cli::cli_warn("scenario {.val {name}} not found; no-op.")
+    return(invisible(project))
+  }
+  project$scenarios[[name]] <- NULL
+  project$modified <- TRUE
+  invisible(project)
 }

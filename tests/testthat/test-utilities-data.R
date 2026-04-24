@@ -632,3 +632,97 @@ test_that("addObservedData errors when name conflicts with existing loaded data"
     regexp = "already exists"
   )
 })
+
+test_that("standalone addObservedData (DataSet) matches R6 method behavior", {
+  pc1 <- testProject()
+  pc2 <- testProject()
+  ds1 <- ospsuite::DataSet$new(name = "StandaloneDS")
+  ds1$setValues(xValues = 1:3, yValues = 1:3)
+  ds2 <- ospsuite::DataSet$new(name = "StandaloneDS")
+  ds2$setValues(xValues = 1:3, yValues = 1:3)
+
+  suppressMessages(addObservedData(pc1, ds1))
+  suppressMessages(pc2$addObservedData(ds2))
+
+  expect_equal(length(pc1$observedData), length(pc2$observedData))
+  expect_equal(
+    names(pc1$.getProgrammaticDataSets()),
+    names(pc2$.getProgrammaticDataSets())
+  )
+  expect_equal(
+    pc1$.getProgrammaticDataSets()[["StandaloneDS"]]$name,
+    pc2$.getProgrammaticDataSets()[["StandaloneDS"]]$name
+  )
+  expect_equal(
+    pc1$.getProgrammaticDataSets()[["StandaloneDS"]]$xValues,
+    pc2$.getProgrammaticDataSets()[["StandaloneDS"]]$xValues
+  )
+  expect_equal(
+    pc1$.getProgrammaticDataSets()[["StandaloneDS"]]$yValues,
+    pc2$.getProgrammaticDataSets()[["StandaloneDS"]]$yValues
+  )
+})
+
+test_that("standalone addObservedData (config list) appends entry", {
+  pc <- testProject()
+  initial <- length(pc$observedData)
+  addObservedData(pc, list(type = "script", file = "scripts/x.R"))
+  expect_equal(length(pc$observedData), initial + 1)
+  expect_true(pc$modified)
+})
+
+test_that("standalone addObservedData returns project invisibly", {
+  pc <- testProject()
+  out <- withVisible(
+    addObservedData(pc, list(type = "script", file = "scripts/y.R"))
+  )
+  expect_false(out$visible)
+  expect_identical(out$value, pc)
+})
+
+test_that("removeObservedData removes programmatic DataSet by name", {
+  pc <- testProject()
+  ds <- ospsuite::DataSet$new(name = "ToRemove")
+  ds$setValues(xValues = 1:3, yValues = 1:3)
+  suppressMessages(addObservedData(pc, ds))
+  pc$modified <- FALSE
+  before <- length(pc$observedData)
+  removeObservedData(pc, "ToRemove")
+  expect_equal(length(pc$observedData), before - 1)
+  expect_false("ToRemove" %in% names(pc$.getProgrammaticDataSets()))
+  expect_true(pc$modified)
+})
+
+test_that("removeObservedData removes config entry by file basename", {
+  pc <- testProject()
+  addObservedData(pc, list(type = "script", file = "scripts/delete-me.R"))
+  before <- length(pc$observedData)
+  removeObservedData(pc, "delete-me.R")
+  expect_equal(length(pc$observedData), before - 1)
+})
+
+test_that("removeObservedData warns on missing name", {
+  pc <- testProject()
+  expect_warning(
+    removeObservedData(pc, "NoSuchDataSet_ZZZ"),
+    regexp = "not found"
+  )
+})
+
+test_that("removeObservedData removes the correct DataSet when multiple programmatic exist", {
+  pc <- testProject()
+  dsA <- ospsuite::DataSet$new(name = "DS_A")
+  dsA$setValues(xValues = 1:3, yValues = c(10, 20, 30))
+  dsB <- ospsuite::DataSet$new(name = "DS_B")
+  dsB$setValues(xValues = 1:3, yValues = c(100, 200, 300))
+
+  suppressMessages(addObservedData(pc, dsA))
+  suppressMessages(addObservedData(pc, dsB))
+
+  # Remove A; B must still be reachable via loadObservedData
+  removeObservedData(pc, "DS_A")
+  loaded <- loadObservedData(pc)
+  expect_false("DS_A" %in% names(loaded))
+  expect_true("DS_B" %in% names(loaded))
+  expect_equal(loaded[["DS_B"]]$yValues, c(100, 200, 300), tolerance = 1e-4)
+})

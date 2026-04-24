@@ -116,7 +116,19 @@ Read-only.}
 \item \href{#method-Project-.cacheObservedDataNames}{\code{Project$.cacheObservedDataNames()}}
 \item \href{#method-Project-.getObservedDataNamesCache}{\code{Project$.getObservedDataNamesCache()}}
 \item \href{#method-Project-addScenario}{\code{Project$addScenario()}}
+\item \href{#method-Project-addIndividual}{\code{Project$addIndividual()}}
+\item \href{#method-Project-removeIndividual}{\code{Project$removeIndividual()}}
+\item \href{#method-Project-addPopulation}{\code{Project$addPopulation()}}
+\item \href{#method-Project-removePopulation}{\code{Project$removePopulation()}}
+\item \href{#method-Project-addModelParameterGroup}{\code{Project$addModelParameterGroup()}}
+\item \href{#method-Project-removeModelParameterGroup}{\code{Project$removeModelParameterGroup()}}
+\item \href{#method-Project-addApplicationGroup}{\code{Project$addApplicationGroup()}}
+\item \href{#method-Project-removeApplicationGroup}{\code{Project$removeApplicationGroup()}}
+\item \href{#method-Project-addOutputPath}{\code{Project$addOutputPath()}}
+\item \href{#method-Project-removeOutputPath}{\code{Project$removeOutputPath()}}
+\item \href{#method-Project-removeScenario}{\code{Project$removeScenario()}}
 \item \href{#method-Project-addObservedData}{\code{Project$addObservedData()}}
+\item \href{#method-Project-removeObservedData}{\code{Project$removeObservedData()}}
 \item \href{#method-Project-new}{\code{Project$new()}}
 \item \href{#method-Project-print}{\code{Project$print()}}
 \item \href{#method-Project-sync}{\code{Project$sync()}}
@@ -184,6 +196,219 @@ Delegates to the standalone \code{\link[=addScenario]{addScenario()}} function.
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addIndividual"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addIndividual}{}}}
+\subsection{Method \code{addIndividual()}}{
+Add an individual programmatically.
+Delegates to the standalone \code{\link[=addIndividual]{addIndividual()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addIndividual(individualId, species, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{individualId}}{Character. Unique ID.}
+
+\item{\code{species}}{Character. Species name.}
+
+\item{\code{...}}{Additional fields passed to \code{\link[=addIndividual]{addIndividual()}}.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeIndividual"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeIndividual}{}}}
+\subsection{Method \code{removeIndividual()}}{
+Remove an individual programmatically.
+Delegates to the standalone \code{\link[=removeIndividual]{removeIndividual()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removeIndividual(individualId)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{individualId}}{Character.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPopulation"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPopulation}{}}}
+\subsection{Method \code{addPopulation()}}{
+Add a population programmatically.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addPopulation(populationId, species, numberOfIndividuals, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{populationId}}{Character.}
+
+\item{\code{species}}{Character.}
+
+\item{\code{numberOfIndividuals}}{Integer.}
+
+\item{\code{...}}{Passed to \code{\link[=addPopulation]{addPopulation()}}.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePopulation"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePopulation}{}}}
+\subsection{Method \code{removePopulation()}}{
+Remove a population programmatically.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removePopulation(populationId)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{populationId}}{Character.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addModelParameterGroup"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addModelParameterGroup}{}}}
+\subsection{Method \code{addModelParameterGroup()}}{
+Add a model parameter group programmatically.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addModelParameterGroup(group, paths, values, units)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{group}}{Character.}
+
+\item{\code{paths}}{Character vector.}
+
+\item{\code{values}}{Numeric vector.}
+
+\item{\code{units}}{Character vector.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeModelParameterGroup"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeModelParameterGroup}{}}}
+\subsection{Method \code{removeModelParameterGroup()}}{
+Remove a model parameter group programmatically.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removeModelParameterGroup(group)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{group}}{Character.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addApplicationGroup"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addApplicationGroup}{}}}
+\subsection{Method \code{addApplicationGroup()}}{
+Add an application group programmatically.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addApplicationGroup(protocol, paths, values, units)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{protocol}}{Character.}
+
+\item{\code{paths}}{Character vector.}
+
+\item{\code{values}}{Numeric vector.}
+
+\item{\code{units}}{Character vector.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeApplicationGroup"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeApplicationGroup}{}}}
+\subsection{Method \code{removeApplicationGroup()}}{
+Remove an application group programmatically.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removeApplicationGroup(protocol)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{protocol}}{Character.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addOutputPath"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addOutputPath}{}}}
+\subsection{Method \code{addOutputPath()}}{
+Add one or more output paths programmatically.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addOutputPath(id, path)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{id}}{Character vector.}
+
+\item{\code{path}}{Character vector.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeOutputPath"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeOutputPath}{}}}
+\subsection{Method \code{removeOutputPath()}}{
+Remove an output path programmatically.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removeOutputPath(id)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{id}}{Character.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeScenario"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeScenario}{}}}
+\subsection{Method \code{removeScenario()}}{
+Remove a scenario programmatically.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removeScenario(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Character.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Project-addObservedData"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-addObservedData}{}}}
 \subsection{Method \code{addObservedData()}}{
@@ -210,7 +435,25 @@ relevant fields (e.g., \code{file}, \code{importerConfiguration}, \code{sheets})
 }
 \subsection{Returns}{
 Invisibly returns self for chaining
-Initialize
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeObservedData"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeObservedData}{}}}
+\subsection{Method \code{removeObservedData()}}{
+Remove observed data programmatically.
+Delegates to the standalone \code{\link[=removeObservedData]{removeObservedData()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removeObservedData(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{DataSet name or config entry file basename.
+Initialize}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -310,9 +553,21 @@ The objects of this class are cloneable with this method.
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id=".cacheObservedDataNames"><a href='../../esqlabsR/html/Project.html#method-Project-.cacheObservedDataNames'><code>esqlabsR::Project$.cacheObservedDataNames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id=".getObservedDataNamesCache"><a href='../../esqlabsR/html/Project.html#method-Project-.getObservedDataNamesCache'><code>esqlabsR::Project$.getObservedDataNamesCache()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id=".getProgrammaticDataSets"><a href='../../esqlabsR/html/Project.html#method-Project-.getProgrammaticDataSets'><code>esqlabsR::Project$.getProgrammaticDataSets()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addApplicationGroup"><a href='../../esqlabsR/html/Project.html#method-Project-addApplicationGroup'><code>esqlabsR::Project$addApplicationGroup()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addIndividual"><a href='../../esqlabsR/html/Project.html#method-Project-addIndividual'><code>esqlabsR::Project$addIndividual()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addModelParameterGroup"><a href='../../esqlabsR/html/Project.html#method-Project-addModelParameterGroup'><code>esqlabsR::Project$addModelParameterGroup()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addObservedData"><a href='../../esqlabsR/html/Project.html#method-Project-addObservedData'><code>esqlabsR::Project$addObservedData()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addOutputPath"><a href='../../esqlabsR/html/Project.html#method-Project-addOutputPath'><code>esqlabsR::Project$addOutputPath()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addPopulation"><a href='../../esqlabsR/html/Project.html#method-Project-addPopulation'><code>esqlabsR::Project$addPopulation()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addScenario"><a href='../../esqlabsR/html/Project.html#method-Project-addScenario'><code>esqlabsR::Project$addScenario()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="print"><a href='../../esqlabsR/html/Project.html#method-Project-print'><code>esqlabsR::Project$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeApplicationGroup"><a href='../../esqlabsR/html/Project.html#method-Project-removeApplicationGroup'><code>esqlabsR::Project$removeApplicationGroup()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeIndividual"><a href='../../esqlabsR/html/Project.html#method-Project-removeIndividual'><code>esqlabsR::Project$removeIndividual()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeModelParameterGroup"><a href='../../esqlabsR/html/Project.html#method-Project-removeModelParameterGroup'><code>esqlabsR::Project$removeModelParameterGroup()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeObservedData"><a href='../../esqlabsR/html/Project.html#method-Project-removeObservedData'><code>esqlabsR::Project$removeObservedData()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeOutputPath"><a href='../../esqlabsR/html/Project.html#method-Project-removeOutputPath'><code>esqlabsR::Project$removeOutputPath()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removePopulation"><a href='../../esqlabsR/html/Project.html#method-Project-removePopulation'><code>esqlabsR::Project$removePopulation()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeScenario"><a href='../../esqlabsR/html/Project.html#method-Project-removeScenario'><code>esqlabsR::Project$removeScenario()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="sync"><a href='../../esqlabsR/html/Project.html#method-Project-sync'><code>esqlabsR::Project$sync()</code></a></span></li>
 </ul>
 </details>

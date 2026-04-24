@@ -72,6 +72,9 @@ Creates a new \code{Scenario} and adds it to the
 }
 \seealso{
 Other scenario: 
-\code{\link{Scenario}}
+\code{\link{Scenario}},
+\code{\link{addOutputPath}()},
+\code{\link{removeOutputPath}()},
+\code{\link{removeScenario}()}
 }
 \concept{scenario}
