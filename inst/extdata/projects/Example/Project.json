@@ -152,7 +152,7 @@
   "applications": {
     "Aciclovir_iv_250mg": [
       {
-        "containerPath": "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+        "containerPath": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
         "parameterName": "Dose",
         "value": 250,
         "units": "mg"
