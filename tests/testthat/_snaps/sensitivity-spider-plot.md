@@ -16,31 +16,6 @@
 
     Code
       extractAxisRange(p1)
-    Condition
-      Warning in `transformation$transform()`:
-      NaNs produced
-      Warning in `ggplot2::scale_x_log10()`:
-      log-10 transformation introduced infinite values.
-      Warning in `transformation$transform()`:
-      NaNs produced
-      Warning in `ggplot2::scale_x_log10()`:
-      log-10 transformation introduced infinite values.
-      Warning in `transformation$transform()`:
-      NaNs produced
-      Warning in `ggplot2::scale_x_log10()`:
-      log-10 transformation introduced infinite values.
-      Warning in `transformation$transform()`:
-      NaNs produced
-      Warning in `ggplot2::scale_x_log10()`:
-      log-10 transformation introduced infinite values.
-      Warning in `transformation$transform()`:
-      NaNs produced
-      Warning in `ggplot2::scale_x_log10()`:
-      log-10 transformation introduced infinite values.
-      Warning in `transformation$transform()`:
-      NaNs produced
-      Warning in `ggplot2::scale_x_log10()`:
-      log-10 transformation introduced infinite values.
     Output
       $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
       $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`$xRange

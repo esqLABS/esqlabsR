@@ -388,7 +388,7 @@ sensitivityTimeProfiles <- function(
     patchwork::plot_annotation(
       title = plotConfiguration$title,
       subtitle = plotConfiguration$subtitle,
-      theme = ggplot2::theme(plot.title = ggplot2::element_text(size = plotConfiguration$titleSize))
+      theme = ggplot2::theme(plot.title = ggtext::element_textbox_simple(size = plotConfiguration$titleSize))
     ) +
     patchwork::plot_layout(
       guides = "collect",

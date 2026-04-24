@@ -395,7 +395,7 @@ sensitivitySpiderPlot <- function(
       title = plotConfiguration$title,
       subtitle = plotConfiguration$subtitle,
       theme = ggplot2::theme(
-        plot.title = ggplot2::element_text(size = plotConfiguration$titleSize)
+        plot.title = ggtext::element_textbox_simple(size = plotConfiguration$titleSize)
       )
     ) +
     patchwork::plot_layout(
