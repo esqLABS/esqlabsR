@@ -103,7 +103,10 @@ outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Veno
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
   "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+  ospsuite::toPathString(
+    "Neighborhoods", "Kidney_pls_Kidney_ur", "Aciclovir",
+    "Glomerular Filtration-GFR-Aciclovir", "GFR fraction"
+  )
 )
 
 results <- sensitivityCalculation(
@@ -128,7 +131,10 @@ sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
 namedParameterPaths <- c(
   "Lipophilicity" = "Aciclovir|Lipophilicity",
   "Dose" = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+  "GFR fraction" = ospsuite::toPathString(
+    "Neighborhoods", "Kidney_pls_Kidney_ur", "Aciclovir",
+    "Glomerular Filtration-GFR-Aciclovir", "GFR fraction"
+  )
 )
 
 resultsNamed <- sensitivityCalculation(
