@@ -11,7 +11,7 @@ addScenario(
   individualId = NULL,
   populationId = NULL,
   applicationProtocol = NULL,
-  parameterGroups = NULL,
+  modelParameters = NULL,
   outputPathIds = NULL,
   simulationTime = NULL,
   simulationTimeUnit = "h",
@@ -39,7 +39,7 @@ model folder).}
 \item{applicationProtocol}{Character or NULL. Protocol name referencing
 \code{project$applications}.}
 
-\item{parameterGroups}{Character vector or NULL. Group names referencing
+\item{modelParameters}{Character vector or NULL. Group names referencing
 \code{project$modelParameters}.}
 
 \item{outputPathIds}{Character vector or NULL. IDs referencing

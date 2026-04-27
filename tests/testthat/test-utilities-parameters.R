@@ -116,155 +116,365 @@ test_that("It extends a structure by a new structure", {
   expect_equal(extended$units, c("", "", "µmol"))
 })
 
-test_that("addModelParameterGroup adds a new group", {
+test_that("addModelParameter creates a new parameter set on first call", {
   pc <- testProject()
-  initial <- length(pc$modelParameters)
-  addModelParameterGroup(
+  addModelParameter(
     pc,
-    group = "MyLiver",
-    paths = c("Organism|Liver|Volume", "Organism|Liver|Q"),
-    values = c(1.8, 90),
-    units = c("L", "mL/min")
+    id = "MyNewSet",
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 1.8,
+    units = "L"
   )
-  expect_equal(length(pc$modelParameters), initial + 1)
-  grp <- pc$modelParameters[["MyLiver"]]
-  expect_equal(grp$paths, c("Organism|Liver|Volume", "Organism|Liver|Q"))
-  expect_equal(grp$values, c(1.8, 90))
-  expect_equal(grp$units, c("L", "mL/min"))
+  expect_true("MyNewSet" %in% names(pc$modelParameters))
+  expect_equal(pc$modelParameters[["MyNewSet"]]$paths, "Organism|Liver|Volume")
+  expect_equal(pc$modelParameters[["MyNewSet"]]$values, 1.8)
+  expect_equal(pc$modelParameters[["MyNewSet"]]$units, "L")
   expect_true(pc$modified)
 })
 
-test_that("addModelParameterGroup errors on duplicate group", {
+test_that("addModelParameter appends to an existing set", {
   pc <- testProject()
-  existing <- names(pc$modelParameters)[[1]]
-  expect_error(
-    addModelParameterGroup(pc, existing, "a", 1, "L"),
-    regexp = "already exists"
+  addModelParameter(
+    pc,
+    "S1",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
   )
+  addModelParameter(
+    pc,
+    "S1",
+    containerPath = "b",
+    parameterName = "y",
+    value = 2,
+    units = "L"
+  )
+  expect_equal(pc$modelParameters[["S1"]]$paths, c("a|x", "b|y"))
+  expect_equal(pc$modelParameters[["S1"]]$values, c(1, 2))
 })
 
-test_that("addModelParameterGroup errors on length mismatch", {
+test_that("addModelParameter overwrites duplicate path silently", {
   pc <- testProject()
-  expect_error(
-    addModelParameterGroup(pc, "Bad", c("a", "b"), c(1), c("L", "L")),
-    regexp = "same length"
+  addModelParameter(
+    pc,
+    "S2",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
   )
+  addModelParameter(
+    pc,
+    "S2",
+    containerPath = "a",
+    parameterName = "x",
+    value = 99,
+    units = "L"
+  )
+  expect_equal(pc$modelParameters[["S2"]]$paths, "a|x")
+  expect_equal(pc$modelParameters[["S2"]]$values, 99)
 })
 
-test_that("addModelParameterGroup errors on empty paths", {
+test_that("removeModelParameter drops the entry", {
   pc <- testProject()
-  expect_error(
-    addModelParameterGroup(
-      pc,
-      "Empty",
-      paths = character(0),
-      values = numeric(0),
-      units = character(0)
-    ),
-    regexp = "non-empty character vector"
+  addModelParameter(
+    pc,
+    "S3",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
   )
-})
-
-test_that("addModelParameterGroup errors on non-numeric values", {
-  pc <- testProject()
-  expect_error(
-    addModelParameterGroup(pc, "G", "a", "not-a-number", "L"),
-    regexp = "values"
+  addModelParameter(
+    pc,
+    "S3",
+    containerPath = "b",
+    parameterName = "y",
+    value = 2,
+    units = "L"
   )
-})
-
-test_that("removeModelParameterGroup removes group", {
-  pc <- testProject()
-  addModelParameterGroup(pc, "Tmp", "a", 1, "L")
   pc$modified <- FALSE
-  removeModelParameterGroup(pc, "Tmp")
-  expect_false("Tmp" %in% names(pc$modelParameters))
+  removeModelParameter(pc, "S3", containerPath = "a", parameterName = "x")
+  expect_equal(pc$modelParameters[["S3"]]$paths, "b|y")
   expect_true(pc$modified)
 })
 
-test_that("removeModelParameterGroup warns on missing", {
+test_that("removeModelParameter auto-removes empty set when last entry deleted", {
+  pc <- testProject()
+  addModelParameter(
+    pc,
+    "S4",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  removeModelParameter(pc, "S4", containerPath = "a", parameterName = "x")
+  expect_false("S4" %in% names(pc$modelParameters))
+})
+
+test_that("removeModelParameter warns on unknown set", {
   pc <- testProject()
   expect_warning(
-    removeModelParameterGroup(pc, "NoSuchGroup_ZZ"),
+    removeModelParameter(
+      pc,
+      "NoSuchSet_QQ",
+      containerPath = "a",
+      parameterName = "x"
+    ),
     regexp = "not found"
   )
 })
 
-test_that("project$addModelParameterGroup delegates to standalone", {
-  pc1 <- testProject()
-  pc2 <- testProject()
-  addModelParameterGroup(pc1, "X", "a", 1, "L")
-  pc2$addModelParameterGroup("X", "a", 1, "L")
-  expect_equal(pc1$modelParameters[["X"]], pc2$modelParameters[["X"]])
-})
-
-test_that("addApplicationGroup adds a new application group", {
+test_that("removeModelParameter warns on unknown entry within an existing set", {
   pc <- testProject()
-  initial <- length(pc$applications)
-  addApplicationGroup(
+  addModelParameter(
     pc,
-    protocol = "Oral_10mg",
-    paths = c("App|Oral|DoseValue"),
-    values = c(10),
-    units = c("mg")
+    "S5",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
   )
-  expect_equal(length(pc$applications), initial + 1)
-  expect_equal(pc$applications[["Oral_10mg"]]$values, 10)
-  expect_true(pc$modified)
-})
-
-test_that("addApplicationGroup errors on duplicate protocol", {
-  pc <- testProject()
-  existing <- names(pc$applications)[[1]]
-  expect_error(
-    addApplicationGroup(pc, existing, "a", 1, "mg"),
-    regexp = "already exists"
+  expect_warning(
+    removeModelParameter(
+      pc,
+      "S5",
+      containerPath = "z",
+      parameterName = "missing"
+    ),
+    regexp = "not found"
   )
 })
 
-test_that("removeApplicationGroup removes group", {
-  pc <- testProject()
-  addApplicationGroup(pc, "TmpApp", "a", 1, "mg")
-  pc$modified <- FALSE
-  removeApplicationGroup(pc, "TmpApp")
-  expect_false("TmpApp" %in% names(pc$applications))
-})
-
-test_that("addModelParameterGroup survives round-trip", {
-  pc <- testProject()
-  addModelParameterGroup(
+test_that("addModelParameter survives round-trip", {
+  pc <- Project$new()
+  pc$modelFolder <- tempdir()
+  addModelParameter(
     pc,
-    "RTGroup",
-    paths = "Organism|Liver|Volume",
-    values = 2.0,
+    "RTSet",
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 2.0,
     units = "L"
   )
   tmp <- tempfile(fileext = ".json")
   saveProject(pc, tmp)
   reloaded <- loadProject(tmp)
-  expect_equal(reloaded$modelParameters[["RTGroup"]]$values, 2.0)
+  expect_equal(
+    reloaded$modelParameters[["RTSet"]]$paths,
+    "Organism|Liver|Volume"
+  )
+  expect_equal(reloaded$modelParameters[["RTSet"]]$values, 2.0)
 })
 
-test_that("addModelParameterGroup rejects NA and Inf in values", {
-  pc <- testProject()
-  expect_error(
-    addModelParameterGroup(pc, "G1", "a", c(1, NA), c("L", "L")),
-    regexp = "NA|NaN|Inf"
+test_that("project$addModelParameter delegates", {
+  pc1 <- testProject()
+  pc2 <- testProject()
+  addModelParameter(
+    pc1,
+    "DelSet",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
   )
-  expect_error(
-    addModelParameterGroup(pc, "G2", "a", Inf, "L"),
-    regexp = "NA|NaN|Inf"
+  pc2$addModelParameter(
+    "DelSet",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
   )
-  expect_error(
-    addModelParameterGroup(pc, "G3", c("a", NA), c(1, 2), c("L", "L")),
-    regexp = "NA|empty"
+  expect_equal(
+    pc1$modelParameters[["DelSet"]],
+    pc2$modelParameters[["DelSet"]]
   )
 })
 
-test_that("addApplicationGroup error message uses the right label", {
-  pc <- testProject()
+test_that("addParameter on Individual appends entry to parallel-vector parameters", {
+  indiv <- structure(
+    list(species = "Human", parameters = NULL),
+    class = c("Individual", "list")
+  )
+  out <- addParameter(
+    indiv,
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 1.8,
+    units = "L"
+  )
+  expect_true(inherits(out, "Individual"))
+  expect_equal(out$parameters$paths, "Organism|Liver|Volume")
+  expect_equal(out$parameters$values, 1.8)
+  expect_equal(out$parameters$units, "L")
+})
+
+test_that("addParameter on Individual extends existing parameters", {
+  indiv <- structure(
+    list(
+      species = "Human",
+      parameters = list(
+        paths = "Organism|Kidney|GFR",
+        values = 90,
+        units = "ml/min"
+      )
+    ),
+    class = c("Individual", "list")
+  )
+  out <- addParameter(
+    indiv,
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 1.8,
+    units = "L"
+  )
+  expect_equal(
+    out$parameters$paths,
+    c("Organism|Kidney|GFR", "Organism|Liver|Volume")
+  )
+  expect_equal(out$parameters$values, c(90, 1.8))
+})
+
+test_that("addParameter overwrites duplicate path silently (last-write-wins)", {
+  indiv <- structure(
+    list(
+      species = "Human",
+      parameters = list(
+        paths = "Organism|Liver|Volume",
+        values = 1.5,
+        units = "L"
+      )
+    ),
+    class = c("Individual", "list")
+  )
+  out <- addParameter(
+    indiv,
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 2.0,
+    units = "L"
+  )
+  expect_equal(out$parameters$paths, "Organism|Liver|Volume")
+  expect_equal(out$parameters$values, 2.0)
+})
+
+test_that("addParameter on Application works the same as on Individual", {
+  app <- structure(
+    list(parameters = NULL),
+    class = c("Application", "list")
+  )
+  out <- addParameter(
+    app,
+    containerPath = "Events|Oral|Schema",
+    parameterName = "Dose",
+    value = 250,
+    units = "mg"
+  )
+  expect_true(inherits(out, "Application"))
+  expect_equal(out$parameters$paths, "Events|Oral|Schema|Dose")
+  expect_equal(out$parameters$values, 250)
+})
+
+test_that("removeParameter drops the entry by containerPath + parameterName", {
+  indiv <- structure(
+    list(
+      species = "Human",
+      parameters = list(
+        paths = c("Organism|Liver|Volume", "Organism|Kidney|GFR"),
+        values = c(1.8, 90),
+        units = c("L", "ml/min")
+      )
+    ),
+    class = c("Individual", "list")
+  )
+  out <- removeParameter(
+    indiv,
+    containerPath = "Organism|Liver",
+    parameterName = "Volume"
+  )
+  expect_equal(out$parameters$paths, "Organism|Kidney|GFR")
+  expect_equal(out$parameters$values, 90)
+})
+
+test_that("removeParameter sets parameters to NULL when last entry removed", {
+  indiv <- structure(
+    list(
+      species = "Human",
+      parameters = list(
+        paths = "Organism|Liver|Volume",
+        values = 1.8,
+        units = "L"
+      )
+    ),
+    class = c("Individual", "list")
+  )
+  out <- removeParameter(
+    indiv,
+    containerPath = "Organism|Liver",
+    parameterName = "Volume"
+  )
+  expect_null(out$parameters)
+})
+
+test_that("removeParameter warns and returns unchanged if entry not found", {
+  indiv <- structure(
+    list(
+      species = "Human",
+      parameters = list(
+        paths = "Organism|Liver|Volume",
+        values = 1.8,
+        units = "L"
+      )
+    ),
+    class = c("Individual", "list")
+  )
+  expect_warning(
+    out <- removeParameter(
+      indiv,
+      containerPath = "Organism|Kidney",
+      parameterName = "GFR"
+    ),
+    regexp = "not found"
+  )
+  expect_equal(out$parameters$paths, "Organism|Liver|Volume")
+})
+
+test_that("addParameter errors on bad input shapes", {
+  indiv <- structure(
+    list(species = "Human", parameters = NULL),
+    class = c("Individual", "list")
+  )
   expect_error(
-    addApplicationGroup(pc, "BadApp", c("a", "b"), c(1), c("mg", "mg")),
-    regexp = "application 'BadApp'"
+    addParameter(
+      indiv,
+      containerPath = "",
+      parameterName = "x",
+      value = 1,
+      units = "L"
+    ),
+    regexp = "containerPath"
+  )
+  expect_error(
+    addParameter(
+      indiv,
+      containerPath = "a",
+      parameterName = "",
+      value = 1,
+      units = "L"
+    ),
+    regexp = "parameterName"
+  )
+  expect_error(
+    addParameter(
+      indiv,
+      containerPath = "a",
+      parameterName = "x",
+      value = "nope",
+      units = "L"
+    ),
+    regexp = "value"
   )
 })

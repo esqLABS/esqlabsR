@@ -2,6 +2,25 @@
 
 ## Breaking changes
 
+- **Parameter ownership moved onto entities.** Individuals gain an inline
+  `parameters` array; the per-individual `parameterSets` field, the top-level
+  `individualParameterSets` dict, and the top-level
+  `individualParameterSetMapping` are removed. Applications are now objects
+  with a `parameters` field (no longer bare arrays of parameter entries). The
+  scenario field `modelParameterGroups` is renamed to `modelParameters`.
+  `addModelParameterGroup()` / `removeModelParameterGroup()` /
+  `addApplicationGroup()` / `removeApplicationGroup()` are replaced by
+  one-parameter-at-a-time helpers: `addModelParameter()`,
+  `removeModelParameter()`, `addIndividualParameter()`,
+  `removeIndividualParameter()`, `addApplicationParameter()`,
+  `removeApplicationParameter()`. Plus generic S3 `addParameter()` /
+  `removeParameter()` dispatching on `Individual` / `Application` objects, and
+  `addApplication()` / `removeApplication()` for managing application
+  protocols. Merge order in `.prepareScenario` is pinned by tests:
+  `modelParameters` (in scenario-listed order) → species defaults → individual
+  `parameters` → application `parameters` → custom params, silent
+  last-write-wins. JSON `schemaVersion` stays at `"2.0"`.
+
 - `dataCombined` JSON structure changed from flat array to nested structure with `simulated` and `observed` sub-arrays. The new format groups entries by DataCombined name and separates simulated/observed data into typed arrays (#1001).
 
 - **`validateAllConfigurations()` replaced by `validateProject()`.** Validation

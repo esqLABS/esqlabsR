@@ -100,7 +100,10 @@ importProjectFromExcel <- function(
   # --- ModelParameters ---
   modelParamsFile <- resolveConfigFile(pcProps[["modelParamsFile"]])
   if (!is.null(modelParamsFile) && file.exists(modelParamsFile)) {
-    jsonData$modelParameters <- .parseExcelParameterSheets(modelParamsFile, schemaVersion = schemaVersion)
+    jsonData$modelParameters <- .parseExcelParameterSheets(
+      modelParamsFile,
+      schemaVersion = schemaVersion
+    )
   }
 
   # --- Individuals ---
@@ -111,14 +114,22 @@ importProjectFromExcel <- function(
       indivDf <- readExcel(individualsFile, sheet = "IndividualBiometrics")
       jsonData$individuals <- .parseExcelIndividuals(indivDf, schemaVersion)
     }
-    # Individual parameter sets — all sheets except IndividualBiometrics
-    paramSetSheets <- setdiff(sheets, "IndividualBiometrics")
-    if (length(paramSetSheets) > 0) {
-      jsonData$individualParameterSets <- .parseExcelParameterSheets(
+    # Per-individual parameter sheets: each sheet whose name matches an
+    # individualId becomes that individual's inline `parameters` array.
+    indivParamSheets <- setdiff(sheets, "IndividualBiometrics")
+    if (length(indivParamSheets) > 0 && !is.null(jsonData$individuals)) {
+      paramGroups <- .parseExcelParameterSheets(
         individualsFile,
-        sheetNames = paramSetSheets,
+        sheetNames = indivParamSheets,
         schemaVersion = schemaVersion
       )
+      for (i in seq_along(jsonData$individuals)) {
+        id <- jsonData$individuals[[i]]$individualId
+        grp <- paramGroups[[id]]
+        if (!is.null(grp)) {
+          jsonData$individuals[[i]]$parameters <- grp
+        }
+      }
     }
   }
 
@@ -132,7 +143,15 @@ importProjectFromExcel <- function(
   # --- Applications ---
   applicationsFile <- resolveConfigFile(pcProps[["applicationsFile"]])
   if (!is.null(applicationsFile) && file.exists(applicationsFile)) {
-    jsonData$applications <- .parseExcelParameterSheets(applicationsFile, schemaVersion = schemaVersion)
+    appGroups <- .parseExcelParameterSheets(
+      applicationsFile,
+      schemaVersion = schemaVersion
+    )
+    appsObj <- list()
+    for (id in names(appGroups)) {
+      appsObj[[id]] <- list(parameters = appGroups[[id]])
+    }
+    jsonData$applications <- appsObj
   }
 
   # --- Plots ---
@@ -236,7 +255,10 @@ exportProjectToExcel <- function(
   # Version metadata rows
   props <- c("schemaVersion", "esqlabsRVersion")
   vals <- c("2.0", as.character(utils::packageVersion("esqlabsR")))
-  descs <- c("Project structure schema version", "esqlabsR version used to generate this file")
+  descs <- c(
+    "Project structure schema version",
+    "esqlabsR version used to generate this file"
+  )
 
   # File path property rows
   pcInternal <- .extractFilePathsData(pc)
@@ -264,18 +286,20 @@ exportProjectToExcel <- function(
   indivSheets <- list()
   if (!is.null(pc$individuals) && length(pc$individuals) > 0) {
     indivSheets[["IndividualBiometrics"]] <- .individualsToExcelDf(
-      pc$individuals,
-      pc$individualParameterSetMapping
+      pc$individuals
     )
-  }
-  if (
-    !is.null(pc$individualParameterSets) &&
-      length(pc$individualParameterSets) > 0
-  ) {
-    paramSheets <- .parameterStructuresToExcelSheets(
-      pc$individualParameterSets
-    )
-    indivSheets <- c(indivSheets, paramSheets)
+    # One sheet per individual carrying their inline parameters
+    indivParamSets <- list()
+    for (id in names(pc$individuals)) {
+      pset <- pc$individuals[[id]]$parameters
+      if (!is.null(pset) && length(pset$paths) > 0) {
+        indivParamSets[[id]] <- pset
+      }
+    }
+    if (length(indivParamSets) > 0) {
+      paramSheets <- .parameterStructuresToExcelSheets(indivParamSets)
+      indivSheets <- c(indivSheets, paramSheets)
+    }
   }
   if (length(indivSheets) > 0) {
     .writeExcel(indivSheets, file.path(configDir, "Individuals.xlsx"))
@@ -311,8 +335,17 @@ exportProjectToExcel <- function(
 
   # --- Applications.xlsx ---
   if (!is.null(pc$applications) && length(pc$applications) > 0) {
-    appSheets <- .parameterStructuresToExcelSheets(pc$applications)
-    .writeExcel(appSheets, file.path(configDir, "Applications.xlsx"))
+    appParamSets <- list()
+    for (id in names(pc$applications)) {
+      pset <- pc$applications[[id]]$parameters
+      if (!is.null(pset) && length(pset$paths) > 0) {
+        appParamSets[[id]] <- pset
+      }
+    }
+    if (length(appParamSets) > 0) {
+      appSheets <- .parameterStructuresToExcelSheets(appParamSets)
+      .writeExcel(appSheets, file.path(configDir, "Applications.xlsx"))
+    }
   }
 
   # --- Plots.xlsx ---
@@ -481,9 +514,7 @@ projectStatus <- function(
       if (!(file %in% names(fileStatus))) {
         fileStatus[[file]] <- "in-sync"
       }
-      if (
-        !identical(originalJsonObj[[file]], currentJsonObj[[file]])
-      ) {
+      if (!identical(originalJsonObj[[file]], currentJsonObj[[file]])) {
         fileStatus[[file]] <- "out-of-sync"
         dataChanges[[file]] <- "data differs"
       }
@@ -557,7 +588,11 @@ projectConfigurationStatus <- function(...) {
 #' @returns Named list of parameter arrays
 #' @keywords internal
 #' @noRd
-.parseExcelParameterSheets <- function(filePath, sheetNames = NULL, schemaVersion = "2.0") {
+.parseExcelParameterSheets <- function(
+  filePath,
+  sheetNames = NULL,
+  schemaVersion = "2.0"
+) {
   if (is.null(sheetNames)) {
     sheetNames <- readxl::excel_sheets(filePath)
   }
@@ -571,9 +606,7 @@ projectConfigurationStatus <- function(...) {
           containerPath = as.character(df[["Container Path"]][[i]]),
           parameterName = as.character(df[["Parameter Name"]][[i]]),
           value = as.numeric(df[["Value"]][[i]]),
-          units = if (
-            is.na(df[["Units"]][[i]]) || df[["Units"]][[i]] == ""
-          ) {
+          units = if (is.na(df[["Units"]][[i]]) || df[["Units"]][[i]] == "") {
             NULL
           } else {
             as.character(df[["Units"]][[i]])
@@ -603,7 +636,7 @@ projectConfigurationStatus <- function(...) {
       individualId = .naToNull(as.character(row$IndividualId)),
       populationId = .naToNull(as.character(row$PopulationId)),
       readPopulationFromCSV = .naToNull(as.logical(row$ReadPopulationFromCSV)),
-      modelParameterGroups = .parseCommaListToArray(row$ModelParameterSheets),
+      modelParameters = .parseCommaListToArray(row$ModelParameterSheets),
       applicationProtocol = .naToNull(as.character(row$ApplicationProtocol)),
       simulationTime = .naToNull(as.character(row$SimulationTime)),
       simulationTimeUnit = .naToNull(as.character(row$SimulationTimeUnit)),
@@ -640,12 +673,6 @@ projectConfigurationStatus <- function(...) {
       age = .naToNull(as.numeric(row$`Age [year(s)]`)),
       proteinOntogenies = .naToNull(as.character(row$`Protein Ontogenies`))
     )
-    # Individual Parameter Sets column — if present
-    if ("Individual Parameter Sets" %in% names(indivDf)) {
-      indiv$parameterSets <- .parseCommaListToArray(
-        row$`Individual Parameter Sets`
-      )
-    }
     individuals[[i]] <- indiv
   }
   individuals
@@ -768,21 +795,13 @@ projectConfigurationStatus <- function(...) {
 
 #' Convert individuals data to an IndividualBiometrics data frame
 #' @param individuals Named list of IndividualCharacteristics objects
-#' @param parameterSetMapping Named list mapping individualId to parameter set
-#'   names
 #' @returns A data frame
 #' @keywords internal
 #' @noRd
-.individualsToExcelDf <- function(individuals, parameterSetMapping = NULL) {
+.individualsToExcelDf <- function(individuals) {
   rows <- list()
   for (indivId in names(individuals)) {
     ic <- individuals[[indivId]]
-    paramSets <- parameterSetMapping[[indivId]]
-    paramSetsStr <- if (!is.null(paramSets) && length(paramSets) > 0) {
-      paste(paramSets, collapse = ", ")
-    } else {
-      NA
-    }
     ontoStr <- ic$proteinOntogenies %||% NA
 
     rows[[length(rows) + 1]] <- data.frame(
@@ -794,7 +813,6 @@ projectConfigurationStatus <- function(...) {
       `Height [cm]` = as.double(ic$height %||% NA),
       `Age [year(s)]` = as.double(ic$age %||% NA),
       `Protein Ontogenies` = ontoStr,
-      `Individual Parameter Sets` = paramSetsStr,
       check.names = FALSE,
       stringsAsFactors = FALSE
     )
@@ -846,12 +864,17 @@ projectConfigurationStatus <- function(...) {
 #' @returns A data frame
 #' @keywords internal
 #' @noRd
-.scenarioConfigurationsToExcelDf <- function(scenarioConfigs, outputPaths = NULL) {
+.scenarioConfigurationsToExcelDf <- function(
+  scenarioConfigs,
+  outputPaths = NULL
+) {
   rows <- list()
   for (name in names(scenarioConfigs)) {
     sc <- scenarioConfigs[[name]]
-    paramGroupNames <- sc$parameterGroups
-    paramGroupsStr <- if (!is.null(paramGroupNames) && length(paramGroupNames) > 0) {
+    paramGroupNames <- sc$modelParameters
+    paramGroupsStr <- if (
+      !is.null(paramGroupNames) && length(paramGroupNames) > 0
+    ) {
       paste(paramGroupNames, collapse = ", ")
     } else {
       NA
@@ -859,9 +882,13 @@ projectConfigurationStatus <- function(...) {
     # simulationTime → string representation
     simTimeStr <- NA
     if (!is.null(sc$simulationTime)) {
-      intervals <- vapply(sc$simulationTime, function(interval) {
-        paste(interval, collapse = ", ")
-      }, character(1))
+      intervals <- vapply(
+        sc$simulationTime,
+        function(interval) {
+          paste(interval, collapse = ", ")
+        },
+        character(1)
+      )
       simTimeStr <- paste(intervals, collapse = "; ")
     }
     # outputPaths → reverse-lookup IDs from pc$outputPaths
@@ -878,7 +905,8 @@ projectConfigurationStatus <- function(...) {
     ssTime <- NA
     ssTimeUnit <- NA
     if (
-      !is.null(sc$steadyStateTime) && !is.na(sc$steadyStateTime) &&
+      !is.null(sc$steadyStateTime) &&
+        !is.na(sc$steadyStateTime) &&
         sc$steadyStateTime > 0
     ) {
       ssTimeUnit <- sc$steadyStateTimeUnit %||% "min"

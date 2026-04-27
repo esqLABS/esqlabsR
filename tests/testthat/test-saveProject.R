@@ -51,7 +51,7 @@ test_that("saveProject produces round-trip fidelity for scenarios", {
   expect_equal(sc1$individualId, sc2$individualId)
   expect_equal(sc1$applicationProtocol, sc2$applicationProtocol)
   expect_equal(sc1$simulateSteadyState, sc2$simulateSteadyState)
-  expect_equal(sc1$parameterGroups, sc2$parameterGroups)
+  expect_equal(sc1$modelParameters, sc2$modelParameters)
 })
 
 test_that("saveProject produces round-trip fidelity for modelParameters", {

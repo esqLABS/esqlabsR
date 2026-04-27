@@ -36,7 +36,7 @@
       "individualId": "Indiv1",
       "populationId": null,
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global"],
+      "modelParameters": ["Global"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -52,7 +52,7 @@
       "individualId": "Indiv1",
       "populationId": null,
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global", "Aciclovir", "Sheet, with comma"],
+      "modelParameters": ["Global", "Aciclovir", "Sheet, with comma"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 1, 60; 1, 12, 20",
       "simulationTimeUnit": "h",
@@ -68,7 +68,7 @@
       "individualId": "Indiv1",
       "populationId": "TestPopulation",
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global"],
+      "modelParameters": ["Global"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 12, 20",
       "simulationTimeUnit": "h",
@@ -84,7 +84,7 @@
       "individualId": "Indiv1",
       "populationId": "TestPopulation",
       "readPopulationFromCSV": true,
-      "modelParameterGroups": ["Global"],
+      "modelParameters": ["Global"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 12, 20",
       "simulationTimeUnit": "h",
@@ -100,7 +100,7 @@
       "individualId": "Indiv1",
       "populationId": null,
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global", "MissingParam"],
+      "modelParameters": ["Global", "MissingParam"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -156,19 +156,16 @@
       "height": 176,
       "age": 30,
       "proteinOntogenies": "CYP3A4:CYP3A4,CYP2D6:CYP2C8",
-      "parameterSets": ["Indiv1"]
+      "parameters": [
+        {
+          "containerPath": "Organism|Kidney",
+          "parameterName": "GFR",
+          "value": 90,
+          "units": "ml/min"
+        }
+      ]
     }
   ],
-  "individualParameterSets": {
-    "Indiv1": [
-      {
-        "containerPath": "Organism|Kidney",
-        "parameterName": "GFR",
-        "value": 90,
-        "units": "ml/min"
-      }
-    ]
-  },
   "populations": [
     {
       "populationId": "TestPopulation",
@@ -210,14 +207,16 @@
     }
   ],
   "applications": {
-    "Aciclovir_iv_250mg": [
-      {
-        "containerPath": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
-        "parameterName": "Dose",
-        "value": 250,
-        "units": "mg"
-      }
-    ]
+    "Aciclovir_iv_250mg": {
+      "parameters": [
+        {
+          "containerPath": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "parameterName": "Dose",
+          "value": 250,
+          "units": "mg"
+        }
+      ]
+    }
   },
   "plots": {
     "dataCombined": [

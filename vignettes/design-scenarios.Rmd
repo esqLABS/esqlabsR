@@ -41,7 +41,7 @@ entry looks like this:
   "name": "Aciclovir_iv",
   "modelFile": "Aciclovir.pkml",
   "individualId": "Adult_male",
-  "modelParameterGroups": ["Global", "Aciclovir"],
+  "modelParameters": ["Global", "Aciclovir"],
   "applicationProtocol": "Aciclovir_iv_250mg",
   "simulationTime": "0, 24, 60",
   "simulationTimeUnit": "h",
@@ -57,7 +57,7 @@ Each field references entries defined elsewhere in the JSON:
 | `individualId` | An entry in `individuals` (matched by `individualId`) |
 | `populationId` | An entry in `populations` (matched by `populationId`), optional |
 | `applicationProtocol` | A key in the top-level `applications` map |
-| `modelParameterGroups` | Keys in the top-level `modelParameters` map, applied in order |
+| `modelParameters` | Keys in the top-level `modelParameters` map, applied in order |
 | `outputPathIds` | Keys in the top-level `outputPaths` map |
 
 To add a scenario, edit `Project.json` directly and re-run `loadProject()`.
@@ -100,7 +100,7 @@ Setting `readPopulationFromCSV` to `true` imports the population from
 
 ### Model parameters
 
-`modelParameterGroups` is an array of keys from the top-level
+`modelParameters` is an array of keys from the top-level
 `modelParameters` map. Each key identifies a parameter group; groups are
 applied in order. For example, `["Global", "Aciclovir"]` applies the
 `Global` group first, then `Aciclovir` -- so `Aciclovir`-specific values
@@ -239,7 +239,7 @@ print(applicationParams)
 ### Model parameters
 
 The `modelParameters` map groups parameter entries by name. Scenarios list
-the groups to apply in their `modelParameterGroups` array:
+the groups to apply in their `modelParameters` array:
 
 ```json
 "modelParameters": {
@@ -288,7 +288,7 @@ the paths themselves are defined once in the `outputPaths` map in the JSON
 and referenced by ID throughout.
 
 Note that the R argument name is `parameterGroups`, while the equivalent
-JSON field is `modelParameterGroups`. The other `addScenario()` argument
+JSON field is `modelParameters`. The other `addScenario()` argument
 names match the JSON field names one-to-one.
 
 > **Note:** `addScenario()` mutates the in-memory `Project` object only. It
@@ -321,7 +321,7 @@ change:
 | `IndividualId` | `individualId` |
 | `PopulationId` | `populationId` |
 | `ReadPopulationFromCSV` | `readPopulationFromCSV` |
-| `ModelParameterSheets` | `modelParameterGroups` |
+| `ModelParameterSheets` | `modelParameters` |
 | `ApplicationProtocol` | `applicationProtocol` |
 | `SimulationTime` | `simulationTime` |
 | `SimulationTimeUnit` | `simulationTimeUnit` |
@@ -333,7 +333,7 @@ change:
 | `OutputPathsIds` | `outputPathIds` |
 
 Note that the Excel column historically called `ModelParameterSheets` is now
-`modelParameterGroups` in JSON -- the underlying concept is the same (a named
+`modelParameters` in JSON -- the underlying concept is the same (a named
 group of parameter entries) but it's no longer tied to Excel sheet naming.
 
 ## Details
@@ -365,5 +365,5 @@ If a parameter path is defined at multiple levels, later levels overwrite
 earlier ones. Concretely, individual parameters overwrite values from
 `modelParameters` groups, and parameters passed via the `customParams`
 argument of `runScenarios()` overwrite everything else. Within
-`modelParameterGroups`, groups are applied in order: later groups overwrite
+`modelParameters`, groups are applied in order: later groups overwrite
 earlier ones.

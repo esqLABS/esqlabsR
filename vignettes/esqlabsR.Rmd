@@ -75,7 +75,7 @@ settings, application protocol, and simulation time window:
   "name": "Aciclovir_iv",
   "modelFile": "Aciclovir.pkml",
   "individualId": "Adult_male",
-  "modelParameterGroups": ["Global", "Aciclovir"],
+  "modelParameters": ["Global", "Aciclovir"],
   "applicationProtocol": "Aciclovir_iv_250mg",
   "simulationTime": "0, 24, 60",
   "simulationTimeUnit": "h"

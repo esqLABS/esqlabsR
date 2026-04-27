@@ -526,7 +526,7 @@ test_that("addScenario populates all optional fields correctly", {
     modelFile = "Aciclovir.pkml",
     individualId = "Indiv1",
     applicationProtocol = names(pc$applications)[[1]],
-    parameterGroups = param_group,
+    modelParameters = param_group,
     simulationTime = "0, 50, 1; 50, 100, 2",
     simulationTimeUnit = "min",
     steadyState = TRUE,
@@ -537,7 +537,7 @@ test_that("addScenario populates all optional fields correctly", {
 
   sc <- pc$scenarios[["FullScenario"]]
   expect_equal(sc$applicationProtocol, names(pc$applications)[[1]])
-  expect_equal(sc$parameterGroups, param_group)
+  expect_equal(sc$modelParameters, param_group)
   expect_equal(sc$simulationTime, list(c(0, 50, 1), c(50, 100, 2)))
   expect_equal(sc$simulationTimeUnit, "min")
   expect_true(sc$simulateSteadyState)

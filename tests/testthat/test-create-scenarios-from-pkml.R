@@ -251,7 +251,7 @@ test_that("Mixed NULL and vector arguments work correctly", {
     individualId = NULL,
     populationId = c("Pop1", "Pop2"),
     applicationProtocols = "SharedProtocol",
-    parameterGroups = NULL,
+    modelParameters = NULL,
     steadyState = c(TRUE, FALSE)
   )
 
@@ -283,7 +283,7 @@ test_that("Custom parameters are applied correctly", {
     pkmlFilePaths = pkmlPath,
     project = project,
     individualId = "TestIndividual",
-    parameterGroups = "Global,Custom",
+    modelParameters = "Global,Custom",
     steadyState = TRUE,
     steadyStateTime = 500,
     steadyStateTimeUnit = "min"
@@ -291,7 +291,7 @@ test_that("Custom parameters are applied correctly", {
 
   scenario <- scenarioConfigurations[[1]]
   expect_equal(scenario$individualId, "TestIndividual")
-  expect_equal(scenario$parameterGroups, c("Global", "Custom"))
+  expect_equal(scenario$modelParameters, c("Global", "Custom"))
   expect_true(scenario$simulateSteadyState)
   expected_time <- ospsuite::toBaseUnit(
     quantityOrDimension = ospsuite::ospDimensions$Time,
@@ -301,7 +301,7 @@ test_that("Custom parameters are applied correctly", {
   expect_equal(scenario$steadyStateTime, expected_time)
 })
 
-test_that("Comma-separated parameterGroups and outputPaths are handled correctly", {
+test_that("Comma-separated modelParameters and outputPaths are handled correctly", {
   temp_project <- with_temp_project()
   project <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
@@ -311,18 +311,18 @@ test_that("Comma-separated parameterGroups and outputPaths are handled correctly
     pkmlFilePaths = pkmlPaths,
     project = project,
     scenarioNames = c("Scenario1", "Scenario2"),
-    parameterGroups = c("Global,Custom", "Global,Alternative"),
+    modelParameters = c("Global,Custom", "Global,Alternative"),
     outputPaths = c("Path1,Path2", "Path3,Path4,Path5")
   )
 
   expect_length(scenarioConfigurations, 2)
 
   scenario1 <- scenarioConfigurations[["Scenario1"]]
-  expect_equal(scenario1$parameterGroups, c("Global", "Custom"))
+  expect_equal(scenario1$modelParameters, c("Global", "Custom"))
   expect_equal(scenario1$outputPaths, c("Path1", "Path2"))
 
   scenario2 <- scenarioConfigurations[["Scenario2"]]
-  expect_equal(scenario2$parameterGroups, c("Global", "Alternative"))
+  expect_equal(scenario2$modelParameters, c("Global", "Alternative"))
   expect_equal(scenario2$outputPaths, c("Path3", "Path4", "Path5"))
 })
 
@@ -493,7 +493,7 @@ test_that("Complex scenario configuration with all parameters", {
     individualId = "Individual123",
     populationId = "Population456",
     applicationProtocols = "ComplexProtocol",
-    parameterGroups = "Global,Custom,Advanced",
+    modelParameters = "Global,Custom,Advanced",
     outputPaths = "Path1,Path2,Path3",
     simulationTime = "0,24,100;24,48,50",
     simulationTimeUnit = "h",
@@ -510,7 +510,7 @@ test_that("Complex scenario configuration with all parameters", {
   expect_equal(scenario$simulationType, "Population")
   expect_equal(scenario$applicationProtocol, "ComplexProtocol")
   expect_equal(
-    scenario$parameterGroups,
+    scenario$modelParameters,
     c("Global", "Custom", "Advanced")
   )
   expect_equal(scenario$outputPaths, c("Path1", "Path2", "Path3"))
@@ -532,14 +532,14 @@ test_that("Empty parameter sheets and output paths handling", {
     pkmlFilePaths = pkmlPath,
     project = project,
     scenarioNames = "EmptyParamsTest",
-    parameterGroups = "",
+    modelParameters = "",
     outputPaths = ""
   )
 
   scenario <- scenarioConfigurations[["EmptyParamsTest"]]
   expect_equal(scenario$scenarioName, "EmptyParamsTest")
   # Empty param sheets should not add any sheets
-  expect_null(scenario$parameterGroups)
+  expect_null(scenario$modelParameters)
 })
 
 test_that("PKML file with custom simulation time intervals", {

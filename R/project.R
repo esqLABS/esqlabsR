@@ -335,23 +335,13 @@ Project <- R6::R6Class(
         jsonData$modelParameters
       )
 
-      # Parse individualParameterSets
-      self$individualParameterSets <- private$.parseParameterGroups(
-        jsonData$individualParameterSets
-      )
-
       # Parse applications
-      self$applications <- private$.parseParameterGroups(
+      self$applications <- private$.parseApplications(
         jsonData$applications
       )
 
       # Parse individuals
       self$individuals <- private$.parseIndividuals(jsonData$individuals)
-
-      # Parse individual parameter set mapping
-      self$individualParameterSetMapping <- private$.parseIndividualParameterSetMapping(
-        jsonData$individuals
-      )
 
       # Parse populations
       self$populations <- private$.parsePopulations(jsonData$populations)
@@ -401,27 +391,56 @@ Project <- R6::R6Class(
       }
       result <- list()
       for (entry in individualsData) {
-        result[[entry$individualId]] <- list(
+        pset <- NULL
+        if (!is.null(entry$parameters)) {
+          for (p in entry$parameters) {
+            pset <- .addParameterEntry(
+              pset,
+              p$containerPath,
+              p$parameterName,
+              p$value,
+              p$units %||% ""
+            )
+          }
+        }
+        indiv <- list(
           species = entry$species,
           population = entry$population,
           gender = entry$gender,
           weight = as.double(entry$weight),
           height = as.double(entry$height),
           age = as.double(entry$age),
-          proteinOntogenies = entry$proteinOntogenies
+          proteinOntogenies = entry$proteinOntogenies,
+          parameters = pset
         )
+        class(indiv) <- c("Individual", "list")
+        result[[entry$individualId]] <- indiv
       }
       result
     },
 
-    .parseIndividualParameterSetMapping = function(individualsData) {
-      if (is.null(individualsData)) {
+    .parseApplications = function(appsData) {
+      if (is.null(appsData)) {
         return(list())
       }
       result <- list()
-      for (entry in individualsData) {
-        setNames <- unlist(entry$parameterSets)
-        result[[entry$individualId]] <- setNames %||% character(0)
+      for (id in names(appsData)) {
+        entry <- appsData[[id]]
+        pset <- NULL
+        if (!is.null(entry$parameters)) {
+          for (p in entry$parameters) {
+            pset <- .addParameterEntry(
+              pset,
+              p$containerPath,
+              p$parameterName,
+              p$value,
+              p$units %||% ""
+            )
+          }
+        }
+        app <- list(parameters = pset)
+        class(app) <- c("Application", "list")
+        result[[id]] <- app
       }
       result
     },
@@ -481,8 +500,8 @@ Project <- R6::R6Class(
         if (!is.null(entry$readPopulationFromCSV)) {
           sc$readPopulationFromCSV <- entry$readPopulationFromCSV
         }
-        if (!is.null(entry$modelParameterGroups)) {
-          sc$parameterGroups <- unlist(entry$modelParameterGroups)
+        if (!is.null(entry$modelParameters)) {
+          sc$modelParameters <- unlist(entry$modelParameters)
         }
         if (!is.null(entry$simulationTime)) {
           sc$simulationTime <- .parseSimulationTimeIntervals(
@@ -636,6 +655,44 @@ Project <- R6::R6Class(
     removeIndividual = function(individualId) {
       removeIndividual(project = self, individualId = individualId)
     },
+    #' @description Add a parameter to a named individual.
+    #' @param individualId Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    #' @param value Numeric.
+    #' @param units Character.
+    addIndividualParameter = function(
+      individualId,
+      containerPath,
+      parameterName,
+      value,
+      units
+    ) {
+      addIndividualParameter(
+        project = self,
+        individualId = individualId,
+        containerPath = containerPath,
+        parameterName = parameterName,
+        value = value,
+        units = units
+      )
+    },
+    #' @description Remove a parameter from a named individual.
+    #' @param individualId Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    removeIndividualParameter = function(
+      individualId,
+      containerPath,
+      parameterName
+    ) {
+      removeIndividualParameter(
+        project = self,
+        individualId = individualId,
+        containerPath = containerPath,
+        parameterName = parameterName
+      )
+    },
     #' @description Add a population programmatically.
     #' @param populationId Character.
     #' @param species Character.
@@ -655,31 +712,75 @@ Project <- R6::R6Class(
     removePopulation = function(populationId) {
       removePopulation(project = self, populationId = populationId)
     },
-    #' @description Add a model parameter group programmatically.
-    #' @param group Character.
-    #' @param paths Character vector.
-    #' @param values Numeric vector.
-    #' @param units Character vector.
-    addModelParameterGroup = function(group, paths, values, units) {
-      addModelParameterGroup(self, group, paths, values, units)
+    #' @description Add a parameter to a named model-parameter set.
+    #' @param id Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    #' @param value Numeric.
+    #' @param units Character.
+    addModelParameter = function(
+      id,
+      containerPath,
+      parameterName,
+      value,
+      units
+    ) {
+      addModelParameter(self, id, containerPath, parameterName, value, units)
     },
-    #' @description Remove a model parameter group programmatically.
-    #' @param group Character.
-    removeModelParameterGroup = function(group) {
-      removeModelParameterGroup(self, group)
+    #' @description Remove a parameter from a named model-parameter set.
+    #' @param id Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    removeModelParameter = function(id, containerPath, parameterName) {
+      removeModelParameter(self, id, containerPath, parameterName)
     },
-    #' @description Add an application group programmatically.
-    #' @param protocol Character.
-    #' @param paths Character vector.
-    #' @param values Numeric vector.
-    #' @param units Character vector.
-    addApplicationGroup = function(protocol, paths, values, units) {
-      addApplicationGroup(self, protocol, paths, values, units)
+    #' @description Add an application protocol programmatically.
+    #' @param applicationId Character.
+    addApplication = function(applicationId) {
+      addApplication(project = self, applicationId = applicationId)
     },
-    #' @description Remove an application group programmatically.
-    #' @param protocol Character.
-    removeApplicationGroup = function(protocol) {
-      removeApplicationGroup(self, protocol)
+    #' @description Remove an application protocol programmatically.
+    #' @param applicationId Character.
+    removeApplication = function(applicationId) {
+      removeApplication(project = self, applicationId = applicationId)
+    },
+    #' @description Add a parameter to a named application.
+    #' @param applicationId Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    #' @param value Numeric.
+    #' @param units Character.
+    addApplicationParameter = function(
+      applicationId,
+      containerPath,
+      parameterName,
+      value,
+      units
+    ) {
+      addApplicationParameter(
+        project = self,
+        applicationId = applicationId,
+        containerPath = containerPath,
+        parameterName = parameterName,
+        value = value,
+        units = units
+      )
+    },
+    #' @description Remove a parameter from a named application.
+    #' @param applicationId Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    removeApplicationParameter = function(
+      applicationId,
+      containerPath,
+      parameterName
+    ) {
+      removeApplicationParameter(
+        project = self,
+        applicationId = applicationId,
+        containerPath = containerPath,
+        parameterName = parameterName
+      )
     },
     #' @description Add one or more output paths programmatically.
     #' @param id Character vector.
@@ -814,9 +915,6 @@ Project <- R6::R6Class(
     #'   Each entry contains `species`, `population`, `gender`, `weight`,
     #'   `height`, `age`, and optionally `proteinOntogenies`.
     individuals = NULL,
-    #' @field individualParameterSets Named list of parameter structures,
-    #'   keyed by set name. Each is a list with `paths`, `values`, `units`.
-    individualParameterSets = NULL,
     #' @field populations Named list of plain lists, keyed by populationId.
     #'   Each entry contains population creation arguments such as `species`,
     #'   `population`, `numberOfIndividuals`, etc.
@@ -833,9 +931,6 @@ Project <- R6::R6Class(
     #' @field jsonPath Path to the source JSON file, or NULL if not loaded
     #'   from JSON.
     jsonPath = NULL,
-    #' @field individualParameterSetMapping Named list mapping individualId
-    #'   to a character vector of parameter set names.
-    individualParameterSetMapping = NULL,
     #' @field observedData List of observed data source declarations parsed from
     #'   JSON. Each entry is a list with `type` ("excel" or "pkml") and
     #'   source-specific fields. See the JSON schema documentation for details.
@@ -1188,15 +1283,9 @@ exampleProjectConfigurationPath <- function() {
     outputPaths = as.list(project$outputPaths) %||% list(),
     scenarios = .scenariosToJson(project$scenarios, project$outputPaths),
     modelParameters = .parameterGroupsToJson(project$modelParameters),
-    individuals = .individualsToJson(
-      project$individuals,
-      project$individualParameterSetMapping
-    ),
-    individualParameterSets = .parameterGroupsToJson(
-      project$individualParameterSets
-    ),
+    individuals = .individualsToJson(project$individuals),
     populations = .populationsToJson(project$populations),
-    applications = .parameterGroupsToJson(project$applications),
+    applications = .applicationsToJson(project$applications),
     plots = .plotsToJson(project$plots)
   )
 }
@@ -1282,7 +1371,7 @@ exampleProjectConfigurationPath <- function() {
         NULL
       },
       readPopulationFromCSV = sc$readPopulationFromCSV,
-      modelParameterGroups = as.list(sc$parameterGroups),
+      modelParameters = as.list(sc$modelParameters),
       applicationProtocol = if (
         is.null(sc$applicationProtocol) || is.na(sc$applicationProtocol)
       ) {
@@ -1349,30 +1438,82 @@ exampleProjectConfigurationPath <- function() {
 
 #' @keywords internal
 #' @noRd
-.individualsToJson <- function(individuals, parameterSetMapping) {
+.applicationsToJson <- function(applications) {
+  if (is.null(applications) || length(applications) == 0) {
+    return(structure(list(), names = character(0)))
+  }
+  result <- list()
+  for (id in names(applications)) {
+    pset <- applications[[id]]$parameters
+    params <- list()
+    if (!is.null(pset) && length(pset$paths) > 0) {
+      params <- vector("list", length(pset$paths))
+      for (j in seq_along(pset$paths)) {
+        path <- pset$paths[[j]]
+        sepIdx <- max(gregexpr("\\|", path)[[1]])
+        containerPath <- if (sepIdx == -1) "" else substr(path, 1, sepIdx - 1)
+        parameterName <- if (sepIdx == -1) {
+          path
+        } else {
+          substr(path, sepIdx + 1, nchar(path))
+        }
+        params[[j]] <- list(
+          containerPath = containerPath,
+          parameterName = parameterName,
+          value = pset$values[[j]],
+          units = pset$units[[j]]
+        )
+      }
+    }
+    result[[id]] <- list(parameters = params)
+  }
+  result
+}
+
+#' @keywords internal
+#' @noRd
+.individualsToJson <- function(individuals, parameterSetMapping = NULL) {
   if (is.null(individuals) || length(individuals) == 0) {
     return(list())
   }
-
-  lapply(names(individuals), function(id) {
-    indiv <- individuals[[id]]
-    paramSets <- parameterSetMapping[[id]]
-    list(
-      individualId = id,
-      species = indiv$species,
-      population = indiv$population,
-      gender = indiv$gender,
-      weight = indiv$weight,
-      height = indiv$height,
-      age = indiv$age,
-      proteinOntogenies = indiv$proteinOntogenies,
-      parameterSets = if (!is.null(paramSets) && length(paramSets) > 0) {
-        as.list(paramSets)
-      } else {
-        NULL
+  result <- vector("list", length(individuals))
+  for (i in seq_along(individuals)) {
+    id <- names(individuals)[[i]]
+    indiv <- individuals[[i]]
+    entry <- list(individualId = id)
+    for (field in c("species", "population", "gender", "proteinOntogenies")) {
+      if (!is.null(indiv[[field]])) entry[[field]] <- indiv[[field]]
+    }
+    for (field in c("weight", "height", "age")) {
+      if (!is.null(indiv[[field]]) && !is.na(indiv[[field]])) {
+        entry[[field]] <- as.double(indiv[[field]])
       }
-    )
-  })
+    }
+    pset <- indiv$parameters
+    if (!is.null(pset) && length(pset$paths) > 0) {
+      params <- vector("list", length(pset$paths))
+      for (j in seq_along(pset$paths)) {
+        path <- pset$paths[[j]]
+        sepIdx <- max(gregexpr("\\|", path)[[1]])
+        if (sepIdx == -1) {
+          containerPath <- ""
+          parameterName <- path
+        } else {
+          containerPath <- substr(path, 1, sepIdx - 1)
+          parameterName <- substr(path, sepIdx + 1, nchar(path))
+        }
+        params[[j]] <- list(
+          containerPath = containerPath,
+          parameterName = parameterName,
+          value = pset$values[[j]],
+          units = pset$units[[j]]
+        )
+      }
+      entry$parameters <- params
+    }
+    result[[i]] <- entry
+  }
+  result
 }
 
 #' @keywords internal

@@ -32,7 +32,7 @@
       "individualId": "Adult_male",
       "populationId": null,
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global", "Aciclovir"],
+      "modelParameters": ["Global", "Aciclovir"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -48,7 +48,7 @@
       "individualId": "Adult_female",
       "populationId": null,
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global", "Aciclovir"],
+      "modelParameters": ["Global", "Aciclovir"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -64,7 +64,7 @@
       "individualId": "Adult_male",
       "populationId": "European_adults",
       "readPopulationFromCSV": false,
-      "modelParameterGroups": ["Global", "Aciclovir"],
+      "modelParameters": ["Global", "Aciclovir"],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -104,7 +104,14 @@
       "height": 176,
       "age": 30,
       "proteinOntogenies": "CYP3A4:CYP3A4",
-      "parameterSets": ["Renal"]
+      "parameters": [
+        {
+          "containerPath": "Organism|Kidney",
+          "parameterName": "GFR",
+          "value": 90,
+          "units": "ml/min"
+        }
+      ]
     },
     {
       "individualId": "Adult_female",
@@ -115,19 +122,16 @@
       "height": 165,
       "age": 28,
       "proteinOntogenies": "CYP3A4:CYP3A4",
-      "parameterSets": ["Renal"]
+      "parameters": [
+        {
+          "containerPath": "Organism|Kidney",
+          "parameterName": "GFR",
+          "value": 90,
+          "units": "ml/min"
+        }
+      ]
     }
   ],
-  "individualParameterSets": {
-    "Renal": [
-      {
-        "containerPath": "Organism|Kidney",
-        "parameterName": "GFR",
-        "value": 90,
-        "units": "ml/min"
-      }
-    ]
-  },
   "populations": [
     {
       "populationId": "European_adults",
@@ -150,14 +154,16 @@
     }
   ],
   "applications": {
-    "Aciclovir_iv_250mg": [
-      {
-        "containerPath": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
-        "parameterName": "Dose",
-        "value": 250,
-        "units": "mg"
-      }
-    ]
+    "Aciclovir_iv_250mg": {
+      "parameters": [
+        {
+          "containerPath": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "parameterName": "Dose",
+          "value": 250,
+          "units": "mg"
+        }
+      ]
+    }
   },
   "plots": {
     "dataCombined": [

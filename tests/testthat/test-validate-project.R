@@ -19,7 +19,6 @@ test_that("validateProject returns ValidationResults with critical error for inv
   expect_true("project" %in% names(results))
   expect_false(results$project$is_valid())
 
-
   unlink(temp_file)
 })
 
@@ -80,7 +79,7 @@ test_that("validateProject returns all expected result sections", {
 # Section validators tests
 
 test_that(".validateIndividuals warns when no individuals defined", {
-  result <- esqlabsR:::.validateIndividuals(list(), list(), list())
+  result <- esqlabsR:::.validateIndividuals(list())
 
   expect_true(result$is_valid())
   expect_true(length(result$warnings) > 0)
@@ -94,7 +93,7 @@ test_that(".validateIndividuals detects missing required fields", {
     )
   )
 
-  result <- esqlabsR:::.validateIndividuals(individuals, list(), list())
+  result <- esqlabsR:::.validateIndividuals(individuals)
 
   expect_false(result$is_valid())
   expect_true(result$has_critical_errors())
@@ -111,31 +110,10 @@ test_that(".validateIndividuals warns about non-numeric fields", {
     )
   )
 
-  result <- esqlabsR:::.validateIndividuals(individuals, list(), list())
+  result <- esqlabsR:::.validateIndividuals(individuals)
 
   expect_true(result$is_valid())
   expect_true(length(result$warnings) > 0)
-})
-
-test_that(".validateIndividuals detects invalid parameter set references", {
-  individuals <- list(
-    Indiv1 = list(species = "Human", gender = "MALE")
-  )
-  individualParameterSets <- list(
-    SetA = list(paths = "p", values = 1, units = "")
-  )
-  individualParameterSetMapping <- list(
-    Indiv1 = c("SetA", "NonExistentSet")
-  )
-
-  result <- esqlabsR:::.validateIndividuals(
-    individuals,
-    individualParameterSets,
-    individualParameterSetMapping
-  )
-
-  expect_false(result$is_valid())
-  expect_true(result$has_critical_errors())
 })
 
 test_that(".validatePopulations warns when no populations defined", {

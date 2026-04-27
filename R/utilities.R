@@ -167,7 +167,7 @@ compareWithNA <- function(v1, v2) {
 #'
 #' @param project A `Project` object.
 #' @param entityType One of "individual", "population", "application",
-#'   "modelParameterGroup", "outputPath".
+#'   "modelParameterSet", "outputPath".
 #' @param id The ID/name being removed.
 #' @returns `invisible(NULL)`; emits a `cli::cli_warn()` if any scenario
 #'   still references `id`.
@@ -187,7 +187,7 @@ compareWithNA <- function(v1, v2) {
       "individual" = identical(sc$individualId, id),
       "population" = identical(sc$populationId, id),
       "application" = identical(sc$applicationProtocol, id),
-      "modelParameterGroup" = isTRUE(id %in% sc$parameterGroups),
+      "modelParameterSet" = isTRUE(id %in% sc$modelParameters),
       "outputPath" = {
         pathValue <- project$outputPaths[[id]]
         isTRUE(pathValue %in% sc$outputPaths)

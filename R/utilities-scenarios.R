@@ -1,3 +1,87 @@
+#' Merge the parameter layers for a scenario
+#'
+#' @description Builds the final parameter structure for a scenario by merging
+#' (in order, last-write-wins): scenario `modelParameters` (iterated in listed
+#' order), species defaults, individual inline `parameters`, application inline
+#' `parameters`, then `customParams`. Pure function: no I/O, no simulation load.
+#'
+#' @param scenario A scenario plain-list (as in `pc$scenarios[[name]]`).
+#' @param pc A `Project` object.
+#' @param customParams Optional caller-supplied parameter structure.
+#'
+#' @returns A parameter structure `list(paths, values, units)`. May be `NULL`
+#'   if no layer sets any parameter.
+#' @keywords internal
+.mergeScenarioParameters <- function(scenario, pc, customParams = NULL) {
+  params <- NULL
+
+  # 1. Model parameters (iterate in the order listed on the scenario)
+  if (!is.null(scenario$modelParameters)) {
+    for (setId in scenario$modelParameters) {
+      setParams <- pc$modelParameters[[setId]]
+      if (!is.null(setParams)) {
+        params <- extendParameterStructure(
+          parameters = params,
+          newParameters = setParams
+        )
+      }
+    }
+  }
+
+  # 2. Species defaults (only if individual is set and resolves)
+  if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
+    indivData <- pc$individuals[[scenario$individualId]]
+    if (!is.null(indivData)) {
+      speciesParams <- .getSpeciesParameters(indivData$species)
+      if (!is.null(speciesParams)) {
+        params <- extendParameterStructure(
+          parameters = params,
+          newParameters = speciesParams
+        )
+      }
+
+      # 3. Individual inline parameters
+      if (!is.null(indivData$parameters)) {
+        params <- extendParameterStructure(
+          parameters = params,
+          newParameters = indivData$parameters
+        )
+      }
+    }
+  }
+
+  # 4. Application inline parameters (back-compat with old parallel-vector
+  # shape during the transition; the $paths fallback is removed in Task 7)
+  if (
+    !is.null(scenario$applicationProtocol) &&
+      !is.na(scenario$applicationProtocol)
+  ) {
+    appData <- pc$applications[[scenario$applicationProtocol]]
+    if (is.null(appData)) {
+      stop(messages$errorApplicationProtocolNotFound(
+        scenarioName = scenario$scenarioName,
+        applicationProtocol = scenario$applicationProtocol
+      ))
+    }
+    if (!is.null(appData$parameters)) {
+      params <- extendParameterStructure(
+        parameters = params,
+        newParameters = appData$parameters
+      )
+    }
+  }
+
+  # 5. Custom params
+  if (!is.null(customParams)) {
+    params <- extendParameterStructure(
+      parameters = params,
+      newParameters = customParams
+    )
+  }
+
+  params
+}
+
 #' Prepare a single scenario for simulation
 #'
 #' @description Loads simulation, creates ospsuite objects (with caching),
@@ -28,33 +112,18 @@
   simulation$name <- scenario$scenarioName
 
   # 2. Build merged parameter structure
-  params <- NULL
+  params <- .mergeScenarioParameters(scenario, pc, customParams)
 
-  # 2a. Model parameter groups
-  if (!is.null(scenario$parameterGroups)) {
-    for (groupName in scenario$parameterGroups) {
-      groupParams <- pc$modelParameters[[groupName]]
-      if (!is.null(groupParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = groupParams
-        )
-      }
-    }
-  }
-
-  # 2b. Individual characteristics + species parameters
+  # 2b. Individual characteristics (still needed for simulation initialization)
   individualCharacteristics <- NULL
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
     indivData <- pc$individuals[[scenario$individualId]]
-
     if (is.null(indivData)) {
       warning(messages$warningNoIndividualCharacteristics(
         scenarioName = scenario$scenarioName,
         individualId = scenario$individualId
       ))
     } else {
-      # Create or retrieve IndividualCharacteristics from cache
       if (!is.null(cache$individuals[[scenario$individualId]])) {
         individualCharacteristics <- cache$individuals[[scenario$individualId]]
       } else {
@@ -72,61 +141,7 @@
         )
         cache$individuals[[scenario$individualId]] <- individualCharacteristics
       }
-
-      # 2c. Species parameters (from bundled SpeciesParameters.xlsx)
-      speciesParams <- .getSpeciesParameters(indivData$species)
-      if (!is.null(speciesParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = speciesParams
-        )
-      }
-
-      # 2d. Individual parameter sets
-      setNames <- pc$individualParameterSetMapping[[scenario$individualId]]
-      if (!is.null(setNames)) {
-        for (setName in setNames) {
-          setParams <- pc$individualParameterSets[[setName]]
-          if (!is.null(setParams)) {
-            params <- extendParameterStructure(
-              parameters = params,
-              newParameters = setParams
-            )
-          } else {
-            stop(messages$errorIndividualParameterSetNotFound(
-              scenarioName = scenario$scenarioName,
-              parameterSetName = setName
-            ))
-          }
-        }
-      }
     }
-  }
-
-  # 2e. Application parameters
-  if (
-    !is.null(scenario$applicationProtocol) &&
-      !is.na(scenario$applicationProtocol)
-  ) {
-    applicationParams <- pc$applications[[scenario$applicationProtocol]]
-    if (is.null(applicationParams)) {
-      stop(messages$errorApplicationProtocolNotFound(
-        scenarioName = scenario$scenarioName,
-        applicationProtocol = scenario$applicationProtocol
-      ))
-    }
-    params <- extendParameterStructure(
-      parameters = params,
-      newParameters = applicationParams
-    )
-  }
-
-  # 2f. Custom parameters from caller
-  if (!is.null(customParams)) {
-    params <- extendParameterStructure(
-      parameters = params,
-      newParameters = customParams
-    )
   }
 
   # 3. Set outputs
@@ -670,11 +685,11 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' @param applicationProtocols Character vector. Optional application protocol names to use for scenarios.
 #'   If `NULL` (default), application protocols will be set to the scenario name.
 #'   Can be a single string (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
-#' @param parameterGroups Character vector. Optional parameter group names to apply to scenarios.
+#' @param modelParameters Character vector. Optional parameter group names to apply to scenarios.
 #'   If `NULL` (default), no parameter groups will be applied. Can be a single string (recycled for all
 #'   scenarios) or a vector with the same length as `pkmlFilePaths`. If providing multiple groups per
 #'   scenario, separate them with commas in the string.
-#' @param paramSheets `r lifecycle::badge("deprecated")` Use `parameterGroups` instead.
+#' @param paramSheets `r lifecycle::badge("deprecated")` Use `modelParameters` instead.
 #' @param outputPaths Character vector or named vector. Optional output paths to use for scenarios. If `NULL` (default),
 #'   output paths will be extracted from the PKML files' output selections. Can be a single string
 #'   (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`. If providing
@@ -784,7 +799,7 @@ createScenariosFromPKML <- function(
   individualId = NULL,
   populationId = NULL,
   applicationProtocols = NULL,
-  parameterGroups = NULL,
+  modelParameters = NULL,
   outputPaths = NULL,
   simulationTime = NULL,
   simulationTimeUnit = NULL,
@@ -799,10 +814,10 @@ createScenariosFromPKML <- function(
   if (lifecycle::is_present(paramSheets)) {
     lifecycle::deprecate_soft(
       what = "createScenariosFromPKML(paramSheets)",
-      with = "createScenariosFromPKML(parameterGroups)",
+      with = "createScenariosFromPKML(modelParameters)",
       when = "6.0.0"
     )
-    parameterGroups <- parameterGroups %||% paramSheets
+    modelParameters <- modelParameters %||% paramSheets
   }
 
   # Validate inputs
@@ -820,8 +835,8 @@ createScenariosFromPKML <- function(
   if (!is.null(applicationProtocols)) {
     validateIsCharacter(applicationProtocols)
   }
-  if (!is.null(parameterGroups)) {
-    validateIsCharacter(parameterGroups)
+  if (!is.null(modelParameters)) {
+    validateIsCharacter(modelParameters)
   }
   if (!is.null(outputPaths)) {
     validateIsCharacter(outputPaths)
@@ -850,7 +865,7 @@ createScenariosFromPKML <- function(
     individualId,
     populationId,
     applicationProtocols,
-    parameterGroups,
+    modelParameters,
     outputPaths,
     simulationTime,
     simulationTimeUnit,
@@ -887,9 +902,9 @@ createScenariosFromPKML <- function(
     "applicationProtocols",
     nScenarios
   )
-  parameterGroups <- .recycleOrValidateVector(
-    parameterGroups,
-    "parameterGroups",
+  modelParameters <- .recycleOrValidateVector(
+    modelParameters,
+    "modelParameters",
     nScenarios
   )
   # Special handling for outputPaths to preserve named vectors
@@ -1027,8 +1042,8 @@ createScenariosFromPKML <- function(
     sc$readPopulationFromCSV <- readPopulationFromCSV[[i]]
 
     # Set parameter groups
-    if (!is.null(parameterGroups)) {
-      scenarioParamGroups <- parameterGroups[[i]]
+    if (!is.null(modelParameters)) {
+      scenarioParamGroups <- modelParameters[[i]]
       if (
         !is.null(scenarioParamGroups) &&
           !is.na(scenarioParamGroups) &&
@@ -1040,7 +1055,7 @@ createScenariosFromPKML <- function(
         ) {
           scenarioParamGroups <- trimws(strsplit(scenarioParamGroups, ",")[[1]])
         }
-        sc$parameterGroups <- scenarioParamGroups
+        sc$modelParameters <- scenarioParamGroups
       }
     }
 
@@ -1375,7 +1390,7 @@ createScenarioConfigurationsFromPKML <- function(...) {
 #'   `project$populations`.
 #' @param applicationProtocol Character or NULL. Protocol name referencing
 #'   `project$applications`.
-#' @param parameterGroups Character vector or NULL. Group names referencing
+#' @param modelParameters Character vector or NULL. Group names referencing
 #'   `project$modelParameters`.
 #' @param outputPathIds Character vector or NULL. IDs referencing
 #'   `project$outputPaths`.
@@ -1403,7 +1418,7 @@ addScenario <- function(
   individualId = NULL,
   populationId = NULL,
   applicationProtocol = NULL,
-  parameterGroups = NULL,
+  modelParameters = NULL,
   outputPathIds = NULL,
   simulationTime = NULL,
   simulationTimeUnit = "h",
@@ -1463,13 +1478,13 @@ addScenario <- function(
       )
     )
   }
-  if (!is.null(parameterGroups)) {
-    bad <- setdiff(parameterGroups, names(pc$modelParameters))
+  if (!is.null(modelParameters)) {
+    bad <- setdiff(modelParameters, names(pc$modelParameters))
     if (length(bad) > 0) {
       errors <- c(
         errors,
         paste0(
-          "parameterGroups not found in modelParameters: ",
+          "modelParameters not found in modelParameters: ",
           paste(bad, collapse = ", ")
         )
       )
@@ -1509,7 +1524,7 @@ addScenario <- function(
     sc$simulationType <- "Population"
   }
 
-  sc$parameterGroups <- parameterGroups
+  sc$modelParameters <- modelParameters
   sc$readPopulationFromCSV <- readPopulationFromCSV
 
   if (!is.null(outputPathIds)) {

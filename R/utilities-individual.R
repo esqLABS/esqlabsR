@@ -121,7 +121,8 @@ addIndividual <- function(project, individualId, species, ...) {
     "weight",
     "height",
     "age",
-    "proteinOntogenies"
+    "proteinOntogenies",
+    "parameters"
   )
   unknown <- setdiff(names(dots), allowed)
   if (length(unknown) > 0) {
@@ -145,13 +146,27 @@ addIndividual <- function(project, individualId, species, ...) {
     ))
   }
 
-  entry <- list(species = species)
+  entry <- list(species = species, parameters = NULL)
   for (field in c("population", "gender", "proteinOntogenies")) {
     if (!is.null(dots[[field]])) entry[[field]] <- dots[[field]]
   }
   for (field in c("weight", "height", "age")) {
     if (!is.null(dots[[field]])) entry[[field]] <- as.double(dots[[field]])
   }
+  if (!is.null(dots$parameters)) {
+    pset <- NULL
+    for (p in dots$parameters) {
+      pset <- .addParameterEntry(
+        pset,
+        p$containerPath,
+        p$parameterName,
+        p$value,
+        p$units
+      )
+    }
+    entry$parameters <- pset
+  }
+  class(entry) <- c("Individual", "list")
 
   project$individuals[[individualId]] <- entry
   project$modified <- TRUE

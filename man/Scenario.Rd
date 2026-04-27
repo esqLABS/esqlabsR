@@ -47,7 +47,7 @@ Other scenario:
 \item{\code{overwriteFormulasInSS}}{Logical. If \code{TRUE}, overwrite formula parameters
 during steady-state.}
 
-\item{\code{parameterGroups}}{Character vector. Names of model parameter groups to apply.}
+\item{\code{modelParameters}}{Character vector. Names of model parameter groups to apply.}
 
 \item{\code{steadyStateTimeUnit}}{Character. Original unit for steadyStateTime
 from the JSON configuration. Used to convert back during Excel export.}

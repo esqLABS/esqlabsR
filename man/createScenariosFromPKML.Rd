@@ -12,7 +12,7 @@ createScenariosFromPKML(
   individualId = NULL,
   populationId = NULL,
   applicationProtocols = NULL,
-  parameterGroups = NULL,
+  modelParameters = NULL,
   outputPaths = NULL,
   simulationTime = NULL,
   simulationTimeUnit = NULL,
@@ -49,7 +49,7 @@ string (recycled for all scenarios) or a vector with the same length as \code{pk
 If \code{NULL} (default), application protocols will be set to the scenario name.
 Can be a single string (recycled for all scenarios) or a vector with the same length as \code{pkmlFilePaths}.}
 
-\item{parameterGroups}{Character vector. Optional parameter group names to apply to scenarios.
+\item{modelParameters}{Character vector. Optional parameter group names to apply to scenarios.
 If \code{NULL} (default), no parameter groups will be applied. Can be a single string (recycled for all
 scenarios) or a vector with the same length as \code{pkmlFilePaths}. If providing multiple groups per
 scenario, separate them with commas in the string.}
@@ -90,7 +90,7 @@ a vector with the same length as \code{pkmlFilePaths}.}
 \item{readPopulationFromCSV}{Logical vector. Whether to read population from CSV for each scenario. Default is \code{FALSE}.
 Can be a single logical value (recycled for all scenarios) or a vector with the same length as \code{pkmlFilePaths}.}
 
-\item{paramSheets}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{parameterGroups} instead.}
+\item{paramSheets}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{modelParameters} instead.}
 }
 \value{
 A named list of \code{Scenario} objects with the names being the scenario names.

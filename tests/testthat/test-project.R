@@ -61,7 +61,7 @@ test_that("Project parses scenarios into Scenario objects", {
   expect_true(sc$simulateSteadyState)
   expect_equal(length(sc$simulationTime), 2)
   expect_equal(
-    sc$parameterGroups,
+    sc$modelParameters,
     c("Global", "Aciclovir", "Sheet, with comma")
   )
 })
@@ -200,7 +200,7 @@ test_that("Scenarios are parsed as Scenario objects (not ScenarioConfiguration)"
   expect_s3_class(sc, "Scenario")
   expect_equal(sc$scenarioName, "TestScenario")
   expect_false(is.null(sc$modelFile))
-  expect_equal(sc$parameterGroups, c("Global"))
+  expect_equal(sc$modelParameters, c("Global"))
 })
 
 test_that("pc$scenarios replaces pc$scenarioConfigurations", {
@@ -676,18 +676,21 @@ test_that("full project can be built programmatically using add* functions", {
     age = 30
   )
   addPopulation(pc, "P1", species = "Human", numberOfIndividuals = 5)
-  addModelParameterGroup(
+  addModelParameter(
     pc,
     "G1",
-    paths = "Organism|Liver|Volume",
-    values = 1.8,
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 1.8,
     units = "L"
   )
-  addApplicationGroup(
+  addApplication(pc, "Oral")
+  addApplicationParameter(
     pc,
     "Oral",
-    paths = "Applications|Oral|Dose",
-    values = 10,
+    containerPath = "Applications|Oral",
+    parameterName = "Dose",
+    value = 10,
     units = "mg"
   )
   addOutputPath(
@@ -701,7 +704,7 @@ test_that("full project can be built programmatically using add* functions", {
     "Aciclovir.pkml",
     individualId = "I1",
     applicationProtocol = "Oral",
-    parameterGroups = "G1",
+    modelParameters = "G1",
     outputPathIds = "Out1"
   )
 
@@ -720,4 +723,80 @@ test_that("full project can be built programmatically using add* functions", {
   expect_equal(names(reloaded$individuals), "I1")
   expect_equal(names(reloaded$scenarios), "S1")
   expect_equal(reloaded$scenarios[["S1"]]$individualId, "I1")
+})
+
+test_that("parsed individuals and applications carry S3 class tags", {
+  pc <- testProject()
+  if (length(pc$individuals) > 0) {
+    expect_true(inherits(pc$individuals[[1]], "Individual"))
+  }
+  if (length(pc$applications) > 0) {
+    expect_true(inherits(pc$applications[[1]], "Application"))
+  }
+})
+
+test_that("individual inline parameters round-trip through saveProject/loadProject", {
+  pc <- Project$new()
+  pc$modelFolder <- tempdir()
+  addIndividual(
+    pc,
+    "RT",
+    species = "Human",
+    weight = 70,
+    height = 175,
+    age = 30,
+    parameters = list(
+      list(
+        containerPath = "Organism|Liver",
+        parameterName = "Volume",
+        value = 1.8,
+        units = "L"
+      ),
+      list(
+        containerPath = "Organism|Kidney",
+        parameterName = "GFR",
+        value = 90,
+        units = "ml/min"
+      )
+    )
+  )
+  tmp <- tempfile(fileext = ".json")
+  saveProject(pc, tmp)
+  reloaded <- loadProject(tmp)
+  pset <- reloaded$individuals[["RT"]]$parameters
+  expect_equal(pset$paths, c("Organism|Liver|Volume", "Organism|Kidney|GFR"))
+  expect_equal(pset$values, c(1.8, 90))
+  expect_equal(pset$units, c("L", "ml/min"))
+})
+
+test_that("individual without parameters round-trips with parameters = NULL", {
+  pc <- Project$new()
+  pc$modelFolder <- tempdir()
+  addIndividual(pc, "RT_NoParam", species = "Human")
+  tmp <- tempfile(fileext = ".json")
+  saveProject(pc, tmp)
+  reloaded <- loadProject(tmp)
+  expect_null(reloaded$individuals[["RT_NoParam"]]$parameters)
+})
+
+test_that("loaded JSON with individual parameters: array gets parsed correctly", {
+  json <- '{
+    "schemaVersion": "2.0",
+    "esqlabsRVersion": "6.0.0",
+    "individuals": [{
+      "individualId": "JsonI",
+      "species": "Human",
+      "parameters": [
+        {"containerPath": "Organism|Liver", "parameterName": "Volume",
+         "value": 1.8, "units": "L"}
+      ]
+    }]
+  }'
+  tmp <- tempfile(fileext = ".json")
+  writeLines(json, tmp)
+  pc <- loadProject(tmp)
+  pset <- pc$individuals[["JsonI"]]$parameters
+  expect_equal(pset$paths, "Organism|Liver|Volume")
+  expect_equal(pset$values, 1.8)
+  expect_equal(pset$units, "L")
 })

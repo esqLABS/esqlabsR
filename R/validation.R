@@ -168,15 +168,9 @@ validationResult <- R6::R6Class(
 
 #' Validate individuals section of a Project
 #' @param individuals Named list of individuals from project$individuals
-#' @param individualParameterSets Named list from project$individualParameterSets
-#' @param individualParameterSetMapping Named list from project$individualParameterSetMapping
 #' @return validationResult object
 #' @keywords internal
-.validateIndividuals <- function(
-  individuals,
-  individualParameterSets,
-  individualParameterSetMapping
-) {
+.validateIndividuals <- function(individuals) {
   result <- validationResult$new()
 
   if (is.null(individuals) || length(individuals) == 0) {
@@ -205,37 +199,6 @@ validationResult <- R6::R6Class(
             "' in individual '",
             id,
             "' should be numeric"
-          )
-        )
-      }
-    }
-  }
-
-  defined_sets <- names(individualParameterSets)
-  individual_ids <- names(individuals)
-  for (id in names(individualParameterSetMapping)) {
-    if (!id %in% individual_ids) {
-      result$add_critical_error(
-        "Invalid Reference",
-        paste0(
-          "Parameter set mapping references undefined individualId '",
-          id,
-          "'"
-        )
-      )
-      next
-    }
-    set_names <- individualParameterSetMapping[[id]]
-    if (length(set_names) > 0) {
-      invalid <- setdiff(set_names, defined_sets)
-      if (length(invalid) > 0) {
-        result$add_critical_error(
-          "Invalid Reference",
-          paste0(
-            "Individual '",
-            id,
-            "' references undefined parameter sets: ",
-            paste(invalid, collapse = ", ")
           )
         )
       }
@@ -671,17 +634,17 @@ validationResult <- R6::R6Class(
       )
     }
 
-    # Check modelParameterGroups references
-    if (!is.null(sc$parameterGroups) && length(sc$parameterGroups) > 0) {
-      invalid_groups <- setdiff(sc$parameterGroups, model_param_keys)
-      if (length(invalid_groups) > 0) {
+    # Check modelParameters references
+    if (!is.null(sc$modelParameters) && length(sc$modelParameters) > 0) {
+      invalid_sets <- setdiff(sc$modelParameters, model_param_keys)
+      if (length(invalid_sets) > 0) {
         result$add_critical_error(
           "Invalid Reference",
           paste0(
             "Scenario '",
             sc_name,
-            "' references undefined model parameter groups: ",
-            paste(invalid_groups, collapse = ", ")
+            "' references undefined model parameter sets: ",
+            paste(invalid_sets, collapse = ", ")
           )
         )
       }
@@ -827,7 +790,12 @@ validationResult <- R6::R6Class(
       if (is.null(entry$file)) {
         result$add_critical_error(
           "Missing Fields",
-          paste0(entryLabel, " (", entry$type, ") is missing required field 'file'")
+          paste0(
+            entryLabel,
+            " (",
+            entry$type,
+            ") is missing required field 'file'"
+          )
         )
       } else {
         filePath <- file.path(dataFolder, entry$file)
@@ -901,11 +869,7 @@ validateProject <- function(project) {
     project <- loaded_project
   }
 
-  results$individuals <- .validateIndividuals(
-    project$individuals,
-    project$individualParameterSets,
-    project$individualParameterSetMapping
-  )
+  results$individuals <- .validateIndividuals(project$individuals)
 
   results$populations <- .validatePopulations(project$populations)
 

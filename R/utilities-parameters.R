@@ -328,167 +328,341 @@ setParameterValuesByPathWithCondition <- function(
   return(list(containerPath = containerPath, parameterName = paramName))
 }
 
-#' Add a model parameter group to a Project
+#' Add a parameter to a named model-parameter set
+#'
+#' @description Adds one parameter entry to the named set in
+#' `project$modelParameters`. The set is created on demand if it does not
+#' yet exist. Last-write-wins on duplicate paths.
 #'
 #' @param project A `Project` object.
-#' @param group Character scalar, unique group name.
-#' @param paths Character vector of parameter paths (length >= 1).
-#' @param values Numeric vector, same length as `paths`.
-#' @param units Character vector, same length as `paths`.
+#' @param id Character scalar, set name. Created if not present.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @param value Numeric scalar.
+#' @param units Character scalar.
 #'
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addModelParameterGroup <- function(project, group, paths, values, units) {
+addModelParameter <- function(
+  project,
+  id,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
   validateIsOfType(project, "Project")
-  .addParameterGroupImpl(
-    project,
-    group,
-    paths,
-    values,
-    units,
-    field = "modelParameters",
-    label = "model parameter group"
+  if (!is.character(id) || length(id) != 1 || is.na(id) || nchar(id) == 0) {
+    stop("id must be a non-empty string")
+  }
+  current <- project$modelParameters[[id]]
+  project$modelParameters[[id]] <- .addParameterEntry(
+    current,
+    containerPath,
+    parameterName,
+    value,
+    units
   )
+  project$modified <- TRUE
+  invisible(project)
 }
 
-#' Remove a model parameter group from a Project
-#' @inheritParams addModelParameterGroup
+#' Remove a parameter from a named model-parameter set
+#'
+#' @description Removes one parameter entry from the named set. If the
+#' removed entry was the last in the set, the set itself is auto-removed
+#' from `project$modelParameters`. Warns if the set or entry doesn't exist.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set name.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#'
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-removeModelParameterGroup <- function(project, group) {
+removeModelParameter <- function(project, id, containerPath, parameterName) {
   validateIsOfType(project, "Project")
-  .removeParameterGroupImpl(
-    project,
-    group,
-    field = "modelParameters",
-    label = "model parameter group",
-    refType = "modelParameterGroup"
+  if (!is.character(id) || length(id) != 1) {
+    stop("id must be a string scalar")
+  }
+  if (!(id %in% names(project$modelParameters))) {
+    cli::cli_warn("model parameter set {.val {id}} not found; no-op.")
+    return(invisible(project))
+  }
+  updated <- .removeParameterEntry(
+    project$modelParameters[[id]],
+    containerPath,
+    parameterName
   )
+  if (is.null(updated)) {
+    .warnIfReferenced(project, "modelParameterSet", id)
+    project$modelParameters[[id]] <- NULL
+  } else {
+    project$modelParameters[[id]] <- updated
+  }
+  project$modified <- TRUE
+  invisible(project)
 }
 
-#' Add an application (protocol) parameter group to a Project
+#' Add a parameter to an entity
 #'
-#' @param project A `Project` object.
-#' @param protocol Character scalar, unique protocol name.
-#' @param paths Character vector of parameter paths.
-#' @param values Numeric vector, same length as `paths`.
-#' @param units Character vector, same length as `paths`.
+#' @description Generic function. Methods exist for objects of class
+#' `Individual` and `Application`. Adds one parameter entry (joining
+#' `containerPath` and `parameterName` with `|` to form the path) into
+#' the entity's `$parameters` parallel-vector structure, with last-write-wins
+#' semantics on duplicate paths.
 #'
-#' @returns The `project` object, invisibly.
+#' @param x The entity (`Individual` or `Application`).
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @param value Numeric scalar.
+#' @param units Character scalar.
+#' @param ... Reserved.
+#' @returns The modified entity.
 #' @export
-#' @family application
-addApplicationGroup <- function(project, protocol, paths, values, units) {
-  validateIsOfType(project, "Project")
-  .addParameterGroupImpl(
-    project,
-    protocol,
-    paths,
-    values,
-    units,
-    field = "applications",
-    label = "application"
-  )
+addParameter <- function(x, containerPath, parameterName, value, units, ...) {
+  UseMethod("addParameter")
 }
 
-#' Remove an application (protocol) from a Project
-#' @inheritParams addApplicationGroup
-#' @returns The `project` object, invisibly.
 #' @export
-#' @family application
-removeApplicationGroup <- function(project, protocol) {
-  validateIsOfType(project, "Project")
-  .removeParameterGroupImpl(
-    project,
-    protocol,
-    field = "applications",
-    label = "application",
-    refType = "application"
+addParameter.Individual <- function(
+  x,
+  containerPath,
+  parameterName,
+  value,
+  units,
+  ...
+) {
+  x$parameters <- .addParameterEntry(
+    x$parameters,
+    containerPath,
+    parameterName,
+    value,
+    units
+  )
+  x
+}
+
+#' @export
+addParameter.Application <- function(
+  x,
+  containerPath,
+  parameterName,
+  value,
+  units,
+  ...
+) {
+  x$parameters <- .addParameterEntry(
+    x$parameters,
+    containerPath,
+    parameterName,
+    value,
+    units
+  )
+  x
+}
+
+#' @export
+addParameter.default <- function(
+  x,
+  containerPath,
+  parameterName,
+  value,
+  units,
+  ...
+) {
+  stop(sprintf(
+    "addParameter() has no method for class %s",
+    paste(class(x), collapse = "/")
+  ))
+}
+
+#' Remove a parameter from an entity
+#'
+#' @description Generic function. Methods exist for `Individual` and
+#' `Application`. Removes the entry whose path equals
+#' `paste(containerPath, parameterName, sep = "|")`. If the removed entry
+#' was the last one, the entity's `$parameters` slot becomes `NULL`. Warns
+#' and leaves the entity unchanged if no matching entry exists.
+#'
+#' @param x The entity.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @param ... Reserved.
+#' @returns The modified entity.
+#' @export
+removeParameter <- function(x, containerPath, parameterName, ...) {
+  UseMethod("removeParameter")
+}
+
+#' @export
+removeParameter.Individual <- function(x, containerPath, parameterName, ...) {
+  x$parameters <- .removeParameterEntry(
+    x$parameters,
+    containerPath,
+    parameterName
+  )
+  x
+}
+
+#' @export
+removeParameter.Application <- function(x, containerPath, parameterName, ...) {
+  x$parameters <- .removeParameterEntry(
+    x$parameters,
+    containerPath,
+    parameterName
+  )
+  x
+}
+
+#' @export
+removeParameter.default <- function(x, containerPath, parameterName, ...) {
+  stop(sprintf(
+    "removeParameter() has no method for class %s",
+    paste(class(x), collapse = "/")
+  ))
+}
+
+#' @keywords internal
+#' @noRd
+.addParameterEntry <- function(
+  parameters,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  errors <- character()
+  if (
+    !is.character(containerPath) ||
+      length(containerPath) != 1 ||
+      is.na(containerPath) ||
+      nchar(containerPath) == 0
+  ) {
+    errors <- c(errors, "containerPath must be a non-empty string")
+  }
+  if (
+    !is.character(parameterName) ||
+      length(parameterName) != 1 ||
+      is.na(parameterName) ||
+      nchar(parameterName) == 0
+  ) {
+    errors <- c(errors, "parameterName must be a non-empty string")
+  }
+  if (!is.numeric(value) || length(value) != 1 || is.na(value)) {
+    errors <- c(errors, "value must be a numeric scalar")
+  }
+  if (!is.character(units) || length(units) != 1) {
+    errors <- c(errors, "units must be a string scalar (use \"\" for none)")
+  }
+  if (length(errors) > 0) {
+    stop(paste0(
+      "Invalid parameter entry:\n- ",
+      paste(errors, collapse = "\n- ")
+    ))
+  }
+
+  newPath <- paste(containerPath, parameterName, sep = "|")
+  newEntry <- list(
+    paths = newPath,
+    values = as.double(value),
+    units = units
+  )
+  extendParameterStructure(
+    parameters = parameters,
+    newParameters = newEntry
   )
 }
 
 #' @keywords internal
 #' @noRd
-.addParameterGroupImpl <- function(
+.removeParameterEntry <- function(parameters, containerPath, parameterName) {
+  if (is.null(parameters) || length(parameters$paths) == 0) {
+    cli::cli_warn(
+      "parameter {.val {paste(containerPath, parameterName, sep='|')}} not found; no-op."
+    )
+    return(parameters)
+  }
+  target <- paste(containerPath, parameterName, sep = "|")
+  idx <- which(parameters$paths == target)
+  if (length(idx) == 0) {
+    cli::cli_warn("parameter {.val {target}} not found; no-op.")
+    return(parameters)
+  }
+  keep <- -idx
+  newPaths <- parameters$paths[keep]
+  if (length(newPaths) == 0) {
+    return(NULL)
+  }
+  list(
+    paths = newPaths,
+    values = parameters$values[keep],
+    units = parameters$units[keep]
+  )
+}
+
+#' Add a parameter to a named individual
+#'
+#' @description Convenience wrapper around `addParameter()` that looks up the
+#' individual by id, dispatches `addParameter`, and writes the result back.
+#' Errors if the id doesn't resolve.
+#'
+#' @param project A `Project` object.
+#' @param individualId Character scalar.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @param value Numeric scalar.
+#' @param units Character scalar.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addIndividualParameter <- function(
   project,
-  name,
-  paths,
-  values,
-  units,
-  field,
-  label
+  individualId,
+  containerPath,
+  parameterName,
+  value,
+  units
 ) {
-  errors <- character()
-
-  if (
-    !is.character(name) || length(name) != 1 || is.na(name) || nchar(name) == 0
-  ) {
-    errors <- c(errors, paste0(label, " name must be a non-empty string"))
-  } else if (name %in% names(project[[field]])) {
-    errors <- c(errors, paste0(label, " '", name, "' already exists"))
+  validateIsOfType(project, "Project")
+  if (!(individualId %in% names(project$individuals))) {
+    stop(paste0("individual '", individualId, "' not found"))
   }
-
-  if (
-    !is.character(paths) ||
-      length(paths) < 1 ||
-      any(is.na(paths)) ||
-      any(nchar(paths) == 0)
-  ) {
-    errors <- c(
-      errors,
-      "paths must be a non-empty character vector with no NA or empty entries"
-    )
-  }
-  if (!is.numeric(values) || any(!is.finite(values))) {
-    errors <- c(
-      errors,
-      "values must be numeric with no NA, NaN, or Inf entries"
-    )
-  }
-  if (!is.character(units) || any(is.na(units))) {
-    errors <- c(errors, "units must be a character vector with no NA entries")
-  }
-  if (is.character(paths) && is.numeric(values) && is.character(units)) {
-    if (!(length(paths) == length(values) && length(paths) == length(units))) {
-      errors <- c(errors, "paths, values, and units must have the same length")
-    }
-  }
-
-  if (length(errors) > 0) {
-    stop(paste0(
-      "Cannot add ",
-      label,
-      " '",
-      name,
-      "':\n- ",
-      paste(errors, collapse = "\n- ")
-    ))
-  }
-
-  project[[field]][[name]] <- list(
-    paths = paths,
-    values = as.double(values),
+  project$individuals[[individualId]] <- addParameter(
+    project$individuals[[individualId]],
+    containerPath = containerPath,
+    parameterName = parameterName,
+    value = value,
     units = units
   )
   project$modified <- TRUE
   invisible(project)
 }
 
-#' @keywords internal
-#' @noRd
-.removeParameterGroupImpl <- function(project, name, field, label, refType) {
-  if (
-    !is.character(name) || length(name) != 1 || is.na(name) || nchar(name) == 0
-  ) {
-    stop(paste0(label, " name must be a non-empty string"))
+#' Remove a parameter from a named individual
+#'
+#' @inheritParams addIndividualParameter
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeIndividualParameter <- function(
+  project,
+  individualId,
+  containerPath,
+  parameterName
+) {
+  validateIsOfType(project, "Project")
+  if (!(individualId %in% names(project$individuals))) {
+    stop(paste0("individual '", individualId, "' not found"))
   }
-  if (!(name %in% names(project[[field]]))) {
-    cli::cli_warn("{label} {.val {name}} not found; no-op.")
-    return(invisible(project))
-  }
-  .warnIfReferenced(project, refType, name)
-  project[[field]][[name]] <- NULL
+  project$individuals[[individualId]] <- removeParameter(
+    project$individuals[[individualId]],
+    containerPath = containerPath,
+    parameterName = parameterName
+  )
   project$modified <- TRUE
   invisible(project)
 }

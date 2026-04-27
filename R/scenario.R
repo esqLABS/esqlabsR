@@ -19,7 +19,7 @@
 #' @field steadyStateTime Numeric. Steady-state simulation time in minutes.
 #' @field overwriteFormulasInSS Logical. If `TRUE`, overwrite formula parameters
 #'   during steady-state.
-#' @field parameterGroups Character vector. Names of model parameter groups to apply.
+#' @field modelParameters Character vector. Names of model parameter groups to apply.
 #'
 #' @export
 #' @family scenario
@@ -43,10 +43,11 @@ Scenario <- R6::R6Class(
     #'   from the JSON configuration. Used to convert back during Excel export.
     steadyStateTimeUnit = NULL,
     overwriteFormulasInSS = FALSE,
-    parameterGroups = NULL,
+    modelParameters = NULL,
 
     #' @description Create a new Scenario.
-    initialize = function() {},
+    initialize = function() {
+    },
 
     #' @description Print scenario summary.
     #' @param ... Ignored.
@@ -60,11 +61,17 @@ Scenario <- R6::R6Class(
         cat("  Population:     ", self$populationId %||% "(none)", "\n")
         cat("  CSV Population: ", self$readPopulationFromCSV, "\n")
       }
-      if (!is.null(self$applicationProtocol) && !is.na(self$applicationProtocol)) {
+      if (
+        !is.null(self$applicationProtocol) && !is.na(self$applicationProtocol)
+      ) {
         cat("  Protocol:       ", self$applicationProtocol, "\n")
       }
-      if (!is.null(self$parameterGroups)) {
-        cat("  Param groups:   ", paste(self$parameterGroups, collapse = ", "), "\n")
+      if (!is.null(self$modelParameters)) {
+        cat(
+          "  Param groups:   ",
+          paste(self$modelParameters, collapse = ", "),
+          "\n"
+        )
       }
       if (!is.null(self$outputPaths)) {
         cat("  Output paths:   ", length(self$outputPaths), "path(s)\n")

@@ -118,3 +118,140 @@ test_that("addIndividual survives saveProject/loadProject round-trip", {
   expect_equal(entry$height, 170)
   expect_equal(entry$age, 40)
 })
+
+test_that("addIndividualParameter adds an entry to a named individual", {
+  pc <- testProject()
+  addIndividual(pc, "I_param", species = "Human")
+  pc$modified <- FALSE
+  addIndividualParameter(
+    pc,
+    "I_param",
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 1.8,
+    units = "L"
+  )
+  expect_equal(
+    pc$individuals[["I_param"]]$parameters$paths,
+    "Organism|Liver|Volume"
+  )
+  expect_equal(pc$individuals[["I_param"]]$parameters$values, 1.8)
+  expect_true(pc$modified)
+})
+
+test_that("addIndividualParameter errors on unknown individualId", {
+  pc <- testProject()
+  expect_error(
+    addIndividualParameter(
+      pc,
+      "NoSuchIndiv_QQ",
+      containerPath = "a",
+      parameterName = "x",
+      value = 1,
+      units = "L"
+    ),
+    regexp = "not found|does not exist"
+  )
+})
+
+test_that("addIndividualParameter preserves S3 class on the individual", {
+  pc <- testProject()
+  addIndividual(pc, "I_class", species = "Human")
+  addIndividualParameter(
+    pc,
+    "I_class",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  expect_true(inherits(pc$individuals[["I_class"]], "Individual"))
+})
+
+test_that("removeIndividualParameter drops the entry", {
+  pc <- testProject()
+  addIndividual(pc, "I_rm", species = "Human")
+  addIndividualParameter(
+    pc,
+    "I_rm",
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 1.8,
+    units = "L"
+  )
+  pc$modified <- FALSE
+  removeIndividualParameter(
+    pc,
+    "I_rm",
+    containerPath = "Organism|Liver",
+    parameterName = "Volume"
+  )
+  expect_null(pc$individuals[["I_rm"]]$parameters)
+  expect_true(pc$modified)
+})
+
+test_that("removeIndividualParameter warns when entry not found", {
+  pc <- testProject()
+  addIndividual(pc, "I_nf", species = "Human")
+  expect_warning(
+    removeIndividualParameter(
+      pc,
+      "I_nf",
+      containerPath = "Organism|Liver",
+      parameterName = "Volume"
+    ),
+    regexp = "not found"
+  )
+})
+
+test_that("addIndividual accepts an inline parameters arg", {
+  pc <- testProject()
+  addIndividual(
+    pc,
+    "I_inline",
+    species = "Human",
+    parameters = list(
+      list(
+        containerPath = "Organism|Liver",
+        parameterName = "Volume",
+        value = 1.8,
+        units = "L"
+      ),
+      list(
+        containerPath = "Organism|Kidney",
+        parameterName = "GFR",
+        value = 90,
+        units = "ml/min"
+      )
+    )
+  )
+  pset <- pc$individuals[["I_inline"]]$parameters
+  expect_equal(pset$paths, c("Organism|Liver|Volume", "Organism|Kidney|GFR"))
+  expect_equal(pset$values, c(1.8, 90))
+})
+
+test_that("project$addIndividualParameter delegates to standalone", {
+  pc1 <- testProject()
+  pc2 <- testProject()
+  addIndividual(pc1, "X", species = "Human")
+  addIndividual(pc2, "X", species = "Human")
+  addIndividualParameter(
+    pc1,
+    "X",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  pc2$addIndividualParameter(
+    "X",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  expect_equal(
+    pc1$individuals[["X"]]$parameters,
+    pc2$individuals[["X"]]$parameters
+  )
+})

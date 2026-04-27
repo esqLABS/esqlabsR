@@ -4,18 +4,10 @@
 \alias{.validateIndividuals}
 \title{Validate individuals section of a Project}
 \usage{
-.validateIndividuals(
-  individuals,
-  individualParameterSets,
-  individualParameterSetMapping
-)
+.validateIndividuals(individuals)
 }
 \arguments{
 \item{individuals}{Named list of individuals from project$individuals}
-
-\item{individualParameterSets}{Named list from project$individualParameterSets}
-
-\item{individualParameterSetMapping}{Named list from project$individualParameterSetMapping}
 }
 \value{
 validationResult object
