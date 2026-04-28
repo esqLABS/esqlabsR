@@ -4,18 +4,18 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions: write-all
 
 jobs:
   bump-dev-version: # only do that when actually merging in main/develop branch
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/bump_dev_version_tag_branch.yaml@main
     with:
       app-id: ${{ vars.ACTIONS_MANAGER_APPID }}
     secrets:
       private-key: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
-
 
   R-CMD-Check:
     if: ${{ !cancelled() }}
@@ -32,9 +32,9 @@ jobs:
   lychee-link-check:
     if: ${{ !cancelled() }}
     needs: [bump-dev-version]
-    uses:  Open-Systems-Pharmacology/Workflows/.github/workflows/Check_URLs.yml@main
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/Check_URLs.yml@main
 
   pkgdown:
     if: ${{ !cancelled() }}
     needs: [bump-dev-version]
-    uses:  Open-Systems-Pharmacology/Workflows/.github/workflows/pkgdown.yaml@main
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/pkgdown.yaml@main
