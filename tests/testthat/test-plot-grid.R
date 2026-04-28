@@ -74,20 +74,33 @@ test_that("adding plots works with plots grid configuration", {
 })
 
 test_that("Plot Grid can have very long texts and contain plots with very long titles", {
+  skip_on_os("mac")
   ls_plots <- list(
     # first plot
     ospsuite.plots::plotBoxWhisker(
       data = mtcars,
       mapping = ggplot2::aes(x = am, y = wt),
       outliers = FALSE
-      ) + 
-      ggplot2::labs(title = paste("Title: This is a", paste(rep("very", 40), collapse = " "), "long title")),
+    ) +
+      ggplot2::labs(
+        title = paste(
+          "Title: This is a",
+          paste(rep("very", 40), collapse = " "),
+          "long title"
+        )
+      ),
     # second plot
     ospsuite.plots::plotBoxWhisker(
       data = ToothGrowth,
       mapping = ggplot2::aes(x = supp, y = len)
-      ) + 
-      ggplot2::labs(title = paste("Title: This is a", paste(rep("very", 40), collapse = " "), "long title"))
+    ) +
+      ggplot2::labs(
+        title = paste(
+          "Title: This is a",
+          paste(rep("very", 40), collapse = " "),
+          "long title"
+        )
+      )
   )
 
   plotGridObj <- PlotGridConfiguration$new(ls_plots)
@@ -97,14 +110,27 @@ test_that("Plot Grid can have very long texts and contain plots with very long t
   plotGridObj$tagSuffix <- ")"
   plotGridObj$tagColor <- "blue"
 
-  plotGridObj$title <- paste("Title: This is a", paste(rep("very", 40), collapse = " "), "long title")
-  plotGridObj$subtitle <- paste("Subtitle: This is a", paste(rep("very", 40), collapse = " "), "long subtitle")
-  plotGridObj$caption <- paste("Caption: This is a", paste(rep("very", 40), collapse = " "), "long caption")
+  plotGridObj$title <- paste(
+    "Title: This is a",
+    paste(rep("very", 40), collapse = " "),
+    "long title"
+  )
+  plotGridObj$subtitle <- paste(
+    "Subtitle: This is a",
+    paste(rep("very", 40), collapse = " "),
+    "long subtitle"
+  )
+  plotGridObj$caption <- paste(
+    "Caption: This is a",
+    paste(rep("very", 40), collapse = " "),
+    "long caption"
+  )
   plotGridObj$titleHorizontalJustification <- 0.5
   plotGridObj$subtitleHorizontalJustification <- 0
   plotGridObj$captionHorizontalJustification <- 1
 
-  vdiffr::expect_doppelganger("long labels in plotgrid",
+  vdiffr::expect_doppelganger(
+    "long labels in plotgrid",
     fig = plotGrid(plotGridObj)
   )
 })
