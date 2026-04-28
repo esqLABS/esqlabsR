@@ -800,3 +800,260 @@ test_that("loaded JSON with individual parameters: array gets parsed correctly",
   expect_equal(pset$values, 1.8)
   expect_equal(pset$units, "L")
 })
+
+# saveProject() ----
+
+test_that("saveProject writes valid JSON that can be reloaded", {
+  pc <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+
+  expect_true(file.exists(tmp))
+  pc2 <- loadProject(tmp)
+  expect_s3_class(pc2, "Project")
+})
+
+test_that("saveProject defaults to project$jsonPath when path is NULL", {
+  tmpDir <- withr::local_tempdir()
+  jsonPath <- file.path(tmpDir, "Project.json")
+  file.copy(testProjectJSONPath(), jsonPath)
+
+  pc <- loadProject(jsonPath)
+  pc$scenarios[["NewScenario"]] <- Scenario$new()
+  pc$scenarios[["NewScenario"]]$scenarioName <- "NewScenario"
+  pc$scenarios[["NewScenario"]]$modelFile <- "Test.pkml"
+
+  saveProject(pc)
+
+  pc2 <- loadProject(jsonPath)
+  expect_true("NewScenario" %in% names(pc2$scenarios))
+})
+
+test_that("saveProject errors when path is NULL and project has no jsonPath", {
+
+  pc <- Project$new()
+  expect_error(saveProject(pc), "path")
+})
+
+test_that("saveProject produces round-trip fidelity for scenarios", {
+  pc <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+  pc2 <- loadProject(tmp)
+
+  expect_equal(names(pc$scenarios), names(pc2$scenarios))
+
+  sc1 <- pc$scenarios[["TestScenario2"]]
+  sc2 <- pc2$scenarios[["TestScenario2"]]
+  expect_equal(sc1$scenarioName, sc2$scenarioName)
+  expect_equal(sc1$modelFile, sc2$modelFile)
+  expect_equal(sc1$individualId, sc2$individualId)
+  expect_equal(sc1$applicationProtocol, sc2$applicationProtocol)
+  expect_equal(sc1$simulateSteadyState, sc2$simulateSteadyState)
+  expect_equal(sc1$modelParameters, sc2$modelParameters)
+})
+
+test_that("saveProject produces round-trip fidelity for modelParameters", {
+  pc <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+  pc2 <- loadProject(tmp)
+
+  expect_equal(names(pc$modelParameters), names(pc2$modelParameters))
+  expect_equal(pc$modelParameters[["Global"]], pc2$modelParameters[["Global"]])
+})
+
+test_that("saveProject produces round-trip fidelity for individuals", {
+  pc <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+  pc2 <- loadProject(tmp)
+
+  expect_equal(names(pc$individuals), names(pc2$individuals))
+  indiv1 <- pc$individuals[["Indiv1"]]
+  indiv2 <- pc2$individuals[["Indiv1"]]
+  expect_equal(indiv1$species, indiv2$species)
+  expect_equal(indiv1$weight, indiv2$weight)
+})
+
+test_that("saveProject produces round-trip fidelity for populations", {
+  pc <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+  pc2 <- loadProject(tmp)
+
+  expect_equal(names(pc$populations), names(pc2$populations))
+  pop1 <- pc$populations[["TestPopulation"]]
+  pop2 <- pc2$populations[["TestPopulation"]]
+  expect_equal(pop1$species, pop2$species)
+  expect_equal(pop1$numberOfIndividuals, pop2$numberOfIndividuals)
+})
+
+test_that("saveProject produces round-trip fidelity for applications", {
+  pc <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+  pc2 <- loadProject(tmp)
+
+  expect_equal(names(pc$applications), names(pc2$applications))
+  expect_equal(
+    pc$applications[["Aciclovir_iv_250mg"]],
+    pc2$applications[["Aciclovir_iv_250mg"]]
+  )
+})
+
+test_that("saveProject produces round-trip fidelity for outputPaths", {
+  pc <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+  pc2 <- loadProject(tmp)
+
+  expect_equal(pc$outputPaths, pc2$outputPaths)
+})
+
+test_that("saveProject produces round-trip fidelity for plots", {
+  pc <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+  pc2 <- loadProject(tmp)
+
+  expect_equal(nrow(pc$plots$dataCombined), nrow(pc2$plots$dataCombined))
+  expect_equal(nrow(pc$plots$plotConfiguration), nrow(pc2$plots$plotConfiguration))
+  expect_equal(nrow(pc$plots$plotGrids), nrow(pc2$plots$plotGrids))
+})
+
+test_that("saveProject resets modified flag to FALSE", {
+  pc <- testProject()
+  pc$modified <- TRUE
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+
+  expect_false(pc$modified)
+})
+
+test_that("saveProject persists scenario added via addScenario", {
+  tmpDir <- withr::local_tempdir()
+  jsonPath <- file.path(tmpDir, "Project.json")
+  file.copy(testProjectJSONPath(), jsonPath)
+
+  pc <- loadProject(jsonPath)
+  addScenario(
+    project = pc,
+    scenarioName = "ProgrammaticScenario",
+    modelFile = "Aciclovir.pkml",
+    individualId = "Indiv1",
+    applicationProtocol = "Aciclovir_iv_250mg"
+  )
+
+  saveProject(pc, jsonPath)
+
+  pc2 <- loadProject(jsonPath)
+  expect_true("ProgrammaticScenario" %in% names(pc2$scenarios))
+  expect_equal(
+    pc2$scenarios[["ProgrammaticScenario"]]$individualId,
+    "Indiv1"
+  )
+})
+
+test_that("saveProject updates esqlabsRVersion to current package version", {
+  pc <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(pc, tmp)
+
+  jsonData <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
+  expect_equal(
+    jsonData$esqlabsRVersion,
+    as.character(utils::packageVersion("esqlabsR"))
+  )
+})
+
+# initProject() / isProjectInitialized() ----
+
+test_that("isProjectInitialized correctly identifies project directories", {
+  tempDir <- withr::local_tempdir(pattern = "test_project_check")
+
+  # Should return FALSE for empty directory
+  expect_false(isProjectInitialized(tempDir))
+
+  # Should return TRUE when Project.xlsx exists
+  initProject(destination = tempDir, overwrite = TRUE)
+  expect_true(isProjectInitialized(tempDir))
+
+  # Clean up and test with Configurations folder only
+  unlink(file.path(tempDir, "Project.xlsx"))
+  expect_true(isProjectInitialized(tempDir))
+})
+
+test_that("isProjectInitialized handles non-existent directories", {
+  expect_false(isProjectInitialized("non_existent_directory"))
+})
+
+test_that("initProject with overwrite = TRUE doesn't ask for permission", {
+  temp_dir <- withr::local_tempdir("test_init_overwrite")
+
+  initProject(destination = temp_dir, overwrite = TRUE)
+  expect_true(isProjectInitialized(temp_dir))
+
+  # Initialize again with overwrite = TRUE — should not ask for permission
+  initProject(destination = temp_dir, overwrite = TRUE)
+  expect_true(isProjectInitialized(temp_dir))
+})
+
+test_that("initProject creates proper project structure", {
+  temp_dir <- withr::local_tempdir("test_init_structure")
+
+  initProject(destination = temp_dir, overwrite = TRUE)
+
+  # JSON should exist (copied from Blank project template)
+  expect_true(file.exists(file.path(temp_dir, "Project.json")))
+
+  # Excel files should be generated from JSON
+  expect_true(file.exists(file.path(temp_dir, "Project.xlsx")))
+  expect_true(dir.exists(file.path(temp_dir, "Configurations")))
+
+  # Directory structure should exist
+  expect_true(dir.exists(file.path(temp_dir, "Models", "Simulations")))
+  expect_true(dir.exists(file.path(temp_dir, "Data")))
+  expect_true(dir.exists(file.path(temp_dir, "Results", "Figures")))
+  expect_true(dir.exists(file.path(temp_dir, "Results", "SimulationResults")))
+  expect_true(dir.exists(file.path(temp_dir, "Populations")))
+})
+
+test_that("initProject creates project from Blank template with no scenarios", {
+  temp_dir <- withr::local_tempdir("test_init_blank")
+
+  initProject(destination = temp_dir, overwrite = TRUE)
+
+  # The generated project should be loadable
+  pc <- loadProject(file.path(temp_dir, "Project.json"))
+  expect_s3_class(pc, "Project")
+
+  # Blank project should have no scenarios
+  expect_equal(length(pc$scenarios), 0)
+})
+
+test_that("exampleProjectPath points to Example project", {
+  path <- exampleProjectPath()
+  expect_true(grepl("Example", path))
+  expect_true(file.exists(path))
+})
