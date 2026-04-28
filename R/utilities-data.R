@@ -429,7 +429,7 @@ addObservedData <- function(project, entry) {
     }
     project$.addProgrammaticDataSet(name, entry)
     project$.appendObservedDataNameCache(name)
-    newEntry <- list(type = "programmatic")
+    newEntry <- list(type = "programmatic", name = name)
     project$observedData <- c(project$observedData, list(newEntry))
     project$modified <- TRUE
     cli::cli_inform(c(
@@ -441,21 +441,17 @@ addObservedData <- function(project, entry) {
     ))
   } else if (is.list(entry)) {
     if (is.null(entry$type)) {
-      stop("Config list must include 'type' field")
+      stop(messages$observedDataConfigMissingType())
     }
     validTypes <- c("excel", "pkml", "script")
     if (!(entry$type %in% validTypes)) {
-      stop(sprintf(
-        "Invalid type '%s'. Must be one of: %s",
-        entry$type,
-        paste(validTypes, collapse = ", ")
-      ))
+      stop(messages$observedDataInvalidType(entry$type, validTypes))
     }
     project$.invalidateObservedDataNamesCache()
     project$observedData <- c(project$observedData, list(entry))
     project$modified <- TRUE
   } else {
-    stop("'entry' must be a DataSet object or a configuration list")
+    stop(messages$observedDataInvalidEntry())
   }
   invisible(project)
 }
@@ -484,19 +480,23 @@ removeObservedData <- function(project, name) {
   progDS <- project$.getProgrammaticDataSets()
   if (name %in% names(progDS)) {
     project$.removeProgrammaticDataSet(name)
-    # Remove the first programmatic entry in observedData (there is no
-    # reliable per-entry name on programmatic entries; removing first
-    # programmatic matches the semantics that there is only one
-    # programmatic entry per DataSet).
-    programIdx <- which(vapply(
+    # Match by the name stamped on the sentinel; falls back to the first
+    # programmatic entry for older configurations whose sentinels predate
+    # the `name` field.
+    matchIdx <- which(vapply(
       project$observedData,
-      function(e) {
-        identical(e$type, "programmatic")
-      },
+      function(e) identical(e$type, "programmatic") && identical(e$name, name),
       logical(1)
     ))
-    if (length(programIdx) > 0) {
-      project$observedData <- project$observedData[-programIdx[[1]]]
+    if (length(matchIdx) == 0) {
+      matchIdx <- which(vapply(
+        project$observedData,
+        function(e) identical(e$type, "programmatic"),
+        logical(1)
+      ))
+    }
+    if (length(matchIdx) > 0) {
+      project$observedData <- project$observedData[-matchIdx[[1]]]
     }
     project$.invalidateObservedDataNamesCache()
     project$modified <- TRUE
@@ -512,7 +512,7 @@ removeObservedData <- function(project, name) {
   ))
 
   if (length(matchIdx) == 0) {
-    cli::cli_warn("observed data {.val {name}} not found; no-op.")
+    cli::cli_warn(messages$observedDataNotFound(name))
     return(invisible(project))
   }
 

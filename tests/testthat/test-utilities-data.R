@@ -553,7 +553,7 @@ test_that("addObservedData with DataSet adds entry and stores DataSet by name", 
   expect_equal(length(pc$observedData), initialCount + 1)
   newEntry <- pc$observedData[[length(pc$observedData)]]
   expect_equal(newEntry$type, "programmatic")
-  expect_null(newEntry$name)
+  expect_equal(newEntry$name, "ProgrammaticData")
   expect_equal(pc$.getProgrammaticDataSets()[["ProgrammaticData"]], ds)
 })
 
@@ -725,4 +725,49 @@ test_that("removeObservedData removes the correct DataSet when multiple programm
   expect_false("DS_A" %in% names(loaded))
   expect_true("DS_B" %in% names(loaded))
   expect_equal(loaded[["DS_B"]]$yValues, c(100, 200, 300), tolerance = 1e-4)
+})
+
+test_that("addObservedData annotates programmatic sentinel with the DataSet name", {
+  pc <- testProject()
+  ds <- ospsuite::DataSet$new(name = "Annotated")
+  ds$setValues(xValues = 1:3, yValues = 1:3)
+  suppressMessages(addObservedData(pc, ds))
+
+  # The programmatic sentinel in observedData should record the DataSet
+  # name so the entry is identifiable when serialised or removed.
+  programmaticEntries <- Filter(
+    function(e) identical(e$type, "programmatic"),
+    pc$observedData
+  )
+  names_recorded <- vapply(
+    programmaticEntries,
+    function(e) e$name %||% NA_character_,
+    character(1)
+  )
+  expect_true("Annotated" %in% names_recorded)
+})
+
+test_that("removeObservedData removes the named programmatic sentinel, not the first one", {
+  pc <- testProject()
+  dsA <- ospsuite::DataSet$new(name = "DS_A")
+  dsA$setValues(xValues = 1:3, yValues = c(10, 20, 30))
+  dsB <- ospsuite::DataSet$new(name = "DS_B")
+  dsB$setValues(xValues = 1:3, yValues = c(100, 200, 300))
+
+  suppressMessages(addObservedData(pc, dsA))
+  suppressMessages(addObservedData(pc, dsB))
+
+  removeObservedData(pc, "DS_B")
+
+  programmaticEntries <- Filter(
+    function(e) identical(e$type, "programmatic"),
+    pc$observedData
+  )
+  names_recorded <- vapply(
+    programmaticEntries,
+    function(e) e$name %||% NA_character_,
+    character(1)
+  )
+  expect_true("DS_A" %in% names_recorded)
+  expect_false("DS_B" %in% names_recorded)
 })

@@ -1447,12 +1447,10 @@ exampleProjectConfigurationPath <- function() {
     group <- groups[[name]]
     entries <- list()
     for (i in seq_along(group$paths)) {
-      pathParts <- strsplit(group$paths[i], "\\|")[[1]]
-      containerPath <- paste(pathParts[-length(pathParts)], collapse = "|")
-      parameterName <- pathParts[length(pathParts)]
+      split <- .splitParameterPathIntoContainerAndName(group$paths[i])
       entries[[i]] <- list(
-        containerPath = containerPath,
-        parameterName = parameterName,
+        containerPath = split$containerPath,
+        parameterName = split$parameterName,
         value = group$values[i],
         units = if (group$units[i] == "") NULL else group$units[i]
       )
@@ -1475,17 +1473,10 @@ exampleProjectConfigurationPath <- function() {
     if (!is.null(pset) && length(pset$paths) > 0) {
       params <- vector("list", length(pset$paths))
       for (j in seq_along(pset$paths)) {
-        path <- pset$paths[[j]]
-        sepIdx <- max(gregexpr("\\|", path)[[1]])
-        containerPath <- if (sepIdx == -1) "" else substr(path, 1, sepIdx - 1)
-        parameterName <- if (sepIdx == -1) {
-          path
-        } else {
-          substr(path, sepIdx + 1, nchar(path))
-        }
+        split <- .splitParameterPathIntoContainerAndName(pset$paths[[j]])
         params[[j]] <- list(
-          containerPath = containerPath,
-          parameterName = parameterName,
+          containerPath = split$containerPath,
+          parameterName = split$parameterName,
           value = pset$values[[j]],
           units = pset$units[[j]]
         )
@@ -1519,18 +1510,10 @@ exampleProjectConfigurationPath <- function() {
     if (!is.null(pset) && length(pset$paths) > 0) {
       params <- vector("list", length(pset$paths))
       for (j in seq_along(pset$paths)) {
-        path <- pset$paths[[j]]
-        sepIdx <- max(gregexpr("\\|", path)[[1]])
-        if (sepIdx == -1) {
-          containerPath <- ""
-          parameterName <- path
-        } else {
-          containerPath <- substr(path, 1, sepIdx - 1)
-          parameterName <- substr(path, sepIdx + 1, nchar(path))
-        }
+        split <- .splitParameterPathIntoContainerAndName(pset$paths[[j]])
         params[[j]] <- list(
-          containerPath = containerPath,
-          parameterName = parameterName,
+          containerPath = split$containerPath,
+          parameterName = split$parameterName,
           value = pset$values[[j]],
           units = pset$units[[j]]
         )

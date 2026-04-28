@@ -809,3 +809,23 @@ messages$observedDataNameOverwritten <- function(name) {
     "Programmatically added observed data {.val {name}} overwrites a JSON-declared entry with the same name."
   )
 }
+
+messages$observedDataConfigMissingType <- function() {
+  cliFormat("Config list must include a {.field type} field.")
+}
+
+messages$observedDataInvalidType <- function(type, validTypes) {
+  cliFormat(
+    "Invalid type {.val {type}}. Must be one of: {.val {validTypes}}."
+  )
+}
+
+messages$observedDataInvalidEntry <- function() {
+  cliFormat(
+    "{.arg entry} must be a {.cls DataSet} object or a configuration list."
+  )
+}
+
+messages$observedDataNotFound <- function(name) {
+  cliFormat("Observed data {.val {name}} not found; no-op.")
+}
