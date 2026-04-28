@@ -126,18 +126,19 @@ col2hsv <- function(color) {
   return(grDevices::rgb2hsv(rgb))
 }
 
-#' @title Create an instance of `DefaultPlotConfiguration` R6 class
+#' @title Create a `DefaultPlotConfiguration` list of properties
 #' @rdname createEsqlabsPlotConfiguration
 #'
 #' @description
 #'
-#' An instance of `DefaultPlotConfiguration` R6 class from `{tlf}` package is
-#' needed for creating visualizations with the `{ospsuite}` package.
+#' A list of plot properties needed for creating visualizations with the `{ospsuite}` package.
 #'
 #' The default attributes of the class are chosen to reflect the corporate
 #' standards adopted by esqLABS GmbH.
 #'
-#' @returns An instance of `DefaultPlotConfiguration` R6 class.
+#' @param plotType Optional one of `"timeProfiles"`, `"spiderPlot"`, `"tornadoPlot` adding plot type specific settings
+#'
+#' @returns A named list
 #'
 #' @examples
 #' createEsqlabsPlotConfiguration()
@@ -145,9 +146,8 @@ col2hsv <- function(color) {
 #' @family create-plotting-configurations
 #'
 #' @export
-createEsqlabsPlotConfiguration <- function() {
-  defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
-
+createEsqlabsPlotConfiguration <- function(plotType = NULL) {
+  defaultPlotConfiguration <- list()
   # Size
   defaultPlotConfiguration$titleSize <- 10
   defaultPlotConfiguration$xLabelSize <- 9
@@ -172,7 +172,8 @@ createEsqlabsPlotConfiguration <- function() {
   # Legend appearance
   # defaultPlotConfiguration$legendBorderColor <- "grey10"
   # defaultPlotConfiguration$legendBorderType <- 1
-  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopLeft
+  defaultPlotConfiguration$legendPosition <- "top"
+  defaultPlotConfiguration$legendJustification <- "left"
 
   # Axis appearance
   defaultPlotConfiguration$yAxisLabelTicksAngle <- 0
@@ -182,6 +183,15 @@ createEsqlabsPlotConfiguration <- function() {
   defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
   defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
 
+  # Add specific default properties for spiderPlot, tornadoPlot and timeProfiles
+  plotConfigurationForType <- .plotConfigurationFromType(plotType)
+  ospsuite.utils::validateIsOfType(defaultPlotConfiguration, "list")
+  for (propertyName in names(plotConfigurationForType)) {
+    defaultPlotConfiguration[[propertyName]] <- defaultPlotConfiguration[[
+      propertyName
+    ]] %||%
+      plotConfigurationForType[[propertyName]]
+  }
   return(defaultPlotConfiguration)
 }
 
@@ -190,7 +200,7 @@ createEsqlabsPlotConfiguration <- function() {
 #'
 #' @description
 #'
-#' An instance of `PlotGridConfiguration` R6 class from `{tlf}` package is
+#' An instance of `PlotGridConfiguration` R6 class is
 #' needed for creating a grid of multiple visualizations created using the
 #' `{ospsuite}` package.
 #'
@@ -207,7 +217,7 @@ createEsqlabsPlotConfiguration <- function() {
 #' @export
 createEsqlabsPlotGridConfiguration <- function() {
   # nolint: object_length_linter.
-  plotGridConfiguration <- tlf::PlotGridConfiguration$new()
+  plotGridConfiguration <- PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
   plotGridConfiguration$tagSize <- 11
@@ -216,46 +226,6 @@ createEsqlabsPlotGridConfiguration <- function() {
   plotGridConfiguration$titleHorizontalJustification <- 0.5
 
   return(plotGridConfiguration)
-}
-
-#' @param outputFolder Path to the folder where the results will be stored.
-#'
-#' @title Create an instance of `ExportConfiguration` R6 class
-#' @rdname createEsqlabsExportConfiguration
-#'
-#' @description
-#'
-#' An instance of `ExportConfiguration` R6 class from `{tlf}` package is needed
-#' for saving the plots and plot grids created using the `{ospsuite}` package.
-#'
-#' The default attributes of the class are chosen to reflect the corporate
-#' standards adopted by esqLABS GmbH.
-#'
-#' @returns An instance of `ExportConfiguration` R6 class.
-#'
-#' @examples
-#' myProjConfig <- ProjectConfiguration$new()
-#' createEsqlabsExportConfiguration(myProjConfig$outputFolder)
-#'
-#' @family create-plotting-configurations
-#'
-#' @export
-createEsqlabsExportConfiguration <- function(outputFolder) {
-  # nolint: object_length_linter.
-  # Specifying the namespace because we want to use the ExportConfiguration
-  # from esqlabsR and not from TLF
-  exportConfiguration <- esqlabsR::ExportConfiguration$new()
-
-  exportConfiguration$path <- outputFolder
-  exportConfiguration$dpi <- 300
-  # NULL is not supported by ExportConfiguration, so we should assign here
-  # something useful. NULL in the ProjectConfiguration currently means "do not
-  # export".
-  exportConfiguration$format <- "png"
-  exportConfiguration$width <- 18
-  exportConfiguration$heightPerRow <- 12
-  exportConfiguration$units <- "cm"
-  return(exportConfiguration)
 }
 
 #' Generate plots as defined in excel file `projectConfiguration$plotsFile`
@@ -277,15 +247,14 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 #'   plot grids specified in the excel sheet will be created. If a plot grid
 #'   with a given name does not exist, an error is thrown.
 #'
-#' @param outputFolder Optional - path to the folder where the results will be
-#'   stored. If `NULL` (default), `projectConfiguration$outputFolder` is used.
-#'   Only relevant for plots specified for export in the `exportConfiguration`
-#'   sheet.
 #' @param dataCombinedList A (named) list of `DataCombined` objects as input to
 #'   create plots defined in the `plotGridNames` argument. Missing
 #'   `DataCombined` will be created from the Excel file (default behavior).
 #'   Defaults to `NULL`, in which case all `DataCombined` are created from
 #'   Excel.
+#'
+#' @param applyTheme A logical defining whether to use a ggplot theme 
+#' that uses esqlabsR default settings
 #'
 #' @returns A list of `ggplot` objects
 #'
@@ -298,13 +267,14 @@ createPlotsFromExcel <- function(
   observedData = NULL,
   dataCombinedList = NULL,
   projectConfiguration,
-  outputFolder = NULL,
-  stopIfNotFound = TRUE
+  stopIfNotFound = TRUE,
+  applyTheme = TRUE
 ) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
   validateIsOfType(dataCombinedList, "DataCombined", nullAllowed = TRUE)
+  validateIsLogical(applyTheme)
   if (!typeof(dataCombinedList) %in% c("list", "NULL")) {
     stop(messages$errorDataCombinedListMustBeList(typeof(dataCombinedList)))
   }
@@ -314,7 +284,6 @@ createPlotsFromExcel <- function(
   )
   dfPlotConfigurations <- plotConfigurations$plotConfigurations
   dfPlotGrids <- plotConfigurations$plotGrids
-  dfExportConfigurations <- plotConfigurations$exportConfigurations
 
   # Exit early if no plotGrids are defined
   if (is.null(dfPlotGrids)) {
@@ -335,6 +304,7 @@ createPlotsFromExcel <- function(
     observedData = observedData,
     stopIfNotFound = stopIfNotFound
   )
+
   # Add entries from to the provided list of DataCombined.
   dataCombinedListFromExcel[names(dataCombinedList)] <- dataCombinedList
   dataCombinedList <- dataCombinedListFromExcel
@@ -344,111 +314,161 @@ createPlotsFromExcel <- function(
     names(dataCombinedList)
   )
 
-  # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
-  defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  plotConfigurationList <- apply(dfPlotConfigurations, 1, \(row) {
-    plotConfiguration <- .createConfigurationFromRow(
-      defaultConfiguration = defaultPlotConfiguration,
-      # Have to exclude all columns that should not be vectorized
-      # Excluding title and subtitle because they should not be processed,
-      # e.g., split by ","
-      row[
-        !(names(row) %in%
-          c(
-            "plotID",
-            "DataCombinedName",
-            "plotType",
-            "title",
-            "subtitle",
-            "xLabel",
-            "yLabel",
-            "aggregation",
-            "quantiles",
-            "nsd",
-            "foldDistance"
-          ))
-      ]
-    )
-    # Apply title and subtitle properties
-    if (!is.na(row[["title"]])) {
-      plotConfiguration$title <- row[["title"]]
-    }
-
-    if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
-      plotConfiguration$subtitle <- row[["subtitle"]]
-    }
-
-    # Check for log scale with zero in axis limits
-    .validateLogScaleAxisLimits(plotConfiguration, row[["plotID"]])
-
-    return(plotConfiguration)
-  })
-  names(plotConfigurationList) <- dfPlotConfigurations$plotID
-
-  # create a list of plots from dataCombinedList and plotConfigurationList
-  plotList <- lapply(dfPlotConfigurations$plotID, \(plotId) {
-    dataCombined <- dataCombinedList[[
-      dfPlotConfigurations[
-        dfPlotConfigurations$plotID == plotId,
-      ]$DataCombinedName
-    ]]
-    switch(
-      dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
-      # Individual time profile
-      individual = plotIndividualTimeProfile(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      ),
-      # Population time profile
-      population = {
-        aggregation <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$aggregation
-        quantiles <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$quantiles
-        nsd <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$nsd
-        args <- list()
-        args$dataCombined <- dataCombined
-        args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
-        # Is aggregation defined?
-        if (!is.null(aggregation) && !is.na(aggregation)) {
-          args$aggregation <- aggregation
-        }
-        # quantiles defined?
-        if (!is.null(quantiles) && !is.na(quantiles)) {
-          args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
-        }
-        # if nsd is defined, add it to the args
-        if (!is.null(nsd) && !is.na(nsd)) {
-          args$nsd <- as.numeric(nsd)
-        }
-        do.call(plotPopulationTimeProfile, args)
-      },
-      observedVsSimulated = {
-        foldDist <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$foldDistance
-        if (is.na(foldDist)) {
-          plotObservedVsSimulated(dataCombined, plotConfigurationList[[plotId]])
-        } else {
-          plotObservedVsSimulated(
-            dataCombined,
-            plotConfigurationList[[plotId]],
-            foldDistance = as.numeric(unlist(strsplit(foldDist, split = ",")))
+  # Set default plot settings prior updating based on  sheet "plotConfiguration"
+  if(applyTheme){
+    setESQTheme()
+  }
+  plotList <- lapply(
+    seq_along(dfPlotConfigurations$plotID),
+    function(rowIndex) {
+      plotConfigurationRow <- dfPlotConfigurations[rowIndex, ]
+      if (is.null(plotConfigurationRow$DataCombinedName)) {
+        return()
+      }
+      .validateLogScaleAxisLimits(
+        plotConfigurationRow,
+        plotID = plotConfigurationRow$plotID
+      )
+      dataCombined <- dataCombinedList[[plotConfigurationRow$DataCombinedName]]
+      switch(
+        dfPlotConfigurations$plotType[rowIndex],
+        # Individual time profile
+        individual = {
+          defaultConfiguration <- formals(ospsuite::plotTimeProfile)
+          ospsuite::plotTimeProfile(
+            plotData = dataCombined,
+            xUnit = .fieldFromExcel(
+              "xUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            xScale = .fieldFromExcel(
+              "xAxisScale",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            xScaleArgs = .fieldFromExcel(
+              "xValuesLimits",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yScale = .fieldFromExcel(
+              "yAxisScale",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yScaleArgs = .fieldFromExcel(
+              "yValuesLimits",
+              plotConfigurationRow,
+              defaultConfiguration
+            )
+          )
+        },
+        # Population time profile
+        population = {
+          defaultConfiguration <- formals(ospsuite::plotTimeProfile)
+          ospsuite::plotTimeProfile(
+            plotData = dataCombined,
+            xUnit = .fieldFromExcel(
+              "xUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            aggregation = .fieldFromExcel(
+              "aggregation",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            quantiles = .fieldFromExcel(
+              "quantiles",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            nsd = .fieldFromExcel(
+              "nsd",
+              plotConfigurationRow,
+              defaultConfiguration
+            )
+          )
+        },
+        observedVsSimulated = {
+          defaultConfiguration <- formals(ospsuite::plotPredictedVsObserved)
+          ospsuite::plotPredictedVsObserved(
+            plotData = dataCombined,
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            xyScale = .fieldFromExcel(
+              "xyScale", 
+              plotConfigurationRow, 
+              defaultConfiguration
+              ),
+            comparisonLineVector = .fieldFromExcel(
+              "foldDistance",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            lloqOnBothAxes = .fieldFromExcel(
+              "lloqOnBothAxes",
+              plotConfigurationRow,
+              defaultConfiguration
+            )
+          )
+        },
+        residualsVsSimulated = {
+          defaultConfiguration <- formals(ospsuite::plotResidualsVsCovariate)
+          ospsuite::plotResidualsVsCovariate(
+            plotData = dataCombined,
+            xUnit = .fieldFromExcel(
+              "xUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            xAxis = "predicted"
+          )
+        },
+        residualsVsTime = {
+          defaultConfiguration <- formals(ospsuite::plotResidualsVsCovariate)
+          ospsuite::plotResidualsVsCovariate(
+            plotData = dataCombined,
+            xUnit = .fieldFromExcel(
+              "xUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yUnit = .fieldFromExcel(
+              "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            xAxis = "time"
           )
         }
-      },
-      residualsVsSimulated = plotResidualsVsSimulated(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      ),
-      residualsVsTime = plotResidualsVsTime(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      )
-    )
-  })
+      ) +
+        ggplot2::labs(
+          title = .fieldFromExcel("title", plotConfigurationRow),
+          subtitle = .fieldFromExcel("subtitle", plotConfigurationRow)
+        )
+    }
+  )
+  # create a list of plots from dataCombinedList and plotConfigurationList
   names(plotList) <- dfPlotConfigurations$plotID
 
   # create plotGridConfiguration objects and add plots from plotList
@@ -494,45 +514,6 @@ createPlotsFromExcel <- function(
     plotGrid(plotGridConfiguration)
   })
   names(plotGrids) <- dfPlotGrids$name
-
-  ## Remove rows that are entirely empty
-  dfExportConfigurations <- dplyr::filter(
-    dfExportConfigurations,
-    !dplyr::if_all(dplyr::everything(), is.na)
-  )
-  dfExportConfigurations <- .validateExportConfigurationsFromExcel(
-    dfExportConfigurations,
-    plotGrids
-  )
-  if (nrow(dfExportConfigurations) > 0) {
-    # create a list of ExportConfiguration objects from dfExportConfigurations
-    outputFolder <- outputFolder %||%
-      file.path(
-        projectConfiguration$outputFolder,
-        "Figures",
-        format(Sys.time(), "%F %H-%M")
-      )
-
-    defaultExportConfiguration <- createEsqlabsExportConfiguration(outputFolder)
-    exportConfigurations <- apply(dfExportConfigurations, 1, \(row) {
-      exportConfiguration <- .createConfigurationFromRow(
-        defaultConfiguration = defaultExportConfiguration,
-        row[!(names(row) %in% c("plotGridName", "name"))]
-      )
-      # Replace "\" and "/" by "_" so the file name does not result in folders
-      name <- row[["name"]]
-      name <- gsub(pattern = "\\", "_", name, fixed = TRUE)
-      name <- gsub(pattern = "/", "_", name, fixed = TRUE)
-      exportConfiguration$name <- name
-      return(exportConfiguration)
-    })
-    # export plotGrid if defined in exportConfigurations
-    lapply(seq_along(exportConfigurations), function(i) {
-      exportConfigurations[[
-        i
-      ]]$savePlot(plotGrids[[dfExportConfigurations$plotGridName[i]]])
-    })
-  }
 
   return(plotGrids)
 }
@@ -634,7 +615,7 @@ createPlotsFromExcel <- function(
 
 #' Validate that log scale axes do not have limits containing zero
 #'
-#' @param plotConfiguration A plot configuration object
+#' @param plotConfiguration A plot configuration excel row
 #' @param plotID Optional plot ID for the warning message
 #'
 #' @keywords internal
@@ -652,30 +633,46 @@ createPlotsFromExcel <- function(
       axis = "y"
     )
   )
-
   for (check in axisChecks) {
     scaleValue <- plotConfiguration[[check$scale]]
-    if (!is.null(scaleValue) && scaleValue == "log") {
-      for (limitsField in check$limits) {
-        limitsValue <- plotConfiguration[[limitsField]]
-        if (!is.null(limitsValue) && 0 %in% limitsValue) {
-          warning(messages$warningLogScaleWithZeroLimit(
-            plotID = plotID,
-            axisLimitsField = limitsField,
-            axis = check$axis
-          ))
-        }
+    for (limitsField in check$limits) {
+      limitsValue <- plotConfiguration[[limitsField]]
+      if (is.null(limitsValue)) {
+        next
+      }
+      if (is.na(limitsValue)) {
+        next
+      }
+      limitsValue <- .parseExcelMultiValueField(
+        limitsValue,
+        plotID = plotID,
+        fieldName = limitsField,
+        expectedLength = 2
+      )
+      if (is.null(scaleValue)) {
+        next
+      }
+      if (is.na(scaleValue)) {
+        next
+      }
+      if (all(scaleValue == "log", 0 %in% limitsValue)) {
+        warning(messages$warningLogScaleWithZeroLimit(
+          plotID = plotID,
+          axisLimitsField = limitsField,
+          axis = check$axis
+        ))
       }
     }
   }
+  return(invisible())
 }
 
-#' Create a plotConfiguration or exportConfiguration objects from a row of sheet
-#' 'plotConfiguration' or 'exportConfiguration'
+#' Create a plotConfiguration object from a row of sheet
+#' 'plotConfiguration'
 #'
-#' @param defaultConfiguration default plotConfiguration or exportConfiguration
+#' @param defaultConfiguration default plotConfiguration
 #' @param ... row with configuration properties
-#' @returns A customized plot- or exportConfiguration object
+#' @returns A customized plotConfiguration object
 #' @keywords internal
 .createConfigurationFromRow <- function(defaultConfiguration, ...) {
   columns <- c(...)
@@ -837,42 +834,6 @@ createPlotsFromExcel <- function(
   }
 
   return(dfPlotGrids)
-}
-
-#' Validate and process the 'exportConfiguration' sheet
-#'
-#' @param dfExportConfigurations Data frame created by reading the
-#'   'exportConfiguration' sheet
-#' @param plotGrids List of multipanel plots created previously
-#'
-#' @returns Processed `dfExportConfigurations`
-#' @keywords internal
-.validateExportConfigurationsFromExcel <- function(
-  dfExportConfigurations,
-  plotGrids
-) {
-  # mandatory column outputName is empty - throw warning, remove rows
-  missingName <- sum(is.na(dfExportConfigurations$name))
-  if (missingName > 0) {
-    dfExportConfigurations <- dfExportConfigurations[
-      !is.na(dfExportConfigurations$name),
-    ]
-    warning(messages$missingOutputFileName())
-  }
-
-  plotGrids <- purrr::compact(plotGrids)
-  missingPlotGrids <- setdiff(
-    dfExportConfigurations$plotGridName,
-    names(plotGrids)
-  )
-  if (length(missingPlotGrids) != 0) {
-    dfExportConfigurations <- dfExportConfigurations[
-      !(dfExportConfigurations$plotGridName %in% missingPlotGrids),
-    ]
-    warning(messages$missingPlotGrids(missingPlotGrids))
-  }
-
-  return(dfExportConfigurations)
 }
 
 #' Update Plot Configuration with Overrides
@@ -1095,19 +1056,11 @@ createPlotsFromExcel <- function(
 #' @param plotGridNames Names of the plot grid specified in the sheet
 #'   `plotGrids`
 #'
-#' @returns A named list with configurations 'plotGrids',
-#'   'dfPlotConfigurations', and 'exportConfigurations'
+#' @returns A named list with configurations 'plotGrids' and 'dfPlotConfigurations'
 #' @noRd
 .readPlotConfigurations <- function(projectConfiguration, plotGridNames) {
   # read sheet "plotGrids" with info for plotGridConfigurations
   dfPlotGrids <- readExcel(projectConfiguration$plotsFile, sheet = "plotGrids")
-
-  # read sheet "exportConfiguration"
-  dfExportConfigurations <- readExcel(
-    projectConfiguration$plotsFile,
-    sheet = "exportConfiguration"
-  ) |>
-    dplyr::rename(name = outputName)
 
   # Filter for only specified plot grids
   if (!is.null(plotGridNames)) {
@@ -1118,11 +1071,6 @@ createPlotsFromExcel <- function(
     }
 
     dfPlotGrids <- dplyr::filter(dfPlotGrids, name %in% plotGridNames)
-    # Filter export configurations for specified plot grids only
-    dfExportConfigurations <- dplyr::filter(
-      dfExportConfigurations,
-      plotGridName %in% plotGridNames
-    )
   }
 
   # Exit early if no PlotGrid is defined
@@ -1154,7 +1102,205 @@ createPlotsFromExcel <- function(
 
   return(list(
     plotGrids = dfPlotGrids,
-    exportConfigurations = dfExportConfigurations,
     plotConfigurations = dfPlotConfigurations
   ))
+}
+
+
+#' Set ospsuite.plots defaults settings for ESQLabs workflows
+#' 
+#' @param legendPosition Default position of legends as defined in `ggplot2::theme`
+#' One of "none", "left", "right", "bottom", "top"
+#' 
+#' @param legendJustification Default alignment/justification of legends as defined in `ggplot2::theme`
+#' One of "left", "right", "center"
+#' 
+#' @param watermarkEnabled Logical allowing whether ospsuite.plots watermark is enabled
+#' 
+#' @export
+setESQTheme <- function(legendPosition = "top", 
+                        legendJustification = "left", 
+                        watermarkEnabled = FALSE) {
+  # Base settings = ospsuite.plots theme
+  # colorMapList argument does not accept functions yet,
+  # esqlabsR::esqlabsColors needs to be set at ggplot2 level
+  ospsuite.plots::setDefaults(colorMapList = list(esqlabsR::esqlabsColors(10)))
+  options(ospsuite.plots.watermarkEnabled = watermarkEnabled)
+  # Elements to update to follow ESQLabs default convention
+  ggplot2::theme_update(
+    # element_textbox_simple wraps and break line if title is too long
+    plot.title = ggtext::element_textbox_simple(size = 10, hjust = 0),
+    axis.title.x = ggplot2::element_text(
+      size = 9,
+      margin = ggplot2::margin(t = 10)
+    ),
+    axis.title.y = ggplot2::element_text(
+      size = 9,
+      margin = ggplot2::margin(r = 10)
+    ),
+    # tick labels cannot use markdown because they need to be vectorised
+    axis.text.x = ggplot2::element_text(size = 8),
+    axis.text.y = ggplot2::element_text(size = 8, angle = 0),
+    # Legend
+    legend.key.size = ggplot2::unit(6, "pt"),
+    legend.position = legendPosition,
+    legend.justification = legendJustification
+    # ESQLabs color palette used as default when adding scale_color_discrete()
+    # palette.colour.discrete = esqlabsR::esqlabsColors
+  )
+  return(invisible())
+}
+
+#' If field from PlotConfiguration is undefined (`NA`),
+#' use default of `{ospsuite.plots}` function
+#'
+#' @param fieldName Name of field to query from Excel table
+#' @param plotConfigurationRow Plot configuration table row
+#' @param defaultConfiguration Default ESQLabs values for the configuration
+#' @importFrom stats na.exclude
+#' @keywords internal
+.fieldFromExcel <- function(
+  fieldName,
+  plotConfigurationRow,
+  defaultConfiguration = NULL
+) {
+  # Specific properties to assess and wrap
+  if (fieldName %in% "foldDistance") {
+    if (is.na(plotConfigurationRow[["foldDistance"]])) {
+      return(defaultConfiguration[["comparisonLineVector"]])
+    }
+    foldDistance <- .parseExcelMultiValueField(plotConfigurationRow[[
+      "foldDistance"
+    ]])
+    return(ospsuite.plots::getFoldDistanceList(folds = foldDistance))
+  }
+  if (fieldName %in% c("xAxisScale", "yAxisScale")) {
+    # Default value for a axis scale is linear
+    if (is.na(plotConfigurationRow[[fieldName]])) {
+      return("linear")
+    }
+    return(plotConfigurationRow[[fieldName]])
+  }
+  # Default value for a axis scale is linear
+  if (fieldName %in% "xyScale") {
+    xyScale <- c(
+      plotConfigurationRow[["xAxisScale"]], 
+      plotConfigurationRow[["yAxisScale"]]
+      ) |>
+      na.exclude() |>
+      unique()
+    # Default value for xyScale is log creating log-log obs vs simulated
+    if(isEmpty(xyScale)){
+      return(defaultConfiguration[[fieldName]])
+    }
+    # Note that at this stage .validateLogScaleAxisLimits was already assessed
+    tryCatch(
+      ospsuite.utils::validateIsOfLength(xyScale, 1),
+      error = function(e) {
+        stop(
+          messages$conflictingAxesScales(plotConfigurationRow$plotID),
+          call. = FALSE
+        )
+      }
+    )
+    return(xyScale)
+  }
+  # Issue #991: default value should be TRUE
+  if (fieldName %in% "lloqOnBothAxes"){
+    undefinedLLOQ <- any(
+      is.null(plotConfigurationRow[["lloqOnBothAxes"]]),
+      is.na(plotConfigurationRow[["lloqOnBothAxes"]])
+    )
+    if(undefinedLLOQ){
+      return(TRUE)
+    }
+    return(as.logical(plotConfigurationRow[["lloqOnBothAxes"]]))
+  }
+  
+  if (fieldName %in% c("xValuesLimits", "yValuesLimits")) {
+    # Default value for axis limits values is empty list
+    if (is.na(plotConfigurationRow[[fieldName]])) {
+      return(list())
+    }
+    valuesLimits <- .parseExcelMultiValueField(plotConfigurationRow[[
+      fieldName
+    ]])
+    return(list(limits = valuesLimits))
+  }
+  undefinedField <- any(
+    length(plotConfigurationRow[[fieldName]]) == 0,
+    is.na(plotConfigurationRow[[fieldName]])
+  )
+  if (undefinedField) {
+    if (is.language(defaultConfiguration[[fieldName]])) {
+      return(eval(defaultConfiguration[[fieldName]]))
+    }
+    return(defaultConfiguration[[fieldName]])
+  }
+  return(plotConfigurationRow[[fieldName]])
+}
+
+
+#' Return list of properties from a plot type
+#'
+#' @param plotType One of `"timeProfiles"`, `"spiderPlot"`, `"tornadoPlot"`
+#' @returns A list
+#' @keywords internal
+.plotConfigurationFromType <- function(plotType = NULL) {
+  if (is.null(plotType)) {
+    return(NULL)
+  }
+  if (plotType %in% "timeProfiles") {
+    timeProfilesConfiguration <- list(
+      legendPosition = "bottom",
+      legendJustification = "center",
+      legendTitle = "Parameter factor",
+      linesAlpha = 0.7,
+      linesSize = 1.4,
+      # linesColor = colorspace::diverging_hcl(2, palette = "Berlin"),
+      pointsShape = ospsuite.plots::ospShapeNames,
+      title = NULL,
+      titleSize = 14,
+      xAxisScale = "lin",
+      xLabel = NULL,
+      yAxisScale = "log",
+      yLabel = NULL
+    )
+    return(timeProfilesConfiguration)
+  }
+  if (plotType %in% "spiderPlot") {
+    spiderPlotConfiguration <- list(
+      legendPosition = "bottom",
+      legendJustification = "center",
+      legendTitle = "Parameter",
+      linesSize = 1.4,
+      linesAlpha = 0.75,
+      linesColor = esqlabsEnv$colorPalette,
+      pointsShape = "circle",
+      pointsSize = 2,
+      title = NULL,
+      titleSize = 14,
+      xAxisScale = "log",
+      xLabel = NULL,
+      yAxisScale = "lin",
+      yAxisTicks = 10L,
+      yLabel = NULL
+    )
+    return(spiderPlotConfiguration)
+  }
+  if (plotType %in% "tornadoPlot") {
+    tornadoPlotConfiguration <- list(
+      legendPosition = "right",
+      legendTitle = "Parameter Factor",
+      subtitle = NULL,
+      title = NULL,
+      titleSize = 14,
+      linesColor = esqlabsEnv$colorPalette,
+      linesAlpha = 0.75,
+      xLabel = "Change in PK parameter [% relative to baseline]",
+      yLabel = "Parameter"
+    )
+    return(tornadoPlotConfiguration)
+  }
+  return(NULL)
 }

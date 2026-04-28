@@ -10,8 +10,8 @@ createPlotsFromExcel(
   observedData = NULL,
   dataCombinedList = NULL,
   projectConfiguration,
-  outputFolder = NULL,
-  stopIfNotFound = TRUE
+  stopIfNotFound = TRUE,
+  applyTheme = TRUE
 )
 }
 \arguments{
@@ -37,14 +37,12 @@ Excel.}
 contains information about the output paths and the excel file where plots
 are defined.}
 
-\item{outputFolder}{Optional - path to the folder where the results will be
-stored. If \code{NULL} (default), \code{projectConfiguration$outputFolder} is used.
-Only relevant for plots specified for export in the \code{exportConfiguration}
-sheet.}
-
 \item{stopIfNotFound}{If TRUE (default), the function stops if any of the
 simulated results or observed data are not found. If FALSE a warning is
 printed.}
+
+\item{applyTheme}{A logical defining whether to use a ggplot theme
+that uses esqlabsR default settings}
 }
 \value{
 A list of \code{ggplot} objects

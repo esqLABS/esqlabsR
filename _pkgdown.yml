@@ -39,8 +39,6 @@ reference:
       - matches("^compare")
       - matches("^calculate")
       - contains("Simulation")
-      - ends_with("Function")
-      - contains("Quantiles")
       - matches("^geo")
       - sampleRandomValue
       - applyIndividualParameters
@@ -51,10 +49,11 @@ reference:
       - loadObservedDataFromPKML
   - title: Helpers for plotting
     contents:
-      - matches("^plot")
+      - matches("^[Pp]lot")
       - matches("^col")
       - matches("[Cc]olor")
       - has_concept("create-plotting-configurations")
+      - PlotGridConfiguration
       - createDataCombinedFromExcel
   - title: Input validation
     contents:
@@ -62,7 +61,6 @@ reference:
       - matches("^is")
       - stringToNum
       - GenderInt
-      - contains("Types")
   - title: Sensitivity analysis
     contents: matches("[Ss]ensitivity")
   - title: Shiny applications
@@ -76,8 +74,6 @@ reference:
       - removeFromList
       - sourceAll
       - esqlabsRSettingNames
-  - title: Inherited classes
-    contents: ExportConfiguration
 articles:
   - title: esqlabsR Workflow
     navbar: esqlabsR Workflow

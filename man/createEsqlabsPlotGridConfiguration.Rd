@@ -10,7 +10,7 @@ createEsqlabsPlotGridConfiguration()
 An instance of \code{PlotGridConfiguration} R6 class.
 }
 \description{
-An instance of \code{PlotGridConfiguration} R6 class from \code{{tlf}} package is
+An instance of \code{PlotGridConfiguration} R6 class is
 needed for creating a grid of multiple visualizations created using the
 \code{{ospsuite}} package.
 
@@ -23,7 +23,6 @@ createEsqlabsPlotGridConfiguration()
 }
 \seealso{
 Other create-plotting-configurations: 
-\code{\link{createEsqlabsExportConfiguration}()},
 \code{\link{createEsqlabsPlotConfiguration}()}
 }
 \concept{create-plotting-configurations}

@@ -490,20 +490,6 @@ messages$invalidConfigurationPropertyFromExcel <- function(
   )
 }
 
-messages$missingOutputFileName <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.arg outputName} of sheet {.var exportConfiguration}. No plots are exported to file for corresponding rows."
-  )
-}
-
-messages$missingPlotGrids <- function(missingPlotGrids) {
-  cliFormat(
-    "Invalid values in column {.arg plotGridName} of sheet {.var exportConfiguration}:
-    {.val {paste0(missingPlotGrids, collapse = ',\n')}}. Plot grids are either not defined or empty and can not be
-    exported to file."
-  )
-}
-
 messages$invalidPlotGridNames <- function(plotGridNames) {
   cliFormat(
     "Following plot grid names have been specified but are not present in the {.field plotGrids} sheet!
@@ -899,4 +885,11 @@ messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
 
 messages$messageRunningPITask <- function(piTaskName) {
   cliFormat("Running PI task: {.val {piTaskName}}")
+}
+
+messages$conflictingAxesScales <- function(plotID) {
+  cli::format_message(c(
+    "x" = "{.strong observedVsSimulated} plot with plotID {.val {plotID}} has conflicting {.field xAxisScale} and {.field yAxisScale}",
+    "i" = "Use either {.val linear} or {.val log} in both columns"
+  ))
 }

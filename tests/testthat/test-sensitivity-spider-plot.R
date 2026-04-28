@@ -203,7 +203,7 @@ test_that("sensitivitySpiderPlot applies free scaling with absolute y-values", {
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
-  myPlotConfiguration <- createEsqlabsPlotConfiguration()
+  myPlotConfiguration <- createEsqlabsPlotConfiguration("spiderPlot")
   myPlotConfiguration$xAxisScale <- "lin"
   myPlotConfiguration$yAxisScale <- "log"
 
@@ -218,7 +218,7 @@ test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
 })
 
 test_that("sensitivitySpiderPlot signature overrides defaultPlotConfiguration", {
-  myPlotConfiguration <- createEsqlabsPlotConfiguration()
+  myPlotConfiguration <- createEsqlabsPlotConfiguration("spiderPlot")
   myPlotConfiguration$xAxisScale <- "lin" # to be overridden
   myPlotConfiguration$yAxisScale <- "log" # to be overridden
 

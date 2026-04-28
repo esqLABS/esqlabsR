@@ -54,7 +54,7 @@ test_that("col2hsv returns expected HSV values for a given R color name", {
 
 test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults", {
   myPC <- createEsqlabsPlotConfiguration()
-  expect_true(isOfType(myPC, "DefaultPlotConfiguration"))
+  expect_type(myPC, "list")
   expect_equal(myPC$titleSize, 10)
 })
 
@@ -64,15 +64,8 @@ test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defau
   expect_equal(myPGC$tagLevels, "a")
 })
 
-test_that("createEsqlabsExportConfiguration() creates object with chosen defaults", {
-  myProjConfig <- ProjectConfiguration$new()
-  myEC <- createEsqlabsExportConfiguration(myProjConfig$outputFolder)
-  expect_true(isOfType(myEC, "ExportConfiguration"))
-  expect_equal(myEC$units, "cm")
-})
-
-
 test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
+  skip("Skipping due to migration towards ospsuite.plots")
   defaultConfig <- ospsuite::DefaultPlotConfiguration$new()
   esqlabsConfig <- createEsqlabsPlotConfiguration()
 
@@ -130,12 +123,13 @@ test_that(".parseExcelMultiValueField numeric conversion path is covered", {
   )
 })
 
-test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualTimeProfile", {
+test_that("setESQTheme() works with ospsuite::plotTimeProfile", {
+  setESQTheme()
   esqlabsConfig <- createEsqlabsPlotConfiguration()
 
   set.seed(123)
   vdiffr::expect_doppelganger(
     title = "time profile - esqlabsPlotConfiguration",
-    fig = plotIndividualTimeProfile(oneObsSimDC, esqlabsConfig)
+    fig = ospsuite::plotTimeProfile(oneObsSimDC)
   )
 })

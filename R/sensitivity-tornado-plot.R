@@ -57,7 +57,10 @@
 #' parameterPaths <- c(
 #'   "Aciclovir|Lipophilicity",
 #'   "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+#'   ospsuite::toPathString(
+#'     "Neighborhoods", "Kidney_pls_Kidney_ur", "Aciclovir",
+#'     "Glomerular Filtration-GFR-Aciclovir", "GFR fraction"
+#'   )
 #' )
 #'
 #' results <- sensitivityCalculation(
@@ -83,7 +86,10 @@
 #' namedParameterPaths <- c(
 #'   "Lipophilicity" = "Aciclovir|Lipophilicity",
 #'   "Dose" = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+#'   "GFR fraction" = ospsuite::toPathString(
+#'     "Neighborhoods", "Kidney_pls_Kidney_ur", "Aciclovir",
+#'     "Glomerular Filtration-GFR-Aciclovir", "GFR fraction"
+#'   )
 #' )
 #'
 #' resultsNamed <- sensitivityCalculation(
@@ -130,22 +136,8 @@ sensitivityTornadoPlot <- function(
   }
 
   # Plot configuration setup -----------------------------
-
-  tornadoPlotConfiguration <- list(
-    legendPosition = "right",
-    legendTitle = "Parameter Factor",
-    subtitle = NULL,
-    title = NULL,
-    titleSize = 14,
-    xLabel = "Change in PK parameter [% relative to baseline]",
-    yLabel = "Parameter"
-  )
-
-  # apply configuration overrides and validate
-  customPlotConfiguration <- .applyPlotConfiguration(
-    defaultPlotConfiguration = defaultPlotConfiguration,
-    plotOverrideConfig = tornadoPlotConfiguration
-  )
+  customPlotConfiguration <- defaultPlotConfiguration %||%
+    .plotConfigurationFromType("tornadoPlot")
 
   # Prepare data -----------------------------------------
 
@@ -214,11 +206,8 @@ sensitivityTornadoPlot <- function(
   defaultPlotConfiguration
 ) {
   # update data dependent plot configuration
-  plotConfiguration <- defaultPlotConfiguration$clone()
-  plotConfiguration <- .updatePlotConfiguration(
-    plotConfiguration,
-    list(title = unique(data$OutputPath))
-  )
+  plotConfiguration <- defaultPlotConfiguration
+  plotConfiguration$title <- unique(data$OutputPath)
 
   # adjust x-axis limits to be symmetric around 0
   pLimits <- .calculateLimits(data$PKPercentChange)
@@ -234,29 +223,30 @@ sensitivityTornadoPlot <- function(
 
     # Basic plot setup -----------------------------------
 
-    plot <- ggplot(
+    plot <- ggplot2::ggplot(
       dataSubset,
-      aes(
+      ggplot2::aes(
         x = PKPercentChange,
         y = ParameterPathLabel,
         fill = as.factor(ParameterFactor)
       )
     ) +
-      geom_col(
+      ggplot2::geom_col(
         color = "grey",
         width = 0.9,
+        alpha = 1,
         na.rm = TRUE
       )
 
     plot <- plot +
-      geom_vline(
+      ggplot2::geom_vline(
         xintercept = 0,
         color = "grey",
         linewidth = 1
       )
 
     plot <- plot +
-      scale_x_continuous(
+      ggplot2::scale_x_continuous(
         limits = pLimits,
         breaks = scales::breaks_extended(),
         labels = scales::label_number_auto()
@@ -265,32 +255,32 @@ sensitivityTornadoPlot <- function(
     # Finalize plot --------------------------------------
 
     plot <- plot +
-      facet_wrap(~PKParameter, scales = "fixed") +
-      labs(
+      ggplot2::facet_wrap(~PKParameter, scales = "fixed") +
+      ggplot2::labs(
         x = plotConfiguration$xLabel,
         y = plotConfiguration$yLabel,
         title = NULL,
         fill = plotConfiguration$legendTitle
       ) +
-      theme_light(
+      ggplot2::theme_light(
         base_size = 11
       ) +
-      theme(
+      ggplot2::theme(
         legend.position = plotConfiguration$legendPosition,
-        panel.grid.minor = element_blank(),
-        text = element_text(size = 11),
-        axis.text.y = element_text(margin = margin(l = 20, unit = "pt"))
+        panel.grid.minor = ggplot2::element_blank(),
+        text = ggplot2::element_text(size = 11),
+        axis.text.y = ggplot2::element_text(margin = ggplot2::margin(l = 20, unit = "pt"))
       )
 
     # apply color scales
     if (is.null(plotConfiguration$linesColor)) {
-      plot <- plot + scale_fill_brewer(palette = "Set2")
+      plot <- plot + ggplot2::scale_fill_brewer(palette = "Set2")
     } else {
       pLevels <- levels(as.factor(data$ParameterFactor))
       pColor <- plotConfiguration$linesColor[seq_along(pLevels)]
       names(pColor) <- pLevels
       plot <- plot +
-        scale_fill_manual(
+        ggplot2::scale_fill_manual(
           values = colorspace::lighten(pColor, amount = 0.2)
         )
     }
@@ -298,7 +288,7 @@ sensitivityTornadoPlot <- function(
     # apply x-axis zoom range if specified
     if (!is.null(xAxisZoomRange)) {
       plot <- plot +
-        coord_cartesian(
+        ggplot2::coord_cartesian(
           xlim = xAxisZoomRange,
           expand = TRUE,
           clip = "on"
@@ -314,8 +304,8 @@ sensitivityTornadoPlot <- function(
     patchwork::plot_annotation(
       title = plotConfiguration$title,
       subtitle = plotConfiguration$subtitle,
-      theme = theme(
-        plot.title = element_text(size = plotConfiguration$titleSize)
+      theme = ggplot2::theme(
+        plot.title = ggtext::element_textbox_simple(size = plotConfiguration$titleSize)
       )
     ) +
     patchwork::plot_layout(
@@ -323,7 +313,7 @@ sensitivityTornadoPlot <- function(
       axes = "collect",
       ncol = 1
     ) &
-    theme(legend.position = plotConfiguration$legendPosition)
+    ggplot2::theme(legend.position = plotConfiguration$legendPosition)
 
   return(plotPatchwork)
 }

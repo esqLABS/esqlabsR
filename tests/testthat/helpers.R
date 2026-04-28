@@ -139,6 +139,24 @@ extractAxisRange <- function(p) {
   return(axisRanges)
 }
 
+#' Provide consistent numeric data summary that always includes `NA` values count
+#'
+#' @description
+#' Creates summary statistics object from numeric values
+#'
+#' @param x numeric values
+#'
+#' @returns A summary object
+#' 
+summaryWithNA <- function(x) {
+  summaryTable <- summary(x)
+  if (!"NAs" %in% names(summaryTable)) {
+    summaryTable <- c(summaryTable, "NAs" = 0)
+  }
+  return(c(summaryTable))
+}
+
+
 #' Summarize sensitivity calculation data
 #'
 #' @description
@@ -163,7 +181,7 @@ summarizer <- function(data, path) {
     "charColumnSummary" = dplyr::select(data, where(is.character)) |>
       purrr::map_dfr(unique),
     "numericColumnSummary" = dplyr::select(data, where(is.numeric)) |>
-      purrr::map_df(summary, .id = "column")
+      purrr::map_df(summaryWithNA, .id = "column")
   )
 }
 

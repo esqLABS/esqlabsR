@@ -2,16 +2,18 @@
 % Please edit documentation in R/utilities-figures.R
 \name{createEsqlabsPlotConfiguration}
 \alias{createEsqlabsPlotConfiguration}
-\title{Create an instance of \code{DefaultPlotConfiguration} R6 class}
+\title{Create a \code{DefaultPlotConfiguration} list of properties}
 \usage{
-createEsqlabsPlotConfiguration()
+createEsqlabsPlotConfiguration(plotType = NULL)
+}
+\arguments{
+\item{plotType}{Optional one of \code{"timeProfiles"}, \code{"spiderPlot"}, \verb{"tornadoPlot} adding plot type specific settings}
 }
 \value{
-An instance of \code{DefaultPlotConfiguration} R6 class.
+A named list
 }
 \description{
-An instance of \code{DefaultPlotConfiguration} R6 class from \code{{tlf}} package is
-needed for creating visualizations with the \code{{ospsuite}} package.
+A list of plot properties needed for creating visualizations with the \code{{ospsuite}} package.
 
 The default attributes of the class are chosen to reflect the corporate
 standards adopted by esqLABS GmbH.
@@ -22,7 +24,6 @@ createEsqlabsPlotConfiguration()
 }
 \seealso{
 Other create-plotting-configurations: 
-\code{\link{createEsqlabsExportConfiguration}()},
 \code{\link{createEsqlabsPlotGridConfiguration}()}
 }
 \concept{create-plotting-configurations}

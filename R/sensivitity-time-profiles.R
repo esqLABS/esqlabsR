@@ -67,7 +67,10 @@
 #' parameterPaths <- c(
 #'   "Aciclovir|Lipophilicity",
 #'   "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+#'   ospsuite::toPathString(
+#'     "Neighborhoods", "Kidney_pls_Kidney_ur", "Aciclovir",
+#'     "Glomerular Filtration-GFR-Aciclovir", "GFR fraction"
+#'   )
 #' )
 #'
 #' results <- sensitivityCalculation(
@@ -92,7 +95,10 @@
 #' namedParameterPaths <- c(
 #'   "Lipophilicity" = "Aciclovir|Lipophilicity",
 #'   "Dose" = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+#'   "GFR fraction" = ospsuite::toPathString(
+#'     "Neighborhoods", "Kidney_pls_Kidney_ur", "Aciclovir",
+#'     "Glomerular Filtration-GFR-Aciclovir", "GFR fraction"
+#'   )
 #' )
 #'
 #' resultsNamed <- sensitivityCalculation(
@@ -134,31 +140,14 @@ sensitivityTimeProfiles <- function(
   .validateCharVector(parameterPaths, nullAllowed = TRUE)
 
   # Plot configuration setup -----------------------------
-
-  timeProfilesConfiguration <- list(
-    legendPosition = "bottom",
-    legendTitle = "Parameter factor",
-    linesAlpha = 0.7,
-    linesSize = 1.4,
-    # pointsShape = NULL,
-    title = NULL,
-    titleSize = 14,
-    xAxisScale = "lin",
-    xLabel = NULL,
-    yAxisScale = "log",
-    yLabel = NULL
-  )
-
-  # apply configuration overrides and validate
-  customPlotConfiguration <- .applyPlotConfiguration(
-    defaultPlotConfiguration = defaultPlotConfiguration,
-    plotOverrideConfig = timeProfilesConfiguration,
-    xAxisScale = xAxisScale,
-    yAxisScale = yAxisScale
-  )
+  customPlotConfiguration <- defaultPlotConfiguration %||%
+    .plotConfigurationFromType("timeProfiles")
+  customPlotConfiguration$xAxisScale <- xAxisScale %||%
+    customPlotConfiguration$xAxisScale
+  customPlotConfiguration$yAxisScale <- yAxisScale %||%
+    customPlotConfiguration$yAxisScale
 
   # Prepare data -----------------------------------------
-
   data <- .aggregateSimulationAndObservedData(
     simulationResults = sensitivityCalculation$simulationResults,
     dataSets = observedData,
@@ -212,29 +201,21 @@ sensitivityTimeProfiles <- function(
 #' @noRd
 .createTimeProfiles <- function(data, defaultPlotConfiguration) {
   # update data dependent plot configuration
-  plotConfiguration <- defaultPlotConfiguration$clone()
-  plotConfiguration <- .updatePlotConfiguration(
-    plotConfiguration,
-    list(title = unique(data$OutputPath))
-  )
-
+  plotConfiguration <- defaultPlotConfiguration
+  plotConfiguration$title <- unique(data$OutputPath)
   # create axis labels
   if (is.null(plotConfiguration$xLabel)) {
-    plotConfiguration$xLabel <- paste0(
-      unique(data$xDimension),
-      " [",
-      unique(data$xUnit),
-      "]"
+    plotConfiguration$xLabel <- ospsuite.plots::constructLabelWithUnit(
+      label = unique(data$xDimension),
+      unit = unique(data$xUnit)
     )
   }
   yUnitForPlot <- unique(data$yUnit)
   yDimensionForPlot <- ospsuite::getDimensionForUnit(yUnitForPlot)
   if (is.null(plotConfiguration$yLabel)) {
-    plotConfiguration$yLabel <- paste0(
-      yDimensionForPlot,
-      " [",
-      yUnitForPlot,
-      "]"
+    plotConfiguration$yLabel <- ospsuite.plots::constructLabelWithUnit(
+      label = yDimensionForPlot,
+      unit = yUnitForPlot
     )
   }
 
@@ -276,10 +257,10 @@ sensitivityTimeProfiles <- function(
 
     # Basic plot setup -----------------------------------
 
-    plot <- ggplot() +
-      geom_line(
+    plot <- ggplot2::ggplot() +
+      ggplot2::geom_line(
         data = dplyr::filter(dataSubset, ParameterFactor != 1.0),
-        aes(
+        ggplot2::aes(
           x = xValues,
           y = yValues,
           group = ParameterFactor,
@@ -289,9 +270,9 @@ sensitivityTimeProfiles <- function(
         alpha = plotConfiguration$linesAlpha,
         na.rm = TRUE
       ) +
-      geom_line(
+      ggplot2::geom_line(
         data = dplyr::filter(dataSubset, ParameterFactor == 1.0),
-        aes(xValues, yValues),
+        ggplot2::aes(xValues, yValues),
         color = "black",
         linewidth = plotConfiguration$linesSize,
         alpha = plotConfiguration$linesAlpha,
@@ -301,11 +282,11 @@ sensitivityTimeProfiles <- function(
     # add symbols for observed data
     if (hasObservedData) {
       plot <- plot +
-        geom_point(
+        ospsuite.plots::geom_point_osp(
           data = observedData,
-          aes(xValues, yValues, shape = `Study Id`)
+          ggplot2::aes(xValues, yValues, shape = `Study Id`)
         ) +
-        scale_shape_manual(
+        ggplot2::scale_shape_manual(
           values = rep(
             plotConfiguration$pointsShape,
             length.out = length(unique(observedData$`Study Id`))
@@ -316,19 +297,19 @@ sensitivityTimeProfiles <- function(
 
     # adjust axis scales
     if (isTRUE(plotConfiguration$xAxisScale == "log")) {
-      plot <- plot + scale_x_log10()
+      plot <- plot + ggplot2::scale_x_log10()
     }
     if (isTRUE(plotConfiguration$yAxisScale == "log")) {
       plot <- plot +
-        scale_y_log10(
+        ggplot2::scale_y_log10(
           limits = pLimits,
-          expand = expansion(mult = c(0.01, 0.1)),
+          expand = ggplot2::expansion(mult = c(0.01, 0.1)),
           breaks = scales::breaks_log(),
           labels = scales::label_log()
         )
     } else {
       plot <- plot +
-        scale_y_continuous(
+        ggplot2::scale_y_continuous(
           limits = pLimits,
           breaks = scales::breaks_extended(),
           labels = scales::label_number_auto()
@@ -338,8 +319,8 @@ sensitivityTimeProfiles <- function(
     # Finalize plot --------------------------------------
 
     plot <- plot +
-      facet_wrap(~ParameterPathLabel) +
-      labs(
+      ggplot2::facet_wrap(~ParameterPathLabel) +
+      ggplot2::labs(
         x = plotConfiguration$xLabel,
         y = plotConfiguration$yLabel,
         title = NULL,
@@ -347,14 +328,15 @@ sensitivityTimeProfiles <- function(
       )
 
     plot <- plot +
-      theme_bw(base_size = 11) +
-      theme(
+      ggplot2::theme_bw(base_size = 11) +
+      ggplot2::theme(
         legend.position = plotConfiguration$legendPosition,
-        panel.grid.minor = element_blank(),
-        text = element_text(size = 11)
+        legend.justification = plotConfiguration$legendJustification,
+        panel.grid.minor = ggplot2::element_blank(),
+        text = ggplot2::element_text(size = 11)
       ) +
-      guides(
-        color = guide_colorbar(
+      ggplot2::guides(
+        color = ggplot2::guide_colorbar(
           title = plotConfiguration$legendTitle,
           ticks = FALSE,
           draw.ulim = FALSE,
@@ -362,13 +344,13 @@ sensitivityTimeProfiles <- function(
           title.position = "top",
           order = 1
         ),
-        shape = guide_legend(order = 2)
+        shape = ggplot2::guide_legend(order = 2)
       )
 
     if (hasObservedData) {
       plot <- plot +
-        guides(
-          shape = guide_legend(
+        ggplot2::guides(
+          shape = ggplot2::guide_legend(
             title.position = "top",
             nrow = length(unique(observedData$dataType))
           )
@@ -386,7 +368,7 @@ sensitivityTimeProfiles <- function(
         )
     } else {
       plot <- plot +
-        scale_color_gradient2(
+        ggplot2::scale_color_gradient2(
           name = plotConfiguration$legendTitle,
           low = colorspace::darken(
             plotConfiguration$linesColor[1],
@@ -412,16 +394,17 @@ sensitivityTimeProfiles <- function(
     patchwork::plot_annotation(
       title = plotConfiguration$title,
       subtitle = plotConfiguration$subtitle,
-      theme = theme(
-        plot.title = element_text(size = plotConfiguration$titleSize)
-      )
+      theme = ggplot2::theme(plot.title = ggtext::element_textbox_simple(size = plotConfiguration$titleSize))
     ) +
     patchwork::plot_layout(
       guides = "collect",
       axes = "collect",
       ncol = length(plotList)
     ) &
-    theme(legend.position = plotConfiguration$legendPosition)
+    ggplot2::theme(
+      legend.position = plotConfiguration$legendPosition,
+      legend.justification = plotConfiguration$legendJustification
+    )
 
   return(plotPatchwork)
 }
