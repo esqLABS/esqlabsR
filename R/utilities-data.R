@@ -349,6 +349,9 @@ loadObservedData <- function(project) {
         if (!file.exists(filePath)) {
           stop(messages$scriptFileNotFound(filePath))
         }
+        cli::cli_inform(c(
+          "i" = "Sourcing observed-data script: {.path {filePath}}"
+        ))
         result <- source(filePath, local = TRUE)$value
         if (inherits(result, "DataSet")) {
           stats::setNames(list(result), result$name)
@@ -424,10 +427,8 @@ addObservedData <- function(project, entry) {
     if (name %in% existingNames) {
       stop(messages$observedDataNameExists(name))
     }
-    project$.__enclos_env__$private$.programmaticDataSets[[name]] <- entry
-    existingCache <- project$.__enclos_env__$private$.observedDataNamesCache
-    project$.__enclos_env__$private$.observedDataNamesCache <-
-      c(existingCache, name)
+    project$.addProgrammaticDataSet(name, entry)
+    project$.appendObservedDataNameCache(name)
     newEntry <- list(type = "programmatic")
     project$observedData <- c(project$observedData, list(newEntry))
     project$modified <- TRUE
@@ -450,7 +451,7 @@ addObservedData <- function(project, entry) {
         paste(validTypes, collapse = ", ")
       ))
     }
-    project$.__enclos_env__$private$.observedDataNamesCache <- NULL
+    project$.invalidateObservedDataNamesCache()
     project$observedData <- c(project$observedData, list(entry))
     project$modified <- TRUE
   } else {
@@ -482,7 +483,7 @@ removeObservedData <- function(project, name) {
 
   progDS <- project$.getProgrammaticDataSets()
   if (name %in% names(progDS)) {
-    project$.__enclos_env__$private$.programmaticDataSets[[name]] <- NULL
+    project$.removeProgrammaticDataSet(name)
     # Remove the first programmatic entry in observedData (there is no
     # reliable per-entry name on programmatic entries; removing first
     # programmatic matches the semantics that there is only one
@@ -497,7 +498,7 @@ removeObservedData <- function(project, name) {
     if (length(programIdx) > 0) {
       project$observedData <- project$observedData[-programIdx[[1]]]
     }
-    project$.__enclos_env__$private$.observedDataNamesCache <- NULL
+    project$.invalidateObservedDataNamesCache()
     project$modified <- TRUE
     return(invisible(project))
   }
@@ -516,7 +517,7 @@ removeObservedData <- function(project, name) {
   }
 
   project$observedData <- project$observedData[-matchIdx[[1]]]
-  project$.__enclos_env__$private$.observedDataNamesCache <- NULL
+  project$.invalidateObservedDataNamesCache()
   project$modified <- TRUE
   invisible(project)
 }

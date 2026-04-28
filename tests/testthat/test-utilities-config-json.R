@@ -268,3 +268,33 @@ test_that("importProjectFromExcel handles PK-Sim exported population CSV files w
     )
   })
 })
+
+# ---- internal helpers ----
+
+test_that(".parseCommaListToArray handles values containing apostrophes", {
+  expect_equal(
+    .parseCommaListToArray("5'-Reductase, CYP3A4"),
+    c("5'-Reductase", "CYP3A4")
+  )
+})
+
+test_that(".parseCommaListToArray returns NULL on empty/NA input", {
+  expect_null(.parseCommaListToArray(NULL))
+  expect_null(.parseCommaListToArray(NA))
+  expect_null(.parseCommaListToArray(""))
+})
+
+test_that(".parseCommaListToArray trims whitespace", {
+  expect_equal(.parseCommaListToArray(" a , b ,c"), c("a", "b", "c"))
+})
+
+test_that(".naToNull leaves multi-element vectors unchanged", {
+  expect_equal(.naToNull(c("a", "b")), c("a", "b"))
+  expect_equal(.naToNull(c(1, NA)), c(1, NA))
+})
+
+test_that(".naToNull returns NULL for scalar NA", {
+  expect_null(.naToNull(NA))
+  expect_null(.naToNull(NA_character_))
+  expect_null(.naToNull(NA_real_))
+})

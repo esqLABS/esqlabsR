@@ -435,7 +435,10 @@ runScenarios <- function(
     )
   }
 
-  # Run population simulations sequentially and append their results
+  # Run population simulations sequentially and append their results.
+  # `runSimulations()` only batches independent simulations; each population
+  # run requires its own population object, so they cannot be combined in a
+  # single batch call.
   for (idx in seq_along(scenarioNames)) {
     prepared <- preparedList[[idx]]
     if (!is.null(prepared$population)) {
@@ -551,9 +554,6 @@ exportScenarioResults <- function(
         warning(paste0("Cannot save to path '", outputFolder, "'"))
         message("Original error message:")
         message(cond)
-      },
-      warning = function(cond) {
-        warning(cond)
       }
     )
   }
@@ -706,7 +706,9 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' @param steadyState Logical vector. Whether to simulate steady-state for each scenario. Default is `FALSE`.
 #'   Can be a single logical value (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
 #' @param steadyStateTime Numeric vector. Steady-state times. Only used when corresponding `steadyState` is `TRUE`.
-#'   If `NULL` (default), no steady-state time will be set. Can be a single numeric value (recycled for all scenarios)
+#'   If `NULL` (default), no steady-state time is set on the scenario, and
+#'   `Scenario$new()`'s default of 1000 (in the configured time unit) takes effect at simulation time.
+#'   Can be a single numeric value (recycled for all scenarios)
 #'   or a vector with the same length as `pkmlFilePaths`.
 #' @param steadyStateTimeUnit Character vector. Steady-state time units. Only used when `steadyState = TRUE` and `steadyStateTime` is provided.
 #'   If `NULL` (default), "min" will be used. Can be a single string (recycled for all scenarios) or a vector
@@ -978,7 +980,10 @@ createScenariosFromPKML <- function(
 
   # Initialize variables
   scenarios <- list()
-  allScenarioNames <- c()
+  # Tracks the *original* (pre-rename) scenario names seen so far, so the
+  # collision counter below increments per original name. The renamed
+  # collision-resolved names are stored as the keys of `scenarios`.
+  originalScenarioNames <- c()
 
   for (i in seq_along(pkmlFilePaths)) {
     pkmlPath <- pkmlFilePaths[[i]]
@@ -1001,21 +1006,20 @@ createScenariosFromPKML <- function(
     }
 
     # Look for duplicated scenario names
-    if (scenarioName %in% allScenarioNames) {
-      # Duplicated scenarioName found
-      # count number of existing scenarios with this name
-      existingCount <- sum(allScenarioNames == originalScenarioName)
-      # Make scenario name unique by appending index
+    if (scenarioName %in% originalScenarioNames) {
+      # Duplicate found: count how many times the original name has already
+      # been seen and append the next index. e.g. second occurrence of "S"
+      # becomes "S_2", third becomes "S_3", etc.
+      existingCount <- sum(originalScenarioNames == originalScenarioName)
       scenarioName <- paste0(scenarioName, "_", existingCount + 1)
 
-      # Warn the user
       warning(messages$autocorrectDuplicateScenarioNames(
         originalScenarioName,
         scenarioName
       ))
     }
 
-    allScenarioNames <- c(allScenarioNames, originalScenarioName)
+    originalScenarioNames <- c(originalScenarioNames, originalScenarioName)
 
     simTree <- ospsuite::getSimulationTree(simulation)
 

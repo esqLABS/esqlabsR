@@ -95,26 +95,39 @@ validationResult <- R6::R6Class(
 # Helper functions ----
 
 #' Categorize validation messages
+#'
+#' Best-effort heuristic categorization based on the wording of upstream errors
+#' and warnings. Keep in mind this couples categories to specific phrases; if
+#' phrasing drifts, callers may see "Validation" buckets instead of the
+#' specific category. Long-term, the throw sites should attach categories via
+#' classed conditions instead of relying on regex matching here.
+#'
 #' @keywords internal
 .categorize_message <- function(message) {
-  dplyr::case_when(
-    grepl(
-      "missing|empty|not found|required field",
-      message,
-      ignore.case = TRUE
-    ) ~
-      "Missing Fields",
-    grepl("duplicate|unique", message, ignore.case = TRUE) ~ "Uniqueness",
-    grepl(
-      "not defined|invalid.*reference|references undefined",
-      message,
-      ignore.case = TRUE
-    ) ~
-      "Invalid Reference",
-    grepl("format|separated|Wrong number", message) ~ "Format Error",
-    grepl("length|mismatch", message, ignore.case = TRUE) ~ "Structure",
-    .default = "Validation"
-  )
+  if (grepl(
+    "missing|empty|not found|required field",
+    message,
+    ignore.case = TRUE
+  )) {
+    return("Missing Fields")
+  }
+  if (grepl("duplicate|unique", message, ignore.case = TRUE)) {
+    return("Uniqueness")
+  }
+  if (grepl(
+    "not defined|invalid.*reference|references undefined",
+    message,
+    ignore.case = TRUE
+  )) {
+    return("Invalid Reference")
+  }
+  if (grepl("format|separated|Wrong number", message)) {
+    return("Format Error")
+  }
+  if (grepl("length|mismatch", message, ignore.case = TRUE)) {
+    return("Structure")
+  }
+  "Validation"
 }
 
 #' Check for duplicate values and add critical error if found
@@ -582,9 +595,21 @@ validationResult <- R6::R6Class(
   result <- validationResult$new()
 
   if (isAnyCriticalErrors(validationResults)) {
+    skipped <- c(
+      "scenario individualId / populationId references",
+      "scenario modelParameters references",
+      "scenario applicationProtocol references",
+      "scenario outputPathIds references",
+      "plot scenario / dataSet references"
+    )
     result$add_warning(
       "Skipped",
-      "Cross-reference validation skipped due to critical errors"
+      paste0(
+        "Cross-reference validation skipped due to critical errors. ",
+        "Re-run validation after fixing them to also check: ",
+        paste(skipped, collapse = "; "),
+        "."
+      )
     )
     return(result)
   }

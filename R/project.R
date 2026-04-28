@@ -209,7 +209,11 @@ Project <- R6::R6Class(
       replace_env_vars = TRUE
     ) {
       # In case project configuration is initialized empty
-      if (is.null(path) || is.na(path)) {
+      if (
+        is.null(path) ||
+          length(path) == 0L ||
+          (length(path) == 1L && is.na(path))
+      ) {
         return(NULL)
       }
 
@@ -217,7 +221,11 @@ Project <- R6::R6Class(
         path <- private$.replace_env_var(path)
       }
 
-      if (is.null(parent) || is.na(parent) || fs::is_absolute_path(path)) {
+      if (
+        is.null(parent) ||
+          (length(parent) == 1L && is.na(parent)) ||
+          fs::is_absolute_path(path)
+      ) {
         # When provided path is absolute or doesn't have parent directory, don't
         # append parent
         abs_path <- fs::path_abs(path)
@@ -241,20 +249,16 @@ Project <- R6::R6Class(
       # split path between each /
       path_split <- unlist(strsplit(path, "/"))
       for (i in seq_along(path_split)) {
-        # Don't replace "path" in path_split[i] with PATH variable (windows)
-        if (
-          !stringr::str_detect(
-            string = path_split[i],
-            pattern = stringr::regex("path", ignore_case = T)
-          )
-        ) {
-          # check if path_split[i] is an environment variable
-          if (Sys.getenv(path_split[i]) != "") {
-            private$.replaced_env_vars[[path_split[
-              i
-            ]]] <- Sys.getenv(path_split[i])
-            path_split[i] <- Sys.getenv(path_split[i])
-          }
+        # Skip the system PATH variable (named "PATH" or "Path" depending on OS)
+        # to avoid clobbering it. Other env vars whose name happens to contain
+        # "path" (e.g. MY_DATA_PATH) are still expanded.
+        if (toupper(path_split[i]) == "PATH") {
+          next
+        }
+        if (Sys.getenv(path_split[i]) != "") {
+          private$.replaced_env_vars[[path_split[i]]] <-
+            Sys.getenv(path_split[i])
+          path_split[i] <- Sys.getenv(path_split[i])
         }
       }
       # reconstruct path with updated environment variables
@@ -279,33 +283,15 @@ Project <- R6::R6Class(
       jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
       private$.rawData <- jsonData
 
-      # Validate schema version
+      # Validate schema version. The JSON `schemaVersion` is the loading
+      # contract; `esqlabsRVersion` is informational metadata (preserved on
+      # round-trip) and is not used to gate or warn on load.
       if (is.null(jsonData$schemaVersion) || jsonData$schemaVersion != "2.0") {
         stop(paste0(
           "Unsupported or missing schemaVersion. Expected '2.0', got '",
           jsonData$schemaVersion %||% "NULL",
           "'."
         ))
-      }
-
-      # Check esqlabsRVersion for compatibility warning
-      if (!is.null(jsonData$esqlabsRVersion)) {
-        jsonMajor <- as.integer(strsplit(jsonData$esqlabsRVersion, "\\.")[[1]][[
-          1
-        ]])
-        pkgMajor <- as.integer(strsplit(
-          as.character(utils::packageVersion("esqlabsR")),
-          "\\."
-        )[[1]][[1]])
-        if (jsonMajor != pkgMajor) {
-          warning(paste0(
-            "JSON was created with esqlabsR v",
-            jsonData$esqlabsRVersion,
-            " but current version is v",
-            utils::packageVersion("esqlabsR"),
-            ". Some fields may not be compatible."
-          ))
-        }
       }
 
       self$schemaVersion <- jsonData$schemaVersion
@@ -533,6 +519,15 @@ Project <- R6::R6Class(
         }
         if (!is.null(entry$outputPathIds)) {
           pathIds <- unlist(entry$outputPathIds)
+          unknown <- setdiff(pathIds, names(self$outputPaths))
+          if (length(unknown) > 0) {
+            stop(
+              "Scenario '",
+              entry$name,
+              "' references unknown outputPathIds: ",
+              paste(unknown, collapse = ", ")
+            )
+          }
           sc$outputPaths <- unname(self$outputPaths[pathIds])
         }
         result[[entry$name]] <- sc
@@ -602,7 +597,7 @@ Project <- R6::R6Class(
         names(row) <- allCols
         as.data.frame(row, stringsAsFactors = FALSE)
       })
-      do.call(rbind, rows)
+      as.data.frame(dplyr::bind_rows(rows))
     }
   ),
   public = list(
@@ -612,11 +607,47 @@ Project <- R6::R6Class(
     .getProgrammaticDataSets = function() {
       private$.programmaticDataSets
     },
+    #' @description Internal method to register a programmatic DataSet.
+    #' Not intended for end-user use.
+    #' @param name Character. Key under which the DataSet is stored.
+    #' @param dataSet A `DataSet` object.
+    #' @keywords internal
+    .addProgrammaticDataSet = function(name, dataSet) {
+      private$.programmaticDataSets[[name]] <- dataSet
+    },
+    #' @description Internal method to drop a programmatic DataSet by name.
+    #' @param name Character.
+    #' @keywords internal
+    .removeProgrammaticDataSet = function(name) {
+      private$.programmaticDataSets[[name]] <- NULL
+    },
+    #' @description Internal method to retrieve the raw filePaths metadata
+    #' (a named list of `list(value, description)` entries). Not intended for
+    #' end-user use; consumed by the Excel import/export bridge.
+    #' @keywords internal
+    .getFilePathsData = function() {
+      private$.filePathsData
+    },
     #' @description Internal method to cache observed data names.
     #' @param names Character vector of DataSet names.
     #' @keywords internal
     .cacheObservedDataNames = function(names) {
       private$.observedDataNamesCache <- names
+    },
+    #' @description Internal method to invalidate the cached observed data
+    #' names. Use after mutating `observedData`.
+    #' @keywords internal
+    .invalidateObservedDataNamesCache = function() {
+      private$.observedDataNamesCache <- NULL
+    },
+    #' @description Internal method to append to the cached observed data names.
+    #' @param name Character scalar to append.
+    #' @keywords internal
+    .appendObservedDataNameCache = function(name) {
+      private$.observedDataNamesCache <- c(
+        private$.observedDataNamesCache,
+        name
+      )
     },
     #' @description Internal method to get cached observed data names.
     #' @keywords internal
@@ -941,23 +972,17 @@ Project <- R6::R6Class(
 #' @rdname Project
 #' @usage NULL
 #' @export
-ProjectConfiguration <- R6::R6Class(
-  "ProjectConfiguration",
-  inherit = Project,
-  public = list(
-    #' @description Deprecated. Use `Project$new()` instead.
-    #' @param projectConfigurationFilePath Path to the project file.
-    #' @param ... Additional arguments passed to `Project$new()`.
-    initialize = function(projectConfigurationFilePath = character(), ...) {
-      lifecycle::deprecate_soft(
-        what = "ProjectConfiguration()",
-        with = "Project()",
-        when = "7.0.0"
-      )
-      super$initialize(projectFilePath = projectConfigurationFilePath, ...)
-    }
+ProjectConfiguration <- function(
+  projectConfigurationFilePath = character(),
+  ...
+) {
+  lifecycle::deprecate_soft(
+    what = "ProjectConfiguration()",
+    with = "Project$new()",
+    when = "7.0.0"
   )
-)
+  Project$new(projectFilePath = projectConfigurationFilePath, ...)
+}
 
 # Internal Helper Functions ----
 
@@ -1140,10 +1165,7 @@ isProjectInitialized <- function(destination = ".") {
   }
 
   # Check for Project.xlsx file
-  hasConfigFile <- any(stringr::str_detect(
-    "Project.*xlsx$",
-    fs::dir_ls(destination)
-  ))
+  hasConfigFile <- length(fs::dir_ls(destination, glob = "*Project*.xlsx")) > 0
 
   # Check for Configurations folder
   hasConfigFolder <- fs::dir_exists(file.path(destination, "Configurations"))
@@ -1277,7 +1299,11 @@ exampleProjectConfigurationPath <- function() {
 .projectToJson <- function(project) {
   list(
     schemaVersion = project$schemaVersion %||% "2.0",
-    esqlabsRVersion = as.character(utils::packageVersion("esqlabsR")),
+    # Preserve the version stamp from the loaded file; only fall back to the
+    # current package version when the project was constructed in-memory and
+    # has no recorded version. This keeps round-trip save/load stable.
+    esqlabsRVersion = project$esqlabsRVersion %||%
+      as.character(utils::packageVersion("esqlabsR")),
     filePaths = .filePathsToJson(project),
     observedData = project$observedData %||% list(),
     outputPaths = as.list(project$outputPaths) %||% list(),
@@ -1644,6 +1670,18 @@ exampleProjectConfigurationPath <- function() {
   if (is.null(jsonPath) || !file.exists(jsonPath)) {
     result$in_sync <- project$modified == FALSE
     result$unsaved_changes <- project$modified
+
+    # Even without a JSON file, sibling Excel files may exist; flag those as
+    # excel_modified relative to the absent JSON so callers don't get a false
+    # in_sync = TRUE.
+    if (!is.null(jsonPath)) {
+      excelPath <- sub("\\.json$", ".xlsx", jsonPath)
+      if (file.exists(excelPath)) {
+        result$excel_modified <- TRUE
+        result$in_sync <- FALSE
+      }
+    }
+
     if (!silent && result$unsaved_changes) {
       message("Project has unsaved changes (no JSON file to compare).")
     }

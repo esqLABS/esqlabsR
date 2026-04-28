@@ -949,9 +949,7 @@ projectConfigurationStatus <- function(...) {
 #' @keywords internal
 #' @noRd
 .extractFilePathsData <- function(pc) {
-  # Access via the environment since .filePathsData is private
-  pcEnv <- pc$.__enclos_env__$private
-  pcEnv$.filePathsData
+  pc$.getFilePathsData()
 }
 
 # ===========================================================================
@@ -965,7 +963,7 @@ projectConfigurationStatus <- function(...) {
   if (is.null(x) || length(x) == 0) {
     return(NULL)
   }
-  if (is.na(x)) {
+  if (length(x) == 1L && is.na(x)) {
     return(NULL)
   }
   x
@@ -978,10 +976,6 @@ projectConfigurationStatus <- function(...) {
   if (is.null(x) || length(x) == 0 || is.na(x) || x == "") {
     return(NULL)
   }
-  trimws(scan(
-    text = as.character(x),
-    what = "character",
-    sep = ",",
-    quiet = TRUE
-  ))
+  parts <- trimws(strsplit(as.character(x), ",", fixed = TRUE)[[1]])
+  parts[nzchar(parts)]
 }

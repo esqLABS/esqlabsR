@@ -68,9 +68,11 @@
   deprecated. The `observedData` parameter is removed and
   `project` is now the first argument. (#908)
 
-- **`loadObservedData()` and `loadObservedDataFromPKML()` removed.** Observed
-  data is now declared in the `observedData` section of the JSON configuration
-  and loaded automatically. (#908)
+- **`loadObservedData()` rewritten.** Observed data is now declared in the
+  `observedData` section of the JSON configuration and loaded automatically.
+  The function returns a named list of `DataSet` objects loaded from a
+  project's declared observed data sources. `loadObservedDataFromPKML()` is
+  removed. (#908)
 
 - The following Excel I/O functions have been removed:
   `readParametersFromXLS()`, `readIndividualCharacteristicsFromXLS()`,
@@ -101,12 +103,12 @@
 
 - **New `add*()` and `remove*()` functions for programmatic project
   editing** (#908): `addIndividual()`, `addPopulation()`,
-  `addModelParameterGroup()`, `addApplicationGroup()`, `addOutputPath()`,
-  plus `removeScenario()`, `removeIndividual()`, `removePopulation()`,
-  `removeModelParameterGroup()`, `removeApplicationGroup()`,
-  `removeObservedData()`, `removeOutputPath()`. Each has a matching R6
-  method on `Project`. `addObservedData()` is now also available as a
-  standalone function; the existing R6 method delegates to it.
+  `addOutputPath()`, plus `removeScenario()`, `removeIndividual()`,
+  `removePopulation()`, `removeObservedData()`, `removeOutputPath()`. Each
+  has a matching R6 method on `Project`. `addObservedData()` is now also
+  available as a standalone function; the existing R6 method delegates to
+  it. (See the breaking-changes section above for the per-parameter helpers
+  that replace `addModelParameterGroup()` / `addApplicationGroup()`.)
 
 - **`importProjectFromExcel()` added.** Migrates an Excel-based
   project to a v2.0 JSON configuration file, including auto-merging species
@@ -134,7 +136,6 @@
   (placed after `SteadyStateTimeUnit`). Also available as a parameter in
   `createScenariosFromPKML()`. (#981)
 
-- New `loadObservedData()` function returns a named list of `DataSet` objects loaded from a `Project`'s declared observed data sources.
 - `initProject()` now accepts `type` parameter (`"minimal"` or `"example"`) and `createExcel` parameter (`TRUE`/`FALSE`) for flexible project scaffolding.
 - Population CSV files are now stored in `Populations/` folder at project root (previously `Configurations/PopulationsCSV/`).
 - Documentation: vignettes rewritten for the JSON-primary workflow; the `advanced` vignette has been removed.

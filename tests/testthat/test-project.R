@@ -304,6 +304,35 @@ test_that("loadProject errors on non-JSON file content", {
   unlink(tmp)
 })
 
+test_that("saveProject preserves esqlabsRVersion from source JSON", {
+  jsonPath <- testProjectJSONPath()
+  rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  storedVersion <- rawJson$esqlabsRVersion
+  expect_false(is.null(storedVersion))
+
+  pc <- loadProject(jsonPath)
+
+  tmp <- tempfile(fileext = ".json")
+  on.exit(unlink(tmp), add = TRUE)
+  saveProject(pc, tmp)
+
+  reloaded <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
+  expect_equal(reloaded$esqlabsRVersion, storedVersion)
+})
+
+test_that("loadProject errors when scenario references unknown outputPathIds", {
+  jsonPath <- testProjectJSONPath()
+  cfg <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+
+  cfg$scenarios[[1]]$outputPathIds <- list("DoesNotExist")
+
+  tmpDir <- withr::local_tempdir()
+  tmpJson <- file.path(tmpDir, "Project.json")
+  jsonlite::write_json(cfg, tmpJson, auto_unbox = TRUE, null = "null")
+
+  expect_error(loadProject(tmpJson), "DoesNotExist")
+})
+
 test_that("loadProject errors when steadyStateTime is set but steadyStateTimeUnit is null", {
   jsonPath <- testProjectJSONPath()
   cfg <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
@@ -493,6 +522,22 @@ test_that("sync detects external JSON file changes", {
 
   expect_false(result$in_sync)
   expect_true(result$json_modified)
+})
+
+test_that("sync detects Excel files when JSON is missing", {
+  temp_proj <- local_test_project()
+  pc <- loadProject(temp_proj$snapshot_path)
+
+  # Delete the JSON but keep Excel files. Sync should not silently report
+  # in_sync; it should flag the Excel-side state as modified relative to
+  # the absent JSON.
+  unlink(temp_proj$snapshot_path)
+  expect_false(file.exists(temp_proj$snapshot_path))
+
+  result <- pc$sync(silent = TRUE)
+
+  expect_false(result$in_sync)
+  expect_true(result$excel_modified)
 })
 
 test_that("sync reports excel_modified when Excel differs from JSON", {
@@ -973,8 +1018,9 @@ test_that("saveProject persists scenario added via addScenario", {
   )
 })
 
-test_that("saveProject updates esqlabsRVersion to current package version", {
+test_that("saveProject defaults esqlabsRVersion to current package version when project lacks one", {
   pc <- testProject()
+  pc$esqlabsRVersion <- NULL
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
@@ -1006,6 +1052,19 @@ test_that("isProjectInitialized correctly identifies project directories", {
 
 test_that("isProjectInitialized handles non-existent directories", {
   expect_false(isProjectInitialized("non_existent_directory"))
+})
+
+test_that("isProjectInitialized detects Project.xlsx without Configurations folder", {
+  tempDir <- withr::local_tempdir(pattern = "test_project_xlsx_only")
+
+  # Create only an Excel file matching the Project.xlsx pattern
+  file.create(file.path(tempDir, "Project.xlsx"))
+  expect_true(isProjectInitialized(tempDir))
+
+  # Empty directory containing an unrelated xlsx is not a project
+  unlink(file.path(tempDir, "Project.xlsx"))
+  file.create(file.path(tempDir, "Other.xlsx"))
+  expect_false(isProjectInitialized(tempDir))
 })
 
 test_that("initProject with overwrite = TRUE doesn't ask for permission", {
