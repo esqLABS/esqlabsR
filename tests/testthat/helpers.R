@@ -161,11 +161,22 @@ extractAxisRange <- function(p) {
 summarizer <- function(data, path) {
   data <- dplyr::filter(data, ParameterPath %in% path)
 
+  # Coerce summary() output to a fixed-shape numeric vector so bind_rows
+  # tolerates columns with and without NAs (which would otherwise have
+  # different lengths and class `summaryDefault`).
+  fields <- c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max.", "NA's")
+  numericSummary <- function(x) {
+    s <- summary(x)
+    out <- setNames(as.numeric(s[fields]), fields)
+    out[["NA's"]] <- out[["NA's"]] %||% 0
+    out
+  }
+
   list(
     "charColumnSummary" = dplyr::select(data, where(is.character)) |>
       purrr::map_dfr(unique),
     "numericColumnSummary" = dplyr::select(data, where(is.numeric)) |>
-      purrr::map_df(summary, .id = "column")
+      purrr::map_df(numericSummary, .id = "column")
   )
 }
 
