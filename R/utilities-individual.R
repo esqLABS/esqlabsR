@@ -1,3 +1,5 @@
+# Apply individual to simulation ----
+
 #' Apply an individual to the simulation. For human species, only parameters
 #' that do not override formulas are applied. For other species, all parameters
 #' returned by `createIndividual` are applied.
@@ -74,6 +76,8 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
   }
   moleculeOntogenies
 }
+
+# Public CRUD: individuals ----
 
 #' Add an individual to a Project
 #'

@@ -1,3 +1,5 @@
+# DataCombined creation ----
+
 #' Generate DataCombined objects from a Project
 #'
 #' @param dataCombinedNames Names of the DataCombined objects that will be
@@ -212,6 +214,8 @@ createDataCombined <- function(
 
   return(dataCombinedList)
 }
+
+# Internal helpers ----
 
 #' Validate and process a DataCombined data frame
 #'

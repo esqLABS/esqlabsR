@@ -88,6 +88,8 @@ stringToNum <- function(
   return(numVals)
 }
 
+# DataSet aggregation ----
+
 #' Calculate mean and standard deviation for the yValues of the given `DataSet`
 #' objects
 #'
@@ -280,6 +282,8 @@ calculateMeanDataSet <- function(
   return(meanDataSet)
 }
 
+# LLOQ / ULOQ enums ----
+
 #' Possible entries for the `lloqMode` argument of `calculateMeans()`
 #' @export
 LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
@@ -287,6 +291,8 @@ LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 #' Possible modes to treat values above the upper limit of quantification.
 #' @export
 ULOQMode <- enum(list("ULOQ", "ignore"))
+
+# Observed data loading and CRUD ----
 
 .resolveDataPath <- function(entryValue, projectDefault, dataFolder) {
   if (!is.null(entryValue)) {

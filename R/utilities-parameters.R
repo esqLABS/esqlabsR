@@ -1,3 +1,5 @@
+# Parameter structure manipulation ----
+
 #' Extend parameters structure with new entries
 #'
 #' @param parameters A parameter structure (a list with elements `paths`,
@@ -131,6 +133,8 @@ extendParameterStructure <- function(parameters, newParameters) {
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }
 
+# Parameter comparison ----
+
 #' @title Check if two parameters are equal with respect to certain properties.
 #'
 #' @details The parameters are not equal if: The paths of the parameters are not
@@ -255,6 +259,8 @@ isTableFormulasEqual <- function(formula1, formula2) {
   }
 }
 
+# Simulation parameter setters ----
+
 #' Set the values of parameters in the simulation by path, if the `condition` is
 #' true.
 #'
@@ -327,6 +333,8 @@ setParameterValuesByPathWithCondition <- function(
   paramName <- fullPathParts[[length(fullPathParts)]]
   return(list(containerPath = containerPath, parameterName = paramName))
 }
+
+# Public CRUD: model parameters and inline parameters ----
 
 #' Add a parameter to a named model-parameter set
 #'

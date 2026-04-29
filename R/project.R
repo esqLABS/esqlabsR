@@ -1,3 +1,5 @@
+# Project R6 class ----
+
 #' @title Project
 #' @docType class
 #' @description An R6 class representing an esqlabsR project
@@ -1303,7 +1305,7 @@ exampleProjectConfigurationPath <- function() {
   exampleProjectPath()
 }
 
-# Internal Helper Functions ----
+# Project → JSON serialization ----
 
 #' Convert a Project object to a JSON-serializable list
 #' @param project A `Project` object.
@@ -1647,6 +1649,8 @@ exampleProjectConfigurationPath <- function() {
     row
   })
 }
+
+# Project sync and validation ----
 
 #' Check synchronization status of a Project
 #' @param project A `Project` object.

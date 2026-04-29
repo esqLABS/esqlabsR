@@ -1,3 +1,5 @@
+# Enums ----
+
 #' Possible gender entries as integer values
 #'
 #' @export
@@ -6,6 +8,8 @@ GenderInt <- enum(list(
   FEMALE = 2,
   UNKNOWN = 3
 ))
+
+# Population variability and sampling ----
 
 #' Add user defined variability on parameters to a population.
 #'
@@ -180,6 +184,8 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
   }
   return(NULL)
 }
+
+# Public CRUD: populations ----
 
 #' Add a population to a Project
 #'
