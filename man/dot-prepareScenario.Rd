@@ -4,12 +4,12 @@
 \alias{.prepareScenario}
 \title{Prepare a single scenario for simulation}
 \usage{
-.prepareScenario(scenario, pc, customParams, cache, simulationRunOptions)
+.prepareScenario(scenario, project, customParams, cache, simulationRunOptions)
 }
 \arguments{
 \item{scenario}{A \code{Scenario} object (plain data class).}
 
-\item{pc}{A \code{Project} object.}
+\item{project}{A \code{Project} object.}
 
 \item{customParams}{Optional parameter structure from the caller.}
 

@@ -174,3 +174,71 @@ test_that("`compareWithNA()` works as expected", {
 
   expect_equal(res, c(TRUE, FALSE, TRUE, FALSE))
 })
+simulation <- loadSimulation(system.file(
+  "extdata",
+  "Aciclovir.pkml",
+  package = "ospsuite"
+))
+simTree <- getSimulationTree(simulation)
+
+test_that("It throws an error if the quantity does not come from a molecule", {
+  path <- simTree$Organism$Weight$path
+  quantity <- getQuantity(path, simulation)
+
+  expect_error(
+    getMoleculeNameFromQuantity(quantity),
+    regexp = messages$cannotGetMoleculeFromQuantity(path),
+    fixed = TRUE
+  )
+})
+
+test_that("It returns the correct name of the molecule for molecules global parameter", {
+  path <- simTree$Aciclovir$`Fraction unbound (plasma)`
+  quantity <- getQuantity(path, simulation)
+
+  expect_equal(getMoleculeNameFromQuantity(quantity), "Aciclovir")
+})
+
+test_that("It returns the correct name of the molecule for molecules local parameter", {
+  path <- simTree$Organism$VenousBlood$Plasma$Aciclovir$Concentration
+  quantity <- getQuantity(path, simulation)
+
+  expect_equal(getMoleculeNameFromQuantity(quantity), "Aciclovir")
+})
+
+test_that("It returns the correct name of the molecule in a container", {
+  path <- simTree$Organism$VenousBlood$Plasma$Aciclovir$path
+  quantity <- getQuantity(path, simulation)
+
+  expect_equal(getMoleculeNameFromQuantity(quantity), "Aciclovir")
+})
+
+test_that("It returns the correct name for an observer", {
+  path <- simTree$Organism$PeripheralVenousBlood$Aciclovir$`Plasma (Peripheral Venous Blood)`
+  quantity <- getQuantity(path, simulation)
+
+  expect_equal(getMoleculeNameFromQuantity(quantity), "Aciclovir")
+})
+# .warnIfReferenced ----
+
+test_that(".warnIfReferenced flags scenarios referencing an individual", {
+  project <- testProject()
+  # Seed a scenario referencing Indiv1 (already exists in TestProject)
+  scNames <- names(project$scenarios)[vapply(
+    project$scenarios,
+    function(s) identical(s$individualId, "Indiv1"),
+    logical(1)
+  )]
+  expect_true(length(scNames) >= 1)
+  expect_warning(
+    .warnIfReferenced(project, "individual", "Indiv1"),
+    regexp = paste(scNames, collapse = "|")
+  )
+})
+
+test_that(".warnIfReferenced is silent when nothing references the id", {
+  project <- testProject()
+  expect_no_warning(
+    .warnIfReferenced(project, "individual", "DoesNotExist_XYZ")
+  )
+})

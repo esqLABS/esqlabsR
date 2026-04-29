@@ -214,13 +214,13 @@ exportConfigurationDf <- data.frame(list(
 
 # Helper to create a project with custom plots data
 .withPlots <- function(
-  project = project,
+  baseProject = project,
   dataCombined = dataCombinedDf,
   plotConfiguration = plotConfigurationDf,
   plotGrids = plotGridsDf,
   exportConfiguration = exportConfigurationDf
 ) {
-  pcLocal <- project$clone()
+  pcLocal <- baseProject$clone()
   pcLocal$plots <- list(
     dataCombined = dataCombined,
     plotConfiguration = plotConfiguration,
@@ -1090,5 +1090,426 @@ test_that("It shows a warning when yAxisScale is log and yValuesLimits contain 0
       axis = "y"
     ),
     fixed = TRUE
+  )
+})
+project <- testProject()
+
+scenarioNames <- c("TestScenario", "PopulationScenario")
+outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+
+simulatedScenarios <- runScenarios(
+  project,
+  scenarioNames = scenarioNames
+)
+
+observedDataForSetup <- loadObservedData(project)
+
+# Create a proper data frame with paths for all entries
+dataCombinedDf <- data.frame(list(
+  "DataCombinedName" = c(
+    "AciclovirPVB",
+    "AciclovirPVB",
+    "DC_missingPath",
+    "DC_missingPath"
+  ),
+  "dataType" = c("simulated", "observed", "simulated", "observed"),
+  "label" = c(
+    "Aciclovir simulated",
+    "Aciclovir observed",
+    "Aciclovir simulated",
+    "Aciclovir observed"
+  ),
+  "scenario" = c(scenarioNames[1], NA, scenarioNames[1], NA),
+  "path" = c(outputPaths, NA, outputPaths, NA),
+  "dataSet" = c(
+    NA,
+    names(observedDataForSetup)[1],
+    NA,
+    names(observedDataForSetup)[1]
+  ),
+  "group" = c(
+    "Aciclovir PVB",
+    "Aciclovir PVB",
+    "Aciclovir PVB",
+    "Aciclovir PVB"
+  ),
+  "xOffsets" = c(NA, NA, NA, NA),
+  "xOffsetsUnits" = c(NA, NA, NA, NA),
+  "yOffsets" = c(NA, NA, NA, NA),
+  "yOffsetsUnits" = c(NA, NA, NA, NA),
+  "xScaleFactors" = c(NA, NA, NA, NA),
+  "yScaleFactors" = c(NA, NA, NA, NA)
+))
+
+test_that("It returns correct names of data combined when a path is not specified for one simulated scenario", {
+  # Create a specific data frame with a missing path for testing
+  df_missing_path <- dataCombinedDf
+  df_missing_path$path[3] <- NA
+
+  expect_error(
+    .validateDataCombined(df_missing_path, list(), observedDataForSetup),
+    regexp = messages$stopNoPathProvided("DC_missingPath")
+  )
+})
+
+test_that("It errors when label is missing", {
+  df_missing_label <- dataCombinedDf
+  df_missing_label$label[1] <- NA
+  expect_error(
+    .validateDataCombined(df_missing_label, list(), observedDataForSetup),
+    regexp = messages$missingLabel()
+  )
+})
+
+test_that("It errors when dataType is missing", {
+  df_missing_dataType <- dataCombinedDf
+  df_missing_dataType$dataType[1] <- NA
+  expect_error(
+    .validateDataCombined(df_missing_dataType, list(), observedDataForSetup),
+    regexp = messages$missingDataType()
+  )
+})
+
+test_that("It errors when scenario is missing for simulated dataType", {
+  df_missing_scenario <- dataCombinedDf
+  df_missing_scenario$scenario[1] <- NA
+  expect_error(
+    .validateDataCombined(df_missing_scenario, list(), observedDataForSetup),
+    regexp = messages$missingScenarioName()
+  )
+})
+
+test_that("It errors when dataSet is missing for observed dataType", {
+  df_missing_dataSet <- dataCombinedDf
+  df_missing_dataSet$dataSet[2] <- NA
+  expect_error(
+    .validateDataCombined(df_missing_dataSet, list(), observedDataForSetup),
+    regexp = messages$stopNoDataSetProvided("AciclovirPVB")
+  )
+})
+
+test_that("It warns when scenario is not found in simulatedScenarios", {
+  df_invalid_scenario <- dataCombinedDf
+  df_invalid_scenario$scenario[1] <- "NonExistentScenario"
+
+  # First test with stopIfNotFound = TRUE
+  expect_error(
+    .validateDataCombined(
+      df_invalid_scenario,
+      list(),
+      observedDataForSetup,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$warningInvalidScenarioName(c(
+      "NonExistentScenario",
+      "TestScenario"
+    )),
+    fixed = TRUE
+  )
+
+  # Then test with stopIfNotFound = FALSE
+  expect_warning(
+    .validateDataCombined(
+      df_invalid_scenario,
+      list(),
+      observedDataForSetup,
+      stopIfNotFound = FALSE
+    ),
+    regexp = messages$warningInvalidScenarioName(c(
+      "NonExistentScenario",
+      "TestScenario"
+    )),
+    fixed = TRUE
+  )
+})
+
+test_that("It warns when dataSet is not found in observedData", {
+  # Create mock simulatedScenarios to avoid the scenario not found error
+  mock_scenario <- list()
+  mock_scenario[[scenarioNames[1]]] <- list(
+    results = list(allQuantityPaths = outputPaths)
+  )
+
+  df_invalid_dataSet <- dataCombinedDf
+  df_invalid_dataSet$dataSet[2] <- "NonExistentDataSet"
+
+  # First test with stopIfNotFound = TRUE
+  expect_error(
+    .validateDataCombined(
+      df_invalid_dataSet,
+      mock_scenario,
+      list(),
+      stopIfNotFound = TRUE
+    ),
+    regexp = "The following data sets are not present in `observedData`"
+  )
+
+  # Then test with stopIfNotFound = FALSE
+  expect_warning(
+    .validateDataCombined(
+      df_invalid_dataSet,
+      mock_scenario,
+      list(),
+      stopIfNotFound = FALSE
+    ),
+    regexp = "The following data sets are not present in `observedData`"
+  )
+})
+
+test_that("createDataCombined loads observed data automatically from Project", {
+  dcList <- createDataCombined(
+    project = project,
+    dataCombinedNames = "AciclovirPVB",
+    simulatedScenarios = simulatedScenarios
+  )
+  expect_true("AciclovirPVB" %in% names(dcList))
+  expect_true(inherits(dcList$AciclovirPVB, "DataCombined"))
+})
+
+test_that("createDataCombined errors when specified DataCombined names are not found", {
+  expect_error(
+    createDataCombined(
+      project = project,
+      dataCombinedNames = c("AciclovirPVB", "NonExistentDC1", "NonExistentDC2"),
+      simulatedScenarios = simulatedScenarios
+    ),
+    regexp = messages$stopDataCombinedNamesNotFound(c(
+      "NonExistentDC1",
+      "NonExistentDC2"
+    )),
+    fixed = TRUE
+  )
+})
+test_that("loadObservedData returns empty list when observedData is NULL", {
+  project <- testProject()
+  project$observedData <- NULL
+  result <- loadObservedData(project)
+  expect_type(result, "list")
+  expect_length(result, 0)
+})
+
+test_that("loadObservedData loads Excel data using project defaults", {
+  project <- testProject()
+  result <- loadObservedData(project)
+  expect_type(result, "list")
+  expect_true(length(result) > 0)
+  expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
+})
+
+test_that("loadObservedData loads Excel data with explicit file overrides", {
+  project <- testProject()
+  project$observedData <- list(list(
+    type = "excel",
+    file = "TestProject_TimeValuesData.xlsx",
+    importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+    sheets = list("Laskin 1982.Group A")
+  ))
+  result <- loadObservedData(project)
+  expect_type(result, "list")
+  expect_true(length(result) > 0)
+  expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
+})
+
+test_that("loadObservedData merges datasets from multiple entries", {
+  project <- testProject()
+  project$observedData <- list(
+    list(
+      type = "excel",
+      file = "TestProject_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group A")
+    ),
+    list(
+      type = "excel",
+      file = "TestProject_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group A")
+    )
+  )
+  result <- loadObservedData(project)
+  expect_type(result, "list")
+  expect_true(length(result) >= 1)
+})
+
+test_that("loadObservedData returns named list of DataSet objects for Example project", {
+  project <- testProject()
+  dataSets <- loadObservedData(project)
+
+  expect_type(dataSets, "list")
+  expect_true(length(dataSets) > 0)
+  expect_true(all(nzchar(names(dataSets))))
+  expect_true(all(vapply(
+    dataSets,
+    function(ds) inherits(ds, "DataSet"),
+    logical(1)
+  )))
+})
+
+test_that("loadObservedData returns empty list when project declares no observed data", {
+  project <- testProject()
+  project$observedData <- NULL
+
+  expect_identical(loadObservedData(project), list())
+})
+
+test_that("loadObservedData errors on non-Project input", {
+  expect_error(
+    loadObservedData("not a project"),
+    regexp = "Project"
+  )
+})
+
+test_that("loadObservedData loads PKML data", {
+  project <- testProject()
+  project$observedData <- list(list(
+    type = "pkml",
+    file = "ObsDataAciclovir_1.pkml"
+  ))
+  result <- loadObservedData(project)
+  expect_type(result, "list")
+  expect_length(result, 1)
+  expect_true(inherits(result[[1]], "DataSet"))
+  expect_equal(names(result), result[[1]]$name)
+})
+
+test_that("loadObservedData loads mixed Excel and PKML data", {
+  project <- testProject()
+  project$observedData <- list(
+    list(
+      type = "excel",
+      file = "TestProject_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group A")
+    ),
+    list(type = "pkml", file = "ObsDataAciclovir_1.pkml")
+  )
+  result <- loadObservedData(project)
+  expect_type(result, "list")
+  expect_true(length(result) >= 2)
+  expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
+})
+
+test_that("loadObservedData loads from JSON with explicit file and importerConfiguration", {
+  project <- testProject()
+  result <- loadObservedData(project)
+  expect_type(result, "list")
+  expect_length(result, 2)
+  expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
+  excelName <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  pkmlName <- "Vergin 1995.Iv"
+  expect_true(excelName %in% names(result))
+  expect_true(pkmlName %in% names(result))
+})
+
+test_that("Project$observedData preserves file and importerConfiguration from JSON", {
+  project <- testProject()
+  expect_length(project$observedData, 2)
+  excelEntry <- project$observedData[[1]]
+  expect_equal(excelEntry$type, "excel")
+  expect_equal(excelEntry$file, "TestProject_TimeValuesData.xlsx")
+  expect_equal(
+    excelEntry$importerConfiguration,
+    "esqlabs_dataImporter_configuration.xml"
+  )
+  expect_equal(excelEntry$sheets, list("Laskin 1982.Group A"))
+  pkmlEntry <- project$observedData[[2]]
+  expect_equal(pkmlEntry$type, "pkml")
+  expect_equal(pkmlEntry$file, "ObsDataAciclovir_1.pkml")
+})
+
+test_that("Project load errors if Excel observedData entry missing file", {
+  project <- testProject()
+  pc_path <- project$jsonPath
+  json_data <- jsonlite::fromJSON(pc_path, simplifyVector = FALSE)
+  json_data$observedData <- list(list(
+    type = "excel",
+    importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+    sheets = list("Sheet1")
+  ))
+  tmp_json <- tempfile(fileext = ".json")
+  jsonlite::write_json(json_data, tmp_json, auto_unbox = TRUE, null = "null")
+  expect_error(
+    loadProject(tmp_json),
+    regexp = "file"
+  )
+})
+
+test_that("Project load errors if Excel observedData entry missing importerConfiguration", {
+  project <- testProject()
+  pc_path <- project$jsonPath
+  json_data <- jsonlite::fromJSON(pc_path, simplifyVector = FALSE)
+  json_data$observedData <- list(list(
+    type = "excel",
+    file = "TestProject_TimeValuesData.xlsx",
+    sheets = list("Sheet1")
+  ))
+  tmp_json <- tempfile(fileext = ".json")
+  jsonlite::write_json(json_data, tmp_json, auto_unbox = TRUE, null = "null")
+  expect_error(
+    loadProject(tmp_json),
+    regexp = "importerConfiguration"
+  )
+})
+
+test_that("Project load errors if script observedData entry missing file", {
+  project <- testProject()
+  pc_path <- project$jsonPath
+  json_data <- jsonlite::fromJSON(pc_path, simplifyVector = FALSE)
+  json_data$observedData <- list(list(type = "script"))
+  tmp_json <- tempfile(fileext = ".json")
+  jsonlite::write_json(json_data, tmp_json, auto_unbox = TRUE, null = "null")
+  expect_error(
+    loadProject(tmp_json),
+    regexp = "file"
+  )
+})
+
+test_that("loadObservedData loads script returning single DataSet", {
+  project <- testProject()
+  project$observedData <- list(list(
+    type = "script",
+    file = "scripts/test_script_single.R"
+  ))
+  result <- loadObservedData(project)
+  expect_type(result, "list")
+  expect_length(result, 1)
+  expect_true(inherits(result[[1]], "DataSet"))
+  expect_equal(names(result), "ScriptGenerated")
+})
+
+test_that("loadObservedData loads script returning list of DataSets", {
+  project <- testProject()
+  project$observedData <- list(list(
+    type = "script",
+    file = "scripts/test_script_list.R"
+  ))
+  result <- loadObservedData(project)
+  expect_type(result, "list")
+  expect_length(result, 2)
+  expect_true(all(sapply(result, inherits, "DataSet")))
+  expect_setequal(names(result), c("ScriptDataSet1", "ScriptDataSet2"))
+})
+
+test_that("loadObservedData errors if script file not found", {
+  project <- testProject()
+  project$observedData <- list(list(
+    type = "script",
+    file = "scripts/nonexistent.R"
+  ))
+  expect_error(
+    loadObservedData(project),
+    regexp = "Script file not found"
+  )
+})
+
+test_that("loadObservedData errors if script returns wrong type", {
+  project <- testProject()
+  project$observedData <- list(list(
+    type = "script",
+    file = "scripts/test_script_bad.R"
+  ))
+  expect_error(
+    loadObservedData(project),
+    regexp = "must return DataSet"
   )
 })

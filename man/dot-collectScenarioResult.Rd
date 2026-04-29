@@ -20,7 +20,7 @@ A list with \code{simulation}, \code{results}, \code{outputValues}, \code{popula
 }
 \description{
 Given a scenario's simulation, raw results, and population,
-resolves output quantities and builds the standard return list used by both
-\code{runScenarios()} and \code{.executeScenario()}.
+resolves output quantities and builds the standard return list used by
+\code{runScenarios()}.
 }
 \keyword{internal}

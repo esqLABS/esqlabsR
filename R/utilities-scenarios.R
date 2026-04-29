@@ -257,8 +257,8 @@
 #' Collect output values for a single completed scenario
 #'
 #' @description Given a scenario's simulation, raw results, and population,
-#' resolves output quantities and builds the standard return list used by both
-#' `runScenarios()` and `.executeScenario()`.
+#' resolves output quantities and builds the standard return list used by
+#' `runScenarios()`.
 #'
 #' @param scenario A `Scenario` object (plain data class).
 #' @param simulation The initialised `Simulation` object.
@@ -292,61 +292,6 @@
     simulation = simulation,
     results = results,
     outputValues = outputValues,
-    population = population
-  )
-}
-
-#' Execute a single scenario
-#'
-#' @description Prepares and runs a single scenario, returning results.
-#' Delegates setup to `.prepareScenario()` and output collection to
-#' `.collectScenarioResult()`.
-#'
-#' @param scenario A `Scenario` object (plain data class).
-#' @param project A `Project` object.
-#' @param customParams Optional parameter structure from the caller.
-#' @param cache An environment with `$individuals` and `$populations` named lists.
-#' @param simulationRunOptions Optional `SimulationRunOptions`.
-#'
-#' @returns A list with `simulation`, `results`, `outputValues`, `population`.
-#' @keywords internal
-.executeScenario <- function(
-  scenario,
-  project,
-  customParams,
-  cache,
-  simulationRunOptions
-) {
-  prepared <- .prepareScenario(
-    scenario = scenario,
-    project = project,
-    customParams = customParams,
-    cache = cache,
-    simulationRunOptions = simulationRunOptions
-  )
-  simulation <- prepared$simulation
-  population <- prepared$population
-
-  # Run simulation
-  if (is.null(population)) {
-    simulationResults <- runSimulations(
-      simulations = simulation,
-      simulationRunOptions = simulationRunOptions
-    )
-  } else {
-    simulationResults <- runSimulations(
-      simulations = simulation,
-      population = population,
-      simulationRunOptions = simulationRunOptions
-    )
-  }
-
-  results <- simulationResults[[simulation$id]]
-
-  .collectScenarioResult(
-    scenario = scenario,
-    simulation = simulation,
-    results = results,
     population = population
   )
 }
@@ -1232,17 +1177,6 @@ createScenariosFromPKML <- function(
   return(scenarios)
 }
 
-#' @rdname createScenariosFromPKML
-#' @export
-createScenarioConfigurationsFromPKML <- function(...) {
-  lifecycle::deprecate_soft(
-    what = "createScenarioConfigurationsFromPKML()",
-    with = "createScenariosFromPKML()",
-    when = "6.0.0"
-  )
-  createScenariosFromPKML(...)
-}
-
 #' Sanitize a string to be a valid Excel sheet name
 #'
 #' @param sheetName Character string. The proposed sheet name to sanitize.
@@ -1386,181 +1320,94 @@ createScenarioConfigurationsFromPKML <- function(...) {
   }
 }
 
-# Public CRUD: scenarios and output paths ----
+# Internal scenario helpers ----
 
-#' Add a scenario programmatically to a Project
+#' Parse protein ontogenies from a string
 #'
-#' @description Creates a new `Scenario` and adds it to the
-#'   `project$scenarios` list after validating all references.
+#' @param ontogenyString A string in the format
+#'   "Molecule1:Ontogeny1,Molecule2:Ontogeny2" or NULL.
 #'
-#' @param project A `Project` object.
-#' @param scenarioName Character. Name for the new scenario. Must not already
-#'   exist in `project$scenarios`.
-#' @param modelFile Character. Name of the `.pkml` model file (relative to
-#'   model folder).
-#' @param individualId Character or NULL. ID referencing
-#'   `project$individuals`.
-#' @param populationId Character or NULL. ID referencing
-#'   `project$populations`.
-#' @param applicationProtocol Character or NULL. Protocol name referencing
-#'   `project$applications`.
-#' @param modelParameters Character vector or NULL. Group names referencing
-#'   `project$modelParameters`.
-#' @param outputPathIds Character vector or NULL. IDs referencing
-#'   `project$outputPaths`.
-#' @param simulationTime Character or NULL. Format `"start, end, resolution"`
-#'   or `"start, end, resolution; start, end, resolution"` for multiple
-#'   intervals.
-#' @param simulationTimeUnit Character. Time unit string. Default `"h"`.
-#' @param steadyState Logical. Whether to simulate steady state. Default
-#'   `FALSE`.
-#' @param steadyStateTime Numeric. Steady-state time in minutes. Default
-#'   `1000`.
-#' @param overwriteFormulasInSS Logical. Overwrite formulas during steady
-#'   state. Default `FALSE`.
-#' @param readPopulationFromCSV Logical. Load population from CSV. Default
-#'   `FALSE`.
-#'
-#' @returns The `project` object, invisibly.
-#'
-#' @export
-#' @family scenario
-addScenario <- function(
-  project,
-  scenarioName,
-  modelFile,
-  individualId = NULL,
-  populationId = NULL,
-  applicationProtocol = NULL,
-  modelParameters = NULL,
-  outputPathIds = NULL,
-  simulationTime = NULL,
-  simulationTimeUnit = "h",
-  steadyState = FALSE,
-  steadyStateTime = 1000,
-  overwriteFormulasInSS = FALSE,
-  readPopulationFromCSV = FALSE
-) {
-  validateIsOfType(project, "Project")
-  project <- project
-  errors <- character()
-
-  # Validate required args
+#' @returns A list of `MoleculeOntogeny` objects, or NULL.
+#' @keywords internal
+#' @noRd
+.readOntongeniesFromList <- function(ontogenyString) {
   if (
-    !is.character(scenarioName) ||
-      length(scenarioName) != 1 ||
-      is.na(scenarioName) ||
-      nchar(scenarioName) == 0
+    is.null(ontogenyString) || is.na(ontogenyString) || ontogenyString == ""
   ) {
-    errors <- c(errors, "scenarioName must be a non-empty string")
-  } else if (scenarioName %in% names(project$scenarios)) {
-    errors <- c(errors, paste0("scenario '", scenarioName, "' already exists"))
+    return(NULL)
   }
-
-  if (
-    !is.character(modelFile) ||
-      length(modelFile) != 1 ||
-      is.na(modelFile) ||
-      nchar(modelFile) == 0
-  ) {
-    errors <- c(errors, "modelFile must be a non-empty string")
-  }
-
-  # Validate optional references
-  if (!is.null(individualId) && !(individualId %in% names(project$individuals))) {
-    errors <- c(
-      errors,
-      paste0("individualId '", individualId, "' not found in individuals")
-    )
-  }
-  if (!is.null(populationId) && !(populationId %in% names(project$populations))) {
-    errors <- c(
-      errors,
-      paste0("populationId '", populationId, "' not found in populations")
-    )
-  }
-  if (
-    !is.null(applicationProtocol) &&
-      !(applicationProtocol %in% names(project$applications))
-  ) {
-    errors <- c(
-      errors,
-      paste0(
-        "applicationProtocol '",
-        applicationProtocol,
-        "' not found in applications"
-      )
-    )
-  }
-  if (!is.null(modelParameters)) {
-    bad <- setdiff(modelParameters, names(project$modelParameters))
-    if (length(bad) > 0) {
-      errors <- c(
-        errors,
-        paste0(
-          "modelParameters not found in modelParameters: ",
-          paste(bad, collapse = ", ")
-        )
-      )
+  # The string format is "Molecule1:Ontogeny1,Molecule2:Ontogeny2"
+  ontogeniesSplit <- unlist(strsplit(ontogenyString, split = ",", fixed = TRUE))
+  ontogeniesSplit <- trimws(ontogeniesSplit)
+  moleculeOntogenies <- vector("list", length(ontogeniesSplit))
+  for (i in seq_along(ontogeniesSplit)) {
+    parts <- unlist(strsplit(ontogeniesSplit[[i]], split = ":", fixed = TRUE))
+    if (length(parts) != 2) {
+      stop(messages$errorWrongOntogenyStructure(ontogeniesSplit[[i]]))
     }
+    protein <- parts[[1]]
+    ontogeny <- parts[[2]]
+    validateEnumValue(value = ontogeny, enum = ospsuite::StandardOntogeny)
+    moleculeOntogenies[[i]] <- ospsuite::MoleculeOntogeny$new(
+      molecule = protein,
+      ontogeny = ospsuite::StandardOntogeny[[ontogeny]]
+    )
   }
-  if (!is.null(outputPathIds)) {
-    bad <- setdiff(outputPathIds, names(project$outputPaths))
-    if (length(bad) > 0) {
-      errors <- c(
-        errors,
-        paste0(
-          "outputPathIds not found in outputPaths: ",
-          paste(bad, collapse = ", ")
-        )
-      )
-    }
-  }
-
-  if (length(errors) > 0) {
-    stop(paste0(
-      "Cannot add scenario '",
-      scenarioName,
-      "':\n- ",
-      paste(errors, collapse = "\n- ")
-    ))
-  }
-
-  # Build Scenario object
-  sc <- Scenario$new()
-  sc$scenarioName <- scenarioName
-  sc$modelFile <- modelFile
-  sc$individualId <- individualId
-  sc$applicationProtocol <- applicationProtocol %||% NA
-
-  if (!is.null(populationId)) {
-    sc$populationId <- populationId
-    sc$simulationType <- "Population"
-  }
-
-  sc$modelParameters <- modelParameters
-  sc$readPopulationFromCSV <- readPopulationFromCSV
-
-  if (!is.null(outputPathIds)) {
-    sc$outputPaths <- unname(project$outputPaths[outputPathIds])
-  }
-
-  if (!is.null(simulationTime)) {
-    sc$simulationTime <- .parseSimulationTimeIntervals(simulationTime)
-    sc$simulationTimeUnit <- simulationTimeUnit
-  }
-
-  sc$simulateSteadyState <- steadyState
-  sc$steadyStateTime <- steadyStateTime
-  sc$overwriteFormulasInSS <- overwriteFormulasInSS
-
-  # Add to configuration
-  project$scenarios[[scenarioName]] <- sc
-  project$.markModified()
-
-  invisible(project)
+  moleculeOntogenies
 }
 
+#' Read parameter values from a structured Excel file
+#'
+#' Each excel sheet must consist of columns 'Container Path', 'Parameter Name',
+#' 'Value', and 'Units'.
+#'
+#' @param paramsXLSpath Path to the excel file
+#' @param sheets Names of the excel sheets containing the information about the
+#'   parameters. Multiple sheets can be processed. If no sheets are provided,
+#'   the first one in the Excel file is used.
+#'
+#' @returns A list containing vectors `paths` with the full paths to the
+#'   parameters, `values` the values of the parameters, and `units` with the
+#'   units the values are in.
+#' @keywords internal
+#' @noRd
+.readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
+  columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
+  validateIsString(paramsXLSpath)
+  validateIsString(sheets, nullAllowed = TRUE)
+
+  if (is.null(sheets)) {
+    sheets <- c(1)
+  }
+
+  pathsValuesVector <- vector(mode = "numeric")
+  pathsUnitsVector <- vector(mode = "character")
+
+  for (sheet in sheets) {
+    data <- readExcel(path = paramsXLSpath, sheet = sheet)
+
+    if (!all(columnNames %in% names(data))) {
+      stop(messages$errorWrongXLSStructure(
+        filePath = paramsXLSpath,
+        expectedColNames = columnNames
+      ))
+    }
+
+    fullPaths <- paste(
+      data[["Container Path"]],
+      data[["Parameter Name"]],
+      sep = "|"
+    )
+    pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
+
+    pathsUnitsVector[fullPaths] <- tidyr::replace_na(
+      data = as.character(data[["Units"]]),
+      replace = ""
+    )
+  }
+
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
+}
 
 #' Read species-specific parameters from the bundled SpeciesParameters.xlsx
 #'
@@ -1585,110 +1432,4 @@ addScenario <- function(
   }
 
   .readParametersFromXLS(paramsXLSpath = filePath, sheets = species)
-}
-
-#' Add output paths to a Project
-#'
-#' @param project A `Project` object.
-#' @param id Character vector of output path IDs (unique within the call
-#'   and not already present in `project$outputPaths`).
-#' @param path Character vector of output paths, same length as `id`.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family scenario
-addOutputPath <- function(project, id, path) {
-  validateIsOfType(project, "Project")
-  errors <- character()
-
-  if (
-    !is.character(id) || length(id) < 1 || any(is.na(id)) || any(nchar(id) == 0)
-  ) {
-    errors <- c(errors, "id must be a non-empty character vector")
-  }
-  if (!is.character(path) || length(path) != length(id)) {
-    errors <- c(
-      errors,
-      "id and path must be character vectors of the same length"
-    )
-  }
-  if (is.character(id) && any(duplicated(id))) {
-    errors <- c(
-      errors,
-      paste0(
-        "duplicate ids within call: ",
-        paste(unique(id[duplicated(id)]), collapse = ", ")
-      )
-    )
-  }
-  if (is.character(id)) {
-    collisions <- intersect(id, names(project$outputPaths))
-    if (length(collisions) > 0) {
-      errors <- c(
-        errors,
-        paste0(
-          "outputPath id already exists: ",
-          paste(collisions, collapse = ", ")
-        )
-      )
-    }
-  }
-
-  if (length(errors) > 0) {
-    stop(paste0(
-      "Cannot add outputPath:\n- ",
-      paste(errors, collapse = "\n- ")
-    ))
-  }
-
-  newPaths <- path
-  names(newPaths) <- id
-  project$outputPaths <- c(project$outputPaths, newPaths)
-  project$.markModified()
-  invisible(project)
-}
-
-#' Remove an output path from a Project
-#' @param project A `Project` object.
-#' @param id Character scalar.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family scenario
-removeOutputPath <- function(project, id) {
-  validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1 || is.na(id) || nchar(id) == 0) {
-    stop("id must be a non-empty string")
-  }
-  if (!(id %in% names(project$outputPaths))) {
-    cli::cli_warn("outputPath {.val {id}} not found; no-op.")
-    return(invisible(project))
-  }
-  .warnIfReferenced(project, "outputPath", id)
-  project$outputPaths <- project$outputPaths[setdiff(
-    names(project$outputPaths),
-    id
-  )]
-  project$.markModified()
-  invisible(project)
-}
-
-#' Remove a scenario from a Project
-#' @param project A `Project` object.
-#' @param name Character scalar, scenario name.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family scenario
-removeScenario <- function(project, name) {
-  validateIsOfType(project, "Project")
-  if (
-    !is.character(name) || length(name) != 1 || is.na(name) || nchar(name) == 0
-  ) {
-    stop("name must be a non-empty string")
-  }
-  if (!(name %in% names(project$scenarios))) {
-    cli::cli_warn("scenario {.val {name}} not found; no-op.")
-    return(invisible(project))
-  }
-  project$scenarios[[name]] <- NULL
-  project$.markModified()
-  invisible(project)
 }

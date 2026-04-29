@@ -188,8 +188,6 @@ removed in a future release:
 | `createDefaultProjectConfiguration()` | `loadProject()` |
 | `snapshotProjectConfiguration()` | `importProjectFromExcel()` |
 | `restoreProjectConfiguration()` | `exportProjectToExcel()` |
-| `importProjectConfigurationFromExcel()` | `importProjectFromExcel()` |
-| `exportProjectConfigurationToExcel()` | `exportProjectToExcel()` |
 | `projectConfigurationStatus()` | `projectStatus()` |
 | `exampleProjectConfigurationPath()` | `exampleProjectPath()` |
 | `ProjectConfiguration` | `Project` |
@@ -197,7 +195,6 @@ removed in a future release:
 | `createPlotsFromExcel()` | `createPlots()` |
 | `saveScenarioResults()` | `exportScenarioResults()` |
 | `loadScenarioResults()` | `importScenarioResults()` |
-| `createScenarioConfigurationsFromPKML()` | `createScenariosFromPKML()` |
 
 Note that `ProjectConfiguration` in the last row is a **class alias** (not a
 function). It is preserved so existing `is(x, "ProjectConfiguration")` checks

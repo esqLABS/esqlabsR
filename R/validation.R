@@ -104,21 +104,25 @@ validationResult <- R6::R6Class(
 #'
 #' @keywords internal
 .categorize_message <- function(message) {
-  if (grepl(
-    "missing|empty|not found|required field",
-    message,
-    ignore.case = TRUE
-  )) {
+  if (
+    grepl(
+      "missing|empty|not found|required field",
+      message,
+      ignore.case = TRUE
+    )
+  ) {
     return("Missing Fields")
   }
   if (grepl("duplicate|unique", message, ignore.case = TRUE)) {
     return("Uniqueness")
   }
-  if (grepl(
-    "not defined|invalid.*reference|references undefined",
-    message,
-    ignore.case = TRUE
-  )) {
+  if (
+    grepl(
+      "not defined|invalid.*reference|references undefined",
+      message,
+      ignore.case = TRUE
+    )
+  ) {
     return("Invalid Reference")
   }
   if (grepl("format|separated|Wrong number", message)) {
@@ -492,7 +496,8 @@ validationResult <- R6::R6Class(
 
     if ("dataType" %in% names(dataCombined)) {
       invalid_types <- dataCombined$dataType[
-        !is.na(dataCombined$dataType) & !dataCombined$dataType %in% c("simulated", "observed")
+        !is.na(dataCombined$dataType) &
+          !dataCombined$dataType %in% c("simulated", "observed")
       ]
       if (length(invalid_types) > 0) {
         result$add_critical_error(
@@ -504,7 +509,9 @@ validationResult <- R6::R6Class(
         )
       }
 
-      simulated_rows <- dataCombined[!is.na(dataCombined$dataType) & dataCombined$dataType == "simulated", ]
+      simulated_rows <- dataCombined[
+        !is.na(dataCombined$dataType) & dataCombined$dataType == "simulated",
+      ]
       if (nrow(simulated_rows) > 0 && "scenario" %in% names(dataCombined)) {
         missing_scenario <- is.na(simulated_rows$scenario) |
           simulated_rows$scenario == ""
@@ -564,7 +571,12 @@ validationResult <- R6::R6Class(
 
   # plotGrids -> plotConfiguration inner cross-ref (warning only)
   plotGrids <- plots$plotGrids
-  if (!is.null(plotGrids) && nrow(plotGrids) > 0 && !is.null(plotConfig) && nrow(plotConfig) > 0) {
+  if (
+    !is.null(plotGrids) &&
+      nrow(plotGrids) > 0 &&
+      !is.null(plotConfig) &&
+      nrow(plotConfig) > 0
+  ) {
     if ("plotIDs" %in% names(plotGrids) && "plotID" %in% names(plotConfig)) {
       all_grid_ids <- unlist(lapply(
         plotGrids$plotIDs[!is.na(plotGrids$plotIDs)],
@@ -702,7 +714,9 @@ validationResult <- R6::R6Class(
       "scenario" %in% names(dataCombined) &&
       "dataType" %in% names(dataCombined)
   ) {
-    simulated <- dataCombined[!is.na(dataCombined$dataType) & dataCombined$dataType == "simulated", ]
+    simulated <- dataCombined[
+      !is.na(dataCombined$dataType) & dataCombined$dataType == "simulated",
+    ]
     scenario_names <- names(scenario_list)
     invalid_scenarios <- setdiff(
       simulated$scenario[!is.na(simulated$scenario)],

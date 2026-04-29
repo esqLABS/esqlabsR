@@ -1,3 +1,50 @@
+# Apply individual to simulation ----
+
+#' Apply an individual to the simulation. For human species, only parameters
+#' that do not override formulas are applied. For other species, all parameters
+#' returned by `createIndividual` are applied.
+#'
+#' @param individualCharacteristics `IndividualCharacteristics` describing an
+#'   individual. Optional
+#' @param simulation `Simulation` loaded from the PKML file
+#' @import ospsuite
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' simulation <- loadSimulation(filePath = modelPath)
+#' humanIndividualCharacteristics <- createIndividualCharacteristics(
+#'   species = Species$Human, population = HumanPopulation$European_ICRP_2002,
+#'   gender = Gender$Male, weight = 70
+#' )
+#' applyIndividualParameters(humanIndividualCharacteristics, simulation)
+#' }
+applyIndividualParameters <- function(individualCharacteristics, simulation) {
+  individual <- ospsuite::createIndividual(individualCharacteristics)
+
+  # For human species, only set distributed parameters
+  allParamPaths <- individual$distributedParameters$paths
+  allParamValues <- individual$distributedParameters$values
+  allParamUnits <- individual$distributedParameters$units
+
+  # For other species, also add derived parameters
+  if (individualCharacteristics$species != ospsuite::Species$Human) {
+    allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
+    allParamValues <- c(allParamValues, individual$derivedParameters$values)
+    allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
+  }
+
+  ospsuite::setParameterValuesByPath(
+    parameterPaths = allParamPaths,
+    values = allParamValues,
+    simulation = simulation,
+    units = allParamUnits,
+    stopIfNotFound = FALSE
+  )
+}
+
+# Initialize simulation ----
+
 #' Load a simulation and apply a set of parameters.
 #'
 #' @description Helper method that combines a set of common steps performed
@@ -64,6 +111,134 @@ initializeSimulation <- function(
     }
   }
 }
+
+# Parameter comparison ----
+
+#' @title Check if two parameters are equal with respect to certain properties.
+#'
+#' @details The parameters are not equal if: The paths of the parameters are not
+#' equal; The types of the formulas differ (types checked: isConstant,
+#' isDistributed, isExplicit, isTable); Constant formulas have different values;
+#' Distributed formulas have different values (not checking for distribution)
+#' Explicit formulas: If formula string are not equal, OR one of the parameter
+#' values is fixed (formula is overridden), OR both parameter values are fixed
+#' and differ, OR checkFormulaValues is TRUE and the values differ (disregarding
+#' of overridden or not) Table formulas: If the number of points differ, OR any
+#' of the points differ, OR one of the parameter values is fixed (formula is
+#' overridden), OR both parameter values are fixed and differ.
+#'
+#' @param parameter1 First parameter to compare
+#' @param parameter2 Second parameter to compare
+#' @param checkFormulaValues If TRUE, values of explicit formulas are always
+#'   compared. Otherwise, the values are only compared if the formulas are
+#'   overridden (isFixedValue == TRUE). FALSE by default.
+#' @param compareFormulasByValue If `FALSE`(default), formulas are compared by
+#'   their types and string. If `TRUE`, only values are compared.
+#'
+#' @returns `TRUE` if parameters are considered equal, `FALSE` otherwise
+#' @export
+isParametersEqual <- function(
+  parameter1,
+  parameter2,
+  checkFormulaValues = FALSE,
+  compareFormulasByValue = FALSE
+) {
+  validateIsOfType(c(parameter1, parameter2), "Parameter")
+
+  # Check for the path
+  if (parameter1$path != parameter2$path) {
+    return(FALSE)
+  }
+
+  formula1 <- parameter1$formula
+  formula2 <- parameter2$formula
+
+  # Compare by value
+  if (compareFormulasByValue) {
+    return(identical(parameter1$value, parameter2$value))
+  }
+
+  # Check for formula type equality
+  if (
+    !all(
+      c(
+        formula1$isConstant,
+        formula1$isDistributed,
+        formula1$isExplicit,
+        formula1$isTable
+      ) ==
+        c(
+          formula2$isConstant,
+          formula2$isDistributed,
+          formula2$isExplicit,
+          formula2$isTable
+        )
+    )
+  ) {
+    return(FALSE)
+  }
+
+  # Constant or distributed formula - check for value
+  # Comparing using 'identical' to capture NaN and NA cases which can happen
+  if (formula1$isConstant || formula1$isDistributed) {
+    return(identical(parameter1$value, parameter2$value))
+  }
+
+  # Explicit or table formula - check if values are overridden
+  if (parameter1$isFixedValue) {
+    if (!parameter2$isFixedValue) {
+      return(FALSE)
+    }
+    if (parameter1$value != parameter2$value) {
+      return(FALSE)
+    }
+  }
+
+  # Explicit
+  if (formula1$isExplicit) {
+    if (
+      checkFormulaValues && (!identical(parameter1$value, parameter2$value))
+    ) {
+      return(FALSE)
+    }
+
+    return(formula1$formulaString == formula2$formulaString)
+  }
+
+  if (formula1$isTable) {
+    return(isTableFormulasEqual(formula1, formula2))
+  }
+
+  return(FALSE)
+}
+
+#' Check if two table formulas are equal.
+#'
+#' Table formulas are equal if the number of points is equal and all x-y value
+#' pairs are equal between the two formulas
+#'
+#' @param formula1 First formula to compare
+#' @param formula2 Second formula to compare
+#'
+#' @returns TRUE if the table formulas are equal, FALSE otherwise
+#' @export
+isTableFormulasEqual <- function(formula1, formula2) {
+  allPoints1 <- formula1$allPoints
+  allPoints2 <- formula2$allPoints
+
+  if (length(allPoints1) != length(allPoints2)) {
+    return(FALSE)
+  }
+
+  for (i in seq_along(allPoints1)) {
+    point1 <- allPoints1[[i]]
+    point2 <- allPoints2[[i]]
+
+    return((point1$x == point2$x) && (point1$y == point2$y))
+  }
+}
+
+# Compare simulations ----
 
 #' Compare two simulations
 #'

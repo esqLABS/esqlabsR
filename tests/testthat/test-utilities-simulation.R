@@ -17,7 +17,11 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
   ))
 
   # Construct the empty parameter structure directly (readParametersFromXLS was removed)
-  params <- list(paths = character(0), values = numeric(0), units = character(0))
+  params <- list(
+    paths = character(0),
+    values = numeric(0),
+    units = character(0)
+  )
 
   initializeSimulation(simulation, additionalParams = params)
   simulationResults <- runSimulations(simulation)
@@ -31,7 +35,9 @@ test_that("initializeSimulation does not read species parameters from Excel", {
     species = ospsuite::Species$Human,
     population = ospsuite::HumanPopulation$European_ICRP_2002,
     gender = ospsuite::Gender$Male,
-    weight = 70, height = 170, age = 30
+    weight = 70,
+    height = 170,
+    age = 30
   )
   # Should not error — the function simply doesn't apply species params anymore
   expect_no_error(

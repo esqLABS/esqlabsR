@@ -1026,7 +1026,9 @@ ProjectConfiguration <- function(
     dataCombinedName <- dataCombined$name
 
     # Process simulated entries
-    if (!is.null(dataCombined$simulated) && length(dataCombined$simulated) > 0) {
+    if (
+      !is.null(dataCombined$simulated) && length(dataCombined$simulated) > 0
+    ) {
       for (entry in dataCombined$simulated) {
         row <- list(
           DataCombinedName = dataCombinedName,
@@ -1069,6 +1071,963 @@ ProjectConfiguration <- function(
   }
 
   do.call(rbind, rows)
+}
+
+# Public CRUD: applications ----
+
+#' Add an application protocol to a Project
+#'
+#' @param project A `Project` object.
+#' @param applicationId Character scalar, unique protocol id.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family application
+addApplication <- function(project, applicationId) {
+  validateIsOfType(project, "Project")
+  if (
+    !is.character(applicationId) ||
+      length(applicationId) != 1 ||
+      is.na(applicationId) ||
+      nchar(applicationId) == 0
+  ) {
+    stop("applicationId must be a non-empty string")
+  }
+  if (applicationId %in% names(project$applications)) {
+    stop(paste0("application '", applicationId, "' already exists"))
+  }
+  app <- list(parameters = NULL)
+  class(app) <- c("Application", "list")
+  project$applications[[applicationId]] <- app
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove an application protocol from a Project
+#'
+#' @param project A `Project` object.
+#' @param applicationId Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family application
+removeApplication <- function(project, applicationId) {
+  validateIsOfType(project, "Project")
+  if (!is.character(applicationId) || length(applicationId) != 1) {
+    stop("applicationId must be a string scalar")
+  }
+  if (!(applicationId %in% names(project$applications))) {
+    cli::cli_warn("application {.val {applicationId}} not found; no-op.")
+    return(invisible(project))
+  }
+  .warnIfReferenced(project, "application", applicationId)
+  project$applications[[applicationId]] <- NULL
+  project$.markModified()
+  invisible(project)
+}
+
+#' Add a parameter to a named application
+#'
+#' @param project A `Project` object.
+#' @param applicationId Character scalar.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @param value Numeric scalar.
+#' @param units Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addApplicationParameter <- function(
+  project,
+  applicationId,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  validateIsOfType(project, "Project")
+  if (!(applicationId %in% names(project$applications))) {
+    stop(paste0("application '", applicationId, "' not found"))
+  }
+  project$applications[[applicationId]] <- addParameter(
+    project$applications[[applicationId]],
+    containerPath = containerPath,
+    parameterName = parameterName,
+    value = value,
+    units = units
+  )
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a parameter from a named application
+#'
+#' @inheritParams addApplicationParameter
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeApplicationParameter <- function(
+  project,
+  applicationId,
+  containerPath,
+  parameterName
+) {
+  validateIsOfType(project, "Project")
+  if (!(applicationId %in% names(project$applications))) {
+    stop(paste0("application '", applicationId, "' not found"))
+  }
+  project$applications[[applicationId]] <- removeParameter(
+    project$applications[[applicationId]],
+    containerPath = containerPath,
+    parameterName = parameterName
+  )
+  project$.markModified()
+  invisible(project)
+}
+
+# Public CRUD: individuals ----
+
+#' Add an individual to a Project
+#'
+#' @param project A `Project` object.
+#' @param individualId Character scalar, unique ID for the individual.
+#' @param species Character scalar, species name.
+#' @param ... Optional named fields: `population`, `gender`, `weight`,
+#'   `height`, `age`, `proteinOntogenies`. Numeric fields are coerced
+#'   via `as.double()`. Unknown fields trigger an error.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family individual
+addIndividual <- function(project, individualId, species, ...) {
+  validateIsOfType(project, "Project")
+  errors <- character()
+
+  if (
+    !is.character(individualId) ||
+      length(individualId) != 1 ||
+      is.na(individualId) ||
+      nchar(individualId) == 0
+  ) {
+    errors <- c(errors, "individualId must be a non-empty string")
+  } else if (individualId %in% names(project$individuals)) {
+    errors <- c(
+      errors,
+      paste0("individual '", individualId, "' already exists")
+    )
+  }
+
+  if (
+    !is.character(species) ||
+      length(species) != 1 ||
+      is.na(species) ||
+      nchar(species) == 0
+  ) {
+    errors <- c(errors, "species must be a non-empty string")
+  }
+
+  dots <- list(...)
+  allowed <- c(
+    "population",
+    "gender",
+    "weight",
+    "height",
+    "age",
+    "proteinOntogenies",
+    "parameters"
+  )
+  unknown <- setdiff(names(dots), allowed)
+  if (length(unknown) > 0) {
+    errors <- c(
+      errors,
+      paste0(
+        "unknown fields: ",
+        paste(unknown, collapse = ", "),
+        ". Allowed: ",
+        paste(allowed, collapse = ", ")
+      )
+    )
+  }
+
+  if (length(errors) > 0) {
+    stop(paste0(
+      "Cannot add individual '",
+      individualId,
+      "':\n- ",
+      paste(errors, collapse = "\n- ")
+    ))
+  }
+
+  entry <- list(species = species, parameters = NULL)
+  for (field in c("population", "gender", "proteinOntogenies")) {
+    if (!is.null(dots[[field]])) entry[[field]] <- dots[[field]]
+  }
+  for (field in c("weight", "height", "age")) {
+    if (!is.null(dots[[field]])) entry[[field]] <- as.double(dots[[field]])
+  }
+  if (!is.null(dots$parameters)) {
+    pset <- NULL
+    for (p in dots$parameters) {
+      pset <- .addParameterEntry(
+        pset,
+        p$containerPath,
+        p$parameterName,
+        p$value,
+        p$units
+      )
+    }
+    entry$parameters <- pset
+  }
+  class(entry) <- c("Individual", "list")
+
+  project$individuals[[individualId]] <- entry
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove an individual from a Project
+#'
+#' @param project A `Project` object.
+#' @param individualId Character scalar, ID of the individual to remove.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family individual
+removeIndividual <- function(project, individualId) {
+  validateIsOfType(project, "Project")
+  if (
+    !is.character(individualId) ||
+      length(individualId) != 1 ||
+      is.na(individualId) ||
+      nchar(individualId) == 0
+  ) {
+    stop("individualId must be a non-empty string")
+  }
+  if (!(individualId %in% names(project$individuals))) {
+    cli::cli_warn("individual {.val {individualId}} not found; no-op.")
+    return(invisible(project))
+  }
+  .warnIfReferenced(project, "individual", individualId)
+  project$individuals[[individualId]] <- NULL
+  project$.markModified()
+  invisible(project)
+}
+
+# Public CRUD: populations ----
+
+#' Add a population to a Project
+#'
+#' @param project A `Project` object.
+#' @param populationId Character scalar, unique ID.
+#' @param species Character scalar.
+#' @param numberOfIndividuals Integer, positive.
+#' @param ... Optional named fields. Accepted: `proportionOfFemales`,
+#'   `weightMin`, `weightMax`, `heightMin`, `heightMax`, `ageMin`, `ageMax`,
+#'   `BMIMin`, `BMIMax`, `gender`, `weightUnit`, `heightUnit`, `ageUnit`,
+#'   `BMIUnit`, `population`, `diseaseState`. Numeric range fields are
+#'   coerced via `as.double()`.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family population
+addPopulation <- function(
+  project,
+  populationId,
+  species,
+  numberOfIndividuals,
+  ...
+) {
+  validateIsOfType(project, "Project")
+  errors <- character()
+
+  if (
+    !is.character(populationId) ||
+      length(populationId) != 1 ||
+      is.na(populationId) ||
+      nchar(populationId) == 0
+  ) {
+    errors <- c(errors, "populationId must be a non-empty string")
+  } else if (populationId %in% names(project$populations)) {
+    errors <- c(
+      errors,
+      paste0("population '", populationId, "' already exists")
+    )
+  }
+
+  if (
+    !is.character(species) ||
+      length(species) != 1 ||
+      is.na(species) ||
+      nchar(species) == 0
+  ) {
+    errors <- c(errors, "species must be a non-empty string")
+  }
+
+  if (
+    !is.numeric(numberOfIndividuals) ||
+      length(numberOfIndividuals) != 1 ||
+      is.na(numberOfIndividuals) ||
+      numberOfIndividuals <= 0
+  ) {
+    errors <- c(errors, "numberOfIndividuals must be a positive number")
+  }
+
+  dots <- list(...)
+  numericFields <- c(
+    "proportionOfFemales",
+    "weightMin",
+    "weightMax",
+    "heightMin",
+    "heightMax",
+    "ageMin",
+    "ageMax",
+    "BMIMin",
+    "BMIMax"
+  )
+  stringFields <- c(
+    "gender",
+    "weightUnit",
+    "heightUnit",
+    "ageUnit",
+    "BMIUnit",
+    "population",
+    "diseaseState"
+  )
+  allowed <- c(numericFields, stringFields)
+  unknown <- setdiff(names(dots), allowed)
+  if (length(unknown) > 0) {
+    errors <- c(
+      errors,
+      paste0(
+        "unknown fields: ",
+        paste(unknown, collapse = ", "),
+        ". Allowed: ",
+        paste(allowed, collapse = ", ")
+      )
+    )
+  }
+
+  if (length(errors) > 0) {
+    stop(paste0(
+      "Cannot add population '",
+      populationId,
+      "':\n- ",
+      paste(errors, collapse = "\n- ")
+    ))
+  }
+
+  entry <- list(
+    species = species,
+    numberOfIndividuals = as.double(numberOfIndividuals)
+  )
+  for (field in numericFields) {
+    if (!is.null(dots[[field]])) entry[[field]] <- as.double(dots[[field]])
+  }
+  for (field in stringFields) {
+    if (!is.null(dots[[field]])) entry[[field]] <- dots[[field]]
+  }
+
+  project$populations[[populationId]] <- entry
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a population from a Project
+#' @param project A `Project` object.
+#' @param populationId Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family population
+removePopulation <- function(project, populationId) {
+  validateIsOfType(project, "Project")
+  if (
+    !is.character(populationId) ||
+      length(populationId) != 1 ||
+      is.na(populationId) ||
+      nchar(populationId) == 0
+  ) {
+    stop("populationId must be a non-empty string")
+  }
+  if (!(populationId %in% names(project$populations))) {
+    cli::cli_warn("population {.val {populationId}} not found; no-op.")
+    return(invisible(project))
+  }
+  .warnIfReferenced(project, "population", populationId)
+  project$populations[[populationId]] <- NULL
+  project$.markModified()
+  invisible(project)
+}
+
+# Public CRUD: model parameters and inline parameters ----
+
+#' Add a parameter to a named model-parameter set
+#'
+#' @description Adds one parameter entry to the named set in
+#' `project$modelParameters`. The set is created on demand if it does not
+#' yet exist. Last-write-wins on duplicate paths.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set name. Created if not present.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @param value Numeric scalar.
+#' @param units Character scalar.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addModelParameter <- function(
+  project,
+  id,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1 || is.na(id) || nchar(id) == 0) {
+    stop("id must be a non-empty string")
+  }
+  current <- project$modelParameters[[id]]
+  project$modelParameters[[id]] <- .addParameterEntry(
+    current,
+    containerPath,
+    parameterName,
+    value,
+    units
+  )
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a parameter from a named model-parameter set
+#'
+#' @description Removes one parameter entry from the named set. If the
+#' removed entry was the last in the set, the set itself is auto-removed
+#' from `project$modelParameters`. Warns if the set or entry doesn't exist.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set name.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeModelParameter <- function(project, id, containerPath, parameterName) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1) {
+    stop("id must be a string scalar")
+  }
+  if (!(id %in% names(project$modelParameters))) {
+    cli::cli_warn("model parameter set {.val {id}} not found; no-op.")
+    return(invisible(project))
+  }
+  updated <- .removeParameterEntry(
+    project$modelParameters[[id]],
+    containerPath,
+    parameterName
+  )
+  if (is.null(updated)) {
+    .warnIfReferenced(project, "modelParameterSet", id)
+    project$modelParameters[[id]] <- NULL
+  } else {
+    project$modelParameters[[id]] <- updated
+  }
+  project$.markModified()
+  invisible(project)
+}
+
+#' Add a parameter to a named individual
+#'
+#' @description Convenience wrapper around `addParameter()` that looks up the
+#' individual by id, dispatches `addParameter`, and writes the result back.
+#' Errors if the id doesn't resolve.
+#'
+#' @param project A `Project` object.
+#' @param individualId Character scalar.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @param value Numeric scalar.
+#' @param units Character scalar.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addIndividualParameter <- function(
+  project,
+  individualId,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  validateIsOfType(project, "Project")
+  if (!(individualId %in% names(project$individuals))) {
+    stop(paste0("individual '", individualId, "' not found"))
+  }
+  project$individuals[[individualId]] <- addParameter(
+    project$individuals[[individualId]],
+    containerPath = containerPath,
+    parameterName = parameterName,
+    value = value,
+    units = units
+  )
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a parameter from a named individual
+#'
+#' @inheritParams addIndividualParameter
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeIndividualParameter <- function(
+  project,
+  individualId,
+  containerPath,
+  parameterName
+) {
+  validateIsOfType(project, "Project")
+  if (!(individualId %in% names(project$individuals))) {
+    stop(paste0("individual '", individualId, "' not found"))
+  }
+  project$individuals[[individualId]] <- removeParameter(
+    project$individuals[[individualId]],
+    containerPath = containerPath,
+    parameterName = parameterName
+  )
+  project$.markModified()
+  invisible(project)
+}
+
+# Public CRUD: scenarios and output paths ----
+
+#' Add a scenario programmatically to a Project
+#'
+#' @description Creates a new `Scenario` and adds it to the
+#'   `project$scenarios` list after validating all references.
+#'
+#' @param project A `Project` object.
+#' @param scenarioName Character. Name for the new scenario. Must not already
+#'   exist in `project$scenarios`.
+#' @param modelFile Character. Name of the `.pkml` model file (relative to
+#'   model folder).
+#' @param individualId Character or NULL. ID referencing
+#'   `project$individuals`.
+#' @param populationId Character or NULL. ID referencing
+#'   `project$populations`.
+#' @param applicationProtocol Character or NULL. Protocol name referencing
+#'   `project$applications`.
+#' @param modelParameters Character vector or NULL. Group names referencing
+#'   `project$modelParameters`.
+#' @param outputPathIds Character vector or NULL. IDs referencing
+#'   `project$outputPaths`.
+#' @param simulationTime Character or NULL. Format `"start, end, resolution"`
+#'   or `"start, end, resolution; start, end, resolution"` for multiple
+#'   intervals.
+#' @param simulationTimeUnit Character. Time unit string. Default `"h"`.
+#' @param steadyState Logical. Whether to simulate steady state. Default
+#'   `FALSE`.
+#' @param steadyStateTime Numeric. Steady-state time in minutes. Default
+#'   `1000`.
+#' @param overwriteFormulasInSS Logical. Overwrite formulas during steady
+#'   state. Default `FALSE`.
+#' @param readPopulationFromCSV Logical. Load population from CSV. Default
+#'   `FALSE`.
+#'
+#' @returns The `project` object, invisibly.
+#'
+#' @export
+#' @family scenario
+addScenario <- function(
+  project,
+  scenarioName,
+  modelFile,
+  individualId = NULL,
+  populationId = NULL,
+  applicationProtocol = NULL,
+  modelParameters = NULL,
+  outputPathIds = NULL,
+  simulationTime = NULL,
+  simulationTimeUnit = "h",
+  steadyState = FALSE,
+  steadyStateTime = 1000,
+  overwriteFormulasInSS = FALSE,
+  readPopulationFromCSV = FALSE
+) {
+  validateIsOfType(project, "Project")
+  project <- project
+  errors <- character()
+
+  # Validate required args
+  if (
+    !is.character(scenarioName) ||
+      length(scenarioName) != 1 ||
+      is.na(scenarioName) ||
+      nchar(scenarioName) == 0
+  ) {
+    errors <- c(errors, "scenarioName must be a non-empty string")
+  } else if (scenarioName %in% names(project$scenarios)) {
+    errors <- c(errors, paste0("scenario '", scenarioName, "' already exists"))
+  }
+
+  if (
+    !is.character(modelFile) ||
+      length(modelFile) != 1 ||
+      is.na(modelFile) ||
+      nchar(modelFile) == 0
+  ) {
+    errors <- c(errors, "modelFile must be a non-empty string")
+  }
+
+  # Validate optional references
+  if (
+    !is.null(individualId) && !(individualId %in% names(project$individuals))
+  ) {
+    errors <- c(
+      errors,
+      paste0("individualId '", individualId, "' not found in individuals")
+    )
+  }
+  if (
+    !is.null(populationId) && !(populationId %in% names(project$populations))
+  ) {
+    errors <- c(
+      errors,
+      paste0("populationId '", populationId, "' not found in populations")
+    )
+  }
+  if (
+    !is.null(applicationProtocol) &&
+      !(applicationProtocol %in% names(project$applications))
+  ) {
+    errors <- c(
+      errors,
+      paste0(
+        "applicationProtocol '",
+        applicationProtocol,
+        "' not found in applications"
+      )
+    )
+  }
+  if (!is.null(modelParameters)) {
+    bad <- setdiff(modelParameters, names(project$modelParameters))
+    if (length(bad) > 0) {
+      errors <- c(
+        errors,
+        paste0(
+          "modelParameters not found in modelParameters: ",
+          paste(bad, collapse = ", ")
+        )
+      )
+    }
+  }
+  if (!is.null(outputPathIds)) {
+    bad <- setdiff(outputPathIds, names(project$outputPaths))
+    if (length(bad) > 0) {
+      errors <- c(
+        errors,
+        paste0(
+          "outputPathIds not found in outputPaths: ",
+          paste(bad, collapse = ", ")
+        )
+      )
+    }
+  }
+
+  if (length(errors) > 0) {
+    stop(paste0(
+      "Cannot add scenario '",
+      scenarioName,
+      "':\n- ",
+      paste(errors, collapse = "\n- ")
+    ))
+  }
+
+  # Build Scenario object
+  sc <- Scenario$new()
+  sc$scenarioName <- scenarioName
+  sc$modelFile <- modelFile
+  sc$individualId <- individualId
+  sc$applicationProtocol <- applicationProtocol %||% NA
+
+  if (!is.null(populationId)) {
+    sc$populationId <- populationId
+    sc$simulationType <- "Population"
+  }
+
+  sc$modelParameters <- modelParameters
+  sc$readPopulationFromCSV <- readPopulationFromCSV
+
+  if (!is.null(outputPathIds)) {
+    sc$outputPaths <- unname(project$outputPaths[outputPathIds])
+  }
+
+  if (!is.null(simulationTime)) {
+    sc$simulationTime <- .parseSimulationTimeIntervals(simulationTime)
+    sc$simulationTimeUnit <- simulationTimeUnit
+  }
+
+  sc$simulateSteadyState <- steadyState
+  sc$steadyStateTime <- steadyStateTime
+  sc$overwriteFormulasInSS <- overwriteFormulasInSS
+
+  # Add to configuration
+  project$scenarios[[scenarioName]] <- sc
+  project$.markModified()
+
+  invisible(project)
+}
+
+#' Add output paths to a Project
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of output path IDs (unique within the call
+#'   and not already present in `project$outputPaths`).
+#' @param path Character vector of output paths, same length as `id`.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+addOutputPath <- function(project, id, path) {
+  validateIsOfType(project, "Project")
+  errors <- character()
+
+  if (
+    !is.character(id) || length(id) < 1 || any(is.na(id)) || any(nchar(id) == 0)
+  ) {
+    errors <- c(errors, "id must be a non-empty character vector")
+  }
+  if (!is.character(path) || length(path) != length(id)) {
+    errors <- c(
+      errors,
+      "id and path must be character vectors of the same length"
+    )
+  }
+  if (is.character(id) && any(duplicated(id))) {
+    errors <- c(
+      errors,
+      paste0(
+        "duplicate ids within call: ",
+        paste(unique(id[duplicated(id)]), collapse = ", ")
+      )
+    )
+  }
+  if (is.character(id)) {
+    collisions <- intersect(id, names(project$outputPaths))
+    if (length(collisions) > 0) {
+      errors <- c(
+        errors,
+        paste0(
+          "outputPath id already exists: ",
+          paste(collisions, collapse = ", ")
+        )
+      )
+    }
+  }
+
+  if (length(errors) > 0) {
+    stop(paste0(
+      "Cannot add outputPath:\n- ",
+      paste(errors, collapse = "\n- ")
+    ))
+  }
+
+  newPaths <- path
+  names(newPaths) <- id
+  project$outputPaths <- c(project$outputPaths, newPaths)
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove an output path from a Project
+#' @param project A `Project` object.
+#' @param id Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+removeOutputPath <- function(project, id) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1 || is.na(id) || nchar(id) == 0) {
+    stop("id must be a non-empty string")
+  }
+  if (!(id %in% names(project$outputPaths))) {
+    cli::cli_warn("outputPath {.val {id}} not found; no-op.")
+    return(invisible(project))
+  }
+  .warnIfReferenced(project, "outputPath", id)
+  project$outputPaths <- project$outputPaths[setdiff(
+    names(project$outputPaths),
+    id
+  )]
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a scenario from a Project
+#' @param project A `Project` object.
+#' @param name Character scalar, scenario name.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+removeScenario <- function(project, name) {
+  validateIsOfType(project, "Project")
+  if (
+    !is.character(name) || length(name) != 1 || is.na(name) || nchar(name) == 0
+  ) {
+    stop("name must be a non-empty string")
+  }
+  if (!(name %in% names(project$scenarios))) {
+    cli::cli_warn("scenario {.val {name}} not found; no-op.")
+    return(invisible(project))
+  }
+  project$scenarios[[name]] <- NULL
+  project$.markModified()
+  invisible(project)
+}
+
+# Public CRUD: observed data ----
+
+#' Get names of all observed data in a Project
+#'
+#' Returns the names of all DataSets that would be returned by
+#' `loadObservedData()`. On first call, this loads the data to discover names;
+#' subsequent calls return cached names unless the cache is invalidated.
+#'
+#' @param project A `Project` object (see [loadProject()]).
+#' @return A character vector of DataSet names.
+#' @examples
+#' \dontrun{
+#' project <- loadProject(exampleProjectPath())
+#' getObservedDataNames(project)
+#' }
+#' @export
+getObservedDataNames <- function(project) {
+  validateIsOfType(project, "Project")
+
+  cached <- project$.getObservedDataNamesCache()
+  if (!is.null(cached)) {
+    return(cached)
+  }
+
+  # Load to populate cache
+  loadObservedData(project)
+  project$.getObservedDataNamesCache()
+}
+
+#' Add observed data to a Project
+#'
+#' @description Add an observedData entry. Accepts either a `DataSet`
+#' (creates a `type="programmatic"` entry keyed by `dataSet$name`) or a
+#' configuration list with `type` field ("excel", "pkml", or "script")
+#' plus source-specific fields.
+#'
+#' @param project A `Project` object.
+#' @param entry Either a `DataSet` object or a configuration list.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family observedData
+addObservedData <- function(project, entry) {
+  validateIsOfType(project, "Project")
+
+  if (inherits(entry, "DataSet")) {
+    name <- entry$name
+    existingNames <- getObservedDataNames(project)
+    if (name %in% existingNames) {
+      stop(messages$observedDataNameExists(name))
+    }
+    project$.addProgrammaticDataSet(name, entry)
+    project$.appendObservedDataNameCache(name)
+    newEntry <- list(type = "programmatic", name = name)
+    project$observedData <- c(project$observedData, list(newEntry))
+    project$.markModified()
+    cli::cli_inform(c(
+      "i" = paste0(
+        "For reproducibility, consider declaring this DataSet via a script ",
+        "in your Project.json using the observedData field with ",
+        "type = \"script\" and file = \"scripts/your_script.R\"."
+      )
+    ))
+  } else if (is.list(entry)) {
+    if (is.null(entry$type)) {
+      stop(messages$observedDataConfigMissingType())
+    }
+    validTypes <- c("excel", "pkml", "script")
+    if (!(entry$type %in% validTypes)) {
+      stop(messages$observedDataInvalidType(entry$type, validTypes))
+    }
+    project$.invalidateObservedDataNamesCache()
+    project$observedData <- c(project$observedData, list(entry))
+    project$.markModified()
+  } else {
+    stop(messages$observedDataInvalidEntry())
+  }
+  invisible(project)
+}
+
+#' Remove observed data from a Project
+#'
+#' @description Removes by DataSet name (for `type="programmatic"` entries)
+#' or by `file` basename (for `type="excel"/"pkml"/"script"` entries).
+#'
+#' @param project A `Project` object.
+#' @param name DataSet name or config entry file basename.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family observedData
+removeObservedData <- function(project, name) {
+  validateIsOfType(project, "Project")
+  if (
+    !is.character(name) ||
+      length(name) != 1 ||
+      is.na(name) ||
+      nchar(name) == 0
+  ) {
+    stop("name must be a non-empty string")
+  }
+
+  progDS <- project$.getProgrammaticDataSets()
+  if (name %in% names(progDS)) {
+    project$.removeProgrammaticDataSet(name)
+    # Match by the name stamped on the sentinel; falls back to the first
+    # programmatic entry for older configurations whose sentinels predate
+    # the `name` field.
+    matchIdx <- which(vapply(
+      project$observedData,
+      function(e) identical(e$type, "programmatic") && identical(e$name, name),
+      logical(1)
+    ))
+    if (length(matchIdx) == 0) {
+      matchIdx <- which(vapply(
+        project$observedData,
+        function(e) identical(e$type, "programmatic"),
+        logical(1)
+      ))
+    }
+    if (length(matchIdx) > 0) {
+      project$observedData <- project$observedData[-matchIdx[[1]]]
+    }
+    project$.invalidateObservedDataNamesCache()
+    project$.markModified()
+    return(invisible(project))
+  }
+
+  matchIdx <- which(vapply(
+    project$observedData,
+    function(e) {
+      !is.null(e$file) && identical(basename(e$file), name)
+    },
+    logical(1)
+  ))
+
+  if (length(matchIdx) == 0) {
+    cli::cli_warn(messages$observedDataNotFound(name))
+    return(invisible(project))
+  }
+
+  project$observedData <- project$observedData[-matchIdx[[1]]]
+  project$.invalidateObservedDataNamesCache()
+  project$.markModified()
+  invisible(project)
 }
 
 # Public Functions ----
@@ -1576,10 +2535,22 @@ exampleProjectConfigurationPath <- function() {
   dataCombinedNames <- unique(df$DataCombinedName)
 
   lapply(dataCombinedNames, function(dataCombinedName) {
-    dataCombinedRows <- df[df$DataCombinedName == dataCombinedName, , drop = FALSE]
+    dataCombinedRows <- df[
+      df$DataCombinedName == dataCombinedName,
+      ,
+      drop = FALSE
+    ]
 
-    simRows <- dataCombinedRows[dataCombinedRows$dataType == "simulated", , drop = FALSE]
-    obsRows <- dataCombinedRows[dataCombinedRows$dataType == "observed", , drop = FALSE]
+    simRows <- dataCombinedRows[
+      dataCombinedRows$dataType == "simulated",
+      ,
+      drop = FALSE
+    ]
+    obsRows <- dataCombinedRows[
+      dataCombinedRows$dataType == "observed",
+      ,
+      drop = FALSE
+    ]
 
     simulated <- lapply(seq_len(nrow(simRows)), function(i) {
       row <- simRows[i, ]
@@ -1813,4 +2784,956 @@ exampleProjectConfigurationPath <- function() {
   )
 
   return(result)
+}
+
+# Excel ↔ JSON bridge: public API ----
+
+#' Import project configuration from Excel files to v2.0 JSON
+#'
+#' @description Reads all Excel configuration files in an esqlabsR project and
+#' produces a single v2.0 JSON file. This is the migration path from
+#' Excel-based projects to the JSON-primary workflow.
+#'
+#' @param projectConfigPath Path to the `Project.xlsx` file.
+#'   Defaults to `"Project.xlsx"`.
+#' @param outputDir Directory where the JSON file will be saved. If `NULL`
+#'   (default), the JSON file is created in the same directory as the source
+#'   Excel file.
+#' @param silent Logical. If `TRUE`, suppresses informational messages.
+#'   Defaults to `FALSE`.
+#'
+#' @return Invisibly returns the path to the created JSON file.
+#' @export
+importProjectFromExcel <- function(
+  projectConfigPath = "Project.xlsx",
+  outputDir = NULL,
+  silent = FALSE
+) {
+  validateIsString(projectConfigPath)
+
+  if (!file.exists(projectConfigPath)) {
+    stop(messages$fileNotFound(projectConfigPath))
+  }
+
+  # Read the Project.xlsx to get path settings
+  pcExcel <- readExcel(projectConfigPath)
+  pcDir <- dirname(fs::path_abs(projectConfigPath))
+
+  # Build a lookup of Property -> Value from the Excel file
+  pcProps <- stats::setNames(
+    as.character(pcExcel$Value),
+    as.character(pcExcel$Property)
+  )
+
+  # Read version metadata (with fallback for old Excel files)
+  schemaVersion <- pcProps[["schemaVersion"]] %||% "2.0"
+  esqlabsRVersion <- pcProps[["esqlabsRVersion"]] %||%
+    as.character(utils::packageVersion("esqlabsR"))
+
+  # Remove version metadata from file path properties
+  pcProps <- pcProps[!names(pcProps) %in% c("schemaVersion", "esqlabsRVersion")]
+
+  # Resolve the configurations folder relative to the Excel file
+  configsFolder <- pcProps[["configurationsFolder"]]
+  if (!is.null(configsFolder) && !is.na(configsFolder)) {
+    configsFolder <- normalizePath(
+      file.path(pcDir, configsFolder),
+      mustWork = FALSE
+    )
+  }
+
+  # Helper to resolve a config file path
+  resolveConfigFile <- function(fileName) {
+    if (is.null(fileName) || is.na(fileName) || fileName == "") {
+      return(NULL)
+    }
+    if (is.null(configsFolder)) {
+      return(NULL)
+    }
+    normalizePath(file.path(configsFolder, fileName), mustWork = FALSE)
+  }
+
+  # Build the JSON structure — schemaVersion comes from the Excel source;
+  # if the Excel predates versioning, default to "2.0".
+  jsonData <- list(
+    schemaVersion = schemaVersion,
+    esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
+  )
+
+  # filePaths section — raw path properties
+  jsonData$filePaths <- as.list(pcProps)
+
+  # --- OutputPaths ---
+  scenariosFile <- resolveConfigFile(pcProps[["scenariosFile"]])
+  if (!is.null(scenariosFile) && file.exists(scenariosFile)) {
+    sheets <- readxl::excel_sheets(scenariosFile)
+    if ("OutputPaths" %in% sheets) {
+      outputPathsDf <- readExcel(scenariosFile, sheet = "OutputPaths")
+      outputPaths <- stats::setNames(
+        as.character(outputPathsDf$OutputPath),
+        as.character(outputPathsDf$OutputPathId)
+      )
+      jsonData$outputPaths <- as.list(outputPaths)
+    }
+  }
+
+  # --- Scenarios ---
+  if (!is.null(scenariosFile) && file.exists(scenariosFile)) {
+    sheets <- readxl::excel_sheets(scenariosFile)
+    if ("Scenarios" %in% sheets) {
+      scenarioDf <- readExcel(scenariosFile, sheet = "Scenarios")
+      scenarioDf <- dplyr::filter(scenarioDf, !is.na(Scenario_name))
+      jsonData$scenarios <- .parseExcelScenarios(scenarioDf, schemaVersion)
+    }
+  }
+
+  # --- ModelParameters ---
+  modelParamsFile <- resolveConfigFile(pcProps[["modelParamsFile"]])
+  if (!is.null(modelParamsFile) && file.exists(modelParamsFile)) {
+    jsonData$modelParameters <- .parseExcelParameterSheets(
+      modelParamsFile,
+      schemaVersion = schemaVersion
+    )
+  }
+
+  # --- Individuals ---
+  individualsFile <- resolveConfigFile(pcProps[["individualsFile"]])
+  if (!is.null(individualsFile) && file.exists(individualsFile)) {
+    sheets <- readxl::excel_sheets(individualsFile)
+    if ("IndividualBiometrics" %in% sheets) {
+      indivDf <- readExcel(individualsFile, sheet = "IndividualBiometrics")
+      jsonData$individuals <- .parseExcelIndividuals(indivDf, schemaVersion)
+    }
+    # Per-individual parameter sheets: each sheet whose name matches an
+    # individualId becomes that individual's inline `parameters` array.
+    indivParamSheets <- setdiff(sheets, "IndividualBiometrics")
+    if (length(indivParamSheets) > 0 && !is.null(jsonData$individuals)) {
+      paramGroups <- .parseExcelParameterSheets(
+        individualsFile,
+        sheetNames = indivParamSheets,
+        schemaVersion = schemaVersion
+      )
+      for (i in seq_along(jsonData$individuals)) {
+        id <- jsonData$individuals[[i]]$individualId
+        grp <- paramGroups[[id]]
+        if (!is.null(grp)) {
+          jsonData$individuals[[i]]$parameters <- grp
+        }
+      }
+    }
+  }
+
+  # --- Populations ---
+  populationsFile <- resolveConfigFile(pcProps[["populationsFile"]])
+  if (!is.null(populationsFile) && file.exists(populationsFile)) {
+    popDf <- readExcel(populationsFile, sheet = 1)
+    jsonData$populations <- .parseExcelPopulations(popDf, schemaVersion)
+  }
+
+  # --- Applications ---
+  applicationsFile <- resolveConfigFile(pcProps[["applicationsFile"]])
+  if (!is.null(applicationsFile) && file.exists(applicationsFile)) {
+    appGroups <- .parseExcelParameterSheets(
+      applicationsFile,
+      schemaVersion = schemaVersion
+    )
+    appsObj <- list()
+    for (id in names(appGroups)) {
+      appsObj[[id]] <- list(parameters = appGroups[[id]])
+    }
+    jsonData$applications <- appsObj
+  }
+
+  # --- Plots ---
+  plotsFile <- resolveConfigFile(pcProps[["plotsFile"]])
+  if (!is.null(plotsFile) && file.exists(plotsFile)) {
+    jsonData$plots <- .parseExcelPlots(plotsFile, schemaVersion)
+  }
+
+  # --- Determine output path ---
+  if (is.null(outputDir)) {
+    outputDir <- pcDir
+  }
+
+  outputFileName <- sub("\\.xlsx$", ".json", basename(projectConfigPath))
+  outputPath <- file.path(outputDir, outputFileName)
+
+  if (!dir.exists(dirname(outputPath))) {
+    dir.create(dirname(outputPath), recursive = TRUE)
+  }
+
+  # Write JSON
+  jsonText <- jsonlite::toJSON(
+    jsonData,
+    pretty = TRUE,
+    auto_unbox = TRUE,
+    digits = NA,
+    null = "null"
+  )
+  writeLines(jsonText, outputPath)
+
+  if (interactive() && !silent) {
+    inputFile <- fs::path_rel(projectConfigPath, start = getwd())
+    outputFile <- fs::path_rel(outputPath, start = getwd())
+    message(messages$createdFileSnapshot(inputFile, outputFile))
+  }
+
+  invisible(outputPath)
+}
+
+#' @rdname importProjectFromExcel
+#' @param ... Arguments passed to `importProjectFromExcel()`.
+#' @export
+snapshotProjectConfiguration <- function(...) {
+  lifecycle::deprecate_soft(
+    what = "snapshotProjectConfiguration()",
+    with = "importProjectFromExcel()",
+    when = "6.0.0"
+  )
+  importProjectFromExcel(...)
+}
+
+#' Export a Project to Excel files
+#'
+#' @description Writes Excel configuration files from a `Project`
+#' object (typically loaded from JSON). This is the reverse of
+#' `importProjectFromExcel()`.
+#'
+#' @param project A `Project` object.
+#' @param outputDir Directory where the Excel files will be created. Defaults
+#'   to the directory of the source JSON file.
+#' @param silent Logical. If `TRUE`, suppresses informational messages.
+#'   Defaults to `FALSE`.
+#'
+#' @return Invisibly returns the path to the created
+#'   `Project.xlsx`.
+#' @export
+exportProjectToExcel <- function(
+  project,
+  outputDir = NULL,
+  silent = FALSE
+) {
+  validateIsOfType(project, "Project")
+
+  if (is.null(outputDir)) {
+    outputDir <- project$projectDirPath %||% "."
+  }
+
+  if (!dir.exists(outputDir)) {
+    dir.create(outputDir, recursive = TRUE)
+  }
+
+  configDir <- file.path(outputDir, "Configurations")
+  if (!dir.exists(configDir)) {
+    dir.create(configDir, recursive = TRUE, showWarnings = FALSE)
+  }
+
+  # --- Project.xlsx ---
+  # Version metadata rows
+  props <- c("schemaVersion", "esqlabsRVersion")
+  vals <- c("2.0", as.character(utils::packageVersion("esqlabsR")))
+  descs <- c(
+    "Project structure schema version",
+    "esqlabsR version used to generate this file"
+  )
+
+  # File path property rows
+  filePathsData <- .extractFilePathsData(project)
+  for (propName in names(filePathsData)) {
+    props <- c(props, propName)
+    vals <- c(vals, filePathsData[[propName]]$value %||% "")
+    descs <- c(descs, filePathsData[[propName]]$description %||% "")
+  }
+  projConfigDf <- data.frame(
+    Property = props,
+    Value = vals,
+    Description = descs,
+    stringsAsFactors = FALSE
+  )
+  projConfigPath <- file.path(outputDir, "Project.xlsx")
+  .writeExcel(projConfigDf, projConfigPath)
+
+  # --- ModelParameters.xlsx ---
+  if (
+    !is.null(project$modelParameters) && length(project$modelParameters) > 0
+  ) {
+    sheets <- .parameterStructuresToExcelSheets(project$modelParameters)
+    .writeExcel(sheets, file.path(configDir, "ModelParameters.xlsx"))
+  }
+
+  # --- Individuals.xlsx ---
+  indivSheets <- list()
+  if (!is.null(project$individuals) && length(project$individuals) > 0) {
+    indivSheets[["IndividualBiometrics"]] <- .individualsToExcelDf(
+      project$individuals
+    )
+    # One sheet per individual carrying their inline parameters
+    indivParamSets <- list()
+    for (id in names(project$individuals)) {
+      pset <- project$individuals[[id]]$parameters
+      if (!is.null(pset) && length(pset$paths) > 0) {
+        indivParamSets[[id]] <- pset
+      }
+    }
+    if (length(indivParamSets) > 0) {
+      paramSheets <- .parameterStructuresToExcelSheets(indivParamSets)
+      indivSheets <- c(indivSheets, paramSheets)
+    }
+  }
+  if (length(indivSheets) > 0) {
+    .writeExcel(indivSheets, file.path(configDir, "Individuals.xlsx"))
+  }
+
+  # --- Populations.xlsx ---
+  if (!is.null(project$populations) && length(project$populations) > 0) {
+    popDf <- .populationsToExcelDf(project$populations)
+    .writeExcel(popDf, file.path(configDir, "Populations.xlsx"))
+  }
+
+  # --- Scenarios.xlsx ---
+  scenSheets <- list()
+  if (
+    !is.null(project$scenarios) &&
+      length(project$scenarios) > 0
+  ) {
+    scenSheets[["Scenarios"]] <- .scenarioConfigurationsToExcelDf(
+      project$scenarios,
+      outputPaths = project$outputPaths
+    )
+  }
+  if (!is.null(project$outputPaths) && length(project$outputPaths) > 0) {
+    scenSheets[["OutputPaths"]] <- data.frame(
+      OutputPathId = names(project$outputPaths),
+      OutputPath = unname(project$outputPaths),
+      stringsAsFactors = FALSE
+    )
+  }
+  if (length(scenSheets) > 0) {
+    .writeExcel(scenSheets, file.path(configDir, "Scenarios.xlsx"))
+  }
+
+  # --- Applications.xlsx ---
+  if (!is.null(project$applications) && length(project$applications) > 0) {
+    appParamSets <- list()
+    for (id in names(project$applications)) {
+      pset <- project$applications[[id]]$parameters
+      if (!is.null(pset) && length(pset$paths) > 0) {
+        appParamSets[[id]] <- pset
+      }
+    }
+    if (length(appParamSets) > 0) {
+      appSheets <- .parameterStructuresToExcelSheets(appParamSets)
+      .writeExcel(appSheets, file.path(configDir, "Applications.xlsx"))
+    }
+  }
+
+  # --- Plots.xlsx ---
+  if (!is.null(project$plots)) {
+    plotSheets <- list()
+    for (sheetName in names(project$plots)) {
+      df <- project$plots[[sheetName]]
+      if (is.data.frame(df) && nrow(df) > 0) {
+        plotSheets[[sheetName]] <- df
+      }
+    }
+    if (length(plotSheets) > 0) {
+      .writeExcel(plotSheets, file.path(configDir, "Plots.xlsx"))
+    }
+  }
+
+  if (interactive() && !silent) {
+    relPath <- fs::path_rel(projConfigPath, start = getwd())
+    message(messages$restoredProject(
+      project$jsonPath %||% "Project",
+      relPath
+    ))
+  }
+
+  invisible(projConfigPath)
+}
+
+#' @rdname exportProjectToExcel
+#' @param jsonPath Path to the JSON configuration file. Defaults to
+#'   `"Project.json"`.
+#' @param ... Additional arguments (unused).
+#' @export
+restoreProjectConfiguration <- function(
+  jsonPath = "Project.json",
+  outputDir = NULL,
+  silent = FALSE,
+  ...
+) {
+  lifecycle::deprecate_soft(
+    what = "restoreProjectConfiguration()",
+    with = "exportProjectToExcel()",
+    when = "6.0.0"
+  )
+  project <- loadProject(jsonPath)
+  exportProjectToExcel(
+    project = project,
+    outputDir = outputDir,
+    silent = silent
+  )
+  invisible(project)
+}
+
+#' Check if Excel configuration files are in sync with JSON
+#'
+#' @description Compares Excel configuration files against their JSON
+#' configuration to determine if they are synchronized.
+#'
+#' @param projectConfigPath Path to a `Project.xlsx` file.
+#'   Defaults to `"Project.xlsx"`.
+#' @param jsonPath Path to the JSON configuration file. If `NULL` (default),
+#'   the function looks for a JSON file with the same base name.
+#' @param silent Logical indicating whether to suppress informational messages.
+#'   Defaults to `FALSE`.
+#'
+#' @return A list with components: \item{in_sync}{Logical indicating whether
+#'   all files are synchronized} \item{details}{A list with detailed comparison
+#'   results}
+#'
+#' @import cli
+#' @export
+projectStatus <- function(
+  projectConfigPath = "Project.xlsx",
+  jsonPath = NULL,
+  silent = FALSE,
+  ignoreVersionCheck = TRUE
+) {
+  # Accept either a path string or a Project object for
+  # backwards compatibility
+  if (inherits(projectConfigPath, "Project")) {
+    pcObj <- projectConfigPath
+    # projectFilePath stores the JSON path; derive the Excel path
+    pcJsonPath <- pcObj$projectFilePath
+    projectConfigPath <- sub("\\.json$", ".xlsx", pcJsonPath)
+    if (is.null(jsonPath)) {
+      jsonPath <- pcJsonPath
+    }
+  }
+
+  if (!file.exists(projectConfigPath)) {
+    stop(messages$fileNotFound(projectConfigPath))
+  }
+
+  # Determine JSON path if not provided
+  if (is.null(jsonPath)) {
+    jsonPath <- sub("\\.xlsx$", ".json", projectConfigPath)
+  }
+
+  if (!file.exists(jsonPath)) {
+    stop("JSON file does not exist: ", jsonPath)
+  }
+
+  # Create temporary snapshot from current Excel files
+  tempDir <- tempfile("config_snapshot")
+  dir.create(tempDir, showWarnings = FALSE, recursive = TRUE)
+  on.exit(unlink(tempDir, recursive = TRUE), add = TRUE)
+
+  tempJsonPath <- file.path(tempDir, basename(jsonPath))
+  importProjectFromExcel(
+    projectConfigPath,
+    outputDir = tempDir,
+    silent = TRUE
+  )
+
+  # Load both JSON files as lists so we can strip volatile fields
+  originalJsonObj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  currentJsonObj <- jsonlite::fromJSON(tempJsonPath, simplifyVector = FALSE)
+
+  # Remove esqlabsRVersion — it changes with package updates and would cause
+  # false out-of-sync reports
+  originalJsonObj[["esqlabsRVersion"]] <- NULL
+  currentJsonObj[["esqlabsRVersion"]] <- NULL
+
+  if (identical(originalJsonObj, currentJsonObj)) {
+    result <- list(
+      in_sync = TRUE,
+      details = list(),
+      unsaved_changes = FALSE
+    )
+    if (!silent) {
+      message(messages$excelInSync())
+    }
+  } else {
+    fileChanges <- list()
+    dataChanges <- list()
+    fileStatus <- list()
+
+    originalFiles <- names(originalJsonObj)
+    currentFiles <- names(currentJsonObj)
+
+    missingFiles <- setdiff(originalFiles, currentFiles)
+    for (file in missingFiles) {
+      fileChanges[[file]] <- "Section missing in current Excel"
+      fileStatus[[file]] <- "out-of-sync"
+    }
+
+    addedFiles <- setdiff(currentFiles, originalFiles)
+    for (file in addedFiles) {
+      fileChanges[[file]] <- "New section not present in snapshot"
+      fileStatus[[file]] <- "out-of-sync"
+    }
+
+    commonFiles <- intersect(originalFiles, currentFiles)
+
+    for (file in commonFiles) {
+      if (!(file %in% names(fileStatus))) {
+        fileStatus[[file]] <- "in-sync"
+      }
+      if (!identical(originalJsonObj[[file]], currentJsonObj[[file]])) {
+        fileStatus[[file]] <- "out-of-sync"
+        dataChanges[[file]] <- "data differs"
+      }
+    }
+
+    differences <- list(
+      file_status = fileStatus,
+      file_changes = if (length(fileChanges) > 0) fileChanges else NULL,
+      data_changes = if (length(dataChanges) > 0) dataChanges else NULL
+    )
+
+    result <- list(
+      in_sync = FALSE,
+      details = differences,
+      unsaved_changes = FALSE
+    )
+
+    if (!silent) {
+      warning(messages$excelNotInSync())
+
+      cli::cli_h2("File Sync Status:")
+      for (file in names(fileStatus)) {
+        status_text <- fileStatus[[file]]
+        if (status_text == "in-sync") {
+          cli::cli_text(
+            "{.green {cli::symbol$tick}} {file}: {status_text}"
+          )
+        } else {
+          cli::cli_text(
+            "{.red {cli::symbol$cross}} {file}: {status_text}"
+          )
+        }
+      }
+
+      cli::cli_h2("Suggested Actions:")
+      cli::cli_text("To resolve these differences, you can:")
+      cli::cli_ul()
+      cli::cli_li(
+        "{.run importProjectFromExcel()} - Update JSON from Excel files."
+      )
+      cli::cli_li(
+        "{.run exportProjectToExcel()} - Recreate Excel files from JSON."
+      )
+      cli::cli_end()
+    }
+  }
+
+  invisible(result)
+}
+
+#' @rdname projectStatus
+#' @export
+projectConfigurationStatus <- function(...) {
+  lifecycle::deprecate_soft(
+    what = "projectConfigurationStatus()",
+    with = "projectStatus()",
+    when = "6.0.0"
+  )
+  projectStatus(...)
+}
+
+# Excel ↔ JSON bridge: internal helpers ----
+
+#' Parse parameter sheets from an Excel file into JSON structure
+#' @param filePath Path to the Excel file
+#' @param sheetNames Sheets to read. If NULL, reads all sheets.
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
+#' @returns Named list of parameter arrays
+#' @keywords internal
+#' @noRd
+.parseExcelParameterSheets <- function(
+  filePath,
+  sheetNames = NULL,
+  schemaVersion = "2.0"
+) {
+  if (is.null(sheetNames)) {
+    sheetNames <- readxl::excel_sheets(filePath)
+  }
+  result <- list()
+  for (sheet in sheetNames) {
+    df <- readExcel(filePath, sheet = sheet)
+    entries <- list()
+    if (nrow(df) > 0) {
+      for (i in seq_len(nrow(df))) {
+        entry <- list(
+          containerPath = as.character(df[["Container Path"]][[i]]),
+          parameterName = as.character(df[["Parameter Name"]][[i]]),
+          value = as.numeric(df[["Value"]][[i]]),
+          units = if (is.na(df[["Units"]][[i]]) || df[["Units"]][[i]] == "") {
+            NULL
+          } else {
+            as.character(df[["Units"]][[i]])
+          }
+        )
+        entries[[i]] <- entry
+      }
+    }
+    result[[sheet]] <- entries
+  }
+  result
+}
+
+#' Parse Scenarios Excel sheet into JSON structure
+#' @param scenarioDf Data frame from the Scenarios sheet
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
+#' @returns List of scenario objects
+#' @keywords internal
+#' @noRd
+.parseExcelScenarios <- function(scenarioDf, schemaVersion = "2.0") {
+  scenarios <- list()
+  for (i in seq_len(nrow(scenarioDf))) {
+    row <- scenarioDf[i, ]
+    scenario <- list(
+      name = as.character(row$Scenario_name),
+      individualId = .naToNull(as.character(row$IndividualId)),
+      populationId = .naToNull(as.character(row$PopulationId)),
+      readPopulationFromCSV = .naToNull(as.logical(row$ReadPopulationFromCSV)),
+      modelParameters = .parseCommaListToArray(row$ModelParameterSheets),
+      applicationProtocol = .naToNull(as.character(row$ApplicationProtocol)),
+      simulationTime = .naToNull(as.character(row$SimulationTime)),
+      simulationTimeUnit = .naToNull(as.character(row$SimulationTimeUnit)),
+      steadyState = .naToNull(as.logical(row$SteadyState)),
+      steadyStateTime = .naToNull(as.numeric(row$SteadyStateTime)),
+      steadyStateTimeUnit = .naToNull(as.character(row$SteadyStateTimeUnit)),
+      overwriteFormulasInSS = .naToNull(as.logical(row$OverwriteFormulasInSS)),
+      modelFile = as.character(row$ModelFile),
+      outputPathIds = .parseCommaListToArray(row$OutputPathsIds)
+    )
+    scenarios[[i]] <- scenario
+  }
+  scenarios
+}
+
+#' Parse IndividualBiometrics Excel sheet into JSON structure
+#' @param indivDf Data frame from the IndividualBiometrics sheet
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
+#' @returns List of individual objects
+#' @keywords internal
+#' @noRd
+.parseExcelIndividuals <- function(indivDf, schemaVersion = "2.0") {
+  individuals <- list()
+  for (i in seq_len(nrow(indivDf))) {
+    row <- indivDf[i, ]
+    indiv <- list(
+      individualId = as.character(row$IndividualId),
+      species = as.character(row$Species),
+      population = as.character(row$Population),
+      gender = as.character(row$Gender),
+      weight = .naToNull(as.numeric(row$`Weight [kg]`)),
+      height = .naToNull(as.numeric(row$`Height [cm]`)),
+      age = .naToNull(as.numeric(row$`Age [year(s)]`)),
+      proteinOntogenies = .naToNull(as.character(row$`Protein Ontogenies`))
+    )
+    individuals[[i]] <- indiv
+  }
+  individuals
+}
+
+#' Parse Populations Excel sheet into JSON structure
+#' @param popDf Data frame from the Demographics sheet
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
+#' @returns List of population objects
+#' @keywords internal
+#' @noRd
+.parseExcelPopulations <- function(popDf, schemaVersion = "2.0") {
+  populations <- list()
+  for (i in seq_len(nrow(popDf))) {
+    row <- popDf[i, ]
+    pop <- list(
+      populationId = as.character(row$PopulationName),
+      species = as.character(row$species),
+      population = as.character(row$population),
+      numberOfIndividuals = .naToNull(as.numeric(row$numberOfIndividuals)),
+      proportionOfFemales = .naToNull(as.numeric(row$proportionOfFemales)),
+      weightMin = .naToNull(as.numeric(row$weightMin)),
+      weightMax = .naToNull(as.numeric(row$weightMax)),
+      weightUnit = .naToNull(as.character(row$weightUnit)),
+      heightMin = .naToNull(as.numeric(row$heightMin)),
+      heightMax = .naToNull(as.numeric(row$heightMax)),
+      heightUnit = .naToNull(as.character(row$heightUnit)),
+      ageMin = .naToNull(as.numeric(row$ageMin)),
+      ageMax = .naToNull(as.numeric(row$ageMax)),
+      BMIMin = .naToNull(as.numeric(row$BMIMin)),
+      BMIMax = .naToNull(as.numeric(row$BMIMax)),
+      BMIUnit = .naToNull(as.character(row$BMIUnit)),
+      proteinOntogenies = .naToNull(as.character(row$`Protein Ontogenies`))
+    )
+    populations[[i]] <- pop
+  }
+  populations
+}
+
+#' Parse Plots Excel file into JSON structure
+#' @param plotsFile Path to the Plots.xlsx file
+#' @param schemaVersion Project structure schema version. Used to adapt parsing
+#'   logic when importing Excel files generated by an older schema.
+#' @returns Named list with dataCombined, plotConfiguration, plotGrids,
+#'   exportConfiguration
+#' @keywords internal
+#' @noRd
+.parseExcelPlots <- function(plotsFile, schemaVersion = "2.0") {
+  sheets <- readxl::excel_sheets(plotsFile)
+  result <- list()
+  for (sheet in sheets) {
+    df <- readExcel(plotsFile, sheet = sheet)
+    if (nrow(df) == 0) {
+      result[[sheet]] <- list()
+      next
+    }
+    entries <- list()
+    for (i in seq_len(nrow(df))) {
+      entry <- list()
+      for (col in names(df)) {
+        val <- df[[col]][[i]]
+        entry[[col]] <- .naToNull(val)
+      }
+      entries[[i]] <- entry
+    }
+    result[[sheet]] <- entries
+  }
+  result
+}
+
+#' Convert parameter structures to Excel sheet data frames
+#' @param parameterGroups Named list of parameter structures (paths, values,
+#'   units)
+#' @returns Named list of data frames suitable for Excel sheets
+#' @keywords internal
+#' @noRd
+.parameterStructuresToExcelSheets <- function(parameterGroups) {
+  sheets <- list()
+  for (name in names(parameterGroups)) {
+    params <- parameterGroups[[name]]
+    if (is.null(params) || length(params$paths) == 0) {
+      sheets[[name]] <- data.frame(
+        `Container Path` = character(0),
+        `Parameter Name` = character(0),
+        Value = numeric(0),
+        Units = character(0),
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      )
+      next
+    }
+    splitPaths <- lapply(
+      params$paths,
+      .splitParameterPathIntoContainerAndName
+    )
+    sheets[[name]] <- data.frame(
+      `Container Path` = vapply(
+        splitPaths,
+        function(x) x$containerPath,
+        character(1)
+      ),
+      `Parameter Name` = vapply(
+        splitPaths,
+        function(x) x$parameterName,
+        character(1)
+      ),
+      Value = params$values,
+      Units = params$units,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  sheets
+}
+
+#' Convert individuals data to an IndividualBiometrics data frame
+#' @param individuals Named list of IndividualCharacteristics objects
+#' @returns A data frame
+#' @keywords internal
+#' @noRd
+.individualsToExcelDf <- function(individuals) {
+  rows <- list()
+  for (indivId in names(individuals)) {
+    ic <- individuals[[indivId]]
+    ontoStr <- ic$proteinOntogenies %||% NA
+
+    rows[[length(rows) + 1]] <- data.frame(
+      IndividualId = indivId,
+      Species = as.character(ic$species),
+      Population = as.character(ic$population %||% NA),
+      Gender = as.character(ic$gender),
+      `Weight [kg]` = as.double(ic$weight %||% NA),
+      `Height [cm]` = as.double(ic$height %||% NA),
+      `Age [year(s)]` = as.double(ic$age %||% NA),
+      `Protein Ontogenies` = ontoStr,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  do.call(rbind, rows)
+}
+
+#' Convert populations data to an Excel data frame
+#' @param populations Named list of PopulationCharacteristics objects
+#' @returns A data frame
+#' @keywords internal
+#' @noRd
+.populationsToExcelDf <- function(populations) {
+  rows <- list()
+  for (popId in names(populations)) {
+    popData <- populations[[popId]]
+    ontoStr <- popData$proteinOntogenies %||% NA
+
+    rows[[length(rows) + 1]] <- data.frame(
+      PopulationName = popId,
+      species = as.character(popData$species),
+      population = as.character(popData$population %||% NA),
+      numberOfIndividuals = as.double(popData$numberOfIndividuals %||% NA),
+      proportionOfFemales = as.double(popData$proportionOfFemales %||% NA),
+      weightMin = as.double(popData$weightMin %||% NA),
+      weightMax = as.double(popData$weightMax %||% NA),
+      weightUnit = as.character(popData$weightUnit %||% NA),
+      heightMin = as.double(popData$heightMin %||% NA),
+      heightMax = as.double(popData$heightMax %||% NA),
+      heightUnit = as.character(popData$heightUnit %||% NA),
+      ageMin = as.double(popData$ageMin %||% NA),
+      ageMax = as.double(popData$ageMax %||% NA),
+      BMIMin = as.double(popData$BMIMin %||% NA),
+      BMIMax = as.double(popData$BMIMax %||% NA),
+      BMIUnit = as.character(popData$BMIUnit %||% NA),
+      `Protein Ontogenies` = ontoStr,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  do.call(rbind, rows)
+}
+
+#' Convert Scenario objects to an Excel data frame
+#' @param scenarioConfigs Named list of Scenario objects
+#' @param outputPaths Named character vector of output paths (names are IDs,
+#'   values are path strings) from `Project$outputPaths`.
+#'   Used to reverse-lookup scenario output paths back to IDs.
+#' @returns A data frame
+#' @keywords internal
+#' @noRd
+.scenarioConfigurationsToExcelDf <- function(
+  scenarioConfigs,
+  outputPaths = NULL
+) {
+  rows <- list()
+  for (name in names(scenarioConfigs)) {
+    sc <- scenarioConfigs[[name]]
+    paramGroupNames <- sc$modelParameters
+    paramGroupsStr <- if (
+      !is.null(paramGroupNames) && length(paramGroupNames) > 0
+    ) {
+      paste(paramGroupNames, collapse = ", ")
+    } else {
+      NA
+    }
+    # simulationTime → string representation
+    simTimeStr <- NA
+    if (!is.null(sc$simulationTime)) {
+      intervals <- vapply(
+        sc$simulationTime,
+        function(interval) {
+          paste(interval, collapse = ", ")
+        },
+        character(1)
+      )
+      simTimeStr <- paste(intervals, collapse = "; ")
+    }
+    # outputPaths → reverse-lookup IDs from project$outputPaths
+    outputPathIdsStr <- NA
+    if (!is.null(sc$outputPaths) && !is.null(outputPaths)) {
+      matchedIds <- names(outputPaths)[match(sc$outputPaths, outputPaths)]
+      matchedIds <- matchedIds[!is.na(matchedIds)]
+      if (length(matchedIds) > 0) {
+        outputPathIdsStr <- paste(matchedIds, collapse = ", ")
+      }
+    }
+
+    # Reconstruct steadyStateTime back to the original unit
+    ssTime <- NA
+    ssTimeUnit <- NA
+    if (
+      !is.null(sc$steadyStateTime) &&
+        !is.na(sc$steadyStateTime) &&
+        sc$steadyStateTime > 0
+    ) {
+      ssTimeUnit <- sc$steadyStateTimeUnit %||% "min"
+      ssTime <- ospsuite::toUnit(
+        quantityOrDimension = ospDimensions$Time,
+        values = sc$steadyStateTime,
+        targetUnit = ssTimeUnit
+      )
+    }
+
+    rows[[length(rows) + 1]] <- data.frame(
+      Scenario_name = sc$scenarioName,
+      IndividualId = sc$individualId %||% NA,
+      PopulationId = if (sc$simulationType == "Population") {
+        sc$populationId
+      } else {
+        NA
+      },
+      ReadPopulationFromCSV = sc$readPopulationFromCSV %||% FALSE,
+      ModelParameterSheets = paramGroupsStr,
+      ApplicationProtocol = sc$applicationProtocol %||% NA,
+      SimulationTime = simTimeStr,
+      SimulationTimeUnit = sc$simulationTimeUnit %||% NA,
+      SteadyState = sc$simulateSteadyState %||% FALSE,
+      SteadyStateTime = ssTime,
+      SteadyStateTimeUnit = ssTimeUnit,
+      OverwriteFormulasInSS = sc$overwriteFormulasInSS %||% FALSE,
+      ModelFile = sc$modelFile %||% NA,
+      OutputPathsIds = outputPathIdsStr,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  do.call(rbind, rows)
+}
+
+#' Extract private .filePathsData from a Project
+#' @param project Project object
+#' @returns Named list of property data
+#' @keywords internal
+#' @noRd
+.extractFilePathsData <- function(project) {
+  project$.getFilePathsData()
+}
+
+#' Convert NA to NULL for JSON serialization
+#' @keywords internal
+#' @noRd
+.naToNull <- function(x) {
+  if (is.null(x) || length(x) == 0) {
+    return(NULL)
+  }
+  if (length(x) == 1L && is.na(x)) {
+    return(NULL)
+  }
+  x
+}
+
+#' Parse a comma-separated string into a character vector, or NULL
+#' @keywords internal
+#' @noRd
+.parseCommaListToArray <- function(x) {
+  if (is.null(x) || length(x) == 0 || is.na(x) || x == "") {
+    return(NULL)
+  }
+  parts <- trimws(strsplit(as.character(x), ",", fixed = TRUE)[[1]])
+  parts[nzchar(parts)]
 }
