@@ -87,9 +87,14 @@ model parameterization. Used by the Excel import/export bridge.}
 \item{\code{populationsFile}}{Path to the Excel file with population
 information. Used by the Excel import/export bridge.}
 
-\item{\code{populationsFolder}}{Name of the folder containing population defined
-through csv files.
-Must be located in the "configurationsFolder".}
+\item{\code{populationsFolder}}{Name of the folder containing population
+definitions as CSV files. Must be located inside
+\code{configurationsFolder}. Note: although this slot lives in the same
+\code{filePaths} group as the Excel-bridge slots (\code{scenariosFile},
+\code{individualsFile}, etc.), it is runtime infrastructure, not
+migration metadata — \code{runScenarios()} reads it to load population
+CSVs at simulation time. See ADR 0001 for the rationale on
+keeping it grouped here despite the mismatch.}
 
 \item{\code{scenariosFile}}{Path to the Excel file with scenario definitions.
 Used by the Excel import/export bridge.}
@@ -118,14 +123,7 @@ schema. Reflects any in-memory modifications. Read-only.}
 \item \href{#method-Project-.markSaved}{\code{Project$.markSaved()}}
 \item \href{#method-Project-.markModified}{\code{Project$.markModified()}}
 \item \href{#method-Project-.markValidated}{\code{Project$.markValidated()}}
-\item \href{#method-Project-.getProgrammaticDataSets}{\code{Project$.getProgrammaticDataSets()}}
-\item \href{#method-Project-.addProgrammaticDataSet}{\code{Project$.addProgrammaticDataSet()}}
-\item \href{#method-Project-.removeProgrammaticDataSet}{\code{Project$.removeProgrammaticDataSet()}}
 \item \href{#method-Project-.getFilePathsData}{\code{Project$.getFilePathsData()}}
-\item \href{#method-Project-.cacheObservedDataNames}{\code{Project$.cacheObservedDataNames()}}
-\item \href{#method-Project-.invalidateObservedDataNamesCache}{\code{Project$.invalidateObservedDataNamesCache()}}
-\item \href{#method-Project-.appendObservedDataNameCache}{\code{Project$.appendObservedDataNameCache()}}
-\item \href{#method-Project-.getObservedDataNamesCache}{\code{Project$.getObservedDataNamesCache()}}
 \item \href{#method-Project-addScenario}{\code{Project$addScenario()}}
 \item \href{#method-Project-addIndividual}{\code{Project$addIndividual()}}
 \item \href{#method-Project-removeIndividual}{\code{Project$removeIndividual()}}
@@ -193,54 +191,6 @@ validation has succeeded with no critical errors. Sets the
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.getProgrammaticDataSets"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.getProgrammaticDataSets}{}}}
-\subsection{Method \code{.getProgrammaticDataSets()}}{
-Internal method to retrieve all programmatic DataSets.
-Not intended for end-user use.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Project$.getProgrammaticDataSets()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.addProgrammaticDataSet"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.addProgrammaticDataSet}{}}}
-\subsection{Method \code{.addProgrammaticDataSet()}}{
-Internal method to register a programmatic DataSet.
-Not intended for end-user use.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Project$.addProgrammaticDataSet(name, dataSet)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{name}}{Character. Key under which the DataSet is stored.}
-
-\item{\code{dataSet}}{A \code{DataSet} object.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.removeProgrammaticDataSet"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.removeProgrammaticDataSet}{}}}
-\subsection{Method \code{.removeProgrammaticDataSet()}}{
-Internal method to drop a programmatic DataSet by name.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Project$.removeProgrammaticDataSet(name)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{name}}{Character.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Project-.getFilePathsData"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-.getFilePathsData}{}}}
 \subsection{Method \code{.getFilePathsData()}}{
@@ -249,61 +199,6 @@ Internal method to retrieve the raw filePaths metadata
 end-user use; consumed by the Excel import/export bridge.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Project$.getFilePathsData()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.cacheObservedDataNames"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.cacheObservedDataNames}{}}}
-\subsection{Method \code{.cacheObservedDataNames()}}{
-Internal method to cache observed data names.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Project$.cacheObservedDataNames(names)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{names}}{Character vector of DataSet names.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.invalidateObservedDataNamesCache"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.invalidateObservedDataNamesCache}{}}}
-\subsection{Method \code{.invalidateObservedDataNamesCache()}}{
-Internal method to invalidate the cached observed data
-names. Use after mutating \code{observedData}.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Project$.invalidateObservedDataNamesCache()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.appendObservedDataNameCache"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.appendObservedDataNameCache}{}}}
-\subsection{Method \code{.appendObservedDataNameCache()}}{
-Internal method to append to the cached observed data names.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Project$.appendObservedDataNameCache(name)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{name}}{Character scalar to append.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.getObservedDataNamesCache"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.getObservedDataNamesCache}{}}}
-\subsection{Method \code{.getObservedDataNamesCache()}}{
-Internal method to get cached observed data names.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Project$.getObservedDataNamesCache()}\if{html}{\out{</div>}}
 }
 
 }

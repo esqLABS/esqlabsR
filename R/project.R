@@ -119,9 +119,14 @@ Project <- R6::R6Class(
         self$configurationsFolder
       )
     },
-    #' @field populationsFolder Name of the folder containing population defined
-    #'   through csv files.
-    #' Must be located in the "configurationsFolder".
+    #' @field populationsFolder Name of the folder containing population
+    #'   definitions as CSV files. Must be located inside
+    #'   `configurationsFolder`. Note: although this slot lives in the same
+    #'   `filePaths` group as the Excel-bridge slots (`scenariosFile`,
+    #'   `individualsFile`, etc.), it is runtime infrastructure, not
+    #'   migration metadata — `runScenarios()` reads it to load population
+    #'   CSVs at simulation time. See ADR 0001 for the rationale on
+    #'   keeping it grouped here despite the mismatch.
     populationsFolder = function(value) {
       if (!missing(value)) {
         private$.filePathsData$populationsFolder$value <-

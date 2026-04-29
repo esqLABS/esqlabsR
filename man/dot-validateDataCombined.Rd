@@ -2,30 +2,36 @@
 % Please edit documentation in R/data-combined.R
 \name{.validateDataCombined}
 \alias{.validateDataCombined}
-\title{Validate and process a DataCombined data frame}
+\title{Validate and process a DataCombined named list}
 \usage{
 .validateDataCombined(
-  dfDataCombined,
+  selected,
   simulatedScenarios,
   observedData,
   stopIfNotFound
 )
 }
 \arguments{
-\item{dfDataCombined}{Data frame with DataCombined definitions}
+\item{selected}{Named list of DataCombined specs (subset of
+\code{project$plots$dataCombined}).}
 
 \item{simulatedScenarios}{List of simulated scenarios as created by
-\code{runScenarios()}}
+\code{runScenarios()}.}
 
-\item{observedData}{Observed data objects}
+\item{observedData}{Named list of observed \code{DataSet} objects.}
 
-\item{stopIfNotFound}{if \code{TRUE}, throw an error if a simulated result of an
-observed data are not found}
+\item{stopIfNotFound}{If \code{TRUE}, throw an error if a referenced scenario
+or dataSet is not found; otherwise warn and drop the offending entry.}
 }
 \value{
-Processed \code{dfDataCombined}
+The (possibly filtered) named list.
 }
 \description{
-Validate and process a DataCombined data frame
+Walks the nested \code{selected} named list and ensures each entry carries
+the fields its \code{dataType} requires. Entries whose scenario / dataSet
+is not in the simulated / observed pool are dropped (or trigger an
+error, if \code{stopIfNotFound}). DataCombined that lose all entries this
+way are kept as empty entries so an empty \code{DataCombined$new()} is still
+created downstream.
 }
 \keyword{internal}
