@@ -214,13 +214,13 @@ exportConfigurationDf <- data.frame(list(
 
 # Helper to create a project with custom plots data
 .withPlots <- function(
-  project = project,
+  baseProject = project,
   dataCombined = dataCombinedDf,
   plotConfiguration = plotConfigurationDf,
   plotGrids = plotGridsDf,
   exportConfiguration = exportConfigurationDf
 ) {
-  pcLocal <- project$clone()
+  pcLocal <- baseProject$clone()
   pcLocal$plots <- list(
     dataCombined = dataCombined,
     plotConfiguration = plotConfiguration,
@@ -1091,4 +1091,191 @@ test_that("It shows a warning when yAxisScale is log and yValuesLimits contain 0
     ),
     fixed = TRUE
   )
+})
+
+# addPlot / removePlot ----
+
+test_that("addPlot appends a row and marks the project modified", {
+  pc <- testProject()
+  pc$.markSaved()
+  before <- nrow(pc$plots$plotConfiguration)
+
+  addPlot(
+    project = pc,
+    plotID = "PNew",
+    dataCombinedName = "AciclovirPVB",
+    plotType = "individual",
+    title = "Hello"
+  )
+
+  expect_equal(nrow(pc$plots$plotConfiguration), before + 1L)
+  newRow <- pc$plots$plotConfiguration[
+    pc$plots$plotConfiguration$plotID == "PNew",
+  ]
+  expect_equal(newRow$DataCombinedName, "AciclovirPVB")
+  expect_equal(newRow$plotType, "individual")
+  expect_equal(newRow$title, "Hello")
+  expect_true(pc$modified)
+})
+
+test_that("addPlot errors on duplicate plotID", {
+  pc <- testProject()
+  expect_error(
+    addPlot(pc, "P1", "AciclovirPVB", "individual"),
+    regexp = "already exists"
+  )
+})
+
+test_that("addPlot errors on unknown DataCombinedName", {
+  pc <- testProject()
+  expect_error(
+    addPlot(pc, "PX", "NoSuchDC", "individual"),
+    regexp = "not found"
+  )
+})
+
+test_that("addPlot errors on unknown plotType", {
+  pc <- testProject()
+  expect_error(
+    addPlot(pc, "PX", "AciclovirPVB", "bogusType"),
+    regexp = "plotType"
+  )
+})
+
+test_that("addPlot keeps optional NULL args as NA columns", {
+  pc <- testProject()
+  addPlot(
+    pc,
+    "PNullArg",
+    "AciclovirPVB",
+    "individual",
+    title = NULL,
+    subtitle = "set"
+  )
+  newRow <- pc$plots$plotConfiguration[
+    pc$plots$plotConfiguration$plotID == "PNullArg",
+  ]
+  expect_true("title" %in% names(newRow))
+  expect_true(is.na(newRow$title))
+  expect_equal(newRow$subtitle, "set")
+})
+
+test_that("addPlot R6 method delegates to standalone", {
+  pc1 <- testProject()
+  pc2 <- testProject()
+  addPlot(pc1, "PD1", "AciclovirPVB", "individual")
+  pc2$addPlot("PD1", "AciclovirPVB", "individual")
+  expect_equal(
+    nrow(pc1$plots$plotConfiguration),
+    nrow(pc2$plots$plotConfiguration)
+  )
+})
+
+test_that("addPlot returns project invisibly", {
+  pc <- testProject()
+  out <- withVisible(addPlot(pc, "PInv", "AciclovirPVB", "individual"))
+  expect_false(out$visible)
+  expect_identical(out$value, pc)
+})
+
+test_that("removePlot drops the row and marks modified", {
+  pc <- testProject()
+  pc$.markSaved()
+  before <- nrow(pc$plots$plotConfiguration)
+  # P3 is referenced by plotGrid "Aciclovir"; the dangling-reference warning
+  # is asserted in a dedicated test below.
+  suppressWarnings(removePlot(pc, "P3"))
+  expect_equal(nrow(pc$plots$plotConfiguration), before - 1L)
+  expect_false("P3" %in% pc$plots$plotConfiguration$plotID)
+  expect_true(pc$modified)
+})
+
+test_that("removePlot warns and is a no-op for unknown plotID", {
+  pc <- testProject()
+  pc$.markSaved()
+  expect_warning(
+    removePlot(pc, "NoSuchPlot_ZZZ"),
+    regexp = "not found"
+  )
+  expect_false(pc$modified)
+})
+
+test_that("removePlot warns when the plot is referenced in a plotGrid", {
+  pc <- testProject()
+  expect_warning(
+    removePlot(pc, "P1"),
+    regexp = "referenced"
+  )
+})
+
+# addPlotGrid / removePlotGrid ----
+
+test_that("addPlotGrid joins plotIDs into a comma string and marks modified", {
+  pc <- testProject()
+  pc$.markSaved()
+  before <- nrow(pc$plots$plotGrids)
+
+  addPlotGrid(
+    project = pc,
+    name = "GridNew",
+    plotIDs = c("P1", "P2"),
+    title = "T"
+  )
+
+  expect_equal(nrow(pc$plots$plotGrids), before + 1L)
+  newRow <- pc$plots$plotGrids[pc$plots$plotGrids$name == "GridNew", ]
+  expect_equal(newRow$plotIDs, "P1, P2")
+  expect_equal(newRow$title, "T")
+  expect_true(pc$modified)
+})
+
+test_that("addPlotGrid errors on duplicate name", {
+  pc <- testProject()
+  expect_error(
+    addPlotGrid(pc, "Aciclovir", c("P1")),
+    regexp = "already exists"
+  )
+})
+
+test_that("addPlotGrid errors when plotIDs reference unknown plots", {
+  pc <- testProject()
+  expect_error(
+    addPlotGrid(pc, "GridX", c("P1", "NoSuchPlot")),
+    regexp = "not found"
+  )
+})
+
+test_that("addPlotGrid R6 method delegates to standalone", {
+  pc1 <- testProject()
+  pc2 <- testProject()
+  addPlotGrid(pc1, "G1", c("P1"))
+  pc2$addPlotGrid("G1", c("P1"))
+  expect_equal(nrow(pc1$plots$plotGrids), nrow(pc2$plots$plotGrids))
+})
+
+test_that("addPlotGrid returns project invisibly", {
+  pc <- testProject()
+  out <- withVisible(addPlotGrid(pc, "GInv", c("P1")))
+  expect_false(out$visible)
+  expect_identical(out$value, pc)
+})
+
+test_that("removePlotGrid drops the row and marks modified", {
+  pc <- testProject()
+  pc$.markSaved()
+  before <- nrow(pc$plots$plotGrids)
+  removePlotGrid(pc, "Aciclovir2")
+  expect_equal(nrow(pc$plots$plotGrids), before - 1L)
+  expect_false("Aciclovir2" %in% pc$plots$plotGrids$name)
+  expect_true(pc$modified)
+})
+
+test_that("removePlotGrid warns and is a no-op for unknown name", {
+  pc <- testProject()
+  pc$.markSaved()
+  expect_warning(
+    removePlotGrid(pc, "NoSuchGrid_ZZZ"),
+    regexp = "not found"
+  )
+  expect_false(pc$modified)
 })

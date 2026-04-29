@@ -74,7 +74,9 @@ Can be a single string (recycled for all scenarios) or a vector with the same le
 Can be a single logical value (recycled for all scenarios) or a vector with the same length as \code{pkmlFilePaths}.}
 
 \item{steadyStateTime}{Numeric vector. Steady-state times. Only used when corresponding \code{steadyState} is \code{TRUE}.
-If \code{NULL} (default), no steady-state time will be set. Can be a single numeric value (recycled for all scenarios)
+If \code{NULL} (default), no steady-state time is set on the scenario, and
+\code{Scenario$new()}'s default of 1000 (in the configured time unit) takes effect at simulation time.
+Can be a single numeric value (recycled for all scenarios)
 or a vector with the same length as \code{pkmlFilePaths}.}
 
 \item{steadyStateTimeUnit}{Character vector. Steady-state time units. Only used when \code{steadyState = TRUE} and \code{steadyStateTime} is provided.
@@ -133,18 +135,18 @@ The function handles duplicate scenario names by appending indices (e.g., "Scena
 \examples{
 \dontrun{
 # Load project
-pc <- loadProject("Project.json")
+project <- loadProject("Project.json")
 
 # Create scenarios from a single PKML file
 pkmlPath <- "path/to/simulation.pkml"
 scenarios <- createScenariosFromPKML(
   pkmlFilePaths = pkmlPath,
-  project = pc
+  project = project
 )
 
 # Add to project and run
-pc$scenarios <- c(pc$scenarios, scenarios)
-results <- runScenarios(pc, scenarioNames = names(scenarios))
+project$scenarios <- c(project$scenarios, scenarios)
+results <- runScenarios(project, scenarioNames = names(scenarios))
 
 # Example of vector recycling - single value applied to all scenarios
 scenarios <- createScenariosFromPKML(

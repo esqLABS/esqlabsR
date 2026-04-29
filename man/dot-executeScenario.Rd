@@ -4,12 +4,12 @@
 \alias{.executeScenario}
 \title{Execute a single scenario}
 \usage{
-.executeScenario(scenario, pc, customParams, cache, simulationRunOptions)
+.executeScenario(scenario, project, customParams, cache, simulationRunOptions)
 }
 \arguments{
 \item{scenario}{A \code{Scenario} object (plain data class).}
 
-\item{pc}{A \code{Project} object.}
+\item{project}{A \code{Project} object.}
 
 \item{customParams}{Optional parameter structure from the caller.}
 
