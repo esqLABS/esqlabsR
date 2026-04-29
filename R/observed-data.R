@@ -162,6 +162,12 @@
   result
 }
 
+#' @keywords internal
+#' @noRd
+.observedDataValidatorAdapter <- function(project) {
+  .validateObservedData(project$observedData, project$dataFolder)
+}
+
 # Load ----
 
 #' Load observed data declared in a Project

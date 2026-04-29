@@ -46,6 +46,12 @@
   .validateParameterGroups(applications, "applications")
 }
 
+#' @keywords internal
+#' @noRd
+.applicationsValidatorAdapter <- function(project) {
+  .validateApplications(project$applications)
+}
+
 # Serialize ----
 
 #' @keywords internal

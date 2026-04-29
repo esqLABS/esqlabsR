@@ -466,8 +466,25 @@ validateProject <- function(project) {
   results
 }
 
-# Canonical order of section validators. crossReferences must come last so it
-# can inspect the partial results map and skip when prior sections failed.
+# Section validator dispatch ----
+#
+# The dispatcher below resolves each section's validator by naming
+# convention rather than hardcoding the section list. Each section file
+# (R/applications.R, R/individuals.R, etc.) defines a top-level
+# `.<section>ValidatorAdapter <- function(project)` that pulls the right
+# slice of the project and calls the section's `.validateX` function.
+# Adding a new section means dropping a file with a matching adapter; this
+# file does not need to change.
+#
+# crossReferences is intentionally NOT a section adapter. It runs after
+# all section validators because it inspects their partial results to
+# decide whether to skip itself, so it lives as a fixed phase in the
+# dispatcher rather than masquerading as a section.
+
+# Canonical order of section validators. Each name (other than
+# crossReferences) must have a matching `.<name>ValidatorAdapter` function
+# defined somewhere in the package. The order determines the order of keys
+# in the returned ValidationResults list.
 .validationSections <- c(
   "individuals",
   "populations",
@@ -479,6 +496,26 @@ validateProject <- function(project) {
   "observedData",
   "crossReferences"
 )
+
+#' Resolve a section name to its validator adapter
+#'
+#' Looks up `.<section>ValidatorAdapter` in the package namespace. Errors
+#' if no such function exists, with a message that points at the missing
+#' adapter rather than a generic "function not found".
+#'
+#' @keywords internal
+#' @noRd
+.lookupSectionValidatorAdapter <- function(section) {
+  adapterName <- paste0(".", section, "ValidatorAdapter")
+  if (!exists(adapterName, mode = "function")) {
+    stop(sprintf(
+      "No validator adapter found for section '%s'. Define `%s <- function(project) ...` in the section's R file.",
+      section,
+      adapterName
+    ))
+  }
+  get(adapterName, mode = "function")
+}
 
 #' Run a (possibly targeted) project validation
 #'
@@ -501,21 +538,12 @@ validateProject <- function(project) {
 
   results <- list()
   for (section in sections) {
-    results[[section]] <- switch(
-      section,
-      individuals = .validateIndividuals(project$individuals),
-      populations = .validatePopulations(project$populations),
-      scenarios = .validateScenarios(project$scenarios),
-      outputPaths = .validateOutputPaths(project$outputPaths),
-      modelParameters = .validateModelParameters(project$modelParameters),
-      applications = .validateApplications(project$applications),
-      plots = .validatePlots(project$plots),
-      observedData = .validateObservedData(
-        project$observedData,
-        project$dataFolder
-      ),
-      crossReferences = .validateCrossReferences(project, results)
-    )
+    if (section == "crossReferences") {
+      results[[section]] <- .validateCrossReferences(project, results)
+      next
+    }
+    adapter <- .lookupSectionValidatorAdapter(section)
+    results[[section]] <- adapter(project)
   }
 
   class(results) <- c("ValidationResults", class(results))

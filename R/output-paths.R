@@ -53,6 +53,12 @@
   result
 }
 
+#' @keywords internal
+#' @noRd
+.outputPathsValidatorAdapter <- function(project) {
+  .validateOutputPaths(project$outputPaths)
+}
+
 # Public CRUD ----
 
 #' Add output paths to a Project

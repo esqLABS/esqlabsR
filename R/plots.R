@@ -273,6 +273,12 @@
   result
 }
 
+#' @keywords internal
+#' @noRd
+.plotsValidatorAdapter <- function(project) {
+  .validatePlots(project$plots)
+}
+
 # Serialize ----
 
 #' @keywords internal

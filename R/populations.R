@@ -127,6 +127,12 @@ Distributions <- enum(list(
   result
 }
 
+#' @keywords internal
+#' @noRd
+.populationsValidatorAdapter <- function(project) {
+  .validatePopulations(project$populations)
+}
+
 # Serialize ----
 
 #' @keywords internal

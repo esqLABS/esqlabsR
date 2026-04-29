@@ -135,6 +135,12 @@
   result
 }
 
+#' @keywords internal
+#' @noRd
+.scenariosValidatorAdapter <- function(project) {
+  .validateScenarios(project$scenarios)
+}
+
 # Serialize ----
 
 #' @keywords internal

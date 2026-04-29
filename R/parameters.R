@@ -56,6 +56,12 @@
   .validateParameterGroups(modelParameters, "modelParameters")
 }
 
+#' @keywords internal
+#' @noRd
+.modelParametersValidatorAdapter <- function(project) {
+  .validateModelParameters(project$modelParameters)
+}
+
 # Serialize ----
 
 #' @keywords internal

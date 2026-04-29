@@ -87,6 +87,12 @@
   result
 }
 
+#' @keywords internal
+#' @noRd
+.individualsValidatorAdapter <- function(project) {
+  .validateIndividuals(project$individuals)
+}
+
 # Serialize ----
 
 #' @keywords internal
