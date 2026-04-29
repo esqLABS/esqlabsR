@@ -280,3 +280,78 @@
     row
   })
 }
+
+
+#' Convert flat dataCombined data.frame to nested JSON structure
+#' @param df data.frame with DataCombinedName, dataType, and entry fields
+#' @returns List of dataCombined objects with simulated/observed arrays
+#' @keywords internal
+#' @noRd
+.dataCombinedToNestedJson <- function(df) {
+  if (is.null(df) || nrow(df) == 0) {
+    return(list())
+  }
+
+  transformCols <- c(
+    "xOffsets",
+    "xOffsetsUnits",
+    "yOffsets",
+    "yOffsetsUnits",
+    "xScaleFactors",
+    "yScaleFactors"
+  )
+
+  dataCombinedNames <- unique(df$DataCombinedName)
+
+  lapply(dataCombinedNames, function(dataCombinedName) {
+    dataCombinedRows <- df[
+      df$DataCombinedName == dataCombinedName,
+      ,
+      drop = FALSE
+    ]
+
+    simRows <- dataCombinedRows[
+      dataCombinedRows$dataType == "simulated",
+      ,
+      drop = FALSE
+    ]
+    obsRows <- dataCombinedRows[
+      dataCombinedRows$dataType == "observed",
+      ,
+      drop = FALSE
+    ]
+
+    simulated <- lapply(seq_len(nrow(simRows)), function(i) {
+      row <- simRows[i, ]
+      entry <- list(
+        label = row$label,
+        scenario = row$scenario,
+        path = row$path,
+        group = if (is.na(row$group)) NULL else row$group
+      )
+      for (col in transformCols) {
+        entry[[col]] <- if (is.na(row[[col]])) NULL else row[[col]]
+      }
+      entry
+    })
+
+    observed <- lapply(seq_len(nrow(obsRows)), function(i) {
+      row <- obsRows[i, ]
+      entry <- list(
+        label = row$label,
+        dataSet = row$dataSet,
+        group = if (is.na(row$group)) NULL else row$group
+      )
+      for (col in transformCols) {
+        entry[[col]] <- if (is.na(row[[col]])) NULL else row[[col]]
+      }
+      entry
+    })
+
+    list(
+      name = dataCombinedName,
+      simulated = simulated,
+      observed = observed
+    )
+  })
+}

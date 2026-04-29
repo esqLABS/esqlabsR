@@ -253,3 +253,24 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
 
   return(sensitivityCalculation)
 }
+
+#' Split parameter path for plot labels
+#'
+#' Used by sensitivity tornado and time-profile plots to wrap long parameter
+#' paths onto two lines for readability.
+#'
+#' @keywords internal
+#' @noRd
+.splitParameterName <- function(x, equalLines = FALSE) {
+  xBreak <- x
+  if (!is.null(x)) {
+    n <- stringr::str_count(x, stringr::fixed("|"))
+    if (isTRUE(n >= 3)) {
+      xBreak <- sub("((?:[^|]*\\|){2}[^|]*)\\|", "\\1|\n", x)
+    } else if (equalLines) {
+      xBreak <- paste0(xBreak, "\n")
+    }
+  }
+
+  return(xBreak)
+}

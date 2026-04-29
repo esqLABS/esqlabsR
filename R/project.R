@@ -1058,3 +1058,173 @@ ProjectConfiguration <- function(
   )
   Project$new(projectFilePath = projectConfigurationFilePath, ...)
 }
+
+# DataCombined JSON <-> flat data.frame ----
+
+#' Parse nested dataCombined JSON to flat data.frame
+#' @param nestedData List of dataCombined objects with simulated/observed arrays
+#' @returns data.frame with DataCombinedName, dataType, and all entry fields
+#' @keywords internal
+#' @noRd
+.parseNestedDataCombined <- function(nestedData) {
+  if (is.null(nestedData) || length(nestedData) == 0) {
+    return(data.frame())
+  }
+
+  transformCols <- c(
+    "xOffsets",
+    "xOffsetsUnits",
+    "yOffsets",
+    "yOffsetsUnits",
+    "xScaleFactors",
+    "yScaleFactors"
+  )
+
+  rows <- list()
+  for (dataCombined in nestedData) {
+    dataCombinedName <- dataCombined$name
+
+    # Process simulated entries
+    if (
+      !is.null(dataCombined$simulated) && length(dataCombined$simulated) > 0
+    ) {
+      for (entry in dataCombined$simulated) {
+        row <- list(
+          DataCombinedName = dataCombinedName,
+          dataType = "simulated",
+          label = entry$label,
+          scenario = entry$scenario,
+          path = entry$path,
+          dataSet = NA,
+          group = entry$group %||% NA
+        )
+        for (col in transformCols) {
+          row[[col]] <- entry[[col]] %||% NA
+        }
+        rows[[length(rows) + 1]] <- as.data.frame(row, stringsAsFactors = FALSE)
+      }
+    }
+
+    # Process observed entries
+    if (!is.null(dataCombined$observed) && length(dataCombined$observed) > 0) {
+      for (entry in dataCombined$observed) {
+        row <- list(
+          DataCombinedName = dataCombinedName,
+          dataType = "observed",
+          label = entry$label,
+          scenario = NA,
+          path = NA,
+          dataSet = entry$dataSet,
+          group = entry$group %||% NA
+        )
+        for (col in transformCols) {
+          row[[col]] <- entry[[col]] %||% NA
+        }
+        rows[[length(rows) + 1]] <- as.data.frame(row, stringsAsFactors = FALSE)
+      }
+    }
+  }
+
+  if (length(rows) == 0) {
+    return(data.frame())
+  }
+
+  do.call(rbind, rows)
+}
+
+# Project sync and validation ----
+
+#' Check synchronization status of a Project
+#' @param project A `Project` object.
+#' @param silent Logical. If `TRUE`, suppresses messages.
+#' @returns A list with sync status details.
+#' @keywords internal
+#' @noRd
+.projectSync <- function(project, silent = FALSE) {
+  result <- list(
+    in_sync = TRUE,
+    unsaved_changes = FALSE,
+    json_modified = FALSE,
+    excel_modified = FALSE,
+    details = list()
+  )
+
+  jsonPath <- project$jsonPath
+  if (is.null(jsonPath) || !file.exists(jsonPath)) {
+    result$in_sync <- project$modified == FALSE
+    result$unsaved_changes <- project$modified
+
+    # Even without a JSON file, sibling Excel files may exist; flag those as
+    # excel_modified relative to the absent JSON so callers don't get a false
+    # in_sync = TRUE.
+    if (!is.null(jsonPath)) {
+      excelPath <- sub("\\.json$", ".xlsx", jsonPath)
+      if (file.exists(excelPath)) {
+        result$excel_modified <- TRUE
+        result$in_sync <- FALSE
+      }
+    }
+
+    if (!silent && result$unsaved_changes) {
+      message("Project has unsaved changes (no JSON file to compare).")
+    }
+    return(invisible(result))
+  }
+
+  if (project$modified) {
+    result$unsaved_changes <- TRUE
+    result$in_sync <- FALSE
+  } else {
+    fileProject <- loadProject(jsonPath)
+    currentJson <- jsonlite::toJSON(
+      .projectToJson(project),
+      auto_unbox = TRUE,
+      null = "null"
+    )
+    fileJson <- jsonlite::toJSON(
+      .projectToJson(fileProject),
+      auto_unbox = TRUE,
+      null = "null"
+    )
+
+    if (!identical(currentJson, fileJson)) {
+      result$json_modified <- TRUE
+      result$in_sync <- FALSE
+    }
+  }
+
+  excelPath <- sub("\\.json$", ".xlsx", jsonPath)
+  if (file.exists(excelPath)) {
+    excelStatus <- tryCatch(
+      projectStatus(
+        projectConfigPath = excelPath,
+        jsonPath = jsonPath,
+        silent = TRUE
+      ),
+      error = function(e) list(in_sync = TRUE)
+    )
+    if (!isTRUE(excelStatus$in_sync)) {
+      result$excel_modified <- TRUE
+      result$in_sync <- FALSE
+      result$details$excel <- excelStatus$details
+    }
+  }
+
+  if (!silent) {
+    if (result$in_sync) {
+      message("Project is in sync with all source files.")
+    } else {
+      if (result$unsaved_changes) {
+        cli::cli_alert_warning("In-memory changes not saved to JSON.")
+      }
+      if (result$json_modified) {
+        cli::cli_alert_warning("JSON file has been modified externally.")
+      }
+      if (result$excel_modified) {
+        cli::cli_alert_warning("Excel files differ from JSON.")
+      }
+    }
+  }
+
+  invisible(result)
+}
