@@ -786,3 +786,83 @@ messages$observedDataInvalidEntry <- function() {
 messages$observedDataNotFound <- function(name) {
   cliFormat("Observed data {.val {name}} not found; no-op.")
 }
+
+# Plots / DataCombined add/remove ----
+
+messages$dataCombinedNameExists <- function(name) {
+  cliFormat(
+    "DataCombined {.val {name}} already exists. Use a different name."
+  )
+}
+
+messages$dataCombinedNotFound <- function(name) {
+  cliFormat("DataCombined {.val {name}} not found; no-op.")
+}
+
+messages$dataCombinedReferencedByPlot <- function(name, plotIDs) {
+  cliFormat(
+    "DataCombined {.val {name}} is referenced by plot{?s} {.val {plotIDs}}; \\
+removing it will leave dangling references."
+  )
+}
+
+messages$dataCombinedSimulatedMissingField <- function(field) {
+  cliFormat(
+    "Each {.field simulated} entry must include {.field {field}}."
+  )
+}
+
+messages$dataCombinedObservedMissingField <- function(field) {
+  cliFormat(
+    "Each {.field observed} entry must include {.field {field}}."
+  )
+}
+
+messages$plotIDExists <- function(plotID) {
+  cliFormat(
+    "Plot with {.field plotID} {.val {plotID}} already exists. \\
+Use a different ID."
+  )
+}
+
+messages$plotIDNotFound <- function(plotID) {
+  cliFormat("Plot {.val {plotID}} not found; no-op.")
+}
+
+messages$plotDataCombinedNameNotFound <- function(name) {
+  cliFormat(
+    "{.field DataCombinedName} {.val {name}} not found in \\
+{.field project$plots$dataCombined}."
+  )
+}
+
+messages$invalidPlotType <- function(plotType, validTypes) {
+  cliFormat(
+    "Invalid {.field plotType} {.val {plotType}}. Must be one of: \\
+{.val {validTypes}}."
+  )
+}
+
+messages$plotReferencedByGrid <- function(plotID, gridNames) {
+  cliFormat(
+    "Plot {.val {plotID}} is referenced by plotGrid{?s} \\
+{.val {gridNames}}; removing it will leave dangling references."
+  )
+}
+
+messages$plotGridNameExists <- function(name) {
+  cliFormat(
+    "PlotGrid {.val {name}} already exists. Use a different name."
+  )
+}
+
+messages$plotGridNotFound <- function(name) {
+  cliFormat("PlotGrid {.val {name}} not found; no-op.")
+}
+
+messages$plotGridUnknownPlotIDs <- function(plotIDs) {
+  cliFormat(
+    "{.field plotIDs} not found in {.field project$plots$plotConfiguration}: \\
+{.val {plotIDs}}."
+  )
+}

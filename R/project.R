@@ -865,6 +865,65 @@ Project <- R6::R6Class(
     removeObservedData = function(name) {
       removeObservedData(project = self, name = name)
     },
+    #' @description Add a DataCombined programmatically.
+    #' Delegates to the standalone [addDataCombined()] function.
+    #' @param name DataCombined name.
+    #' @param simulated List of simulated entry lists.
+    #' @param observed List of observed entry lists.
+    addDataCombined = function(name, simulated = list(), observed = list()) {
+      addDataCombined(
+        project = self,
+        name = name,
+        simulated = simulated,
+        observed = observed
+      )
+    },
+    #' @description Remove a DataCombined programmatically.
+    #' Delegates to the standalone [removeDataCombined()] function.
+    #' @param name DataCombined name.
+    removeDataCombined = function(name) {
+      removeDataCombined(project = self, name = name)
+    },
+    #' @description Add a plot configuration programmatically.
+    #' Delegates to the standalone [addPlot()] function.
+    #' @param plotID Unique plot identifier.
+    #' @param dataCombinedName DataCombined the plot draws from.
+    #' @param plotType One of the supported plot types.
+    #' @param ... Optional plot-configuration fields.
+    addPlot = function(plotID, dataCombinedName, plotType, ...) {
+      addPlot(
+        project = self,
+        plotID = plotID,
+        dataCombinedName = dataCombinedName,
+        plotType = plotType,
+        ...
+      )
+    },
+    #' @description Remove a plot configuration programmatically.
+    #' Delegates to the standalone [removePlot()] function.
+    #' @param plotID Plot identifier.
+    removePlot = function(plotID) {
+      removePlot(project = self, plotID = plotID)
+    },
+    #' @description Add a plot grid programmatically.
+    #' Delegates to the standalone [addPlotGrid()] function.
+    #' @param name Plot-grid name.
+    #' @param plotIDs Character vector of plot IDs.
+    #' @param ... Optional plot-grid fields.
+    addPlotGrid = function(name, plotIDs, ...) {
+      addPlotGrid(
+        project = self,
+        name = name,
+        plotIDs = plotIDs,
+        ...
+      )
+    },
+    #' @description Remove a plot grid programmatically.
+    #' Delegates to the standalone [removePlotGrid()] function.
+    #' @param name Plot-grid name.
+    removePlotGrid = function(name) {
+      removePlotGrid(project = self, name = name)
+    },
     #' Initialize
     #'
     #' @param projectFilePath A string representing the path to the

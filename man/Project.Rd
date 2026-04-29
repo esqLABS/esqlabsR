@@ -137,6 +137,12 @@ schema. Reflects any in-memory modifications. Read-only.}
 \item \href{#method-Project-removeScenario}{\code{Project$removeScenario()}}
 \item \href{#method-Project-addObservedData}{\code{Project$addObservedData()}}
 \item \href{#method-Project-removeObservedData}{\code{Project$removeObservedData()}}
+\item \href{#method-Project-addDataCombined}{\code{Project$addDataCombined()}}
+\item \href{#method-Project-removeDataCombined}{\code{Project$removeDataCombined()}}
+\item \href{#method-Project-addPlot}{\code{Project$addPlot()}}
+\item \href{#method-Project-removePlot}{\code{Project$removePlot()}}
+\item \href{#method-Project-addPlotGrid}{\code{Project$addPlotGrid()}}
+\item \href{#method-Project-removePlotGrid}{\code{Project$removePlotGrid()}}
 \item \href{#method-Project-new}{\code{Project$new()}}
 \item \href{#method-Project-print}{\code{Project$print()}}
 \item \href{#method-Project-sync}{\code{Project$sync()}}
@@ -661,7 +667,129 @@ Delegates to the standalone \code{\link[=removeObservedData]{removeObservedData(
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{name}}{DataSet name or config entry file basename.
+\item{\code{name}}{DataSet name or config entry file basename.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addDataCombined"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addDataCombined}{}}}
+\subsection{Method \code{addDataCombined()}}{
+Add a DataCombined programmatically.
+Delegates to the standalone \code{\link[=addDataCombined]{addDataCombined()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addDataCombined(name, simulated = list(), observed = list())}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{DataCombined name.}
+
+\item{\code{simulated}}{List of simulated entry lists.}
+
+\item{\code{observed}}{List of observed entry lists.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeDataCombined"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeDataCombined}{}}}
+\subsection{Method \code{removeDataCombined()}}{
+Remove a DataCombined programmatically.
+Delegates to the standalone \code{\link[=removeDataCombined]{removeDataCombined()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removeDataCombined(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{DataCombined name.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPlot"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPlot}{}}}
+\subsection{Method \code{addPlot()}}{
+Add a plot configuration programmatically.
+Delegates to the standalone \code{\link[=addPlot]{addPlot()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addPlot(plotID, dataCombinedName, plotType, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{plotID}}{Unique plot identifier.}
+
+\item{\code{dataCombinedName}}{DataCombined the plot draws from.}
+
+\item{\code{plotType}}{One of the supported plot types.}
+
+\item{\code{...}}{Optional plot-configuration fields.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePlot"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePlot}{}}}
+\subsection{Method \code{removePlot()}}{
+Remove a plot configuration programmatically.
+Delegates to the standalone \code{\link[=removePlot]{removePlot()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removePlot(plotID)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{plotID}}{Plot identifier.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPlotGrid"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPlotGrid}{}}}
+\subsection{Method \code{addPlotGrid()}}{
+Add a plot grid programmatically.
+Delegates to the standalone \code{\link[=addPlotGrid]{addPlotGrid()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addPlotGrid(name, plotIDs, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Plot-grid name.}
+
+\item{\code{plotIDs}}{Character vector of plot IDs.}
+
+\item{\code{...}}{Optional plot-grid fields.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePlotGrid"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePlotGrid}{}}}
+\subsection{Method \code{removePlotGrid()}}{
+Remove a plot grid programmatically.
+Delegates to the standalone \code{\link[=removePlotGrid]{removePlotGrid()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removePlotGrid(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Plot-grid name.
 Initialize}
 }
 \if{html}{\out{</div>}}
