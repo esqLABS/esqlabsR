@@ -37,8 +37,8 @@ protocol name. Each is a list with \code{paths}, \code{values}, \code{units}.}
 \item{\code{outputPaths}}{Named character vector. Names are IDs, values are
 output path strings.}
 
-\item{\code{plots}}{List with 4 data.frame elements: \code{dataCombined},
-\code{plotConfiguration}, \code{plotGrids}, \code{exportConfiguration}.}
+\item{\code{plots}}{List with 3 data.frame elements: \code{dataCombined},
+\code{plotConfiguration}, \code{plotGrids}.}
 
 \item{\code{jsonPath}}{Path to the source JSON file, or NULL if not loaded
 from JSON.}
@@ -66,6 +66,12 @@ loaded from a file.}
 \item{\code{modified}}{Read-only logical. \code{TRUE} if any configuration property
 has been modified since the project was loaded or saved. Cleared
 internally by \code{\link[=saveProject]{saveProject()}}.}
+
+\item{\code{validatedSinceMutation}}{Read-only logical. \code{TRUE} if a full
+\code{\link[=validateProject]{validateProject()}} has succeeded since the last project mutation
+or load. Cleared by any mutation. Used internally by automatic
+validation hooks (e.g. in \code{\link[=runScenarios]{runScenarios()}} and \code{\link[=createPlots]{createPlots()}}) to
+skip redundant re-validation of an unchanged project.}
 
 \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
 
@@ -111,6 +117,7 @@ schema. Reflects any in-memory modifications. Read-only.}
 \itemize{
 \item \href{#method-Project-.markSaved}{\code{Project$.markSaved()}}
 \item \href{#method-Project-.markModified}{\code{Project$.markModified()}}
+\item \href{#method-Project-.markValidated}{\code{Project$.markValidated()}}
 \item \href{#method-Project-.getProgrammaticDataSets}{\code{Project$.getProgrammaticDataSets()}}
 \item \href{#method-Project-.addProgrammaticDataSet}{\code{Project$.addProgrammaticDataSet()}}
 \item \href{#method-Project-.removeProgrammaticDataSet}{\code{Project$.removeProgrammaticDataSet()}}
@@ -165,9 +172,23 @@ Not intended for end-user use.
 \if{latex}{\out{\hypertarget{method-Project-.markModified}{}}}
 \subsection{Method \code{.markModified()}}{
 Internal method to set the \code{modified} flag after a
-programmatic mutation. Not intended for end-user use.
+programmatic mutation. Not intended for end-user use. Also clears
+the \code{validatedSinceMutation} flag so that any cached validation
+result is invalidated.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Project$.markModified()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.markValidated"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.markValidated}{}}}
+\subsection{Method \code{.markValidated()}}{
+Internal method to record that a full project
+validation has succeeded with no critical errors. Sets the
+\code{validatedSinceMutation} flag. Not intended for end-user use.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.markValidated()}\if{html}{\out{</div>}}
 }
 
 }

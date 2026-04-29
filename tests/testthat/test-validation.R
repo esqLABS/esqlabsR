@@ -706,3 +706,151 @@ test_that("validateProject includes observedData in results", {
   expect_true("observedData" %in% names(results))
   expect_true(inherits(results$observedData, "validationResult"))
 })
+
+# .runProjectValidation: targeted runs ----
+
+test_that(".runProjectValidation returns only requested sections", {
+  project <- testProject()
+  results <- esqlabsR:::.runProjectValidation(
+    project,
+    sections = c("scenarios", "crossReferences")
+  )
+  expect_setequal(names(results), c("scenarios", "crossReferences"))
+})
+
+test_that(".runProjectValidation NULL sections runs the full set", {
+  project <- testProject()
+  results <- esqlabsR:::.runProjectValidation(project, sections = NULL)
+  expect_true(all(
+    c(
+      "individuals",
+      "populations",
+      "scenarios",
+      "outputPaths",
+      "modelParameters",
+      "applications",
+      "plots",
+      "observedData",
+      "crossReferences"
+    ) %in%
+      names(results)
+  ))
+})
+
+test_that(".runProjectValidation runs crossReferences last so it sees prior results", {
+  project <- testProject()
+  # Inject a structural error in scenarios; crossReferences should then skip.
+  project$scenarios[[1]]$modelFile <- NULL
+  results <- esqlabsR:::.runProjectValidation(
+    project,
+    sections = c("scenarios", "crossReferences")
+  )
+  expect_true(results$scenarios$has_critical_errors())
+  # crossReferences should have skipped (no critical errors, but a "Skipped"
+  # warning).
+  expect_false(results$crossReferences$has_critical_errors())
+  expect_true(length(results$crossReferences$warnings) > 0)
+})
+
+# validatedSinceMutation flag ----
+
+test_that("loadProject leaves validatedSinceMutation FALSE", {
+  project <- testProject()
+  expect_false(project$validatedSinceMutation)
+})
+
+test_that("validateProject sets validatedSinceMutation when clean", {
+  project <- testProject()
+  validateProject(project)
+  expect_true(project$validatedSinceMutation)
+})
+
+test_that("validateProject leaves validatedSinceMutation FALSE on critical errors", {
+  project <- testProject()
+  # Force a cross-reference error.
+  project$scenarios[[1]]$individualId <- "DoesNotExist"
+  validateProject(project)
+  expect_false(project$validatedSinceMutation)
+})
+
+test_that("any project mutation clears validatedSinceMutation", {
+  project <- testProject()
+  validateProject(project)
+  expect_true(project$validatedSinceMutation)
+
+  project$.markModified()
+  expect_false(project$validatedSinceMutation)
+})
+
+test_that("active-binding setter clears validatedSinceMutation", {
+  project <- testProject()
+  validateProject(project)
+  expect_true(project$validatedSinceMutation)
+
+  project$dataFolder <- project$dataFolder
+  expect_false(project$validatedSinceMutation)
+})
+
+test_that("validatedSinceMutation is read-only", {
+  project <- testProject()
+  expect_error(project$validatedSinceMutation <- TRUE, "readonly")
+})
+
+# .ensureValid ----
+
+test_that(".ensureValid is a no-op when validatedSinceMutation is TRUE", {
+  project <- testProject()
+  project$.markValidated()
+
+  called <- 0L
+  testthat::local_mocked_bindings(
+    .runProjectValidation = function(...) {
+      called <<- called + 1L
+      list()
+    }
+  )
+
+  esqlabsR:::.ensureValid(
+    project,
+    sections = c("scenarios", "crossReferences"),
+    opName = "test"
+  )
+  expect_equal(called, 0L)
+})
+
+test_that(".ensureValid runs targeted validation when not cached", {
+  project <- testProject()
+  expect_silent(
+    esqlabsR:::.ensureValid(
+      project,
+      sections = c("scenarios", "crossReferences"),
+      opName = "test"
+    )
+  )
+})
+
+test_that(".ensureValid aborts on critical errors with operation name", {
+  project <- testProject()
+  project$scenarios[[1]]$individualId <- "DoesNotExist"
+  expect_error(
+    esqlabsR:::.ensureValid(
+      project,
+      sections = c("scenarios", "crossReferences"),
+      opName = "do the thing"
+    ),
+    "do the thing"
+  )
+})
+
+test_that(".ensureValid targeted run does NOT set validatedSinceMutation", {
+  project <- testProject()
+  esqlabsR:::.ensureValid(
+    project,
+    sections = c("scenarios", "crossReferences"),
+    opName = "test"
+  )
+  # Targeted: only proves a subset; cache flag must remain FALSE so a later
+  # full-validation call still runs.
+  expect_false(project$validatedSinceMutation)
+})
+

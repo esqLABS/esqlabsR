@@ -64,14 +64,6 @@ test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defau
   expect_equal(myPGC$tagLevels, "a")
 })
 
-test_that("createEsqlabsExportConfiguration() creates object with chosen defaults", {
-  myProjConfig <- Project$new()
-  myEC <- createEsqlabsExportConfiguration(myProjConfig$outputFolder)
-  expect_true(isOfType(myEC, "ExportConfiguration"))
-  expect_equal(myEC$units, "cm")
-})
-
-
 test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
   defaultConfig <- ospsuite::DefaultPlotConfiguration$new()
   esqlabsConfig <- createEsqlabsPlotConfiguration()
@@ -201,31 +193,18 @@ plotGridsDf <- data.frame(list(
   "title" = "Aciclovir PVB"
 ))
 
-exportConfigurationDf <- data.frame(list(
-  "plotGridName" = character(0),
-  "name" = character(0)
-))
-
-# Helper function to get the most recently created/modified directory
-.getLatestDirectory <- function(baseDir) {
-  allDirs <- list.dirs(baseDir, full.names = TRUE, recursive = FALSE)
-  allDirs[which.max(file.info(allDirs)$mtime)]
-}
-
 # Helper to create a project with custom plots data
 .withPlots <- function(
   baseProject = project,
   dataCombined = dataCombinedDf,
   plotConfiguration = plotConfigurationDf,
-  plotGrids = plotGridsDf,
-  exportConfiguration = exportConfigurationDf
+  plotGrids = plotGridsDf
 ) {
   pcLocal <- baseProject$clone()
   pcLocal$plots <- list(
     dataCombined = dataCombined,
     plotConfiguration = plotConfiguration,
-    plotGrids = plotGrids,
-    exportConfiguration = exportConfiguration
+    plotGrids = plotGrids
   )
   pcLocal
 }
@@ -270,7 +249,8 @@ test_that("It throws an error if no scenario is specified for a simulated data",
     createPlots(
       project = pcLocal,
       simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = TRUE
+      stopIfNotFound = TRUE,
+      validate = FALSE
     ),
     regexp = messages$missingScenarioName()
   )
@@ -430,7 +410,8 @@ test_that("It throws an error if a plot requires a DataCombined that is not defi
     createPlots(
       project = pcLocal,
       simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = TRUE
+      stopIfNotFound = TRUE,
+      validate = FALSE
     ),
     regexp = messages$stopDataCombinedNamesNotFound("foo")
   )
@@ -512,7 +493,8 @@ test_that("It can create plots when custom data combined are passed that are mis
     project = pcLocal,
     simulatedScenarios = simulatedScenarios,
     dataCombinedList = dataCombinedList,
-    stopIfNotFound = TRUE
+    stopIfNotFound = TRUE,
+    validate = FALSE
   )
   vdiffr::expect_doppelganger(title = "firstPlotCustomDC", plots[[1]])
 })
@@ -577,7 +559,8 @@ test_that("It throws an error if plotIDs are not unique", {
     createPlots(
       project = pcLocal,
       simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = TRUE
+      stopIfNotFound = TRUE,
+      validate = FALSE
     ),
     regexp = messages$PlotIDsMustBeUnique(c("P1")),
     fixed = TRUE
@@ -618,47 +601,6 @@ test_that("It throws an error if a plot grid requires a plot id that is not defi
   )
 })
 
-test_that("It exports plot grids as defined in exportConfiguration", {
-  exportConfigurationDfLocal <- data.frame(
-    plotGridName = rep("Aciclovir", 2),
-    name = c("Aciclovir1", "Aciclovir2"),
-    height = c(10, NA)
-  )
-  pcLocal <- .withPlots(exportConfiguration = exportConfigurationDfLocal)
-  pcLocal$outputFolder <- tempdir()
-
-  createPlots(
-    project = pcLocal,
-    simulatedScenarios = simulatedScenarios,
-    stopIfNotFound = TRUE
-  )
-  # Get the most recently created/modified folder in the Figures directory
-  latestDir <- .getLatestDirectory(file.path(tempdir(), "Figures"))
-  expect_true(file.exists(file.path(latestDir, "Aciclovir1.png")))
-  expect_true(file.exists(file.path(latestDir, "Aciclovir2.png")))
-})
-
-test_that("It exports plot grids with specified output folder", {
-  exportConfigurationDfLocal <- data.frame(
-    plotGridName = rep("Aciclovir", 2),
-    name = c("Aciclovir1", "Aciclovir2"),
-    height = c(10, NA)
-  )
-  pcLocal <- .withPlots(exportConfiguration = exportConfigurationDfLocal)
-  pcLocal$outputFolder <- tempdir()
-
-  createPlots(
-    project = pcLocal,
-    simulatedScenarios = simulatedScenarios,
-    stopIfNotFound = TRUE,
-    outputFolder = tempdir()
-  )
-  # Get the most recently created/modified folder in the Figures directory
-  latestDir <- .getLatestDirectory(file.path(tempdir(), "Figures"))
-  expect_true(file.exists(file.path(latestDir, "Aciclovir1.png")))
-  expect_true(file.exists(file.path(latestDir, "Aciclovir2.png")))
-})
-
 test_that("It throws an error when trying to set a property that is not supported by the configuration", {
   plotConfigurationDfLocal <- plotConfigurationDf
   plotConfigurationDfLocal$"blabla" <- "1,2,3"
@@ -682,30 +624,18 @@ test_that("It correctly treats names with underscores", {
   plotConfigurationDfLocal$plotID <- "P_1"
   plotGridsDfLocal <- plotGridsDf
   plotGridsDfLocal$plotIDs <- "P_1"
-  exportConfigurationDfLocal <- data.frame(
-    plotGridName = rep("Aciclovir", 2),
-    name = c("Aciclovir1", "Aciclovir2"),
-    height = c(10, NA)
-  )
   pcLocal <- .withPlots(
     plotConfiguration = plotConfigurationDfLocal,
-    plotGrids = plotGridsDfLocal,
-    exportConfiguration = exportConfigurationDfLocal
-  )
-  pcLocal$outputFolder <- tempdir()
-
-  createPlots(
-    project = pcLocal,
-    simulatedScenarios = simulatedScenarios,
-    stopIfNotFound = TRUE
+    plotGrids = plotGridsDfLocal
   )
 
-  # Get the most recently created/modified folder in the Figures directory
-  figuresPath <- file.path(tempdir(), "Figures")
-  latestDir <- .getLatestDirectory(figuresPath)
-
-  expect_true(file.exists(file.path(latestDir, "Aciclovir1.png")))
-  expect_true(file.exists(file.path(latestDir, "Aciclovir2.png")))
+  expect_no_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    )
+  )
 })
 
 
@@ -748,25 +678,18 @@ test_that("It correctly treats empty rows", {
     "plotIDs" = c("P1", NA, "P2"),
     "title" = c("Aciclovir PVB", NA, "Aciclovir PVB 2")
   ))
-  # exportConfiguration with empty row
-  exportConfigurationDfLocal <- data.frame(
-    plotGridName = c("Aciclovir", NA, "Aciclovir"),
-    name = c("Aciclovir1", NA, "Aciclovir2"),
-    height = c(10, NA, NA)
-  )
   pcLocal <- .withPlots(
     dataCombined = dataCombinedDfLocal,
     plotConfiguration = plotConfigurationDfLocal,
-    plotGrids = plotGridsDfLocal,
-    exportConfiguration = exportConfigurationDfLocal
+    plotGrids = plotGridsDfLocal
   )
-  pcLocal$outputFolder <- tempdir()
 
   expect_no_error(
     createPlots(
       project = pcLocal,
       simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = TRUE
+      stopIfNotFound = TRUE,
+      validate = FALSE
     )
   )
 })
@@ -827,42 +750,6 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
       simulatedScenarios = simulatedScenarios,
       stopIfNotFound = TRUE
     )
-  )
-})
-
-test_that("It throws a warning when trying to export non-existent plot grid to file", {
-  exportConfigurationDfLocal <- data.frame(
-    plotGridName = "invalidPlotGridName",
-    name = "Aciclovir1"
-  )
-  pcLocal <- .withPlots(exportConfiguration = exportConfigurationDfLocal)
-
-  expect_warning(
-    createPlots(
-      project = pcLocal,
-      simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = TRUE
-    ),
-    regexp = messages$missingPlotGrids(
-      missingPlotGrids = "invalidPlotGridName"
-    )
-  )
-})
-
-test_that("It throws a warning when output name is missing in exportConfiguration", {
-  exportConfigurationDfLocal <- data.frame(
-    plotGridName = "Aciclovir",
-    name = NA
-  )
-  pcLocal <- .withPlots(exportConfiguration = exportConfigurationDfLocal)
-
-  expect_warning(
-    createPlots(
-      project = pcLocal,
-      simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = TRUE
-    ),
-    regexp = messages$missingOutputFileName()
   )
 })
 

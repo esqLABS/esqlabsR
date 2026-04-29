@@ -7,8 +7,8 @@
 .validatePlots(plots)
 }
 \arguments{
-\item{plots}{List with dataCombined, plotConfiguration, plotGrids,
-exportConfiguration data.frames from project$plots}
+\item{plots}{List with dataCombined, plotConfiguration, plotGrids
+data.frames from project$plots}
 }
 \value{
 validationResult object

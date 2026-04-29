@@ -466,8 +466,8 @@ validationResult <- R6::R6Class(
 }
 
 #' Validate plots section of a Project
-#' @param plots List with dataCombined, plotConfiguration, plotGrids,
-#'   exportConfiguration data.frames from project$plots
+#' @param plots List with dataCombined, plotConfiguration, plotGrids
+#'   data.frames from project$plots
 #' @return validationResult object
 #' @keywords internal
 .validatePlots <- function(plots) {
@@ -908,29 +908,123 @@ validateProject <- function(project) {
     project <- loaded_project
   }
 
-  results$individuals <- .validateIndividuals(project$individuals)
+  results <- .runProjectValidation(project, sections = NULL)
 
-  results$populations <- .validatePopulations(project$populations)
+  if (!isAnyCriticalErrors(results)) {
+    project$.markValidated()
+  }
 
-  results$scenarios <- .validateScenarios(project$scenarios)
+  results
+}
 
-  results$outputPaths <- .validateOutputPaths(project$outputPaths)
+# Canonical order of section validators. crossReferences must come last so it
+# can inspect the partial results map and skip when prior sections failed.
+.validationSections <- c(
+  "individuals",
+  "populations",
+  "scenarios",
+  "outputPaths",
+  "modelParameters",
+  "applications",
+  "plots",
+  "observedData",
+  "crossReferences"
+)
 
-  results$modelParameters <- .validateModelParameters(project$modelParameters)
+#' Run a (possibly targeted) project validation
+#'
+#' Internal orchestration helper. Runs the requested section validators in
+#' canonical order and returns a `ValidationResults` list. `crossReferences`
+#' is always run last when included so it sees prior section results.
+#'
+#' @param project A loaded `Project` object.
+#' @param sections Character vector of section names to validate, or `NULL`
+#'   for a full validation. Unknown names are dropped silently.
+#' @return Named list of `validationResult` objects with class
+#'   `"ValidationResults"`. Only requested sections are present.
+#' @keywords internal
+.runProjectValidation <- function(project, sections = NULL) {
+  if (is.null(sections)) {
+    sections <- .validationSections
+  } else {
+    sections <- intersect(.validationSections, sections)
+  }
 
-  results$applications <- .validateApplications(project$applications)
-
-  results$plots <- .validatePlots(project$plots)
-
-  results$observedData <- .validateObservedData(
-    project$observedData,
-    project$dataFolder
-  )
-
-  results$crossReferences <- .validateCrossReferences(project, results)
+  results <- list()
+  for (section in sections) {
+    results[[section]] <- switch(
+      section,
+      individuals = .validateIndividuals(project$individuals),
+      populations = .validatePopulations(project$populations),
+      scenarios = .validateScenarios(project$scenarios),
+      outputPaths = .validateOutputPaths(project$outputPaths),
+      modelParameters = .validateModelParameters(project$modelParameters),
+      applications = .validateApplications(project$applications),
+      plots = .validatePlots(project$plots),
+      observedData = .validateObservedData(
+        project$observedData,
+        project$dataFolder
+      ),
+      crossReferences = .validateCrossReferences(project, results)
+    )
+  }
 
   class(results) <- c("ValidationResults", class(results))
   results
+}
+
+#' Ensure a project passes validation before an operation
+#'
+#' Runs targeted validation for the sections an operation depends on, and
+#' aborts with a formatted multi-error message if any critical errors are
+#' found. Short-circuits when the project has been fully validated since
+#' its last mutation (the `validatedSinceMutation` flag).
+#'
+#' This helper does not itself flip the cache flag, because it only runs
+#' a subset of validators. Only [validateProject()] (a full run) sets the
+#' flag.
+#'
+#' @param project A `Project` object.
+#' @param sections Non-empty character vector of section names required by
+#'   the calling operation.
+#' @param opName Short label used in the abort message (e.g. `"runScenarios"`).
+#' @return `invisible(NULL)` on success.
+#' @keywords internal
+.ensureValid <- function(project, sections, opName) {
+  if (isTRUE(project$validatedSinceMutation)) {
+    return(invisible(NULL))
+  }
+
+  results <- .runProjectValidation(project, sections = sections)
+
+  if (isAnyCriticalErrors(results)) {
+    .abortValidationErrors(results, opName)
+  }
+
+  invisible(NULL)
+}
+
+#' Format and abort with the critical errors found in a validation run
+#'
+#' @keywords internal
+.abortValidationErrors <- function(results, opName) {
+  lines <- character()
+  for (section in names(results)) {
+    r <- results[[section]]
+    if (!inherits(r, "validationResult") || !r$has_critical_errors()) {
+      next
+    }
+    for (e in r$critical_errors) {
+      lines <- c(lines, paste0("[", section, "] ", e$message))
+    }
+  }
+  bullets <- stats::setNames(lines, rep("x", length(lines)))
+  cli::cli_abort(c(
+    "Cannot {opName}: project has {length(lines)} critical validation \\
+    error{?s}.",
+    bullets,
+    "i" = "Run {.code validateProject(project)} for a full report."
+  ))
 }
 
 #' Check if validation results contain any critical errors

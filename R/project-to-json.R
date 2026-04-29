@@ -254,16 +254,14 @@
     return(list(
       dataCombined = list(),
       plotConfiguration = list(),
-      plotGrids = list(),
-      exportConfiguration = list()
+      plotGrids = list()
     ))
   }
 
   list(
     dataCombined = .dataCombinedToNestedJson(plots$dataCombined),
     plotConfiguration = .dataFrameToListOfLists(plots$plotConfiguration),
-    plotGrids = .dataFrameToListOfLists(plots$plotGrids),
-    exportConfiguration = .dataFrameToListOfLists(plots$exportConfiguration)
+    plotGrids = .dataFrameToListOfLists(plots$plotGrids)
   )
 }
 

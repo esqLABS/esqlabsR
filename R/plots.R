@@ -15,14 +15,17 @@
 #'   created. If `NULL` (default), all plot grids will be created. If a plot
 #'   grid with a given name does not exist, an error is thrown.
 #'
-#' @param outputFolder Optional - path to the folder where the results will be
-#'   stored. If `NULL` (default), `project$outputFolder` is used.
-#'   Only relevant for plots specified for export in the export configuration.
 #' @param dataCombinedList A (named) list of `DataCombined` objects as input to
 #'   create plots defined in the `plotGridNames` argument. Missing
 #'   `DataCombined` will be created from the project configuration (default
 #'   behavior). Defaults to `NULL`, in which case all `DataCombined` are
 #'   created from the project configuration.
+#' @param validate If `TRUE` (default), the `plots` and `crossReferences`
+#'   sections of the project are validated before plotting. Any critical
+#'   errors abort the call with a formatted message. Set to `FALSE` to skip
+#'   the pre-flight check. Validation is skipped automatically if no plots
+#'   are configured, or if a full [validateProject()] has already succeeded
+#'   since the last project mutation.
 #'
 #' @returns A list of `ggplot` objects
 #'
@@ -34,8 +37,8 @@ createPlots <- function(
   plotGridNames = NULL,
   simulatedScenarios = NULL,
   dataCombinedList = NULL,
-  outputFolder = NULL,
-  stopIfNotFound = TRUE
+  stopIfNotFound = TRUE,
+  validate = TRUE
 ) {
   validateIsOfType(project, "Project")
   validateIsString(plotGridNames, nullAllowed = TRUE)
@@ -43,13 +46,21 @@ createPlots <- function(
   if (!typeof(dataCombinedList) %in% c("list", "NULL")) {
     stop(messages$errorDataCombinedListMustBeList(typeof(dataCombinedList)))
   }
+
+  if (isTRUE(validate) && !is.null(project$plots)) {
+    .ensureValid(
+      project,
+      sections = c("plots", "crossReferences"),
+      opName = "create plots"
+    )
+  }
+
   plotConfigurations <- .getPlotConfigurations(
     project = project,
     plotGridNames = plotGridNames
   )
   dfPlotConfigurations <- plotConfigurations$plotConfigurations
   dfPlotGrids <- plotConfigurations$plotGrids
-  dfExportConfigurations <- plotConfigurations$exportConfigurations
 
   # Exit early if no plotGrids are defined
   if (is.null(dfPlotGrids)) {
@@ -229,45 +240,6 @@ createPlots <- function(
   })
   names(plotGrids) <- dfPlotGrids$name
 
-  ## Remove rows that are entirely empty
-  dfExportConfigurations <- dplyr::filter(
-    dfExportConfigurations,
-    !dplyr::if_all(dplyr::everything(), is.na)
-  )
-  dfExportConfigurations <- .validateExportConfigurations(
-    dfExportConfigurations,
-    plotGrids
-  )
-  if (nrow(dfExportConfigurations) > 0) {
-    # create a list of ExportConfiguration objects from dfExportConfigurations
-    outputFolder <- outputFolder %||%
-      file.path(
-        project$outputFolder,
-        "Figures",
-        format(Sys.time(), "%F %H-%M")
-      )
-
-    defaultExportConfiguration <- createEsqlabsExportConfiguration(outputFolder)
-    exportConfigurations <- apply(dfExportConfigurations, 1, \(row) {
-      exportConfiguration <- .createConfigurationFromRow(
-        defaultConfiguration = defaultExportConfiguration,
-        row[!(names(row) %in% c("plotGridName", "name"))]
-      )
-      # Replace "\" and "/" by "_" so the file name does not result in folders
-      name <- row[["name"]]
-      name <- gsub(pattern = "\\", "_", name, fixed = TRUE)
-      name <- gsub(pattern = "/", "_", name, fixed = TRUE)
-      exportConfiguration$name <- name
-      return(exportConfiguration)
-    })
-    # export plotGrid if defined in exportConfigurations
-    lapply(seq_along(exportConfigurations), function(i) {
-      exportConfigurations[[
-        i
-      ]]$savePlot(plotGrids[[dfExportConfigurations$plotGridName[i]]])
-    })
-  }
-
   return(plotGrids)
 }
 
@@ -418,12 +390,11 @@ createPlotsFromExcel <- function(...) {
   }
 }
 
-#' Create a plotConfiguration or exportConfiguration objects from a row of sheet
-#' 'plotConfiguration' or 'exportConfiguration'
+#' Create a plotConfiguration object from a row of sheet 'plotConfiguration'
 #'
-#' @param defaultConfiguration default plotConfiguration or exportConfiguration
+#' @param defaultConfiguration default plotConfiguration
 #' @param ... row with configuration properties
-#' @returns A customized plot- or exportConfiguration object
+#' @returns A customized plotConfiguration object
 #' @keywords internal
 .createConfigurationFromRow <- function(defaultConfiguration, ...) {
   columns <- c(...)
@@ -585,42 +556,6 @@ createPlotsFromExcel <- function(...) {
   }
 
   return(dfPlotGrids)
-}
-
-#' Validate and process the 'exportConfiguration' sheet
-#'
-#' @param dfExportConfigurations Data frame created by reading the
-#'   'exportConfiguration' sheet
-#' @param plotGrids List of multipanel plots created previously
-#'
-#' @returns Processed `dfExportConfigurations`
-#' @keywords internal
-.validateExportConfigurations <- function(
-  dfExportConfigurations,
-  plotGrids
-) {
-  # mandatory column outputName is empty - throw warning, remove rows
-  missingName <- sum(is.na(dfExportConfigurations$name))
-  if (missingName > 0) {
-    dfExportConfigurations <- dfExportConfigurations[
-      !is.na(dfExportConfigurations$name),
-    ]
-    warning(messages$missingOutputFileName())
-  }
-
-  plotGrids <- purrr::compact(plotGrids)
-  missingPlotGrids <- setdiff(
-    dfExportConfigurations$plotGridName,
-    names(plotGrids)
-  )
-  if (length(missingPlotGrids) != 0) {
-    dfExportConfigurations <- dfExportConfigurations[
-      !(dfExportConfigurations$plotGridName %in% missingPlotGrids),
-    ]
-    warning(messages$missingPlotGrids(missingPlotGrids))
-  }
-
-  return(dfExportConfigurations)
 }
 
 #' Check if the `object` contains active binding with the name `field`

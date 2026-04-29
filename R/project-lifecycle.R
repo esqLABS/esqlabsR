@@ -5,13 +5,46 @@
 #' @description Load a `Project` from a JSON file. This is the
 #'   primary entry point for working with esqlabsR projects.
 #'
+#'   On load the project is checked for the most common cross-reference
+#'   problems (e.g. a scenario referring to an individual or population
+#'   that is not defined). Any such issues are reported via [cli::cli_warn()]
+#'   so that obvious configuration mistakes surface immediately, but loading
+#'   still succeeds. Use [validateProject()] for a full report.
+#'
 #' @param path Path to the `Project.json` file. Defaults to
 #'   `Project.json` in the working directory.
 #'
 #' @returns Object of type `Project`
 #' @export
 loadProject <- function(path = "Project.json") {
-  Project$new(projectFilePath = path)
+  project <- Project$new(projectFilePath = path)
+  .warnOnCrossReferenceErrors(project)
+  project
+}
+
+#' Emit a `cli_warn` listing critical cross-reference errors, if any
+#'
+#' Runs `scenarios` first so `.validateCrossReferences` can apply its
+#' skip-on-prior-errors guard — without this, a structurally invalid
+#' scenarios section would still trigger spurious cross-reference warnings.
+#' @keywords internal
+.warnOnCrossReferenceErrors <- function(project) {
+  results <- .runProjectValidation(
+    project,
+    sections = c("scenarios", "crossReferences")
+  )
+  r <- results$crossReferences
+  if (is.null(r) || !r$has_critical_errors()) {
+    return(invisible(NULL))
+  }
+  bullets <- vapply(r$critical_errors, function(e) e$message, character(1))
+  bullets <- stats::setNames(bullets, rep("x", length(bullets)))
+  cli::cli_warn(c(
+    "Project has {length(bullets)} unresolved cross-reference{?s}:",
+    bullets,
+    "i" = "Run {.code validateProject(project)} for the full report."
+  ))
+  invisible(NULL)
 }
 
 #' Save a project to a JSON file

@@ -43,12 +43,24 @@ Project <- R6::R6Class(
         stop("modified is readonly")
       }
     },
+    #' @field validatedSinceMutation Read-only logical. `TRUE` if a full
+    #' [validateProject()] has succeeded since the last project mutation
+    #' or load. Cleared by any mutation. Used internally by automatic
+    #' validation hooks (e.g. in [runScenarios()] and [createPlots()]) to
+    #' skip redundant re-validation of an unchanged project.
+    validatedSinceMutation = function(value) {
+      if (missing(value)) {
+        private$.validatedSinceMutation
+      } else {
+        stop("validatedSinceMutation is readonly")
+      }
+    },
     #' @field modelFolder Path to the folder containing pkml simulation files.
     modelFolder = function(value) {
       if (!missing(value)) {
         private$.filePathsData$modelFolder$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$modelFolder$value,
@@ -61,7 +73,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$configurationsFolder$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$configurationsFolder$value,
@@ -74,7 +86,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$modelParamsFile$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$modelParamsFile$value,
@@ -87,7 +99,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$individualsFile$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$individualsFile$value,
@@ -100,7 +112,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$populationsFile$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$populationsFile$value,
@@ -114,7 +126,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$populationsFolder$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$populationsFolder$value,
@@ -127,7 +139,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$scenariosFile$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$scenariosFile$value,
@@ -141,7 +153,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$applicationsFile$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$applicationsFile$value,
@@ -154,7 +166,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$plotsFile$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$plotsFile$value,
@@ -167,7 +179,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$dataFolder$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$dataFolder$value,
@@ -180,7 +192,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$outputFolder$value <-
           value
-        private$.modified <- TRUE
+        private$.invalidate()
       }
       private$.clean_path(
         private$.filePathsData$outputFolder$value,
@@ -202,7 +214,12 @@ Project <- R6::R6Class(
     .projectFilePath = NULL,
     .projectDirPath = NULL,
     .modified = FALSE,
+    .validatedSinceMutation = FALSE,
     .rawData = NULL,
+    .invalidate = function() {
+      private$.modified <- TRUE
+      private$.validatedSinceMutation <- FALSE
+    },
     .warned_paths = character(),
     .programmaticDataSets = list(),
     .observedDataNamesCache = NULL,
@@ -346,6 +363,7 @@ Project <- R6::R6Class(
       self$plots <- private$.parsePlots(jsonData$plots)
 
       private$.modified <- FALSE
+      private$.validatedSinceMutation <- FALSE
     },
 
     .parseParameterGroups = function(groups) {
@@ -581,9 +599,6 @@ Project <- R6::R6Class(
         ),
         plotGrids = private$.listOfListsToDataFrame(
           plotsData$plotGrids
-        ),
-        exportConfiguration = private$.listOfListsToDataFrame(
-          plotsData$exportConfiguration
         )
       )
     },
@@ -612,10 +627,19 @@ Project <- R6::R6Class(
       private$.modified <- FALSE
     },
     #' @description Internal method to set the `modified` flag after a
-    #' programmatic mutation. Not intended for end-user use.
+    #' programmatic mutation. Not intended for end-user use. Also clears
+    #' the `validatedSinceMutation` flag so that any cached validation
+    #' result is invalidated.
     #' @keywords internal
     .markModified = function() {
-      private$.modified <- TRUE
+      private$.invalidate()
+    },
+    #' @description Internal method to record that a full project
+    #' validation has succeeded with no critical errors. Sets the
+    #' `validatedSinceMutation` flag. Not intended for end-user use.
+    #' @keywords internal
+    .markValidated = function() {
+      private$.validatedSinceMutation <- TRUE
     },
     #' @description Internal method to retrieve all programmatic DataSets.
     #' Not intended for end-user use.
@@ -930,6 +954,7 @@ Project <- R6::R6Class(
     #'   project configuration file.
     initialize = function(projectFilePath = character()) {
       private$.modified <- FALSE
+      private$.validatedSinceMutation <- FALSE
       if (!missing(projectFilePath)) {
         private$.read_json(projectFilePath)
       } else {
@@ -959,8 +984,7 @@ Project <- R6::R6Class(
         c(
           "dataCombined",
           "plotConfiguration",
-          "plotGrids",
-          "exportConfiguration"
+          "plotGrids"
         ),
         function(name) {
           df <- self$plots[[name]]
@@ -1031,8 +1055,8 @@ Project <- R6::R6Class(
     #' @field outputPaths Named character vector. Names are IDs, values are
     #'   output path strings.
     outputPaths = NULL,
-    #' @field plots List with 4 data.frame elements: `dataCombined`,
-    #'   `plotConfiguration`, `plotGrids`, `exportConfiguration`.
+    #' @field plots List with 3 data.frame elements: `dataCombined`,
+    #'   `plotConfiguration`, `plotGrids`.
     plots = NULL,
     #' @field jsonPath Path to the source JSON file, or NULL if not loaded
     #'   from JSON.

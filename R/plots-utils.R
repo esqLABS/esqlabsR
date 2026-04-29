@@ -221,46 +221,6 @@ createEsqlabsPlotGridConfiguration <- function() {
   return(plotGridConfiguration)
 }
 
-#' @param outputFolder Path to the folder where the results will be stored.
-#'
-#' @title Create an instance of `ExportConfiguration` R6 class
-#' @rdname createEsqlabsExportConfiguration
-#'
-#' @description
-#'
-#' An instance of `ExportConfiguration` R6 class from `{tlf}` package is needed
-#' for saving the plots and plot grids created using the `{ospsuite}` package.
-#'
-#' The default attributes of the class are chosen to reflect the corporate
-#' standards adopted by esqLABS GmbH.
-#'
-#' @returns An instance of `ExportConfiguration` R6 class.
-#'
-#' @examples
-#' myProjConfig <- Project$new()
-#' createEsqlabsExportConfiguration(myProjConfig$outputFolder)
-#'
-#' @family create-plotting-configurations
-#'
-#' @export
-createEsqlabsExportConfiguration <- function(outputFolder) {
-  # nolint: object_length_linter.
-  # Specifying the namespace because we want to use the ExportConfiguration
-  # from esqlabsR and not from TLF
-  exportConfiguration <- esqlabsR::ExportConfiguration$new()
-
-  exportConfiguration$path <- outputFolder
-  exportConfiguration$dpi <- 300
-  # NULL is not supported by ExportConfiguration, so we should assign here
-  # something useful. NULL in the Project currently means "do not
-  # export".
-  exportConfiguration$format <- "png"
-  exportConfiguration$width <- 18
-  exportConfiguration$heightPerRow <- 12
-  exportConfiguration$units <- "cm"
-  return(exportConfiguration)
-}
-
 # Plot configuration override and overlay helpers ----
 
 #' Update Plot Configuration with Overrides
@@ -479,35 +439,17 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 
 #' Read plot configurations from a Project object
 #'
-#' Reads plot grids, plot configurations, and export configurations from
-#' `project$plots` instead of Excel files.
+#' Reads plot grids and plot configurations from `project$plots`.
 #'
 #' @param project Object of class `Project`
 #' @param plotGridNames Names of the plot grids to filter for. If `NULL`,
 #'   all plot grids are returned.
 #'
-#' @returns A list with elements `plotGrids`, `exportConfigurations`, and
-#'   `plotConfigurations`, or `NULL` if no plot grids are defined.
+#' @returns A list with elements `plotGrids` and `plotConfigurations`, or
+#'   `NULL` if no plot grids are defined.
 #' @keywords internal
 .getPlotConfigurations <- function(project, plotGridNames) {
   dfPlotGrids <- project$plots$plotGrids
-  dfExportConfigurations <- project$plots$exportConfiguration
-
-  # Handle empty export configurations (no columns)
-  if (ncol(dfExportConfigurations) == 0) {
-    dfExportConfigurations <- data.frame(
-      plotGridName = character(0),
-      name = character(0)
-    )
-  }
-
-  # Rename outputName to name if present (legacy column name from Excel)
-  if ("outputName" %in% names(dfExportConfigurations)) {
-    dfExportConfigurations <- dplyr::rename(
-      dfExportConfigurations,
-      name = outputName
-    )
-  }
 
   # Filter for only specified plot grids
   if (!is.null(plotGridNames)) {
@@ -517,10 +459,6 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
     }
 
     dfPlotGrids <- dplyr::filter(dfPlotGrids, name %in% plotGridNames)
-    dfExportConfigurations <- dplyr::filter(
-      dfExportConfigurations,
-      plotGridName %in% plotGridNames
-    )
   }
 
   # Exit early if no PlotGrid is defined
@@ -555,7 +493,6 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 
   return(list(
     plotGrids = dfPlotGrids,
-    exportConfigurations = dfExportConfigurations,
     plotConfigurations = dfPlotConfigurations
   ))
 }

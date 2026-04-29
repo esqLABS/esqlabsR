@@ -2695,3 +2695,39 @@ test_that("removeOutputPath warns when referenced by a scenario", {
   )
   expect_false(refId %in% names(project$outputPaths))
 })
+
+# loadProject auto cross-reference warnings ----
+
+test_that("loadProject warns when scenarios reference undefined cross-references", {
+  jsonPath <- testProjectJSONPath()
+  raw <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  raw$scenarios[[1]]$individualId <- "DoesNotExist"
+  tmp <- file.path(tempfile(), "Project.json")
+  dir.create(dirname(tmp), recursive = TRUE)
+  jsonlite::write_json(raw, tmp, auto_unbox = TRUE, null = "null", pretty = TRUE)
+  withr::defer(unlink(dirname(tmp), recursive = TRUE))
+
+  # Other path-resolution warnings may also fire — assert ours specifically.
+  warns <- character()
+  withCallingHandlers(
+    loadProject(tmp),
+    warning = function(w) {
+      warns <<- c(warns, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_true(any(grepl("cross-reference", warns)))
+})
+
+test_that("loadProject does not warn on a clean project", {
+  jsonPath <- testProjectJSONPath()
+  warns <- character()
+  withCallingHandlers(
+    loadProject(jsonPath),
+    warning = function(w) {
+      warns <<- c(warns, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_false(any(grepl("cross-reference", warns)))
+})

@@ -8,7 +8,8 @@ runScenarios(
   project,
   scenarioNames = NULL,
   customParams = NULL,
-  simulationRunOptions = NULL
+  simulationRunOptions = NULL,
+  validate = TRUE
 )
 }
 \arguments{
@@ -23,6 +24,14 @@ that will be applied to all scenarios.}
 
 \item{simulationRunOptions}{Object of type \code{SimulationRunOptions} that will
 be passed to simulation runs. If \code{NULL}, default options are used.}
+
+\item{validate}{If \code{TRUE} (default), the \code{scenarios} and \code{crossReferences}
+sections of the project are validated before running. Any critical
+errors abort the run with a formatted message. Set to \code{FALSE} to skip
+the pre-flight check (e.g. when intentionally running a partially
+defined project). Validation is skipped automatically if a full
+\code{\link[=validateProject]{validateProject()}} has already succeeded since the last project
+mutation.}
 }
 \value{
 A named list, where the names are scenario names, and the values are

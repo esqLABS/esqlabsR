@@ -22,4 +22,10 @@ Object of type \code{Project}
 \description{
 Load a \code{Project} from a JSON file. This is the
 primary entry point for working with esqlabsR projects.
+
+On load the project is checked for the most common cross-reference
+problems (e.g. a scenario referring to an individual or population
+that is not defined). Any such issues are reported via \code{\link[cli:cli_abort]{cli::cli_warn()}}
+so that obvious configuration mistakes surface immediately, but loading
+still succeeds. Use \code{\link[=validateProject]{validateProject()}} for a full report.
 }

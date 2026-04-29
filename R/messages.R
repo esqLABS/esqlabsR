@@ -457,20 +457,6 @@ messages$invalidConfigurationProperty <- function(
   )
 }
 
-messages$missingOutputFileName <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.arg outputName} of sheet {.var exportConfiguration}. No plots are exported to file for corresponding rows."
-  )
-}
-
-messages$missingPlotGrids <- function(missingPlotGrids) {
-  cliFormat(
-    "Invalid values in column {.arg plotGridName} of sheet {.var exportConfiguration}:
-    {.val {paste0(missingPlotGrids, collapse = ',\n')}}. Plot grids are either not defined or empty and can not be
-    exported to file."
-  )
-}
-
 messages$invalidPlotGridNames <- function(plotGridNames) {
   cliFormat(
     "Following plot grid names have been specified but are not present in the {.field plotGrids} sheet!

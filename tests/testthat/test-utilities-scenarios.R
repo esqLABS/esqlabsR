@@ -293,6 +293,52 @@ test_that("runScenarios filters to specified scenarioNames", {
   expect_equal(names(results), "TestScenario")
 })
 
+# Automatic validation ----
+
+test_that("runScenarios aborts on broken cross-references", {
+  project <- testProject()
+  project$scenarios[[1]]$individualId <- "DoesNotExist"
+  expect_error(
+    runScenarios(project, scenarioNames = "TestScenario"),
+    "run scenarios"
+  )
+})
+
+test_that("runScenarios validate = FALSE skips the pre-flight check", {
+  project <- testProject()
+  project$scenarios[[1]]$individualId <- "DoesNotExist"
+  # The auto-validation gate emits an error containing "run scenarios";
+  # downstream runtime code emits a different one. With validate = FALSE
+  # we should bypass the gate entirely.
+  msg <- tryCatch(
+    suppressWarnings(runScenarios(
+      project,
+      scenarioNames = "TestScenario",
+      validate = FALSE
+    )),
+    error = function(e) conditionMessage(e)
+  )
+  expect_false(grepl("run scenarios", msg, fixed = TRUE))
+})
+
+test_that("runScenarios skips re-validation when validatedSinceMutation is TRUE", {
+  project <- testProject()
+  validateProject(project)
+  expect_true(project$validatedSinceMutation)
+
+  called <- 0L
+  testthat::local_mocked_bindings(
+    .runProjectValidation = function(...) {
+      called <<- called + 1L
+      list()
+    }
+  )
+
+  results <- runScenarios(project, scenarioNames = "TestScenario")
+  expect_equal(called, 0L)
+  expect_true("TestScenario" %in% names(results))
+})
+
 
 # Guard-clause regression tests ----
 

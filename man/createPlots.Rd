@@ -10,8 +10,8 @@ createPlots(
   plotGridNames = NULL,
   simulatedScenarios = NULL,
   dataCombinedList = NULL,
-  outputFolder = NULL,
-  stopIfNotFound = TRUE
+  stopIfNotFound = TRUE,
+  validate = TRUE
 )
 
 createPlotsFromExcel(...)
@@ -34,13 +34,16 @@ create plots defined in the \code{plotGridNames} argument. Missing
 behavior). Defaults to \code{NULL}, in which case all \code{DataCombined} are
 created from the project configuration.}
 
-\item{outputFolder}{Optional - path to the folder where the results will be
-stored. If \code{NULL} (default), \code{project$outputFolder} is used.
-Only relevant for plots specified for export in the export configuration.}
-
 \item{stopIfNotFound}{If TRUE (default), the function stops if any of the
 simulated results or observed data are not found. If FALSE a warning is
 printed.}
+
+\item{validate}{If \code{TRUE} (default), the \code{plots} and \code{crossReferences}
+sections of the project are validated before plotting. Any critical
+errors abort the call with a formatted message. Set to \code{FALSE} to skip
+the pre-flight check. Validation is skipped automatically if no plots
+are configured, or if a full \code{\link[=validateProject]{validateProject()}} has already succeeded
+since the last project mutation.}
 }
 \value{
 A list of \code{ggplot} objects

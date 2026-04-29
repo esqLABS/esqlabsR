@@ -308,6 +308,13 @@
 #'   that will be applied to all scenarios.
 #' @param simulationRunOptions Object of type `SimulationRunOptions` that will
 #'   be passed to simulation runs. If `NULL`, default options are used.
+#' @param validate If `TRUE` (default), the `scenarios` and `crossReferences`
+#'   sections of the project are validated before running. Any critical
+#'   errors abort the run with a formatted message. Set to `FALSE` to skip
+#'   the pre-flight check (e.g. when intentionally running a partially
+#'   defined project). Validation is skipped automatically if a full
+#'   [validateProject()] has already succeeded since the last project
+#'   mutation.
 #'
 #' @returns A named list, where the names are scenario names, and the values are
 #'   lists with the entries `simulation` being the initialized `Simulation`
@@ -323,7 +330,8 @@ runScenarios <- function(
   project,
   scenarioNames = NULL,
   customParams = NULL,
-  simulationRunOptions = NULL
+  simulationRunOptions = NULL,
+  validate = TRUE
 ) {
   validateIsOfType(project, "Project")
   .validateParametersStructure(
@@ -331,6 +339,14 @@ runScenarios <- function(
     argumentName = "customParams",
     nullAllowed = TRUE
   )
+
+  if (isTRUE(validate)) {
+    .ensureValid(
+      project,
+      sections = c("scenarios", "crossReferences"),
+      opName = "run scenarios"
+    )
+  }
 
   allScenarios <- project$scenarios
   if (is.null(scenarioNames)) {

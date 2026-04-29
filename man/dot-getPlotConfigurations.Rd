@@ -13,11 +13,10 @@
 all plot grids are returned.}
 }
 \value{
-A list with elements \code{plotGrids}, \code{exportConfigurations}, and
-\code{plotConfigurations}, or \code{NULL} if no plot grids are defined.
+A list with elements \code{plotGrids} and \code{plotConfigurations}, or
+\code{NULL} if no plot grids are defined.
 }
 \description{
-Reads plot grids, plot configurations, and export configurations from
-\code{project$plots} instead of Excel files.
+Reads plot grids and plot configurations from \code{project$plots}.
 }
 \keyword{internal}

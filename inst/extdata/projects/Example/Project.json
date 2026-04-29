@@ -329,17 +329,6 @@
         "title": null,
         "subtitle": null
       }
-    ],
-    "exportConfiguration": [
-      {
-        "plotGridName": "Individual_diagnostics",
-        "outputName": "Aciclovir_diagnostics",
-        "format": "png",
-        "width": 20,
-        "height": 15,
-        "units": "cm",
-        "dpi": 300
-      }
     ]
   }
 }

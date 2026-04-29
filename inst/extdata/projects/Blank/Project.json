@@ -24,7 +24,6 @@
   "plots": {
     "dataCombined": [],
     "plotConfiguration": [],
-    "plotGrids": [],
-    "exportConfiguration": []
+    "plotGrids": []
   }
 }
