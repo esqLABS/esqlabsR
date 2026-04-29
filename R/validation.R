@@ -372,20 +372,16 @@ validationResult <- R6::R6Class(
 
   # Check plots dataCombined scenario references
   dataCombined <- project$plots$dataCombined
-  if (
-    !is.null(dataCombined) &&
-      nrow(dataCombined) > 0 &&
-      "scenario" %in% names(dataCombined) &&
-      "dataType" %in% names(dataCombined)
-  ) {
-    simulated <- dataCombined[
-      !is.na(dataCombined$dataType) & dataCombined$dataType == "simulated",
-    ]
-    scenario_names <- names(scenario_list)
-    invalid_scenarios <- setdiff(
-      simulated$scenario[!is.na(simulated$scenario)],
-      scenario_names
-    )
+  if (!is.null(dataCombined) && length(dataCombined) > 0) {
+    referenced_scenarios <- unlist(lapply(dataCombined, function(dc) {
+      vapply(
+        dc$simulated %||% list(),
+        function(e) e$scenario %||% NA_character_,
+        character(1)
+      )
+    }))
+    referenced_scenarios <- referenced_scenarios[!is.na(referenced_scenarios)]
+    invalid_scenarios <- setdiff(referenced_scenarios, names(scenario_list))
     if (length(invalid_scenarios) > 0) {
       result$add_critical_error(
         "Invalid Reference",

@@ -386,12 +386,6 @@ messages$missingPlotType <- function() {
   )
 }
 
-messages$missingDataType <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.val dataType} of sheet {.var DataCombined}. Fill in values to proceed."
-  )
-}
-
 messages$missingScenarioName <- function() {
   cliFormat(
     "Missing values found in mandatory column {.val scenario} of sheet {.var DataCombined} when {.arg dataType} is {.val simulated}. Fill in values to proceed."

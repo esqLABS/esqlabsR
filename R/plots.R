@@ -24,15 +24,6 @@
   "residualsVsTime"
 )
 
-.dataCombinedTransformCols <- c(
-  "xOffsets",
-  "xOffsetsUnits",
-  "yOffsets",
-  "yOffsetsUnits",
-  "xScaleFactors",
-  "yScaleFactors"
-)
-
 # Parse ----
 
 #' @keywords internal
@@ -48,75 +39,33 @@
   )
 }
 
-#' Parse nested dataCombined JSON to flat data.frame
-#' @param nestedData List of dataCombined objects with simulated/observed arrays
-#' @returns data.frame with DataCombinedName, dataType, and all entry fields
+#' Parse the dataCombined section of a Project.json
+#'
+#' Drops the redundant `name` field from each entry (it is the list key)
+#' and re-keys the list by name. The simulated/observed lists are passed
+#' through unchanged; per-entry fields are not enumerated, so adding a
+#' new optional field at the JSON level does not require a code change
+#' here. NULL becomes NULL (kept absent), not NA.
+#'
+#' @param nestedData List of dataCombined objects with `name`,
+#'   `simulated`, and `observed` fields.
+#' @returns Named list keyed by DataCombined name, each entry a list with
+#'   `simulated` and `observed` (each itself a list of entries).
 #' @keywords internal
 #' @noRd
 .parseNestedDataCombined <- function(nestedData) {
   if (is.null(nestedData) || length(nestedData) == 0) {
-    return(data.frame())
+    return(list())
   }
 
-  transformCols <- c(
-    "xOffsets",
-    "xOffsetsUnits",
-    "yOffsets",
-    "yOffsetsUnits",
-    "xScaleFactors",
-    "yScaleFactors"
-  )
-
-  rows <- list()
-  for (dataCombined in nestedData) {
-    dataCombinedName <- dataCombined$name
-
-    # Process simulated entries
-    if (
-      !is.null(dataCombined$simulated) && length(dataCombined$simulated) > 0
-    ) {
-      for (entry in dataCombined$simulated) {
-        row <- list(
-          DataCombinedName = dataCombinedName,
-          dataType = "simulated",
-          label = entry$label,
-          scenario = entry$scenario,
-          path = entry$path,
-          dataSet = NA,
-          group = entry$group %||% NA
-        )
-        for (col in transformCols) {
-          row[[col]] <- entry[[col]] %||% NA
-        }
-        rows[[length(rows) + 1]] <- as.data.frame(row, stringsAsFactors = FALSE)
-      }
-    }
-
-    # Process observed entries
-    if (!is.null(dataCombined$observed) && length(dataCombined$observed) > 0) {
-      for (entry in dataCombined$observed) {
-        row <- list(
-          DataCombinedName = dataCombinedName,
-          dataType = "observed",
-          label = entry$label,
-          scenario = NA,
-          path = NA,
-          dataSet = entry$dataSet,
-          group = entry$group %||% NA
-        )
-        for (col in transformCols) {
-          row[[col]] <- entry[[col]] %||% NA
-        }
-        rows[[length(rows) + 1]] <- as.data.frame(row, stringsAsFactors = FALSE)
-      }
-    }
+  result <- list()
+  for (dc in nestedData) {
+    result[[dc$name]] <- list(
+      simulated = dc$simulated %||% list(),
+      observed = dc$observed %||% list()
+    )
   }
-
-  if (length(rows) == 0) {
-    return(data.frame())
-  }
-
-  do.call(rbind, rows)
+  result
 }
 
 #' Convert a list of named lists to a data.frame, padding missing fields with NA
@@ -157,43 +106,20 @@
   plotConfig <- plots$plotConfiguration
 
   # Validate dataCombined
-  if (is.null(dataCombined) || nrow(dataCombined) == 0) {
+  if (is.null(dataCombined) || length(dataCombined) == 0) {
     result$add_warning("Data", "dataCombined is empty")
   } else {
-    for (col in c("DataCombinedName", "dataType")) {
-      if (!col %in% names(dataCombined)) {
-        result$add_critical_error(
-          "Missing Fields",
-          paste0("dataCombined is missing required column '", col, "'")
-        )
-      }
-    }
-
-    if ("dataType" %in% names(dataCombined)) {
-      invalid_types <- dataCombined$dataType[
-        !is.na(dataCombined$dataType) &
-          !dataCombined$dataType %in% c("simulated", "observed")
-      ]
-      if (length(invalid_types) > 0) {
-        result$add_critical_error(
-          "Validation",
-          paste0(
-            "Invalid dataType values in dataCombined: ",
-            paste(unique(invalid_types), collapse = ", ")
-          )
-        )
-      }
-
-      simulated_rows <- dataCombined[
-        !is.na(dataCombined$dataType) & dataCombined$dataType == "simulated",
-      ]
-      if (nrow(simulated_rows) > 0 && "scenario" %in% names(dataCombined)) {
-        missing_scenario <- is.na(simulated_rows$scenario) |
-          simulated_rows$scenario == ""
-        if (any(missing_scenario)) {
+    for (dcName in names(dataCombined)) {
+      dc <- dataCombined[[dcName]]
+      for (entry in dc$simulated %||% list()) {
+        if (is.null(entry$scenario) || identical(entry$scenario, "")) {
           result$add_critical_error(
             "Missing Fields",
-            "Some simulated rows in dataCombined are missing 'scenario'"
+            paste0(
+              "Simulated entry in dataCombined '",
+              dcName,
+              "' is missing 'scenario'"
+            )
           )
         }
       }
@@ -224,13 +150,12 @@
     # Inner cross-ref: plotConfiguration -> dataCombined
     if (
       !is.null(dataCombined) &&
-        nrow(dataCombined) > 0 &&
-        "DataCombinedName" %in% names(plotConfig) &&
-        "DataCombinedName" %in% names(dataCombined)
+        length(dataCombined) > 0 &&
+        "DataCombinedName" %in% names(plotConfig)
     ) {
       invalid_dataCombined_refs <- setdiff(
         plotConfig$DataCombinedName[!is.na(plotConfig$DataCombinedName)],
-        dataCombined$DataCombinedName
+        names(dataCombined)
       )
       if (length(invalid_dataCombined_refs) > 0) {
         result$add_critical_error(
@@ -299,78 +224,28 @@
   )
 }
 
-#' Convert flat dataCombined data.frame to nested JSON structure
-#' @param df data.frame with DataCombinedName, dataType, and entry fields
-#' @returns List of dataCombined objects with simulated/observed arrays
+#' Serialize the dataCombined section to JSON-shaped nested list
+#'
+#' Inverts `.parseNestedDataCombined()`: re-adds the `name` field from the
+#' list key. The per-entry shape is passed through unchanged.
+#'
+#' @param dataCombined Named list as produced by `.parseNestedDataCombined()`.
+#' @returns List of dataCombined objects with `name`, `simulated`,
+#'   `observed`. Empty `simulated`/`observed` lists are omitted to keep
+#'   the JSON terse.
 #' @keywords internal
 #' @noRd
-.dataCombinedToNestedJson <- function(df) {
-  if (is.null(df) || nrow(df) == 0) {
+.dataCombinedToNestedJson <- function(dataCombined) {
+  if (is.null(dataCombined) || length(dataCombined) == 0) {
     return(list())
   }
-
-  transformCols <- c(
-    "xOffsets",
-    "xOffsetsUnits",
-    "yOffsets",
-    "yOffsetsUnits",
-    "xScaleFactors",
-    "yScaleFactors"
-  )
-
-  dataCombinedNames <- unique(df$DataCombinedName)
-
-  lapply(dataCombinedNames, function(dataCombinedName) {
-    dataCombinedRows <- df[
-      df$DataCombinedName == dataCombinedName,
-      ,
-      drop = FALSE
-    ]
-
-    simRows <- dataCombinedRows[
-      dataCombinedRows$dataType == "simulated",
-      ,
-      drop = FALSE
-    ]
-    obsRows <- dataCombinedRows[
-      dataCombinedRows$dataType == "observed",
-      ,
-      drop = FALSE
-    ]
-
-    simulated <- lapply(seq_len(nrow(simRows)), function(i) {
-      row <- simRows[i, ]
-      entry <- list(
-        label = row$label,
-        scenario = row$scenario,
-        path = row$path,
-        group = if (is.na(row$group)) NULL else row$group
-      )
-      for (col in transformCols) {
-        entry[[col]] <- if (is.na(row[[col]])) NULL else row[[col]]
-      }
-      entry
-    })
-
-    observed <- lapply(seq_len(nrow(obsRows)), function(i) {
-      row <- obsRows[i, ]
-      entry <- list(
-        label = row$label,
-        dataSet = row$dataSet,
-        group = if (is.na(row$group)) NULL else row$group
-      )
-      for (col in transformCols) {
-        entry[[col]] <- if (is.na(row[[col]])) NULL else row[[col]]
-      }
-      entry
-    })
-
-    list(
-      name = dataCombinedName,
-      simulated = simulated,
-      observed = observed
-    )
-  })
+  unname(lapply(names(dataCombined), function(name) {
+    dc <- dataCombined[[name]]
+    entry <- list(name = name)
+    if (length(dc$simulated) > 0) entry$simulated <- dc$simulated
+    if (length(dc$observed) > 0) entry$observed <- dc$observed
+    entry
+  }))
 }
 
 #' @keywords internal
@@ -412,7 +287,7 @@
   dots
 }
 
-.buildDataCombinedRow <- function(dataCombinedName, dataType, entry) {
+.checkDataCombinedEntry <- function(entry, dataType) {
   required <- if (dataType == "simulated") {
     c("label", "scenario", "path")
   } else {
@@ -428,19 +303,7 @@
       stop(msgFn(field))
     }
   }
-  row <- list(
-    DataCombinedName = dataCombinedName,
-    dataType = dataType,
-    label = entry$label,
-    scenario = if (dataType == "simulated") entry$scenario else NA,
-    path = if (dataType == "simulated") entry$path else NA,
-    dataSet = if (dataType == "observed") entry$dataSet else NA,
-    group = entry$group %||% NA
-  )
-  for (col in .dataCombinedTransformCols) {
-    row[[col]] <- entry[[col]] %||% NA
-  }
-  as.data.frame(row, stringsAsFactors = FALSE)
+  invisible(TRUE)
 }
 
 # Public CRUD: plots ----
@@ -480,7 +343,7 @@ addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
     stop(messages$plotIDExists(plotID))
   }
 
-  if (!(dataCombinedName %in% project$plots$dataCombined$DataCombinedName)) {
+  if (!(dataCombinedName %in% names(project$plots$dataCombined))) {
     stop(messages$plotDataCombinedNameNotFound(dataCombinedName))
   }
 
@@ -656,21 +519,28 @@ addDataCombined <- function(
   validateIsOfType(project, "Project")
   .requireNonEmptyString(name, "name")
 
-  if (name %in% project$plots$dataCombined$DataCombinedName) {
+  if (name %in% names(project$plots$dataCombined)) {
     stop(messages$dataCombinedNameExists(name))
   }
 
-  rows <- c(
-    lapply(simulated, function(e) .buildDataCombinedRow(name, "simulated", e)),
-    lapply(observed, function(e) .buildDataCombinedRow(name, "observed", e))
-  )
-  if (length(rows) == 0) {
+  if (length(simulated) == 0 && length(observed) == 0) {
     stop("addDataCombined requires at least one simulated or observed entry")
   }
 
-  project$plots$dataCombined <- as.data.frame(dplyr::bind_rows(
-    c(list(project$plots$dataCombined), rows)
-  ))
+  for (e in simulated) .checkDataCombinedEntry(e, "simulated")
+  for (e in observed) .checkDataCombinedEntry(e, "observed")
+
+  if (is.null(project$plots)) {
+    project$plots <- list(
+      dataCombined = list(),
+      plotConfiguration = data.frame(),
+      plotGrids = data.frame()
+    )
+  }
+  project$plots$dataCombined[[name]] <- list(
+    simulated = simulated,
+    observed = observed
+  )
   project$.markModified()
   invisible(project)
 }
@@ -690,8 +560,7 @@ removeDataCombined <- function(project, name) {
   validateIsOfType(project, "Project")
   .requireNonEmptyString(name, "name")
 
-  df <- project$plots$dataCombined
-  if (is.null(df) || nrow(df) == 0 || !(name %in% df$DataCombinedName)) {
+  if (!(name %in% names(project$plots$dataCombined))) {
     cli::cli_warn(messages$dataCombinedNotFound(name))
     return(invisible(project))
   }
@@ -709,7 +578,7 @@ removeDataCombined <- function(project, name) {
     }
   }
 
-  project$plots$dataCombined <- df[df$DataCombinedName != name, , drop = FALSE]
+  project$plots$dataCombined[[name]] <- NULL
   project$.markModified()
   invisible(project)
 }

@@ -157,21 +157,25 @@ simulatedScenarios$TestScenario$outputValues <- getOutputValues(
 
 observedDataForSetup <- loadObservedData(project)
 
-dataCombinedDf <- data.frame(list(
-  "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
-  "dataType" = c("simulated", "observed"),
-  "label" = c("Aciclovir simulated", "Aciclovir observed"),
-  "scenario" = c(scenarioNames[1], NA),
-  "path" = c(outputPaths, NA),
-  "dataSet" = c(NA, names(observedDataForSetup)[1]),
-  "group" = c("Aciclovir PVB", "Aciclovir PVB"),
-  "xOffsets" = c(NA, NA),
-  "xOffsetsUnits" = c(NA, NA),
-  "yOffsets" = c(NA, NA),
-  "yOffsetsUnits" = c(NA, NA),
-  "xScaleFactors" = c(NA, NA),
-  "yScaleFactors" = c(NA, NA)
-))
+dataCombinedSpec <- list(
+  AciclovirPVB = list(
+    simulated = list(
+      list(
+        label = "Aciclovir simulated",
+        scenario = scenarioNames[1],
+        path = outputPaths,
+        group = "Aciclovir PVB"
+      )
+    ),
+    observed = list(
+      list(
+        label = "Aciclovir observed",
+        dataSet = names(observedDataForSetup)[1],
+        group = "Aciclovir PVB"
+      )
+    )
+  )
+)
 plotConfigurationDf <- data.frame(list(
   "plotID" = "P1",
   "DataCombinedName" = "AciclovirPVB",
@@ -196,7 +200,7 @@ plotGridsDf <- data.frame(list(
 # Helper to create a project with custom plots data
 .withPlots <- function(
   baseProject = project,
-  dataCombined = dataCombinedDf,
+  dataCombined = dataCombinedSpec,
   plotConfiguration = plotConfigurationDf,
   plotGrids = plotGridsDf
 ) {
@@ -210,25 +214,10 @@ plotGridsDf <- data.frame(list(
 }
 
 # Validation DataCombined
-test_that("It throws an error if mandatory field dataType is not filled out", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$dataType <- NA
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
-
-  expect_error(
-    createPlots(
-      project = pcLocal,
-      simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = TRUE
-    ),
-    regexp = messages$missingDataType()
-  )
-})
-
 test_that("It throws an error if mandatory field label is not filled out", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$label <- NA
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$label <- NA
+  pcLocal <- .withPlots(dataCombined = spec)
 
   expect_error(
     createPlots(
@@ -241,9 +230,9 @@ test_that("It throws an error if mandatory field label is not filled out", {
 })
 
 test_that("It throws an error if no scenario is specified for a simulated data", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$scenario <- NA
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$scenario <- NA
+  pcLocal <- .withPlots(dataCombined = spec)
 
   expect_error(
     createPlots(
@@ -257,9 +246,9 @@ test_that("It throws an error if no scenario is specified for a simulated data",
 })
 
 test_that("It throws an error if no output path is specified for a simulated data", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$path <- NA
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$path <- NA
+  pcLocal <- .withPlots(dataCombined = spec)
 
   expect_error(
     createPlots(
@@ -272,9 +261,9 @@ test_that("It throws an error if no output path is specified for a simulated dat
 })
 
 test_that("It throws an error if wrong output path is specified for a simulated data", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$path <- "foo"
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$path <- "foo"
+  pcLocal <- .withPlots(dataCombined = spec)
 
   expect_error(
     createPlots(
@@ -283,17 +272,17 @@ test_that("It throws an error if wrong output path is specified for a simulated 
       stopIfNotFound = TRUE
     ),
     regexp = messages$stopWrongOutputPath(
-      dataCombinedName = dataCombinedDfLocal$DataCombinedName[[1]],
-      scenarioName = dataCombinedDfLocal$scenario[[1]],
-      path = dataCombinedDfLocal$path[[1]]
+      dataCombinedName = "AciclovirPVB",
+      scenarioName = spec$AciclovirPVB$simulated[[1]]$scenario,
+      path = "foo"
     )
   )
 })
 
 test_that("It throws an error if no data set is specified for observed data", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$dataSet <- NA
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$observed[[1]]$dataSet <- NA
+  pcLocal <- .withPlots(dataCombined = spec)
 
   expect_error(
     createPlots(
@@ -306,42 +295,41 @@ test_that("It throws an error if no data set is specified for observed data", {
 })
 
 test_that("It throws an error if defined scenario is missing and stopIfNotFound is TRUE", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$scenario <- c("TestScenario", "foo")
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$scenario <- "foo"
+  pcLocal <- .withPlots(dataCombined = spec)
 
   expect_error(
     createPlots(
       project = pcLocal,
       simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = TRUE
+      stopIfNotFound = TRUE,
+      validate = FALSE
     ),
     regexp = messages$warningInvalidScenarioName("foo")
   )
 })
 
 test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$scenario <- c(scenarioNames[1], "foo")
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$scenario <- "foo"
+  pcLocal <- .withPlots(dataCombined = spec)
 
   expect_warning(
     createPlots(
       project = pcLocal,
       simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = FALSE
+      stopIfNotFound = FALSE,
+      validate = FALSE
     ),
     regexp = messages$warningInvalidScenarioName("foo")
   )
 })
 
 test_that("It throws an error if defined data set is missing and stopIfNotFound is TRUE", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$dataSet <- c(
-    scenarioNames[1],
-    names(observedDataForSetup)[1]
-  )
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$observed[[1]]$dataSet <- scenarioNames[1]
+  pcLocal <- .withPlots(dataCombined = spec)
 
   expect_error(
     createPlots(
@@ -354,12 +342,9 @@ test_that("It throws an error if defined data set is missing and stopIfNotFound 
 })
 
 test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", {
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$dataSet <- c(
-    scenarioNames[1],
-    names(observedDataForSetup)[1]
-  )
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$observed[[1]]$dataSet <- scenarioNames[1]
+  pcLocal <- .withPlots(dataCombined = spec)
 
   expect_warning(
     createPlots(
@@ -639,69 +624,11 @@ test_that("It correctly treats names with underscores", {
 })
 
 
-test_that("It correctly treats empty rows", {
-  # datacombined with empty row
-  dataCombinedDfLocal <- data.frame(list(
-    "DataCombinedName" = c("AciclovirPVB", NA, "AciclovirPVB"),
-    "dataType" = c("simulated", NA, "observed"),
-    "label" = c("Aciclovir simulated", NA, "Aciclovir observed"),
-    "scenario" = c(scenarioNames[1], NA, NA),
-    "path" = c(outputPaths, NA, NA),
-    "dataSet" = c(NA, NA, names(observedDataForSetup)[1]),
-    "group" = c("Aciclovir PVB", NA, "Aciclovir PVB"),
-    "xOffsets" = NA,
-    "xOffsetsUnits" = NA,
-    "yOffsets" = NA,
-    "yOffsetsUnits" = NA,
-    "xScaleFactors" = NA,
-    "yScaleFactors" = NA
-  ))
-  # plotConfiguration with empty row
-  plotConfigurationDfLocal <- data.frame(list(
-    "plotID" = c("P1", NA, "P2"),
-    "DataCombinedName" = c("AciclovirPVB", NA, "AciclovirPVB"),
-    "plotType" = c("individual", NA, "individual"),
-    "title" = NA,
-    "xUnit" = NA,
-    "yUnit" = NA,
-    "xAxisScale" = NA,
-    "yAxisScale" = NA,
-    "xValuesLimits" = NA,
-    "yValuesLimits" = NA,
-    "quantiles" = NA,
-    "nsd" = NA,
-    "foldDistance" = NA
-  ))
-  # plotGrid with empty row
-  plotGridsDfLocal <- data.frame(list(
-    "name" = c("Aciclovir", NA, "Aciclovir 2"),
-    "plotIDs" = c("P1", NA, "P2"),
-    "title" = c("Aciclovir PVB", NA, "Aciclovir PVB 2")
-  ))
-  pcLocal <- .withPlots(
-    dataCombined = dataCombinedDfLocal,
-    plotConfiguration = plotConfigurationDfLocal,
-    plotGrids = plotGridsDfLocal
-  )
-
-  expect_no_error(
-    createPlots(
-      project = pcLocal,
-      simulatedScenarios = simulatedScenarios,
-      stopIfNotFound = TRUE,
-      validate = FALSE
-    )
-  )
-})
-
-
 test_that("It checks if OffsetsUnits are not empty if xOffsets", {
-  # Test xOffsets without units
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$xOffsets <- c(1, NA)
-  dataCombinedDfLocal$xOffsetsUnits <- c(NA, NA)
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
-
+  # xOffsets without units \u2192 error
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$xOffsets <- 1
+  pcLocal <- .withPlots(dataCombined = spec)
   expect_error(
     createPlots(
       project = pcLocal,
@@ -710,12 +637,11 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
     )
   )
 
-  # Test xOffsets with units
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$xOffsets <- c(1, NA)
-  dataCombinedDfLocal$xOffsetsUnits <- c("min", NA)
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
-
+  # xOffsets with units \u2192 no error
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$xOffsets <- 1
+  spec$AciclovirPVB$simulated[[1]]$xOffsetsUnits <- "min"
+  pcLocal <- .withPlots(dataCombined = spec)
   expect_no_error(
     createPlots(
       project = pcLocal,
@@ -724,12 +650,10 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
     )
   )
 
-  # test yOffsets without units
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$yOffsets <- c(1, NA)
-  dataCombinedDfLocal$yOffsetsUnits <- c(NA, NA)
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
-
+  # yOffsets without units \u2192 error
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$yOffsets <- 1
+  pcLocal <- .withPlots(dataCombined = spec)
   expect_error(
     createPlots(
       project = pcLocal,
@@ -738,12 +662,11 @@ test_that("It checks if OffsetsUnits are not empty if xOffsets", {
     )
   )
 
-  # Test yOffsets with units
-  dataCombinedDfLocal <- dataCombinedDf
-  dataCombinedDfLocal$yOffsets <- c(1, NA)
-  dataCombinedDfLocal$yOffsetsUnits <- c("\u00b5M", NA)
-  pcLocal <- .withPlots(dataCombined = dataCombinedDfLocal)
-
+  # yOffsets with units \u2192 no error
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$yOffsets <- 1
+  spec$AciclovirPVB$simulated[[1]]$yOffsetsUnits <- "\u00b5M"
+  pcLocal <- .withPlots(dataCombined = spec)
   expect_no_error(
     createPlots(
       project = pcLocal,
@@ -992,98 +915,91 @@ simulatedScenarios <- runScenarios(
 
 observedDataForSetup <- loadObservedData(project)
 
-# Create a proper data frame with paths for all entries
-dataCombinedDf <- data.frame(list(
-  "DataCombinedName" = c(
-    "AciclovirPVB",
-    "AciclovirPVB",
-    "DC_missingPath",
-    "DC_missingPath"
-  ),
-  "dataType" = c("simulated", "observed", "simulated", "observed"),
-  "label" = c(
-    "Aciclovir simulated",
-    "Aciclovir observed",
-    "Aciclovir simulated",
-    "Aciclovir observed"
-  ),
-  "scenario" = c(scenarioNames[1], NA, scenarioNames[1], NA),
-  "path" = c(outputPaths, NA, outputPaths, NA),
-  "dataSet" = c(
-    NA,
-    names(observedDataForSetup)[1],
-    NA,
-    names(observedDataForSetup)[1]
-  ),
-  "group" = c(
-    "Aciclovir PVB",
-    "Aciclovir PVB",
-    "Aciclovir PVB",
-    "Aciclovir PVB"
-  ),
-  "xOffsets" = c(NA, NA, NA, NA),
-  "xOffsetsUnits" = c(NA, NA, NA, NA),
-  "yOffsets" = c(NA, NA, NA, NA),
-  "yOffsetsUnits" = c(NA, NA, NA, NA),
-  "xScaleFactors" = c(NA, NA, NA, NA),
-  "yScaleFactors" = c(NA, NA, NA, NA)
-))
+# Two-DC fixture for the .validateDataCombined unit tests below.
+.makeValidationFixture <- function() {
+  list(
+    AciclovirPVB = list(
+      simulated = list(
+        list(
+          label = "Aciclovir simulated",
+          scenario = scenarioNames[1],
+          path = outputPaths,
+          group = "Aciclovir PVB"
+        )
+      ),
+      observed = list(
+        list(
+          label = "Aciclovir observed",
+          dataSet = names(observedDataForSetup)[1],
+          group = "Aciclovir PVB"
+        )
+      )
+    ),
+    DC_missingPath = list(
+      simulated = list(
+        list(
+          label = "Aciclovir simulated",
+          scenario = scenarioNames[1],
+          path = outputPaths,
+          group = "Aciclovir PVB"
+        )
+      ),
+      observed = list(
+        list(
+          label = "Aciclovir observed",
+          dataSet = names(observedDataForSetup)[1],
+          group = "Aciclovir PVB"
+        )
+      )
+    )
+  )
+}
 
 test_that("It returns correct names of data combined when a path is not specified for one simulated scenario", {
-  # Create a specific data frame with a missing path for testing
-  df_missing_path <- dataCombinedDf
-  df_missing_path$path[3] <- NA
+  spec <- .makeValidationFixture()
+  spec$DC_missingPath$simulated[[1]]$path <- NA
 
   expect_error(
-    .validateDataCombined(df_missing_path, list(), observedDataForSetup),
+    .validateDataCombined(spec, list(), observedDataForSetup),
     regexp = messages$stopNoPathProvided("DC_missingPath")
   )
 })
 
 test_that("It errors when label is missing", {
-  df_missing_label <- dataCombinedDf
-  df_missing_label$label[1] <- NA
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$simulated[[1]]$label <- NA
   expect_error(
-    .validateDataCombined(df_missing_label, list(), observedDataForSetup),
+    .validateDataCombined(spec, list(), observedDataForSetup),
     regexp = messages$missingLabel()
   )
 })
 
-test_that("It errors when dataType is missing", {
-  df_missing_dataType <- dataCombinedDf
-  df_missing_dataType$dataType[1] <- NA
+test_that("It errors when scenario is missing for simulated entry", {
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$simulated[[1]]$scenario <- NA
   expect_error(
-    .validateDataCombined(df_missing_dataType, list(), observedDataForSetup),
-    regexp = messages$missingDataType()
-  )
-})
-
-test_that("It errors when scenario is missing for simulated dataType", {
-  df_missing_scenario <- dataCombinedDf
-  df_missing_scenario$scenario[1] <- NA
-  expect_error(
-    .validateDataCombined(df_missing_scenario, list(), observedDataForSetup),
+    .validateDataCombined(spec, list(), observedDataForSetup),
     regexp = messages$missingScenarioName()
   )
 })
 
-test_that("It errors when dataSet is missing for observed dataType", {
-  df_missing_dataSet <- dataCombinedDf
-  df_missing_dataSet$dataSet[2] <- NA
+test_that("It errors when dataSet is missing for observed entry", {
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$observed[[1]]$dataSet <- NA
   expect_error(
-    .validateDataCombined(df_missing_dataSet, list(), observedDataForSetup),
+    .validateDataCombined(spec, list(), observedDataForSetup),
     regexp = messages$stopNoDataSetProvided("AciclovirPVB")
   )
 })
 
 test_that("It warns when scenario is not found in simulatedScenarios", {
-  df_invalid_scenario <- dataCombinedDf
-  df_invalid_scenario$scenario[1] <- "NonExistentScenario"
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$simulated[[1]]$scenario <- "NonExistentScenario"
 
   # First test with stopIfNotFound = TRUE
   expect_error(
     .validateDataCombined(
-      df_invalid_scenario,
+      spec,
       list(),
       observedDataForSetup,
       stopIfNotFound = TRUE
@@ -1098,7 +1014,7 @@ test_that("It warns when scenario is not found in simulatedScenarios", {
   # Then test with stopIfNotFound = FALSE
   expect_warning(
     .validateDataCombined(
-      df_invalid_scenario,
+      spec,
       list(),
       observedDataForSetup,
       stopIfNotFound = FALSE
@@ -1118,13 +1034,13 @@ test_that("It warns when dataSet is not found in observedData", {
     results = list(allQuantityPaths = outputPaths)
   )
 
-  df_invalid_dataSet <- dataCombinedDf
-  df_invalid_dataSet$dataSet[2] <- "NonExistentDataSet"
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$observed[[1]]$dataSet <- "NonExistentDataSet"
 
   # First test with stopIfNotFound = TRUE
   expect_error(
     .validateDataCombined(
-      df_invalid_dataSet,
+      spec,
       mock_scenario,
       list(),
       stopIfNotFound = TRUE
@@ -1135,7 +1051,7 @@ test_that("It warns when dataSet is not found in observedData", {
   # Then test with stopIfNotFound = FALSE
   expect_warning(
     .validateDataCombined(
-      df_invalid_dataSet,
+      spec,
       mock_scenario,
       list(),
       stopIfNotFound = FALSE

@@ -54,162 +54,134 @@ createDataCombined <- function(
     )
   }
 
-  dfDataCombined <- project$plots$dataCombined
-  dfDataCombined <- dplyr::filter(
-    dfDataCombined,
-    DataCombinedName %in% dataCombinedNames
-  )
+  allDataCombined <- project$plots$dataCombined %||% list()
+  selected <- allDataCombined[
+    intersect(names(allDataCombined), dataCombinedNames)
+  ]
 
   missingNames <- setdiff(
     dataCombinedNames[!is.na(dataCombinedNames)],
-    dfDataCombined$DataCombinedName
+    names(selected)
   )
   if (length(missingNames) > 0) {
     stop(messages$stopDataCombinedNamesNotFound(missingNames))
   }
 
-  dfDataCombined <- .validateDataCombined(
-    dfDataCombined,
+  selected <- .validateDataCombined(
+    selected,
     simulatedScenarios,
     observedData,
     stopIfNotFound
   )
 
   # create named list of DataCombined objects
-  dataCombinedList <- lapply(unique(dfDataCombined$DataCombinedName), \(name) {
+  dataCombinedList <- lapply(names(selected), function(name) {
+    spec <- selected[[name]]
     dataCombined <- DataCombined$new()
-    # add data to DataCombined object
+
     # add simulated data
-    simulated <- dplyr::filter(
-      dfDataCombined,
-      DataCombinedName == name,
-      dataType == "simulated"
-    )
-    if (nrow(simulated) > 0) {
-      for (j in seq_len(nrow(simulated))) {
-        # Check if the output has been simulated
-        # If yes, add it to the DataCombined
-        if (
-          any(
-            simulatedScenarios[[
-              simulated[j, ]$scenario
-            ]]$results$allQuantityPaths ==
-              simulated[j, ]$path
-          )
-        ) {
-          dataCombined$addSimulationResults(
-            simulationResults = simulatedScenarios[[
-              simulated[j, ]$scenario
-            ]]$results,
-            quantitiesOrPaths = simulated[j, ]$path,
-            groups = simulated[j, ]$group,
-            names = simulated[j, ]$label
-          )
-        } else {
-          if (stopIfNotFound) {
-            stop(messages$stopWrongOutputPath(
-              dataCombinedName = name,
-              scenarioName = simulated[j, ]$scenario,
-              path = simulated[j, ]$path
-            ))
-          }
-          warning(messages$stopWrongOutputPath(
-            dataCombinedName = name,
-            scenarioName = simulated[j, ]$scenario,
-            path = simulated[j, ]$path
-          ))
-        }
+    for (sim in spec$simulated %||% list()) {
+      hasPath <- any(
+        simulatedScenarios[[sim$scenario]]$results$allQuantityPaths ==
+          sim$path
+      )
+      if (hasPath) {
+        dataCombined$addSimulationResults(
+          simulationResults = simulatedScenarios[[sim$scenario]]$results,
+          quantitiesOrPaths = sim$path,
+          groups = sim$group %||% NA,
+          names = sim$label
+        )
+      } else {
+        msg <- messages$stopWrongOutputPath(
+          dataCombinedName = name,
+          scenarioName = sim$scenario,
+          path = sim$path
+        )
+        if (stopIfNotFound) stop(msg) else warning(msg)
       }
     }
 
     # add observed data
-    observed <- dplyr::filter(
-      dfDataCombined,
-      DataCombinedName == name,
-      dataType == "observed"
-    )
-    if (nrow(observed) > 0) {
-      dataSets <- observedData[observed$dataSet]
+    obsEntries <- spec$observed %||% list()
+    if (length(obsEntries) > 0) {
+      dataSets <- observedData[vapply(obsEntries, `[[`, character(1), "dataSet")]
       dataCombined$addDataSets(
         dataSets,
-        names = observed$label,
-        groups = observed$group
+        names = vapply(obsEntries, `[[`, character(1), "label"),
+        groups = vapply(
+          obsEntries,
+          function(e) e$group %||% NA_character_,
+          character(1)
+        )
       )
     }
-    return(dataCombined)
+    dataCombined
   })
-  names(dataCombinedList) <- unique(dfDataCombined$DataCombinedName)
+  names(dataCombinedList) <- names(selected)
 
   # apply data transformations
-  dfTransform <- dplyr::filter(
-    dfDataCombined,
-    !is.na(xOffsets) |
-      !is.na(yOffsets) |
-      !is.na(xScaleFactors) |
-      !is.na(yScaleFactors)
-  )
-  # Apply data transformations if specified
-  if (dim(dfTransform)[[1]] != 0) {
-    apply(dfTransform, 1, \(row) {
-      # Get the data frame of the Data combined to retrieve units and MW
-      dataCombinedDf <- dataCombinedList[[row[[
-        "DataCombinedName"
-      ]]]]$toDataFrame()
-      singleRow <- dataCombinedDf[dataCombinedDf$name == row[["label"]], ][1, ]
+  for (name in names(selected)) {
+    spec <- selected[[name]]
+    allEntries <- c(spec$simulated %||% list(), spec$observed %||% list())
+    for (entry in allEntries) {
+      hasOffset <- !is.null(entry$xOffsets) || !is.null(entry$yOffsets)
+      hasScale <- !is.null(entry$xScaleFactors) ||
+        !is.null(entry$yScaleFactors)
+      if (!hasOffset && !hasScale) next
 
-      # Check if x/yOffsetsUnits are defined when x/yOffsets are non empty.
+      # Get the data frame of the DataCombined to retrieve units and MW
+      dataCombinedDf <- dataCombinedList[[name]]$toDataFrame()
+      singleRow <- dataCombinedDf[dataCombinedDf$name == entry$label, ][1, ]
+
+      # Check if x/yOffsetsUnits are defined when x/yOffsets are non empty
       if (
-        (!is.na(row[["xOffsets"]]) & is.na(row[["xOffsetsUnits"]])) |
-          (!is.na(row[["yOffsets"]]) & is.na(row[["yOffsetsUnits"]]))
+        (!is.null(entry$xOffsets) && is.null(entry$xOffsetsUnits)) ||
+          (!is.null(entry$yOffsets) && is.null(entry$yOffsetsUnits))
       ) {
-        stop(messages$offsetUnitsNotDefined(row[[
-          "DataCombinedName"
-        ]]))
+        stop(messages$offsetUnitsNotDefined(name))
       }
 
-      # If offsets are defined, convert them to the default unit of the data
-      # Extract the base unit of the data (or simulation result) and the unit
-      # defined for the offset.
-      # We don't have to check for NAs because 'toUnit()' returns NA for NA
-      xDimension <- singleRow$xDimension
-      xBaseUnit <- row[["xOffsetsUnits"]]
-      xTargetUnit <- singleRow$xUnit
-      # Empty units should be converted to "" for the dimension "Fraction" or "Dimensionless"
-      if (is.na(xTargetUnit)) {
-        xTargetUnit <- ""
+      xOffset <- if (!is.null(entry$xOffsets)) {
+        toUnit(
+          quantityOrDimension = singleRow$xDimension,
+          values = as.numeric(entry$xOffsets),
+          targetUnit = if (is.na(singleRow$xUnit)) "" else singleRow$xUnit,
+          sourceUnit = entry$xOffsetsUnits
+        )
+      } else {
+        NA_real_
       }
-      row[["xOffsets"]] <- toUnit(
-        quantityOrDimension = xDimension,
-        values = as.numeric(row[["xOffsets"]]),
-        targetUnit = xTargetUnit,
-        sourceUnit = xBaseUnit
-      )
 
-      yDimension <- singleRow$yDimension
-      yBaseUnit <- row[["yOffsetsUnits"]]
-      yTargetUnit <- singleRow$yUnit
-      yMW <- singleRow$molWeight
-      # Empty units should be converted to "" for the dimension "Fraction" or "Dimensionless"
-      if (is.na(yTargetUnit)) {
-        yTargetUnit <- ""
+      yOffset <- if (!is.null(entry$yOffsets)) {
+        toUnit(
+          quantityOrDimension = singleRow$yDimension,
+          values = as.numeric(entry$yOffsets),
+          targetUnit = if (is.na(singleRow$yUnit)) "" else singleRow$yUnit,
+          sourceUnit = entry$yOffsetsUnits,
+          molWeight = singleRow$molWeight,
+          molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+        )
+      } else {
+        NA_real_
       }
-      row[["yOffsets"]] <- toUnit(
-        quantityOrDimension = yDimension,
-        values = as.numeric(row[["yOffsets"]]),
-        targetUnit = yTargetUnit,
-        sourceUnit = yBaseUnit,
-        molWeight = yMW,
-        molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
-      )
 
-      dataCombinedList[[row[["DataCombinedName"]]]]$setDataTransformations(
-        forNames = row[["label"]],
-        xOffsets = as.numeric(row[["xOffsets"]]),
-        yOffsets = as.numeric(row[["yOffsets"]]),
-        xScaleFactors = as.numeric(row[["xScaleFactors"]]),
-        yScaleFactors = as.numeric(row[["yScaleFactors"]])
+      dataCombinedList[[name]]$setDataTransformations(
+        forNames = entry$label,
+        xOffsets = xOffset,
+        yOffsets = yOffset,
+        xScaleFactors = if (!is.null(entry$xScaleFactors)) {
+          as.numeric(entry$xScaleFactors)
+        } else {
+          NA_real_
+        },
+        yScaleFactors = if (!is.null(entry$yScaleFactors)) {
+          as.numeric(entry$yScaleFactors)
+        } else {
+          NA_real_
+        }
       )
-    })
+    }
   }
 
   return(dataCombinedList)
@@ -226,105 +198,104 @@ createDataCombinedFromExcel <- function(...) {
   createDataCombined(...)
 }
 
-#' Validate and process a DataCombined data frame
+#' Validate and process a DataCombined named list
 #'
-#' @param dfDataCombined Data frame with DataCombined definitions
+#' Walks the nested `selected` named list and ensures each entry carries
+#' the fields its `dataType` requires. Entries whose scenario / dataSet
+#' is not in the simulated / observed pool are dropped (or trigger an
+#' error, if `stopIfNotFound`). DataCombined that lose all entries this
+#' way are kept as empty entries so an empty `DataCombined$new()` is still
+#' created downstream.
+#'
+#' @param selected Named list of DataCombined specs (subset of
+#'   `project$plots$dataCombined`).
 #' @param simulatedScenarios List of simulated scenarios as created by
-#'   `runScenarios()`
-#' @param observedData Observed data objects
-#' @param stopIfNotFound if `TRUE`, throw an error if a simulated result of an
-#'   observed data are not found
+#'   `runScenarios()`.
+#' @param observedData Named list of observed `DataSet` objects.
+#' @param stopIfNotFound If `TRUE`, throw an error if a referenced scenario
+#'   or dataSet is not found; otherwise warn and drop the offending entry.
 #'
-#' @returns Processed `dfDataCombined`
+#' @returns The (possibly filtered) named list.
 #' @keywords internal
 .validateDataCombined <- function(
-  dfDataCombined,
+  selected,
   simulatedScenarios,
   observedData,
   stopIfNotFound
 ) {
-  # mandatory column label is empty - throw error
-  missingLabel <- sum(is.na(dfDataCombined$label))
-  if (missingLabel > 0) {
-    stop(messages$missingLabel())
+  # Required-field checks per entry
+  for (name in names(selected)) {
+    spec <- selected[[name]]
+    for (sim in spec$simulated %||% list()) {
+      if (is.null(sim$label) || is.na(sim$label)) stop(messages$missingLabel())
+      if (is.null(sim$scenario) || is.na(sim$scenario)) {
+        stop(messages$missingScenarioName())
+      }
+      if (is.null(sim$path) || is.na(sim$path)) {
+        stop(messages$stopNoPathProvided(name))
+      }
+    }
+    for (obs in spec$observed %||% list()) {
+      if (is.null(obs$label) || is.na(obs$label)) stop(messages$missingLabel())
+      if (is.null(obs$dataSet) || is.na(obs$dataSet)) {
+        stop(messages$stopNoDataSetProvided(name))
+      }
+    }
   }
 
-  # mandatory column dataType is empty - throw error
-  missingLabel <- sum(is.na(dfDataCombined$dataType))
-  if (missingLabel > 0) {
-    stop(messages$missingDataType())
-  }
-
-  # dataType == simulated, but no scenario defined - throw error
-  missingLabel <- sum(is.na(
-    dfDataCombined[dfDataCombined$dataType == "simulated", ]$scenario
-  ))
-  if (missingLabel > 0) {
-    stop(messages$missingScenarioName())
-  }
-
-  # dataType == simulated, but no path defined - throw error
-  missingLabel <- is.na(
-    dfDataCombined[dfDataCombined$dataType == "simulated", ]$path
-  )
-  if (sum(missingLabel) > 0) {
-    stop(messages$stopNoPathProvided(dfDataCombined[
-      dfDataCombined$dataType == "simulated",
-    ]$DataCombinedName[missingLabel]))
-  }
-
-  # dataType == observed, but no data set defined - throw error
-  missingLabel <- is.na(
-    dfDataCombined[dfDataCombined$dataType == "observed", ]$dataSet
-  )
-  if (sum(missingLabel) > 0) {
-    stop(messages$stopNoDataSetProvided(dfDataCombined[
-      dfDataCombined$dataType == "observed",
-    ]$DataCombinedName[missingLabel]))
-  }
-
-  # Store the names of all DataCombined before filtering. This is required
-  # to create empty rows for DataCombined for which no data exists. This way,
-  # empty data combined can still be created.
-  dcNames <- unique(dfDataCombined$DataCombinedName)
-
-  # scenario not present in simulatedScenarios
+  # Cross-check scenario references against the run pool
+  allScenarios <- unlist(lapply(selected, function(spec) {
+    vapply(
+      spec$simulated %||% list(),
+      function(e) e$scenario %||% NA_character_,
+      character(1)
+    )
+  }))
   missingScenarios <- setdiff(
-    setdiff(dfDataCombined$scenario, names(simulatedScenarios)),
+    setdiff(allScenarios, names(simulatedScenarios)),
     NA
   )
-  if (length(missingScenarios) != 0) {
+  if (length(missingScenarios) > 0) {
     if (stopIfNotFound) {
       stop(messages$warningInvalidScenarioName(missingScenarios))
     }
     warning(messages$warningInvalidScenarioName(missingScenarios))
-    dfDataCombined <- dplyr::filter(
-      dfDataCombined,
-      (dataType == "observed") | !(scenario %in% missingScenarios)
-    )
+    selected <- lapply(selected, function(spec) {
+      spec$simulated <- Filter(
+        function(e) !((e$scenario %||% NA) %in% missingScenarios),
+        spec$simulated %||% list()
+      )
+      spec
+    })
   }
-  # data set name not present in observedData
+
+  # Cross-check dataSet references against the loaded observedData
+  allDataSets <- unlist(lapply(selected, function(spec) {
+    vapply(
+      spec$observed %||% list(),
+      function(e) e$dataSet %||% NA_character_,
+      character(1)
+    )
+  }))
   missingDataSets <- setdiff(
-    setdiff(dfDataCombined$dataSet, names(observedData)),
+    setdiff(allDataSets, names(observedData)),
     NA
   )
-  if (length(missingDataSets) != 0) {
+  if (length(missingDataSets) > 0) {
     if (stopIfNotFound) {
       stop(messages$stopInvalidDataSetName(missingDataSets))
     }
     warning(messages$warningInvalidDataSetName(missingDataSets))
-    dfDataCombined <- dfDataCombined[
-      !(dfDataCombined$dataSet %in% missingDataSets),
-    ]
-  }
-  # Identify the names of DataCombined that have been completely removed
-  missingDc <- setdiff(dcNames, unique(dfDataCombined$DataCombinedName))
-  # Create empty rows for each missing DataCombined
-  for (name in missingDc) {
-    dfDataCombined[nrow(dfDataCombined) + 1, 1] <- name
+    selected <- lapply(selected, function(spec) {
+      spec$observed <- Filter(
+        function(e) !((e$dataSet %||% NA) %in% missingDataSets),
+        spec$observed %||% list()
+      )
+      spec
+    })
   }
 
-  return(dfDataCombined)
+  selected
 }
 
 

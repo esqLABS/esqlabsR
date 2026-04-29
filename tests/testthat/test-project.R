@@ -212,7 +212,7 @@ test_that("print() shows category counts for loaded project", {
   expect_match(output_text, "Model Parameters:\\s+4 groups")
   expect_match(output_text, "Applications:\\s+1")
   expect_match(output_text, "Output Paths:\\s+2")
-  expect_match(output_text, "4 dataCombined")
+  expect_match(output_text, "2 dataCombined")
   expect_match(output_text, "4 plotConfiguration")
   expect_match(output_text, "3 plotGrids")
 })

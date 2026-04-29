@@ -442,9 +442,14 @@ test_that(".validatePlots warns when no plots defined", {
   expect_true(length(result$warnings) > 0)
 })
 
-test_that(".validatePlots detects missing required columns in dataCombined", {
+test_that(".validatePlots flags simulated entries missing scenario", {
   plots <- list(
-    dataCombined = data.frame(WrongColumn = "value"),
+    dataCombined = list(
+      DC1 = list(
+        simulated = list(list(label = "x", path = "p")),  # missing scenario
+        observed = list()
+      )
+    ),
     plotConfiguration = data.frame(
       plotID = "P1",
       DataCombinedName = "DC1",
@@ -454,14 +459,20 @@ test_that(".validatePlots detects missing required columns in dataCombined", {
 
   result <- esqlabsR:::.validatePlots(plots)
 
-  expect_false(result$is_valid())
+  expect_true(result$has_critical_errors())
 })
 
 test_that(".validatePlots detects duplicate plotIDs", {
   plots <- list(
-    dataCombined = data.frame(
-      DataCombinedName = c("DC1", "DC2"),
-      dataType = c("simulated", "simulated")
+    dataCombined = list(
+      DC1 = list(
+        simulated = list(list(label = "a", scenario = "S", path = "P")),
+        observed = list()
+      ),
+      DC2 = list(
+        simulated = list(list(label = "b", scenario = "S", path = "P")),
+        observed = list()
+      )
     ),
     plotConfiguration = data.frame(
       plotID = c("P1", "P1"),
@@ -542,23 +553,11 @@ test_that(".validateCrossReferences detects invalid scenario references in plots
 
   project <- loadProject(project_path)
 
-  project$plots$dataCombined <- rbind(
-    project$plots$dataCombined,
-    data.frame(
-      DataCombinedName = "BadDC",
-      dataType = "simulated",
-      scenario = "NonExistentScenario",
-      label = "test",
-      path = "test",
-      dataSet = NA,
-      group = NA,
-      xOffsets = NA,
-      xOffsetsUnits = NA,
-      yOffsets = NA,
-      yOffsetsUnits = NA,
-      xScaleFactors = NA,
-      yScaleFactors = NA
-    )
+  project$plots$dataCombined$BadDC <- list(
+    simulated = list(
+      list(label = "test", scenario = "NonExistentScenario", path = "test")
+    ),
+    observed = list()
   )
 
   mock_results <- list(

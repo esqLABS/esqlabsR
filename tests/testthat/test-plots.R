@@ -2,9 +2,9 @@
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 observedDataForSetup <- loadObservedData(testProject())
 
-# Parse / serialize: dataCombined nested-JSON <-> flat data.frame ----
+# Parse / serialize: dataCombined JSON <-> named list ----
 
-test_that(".parseNestedDataCombined converts nested structure to flat data.frame", {
+test_that(".parseNestedDataCombined re-keys by name and preserves entries", {
   nested <- list(
     list(
       name = "DC1",
@@ -13,13 +13,7 @@ test_that(".parseNestedDataCombined converts nested structure to flat data.frame
           label = "Sim1",
           scenario = "Scenario1",
           path = "Path1",
-          group = "Group1",
-          xOffsets = NULL,
-          xOffsetsUnits = NULL,
-          yOffsets = NULL,
-          yOffsetsUnits = NULL,
-          xScaleFactors = NULL,
-          yScaleFactors = NULL
+          group = "Group1"
         )
       ),
       observed = list(
@@ -28,11 +22,7 @@ test_that(".parseNestedDataCombined converts nested structure to flat data.frame
           dataSet = "DataSet1",
           group = "Group1",
           xOffsets = 1,
-          xOffsetsUnits = "h",
-          yOffsets = NULL,
-          yOffsetsUnits = NULL,
-          xScaleFactors = NULL,
-          yScaleFactors = NULL
+          xOffsetsUnits = "h"
         )
       )
     )
@@ -40,123 +30,98 @@ test_that(".parseNestedDataCombined converts nested structure to flat data.frame
 
   result <- .parseNestedDataCombined(nested)
 
-  expect_s3_class(result, "data.frame")
-  expect_equal(nrow(result), 2)
-  expect_equal(result$DataCombinedName, c("DC1", "DC1"))
-  expect_equal(result$dataType, c("simulated", "observed"))
-  expect_equal(result$label, c("Sim1", "Obs1"))
-  expect_equal(result$scenario, c("Scenario1", NA))
-  expect_equal(result$path, c("Path1", NA))
-  expect_equal(result$dataSet, c(NA, "DataSet1"))
-  expect_equal(result$xOffsets, c(NA, 1))
-  expect_equal(result$xOffsetsUnits, c(NA, "h"))
+  expect_equal(names(result), "DC1")
+  expect_length(result$DC1$simulated, 1)
+  expect_length(result$DC1$observed, 1)
+  expect_equal(result$DC1$simulated[[1]]$label, "Sim1")
+  expect_equal(result$DC1$simulated[[1]]$scenario, "Scenario1")
+  expect_equal(result$DC1$simulated[[1]]$path, "Path1")
+  expect_equal(result$DC1$observed[[1]]$dataSet, "DataSet1")
+  expect_equal(result$DC1$observed[[1]]$xOffsets, 1)
+  expect_equal(result$DC1$observed[[1]]$xOffsetsUnits, "h")
 })
 
 test_that(".parseNestedDataCombined handles empty input", {
-  expect_equal(nrow(.parseNestedDataCombined(NULL)), 0)
-  expect_equal(nrow(.parseNestedDataCombined(list())), 0)
+  expect_identical(.parseNestedDataCombined(NULL), list())
+  expect_identical(.parseNestedDataCombined(list()), list())
 })
 
-test_that(".dataCombinedToNestedJson converts flat data.frame to nested structure", {
-  df <- data.frame(
-    DataCombinedName = c("DC1", "DC1", "DC2"),
-    dataType = c("simulated", "observed", "simulated"),
-    label = c("Sim1", "Obs1", "Sim2"),
-    scenario = c("Scenario1", NA, "Scenario2"),
-    path = c("Path1", NA, "Path2"),
-    dataSet = c(NA, "DataSet1", NA),
-    group = c("Group1", "Group1", "Group2"),
-    xOffsets = c(NA, 1, NA),
-    xOffsetsUnits = c(NA, "h", NA),
-    yOffsets = c(NA, NA, NA),
-    yOffsetsUnits = c(NA, NA, NA),
-    xScaleFactors = c(NA, NA, NA),
-    yScaleFactors = c(NA, NA, NA),
-    stringsAsFactors = FALSE
+test_that(".parseNestedDataCombined defaults missing simulated/observed to empty lists", {
+  result <- .parseNestedDataCombined(list(
+    list(name = "DC1", simulated = list(list(label = "S", scenario = "X", path = "P")))
+  ))
+  expect_identical(result$DC1$observed, list())
+})
+
+test_that(".dataCombinedToNestedJson re-adds the name field from list keys", {
+  dc <- list(
+    DC1 = list(
+      simulated = list(
+        list(label = "Sim1", scenario = "Scenario1", path = "Path1")
+      ),
+      observed = list(
+        list(label = "Obs1", dataSet = "DataSet1", xOffsets = 1)
+      )
+    ),
+    DC2 = list(
+      simulated = list(list(label = "Sim2", scenario = "Scenario2", path = "Path2")),
+      observed = list()
+    )
   )
 
-  result <- .dataCombinedToNestedJson(df)
+  result <- .dataCombinedToNestedJson(dc)
 
   expect_length(result, 2)
   expect_equal(result[[1]]$name, "DC1")
   expect_length(result[[1]]$simulated, 1)
   expect_length(result[[1]]$observed, 1)
-  expect_equal(result[[1]]$simulated[[1]]$label, "Sim1")
   expect_equal(result[[1]]$simulated[[1]]$scenario, "Scenario1")
-  expect_equal(result[[1]]$observed[[1]]$dataSet, "DataSet1")
   expect_equal(result[[1]]$observed[[1]]$xOffsets, 1)
   expect_equal(result[[2]]$name, "DC2")
   expect_length(result[[2]]$simulated, 1)
-  expect_length(result[[2]]$observed, 0)
+  # Empty observed is omitted from the JSON entry to keep it terse.
+  expect_null(result[[2]]$observed)
 })
 
 test_that(".dataCombinedToNestedJson handles empty input", {
-  expect_equal(.dataCombinedToNestedJson(NULL), list())
-  expect_equal(.dataCombinedToNestedJson(data.frame()), list())
+  expect_identical(.dataCombinedToNestedJson(NULL), list())
+  expect_identical(.dataCombinedToNestedJson(list()), list())
 })
 
-test_that("dataCombined round-trip: nested JSON -> flat df -> nested JSON", {
+test_that("dataCombined round-trips: JSON -> named list -> JSON", {
   original <- list(
     list(
       name = "DC1",
       simulated = list(
-        list(
-          label = "Sim1",
-          scenario = "Scenario1",
-          path = "Path1",
-          group = "Group1",
-          xOffsets = NULL,
-          xOffsetsUnits = NULL,
-          yOffsets = NULL,
-          yOffsetsUnits = NULL,
-          xScaleFactors = NULL,
-          yScaleFactors = NULL
-        )
+        list(label = "Sim1", scenario = "Scenario1", path = "Path1", group = "G")
       ),
       observed = list(
-        list(
-          label = "Obs1",
-          dataSet = "DataSet1",
-          group = "Group1",
-          xOffsets = 1,
-          xOffsetsUnits = "h",
-          yOffsets = NULL,
-          yOffsetsUnits = NULL,
-          xScaleFactors = NULL,
-          yScaleFactors = NULL
-        )
+        list(label = "Obs1", dataSet = "DataSet1", xOffsets = 1, xOffsetsUnits = "h")
       )
     )
   )
 
-  flat <- .parseNestedDataCombined(original)
-  roundtrip <- .dataCombinedToNestedJson(flat)
+  parsed <- .parseNestedDataCombined(original)
+  roundtrip <- .dataCombinedToNestedJson(parsed)
 
   expect_equal(roundtrip[[1]]$name, original[[1]]$name)
   expect_equal(
-    roundtrip[[1]]$simulated[[1]]$label,
-    original[[1]]$simulated[[1]]$label
+    roundtrip[[1]]$simulated[[1]],
+    original[[1]]$simulated[[1]]
   )
   expect_equal(
-    roundtrip[[1]]$simulated[[1]]$scenario,
-    original[[1]]$simulated[[1]]$scenario
-  )
-  expect_equal(
-    roundtrip[[1]]$observed[[1]]$dataSet,
-    original[[1]]$observed[[1]]$dataSet
-  )
-  expect_equal(
-    roundtrip[[1]]$observed[[1]]$xOffsets,
-    original[[1]]$observed[[1]]$xOffsets
+    roundtrip[[1]]$observed[[1]],
+    original[[1]]$observed[[1]]
   )
 })
 
 # Parse: load-time shape ----
 
-test_that("Project parses plots into data.frames", {
+test_that("Project parses dataCombined as a named list and other plots tables as data.frames", {
   project <- testProject()
-  expect_s3_class(project$plots$dataCombined, "data.frame")
-  expect_equal(nrow(project$plots$dataCombined), 4)
+  expect_type(project$plots$dataCombined, "list")
+  expect_false(is.data.frame(project$plots$dataCombined))
+  expect_length(project$plots$dataCombined, 2)
   expect_s3_class(project$plots$plotConfiguration, "data.frame")
   expect_equal(nrow(project$plots$plotConfiguration), 4)
 })
@@ -171,7 +136,10 @@ test_that("saveProject produces round-trip fidelity for plots", {
   saveProject(project, tmp)
   pc2 <- loadProject(tmp)
 
-  expect_equal(nrow(project$plots$dataCombined), nrow(pc2$plots$dataCombined))
+  expect_equal(
+    length(project$plots$dataCombined),
+    length(pc2$plots$dataCombined)
+  )
   expect_equal(
     nrow(project$plots$plotConfiguration),
     nrow(pc2$plots$plotConfiguration)
@@ -368,11 +336,11 @@ test_that("removePlotGrid warns and is a no-op for unknown name", {
 
 # Public CRUD: dataCombined ----
 
-test_that("addDataCombined appends rows and marks the project modified", {
+test_that("addDataCombined appends a new entry and marks the project modified", {
   pc <- testProject()
   pc$.markSaved()
-  beforeRows <- nrow(pc$plots$dataCombined)
-  beforeNames <- unique(pc$plots$dataCombined$DataCombinedName)
+  beforeCount <- length(pc$plots$dataCombined)
+  beforeNames <- names(pc$plots$dataCombined)
 
   addDataCombined(
     project = pc,
@@ -385,16 +353,12 @@ test_that("addDataCombined appends rows and marks the project modified", {
     )
   )
 
-  expect_equal(nrow(pc$plots$dataCombined), beforeRows + 2L)
-  expect_true("NewDC" %in% pc$plots$dataCombined$DataCombinedName)
-  expect_setequal(
-    pc$plots$dataCombined$dataType[
-      pc$plots$dataCombined$DataCombinedName == "NewDC"
-    ],
-    c("simulated", "observed")
-  )
+  expect_equal(length(pc$plots$dataCombined), beforeCount + 1L)
+  expect_true("NewDC" %in% names(pc$plots$dataCombined))
+  expect_length(pc$plots$dataCombined$NewDC$simulated, 1)
+  expect_length(pc$plots$dataCombined$NewDC$observed, 1)
   expect_true(pc$modified)
-  expect_false(any(beforeNames == "NewDC"))
+  expect_false("NewDC" %in% beforeNames)
 })
 
 test_that("addDataCombined errors when the DataCombined name already exists", {
@@ -444,8 +408,12 @@ test_that("addDataCombined R6 method delegates to standalone", {
   addDataCombined(pc1, name = "DelegateDC", simulated = sim)
   pc2$addDataCombined(name = "DelegateDC", simulated = sim)
   expect_equal(
-    nrow(pc1$plots$dataCombined),
-    nrow(pc2$plots$dataCombined)
+    length(pc1$plots$dataCombined),
+    length(pc2$plots$dataCombined)
+  )
+  expect_equal(
+    pc1$plots$dataCombined$DelegateDC,
+    pc2$plots$dataCombined$DelegateDC
   )
 })
 
@@ -487,28 +455,25 @@ test_that("addDataCombined survives a JSON round-trip", {
   saveProject(pc, path = tmp)
   reloaded <- loadProject(tmp)
 
-  expect_true(
-    "RoundTripDC" %in% reloaded$plots$dataCombined$DataCombinedName
-  )
-  rtRows <- reloaded$plots$dataCombined[
-    reloaded$plots$dataCombined$DataCombinedName == "RoundTripDC",
-  ]
-  expect_setequal(rtRows$dataType, c("simulated", "observed"))
-  expect_setequal(rtRows$label, c("s1", "o1"))
+  expect_true("RoundTripDC" %in% names(reloaded$plots$dataCombined))
+  rt <- reloaded$plots$dataCombined$RoundTripDC
+  expect_length(rt$simulated, 1)
+  expect_length(rt$observed, 1)
+  expect_equal(rt$simulated[[1]]$label, "s1")
+  expect_equal(rt$observed[[1]]$label, "o1")
 })
 
-test_that("removeDataCombined drops all rows for the named DataCombined", {
+test_that("removeDataCombined drops the named DataCombined", {
   pc <- testProject()
   pc$.markSaved()
-  beforeRows <- nrow(pc$plots$dataCombined)
-  removedRows <- sum(pc$plots$dataCombined$DataCombinedName == "AciclovirPop")
-  expect_gt(removedRows, 0L)
+  beforeCount <- length(pc$plots$dataCombined)
+  expect_true("AciclovirPop" %in% names(pc$plots$dataCombined))
 
   suppressWarnings(removePlot(pc, "P4"))
   removeDataCombined(pc, "AciclovirPop")
 
-  expect_equal(nrow(pc$plots$dataCombined), beforeRows - removedRows)
-  expect_false("AciclovirPop" %in% pc$plots$dataCombined$DataCombinedName)
+  expect_equal(length(pc$plots$dataCombined), beforeCount - 1L)
+  expect_false("AciclovirPop" %in% names(pc$plots$dataCombined))
   expect_true(pc$modified)
 })
 

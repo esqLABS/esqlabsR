@@ -722,7 +722,8 @@ Project <- R6::R6Class(
         "Output folder" = rel(self$outputFolder)
       ))
 
-      # Count plots breakdown
+      # Count plots breakdown. dataCombined is a named list; the other two
+      # are data.frames.
       plotCounts <- vapply(
         c(
           "dataCombined",
@@ -730,8 +731,14 @@ Project <- R6::R6Class(
           "plotGrids"
         ),
         function(name) {
-          df <- self$plots[[name]]
-          if (is.null(df)) 0L else nrow(df)
+          val <- self$plots[[name]]
+          if (is.null(val)) {
+            0L
+          } else if (is.data.frame(val)) {
+            nrow(val)
+          } else {
+            length(val)
+          }
         },
         integer(1)
       )
