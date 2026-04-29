@@ -1,5 +1,9 @@
 # esqlabsR (development version)
 
+## Minor improvements and bug fixes
+
+- `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set) (#1007).
+
 # esqlabsR 5.6.0
 
 ## New features
@@ -8,6 +12,7 @@
 - Added `ignoreVersionCheck` parameter to `createProjectConfiguration()` and `createDefaultProjectConfiguration()`. When `TRUE`, the version check is skipped. This is intended for non-interactive contexts such as automated tests or scripts run from the console where user input cannot be assured. When using this option, it is the responsibility of the user to ensure that the project is compatible with the currently installed version of `esqlabsR`.
 
 ## Minor improvements and bug fixes
+
 - `loadObservedData()` now passes the `sheets` argument directly to `ospsuite::loadDataSetsFromExcel()`, removing the deprecated `importAllSheets` workaround. The `sheets` parameter takes precedence over any sheets defined in `importerConfiguration`: `importerConfiguration$sheets` is always set to `NULL` before loading, so the passed configuration object is mutated as a side effect (#962).
 - Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
 - `createDataCombinedFromExcel()` now throws an error listing all DataCombined IDs that cannot be found in the Excel file (\#740).
