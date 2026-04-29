@@ -353,3 +353,145 @@ createDataCombinedFromExcel <- function(...) {
   )
   createDataCombined(...)
 }
+
+# add/remove DataCombined ----
+
+.dataCombinedTransformCols <- c(
+  "xOffsets",
+  "xOffsetsUnits",
+  "yOffsets",
+  "yOffsetsUnits",
+  "xScaleFactors",
+  "yScaleFactors"
+)
+
+# Reject non-empty-scalar-string arguments uniformly across add/remove fns.
+.requireNonEmptyString <- function(x, arg) {
+  if (!is.character(x) || length(x) != 1 || is.na(x) || nchar(x) == 0) {
+    stop(paste0(arg, " must be a non-empty string"))
+  }
+  invisible(x)
+}
+
+# Replace NULL values in `...` with NA so that `as.data.frame()` keeps the
+# column (otherwise NULL entries are silently dropped).
+.namedDotsAsRow <- function(...) {
+  dots <- list(...)
+  dots <- lapply(dots, function(v) if (is.null(v)) NA else v)
+  dots
+}
+
+.buildDataCombinedRow <- function(dataCombinedName, dataType, entry) {
+  required <- if (dataType == "simulated") {
+    c("label", "scenario", "path")
+  } else {
+    c("label", "dataSet")
+  }
+  for (field in required) {
+    if (is.null(entry[[field]]) || is.na(entry[[field]])) {
+      msgFn <- if (dataType == "simulated") {
+        messages$dataCombinedSimulatedMissingField
+      } else {
+        messages$dataCombinedObservedMissingField
+      }
+      stop(msgFn(field))
+    }
+  }
+  row <- list(
+    DataCombinedName = dataCombinedName,
+    dataType = dataType,
+    label = entry$label,
+    scenario = if (dataType == "simulated") entry$scenario else NA,
+    path = if (dataType == "simulated") entry$path else NA,
+    dataSet = if (dataType == "observed") entry$dataSet else NA,
+    group = entry$group %||% NA
+  )
+  for (col in .dataCombinedTransformCols) {
+    row[[col]] <- entry[[col]] %||% NA
+  }
+  as.data.frame(row, stringsAsFactors = FALSE)
+}
+
+#' Add a DataCombined to a Project
+#'
+#' @description Append a new DataCombined entry (one or more simulated and/or
+#' observed rows) to `project$plots$dataCombined`. Mirrors the JSON
+#' `plots.dataCombined[]` shape — one call per DataCombined.
+#'
+#' @param project A `Project` object.
+#' @param name Character scalar. Unique DataCombined name.
+#' @param simulated List of named lists. Each must include `label`,
+#'   `scenario`, and `path`. Optional fields: `group`, `xOffsets`,
+#'   `xOffsetsUnits`, `yOffsets`, `yOffsetsUnits`, `xScaleFactors`,
+#'   `yScaleFactors`.
+#' @param observed List of named lists. Each must include `label` and
+#'   `dataSet`. Optional fields: same as `simulated` minus `scenario`/`path`.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family dataCombined
+addDataCombined <- function(
+  project,
+  name,
+  simulated = list(),
+  observed = list()
+) {
+  validateIsOfType(project, "Project")
+  .requireNonEmptyString(name, "name")
+
+  if (name %in% project$plots$dataCombined$DataCombinedName) {
+    stop(messages$dataCombinedNameExists(name))
+  }
+
+  rows <- c(
+    lapply(simulated, function(e) .buildDataCombinedRow(name, "simulated", e)),
+    lapply(observed, function(e) .buildDataCombinedRow(name, "observed", e))
+  )
+  if (length(rows) == 0) {
+    stop("addDataCombined requires at least one simulated or observed entry")
+  }
+
+  project$plots$dataCombined <- as.data.frame(dplyr::bind_rows(
+    c(list(project$plots$dataCombined), rows)
+  ))
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a DataCombined from a Project
+#'
+#' @description Drop all rows in `project$plots$dataCombined` matching the
+#' given name. Warns (and is a no-op) if `name` is not present, and warns
+#' about any `plotConfiguration` rows that still reference it.
+#'
+#' @param project A `Project` object.
+#' @param name Character scalar. DataCombined name to remove.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family dataCombined
+removeDataCombined <- function(project, name) {
+  validateIsOfType(project, "Project")
+  .requireNonEmptyString(name, "name")
+
+  df <- project$plots$dataCombined
+  if (is.null(df) || nrow(df) == 0 || !(name %in% df$DataCombinedName)) {
+    cli::cli_warn(messages$dataCombinedNotFound(name))
+    return(invisible(project))
+  }
+
+  plotCfg <- project$plots$plotConfiguration
+  if (!is.null(plotCfg) && nrow(plotCfg) > 0) {
+    referencingPlots <- plotCfg$plotID[
+      !is.na(plotCfg$DataCombinedName) & plotCfg$DataCombinedName == name
+    ]
+    if (length(referencingPlots) > 0) {
+      cli::cli_warn(messages$dataCombinedReferencedByPlot(
+        name,
+        referencingPlots
+      ))
+    }
+  }
+
+  project$plots$dataCombined <- df[df$DataCombinedName != name, , drop = FALSE]
+  project$.markModified()
+  invisible(project)
+}

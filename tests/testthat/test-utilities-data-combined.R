@@ -186,3 +186,167 @@ test_that("createDataCombined errors when specified DataCombined names are not f
     fixed = TRUE
   )
 })
+
+# addDataCombined / removeDataCombined ----
+
+test_that("addDataCombined appends rows and marks the project modified", {
+  pc <- testProject()
+  pc$.markSaved()
+  beforeRows <- nrow(pc$plots$dataCombined)
+  beforeNames <- unique(pc$plots$dataCombined$DataCombinedName)
+
+  addDataCombined(
+    project = pc,
+    name = "NewDC",
+    simulated = list(
+      list(label = "sim1", scenario = "TestScenario", path = outputPaths)
+    ),
+    observed = list(
+      list(label = "obs1", dataSet = names(observedDataForSetup)[[1]])
+    )
+  )
+
+  expect_equal(nrow(pc$plots$dataCombined), beforeRows + 2L)
+  expect_true("NewDC" %in% pc$plots$dataCombined$DataCombinedName)
+  expect_setequal(
+    pc$plots$dataCombined$dataType[
+      pc$plots$dataCombined$DataCombinedName == "NewDC"
+    ],
+    c("simulated", "observed")
+  )
+  expect_true(pc$modified)
+  expect_false(any(beforeNames == "NewDC"))
+})
+
+test_that("addDataCombined errors when the DataCombined name already exists", {
+  pc <- testProject()
+  expect_error(
+    addDataCombined(
+      project = pc,
+      name = "AciclovirPVB",
+      simulated = list(
+        list(label = "sim1", scenario = "TestScenario", path = outputPaths)
+      )
+    ),
+    regexp = "already exists"
+  )
+})
+
+test_that("addDataCombined errors when simulated entry misses required fields", {
+  pc <- testProject()
+  expect_error(
+    addDataCombined(
+      project = pc,
+      name = "BadDC",
+      simulated = list(list(label = "x", scenario = "TestScenario"))
+    ),
+    regexp = "path"
+  )
+})
+
+test_that("addDataCombined errors when observed entry misses required fields", {
+  pc <- testProject()
+  expect_error(
+    addDataCombined(
+      project = pc,
+      name = "BadDC2",
+      observed = list(list(label = "x"))
+    ),
+    regexp = "dataSet"
+  )
+})
+
+test_that("addDataCombined R6 method delegates to standalone", {
+  pc1 <- testProject()
+  pc2 <- testProject()
+  sim <- list(
+    list(label = "s", scenario = "TestScenario", path = outputPaths)
+  )
+  addDataCombined(pc1, name = "DelegateDC", simulated = sim)
+  pc2$addDataCombined(name = "DelegateDC", simulated = sim)
+  expect_equal(
+    nrow(pc1$plots$dataCombined),
+    nrow(pc2$plots$dataCombined)
+  )
+})
+
+test_that("addDataCombined returns project invisibly", {
+  pc <- testProject()
+  out <- withVisible(
+    addDataCombined(
+      project = pc,
+      name = "InvisDC",
+      simulated = list(
+        list(label = "s", scenario = "TestScenario", path = outputPaths)
+      )
+    )
+  )
+  expect_false(out$visible)
+  expect_identical(out$value, pc)
+})
+
+test_that("addDataCombined survives a JSON round-trip", {
+  pc <- testProject()
+  addDataCombined(
+    project = pc,
+    name = "RoundTripDC",
+    simulated = list(
+      list(
+        label = "s1",
+        scenario = "TestScenario",
+        path = outputPaths,
+        group = "g",
+        xOffsets = 2
+      )
+    ),
+    observed = list(
+      list(label = "o1", dataSet = names(observedDataForSetup)[[1]])
+    )
+  )
+
+  tmp <- withr::local_tempfile(fileext = ".json")
+  saveProject(pc, path = tmp)
+  reloaded <- loadProject(tmp)
+
+  expect_true(
+    "RoundTripDC" %in% reloaded$plots$dataCombined$DataCombinedName
+  )
+  rtRows <- reloaded$plots$dataCombined[
+    reloaded$plots$dataCombined$DataCombinedName == "RoundTripDC",
+  ]
+  expect_setequal(rtRows$dataType, c("simulated", "observed"))
+  expect_setequal(rtRows$label, c("s1", "o1"))
+})
+
+test_that("removeDataCombined drops all rows for the named DataCombined", {
+  pc <- testProject()
+  pc$.markSaved()
+  beforeRows <- nrow(pc$plots$dataCombined)
+  removedRows <- sum(pc$plots$dataCombined$DataCombinedName == "AciclovirPop")
+  expect_gt(removedRows, 0L)
+
+  suppressWarnings(removePlot(pc, "P4"))
+  removeDataCombined(pc, "AciclovirPop")
+
+  expect_equal(nrow(pc$plots$dataCombined), beforeRows - removedRows)
+  expect_false("AciclovirPop" %in% pc$plots$dataCombined$DataCombinedName)
+  expect_true(pc$modified)
+})
+
+test_that("removeDataCombined warns and is a no-op for unknown name", {
+  pc <- testProject()
+  pc$.markSaved()
+  expect_warning(
+    removeDataCombined(pc, "NoSuchDC_ZZZ"),
+    regexp = "not found"
+  )
+  expect_false(pc$modified)
+})
+
+test_that("removeDataCombined warns when referenced by plotConfiguration", {
+  pc <- testProject()
+  expect_warning(
+    removeDataCombined(pc, "AciclovirPVB"),
+    regexp = "referenced"
+  )
+})

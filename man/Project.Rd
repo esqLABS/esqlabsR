@@ -52,16 +52,20 @@ source-specific fields. See the JSON schema documentation for details.}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{projectFilePath}}{Path to the file that serve as base
-path for other parameters. If NULL, then, other paths should be absolute
-paths.}
+\item{\code{projectFilePath}}{Read-only. Absolute path to the JSON
+configuration file the project was loaded from. All other relative
+paths in the project are resolved against the file's directory
+(see \code{projectDirPath}). \code{NULL} for an empty in-memory project; in
+that case all path fields must be absolute.}
 
-\item{\code{projectDirPath}}{Path to the folder that serve as base
-path for other paths. If NULL, then, other paths should be absolute
-paths.}
+\item{\code{projectDirPath}}{Read-only. Directory containing the JSON
+configuration file (i.e. \code{dirname(projectFilePath)}). Used as the
+base for resolving relative paths. \code{NULL} if the project was not
+loaded from a file.}
 
-\item{\code{modified}}{Logical indicating whether any configuration properties
-have been modified since loading from file.}
+\item{\code{modified}}{Read-only logical. \code{TRUE} if any configuration property
+has been modified since the project was loaded or saved. Cleared
+internally by \code{\link[=saveProject]{saveProject()}}.}
 
 \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
 
@@ -97,17 +101,23 @@ located.}
 \item{\code{outputFolder}}{Path to the folder where the results should be saved
 relative to the "Code" folder}
 
-\item{\code{data}}{Returns the current project data structure as a list
-matching the JSON schema. Reflects any in-memory modifications.
-Read-only.}
+\item{\code{asList}}{Returns the current project as a list matching the JSON
+schema. Reflects any in-memory modifications. Read-only.}
 }
 \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-Project-.markSaved}{\code{Project$.markSaved()}}
+\item \href{#method-Project-.markModified}{\code{Project$.markModified()}}
 \item \href{#method-Project-.getProgrammaticDataSets}{\code{Project$.getProgrammaticDataSets()}}
+\item \href{#method-Project-.addProgrammaticDataSet}{\code{Project$.addProgrammaticDataSet()}}
+\item \href{#method-Project-.removeProgrammaticDataSet}{\code{Project$.removeProgrammaticDataSet()}}
+\item \href{#method-Project-.getFilePathsData}{\code{Project$.getFilePathsData()}}
 \item \href{#method-Project-.cacheObservedDataNames}{\code{Project$.cacheObservedDataNames()}}
+\item \href{#method-Project-.invalidateObservedDataNamesCache}{\code{Project$.invalidateObservedDataNamesCache()}}
+\item \href{#method-Project-.appendObservedDataNameCache}{\code{Project$.appendObservedDataNameCache()}}
 \item \href{#method-Project-.getObservedDataNamesCache}{\code{Project$.getObservedDataNamesCache()}}
 \item \href{#method-Project-addScenario}{\code{Project$addScenario()}}
 \item \href{#method-Project-addIndividual}{\code{Project$addIndividual()}}
@@ -127,11 +137,39 @@ Read-only.}
 \item \href{#method-Project-removeScenario}{\code{Project$removeScenario()}}
 \item \href{#method-Project-addObservedData}{\code{Project$addObservedData()}}
 \item \href{#method-Project-removeObservedData}{\code{Project$removeObservedData()}}
+\item \href{#method-Project-addDataCombined}{\code{Project$addDataCombined()}}
+\item \href{#method-Project-removeDataCombined}{\code{Project$removeDataCombined()}}
+\item \href{#method-Project-addPlot}{\code{Project$addPlot()}}
+\item \href{#method-Project-removePlot}{\code{Project$removePlot()}}
+\item \href{#method-Project-addPlotGrid}{\code{Project$addPlotGrid()}}
+\item \href{#method-Project-removePlotGrid}{\code{Project$removePlotGrid()}}
 \item \href{#method-Project-new}{\code{Project$new()}}
 \item \href{#method-Project-print}{\code{Project$print()}}
 \item \href{#method-Project-sync}{\code{Project$sync()}}
 \item \href{#method-Project-clone}{\code{Project$clone()}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.markSaved"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.markSaved}{}}}
+\subsection{Method \code{.markSaved()}}{
+Internal method to clear the \code{modified} flag after saving.
+Not intended for end-user use.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.markSaved()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.markModified"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.markModified}{}}}
+\subsection{Method \code{.markModified()}}{
+Internal method to set the \code{modified} flag after a
+programmatic mutation. Not intended for end-user use.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.markModified()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Project-.getProgrammaticDataSets"></a>}}
@@ -141,6 +179,55 @@ Internal method to retrieve all programmatic DataSets.
 Not intended for end-user use.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Project$.getProgrammaticDataSets()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.addProgrammaticDataSet"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.addProgrammaticDataSet}{}}}
+\subsection{Method \code{.addProgrammaticDataSet()}}{
+Internal method to register a programmatic DataSet.
+Not intended for end-user use.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.addProgrammaticDataSet(name, dataSet)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Character. Key under which the DataSet is stored.}
+
+\item{\code{dataSet}}{A \code{DataSet} object.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.removeProgrammaticDataSet"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.removeProgrammaticDataSet}{}}}
+\subsection{Method \code{.removeProgrammaticDataSet()}}{
+Internal method to drop a programmatic DataSet by name.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.removeProgrammaticDataSet(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Character.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.getFilePathsData"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.getFilePathsData}{}}}
+\subsection{Method \code{.getFilePathsData()}}{
+Internal method to retrieve the raw filePaths metadata
+(a named list of \code{list(value, description)} entries). Not intended for
+end-user use; consumed by the Excel import/export bridge.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.getFilePathsData()}\if{html}{\out{</div>}}
 }
 
 }
@@ -157,6 +244,34 @@ Internal method to cache observed data names.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{names}}{Character vector of DataSet names.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.invalidateObservedDataNamesCache"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.invalidateObservedDataNamesCache}{}}}
+\subsection{Method \code{.invalidateObservedDataNamesCache()}}{
+Internal method to invalidate the cached observed data
+names. Use after mutating \code{observedData}.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.invalidateObservedDataNamesCache()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.appendObservedDataNameCache"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.appendObservedDataNameCache}{}}}
+\subsection{Method \code{.appendObservedDataNameCache()}}{
+Internal method to append to the cached observed data names.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$.appendObservedDataNameCache(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Character scalar to append.}
 }
 \if{html}{\out{</div>}}
 }
@@ -552,7 +667,129 @@ Delegates to the standalone \code{\link[=removeObservedData]{removeObservedData(
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{name}}{DataSet name or config entry file basename.
+\item{\code{name}}{DataSet name or config entry file basename.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addDataCombined"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addDataCombined}{}}}
+\subsection{Method \code{addDataCombined()}}{
+Add a DataCombined programmatically.
+Delegates to the standalone \code{\link[=addDataCombined]{addDataCombined()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addDataCombined(name, simulated = list(), observed = list())}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{DataCombined name.}
+
+\item{\code{simulated}}{List of simulated entry lists.}
+
+\item{\code{observed}}{List of observed entry lists.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeDataCombined"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeDataCombined}{}}}
+\subsection{Method \code{removeDataCombined()}}{
+Remove a DataCombined programmatically.
+Delegates to the standalone \code{\link[=removeDataCombined]{removeDataCombined()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removeDataCombined(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{DataCombined name.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPlot"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPlot}{}}}
+\subsection{Method \code{addPlot()}}{
+Add a plot configuration programmatically.
+Delegates to the standalone \code{\link[=addPlot]{addPlot()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addPlot(plotID, dataCombinedName, plotType, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{plotID}}{Unique plot identifier.}
+
+\item{\code{dataCombinedName}}{DataCombined the plot draws from.}
+
+\item{\code{plotType}}{One of the supported plot types.}
+
+\item{\code{...}}{Optional plot-configuration fields.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePlot"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePlot}{}}}
+\subsection{Method \code{removePlot()}}{
+Remove a plot configuration programmatically.
+Delegates to the standalone \code{\link[=removePlot]{removePlot()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removePlot(plotID)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{plotID}}{Plot identifier.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPlotGrid"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPlotGrid}{}}}
+\subsection{Method \code{addPlotGrid()}}{
+Add a plot grid programmatically.
+Delegates to the standalone \code{\link[=addPlotGrid]{addPlotGrid()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$addPlotGrid(name, plotIDs, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Plot-grid name.}
+
+\item{\code{plotIDs}}{Character vector of plot IDs.}
+
+\item{\code{...}}{Optional plot-grid fields.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePlotGrid"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePlotGrid}{}}}
+\subsection{Method \code{removePlotGrid()}}{
+Remove a plot grid programmatically.
+Delegates to the standalone \code{\link[=removePlotGrid]{removePlotGrid()}} function.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Project$removePlotGrid(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Plot-grid name.
 Initialize}
 }
 \if{html}{\out{</div>}}
@@ -628,82 +865,6 @@ A list with components:
 The objects of this class are cloneable with this method.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Project$clone(deep = FALSE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{deep}}{Whether to make a deep clone.}
-}
-\if{html}{\out{</div>}}
-}
-}
-}
-\section{Super class}{
-\code{\link[esqlabsR:Project]{esqlabsR::Project}} -> \code{ProjectConfiguration}
-}
-\section{Methods}{
-\subsection{Public methods}{
-\itemize{
-\item \href{#method-ProjectConfiguration-new}{\code{ProjectConfiguration$new()}}
-\item \href{#method-ProjectConfiguration-clone}{\code{ProjectConfiguration$clone()}}
-}
-}
-\if{html}{\out{
-<details><summary>Inherited methods</summary>
-<ul>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id=".cacheObservedDataNames"><a href='../../esqlabsR/html/Project.html#method-Project-.cacheObservedDataNames'><code>esqlabsR::Project$.cacheObservedDataNames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id=".getObservedDataNamesCache"><a href='../../esqlabsR/html/Project.html#method-Project-.getObservedDataNamesCache'><code>esqlabsR::Project$.getObservedDataNamesCache()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id=".getProgrammaticDataSets"><a href='../../esqlabsR/html/Project.html#method-Project-.getProgrammaticDataSets'><code>esqlabsR::Project$.getProgrammaticDataSets()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addApplication"><a href='../../esqlabsR/html/Project.html#method-Project-addApplication'><code>esqlabsR::Project$addApplication()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addApplicationParameter"><a href='../../esqlabsR/html/Project.html#method-Project-addApplicationParameter'><code>esqlabsR::Project$addApplicationParameter()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addIndividual"><a href='../../esqlabsR/html/Project.html#method-Project-addIndividual'><code>esqlabsR::Project$addIndividual()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addIndividualParameter"><a href='../../esqlabsR/html/Project.html#method-Project-addIndividualParameter'><code>esqlabsR::Project$addIndividualParameter()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addModelParameter"><a href='../../esqlabsR/html/Project.html#method-Project-addModelParameter'><code>esqlabsR::Project$addModelParameter()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addObservedData"><a href='../../esqlabsR/html/Project.html#method-Project-addObservedData'><code>esqlabsR::Project$addObservedData()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addOutputPath"><a href='../../esqlabsR/html/Project.html#method-Project-addOutputPath'><code>esqlabsR::Project$addOutputPath()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addPopulation"><a href='../../esqlabsR/html/Project.html#method-Project-addPopulation'><code>esqlabsR::Project$addPopulation()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="addScenario"><a href='../../esqlabsR/html/Project.html#method-Project-addScenario'><code>esqlabsR::Project$addScenario()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="print"><a href='../../esqlabsR/html/Project.html#method-Project-print'><code>esqlabsR::Project$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeApplication"><a href='../../esqlabsR/html/Project.html#method-Project-removeApplication'><code>esqlabsR::Project$removeApplication()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeApplicationParameter"><a href='../../esqlabsR/html/Project.html#method-Project-removeApplicationParameter'><code>esqlabsR::Project$removeApplicationParameter()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeIndividual"><a href='../../esqlabsR/html/Project.html#method-Project-removeIndividual'><code>esqlabsR::Project$removeIndividual()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeIndividualParameter"><a href='../../esqlabsR/html/Project.html#method-Project-removeIndividualParameter'><code>esqlabsR::Project$removeIndividualParameter()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeModelParameter"><a href='../../esqlabsR/html/Project.html#method-Project-removeModelParameter'><code>esqlabsR::Project$removeModelParameter()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeObservedData"><a href='../../esqlabsR/html/Project.html#method-Project-removeObservedData'><code>esqlabsR::Project$removeObservedData()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeOutputPath"><a href='../../esqlabsR/html/Project.html#method-Project-removeOutputPath'><code>esqlabsR::Project$removeOutputPath()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removePopulation"><a href='../../esqlabsR/html/Project.html#method-Project-removePopulation'><code>esqlabsR::Project$removePopulation()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="removeScenario"><a href='../../esqlabsR/html/Project.html#method-Project-removeScenario'><code>esqlabsR::Project$removeScenario()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="esqlabsR" data-topic="Project" data-id="sync"><a href='../../esqlabsR/html/Project.html#method-Project-sync'><code>esqlabsR::Project$sync()</code></a></span></li>
-</ul>
-</details>
-}}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ProjectConfiguration-new"></a>}}
-\if{latex}{\out{\hypertarget{method-ProjectConfiguration-new}{}}}
-\subsection{Method \code{new()}}{
-Deprecated. Use \code{Project$new()} instead.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$new(projectConfigurationFilePath = character(), ...)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{projectConfigurationFilePath}}{Path to the project file.}
-
-\item{\code{...}}{Additional arguments passed to \code{Project$new()}.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ProjectConfiguration-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-ProjectConfiguration-clone}{}}}
-\subsection{Method \code{clone()}}{
-The objects of this class are cloneable with this method.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ProjectConfiguration$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

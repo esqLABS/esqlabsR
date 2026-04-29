@@ -7,6 +7,10 @@
 .categorize_message(message)
 }
 \description{
-Categorize validation messages
+Best-effort heuristic categorization based on the wording of upstream errors
+and warnings. Keep in mind this couples categories to specific phrases; if
+phrasing drifts, callers may see "Validation" buckets instead of the
+specific category. Long-term, the throw sites should attach categories via
+classed conditions instead of relying on regex matching here.
 }
 \keyword{internal}

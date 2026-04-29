@@ -4,12 +4,12 @@
 \alias{.mergeScenarioParameters}
 \title{Merge the parameter layers for a scenario}
 \usage{
-.mergeScenarioParameters(scenario, pc, customParams = NULL)
+.mergeScenarioParameters(scenario, project, customParams = NULL)
 }
 \arguments{
-\item{scenario}{A scenario plain-list (as in \code{pc$scenarios[[name]]}).}
+\item{scenario}{A scenario plain-list (as in \code{project$scenarios[[name]]}).}
 
-\item{pc}{A \code{Project} object.}
+\item{project}{A \code{Project} object.}
 
 \item{customParams}{Optional caller-supplied parameter structure.}
 }
