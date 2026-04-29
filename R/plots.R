@@ -1,574 +1,709 @@
-# Plot generation ----
+# Plots section: parse + validate + serialize + mutation.
+#
+# Owns Project$plots end-to-end. Project$plots is a list with three
+# data.frames: dataCombined, plotConfiguration, plotGrids. The flat
+# in-memory data.frame shape contrasts with the nested JSON shape, so the
+# parse/serialize step does a structural conversion in addition to type
+# coercion. The plotting *engine* (createPlots() and its dispatchers) lives
+# in R/create-plots.R and is independent of this file.
+#
+# Called by:
+#   - Project$.read_json() via .parsePlots()
+#   - .runProjectValidation() via .validatePlots()
+#   - .projectToJson() via .plotsToJson()
+#   - users via the public addPlot / removePlot / addPlotGrid /
+#     removePlotGrid / addDataCombined / removeDataCombined functions.
 
-#' Generate plots from a Project
-#'
-#' @param project Object of class `Project` that
-#'   contains information about the output paths and plots configuration.
-#' @param simulatedScenarios A list of simulated scenarios as returned by
-#'   `runScenarios()`. Can be `NULL` if no simulated data is required for the
-#'   plots.
-#' @param stopIfNotFound If TRUE (default), the function stops if any of the
-#'   simulated results or observed data are not found. If FALSE a warning is
-#'   printed.
-#'
-#' @param plotGridNames Names of the plot grids for which the figures will be
-#'   created. If `NULL` (default), all plot grids will be created. If a plot
-#'   grid with a given name does not exist, an error is thrown.
-#'
-#' @param dataCombinedList A (named) list of `DataCombined` objects as input to
-#'   create plots defined in the `plotGridNames` argument. Missing
-#'   `DataCombined` will be created from the project configuration (default
-#'   behavior). Defaults to `NULL`, in which case all `DataCombined` are
-#'   created from the project configuration.
-#' @param validate If `TRUE` (default), the `plots` and `crossReferences`
-#'   sections of the project are validated before plotting. Any critical
-#'   errors abort the call with a formatted message. Set to `FALSE` to skip
-#'   the pre-flight check. Validation is skipped automatically if no plots
-#'   are configured, or if a full [validateProject()] has already succeeded
-#'   since the last project mutation.
-#'
-#' @returns A list of `ggplot` objects
-#'
-#' @import tidyr
-#'
-#' @export
-createPlots <- function(
-  project,
-  plotGridNames = NULL,
-  simulatedScenarios = NULL,
-  dataCombinedList = NULL,
-  stopIfNotFound = TRUE,
-  validate = TRUE
-) {
-  validateIsOfType(project, "Project")
-  validateIsString(plotGridNames, nullAllowed = TRUE)
-  validateIsOfType(dataCombinedList, "DataCombined", nullAllowed = TRUE)
-  if (!typeof(dataCombinedList) %in% c("list", "NULL")) {
-    stop(messages$errorDataCombinedListMustBeList(typeof(dataCombinedList)))
-  }
+# Constants ----
 
-  if (isTRUE(validate) && !is.null(project$plots)) {
-    .ensureValid(
-      project,
-      sections = c("plots", "crossReferences"),
-      opName = "create plots"
-    )
-  }
+.validPlotTypes <- c(
+  "individual",
+  "population",
+  "observedVsSimulated",
+  "residualsVsSimulated",
+  "residualsVsTime"
+)
 
-  plotConfigurations <- .getPlotConfigurations(
-    project = project,
-    plotGridNames = plotGridNames
-  )
-  dfPlotConfigurations <- plotConfigurations$plotConfigurations
-  dfPlotGrids <- plotConfigurations$plotGrids
+.dataCombinedTransformCols <- c(
+  "xOffsets",
+  "xOffsetsUnits",
+  "yOffsets",
+  "yOffsetsUnits",
+  "xScaleFactors",
+  "yScaleFactors"
+)
 
-  # Exit early if no plotGrids are defined
-  if (is.null(dfPlotGrids)) {
-    return(NULL)
-  }
+# Parse ----
 
-  # Get the names of data combined that are required for creation of the plots
-  dataCombinedNames <- unique(dfPlotConfigurations$DataCombinedName)
-  # Do not create DataCombined that are already passed
-  if (!is.null(dataCombinedList)) {
-    dataCombinedNames <- setdiff(dataCombinedNames, names(dataCombinedList))
-  }
-  # Filter and validate only used data combined
-  dataCombinedListFromConfig <- createDataCombined(
-    project = project,
-    dataCombinedNames = dataCombinedNames,
-    simulatedScenarios = simulatedScenarios,
-    stopIfNotFound = stopIfNotFound
-  )
-  # Add entries from the provided list of DataCombined.
-  dataCombinedListFromConfig[names(dataCombinedList)] <- dataCombinedList
-  dataCombinedList <- dataCombinedListFromConfig
-
-  dfPlotConfigurations <- .validatePlotConfiguration(
-    dfPlotConfigurations,
-    names(dataCombinedList)
-  )
-
-  # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
-  defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  plotConfigurationList <- apply(dfPlotConfigurations, 1, \(row) {
-    plotConfiguration <- .createConfigurationFromRow(
-      defaultConfiguration = defaultPlotConfiguration,
-      # Have to exclude all columns that should not be vectorized
-      # Excluding title and subtitle because they should not be processed,
-      # e.g., split by ","
-      row[
-        !(names(row) %in%
-          c(
-            "plotID",
-            "DataCombinedName",
-            "plotType",
-            "title",
-            "subtitle",
-            "xLabel",
-            "yLabel",
-            "aggregation",
-            "quantiles",
-            "nsd",
-            "foldDistance"
-          ))
-      ]
-    )
-    # Apply title and subtitle properties
-    if (!is.na(row[["title"]])) {
-      plotConfiguration$title <- row[["title"]]
-    }
-
-    if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
-      plotConfiguration$subtitle <- row[["subtitle"]]
-    }
-
-    # Check for log scale with zero in axis limits
-    .validateLogScaleAxisLimits(plotConfiguration, row[["plotID"]])
-
-    return(plotConfiguration)
-  })
-  names(plotConfigurationList) <- dfPlotConfigurations$plotID
-
-  # create a list of plots from dataCombinedList and plotConfigurationList
-  plotList <- lapply(dfPlotConfigurations$plotID, \(plotId) {
-    dataCombined <- dataCombinedList[[
-      dfPlotConfigurations[
-        dfPlotConfigurations$plotID == plotId,
-      ]$DataCombinedName
-    ]]
-    switch(
-      dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
-      # Individual time profile
-      individual = plotIndividualTimeProfile(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      ),
-      # Population time profile
-      population = {
-        aggregation <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$aggregation
-        quantiles <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$quantiles
-        nsd <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$nsd
-        args <- list()
-        args$dataCombined <- dataCombined
-        args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
-        # Is aggregation defined?
-        if (!is.null(aggregation) && !is.na(aggregation)) {
-          args$aggregation <- aggregation
-        }
-        # quantiles defined?
-        if (!is.null(quantiles) && !is.na(quantiles)) {
-          args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
-        }
-        # if nsd is defined, add it to the args
-        if (!is.null(nsd) && !is.na(nsd)) {
-          args$nsd <- as.numeric(nsd)
-        }
-        do.call(plotPopulationTimeProfile, args)
-      },
-      observedVsSimulated = {
-        foldDist <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$foldDistance
-        if (is.na(foldDist)) {
-          plotObservedVsSimulated(dataCombined, plotConfigurationList[[plotId]])
-        } else {
-          plotObservedVsSimulated(
-            dataCombined,
-            plotConfigurationList[[plotId]],
-            foldDistance = as.numeric(unlist(strsplit(foldDist, split = ",")))
-          )
-        }
-      },
-      residualsVsSimulated = plotResidualsVsSimulated(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      ),
-      residualsVsTime = plotResidualsVsTime(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      )
-    )
-  })
-  names(plotList) <- dfPlotConfigurations$plotID
-
-  # create plotGridConfiguration objects and add plots from plotList
-  defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
-  plotGrids <- apply(dfPlotGrids, 1, \(row) {
-    plotGridConfiguration <- .createConfigurationFromRow(
-      defaultConfiguration = defaultPlotGridConfig,
-      row[!(names(row) %in% c("name", "plotIDs", "title"))]
-    )
-
-    # Ignore if title is not defined or no 'title' column is present
-    if (!is.na(row$title) && !is.null(row$title)) {
-      plotGridConfiguration$title <- row$title
-    }
-
-    plotsToAdd <- plotList[intersect(
-      unlist(row$plotIDs),
-      dfPlotConfigurations$plotID
-    )]
-    # Have to remove NULL instances. NULL can be produced e.g. when trying to create
-    # a simulated vs observed plot without any groups
-    plotsToAdd <- plotsToAdd[lengths(plotsToAdd) != 0]
-    # Cannot create a plot grid if no plots are added. Skip
-    if (length(plotsToAdd) == 0) {
-      return(NULL)
-    }
-    # When only one plot is in the grid, do not show panel labels
-    if (length(plotsToAdd) == 1) {
-      plotGridConfiguration$tagLevels <- NULL
-    }
-    plotGridConfiguration$addPlots(plots = plotsToAdd)
-    if (
-      length(
-        invalidPlotIDs <- setdiff(
-          unlist(row$plotIDs),
-          dfPlotConfigurations$plotID
-        )
-      ) !=
-        0
-    ) {
-      warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
-    }
-    plotGrid(plotGridConfiguration)
-  })
-  names(plotGrids) <- dfPlotGrids$name
-
-  return(plotGrids)
-}
-
-
-#' @rdname createPlots
-#' @export
-createPlotsFromExcel <- function(...) {
-  lifecycle::deprecate_soft(
-    what = "createPlotsFromExcel()",
-    with = "createPlots()",
-    when = "6.0.0"
-  )
-  createPlots(...)
-}
-
-# Internal helpers: parsing, validation, configuration ----
-
-#' Parse and validate comma-separated field value
-#'
-#' Parses comma-separated values and validates using ospsuite.utils.
-#' Provides error context (plotID, field name) for common issues.
-#'
-#' @param value Raw string value
-#' @param fieldName Name of the field for error messages
-#' @param plotID Optional plot ID for error context
-#' @param expectedLength Expected number of values (NULL for any length)
-#' @param expectedType Expected type ("numeric" or "character")
-#' @returns Parsed and validated vector
-#' @keywords internal
-.parseMultiValueField <- function(
-  value,
-  fieldName,
-  plotID = NULL,
-  expectedLength = NULL,
-  expectedType = "numeric"
-) {
-  originalValue <- value
-
-  # Parse using scan (existing method)
-  parsed <- unlist(trimws(scan(
-    text = as.character(value),
-    what = "character",
-    sep = ",",
-    quiet = TRUE
-  )))
-
-  # Detect common error: space-separated instead of comma-separated
-  if (!is.null(expectedLength) && length(parsed) != expectedLength) {
-    # Check if might be space-separated
-    spaceSplit <- unlist(strsplit(trimws(as.character(originalValue)), "\\s+"))
-    if (length(spaceSplit) == expectedLength) {
-      # Check if all parts look numeric (for numeric fields)
-      if (expectedType == "numeric") {
-        numericTest <- suppressWarnings(as.numeric(spaceSplit))
-        if (!any(is.na(numericTest))) {
-          # User likely used spaces instead of commas
-          stop(
-            messages$fieldFormatError(
-              fieldName,
-              originalValue,
-              plotID,
-              "comma-separated"
-            ),
-            call. = FALSE
-          )
-        }
-      }
-    }
-  }
-
-  # Validate length using ospsuite.utils
-  if (!is.null(expectedLength)) {
-    tryCatch(
-      ospsuite.utils::validateIsOfLength(parsed, expectedLength),
-      error = function(e) {
-        stop(
-          messages$fieldLengthError(
-            fieldName,
-            originalValue,
-            plotID,
-            expectedLength,
-            length(parsed)
-          ),
-          call. = FALSE
-        )
-      }
-    )
-  }
-
-  # Validate type and convert if needed
-  if (expectedType == "numeric") {
-    numericParsed <- suppressWarnings(as.numeric(parsed))
-    tryCatch(
-      ospsuite.utils::validateIsNumeric(numericParsed),
-      error = function(e) {
-        stop(
-          messages$fieldTypeError(
-            fieldName,
-            originalValue,
-            plotID,
-            "numeric"
-          ),
-          call. = FALSE
-        )
-      }
-    )
-    return(numericParsed)
-  }
-
-  return(parsed)
-}
-
-#' Validate that log scale axes do not have limits containing zero
-#'
-#' @param plotConfiguration A plot configuration object
-#' @param plotID Optional plot ID for the warning message
-#'
 #' @keywords internal
 #' @noRd
-.validateLogScaleAxisLimits <- function(plotConfiguration, plotID = NULL) {
-  axisChecks <- list(
-    list(
-      scale = "xAxisScale",
-      limits = c("xAxisLimits", "xValuesLimits"),
-      axis = "x"
-    ),
-    list(
-      scale = "yAxisScale",
-      limits = c("yAxisLimits", "yValuesLimits"),
-      axis = "y"
-    )
+.parsePlots <- function(plotsData) {
+  if (is.null(plotsData)) {
+    return(NULL)
+  }
+  list(
+    dataCombined = .parseNestedDataCombined(plotsData$dataCombined),
+    plotConfiguration = .listOfListsToDataFrame(plotsData$plotConfiguration),
+    plotGrids = .listOfListsToDataFrame(plotsData$plotGrids)
+  )
+}
+
+#' Parse nested dataCombined JSON to flat data.frame
+#' @param nestedData List of dataCombined objects with simulated/observed arrays
+#' @returns data.frame with DataCombinedName, dataType, and all entry fields
+#' @keywords internal
+#' @noRd
+.parseNestedDataCombined <- function(nestedData) {
+  if (is.null(nestedData) || length(nestedData) == 0) {
+    return(data.frame())
+  }
+
+  transformCols <- c(
+    "xOffsets",
+    "xOffsetsUnits",
+    "yOffsets",
+    "yOffsetsUnits",
+    "xScaleFactors",
+    "yScaleFactors"
   )
 
-  for (check in axisChecks) {
-    scaleValue <- plotConfiguration[[check$scale]]
-    if (!is.null(scaleValue) && scaleValue == "log") {
-      for (limitsField in check$limits) {
-        limitsValue <- plotConfiguration[[limitsField]]
-        if (!is.null(limitsValue) && 0 %in% limitsValue) {
-          warning(messages$warningLogScaleWithZeroLimit(
-            plotID = plotID,
-            axisLimitsField = limitsField,
-            axis = check$axis
-          ))
+  rows <- list()
+  for (dataCombined in nestedData) {
+    dataCombinedName <- dataCombined$name
+
+    # Process simulated entries
+    if (
+      !is.null(dataCombined$simulated) && length(dataCombined$simulated) > 0
+    ) {
+      for (entry in dataCombined$simulated) {
+        row <- list(
+          DataCombinedName = dataCombinedName,
+          dataType = "simulated",
+          label = entry$label,
+          scenario = entry$scenario,
+          path = entry$path,
+          dataSet = NA,
+          group = entry$group %||% NA
+        )
+        for (col in transformCols) {
+          row[[col]] <- entry[[col]] %||% NA
         }
+        rows[[length(rows) + 1]] <- as.data.frame(row, stringsAsFactors = FALSE)
+      }
+    }
+
+    # Process observed entries
+    if (!is.null(dataCombined$observed) && length(dataCombined$observed) > 0) {
+      for (entry in dataCombined$observed) {
+        row <- list(
+          DataCombinedName = dataCombinedName,
+          dataType = "observed",
+          label = entry$label,
+          scenario = NA,
+          path = NA,
+          dataSet = entry$dataSet,
+          group = entry$group %||% NA
+        )
+        for (col in transformCols) {
+          row[[col]] <- entry[[col]] %||% NA
+        }
+        rows[[length(rows) + 1]] <- as.data.frame(row, stringsAsFactors = FALSE)
       }
     }
   }
+
+  if (length(rows) == 0) {
+    return(data.frame())
+  }
+
+  do.call(rbind, rows)
 }
 
-#' Create a plotConfiguration object from a row of sheet 'plotConfiguration'
-#'
-#' @param defaultConfiguration default plotConfiguration
-#' @param ... row with configuration properties
-#' @returns A customized plotConfiguration object
+#' Convert a list of named lists to a data.frame, padding missing fields with NA
 #' @keywords internal
-.createConfigurationFromRow <- function(defaultConfiguration, ...) {
-  columns <- c(...)
-  newConfiguration <- defaultConfiguration$clone()
-  lapply(seq_along(columns), function(i) {
-    value <- columns[[i]]
-    colName <- names(columns)[[i]]
-    if (!is.na(value)) {
-      # Check if the field name is supported by the configuration class
-      if (!.validateClassHasField(object = newConfiguration, field = colName)) {
-        stop(messages$invalidConfigurationProperty(
-          propertyName = colName,
-          configurationType = class(newConfiguration)[[1]]
-        ))
+#' @noRd
+.listOfListsToDataFrame <- function(data) {
+  if (is.null(data) || length(data) == 0) {
+    return(data.frame())
+  }
+  allCols <- unique(unlist(lapply(data, names)))
+  rows <- lapply(data, function(entry) {
+    row <- lapply(allCols, function(col) {
+      val <- entry[[col]]
+      if (is.null(val)) NA else val
+    })
+    names(row) <- allCols
+    as.data.frame(row, stringsAsFactors = FALSE)
+  })
+  as.data.frame(dplyr::bind_rows(rows))
+}
+
+# Validate ----
+
+#' Validate plots section of a Project
+#' @param plots List with dataCombined, plotConfiguration, plotGrids
+#'   data.frames from project$plots
+#' @return validationResult object
+#' @keywords internal
+.validatePlots <- function(plots) {
+  result <- validationResult$new()
+
+  if (is.null(plots)) {
+    result$add_warning("Data", "No plots defined")
+    return(result)
+  }
+
+  dataCombined <- plots$dataCombined
+  plotConfig <- plots$plotConfiguration
+
+  # Validate dataCombined
+  if (is.null(dataCombined) || nrow(dataCombined) == 0) {
+    result$add_warning("Data", "dataCombined is empty")
+  } else {
+    for (col in c("DataCombinedName", "dataType")) {
+      if (!col %in% names(dataCombined)) {
+        result$add_critical_error(
+          "Missing Fields",
+          paste0("dataCombined is missing required column '", col, "'")
+        )
       }
-      # Special treatment for axis limits - parse and validate early with clear errors
-      if (
-        colName %in%
-          c(
-            "xAxisLimits",
-            "yAxisLimits",
-            "xValuesLimits",
-            "yValuesLimits"
+    }
+
+    if ("dataType" %in% names(dataCombined)) {
+      invalid_types <- dataCombined$dataType[
+        !is.na(dataCombined$dataType) &
+          !dataCombined$dataType %in% c("simulated", "observed")
+      ]
+      if (length(invalid_types) > 0) {
+        result$add_critical_error(
+          "Validation",
+          paste0(
+            "Invalid dataType values in dataCombined: ",
+            paste(unique(invalid_types), collapse = ", ")
           )
-      ) {
-        # Use wrapper function with ospsuite.utils validation
-        value <- .parseMultiValueField(
-          value = value,
-          fieldName = colName,
-          plotID = if ("plotID" %in% names(columns)) {
-            columns[["plotID"]]
-          } else {
-            NULL
-          },
-          expectedLength = 2,
-          expectedType = "numeric"
         )
-        # Set directly (already validated and converted)
-        newConfiguration[[colName]] <- value
-      } else {
-        # For other fields, use existing logic
-        # For fields that require multiple values, values are separated by a ','.
-        # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
-        # Split the input string by ',' but do not split within ""
-        value <- unlist(trimws(scan(
-          text = as.character(value),
-          what = "character",
-          sep = ",",
-          quiet = TRUE
-        )))
+      }
 
-        # Expected type of the field to cast the value to the
-        # correct type. For fields that do not have a default value (NULL), we have
-        # to assume character until a better solution is found
-        expectedType <- "character"
-        # Try to get the expected type of the field from the default value
-        defVal <- newConfiguration[[colName]]
-        if (!is.null(defVal)) {
-          expectedType <- typeof(defVal)
+      simulated_rows <- dataCombined[
+        !is.na(dataCombined$dataType) & dataCombined$dataType == "simulated",
+      ]
+      if (nrow(simulated_rows) > 0 && "scenario" %in% names(dataCombined)) {
+        missing_scenario <- is.na(simulated_rows$scenario) |
+          simulated_rows$scenario == ""
+        if (any(missing_scenario)) {
+          result$add_critical_error(
+            "Missing Fields",
+            "Some simulated rows in dataCombined are missing 'scenario'"
+          )
         }
+      }
+    }
+  }
 
-        # Caste the value and set it
-        newConfiguration[[colName]] <- methods::as(
-          object = value,
-          Class = expectedType
+  # Validate plotConfiguration
+  if (is.null(plotConfig) || nrow(plotConfig) == 0) {
+    result$add_warning("Data", "plotConfiguration is empty")
+  } else {
+    for (col in c("plotID", "DataCombinedName", "plotType")) {
+      if (!col %in% names(plotConfig)) {
+        result$add_critical_error(
+          "Missing Fields",
+          paste0("plotConfiguration is missing required column '", col, "'")
         )
       }
     }
-  })
 
-  return(newConfiguration)
+    if ("plotID" %in% names(plotConfig)) {
+      result <- .check_no_duplicates(
+        plotConfig$plotID[!is.na(plotConfig$plotID)],
+        "plotID",
+        result
+      )
+    }
+
+    # Inner cross-ref: plotConfiguration -> dataCombined
+    if (
+      !is.null(dataCombined) &&
+        nrow(dataCombined) > 0 &&
+        "DataCombinedName" %in% names(plotConfig) &&
+        "DataCombinedName" %in% names(dataCombined)
+    ) {
+      invalid_dataCombined_refs <- setdiff(
+        plotConfig$DataCombinedName[!is.na(plotConfig$DataCombinedName)],
+        dataCombined$DataCombinedName
+      )
+      if (length(invalid_dataCombined_refs) > 0) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "plotConfiguration references unknown DataCombinedName: ",
+            paste(invalid_dataCombined_refs, collapse = ", ")
+          )
+        )
+      }
+    }
+  }
+
+  # plotGrids -> plotConfiguration inner cross-ref (warning only)
+  plotGrids <- plots$plotGrids
+  if (
+    !is.null(plotGrids) &&
+      nrow(plotGrids) > 0 &&
+      !is.null(plotConfig) &&
+      nrow(plotConfig) > 0
+  ) {
+    if ("plotIDs" %in% names(plotGrids) && "plotID" %in% names(plotConfig)) {
+      all_grid_ids <- unlist(lapply(
+        plotGrids$plotIDs[!is.na(plotGrids$plotIDs)],
+        function(x) trimws(strsplit(x, ",")[[1]])
+      ))
+      invalid_grid_refs <- setdiff(all_grid_ids, plotConfig$plotID)
+      if (length(invalid_grid_refs) > 0) {
+        result$add_warning(
+          "Invalid Reference",
+          paste0(
+            "plotGrids references unknown plotIDs: ",
+            paste(invalid_grid_refs, collapse = ", ")
+          )
+        )
+      }
+    }
+  }
+
+  result
 }
 
-#' Validate and process the 'plotConfiguration' sheet
-#'
-#' @param dfPlotConfigurations Data frame created by reading the '
-#'   plotConfiguration' sheet
-#' @param dataCombinedNames Names of the 'DataCombined' that are referenced in
-#'   the plot configurations
-#'
-#' @returns Processed `dfPlotConfigurations`
+# Serialize ----
+
 #' @keywords internal
-.validatePlotConfiguration <- function(
-  dfPlotConfigurations,
-  dataCombinedNames
+#' @noRd
+.plotsToJson <- function(plots) {
+  if (is.null(plots)) {
+    return(list(
+      dataCombined = list(),
+      plotConfiguration = list(),
+      plotGrids = list()
+    ))
+  }
+
+  list(
+    dataCombined = .dataCombinedToNestedJson(plots$dataCombined),
+    plotConfiguration = .dataFrameToListOfLists(plots$plotConfiguration),
+    plotGrids = .dataFrameToListOfLists(plots$plotGrids)
+  )
+}
+
+#' Convert flat dataCombined data.frame to nested JSON structure
+#' @param df data.frame with DataCombinedName, dataType, and entry fields
+#' @returns List of dataCombined objects with simulated/observed arrays
+#' @keywords internal
+#' @noRd
+.dataCombinedToNestedJson <- function(df) {
+  if (is.null(df) || nrow(df) == 0) {
+    return(list())
+  }
+
+  transformCols <- c(
+    "xOffsets",
+    "xOffsetsUnits",
+    "yOffsets",
+    "yOffsetsUnits",
+    "xScaleFactors",
+    "yScaleFactors"
+  )
+
+  dataCombinedNames <- unique(df$DataCombinedName)
+
+  lapply(dataCombinedNames, function(dataCombinedName) {
+    dataCombinedRows <- df[
+      df$DataCombinedName == dataCombinedName,
+      ,
+      drop = FALSE
+    ]
+
+    simRows <- dataCombinedRows[
+      dataCombinedRows$dataType == "simulated",
+      ,
+      drop = FALSE
+    ]
+    obsRows <- dataCombinedRows[
+      dataCombinedRows$dataType == "observed",
+      ,
+      drop = FALSE
+    ]
+
+    simulated <- lapply(seq_len(nrow(simRows)), function(i) {
+      row <- simRows[i, ]
+      entry <- list(
+        label = row$label,
+        scenario = row$scenario,
+        path = row$path,
+        group = if (is.na(row$group)) NULL else row$group
+      )
+      for (col in transformCols) {
+        entry[[col]] <- if (is.na(row[[col]])) NULL else row[[col]]
+      }
+      entry
+    })
+
+    observed <- lapply(seq_len(nrow(obsRows)), function(i) {
+      row <- obsRows[i, ]
+      entry <- list(
+        label = row$label,
+        dataSet = row$dataSet,
+        group = if (is.na(row$group)) NULL else row$group
+      )
+      for (col in transformCols) {
+        entry[[col]] <- if (is.na(row[[col]])) NULL else row[[col]]
+      }
+      entry
+    })
+
+    list(
+      name = dataCombinedName,
+      simulated = simulated,
+      observed = observed
+    )
+  })
+}
+
+#' @keywords internal
+#' @noRd
+.dataFrameToListOfLists <- function(df) {
+  if (is.null(df) || nrow(df) == 0) {
+    return(list())
+  }
+
+  lapply(seq_len(nrow(df)), function(i) {
+    row <- as.list(df[i, , drop = FALSE])
+    row <- lapply(row, function(x) if (is.na(x)) NULL else x)
+    row
+  })
+}
+
+# CRUD helpers ----
+
+.splitPlotIDs <- function(plotIdsStr) {
+  if (is.null(plotIdsStr) || is.na(plotIdsStr) || !nzchar(plotIdsStr)) {
+    return(character())
+  }
+  trimws(unlist(strsplit(as.character(plotIdsStr), ",", fixed = TRUE)))
+}
+
+# Reject non-empty-scalar-string arguments uniformly across add/remove fns.
+.requireNonEmptyString <- function(x, arg) {
+  if (!is.character(x) || length(x) != 1 || is.na(x) || nchar(x) == 0) {
+    stop(paste0(arg, " must be a non-empty string"))
+  }
+  invisible(x)
+}
+
+# Replace NULL values in `...` with NA so that `as.data.frame()` keeps the
+# column (otherwise NULL entries are silently dropped).
+.namedDotsAsRow <- function(...) {
+  dots <- list(...)
+  dots <- lapply(dots, function(v) if (is.null(v)) NA else v)
+  dots
+}
+
+.buildDataCombinedRow <- function(dataCombinedName, dataType, entry) {
+  required <- if (dataType == "simulated") {
+    c("label", "scenario", "path")
+  } else {
+    c("label", "dataSet")
+  }
+  for (field in required) {
+    if (is.null(entry[[field]]) || is.na(entry[[field]])) {
+      msgFn <- if (dataType == "simulated") {
+        messages$dataCombinedSimulatedMissingField
+      } else {
+        messages$dataCombinedObservedMissingField
+      }
+      stop(msgFn(field))
+    }
+  }
+  row <- list(
+    DataCombinedName = dataCombinedName,
+    dataType = dataType,
+    label = entry$label,
+    scenario = if (dataType == "simulated") entry$scenario else NA,
+    path = if (dataType == "simulated") entry$path else NA,
+    dataSet = if (dataType == "observed") entry$dataSet else NA,
+    group = entry$group %||% NA
+  )
+  for (col in .dataCombinedTransformCols) {
+    row[[col]] <- entry[[col]] %||% NA
+  }
+  as.data.frame(row, stringsAsFactors = FALSE)
+}
+
+# Public CRUD: plots ----
+
+#' Add a plot configuration to a Project
+#'
+#' @description Append a new row to `project$plots$plotConfiguration`.
+#' Errors if `plotID` already exists, if `dataCombinedName` is not present
+#' in `project$plots$dataCombined`, or if `plotType` is not one of the
+#' supported types.
+#'
+#' @param project A `Project` object.
+#' @param plotID Character scalar. Unique plot identifier.
+#' @param dataCombinedName Character scalar. Must reference an existing
+#'   DataCombined name on the project. Stored in the `DataCombinedName`
+#'   column to match the JSON schema.
+#' @param plotType Character scalar. One of `"individual"`, `"population"`,
+#'   `"observedVsSimulated"`, `"residualsVsSimulated"`, `"residualsVsTime"`.
+#' @param ... Optional plot-configuration fields, e.g. `title`, `subtitle`,
+#'   `xUnit`, `yUnit`, `xAxisScale`, `yAxisScale`, `xValuesLimits`,
+#'   `yValuesLimits`, `aggregation`, `quantiles`, `nsd`, `foldDistance`.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family plots
+addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
+  validateIsOfType(project, "Project")
+  .requireNonEmptyString(plotID, "plotID")
+  .requireNonEmptyString(dataCombinedName, "dataCombinedName")
+  .requireNonEmptyString(plotType, "plotType")
+
+  existingPlots <- project$plots$plotConfiguration
+  if (
+    !is.null(existingPlots) &&
+      nrow(existingPlots) > 0 &&
+      plotID %in% existingPlots$plotID
+  ) {
+    stop(messages$plotIDExists(plotID))
+  }
+
+  if (!(dataCombinedName %in% project$plots$dataCombined$DataCombinedName)) {
+    stop(messages$plotDataCombinedNameNotFound(dataCombinedName))
+  }
+
+  if (!(plotType %in% .validPlotTypes)) {
+    stop(messages$invalidPlotType(plotType, .validPlotTypes))
+  }
+
+  newRow <- c(
+    list(
+      plotID = plotID,
+      DataCombinedName = dataCombinedName,
+      plotType = plotType
+    ),
+    .namedDotsAsRow(...)
+  )
+  newRowDf <- as.data.frame(newRow, stringsAsFactors = FALSE)
+
+  project$plots$plotConfiguration <- as.data.frame(dplyr::bind_rows(
+    existingPlots,
+    newRowDf
+  ))
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a plot configuration from a Project
+#'
+#' @description Drop the row with matching `plotID`. Warns (no-op) if
+#' `plotID` is not found, and warns when the plot is referenced by any
+#' `plotGrids` entry.
+#'
+#' @param project A `Project` object.
+#' @param plotID Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family plots
+removePlot <- function(project, plotID) {
+  validateIsOfType(project, "Project")
+  .requireNonEmptyString(plotID, "plotID")
+
+  df <- project$plots$plotConfiguration
+  if (is.null(df) || nrow(df) == 0 || !(plotID %in% df$plotID)) {
+    cli::cli_warn(messages$plotIDNotFound(plotID))
+    return(invisible(project))
+  }
+
+  grids <- project$plots$plotGrids
+  if (!is.null(grids) && nrow(grids) > 0) {
+    referencingGrids <- grids$name[vapply(
+      grids$plotIDs,
+      function(s) plotID %in% .splitPlotIDs(s),
+      logical(1)
+    )]
+    if (length(referencingGrids) > 0) {
+      cli::cli_warn(messages$plotReferencedByGrid(plotID, referencingGrids))
+    }
+  }
+
+  project$plots$plotConfiguration <- df[df$plotID != plotID, , drop = FALSE]
+  project$.markModified()
+  invisible(project)
+}
+
+# Public CRUD: plot grids ----
+
+#' Add a plot grid to a Project
+#'
+#' @description Append a new row to `project$plots$plotGrids`. Errors if
+#' `name` already exists or if any of the supplied `plotIDs` are not
+#' present in `project$plots$plotConfiguration`.
+#'
+#' @param project A `Project` object.
+#' @param name Character scalar. Unique plot-grid name.
+#' @param plotIDs Character vector of `plotID`s to include in the grid.
+#'   Stored internally as a comma-separated string.
+#' @param ... Optional plot-grid fields, e.g. `title`, `subtitle`.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family plots
+addPlotGrid <- function(project, name, plotIDs, ...) {
+  validateIsOfType(project, "Project")
+  .requireNonEmptyString(name, "name")
+  if (
+    !is.character(plotIDs) ||
+      length(plotIDs) == 0 ||
+      any(is.na(plotIDs)) ||
+      any(nchar(plotIDs) == 0)
+  ) {
+    stop("plotIDs must be a non-empty character vector")
+  }
+
+  existingGrids <- project$plots$plotGrids
+  if (
+    !is.null(existingGrids) &&
+      nrow(existingGrids) > 0 &&
+      name %in% existingGrids$name
+  ) {
+    stop(messages$plotGridNameExists(name))
+  }
+
+  unknown <- setdiff(plotIDs, project$plots$plotConfiguration$plotID)
+  if (length(unknown) > 0) {
+    stop(messages$plotGridUnknownPlotIDs(unknown))
+  }
+
+  newRow <- c(
+    list(
+      name = name,
+      plotIDs = paste(plotIDs, collapse = ", ")
+    ),
+    .namedDotsAsRow(...)
+  )
+  newRowDf <- as.data.frame(newRow, stringsAsFactors = FALSE)
+
+  project$plots$plotGrids <- as.data.frame(dplyr::bind_rows(
+    existingGrids,
+    newRowDf
+  ))
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a plot grid from a Project
+#'
+#' @description Drop the row with matching `name`. Warns (no-op) if
+#' `name` is not present.
+#'
+#' @param project A `Project` object.
+#' @param name Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family plots
+removePlotGrid <- function(project, name) {
+  validateIsOfType(project, "Project")
+  .requireNonEmptyString(name, "name")
+
+  df <- project$plots$plotGrids
+  if (is.null(df) || nrow(df) == 0 || !(name %in% df$name)) {
+    cli::cli_warn(messages$plotGridNotFound(name))
+    return(invisible(project))
+  }
+
+  project$plots$plotGrids <- df[df$name != name, , drop = FALSE]
+  project$.markModified()
+  invisible(project)
+}
+
+# Public CRUD: dataCombined ----
+
+#' Add a DataCombined to a Project
+#'
+#' @description Append a new DataCombined entry (one or more simulated and/or
+#' observed rows) to `project$plots$dataCombined`. Mirrors the JSON
+#' `plots.dataCombined[]` shape — one call per DataCombined.
+#'
+#' @param project A `Project` object.
+#' @param name Character scalar. Unique DataCombined name.
+#' @param simulated List of named lists. Each must include `label`,
+#'   `scenario`, and `path`. Optional fields: `group`, `xOffsets`,
+#'   `xOffsetsUnits`, `yOffsets`, `yOffsetsUnits`, `xScaleFactors`,
+#'   `yScaleFactors`.
+#' @param observed List of named lists. Each must include `label` and
+#'   `dataSet`. Optional fields: same as `simulated` minus `scenario`/`path`.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family dataCombined
+addDataCombined <- function(
+  project,
+  name,
+  simulated = list(),
+  observed = list()
 ) {
-  # mandatory column DataCombinedName is empty - throw error
-  missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
-  if (missingLabel > 0) {
-    stop(messages$missingDataCombinedName())
+  validateIsOfType(project, "Project")
+  .requireNonEmptyString(name, "name")
+
+  if (name %in% project$plots$dataCombined$DataCombinedName) {
+    stop(messages$dataCombinedNameExists(name))
   }
 
-  # plotIDs must be unique
-  duplicated_plotIDs <- dfPlotConfigurations$plotID[duplicated(
-    dfPlotConfigurations$plotID
-  )]
-  if (length(duplicated_plotIDs) > 0) {
-    stop(messages$PlotIDsMustBeUnique(duplicated_plotIDs))
-  }
-
-  # mandatory column plotType is empty - throw error
-  missingLabel <- sum(is.na(dfPlotConfigurations$plotType))
-  if (missingLabel > 0) {
-    stop(messages$missingPlotType())
-  }
-
-  # DataCombined that are not defined in the DataCombined sheet. Stop if any.
-  missingDataCombined <- setdiff(
-    setdiff(dfPlotConfigurations$DataCombinedName, dataCombinedNames),
-    NA
+  rows <- c(
+    lapply(simulated, function(e) .buildDataCombinedRow(name, "simulated", e)),
+    lapply(observed, function(e) .buildDataCombinedRow(name, "observed", e))
   )
-  if (length(missingDataCombined) != 0) {
-    stop(messages$stopInvalidDataCombinedName(missingDataCombined))
+  if (length(rows) == 0) {
+    stop("addDataCombined requires at least one simulated or observed entry")
   }
 
-  return(dfPlotConfigurations)
+  project$plots$dataCombined <- as.data.frame(dplyr::bind_rows(
+    c(list(project$plots$dataCombined), rows)
+  ))
+  project$.markModified()
+  invisible(project)
 }
 
-#' Validate and process the 'plotGrids' sheet
+#' Remove a DataCombined from a Project
 #'
-#' @param dfPlotGrids Data frame created by reading the ' plotGrids' sheet
-#' @param plotIDs IDs of the plots that are referenced in the plot grids
+#' @description Drop all rows in `project$plots$dataCombined` matching the
+#' given name. Warns (and is a no-op) if `name` is not present, and warns
+#' about any `plotConfiguration` rows that still reference it.
 #'
-#' @returns Processed `dfPlotGrids`
-#' @keywords internal
-.validatePlotGrids <- function(dfPlotGrids, plotIDs) {
-  # mandatory column plotIDs is empty - throw error
-  missingLabel <- sum(is.na(dfPlotGrids$plotIDs))
-  if (missingLabel > 0) {
-    stop(messages$missingPlotIDs())
+#' @param project A `Project` object.
+#' @param name Character scalar. DataCombined name to remove.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family dataCombined
+removeDataCombined <- function(project, name) {
+  validateIsOfType(project, "Project")
+  .requireNonEmptyString(name, "name")
+
+  df <- project$plots$dataCombined
+  if (is.null(df) || nrow(df) == 0 || !(name %in% df$DataCombinedName)) {
+    cli::cli_warn(messages$dataCombinedNotFound(name))
+    return(invisible(project))
   }
 
-  # plotGrids names must be unique
-  duplicated_PlotGridsNames <- dfPlotGrids$name[duplicated(dfPlotGrids$name)]
-  if (length(duplicated_PlotGridsNames) > 0) {
-    stop(messages$PlotGridsNamesMustBeUnique(duplicated_PlotGridsNames))
+  plotCfg <- project$plots$plotConfiguration
+  if (!is.null(plotCfg) && nrow(plotCfg) > 0) {
+    referencingPlots <- plotCfg$plotID[
+      !is.na(plotCfg$DataCombinedName) & plotCfg$DataCombinedName == name
+    ]
+    if (length(referencingPlots) > 0) {
+      cli::cli_warn(messages$dataCombinedReferencedByPlot(
+        name,
+        referencingPlots
+      ))
+    }
   }
 
-  # The values can be enclosed in "" in case the title should contain a ','.
-  # Split the input string by ',' but do not split within "" Have to do it one
-  # row at a time, otherwise it returns one separate list entry for each plot it
-  # (and not lists of plot ids)
-  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId) {
-    unlist(trimws(scan(
-      text = as.character(plotId),
-      what = "character",
-      sep = ",",
-      quiet = TRUE
-    )))
-  })
-
-  # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
-  missingPlots <- setdiff(
-    setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs),
-    NA
-  )
-  if (length(missingPlots) != 0) {
-    stop(messages$errorInvalidPlotID(missingPlots))
-  }
-
-  return(dfPlotGrids)
-}
-
-#' Check if the `object` contains active binding with the name `field`
-#'
-#' @param object A class or an instance of a class to check
-#' @param field Name of the field
-#'
-#' @returns `TRUE` if the `object` has an active binding `field`, `FALSE`
-#'   otherwise.
-#' @keywords internal
-.validateClassHasField <- function(object, field) {
-  if (!any(names(object) == field)) {
-    return(FALSE)
-  }
-  return(TRUE)
+  project$plots$dataCombined <- df[df$DataCombinedName != name, , drop = FALSE]
+  project$.markModified()
+  invisible(project)
 }

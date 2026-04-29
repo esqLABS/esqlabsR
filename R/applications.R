@@ -1,4 +1,81 @@
-# Public CRUD: applications ----
+# Applications section: parse + validate + serialize + mutation.
+# Owns Project$applications end-to-end. Called by:
+#   - Project$.read_json() via .parseApplications()
+#   - .runProjectValidation() via .validateApplications()
+#   - .projectToJson() via .applicationsToJson()
+#   - users via the public addApplication / removeApplication /
+#     addApplicationParameter / removeApplicationParameter functions.
+
+# Parse ----
+
+#' @keywords internal
+#' @noRd
+.parseApplications <- function(appsData) {
+  if (is.null(appsData)) {
+    return(list())
+  }
+  result <- list()
+  for (id in names(appsData)) {
+    entry <- appsData[[id]]
+    pset <- NULL
+    if (!is.null(entry$parameters)) {
+      for (p in entry$parameters) {
+        pset <- .addParameterEntry(
+          pset,
+          p$containerPath,
+          p$parameterName,
+          p$value,
+          p$units %||% ""
+        )
+      }
+    }
+    app <- list(parameters = pset)
+    class(app) <- c("Application", "list")
+    result[[id]] <- app
+  }
+  result
+}
+
+# Validate ----
+
+#' Validate applications section of a Project
+#' @param applications Named list from project$applications
+#' @return validationResult object
+#' @keywords internal
+.validateApplications <- function(applications) {
+  .validateParameterGroups(applications, "applications")
+}
+
+# Serialize ----
+
+#' @keywords internal
+#' @noRd
+.applicationsToJson <- function(applications) {
+  if (is.null(applications) || length(applications) == 0) {
+    return(structure(list(), names = character(0)))
+  }
+  result <- list()
+  for (id in names(applications)) {
+    pset <- applications[[id]]$parameters
+    params <- list()
+    if (!is.null(pset) && length(pset$paths) > 0) {
+      params <- vector("list", length(pset$paths))
+      for (j in seq_along(pset$paths)) {
+        split <- .splitParameterPathIntoContainerAndName(pset$paths[[j]])
+        params[[j]] <- list(
+          containerPath = split$containerPath,
+          parameterName = split$parameterName,
+          value = pset$values[[j]],
+          units = pset$units[[j]]
+        )
+      }
+    }
+    result[[id]] <- list(parameters = params)
+  }
+  result
+}
+
+# Public CRUD ----
 
 #' Add an application protocol to a Project
 #'

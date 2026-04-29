@@ -1,3 +1,16 @@
+# Populations: section management + variability/sampling logic.
+#
+# Section concerns (parse + validate + serialize + mutation) own
+# Project$populations end-to-end. Called by:
+#   - Project$.read_json() via .parsePopulations()
+#   - .runProjectValidation() via .validatePopulations()
+#   - .projectToJson() via .populationsToJson()
+#   - users via the public addPopulation / removePopulation functions.
+#
+# The variability/sampling helpers further down operate on already-built
+# `ospsuite::Population` runtime objects and are independent of the
+# section management above.
+
 # Enums ----
 
 #' Possible gender entries as integer values
@@ -8,6 +21,271 @@ GenderInt <- enum(list(
   FEMALE = 2,
   UNKNOWN = 3
 ))
+
+#' Supported distributions for sampling
+#' @export
+Distributions <- enum(list(
+  "Normal",
+  "LogNormal"
+))
+
+# Parse ----
+
+#' @keywords internal
+#' @noRd
+.parsePopulations <- function(populationsData) {
+  if (is.null(populationsData)) {
+    return(list())
+  }
+  result <- list()
+  for (entry in populationsData) {
+    popData <- list()
+    for (field in names(entry)) {
+      if (field == "populationId") {
+        next
+      }
+      val <- entry[[field]]
+      if (!is.null(val)) {
+        numericFields <- c(
+          "numberOfIndividuals",
+          "proportionOfFemales",
+          "weightMin",
+          "weightMax",
+          "heightMin",
+          "heightMax",
+          "ageMin",
+          "ageMax",
+          "BMIMin",
+          "BMIMax"
+        )
+        if (field %in% numericFields) {
+          val <- as.double(val)
+        }
+        popData[[field]] <- val
+      }
+    }
+    result[[entry$populationId]] <- popData
+  }
+  result
+}
+
+# Validate ----
+
+#' Validate populations section of a Project
+#' @param populations Named list of populations from project$populations
+#' @return validationResult object
+#' @keywords internal
+.validatePopulations <- function(populations) {
+  result <- validationResult$new()
+
+  if (is.null(populations) || length(populations) == 0) {
+    result$add_warning("Data", "No populations defined")
+    return(result)
+  }
+
+  for (id in names(populations)) {
+    pop <- populations[[id]]
+    result <- .check_required_fields(
+      pop,
+      c("species"),
+      paste0("population '", id, "'"),
+      result
+    )
+
+    if (!is.null(pop$proportionOfFemales)) {
+      pof <- as.numeric(pop$proportionOfFemales)
+      if (!is.na(pof) && (pof < 0 || pof > 100)) {
+        result$add_warning(
+          "Data Range",
+          paste0(
+            "proportionOfFemales in population '",
+            id,
+            "' should be between 0 and 100"
+          )
+        )
+      }
+    }
+
+    range_pairs <- list(
+      c("ageMin", "ageMax"),
+      c("weightMin", "weightMax"),
+      c("heightMin", "heightMax"),
+      c("BMIMin", "BMIMax")
+    )
+    for (pair in range_pairs) {
+      lo <- pop[[pair[1]]]
+      hi <- pop[[pair[2]]]
+      if (!is.null(lo) && !is.null(hi) && !is.na(lo) && !is.na(hi) && lo > hi) {
+        result$add_warning(
+          "Data Range",
+          paste0(pair[1], " > ", pair[2], " in population '", id, "'")
+        )
+      }
+    }
+  }
+
+  result
+}
+
+# Serialize ----
+
+#' @keywords internal
+#' @noRd
+.populationsToJson <- function(populations) {
+  if (is.null(populations) || length(populations) == 0) {
+    return(list())
+  }
+
+  lapply(names(populations), function(id) {
+    pop <- populations[[id]]
+    c(list(populationId = id), pop)
+  })
+}
+
+# Public CRUD ----
+
+#' Add a population to a Project
+#'
+#' @param project A `Project` object.
+#' @param populationId Character scalar, unique ID.
+#' @param species Character scalar.
+#' @param numberOfIndividuals Integer, positive.
+#' @param ... Optional named fields. Accepted: `proportionOfFemales`,
+#'   `weightMin`, `weightMax`, `heightMin`, `heightMax`, `ageMin`, `ageMax`,
+#'   `BMIMin`, `BMIMax`, `gender`, `weightUnit`, `heightUnit`, `ageUnit`,
+#'   `BMIUnit`, `population`, `diseaseState`. Numeric range fields are
+#'   coerced via `as.double()`.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family population
+addPopulation <- function(
+  project,
+  populationId,
+  species,
+  numberOfIndividuals,
+  ...
+) {
+  validateIsOfType(project, "Project")
+  errors <- character()
+
+  if (
+    !is.character(populationId) ||
+      length(populationId) != 1 ||
+      is.na(populationId) ||
+      nchar(populationId) == 0
+  ) {
+    errors <- c(errors, "populationId must be a non-empty string")
+  } else if (populationId %in% names(project$populations)) {
+    errors <- c(
+      errors,
+      paste0("population '", populationId, "' already exists")
+    )
+  }
+
+  if (
+    !is.character(species) ||
+      length(species) != 1 ||
+      is.na(species) ||
+      nchar(species) == 0
+  ) {
+    errors <- c(errors, "species must be a non-empty string")
+  }
+
+  if (
+    !is.numeric(numberOfIndividuals) ||
+      length(numberOfIndividuals) != 1 ||
+      is.na(numberOfIndividuals) ||
+      numberOfIndividuals <= 0
+  ) {
+    errors <- c(errors, "numberOfIndividuals must be a positive number")
+  }
+
+  dots <- list(...)
+  numericFields <- c(
+    "proportionOfFemales",
+    "weightMin",
+    "weightMax",
+    "heightMin",
+    "heightMax",
+    "ageMin",
+    "ageMax",
+    "BMIMin",
+    "BMIMax"
+  )
+  stringFields <- c(
+    "gender",
+    "weightUnit",
+    "heightUnit",
+    "ageUnit",
+    "BMIUnit",
+    "population",
+    "diseaseState"
+  )
+  allowed <- c(numericFields, stringFields)
+  unknown <- setdiff(names(dots), allowed)
+  if (length(unknown) > 0) {
+    errors <- c(
+      errors,
+      paste0(
+        "unknown fields: ",
+        paste(unknown, collapse = ", "),
+        ". Allowed: ",
+        paste(allowed, collapse = ", ")
+      )
+    )
+  }
+
+  if (length(errors) > 0) {
+    stop(paste0(
+      "Cannot add population '",
+      populationId,
+      "':\n- ",
+      paste(errors, collapse = "\n- ")
+    ))
+  }
+
+  entry <- list(
+    species = species,
+    numberOfIndividuals = as.double(numberOfIndividuals)
+  )
+  for (field in numericFields) {
+    if (!is.null(dots[[field]])) entry[[field]] <- as.double(dots[[field]])
+  }
+  for (field in stringFields) {
+    if (!is.null(dots[[field]])) entry[[field]] <- dots[[field]]
+  }
+
+  project$populations[[populationId]] <- entry
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a population from a Project
+#' @param project A `Project` object.
+#' @param populationId Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family population
+removePopulation <- function(project, populationId) {
+  validateIsOfType(project, "Project")
+  if (
+    !is.character(populationId) ||
+      length(populationId) != 1 ||
+      is.na(populationId) ||
+      nchar(populationId) == 0
+  ) {
+    stop("populationId must be a non-empty string")
+  }
+  if (!(populationId %in% names(project$populations))) {
+    cli::cli_warn("population {.val {populationId}} not found; no-op.")
+    return(invisible(project))
+  }
+  .warnIfReferenced(project, "population", populationId)
+  project$populations[[populationId]] <- NULL
+  project$.markModified()
+  invisible(project)
+}
 
 # Population variability and sampling ----
 
@@ -149,13 +427,6 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
     distributions = complete_data$Distribution
   )
 }
-
-#' Supported distributions for sampling
-#' @export
-Distributions <- enum(list(
-  "Normal",
-  "LogNormal"
-))
 
 #' Sample a random value from a distribution
 #'

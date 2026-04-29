@@ -1,3 +1,168 @@
+# Parameters: section management for Project$modelParameters
+# + the underlying parameter-data-structure manipulation logic used
+# everywhere parameter sets are merged, mutated, or split into
+# (containerPath, parameterName, value, units) tuples.
+#
+# Section concerns (parse + validate + serialize + mutation) own
+# Project$modelParameters end-to-end. Called by:
+#   - Project$.read_json() via .parseParameterGroups()
+#   - .runProjectValidation() via .validateModelParameters()
+#   - .projectToJson() via .parameterGroupsToJson()
+#   - users via the public addModelParameter / removeModelParameter functions.
+#
+# The lower half (extendParameterStructure, S3 addParameter/removeParameter,
+# .addParameterEntry, .removeParameterEntry, etc.) is shared infrastructure
+# used by the individuals, applications, and modelParameters sections to
+# build and edit the (paths, values, units) parallel-vector structure.
+
+# Parse ----
+
+#' @keywords internal
+#' @noRd
+.parseParameterGroups <- function(groups) {
+  if (is.null(groups)) {
+    return(list())
+  }
+  result <- list()
+  for (name in names(groups)) {
+    entries <- groups[[name]]
+    paths <- character(0)
+    values <- numeric(0)
+    units <- character(0)
+    for (entry in entries) {
+      paths <- c(
+        paths,
+        paste(
+          entry$containerPath,
+          entry$parameterName,
+          sep = "|"
+        )
+      )
+      values <- c(values, as.numeric(entry$value))
+      units <- c(units, entry$units %||% "")
+    }
+    result[[name]] <- list(paths = paths, values = values, units = units)
+  }
+  result
+}
+
+# Validate ----
+
+#' Validate modelParameters section of a Project
+#' @param modelParameters Named list from project$modelParameters
+#' @return validationResult object
+#' @keywords internal
+.validateModelParameters <- function(modelParameters) {
+  .validateParameterGroups(modelParameters, "modelParameters")
+}
+
+# Serialize ----
+
+#' @keywords internal
+#' @noRd
+.parameterGroupsToJson <- function(groups) {
+  if (is.null(groups) || length(groups) == 0) {
+    return(list())
+  }
+
+  result <- list()
+  for (name in names(groups)) {
+    group <- groups[[name]]
+    entries <- list()
+    for (i in seq_along(group$paths)) {
+      split <- .splitParameterPathIntoContainerAndName(group$paths[i])
+      entries[[i]] <- list(
+        containerPath = split$containerPath,
+        parameterName = split$parameterName,
+        value = group$values[i],
+        units = if (group$units[i] == "") NULL else group$units[i]
+      )
+    }
+    result[[name]] <- entries
+  }
+  result
+}
+
+# Public CRUD ----
+
+#' Add a parameter to a named model-parameter set
+#'
+#' @description Adds one parameter entry to the named set in
+#' `project$modelParameters`. The set is created on demand if it does not
+#' yet exist. Last-write-wins on duplicate paths.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set name. Created if not present.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @param value Numeric scalar.
+#' @param units Character scalar.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addModelParameter <- function(
+  project,
+  id,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1 || is.na(id) || nchar(id) == 0) {
+    stop("id must be a non-empty string")
+  }
+  current <- project$modelParameters[[id]]
+  project$modelParameters[[id]] <- .addParameterEntry(
+    current,
+    containerPath,
+    parameterName,
+    value,
+    units
+  )
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a parameter from a named model-parameter set
+#'
+#' @description Removes one parameter entry from the named set. If the
+#' removed entry was the last in the set, the set itself is auto-removed
+#' from `project$modelParameters`. Warns if the set or entry doesn't exist.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set name.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeModelParameter <- function(project, id, containerPath, parameterName) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1) {
+    stop("id must be a string scalar")
+  }
+  if (!(id %in% names(project$modelParameters))) {
+    cli::cli_warn("model parameter set {.val {id}} not found; no-op.")
+    return(invisible(project))
+  }
+  updated <- .removeParameterEntry(
+    project$modelParameters[[id]],
+    containerPath,
+    parameterName
+  )
+  if (is.null(updated)) {
+    .warnIfReferenced(project, "modelParameterSet", id)
+    project$modelParameters[[id]] <- NULL
+  } else {
+    project$modelParameters[[id]] <- updated
+  }
+  project$.markModified()
+  invisible(project)
+}
+
 # Parameter structure manipulation ----
 
 #' Extend parameters structure with new entries
@@ -155,6 +320,8 @@ setParameterValuesByPathWithCondition <- function(
   return(list(containerPath = containerPath, parameterName = paramName))
 }
 
+# S3 dispatch: addParameter / removeParameter on entity types ----
+
 #' Add a parameter to an entity
 #'
 #' @description Generic function. Methods exist for objects of class
@@ -273,6 +440,8 @@ removeParameter.default <- function(x, containerPath, parameterName, ...) {
     paste(class(x), collapse = "/")
   ))
 }
+
+# Low-level (paths, values, units) entry helpers ----
 
 #' @keywords internal
 #' @noRd
