@@ -1,3 +1,5 @@
+# Parameter structure manipulation ----
+
 test_that("It trows an error if wrong structure is provideed", {
   expect_error(
     extendParameterStructure(
@@ -299,5 +301,205 @@ test_that("addParameter errors on bad input shapes", {
       units = "L"
     ),
     regexp = "value"
+  )
+})
+
+# Round-trip ----
+
+test_that("saveProject produces round-trip fidelity for modelParameters", {
+  project <- testProject()
+  tmp <- tempfile(fileext = ".json")
+  withr::defer(unlink(tmp))
+
+  saveProject(project, tmp)
+  pc2 <- loadProject(tmp)
+
+  expect_equal(names(project$modelParameters), names(pc2$modelParameters))
+  expect_equal(
+    project$modelParameters[["Global"]],
+    pc2$modelParameters[["Global"]]
+  )
+})
+
+# Public CRUD: model parameters ----
+
+test_that("addModelParameter creates a new parameter set on first call", {
+  project <- testProject()
+  addModelParameter(
+    project,
+    id = "MyNewSet",
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 1.8,
+    units = "L"
+  )
+  expect_true("MyNewSet" %in% names(project$modelParameters))
+  expect_equal(
+    project$modelParameters[["MyNewSet"]]$paths,
+    "Organism|Liver|Volume"
+  )
+  expect_equal(project$modelParameters[["MyNewSet"]]$values, 1.8)
+  expect_equal(project$modelParameters[["MyNewSet"]]$units, "L")
+  expect_true(project$modified)
+})
+
+test_that("addModelParameter appends to an existing set", {
+  project <- testProject()
+  addModelParameter(
+    project,
+    "S1",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  addModelParameter(
+    project,
+    "S1",
+    containerPath = "b",
+    parameterName = "y",
+    value = 2,
+    units = "L"
+  )
+  expect_equal(project$modelParameters[["S1"]]$paths, c("a|x", "b|y"))
+  expect_equal(project$modelParameters[["S1"]]$values, c(1, 2))
+})
+
+test_that("addModelParameter overwrites duplicate path silently", {
+  project <- testProject()
+  addModelParameter(
+    project,
+    "S2",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  addModelParameter(
+    project,
+    "S2",
+    containerPath = "a",
+    parameterName = "x",
+    value = 99,
+    units = "L"
+  )
+  expect_equal(project$modelParameters[["S2"]]$paths, "a|x")
+  expect_equal(project$modelParameters[["S2"]]$values, 99)
+})
+
+test_that("removeModelParameter drops the entry", {
+  project <- testProject()
+  addModelParameter(
+    project,
+    "S3",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  addModelParameter(
+    project,
+    "S3",
+    containerPath = "b",
+    parameterName = "y",
+    value = 2,
+    units = "L"
+  )
+  project$.markSaved()
+  removeModelParameter(project, "S3", containerPath = "a", parameterName = "x")
+  expect_equal(project$modelParameters[["S3"]]$paths, "b|y")
+  expect_true(project$modified)
+})
+
+test_that("removeModelParameter auto-removes empty set when last entry deleted", {
+  project <- testProject()
+  addModelParameter(
+    project,
+    "S4",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  removeModelParameter(project, "S4", containerPath = "a", parameterName = "x")
+  expect_false("S4" %in% names(project$modelParameters))
+})
+
+test_that("removeModelParameter warns on unknown set", {
+  project <- testProject()
+  expect_warning(
+    removeModelParameter(
+      project,
+      "NoSuchSet_QQ",
+      containerPath = "a",
+      parameterName = "x"
+    ),
+    regexp = "not found"
+  )
+})
+
+test_that("removeModelParameter warns on unknown entry within an existing set", {
+  project <- testProject()
+  addModelParameter(
+    project,
+    "S5",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  expect_warning(
+    removeModelParameter(
+      project,
+      "S5",
+      containerPath = "z",
+      parameterName = "missing"
+    ),
+    regexp = "not found"
+  )
+})
+
+test_that("addModelParameter survives round-trip", {
+  project <- Project$new()
+  project$modelFolder <- tempdir()
+  addModelParameter(
+    project,
+    "RTSet",
+    containerPath = "Organism|Liver",
+    parameterName = "Volume",
+    value = 2.0,
+    units = "L"
+  )
+  tmp <- tempfile(fileext = ".json")
+  saveProject(project, tmp)
+  reloaded <- loadProject(tmp)
+  expect_equal(
+    reloaded$modelParameters[["RTSet"]]$paths,
+    "Organism|Liver|Volume"
+  )
+  expect_equal(reloaded$modelParameters[["RTSet"]]$values, 2.0)
+})
+
+test_that("project$addModelParameter delegates", {
+  pc1 <- testProject()
+  pc2 <- testProject()
+  addModelParameter(
+    pc1,
+    "DelSet",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  pc2$addModelParameter(
+    "DelSet",
+    containerPath = "a",
+    parameterName = "x",
+    value = 1,
+    units = "L"
+  )
+  expect_equal(
+    pc1$modelParameters[["DelSet"]],
+    pc2$modelParameters[["DelSet"]]
   )
 })
