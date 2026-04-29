@@ -1,20 +1,11 @@
 messages <- ospsuite.utils::messages
 
-# Project config####
+# Project config ----
 messages$oldProjectLayout <- function() {
   cli::format_message(c(
     "!" = "The project file layout used is from an older version of the package.",
     "i" = "This version is still supported and will be loaded but it is recommended to update the project file.
       To do so, use the {.code $save} method of the project object."
-  ))
-}
-
-messages$invalidConfigurationProperty <- function(
-  property,
-  path
-) {
-  cli::format_message(c(
-    "x" = "Property {.arg {property}} is not a valid configuration property for {.path {path}}"
   ))
 }
 
@@ -32,7 +23,7 @@ messages$versionNotStored <- function(currentVersion) {
   ))
 }
 
-# Parameters structure####
+# Parameters structure ----
 messages$errorWrongXLSStructure <- function(
   filePath,
   expectedColNames,
@@ -52,12 +43,12 @@ messages$wrongParametersStructure <- function(argumentName) {
   )
 }
 
-# Enum####
+# Enum ----
 messages$errorEnumPutListMultipleKeys <- function() {
   cliFormat("Trying to put multiple keys, but only one key is allowed!")
 }
 
-# utilities-population####
+# utilities-population ----
 messages$errorDistributionNotSupported <- function(string) {
   cliFormat(
     "The distribution {.val {string}} is not supported. Supported distributions are listed in {.var Distributions}."
@@ -77,14 +68,14 @@ messages$errorWrongOntogenyStructure <- function(entry) {
   )
 }
 
-# utilities-individual####
+# utilities-individual ----
 messages$errorWrongIndividualId <- function(individualId) {
   cliFormat(
     "Individual with id {.var {individualId}} is not specified in the individual characteristics file!"
   )
 }
 
-# utilities####
+# utilities ----
 messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
@@ -124,15 +115,6 @@ messages$autocorrectDuplicateScenarioNames <- function(
   ))
 }
 
-messages$scenariosNotNamedList <- function() {
-  cli::format_message(c(
-    "Invalid scenarios:",
-    "x" = "scenarios must be a named list",
-    "i" = "Each scenario must have a unique name"
-  ))
-}
-
-
 messages$createdFileSnapshot <- function(inputFile, outputFile) {
   cliFormat(
     "Snapshot of {.file {inputFile}} created at {.file {outputFile}}"
@@ -143,13 +125,6 @@ messages$restoredProject <- function(inputFile, outputFile) {
   cliFormat(
     "Project from {.file {inputFile}} restored at {.file {outputFile}}"
   )
-}
-
-messages$hasUnsavedChanges <- function() {
-  cli::format_message(c(
-    "!" = "The Project object has been modified since loading from file.",
-    "i" = "The object properties don't match the original configuration file."
-  ))
 }
 
 messages$invalidArgumentLength <- function(noOfOutpaths, noOfScenarios) {
@@ -176,14 +151,14 @@ messages$errorWrongArguments <- function(expectedArguments) {
   )
 }
 
-# utilities numerics####
+# utilities numerics ----
 messages$valueShouldNotBeNegative <- function(parameterName, value) {
   cliFormat(
     "{.arg {parameterName}} must be a positive numerical value, but the value is {.val {value}}"
   )
 }
 
-# utilities-data####
+# utilities-data ----
 messages$errorInvalidMeanMethod <- function() {
   cliFormat(
     "Invalid value for argument {.arg method}, supported values are {.val arithmetic} or {.val geometric}"
@@ -202,7 +177,7 @@ messages$offsetUnitsNotDefined <- function(rows) {
   ))
 }
 
-# utilities-figures####
+# utilities-figures ----
 messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
   cliFormat(
     "nrOfColors must be positive, value {.val {nrOfColors}} is not valid!"
@@ -229,7 +204,7 @@ messages$UnknownPlotConfiguration <- function(name) {
   cliFormat("Unknown plot configuration option: {.arg {name}}")
 }
 
-# scenario####
+# scenario ----
 messages$errorApplicationProtocolNotFound <- function(
   scenarioName,
   applicationProtocol
@@ -296,12 +271,6 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   )
 }
 
-messages$stopScenarioNameNonUnique <- function(scenarioName) {
-  cliFormat(
-    "Scenario {.val {scenarioName}} is defined multiple times! Make sure that each scenario has a unique name."
-  )
-}
-
 messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
   cliFormat(
     "The time interval string {.val {timeIntervalString}} is not valid! Please 
@@ -331,7 +300,7 @@ messages$missingSteadyStateTimeUnit <- function(scenarioName) {
     "Missing unit for steady-state time (column {.field SteadyStateTimeUnit}) for scenario {.val {scenarioName}}."
   )
 }
-# sensitivity-calculation####
+# sensitivity-calculation ----
 messages$noPKDataToWrite <- function() {
   cliFormat(
     "{.path saOutputFilePath} argument is specified, but there is no PK parameters data to write to spreadsheets."
@@ -354,7 +323,7 @@ messages$errorOptionOutOfBounds <- function(parameterFactor) {
   )
 }
 
-# utilities-quantity####
+# utilities-quantity ----
 messages$cannotGetMoleculeFromQuantity <- function(
   quantityPath,
   optionalMessage = ""
@@ -372,7 +341,7 @@ messages$warningInvalidDataSetName <- function(dataSetNames) {
   )
 }
 
-# Plot configuration ####
+# Plot configuration ----
 messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
   cliFormat(
     "The plots with plotIDs {.val {paste(plotIDs, collapse = ',\n')}} could not be added to plot grid
@@ -537,7 +506,7 @@ messages$errorDataCombinedListMustBeList <- function(type) {
   )
 }
 
-# Sensitivity calculation####
+# Sensitivity calculation ----
 messages$sensitivityAnalysisSimulationFailure <- function(
   parameterPath,
   parameterFactor
@@ -602,7 +571,7 @@ messages$promptDeleteOutputDir <- function(outputDir) {
   )
 }
 
-# Field validation error messages ####
+# Field validation error messages ----
 messages$fieldFormatError <- function(
   fieldName,
   value,
@@ -661,7 +630,7 @@ messages$warningSensitivityPKParameterNotCalculated <- function(
   )
 }
 
-# Validation framework messages ####
+# Validation framework messages ----
 messages$validationFileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
@@ -683,12 +652,6 @@ messages$validationEmptySheet <- function(sheet) {
 messages$validationCrossReference <- function(source, target, missing) {
   cliFormat(
     "Invalid references from {.val {source}} to {.val {target}}: {.val {paste(missing, collapse = ', ')}}"
-  )
-}
-
-messages$validationRequiredFileNotConfigured <- function(fileName) {
-  cliFormat(
-    "Required configuration file {.file {fileName}} is not configured in Project"
   )
 }
 
@@ -747,12 +710,6 @@ messages$excelNotInSync <- function(message = "") {
 messages$excelInSync <- function() {
   cliFormat(
     "Excel configuration files are in sync with JSON snapshot."
-  )
-}
-
-messages$projectConfigUnsavedChanges <- function() {
-  cliFormat(
-    "The Project object has {.strong unsaved changes} that differ from the Excel file."
   )
 }
 

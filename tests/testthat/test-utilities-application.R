@@ -1,45 +1,45 @@
 test_that("addApplication adds an application object with empty parameters", {
-  pc <- testProject()
-  initial <- length(pc$applications)
-  addApplication(pc, "Oral_10mg")
-  expect_equal(length(pc$applications), initial + 1)
-  expect_true(inherits(pc$applications[["Oral_10mg"]], "Application"))
-  expect_null(pc$applications[["Oral_10mg"]]$parameters)
-  expect_true(pc$modified)
+  project <- testProject()
+  initial <- length(project$applications)
+  addApplication(project, "Oral_10mg")
+  expect_equal(length(project$applications), initial + 1)
+  expect_true(inherits(project$applications[["Oral_10mg"]], "Application"))
+  expect_null(project$applications[["Oral_10mg"]]$parameters)
+  expect_true(project$modified)
 })
 
 test_that("addApplication errors on duplicate id", {
-  pc <- testProject()
-  existing <- names(pc$applications)[[1]]
+  project <- testProject()
+  existing <- names(project$applications)[[1]]
   expect_error(
-    addApplication(pc, existing),
+    addApplication(project, existing),
     regexp = "already exists"
   )
 })
 
 test_that("addApplicationParameter appends to an application", {
-  pc <- testProject()
-  addApplication(pc, "OralX")
+  project <- testProject()
+  addApplication(project, "OralX")
   addApplicationParameter(
-    pc,
+    project,
     "OralX",
     containerPath = "Events|Oral|Schema",
     parameterName = "Dose",
     value = 250,
     units = "mg"
   )
-  pset <- pc$applications[["OralX"]]$parameters
+  pset <- project$applications[["OralX"]]$parameters
   expect_equal(pset$paths, "Events|Oral|Schema|Dose")
   expect_equal(pset$values, 250)
   expect_equal(pset$units, "mg")
-  expect_true(inherits(pc$applications[["OralX"]], "Application"))
+  expect_true(inherits(project$applications[["OralX"]], "Application"))
 })
 
 test_that("addApplicationParameter errors on unknown application id", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
     addApplicationParameter(
-      pc,
+      project,
       "NoSuchApp_QQ",
       containerPath = "a",
       parameterName = "x",
@@ -51,19 +51,19 @@ test_that("addApplicationParameter errors on unknown application id", {
 })
 
 test_that("removeApplication removes the application", {
-  pc <- testProject()
-  addApplication(pc, "TmpApp")
-  pc$modified <- FALSE
-  removeApplication(pc, "TmpApp")
-  expect_false("TmpApp" %in% names(pc$applications))
-  expect_true(pc$modified)
+  project <- testProject()
+  addApplication(project, "TmpApp")
+  project$.markSaved()
+  removeApplication(project, "TmpApp")
+  expect_false("TmpApp" %in% names(project$applications))
+  expect_true(project$modified)
 })
 
 test_that("removeApplicationParameter drops the entry", {
-  pc <- testProject()
-  addApplication(pc, "AppRm")
+  project <- testProject()
+  addApplication(project, "AppRm")
   addApplicationParameter(
-    pc,
+    project,
     "AppRm",
     containerPath = "Events|Oral|Schema",
     parameterName = "Dose",
@@ -71,20 +71,20 @@ test_that("removeApplicationParameter drops the entry", {
     units = "mg"
   )
   removeApplicationParameter(
-    pc,
+    project,
     "AppRm",
     containerPath = "Events|Oral|Schema",
     parameterName = "Dose"
   )
-  expect_null(pc$applications[["AppRm"]]$parameters)
+  expect_null(project$applications[["AppRm"]]$parameters)
 })
 
 test_that("application round-trips with parameters", {
-  pc <- Project$new()
-  pc$modelFolder <- tempdir()
-  addApplication(pc, "OralRT")
+  project <- Project$new()
+  project$modelFolder <- tempdir()
+  addApplication(project, "OralRT")
   addApplicationParameter(
-    pc,
+    project,
     "OralRT",
     containerPath = "Events|Oral|Schema",
     parameterName = "Dose",
@@ -92,7 +92,7 @@ test_that("application round-trips with parameters", {
     units = "mg"
   )
   tmp <- tempfile(fileext = ".json")
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   reloaded <- loadProject(tmp)
   pset <- reloaded$applications[["OralRT"]]$parameters
   expect_equal(pset$paths, "Events|Oral|Schema|Dose")
@@ -116,8 +116,8 @@ test_that("loaded JSON with applications object shape parses correctly", {
   }'
   tmp <- tempfile(fileext = ".json")
   writeLines(json, tmp)
-  pc <- loadProject(tmp)
-  pset <- pc$applications[["OralFromJson"]]$parameters
+  project <- loadProject(tmp)
+  pset <- project$applications[["OralFromJson"]]$parameters
   expect_equal(pset$paths, "Events|Oral|Schema|Dose")
   expect_equal(pset$values, 50)
 })

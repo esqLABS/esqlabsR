@@ -214,13 +214,13 @@ exportConfigurationDf <- data.frame(list(
 
 # Helper to create a project with custom plots data
 .withPlots <- function(
-  pc = project,
+  project = project,
   dataCombined = dataCombinedDf,
   plotConfiguration = plotConfigurationDf,
   plotGrids = plotGridsDf,
   exportConfiguration = exportConfigurationDf
 ) {
-  pcLocal <- pc$clone()
+  pcLocal <- project$clone()
   pcLocal$plots <- list(
     dataCombined = dataCombined,
     plotConfiguration = plotConfiguration,

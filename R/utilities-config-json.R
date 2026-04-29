@@ -1,3 +1,5 @@
+# Public API ----
+
 #' Import project configuration from Excel files to v2.0 JSON
 #'
 #' @description Reads all Excel configuration files in an esqlabsR project and
@@ -249,8 +251,6 @@ exportProjectToExcel <- function(
     dir.create(configDir, recursive = TRUE, showWarnings = FALSE)
   }
 
-  pc <- project
-
   # --- Project.xlsx ---
   # Version metadata rows
   props <- c("schemaVersion", "esqlabsRVersion")
@@ -261,11 +261,11 @@ exportProjectToExcel <- function(
   )
 
   # File path property rows
-  pcInternal <- .extractFilePathsData(pc)
-  for (propName in names(pcInternal)) {
+  filePathsData <- .extractFilePathsData(project)
+  for (propName in names(filePathsData)) {
     props <- c(props, propName)
-    vals <- c(vals, pcInternal[[propName]]$value %||% "")
-    descs <- c(descs, pcInternal[[propName]]$description %||% "")
+    vals <- c(vals, filePathsData[[propName]]$value %||% "")
+    descs <- c(descs, filePathsData[[propName]]$description %||% "")
   }
   projConfigDf <- data.frame(
     Property = props,
@@ -277,21 +277,21 @@ exportProjectToExcel <- function(
   .writeExcel(projConfigDf, projConfigPath)
 
   # --- ModelParameters.xlsx ---
-  if (!is.null(pc$modelParameters) && length(pc$modelParameters) > 0) {
-    sheets <- .parameterStructuresToExcelSheets(pc$modelParameters)
+  if (!is.null(project$modelParameters) && length(project$modelParameters) > 0) {
+    sheets <- .parameterStructuresToExcelSheets(project$modelParameters)
     .writeExcel(sheets, file.path(configDir, "ModelParameters.xlsx"))
   }
 
   # --- Individuals.xlsx ---
   indivSheets <- list()
-  if (!is.null(pc$individuals) && length(pc$individuals) > 0) {
+  if (!is.null(project$individuals) && length(project$individuals) > 0) {
     indivSheets[["IndividualBiometrics"]] <- .individualsToExcelDf(
-      pc$individuals
+      project$individuals
     )
     # One sheet per individual carrying their inline parameters
     indivParamSets <- list()
-    for (id in names(pc$individuals)) {
-      pset <- pc$individuals[[id]]$parameters
+    for (id in names(project$individuals)) {
+      pset <- project$individuals[[id]]$parameters
       if (!is.null(pset) && length(pset$paths) > 0) {
         indivParamSets[[id]] <- pset
       }
@@ -306,26 +306,26 @@ exportProjectToExcel <- function(
   }
 
   # --- Populations.xlsx ---
-  if (!is.null(pc$populations) && length(pc$populations) > 0) {
-    popDf <- .populationsToExcelDf(pc$populations)
+  if (!is.null(project$populations) && length(project$populations) > 0) {
+    popDf <- .populationsToExcelDf(project$populations)
     .writeExcel(popDf, file.path(configDir, "Populations.xlsx"))
   }
 
   # --- Scenarios.xlsx ---
   scenSheets <- list()
   if (
-    !is.null(pc$scenarios) &&
-      length(pc$scenarios) > 0
+    !is.null(project$scenarios) &&
+      length(project$scenarios) > 0
   ) {
     scenSheets[["Scenarios"]] <- .scenarioConfigurationsToExcelDf(
-      pc$scenarios,
-      outputPaths = pc$outputPaths
+      project$scenarios,
+      outputPaths = project$outputPaths
     )
   }
-  if (!is.null(pc$outputPaths) && length(pc$outputPaths) > 0) {
+  if (!is.null(project$outputPaths) && length(project$outputPaths) > 0) {
     scenSheets[["OutputPaths"]] <- data.frame(
-      OutputPathId = names(pc$outputPaths),
-      OutputPath = unname(pc$outputPaths),
+      OutputPathId = names(project$outputPaths),
+      OutputPath = unname(project$outputPaths),
       stringsAsFactors = FALSE
     )
   }
@@ -334,10 +334,10 @@ exportProjectToExcel <- function(
   }
 
   # --- Applications.xlsx ---
-  if (!is.null(pc$applications) && length(pc$applications) > 0) {
+  if (!is.null(project$applications) && length(project$applications) > 0) {
     appParamSets <- list()
-    for (id in names(pc$applications)) {
-      pset <- pc$applications[[id]]$parameters
+    for (id in names(project$applications)) {
+      pset <- project$applications[[id]]$parameters
       if (!is.null(pset) && length(pset$paths) > 0) {
         appParamSets[[id]] <- pset
       }
@@ -349,10 +349,10 @@ exportProjectToExcel <- function(
   }
 
   # --- Plots.xlsx ---
-  if (!is.null(pc$plots)) {
+  if (!is.null(project$plots)) {
     plotSheets <- list()
-    for (sheetName in names(pc$plots)) {
-      df <- pc$plots[[sheetName]]
+    for (sheetName in names(project$plots)) {
+      df <- project$plots[[sheetName]]
       if (is.data.frame(df) && nrow(df) > 0) {
         plotSheets[[sheetName]] <- df
       }
@@ -365,7 +365,7 @@ exportProjectToExcel <- function(
   if (interactive() && !silent) {
     relPath <- fs::path_rel(projConfigPath, start = getwd())
     message(messages$restoredProject(
-      pc$jsonPath %||% "Project",
+      project$jsonPath %||% "Project",
       relPath
     ))
   }
@@ -389,13 +389,13 @@ restoreProjectConfiguration <- function(
     with = "exportProjectToExcel()",
     when = "6.0.0"
   )
-  pc <- loadProject(jsonPath)
+  project <- loadProject(jsonPath)
   exportProjectToExcel(
-    project = pc,
+    project = project,
     outputDir = outputDir,
     silent = silent
   )
-  invisible(pc)
+  invisible(project)
 }
 
 #' @rdname exportProjectToExcel
@@ -576,9 +576,7 @@ projectConfigurationStatus <- function(...) {
   projectStatus(...)
 }
 
-# ===========================================================================
-# Excel → JSON conversion helpers
-# ===========================================================================
+# Excel → JSON conversion helpers ----
 
 #' Parse parameter sheets from an Excel file into JSON structure
 #' @param filePath Path to the Excel file
@@ -744,9 +742,7 @@ projectConfigurationStatus <- function(...) {
   result
 }
 
-# ===========================================================================
-# v2.0 JSON conversion helpers — JSON → Excel (for export)
-# ===========================================================================
+# JSON → Excel conversion helpers (for export) ----
 
 #' Convert parameter structures to Excel sheet data frames
 #' @param parameterGroups Named list of parameter structures (paths, values,
@@ -891,7 +887,7 @@ projectConfigurationStatus <- function(...) {
       )
       simTimeStr <- paste(intervals, collapse = "; ")
     }
-    # outputPaths → reverse-lookup IDs from pc$outputPaths
+    # outputPaths → reverse-lookup IDs from project$outputPaths
     outputPathIdsStr <- NA
     if (!is.null(sc$outputPaths) && !is.null(outputPaths)) {
       matchedIds <- names(outputPaths)[match(sc$outputPaths, outputPaths)]
@@ -944,17 +940,15 @@ projectConfigurationStatus <- function(...) {
 }
 
 #' Extract private .filePathsData from a Project
-#' @param pc Project object
+#' @param project Project object
 #' @returns Named list of property data
 #' @keywords internal
 #' @noRd
-.extractFilePathsData <- function(pc) {
-  pc$.getFilePathsData()
+.extractFilePathsData <- function(project) {
+  project$.getFilePathsData()
 }
 
-# ===========================================================================
-# Generic helpers
-# ===========================================================================
+# Generic helpers ----
 
 #' Convert NA to NULL for JSON serialization
 #' @keywords internal

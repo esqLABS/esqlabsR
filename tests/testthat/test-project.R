@@ -2,23 +2,23 @@
 
 test_that("Project loads from valid JSON and populates all fields", {
   jsonPath <- testProjectJSONPath()
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
 
-  expect_true(isOfType(pc, "Project"))
-  expect_true(fs::file_exists(pc$modelFolder))
-  expect_true(fs::dir_exists(pc$configurationsFolder))
+  expect_true(isOfType(project, "Project"))
+  expect_true(fs::file_exists(project$modelFolder))
+  expect_true(fs::dir_exists(project$configurationsFolder))
 
-  expect_length(pc$scenarios, 5)
-  expect_true("TestScenario" %in% names(pc$scenarios))
-  expect_length(pc$modelParameters, 4)
-  expect_true("Global" %in% names(pc$modelParameters))
-  expect_length(pc$individuals, 1)
-  expect_true("Indiv1" %in% names(pc$individuals))
-  expect_length(pc$populations, 2)
-  expect_length(pc$applications, 1)
-  expect_length(pc$outputPaths, 2)
-  expect_false(is.null(pc$plots))
-  expect_equal(as.character(pc$jsonPath), normalizePath(jsonPath))
+  expect_length(project$scenarios, 5)
+  expect_true("TestScenario" %in% names(project$scenarios))
+  expect_length(project$modelParameters, 4)
+  expect_true("Global" %in% names(project$modelParameters))
+  expect_length(project$individuals, 1)
+  expect_true("Indiv1" %in% names(project$individuals))
+  expect_length(project$populations, 2)
+  expect_length(project$applications, 1)
+  expect_length(project$outputPaths, 2)
+  expect_false(is.null(project$plots))
+  expect_equal(as.character(project$jsonPath), normalizePath(jsonPath))
 })
 
 test_that("Project errors on missing schemaVersion", {
@@ -37,25 +37,25 @@ test_that("Project errors on unsupported schemaVersion", {
 
 test_that("Project resolves paths relative to JSON directory", {
   jsonPath <- testProjectJSONPath()
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
   jsonDir <- dirname(jsonPath)
   expect_equal(
-    as.character(pc$modelFolder),
+    as.character(project$modelFolder),
     normalizePath(file.path(jsonDir, "Models/Simulations/"))
   )
 })
 
 test_that("Project parses model parameters into list(paths, values, units)", {
-  pc <- testProject()
-  global <- pc$modelParameters[["Global"]]
+  project <- testProject()
+  global <- project$modelParameters[["Global"]]
   expect_equal(global$paths, "Organism|Liver|EHC continuous fraction")
   expect_equal(global$values, 1)
   expect_equal(global$units, "")
 })
 
 test_that("Project parses scenarios into Scenario objects", {
-  pc <- testProject()
-  sc <- pc$scenarios[["TestScenario2"]]
+  project <- testProject()
+  sc <- project$scenarios[["TestScenario2"]]
   expect_s3_class(sc, "Scenario")
   expect_equal(sc$scenarioName, "TestScenario2")
   expect_true(sc$simulateSteadyState)
@@ -67,8 +67,8 @@ test_that("Project parses scenarios into Scenario objects", {
 })
 
 test_that("Individuals are stored as plain lists", {
-  pc <- testProject()
-  indiv <- pc$individuals[["Indiv1"]]
+  project <- testProject()
+  indiv <- project$individuals[["Indiv1"]]
   expect_type(indiv, "list")
   expect_true("species" %in% names(indiv))
   expect_true("population" %in% names(indiv))
@@ -81,8 +81,8 @@ test_that("Individuals are stored as plain lists", {
 })
 
 test_that("Populations are stored as plain lists", {
-  pc <- testProject()
-  pop <- pc$populations[["TestPopulation"]]
+  project <- testProject()
+  pop <- project$populations[["TestPopulation"]]
   expect_type(pop, "list")
   expect_true("species" %in% names(pop))
   expect_true("population" %in% names(pop))
@@ -92,58 +92,55 @@ test_that("Populations are stored as plain lists", {
 })
 
 test_that("Project parses plots into data.frames", {
-  pc <- testProject()
-  expect_s3_class(pc$plots$dataCombined, "data.frame")
-  expect_equal(nrow(pc$plots$dataCombined), 4)
-  expect_s3_class(pc$plots$plotConfiguration, "data.frame")
-  expect_equal(nrow(pc$plots$plotConfiguration), 4)
+  project <- testProject()
+  expect_s3_class(project$plots$dataCombined, "data.frame")
+  expect_equal(nrow(project$plots$dataCombined), 4)
+  expect_s3_class(project$plots$plotConfiguration, "data.frame")
+  expect_equal(nrow(project$plots$plotConfiguration), 4)
 })
 
 # Path property setters ----
 
 test_that("setting non-existent outputFolder does not warn", {
-  pc <- testProject()
-  expect_no_warning(pc$outputFolder <- "this/directory/does/not/exist")
+  project <- testProject()
+  expect_no_warning(project$outputFolder <- "this/directory/does/not/exist")
 })
 
 test_that("setting non-existent dataFolder warns", {
-  pc <- testProject()
-  expect_warning(pc$dataFolder <- "this/directory/does/not/exist")
+  project <- testProject()
+  expect_warning(project$dataFolder <- "this/directory/does/not/exist")
 })
 
 test_that("setting invalid paths warns for each path property", {
-  pc <- testProject()
-  expect_warning(pc$configurationsFolder <- "Wrong/Folder")
-  expect_warning(pc$dataFolder <- "folder/data/does/not/exist")
-  expect_warning(pc$modelFolder <- "folder/model/does/not/exist")
-  expect_warning(pc$populationsFolder <- "folder/populations/does/not/exist")
-  expect_warning(pc$modelParamsFile <- "modelparams_donotexist.xlsx")
-  expect_warning(pc$individualsFile <- "individuals_donotexist.xlsx")
-  expect_warning(pc$populationsFile <- "populations_donotexist.xlsx")
-  expect_warning(pc$scenariosFile <- "scenarios_donotexist.xlsx")
-  expect_warning(pc$applicationsFile <- "applications_donotexist.xlsx")
-  expect_warning(pc$plotsFile <- "plots_donotexist.xlsx")
+  project <- testProject()
+  expect_warning(project$configurationsFolder <- "Wrong/Folder")
+  expect_warning(project$dataFolder <- "folder/data/does/not/exist")
+  expect_warning(project$modelFolder <- "folder/model/does/not/exist")
+  expect_warning(project$populationsFolder <- "folder/populations/does/not/exist")
+  expect_warning(project$modelParamsFile <- "modelparams_donotexist.xlsx")
+  expect_warning(project$individualsFile <- "individuals_donotexist.xlsx")
+  expect_warning(project$populationsFile <- "populations_donotexist.xlsx")
+  expect_warning(project$scenariosFile <- "scenarios_donotexist.xlsx")
+  expect_warning(project$applicationsFile <- "applications_donotexist.xlsx")
+  expect_warning(project$plotsFile <- "plots_donotexist.xlsx")
 })
 
 # Modified flag ----
 
 test_that("modified flag is FALSE when first created from JSON", {
-  pc <- testProject()
-  expect_false(pc$modified)
+  project <- testProject()
+  expect_false(project$modified)
 })
 
 test_that("modified flag is FALSE for empty Project", {
-  pc <- Project$new()
-  expect_false(pc$modified)
+  project <- Project$new()
+  expect_false(project$modified)
 })
 
-test_that("modified flag can be set to a logical value", {
-  pc <- testProject()
-  expect_false(pc$modified)
-  pc$modified <- TRUE
-  expect_true(pc$modified)
-  pc$modified <- FALSE
-  expect_false(pc$modified)
+test_that("modified flag is read-only", {
+  project <- testProject()
+  expect_error(project$modified <- TRUE, "modified is readonly")
+  expect_error(project$modified <- FALSE, "modified is readonly")
 })
 
 test_that("modified flag becomes TRUE when any property is changed", {
@@ -161,58 +158,58 @@ test_that("modified flag becomes TRUE when any property is changed", {
     "outputFolder"
   )
   for (prop in properties) {
-    pc <- testProject()
-    expect_false(pc$modified)
-    suppressWarnings(pc[[prop]] <- "new/value")
-    expect_true(pc$modified, info = paste("property:", prop))
+    project <- testProject()
+    expect_false(project$modified)
+    suppressWarnings(project[[prop]] <- "new/value")
+    expect_true(project$modified, info = paste("property:", prop))
   }
 })
 
 test_that("modified flag persists across multiple property changes", {
-  pc <- testProject()
-  expect_false(pc$modified)
-  suppressWarnings(pc$modelFolder <- "new/model/folder")
-  expect_true(pc$modified)
-  suppressWarnings(pc$dataFolder <- "new/data/folder")
-  expect_true(pc$modified)
-  pc$outputFolder <- "new/output/folder"
-  expect_true(pc$modified)
+  project <- testProject()
+  expect_false(project$modified)
+  suppressWarnings(project$modelFolder <- "new/model/folder")
+  expect_true(project$modified)
+  suppressWarnings(project$dataFolder <- "new/data/folder")
+  expect_true(project$modified)
+  project$outputFolder <- "new/output/folder"
+  expect_true(project$modified)
 })
 
 test_that("modified flag is independent between clones", {
-  pc <- testProject()
-  cloned <- pc$clone()
+  project <- testProject()
+  cloned <- project$clone()
   expect_false(cloned$modified)
 
-  suppressWarnings(pc$modelFolder <- "modified/folder")
-  expect_true(pc$modified)
+  suppressWarnings(project$modelFolder <- "modified/folder")
+  expect_true(project$modified)
   expect_false(cloned$modified)
 
   suppressWarnings(cloned$dataFolder <- "modified/data/folder")
-  expect_true(pc$modified)
+  expect_true(project$modified)
   expect_true(cloned$modified)
 })
 
 test_that("Scenarios are parsed as Scenario objects (not ScenarioConfiguration)", {
-  pc <- testProject()
-  expect_true(length(pc$scenarios) > 0)
-  sc <- pc$scenarios[["TestScenario"]]
+  project <- testProject()
+  expect_true(length(project$scenarios) > 0)
+  sc <- project$scenarios[["TestScenario"]]
   expect_s3_class(sc, "Scenario")
   expect_equal(sc$scenarioName, "TestScenario")
   expect_false(is.null(sc$modelFile))
   expect_equal(sc$modelParameters, c("Global"))
 })
 
-test_that("pc$scenarios replaces pc$scenarioConfigurations", {
-  pc <- testProject()
-  expect_true(!is.null(pc$scenarios))
+test_that("project$scenarios replaces project$scenarioConfigurations", {
+  project <- testProject()
+  expect_true(!is.null(project$scenarios))
 })
 
 # Print method ----
 
 test_that("print() shows category counts for loaded project", {
-  pc <- testProject()
-  output <- capture.output(print(pc))
+  project <- testProject()
+  output <- capture.output(print(project))
   output_text <- paste(output, collapse = "\n")
 
   expect_match(output_text, "Scenarios:\\s+5")
@@ -227,8 +224,8 @@ test_that("print() shows category counts for loaded project", {
 })
 
 test_that("print() does not show Excel configuration file paths", {
-  pc <- testProject()
-  output <- capture.output(print(pc))
+  project <- testProject()
+  output <- capture.output(print(project))
   output_text <- paste(output, collapse = "\n")
 
   expect_no_match(output_text, "Model params file")
@@ -242,8 +239,8 @@ test_that("print() does not show Excel configuration file paths", {
 })
 
 test_that("print() shows 0 counts for empty Project", {
-  pc <- Project$new()
-  output <- capture.output(print(pc))
+  project <- Project$new()
+  output <- capture.output(print(project))
   output_text <- paste(output, collapse = "\n")
 
   expect_match(output_text, "Scenarios:\\s+0")
@@ -256,24 +253,24 @@ test_that("print() shows 0 counts for empty Project", {
 })
 
 test_that("print() shows relative paths instead of absolute paths", {
-  pc <- testProject()
-  output <- capture.output(print(pc))
+  project <- testProject()
+  output <- capture.output(print(project))
   output_text <- paste(output, collapse = "\n")
 
   expect_match(output_text, "Model folder:\\s+Models/Simulations")
   expect_match(output_text, "Data folder:\\s+Data")
   expect_match(output_text, "Output folder:\\s+Results")
-  expect_no_match(output_text, pc$projectDirPath, fixed = TRUE)
+  expect_no_match(output_text, project$projectDirPath, fixed = TRUE)
 })
 
 # observedData parsing ----
 
 test_that("observedData field is populated from JSON", {
-  pc <- testProject()
-  expect_type(pc$observedData, "list")
-  expect_true(length(pc$observedData) > 0)
-  expect_equal(pc$observedData[[1]]$type, "excel")
-  expect_equal(pc$observedData[[1]]$sheets, list("Laskin 1982.Group A"))
+  project <- testProject()
+  expect_type(project$observedData, "list")
+  expect_true(length(project$observedData) > 0)
+  expect_equal(project$observedData[[1]]$type, "excel")
+  expect_equal(project$observedData[[1]]$sheets, list("Laskin 1982.Group A"))
 })
 
 test_that("observedData is empty list when JSON has no observedData", {
@@ -282,9 +279,9 @@ test_that("observedData is empty list when JSON has no observedData", {
     '{"schemaVersion": "2.0", "filePaths": {}}',
     tmp
   )
-  pc <- Project$new(tmp)
-  expect_type(pc$observedData, "list")
-  expect_length(pc$observedData, 0)
+  project <- Project$new(tmp)
+  expect_type(project$observedData, "list")
+  expect_length(project$observedData, 0)
   unlink(tmp)
 })
 
@@ -310,11 +307,11 @@ test_that("saveProject preserves esqlabsRVersion from source JSON", {
   storedVersion <- rawJson$esqlabsRVersion
   expect_false(is.null(storedVersion))
 
-  pc <- loadProject(jsonPath)
+  project <- loadProject(jsonPath)
 
   tmp <- tempfile(fileext = ".json")
   on.exit(unlink(tmp), add = TRUE)
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
 
   reloaded <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
   expect_equal(reloaded$esqlabsRVersion, storedVersion)
@@ -352,11 +349,11 @@ test_that("loadProject errors when steadyStateTime is set but steadyStateTimeUni
   )
 })
 
-# data accessor ----
+# asList accessor ----
 
-test_that("data accessor returns complete project structure as list", {
-  pc <- testProject()
-  data <- pc$data
+test_that("asList accessor returns complete project structure as list", {
+  project <- testProject()
+  data <- project$asList
 
   expect_type(data, "list")
   expect_equal(data$schemaVersion, "2.0")
@@ -370,27 +367,27 @@ test_that("data accessor returns complete project structure as list", {
   expect_true("plots" %in% names(data))
 })
 
-test_that("data accessor is read-only", {
-  pc <- testProject()
-  expect_error(pc$data <- list(), "readonly")
+test_that("asList accessor is read-only", {
+  project <- testProject()
+  expect_error(project$asList <- list(), "readonly")
 })
 
-test_that("data accessor preserves schemaVersion from source JSON", {
+test_that("asList accessor preserves schemaVersion from source JSON", {
   jsonPath <- testProjectJSONPath()
   rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
 
-  expect_equal(pc$data$schemaVersion, rawJson$schemaVersion)
+  expect_equal(project$asList$schemaVersion, rawJson$schemaVersion)
 })
 
-test_that("data accessor preserves filePaths values from source JSON", {
+test_that("asList accessor preserves filePaths values from source JSON", {
   jsonPath <- testProjectJSONPath()
   rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
 
   for (field in names(rawJson$filePaths)) {
     raw_val <- rawJson$filePaths[[field]]
-    data_val <- pc$data$filePaths[[field]]
+    data_val <- project$asList$filePaths[[field]]
     if (!is.null(raw_val)) {
       expect_equal(
         gsub("/$", "", as.character(data_val)),
@@ -401,70 +398,70 @@ test_that("data accessor preserves filePaths values from source JSON", {
   }
 })
 
-test_that("data accessor preserves scenario count from source JSON", {
+test_that("asList accessor preserves scenario count from source JSON", {
   jsonPath <- testProjectJSONPath()
   rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
 
-  expect_equal(length(pc$data$scenarios), length(rawJson$scenarios))
+  expect_equal(length(project$asList$scenarios), length(rawJson$scenarios))
 })
 
-test_that("data accessor preserves scenario names from source JSON", {
+test_that("asList accessor preserves scenario names from source JSON", {
   jsonPath <- testProjectJSONPath()
   rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
 
   rawNames <- vapply(rawJson$scenarios, function(s) s$name, character(1))
-  dataNames <- vapply(pc$data$scenarios, function(s) s$name, character(1))
+  dataNames <- vapply(project$asList$scenarios, function(s) s$name, character(1))
   expect_equal(sort(unname(dataNames)), sort(unname(rawNames)))
 })
 
-test_that("data accessor preserves modelParameters from source JSON", {
+test_that("asList accessor preserves modelParameters from source JSON", {
   jsonPath <- testProjectJSONPath()
   rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
 
-  expect_equal(names(pc$data$modelParameters), names(rawJson$modelParameters))
+  expect_equal(names(project$asList$modelParameters), names(rawJson$modelParameters))
 })
 
-test_that("data accessor preserves individuals from source JSON", {
+test_that("asList accessor preserves individuals from source JSON", {
   jsonPath <- testProjectJSONPath()
   rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
 
-  expect_equal(length(pc$data$individuals), length(rawJson$individuals))
+  expect_equal(length(project$asList$individuals), length(rawJson$individuals))
 })
 
-test_that("data accessor preserves populations from source JSON", {
+test_that("asList accessor preserves populations from source JSON", {
   jsonPath <- testProjectJSONPath()
   rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
 
-  expect_equal(length(pc$data$populations), length(rawJson$populations))
+  expect_equal(length(project$asList$populations), length(rawJson$populations))
 })
 
-test_that("data accessor preserves outputPaths from source JSON", {
+test_that("asList accessor preserves outputPaths from source JSON", {
   jsonPath <- testProjectJSONPath()
   rawJson <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  pc <- Project$new(jsonPath)
+  project <- Project$new(jsonPath)
 
-  expect_equal(pc$data$outputPaths, rawJson$outputPaths)
+  expect_equal(project$asList$outputPaths, rawJson$outputPaths)
 })
 
-test_that("data accessor reflects in-memory changes after addScenario", {
-  pc <- testProject()
-  originalCount <- length(pc$data$scenarios)
+test_that("asList accessor reflects in-memory changes after addScenario", {
+  project <- testProject()
+  originalCount <- length(project$asList$scenarios)
 
-  addScenario(pc, "NewTestScenario", "Aciclovir.pkml", individualId = "Indiv1")
+  addScenario(project, "NewTestScenario", "Aciclovir.pkml", individualId = "Indiv1")
 
-  expect_equal(length(pc$data$scenarios), originalCount + 1)
-  newNames <- vapply(pc$data$scenarios, function(s) s$name, character(1))
+  expect_equal(length(project$asList$scenarios), originalCount + 1)
+  newNames <- vapply(project$asList$scenarios, function(s) s$name, character(1))
   expect_true("NewTestScenario" %in% newNames)
 })
 
-test_that("data accessor returns default structure for empty Project", {
-  pc <- Project$new()
-  data <- pc$data
+test_that("asList accessor returns default structure for empty Project", {
+  project <- Project$new()
+  data <- project$asList
   expect_equal(data$schemaVersion, "2.0")
   expect_equal(length(data$scenarios), 0)
   expect_equal(length(data$individuals), 0)
@@ -474,8 +471,8 @@ test_that("data accessor returns default structure for empty Project", {
 # sync method ----
 
 test_that("sync returns in_sync TRUE for freshly loaded project", {
-  pc <- testProject()
-  result <- pc$sync(silent = TRUE)
+  project <- testProject()
+  result <- project$sync(silent = TRUE)
 
   expect_type(result, "list")
   expect_true(result$in_sync)
@@ -483,10 +480,10 @@ test_that("sync returns in_sync TRUE for freshly loaded project", {
 })
 
 test_that("sync detects unsaved changes after modification", {
-  pc <- testProject()
-  addScenario(pc, "NewScenario", "Aciclovir.pkml", individualId = "Indiv1")
+  project <- testProject()
+  addScenario(project, "NewScenario", "Aciclovir.pkml", individualId = "Indiv1")
 
-  result <- pc$sync(silent = TRUE)
+  result <- project$sync(silent = TRUE)
 
   expect_false(result$in_sync)
   expect_true(result$unsaved_changes)
@@ -494,11 +491,11 @@ test_that("sync detects unsaved changes after modification", {
 
 test_that("sync shows unsaved_changes FALSE after saveProject", {
   temp_proj <- local_test_project()
-  pc <- loadProject(temp_proj$snapshot_path)
-  addScenario(pc, "NewScenario", "Aciclovir.pkml", individualId = "Indiv1")
+  project <- loadProject(temp_proj$snapshot_path)
+  addScenario(project, "NewScenario", "Aciclovir.pkml", individualId = "Indiv1")
 
-  saveProject(pc)
-  result <- pc$sync(silent = TRUE)
+  saveProject(project)
+  result <- project$sync(silent = TRUE)
 
   expect_false(result$unsaved_changes)
   expect_false(result$json_modified)
@@ -507,7 +504,7 @@ test_that("sync shows unsaved_changes FALSE after saveProject", {
 
 test_that("sync detects external JSON file changes", {
   temp_proj <- local_test_project()
-  pc <- loadProject(temp_proj$snapshot_path)
+  project <- loadProject(temp_proj$snapshot_path)
 
   cfg <- jsonlite::fromJSON(temp_proj$snapshot_path, simplifyVector = FALSE)
   cfg$scenarios[[1]]$name <- "RenamedByExternalEdit"
@@ -518,7 +515,7 @@ test_that("sync detects external JSON file changes", {
     null = "null"
   )
 
-  result <- pc$sync(silent = TRUE)
+  result <- project$sync(silent = TRUE)
 
   expect_false(result$in_sync)
   expect_true(result$json_modified)
@@ -526,7 +523,7 @@ test_that("sync detects external JSON file changes", {
 
 test_that("sync detects Excel files when JSON is missing", {
   temp_proj <- local_test_project()
-  pc <- loadProject(temp_proj$snapshot_path)
+  project <- loadProject(temp_proj$snapshot_path)
 
   # Delete the JSON but keep Excel files. Sync should not silently report
   # in_sync; it should flag the Excel-side state as modified relative to
@@ -534,7 +531,7 @@ test_that("sync detects Excel files when JSON is missing", {
   unlink(temp_proj$snapshot_path)
   expect_false(file.exists(temp_proj$snapshot_path))
 
-  result <- pc$sync(silent = TRUE)
+  result <- project$sync(silent = TRUE)
 
   expect_false(result$in_sync)
   expect_true(result$excel_modified)
@@ -542,14 +539,14 @@ test_that("sync detects Excel files when JSON is missing", {
 
 test_that("sync reports excel_modified when Excel differs from JSON", {
   temp_proj <- local_test_project()
-  pc <- loadProject(temp_proj$snapshot_path)
+  project <- loadProject(temp_proj$snapshot_path)
 
   scenariosXlsx <- file.path(temp_proj$configurations_dir, "Scenarios.xlsx")
   scenariosDf <- readExcel(scenariosXlsx, sheet = "Scenarios")
   scenariosDf$Scenario_name[[1]] <- "ModifiedInExcel"
   .writeExcel(list(Scenarios = scenariosDf), scenariosXlsx)
 
-  result <- pc$sync(silent = TRUE)
+  result <- project$sync(silent = TRUE)
 
   expect_false(result$in_sync)
   expect_true(result$excel_modified)
@@ -703,35 +700,35 @@ test_that("dataCombined round-trip: nested JSON -> flat df -> nested JSON", {
 })
 
 test_that("full project can be built programmatically using add* functions", {
-  pc <- Project$new()
-  pc$modelFolder <- testProjectJSONPath() |>
+  project <- Project$new()
+  project$modelFolder <- testProjectJSONPath() |>
     dirname() |>
     file.path("Models")
-  pc$dataFolder <- testProjectJSONPath() |>
+  project$dataFolder <- testProjectJSONPath() |>
     dirname() |>
     file.path("Data")
-  pc$outputFolder <- tempdir()
+  project$outputFolder <- tempdir()
 
   addIndividual(
-    pc,
+    project,
     "I1",
     species = "Human",
     weight = 70,
     height = 175,
     age = 30
   )
-  addPopulation(pc, "P1", species = "Human", numberOfIndividuals = 5)
+  addPopulation(project, "P1", species = "Human", numberOfIndividuals = 5)
   addModelParameter(
-    pc,
+    project,
     "G1",
     containerPath = "Organism|Liver",
     parameterName = "Volume",
     value = 1.8,
     units = "L"
   )
-  addApplication(pc, "Oral")
+  addApplication(project, "Oral")
   addApplicationParameter(
-    pc,
+    project,
     "Oral",
     containerPath = "Applications|Oral",
     parameterName = "Dose",
@@ -739,12 +736,12 @@ test_that("full project can be built programmatically using add* functions", {
     units = "mg"
   )
   addOutputPath(
-    pc,
+    project,
     "Out1",
     "Organism|PeripheralVenousBlood|Aciclovir|Concentration in container"
   )
   addScenario(
-    pc,
+    project,
     "S1",
     "Aciclovir.pkml",
     individualId = "I1",
@@ -753,17 +750,17 @@ test_that("full project can be built programmatically using add* functions", {
     outputPathIds = "Out1"
   )
 
-  expect_true(pc$modified)
-  expect_equal(length(pc$individuals), 1)
-  expect_equal(length(pc$populations), 1)
-  expect_equal(length(pc$modelParameters), 1)
-  expect_equal(length(pc$applications), 1)
-  expect_equal(length(pc$outputPaths), 1)
-  expect_equal(length(pc$scenarios), 1)
+  expect_true(project$modified)
+  expect_equal(length(project$individuals), 1)
+  expect_equal(length(project$populations), 1)
+  expect_equal(length(project$modelParameters), 1)
+  expect_equal(length(project$applications), 1)
+  expect_equal(length(project$outputPaths), 1)
+  expect_equal(length(project$scenarios), 1)
 
   # Round-trip
   tmp <- tempfile(fileext = ".json")
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   reloaded <- loadProject(tmp)
   expect_equal(names(reloaded$individuals), "I1")
   expect_equal(names(reloaded$scenarios), "S1")
@@ -771,20 +768,20 @@ test_that("full project can be built programmatically using add* functions", {
 })
 
 test_that("parsed individuals and applications carry S3 class tags", {
-  pc <- testProject()
-  if (length(pc$individuals) > 0) {
-    expect_true(inherits(pc$individuals[[1]], "Individual"))
+  project <- testProject()
+  if (length(project$individuals) > 0) {
+    expect_true(inherits(project$individuals[[1]], "Individual"))
   }
-  if (length(pc$applications) > 0) {
-    expect_true(inherits(pc$applications[[1]], "Application"))
+  if (length(project$applications) > 0) {
+    expect_true(inherits(project$applications[[1]], "Application"))
   }
 })
 
 test_that("individual inline parameters round-trip through saveProject/loadProject", {
-  pc <- Project$new()
-  pc$modelFolder <- tempdir()
+  project <- Project$new()
+  project$modelFolder <- tempdir()
   addIndividual(
-    pc,
+    project,
     "RT",
     species = "Human",
     weight = 70,
@@ -806,7 +803,7 @@ test_that("individual inline parameters round-trip through saveProject/loadProje
     )
   )
   tmp <- tempfile(fileext = ".json")
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   reloaded <- loadProject(tmp)
   pset <- reloaded$individuals[["RT"]]$parameters
   expect_equal(pset$paths, c("Organism|Liver|Volume", "Organism|Kidney|GFR"))
@@ -815,11 +812,11 @@ test_that("individual inline parameters round-trip through saveProject/loadProje
 })
 
 test_that("individual without parameters round-trips with parameters = NULL", {
-  pc <- Project$new()
-  pc$modelFolder <- tempdir()
-  addIndividual(pc, "RT_NoParam", species = "Human")
+  project <- Project$new()
+  project$modelFolder <- tempdir()
+  addIndividual(project, "RT_NoParam", species = "Human")
   tmp <- tempfile(fileext = ".json")
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   reloaded <- loadProject(tmp)
   expect_null(reloaded$individuals[["RT_NoParam"]]$parameters)
 })
@@ -839,8 +836,8 @@ test_that("loaded JSON with individual parameters: array gets parsed correctly",
   }'
   tmp <- tempfile(fileext = ".json")
   writeLines(json, tmp)
-  pc <- loadProject(tmp)
-  pset <- pc$individuals[["JsonI"]]$parameters
+  project <- loadProject(tmp)
+  pset <- project$individuals[["JsonI"]]$parameters
   expect_equal(pset$paths, "Organism|Liver|Volume")
   expect_equal(pset$values, 1.8)
   expect_equal(pset$units, "L")
@@ -849,11 +846,11 @@ test_that("loaded JSON with individual parameters: array gets parsed correctly",
 # saveProject() ----
 
 test_that("saveProject writes valid JSON that can be reloaded", {
-  pc <- testProject()
+  project <- testProject()
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
 
   expect_true(file.exists(tmp))
   pc2 <- loadProject(tmp)
@@ -865,34 +862,33 @@ test_that("saveProject defaults to project$jsonPath when path is NULL", {
   jsonPath <- file.path(tmpDir, "Project.json")
   file.copy(testProjectJSONPath(), jsonPath)
 
-  pc <- loadProject(jsonPath)
-  pc$scenarios[["NewScenario"]] <- Scenario$new()
-  pc$scenarios[["NewScenario"]]$scenarioName <- "NewScenario"
-  pc$scenarios[["NewScenario"]]$modelFile <- "Test.pkml"
+  project <- loadProject(jsonPath)
+  project$scenarios[["NewScenario"]] <- Scenario$new()
+  project$scenarios[["NewScenario"]]$scenarioName <- "NewScenario"
+  project$scenarios[["NewScenario"]]$modelFile <- "Test.pkml"
 
-  saveProject(pc)
+  saveProject(project)
 
   pc2 <- loadProject(jsonPath)
   expect_true("NewScenario" %in% names(pc2$scenarios))
 })
 
 test_that("saveProject errors when path is NULL and project has no jsonPath", {
-
-  pc <- Project$new()
-  expect_error(saveProject(pc), "path")
+  project <- Project$new()
+  expect_error(saveProject(project), "path")
 })
 
 test_that("saveProject produces round-trip fidelity for scenarios", {
-  pc <- testProject()
+  project <- testProject()
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   pc2 <- loadProject(tmp)
 
-  expect_equal(names(pc$scenarios), names(pc2$scenarios))
+  expect_equal(names(project$scenarios), names(pc2$scenarios))
 
-  sc1 <- pc$scenarios[["TestScenario2"]]
+  sc1 <- project$scenarios[["TestScenario2"]]
   sc2 <- pc2$scenarios[["TestScenario2"]]
   expect_equal(sc1$scenarioName, sc2$scenarioName)
   expect_equal(sc1$modelFile, sc2$modelFile)
@@ -903,95 +899,98 @@ test_that("saveProject produces round-trip fidelity for scenarios", {
 })
 
 test_that("saveProject produces round-trip fidelity for modelParameters", {
-  pc <- testProject()
+  project <- testProject()
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   pc2 <- loadProject(tmp)
 
-  expect_equal(names(pc$modelParameters), names(pc2$modelParameters))
-  expect_equal(pc$modelParameters[["Global"]], pc2$modelParameters[["Global"]])
+  expect_equal(names(project$modelParameters), names(pc2$modelParameters))
+  expect_equal(project$modelParameters[["Global"]], pc2$modelParameters[["Global"]])
 })
 
 test_that("saveProject produces round-trip fidelity for individuals", {
-  pc <- testProject()
+  project <- testProject()
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   pc2 <- loadProject(tmp)
 
-  expect_equal(names(pc$individuals), names(pc2$individuals))
-  indiv1 <- pc$individuals[["Indiv1"]]
+  expect_equal(names(project$individuals), names(pc2$individuals))
+  indiv1 <- project$individuals[["Indiv1"]]
   indiv2 <- pc2$individuals[["Indiv1"]]
   expect_equal(indiv1$species, indiv2$species)
   expect_equal(indiv1$weight, indiv2$weight)
 })
 
 test_that("saveProject produces round-trip fidelity for populations", {
-  pc <- testProject()
+  project <- testProject()
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   pc2 <- loadProject(tmp)
 
-  expect_equal(names(pc$populations), names(pc2$populations))
-  pop1 <- pc$populations[["TestPopulation"]]
+  expect_equal(names(project$populations), names(pc2$populations))
+  pop1 <- project$populations[["TestPopulation"]]
   pop2 <- pc2$populations[["TestPopulation"]]
   expect_equal(pop1$species, pop2$species)
   expect_equal(pop1$numberOfIndividuals, pop2$numberOfIndividuals)
 })
 
 test_that("saveProject produces round-trip fidelity for applications", {
-  pc <- testProject()
+  project <- testProject()
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   pc2 <- loadProject(tmp)
 
-  expect_equal(names(pc$applications), names(pc2$applications))
+  expect_equal(names(project$applications), names(pc2$applications))
   expect_equal(
-    pc$applications[["Aciclovir_iv_250mg"]],
+    project$applications[["Aciclovir_iv_250mg"]],
     pc2$applications[["Aciclovir_iv_250mg"]]
   )
 })
 
 test_that("saveProject produces round-trip fidelity for outputPaths", {
-  pc <- testProject()
+  project <- testProject()
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   pc2 <- loadProject(tmp)
 
-  expect_equal(pc$outputPaths, pc2$outputPaths)
+  expect_equal(project$outputPaths, pc2$outputPaths)
 })
 
 test_that("saveProject produces round-trip fidelity for plots", {
-  pc <- testProject()
+  project <- testProject()
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   pc2 <- loadProject(tmp)
 
-  expect_equal(nrow(pc$plots$dataCombined), nrow(pc2$plots$dataCombined))
-  expect_equal(nrow(pc$plots$plotConfiguration), nrow(pc2$plots$plotConfiguration))
-  expect_equal(nrow(pc$plots$plotGrids), nrow(pc2$plots$plotGrids))
+  expect_equal(nrow(project$plots$dataCombined), nrow(pc2$plots$dataCombined))
+  expect_equal(
+    nrow(project$plots$plotConfiguration),
+    nrow(pc2$plots$plotConfiguration)
+  )
+  expect_equal(nrow(project$plots$plotGrids), nrow(pc2$plots$plotGrids))
 })
 
 test_that("saveProject resets modified flag to FALSE", {
-  pc <- testProject()
-  pc$modified <- TRUE
+  project <- testProject()
+  project$.markModified()
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
 
-  expect_false(pc$modified)
+  expect_false(project$modified)
 })
 
 test_that("saveProject persists scenario added via addScenario", {
@@ -999,16 +998,16 @@ test_that("saveProject persists scenario added via addScenario", {
   jsonPath <- file.path(tmpDir, "Project.json")
   file.copy(testProjectJSONPath(), jsonPath)
 
-  pc <- loadProject(jsonPath)
+  project <- loadProject(jsonPath)
   addScenario(
-    project = pc,
+    project = project,
     scenarioName = "ProgrammaticScenario",
     modelFile = "Aciclovir.pkml",
     individualId = "Indiv1",
     applicationProtocol = "Aciclovir_iv_250mg"
   )
 
-  saveProject(pc, jsonPath)
+  saveProject(project, jsonPath)
 
   pc2 <- loadProject(jsonPath)
   expect_true("ProgrammaticScenario" %in% names(pc2$scenarios))
@@ -1019,12 +1018,12 @@ test_that("saveProject persists scenario added via addScenario", {
 })
 
 test_that("saveProject defaults esqlabsRVersion to current package version when project lacks one", {
-  pc <- testProject()
-  pc$esqlabsRVersion <- NULL
+  project <- testProject()
+  project$esqlabsRVersion <- NULL
   tmp <- tempfile(fileext = ".json")
   withr::defer(unlink(tmp))
 
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
 
   jsonData <- jsonlite::fromJSON(tmp, simplifyVector = FALSE)
   expect_equal(
@@ -1104,11 +1103,11 @@ test_that("initProject creates project from Blank template with no scenarios", {
   initProject(destination = temp_dir, overwrite = TRUE)
 
   # The generated project should be loadable
-  pc <- loadProject(file.path(temp_dir, "Project.json"))
-  expect_s3_class(pc, "Project")
+  project <- loadProject(file.path(temp_dir, "Project.json"))
+  expect_s3_class(project, "Project")
 
   # Blank project should have no scenarios
-  expect_equal(length(pc$scenarios), 0)
+  expect_equal(length(project$scenarios), 0)
 })
 
 test_that("exampleProjectPath points to Example project", {

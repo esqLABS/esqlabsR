@@ -226,20 +226,20 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
 })
 
 test_that("addPopulation adds entry with required fields", {
-  pc <- testProject()
-  initial <- length(pc$populations)
-  addPopulation(pc, "NewPop", species = "Human", numberOfIndividuals = 10)
-  expect_equal(length(pc$populations), initial + 1)
-  entry <- pc$populations[["NewPop"]]
+  project <- testProject()
+  initial <- length(project$populations)
+  addPopulation(project, "NewPop", species = "Human", numberOfIndividuals = 10)
+  expect_equal(length(project$populations), initial + 1)
+  entry <- project$populations[["NewPop"]]
   expect_equal(entry$species, "Human")
   expect_equal(entry$numberOfIndividuals, 10)
-  expect_true(pc$modified)
+  expect_true(project$modified)
 })
 
 test_that("addPopulation accepts range fields via ...", {
-  pc <- testProject()
+  project <- testProject()
   addPopulation(
-    pc,
+    project,
     "Pop2",
     species = "Human",
     numberOfIndividuals = 20,
@@ -249,26 +249,26 @@ test_that("addPopulation accepts range fields via ...", {
     ageMax = 65,
     proportionOfFemales = 50
   )
-  entry <- pc$populations[["Pop2"]]
+  entry <- project$populations[["Pop2"]]
   expect_equal(entry$weightMin, 50)
   expect_equal(entry$ageMax, 65)
   expect_equal(entry$proportionOfFemales, 50)
 })
 
 test_that("addPopulation errors on duplicate id", {
-  pc <- testProject()
-  existing <- names(pc$populations)[[1]]
+  project <- testProject()
+  existing <- names(project$populations)[[1]]
   expect_error(
-    addPopulation(pc, existing, species = "Human", numberOfIndividuals = 5),
+    addPopulation(project, existing, species = "Human", numberOfIndividuals = 5),
     regexp = "already exists"
   )
 })
 
 test_that("addPopulation errors on unknown ... field", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
     addPopulation(
-      pc,
+      project,
       "BadPop",
       species = "Human",
       numberOfIndividuals = 10,
@@ -279,26 +279,26 @@ test_that("addPopulation errors on unknown ... field", {
 })
 
 test_that("addPopulation errors on non-positive numberOfIndividuals", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
-    addPopulation(pc, "Zero", species = "Human", numberOfIndividuals = 0),
+    addPopulation(project, "Zero", species = "Human", numberOfIndividuals = 0),
     regexp = "numberOfIndividuals"
   )
 })
 
 test_that("removePopulation removes entry and sets modified", {
-  pc <- testProject()
-  addPopulation(pc, "Gone", species = "Human", numberOfIndividuals = 5)
-  pc$modified <- FALSE
-  removePopulation(pc, "Gone")
-  expect_false("Gone" %in% names(pc$populations))
-  expect_true(pc$modified)
+  project <- testProject()
+  addPopulation(project, "Gone", species = "Human", numberOfIndividuals = 5)
+  project$.markSaved()
+  removePopulation(project, "Gone")
+  expect_false("Gone" %in% names(project$populations))
+  expect_true(project$modified)
 })
 
 test_that("removePopulation warns on missing id", {
-  pc <- testProject()
+  project <- testProject()
   expect_warning(
-    removePopulation(pc, "NoSuchPop_QQQ"),
+    removePopulation(project, "NoSuchPop_QQQ"),
     regexp = "not found"
   )
 })
@@ -312,9 +312,9 @@ test_that("project$addPopulation delegates to standalone", {
 })
 
 test_that("addPopulation survives round-trip", {
-  pc <- testProject()
+  project <- testProject()
   addPopulation(
-    pc,
+    project,
     "RT",
     species = "Human",
     numberOfIndividuals = 10,
@@ -322,7 +322,7 @@ test_that("addPopulation survives round-trip", {
     weightMax = 90
   )
   tmp <- tempfile(fileext = ".json")
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   reloaded <- loadProject(tmp)
   entry <- reloaded$populations[["RT"]]
   expect_equal(entry$numberOfIndividuals, 10)

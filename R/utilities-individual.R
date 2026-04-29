@@ -169,7 +169,7 @@ addIndividual <- function(project, individualId, species, ...) {
   class(entry) <- c("Individual", "list")
 
   project$individuals[[individualId]] <- entry
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -196,6 +196,6 @@ removeIndividual <- function(project, individualId) {
   }
   .warnIfReferenced(project, "individual", individualId)
   project$individuals[[individualId]] <- NULL
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }

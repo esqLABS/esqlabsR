@@ -1,3 +1,5 @@
+# Numeric parsing helpers ----
+
 #' Convert string to numeric
 #'
 #' @param string A string or a list of strings to be converted to numeric values
@@ -431,7 +433,7 @@ addObservedData <- function(project, entry) {
     project$.appendObservedDataNameCache(name)
     newEntry <- list(type = "programmatic", name = name)
     project$observedData <- c(project$observedData, list(newEntry))
-    project$modified <- TRUE
+    project$.markModified()
     cli::cli_inform(c(
       "i" = paste0(
         "For reproducibility, consider declaring this DataSet via a script ",
@@ -449,7 +451,7 @@ addObservedData <- function(project, entry) {
     }
     project$.invalidateObservedDataNamesCache()
     project$observedData <- c(project$observedData, list(entry))
-    project$modified <- TRUE
+    project$.markModified()
   } else {
     stop(messages$observedDataInvalidEntry())
   }
@@ -499,7 +501,7 @@ removeObservedData <- function(project, name) {
       project$observedData <- project$observedData[-matchIdx[[1]]]
     }
     project$.invalidateObservedDataNamesCache()
-    project$modified <- TRUE
+    project$.markModified()
     return(invisible(project))
   }
 
@@ -518,6 +520,6 @@ removeObservedData <- function(project, name) {
 
   project$observedData <- project$observedData[-matchIdx[[1]]]
   project$.invalidateObservedDataNamesCache()
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }

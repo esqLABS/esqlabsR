@@ -61,13 +61,13 @@ test_that("importProjectFromExcel JSON can be loaded by Project", {
   )
 
   expect_no_error({
-    pc <- loadProject(jsonPath)
+    project <- loadProject(jsonPath)
   })
 
-  expect_s3_class(pc, "Project")
-  expect_true(length(pc$scenarios) > 0)
-  expect_true(length(pc$modelParameters) > 0)
-  expect_true(length(pc$individuals) > 0)
+  expect_s3_class(project, "Project")
+  expect_true(length(project$scenarios) > 0)
+  expect_true(length(project$modelParameters) > 0)
+  expect_true(length(project$individuals) > 0)
 })
 
 test_that("importProjectFromExcel does not merge bundled species parameters into modelParameters", {
@@ -89,12 +89,12 @@ test_that("importProjectFromExcel does not merge bundled species parameters into
 # ---- exportProjectToExcel tests ----
 
 test_that("exportProjectToExcel creates Excel files from Project", {
-  pc <- testProject()
+  project <- testProject()
 
   outputDir <- withr::local_tempdir("test_export")
 
   projConfigPath <- exportProjectToExcel(
-    pc,
+    project,
     outputDir = outputDir,
     silent = TRUE
   )
@@ -114,9 +114,9 @@ test_that("exportProjectToExcel creates Excel files from Project", {
 })
 
 test_that("exportProjectToExcel works with plain-data individuals and scenarios", {
-  pc <- testProject()
+  project <- testProject()
   tempDir <- withr::local_tempdir()
-  exportProjectToExcel(pc, outputDir = tempDir, silent = TRUE)
+  exportProjectToExcel(project, outputDir = tempDir, silent = TRUE)
 
   # Check that key files were created
   expect_true(file.exists(file.path(tempDir, "Configurations", "Scenarios.xlsx")))
@@ -124,10 +124,10 @@ test_that("exportProjectToExcel works with plain-data individuals and scenarios"
 })
 
 test_that("exportProjectToExcel preserves model parameters", {
-  pc <- testProject()
+  project <- testProject()
 
   outputDir <- withr::local_tempdir("test_export_params")
-  exportProjectToExcel(pc, outputDir = outputDir, silent = TRUE)
+  exportProjectToExcel(project, outputDir = outputDir, silent = TRUE)
 
   # Read back the ModelParameters.xlsx
   paramsFile <- file.path(outputDir, "Configurations", "ModelParameters.xlsx")
@@ -229,9 +229,9 @@ test_that("restoreProjectConfiguration emits deprecation warning", {
 })
 
 test_that("createProjectConfiguration emits deprecation warning", {
-  pc <- testProject()
+  project <- testProject()
   lifecycle::expect_deprecated(
-    createProjectConfiguration(pc$projectFilePath)
+    createProjectConfiguration(project$projectFilePath)
   )
 })
 

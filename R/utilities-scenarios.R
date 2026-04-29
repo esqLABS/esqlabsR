@@ -1,3 +1,5 @@
+# Internal scenario execution helpers ----
+
 #' Merge the parameter layers for a scenario
 #'
 #' @description Builds the final parameter structure for a scenario by merging
@@ -5,20 +7,20 @@
 #' order), species defaults, individual inline `parameters`, application inline
 #' `parameters`, then `customParams`. Pure function: no I/O, no simulation load.
 #'
-#' @param scenario A scenario plain-list (as in `pc$scenarios[[name]]`).
-#' @param pc A `Project` object.
+#' @param scenario A scenario plain-list (as in `project$scenarios[[name]]`).
+#' @param project A `Project` object.
 #' @param customParams Optional caller-supplied parameter structure.
 #'
 #' @returns A parameter structure `list(paths, values, units)`. May be `NULL`
 #'   if no layer sets any parameter.
 #' @keywords internal
-.mergeScenarioParameters <- function(scenario, pc, customParams = NULL) {
+.mergeScenarioParameters <- function(scenario, project, customParams = NULL) {
   params <- NULL
 
   # 1. Model parameters (iterate in the order listed on the scenario)
   if (!is.null(scenario$modelParameters)) {
     for (setId in scenario$modelParameters) {
-      setParams <- pc$modelParameters[[setId]]
+      setParams <- project$modelParameters[[setId]]
       if (!is.null(setParams)) {
         params <- extendParameterStructure(
           parameters = params,
@@ -30,7 +32,7 @@
 
   # 2. Species defaults (only if individual is set and resolves)
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
-    indivData <- pc$individuals[[scenario$individualId]]
+    indivData <- project$individuals[[scenario$individualId]]
     if (!is.null(indivData)) {
       speciesParams <- .getSpeciesParameters(indivData$species)
       if (!is.null(speciesParams)) {
@@ -56,7 +58,7 @@
     !is.null(scenario$applicationProtocol) &&
       !is.na(scenario$applicationProtocol)
   ) {
-    appData <- pc$applications[[scenario$applicationProtocol]]
+    appData <- project$applications[[scenario$applicationProtocol]]
     if (is.null(appData)) {
       stop(messages$errorApplicationProtocolNotFound(
         scenarioName = scenario$scenarioName,
@@ -90,7 +92,7 @@
 #' Does NOT run the simulation.
 #'
 #' @param scenario A `Scenario` object (plain data class).
-#' @param pc A `Project` object.
+#' @param project A `Project` object.
 #' @param customParams Optional parameter structure from the caller.
 #' @param cache An environment with `$individuals` and `$populations` named lists.
 #' @param simulationRunOptions Optional `SimulationRunOptions` (used for steady-state).
@@ -99,25 +101,25 @@
 #' @keywords internal
 .prepareScenario <- function(
   scenario,
-  pc,
+  project,
   customParams,
   cache,
   simulationRunOptions
 ) {
   # 1. Load simulation
   simulation <- ospsuite::loadSimulation(
-    filePath = file.path(pc$modelFolder, scenario$modelFile),
+    filePath = file.path(project$modelFolder, scenario$modelFile),
     loadFromCache = FALSE
   )
   simulation$name <- scenario$scenarioName
 
   # 2. Build merged parameter structure
-  params <- .mergeScenarioParameters(scenario, pc, customParams)
+  params <- .mergeScenarioParameters(scenario, project, customParams)
 
   # 2b. Individual characteristics (still needed for simulation initialization)
   individualCharacteristics <- NULL
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
-    indivData <- pc$individuals[[scenario$individualId]]
+    indivData <- project$individuals[[scenario$individualId]]
     if (is.null(indivData)) {
       warning(messages$warningNoIndividualCharacteristics(
         scenarioName = scenario$scenarioName,
@@ -197,7 +199,7 @@
     }
     if (scenario$readPopulationFromCSV) {
       populationPath <- paste0(
-        file.path(pc$populationsFolder, scenario$populationId),
+        file.path(project$populationsFolder, scenario$populationId),
         ".csv"
       )
       population <- loadPopulation(populationPath)
@@ -206,7 +208,7 @@
       if (!is.null(cache$populations[[scenario$populationId]])) {
         population <- cache$populations[[scenario$populationId]]
       } else {
-        popData <- pc$populations[[scenario$populationId]]
+        popData <- project$populations[[scenario$populationId]]
         if (is.null(popData)) {
           stop(paste0(
             "Population '",
@@ -301,7 +303,7 @@
 #' `.collectScenarioResult()`.
 #'
 #' @param scenario A `Scenario` object (plain data class).
-#' @param pc A `Project` object.
+#' @param project A `Project` object.
 #' @param customParams Optional parameter structure from the caller.
 #' @param cache An environment with `$individuals` and `$populations` named lists.
 #' @param simulationRunOptions Optional `SimulationRunOptions`.
@@ -310,14 +312,14 @@
 #' @keywords internal
 .executeScenario <- function(
   scenario,
-  pc,
+  project,
   customParams,
   cache,
   simulationRunOptions
 ) {
   prepared <- .prepareScenario(
     scenario = scenario,
-    pc = pc,
+    project = project,
     customParams = customParams,
     cache = cache,
     simulationRunOptions = simulationRunOptions
@@ -348,6 +350,8 @@
     population = population
   )
 }
+
+# Run scenarios ----
 
 #' Run a set of scenarios.
 #'
@@ -409,7 +413,7 @@ runScenarios <- function(
     scenario <- allScenarios[[scenarioName]]
     preparedList[[idx]] <- .prepareScenario(
       scenario = scenario,
-      pc = project,
+      project = project,
       customParams = customParams,
       cache = cache,
       simulationRunOptions = simulationRunOptions
@@ -470,6 +474,8 @@ runScenarios <- function(
 
   return(returnList)
 }
+
+# Export / import scenario results ----
 
 #' Export results of scenario simulations to csv.
 #'
@@ -662,6 +668,8 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
   )
 }
 
+# Create scenarios from PKML ----
+
 #' Create scenario configurations from PKML files
 #'
 #' @description
@@ -751,18 +759,18 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 #' @examples
 #' \dontrun{
 #' # Load project
-#' pc <- loadProject("Project.json")
+#' project <- loadProject("Project.json")
 #'
 #' # Create scenarios from a single PKML file
 #' pkmlPath <- "path/to/simulation.pkml"
 #' scenarios <- createScenariosFromPKML(
 #'   pkmlFilePaths = pkmlPath,
-#'   project = pc
+#'   project = project
 #' )
 #'
 #' # Add to project and run
-#' pc$scenarios <- c(pc$scenarios, scenarios)
-#' results <- runScenarios(pc, scenarioNames = names(scenarios))
+#' project$scenarios <- c(project$scenarios, scenarios)
+#' results <- runScenarios(project, scenarioNames = names(scenarios))
 #'
 #' # Example of vector recycling - single value applied to all scenarios
 #' scenarios <- createScenariosFromPKML(
@@ -1378,6 +1386,8 @@ createScenarioConfigurationsFromPKML <- function(...) {
   }
 }
 
+# Public CRUD: scenarios and output paths ----
+
 #' Add a scenario programmatically to a Project
 #'
 #' @description Creates a new `Scenario` and adds it to the
@@ -1432,7 +1442,7 @@ addScenario <- function(
   readPopulationFromCSV = FALSE
 ) {
   validateIsOfType(project, "Project")
-  pc <- project
+  project <- project
   errors <- character()
 
   # Validate required args
@@ -1443,7 +1453,7 @@ addScenario <- function(
       nchar(scenarioName) == 0
   ) {
     errors <- c(errors, "scenarioName must be a non-empty string")
-  } else if (scenarioName %in% names(pc$scenarios)) {
+  } else if (scenarioName %in% names(project$scenarios)) {
     errors <- c(errors, paste0("scenario '", scenarioName, "' already exists"))
   }
 
@@ -1457,13 +1467,13 @@ addScenario <- function(
   }
 
   # Validate optional references
-  if (!is.null(individualId) && !(individualId %in% names(pc$individuals))) {
+  if (!is.null(individualId) && !(individualId %in% names(project$individuals))) {
     errors <- c(
       errors,
       paste0("individualId '", individualId, "' not found in individuals")
     )
   }
-  if (!is.null(populationId) && !(populationId %in% names(pc$populations))) {
+  if (!is.null(populationId) && !(populationId %in% names(project$populations))) {
     errors <- c(
       errors,
       paste0("populationId '", populationId, "' not found in populations")
@@ -1471,7 +1481,7 @@ addScenario <- function(
   }
   if (
     !is.null(applicationProtocol) &&
-      !(applicationProtocol %in% names(pc$applications))
+      !(applicationProtocol %in% names(project$applications))
   ) {
     errors <- c(
       errors,
@@ -1483,7 +1493,7 @@ addScenario <- function(
     )
   }
   if (!is.null(modelParameters)) {
-    bad <- setdiff(modelParameters, names(pc$modelParameters))
+    bad <- setdiff(modelParameters, names(project$modelParameters))
     if (length(bad) > 0) {
       errors <- c(
         errors,
@@ -1495,7 +1505,7 @@ addScenario <- function(
     }
   }
   if (!is.null(outputPathIds)) {
-    bad <- setdiff(outputPathIds, names(pc$outputPaths))
+    bad <- setdiff(outputPathIds, names(project$outputPaths))
     if (length(bad) > 0) {
       errors <- c(
         errors,
@@ -1532,7 +1542,7 @@ addScenario <- function(
   sc$readPopulationFromCSV <- readPopulationFromCSV
 
   if (!is.null(outputPathIds)) {
-    sc$outputPaths <- unname(pc$outputPaths[outputPathIds])
+    sc$outputPaths <- unname(project$outputPaths[outputPathIds])
   }
 
   if (!is.null(simulationTime)) {
@@ -1545,10 +1555,10 @@ addScenario <- function(
   sc$overwriteFormulasInSS <- overwriteFormulasInSS
 
   # Add to configuration
-  pc$scenarios[[scenarioName]] <- sc
-  pc$modified <- TRUE
+  project$scenarios[[scenarioName]] <- sc
+  project$.markModified()
 
-  invisible(pc)
+  invisible(project)
 }
 
 
@@ -1633,7 +1643,7 @@ addOutputPath <- function(project, id, path) {
   newPaths <- path
   names(newPaths) <- id
   project$outputPaths <- c(project$outputPaths, newPaths)
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -1657,7 +1667,7 @@ removeOutputPath <- function(project, id) {
     names(project$outputPaths),
     id
   )]
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -1679,6 +1689,6 @@ removeScenario <- function(project, name) {
     return(invisible(project))
   }
   project$scenarios[[name]] <- NULL
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }

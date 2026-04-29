@@ -1,9 +1,9 @@
 # Full JSON workflow integration tests ----
 
 test_that("JSON workflow: load project, run scenario, get results", {
-  pc <- testProject()
+  project <- testProject()
 
-  results <- runScenarios(pc, scenarioNames = "TestScenario")
+  results <- runScenarios(project, scenarioNames = "TestScenario")
 
   expect_true("TestScenario" %in% names(results))
   expect_false(is.null(results$TestScenario$results))
@@ -11,10 +11,10 @@ test_that("JSON workflow: load project, run scenario, get results", {
 })
 
 test_that("JSON workflow: run multiple scenarios", {
-  pc <- testProject()
+  project <- testProject()
 
   results <- runScenarios(
-    pc,
+    project,
     scenarioNames = c("TestScenario", "TestScenario2")
   )
 
@@ -24,12 +24,12 @@ test_that("JSON workflow: run multiple scenarios", {
 })
 
 test_that("JSON workflow: createDataCombined produces DataCombined objects", {
-  pc <- testProject()
+  project <- testProject()
 
-  results <- runScenarios(pc, scenarioNames = "TestScenario")
+  results <- runScenarios(project, scenarioNames = "TestScenario")
 
   dcList <- createDataCombined(
-    project = pc,
+    project = project,
     dataCombinedNames = "AciclovirPVB",
     simulatedScenarios = results
   )
@@ -39,12 +39,12 @@ test_that("JSON workflow: createDataCombined produces DataCombined objects", {
 })
 
 test_that("JSON workflow: createPlots produces plot output", {
-  pc <- testProject()
+  project <- testProject()
 
-  results <- runScenarios(pc, scenarioNames = "TestScenario")
+  results <- runScenarios(project, scenarioNames = "TestScenario")
 
   plotOutput <- createPlots(
-    project = pc,
+    project = project,
     plotGridNames = "Aciclovir",
     simulatedScenarios = results
   )

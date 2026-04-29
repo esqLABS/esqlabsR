@@ -6,7 +6,7 @@
 #' @param name Name of project directory. If `NULL`, the available names will be
 #'   listed.
 #' @keywords internal
-projectDirectory <- function(name = NULL) {
+.projectDirectory <- function(name = NULL) {
   directory <- system.file("extdata", "projects", package = "esqlabsR")
   if (!is.null(name)) {
     directory <- file.path(directory, name)

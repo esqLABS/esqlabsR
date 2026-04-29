@@ -22,7 +22,7 @@ addApplication <- function(project, applicationId) {
   app <- list(parameters = NULL)
   class(app) <- c("Application", "list")
   project$applications[[applicationId]] <- app
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -44,7 +44,7 @@ removeApplication <- function(project, applicationId) {
   }
   .warnIfReferenced(project, "application", applicationId)
   project$applications[[applicationId]] <- NULL
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -78,7 +78,7 @@ addApplicationParameter <- function(
     value = value,
     units = units
   )
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -103,6 +103,6 @@ removeApplicationParameter <- function(
     containerPath = containerPath,
     parameterName = parameterName
   )
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }

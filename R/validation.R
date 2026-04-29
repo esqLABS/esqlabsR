@@ -474,15 +474,15 @@ validationResult <- R6::R6Class(
     return(result)
   }
 
-  dc <- plots$dataCombined
-  pc <- plots$plotConfiguration
+  dataCombined <- plots$dataCombined
+  plotConfig <- plots$plotConfiguration
 
   # Validate dataCombined
-  if (is.null(dc) || nrow(dc) == 0) {
+  if (is.null(dataCombined) || nrow(dataCombined) == 0) {
     result$add_warning("Data", "dataCombined is empty")
   } else {
     for (col in c("DataCombinedName", "dataType")) {
-      if (!col %in% names(dc)) {
+      if (!col %in% names(dataCombined)) {
         result$add_critical_error(
           "Missing Fields",
           paste0("dataCombined is missing required column '", col, "'")
@@ -490,9 +490,9 @@ validationResult <- R6::R6Class(
       }
     }
 
-    if ("dataType" %in% names(dc)) {
-      invalid_types <- dc$dataType[
-        !is.na(dc$dataType) & !dc$dataType %in% c("simulated", "observed")
+    if ("dataType" %in% names(dataCombined)) {
+      invalid_types <- dataCombined$dataType[
+        !is.na(dataCombined$dataType) & !dataCombined$dataType %in% c("simulated", "observed")
       ]
       if (length(invalid_types) > 0) {
         result$add_critical_error(
@@ -504,8 +504,8 @@ validationResult <- R6::R6Class(
         )
       }
 
-      simulated_rows <- dc[!is.na(dc$dataType) & dc$dataType == "simulated", ]
-      if (nrow(simulated_rows) > 0 && "scenario" %in% names(dc)) {
+      simulated_rows <- dataCombined[!is.na(dataCombined$dataType) & dataCombined$dataType == "simulated", ]
+      if (nrow(simulated_rows) > 0 && "scenario" %in% names(dataCombined)) {
         missing_scenario <- is.na(simulated_rows$scenario) |
           simulated_rows$scenario == ""
         if (any(missing_scenario)) {
@@ -519,11 +519,11 @@ validationResult <- R6::R6Class(
   }
 
   # Validate plotConfiguration
-  if (is.null(pc) || nrow(pc) == 0) {
+  if (is.null(plotConfig) || nrow(plotConfig) == 0) {
     result$add_warning("Data", "plotConfiguration is empty")
   } else {
     for (col in c("plotID", "DataCombinedName", "plotType")) {
-      if (!col %in% names(pc)) {
+      if (!col %in% names(plotConfig)) {
         result$add_critical_error(
           "Missing Fields",
           paste0("plotConfiguration is missing required column '", col, "'")
@@ -531,9 +531,9 @@ validationResult <- R6::R6Class(
       }
     }
 
-    if ("plotID" %in% names(pc)) {
+    if ("plotID" %in% names(plotConfig)) {
       result <- .check_no_duplicates(
-        pc$plotID[!is.na(pc$plotID)],
+        plotConfig$plotID[!is.na(plotConfig$plotID)],
         "plotID",
         result
       )
@@ -541,21 +541,21 @@ validationResult <- R6::R6Class(
 
     # Inner cross-ref: plotConfiguration -> dataCombined
     if (
-      !is.null(dc) &&
-        nrow(dc) > 0 &&
-        "DataCombinedName" %in% names(pc) &&
-        "DataCombinedName" %in% names(dc)
+      !is.null(dataCombined) &&
+        nrow(dataCombined) > 0 &&
+        "DataCombinedName" %in% names(plotConfig) &&
+        "DataCombinedName" %in% names(dataCombined)
     ) {
-      invalid_dc_refs <- setdiff(
-        pc$DataCombinedName[!is.na(pc$DataCombinedName)],
-        dc$DataCombinedName
+      invalid_dataCombined_refs <- setdiff(
+        plotConfig$DataCombinedName[!is.na(plotConfig$DataCombinedName)],
+        dataCombined$DataCombinedName
       )
-      if (length(invalid_dc_refs) > 0) {
+      if (length(invalid_dataCombined_refs) > 0) {
         result$add_critical_error(
           "Invalid Reference",
           paste0(
             "plotConfiguration references unknown DataCombinedName: ",
-            paste(invalid_dc_refs, collapse = ", ")
+            paste(invalid_dataCombined_refs, collapse = ", ")
           )
         )
       }
@@ -563,14 +563,14 @@ validationResult <- R6::R6Class(
   }
 
   # plotGrids -> plotConfiguration inner cross-ref (warning only)
-  pg <- plots$plotGrids
-  if (!is.null(pg) && nrow(pg) > 0 && !is.null(pc) && nrow(pc) > 0) {
-    if ("plotIDs" %in% names(pg) && "plotID" %in% names(pc)) {
+  plotGrids <- plots$plotGrids
+  if (!is.null(plotGrids) && nrow(plotGrids) > 0 && !is.null(plotConfig) && nrow(plotConfig) > 0) {
+    if ("plotIDs" %in% names(plotGrids) && "plotID" %in% names(plotConfig)) {
       all_grid_ids <- unlist(lapply(
-        pg$plotIDs[!is.na(pg$plotIDs)],
+        plotGrids$plotIDs[!is.na(plotGrids$plotIDs)],
         function(x) trimws(strsplit(x, ",")[[1]])
       ))
-      invalid_grid_refs <- setdiff(all_grid_ids, pc$plotID)
+      invalid_grid_refs <- setdiff(all_grid_ids, plotConfig$plotID)
       if (length(invalid_grid_refs) > 0) {
         result$add_warning(
           "Invalid Reference",
@@ -695,14 +695,14 @@ validationResult <- R6::R6Class(
   }
 
   # Check plots dataCombined scenario references
-  dc <- project$plots$dataCombined
+  dataCombined <- project$plots$dataCombined
   if (
-    !is.null(dc) &&
-      nrow(dc) > 0 &&
-      "scenario" %in% names(dc) &&
-      "dataType" %in% names(dc)
+    !is.null(dataCombined) &&
+      nrow(dataCombined) > 0 &&
+      "scenario" %in% names(dataCombined) &&
+      "dataType" %in% names(dataCombined)
   ) {
-    simulated <- dc[!is.na(dc$dataType) & dc$dataType == "simulated", ]
+    simulated <- dataCombined[!is.na(dataCombined$dataType) & dataCombined$dataType == "simulated", ]
     scenario_names <- names(scenario_list)
     invalid_scenarios <- setdiff(
       simulated$scenario[!is.na(simulated$scenario)],

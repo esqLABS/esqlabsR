@@ -117,26 +117,26 @@ test_that("It extends a structure by a new structure", {
 })
 
 test_that("addModelParameter creates a new parameter set on first call", {
-  pc <- testProject()
+  project <- testProject()
   addModelParameter(
-    pc,
+    project,
     id = "MyNewSet",
     containerPath = "Organism|Liver",
     parameterName = "Volume",
     value = 1.8,
     units = "L"
   )
-  expect_true("MyNewSet" %in% names(pc$modelParameters))
-  expect_equal(pc$modelParameters[["MyNewSet"]]$paths, "Organism|Liver|Volume")
-  expect_equal(pc$modelParameters[["MyNewSet"]]$values, 1.8)
-  expect_equal(pc$modelParameters[["MyNewSet"]]$units, "L")
-  expect_true(pc$modified)
+  expect_true("MyNewSet" %in% names(project$modelParameters))
+  expect_equal(project$modelParameters[["MyNewSet"]]$paths, "Organism|Liver|Volume")
+  expect_equal(project$modelParameters[["MyNewSet"]]$values, 1.8)
+  expect_equal(project$modelParameters[["MyNewSet"]]$units, "L")
+  expect_true(project$modified)
 })
 
 test_that("addModelParameter appends to an existing set", {
-  pc <- testProject()
+  project <- testProject()
   addModelParameter(
-    pc,
+    project,
     "S1",
     containerPath = "a",
     parameterName = "x",
@@ -144,21 +144,21 @@ test_that("addModelParameter appends to an existing set", {
     units = "L"
   )
   addModelParameter(
-    pc,
+    project,
     "S1",
     containerPath = "b",
     parameterName = "y",
     value = 2,
     units = "L"
   )
-  expect_equal(pc$modelParameters[["S1"]]$paths, c("a|x", "b|y"))
-  expect_equal(pc$modelParameters[["S1"]]$values, c(1, 2))
+  expect_equal(project$modelParameters[["S1"]]$paths, c("a|x", "b|y"))
+  expect_equal(project$modelParameters[["S1"]]$values, c(1, 2))
 })
 
 test_that("addModelParameter overwrites duplicate path silently", {
-  pc <- testProject()
+  project <- testProject()
   addModelParameter(
-    pc,
+    project,
     "S2",
     containerPath = "a",
     parameterName = "x",
@@ -166,21 +166,21 @@ test_that("addModelParameter overwrites duplicate path silently", {
     units = "L"
   )
   addModelParameter(
-    pc,
+    project,
     "S2",
     containerPath = "a",
     parameterName = "x",
     value = 99,
     units = "L"
   )
-  expect_equal(pc$modelParameters[["S2"]]$paths, "a|x")
-  expect_equal(pc$modelParameters[["S2"]]$values, 99)
+  expect_equal(project$modelParameters[["S2"]]$paths, "a|x")
+  expect_equal(project$modelParameters[["S2"]]$values, 99)
 })
 
 test_that("removeModelParameter drops the entry", {
-  pc <- testProject()
+  project <- testProject()
   addModelParameter(
-    pc,
+    project,
     "S3",
     containerPath = "a",
     parameterName = "x",
@@ -188,38 +188,38 @@ test_that("removeModelParameter drops the entry", {
     units = "L"
   )
   addModelParameter(
-    pc,
+    project,
     "S3",
     containerPath = "b",
     parameterName = "y",
     value = 2,
     units = "L"
   )
-  pc$modified <- FALSE
-  removeModelParameter(pc, "S3", containerPath = "a", parameterName = "x")
-  expect_equal(pc$modelParameters[["S3"]]$paths, "b|y")
-  expect_true(pc$modified)
+  project$.markSaved()
+  removeModelParameter(project, "S3", containerPath = "a", parameterName = "x")
+  expect_equal(project$modelParameters[["S3"]]$paths, "b|y")
+  expect_true(project$modified)
 })
 
 test_that("removeModelParameter auto-removes empty set when last entry deleted", {
-  pc <- testProject()
+  project <- testProject()
   addModelParameter(
-    pc,
+    project,
     "S4",
     containerPath = "a",
     parameterName = "x",
     value = 1,
     units = "L"
   )
-  removeModelParameter(pc, "S4", containerPath = "a", parameterName = "x")
-  expect_false("S4" %in% names(pc$modelParameters))
+  removeModelParameter(project, "S4", containerPath = "a", parameterName = "x")
+  expect_false("S4" %in% names(project$modelParameters))
 })
 
 test_that("removeModelParameter warns on unknown set", {
-  pc <- testProject()
+  project <- testProject()
   expect_warning(
     removeModelParameter(
-      pc,
+      project,
       "NoSuchSet_QQ",
       containerPath = "a",
       parameterName = "x"
@@ -229,9 +229,9 @@ test_that("removeModelParameter warns on unknown set", {
 })
 
 test_that("removeModelParameter warns on unknown entry within an existing set", {
-  pc <- testProject()
+  project <- testProject()
   addModelParameter(
-    pc,
+    project,
     "S5",
     containerPath = "a",
     parameterName = "x",
@@ -240,7 +240,7 @@ test_that("removeModelParameter warns on unknown entry within an existing set", 
   )
   expect_warning(
     removeModelParameter(
-      pc,
+      project,
       "S5",
       containerPath = "z",
       parameterName = "missing"
@@ -250,10 +250,10 @@ test_that("removeModelParameter warns on unknown entry within an existing set", 
 })
 
 test_that("addModelParameter survives round-trip", {
-  pc <- Project$new()
-  pc$modelFolder <- tempdir()
+  project <- Project$new()
+  project$modelFolder <- tempdir()
   addModelParameter(
-    pc,
+    project,
     "RTSet",
     containerPath = "Organism|Liver",
     parameterName = "Volume",
@@ -261,7 +261,7 @@ test_that("addModelParameter survives round-trip", {
     units = "L"
   )
   tmp <- tempfile(fileext = ".json")
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   reloaded <- loadProject(tmp)
   expect_equal(
     reloaded$modelParameters[["RTSet"]]$paths,

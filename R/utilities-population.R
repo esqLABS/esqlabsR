@@ -294,7 +294,7 @@ addPopulation <- function(
   }
 
   project$populations[[populationId]] <- entry
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -320,6 +320,6 @@ removePopulation <- function(project, populationId) {
   }
   .warnIfReferenced(project, "population", populationId)
   project$populations[[populationId]] <- NULL
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }

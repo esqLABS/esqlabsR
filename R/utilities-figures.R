@@ -1,3 +1,5 @@
+# Color palette ----
+
 #' esqLABS color palette
 #'
 #' Returns the list of colors extrapolated between the esqLABS colors blue, red,
@@ -125,6 +127,8 @@ col2hsv <- function(color) {
   rgb <- col2rgb(color)
   return(grDevices::rgb2hsv(rgb))
 }
+
+# Plot configuration constructors ----
 
 #' @title Create an instance of `DefaultPlotConfiguration` R6 class
 #' @rdname createEsqlabsPlotConfiguration
@@ -257,6 +261,8 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
   exportConfiguration$units <- "cm"
   return(exportConfiguration)
 }
+
+# Plot generation ----
 
 #' Generate plots from a Project
 #'
@@ -541,6 +547,8 @@ createPlotsFromExcel <- function(...) {
   createPlots(...)
 }
 
+
+# Internal helpers: parsing, validation, configuration ----
 
 #' Parse and validate comma-separated field value
 #'

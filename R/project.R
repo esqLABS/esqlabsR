@@ -8,9 +8,11 @@ Project <- R6::R6Class(
   "Project",
   cloneable = TRUE,
   active = list(
-    #' @field projectFilePath Path to the file that serve as base
-    #' path for other parameters. If NULL, then, other paths should be absolute
-    #'  paths.
+    #' @field projectFilePath Read-only. Absolute path to the JSON
+    #'   configuration file the project was loaded from. All other relative
+    #'   paths in the project are resolved against the file's directory
+    #'   (see `projectDirPath`). `NULL` for an empty in-memory project; in
+    #'   that case all path fields must be absolute.
     projectFilePath = function(value) {
       if (missing(value)) {
         private$.projectFilePath
@@ -18,9 +20,10 @@ Project <- R6::R6Class(
         stop("projectFilePath is readonly")
       }
     },
-    #' @field projectDirPath Path to the folder that serve as base
-    #' path for other paths. If NULL, then, other paths should be absolute
-    #' paths.
+    #' @field projectDirPath Read-only. Directory containing the JSON
+    #'   configuration file (i.e. `dirname(projectFilePath)`). Used as the
+    #'   base for resolving relative paths. `NULL` if the project was not
+    #'   loaded from a file.
     projectDirPath = function(value) {
       if (missing(value)) {
         private$.projectDirPath
@@ -28,14 +31,14 @@ Project <- R6::R6Class(
         stop("projectDirPath is readonly")
       }
     },
-    #' @field modified Logical indicating whether any configuration properties
-    #' have been modified since loading from file.
+    #' @field modified Read-only logical. `TRUE` if any configuration property
+    #' has been modified since the project was loaded or saved. Cleared
+    #' internally by [saveProject()].
     modified = function(value) {
       if (missing(value)) {
         private$.modified
       } else {
-        stopifnot(is.logical(value), length(value) == 1L)
-        private$.modified <- value
+        stop("modified is readonly")
       }
     },
     #' @field modelFolder Path to the folder containing pkml simulation files.
@@ -183,12 +186,11 @@ Project <- R6::R6Class(
         must_work = FALSE
       )
     },
-    #' @field data Returns the current project data structure as a list
-    #'   matching the JSON schema. Reflects any in-memory modifications.
-    #'   Read-only.
-    data = function(value) {
+    #' @field asList Returns the current project as a list matching the JSON
+    #'   schema. Reflects any in-memory modifications. Read-only.
+    asList = function(value) {
       if (!missing(value)) {
-        stop("data is readonly")
+        stop("asList is readonly")
       }
       .projectToJson(self)
     }
@@ -601,6 +603,18 @@ Project <- R6::R6Class(
     }
   ),
   public = list(
+    #' @description Internal method to clear the `modified` flag after saving.
+    #' Not intended for end-user use.
+    #' @keywords internal
+    .markSaved = function() {
+      private$.modified <- FALSE
+    },
+    #' @description Internal method to set the `modified` flag after a
+    #' programmatic mutation. Not intended for end-user use.
+    #' @keywords internal
+    .markModified = function() {
+      private$.modified <- TRUE
+    },
     #' @description Internal method to retrieve all programmatic DataSets.
     #' Not intended for end-user use.
     #' @keywords internal
@@ -1006,14 +1020,14 @@ ProjectConfiguration <- function(
   )
 
   rows <- list()
-  for (dc in nestedData) {
-    dcName <- dc$name
+  for (dataCombined in nestedData) {
+    dataCombinedName <- dataCombined$name
 
     # Process simulated entries
-    if (!is.null(dc$simulated) && length(dc$simulated) > 0) {
-      for (entry in dc$simulated) {
+    if (!is.null(dataCombined$simulated) && length(dataCombined$simulated) > 0) {
+      for (entry in dataCombined$simulated) {
         row <- list(
-          DataCombinedName = dcName,
+          DataCombinedName = dataCombinedName,
           dataType = "simulated",
           label = entry$label,
           scenario = entry$scenario,
@@ -1029,10 +1043,10 @@ ProjectConfiguration <- function(
     }
 
     # Process observed entries
-    if (!is.null(dc$observed) && length(dc$observed) > 0) {
-      for (entry in dc$observed) {
+    if (!is.null(dataCombined$observed) && length(dataCombined$observed) > 0) {
+      for (entry in dataCombined$observed) {
         row <- list(
-          DataCombinedName = dcName,
+          DataCombinedName = dataCombinedName,
           dataType = "observed",
           label = entry$label,
           scenario = NA,
@@ -1111,7 +1125,7 @@ saveProject <- function(project, path = NULL) {
     pretty = TRUE
   )
 
-  project$modified <- FALSE
+  project$.markSaved()
   invisible(path)
 }
 
@@ -1208,8 +1222,8 @@ initProject <- function(
 
   source_folder <- switch(
     type,
-    "minimal" = projectDirectory("Blank"),
-    "example" = projectDirectory("Example")
+    "minimal" = .projectDirectory("Blank"),
+    "example" = .projectDirectory("Example")
   )
 
   # Check if project already exists
@@ -1260,8 +1274,8 @@ initProject <- function(
 
   if (createExcel) {
     jsonPath <- file.path(destination, "Project.json")
-    pc <- loadProject(jsonPath)
-    exportProjectToExcel(pc, outputDir = destination, silent = TRUE)
+    project <- loadProject(jsonPath)
+    exportProjectToExcel(project, outputDir = destination, silent = TRUE)
   }
 
   invisible(destination)
@@ -1275,7 +1289,7 @@ initProject <- function(
 #' @examples
 #' exampleProjectPath()
 exampleProjectPath <- function() {
-  file.path(projectDirectory("Example"), "Project.json")
+  file.path(.projectDirectory("Example"), "Project.json")
 }
 
 #' @rdname exampleProjectPath
@@ -1557,13 +1571,13 @@ exampleProjectConfigurationPath <- function() {
     "yScaleFactors"
   )
 
-  dcNames <- unique(df$DataCombinedName)
+  dataCombinedNames <- unique(df$DataCombinedName)
 
-  lapply(dcNames, function(dcName) {
-    dcRows <- df[df$DataCombinedName == dcName, , drop = FALSE]
+  lapply(dataCombinedNames, function(dataCombinedName) {
+    dataCombinedRows <- df[df$DataCombinedName == dataCombinedName, , drop = FALSE]
 
-    simRows <- dcRows[dcRows$dataType == "simulated", , drop = FALSE]
-    obsRows <- dcRows[dcRows$dataType == "observed", , drop = FALSE]
+    simRows <- dataCombinedRows[dataCombinedRows$dataType == "simulated", , drop = FALSE]
+    obsRows <- dataCombinedRows[dataCombinedRows$dataType == "observed", , drop = FALSE]
 
     simulated <- lapply(seq_len(nrow(simRows)), function(i) {
       row <- simRows[i, ]
@@ -1593,7 +1607,7 @@ exampleProjectConfigurationPath <- function() {
     })
 
     list(
-      name = dcName,
+      name = dataCombinedName,
       simulated = simulated,
       observed = observed
     )

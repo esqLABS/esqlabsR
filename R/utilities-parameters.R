@@ -364,7 +364,7 @@ addModelParameter <- function(
     value,
     units
   )
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -402,7 +402,7 @@ removeModelParameter <- function(project, id, containerPath, parameterName) {
   } else {
     project$modelParameters[[id]] <- updated
   }
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -638,7 +638,7 @@ addIndividualParameter <- function(
     value = value,
     units = units
   )
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }
 
@@ -663,6 +663,6 @@ removeIndividualParameter <- function(
     containerPath = containerPath,
     parameterName = parameterName
   )
-  project$modified <- TRUE
+  project$.markModified()
   invisible(project)
 }

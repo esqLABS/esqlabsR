@@ -53,7 +53,7 @@ executeWithTestFile <- function(actionWithFile) {
 #'
 #' @description
 #' Returns the path to the test data directory under tests/testthat/data/.
-#' Unlike projectDirectory(), this points to test-specific data that is not
+#' Unlike .projectDirectory(), this points to test-specific data that is not
 #' part of the installed package.
 #'
 #' @param name Optional subdirectory name within the test data directory.
@@ -217,13 +217,13 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
 
   # Generate Excel files from JSON
   jsonPath <- file.path(temp_dir, "Project.json")
-  pc <- loadProject(jsonPath)
-  exportProjectToExcel(pc, outputDir = temp_dir, silent = TRUE)
+  project <- loadProject(jsonPath)
+  exportProjectToExcel(project, outputDir = temp_dir, silent = TRUE)
 
   # Return list with path and config
   list(
     path = temp_dir,
-    config = pc
+    config = project
   )
 }
 
@@ -247,8 +247,8 @@ local_test_project <- function(
 
   # Generate Excel files from JSON in the temp copy
   jsonPath <- file.path(temp_dir, "Project.json")
-  pc <- loadProject(jsonPath)
-  exportProjectToExcel(pc, outputDir = temp_dir, silent = TRUE)
+  project <- loadProject(jsonPath)
+  exportProjectToExcel(project, outputDir = temp_dir, silent = TRUE)
 
   # Return the paths needed for testing
   list(

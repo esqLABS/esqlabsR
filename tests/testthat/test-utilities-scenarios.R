@@ -1,15 +1,15 @@
 defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("runScenarios stops with an error if a parameter is not present", {
-  pc <- testProject()
-  expect_error(runScenarios(pc, scenarioNames = "TestScenario_missingParam"))
+  project <- testProject()
+  expect_error(runScenarios(project, scenarioNames = "TestScenario_missingParam"))
 })
 
 test_that("It runs one scenario without specifying output paths", {
-  pc <- testProject()
+  project <- testProject()
 
   simulatedScenarios <- runScenarios(
-    project = pc,
+    project = project,
     scenarioNames = "TestScenario"
   )
 
@@ -21,17 +21,17 @@ test_that("It runs one scenario without specifying output paths", {
 })
 
 test_that("It runs one scenario with specifying output paths", {
-  pc <- testProject()
+  project <- testProject()
   OutputPaths <- enum(list(
     Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
     Aciclovir_bone_pls = "Organism|Bone|Plasma|Aciclovir|Concentration"
   ))
 
   # Modify output paths on the scenario before running
-  pc$scenarios[["TestScenario"]]$outputPaths <- enumValues(OutputPaths)
+  project$scenarios[["TestScenario"]]$outputPaths <- enumValues(OutputPaths)
 
   simulatedScenarios <- runScenarios(
-    project = pc,
+    project = project,
     scenarioNames = "TestScenario"
   )
 
@@ -43,16 +43,16 @@ test_that("It runs one scenario with specifying output paths", {
 })
 
 test_that("It runs two scenarios", {
-  pc <- testProject()
+  project <- testProject()
   scenarioNames <- c("TestScenario", "TestScenario2")
 
   # Disable steady-state for second scenario
-  pc$scenarios[["TestScenario2"]]$simulateSteadyState <- FALSE
+  project$scenarios[["TestScenario2"]]$simulateSteadyState <- FALSE
   # Prevent warning because Indiv not found by replacing with existing IndividualId
-  pc$scenarios[["TestScenario2"]]$individualId <- "Indiv1"
+  project$scenarios[["TestScenario2"]]$individualId <- "Indiv1"
 
   simulatedScenarios <- runScenarios(
-    project = pc,
+    project = project,
     scenarioNames = scenarioNames
   )
 
@@ -72,11 +72,11 @@ test_that("It runs two scenarios", {
 })
 
 test_that("It runs population and individual scenarios", {
-  pc <- testProject()
+  project <- testProject()
   scenarioNames <- c("TestScenario", "PopulationScenario")
 
   simulatedScenarios <- runScenarios(
-    project = pc,
+    project = project,
     scenarioNames = scenarioNames
   )
 
@@ -96,10 +96,10 @@ test_that("It runs population and individual scenarios", {
 # exportScenarioResults / importScenarioResults ----
 
 test_that("exportScenarioResults saves results to csv and pkml", {
-  pc <- testProject()
+  project <- testProject()
 
   simulatedScenarios <- runScenarios(
-    project = pc,
+    project = project,
     scenarioNames = "TestScenario"
   )
 
@@ -108,7 +108,7 @@ test_that("exportScenarioResults saves results to csv and pkml", {
     code = {
       outputFolder <- exportScenarioResults(
         simulatedScenariosResults = simulatedScenarios,
-        project = pc,
+        project = project,
         outputFolder = tempdir
       )
       expect_true(file.exists(file.path(tempdir, "TestScenario.pkml")))
@@ -120,10 +120,10 @@ test_that("exportScenarioResults saves results to csv and pkml", {
 })
 
 test_that("importScenarioResults loads results from csv and pkml", {
-  pc <- testProject()
+  project <- testProject()
 
   simulatedScenarios <- runScenarios(
-    project = pc,
+    project = project,
     scenarioNames = "TestScenario"
   )
 
@@ -132,7 +132,7 @@ test_that("importScenarioResults loads results from csv and pkml", {
     code = {
       exportScenarioResults(
         simulatedScenariosResults = simulatedScenarios,
-        project = pc,
+        project = project,
         outputFolder = tempdir
       )
 
@@ -162,10 +162,10 @@ test_that("importScenarioResults throws an error when files don't exist", {
 })
 
 test_that("export/import handles scenario names with forbidden characters", {
-  pc <- testProject()
+  project <- testProject()
 
   simulatedScenarios <- runScenarios(
-    project = pc,
+    project = project,
     scenarioNames = "TestScenario"
   )
   # Rename simulatedScenarios to include a slash
@@ -177,7 +177,7 @@ test_that("export/import handles scenario names with forbidden characters", {
       # Save results using temp folder
       outputFolder <- exportScenarioResults(
         simulatedScenariosResults = simulatedScenarios,
-        project = pc,
+        project = project,
         outputFolder = tempdir
       )
       # Check that the results are saved
@@ -207,11 +207,11 @@ test_that("export/import handles scenario names with forbidden characters", {
 })
 
 test_that("customParams in runScenarios overrides default parameters", {
-  pc <- testProject()
+  project <- testProject()
   dosePath <- "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
 
   # Default run — dose should be 250 from the JSON
-  results <- runScenarios(pc, scenarioNames = "TestScenario")
+  results <- runScenarios(project, scenarioNames = "TestScenario")
   sim <- results$TestScenario$simulation
   doseParam <- ospsuite::getParameter(dosePath, sim)
   expect_equal(
@@ -221,7 +221,7 @@ test_that("customParams in runScenarios overrides default parameters", {
 
   # Run with custom parameter overriding dose to 300
   results2 <- runScenarios(
-    pc,
+    project,
     scenarioNames = "TestScenario",
     customParams = list(
       paths = dosePath,
@@ -251,10 +251,10 @@ test_that("deprecated loadScenarioResults still works", {
 })
 
 test_that("It correctly runs when only one scenario name is provided", {
-  pc <- testProject()
+  project <- testProject()
 
   simulatedScenarios <- runScenarios(
-    project = pc,
+    project = project,
     scenarioNames = "TestScenario"
   )
 
@@ -268,24 +268,24 @@ test_that("It correctly runs when only one scenario name is provided", {
 # JSON integration ----
 
 test_that("runScenarios runs a scenario from JSON Project", {
-  pc <- testProject()
-  results <- runScenarios(pc, scenarioNames = "TestScenario")
+  project <- testProject()
+  results <- runScenarios(project, scenarioNames = "TestScenario")
   expect_true("TestScenario" %in% names(results))
   expect_false(is.null(results$TestScenario$results))
   expect_false(is.null(results$TestScenario$outputValues))
 })
 
 test_that("runScenarios errors on unknown scenario name", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
-    runScenarios(pc, scenarioNames = "NonExistent"),
+    runScenarios(project, scenarioNames = "NonExistent"),
     "NonExistent"
   )
 })
 
 test_that("runScenarios filters to specified scenarioNames", {
-  pc <- testProject()
-  results <- runScenarios(pc, scenarioNames = "TestScenario")
+  project <- testProject()
+  results <- runScenarios(project, scenarioNames = "TestScenario")
   expect_length(results, 1)
   expect_equal(names(results), "TestScenario")
 })
@@ -293,15 +293,15 @@ test_that("runScenarios filters to specified scenarioNames", {
 # .executeScenario tests ----
 
 test_that(".executeScenario initializes and runs an individual scenario", {
-  pc <- testProject()
-  scenario <- pc$scenarios[["TestScenario"]]
+  project <- testProject()
+  scenario <- project$scenarios[["TestScenario"]]
   cache <- new.env(parent = emptyenv())
   cache$individuals <- list()
   cache$populations <- list()
 
   result <- esqlabsR:::.executeScenario(
     scenario = scenario,
-    pc = pc,
+    project = project,
     customParams = NULL,
     cache = cache,
     simulationRunOptions = NULL
@@ -315,15 +315,15 @@ test_that(".executeScenario initializes and runs an individual scenario", {
 })
 
 test_that(".executeScenario caches IndividualCharacteristics", {
-  pc <- testProject()
-  scenario <- pc$scenarios[["TestScenario"]]
+  project <- testProject()
+  scenario <- project$scenarios[["TestScenario"]]
   cache <- new.env(parent = emptyenv())
   cache$individuals <- list()
   cache$populations <- list()
 
   esqlabsR:::.executeScenario(
     scenario = scenario,
-    pc = pc,
+    project = project,
     customParams = NULL,
     cache = cache,
     simulationRunOptions = NULL
@@ -338,12 +338,12 @@ test_that(".executeScenario caches IndividualCharacteristics", {
 })
 
 test_that(".executeScenario reuses cached IndividualCharacteristics", {
-  pc <- testProject()
-  scenario <- pc$scenarios[["TestScenario"]]
+  project <- testProject()
+  scenario <- project$scenarios[["TestScenario"]]
   cache <- new.env(parent = emptyenv())
 
   # Pre-populate cache
-  indivData <- pc$individuals[[scenario$individualId]]
+  indivData <- project$individuals[[scenario$individualId]]
   indivChar <- ospsuite::createIndividualCharacteristics(
     species = indivData$species,
     population = indivData$population,
@@ -358,7 +358,7 @@ test_that(".executeScenario reuses cached IndividualCharacteristics", {
 
   result <- esqlabsR:::.executeScenario(
     scenario = scenario,
-    pc = pc,
+    project = project,
     customParams = NULL,
     cache = cache,
     simulationRunOptions = NULL
@@ -374,19 +374,19 @@ test_that(".executeScenario reuses cached IndividualCharacteristics", {
 # addScenario ----
 
 test_that("addScenario errors on duplicate scenario name", {
-  pc <- testProject()
-  existing_name <- names(pc$scenarios)[[1]]
+  project <- testProject()
+  existing_name <- names(project$scenarios)[[1]]
   expect_error(
-    addScenario(pc, scenarioName = existing_name, modelFile = "model.pkml"),
+    addScenario(project, scenarioName = existing_name, modelFile = "model.pkml"),
     "already exists"
   )
 })
 
 test_that("addScenario errors on invalid individualId", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
     addScenario(
-      pc,
+      project,
       scenarioName = "NewScenario",
       modelFile = "model.pkml",
       individualId = "NonExistent"
@@ -396,10 +396,10 @@ test_that("addScenario errors on invalid individualId", {
 })
 
 test_that("addScenario collects all validation errors in one message", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
     addScenario(
-      pc,
+      project,
       scenarioName = "NewScenario",
       modelFile = "model.pkml",
       individualId = "BadIndiv",
@@ -411,9 +411,9 @@ test_that("addScenario collects all validation errors in one message", {
 })
 
 test_that("addScenario errors on empty scenarioName", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
-    addScenario(pc, scenarioName = "", modelFile = "model.pkml"),
+    addScenario(project, scenarioName = "", modelFile = "model.pkml"),
     "non-empty string"
   )
 })
@@ -421,20 +421,20 @@ test_that("addScenario errors on empty scenarioName", {
 # Happy path ----
 
 test_that("addScenario adds a valid scenario with correct fields", {
-  pc <- testProject()
-  original_count <- length(pc$scenarios)
+  project <- testProject()
+  original_count <- length(project$scenarios)
 
   addScenario(
-    pc,
+    project,
     scenarioName = "ProgrammaticScenario",
     modelFile = "Aciclovir.pkml",
     individualId = "Indiv1"
   )
 
-  expect_length(pc$scenarios, original_count + 1)
-  expect_true("ProgrammaticScenario" %in% names(pc$scenarios))
+  expect_length(project$scenarios, original_count + 1)
+  expect_true("ProgrammaticScenario" %in% names(project$scenarios))
 
-  sc <- pc$scenarios[["ProgrammaticScenario"]]
+  sc <- project$scenarios[["ProgrammaticScenario"]]
   expect_s3_class(sc, "Scenario")
   expect_equal(sc$scenarioName, "ProgrammaticScenario")
   expect_equal(sc$modelFile, "Aciclovir.pkml")
@@ -443,89 +443,89 @@ test_that("addScenario adds a valid scenario with correct fields", {
 })
 
 test_that("addScenario with populationId sets simulationType to Population", {
-  pc <- testProject()
-  pop_name <- names(pc$populations)[[1]]
+  project <- testProject()
+  pop_name <- names(project$populations)[[1]]
 
   addScenario(
-    pc,
+    project,
     scenarioName = "PopScenario",
     modelFile = "Aciclovir.pkml",
     populationId = pop_name
   )
 
-  sc <- pc$scenarios[["PopScenario"]]
+  sc <- project$scenarios[["PopScenario"]]
   expect_equal(sc$simulationType, "Population")
   expect_equal(sc$populationId, pop_name)
 })
 
 test_that("addScenario parses simulationTime string into list of vectors", {
-  pc <- testProject()
+  project <- testProject()
 
   addScenario(
-    pc,
+    project,
     scenarioName = "TimeScenario",
     modelFile = "Aciclovir.pkml",
     simulationTime = "0, 100, 1",
     simulationTimeUnit = "h"
   )
 
-  sc <- pc$scenarios[["TimeScenario"]]
+  sc <- project$scenarios[["TimeScenario"]]
   expect_equal(sc$simulationTime, list(c(0, 100, 1)))
   expect_equal(sc$simulationTimeUnit, "h")
 })
 
 test_that("addScenario resolves outputPathIds to output path strings", {
-  pc <- testProject()
-  path_ids <- names(pc$outputPaths)
+  project <- testProject()
+  path_ids <- names(project$outputPaths)
 
   addScenario(
-    pc,
+    project,
     scenarioName = "OutputScenario",
     modelFile = "Aciclovir.pkml",
     outputPathIds = path_ids
   )
 
-  sc <- pc$scenarios[["OutputScenario"]]
-  expect_equal(sc$outputPaths, unname(pc$outputPaths[path_ids]))
+  sc <- project$scenarios[["OutputScenario"]]
+  expect_equal(sc$outputPaths, unname(project$outputPaths[path_ids]))
 })
 
 test_that("addScenario sets modified flag to TRUE", {
-  pc <- testProject()
-  expect_false(pc$modified)
+  project <- testProject()
+  expect_false(project$modified)
 
   addScenario(
-    pc,
+    project,
     scenarioName = "ModifiedScenario",
     modelFile = "Aciclovir.pkml"
   )
 
-  expect_true(pc$modified)
+  expect_true(project$modified)
 })
 
-test_that("pc$addScenario() delegates to standalone addScenario()", {
-  pc <- testProject()
+test_that("project$addScenario() delegates to standalone addScenario()", {
+  project <- testProject()
 
-  pc$addScenario(
+  project$addScenario(
     scenarioName = "MethodScenario",
     modelFile = "Aciclovir.pkml",
     individualId = "Indiv1"
   )
 
-  expect_true("MethodScenario" %in% names(pc$scenarios))
-  sc <- pc$scenarios[["MethodScenario"]]
+  expect_true("MethodScenario" %in% names(project$scenarios))
+  sc <- project$scenarios[["MethodScenario"]]
   expect_equal(sc$individualId, "Indiv1")
 })
 
 test_that("addScenario populates all optional fields correctly", {
-  pc <- testProject()
-  param_group <- names(pc$modelParameters)[[1]]
+  project <- testProject()
+  param_group <- names(project$modelParameters)[[1]]
 
   addScenario(
-    pc,
+    project,
     scenarioName = "FullScenario",
     modelFile = "Aciclovir.pkml",
     individualId = "Indiv1",
-    applicationProtocol = names(pc$applications)[[1]],
+    applicationProtocol = names(project$applications)[[1]],
     modelParameters = param_group,
     simulationTime = "0, 50, 1; 50, 100, 2",
     simulationTimeUnit = "min",
@@ -535,8 +535,8 @@ test_that("addScenario populates all optional fields correctly", {
     readPopulationFromCSV = FALSE
   )
 
-  sc <- pc$scenarios[["FullScenario"]]
-  expect_equal(sc$applicationProtocol, names(pc$applications)[[1]])
+  sc <- project$scenarios[["FullScenario"]]
+  expect_equal(sc$applicationProtocol, names(project$applications)[[1]])
   expect_equal(sc$modelParameters, param_group)
   expect_equal(sc$simulationTime, list(c(0, 50, 1), c(50, 100, 2)))
   expect_equal(sc$simulationTimeUnit, "min")
@@ -547,21 +547,21 @@ test_that("addScenario populates all optional fields correctly", {
 })
 
 test_that("addScenario returns project invisibly", {
-  pc <- testProject()
+  project <- testProject()
   result <- withVisible(addScenario(
-    pc,
+    project,
     scenarioName = "InvisibleScenario",
     modelFile = "Aciclovir.pkml"
   ))
   expect_false(result$visible)
-  expect_identical(result$value, pc)
+  expect_identical(result$value, project)
 })
 
 # Guard-clause regression tests ----
 
 test_that(".prepareScenario errors when simulationTimeUnit is NULL but simulationTime is set", {
-  pc <- testProject()
-  scenario <- pc$scenarios[["TestScenario"]]
+  project <- testProject()
+  scenario <- project$scenarios[["TestScenario"]]
   # simulationTime is already set from JSON; remove the unit
 
   scenario$simulationTimeUnit <- NULL
@@ -573,7 +573,7 @@ test_that(".prepareScenario errors when simulationTimeUnit is NULL but simulatio
   expect_error(
     esqlabsR:::.prepareScenario(
       scenario = scenario,
-      pc = pc,
+      project = project,
       customParams = NULL,
       cache = cache,
       simulationRunOptions = NULL
@@ -583,8 +583,8 @@ test_that(".prepareScenario errors when simulationTimeUnit is NULL but simulatio
 })
 
 test_that(".prepareScenario errors when populationId references a non-existent population", {
-  pc <- testProject()
-  scenario <- pc$scenarios[["PopulationScenario"]]$clone()
+  project <- testProject()
+  scenario <- project$scenarios[["PopulationScenario"]]$clone()
   scenario$populationId <- "NonExistentPopulation"
 
   cache <- new.env(parent = emptyenv())
@@ -594,7 +594,7 @@ test_that(".prepareScenario errors when populationId references a non-existent p
   expect_error(
     esqlabsR:::.prepareScenario(
       scenario = scenario,
-      pc = pc,
+      project = project,
       customParams = NULL,
       cache = cache,
       simulationRunOptions = NULL
@@ -604,8 +604,8 @@ test_that(".prepareScenario errors when populationId references a non-existent p
 })
 
 test_that(".prepareScenario does not crash on is.na(NULL) when applicationProtocol is NULL", {
-  pc <- testProject()
-  scenario <- pc$scenarios[["TestScenario"]]$clone()
+  project <- testProject()
+  scenario <- project$scenarios[["TestScenario"]]$clone()
   # Default Scenario has applicationProtocol = NULL; force it explicitly
   scenario$applicationProtocol <- NULL
 
@@ -619,7 +619,7 @@ test_that(".prepareScenario does not crash on is.na(NULL) when applicationProtoc
   result <- tryCatch(
     esqlabsR:::.prepareScenario(
       scenario = scenario,
-      pc = pc,
+      project = project,
       customParams = NULL,
       cache = cache,
       simulationRunOptions = NULL
@@ -638,102 +638,102 @@ test_that(".prepareScenario does not crash on is.na(NULL) when applicationProtoc
 # .warnIfReferenced ----
 
 test_that(".warnIfReferenced flags scenarios referencing an individual", {
-  pc <- testProject()
+  project <- testProject()
   # Seed a scenario referencing Indiv1 (already exists in TestProject)
-  scNames <- names(pc$scenarios)[vapply(
-    pc$scenarios,
+  scNames <- names(project$scenarios)[vapply(
+    project$scenarios,
     function(s) identical(s$individualId, "Indiv1"),
     logical(1)
   )]
   expect_true(length(scNames) >= 1)
   expect_warning(
-    .warnIfReferenced(pc, "individual", "Indiv1"),
+    .warnIfReferenced(project, "individual", "Indiv1"),
     regexp = paste(scNames, collapse = "|")
   )
 })
 
 test_that(".warnIfReferenced is silent when nothing references the id", {
-  pc <- testProject()
+  project <- testProject()
   expect_no_warning(
-    .warnIfReferenced(pc, "individual", "DoesNotExist_XYZ")
+    .warnIfReferenced(project, "individual", "DoesNotExist_XYZ")
   )
 })
 
 test_that("addOutputPath adds single entry", {
-  pc <- testProject()
-  initial <- length(pc$outputPaths)
-  addOutputPath(pc, id = "MyOut", path = "Organism|PeripheralVenousBlood|C")
-  expect_equal(length(pc$outputPaths), initial + 1)
-  expect_equal(pc$outputPaths[["MyOut"]], "Organism|PeripheralVenousBlood|C")
-  expect_true(pc$modified)
+  project <- testProject()
+  initial <- length(project$outputPaths)
+  addOutputPath(project, id = "MyOut", path = "Organism|PeripheralVenousBlood|C")
+  expect_equal(length(project$outputPaths), initial + 1)
+  expect_equal(project$outputPaths[["MyOut"]], "Organism|PeripheralVenousBlood|C")
+  expect_true(project$modified)
 })
 
 test_that("addOutputPath accepts vectors of equal length", {
-  pc <- testProject()
+  project <- testProject()
   addOutputPath(
-    pc,
+    project,
     id = c("O1", "O2"),
     path = c("Organism|Liver|C", "Organism|Kidney|C")
   )
-  expect_equal(pc$outputPaths[["O1"]], "Organism|Liver|C")
-  expect_equal(pc$outputPaths[["O2"]], "Organism|Kidney|C")
+  expect_equal(project$outputPaths[["O1"]], "Organism|Liver|C")
+  expect_equal(project$outputPaths[["O2"]], "Organism|Kidney|C")
 })
 
 test_that("addOutputPath errors on length mismatch", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
-    addOutputPath(pc, c("A", "B"), c("Organism|Liver|C")),
+    addOutputPath(project, c("A", "B"), c("Organism|Liver|C")),
     regexp = "same length"
   )
 })
 
 test_that("addOutputPath errors on duplicate id within call", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
-    addOutputPath(pc, c("Dup", "Dup"), c("a", "b")),
+    addOutputPath(project, c("Dup", "Dup"), c("a", "b")),
     regexp = "duplicate"
   )
 })
 
 test_that("addOutputPath errors on existing id", {
-  pc <- testProject()
-  existing <- names(pc$outputPaths)[[1]]
+  project <- testProject()
+  existing <- names(project$outputPaths)[[1]]
   expect_error(
-    addOutputPath(pc, existing, "Organism|Liver|C"),
+    addOutputPath(project, existing, "Organism|Liver|C"),
     regexp = "already exists"
   )
 })
 
 test_that("removeOutputPath removes entry", {
-  pc <- testProject()
-  addOutputPath(pc, "GoingAway", "Organism|Liver|C")
-  pc$modified <- FALSE
-  removeOutputPath(pc, "GoingAway")
-  expect_false("GoingAway" %in% names(pc$outputPaths))
-  expect_true(pc$modified)
+  project <- testProject()
+  addOutputPath(project, "GoingAway", "Organism|Liver|C")
+  project$.markSaved()
+  removeOutputPath(project, "GoingAway")
+  expect_false("GoingAway" %in% names(project$outputPaths))
+  expect_true(project$modified)
 })
 
 test_that("removeOutputPath warns on missing id", {
-  pc <- testProject()
+  project <- testProject()
   expect_warning(
-    removeOutputPath(pc, "NoSuchPath_ZZ"),
+    removeOutputPath(project, "NoSuchPath_ZZ"),
     regexp = "not found"
   )
 })
 
 test_that("removeScenario removes scenario", {
-  pc <- testProject()
-  addScenario(pc, "TempScenario", "Aciclovir.pkml", individualId = "Indiv1")
-  pc$modified <- FALSE
-  removeScenario(pc, "TempScenario")
-  expect_false("TempScenario" %in% names(pc$scenarios))
-  expect_true(pc$modified)
+  project <- testProject()
+  addScenario(project, "TempScenario", "Aciclovir.pkml", individualId = "Indiv1")
+  project$.markSaved()
+  removeScenario(project, "TempScenario")
+  expect_false("TempScenario" %in% names(project$scenarios))
+  expect_true(project$modified)
 })
 
 test_that("removeScenario warns on missing", {
-  pc <- testProject()
+  project <- testProject()
   expect_warning(
-    removeScenario(pc, "NoSuchScenario_ZZ"),
+    removeScenario(project, "NoSuchScenario_ZZ"),
     regexp = "not found"
   )
 })
@@ -752,22 +752,22 @@ test_that("project$addOutputPath / removeOutputPath / removeScenario delegate", 
 })
 
 test_that("addOutputPath survives round-trip", {
-  pc <- testProject()
-  addOutputPath(pc, "RTPath", "Organism|Liver|C")
+  project <- testProject()
+  addOutputPath(project, "RTPath", "Organism|Liver|C")
   tmp <- tempfile(fileext = ".json")
-  saveProject(pc, tmp)
+  saveProject(project, tmp)
   reloaded <- loadProject(tmp)
   expect_equal(reloaded$outputPaths[["RTPath"]], "Organism|Liver|C")
 })
 
 test_that("removeOutputPath warns when referenced by a scenario", {
-  pc <- testProject()
+  project <- testProject()
   # Find any outputPath referenced by at least one scenario (fixture-dependent)
   refId <- NULL
-  for (id in names(pc$outputPaths)) {
+  for (id in names(project$outputPaths)) {
     hit <- vapply(
-      pc$scenarios,
-      function(s) pc$outputPaths[[id]] %in% s$outputPaths,
+      project$scenarios,
+      function(s) project$outputPaths[[id]] %in% s$outputPaths,
       logical(1)
     )
     if (any(hit)) {
@@ -778,10 +778,10 @@ test_that("removeOutputPath warns when referenced by a scenario", {
   skip_if(is.null(refId), "no referenced outputPath in test fixture")
 
   expect_warning(
-    removeOutputPath(pc, refId),
+    removeOutputPath(project, refId),
     regexp = "referenced"
   )
-  expect_false(refId %in% names(pc$outputPaths))
+  expect_false(refId %in% names(project$outputPaths))
 })
 
 # createScenariosFromPKML ------------------------------------------------
@@ -1545,7 +1545,6 @@ test_that("Helper functions work correctly", {
     "Excel sheet name was sanitized"
   )
   expect_equal(nchar(result), 31)
-
 })
 
 # .mergeScenarioParameters layer order ----------------------------------
@@ -1574,13 +1573,13 @@ PARAM_NAME <- "Volume"
   applicationValue = NULL, # numeric scalar or NULL
   scenarioModelParamIds = character() # ordered ids referenced by scenario
 ) {
-  pc <- Project$new()
-  pc$modelFolder <- tempdir()
+  project <- Project$new()
+  project$modelFolder <- tempdir()
 
   # Build model parameter sets
   for (setId in names(modelParamsValues)) {
     addModelParameter(
-      pc,
+      project,
       id = setId,
       containerPath = PARAM_CONTAINER,
       parameterName = PARAM_NAME,
@@ -1590,10 +1589,11 @@ PARAM_NAME <- "Volume"
   }
 
   # Add individual (with optional parameter)
-  addIndividual(pc, "I1", species = "Human")
+  addIndividual(project, "I1", species = "Human")
   if (!is.null(individualValue)) {
     addIndividualParameter(
-      pc, "I1",
+      project,
+      "I1",
       containerPath = PARAM_CONTAINER,
       parameterName = PARAM_NAME,
       value = individualValue,
@@ -1602,10 +1602,11 @@ PARAM_NAME <- "Volume"
   }
 
   # Add application (with optional parameter)
-  addApplication(pc, "App1")
+  addApplication(project, "App1")
   if (!is.null(applicationValue)) {
     addApplicationParameter(
-      pc, "App1",
+      project,
+      "App1",
       containerPath = PARAM_CONTAINER,
       parameterName = PARAM_NAME,
       value = applicationValue,
@@ -1615,13 +1616,15 @@ PARAM_NAME <- "Volume"
 
   # Add scenario referencing the model parameter sets in the requested order
   addScenario(
-    pc, "S1", "model.pkml",
+    project,
+    "S1",
+    "model.pkml",
     individualId = "I1",
     applicationProtocol = "App1",
     modelParameters = scenarioModelParamIds
   )
 
-  pc
+  project
 }
 
 # Helper: extract the merged value for PARAM_PATH from .prepareScenario,
@@ -1633,19 +1636,19 @@ PARAM_NAME <- "Volume"
 # helper .mergeScenarioParameters in Task 2 that returns the merged structure
 # without loading the simulation; we test that helper directly.
 
-.mergedValueFor <- function(pc, customParams = NULL) {
-  scenario <- pc$scenarios[["S1"]]
-  merged <- .mergeScenarioParameters(scenario, pc, customParams)
+.mergedValueFor <- function(project, customParams = NULL) {
+  scenario <- project$scenarios[["S1"]]
+  merged <- .mergeScenarioParameters(scenario, project, customParams)
   idx <- which(merged$paths == PARAM_PATH)
   if (length(idx) == 0) NA_real_ else merged$values[[idx]]
 }
 
 test_that("within modelParameters, later set overrides earlier", {
-  pc <- .makeOrderTestProject(
+  project <- .makeOrderTestProject(
     modelParamsValues = list(SetA = 10, SetB = 20),
     scenarioModelParamIds = c("SetA", "SetB")
   )
-  expect_equal(.mergedValueFor(pc), 20)
+  expect_equal(.mergedValueFor(project), 20)
 
   pc2 <- .makeOrderTestProject(
     modelParamsValues = list(SetA = 10, SetB = 20),
@@ -1655,48 +1658,48 @@ test_that("within modelParameters, later set overrides earlier", {
 })
 
 test_that("individual inline parameters override modelParameters layer", {
-  pc <- .makeOrderTestProject(
+  project <- .makeOrderTestProject(
     modelParamsValues = list(Set = 10),
     individualValue = 99,
     scenarioModelParamIds = "Set"
   )
-  expect_equal(.mergedValueFor(pc), 99)
+  expect_equal(.mergedValueFor(project), 99)
 })
 
 test_that("application inline parameters override individual inline parameters", {
-  pc <- .makeOrderTestProject(
+  project <- .makeOrderTestProject(
     modelParamsValues = list(Set = 10),
     individualValue = 99,
     applicationValue = 7,
     scenarioModelParamIds = "Set"
   )
-  expect_equal(.mergedValueFor(pc), 7)
+  expect_equal(.mergedValueFor(project), 7)
 })
 
 test_that("customParams override application inline parameters", {
-  pc <- .makeOrderTestProject(
+  project <- .makeOrderTestProject(
     modelParamsValues = list(Set = 10),
     individualValue = 99,
     applicationValue = 7,
     scenarioModelParamIds = "Set"
   )
   custom <- list(paths = PARAM_PATH, values = 1, units = "L")
-  expect_equal(.mergedValueFor(pc, customParams = custom), 1)
+  expect_equal(.mergedValueFor(project, customParams = custom), 1)
 })
 
 test_that("layer that doesn't set the path doesn't disturb other layers", {
   # Only individual sets the path; everything else absent.
-  pc <- .makeOrderTestProject(individualValue = 42)
-  expect_equal(.mergedValueFor(pc), 42)
+  project <- .makeOrderTestProject(individualValue = 42)
+  expect_equal(.mergedValueFor(project), 42)
 })
 
 test_that("merge produces correct path|value|units triplets", {
-  pc <- .makeOrderTestProject(
+  project <- .makeOrderTestProject(
     modelParamsValues = list(Set = 10),
     scenarioModelParamIds = "Set"
   )
-  scenario <- pc$scenarios[["S1"]]
-  merged <- .mergeScenarioParameters(scenario, pc, customParams = NULL)
+  scenario <- project$scenarios[["S1"]]
+  merged <- .mergeScenarioParameters(scenario, project, customParams = NULL)
   expect_setequal(c("paths", "values", "units"), names(merged))
   expect_equal(length(merged$paths), length(merged$values))
   expect_equal(length(merged$paths), length(merged$units))

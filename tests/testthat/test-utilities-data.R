@@ -308,38 +308,38 @@ test_that("It sets the LLOQ if it is given for any of the original data sets", {
 })
 
 test_that("loadObservedData returns empty list when observedData is NULL", {
-  pc <- testProject()
-  pc$observedData <- NULL
-  result <- loadObservedData(pc)
+  project <- testProject()
+  project$observedData <- NULL
+  result <- loadObservedData(project)
   expect_type(result, "list")
   expect_length(result, 0)
 })
 
 test_that("loadObservedData loads Excel data using project defaults", {
-  pc <- testProject()
-  result <- loadObservedData(pc)
+  project <- testProject()
+  result <- loadObservedData(project)
   expect_type(result, "list")
   expect_true(length(result) > 0)
   expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
 })
 
 test_that("loadObservedData loads Excel data with explicit file overrides", {
-  pc <- testProject()
-  pc$observedData <- list(list(
+  project <- testProject()
+  project$observedData <- list(list(
     type = "excel",
     file = "TestProject_TimeValuesData.xlsx",
     importerConfiguration = "esqlabs_dataImporter_configuration.xml",
     sheets = list("Laskin 1982.Group A")
   ))
-  result <- loadObservedData(pc)
+  result <- loadObservedData(project)
   expect_type(result, "list")
   expect_true(length(result) > 0)
   expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
 })
 
 test_that("loadObservedData merges datasets from multiple entries", {
-  pc <- testProject()
-  pc$observedData <- list(
+  project <- testProject()
+  project$observedData <- list(
     list(
       type = "excel",
       file = "TestProject_TimeValuesData.xlsx",
@@ -353,7 +353,7 @@ test_that("loadObservedData merges datasets from multiple entries", {
       sheets = list("Laskin 1982.Group A")
     )
   )
-  result <- loadObservedData(pc)
+  result <- loadObservedData(project)
   expect_type(result, "list")
   expect_true(length(result) >= 1)
 })
@@ -387,12 +387,12 @@ test_that("loadObservedData errors on non-Project input", {
 })
 
 test_that("loadObservedData loads PKML data", {
-  pc <- testProject()
-  pc$observedData <- list(list(
+  project <- testProject()
+  project$observedData <- list(list(
     type = "pkml",
     file = "ObsDataAciclovir_1.pkml"
   ))
-  result <- loadObservedData(pc)
+  result <- loadObservedData(project)
   expect_type(result, "list")
   expect_length(result, 1)
   expect_true(inherits(result[[1]], "DataSet"))
@@ -400,8 +400,8 @@ test_that("loadObservedData loads PKML data", {
 })
 
 test_that("loadObservedData loads mixed Excel and PKML data", {
-  pc <- testProject()
-  pc$observedData <- list(
+  project <- testProject()
+  project$observedData <- list(
     list(
       type = "excel",
       file = "TestProject_TimeValuesData.xlsx",
@@ -410,15 +410,15 @@ test_that("loadObservedData loads mixed Excel and PKML data", {
     ),
     list(type = "pkml", file = "ObsDataAciclovir_1.pkml")
   )
-  result <- loadObservedData(pc)
+  result <- loadObservedData(project)
   expect_type(result, "list")
   expect_true(length(result) >= 2)
   expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
 })
 
 test_that("loadObservedData loads from JSON with explicit file and importerConfiguration", {
-  pc <- testProject()
-  result <- loadObservedData(pc)
+  project <- testProject()
+  result <- loadObservedData(project)
   expect_type(result, "list")
   expect_length(result, 2)
   expect_true(all(sapply(result, function(ds) inherits(ds, "DataSet"))))
@@ -429,9 +429,9 @@ test_that("loadObservedData loads from JSON with explicit file and importerConfi
 })
 
 test_that("Project$observedData preserves file and importerConfiguration from JSON", {
-  pc <- testProject()
-  expect_length(pc$observedData, 2)
-  excelEntry <- pc$observedData[[1]]
+  project <- testProject()
+  expect_length(project$observedData, 2)
+  excelEntry <- project$observedData[[1]]
   expect_equal(excelEntry$type, "excel")
   expect_equal(excelEntry$file, "TestProject_TimeValuesData.xlsx")
   expect_equal(
@@ -439,14 +439,14 @@ test_that("Project$observedData preserves file and importerConfiguration from JS
     "esqlabs_dataImporter_configuration.xml"
   )
   expect_equal(excelEntry$sheets, list("Laskin 1982.Group A"))
-  pkmlEntry <- pc$observedData[[2]]
+  pkmlEntry <- project$observedData[[2]]
   expect_equal(pkmlEntry$type, "pkml")
   expect_equal(pkmlEntry$file, "ObsDataAciclovir_1.pkml")
 })
 
 test_that("Project load errors if Excel observedData entry missing file", {
-  pc <- testProject()
-  pc_path <- pc$jsonPath
+  project <- testProject()
+  pc_path <- project$jsonPath
   json_data <- jsonlite::fromJSON(pc_path, simplifyVector = FALSE)
   json_data$observedData <- list(list(
     type = "excel",
@@ -462,8 +462,8 @@ test_that("Project load errors if Excel observedData entry missing file", {
 })
 
 test_that("Project load errors if Excel observedData entry missing importerConfiguration", {
-  pc <- testProject()
-  pc_path <- pc$jsonPath
+  project <- testProject()
+  pc_path <- project$jsonPath
   json_data <- jsonlite::fromJSON(pc_path, simplifyVector = FALSE)
   json_data$observedData <- list(list(
     type = "excel",
@@ -479,8 +479,8 @@ test_that("Project load errors if Excel observedData entry missing importerConfi
 })
 
 test_that("Project load errors if script observedData entry missing file", {
-  pc <- testProject()
-  pc_path <- pc$jsonPath
+  project <- testProject()
+  pc_path <- project$jsonPath
   json_data <- jsonlite::fromJSON(pc_path, simplifyVector = FALSE)
   json_data$observedData <- list(list(type = "script"))
   tmp_json <- tempfile(fileext = ".json")
@@ -492,12 +492,12 @@ test_that("Project load errors if script observedData entry missing file", {
 })
 
 test_that("loadObservedData loads script returning single DataSet", {
-  pc <- testProject()
-  pc$observedData <- list(list(
+  project <- testProject()
+  project$observedData <- list(list(
     type = "script",
     file = "scripts/test_script_single.R"
   ))
-  result <- loadObservedData(pc)
+  result <- loadObservedData(project)
   expect_type(result, "list")
   expect_length(result, 1)
   expect_true(inherits(result[[1]], "DataSet"))
@@ -505,12 +505,12 @@ test_that("loadObservedData loads script returning single DataSet", {
 })
 
 test_that("loadObservedData loads script returning list of DataSets", {
-  pc <- testProject()
-  pc$observedData <- list(list(
+  project <- testProject()
+  project$observedData <- list(list(
     type = "script",
     file = "scripts/test_script_list.R"
   ))
-  result <- loadObservedData(pc)
+  result <- loadObservedData(project)
   expect_type(result, "list")
   expect_length(result, 2)
   expect_true(all(sapply(result, inherits, "DataSet")))
@@ -518,77 +518,77 @@ test_that("loadObservedData loads script returning list of DataSets", {
 })
 
 test_that("loadObservedData errors if script file not found", {
-  pc <- testProject()
-  pc$observedData <- list(list(
+  project <- testProject()
+  project$observedData <- list(list(
     type = "script",
     file = "scripts/nonexistent.R"
   ))
   expect_error(
-    loadObservedData(pc),
+    loadObservedData(project),
     regexp = "Script file not found"
   )
 })
 
 test_that("loadObservedData errors if script returns wrong type", {
-  pc <- testProject()
-  pc$observedData <- list(list(
+  project <- testProject()
+  project$observedData <- list(list(
     type = "script",
     file = "scripts/test_script_bad.R"
   ))
   expect_error(
-    loadObservedData(pc),
+    loadObservedData(project),
     regexp = "must return DataSet"
   )
 })
 
 test_that("addObservedData with DataSet adds entry and stores DataSet by name", {
-  pc <- testProject()
+  project <- testProject()
   ds <- ospsuite::DataSet$new(name = "ProgrammaticData")
   ds$setValues(xValues = 1:3, yValues = 1:3)
-  initialCount <- length(pc$observedData)
+  initialCount <- length(project$observedData)
   expect_message(
-    pc$addObservedData(ds),
+    project$addObservedData(ds),
     regexp = "reproducibility"
   )
-  expect_equal(length(pc$observedData), initialCount + 1)
-  newEntry <- pc$observedData[[length(pc$observedData)]]
+  expect_equal(length(project$observedData), initialCount + 1)
+  newEntry <- project$observedData[[length(project$observedData)]]
   expect_equal(newEntry$type, "programmatic")
   expect_equal(newEntry$name, "ProgrammaticData")
-  expect_equal(pc$.getProgrammaticDataSets()[["ProgrammaticData"]], ds)
+  expect_equal(project$.getProgrammaticDataSets()[["ProgrammaticData"]], ds)
 })
 
 test_that("addObservedData with config list adds entry directly", {
-  pc <- testProject()
-  initialCount <- length(pc$observedData)
+  project <- testProject()
+  initialCount <- length(project$observedData)
   config <- list(
     type = "script",
     file = "scripts/generate_data.R"
   )
-  pc$addObservedData(config)
-  expect_equal(length(pc$observedData), initialCount + 1)
-  newEntry <- pc$observedData[[length(pc$observedData)]]
+  project$addObservedData(config)
+  expect_equal(length(project$observedData), initialCount + 1)
+  newEntry <- project$observedData[[length(project$observedData)]]
   expect_equal(newEntry$type, "script")
   expect_equal(newEntry$file, "scripts/generate_data.R")
 })
 
 test_that("addObservedData with config list validates type", {
-  pc <- testProject()
+  project <- testProject()
   expect_error(
-    pc$addObservedData(list(type = "invalid", file = "test.xlsx")),
+    project$addObservedData(list(type = "invalid", file = "test.xlsx")),
     regexp = "Invalid type"
   )
   expect_error(
-    pc$addObservedData(list(file = "test.xlsx")),
+    project$addObservedData(list(file = "test.xlsx")),
     regexp = "must include.*type"
   )
 })
 
 test_that("loadObservedData merges programmatic and JSON-declared DataSets", {
-  pc <- testProject()
+  project <- testProject()
   ds <- ospsuite::DataSet$new(name = "ProgrammaticData")
   ds$setValues(xValues = 1:3, yValues = 1:3)
-  suppressMessages(pc$addObservedData(ds))
-  result <- loadObservedData(pc)
+  suppressMessages(project$addObservedData(ds))
+  result <- loadObservedData(project)
   expect_true("ProgrammaticData" %in% names(result))
   expect_equal(result[["ProgrammaticData"]], ds)
   expect_true(length(result) > 1)
@@ -596,39 +596,39 @@ test_that("loadObservedData merges programmatic and JSON-declared DataSets", {
 
 
 test_that("addObservedData errors on duplicate DataSet name", {
-  pc <- testProject()
+  project <- testProject()
   ds1 <- ospsuite::DataSet$new(name = "SameName")
   ds1$setValues(xValues = 1:3, yValues = 1:3)
   ds2 <- ospsuite::DataSet$new(name = "SameName")
   ds2$setValues(xValues = 1:3, yValues = 4:6)
-  suppressMessages(pc$addObservedData(ds1))
+  suppressMessages(project$addObservedData(ds1))
   expect_error(
-    suppressMessages(pc$addObservedData(ds2)),
+    suppressMessages(project$addObservedData(ds2)),
     regexp = "already exists"
   )
 })
 
 test_that("getObservedDataNames returns all DataSet names", {
-  pc <- testProject()
-  names_before <- getObservedDataNames(pc)
+  project <- testProject()
+  names_before <- getObservedDataNames(project)
   expect_true(length(names_before) >= 1)
 
   ds <- ospsuite::DataSet$new(name = "NewData")
   ds$setValues(xValues = 1:3, yValues = 1:3)
-  suppressMessages(pc$addObservedData(ds))
+  suppressMessages(project$addObservedData(ds))
 
-  names_after <- getObservedDataNames(pc)
+  names_after <- getObservedDataNames(project)
   expect_true("NewData" %in% names_after)
   expect_equal(length(names_after), length(names_before) + 1)
 })
 
 test_that("addObservedData errors when name conflicts with existing loaded data", {
-  pc <- testProject()
-  existing_name <- getObservedDataNames(pc)[[1]]
+  project <- testProject()
+  existing_name <- getObservedDataNames(project)[[1]]
   ds <- ospsuite::DataSet$new(name = existing_name)
   ds$setValues(xValues = 1:3, yValues = 1:3)
   expect_error(
-    suppressMessages(pc$addObservedData(ds)),
+    suppressMessages(project$addObservedData(ds)),
     regexp = "already exists"
   )
 })
@@ -664,80 +664,80 @@ test_that("standalone addObservedData (DataSet) matches R6 method behavior", {
 })
 
 test_that("standalone addObservedData (config list) appends entry", {
-  pc <- testProject()
-  initial <- length(pc$observedData)
-  addObservedData(pc, list(type = "script", file = "scripts/x.R"))
-  expect_equal(length(pc$observedData), initial + 1)
-  expect_true(pc$modified)
+  project <- testProject()
+  initial <- length(project$observedData)
+  addObservedData(project, list(type = "script", file = "scripts/x.R"))
+  expect_equal(length(project$observedData), initial + 1)
+  expect_true(project$modified)
 })
 
 test_that("standalone addObservedData returns project invisibly", {
-  pc <- testProject()
+  project <- testProject()
   out <- withVisible(
-    addObservedData(pc, list(type = "script", file = "scripts/y.R"))
+    addObservedData(project, list(type = "script", file = "scripts/y.R"))
   )
   expect_false(out$visible)
-  expect_identical(out$value, pc)
+  expect_identical(out$value, project)
 })
 
 test_that("removeObservedData removes programmatic DataSet by name", {
-  pc <- testProject()
+  project <- testProject()
   ds <- ospsuite::DataSet$new(name = "ToRemove")
   ds$setValues(xValues = 1:3, yValues = 1:3)
-  suppressMessages(addObservedData(pc, ds))
-  pc$modified <- FALSE
-  before <- length(pc$observedData)
-  removeObservedData(pc, "ToRemove")
-  expect_equal(length(pc$observedData), before - 1)
-  expect_false("ToRemove" %in% names(pc$.getProgrammaticDataSets()))
-  expect_true(pc$modified)
+  suppressMessages(addObservedData(project, ds))
+  project$.markSaved()
+  before <- length(project$observedData)
+  removeObservedData(project, "ToRemove")
+  expect_equal(length(project$observedData), before - 1)
+  expect_false("ToRemove" %in% names(project$.getProgrammaticDataSets()))
+  expect_true(project$modified)
 })
 
 test_that("removeObservedData removes config entry by file basename", {
-  pc <- testProject()
-  addObservedData(pc, list(type = "script", file = "scripts/delete-me.R"))
-  before <- length(pc$observedData)
-  removeObservedData(pc, "delete-me.R")
-  expect_equal(length(pc$observedData), before - 1)
+  project <- testProject()
+  addObservedData(project, list(type = "script", file = "scripts/delete-me.R"))
+  before <- length(project$observedData)
+  removeObservedData(project, "delete-me.R")
+  expect_equal(length(project$observedData), before - 1)
 })
 
 test_that("removeObservedData warns on missing name", {
-  pc <- testProject()
+  project <- testProject()
   expect_warning(
-    removeObservedData(pc, "NoSuchDataSet_ZZZ"),
+    removeObservedData(project, "NoSuchDataSet_ZZZ"),
     regexp = "not found"
   )
 })
 
 test_that("removeObservedData removes the correct DataSet when multiple programmatic exist", {
-  pc <- testProject()
+  project <- testProject()
   dsA <- ospsuite::DataSet$new(name = "DS_A")
   dsA$setValues(xValues = 1:3, yValues = c(10, 20, 30))
   dsB <- ospsuite::DataSet$new(name = "DS_B")
   dsB$setValues(xValues = 1:3, yValues = c(100, 200, 300))
 
-  suppressMessages(addObservedData(pc, dsA))
-  suppressMessages(addObservedData(pc, dsB))
+  suppressMessages(addObservedData(project, dsA))
+  suppressMessages(addObservedData(project, dsB))
 
   # Remove A; B must still be reachable via loadObservedData
-  removeObservedData(pc, "DS_A")
-  loaded <- loadObservedData(pc)
+  removeObservedData(project, "DS_A")
+  loaded <- loadObservedData(project)
   expect_false("DS_A" %in% names(loaded))
   expect_true("DS_B" %in% names(loaded))
   expect_equal(loaded[["DS_B"]]$yValues, c(100, 200, 300), tolerance = 1e-4)
 })
 
 test_that("addObservedData annotates programmatic sentinel with the DataSet name", {
-  pc <- testProject()
+  project <- testProject()
   ds <- ospsuite::DataSet$new(name = "Annotated")
   ds$setValues(xValues = 1:3, yValues = 1:3)
-  suppressMessages(addObservedData(pc, ds))
+  suppressMessages(addObservedData(project, ds))
 
   # The programmatic sentinel in observedData should record the DataSet
   # name so the entry is identifiable when serialised or removed.
   programmaticEntries <- Filter(
     function(e) identical(e$type, "programmatic"),
-    pc$observedData
+    project$observedData
   )
   names_recorded <- vapply(
     programmaticEntries,
@@ -748,20 +748,20 @@ test_that("addObservedData annotates programmatic sentinel with the DataSet name
 })
 
 test_that("removeObservedData removes the named programmatic sentinel, not the first one", {
-  pc <- testProject()
+  project <- testProject()
   dsA <- ospsuite::DataSet$new(name = "DS_A")
   dsA$setValues(xValues = 1:3, yValues = c(10, 20, 30))
   dsB <- ospsuite::DataSet$new(name = "DS_B")
   dsB$setValues(xValues = 1:3, yValues = c(100, 200, 300))
 
-  suppressMessages(addObservedData(pc, dsA))
-  suppressMessages(addObservedData(pc, dsB))
+  suppressMessages(addObservedData(project, dsA))
+  suppressMessages(addObservedData(project, dsB))
 
-  removeObservedData(pc, "DS_B")
+  removeObservedData(project, "DS_B")
 
   programmaticEntries <- Filter(
     function(e) identical(e$type, "programmatic"),
-    pc$observedData
+    project$observedData
   )
   names_recorded <- vapply(
     programmaticEntries,
