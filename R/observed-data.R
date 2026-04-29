@@ -11,6 +11,21 @@
 #
 # loadObservedData() is the runtime loader that resolves declared sources
 # (excel / pkml / script / programmatic) to ospsuite::DataSet objects.
+#
+# Two pieces of internal state live as private fields on the Project R6:
+#   - .observedDataNamesCache  : cached vector of names from a prior
+#                                loadObservedData() call, or NULL when stale
+#   - .programmaticDataSets    : name -> DataSet map for runtime DataSets
+#                                that can't survive JSON round-trip
+# Both are read/written exclusively from this file via .projectPrivate()
+# below. They are not exposed as public R6 methods on Project — callers
+# that need observed-data state should use loadObservedData() /
+# getObservedDataNames() instead.
+
+# Reach into Project's R6 private slot. R does not enforce R6 privacy at
+# runtime; this helper stays narrow to the observed-data module so the
+# rest of the codebase does not pick up the pattern.
+.projectPrivate <- function(project) project$.__enclos_env__$private
 
 # Parse ----
 
@@ -195,6 +210,8 @@ loadObservedData <- function(project) {
     return(list())
   }
 
+  state <- .projectPrivate(project)
+
   allDataSets <- list()
   for (entry in project$observedData) {
     dataSets <- switch(
@@ -246,11 +263,9 @@ loadObservedData <- function(project) {
     allDataSets <- c(allDataSets, dataSets)
   }
 
-  # Add programmatic DataSets (keyed by dataSet$name)
-  allDataSets <- c(allDataSets, project$.getProgrammaticDataSets())
-
-  # Cache the names
-  project$.cacheObservedDataNames(names(allDataSets))
+  # Merge the runtime programmatic store, then cache names
+  allDataSets <- c(allDataSets, state$.programmaticDataSets)
+  state$.observedDataNamesCache <- names(allDataSets)
 
   allDataSets
 }
@@ -274,14 +289,14 @@ loadObservedData <- function(project) {
 getObservedDataNames <- function(project) {
   validateIsOfType(project, "Project")
 
-  cached <- project$.getObservedDataNamesCache()
-  if (!is.null(cached)) {
-    return(cached)
+  state <- .projectPrivate(project)
+  if (!is.null(state$.observedDataNamesCache)) {
+    return(state$.observedDataNamesCache)
   }
 
   # Load to populate cache
   loadObservedData(project)
-  project$.getObservedDataNamesCache()
+  state$.observedDataNamesCache
 }
 
 #' Add observed data to a Project
@@ -298,6 +313,7 @@ getObservedDataNames <- function(project) {
 #' @family observedData
 addObservedData <- function(project, entry) {
   validateIsOfType(project, "Project")
+  state <- .projectPrivate(project)
 
   if (inherits(entry, "DataSet")) {
     name <- entry$name
@@ -305,8 +321,11 @@ addObservedData <- function(project, entry) {
     if (name %in% existingNames) {
       stop(messages$observedDataNameExists(name))
     }
-    project$.addProgrammaticDataSet(name, entry)
-    project$.appendObservedDataNameCache(name)
+    state$.programmaticDataSets[[name]] <- entry
+    # Cheap append rather than full invalidation; saves a re-walk of
+    # excel/pkml/script sources on subsequent getObservedDataNames() calls
+    # that follow a series of programmatic adds.
+    state$.observedDataNamesCache <- c(state$.observedDataNamesCache, name)
     newEntry <- list(type = "programmatic", name = name)
     project$observedData <- c(project$observedData, list(newEntry))
     project$.markModified()
@@ -325,7 +344,7 @@ addObservedData <- function(project, entry) {
     if (!(entry$type %in% validTypes)) {
       stop(messages$observedDataInvalidType(entry$type, validTypes))
     }
-    project$.invalidateObservedDataNamesCache()
+    state$.observedDataNamesCache <- NULL
     project$observedData <- c(project$observedData, list(entry))
     project$.markModified()
   } else {
@@ -354,10 +373,10 @@ removeObservedData <- function(project, name) {
   ) {
     stop("name must be a non-empty string")
   }
+  state <- .projectPrivate(project)
 
-  progDS <- project$.getProgrammaticDataSets()
-  if (name %in% names(progDS)) {
-    project$.removeProgrammaticDataSet(name)
+  if (name %in% names(state$.programmaticDataSets)) {
+    state$.programmaticDataSets[[name]] <- NULL
     # Match by the name stamped on the sentinel; falls back to the first
     # programmatic entry for older configurations whose sentinels predate
     # the `name` field.
@@ -376,7 +395,7 @@ removeObservedData <- function(project, name) {
     if (length(matchIdx) > 0) {
       project$observedData <- project$observedData[-matchIdx[[1]]]
     }
-    project$.invalidateObservedDataNamesCache()
+    state$.observedDataNamesCache <- NULL
     project$.markModified()
     return(invisible(project))
   }
@@ -395,7 +414,7 @@ removeObservedData <- function(project, name) {
   }
 
   project$observedData <- project$observedData[-matchIdx[[1]]]
-  project$.invalidateObservedDataNamesCache()
+  state$.observedDataNamesCache <- NULL
   project$.markModified()
   invisible(project)
 }

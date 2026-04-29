@@ -249,7 +249,7 @@ test_that("addObservedData with DataSet adds entry and stores DataSet by name", 
   newEntry <- project$observedData[[length(project$observedData)]]
   expect_equal(newEntry$type, "programmatic")
   expect_equal(newEntry$name, "ProgrammaticData")
-  expect_equal(project$.getProgrammaticDataSets()[["ProgrammaticData"]], ds)
+  expect_equal(loadObservedData(project)[["ProgrammaticData"]], ds)
 })
 
 test_that("addObservedData with config list adds entry directly", {
@@ -338,22 +338,23 @@ test_that("standalone addObservedData (DataSet) matches R6 method behavior", {
   suppressMessages(addObservedData(pc1, ds1))
   suppressMessages(pc2$addObservedData(ds2))
 
+  loaded1 <- loadObservedData(pc1)
+  loaded2 <- loadObservedData(pc2)
+
   expect_equal(length(pc1$observedData), length(pc2$observedData))
+  expect_true("StandaloneDS" %in% names(loaded1))
+  expect_true("StandaloneDS" %in% names(loaded2))
   expect_equal(
-    names(pc1$.getProgrammaticDataSets()),
-    names(pc2$.getProgrammaticDataSets())
+    loaded1[["StandaloneDS"]]$name,
+    loaded2[["StandaloneDS"]]$name
   )
   expect_equal(
-    pc1$.getProgrammaticDataSets()[["StandaloneDS"]]$name,
-    pc2$.getProgrammaticDataSets()[["StandaloneDS"]]$name
+    loaded1[["StandaloneDS"]]$xValues,
+    loaded2[["StandaloneDS"]]$xValues
   )
   expect_equal(
-    pc1$.getProgrammaticDataSets()[["StandaloneDS"]]$xValues,
-    pc2$.getProgrammaticDataSets()[["StandaloneDS"]]$xValues
-  )
-  expect_equal(
-    pc1$.getProgrammaticDataSets()[["StandaloneDS"]]$yValues,
-    pc2$.getProgrammaticDataSets()[["StandaloneDS"]]$yValues
+    loaded1[["StandaloneDS"]]$yValues,
+    loaded2[["StandaloneDS"]]$yValues
   )
 })
 
@@ -383,7 +384,7 @@ test_that("removeObservedData removes programmatic DataSet by name", {
   before <- length(project$observedData)
   removeObservedData(project, "ToRemove")
   expect_equal(length(project$observedData), before - 1)
-  expect_false("ToRemove" %in% names(project$.getProgrammaticDataSets()))
+  expect_false("ToRemove" %in% names(loadObservedData(project)))
   expect_true(project$modified)
 })
 

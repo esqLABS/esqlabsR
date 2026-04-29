@@ -384,58 +384,12 @@ Project <- R6::R6Class(
     .markValidated = function() {
       private$.validatedSinceMutation <- TRUE
     },
-    #' @description Internal method to retrieve all programmatic DataSets.
-    #' Not intended for end-user use.
-    #' @keywords internal
-    .getProgrammaticDataSets = function() {
-      private$.programmaticDataSets
-    },
-    #' @description Internal method to register a programmatic DataSet.
-    #' Not intended for end-user use.
-    #' @param name Character. Key under which the DataSet is stored.
-    #' @param dataSet A `DataSet` object.
-    #' @keywords internal
-    .addProgrammaticDataSet = function(name, dataSet) {
-      private$.programmaticDataSets[[name]] <- dataSet
-    },
-    #' @description Internal method to drop a programmatic DataSet by name.
-    #' @param name Character.
-    #' @keywords internal
-    .removeProgrammaticDataSet = function(name) {
-      private$.programmaticDataSets[[name]] <- NULL
-    },
     #' @description Internal method to retrieve the raw filePaths metadata
     #' (a named list of `list(value, description)` entries). Not intended for
     #' end-user use; consumed by the Excel import/export bridge.
     #' @keywords internal
     .getFilePathsData = function() {
       private$.filePathsData
-    },
-    #' @description Internal method to cache observed data names.
-    #' @param names Character vector of DataSet names.
-    #' @keywords internal
-    .cacheObservedDataNames = function(names) {
-      private$.observedDataNamesCache <- names
-    },
-    #' @description Internal method to invalidate the cached observed data
-    #' names. Use after mutating `observedData`.
-    #' @keywords internal
-    .invalidateObservedDataNamesCache = function() {
-      private$.observedDataNamesCache <- NULL
-    },
-    #' @description Internal method to append to the cached observed data names.
-    #' @param name Character scalar to append.
-    #' @keywords internal
-    .appendObservedDataNameCache = function(name) {
-      private$.observedDataNamesCache <- c(
-        private$.observedDataNamesCache,
-        name
-      )
-    },
-    #' @description Internal method to get cached observed data names.
-    #' @keywords internal
-    .getObservedDataNamesCache = function() {
-      private$.observedDataNamesCache
     },
     #' @description Add a scenario programmatically.
     #' Delegates to the standalone [addScenario()] function.
