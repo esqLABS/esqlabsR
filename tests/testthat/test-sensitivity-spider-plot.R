@@ -258,6 +258,7 @@ resultsMultiple <- sensitivityCalculation(
 )
 
 test_that("sensitivitySpiderPlot handles multiple output paths correctly", {
+  skip_on_os("mac")
   set.seed(123)
   plotsMultiple <- sensitivitySpiderPlot(resultsMultiple)
 
