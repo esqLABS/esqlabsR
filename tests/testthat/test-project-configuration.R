@@ -6,24 +6,30 @@ test_that("`createProjectConfiguration()` works as expected with project templat
 test_that("A warning is (not) displayed if path/file does not exist", {
   myConfig <- testProjectConfiguration()
   expect_no_warning(myConfig$outputFolder <- "this/directory/does/not/exist")
-  expect_warning(myConfig$dataFolder <- "this/directory/does/not/exist")
+  expect_warning(
+    myConfig$dataFolder <- "this/directory/does/not/exist",
+    "File not found"
+  )
 })
 
 
 test_that("`createDefaultProjectConfiguration()` is deprecated", {
-  expect_warning(createDefaultProjectConfiguration(
-    path = exampleProjectConfigurationPath(),
-    ignoreVersionCheck = TRUE
-  ))
+  expect_warning(
+    createDefaultProjectConfiguration(
+      path = exampleProjectConfigurationPath(),
+      ignoreVersionCheck = TRUE
+    ),
+    "deprecated"
+  )
 })
 
 
 test_that("Project Configuration can be created from V5 project configuration file but raises an error", {
-  expect_error(createProjectConfiguration(test_path(
+  expect_error(suppressWarnings(createProjectConfiguration(test_path(
     "..",
     "data",
     "ProjectConfiguration-V5.xlsx"
-  )))
+  ))))
 })
 
 test_that("Project Configuration can be customized but throws warning if path are wrong", {
@@ -31,50 +37,86 @@ test_that("Project Configuration can be customized but throws warning if path ar
   temp_project <- with_temp_project()
   myConfig <- temp_project$config
 
-  expect_warning({
-    myConfig$configurationsFolder <- "Wrong/Folder"
-  })
+  expect_warning(
+    {
+      myConfig$configurationsFolder <- "Wrong/Folder"
+    },
+    "File not found"
+  )
 
   # Create a new temporary project for each test to avoid interference
   temp_project2 <- with_temp_project()
   myConfig <- temp_project2$config
-  expect_warning({
-    myConfig$dataFolder <- "folder/data/does/not/exist"
-  })
-  expect_warning({
-    myConfig$modelFolder <- "folder/model/does/not/exist"
-  })
-  expect_warning({
-    myConfig$populationsFolder <- "folder/populations/does/not/exist"
-  })
+  expect_warning(
+    {
+      myConfig$dataFolder <- "folder/data/does/not/exist"
+    },
+    "File not found"
+  )
+  expect_warning(
+    {
+      myConfig$modelFolder <- "folder/model/does/not/exist"
+    },
+    "File not found"
+  )
+  expect_warning(
+    {
+      myConfig$populationsFolder <- "folder/populations/does/not/exist"
+    },
+    "File not found"
+  )
 
   # Create a new temporary project for each test to avoid interference
   temp_project3 <- with_temp_project()
   myConfig <- temp_project3$config
-  expect_warning({
-    myConfig$modelParamsFile <- "modelparams_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$individualsFile <- "individuals_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$populationsFile <- "populations_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$scenariosFile <- "scenarios_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$applicationsFile <- "applications_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$plotsFile <- "plots_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$dataFile <- "data_donotexist.xlsx"
-  })
-  expect_warning({
-    myConfig$dataImporterConfigurationFile <- "importer_donotexist.xml"
-  })
+  expect_warning(
+    {
+      myConfig$modelParamsFile <- "modelparams_donotexist.xlsx"
+    },
+    "File not found"
+  )
+  expect_warning(
+    {
+      myConfig$individualsFile <- "individuals_donotexist.xlsx"
+    },
+    "File not found"
+  )
+  expect_warning(
+    {
+      myConfig$populationsFile <- "populations_donotexist.xlsx"
+    },
+    "File not found"
+  )
+  expect_warning(
+    {
+      myConfig$scenariosFile <- "scenarios_donotexist.xlsx"
+    },
+    "File not found"
+  )
+  expect_warning(
+    {
+      myConfig$applicationsFile <- "applications_donotexist.xlsx"
+    },
+    "File not found"
+  )
+  expect_warning(
+    {
+      myConfig$plotsFile <- "plots_donotexist.xlsx"
+    },
+    "File not found"
+  )
+  expect_warning(
+    {
+      myConfig$dataFile <- "data_donotexist.xlsx"
+    },
+    "File not found"
+  )
+  expect_warning(
+    {
+      myConfig$dataImporterConfigurationFile <- "importer_donotexist.xml"
+    },
+    "File not found"
+  )
 })
 
 

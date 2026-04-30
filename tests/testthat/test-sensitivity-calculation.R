@@ -695,7 +695,8 @@ test_that("sensitivityCalculation handles simulation failure", {
         variationRange = c(-1, 2, 10)
       ),
       "Simulation run failed"
-    )
+    ),
+    "with variation factor .* failed"
   )
 
   expect_true(isOfType(resultsSimFailure, "SensitivityCalculation"))
@@ -815,7 +816,8 @@ test_that("sensitivityCalculation handles simulation failure for multiple output
         variationRange = c(-1, 2, 10)
       ),
       "Simulation run failed"
-    )
+    ),
+    "with variation factor .* failed"
   )
 
   expect_identical(nrow(resultsMultipleSimFailure$pkData), 99L)

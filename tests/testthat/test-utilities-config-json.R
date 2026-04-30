@@ -706,8 +706,10 @@ test_that("modifying ProjectConfiguration after snapshotting affects status chec
 
   # Status check should now warn about modification
 
-  expect_warning(status2 <- projectConfigurationStatus(projectConfig, jsonPath))
-  # The warning is about the object being modified, not necessarily about sync status
+  expect_warning(
+    status2 <- projectConfigurationStatus(projectConfig, jsonPath),
+    "The ProjectConfiguration object has been modified"
+  )
   expect_true(status2$in_sync)
   expect_true(status2$unsaved_changes)
 })
