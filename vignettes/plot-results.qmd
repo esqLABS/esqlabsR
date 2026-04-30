@@ -1,9 +1,8 @@
 ---
 title: "4. Plot Results"
-output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{plot-results}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -55,7 +54,36 @@ Plot](#export-plots) section.
 Once all the excel sheets are setup, just call the `createPlotsFromExcel()`
 function to generate and export the plots.
 
-![](Figures/plot-workflow.png)
+```{mermaid}
+classDiagram
+    direction LR
+    class DataCombined {
+        DataCombinedName
+        dataType
+        label
+        scenario
+        ...
+    }
+    class plotConfiguration {
+        plotID
+        DataCombinedName
+        plotType
+        title
+        ...
+    }
+    class plotGrids {
+        name
+        plotID
+        title
+        ...
+    }
+    DataCombined --> plotConfiguration
+    plotConfiguration --> plotGrids
+
+    note for DataCombined "Simulation results and observed data"
+    note for plotConfiguration "Data and type of each plot"
+    note for plotGrids "Plots to combine on one panel"
+```
 
 ### Specify a `DataCombined`
 
