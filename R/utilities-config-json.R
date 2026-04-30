@@ -90,7 +90,7 @@ snapshotProjectConfiguration <- function(
   # Read each Excel file and store its sheets
   for (name in names(excelFiles)) {
     filePath <- excelFiles[[name]]
-    if (!is.na(filePath) && file.exists(filePath)) {
+    if (!is.null(filePath) && file.exists(filePath)) {
       # Get sheets
       sheets <- readxl::excel_sheets(filePath)
 
@@ -107,7 +107,7 @@ snapshotProjectConfiguration <- function(
 
   # Handle CSV files in populations folder if it exists
   if (
-    !is.na(projectConfig$populationsFolder) &&
+    !is.null(projectConfig$populationsFolder) &&
       dir.exists(projectConfig$populationsFolder)
   ) {
     # Find CSV files
