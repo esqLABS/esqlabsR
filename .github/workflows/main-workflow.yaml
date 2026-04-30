@@ -20,7 +20,12 @@ jobs:
   R-CMD-Check:
     if: ${{ !cancelled() }}
     needs: [bump-dev-version]
+    # CI will pass once Open-Systems-Pharmacology/Workflows#224 is merged
+    # (exposes setup-quarto and extra-packages on R-CMD-check-build).
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
+    with:
+      setup-quarto: true
+      extra-packages: local::.
 
   test-coverage:
     if: ${{ !cancelled() }}
