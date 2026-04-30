@@ -38,56 +38,56 @@ are optional and allow customizing the optimization behavior.
 Defines the parameters to be identified. Each row maps a model parameter
 to a scenario and specifies bounds for the optimization.
 
-| Column           | Description                                                      |
-|:-----------------|:-----------------------------------------------------------------|
-| `PITaskName`     | Name of the PI task this row belongs to                          |
-| `Scenarios`      | Name of the scenario (must exist in `Scenarios.xlsx`)            |
-| `Container Path` | Container path of the parameter in the simulation                |
-| `Parameter Name` | Name of the parameter                                            |
-| `Units`          | Unit of the parameter value (optional)                           |
-| `MinValue`       | Lower bound for optimization                                     |
-| `MaxValue`       | Upper bound for optimization                                     |
-| `StartValue`     | Starting value for optimization                                  |
-| `Group`          | Group identifier (see [Parameter Grouping](#parameter-grouping)) |
+| Column | Description |
+|:---|:---|
+| `PITaskName` | Name of the PI task this row belongs to |
+| `Scenarios` | Name of the scenario (must exist in `Scenarios.xlsx`) |
+| `Container Path` | Container path of the parameter in the simulation |
+| `Parameter Name` | Name of the parameter |
+| `Units` | Unit of the parameter value (optional) |
+| `MinValue` | Lower bound for optimization |
+| `MaxValue` | Upper bound for optimization |
+| `StartValue` | Starting value for optimization |
+| `Group` | Group identifier (see [Parameter Grouping](#parameter-grouping)) |
 
 ### PIOutputMappings (mandatory)
 
 Maps simulation outputs to observed data sets used to compute the
 objective function.
 
-| Column              | Description                                                    |
-|:--------------------|:---------------------------------------------------------------|
-| `PITaskName`        | Name of the PI task                                            |
-| `Scenarios`         | Name of the scenario (must exist in `Scenarios.xlsx`)          |
-| `OutputPath`        | Simulation output path or `OutputPathId` from `Scenarios.xlsx` |
-| `ObservedDataSheet` | Sheet name in the observed data Excel file                     |
-| `DataSet`           | Name of the specific data set within the sheet                 |
-| `Scaling`           | Residual scaling: `lin` (linear) or `log` (logarithmic)        |
-| `xOffset`           | Offset applied to x-values of observed data (optional)         |
-| `yOffset`           | Offset applied to y-values of observed data (optional)         |
-| `xFactor`           | Scale factor applied to x-values of observed data (optional)   |
-| `yFactor`           | Scale factor applied to y-values of observed data (optional)   |
-| `Weight`            | Weight(s) for this output mapping (optional)                   |
+| Column | Description |
+|:---|:---|
+| `PITaskName` | Name of the PI task |
+| `Scenarios` | Name of the scenario (must exist in `Scenarios.xlsx`) |
+| `OutputPath` | Simulation output path or `OutputPathId` from `Scenarios.xlsx` |
+| `ObservedDataSheet` | Sheet name in the observed data Excel file |
+| `DataSet` | Name of the specific data set within the sheet |
+| `Scaling` | Residual scaling: `lin` (linear) or `log` (logarithmic) |
+| `xOffset` | Offset applied to x-values of observed data (optional) |
+| `yOffset` | Offset applied to y-values of observed data (optional) |
+| `xFactor` | Scale factor applied to x-values of observed data (optional) |
+| `yFactor` | Scale factor applied to y-values of observed data (optional) |
+| `Weight` | Weight(s) for this output mapping (optional) |
 
 ### PIConfiguration (optional)
 
 General settings for each PI task. If omitted, defaults are used.
 
-| Column                    | Description                                                  |
-|:--------------------------|:-------------------------------------------------------------|
-| `PITaskName`              | Unique name of the PI task                                   |
-| `Algorithm`               | Optimization algorithm (e.g., `BOBYQA`)                      |
-| `CIMethod`                | Confidence interval method (e.g., `hessian`)                 |
-| `PrintEvaluationFeedback` | Print progress during optimization (`TRUE`/`FALSE`)          |
-| `AutoEstimateCI`          | Automatically estimate confidence intervals (`TRUE`/`FALSE`) |
-| `numberOfCores`           | Number of CPU cores for parallel simulation runs             |
-| `checkForNegativeValues`  | Check for negative values during simulation (`TRUE`/`FALSE`) |
-| `ObjectiveFunctionType`   | Error model: `lsq` (default) or `m3`                         |
+| Column | Description |
+|:---|:---|
+| `PITaskName` | Unique name of the PI task |
+| `Algorithm` | Optimization algorithm (e.g., `BOBYQA`) |
+| `CIMethod` | Confidence interval method (e.g., `hessian`) |
+| `PrintEvaluationFeedback` | Print progress during optimization (`TRUE`/`FALSE`) |
+| `AutoEstimateCI` | Automatically estimate confidence intervals (`TRUE`/`FALSE`) |
+| `numberOfCores` | Number of CPU cores for parallel simulation runs |
+| `checkForNegativeValues` | Check for negative values during simulation (`TRUE`/`FALSE`) |
+| `ObjectiveFunctionType` | Error model: `lsq` (default) or `m3` |
 | `ResidualWeightingMethod` | Residual weighting: `none` (default), `std`, `mean`, `error` |
-| `RobustMethod`            | Robust estimation: `none` (default), `huber`, `bisquare`     |
-| `ScaleVar`                | Scale variance (`TRUE`/`FALSE`, default `FALSE`)             |
-| `LinScaleCV`              | Coefficient of variation for linear scale (default `0.2`)    |
-| `LogScaleSD`              | Standard deviation for log scale (default `0.086`)           |
+| `RobustMethod` | Robust estimation: `none` (default), `huber`, `bisquare` |
+| `ScaleVar` | Scale variance (`TRUE`/`FALSE`, default `FALSE`) |
+| `LinScaleCV` | Coefficient of variation for linear scale (default `0.2`) |
+| `LogScaleSD` | Standard deviation for log scale (default `0.086`) |
 
 `numberOfCores` and `checkForNegativeValues` correspond to the options
 of
@@ -109,6 +109,7 @@ For a quick lookup of available option names and their defaults, run
 e.g.:
 
 ``` r
+
 ospsuite.parameteridentification::AlgorithmOptions_BOBYQA
 ospsuite.parameteridentification::AlgorithmOptions_DEoptim
 ```
@@ -125,6 +126,7 @@ Options for confidence interval estimation in long format. For a quick
 lookup of available option names and their defaults, run e.g.:
 
 ``` r
+
 ospsuite.parameteridentification::CIOptions_hessian
 ospsuite.parameteridentification::CIOptions_bootstrap
 ```
@@ -148,6 +150,7 @@ First, load the project configuration and read the PI task definitions
 from Excel:
 
 ``` r
+
 projectConfiguration <- createProjectConfiguration(
   path = exampleProjectConfigurationPath(),
   ignoreVersionCheck = TRUE
@@ -163,6 +166,7 @@ The returned object is a named list of `PITaskConfiguration` objects.
 You can inspect the configuration by printing it:
 
 ``` r
+
 piTaskConfigurations$AciclovirSimple
 #> <PITaskConfiguration>
 #> 
@@ -182,6 +186,7 @@ Next, create the `ParameterIdentification` objects. This step loads the
 simulations, resolves the parameter paths, and maps the observed data:
 
 ``` r
+
 piTasks <- createPITasks(piTaskConfigurations)
 ```
 
@@ -190,6 +195,7 @@ piTasks <- createPITasks(piTaskConfigurations)
 Finally, run the parameter identification:
 
 ``` r
+
 piResults <- runPI(piTasks)
 ```
 
@@ -217,20 +223,20 @@ scenarios.
 
 The `PIParameters` sheet for this task:
 
-| PITaskName             | Scenarios        | Container Path                                                                | Parameter Name | MinValue | MaxValue | StartValue | Group |
-|:-----------------------|:-----------------|:------------------------------------------------------------------------------|:---------------|---------:|---------:|-----------:|------:|
-| AciclovirMultiScenario | PIScenario_250mg | Aciclovir                                                                     | Lipophilicity  |      -10 |       10 |        1.0 |     1 |
-| AciclovirMultiScenario | PIScenario_500mg | Aciclovir                                                                     | Lipophilicity  |      -10 |       10 |        1.0 |     1 |
-| AciclovirMultiScenario | PIScenario_250mg | Neighborhoods\|Kidney_pls_Kidney_ur\|Aciclovir\|Renal Clearances-TS-Aciclovir | TSspec         |        0 |       10 |        0.5 |     2 |
-| AciclovirMultiScenario | PIScenario_500mg | Neighborhoods\|Kidney_pls_Kidney_ur\|Aciclovir\|Renal Clearances-TS-Aciclovir | TSspec         |        0 |       10 |        0.5 |     3 |
+| PITaskName | Scenarios | Container Path | Parameter Name | MinValue | MaxValue | StartValue | Group |
+|:---|:---|:---|:---|---:|---:|---:|---:|
+| AciclovirMultiScenario | PIScenario_250mg | Aciclovir | Lipophilicity | -10 | 10 | 1.0 | 1 |
+| AciclovirMultiScenario | PIScenario_500mg | Aciclovir | Lipophilicity | -10 | 10 | 1.0 | 1 |
+| AciclovirMultiScenario | PIScenario_250mg | Neighborhoods\|Kidney_pls_Kidney_ur\|Aciclovir\|Renal Clearances-TS-Aciclovir | TSspec | 0 | 10 | 0.5 | 2 |
+| AciclovirMultiScenario | PIScenario_500mg | Neighborhoods\|Kidney_pls_Kidney_ur\|Aciclovir\|Renal Clearances-TS-Aciclovir | TSspec | 0 | 10 | 0.5 | 3 |
 
 The `PIOutputMappings` sheet maps each scenario to its respective
 observed data set:
 
-| PITaskName             | Scenarios        | OutputPath                                                                   | ObservedDataSheet   | DataSet                                                                                | Scaling | xOffset | yOffset | xFactor | yFactor | Weight |
-|:-----------------------|:-----------------|:-----------------------------------------------------------------------------|:--------------------|:---------------------------------------------------------------------------------------|:--------|:--------|:--------|:--------|:--------|:-------|
-| AciclovirMultiScenario | PIScenario_250mg | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) | Laskin 1982.Group A | Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv\_ | log     | NA      | NA      | NA      | NA      | NA     |
-| AciclovirMultiScenario | PIScenario_500mg | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) | Laskin 1982.Group A | Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5.0 mg/kg_iv\_ | log     | NA      | NA      | NA      | NA      | NA     |
+| PITaskName | Scenarios | OutputPath | ObservedDataSheet | DataSet | Scaling | xOffset | yOffset | xFactor | yFactor | Weight |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| AciclovirMultiScenario | PIScenario_250mg | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) | Laskin 1982.Group A | Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv\_ | log | NA | NA | NA | NA | NA |
+| AciclovirMultiScenario | PIScenario_500mg | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) | Laskin 1982.Group A | Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5.0 mg/kg_iv\_ | log | NA | NA | NA | NA | NA |
 
 ### Parameter Grouping
 
@@ -255,6 +261,7 @@ identical across all rows.
 The workflow is identical to the simple case:
 
 ``` r
+
 piTaskConfigurations <- readPITaskConfigurationFromExcel(
   piTaskNames = "AciclovirMultiScenario",
   projectConfiguration = projectConfiguration
@@ -288,6 +295,7 @@ column specifies the exact data set name within the loaded sheet. To
 find available data set names, use:
 
 ``` r
+
 observedData <- loadObservedData(
   projectConfiguration = projectConfiguration,
   sheets = "Laskin 1982.Group A"

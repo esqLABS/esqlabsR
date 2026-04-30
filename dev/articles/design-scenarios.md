@@ -140,12 +140,12 @@ When you call
 without providing an argument for a particular setting, the function
 reads it directly from the PKML file:
 
-| Extracted from PKML               | Corresponding argument | Fallback                                          |
-|-----------------------------------|------------------------|---------------------------------------------------|
-| Application protocol names        | `applicationProtocols` | Scenario name                                     |
-| Output paths (`outputSelections`) | `outputPaths`          | Simulation outputs defined in the PKML/simulation |
-| Simulation time intervals         | `simulationTime`       | (none)                                            |
-| Simulation time unit              | `simulationTimeUnit`   | `"min"`                                           |
+| Extracted from PKML | Corresponding argument | Fallback |
+|----|----|----|
+| Application protocol names | `applicationProtocols` | Scenario name |
+| Output paths (`outputSelections`) | `outputPaths` | Simulation outputs defined in the PKML/simulation |
+| Simulation time intervals | `simulationTime` | (none) |
+| Simulation time unit | `simulationTimeUnit` | `"min"` |
 
 You can override any of these by supplying the corresponding argument
 explicitly.
@@ -157,6 +157,7 @@ The typical workflow for this approach consists of two steps:
 **Step 1 — Create scenario configurations from PKML:**
 
 ``` r
+
 projectConfiguration <- createProjectConfiguration("path/to/project/ProjectConfiguration.xlsx")
 
 scenarios <- createScenarioConfigurationsFromPKML(
@@ -168,6 +169,7 @@ scenarios <- createScenarioConfigurationsFromPKML(
 **Step 2 — Write them to the project Excel files:**
 
 ``` r
+
 addScenarioConfigurationsToExcel(
   scenarioConfigurations = scenarios,
   projectConfiguration = projectConfiguration
@@ -187,6 +189,7 @@ Pass a character vector of paths to create one scenario per file. Use
 simulation name stored inside the PKML is used):
 
 ``` r
+
 scenarios <- createScenarioConfigurationsFromPKML(
   pkmlFilePaths = c(
     "Models/Simulations/adult.pkml",
@@ -210,6 +213,7 @@ scenarios. This makes it easy to create many scenarios from a single
 base model:
 
 ``` r
+
 # Three scenarios from the same PKML file, each with a different protocol
 scenarios <- createScenarioConfigurationsFromPKML(
   pkmlFilePaths = "Models/Simulations/base_model.pkml",  # recycled to all 3
@@ -224,6 +228,7 @@ scenarios <- createScenarioConfigurationsFromPKML(
 You can fully control every setting for each scenario individually:
 
 ``` r
+
 scenarios <- createScenarioConfigurationsFromPKML(
   pkmlFilePaths = c(
     "Models/Simulations/pediatric.pkml",
@@ -246,6 +251,7 @@ assign short aliases to the full model paths. The names become the
 `OutputPathId` values in the `OutputPaths` sheet of `Scenarios.xlsx`:
 
 ``` r
+
 scenarios <- createScenarioConfigurationsFromPKML(
   pkmlFilePaths = "Models/Simulations/simulation.pkml",
   projectConfiguration = projectConfiguration,
@@ -265,6 +271,7 @@ Set `appendToExisting = FALSE` to overwrite the file completely with
 only the new scenarios:
 
 ``` r
+
 # Replace all existing scenarios with the new ones
 addScenarioConfigurationsToExcel(
   scenarioConfigurations = scenarios,
@@ -380,6 +387,7 @@ application parameters for the molecule `Aciclovir` from the example
 simulation:
 
 ``` r
+
 sim <- loadSimulation(system.file(
   "extdata",
   "Aciclovir.pkml",
@@ -445,6 +453,7 @@ And export the parameters to an Excel file using the
 function:
 
 ``` r
+
 exportParametersToXLS(
   parameters = applicationParams,
   paramsXLSpath = "../Applications.xlsx"
@@ -455,6 +464,7 @@ If you need to add more parameters to an existing Excel file without
 overwriting it, you can use the `append` parameter:
 
 ``` r
+
 # Add more parameters to existing file
 exportParametersToXLS(
   parameters = additionalParams,
@@ -525,10 +535,10 @@ path into the column `OutputPath` and defining a unique identifier for
 this path in the column `OutputPathId`. The content of the sheet could
 look like this:
 
-| OutputPathId       | OutputPath                                                                   |
-|--------------------|------------------------------------------------------------------------------|
-| Aciclovir_PVB      | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
-| Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container          |
+| OutputPathId | OutputPath |
+|----|----|
+| Aciclovir_PVB | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
+| Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container |
 
 In the `Scenarios` sheet, enter the IDs of all paths the outputs should
 be generated for, separated by a comma, e.g.,

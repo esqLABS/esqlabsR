@@ -26,6 +26,7 @@ Before applying this configuration, let’s first run a sensitivity
 analysis using the aciclovir example:
 
 ``` r
+
 library(esqlabsR)
 
 simulationFilePath <- system.file(
@@ -97,26 +98,26 @@ subset of options depending on the visual structure of the plot.
 The table below summarizes which configuration options are supported by
 each plot type:
 
-| Configuration Option | Spider Plot | Time Profiles | Tornado Plot | Description                          |
-|----------------------|-------------|---------------|--------------|--------------------------------------|
-| `legendPosition`     | ✔️          | ✔️            | ✔️           | Position of the legend on the plot   |
-| `legendTitle`        | ✔️          | ✔️            | ✔️           | Title displayed for the legend       |
-| `linesAlpha`         | ✔️          | ✔️            |              | Transparency of line elements        |
-| `linesColor`         | ✔️          | ✔️            | ✔️           | Color of lines (or bars for tornado) |
-| `linesSize`          | ✔️          | ✔️            |              | Thickness of line elements           |
-| `pointsShape`        | ✔️          | ✔️            |              | Shape of data points                 |
-| `pointsSize`         | ✔️          |               |              | Size of data points                  |
-| `title`              | ✔️          | ✔️            | ✔️           | Main title of the plot               |
-| `titleSize`          | ✔️          | ✔️            | ✔️           | Font size of the title               |
-| `subtitle`           | ✔️          |               | ✔️           | Subtitle text below the title        |
-| `xAxisScale`         | ✔️          | ✔️            |              | X-axis scale type (“log”, “lin”)     |
-| `xLabel`             | ✔️          | ✔️            | ✔️           | Label for the x-axis                 |
-| `xValuesLimits`      | ✔️          |               |              | Limits for x-values                  |
-| `yAxisScale`         | ✔️          | ✔️            |              | Y-axis scale type (“log”, “lin”)     |
-| `yAxisTicks`         | ✔️          |               |              | Number of ticks on y-axis            |
-| `yAxisLimits`        | ✔️          |               |              | Y-axis limits                        |
-| `yValuesLimits`      | ✔️          |               |              | Limits for y-values                  |
-| `yLabel`             | ✔️          | ✔️            | ✔️           | Label for the y-axis                 |
+| Configuration Option | Spider Plot | Time Profiles | Tornado Plot | Description |
+|----|----|----|----|----|
+| `legendPosition` | ✔️ | ✔️ | ✔️ | Position of the legend on the plot |
+| `legendTitle` | ✔️ | ✔️ | ✔️ | Title displayed for the legend |
+| `linesAlpha` | ✔️ | ✔️ |  | Transparency of line elements |
+| `linesColor` | ✔️ | ✔️ | ✔️ | Color of lines (or bars for tornado) |
+| `linesSize` | ✔️ | ✔️ |  | Thickness of line elements |
+| `pointsShape` | ✔️ | ✔️ |  | Shape of data points |
+| `pointsSize` | ✔️ |  |  | Size of data points |
+| `title` | ✔️ | ✔️ | ✔️ | Main title of the plot |
+| `titleSize` | ✔️ | ✔️ | ✔️ | Font size of the title |
+| `subtitle` | ✔️ |  | ✔️ | Subtitle text below the title |
+| `xAxisScale` | ✔️ | ✔️ |  | X-axis scale type (“log”, “lin”) |
+| `xLabel` | ✔️ | ✔️ | ✔️ | Label for the x-axis |
+| `xValuesLimits` | ✔️ |  |  | Limits for x-values |
+| `yAxisScale` | ✔️ | ✔️ |  | Y-axis scale type (“log”, “lin”) |
+| `yAxisTicks` | ✔️ |  |  | Number of ticks on y-axis |
+| `yAxisLimits` | ✔️ |  |  | Y-axis limits |
+| `yValuesLimits` | ✔️ |  |  | Limits for y-values |
+| `yLabel` | ✔️ | ✔️ | ✔️ | Label for the y-axis |
 
 **Note:** `defaultPlotConfiguration` follows ggplot2-style aesthetics
 (e.g., `legendPosition`, `linesColor`, `pointsShape`). The sensitivity
@@ -133,6 +134,7 @@ To explicitly control the appearance of your plots, create and modify a
 configuration object as shown below:
 
 ``` r
+
 myConfiguration <- createEsqlabsPlotConfiguration()
 
 myConfiguration$linesColor <- c("#4D8076", "#C34A36")
@@ -144,6 +146,7 @@ myConfiguration$legendPosition <- "right"
 You can then pass this object to any sensitivity plotting function:
 
 ``` r
+
 sensitivitySpiderPlot(
   sensitivityCalculation = analysis, 
   defaultPlotConfiguration = myConfiguration
@@ -180,6 +183,7 @@ directly to the function takes precedence and applies a linear scale
 instead.
 
 ``` r
+
 myConfiguration <- createEsqlabsPlotConfiguration()
 
 myConfiguration$linesColor <- c("#d8b365", "#5ab4ac")
@@ -218,6 +222,7 @@ This flexibility makes post-processing straightforward. For example,
 modifying a spider plot after creation:
 
 ``` r
+
 library(ggplot2)
 library(patchwork)
 

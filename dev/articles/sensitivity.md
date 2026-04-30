@@ -21,6 +21,7 @@ We begin by loading a simulation of aciclovir from the package example
 data:
 
 ``` r
+
 library(esqlabsR)
 
 simulationFilePath <- system.file(
@@ -48,6 +49,7 @@ In the following example, we analyze how changes in *lipophilicity*,
 pharmacokinetics of aciclovir:
 
 ``` r
+
 outputPaths <- c(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 )
@@ -76,6 +78,7 @@ head(analysis$pkData)
 To illustrate interpretation we will focus on *lipophilicity* only.
 
 ``` r
+
 analysis$pkData |>
   dplyr::filter(
     ParameterPath == "Aciclovir|Lipophilicity",
@@ -103,7 +106,9 @@ AUC of 4072.6 µmol·min/L. Ten-fold higher (−0.0097) reduces AUC by 0.44
 %, whereas ten-fold lower (−0.97) increases it by 2.13 %. The
 sensitivity of AUC to a 10-fold increase in lipophilicity is calculated
 as:
-$$\text{Sensitivity} = \frac{\Delta\text{AUC}}{\Delta\text{lipophilicity}} \times \frac{\text{lipophilicity}}{\text{AUC}} = \frac{4159.5 - 4072.6}{- 0.97 - - 0.097} \times \frac{- 0.097}{4072.6} = 0.0028$$
+``` math
+ \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4159.5-4072.6}{-0.97--0.097} \times \frac{-0.097}{4072.6} = 0.0028 
+```
 
 ### Saving and Loading Sensitivity Results
 
@@ -119,6 +124,7 @@ from disk is avoided. Otherwise, the function attempts to load the
 must still be accessible.
 
 ``` r
+
 # Save to disk
 outputDir <- file.path(tempdir(), "sensitivity-results")
 saveSensitivityCalculation(analysis, outputDir)
@@ -144,6 +150,7 @@ By default, the plot includes all PK parameters in `analysis$pkData`. To
 restrict the output, use the `pkParameters` argument.
 
 ``` r
+
 sensitivitySpiderPlot(analysis)
 #> $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
 ```
@@ -168,6 +175,7 @@ Each panel corresponds to one input parameter, with a color gradient
 representing the scaling factor: 0.1 = blue, 1.0 = black, 10 = red.
 
 ``` r
+
 sensitivityTimeProfiles(analysis)
 #> $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
 ```
@@ -194,6 +202,7 @@ be included in the `variationRange` passed to
 [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md).
 
 ``` r
+
 sensitivityTornadoPlot(analysis)
 #> $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
 ```
@@ -228,6 +237,7 @@ We first define a function that calculates the mean of a given numerical
 vector:
 
 ``` r
+
 meanFunction <- function(x, y) {
   mean(y)
 }
@@ -241,6 +251,7 @@ can pass a *named vector* to the `parameterPaths` argument, where the
 names will be used as labels instead of full paths.
 
 ``` r
+
 simulation <- loadSimulation(simulationFilePath)
 customOutputPaths <- c(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
@@ -278,6 +289,7 @@ aciclovir in the peripheral venous blood to the lipophilicity of
 aciclovir.
 
 ``` r
+
 sensitivitySpiderPlot(customAnalysis)
 #> $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
 ```

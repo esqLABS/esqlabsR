@@ -15,6 +15,7 @@ be other objects) and methods, which are accessible by the `$`
 character:
 
 ``` r
+
 # create an instance of an object
 object1 <- ClassName$new()
 

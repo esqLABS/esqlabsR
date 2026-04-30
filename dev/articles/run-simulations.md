@@ -19,6 +19,7 @@ function. To create the configuration for the *‘TestScenario’* scenario
 defined in the `Scenarios.xlsx` file, we call:
 
 ``` r
+
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   scenarioNames = "TestScenario",
@@ -70,6 +71,7 @@ argument to the
 function.
 
 ``` r
+
 # Create `Scenario` objects from `ScenarioConfiguration` objects
 scenarios <- createScenarios(scenarioConfigurations)
 ```
@@ -78,6 +80,7 @@ You can view the final parametrization that is applied to the simulation
 by calling the `finalCustomParams` property:
 
 ``` r
+
 scenarios$TestScenario$finalCustomParams
 #> $paths
 #> [1] "Organism|Liver|EHC continuous fraction"                     
@@ -103,6 +106,7 @@ of the `SimulationResults`, and the population if the scenario is a
 population simulation.
 
 ``` r
+
 simulatedScenariosResults <- runScenarios(
   scenarios = scenarios
 )
@@ -132,11 +136,11 @@ head(simulatedScenariosResults$TestScenario$outputValues$metaData)
 #> 6            0    5
 #>   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
 #> 1                                                                  0.000000
-#> 2                                                                  2.712925
-#> 3                                                                  7.830324
-#> 4                                                                 13.107444
-#> 5                                                                 18.254257
-#> 6                                                                 23.235130
+#> 2                                                                  2.713359
+#> 3                                                                  7.830900
+#> 4                                                                 13.108006
+#> 5                                                                 18.254757
+#> 6                                                                 23.235542
 #> NULL
 ```
 

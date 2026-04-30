@@ -21,6 +21,7 @@ A new project folder can be initialized with the
 function.
 
 ``` r
+
 library(esqlabsR)
 
 initProject()
@@ -46,6 +47,7 @@ Loading the project configuration is the first step in any workflow
 using [esqlabsR](https://github.com/esqLABS/esqlabsR).
 
 ``` r
+
 my_project_configuration <- createProjectConfiguration(
   path = "path/to/ProjectConfiguration.xlsx"
 )
@@ -69,6 +71,7 @@ To create an example `ProjectConfiguration` and execute the rest of this
 tutorial, run the following:
 
 ``` r
+
 my_project_configuration <- createProjectConfiguration(
   path = exampleProjectConfigurationPath(),
   ignoreVersionCheck = TRUE
@@ -87,6 +90,7 @@ project configuration snapshots. This allows you to:
 - **Ensure reproducibility** across different environments
 
 ``` r
+
 # Create a JSON snapshot of your project configuration
 snapshotProjectConfiguration(my_project_configuration)
 
@@ -153,6 +157,7 @@ and create `Scenario` objects with
 [`createScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarios.md):
 
 ``` r
+
 my_scenarios <- createScenarios(
   readScenarioConfigurationFromExcel(
     scenarioNames = "TestScenario",
@@ -186,6 +191,7 @@ my_scenarios <- createScenarios(
 Then, we run the simulations by passing the scenarios we defined:
 
 ``` r
+
 myScenarioResults <- runScenarios(my_scenarios)
 ```
 
@@ -195,6 +201,7 @@ and
 [`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.md).
 
 ``` r
+
 saveScenarioResults(
   myScenarioResults,
   projectConfiguration = my_project_configuration,
@@ -222,12 +229,14 @@ package.
 First, a `DataCombined` object is initialized:
 
 ``` r
+
 my_datacombined <- DataCombined$new()
 ```
 
 Then, simulation result are added to the dataCombined object:
 
 ``` r
+
 my_datacombined$addSimulationResults(
   myScenarioResults$TestScenario$results,
   names = "Simulated",
@@ -238,6 +247,7 @@ my_datacombined$addSimulationResults(
 Finally, the plot is generated:
 
 ``` r
+
 plotIndividualTimeProfile(my_datacombined)
 ```
 
@@ -248,6 +258,7 @@ In some cases, we also want to plot the observed experimental data
 observed data for them to be plotted.
 
 ``` r
+
 observed_data <- loadObservedData(
   projectConfiguration = my_project_configuration,
   sheets = "Laskin 1982.Group A"

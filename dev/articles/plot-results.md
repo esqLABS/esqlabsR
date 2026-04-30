@@ -136,6 +136,7 @@ described in
 and load the corresponding observed data.
 
 ``` r
+
 library(esqlabsR)
 # Create a project configuration
 projectConfiguration <- createProjectConfiguration(
@@ -175,6 +176,7 @@ In the next step, the user calls the function
 passing the generated data:
 
 ``` r
+
 plots <- createPlotsFromExcel(
   simulatedScenarios = simulatedScenarios,
   observedData = observedData,
@@ -187,17 +189,20 @@ The function returns a named list of `ggplot2` objects, with names being
 the names of the plot grids:
 
 ``` r
+
 names(plots)
 #> [1] "Aciclovir"  "Aciclovir2"
 ```
 
 ``` r
+
 plots$Aciclovir
 ```
 
 ![](plot-results_files/figure-html/unnamed-chunk-8-1.png)
 
 ``` r
+
 plots$Aciclovir2
 ```
 
@@ -229,6 +234,7 @@ plotting. To do so, you can use the
 function:
 
 ``` r
+
 # Create DataCombined used inthe plots "Aciclovir" and "Aciclovir2"
 dataCombined <- createDataCombinedFromExcel(
   projectConfiguration = projectConfiguration,
@@ -259,13 +265,14 @@ residuals <- calculateResiduals(
 sumResiduals <- sum(residuals$residualValues)
 
 print(paste0("The sum of linear residuals for is ", sumResiduals))
-#> [1] "The sum of linear residuals for is 10.6267826644734"
+#> [1] "The sum of linear residuals for is 10.6297417948094"
 ```
 
 You can modify the created `DataCombined`, e.g., by changing the
 offsets, and pass them to the `createPlotsFromExcel` function:
 
 ``` r
+
 # Change the offset of the first group
 dataCombined[[1]]$setDataTransformations(xOffsets = 0)
 # Create the plots using the modified DataCombined
@@ -308,6 +315,7 @@ For the following examples, we will use the same scenario as described
 in the [Example](#example) above.
 
 ``` r
+
 # Create a project configuration
 projectConfiguration <- createProjectConfiguration(
   exampleProjectConfigurationPath(),
@@ -358,6 +366,7 @@ Let’s create a `DataCombined` object and populate it with data with the
 following code:
 
 ``` r
+
 dataCombined <- DataCombined$new()
 dataCombined$addDataSets(observedData, names = "Observed", groups = "Aciclovir")
 dataCombined$addSimulationResults(
@@ -402,6 +411,7 @@ The next example shows how to create a multi-panel figure using the
 default configurations.
 
 ``` r
+
 plotConfig <- createEsqlabsPlotConfiguration()
 gridConfig <- createEsqlabsPlotGridConfiguration()
 
@@ -444,6 +454,7 @@ To save the plot to a `PNG` file, use the
 Make sure that the `fileName` argument ends with `.png`:
 
 ``` r
+
 exportConfig <- createEsqlabsExportConfiguration(
   projectConfiguration$outputFolder
 )
@@ -475,6 +486,7 @@ and Excel files with observed data are present in the
 data:
 
 ``` r
+
 projectConfiguration <- createProjectConfiguration(
   exampleProjectConfigurationPath(),
   ignoreVersionCheck = TRUE
