@@ -7,6 +7,7 @@
 ## Minor improvements and bug fixes
 
 - `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set) (#1007).
+- Bumped minimum required `ospsuite` version to 12.4.2; earlier versions fail to load data correctly (#1000).
 
 # esqlabsR 5.6.0
 
