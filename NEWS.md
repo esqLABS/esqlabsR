@@ -1,5 +1,9 @@
 # esqlabsR (development version)
 
+## New features
+
+- Added Excel-based parameter identification (PI) workflow: `readPITaskConfigurationFromExcel()`, `createPITasks()`, and `runPI()` enable defining and running PI tasks from `ParameterIdentification.xlsx`. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See `vignette("pi-workflow")` (\#928).
+
 ## Minor improvements and bug fixes
 
 - `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set) (#1007).
@@ -13,12 +17,14 @@
 
 ## Minor improvements and bug fixes
 
-- `loadObservedData()` now passes the `sheets` argument directly to `ospsuite::loadDataSetsFromExcel()`, removing the deprecated `importAllSheets` workaround. The `sheets` parameter takes precedence over any sheets defined in `importerConfiguration`: `importerConfiguration$sheets` is always set to `NULL` before loading, so the passed configuration object is mutated as a side effect (#962).
+- `loadObservedData()` now passes the `sheets` argument directly to `ospsuite::loadDataSetsFromExcel()`, removing the deprecated `importAllSheets` workaround. The `sheets` parameter takes precedence over any sheets defined in `importerConfiguration`: `importerConfiguration$sheets` is always set to `NULL` before loading, so the passed configuration object is mutated as a side effect (#982).
 - Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
 - `createDataCombinedFromExcel()` now throws an error listing all DataCombined IDs that cannot be found in the Excel file (\#740).
 - Added a warning when axis limits contain zero while the corresponding axis scale is set to `log` in `Plots.xlsx`. Previously, this combination silently produced empty plots (\#967).
 - `extendParameterStructure()` now supports `NULL` for `parameters` and `newParameters` arguments. When `NULL` is provided, a valid empty structure is returned or combined with the non-NULL argument (#583).
 - `sensitivityTimeProfiles()` now accepts `xUnits` and `yUnits` as plain strings (e.g., `yUnits = "nmol/l"`) in addition to lists. Single string values are automatically coerced to a list (\#822).
+- `snapshotProjectConfiguration()` no longer fails when population files are PK-Sim exported CSVs that do not have sheet names (\#980).
+- Remove false warnings whenever a `ProjectConfiguration` is created (\#964).
 
 # esqlabsR 5.5.2
 
@@ -34,14 +40,12 @@
   - `validationSummary()`: Returns summary of validation results
   - `isAnyCriticalErrors()`: Checks if validation found blocking errors
 - Added validation documentation to project-structure vignette
-- Added Excel-based parameter identification (PI) workflow: `readPITaskConfigurationFromExcel()`, `createPITasks()`, and `runPI()` enable defining and running PI tasks from `ParameterIdentification.xlsx`. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See `vignette("pi-workflow")` (\#928).
 
 ## Minor improvements and bug fixes
 
 - Fixed variable scoping issues in validation functions
 - Simplified validation logic to check data frame structure instead of R6 objects
 - Using native operator `%||%` instead of importing from the `ospsuite.utils` package.
-- Remove false warnings whenever a ProjectConfiguration is created (\#964).
 
 # esqlabsR 5.5.1
 
