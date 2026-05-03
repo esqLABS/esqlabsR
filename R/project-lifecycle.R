@@ -1,0 +1,282 @@
+# Project lifecycle: load, save, init, examples ----
+
+#' Load a project from a JSON configuration file
+#'
+#' @description Load a `Project` from a JSON file. This is the
+#'   primary entry point for working with esqlabsR projects.
+#'
+#'   On load the project is checked for the most common cross-reference
+#'   problems (e.g. a scenario referring to an individual or population
+#'   that is not defined). Any such issues are reported via [cli::cli_warn()]
+#'   so that obvious configuration mistakes surface immediately, but loading
+#'   still succeeds. Use [validateProject()] for a full report.
+#'
+#' @param path Path to the `Project.json` file. Defaults to
+#'   `Project.json` in the working directory.
+#'
+#' @returns Object of type `Project`
+#' @export
+loadProject <- function(path = "Project.json") {
+  project <- Project$new(projectFilePath = path)
+  .warnOnCrossReferenceErrors(project)
+  project
+}
+
+#' Emit a `cli_warn` listing critical cross-reference errors, if any
+#'
+#' Runs `scenarios` first so `.validateCrossReferences` can apply its
+#' skip-on-prior-errors guard — without this, a structurally invalid
+#' scenarios section would still trigger spurious cross-reference warnings.
+#' @keywords internal
+.warnOnCrossReferenceErrors <- function(project) {
+  results <- .runProjectValidation(
+    project,
+    sections = c("scenarios", "crossReferences")
+  )
+  r <- results$crossReferences
+  if (is.null(r) || !r$has_critical_errors()) {
+    return(invisible(NULL))
+  }
+  bullets <- vapply(r$critical_errors, function(e) e$message, character(1))
+  bullets <- stats::setNames(bullets, rep("x", length(bullets)))
+  cli::cli_warn(c(
+    "Project has {length(bullets)} unresolved cross-reference{?s}:",
+    bullets,
+    "i" = "Run {.code validateProject(project)} for the full report."
+  ))
+  invisible(NULL)
+}
+
+#' Save a project to a JSON file
+#'
+#' @description Serializes the in-memory `Project` object back to JSON with
+#'   round-trip fidelity. This allows persisting changes made programmatically
+#'   (e.g., via [addScenario()]).
+#'
+#' @param project A `Project` object.
+#' @param path Path where the JSON file should be written. If `NULL` (default),
+#'   uses `project$jsonPath` (the path the project was loaded from).
+#'
+#' @returns Invisibly returns the path where the file was written.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' addScenario(project, "NewScenario", "Model.pkml", individualId = "Indiv1")
+#' saveProject(project)
+#' }
+saveProject <- function(project, path = NULL) {
+  validateIsOfType(project, "Project")
+
+  if (is.null(path)) {
+    path <- project$jsonPath
+    if (is.null(path)) {
+      stop(
+        "No path specified and project has no jsonPath. Provide a path argument."
+      )
+    }
+  }
+
+  jsonData <- .projectToJson(project)
+  jsonlite::write_json(
+    jsonData,
+    path,
+    auto_unbox = TRUE,
+    null = "null",
+    pretty = TRUE
+  )
+
+  project$.markSaved()
+  invisible(path)
+}
+
+#' @rdname loadProject
+#' @export
+createProjectConfiguration <- function(path = "Project.json") {
+  lifecycle::deprecate_soft(
+    what = "createProjectConfiguration()",
+    with = "loadProject()",
+    when = "6.0.0"
+  )
+  loadProject(path)
+}
+
+#' @rdname loadProject
+#' @export
+createDefaultProjectConfiguration <- function(path = "Project.json") {
+  lifecycle::deprecate_soft(
+    what = "createDefaultProjectConfiguration()",
+    with = "loadProject()",
+    when = "5.3.0"
+  )
+  loadProject(path)
+}
+
+#' Check if a directory contains an esqlabsR project
+#'
+#' @description Checks if a directory already contains an esqlabsR project by
+#' looking for the presence of Project.xlsx file or Configurations
+#' folder.
+#'
+#' @param destination A string defining the path to check for an existing
+#'   project. Defaults to current working directory.
+#'
+#' @returns TRUE if an esqlabsR project exists in the directory, FALSE
+#'   otherwise.
+#' @export
+#' @examples
+#' \dontrun{
+#' # Check if current directory has a project
+#' hasProject <- isProjectInitialized()
+#'
+#' # Check if specific directory has a project
+#' hasProject <- isProjectInitialized("path/to/project")
+#' }
+isProjectInitialized <- function(destination = ".") {
+  destination <- fs::path_abs(destination)
+
+  if (!fs::dir_exists(destination)) {
+    return(FALSE)
+  }
+
+  # Check for Project.xlsx file
+  hasConfigFile <- length(fs::dir_ls(destination, glob = "*Project*.xlsx")) > 0
+
+  # Check for Configurations folder
+  hasConfigFolder <- fs::dir_exists(file.path(destination, "Configurations"))
+
+  return(hasConfigFile || hasConfigFolder)
+}
+
+#' Initialize esqlabsR Project Folders and required Files
+#'
+#' @description
+#'
+#' Creates the default project folder structure with Excel file templates in the
+#' working directory.
+#'
+#' @param destination A string defining the path where to initialize the
+#'   project. default to current working directory.
+#' @param type Type of project to create: `"minimal"` (default) creates an empty
+#'   project with just the directory structure, `"example"` creates a project
+#'   with example data, models, and configurations.
+#' @param createExcel If `TRUE` (default), generates Excel configuration files
+#'   from the JSON. Set to `FALSE` for a JSON-only workflow.
+#' @param overwrite If TRUE, overwrites existing project without asking for
+#'   permission. If FALSE and a project already exists, asks user for permission
+#'   to overwrite.
+#' @export
+initProject <- function(
+  destination = ".",
+  type = c("minimal", "example"),
+  createExcel = TRUE,
+  overwrite = FALSE
+) {
+  destination <- fs::path_abs(destination)
+  type <- match.arg(type)
+
+  if (!fs::dir_exists(destination)) {
+    stop(
+      messages$pathNotFound(destination)
+    )
+  }
+
+  source_folder <- switch(
+    type,
+    "minimal" = .projectDirectory("Blank"),
+    "example" = .projectDirectory("Example")
+  )
+
+  # Check if project already exists
+  if (isProjectInitialized(destination)) {
+    if (overwrite) {
+      # Overwrite without asking
+      message(messages$overwriteDestination(destination))
+    } else {
+      # Ask for permission to overwrite
+      qs <- sample(c("Absolutely not", "Yes", "No way"))
+
+      out <- utils::menu(
+        title = "The destination folder seems to already contain an esqlabsR project. Do you want to overwrite it?",
+        choices = qs
+      )
+
+      if (out == 0L || qs[[out]] != "Yes") {
+        stop(messages$abortedByUser())
+      }
+
+      message(messages$overwriteDestination(destination))
+    }
+  }
+
+  # Copy Blank template files (just the JSON)
+  res <- file.copy(
+    list.files(source_folder, full.names = TRUE),
+    destination,
+    recursive = TRUE,
+    overwrite = TRUE
+  )
+
+  # Create empty directory structure
+  dirs_to_create <- c(
+    "Models/Simulations",
+    "Data",
+    "Populations",
+    "Results/Figures",
+    "Results/SimulationResults"
+  )
+  for (d in dirs_to_create) {
+    dir.create(
+      file.path(destination, d),
+      recursive = TRUE,
+      showWarnings = FALSE
+    )
+  }
+
+  if (createExcel) {
+    jsonPath <- file.path(destination, "Project.json")
+    project <- loadProject(jsonPath)
+    exportProjectToExcel(project, outputDir = destination, silent = TRUE)
+  }
+
+  invisible(destination)
+}
+
+#' Get the path to the example Project.json
+#'
+#' @returns A string representing the path to the example
+#'   `Project.json` file shipped with the package.
+#' @export
+#' @examples
+#' exampleProjectPath()
+exampleProjectPath <- function() {
+  file.path(.projectDirectory("Example"), "Project.json")
+}
+
+#' @rdname exampleProjectPath
+#' @export
+exampleProjectConfigurationPath <- function() {
+  lifecycle::deprecate_soft(
+    what = "exampleProjectConfigurationPath()",
+    with = "exampleProjectPath()",
+    when = "7.0.0"
+  )
+  exampleProjectPath()
+}
+
+#' Get path to esqlabsR project templates
+#'
+#' esqlabsR comes bundled with project templates in its `inst/extdata`
+#' directory. This function makes them easy to access.
+#'
+#' @param name Name of project directory. If `NULL`, the available names will be
+#'   listed.
+#' @keywords internal
+.projectDirectory <- function(name = NULL) {
+  directory <- system.file("extdata", "projects", package = "esqlabsR")
+  if (!is.null(name)) {
+    directory <- file.path(directory, name)
+  }
+  directory
+}

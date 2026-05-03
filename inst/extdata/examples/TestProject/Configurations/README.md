@@ -1,1 +1,0 @@
-All parameter excel files used by esqlabsR projects
