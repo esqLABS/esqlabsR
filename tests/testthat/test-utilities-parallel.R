@@ -1,6 +1,4 @@
 test_that("`executeInParallel()` works as expected", {
-  skip_on_os("mac")
-
   chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
 
   # Limiting the number of cores so the test does not fail when building

@@ -16,12 +16,11 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
     package = "ospsuite"
   ))
 
-  dataFolder <- getTestDataFilePath("")
-  paramsXLSpath <- file.path(dataFolder, "Parameters.xlsx")
-  sheets <- c("EmptySheet")
-  params <- readParametersFromXLS(
-    paramsXLSpath = paramsXLSpath,
-    sheets = sheets
+  # Construct the empty parameter structure directly (readParametersFromXLS was removed)
+  params <- list(
+    paths = character(0),
+    values = numeric(0),
+    units = character(0)
   )
 
   initializeSimulation(simulation, additionalParams = params)
@@ -29,6 +28,22 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
+
+test_that("initializeSimulation does not read species parameters from Excel", {
+  sim <- loadTestSimulation("simple")
+  indivChar <- ospsuite::createIndividualCharacteristics(
+    species = ospsuite::Species$Human,
+    population = ospsuite::HumanPopulation$European_ICRP_2002,
+    gender = ospsuite::Gender$Male,
+    weight = 70,
+    height = 170,
+    age = 30
+  )
+  # Should not error — the function simply doesn't apply species params anymore
+  expect_no_error(
+    initializeSimulation(sim, individualCharacteristics = indivChar)
+  )
+})
 
 test_that("`compareSimulations()` produces no differences with identical simulations", {
   simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")

@@ -24,8 +24,9 @@ esqlabsR's projects are set up in a four steps process:
 4. Plot Results
 
 
-While step 1 need to be done just once, you will be able to iterate easily as
-you fine tune your simulation and plots using simple code and excel files.
+While step 1 needs to be done just once, you can iterate easily as you
+fine-tune your simulation and plots by editing `Project.json` (or the
+optional Excel files synced via `importProjectFromExcel()`).
 
 ![esqlabsR Workflow](Figures/esqlabs-workflow.png)
 
@@ -33,10 +34,10 @@ you fine tune your simulation and plots using simple code and excel files.
 This first step is to initialize the specific directories and file 
 structure required for the workflows.
 
-The output is a `ProjectConfiguration` object that will be used 
+The output is a `Project` object that will be used
 in many steps during the rest of the process.
 
-**Version Control**: You can create JSON snapshots of your project configuration for team collaboration and version control using `snapshotProjectConfiguration()` and `restoreProjectConfiguration()`.
+**Version Control**: JSON is the primary project configuration format, making it easy to track changes in Git. Use `importProjectFromExcel()` to migrate existing Excel projects and `exportProjectToExcel()` to generate Excel files when needed.
 
 Learn more in `vignette("project-structure")`.
 

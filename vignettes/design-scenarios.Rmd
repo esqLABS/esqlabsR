@@ -17,250 +17,214 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Within the `esqlabsR` framework, the simulations are run by defining and
-executing multiple *scenarios*. A scenario is defined by the simulation
-file containing the model structure, parametrization of the model,
-application protocol, and (optionally) the physiology of the simulated
-individual or population. To simplify scenarios set up, all this
-information is stored in Excel files with a defined structure.
+Within the `esqlabsR` framework, simulations are organized as named
+*scenarios*. A scenario links together a simulation model (`.pkml`), a set
+of model parameters, an individual or population, an application protocol,
+and simulation-time settings.
 
-The step-wise approach of setting up a new simulation scenario is shown
-in Figure 1; a detailed description of the Excel file structures and `R`
-code are given in the [Configuration files structure](#files-structure)
-section.
+All scenario information lives in the `scenarios` array of `Project.json`.
+The accompanying Excel files (`Applications.xlsx`, `Individuals.xlsx`,
+`ModelParameters.xlsx`, `Populations.xlsx`, `Scenarios.xlsx`) are an
+**optional editing surface** that syncs to and from the JSON via
+`importProjectFromExcel()` and `exportProjectToExcel()`. When both a JSON
+and Excel copy of a project exist, the JSON file is authoritative.
 
 ![Figure 1: Workflow of scenario setup](Figures/ScenarioWorkflow.png)
 
 ## Add a new scenario
 
-### 1. Add the model file
+A scenario is one entry in the `scenarios` array of `Project.json`. A minimal
+entry looks like this:
 
-After the model has been developed in PK-Sim and/or MoBi, a simulation
-must be stored as a *.pkml* file in the `Models/Simulations` folder.
+```json
+{
+  "name": "Aciclovir_iv",
+  "modelFile": "Aciclovir.pkml",
+  "individualId": "Adult_male",
+  "modelParameters": ["Global", "Aciclovir"],
+  "applicationProtocol": "Aciclovir_iv_250mg",
+  "simulationTime": "0, 24, 60",
+  "simulationTimeUnit": "h",
+  "outputPathIds": ["Aciclovir_PVB"]
+}
+```
 
-### 2. Name the new scenario
+Each field references entries defined elsewhere in the JSON:
 
-To set up a simulation/scenario in `R`, open the file `Scenarios.xlsx`
-located in the folder `Parameters`. Start defining a scenario by giving
-it a *name* in the `Scenario_name` column. The scenario name will be
-used later to retrieve simulation results, e.g., in figure definitions.
+| Field | References |
+|---|---|
+| `modelFile` | A `.pkml` file in `modelFolder` |
+| `individualId` | An entry in `individuals` (matched by `individualId`) |
+| `populationId` | An entry in `populations` (matched by `populationId`), optional |
+| `applicationProtocol` | A key in the top-level `applications` map |
+| `modelParameters` | Keys in the top-level `modelParameters` map, applied in order |
+| `outputPathIds` | Keys in the top-level `outputPaths` map |
 
-### 3. Link to the model file
-
-Specify the simulation `*.pkml` file to use in the column `ModelFile`.
-
-If you want to run the simulation with the settings as it has been
-exported from PK-Sim or MoBi, you can proceed to
-`vignette("run-simulations")`.
+To add a scenario, edit `Project.json` directly and re-run `loadProject()`.
 
 ## Customize a scenario
 
-### 4. Simulation Parameters
+All fields except `name` and `modelFile` are optional. Omitting a field leaves
+the simulation at the default defined by the model file and the `Scenario`
+constructor (e.g., `steadyStateTime = 1000` minutes,
+`overwriteFormulasInSS = false`).
 
-You can define simulation parameters in the `ModelParameters.xlsx` file.
-To apply them to the simulation, you need to specify which sheets to
-load in the `ModelParameterSheets` column of the `Scenarios.xlsx` file.
+### Simulation time
 
-### 5. Individuals {#individuals}
+`simulationTime` is a string of one or more comma-separated triplets
+`"startTime, endTime, resolution"`. Multiple intervals are separated by `;`.
+For example, `"0, 20, 60; 20, 504, 1; 504, 552, 10"` simulates 0-20 h at 60
+points/h, then 20-504 h at 1 point/h, then 504-552 h at 10 points/h.
+`simulationTimeUnit` sets the unit (`"h"`, `"min"`, etc.); see
+`ospsuite::ospUnits` for the full list.
 
-If you want to simulate a specific individual with individual
-characteristics (age, weight, etc.) or apply individual model parameter
-values to the simulation, define the individual in the `IndividualId`
-column. Then create a new individual entry in the `Individuals.xlsx`
-file.
+### Steady state
 
-a)  To create a new individual with specific biometrics, create a new
-    row in the `IndividualBiometrics` sheet.
-b)  To define individual-specific model parametrization, create one or
-    more sheets in `Individuals.xlsx` and list their names (separated by
-    a `,`) in the `Individual Parameter Sets` column of the
-    `IndividualBiometrics` row for that individual. Parameters from the
-    listed sheets are applied to the simulation in the order they appear
-    in the column. Each subsequent sheet overrides parameters set by
-    previous sheets. The `Individual Parameter Sets` column is required;
-    leave it empty if no individual-specific model parameters are needed.
+Set `steadyState` to `true` to initialize the simulation from its steady
+state. `steadyStateTime` (default `1000`; interpreted in the unit given by
+`steadyStateTimeUnit`, which defaults to `"min"`) controls the pre-simulation
+duration. `overwriteFormulasInSS` (default `false`)
+controls whether formula-defined parameters are overwritten with
+steady-state values (corresponds to `ignoreIfFormula = FALSE` in
+`ospsuite::getSteadyState()`).
 
-If your model contains proteins (e.g., enzymes or transporters), you
-have to specify their ontogenies in the column 'Protein Ontogenies' as
-a list (separated by a `,`) of `<Protein>:<Ontogeny>` values. The value
-of `<Ontogeny>` must be one of the standard ontogenies implemented in
-the PK-Sim database (call `ospsuite::StandardOntogeny` to see the list
-of supported ontogenies). For example, if your model contains proteins
-with names `CYP3A4_alternative` and `CYP2D6_alternative`, you can
-specify their ontogenies by entering
-`CYP3A4_alternative:CYP3A4, CYP2D6_alternative:CYP2D6` in the 'Protein
-Ontogenies' column. If not specified, age-dependent protein expression
-will not be considered.
+### Population vs individual
 
-### 6. Population
+Set `individualId` alone for an individual simulation. Set `populationId` for
+a population simulation. You can set both -- in that case, individual-specific
+parameters are applied first, then population parameters (which overwrite any
+overlapping physiology parameters).
 
-To run a *population simulation*, specify a population in the column
-`PopulationId`. If you want to create a new population each time you run
-the scenario, define population demographics in the `Demographics` sheet
-of the `PopulationParameters.xlsx` file. Remember that simulation
-results might differ each time you run the scenario, as a new population
-will be generated each time!
+Setting `readPopulationFromCSV` to `true` imports the population from
+`populationsFolder/<populationId>.csv` instead of generating it on the fly.
 
-If you want to import a population from an existing CSV file, set the
-value of the `ReadPopulationFromCSV` column to `TRUE`. The population
-CSV file must be located in the `Parameters/Populations` folder.
+### Model parameters
 
-To apply ontogenies of proteins implemented in PK-Sim data base, you
-have to specify the ontogenies for the proteins in the model. See
-Section [5. Individuals](#individuals) for more information.
+`modelParameters` is an array of keys from the top-level
+`modelParameters` map. Each key identifies a parameter group; groups are
+applied in order. For example, `["Global", "Aciclovir"]` applies the
+`Global` group first, then `Aciclovir` -- so `Aciclovir`-specific values
+overwrite `Global` where they overlap. This lets you keep a base group of
+global parameters alongside disease-state or compound-specific overrides
+(e.g., `Healthy`, `CKD`, `Aciclovir`).
 
-### 7. Time
+### Output paths
 
-Simulation time can also be changed with the `SimulationTime` and
-`SimulationTimeUnit` columns.
+Output paths are declared once in the top-level `outputPaths` map -- keys are
+short IDs, values are full paths:
 
-### 8. OutputPath
-
-You can define the outputs of the simulation in the `OutputPathsIds`
-column. For convenience, not the full paths to the outputs must be
-listed, but their acronyms. The full path for each acronym must be
-defined in the sheet `OutputPaths`.
-
-### 9. Administration Protocols
-
-Finally, you can simulate different administration protocols from the
-same simulation file by defining an application protocol in the column
-`ApplicationProtocol`. See the description below.
-
-Now that you designed your own simulation, read
-`vignette("run-simulations")` to continue the process. To learn more
-about simulation design, read the following sections.
-
-## Alternative: Creating scenarios directly from PKML files
-
-For more advanced users or when working programmatically, `esqlabsR` provides 
-functions to create scenario configurations directly from PKML files, bypassing 
-the need to manually create Excel files:
-
-- `createScenarioConfigurationsFromPKML()`: Creates scenario configurations from 
-  PKML files by extracting simulation settings, applications, and output paths.
-- `addScenarioConfigurationsToExcel()`: Adds scenario configurations to the 
-  project Excel files for later use.
-
-This approach is particularly useful when:
-- You have multiple PKML files to convert into scenarios
-- You want to automate scenario creation
-- You're working with simulation files that already contain the needed configuration
-
-Example usage:
-
-```{r, eval=FALSE}
-# Create scenarios from PKML files
-scenarioConfigs <- createScenarioConfigurationsFromPKML(
-  pkmlFilePaths = c("Model1.pkml", "Model2.pkml"),
-  projectConfiguration = projectConfiguration,
-  scenarioNames = c("Scenario1", "Scenario2"),
-  outputPaths = c(
-    "plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration",
-    "liver" = "Organism|Liver|Intracellular|Drug|Concentration"
-  )
-)
-
-# Add them to the project Excel files
-addScenarioConfigurationsToExcel(
-  scenarioConfigurations = scenarioConfigs,
-  projectConfiguration = projectConfiguration
-)
+```json
+"outputPaths": {
+  "Aciclovir_PVB": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+  "Aciclovir_fat_cell": "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+}
 ```
 
-## Details
+Scenarios then reference output paths by ID via `outputPathIds`:
 
-### Configuration files structure {#files-structure}
+```json
+"outputPathIds": ["Aciclovir_PVB", "Aciclovir_fat_cell"]
+```
 
-The relevant Excel files for the definition of the scenarios are:
+## Supporting sections of `Project.json`
 
--   `ApplicationParameters.xlsx`
--   `Individuals.xlsx`
--   `ModelParameters.xlsx`
--   `PopulationParameters.xlsx`
--   `Scenarios.xlsx`
+### Individuals
 
-The `Scenarios` sheet of the `Scenarios.xlsx` file has the following
-structure:
+Each individual is an entry in the `individuals` array. Individual-specific
+parameter sets are defined separately in the `individualParameterSets` map
+and referenced by name:
 
-#### Scenario_name
+```json
+"individuals": [
+  {
+    "individualId": "Adult_male",
+    "species": "Human",
+    "population": "European_ICRP_2002",
+    "gender": "MALE",
+    "weight": 73,
+    "height": 176,
+    "age": 30,
+    "proteinOntogenies": "CYP3A4:CYP3A4",
+    "parameterSets": ["Renal"]
+  }
+],
+"individualParameterSets": {
+  "Renal": [
+    {
+      "containerPath": "Organism|Kidney",
+      "parameterName": "GFR",
+      "value": 90,
+      "units": "ml/min"
+    }
+  ]
+}
+```
 
-Unique name of the scenario. The name must be a [valid R variables
-name](https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f).
+`species` supports scaling from the base `Human` model to `Beagle`, `Dog`,
+`Minipig`, `Mouse`, `Rat`, `Rabbit`, and `Monkey` by using the respective
+species name. `proteinOntogenies` is a comma-separated string of
+`<Protein>:<Ontogeny>` pairs; call `ospsuite::StandardOntogeny` for
+supported values. The `parameterSets` array lists keys from
+`individualParameterSets` to apply in order (later sets override earlier
+sets).
 
-#### IndividualId
+### Populations
 
-Name (ID) of an individual. This name refers to the name of the
-individual as used in Excel file `Individuals.xlsx` for the definition
-of the biometric properties (sheet `IndividualBiometrics`) of the
-simulated individual. Individual-specific model parameters are defined
-in sheets listed in the `Individual Parameter Sets` column of the
-`IndividualBiometrics` row for that individual (see
-Section [5. Individuals](#individuals)). **IndividualId** may be empty.
-In this case, the individual as defined in the `pkml` simulation without
-any individual-specific model parameters will be simulated. The same
-individual can be used in multiple scenarios. It is possible to scale
-from a human model to the species **Beagle**, **Dog**, **Minipig**,
-**Mouse**, **Rat**, **Rabbit**, and **Monkey** by applying the
-respective individual to the simulation. Other species scalings are
-technically possible but the correctness of the results is not
-guaranteed as there exist some structural differences between the
-species.
+Populations are defined in the `populations` array:
 
-#### PopulationId
+```json
+"populations": [
+  {
+    "populationId": "European_adults",
+    "species": "Human",
+    "population": "European_ICRP_2002",
+    "numberOfIndividuals": 50,
+    "proportionOfFemales": 50,
+    "ageMin": 18,
+    "ageMax": 65,
+    "weightMin": null,
+    "weightMax": null,
+    "weightUnit": "kg",
+    "heightMin": null,
+    "heightMax": null,
+    "heightUnit": "cm",
+    "BMIMin": null,
+    "BMIMax": null,
+    "BMIUnit": "kg/m²",
+    "proteinOntogenies": "CYP3A4:CYP3A4"
+  }
+]
+```
 
-Name (ID) of a population. If empty, the scenario is simulated as an
-individual simulation. Otherwise, population simulation is performed. If
-the column **ReadPopulationFromCSV** is set to `FALSE`, **PopulationId**
-refers to the name of the population as defined in the sheet
-`Demographics` of the file `PopulationParameters.xlsx`. To create a
-population with specific demographic characteristics, define an entry
-with the same population id in the `Demographics`. The same population
-can be used in multiple scenarios. If the column
-**ReadPopulationFromCSV** is set to `TRUE`, the population will be
-imported from the CSV file located in the folder
-`Parameters/Populations`, the name of the file must be the id of the
-population. **Note**: You can define both an **IndividualId** and a
-**PopulationId**. In this case, individual-specific parameters from the
-`IndividualParameters.xlsx` will be applied to the simulation before
-applying the population parameters. Keep in mind, that any physiological
-parameters defined for an individual that are also part of the parameter
-set of a population will be overwritten by the population! If, e.g., you
-specify the GFR of the individual in the `IndividualParameters.xlsx`, it
-will be overwritten by the GFR values sampled in the simulation.
+A `null` `Min` / `Max` value leaves that dimension unconstrained. To load a
+prebuilt population from CSV instead of regenerating, set the scenario's
+`readPopulationFromCSV` to `true` and place the CSV under
+`populationsFolder/<populationId>.csv`.
 
-#### ModelParameterSheets
+### Applications
 
-A list of sheet names from the `ModelParameter.xlsx` file, separated by
-a `,`. Each sheet must contain `Container Path`, `Parameter Name`,
-`Value`, and `Units`. Parameter values from specified sheets will be
-applied to the model according to the order of their definition. E.g.,
-if we define `Global, Aciclovir`, then parameters from the `Aciclovir`
-sheet will be applied after the `Global` parameters.
-**ModelParameterSheets** may be empty or specify as many sheets as
-required. Note that the specified sheets must be present in the
-`ModelParameter.xlsx` file. This approach aims to have *global*
-parameters that can be applied to most scenarios and a separate set of
-parameters for, e.g., different *disease states* (parameter sheets
-`Healthy` and `CKD`) or separate parametrization of different
-*compounds* (sheet `Aciclovir`).
+Application protocols are defined in the `applications` map. Each key is a
+protocol ID; each value is an array of parameter entries in PK-Sim's
+container/parameter form:
 
-#### ApplicationProtocol
+```json
+"applications": {
+  "Aciclovir_iv_250mg": [
+    {
+      "containerPath": "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+      "parameterName": "Dose",
+      "value": 250,
+      "units": "mg"
+    }
+  ]
+}
+```
 
-Name of the application protocol that will be applied. Applications are
-defined as parameters that will be applied to the model in the file
-`ApplicationParameters.xlsx`. For each application, create a sheet with
-the name as specified in the **ApplicationProtocol** entry and populate
-it with the same structure as the `ModelParameter.xlsx` file.
-Configuring application protocols this way requires that the loaded
-simulation includes all possible applications that can be turned on and
-off by setting parameters, e.g., the `Dose` or `Start time` parameters.
-As it might be cumbersome to create entries for all administration
-parameters manually, we can use the getAllApplicationParameters()
-function to get a list of all (constant) parameters in the
-`Applications` container. In the following example, we will extract
-application parameters for the molecule `Aciclovir` from the example
-simulation:
+Scenarios reference protocols by ID via the `applicationProtocol` field. The
+loaded simulation must already contain all possible applications -- the
+protocol's parameter entries tune their parameters. Use
+`getAllApplicationParameters(sim)` to extract all configurable parameters
+from a simulation for inclusion in the `applications` map:
 
 ```{r}
 sim <- loadSimulation(system.file(
@@ -272,137 +236,134 @@ applicationParams <- getAllApplicationParameters(sim)
 print(applicationParams)
 ```
 
-And export the parameters to an Excel file using the
-`exportParametersToXLS()` function:
+### Model parameters
+
+The `modelParameters` map groups parameter entries by name. Scenarios list
+the groups to apply in their `modelParameters` array:
+
+```json
+"modelParameters": {
+  "Global": [
+    {
+      "containerPath": "Organism|Liver",
+      "parameterName": "EHC continuous fraction",
+      "value": 1,
+      "units": null
+    }
+  ],
+  "Aciclovir": [
+    {
+      "containerPath": "Organism|PeripheralVenousBlood|Aciclovir",
+      "parameterName": "Fraction unbound (plasma, reference value)",
+      "value": 0.85,
+      "units": null
+    }
+  ]
+}
+```
+
+## Adding scenarios programmatically
+
+For advanced use or automation, `addScenario()` adds a scenario to an
+already-loaded `Project` without editing `Project.json`:
 
 ```{r, eval=FALSE}
-exportParametersToXLS(
-  parameters = applicationParams,
-  paramsXLSpath = "../Applications.xlsx"
+project <- loadProject("Project.json")
+
+addScenario(
+  project,
+  scenarioName = "Aciclovir_iv_higher_dose",
+  modelFile = "Aciclovir.pkml",
+  individualId = "Adult_male",
+  applicationProtocol = "Aciclovir_iv_500mg",
+  parameterGroups = c("Global", "Aciclovir"),
+  outputPathIds = c("Aciclovir_PVB"),
+  simulationTime = "0, 24, 60",
+  simulationTimeUnit = "h"
 )
 ```
 
-If you need to add more parameters to an existing Excel file without overwriting it, 
-you can use the `append` parameter:
+`outputPathIds` is a character vector of keys from `project$outputPaths` --
+the paths themselves are defined once in the `outputPaths` map in the JSON
+and referenced by ID throughout.
 
-```{r, eval=FALSE}
-# Add more parameters to existing file
-exportParametersToXLS(
-  parameters = additionalParams,
-  paramsXLSpath = "../Applications.xlsx",
-  sheet = "AdditionalProtocol",
-  append = TRUE
-)
-```
+Note that the R argument name is `parameterGroups`, while the equivalent
+JSON field is `modelParameters`. The other `addScenario()` argument
+names match the JSON field names one-to-one.
 
-The created Excel file will have the same structure as all
-Parameter-files and can be directly loaded in MoBi or R using the
-`readParametersFromXLS()` function.
+> **Note:** `addScenario()` mutates the in-memory `Project` object only. It
+> does not write back to `Project.json`. To persist programmatic changes,
+> edit `Project.json` directly. A JSON-write helper is tracked as a
+> follow-up issue.
 
-#### SimulationTime
+This approach is particularly useful when:
 
-Time of the simulation. Multiple simulation time intervals can be
-defined, each being a triplet of \<StartTime, EndTime, Resolution\>
-values. Resolution is the number of simulated points per time unit
-defined in the column `TimeUnit`. Simulation intervals are separated by
-a `;`.
+- You want to automate scenario creation.
+- You need to add scenarios based on runtime conditions.
+- You are setting up batch simulations programmatically.
 
-For example, to simulate the model for 10 minutes with a resolution of 1
-point per minute, the value of the column `SimulationTime` should be
-`0, 10, 1`, and that of the column `SimulationTimeUnit` should be `min`.
-To simulate the model for
+## Editing scenarios via Excel
 
--   20 hours with a resolution of 1 point per minute, then
--   for three weeks (equals to 3*7*24 = 504 hours) with a resolution of
-    1 point per hour, and finally
--   for two days (equals to 504 + 2\*24 = 552 hours) with a resolution
-    of 10 points per hour,
+If you prefer a spreadsheet interface, you can round-trip the project
+through Excel:
 
-the value of the column `SimulationTime` should be
-`0, 20, 60; 20, 504, 1; 504, 552, 10`, and that of the column
-`SimulationTimeUnit` should be `h`.
+- `exportProjectToExcel(project, outputDir = "path/to/project/")` generates
+  the supporting `.xlsx` files from a loaded `Project` object.
+- `importProjectFromExcel("path/to/Project.xlsx")` regenerates
+  `Project.json` from the Excel files.
 
-#### SimulationTimeUnit
+The Excel column names map 1:1 to the JSON field names, with a casing
+change:
 
-Unit for `SimulationTime`. For supported units, see
-`ospsuite::ospUnits`.
+| Excel column (in `Scenarios.xlsx`) | JSON field |
+|---|---|
+| `Scenario_name` | `name` |
+| `IndividualId` | `individualId` |
+| `PopulationId` | `populationId` |
+| `ReadPopulationFromCSV` | `readPopulationFromCSV` |
+| `ModelParameterSheets` | `modelParameters` |
+| `ApplicationProtocol` | `applicationProtocol` |
+| `SimulationTime` | `simulationTime` |
+| `SimulationTimeUnit` | `simulationTimeUnit` |
+| `SteadyState` | `steadyState` |
+| `SteadyStateTime` | `steadyStateTime` |
+| `SteadyStateTimeUnit` | `steadyStateTimeUnit` |
+| `OverwriteFormulasInSS` | `overwriteFormulasInSS` |
+| `ModelFile` | `modelFile` |
+| `OutputPathsIds` | `outputPathIds` |
 
-#### SteadyState
+Note that the Excel column historically called `ModelParameterSheets` is now
+`modelParameters` in JSON -- the underlying concept is the same (a named
+group of parameter entries) but it's no longer tied to Excel sheet naming.
 
-If `TRUE`, the model will be simulated for a "sufficiently long" time
-(1000 minutes by default).
+## Details
 
-#### SteadyStateTime
+### Configuration files structure {#files-structure}
 
-Time for the steady state.
+A scenario's configuration is ultimately just the set of JSON fields listed
+above. In Excel form, each JSON field corresponds to one column (for
+scenario-level fields) or one sheet (for parameter groups). The canonical
+Excel filenames are:
 
-#### SteadyStateTimeUnit
+- `Applications.xlsx`
+- `Individuals.xlsx`
+- `ModelParameters.xlsx`
+- `Populations.xlsx`
+- `Scenarios.xlsx`
 
-Unit for `SteadyStateTime`. For supported units, see
-`ospsuite::ospUnits`.
-
-#### OverwriteFormulasInSS
-
-If `TRUE`, formula-defined parameters will be overwritten with their
-steady-state values (corresponds to `ignoreIfFormula = FALSE` in
-`ospsuite::getSteadyState()`). If empty or `FALSE` (default), only
-constant parameters are updated with steady-state values and
-formula-defined parameters are left unchanged (corresponds to
-`ignoreIfFormula = TRUE`).
-
-#### ModelFile
-
-Name of the `pkml` file with the simulation. It must be located in the
-folder defined in `ProjectConfiguration$modelFolder`.
-
-#### OutputPathsIds
-
-Paths of model outputs (i.e., paths to the molecules/ parameters for
-which outputs will be simulated) can be defined in the sheet
-`OutputPaths`. Create an entry for each output path by entering the full
-path into the column `OutputPath` and defining a unique identifier for
-this path in the column `OutputPathId`. The content of the sheet could
-look like this:
-
-| OutputPathId | OutputPath |
-|----|----|
-| Aciclovir_PVB | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
-| Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container |
-
-In the `Scenarios` sheet, enter the IDs of all paths the outputs should
-be generated for, separated by a comma, e.g.,
-`Aciclovir_PVB, Aciclovir_fat_cell`.
-
-**Alternative approach:** When programmatically creating scenarios, you can also use 
-named vectors for output paths, where names serve as aliases:
-
-```{r, eval=FALSE}
-outputPaths <- c(
-  "plasma" = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-  "fat_cell" = "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
-)
-```
-
-This approach is particularly useful with the new `createScenarioConfigurationsFromPKML()` function.
+See each section above for the JSON structure these files map into.
 
 ### Scenario parameterization hierarchy
 
 The final parameterization combines the different parameterization steps
-defined at various levels, as described in the section above. The
-following figure summarizes the hierarchy of the parameterization.
+defined at various levels, as described in the sections above. The
+following figure summarizes the hierarchy:
 
 ![Parametrization sequence](Figures/ParametrizationHierarchy.png)
 
-If a parameter path is defined in multiple steps, its value will be
-overwritten by the subsequent steps. That means individual parameter
-values will overwrite the values defined in the "ModelParameters.xlsx"
-file, and parameters specified in the `customParams` argument of the
-`createScenarios()` function will overwrite everything else.
-
-The order of parameter sheets of the "ModelParameters.xlsx" file defined
-in the **ModelParameterSheets** column defines the order in which the
-parameters are applied.
-
-<!-- For demonstrating the simulation design process, we will use the example included in the package (which can be accessed using `exampleProjectConfigurationPath`). -->
-
-<!-- projectConfiguration <- createProjectConfiguration(exampleProjectConfigurationPath()) -->
+If a parameter path is defined at multiple levels, later levels overwrite
+earlier ones. Concretely, individual parameters overwrite values from
+`modelParameters` groups, and parameters passed via the `customParams`
+argument of `runScenarios()` overwrite everything else. Within
+`modelParameters`, groups are applied in order: later groups overwrite
+earlier ones.

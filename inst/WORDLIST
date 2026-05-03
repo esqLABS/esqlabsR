@@ -10,7 +10,6 @@ Datacombined
 EB
 EndTime
 Enum
-ExportConfiguration
 GFR
 GitHub
 GmbH
@@ -39,7 +38,6 @@ PlotConfiguration
 PopulationId
 PopulationName
 PopulationParameters
-ProjectConfiguration
 QSP
 ReadPopulationFromCSV
 ScenarioConfiguration
@@ -80,9 +78,9 @@ esqlabs
 esqlabsEnv
 esqlabsR's
 esqlabsR’s
-exportConfiguration
 exportParametersToXLS
 facetes
+filePaths
 frac
 getAllApplicationParameters
 ggplot
@@ -124,7 +122,6 @@ plotGridName
 plotGrids
 plotIDs
 plotgrids
-projectConfiguration
 rSharp
 readScenarioConfigurationFromExcel
 repo

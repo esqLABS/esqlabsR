@@ -21,8 +21,8 @@ library(esqlabsR)
 The project configuration is the central piece of any `esqlabsR` project. It defines the structure of your project, specifies where all necessary files are stored, and provides the foundation for all workflows in the package. The project configuration consists of:
 
 - **Project structure**: A standardized folder hierarchy that organizes your models, data, parameters, scenarios, and results
-- **ProjectConfiguration object**: An R object that stores paths to all project files and directories
-- **Configuration files**: Excel files (or JSON snapshots) that define the project setup
+- **Project object**: An R object that stores paths to all project files and directories
+- **Configuration files**: A JSON configuration file and supporting Excel files that define the project setup
 
 ## Initialize the Project Structure
 
@@ -39,93 +39,46 @@ structure.
 
 
 ```{r, echo = FALSE}
-fs::dir_tree(path = esqlabsR:::exampleDirectory("TestProject"), glob = "*.md|*.R", invert = TRUE)
+fs::dir_tree(path = dirname(exampleProjectPath()), glob = "*.md|*.R", invert = TRUE)
 ```
-## Create a ProjectConfiguration
+## Create a Project
 
-The `ProjectConfiguration` stores the paths to the model-, data-, and other files
-and directories. It will be used at several steps in `esqlabsR` workflows so it 
+The `Project` stores the paths to the model-, data-, and other files
+and directories. It will be used at several steps in `esqlabsR` workflows so it
 needs to be created before performing any simulations.
 
-By printing the `ProjectConfiguration`, we can see the locations of all files 
+By printing the `Project`, we can see the locations of all files
 used in the workflows:
 
 ```{r, eval = TRUE}
-my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath(), ignoreVersionCheck = TRUE)
-```
-
-### Package version tracking
-
-The `ProjectConfiguration` stores the version of the `esqlabsR` package it was
-last saved with. Every time `$save()` is called, the current package version is
-written into the configuration file.
-
-When loading a configuration file with `createProjectConfiguration()`, the stored
-version is compared against the currently installed version of `esqlabsR`. If a
-mismatch is detected — for example after upgrading the package — you will be
-prompted interactively:
-
-```
-! The esqlabsR version stored in the project configuration ('5.4.0') does not
-  match the currently installed version ('5.5.2').
-i Please review the package NEWS for breaking changes:
-  https://esqlabs.github.io/esqlabsR/news/index.html
-> To update the version stored in the project configuration, use
-  `projectConfiguration$save()`.
-
-Do you want to update the version in the project configuration and continue?
-
-Available options (order may vary):
-- Yes
-- Absolutely not
-- No way
-```
-
-If you confirm, the stored version is updated and you can continue working. If
-you decline, execution stops.
-
-**Important**: Before confirming the update, always consult the
-[esqlabsR NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) to review
-breaking changes between the stored and the currently installed version. Some
-changes may require manual adjustments to your project files or scripts.
-
-### Skipping the version check
-
-In non-interactive contexts — such as automated tests or scripts executed from
-the console — user input cannot be provided. Use `ignoreVersionCheck = TRUE` to
-bypass the check entirely in those situations:
-
-```{r, eval = FALSE}
-my_project_configuration <- createProjectConfiguration(
-  path = "path/to/ProjectConfiguration.xlsx",
-  ignoreVersionCheck = TRUE
+projectConfigPath <- system.file(
+  "extdata", "projects", "Example", "Project.json",
+  package = "esqlabsR"
 )
+my_project <- loadProject(projectConfigPath)
+my_project
 ```
 
-> **Note**: When `ignoreVersionCheck = TRUE`, it is your responsibility to
-> ensure that the project is compatible with the currently installed version of
-> `esqlabsR`. Review the NEWS page for any breaking changes that may affect
-> your project.
-
-Now that the project structure is initialized and the `ProjectConfiguration` is
+Now that the project structure is initialized and the `Project` is
 created, read `vignette("design-scenarios")` to continue the process.
-To learn more about `ProjectConfiguration`, read the following sections.
+To learn more about `Project`, read the following sections.
 
-## Validating Project Configuration
+## Validating Project
 
-Before running simulations, it is recommended to validate your project configuration
-files to catch potential issues early. The `validateAllConfigurations()` function
-performs comprehensive validation across all Excel configuration files and returns
-structured results.
+Before running simulations, it is recommended to validate your project
+configuration to catch potential issues early. The `validateProject()`
+function accepts either a loaded `Project` object or a path to a `Project.json`
+file, performs comprehensive validation across all project sections, and
+returns structured results.
 
 ### Validation Process
 
-The validation system checks your configuration files for:
+The validation system checks your project for:
 
-- **Structural issues**: Missing required sheets or columns
-- **Data integrity**: Empty sheets, invalid data types, required fields
+- **Required fields**: Missing required fields in individuals, populations, scenarios
+- **Data integrity**: Invalid data types, values out of range
 - **Uniqueness constraints**: Duplicate IDs or names that must be unique
-- **Cross-references**: Invalid references between configuration files (e.g., scenarios referencing non-existent individuals)
+- **Cross-references**: Invalid references between sections (e.g., scenarios referencing non-existent individuals or populations)
 
 ### Three-Tier Validation Results
 
@@ -138,11 +91,11 @@ Validation results are categorized into three levels:
 ### Usage Example
 
 ```{r, eval=FALSE}
-# Validate all configuration files in a project
-validation_results <- validateAllConfigurations(my_project_configuration)
+# Validate a loaded project
+validation_results <- validateProject(my_project)
 
-# Or validate directly from the Excel file path
-validation_results <- validateAllConfigurations(exampleProjectConfigurationPath())
+# Or validate directly from a Project.json path
+validation_results <- validateProject("Project.json")
 
 # Check if there are any critical errors
 if (isAnyCriticalErrors(validation_results)) {
@@ -157,28 +110,31 @@ if (isAnyCriticalErrors(validation_results)) {
 
 ### Interpreting Validation Results
 
-The `validateAllConfigurations()` function returns a named list of `validationResult`
-objects, one for each configuration file validated. Each result contains:
+The `validateProject()` function returns a named list of `validationResult`
+objects, one for each project section validated. Each result contains:
 
 - `critical_errors`: List of blocking issues
 - `warnings`: List of non-blocking issues
 - `data`: The validated data (if validation succeeded)
 
-You can access individual file results:
+You can access individual section results:
 
 ```{r, eval=FALSE}
 # Check scenarios validation
 scenarios_result <- validation_results$scenarios
 
 if (scenarios_result$has_critical_errors()) {
-  print("Scenarios file has critical errors:")
+  print("Scenarios section has critical errors:")
   print(scenarios_result$critical_errors)
 }
 
 if (length(scenarios_result$warnings) > 0) {
-  print("Scenarios file has warnings:")
+  print("Scenarios section has warnings:")
   print(scenarios_result$warnings)
 }
+
+# Available sections: individuals, populations, scenarios, outputPaths,
+# modelParameters, applications, plots, crossReferences
 ```
 
 The validation system ensures data quality before simulation, helping you identify
@@ -186,131 +142,183 @@ and fix configuration issues early in your workflow.
 
 ## Details
 
-### Change ProjectConfiguration from R
+### Change Project from R
 
 If required, you can change the location of one of the files or folders using relative or absolute paths
 
 ```{r, eval=FALSE}
 # change the location of the output folder
-projectConfiguration$outputFolder <- "../anotherOutputFolder"
+project$outputFolder <- "../anotherOutputFolder"
 
 # change the location of the model parameters file
-projectConfiguration$modelParametersFile <- "absolute/path/to/anotherModelParameters.xlsx"
+project$modelParamsFile <- "absolute/path/to/anotherModelParameters.xlsx"
 ```
 
 
-### About `ProjectConfiguration.xlsx`
+### About `Project.json`
 
-The `ProjectConfiguration.xlsx` file will be used by `esqlabsR` to generate a
-`ProjectConfiguration` object which is the central piece of a project. It should 
-be located in the root folder of the project.
+The `Project.json` file is the primary configuration file used by
+`esqlabsR` to generate a `Project` object which is the central
+piece of a project. It should be located in the root folder of the project.
 
-This file defines *where* all the necessary files are stored in the project 
-folder. All the path specified in the `Value` column should be *relative* to the
-`ProjectConfiguration.xlsx` location.
+This file defines *where* all the necessary files are stored in the project
+folder, which scenarios to run, and how observed data is loaded. Paths specified
+in the JSON should be *relative* to the `Project.json` location.
 
-All these directories and files have a specific purpose and template and are 
-describe in next sections.
+Excel files (`ModelParameters.xlsx`, `Individuals.xlsx`, `Populations.xlsx`,
+`Applications.xlsx`, `Scenarios.xlsx`, `Plots.xlsx`) are an **optional**
+editing surface for the same content that lives in `Project.json`. Edit them,
+then sync back to JSON with `importProjectFromExcel()`. `Project.json` remains
+the authoritative store.
 
-```{r, echo = FALSE}
-ProjectConfiguration_excel <- readxl::read_xlsx(exampleProjectConfigurationPath())
+A `Project.xlsx` file can be generated from any JSON project via
+`exportProjectToExcel()`; it is optional and not committed by default.
+`importProjectFromExcel()` performs the reverse direction — generating or
+updating `Project.json` from an Excel-based project.
 
-reactable::reactable(ProjectConfiguration_excel,
-  columns = list(
-    "Property" = reactable::colDef(minWidth = 50),
-    "Value" = reactable::colDef(show = FALSE),
-    "Description" = reactable::colDef(minWidth = 100)
-  ),
-  outlined = TRUE,
-  pagination = FALSE,
-  highlight = TRUE
-)
+### Observed Data
+
+The `observedData` section in `Project.json` declares data sources that are
+loaded via `loadObservedData()`. Each entry specifies a source type and the
+information needed to load it.
+
+#### Source Types
+
+**Excel files** — loaded via a data importer configuration:
+
+```json
+{
+  "type": "excel",
+  "file": "StudyData.xlsx",
+  "importerConfiguration": "importer_config.xml",
+  "sheets": ["Group A", "Group B"]
+}
 ```
+
+**PKML files** — loaded directly:
+
+```json
+{
+  "type": "pkml",
+  "file": "observed_data.pkml"
+}
+```
+
+**R scripts** — sourced at load time, must return a `DataSet` or list of `DataSet` objects:
+```json
+{
+  "type": "script",
+  "file": "scripts/generate_data.R"
+}
+```
+
+All file paths are relative to `dataFolder`.
+
+#### Loading Observed Data
+
+```{r, eval=FALSE}
+project <- loadProject("Project.json")
+
+# Get all DataSet names (loads data on first call, then cached)
+getObservedDataNames(project)
+
+# Load all DataSets
+dataSets <- loadObservedData(project)
+```
+
+#### Adding Data Programmatically
+
+You can add observed data entries at runtime using `addObservedData()`:
+
+```{r, eval=FALSE}
+# Add a DataSet directly (uses dataSet$name as key)
+my_data <- ospsuite::DataSet$new(name = "MyPKData")
+my_data$setValues(xValues = c(0, 1, 2, 4), yValues = c(0, 10, 8, 5))
+project$addObservedData(my_data)
+
+# Add a config entry (e.g., a script to be loaded later)
+project$addObservedData(list(
+  type = "script",
+  file = "scripts/additional_data.R"
+))
+```
+
+When adding a `DataSet` directly, duplicate names are checked against all
+existing DataSet names (including those from Excel, PKML, and script sources).
 
 ### Version Control and Project Sharing
 
-While Excel provides an excellent interface for quickly editing and creating new entries in your project configuration, it has limitations when it comes to version control and team collaboration - Excel files are binary and don't work well with Git, making it cumbersome to share changes between team members.
-
-`esqlabsR` addresses these limitations by providing powerful version control and project sharing capabilities through its snapshot and restore functionality. This allows you to:
+Since `Project.json` is a text-based format, it works naturally
+with version control systems like Git. This means you can:
 
 - **Track changes** to your project configuration in version control systems like Git
 - **Share projects** with team members easily
 - **Create backups** before making significant changes
 - **Ensure reproducibility** across different environments
 
-#### Creating Project Snapshots
+#### Migrating from Excel to JSON
 
-The `snapshotProjectConfiguration()` function exports all Excel configuration files in your project to a single JSON file. This JSON format is ideal for version control as it's:
-
-- **Text-based**: Easy to track changes in Git
-- **Human-readable**: Can be reviewed and compared
-- **Complete**: Contains all project configuration data
+If you have an existing Excel-based project, `importProjectFromExcel()`
+converts your Excel configuration files into a single JSON file:
 
 ```{r, eval=FALSE}
-# Create a snapshot from a ProjectConfiguration object
-my_project_configuration <- createProjectConfiguration("ProjectConfiguration.xlsx", ignoreVersionCheck = TRUE)
-snapshotProjectConfiguration(my_project_configuration)
-
-# Or create a snapshot directly from the Excel file path
-snapshotProjectConfiguration("ProjectConfiguration.xlsx")
+# Migrate an Excel-based project to JSON
+importProjectFromExcel("Project.xlsx")
 ```
 
-By default, the JSON file will be created in the same directory as your `ProjectConfiguration.xlsx` file with the name `ProjectConfiguration.json`.
+By default, `importProjectFromExcel()` writes the JSON output next to the
+input file, using the same basename with `.xlsx` replaced by `.json` — so
+`Project.xlsx` yields `Project.json` in the same directory. Pass the
+`outputDir` argument to write elsewhere.
 
-#### Restoring from Snapshots
+#### Exporting back to Excel
 
-The `restoreProjectConfiguration()` function recreates your entire project configuration from a JSON snapshot:
+The `exportProjectToExcel()` function regenerates Excel configuration
+files from a `Project` object:
 
 ```{r, eval=FALSE}
-# Restore a project from a JSON snapshot
-restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
+# Load the project from JSON
+pc <- loadProject("Project.json")
+
+# Export back to Excel files
+exportProjectToExcel(pc)
 ```
 
 This function will:
 1. Create the necessary directory structure
 2. Regenerate all Excel configuration files
-3. Return a new `ProjectConfiguration` object
 
-#### Checking Project Status
-
-Use `projectConfigurationStatus()` to check if your Excel files are synchronized with your JSON snapshot:
-
-```{r, eval=FALSE}
-# Check if files are in sync
-status <- projectConfigurationStatus("ProjectConfiguration.xlsx", "ProjectConfiguration.json")
-print(status$in_sync) # TRUE if synchronized, FALSE otherwise
-```
+> **Known gaps in the Excel round-trip:** Some `Project.json` content is not
+> reproduced in Excel form — species-level parameters and other internal
+> fields stay JSON-only. An export → edit-in-Excel → re-import round-trip
+> preserves the user-facing configuration but may drop internal metadata.
+> Prefer editing `Project.json` directly when fidelity matters.
 
 #### Workflow Examples
 
 **Team Collaboration**: When working with a team:
 
-1. **Initial Setup**: Create a snapshot of your project configuration
+1. **Initial Setup**: Load and commit the JSON project configuration
    ```{r, eval=FALSE}
-snapshotProjectConfiguration("ProjectConfiguration.xlsx")
+pc <- loadProject("Project.json")
    ```
 
 2. **Version Control**: Commit the JSON file to your Git repository
    ```bash
-   git add ProjectConfiguration.json
-   git commit -m "Add project configuration snapshot"
+   git add Project.json
+   git commit -m "Add project configuration"
    ```
 
-3. **Team Sharing**: Team members can restore the project
+3. **Team Sharing**: Team members clone the repo and load the project
    ```{r, eval=FALSE}
-restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
+pc <- loadProject("Project.json")
    ```
 
-**Backup Strategy**: Before making significant changes to your project:
+4. **Working with Excel**: If Excel editing is needed, export and re-import
+   ```{r, eval=FALSE}
+exportProjectToExcel(pc)
+# Edit Excel files...
+importProjectFromExcel("Project.xlsx")
+   ```
 
-```{r, eval=FALSE}
-# Create a backup snapshot
-snapshotProjectConfiguration("ProjectConfiguration.xlsx")
-
-# Make your changes...
-
-# If something goes wrong, restore from the snapshot
-restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
-```
-
-The version control features in `esqlabsR` provide a robust foundation for team collaboration and project management. By using snapshots, you can maintain project history in version control systems, share configurations easily with team members, create reliable backups before making changes, and ensure reproducibility across different environments.
+The version control features in `esqlabsR` provide a robust foundation for team collaboration and project management. By using JSON as the primary format, you can maintain project history in version control systems, share configurations easily with team members, create reliable backups before making changes, and ensure reproducibility across different environments.

@@ -1,6 +1,84 @@
-# esqlabsR (development version)
+# esqlabsR 6.0.0
 
 ## Breaking changes
+
+- **Parameter ownership moved onto entities.** Individuals gain an inline
+  `parameters` array; the per-individual `parameterSets` field, the top-level
+  `individualParameterSets` dict, and the top-level
+  `individualParameterSetMapping` are removed. Applications are now objects
+  with a `parameters` field (no longer bare arrays of parameter entries). The
+  scenario field `modelParameterGroups` is renamed to `modelParameters`.
+  `addModelParameterGroup()` / `removeModelParameterGroup()` /
+  `addApplicationGroup()` / `removeApplicationGroup()` are replaced by
+  one-parameter-at-a-time helpers: `addModelParameter()`,
+  `removeModelParameter()`, `addIndividualParameter()`,
+  `removeIndividualParameter()`, `addApplicationParameter()`,
+  `removeApplicationParameter()`. Plus generic S3 `addParameter()` /
+  `removeParameter()` dispatching on `Individual` / `Application` objects, and
+  `addApplication()` / `removeApplication()` for managing application
+  protocols. Merge order in `.prepareScenario` is pinned by tests:
+  `modelParameters` (in scenario-listed order) → species defaults → individual
+  `parameters` → application `parameters` → custom params, silent
+  last-write-wins. JSON `schemaVersion` stays at `"2.0"`.
+
+- `dataCombined` JSON structure changed from flat array to nested structure with `simulated` and `observed` sub-arrays. The new format groups entries by DataCombined name and separates simulated/observed data into typed arrays (#1001).
+
+- **`validateAllConfigurations()` replaced by `validateProject()`.** Validation
+  now operates on loaded `Project` objects or `Project.json` files directly,
+  instead of Excel files. The new function validates all project sections
+  (individuals, populations, scenarios, outputPaths, modelParameters,
+  applications, plots) and cross-references between them. (#908)
+
+- **JSON is now the primary project configuration format.** Projects are
+  defined in a `Project.json` file (v2.0 schema) instead of a
+  collection of Excel files. Use `loadProject()` to load a project. Existing
+  Excel-based projects can be migrated with `importProjectFromExcel()`.
+  (#908)
+
+- **`ProjectConfiguration` class renamed to `Project`.** The JSON section key
+  `"projectConfiguration"` is now `"filePaths"`, and config files are renamed
+  from `ProjectConfiguration.json`/`.xlsx` to `Project.json`/`.xlsx`.
+  All associated functions are renamed: `exportProjectToExcel()`,
+  `importProjectFromExcel()`, `projectStatus()`, `exampleProjectPath()`.
+  Old names are soft-deprecated and will be removed in a future version. (#908)
+
+- **`ScenarioConfiguration` class removed.** The class and all associated
+  utilities (`readScenarioConfigurationFromExcel()`,
+  `addScenarioConfigurationsToExcel()`, etc.) have been deleted. Scenarios are
+  now defined as entries in the JSON configuration and represented as plain-data
+  `Scenario` objects. (#908)
+
+- **`Scenario` class rewritten as a plain data class.** The old R6 class with
+  active bindings and runtime logic is replaced by a simple data holder with
+  public fields (`scenarioName`, `modelFile`, `individualId`, `populationId`,
+  `outputPaths`, `parameterGroups`, etc.). (#908)
+
+- **`runScenarios()` signature changed.** The function now accepts a
+  `Project` object (or scenario names and custom params) instead
+  of a list of pre-built `Scenario` objects. (#908)
+
+- **`createScenarios()` is no longer exported.** Scenarios are now created
+  internally by `runScenarios()`. (#908)
+
+- **`createDataCombinedFromExcel()` renamed to `createDataCombined()`.** The
+  old name is deprecated. The `observedData` parameter is removed; observed
+  data is now auto-loaded from the JSON configuration. (#908)
+
+- **`createPlotsFromExcel()` renamed to `createPlots()`.** The old name is
+  deprecated. The `observedData` parameter is removed and
+  `project` is now the first argument. (#908)
+
+- **`loadObservedData()` rewritten.** Observed data is now declared in the
+  `observedData` section of the JSON configuration and loaded automatically.
+  The function returns a named list of `DataSet` objects loaded from a
+  project's declared observed data sources. `loadObservedDataFromPKML()` is
+  removed. (#908)
+
+- The following Excel I/O functions have been removed:
+  `readParametersFromXLS()`, `readIndividualCharacteristicsFromXLS()`,
+  `readPopulationCharacteristicsFromXLS()`, `writeIndividualToXLS()`,
+  `writeParameterStructureToXLS()`, `exportParametersToXLS()`,
+  `setApplications()`. (#908)
 
 - Individual parameter sets in `Individuals.xlsx` must now be specified
   explicitly via the new required column `Individual Parameter Sets` in the
@@ -13,7 +91,81 @@
 
 ## New features
 
-- Added `overwriteFormulasInSS` property to `ScenarioConfiguration`. When set to `TRUE`, formula-defined parameters will be overwritten with their steady-state values (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`). Default is `FALSE` (formula-defined parameters are kept, i.e. `ignoreIfFormula = TRUE`). The property can be set via a new `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx` (placed after `SteadyStateTimeUnit`). Also available as a parameter in `createScenarioConfigurationsFromPKML()`.
+- **`loadProject()` is the new primary entry point.** Reads a v2.0
+  `Project.json` file and returns a fully populated
+  `Project` object with parsed scenarios, individuals,
+  populations, output paths, model parameters, applications, and observed data.
+  (#908)
+
+- **`addScenario()` function and `Project$addScenario()` method
+  added.** Programmatically add scenarios to a loaded project
+  with validation. (#908)
+
+- **New `add*()` and `remove*()` functions for programmatic project
+  editing** (#908): `addIndividual()`, `addPopulation()`,
+  `addOutputPath()`, plus `removeScenario()`, `removeIndividual()`,
+  `removePopulation()`, `removeObservedData()`, `removeOutputPath()`. Each
+  has a matching R6 method on `Project`. `addObservedData()` is now also
+  available as a standalone function; the existing R6 method delegates to
+  it. (See the breaking-changes section above for the per-parameter helpers
+  that replace `addModelParameterGroup()` / `addApplicationGroup()`.)
+
+- **`importProjectFromExcel()` added.** Migrates an Excel-based
+  project to a v2.0 JSON configuration file, including auto-merging species
+  parameters into the `modelParameters` section. Replaces
+  `snapshotProjectConfiguration()` (deprecated). (#908)
+
+- **`exportProjectToExcel()` added.** Writes Excel configuration
+  files from a `Project` object. Replaces
+  `restoreProjectConfiguration()` (deprecated). (#908)
+
+- **Observed data auto-loading from JSON.** The `observedData` section in the
+  JSON configuration supports both `"excel"` and `"pkml"` types with per-entry
+  file, sheet, and importer configuration settings. (#908)
+
+- **`Project$print()` rewritten** to show category counts (e.g.,
+  number of scenarios, individuals, populations) and display file paths
+  relative to the project directory for readability. (#908)
+
+- Added `overwriteFormulasInSS` property to `Scenario`. When set to `TRUE`,
+  formula-defined parameters will be overwritten with their steady-state values
+  (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`).
+  Default is `FALSE` (formula-defined parameters are kept, i.e.
+  `ignoreIfFormula = TRUE`). The property can be set via a new
+  `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx`
+  (placed after `SteadyStateTimeUnit`). Also available as a parameter in
+  `createScenariosFromPKML()`. (#981)
+
+- `initProject()` now accepts `type` parameter (`"minimal"` or `"example"`) and `createExcel` parameter (`TRUE`/`FALSE`) for flexible project scaffolding.
+- Population CSV files are now stored in `Populations/` folder at project root (previously `Configurations/PopulationsCSV/`).
+- Documentation: vignettes rewritten for the JSON-primary workflow; the `advanced` vignette has been removed.
+
+## Deprecated
+
+The following functions still work but emit deprecation warnings and will be
+removed in a future release:
+
+- `createProjectConfiguration()` -- use `loadProject()` instead.
+- `createDefaultProjectConfiguration()` -- use `loadProject()` instead.
+- `snapshotProjectConfiguration()` -- use `importProjectFromExcel()` instead.
+- `restoreProjectConfiguration()` -- use `exportProjectToExcel()` instead.
+- `createDataCombinedFromExcel()` -- use `createDataCombined()` instead.
+- `createPlotsFromExcel()` -- use `createPlots()` instead.
+- `createScenarioConfigurationsFromPKML()` -- use `createScenariosFromPKML()`
+  instead. The `paramSheets` argument is also deprecated in favor of
+  `parameterGroups`.
+
+## Renamed
+
+- `saveScenarioResults()` is now `exportScenarioResults()`.
+- `loadScenarioResults()` is now `importScenarioResults()`.
+
+# esqlabsR 5.6.0
+
+## New features
+
+- `ProjectConfiguration` now stores the `esqlabsR` package version it was last saved with. When loading a configuration, the stored version is compared against the currently installed version. On mismatch or missing version, the user is interactively prompted to update the version in the configuration file and continue, or to stop. The user should always consult the [package NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) for breaking changes before confirming the update.
+- Added `ignoreVersionCheck` parameter to `createProjectConfiguration()` and `createDefaultProjectConfiguration()`. When `TRUE`, the version check is skipped. This is intended for non-interactive contexts such as automated tests or scripts run from the console where user input cannot be assured. When using this option, it is the responsibility of the user to ensure that the project is compatible with the currently installed version of `esqlabsR`.
 
 # esqlabsR 5.6.0
 
@@ -23,11 +175,13 @@
 - Added `ignoreVersionCheck` parameter to `createProjectConfiguration()` and `createDefaultProjectConfiguration()`. When `TRUE`, the version check is skipped. This is intended for non-interactive contexts such as automated tests or scripts run from the console where user input cannot be assured. When using this option, it is the responsibility of the user to ensure that the project is compatible with the currently installed version of `esqlabsR`.
 
 ## Minor improvements and bug fixes
-- `loadObservedData()` now passes the `sheets` argument directly to `ospsuite::loadDataSetsFromExcel()`, removing the deprecated `importAllSheets` workaround. The `sheets` parameter takes precedence over any sheets defined in `importerConfiguration`: `importerConfiguration$sheets` is always set to `NULL` before loading, so the passed configuration object is mutated as a side effect (#962).
-- Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
-- Added a warning when axis limits contain zero while the corresponding axis scale is set to `log` in `Plots.xlsx`. Previously, this combination silently produced empty plots (\#967).
-- `createDataCombinedFromExcel()` now throws an error listing all DataCombined IDs that cannot be found in the Excel file (\#740).
-- `extendParameterStructure()` now supports `NULL` for `parameters` and `newParameters` arguments. When `NULL` is provided, a valid empty structure is returned or combined with the non-NULL argument (#583).
+
+- Added a warning when axis limits contain zero while the corresponding axis
+  scale is set to `log` in `Plots.xlsx`. Previously, this combination silently
+  produced empty plots (\#967).
+- `extendParameterStructure()` now supports `NULL` for `parameters` and
+  `newParameters` arguments. When `NULL` is provided, a valid empty structure
+  is returned or combined with the non-NULL argument (#583).
 - `sensitivityTimeProfiles()` now accepts `xUnits` and `yUnits` as plain strings (e.g., `yUnits = "nmol/l"`) in addition to lists. Single string values are automatically coerced to a list (\#822).
 
 # esqlabsR 5.5.2

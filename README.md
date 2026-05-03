@@ -1,3 +1,4 @@
+
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 # esqlabsR <a href="https://esqlabs.github.io/esqlabsR/"><img src="man/figures/logo.png" align="right" height="139" alt="esqlabsR website" /></a>
@@ -7,7 +8,6 @@
 [![](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/main-workflow.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/main-workflow.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
-
 <!-- badges: end -->
 
 The `{esqlabsR}` package facilitates and standardizes the modeling and
@@ -28,7 +28,7 @@ The package provides functions to:
 - Interact with the OSPS features using simple Excel files.
 
 To get started with the esqlabsR package, please follow the [Get Started
-tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
+tutorial](articles/esqlabsR.html).
 
 ## Installation
 
@@ -45,7 +45,7 @@ tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
 
 You can install the package by running:
 
-```r
+``` r
 install.packages("pak")
 pak::pak("esqLABS/esqlabsR@*release")
 ```
@@ -53,7 +53,7 @@ pak::pak("esqLABS/esqlabsR@*release")
 The latest development version of the package can also be installed
 with:
 
-```r
+``` r
 pak::pak("esqLABS/esqlabsR")
 ```
 
@@ -67,111 +67,47 @@ You can start with the “Get Started” vignette: `vignette("esqlabsR")`.
 `{esqlabsR}` workflows require a specific project structure. You can
 initialize a new project by running:
 
-```r
+``` r
 esqlabsR::initProject()
 ```
 
-This will create the required folder structure and files for your
-project in the working directory from where you run the command.
+This creates the required folder structure and a `Project.json`
+configuration file in your working directory.
 
-Below is a simple example of how to work with the package:
+Below is a simple example of the complete workflow:
 
-```r
-# load esqlabsR
+``` r
 library(esqlabsR)
 
-# Load excel-based configuration
-# The function `exampleProjectConfigurationPath()` returns the path to the example project
-# configuration included in the package. Replace the variable `configurationPath`
-# with the path to you project configuration file.
-configurationPath <- exampleProjectConfigurationPath()
+# Load the project
+# projectPath <- "path/to/Project.json"  # replace with your project path
+projectPath <- exampleProjectPath()
+myProject <- loadProject(projectPath)
 
-myProjectConfiguration <-
-  createProjectConfiguration(configurationPath)
+# Run scenarios
+myScenarioResults <- runScenarios(myProject)
 
-# Define which scenarios to run
-scenarioNames <- c("TestScenario")
-# Set scenario names to NULL if you want to simulate all scenarios defined in the
-# excel file
-# scenarioNames <- NULL
-
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = scenarioNames,
-  projectConfiguration = myProjectConfiguration
-)
-
-# Define custom parameters for the scenarios. These parameter will be applied
-# additionally to the paremetrization specified in the Excel files.
-customParam <- list(
-  paths = c(
-    "Aciclovir|Lipophilicity"
-  ),
-  values = c(
-    -0.1
-  ),
-  units = c(
-    "Log Units"
-  )
-)
-
-# Create simulation scenarios defined in the excel files and apply the custom parameters
-myScenarios <- createScenarios(
-  scenarioConfigurations = scenarioConfigurations,
-  customParams = customParam
-)
-
-# Adjust simulation run options, if necessary.
-# E.g. disable check for negative values if required
-simulationRunOptions <- ospsuite::SimulationRunOptions$new()
-simulationRunOptions$checkForNegativeValues <- FALSE
-
-# Run simulations
-simulatedScenariosResults <- runScenarios(
-  scenarios = myScenarios,
-  simulationRunOptions = simulationRunOptions
-)
-
-    # Save results and store the path to the results for later re-use
-    outputFolder <- saveScenarioResults(simulatedScenariosResults, myProjectConfiguration)
-
-    # Load observed data using the default importer configuration provided with the package. Alternatively, you can load a custom data importer configuration.
-  dataSheets <- c("Laskin 1982.Group A")
-  observedData <- esqlabsR::loadObservedData(
-    projectConfiguration = myProjectConfiguration,
-    sheets = dataSheets
-  )
-
-  ########## Create figures defined in the Plots.xlsx file########
-  plots <- createPlotsFromExcel(
-    plotGridNames = c("Aciclovir",
-                      "Aciclovir2"),
-    simulatedScenarios = simulatedScenariosResults,
-    observedData = observedData,
-    projectConfiguration = myProjectConfiguration,
-    outputFolder = outputFolder,
-    stopIfNotFound = TRUE
-  )
-
-  plots$Aciclovir
+# Generate plots
+plots <- createPlots(myProject, simulatedScenarios = myScenarioResults)
+plots$Individual_diagnostics
 ```
 
-<img src="man/figures/README-unnamed-chunk-6-1.png" width="80%" style="display: block; margin: auto;" />
+<img src="man/figures/README-unnamed-chunk-6-1.png" alt="" width="80%" style="display: block; margin: auto;" />
 
 ## Learn More
 
 You can find more information on specific topics in dedicated vignettes:
 
-- Start with `vignette("esqlabsR-workflow-overview")` to learn about the
+- Start with `vignette("workflow-overview")` to learn about the
   esqlabsR’s streamlined workflow.
-- `vignette("esqlabsR-project-structure")` details the structure and
-  purpose of each component file and directory of an esqlabsR project.
-- `vignette("esqlabsR-design-scenarios")` explains how you can design
-  your own simulations only using excel files.
-- `vignette("esqlabsR-run-simulations")` describes all you need to know
-  to run your customized simulations.
-- `vignette("esqlabsR-plot-results")` explains how to generate
-  visualizations from simulations.
+- `vignette("project-structure")` details the structure and purpose of
+  each component file and directory of an esqlabsR project.
+- `vignette("design-scenarios")` explains how you can design your own
+  simulations only using excel files.
+- `vignette("run-simulations")` describes all you need to know to run
+  your customized simulations.
+- `vignette("plot-results")` explains how to generate visualizations
+  from simulations.
 
 ## Related Work
 

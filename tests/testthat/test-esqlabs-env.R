@@ -1,22 +1,21 @@
-test_that("esqlabsRSettingNames function returns correct enum", {
-  # Check that esqlabsRSettingNames returns an enum
-  expect_true(is.list(esqlabsRSettingNames))
-  expect_true(all(
-    c("packageName", "packageVersion") %in% names(esqlabsRSettingNames)
-  ))
+test_that("Names for settings are as expected", {
+  expect_equal(
+    esqlabsRSettingNames,
+    list(
+      packageVersion = "packageVersion",
+      packageName = "packageName"
+    )
+  )
 })
 
-test_that("getEsqlabsRSetting returns correct settings", {
-  # Check packageName
+test_that("Check that values for package environment bindings are correct", {
+  expect_error(
+    getEsqlabsRSetting("xyz"),
+    messages$errorPackageSettingNotFound("xyz", esqlabsEnv)
+  )
+
   expect_equal(getEsqlabsRSetting("packageName"), "esqlabsR")
-
-  # Check packageVersion
-  expect_true(is.character(getEsqlabsRSetting("packageVersion")))
-
-  # Check error for non-existent setting
-  # The error message contains the list of available settings which may change over time
-  # so we just check that an error is thrown without checking the specific message
-  expect_error(getEsqlabsRSetting("nonExistentSetting"))
+  expect_type(getEsqlabsRSetting("packageVersion"), "character")
 })
 
 test_that(".getEsqlabsColors returns the expected colors", {

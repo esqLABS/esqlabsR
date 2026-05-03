@@ -1,20 +1,11 @@
 messages <- ospsuite.utils::messages
 
-# Project config####
-messages$oldProjectConfigurationLayout <- function() {
+# Project config ----
+messages$oldProjectLayout <- function() {
   cli::format_message(c(
-    "!" = "The project configuration file layout used is from an older version of the package.",
-    "i" = "This version is still supported and will be loaded but it is recommended to update the project configuration file.
-      To do so, use the {.code $save} method of the project configuration object."
-  ))
-}
-
-messages$invalidConfigurationProperty <- function(
-  property,
-  path
-) {
-  cli::format_message(c(
-    "x" = "Property {.arg {property}} is not a valid configuration property for {.path {path}}"
+    "!" = "The project file layout used is from an older version of the package.",
+    "i" = "This version is still supported and will be loaded but it is recommended to update the project file.
+      To do so, use the {.code $save} method of the project object."
   ))
 }
 
@@ -32,7 +23,7 @@ messages$versionNotStored <- function(currentVersion) {
   ))
 }
 
-# Parameters structure####
+# Parameters structure ----
 messages$errorWrongXLSStructure <- function(
   filePath,
   expectedColNames,
@@ -52,12 +43,12 @@ messages$wrongParametersStructure <- function(argumentName) {
   )
 }
 
-# Enum####
+# Enum ----
 messages$errorEnumPutListMultipleKeys <- function() {
   cliFormat("Trying to put multiple keys, but only one key is allowed!")
 }
 
-# utilities-population####
+# utilities-population ----
 messages$errorDistributionNotSupported <- function(string) {
   cliFormat(
     "The distribution {.val {string}} is not supported. Supported distributions are listed in {.var Distributions}."
@@ -77,14 +68,14 @@ messages$errorWrongOntogenyStructure <- function(entry) {
   )
 }
 
-# utilities-individual####
+# utilities-individual ----
 messages$errorWrongIndividualId <- function(individualId) {
   cliFormat(
     "Individual with id {.var {individualId}} is not specified in the individual characteristics file!"
   )
 }
 
-# utilities####
+# utilities ----
 messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
@@ -124,33 +115,16 @@ messages$autocorrectDuplicateScenarioNames <- function(
   ))
 }
 
-messages$scenarioConfigurationNotNamedList <- function() {
-  cli::format_message(c(
-    "Invalid scenarioConfigurations:",
-    "x" = "scenarioConfigurations must be a named list",
-    "i" = "Each scenario configuration must have a unique name"
-  ))
-}
-
-
 messages$createdFileSnapshot <- function(inputFile, outputFile) {
   cliFormat(
     "Snapshot of {.file {inputFile}} created at {.file {outputFile}}"
   )
 }
 
-messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
+messages$restoredProject <- function(inputFile, outputFile) {
   cliFormat(
-    "Project configuration from {.file {inputFile}} restored at {.file {outputFile}}"
+    "Project from {.file {inputFile}} restored at {.file {outputFile}}"
   )
-}
-
-messages$hasUnsavedChanges <- function() {
-  cli::format_message(c(
-    "!" = "The ProjectConfiguration object has been modified since loading from file.",
-    "i" = "The object properties don't match the original Excel file.",
-    ">" = "Consider running {.run projectConfig$save()} to save changes to the Excel file."
-  ))
 }
 
 messages$invalidArgumentLength <- function(noOfOutpaths, noOfScenarios) {
@@ -177,14 +151,14 @@ messages$errorWrongArguments <- function(expectedArguments) {
   )
 }
 
-# utilities numerics####
+# utilities numerics ----
 messages$valueShouldNotBeNegative <- function(parameterName, value) {
   cliFormat(
     "{.arg {parameterName}} must be a positive numerical value, but the value is {.val {value}}"
   )
 }
 
-# utilities-data####
+# utilities-data ----
 messages$errorInvalidMeanMethod <- function() {
   cliFormat(
     "Invalid value for argument {.arg method}, supported values are {.val arithmetic} or {.val geometric}"
@@ -203,7 +177,7 @@ messages$offsetUnitsNotDefined <- function(rows) {
   ))
 }
 
-# utilities-figures####
+# utilities-figures ----
 messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
   cliFormat(
     "nrOfColors must be positive, value {.val {nrOfColors}} is not valid!"
@@ -230,14 +204,13 @@ messages$UnknownPlotConfiguration <- function(name) {
   cliFormat("Unknown plot configuration option: {.arg {name}}")
 }
 
-# scenario####
+# scenario ----
 messages$errorApplicationProtocolNotFound <- function(
   scenarioName,
   applicationProtocol
 ) {
   cliFormat(
-    "Application protocol {.var {applicationProtocol}} defined in scenario {.var {scenarioName}} not found
-    in the excel file {.file ApplicationProtocols.xlsx}"
+    "Application protocol {.var {applicationProtocol}} defined in scenario {.var {scenarioName}} not found in the project configuration."
   )
 }
 messages$wrongSimulationType <- function() {
@@ -298,12 +271,6 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   )
 }
 
-messages$stopScenarioNameNonUnique <- function(scenarioName) {
-  cliFormat(
-    "Scenario {.val {scenarioName}} is defined multiple times! Make sure that each scenario defined in the excel file has a unique name."
-  )
-}
-
 messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
   cliFormat(
     "The time interval string {.val {timeIntervalString}} is not valid! Please 
@@ -333,7 +300,7 @@ messages$missingSteadyStateTimeUnit <- function(scenarioName) {
     "Missing unit for steady-state time (column {.field SteadyStateTimeUnit}) for scenario {.val {scenarioName}}."
   )
 }
-# sensitivity-calculation####
+# sensitivity-calculation ----
 messages$noPKDataToWrite <- function() {
   cliFormat(
     "{.path saOutputFilePath} argument is specified, but there is no PK parameters data to write to spreadsheets."
@@ -356,7 +323,7 @@ messages$errorOptionOutOfBounds <- function(parameterFactor) {
   )
 }
 
-# utilities-quantity####
+# utilities-quantity ----
 messages$cannotGetMoleculeFromQuantity <- function(
   quantityPath,
   optionalMessage = ""
@@ -374,7 +341,7 @@ messages$warningInvalidDataSetName <- function(dataSetNames) {
   )
 }
 
-# Plots.xlsx####
+# Plot configuration ----
 messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
   cliFormat(
     "The plots with plotIDs {.val {paste(plotIDs, collapse = ',\n')}} could not be added to plot grid
@@ -416,12 +383,6 @@ messages$missingLabel <- function() {
 messages$missingPlotType <- function() {
   cliFormat(
     "Missing values found in mandatory column {.val plotType} of sheet {.var plotConfiguration}. Fill in values to proceed."
-  )
-}
-
-messages$missingDataType <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.val dataType} of sheet {.var DataCombined}. Fill in values to proceed."
   )
 }
 
@@ -479,28 +440,14 @@ messages$stopInvalidDataSetName <- function(dataSetNames) {
   )
 }
 
-messages$invalidConfigurationPropertyFromExcel <- function(
+messages$invalidConfigurationProperty <- function(
   propertyName,
   configurationType
 ) {
   cliFormat(
-    "Trying to apply property {.arg {propertyName}} that is not supported by 
-    the configuration {.var {configurationType}}! Check column names in the 
-    excel file defining plot configurations."
-  )
-}
-
-messages$missingOutputFileName <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.arg outputName} of sheet {.var exportConfiguration}. No plots are exported to file for corresponding rows."
-  )
-}
-
-messages$missingPlotGrids <- function(missingPlotGrids) {
-  cliFormat(
-    "Invalid values in column {.arg plotGridName} of sheet {.var exportConfiguration}:
-    {.val {paste0(missingPlotGrids, collapse = ',\n')}}. Plot grids are either not defined or empty and can not be
-    exported to file."
+    "Trying to apply property {.arg {propertyName}} that is not supported by
+    the configuration {.var {configurationType}}! Check field names in the
+    plot configuration."
   )
 }
 
@@ -539,7 +486,7 @@ messages$errorDataCombinedListMustBeList <- function(type) {
   )
 }
 
-# Sensitivity calculation####
+# Sensitivity calculation ----
 messages$sensitivityAnalysisSimulationFailure <- function(
   parameterPath,
   parameterFactor
@@ -604,8 +551,8 @@ messages$promptDeleteOutputDir <- function(outputDir) {
   )
 }
 
-# Excel field validation error messages ####
-messages$excelFieldFormatError <- function(
+# Field validation error messages ----
+messages$fieldFormatError <- function(
   fieldName,
   value,
   plotID,
@@ -613,14 +560,14 @@ messages$excelFieldFormatError <- function(
 ) {
   plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
   cliFormat(
-    "Excel validation error{plotInfo}: Invalid format for {.field {fieldName}}.
+    "Validation error{plotInfo}: Invalid format for {.field {fieldName}}.
     Provided: {.val {value}}
     Expected: Values separated by commas (not spaces)
     Example: '72, 80' or '72,80' (not '72 80')"
   )
 }
 
-messages$excelFieldLengthError <- function(
+messages$fieldLengthError <- function(
   fieldName,
   value,
   plotID,
@@ -631,14 +578,14 @@ messages$excelFieldLengthError <- function(
   valuePlural <- if (actual != 1) "s" else ""
   expectedPlural <- if (expected != 1) "s" else ""
   cliFormat(
-    "Excel validation error{plotInfo}: Wrong number of values for {.field {fieldName}}.
+    "Validation error{plotInfo}: Wrong number of values for {.field {fieldName}}.
     Provided: {.val {value}} ({actual} value{valuePlural})
     Expected: {expected} comma-separated value{expectedPlural}
     Example: '72, 80'"
   )
 }
 
-messages$excelFieldTypeError <- function(
+messages$fieldTypeError <- function(
   fieldName,
   value,
   plotID,
@@ -646,7 +593,7 @@ messages$excelFieldTypeError <- function(
 ) {
   plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
   cliFormat(
-    "Excel validation error{plotInfo}: Invalid {.field {fieldName}} value.
+    "Validation error{plotInfo}: Invalid {.field {fieldName}} value.
     Provided: {.val {value}}
     Expected: {expectedType} values"
   )
@@ -663,7 +610,7 @@ messages$warningSensitivityPKParameterNotCalculated <- function(
   )
 }
 
-# Validation framework messages ####
+# Validation framework messages ----
 messages$validationFileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
@@ -685,12 +632,6 @@ messages$validationEmptySheet <- function(sheet) {
 messages$validationCrossReference <- function(source, target, missing) {
   cliFormat(
     "Invalid references from {.val {source}} to {.val {target}}: {.val {paste(missing, collapse = ', ')}}"
-  )
-}
-
-messages$validationRequiredFileNotConfigured <- function(fileName) {
-  cliFormat(
-    "Required configuration file {.file {fileName}} is not configured in ProjectConfiguration"
   )
 }
 
@@ -752,14 +693,156 @@ messages$excelInSync <- function() {
   )
 }
 
-messages$projectConfigUnsavedChanges <- function() {
-  cliFormat(
-    "The ProjectConfiguration object has {.strong unsaved changes} that differ from the Excel file."
-  )
-}
-
 messages$abortedByUser <- function() {
   cliFormat(
     "Aborted by user."
+  )
+}
+
+messages$scriptFileNotFound <- function(path) {
+  cliFormat(
+    "Script file not found: {.file {path}}"
+  )
+}
+
+messages$scriptWrongReturnType <- function(path, actualClass) {
+  cliFormat(
+    "Script {.file {path}} must return DataSet or list of DataSet objects, got {.cls {actualClass}}"
+  )
+}
+
+messages$excelEntryMissingFile <- function() {
+  cliFormat(
+    "Excel observedData entry must have a {.field file} field specifying the Excel file path."
+  )
+}
+
+messages$excelEntryMissingImporter <- function() {
+  cliFormat(
+    "Excel observedData entry must have an {.field importerConfiguration} field specifying the importer XML file."
+  )
+}
+
+messages$excelEntryMissingSheets <- function() {
+  cliFormat(
+    "Excel observedData entry must have a {.field sheets} field specifying which sheets to load."
+  )
+}
+
+messages$entryMissingFile <- function(type) {
+  cliFormat(
+    "{.val {type}} observedData entry must have a {.field file} field."
+  )
+}
+
+messages$observedDataNameExists <- function(name) {
+  cliFormat(
+    "Observed data with name {.val {name}} already exists. Use a different name."
+  )
+}
+
+messages$observedDataNameOverwritten <- function(name) {
+  cliFormat(
+    "Programmatically added observed data {.val {name}} overwrites a JSON-declared entry with the same name."
+  )
+}
+
+messages$observedDataConfigMissingType <- function() {
+  cliFormat("Config list must include a {.field type} field.")
+}
+
+messages$observedDataInvalidType <- function(type, validTypes) {
+  cliFormat(
+    "Invalid type {.val {type}}. Must be one of: {.val {validTypes}}."
+  )
+}
+
+messages$observedDataInvalidEntry <- function() {
+  cliFormat(
+    "{.arg entry} must be a {.cls DataSet} object or a configuration list."
+  )
+}
+
+messages$observedDataNotFound <- function(name) {
+  cliFormat("Observed data {.val {name}} not found; no-op.")
+}
+
+# Plots / DataCombined add/remove ----
+
+messages$dataCombinedNameExists <- function(name) {
+  cliFormat(
+    "DataCombined {.val {name}} already exists. Use a different name."
+  )
+}
+
+messages$dataCombinedNotFound <- function(name) {
+  cliFormat("DataCombined {.val {name}} not found; no-op.")
+}
+
+messages$dataCombinedReferencedByPlot <- function(name, plotIDs) {
+  cliFormat(
+    "DataCombined {.val {name}} is referenced by plot{?s} {.val {plotIDs}}; \\
+removing it will leave dangling references."
+  )
+}
+
+messages$dataCombinedSimulatedMissingField <- function(field) {
+  cliFormat(
+    "Each {.field simulated} entry must include {.field {field}}."
+  )
+}
+
+messages$dataCombinedObservedMissingField <- function(field) {
+  cliFormat(
+    "Each {.field observed} entry must include {.field {field}}."
+  )
+}
+
+messages$plotIDExists <- function(plotID) {
+  cliFormat(
+    "Plot with {.field plotID} {.val {plotID}} already exists. \\
+Use a different ID."
+  )
+}
+
+messages$plotIDNotFound <- function(plotID) {
+  cliFormat("Plot {.val {plotID}} not found; no-op.")
+}
+
+messages$plotDataCombinedNameNotFound <- function(name) {
+  cliFormat(
+    "{.field DataCombinedName} {.val {name}} not found in \\
+{.field project$plots$dataCombined}."
+  )
+}
+
+messages$invalidPlotType <- function(plotType, validTypes) {
+  cliFormat(
+    "Invalid {.field plotType} {.val {plotType}}. Must be one of: \\
+{.val {validTypes}}."
+  )
+}
+
+messages$plotReferencedByGrid <- function(plotID, gridNames) {
+  cliFormat(
+    "Plot {.val {plotID}} is referenced by plotGrid{?s} \\
+{.val {gridNames}}; removing it will leave dangling references."
+  )
+}
+
+messages$plotGridNameExists <- function(name) {
+  cliFormat(
+    "PlotGrid {.val {name}} already exists. Use a different name."
+  )
+}
+
+messages$plotGridNotFound <- function(name) {
+  cliFormat("PlotGrid {.val {name}} not found; no-op.")
+}
+
+messages$plotGridUnknownPlotIDs <- function(plotIDs) {
+  cliFormat(
+    "{.field plotIDs} not found in {.field project$plots$plotConfiguration}: \\
+{.val {plotIDs}}."
   )
 }
