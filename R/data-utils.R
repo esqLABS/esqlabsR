@@ -1,3 +1,5 @@
+# Numeric parsing helpers ----
+
 #' Convert string to numeric
 #'
 #' @param string A string or a list of strings to be converted to numeric values
@@ -86,6 +88,35 @@ stringToNum <- function(
   return(numVals)
 }
 
+# DataSet aggregation ----
+
+#' Calculate geometric mean of a numeric vector
+#'
+#' @param x Numeric array to calculate geometric mean for
+#' @param na.rm A logical value indicating whether `NA` values should be
+#'   stripped before the computation proceeds
+#' @param trim Fraction (0 to 0.5) of observations to be trimmed from each end
+#'   of `x` before the mean is computed. Values of trim outside that range are
+#'   taken as the nearest endpoint
+#'
+#' @returns Geometric mean of `x`
+#' @export
+geomean <- function(x, na.rm = FALSE, trim = 0) {
+  exp(mean(log(x), na.rm = na.rm, trim = trim))
+}
+
+#' Calculate geometric standard deviation of a numeric vector
+#'
+#' @param x Numeric array
+#' @param na.rm A logical value indicating whether `NA` values should be
+#'   stripped before the computation proceeds.
+#'
+#' @returns Geometric standard deviation of `x`
+#' @export
+geosd <- function(x, na.rm = FALSE) {
+  exp(stats::sd(log(x), na.rm = na.rm))
+}
+
 #' Calculate mean and standard deviation for the yValues of the given `DataSet`
 #' objects
 #'
@@ -170,7 +201,8 @@ calculateMeanDataSet <- function(
   switch(
     lloqMode,
     # nothing to do for LLOQ/2
-    "LLOQ/2" = {},
+    "LLOQ/2" = {
+    },
     # set all data points with lloq that are smaller than it to value of lloq
     "LLOQ" = df[ind, "yValues"] <- df[ind, "lloq"],
     # set all data points with lloq to 0
@@ -277,6 +309,8 @@ calculateMeanDataSet <- function(
   return(meanDataSet)
 }
 
+# LLOQ / ULOQ enums ----
+
 #' Possible entries for the `lloqMode` argument of `calculateMeans()`
 #' @export
 LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
@@ -284,115 +318,3 @@ LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 #' Possible modes to treat values above the upper limit of quantification.
 #' @export
 ULOQMode <- enum(list("ULOQ", "ignore"))
-
-#' Load data from excel
-#'
-#' @description Loads data sets from excel. The excel file containing the data
-#'   must be located in the folder `projectConfiguration$dataFolder` and be
-#'   named `projectConfiguration$dataFile`. Importer configuration file must be
-#'   located in the same folder and named
-#'   `projectConfiguration$dataImporterConfigurationFile`.
-#'
-#' @param projectConfiguration Object of class `ProjectConfiguration` containing
-#'   the necessary information.
-#' @param sheets String or a list of strings defining which sheets to load. If
-#'   `NULL` (default), all sheets within the file are loaded. This parameter
-#'   takes precedence over any sheets defined in `importerConfiguration`: the
-#'   function always sets `importerConfiguration$sheets` to `NULL` before
-#'   calling `ospsuite::loadDataSetsFromExcel()`, so the passed
-#'   `importerConfiguration` object is mutated as a side effect.
-#' @param importerConfiguration `DataImporterConfiguration` object used to load
-#'   the data. If `NULL` (default), default esqlabs importer configuration as
-#'   defined in `projectConfiguration$dataImporterConfigurationFile` will be
-#'   used. Note: the `sheets` property of this object is always set to `NULL`
-#'   by this function (see the `sheets` parameter description).
-#'
-#' @returns A named list of `DataSet` objects, with names being the names of the
-#' data sets.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Create default project configuration
-#' projectConfiguration <- createProjectConfiguration()
-#' dataSets <- loadObservedData(projectConfiguration)
-#' }
-loadObservedData <- function(
-  projectConfiguration,
-  sheets = NULL,
-  importerConfiguration = NULL
-) {
-  importerConfiguration <- importerConfiguration %||%
-    ospsuite::loadDataImporterConfiguration(
-      configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-    )
-  validateIsString(sheets, nullAllowed = TRUE)
-  # Clear sheets from configuration so that `sheets` parameter takes full
-  # control. If `sheets` is NULL, all sheets will be loaded.
-  importerConfiguration$sheets <- NULL
-
-  dataSets <- ospsuite::loadDataSetsFromExcel(
-    xlsFilePath = projectConfiguration$dataFile,
-    importerConfigurationOrPath = importerConfiguration,
-    sheets = sheets
-  )
-
-  return(dataSets)
-}
-
-#' Load data from pkml
-#'
-#' @description Loads data sets that are exported as pkml. The files must be
-#'   located in the folder `projectConfiguration$dataFolder`, subfolder `pkml`.
-#'   and be named `projectConfiguration$dataFile`.
-#'
-#' @param projectConfiguration Object of class `ProjectConfiguration` containing
-#'   the necessary information.
-#' @param obsDataNames String or a list of strings defining data sets to load If
-#'   `NULL` (default), all data sets located in the folder are loaded. Must not
-#'   contain the ".pkml" file extension.
-#'
-#' @returns A named list of `DataSet` objects, with names being the names of the
-#' data sets.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Create default project configuration
-#' projectConfiguration <- createProjectConfiguration()
-#' dataSets <- loadObservedData(projectConfiguration)
-#' }
-loadObservedDataFromPKML <- function(
-  projectConfiguration,
-  obsDataNames = NULL
-) {
-  ospsuite.utils::validateIsString(obsDataNames, nullAllowed = TRUE)
-  # If data sets have been specified, import only those. Otherwise try to import all
-  # files
-  if (!is.null(obsDataNames)) {
-    allFiles <- paste0(obsDataNames, ".pkml")
-  } else {
-    allFiles <- list.files(
-      path = file.path(
-        projectConfiguration$dataFolder,
-        "pkml"
-      ),
-      pattern = "*.pkml"
-    )
-  }
-
-  dataSets <- lapply(allFiles, function(fileName) {
-    ospsuite::loadDataSetFromPKML(
-      filePath = file.path(
-        projectConfiguration$dataFolder,
-        "pkml",
-        fileName
-      )
-    )
-  })
-  names(dataSets) <- lapply(dataSets, function(x) {
-    x$name
-  })
-
-  return(dataSets)
-}

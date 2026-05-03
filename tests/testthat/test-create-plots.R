@@ -1,0 +1,1087 @@
+# esqlabsColors ----------------------------------------------------------
+
+test_that("esqlabsColors input validation works as expected", {
+  expect_error(
+    esqlabsColors(-1),
+    regexp = messages$nrOfColorsShouldBePositive(-1),
+    fixed = TRUE
+  )
+})
+
+test_that("esqlabsColors works with empty argument vector", {
+  expect_length(esqlabsColors(0), 0)
+})
+
+test_that("esqlabsColors returns two colors", {
+  expect_length(esqlabsColors(2), 2)
+})
+
+test_that("esqlabsColors returns three colors", {
+  expect_length(esqlabsColors(3), 3)
+})
+
+test_that("esqlabsColors returns ten colors", {
+  expect_length(esqlabsColors(10), 10)
+})
+
+test_that("esqlabsColors returns ten colors", {
+  expect_length(esqlabsColors(10), 10)
+})
+
+# col2hsv -----------------------------------------------------------------
+
+test_that("col2hsv returns expected HSV values for a given R color name", {
+  expect_equal(
+    col2hsv("yellow"),
+    structure(
+      c(0.166666666666667, 1, 1),
+      .Dim = c(3L, 1L),
+      .Dimnames = list(c("h", "s", "v"), NULL)
+    )
+  )
+
+  expect_equal(
+    col2hsv("white"),
+    structure(
+      c(0, 0, 1),
+      .Dim = c(3L, 1L),
+      .Dimnames = list(c("h", "s", "v"), NULL)
+    )
+  )
+})
+
+# createEsqlabsPlotConfiguration ------------------------------------------
+
+test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults", {
+  myPC <- createEsqlabsPlotConfiguration()
+  expect_true(isOfType(myPC, "DefaultPlotConfiguration"))
+  expect_equal(myPC$titleSize, 10)
+})
+
+test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defaults", {
+  myPGC <- createEsqlabsPlotGridConfiguration()
+  expect_true(isOfType(myPGC, "PlotGridConfiguration"))
+  expect_equal(myPGC$tagLevels, "a")
+})
+
+test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
+  defaultConfig <- ospsuite::DefaultPlotConfiguration$new()
+  esqlabsConfig <- createEsqlabsPlotConfiguration()
+
+  # Check if all fields from DefaultPlotConfiguration are present in esqLabs configuration
+  defaultFields <- names(defaultConfig)
+  esqlabsFields <- names(esqlabsConfig)
+
+  missingFields <- setdiff(defaultFields, esqlabsFields)
+  expect_true(
+    length(missingFields) == 0,
+    info = paste("Missing fields:", paste(missingFields, collapse = ", "))
+  )
+
+  # Only override fields where differences are intentional
+  # and backward compatibility with `ospsuite` plotting functions was verified
+  esqlabsConfig$linesColor <- NULL
+  esqlabsConfig$legendPosition <- NULL
+
+  # Check if the types of the remaining fields are the same between both configurations
+  for (field in defaultFields) {
+    expect_equal(
+      class(esqlabsConfig[[field]]),
+      class(defaultConfig[[field]]),
+      info = paste("Field", field, "has different types")
+    )
+  }
+})
+
+# single observed and simulated datasets
+oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
+
+test_that(".parseMultiValueField numeric conversion path is covered", {
+  # Direct test to ensure numeric conversion code path is covered
+  result <- esqlabsR:::.parseMultiValueField(
+    value = "72.5, 80.5",
+    fieldName = "test",
+    plotID = "P1",
+    expectedLength = 2,
+    expectedType = "numeric"
+  )
+  expect_equal(result, c(72.5, 80.5))
+  expect_true(is.numeric(result))
+
+  # Test space-separated numeric values trigger correct error
+  expect_error(
+    esqlabsR:::.parseMultiValueField(
+      value = "72 80",
+      fieldName = "test",
+      plotID = "P1",
+      expectedLength = 2,
+      expectedType = "numeric"
+    ),
+    regexp = "Invalid format.*Expected.*Values separated by commas",
+    fixed = FALSE
+  )
+})
+
+test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualTimeProfile", {
+  esqlabsConfig <- createEsqlabsPlotConfiguration()
+
+  set.seed(123)
+  vdiffr::expect_doppelganger(
+    title = "time profile - esqlabsPlotConfiguration",
+    fig = plotIndividualTimeProfile(oneObsSimDC, esqlabsConfig)
+  )
+})
+
+# createPlots ------------------------------------------------------------
+
+project <- testProject()
+
+scenarioNames <- c("TestScenario", "PopulationScenario")
+outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+
+simulatedScenarios <- runScenarios(
+  project,
+  scenarioNames = scenarioNames
+)
+
+# Load pre-simulated results for the "TestScenario". Required to ensure
+# identify of the results, otherwise numerical noise interferes with snapshot testing
+preSimulatedResults <- ospsuite::importResultsFromCSV(
+  simulation = simulatedScenarios$TestScenario$simulation,
+  filePaths = getTestDataFilePath("TestScenario_results.csv")
+)
+simulatedScenarios$TestScenario$results <- preSimulatedResults
+simulatedScenarios$TestScenario$outputValues <- getOutputValues(
+  simulationResults = preSimulatedResults
+)
+
+observedDataForSetup <- loadObservedData(project)
+
+dataCombinedSpec <- list(
+  AciclovirPVB = list(
+    simulated = list(
+      list(
+        label = "Aciclovir simulated",
+        scenario = scenarioNames[1],
+        path = outputPaths,
+        group = "Aciclovir PVB"
+      )
+    ),
+    observed = list(
+      list(
+        label = "Aciclovir observed",
+        dataSet = names(observedDataForSetup)[1],
+        group = "Aciclovir PVB"
+      )
+    )
+  )
+)
+plotConfigurationDf <- data.frame(list(
+  "plotID" = "P1",
+  "DataCombinedName" = "AciclovirPVB",
+  "plotType" = "individual",
+  "title" = NA,
+  "xUnit" = NA,
+  "yUnit" = NA,
+  "xAxisScale" = NA,
+  "yAxisScale" = NA,
+  "xValuesLimits" = NA,
+  "yValuesLimits" = NA,
+  "quantiles" = NA,
+  "nsd" = NA,
+  "foldDistance" = NA
+))
+plotGridsDf <- data.frame(list(
+  "name" = "Aciclovir",
+  "plotIDs" = "P1",
+  "title" = "Aciclovir PVB"
+))
+
+# Helper to create a project with custom plots data
+.withPlots <- function(
+  baseProject = project,
+  dataCombined = dataCombinedSpec,
+  plotConfiguration = plotConfigurationDf,
+  plotGrids = plotGridsDf
+) {
+  pcLocal <- baseProject$clone()
+  pcLocal$plots <- list(
+    dataCombined = dataCombined,
+    plotConfiguration = plotConfiguration,
+    plotGrids = plotGrids
+  )
+  pcLocal
+}
+
+# Validation DataCombined
+test_that("It throws an error if mandatory field label is not filled out", {
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$label <- NA
+  pcLocal <- .withPlots(dataCombined = spec)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$missingLabel()
+  )
+})
+
+test_that("It throws an error if no scenario is specified for a simulated data", {
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$scenario <- NA
+  pcLocal <- .withPlots(dataCombined = spec)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE,
+      validate = FALSE
+    ),
+    regexp = messages$missingScenarioName()
+  )
+})
+
+test_that("It throws an error if no output path is specified for a simulated data", {
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$path <- NA
+  pcLocal <- .withPlots(dataCombined = spec)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$stopNoPathProvided("AciclovirPVB")
+  )
+})
+
+test_that("It throws an error if wrong output path is specified for a simulated data", {
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$path <- "foo"
+  pcLocal <- .withPlots(dataCombined = spec)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$stopWrongOutputPath(
+      dataCombinedName = "AciclovirPVB",
+      scenarioName = spec$AciclovirPVB$simulated[[1]]$scenario,
+      path = "foo"
+    )
+  )
+})
+
+test_that("It throws an error if no data set is specified for observed data", {
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$observed[[1]]$dataSet <- NA
+  pcLocal <- .withPlots(dataCombined = spec)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$stopNoDataSetProvided("AciclovirPVB")
+  )
+})
+
+test_that("It throws an error if defined scenario is missing and stopIfNotFound is TRUE", {
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$scenario <- "foo"
+  pcLocal <- .withPlots(dataCombined = spec)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE,
+      validate = FALSE
+    ),
+    regexp = messages$warningInvalidScenarioName("foo")
+  )
+})
+
+test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE", {
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$scenario <- "foo"
+  pcLocal <- .withPlots(dataCombined = spec)
+
+  expect_warning(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = FALSE,
+      validate = FALSE
+    ),
+    regexp = messages$warningInvalidScenarioName("foo")
+  )
+})
+
+test_that("It throws an error if defined data set is missing and stopIfNotFound is TRUE", {
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$observed[[1]]$dataSet <- scenarioNames[1]
+  pcLocal <- .withPlots(dataCombined = spec)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$stopInvalidDataSetName(scenarioNames[1])
+  )
+})
+
+test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", {
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$observed[[1]]$dataSet <- scenarioNames[1]
+  pcLocal <- .withPlots(dataCombined = spec)
+
+  expect_warning(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = FALSE
+    ),
+    regexp = messages$warningInvalidDataSetName(scenarioNames[1])
+  )
+})
+
+test_that("It throws an error if mandatory field DataCombinedName is not filled out", {
+  plotConfigurationDfLocal <- plotConfigurationDf
+  plotConfigurationDfLocal$DataCombinedName <- NA
+  pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$missingDataCombinedName()
+  )
+})
+
+test_that("It throws an error if mandatory field plotType is not filled out", {
+  plotConfigurationDfLocal <- plotConfigurationDf
+  plotConfigurationDfLocal$plotType <- NA
+  pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$missingPlotType()
+  )
+})
+
+test_that("It throws an error if a plot requires a DataCombined that is not defined", {
+  plotConfigurationDfLocal <- plotConfigurationDf
+  plotConfigurationDfLocal$DataCombinedName <- "foo"
+  pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE,
+      validate = FALSE
+    ),
+    regexp = messages$stopDataCombinedNamesNotFound("foo")
+  )
+})
+
+# Validation plotGrids
+test_that("It returns NULL if no plotGrids are defined", {
+  plotGridsDfLocal <- data.frame(list(
+    "name" = NA,
+    "plotIDs" = NA,
+    "title" = NA
+  ))
+  pcLocal <- .withPlots(plotGrids = plotGridsDfLocal)
+
+  plots <- createPlots(
+    project = pcLocal,
+    simulatedScenarios = simulatedScenarios,
+    stopIfNotFound = TRUE
+  )
+  expect_null(plots)
+})
+
+test_that("It creates plots for all plot grids when plotGridNames is NULL", {
+  plots <- createPlots(
+    project = project,
+    simulatedScenarios = simulatedScenarios,
+    stopIfNotFound = TRUE
+  )
+  expect_equal(names(plots), c("Aciclovir", "Aciclovir2", "Aciclovir3"))
+})
+
+test_that("When custom DataCombined is passed, it is used instead of the one from config", {
+  dataCombinedList <- createDataCombined(
+    project = project,
+    plotGridNames = c("Aciclovir", "Aciclovir2", "Aciclovir3"),
+    simulatedScenarios = simulatedScenarios
+  )
+
+  # Change the x-offset of a data combined
+  dataCombinedList$AciclovirPVB$setDataTransformations(xOffsets = 0)
+
+  plots <- createPlots(
+    project = project,
+    simulatedScenarios = simulatedScenarios,
+    dataCombinedList = dataCombinedList,
+    stopIfNotFound = TRUE
+  )
+
+  vdiffr::expect_doppelganger(title = "firstPlot", plots[[1]])
+  vdiffr::expect_doppelganger(title = "secondPlot", plots[[2]])
+})
+
+test_that("It can create plots when custom data combined are passed that are missing in the config", {
+  dataCombinedList <- createDataCombined(
+    project = project,
+    plotGridNames = c("Aciclovir", "Aciclovir2", "Aciclovir3"),
+    simulatedScenarios = simulatedScenarios
+  )
+
+  emptyDataCombinedDf <- data.frame(list(
+    "DataCombinedName" = NA,
+    "dataType" = NA,
+    "label" = NA,
+    "scenario" = NA,
+    "path" = NA,
+    "dataSet" = NA,
+    "group" = NA,
+    "xOffsets" = NA,
+    "xOffsetsUnits" = NA,
+    "yOffsets" = NA,
+    "yOffsetsUnits" = NA,
+    "xScaleFactors" = NA,
+    "yScaleFactors" = NA
+  ))
+
+  pcLocal <- .withPlots(dataCombined = emptyDataCombinedDf)
+
+  plots <- createPlots(
+    project = pcLocal,
+    simulatedScenarios = simulatedScenarios,
+    dataCombinedList = dataCombinedList,
+    stopIfNotFound = TRUE,
+    validate = FALSE
+  )
+  vdiffr::expect_doppelganger(title = "firstPlotCustomDC", plots[[1]])
+})
+
+test_that("It creates plots only for specified plotGrids", {
+  plots <- createPlots(
+    plotGridNames = "Aciclovir",
+    project = project,
+    simulatedScenarios = simulatedScenarios,
+    stopIfNotFound = TRUE
+  )
+  expect_equal(names(plots), c("Aciclovir"))
+})
+
+test_that("It throws an error when specified plot grid names are not defined", {
+  expect_error(
+    createPlots(
+      plotGridNames = c("foo", "Aciclovir", "bar"),
+      project = project,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    messages$invalidPlotGridNames(c("foo", "bar"))
+  )
+})
+
+test_that("It throws an error if mandatory field plotIDs is not filled out", {
+  plotGridsDfLocal <- plotGridsDf
+  plotGridsDfLocal$plotIDs <- NA
+  pcLocal <- .withPlots(plotGrids = plotGridsDfLocal)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$missingPlotIDs()
+  )
+})
+
+
+test_that("It throws an error if plotIDs are not unique", {
+  plotConfigurationDfLocal <- data.frame(list(
+    "plotID" = c("P1", "P1"),
+    "DataCombinedName" = c("AciclovirPVB", "AciclovirPVB"),
+    "plotType" = c("individual", "individual"),
+    "title" = NA,
+    "xUnit" = NA,
+    "yUnit" = NA,
+    "xAxisScale" = NA,
+    "yAxisScale" = NA,
+    "xValuesLimits" = NA,
+    "yValuesLimits" = NA,
+    "quantiles" = NA,
+    "nsd" = NA,
+    "foldDistance" = NA
+  ))
+  pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE,
+      validate = FALSE
+    ),
+    regexp = messages$PlotIDsMustBeUnique(c("P1")),
+    fixed = TRUE
+  )
+})
+
+test_that("It throws an error if plotGrid names are not unique", {
+  plotGridsDfLocal <- data.frame(list(
+    "name" = c("Aciclovir", "Aciclovir"),
+    "plotIDs" = c("P1", "P2"),
+    "title" = c("Aciclovir PVB", "Aciclovir PVB2")
+  ))
+  pcLocal <- .withPlots(plotGrids = plotGridsDfLocal)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$PlotGridsNamesMustBeUnique(c("Aciclovir")),
+    fixed = TRUE
+  )
+})
+
+test_that("It throws an error if a plot grid requires a plot id that is not defined", {
+  plotGridsDfLocal <- plotGridsDf
+  plotGridsDfLocal$plotIDs <- "foo"
+  pcLocal <- .withPlots(plotGrids = plotGridsDfLocal)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$errorInvalidPlotID("foo")
+  )
+})
+
+test_that("It throws an error when trying to set a property that is not supported by the configuration", {
+  plotConfigurationDfLocal <- plotConfigurationDf
+  plotConfigurationDfLocal$"blabla" <- "1,2,3"
+  pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$invalidConfigurationProperty(
+      propertyName = "blabla",
+      configurationType = "DefaultPlotConfiguration"
+    )
+  )
+})
+
+test_that("It correctly treats names with underscores", {
+  plotConfigurationDfLocal <- plotConfigurationDf
+  plotConfigurationDfLocal$plotID <- "P_1"
+  plotGridsDfLocal <- plotGridsDf
+  plotGridsDfLocal$plotIDs <- "P_1"
+  pcLocal <- .withPlots(
+    plotConfiguration = plotConfigurationDfLocal,
+    plotGrids = plotGridsDfLocal
+  )
+
+  expect_no_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    )
+  )
+})
+
+
+test_that("It checks if OffsetsUnits are not empty if xOffsets", {
+  # xOffsets without units \u2192 error
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$xOffsets <- 1
+  pcLocal <- .withPlots(dataCombined = spec)
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    )
+  )
+
+  # xOffsets with units \u2192 no error
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$xOffsets <- 1
+  spec$AciclovirPVB$simulated[[1]]$xOffsetsUnits <- "min"
+  pcLocal <- .withPlots(dataCombined = spec)
+  expect_no_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    )
+  )
+
+  # yOffsets without units \u2192 error
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$yOffsets <- 1
+  pcLocal <- .withPlots(dataCombined = spec)
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    )
+  )
+
+  # yOffsets with units \u2192 no error
+  spec <- dataCombinedSpec
+  spec$AciclovirPVB$simulated[[1]]$yOffsets <- 1
+  spec$AciclovirPVB$simulated[[1]]$yOffsetsUnits <- "\u00b5M"
+  pcLocal <- .withPlots(dataCombined = spec)
+  expect_no_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    )
+  )
+})
+
+test_that(".createConfigurationFromRow correctly reads values in quotes", {
+  plotGridsDfLocal <- as.data.frame(lapply(plotGridsDf, rep, 6))
+
+  inputValues <- c(
+    "Test without quotes",
+    "Test, separated",
+    "Test with \"quotes\"",
+    "Test with \"quotes\" and, comma",
+    "Test with \"quotes, comma\"",
+    "Test with, \"quotes, comma\" and, comma"
+  )
+  plotGridsDfLocal$tagSuffix <- inputValues
+
+  defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
+  parsedValues <- apply(plotGridsDfLocal, 1, \(row) {
+    plotGridConfiguration <- .createConfigurationFromRow(
+      defaultConfiguration = defaultPlotGridConfig,
+      row[!(names(row) %in% c("name", "plotIDs"))]
+    )
+    return(plotGridConfiguration$tagSuffix)
+  })
+
+  expectedValues <- list(
+    c("Test without quotes"),
+    c("Test", "separated"),
+    c("Test with quotes"),
+    c("Test with quotes and", "comma"),
+    "Test with quotes, comma",
+    c("Test with", "quotes, comma and", "comma")
+  )
+  expect_equal(parsedValues, expectedValues)
+})
+
+test_that("It ignores a title argument in plotGrids when the title column is not present", {
+  plotGridsDfLocal <- plotGridsDf
+  plotGridsDfLocal$title <- NULL # Remove the title column
+  pcLocal <- .withPlots(plotGrids = plotGridsDfLocal)
+
+  expect_no_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    )
+  )
+})
+
+# Tests for issue #848: Better validation for fields
+test_that("It provides clear error when xValuesLimits uses space instead of comma (#848)", {
+  plotConfigurationDfLocal <- data.frame(list(
+    "plotID" = "TestPlot",
+    "DataCombinedName" = "AciclovirPVB",
+    "plotType" = "individual",
+    "title" = NA,
+    "xUnit" = NA,
+    "yUnit" = NA,
+    "xAxisScale" = NA,
+    "yAxisScale" = NA,
+    "xValuesLimits" = "72 80", # Space-separated - should trigger clear error
+    "yValuesLimits" = NA,
+    "quantiles" = NA,
+    "nsd" = NA,
+    "foldDistance" = NA
+  ))
+
+  plotGridsDfLocal <- data.frame(list(
+    "name" = "TestGrid",
+    "plotIDs" = "TestPlot",
+    "title" = "Test Grid"
+  ))
+
+  pcLocal <- .withPlots(
+    plotConfiguration = plotConfigurationDfLocal,
+    plotGrids = plotGridsDfLocal
+  )
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = "Validation error.*xValuesLimits",
+    fixed = FALSE
+  )
+})
+
+test_that("It accepts correctly formatted comma-separated axis limits (#848)", {
+  plotConfigurationDfLocal <- data.frame(list(
+    "plotID" = "TestPlot",
+    "DataCombinedName" = "AciclovirPVB",
+    "plotType" = "individual",
+    "title" = NA,
+    "xUnit" = NA,
+    "yUnit" = NA,
+    "xAxisScale" = NA,
+    "yAxisScale" = NA,
+    "xValuesLimits" = "72, 80", # Correct format
+    "yAxisLimits" = "0,100", # Also correct (no space after comma)
+    "yValuesLimits" = NA,
+    "quantiles" = NA,
+    "nsd" = NA,
+    "foldDistance" = NA
+  ))
+
+  plotGridsDfLocal <- data.frame(list(
+    "name" = "TestGrid",
+    "plotIDs" = "TestPlot",
+    "title" = "Test Grid"
+  ))
+
+  pcLocal <- .withPlots(
+    plotConfiguration = plotConfigurationDfLocal,
+    plotGrids = plotGridsDfLocal
+  )
+
+  expect_no_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    )
+  )
+})
+
+test_that("It provides clear error for wrong number of axis limit values (#848)", {
+  plotConfigurationDfLocal <- data.frame(list(
+    "plotID" = "TestPlot2",
+    "DataCombinedName" = "AciclovirPVB",
+    "plotType" = "individual",
+    "title" = NA,
+    "xUnit" = NA,
+    "yUnit" = NA,
+    "xAxisScale" = NA,
+    "yAxisScale" = NA,
+    "xValuesLimits" = NA,
+    "yValuesLimits" = "100", # Only one value - should need 2
+    "quantiles" = NA,
+    "nsd" = NA,
+    "foldDistance" = NA
+  ))
+
+  plotGridsDfLocal <- data.frame(list(
+    "name" = "TestGrid",
+    "plotIDs" = "TestPlot2",
+    "title" = "Test Grid"
+  ))
+
+  pcLocal <- .withPlots(
+    plotConfiguration = plotConfigurationDfLocal,
+    plotGrids = plotGridsDfLocal
+  )
+
+  expect_error(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = "Validation error.*yValuesLimits.*Expected: 2",
+    fixed = FALSE
+  )
+})
+
+test_that("It shows a warning when xAxisScale is log and xAxisLimits contain 0", {
+  plotConfigurationDfLocal <- plotConfigurationDf
+  plotConfigurationDfLocal$xAxisScale <- "log"
+  plotConfigurationDfLocal$xAxisLimits <- "0, 100"
+  pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
+
+  expect_warning(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$warningLogScaleWithZeroLimit(
+      plotID = "P1",
+      axisLimitsField = "xAxisLimits",
+      axis = "x"
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("It shows a warning when yAxisScale is log and yAxisLimits contain 0", {
+  plotConfigurationDfLocal <- plotConfigurationDf
+  plotConfigurationDfLocal$yAxisScale <- "log"
+  plotConfigurationDfLocal$yAxisLimits <- "0, 100"
+  pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
+
+  expect_warning(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$warningLogScaleWithZeroLimit(
+      plotID = "P1",
+      axisLimitsField = "yAxisLimits",
+      axis = "y"
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("It shows a warning when yAxisScale is log and yValuesLimits contain 0", {
+  plotConfigurationDfLocal <- plotConfigurationDf
+  plotConfigurationDfLocal$yAxisScale <- "log"
+  plotConfigurationDfLocal$yValuesLimits <- "0, 100"
+  pcLocal <- .withPlots(plotConfiguration = plotConfigurationDfLocal)
+
+  expect_warning(
+    createPlots(
+      project = pcLocal,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$warningLogScaleWithZeroLimit(
+      plotID = "P1",
+      axisLimitsField = "yValuesLimits",
+      axis = "y"
+    ),
+    fixed = TRUE
+  )
+})
+
+project <- testProject()
+
+scenarioNames <- c("TestScenario", "PopulationScenario")
+outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+
+simulatedScenarios <- runScenarios(
+  project,
+  scenarioNames = scenarioNames
+)
+
+observedDataForSetup <- loadObservedData(project)
+
+# Two-DC fixture for the .validateDataCombined unit tests below.
+.makeValidationFixture <- function() {
+  list(
+    AciclovirPVB = list(
+      simulated = list(
+        list(
+          label = "Aciclovir simulated",
+          scenario = scenarioNames[1],
+          path = outputPaths,
+          group = "Aciclovir PVB"
+        )
+      ),
+      observed = list(
+        list(
+          label = "Aciclovir observed",
+          dataSet = names(observedDataForSetup)[1],
+          group = "Aciclovir PVB"
+        )
+      )
+    ),
+    DC_missingPath = list(
+      simulated = list(
+        list(
+          label = "Aciclovir simulated",
+          scenario = scenarioNames[1],
+          path = outputPaths,
+          group = "Aciclovir PVB"
+        )
+      ),
+      observed = list(
+        list(
+          label = "Aciclovir observed",
+          dataSet = names(observedDataForSetup)[1],
+          group = "Aciclovir PVB"
+        )
+      )
+    )
+  )
+}
+
+test_that("It returns correct names of data combined when a path is not specified for one simulated scenario", {
+  spec <- .makeValidationFixture()
+  spec$DC_missingPath$simulated[[1]]$path <- NA
+
+  expect_error(
+    .validateDataCombined(spec, list(), observedDataForSetup),
+    regexp = messages$stopNoPathProvided("DC_missingPath")
+  )
+})
+
+test_that("It errors when label is missing", {
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$simulated[[1]]$label <- NA
+  expect_error(
+    .validateDataCombined(spec, list(), observedDataForSetup),
+    regexp = messages$missingLabel()
+  )
+})
+
+test_that("It errors when scenario is missing for simulated entry", {
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$simulated[[1]]$scenario <- NA
+  expect_error(
+    .validateDataCombined(spec, list(), observedDataForSetup),
+    regexp = messages$missingScenarioName()
+  )
+})
+
+test_that("It errors when dataSet is missing for observed entry", {
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$observed[[1]]$dataSet <- NA
+  expect_error(
+    .validateDataCombined(spec, list(), observedDataForSetup),
+    regexp = messages$stopNoDataSetProvided("AciclovirPVB")
+  )
+})
+
+test_that("It warns when scenario is not found in simulatedScenarios", {
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$simulated[[1]]$scenario <- "NonExistentScenario"
+
+  # First test with stopIfNotFound = TRUE
+  expect_error(
+    .validateDataCombined(
+      spec,
+      list(),
+      observedDataForSetup,
+      stopIfNotFound = TRUE
+    ),
+    regexp = messages$warningInvalidScenarioName(c(
+      "NonExistentScenario",
+      "TestScenario"
+    )),
+    fixed = TRUE
+  )
+
+  # Then test with stopIfNotFound = FALSE
+  expect_warning(
+    .validateDataCombined(
+      spec,
+      list(),
+      observedDataForSetup,
+      stopIfNotFound = FALSE
+    ),
+    regexp = messages$warningInvalidScenarioName(c(
+      "NonExistentScenario",
+      "TestScenario"
+    )),
+    fixed = TRUE
+  )
+})
+
+test_that("It warns when dataSet is not found in observedData", {
+  # Create mock simulatedScenarios to avoid the scenario not found error
+  mock_scenario <- list()
+  mock_scenario[[scenarioNames[1]]] <- list(
+    results = list(allQuantityPaths = outputPaths)
+  )
+
+  spec <- .makeValidationFixture()
+  spec$AciclovirPVB$observed[[1]]$dataSet <- "NonExistentDataSet"
+
+  # First test with stopIfNotFound = TRUE
+  expect_error(
+    .validateDataCombined(
+      spec,
+      mock_scenario,
+      list(),
+      stopIfNotFound = TRUE
+    ),
+    regexp = "The following data sets are not present in `observedData`"
+  )
+
+  # Then test with stopIfNotFound = FALSE
+  expect_warning(
+    .validateDataCombined(
+      spec,
+      mock_scenario,
+      list(),
+      stopIfNotFound = FALSE
+    ),
+    regexp = "The following data sets are not present in `observedData`"
+  )
+})
+
+test_that("createDataCombined loads observed data automatically from Project", {
+  dcList <- createDataCombined(
+    project = project,
+    dataCombinedNames = "AciclovirPVB",
+    simulatedScenarios = simulatedScenarios
+  )
+  expect_true("AciclovirPVB" %in% names(dcList))
+  expect_true(inherits(dcList$AciclovirPVB, "DataCombined"))
+})
+
+test_that("createDataCombined errors when specified DataCombined names are not found", {
+  expect_error(
+    createDataCombined(
+      project = project,
+      dataCombinedNames = c("AciclovirPVB", "NonExistentDC1", "NonExistentDC2"),
+      simulatedScenarios = simulatedScenarios
+    ),
+    regexp = messages$stopDataCombinedNamesNotFound(c(
+      "NonExistentDC1",
+      "NonExistentDC2"
+    )),
+    fixed = TRUE
+  )
+})
+
