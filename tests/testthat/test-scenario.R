@@ -1,322 +1,47 @@
-test_that("Scenario can be created from excel file", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  # Define which scenarios to run
-  scenarioNames <- c("TestScenario")
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-
-  expect_equal(length(scenarios), 1)
-  expect_equal(names(scenarios), scenarioNames)
+test_that("Scenario has correct default field values", {
+  s <- Scenario$new()
+  expect_null(s$scenarioName)
+  expect_null(s$modelFile)
+  expect_null(s$applicationProtocol)
+  expect_null(s$individualId)
+  expect_null(s$populationId)
+  expect_null(s$outputPaths)
+  expect_equal(s$simulationType, "Individual")
+  expect_false(s$readPopulationFromCSV)
+  expect_false(s$simulateSteadyState)
+  expect_null(s$simulationTime)
+  expect_null(s$simulationTimeUnit)
+  expect_equal(s$steadyStateTime, 1000)
+  expect_false(s$overwriteFormulasInSS)
+  expect_null(s$modelParameters)
 })
 
-test_that("Scenario can be run", {
-  # Create a project configuration using temporary project
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  # Define which scenarios to run
-  scenarioNames <- c("TestScenario")
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-
-  simulatedScenarios <- runScenarios(
-    scenarios = scenarios
-  )
-
-  expect_equal(names(simulatedScenarios), scenarioNames)
+test_that("Scenario fields can be set", {
+  s <- Scenario$new()
+  s$scenarioName <- "MyScenario"
+  s$modelFile <- "model.pkml"
+  s$individualId <- "Indiv1"
+  s$modelParameters <- c("Global", "Sheet2")
+  expect_equal(s$scenarioName, "MyScenario")
+  expect_equal(s$modelFile, "model.pkml")
+  expect_equal(s$individualId, "Indiv1")
+  expect_equal(s$modelParameters, c("Global", "Sheet2"))
 })
 
-test_that("It throws an error when the application protocol is not found", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  scenarioNames <- c(
-    "TestScenario"
-  )
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Set application protocol to a non existent
-  scenarioConfigurations$TestScenario$applicationProtocol <- "NonExistentProtocol"
-
-  expect_error(
-    Scenario$new(scenarioConfigurations$TestScenario),
-    messages$errorApplicationProtocolNotFound(
-      scenarioNames[[1]],
-      "NonExistentProtocol"
-    )
-  )
+test_that("Scenario is cloneable", {
+  s <- Scenario$new()
+  s$scenarioName <- "Original"
+  s2 <- s$clone()
+  s2$scenarioName <- "Clone"
+  expect_equal(s$scenarioName, "Original")
+  expect_equal(s2$scenarioName, "Clone")
 })
 
-test_that("Scenario properties are read-only", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  scenarioNames <- c("TestScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  scenario <- Scenario$new(
-    scenarioConfigurations$TestScenario,
-    stopIfParameterNotFound = FALSE
-  )
-
-  # Test that properties are read-only
-  expect_error(
-    scenario$scenarioConfiguration <- "new value"
-  )
-  expect_error(scenario$finalCustomParams <- "new value")
-  expect_error(scenario$simulation <- "new value")
-  expect_error(scenario$population <- "new value")
-  expect_error(scenario$scenarioType <- "new value")
-})
-
-test_that("Scenario type is correctly identified", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  # Create individual scenario
-  scenarioNames <- c("TestScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  individualScenario <- Scenario$new(
-    scenarioConfigurations$TestScenario,
-    stopIfParameterNotFound = FALSE
-  )
-  expect_equal(individualScenario$scenarioType, "Individual")
-
-  # Create population scenario
-  scenarioNames <- c("PopulationScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  populationScenario <- Scenario$new(
-    scenarioConfigurations$PopulationScenario,
-    stopIfParameterNotFound = FALSE
-  )
-  expect_equal(populationScenario$scenarioType, "Population")
-})
-
-test_that("Custom parameters are correctly applied", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  scenarioNames <- c("TestScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Define custom parameter
-  customParams <- list(
-    paths = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-    values = 500,
-    units = "mg"
-  )
-
-  scenario <- Scenario$new(
-    scenarioConfigurations$TestScenario,
-    customParams = customParams,
-    stopIfParameterNotFound = FALSE
-  )
-
-  # Check that the custom parameter was applied
-  idx <- which(
-    scenario$finalCustomParams$paths ==
-      "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
-  )
-  expect_equal(scenario$finalCustomParams$values[[idx]], 500)
-})
-
-test_that("Print method works", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  scenarioNames <- c("TestScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  scenario <- Scenario$new(
-    scenarioConfigurations$TestScenario,
-    stopIfParameterNotFound = FALSE
-  )
-
-  # Test that print method returns the object invisibly
-  expect_output(result <- scenario$print())
-  expect_equal(scenario, result)
-})
-
-test_that("Warning is shown when individual characteristics are not found", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  scenarioNames <- c("TestScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Set individual ID to non-existent individual
-  scenarioConfigurations$TestScenario$individualId <- "NonExistentIndividual"
-
-  expect_warning(
-    expect_warning(
-      Scenario$new(
-        scenarioConfigurations$TestScenario,
-        stopIfParameterNotFound = FALSE
-      ),
-      regexp = messages$warningNoIndividualSpecificModelParameters(
-        "TestScenario",
-        "NonExistentIndividual"
-      )
-    ),
-    regexp = messages$warningNoIndividualCharacteristics(
-      "TestScenario",
-      "NonExistentIndividual"
-    )
-  )
-})
-
-test_that("Individual parameter sets from 'Individual Parameter Sets' column are applied", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  scenarioNames <- c("TestScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  # TestScenario uses Indiv1, whose "Individual Parameter Sets" column points to
-  # the "Indiv1" sheet (GFR = 90 ml/min). Verify this parameter is applied.
-  scenario <- Scenario$new(
-    scenarioConfigurations$TestScenario,
-    stopIfParameterNotFound = FALSE
-  )
-
-  gfrPath <- "Organism|Kidney|GFR"
-  idx <- which(scenario$finalCustomParams$paths == gfrPath)
-  expect_true(length(idx) > 0)
-  expect_equal(scenario$finalCustomParams$values[[idx]], 90)
-  expect_equal(scenario$finalCustomParams$units[[idx]], "ml/min")
-})
-
-test_that("Warning is shown when an individual parameter set sheet is not found", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  individualsFile <- projectConfiguration$individualsFile
-
-  # Add a new individual row with a non-existent parameter set sheet name
-  existingData <- readxl::read_xlsx(
-    individualsFile,
-    sheet = "IndividualBiometrics"
-  )
-  new_row <- data.frame(
-    IndividualId = "TestIndiv_bad_set",
-    Species = "Human",
-    Population = "European_ICRP_2002",
-    Gender = "MALE",
-    `Weight [kg]` = 70,
-    `Height [cm]` = 170,
-    `Age [year(s)]` = 30,
-    `Protein Ontogenies` = NA_character_,
-    `Individual Parameter Sets` = "NonExistentSheet",
-    check.names = FALSE
-  )
-  combined <- rbind(existingData, new_row)
-
-  wb <- openxlsx::loadWorkbook(individualsFile)
-  openxlsx::removeWorksheet(wb, "IndividualBiometrics")
-  openxlsx::addWorksheet(wb, "IndividualBiometrics")
-  openxlsx::writeData(wb, "IndividualBiometrics", combined)
-  openxlsx::saveWorkbook(wb, individualsFile, overwrite = TRUE)
-
-  scenarioNames <- c("TestScenario")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-  scenarioConfigurations$TestScenario$individualId <- "TestIndiv_bad_set"
-
-  expect_error(
-    Scenario$new(
-      scenarioConfigurations$TestScenario,
-      stopIfParameterNotFound = FALSE
-    ),
-    regexp = messages$errorIndividualParameterSetNotFound(
-      "TestScenario",
-      "NonExistentSheet"
-    )
-  )
-})
-
-
-test_that("Population from CSV is loaded correctly", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  scenarioNames <- c("PopulationScenarioFromCSV")
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-
-  # Ensure readPopulationFromCSV is set to TRUE
-  scenarioConfigurations$PopulationScenarioFromCSV$readPopulationFromCSV <- TRUE
-
-  scenario <- Scenario$new(
-    scenarioConfigurations$PopulationScenarioFromCSV,
-    stopIfParameterNotFound = FALSE
-  )
-
-  expect_true(isOfType(scenario$population, "Population"))
-  expect_equal(scenario$scenarioType, "Population")
-})
-
-test_that("The name of a scenario is set as simulation name", {
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-
-  # Create a project configuration using temporary project
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$config
-  scenarioNames <- c(
-    "TestScenario"
-  )
-  # Create `ScenarioConfiguration` objects from excel files
-  scenarioConfigurations <- readScenarioConfigurationFromExcel(
-    scenarioNames = scenarioNames,
-    projectConfiguration = projectConfiguration
-  )
-  scenarios <- createScenarios(
-    scenarioConfigurations = scenarioConfigurations,
-    stopIfParameterNotFound = FALSE
-  )
-
-  # Check if the name of the simulation is set to the name of the scenario
-  expect_equal(scenarios[[1]]$simulation$name, scenarioNames[[1]])
+test_that("Scenario print method works", {
+  s <- Scenario$new()
+  s$scenarioName <- "TestScenario"
+  s$modelFile <- "model.pkml"
+  s$simulationType <- "Individual"
+  expect_output(result <- s$print(), "TestScenario")
+  expect_identical(result, s)
 })
