@@ -43,7 +43,7 @@
     )
   }
 
-  jsonPath <- normalizePath(path, winslash = "/", mustWork = TRUE)
+  jsonPath <- normalizePath(path, winslash = "/", mustWork = FALSE)
   projectDirPath <- dirname(jsonPath)
 
   Project$new(

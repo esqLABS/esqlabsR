@@ -33,19 +33,21 @@ Project <- R6::R6Class(
     #' @field schemaVersion Schema version declared in the JSON. Always "2.0"
     #'   for projects loaded by this parser.
     schemaVersion = function(value) {
-      if (!missing(value)) stop("schemaVersion is read-only")
+      if (!missing(value))
+        cli::cli_abort("{.field schemaVersion} is read-only.")
       private$.schemaVersion
     },
 
     #' @field esqlabsRVersion Informational version string from the JSON.
     esqlabsRVersion = function(value) {
-      if (!missing(value)) stop("esqlabsRVersion is read-only")
+      if (!missing(value))
+        cli::cli_abort("{.field esqlabsRVersion} is read-only.")
       private$.esqlabsRVersion
     },
 
     #' @field jsonPath Absolute path the project was loaded from, or `NULL`.
     jsonPath = function(value) {
-      if (!missing(value)) stop("jsonPath is read-only")
+      if (!missing(value)) cli::cli_abort("{.field jsonPath} is read-only.")
       private$.jsonPath
     },
 
@@ -53,7 +55,8 @@ Project <- R6::R6Class(
     #'   file, or `NULL` if the project was not loaded from disk. All relative
     #'   paths in the JSON are interpreted relative to this directory.
     projectDirPath = function(value) {
-      if (!missing(value)) stop("projectDirPath is read-only")
+      if (!missing(value))
+        cli::cli_abort("{.field projectDirPath} is read-only.")
       private$.projectDirPath
     },
 
@@ -61,60 +64,64 @@ Project <- R6::R6Class(
     #'   `filePaths` JSON section). Values are stored verbatim as strings; no
     #'   resolution is performed at this stage.
     filePaths = function(value) {
-      if (!missing(value)) stop("filePaths is read-only")
+      if (!missing(value)) cli::cli_abort("{.field filePaths} is read-only.")
       private$.filePaths
     },
 
     #' @field outputPaths Named list mapping output-path IDs to literal output
     #'   path strings.
     outputPaths = function(value) {
-      if (!missing(value)) stop("outputPaths is read-only")
+      if (!missing(value)) cli::cli_abort("{.field outputPaths} is read-only.")
       private$.outputPaths
     },
 
     #' @field scenarios List of scenario entries. Each entry is a plain named
     #'   list mirroring the JSON object shape.
     scenarios = function(value) {
-      if (!missing(value)) stop("scenarios is read-only")
+      if (!missing(value)) cli::cli_abort("{.field scenarios} is read-only.")
       private$.scenarios
     },
 
     #' @field modelParameters Named list keyed by parameter-set name; each
     #'   value is a list of parameter entries.
     modelParameters = function(value) {
-      if (!missing(value)) stop("modelParameters is read-only")
+      if (!missing(value))
+        cli::cli_abort("{.field modelParameters} is read-only.")
       private$.modelParameters
     },
 
     #' @field individuals List of individual entries.
     individuals = function(value) {
-      if (!missing(value)) stop("individuals is read-only")
+      if (!missing(value)) cli::cli_abort("{.field individuals} is read-only.")
       private$.individuals
     },
 
     #' @field populations List of population entries.
     populations = function(value) {
-      if (!missing(value)) stop("populations is read-only")
+      if (!missing(value)) cli::cli_abort("{.field populations} is read-only.")
       private$.populations
     },
 
     #' @field applications Named list keyed by application-protocol name.
     applications = function(value) {
-      if (!missing(value)) stop("applications is read-only")
+      if (!missing(value)) cli::cli_abort("{.field applications} is read-only.")
       private$.applications
     },
 
     #' @field observedData List of observed-data source entries.
     observedData = function(value) {
-      if (!missing(value)) stop("observedData is read-only")
+      if (!missing(value)) cli::cli_abort("{.field observedData} is read-only.")
       private$.observedData
     },
 
     #' @field plots Named list with sub-entries `dataCombined`,
     #'   `plotConfiguration`, and `plotGrids`. `NULL` if the JSON omits the
-    #'   `plots` section.
+    #'   `plots` section. Each `plotGrids[[i]]$plotIDs` is a single
+    #'   comma-separated string (e.g. `"P1, P2"`), not a JSON array; this
+    #'   matches the v2.0 schema and the existing Excel `Plots` sheet
+    #'   convention. Splitting/normalising is deferred to the plots chapter.
     plots = function(value) {
-      if (!missing(value)) stop("plots is read-only")
+      if (!missing(value)) cli::cli_abort("{.field plots} is read-only.")
       private$.plots
     }
   ),
@@ -173,22 +180,40 @@ Project <- R6::R6Class(
       if (!is.null(private$.jsonPath)) {
         cat("  jsonPath:        ", private$.jsonPath, "\n", sep = "")
       }
-      cat("  esqlabsRVersion: ", private$.esqlabsRVersion %||% "NA", "\n", sep = "")
+      cat(
+        "  esqlabsRVersion: ",
+        private$.esqlabsRVersion %||% "NA",
+        "\n",
+        sep = ""
+      )
       cat("  scenarios:       ", length(private$.scenarios), "\n", sep = "")
       cat("  individuals:     ", length(private$.individuals), "\n", sep = "")
       cat("  populations:     ", length(private$.populations), "\n", sep = "")
-      cat("  modelParameters: ", length(private$.modelParameters), " set(s)\n", sep = "")
+      cat(
+        "  modelParameters: ",
+        length(private$.modelParameters),
+        " set(s)\n",
+        sep = ""
+      )
       cat("  applications:    ", length(private$.applications), "\n", sep = "")
       cat("  outputPaths:     ", length(private$.outputPaths), "\n", sep = "")
-      cat("  observedData:    ", length(private$.observedData), " source(s)\n", sep = "")
+      cat(
+        "  observedData:    ",
+        length(private$.observedData),
+        " source(s)\n",
+        sep = ""
+      )
       if (is.null(private$.plots)) {
         cat("  plots:           (none)\n")
       } else {
         cat(
           "  plots:           ",
-          length(private$.plots$dataCombined %||% list()), " dataCombined / ",
-          length(private$.plots$plotConfiguration %||% list()), " plot(s) / ",
-          length(private$.plots$plotGrids %||% list()), " grid(s)\n",
+          length(private$.plots$dataCombined %||% list()),
+          " dataCombined / ",
+          length(private$.plots$plotConfiguration %||% list()),
+          " plot(s) / ",
+          length(private$.plots$plotGrids %||% list()),
+          " grid(s)\n",
           sep = ""
         )
       }
