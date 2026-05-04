@@ -1,5 +1,37 @@
 defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
+test_that("runScenarios() dispatches the legacy named form (scenarios = ...) to the legacy path", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  fakeScenario <- structure(
+    list(scenarioConfiguration = list(scenarioName = "X", simulateSteadyState = FALSE)),
+    class = "LegacyScenario"
+  )
+  testthat::local_mocked_bindings(
+    .runLegacyScenarios = function(scenarios, simulationRunOptions = NULL) {
+      list(invoked = "legacy", scenariosLength = length(scenarios))
+    }
+  )
+  result <- runScenarios(scenarios = list(fakeScenario))
+  expect_equal(result$invoked, "legacy")
+  expect_equal(result$scenariosLength, 1)
+})
+
+test_that("runScenarios() dispatches the legacy positional form to the legacy path", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  fakeScenarios <- list(
+    structure(list(), class = "LegacyScenario"),
+    structure(list(), class = "LegacyScenario")
+  )
+  testthat::local_mocked_bindings(
+    .runLegacyScenarios = function(scenarios, simulationRunOptions = NULL) {
+      list(invoked = "legacy", scenariosLength = length(scenarios))
+    }
+  )
+  result <- runScenarios(fakeScenarios)
+  expect_equal(result$invoked, "legacy")
+  expect_equal(result$scenariosLength, 2)
+})
+
 test_that("It stops with an error if the excel file defines a parameter that is
           not present", {
   withr::local_options(lifecycle_verbosity = "quiet")

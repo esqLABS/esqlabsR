@@ -1,35 +1,20 @@
-#' Run a set of scenarios.
-#'
-#' @param simulationRunOptions Object of type `SimulationRunOptions` that will
-#'   be passed to simulation runs. If `NULL`, default options are used.
-#' @param scenarios List of `Scenario` objects to be simulated.
-#'
-#' @returns A named list, where the names are scenario names, and the values are
-#'   lists with the entries `simulation` being the initialized `Simulation`
-#'   object with applied parameters, `results` being `SimulatioResults` object
-#'   produced by running the simulation, `outputValues` the output values of the
-#'   `SimulationResults`, and `population` the `Population` object if the
-#'   scenario is a population simulation.
-#' @details If simulation of a scenario fails, a warning is produced, and the
-#' `outputValues` for this scenario is `NULL`.
-#'
-#' @export
-runScenarios <- function(scenarios, simulationRunOptions = NULL) {
+# Legacy v6 runtime path: runs scenarios that were created via
+# `createScenarios()` from `ScenarioConfiguration` / Excel. Soft-
+# deprecated via `runScenarios()`'s dispatcher in this file. Body is
+# a verbatim move of the v6 `runScenarios()` logic — Chapter 8 deletes.
+# @keywords internal
+# @noRd
+.runLegacyScenarios <- function(scenarios, simulationRunOptions = NULL) {
   scenarios <- ospsuite.utils::toList(scenarios)
-  # List of individiaul simulations
   individualSimulations <- list()
-  # List of population scenarios
   populationScenarios <- list()
-  # List of simulations with steady-state, grouped by overwriteFormulasInSS value
   steadyStateGroups <- list()
-
   for (scenario in scenarios) {
     if (scenario$scenarioType == "Individual") {
       individualSimulations <- c(individualSimulations, scenario$simulation)
     } else {
       populationScenarios <- c(populationScenarios, scenario)
     }
-
     if (scenario$scenarioConfiguration$simulateSteadyState) {
       ignoreIfFormulaKey <- as.character(
         scenario$scenarioConfiguration$overwriteFormulasInSS
@@ -50,8 +35,6 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
       )
     }
   }
-
-  # Simulate steady-state concurrently, grouped by ignoreIfFormula value
   initialValues <- list()
   for (ignoreIfFormulaKey in names(steadyStateGroups)) {
     group <- steadyStateGroups[[ignoreIfFormulaKey]]
@@ -64,8 +47,6 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     )
     initialValues <- c(initialValues, groupValues)
   }
-
-  # Set initial values for steady-state simulations
   for (ignoreIfFormulaKey in names(steadyStateGroups)) {
     for (simulation in steadyStateGroups[[ignoreIfFormulaKey]]$simulations) {
       ospsuite::setQuantityValuesByPath(
@@ -75,15 +56,10 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
       )
     }
   }
-
-  # Run invidual simulations
   simulationResults <- runSimulations(
     simulations = individualSimulations,
     simulationRunOptions = simulationRunOptions
   )
-
-  # Run population simulations sequentially and add the to the list of
-  # simulation results
   for (scenario in populationScenarios) {
     populationResults <- runSimulations(
       simulations = scenario$simulation,
@@ -92,9 +68,6 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     )
     simulationResults <- c(simulationResults, populationResults)
   }
-
-  # Create output list with simulation results, simulation objects, and
-  # population objects
   returnList <- vector("list", length(simulationResults))
   for (idx in seq_along(scenarios)) {
     scenario <- scenarios[[idx]]
@@ -103,7 +76,6 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     id <- simulation$id
     results <- simulationResults[[id]]
     population <- scenario$population
-    # For the cases when population is set to NA, convert it to NULL
     if (
       !is.null(population) &&
         !isOfType(population, "Population") &&
@@ -111,8 +83,6 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     ) {
       population <- NULL
     }
-
-    # Retrieving quantities from paths to support pattern matching with '*'
     outputQuantities <- NULL
     if (!is.null(scenario$scenarioConfiguration$outputPaths)) {
       outputQuantities <- getAllQuantitiesMatching(
@@ -120,8 +90,6 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
         simulation
       )
     }
-
-    # If results could not be calculated, show a warning and return NULL
     if (is.null(results)) {
       warning(messages$missingResultsForScenario(scenarioName))
       outputValues <- NULL
@@ -141,8 +109,107 @@ runScenarios <- function(scenarios, simulationRunOptions = NULL) {
     )
     names(returnList)[[idx]] <- scenarioName
   }
+  returnList
+}
 
-  return(returnList)
+#' Run a set of scenarios from a `Project`.
+#'
+#' @description Loads simulations, applies parameters, runs the
+#'   simulations, and collects results for one or more scenarios
+#'   defined on a parsed [Project]. The project must already have been
+#'   loaded with [loadProject()].
+#'
+#' @param project A [Project] object loaded from a `Project.json` file.
+#'   In the legacy positional form, this argument also accepts a list
+#'   of [LegacyScenario] objects produced by [createScenarios()] — see
+#'   "Details".
+#' @param scenarioNames Optional character vector of scenario names to
+#'   run. `NULL` (default) runs all scenarios in the project.
+#' @param customParams A list with vectors `paths`, `values`, and
+#'   `units` — applied to every selected scenario as the final
+#'   parameter layer.
+#' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions]
+#'   for the simulation run. `NULL` (default) uses the package
+#'   defaults.
+#' @param validate Logical. Reserved for future use; currently
+#'   accepted but ignored. Project validation is wired in a later
+#'   chapter.
+#' @param scenarios `r lifecycle::badge("deprecated")` Legacy alias
+#'   for the first positional argument when passing a list of
+#'   [LegacyScenario] objects. Use `project = loadProject(...)` and
+#'   the modern signature instead.
+#'
+#' @returns A named list keyed by scenario name. Each entry is a list
+#'   with `simulation` (the initialized [ospsuite::Simulation]),
+#'   `results` ([ospsuite::SimulationResults]), `outputValues` (the
+#'   computed output values, or `NULL` if simulation failed), and
+#'   `population` (an [ospsuite::Population] for population
+#'   scenarios, or `NULL` for individual scenarios).
+#'
+#' @details If a scenario's simulation fails, a warning is produced
+#'   and `outputValues` for that scenario is `NULL`.
+#'
+#'   The legacy signatures
+#'   `runScenarios(scenariosList, simulationRunOptions)` (positional)
+#'   and `runScenarios(scenarios = ..., simulationRunOptions = ...)`
+#'   (named) — taking a list of [LegacyScenario] objects produced by
+#'   [createScenarios()] — are still accepted but soft-deprecated.
+#'   New code should use the JSON-first form shown above.
+#'
+#' @export
+runScenarios <- function(
+  project,
+  scenarioNames        = NULL,
+  customParams         = NULL,
+  simulationRunOptions = NULL,
+  validate             = TRUE,
+  scenarios            = lifecycle::deprecated()
+) {
+  # Legacy named-arg form.
+  if (lifecycle::is_present(scenarios)) {
+    lifecycle::deprecate_soft(
+      when = "6.0.0",
+      what = "runScenarios(scenarios = )",
+      with = "runScenarios(project = )",
+      details = paste(
+        "Pass a Project loaded via loadProject() instead of a list of",
+        "LegacyScenario objects produced by createScenarios()."
+      )
+    )
+    return(.runLegacyScenarios(
+      scenarios = scenarios,
+      simulationRunOptions = simulationRunOptions
+    ))
+  }
+
+  # Modern path.
+  if (inherits(project, "Project")) {
+    return(.runScenariosFromProject(
+      project = project,
+      scenarioNames = scenarioNames,
+      customParams = customParams,
+      simulationRunOptions = simulationRunOptions,
+      validate = validate
+    ))
+  }
+
+  # Legacy positional form: first arg is a scenarios list, second is
+  # simulationRunOptions (so it landed in `scenarioNames` due to the
+  # modern signature's positional names).
+  lifecycle::deprecate_soft(
+    when = "6.0.0",
+    what = I("runScenarios(scenariosList)"),
+    with = "runScenarios(project)",
+    details = paste(
+      "Pass a Project loaded via loadProject() instead of a list of",
+      "LegacyScenario objects produced by createScenarios()."
+    )
+  )
+  legacySimRunOpts <- simulationRunOptions %||% scenarioNames
+  .runLegacyScenarios(
+    scenarios = project,
+    simulationRunOptions = legacySimRunOpts
+  )
 }
 
 #' Create `Scenario` objects from `ScenarioConfiguration` objects
