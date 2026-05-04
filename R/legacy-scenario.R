@@ -19,11 +19,10 @@ LegacyScenario <- R6::R6Class(
       }
     },
     #' @field finalCustomParams Custom parameters to be used for the simulation.
-    #'   Read-only.
-    #' @description Custom parameters to be used for the simulation. The final
-    #'   custom parameters are a combination of parametrization through the
-    #'   excel files and the custom parameters specified by the user through the
-    #'   `customParams` argument of the `LegacyScenario` constructor.
+    #'   Read-only. The final custom parameters are a combination of
+    #'   parametrization through the excel files and the custom parameters
+    #'   specified by the user through the `customParams` argument of the
+    #'   `LegacyScenario` constructor.
     finalCustomParams = function(value) {
       if (missing(value)) {
         private$.finalCustomParams
@@ -32,8 +31,7 @@ LegacyScenario <- R6::R6Class(
       }
     },
     #' @field simulation Simulation object created from the
-    #'   `ScenarioConfiguration`. Read-only
-    #' @description Simulation object. Read-only.
+    #'   `ScenarioConfiguration`. Read-only.
     simulation = function(value) {
       if (missing(value)) {
         private$.simulation

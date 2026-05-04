@@ -4,96 +4,92 @@
 \name{LegacyScenario}
 \alias{LegacyScenario}
 \title{LegacyScenario}
-\value{
-A new \code{LegacyScenario} object.
-}
 \description{
 Legacy simulation scenario built from a \code{ScenarioConfiguration}
 read from Excel. Soft-deprecated -- use \code{\link[=loadProject]{loadProject()}} +
 \code{\link[=runScenarios]{runScenarios()}} with a \code{Project} instead.
 }
 \section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{scenarioConfiguration}}{\code{scenarioConfiguration} used for creation of
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{scenarioConfiguration}}{\code{scenarioConfiguration} used for creation of
 this scenario. Read-only.}
 
-\item{\code{finalCustomParams}}{Custom parameters to be used for the simulation.
-Read-only.}
+    \item{\code{finalCustomParams}}{Custom parameters to be used for the simulation.
+Read-only. The final custom parameters are a combination of
+parametrization through the excel files and the custom parameters
+specified by the user through the \code{customParams} argument of the
+\code{LegacyScenario} constructor.}
 
-\item{\code{simulation}}{Simulation object created from the
-\code{ScenarioConfiguration}. Read-only}
+    \item{\code{simulation}}{Simulation object created from the
+\code{ScenarioConfiguration}. Read-only.}
 
-\item{\code{population}}{Population object in case the scenario is a population
+    \item{\code{population}}{Population object in case the scenario is a population
 simulation. Read-only.}
 
-\item{\code{scenarioType}}{Type of the scenario - individual or population.
+    \item{\code{scenarioType}}{Type of the scenario - individual or population.
 Read-only}
-}
-\if{html}{\out{</div>}}
+  }
+  \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-LegacyScenario-new}{\code{LegacyScenario$new()}}
-\item \href{#method-LegacyScenario-print}{\code{LegacyScenario$print()}}
-}
+  \itemize{
+    \item \href{#method-LegacyScenario-initialize}{\code{LegacyScenario$new()}}
+    \item \href{#method-LegacyScenario-print}{\code{LegacyScenario$print()}}
+  }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-LegacyScenario-new"></a>}}
-\if{latex}{\out{\hypertarget{method-LegacyScenario-new}{}}}
-\subsection{Method \code{new()}}{
-Custom parameters to be used for the simulation. The final
-custom parameters are a combination of parametrization through the
-excel files and the custom parameters specified by the user through the
-\code{customParams} argument of the \code{LegacyScenario} constructor.
-
-
-Simulation object. Read-only.
-
-
-Initialize a new instance of the class. Initializes the
+\if{html}{\out{<a id="method-LegacyScenario-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-LegacyScenario-initialize}{}}}
+\subsection{\code{LegacyScenario$new()}}{
+  Initialize a new instance of the class. Initializes the
 scenario from \code{ScenarioConfiguration} object.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{LegacyScenario$new(
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{LegacyScenario$new(
   scenarioConfiguration,
   customParams = NULL,
   stopIfParameterNotFound = TRUE
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{scenarioConfiguration}}{An object of class \code{ScenarioConfiguration}.}
-
-\item{\code{customParams}}{Custom parameters to be used for the simulation. A
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{scenarioConfiguration}}{An object of class \code{ScenarioConfiguration}.}
+      \item{\code{customParams}}{Custom parameters to be used for the simulation. A
 list containing vectors 'paths' with the full paths to the parameters,
 'values' the values of the parameters, and 'units' with the units the
 values are in.}
-
-\item{\code{stopIfParameterNotFound}}{Logical. If \code{TRUE} (default), an error is
+      \item{\code{stopIfParameterNotFound}}{Logical. If \code{TRUE} (default), an error is
 thrown if any of the custom defined parameter does not exist. If
 \code{FALSE}, non-existent parameters are  ignored.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A new \code{LegacyScenario} object.
+  }
 }
-\if{html}{\out{</div>}}
-}
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-LegacyScenario-print"></a>}}
 \if{latex}{\out{\hypertarget{method-LegacyScenario-print}{}}}
-\subsection{Method \code{print()}}{
-Print the object to the console
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{LegacyScenario$print(...)}\if{html}{\out{</div>}}
+\subsection{\code{LegacyScenario$print()}}{
+  Print the object to the console
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{LegacyScenario$print(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Rest arguments.}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{...}}{Rest arguments.}
-}
-\if{html}{\out{</div>}}
-}
-}
 }
