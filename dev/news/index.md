@@ -16,6 +16,12 @@
   [`vignette("pi-workflow")`](https://esqlabs.github.io/esqlabsR/dev/articles/pi-workflow.md)
   ([\#928](https://github.com/esqLABS/esqlabsR/issues/928)).
 
+### Breaking changes
+
+- Bumped minimum required `ospsuite` version to 12.4.2; earlier versions
+  fail to load data correctly
+  ([\#1000](https://github.com/esqLABS/esqlabsR/issues/1000)).
+
 ### Minor improvements and bug fixes
 
 - [`snapshotProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/snapshotProjectConfiguration.md)

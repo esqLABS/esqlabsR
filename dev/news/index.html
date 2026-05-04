@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.6.0.9007</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,6 +57,10 @@
 <div class="section level3">
 <h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
 <ul><li>Added Excel-based parameter identification (PI) workflow: <code><a href="../reference/readPITaskConfigurationFromExcel.html">readPITaskConfigurationFromExcel()</a></code>, <code><a href="../reference/createPITasks.html">createPITasks()</a></code>, and <code><a href="../reference/runPI.html">runPI()</a></code> enable defining and running PI tasks from <code>ParameterIdentification.xlsx</code>. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See <code><a href="../articles/pi-workflow.html">vignette("pi-workflow")</a></code> (<a href="https://github.com/esqLABS/esqlabsR/issues/928" class="external-link">#928</a>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
+<ul><li>Bumped minimum required <code>ospsuite</code> version to 12.4.2; earlier versions fail to load data correctly (<a href="https://github.com/esqLABS/esqlabsR/issues/1000" class="external-link">#1000</a>).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
