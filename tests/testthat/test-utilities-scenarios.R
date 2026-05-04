@@ -32,6 +32,21 @@ test_that("runScenarios() dispatches the legacy positional form to the legacy pa
   expect_equal(result$scenariosLength, 2)
 })
 
+test_that("runScenarios() emits a soft-deprecation warning on legacy calls", {
+  withr::local_options(lifecycle_verbosity = "warning")
+  testthat::local_mocked_bindings(
+    .runLegacyScenarios = function(scenarios, simulationRunOptions = NULL) NULL
+  )
+  expect_warning(
+    runScenarios(scenarios = list()),
+    regexp = "deprecated"
+  )
+  expect_warning(
+    runScenarios(list()),
+    regexp = "deprecated"
+  )
+})
+
 test_that("It stops with an error if the excel file defines a parameter that is
           not present", {
   withr::local_options(lifecycle_verbosity = "quiet")
