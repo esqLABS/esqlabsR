@@ -10,8 +10,7 @@ createPlotsFromExcel(
   observedData = NULL,
   dataCombinedList = NULL,
   projectConfiguration,
-  stopIfNotFound = TRUE,
-  applyTheme = TRUE
+  stopIfNotFound = TRUE
 )
 }
 \arguments{
@@ -40,9 +39,6 @@ are defined.}
 \item{stopIfNotFound}{If TRUE (default), the function stops if any of the
 simulated results or observed data are not found. If FALSE a warning is
 printed.}
-
-\item{applyTheme}{A logical defining whether to use a ggplot theme
-that uses esqlabsR default settings}
 }
 \value{
 A list of \code{ggplot} objects

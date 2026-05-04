@@ -419,6 +419,22 @@ messages$missingPlotType <- function() {
   )
 }
 
+messages$missingOrWrongPlotType <- function(plotType) {
+  if (is.null(plotType)) {
+    return(messages$missingPlotType())
+  }
+  cliFormat(
+    "Wrong values found in mandatory column {.val plotType} of sheet {.var plotConfiguration}: {.val {plotType}}.",
+    "Allowed values are: {.val {c('individual', 'population', 'observedVsSimulated', 'residualsVsSimulated', 'residualsVsTime')}}"
+  )
+}
+
+messages$wrongPlotTypeInPlotConfiguration <- function(plotType) {
+  cliFormat(
+    "{.field plotType} ({.val {plotType}}) is not one of {.val {c('timeProfiles', 'spiderPlot', 'tornadoPlot')}}"
+  )
+}
+
 messages$missingDataType <- function() {
   cliFormat(
     "Missing values found in mandatory column {.val dataType} of sheet {.var DataCombined}. Fill in values to proceed."

@@ -3,6 +3,10 @@ esqlabsEnv$colorPalette <- .getEsqlabsColors()
 
 .onLoad <- function(libname, pkgname) {
   Sys.setenv("_R_CHECK_LENGTH_1_CONDITION_" = "true")
+  options(
+    ospsuite.plots.watermarkEnabled = FALSE,
+    ggplot2.discrete.colour = NULL
+    )
 }
 
 utils::globalVariables(c(

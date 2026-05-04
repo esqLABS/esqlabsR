@@ -253,9 +253,6 @@ createEsqlabsPlotGridConfiguration <- function() {
 #'   Defaults to `NULL`, in which case all `DataCombined` are created from
 #'   Excel.
 #'
-#' @param applyTheme A logical defining whether to use a ggplot theme 
-#' that uses esqlabsR default settings
-#'
 #' @returns A list of `ggplot` objects
 #'
 #' @import tidyr
@@ -267,14 +264,12 @@ createPlotsFromExcel <- function(
   observedData = NULL,
   dataCombinedList = NULL,
   projectConfiguration,
-  stopIfNotFound = TRUE,
-  applyTheme = TRUE
+  stopIfNotFound = TRUE
 ) {
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
   validateIsOfType(dataCombinedList, "DataCombined", nullAllowed = TRUE)
-  validateIsLogical(applyTheme)
   if (!typeof(dataCombinedList) %in% c("list", "NULL")) {
     stop(messages$errorDataCombinedListMustBeList(typeof(dataCombinedList)))
   }
@@ -309,26 +304,39 @@ createPlotsFromExcel <- function(
   dataCombinedListFromExcel[names(dataCombinedList)] <- dataCombinedList
   dataCombinedList <- dataCombinedListFromExcel
 
+  # Handles potential issues with ill or undefined Excel columns
   dfPlotConfigurations <- .validatePlotConfigurationFromExcel(
     dfPlotConfigurations,
     names(dataCombinedList)
   )
-
-  # Set default plot settings prior updating based on  sheet "plotConfiguration"
-  if(applyTheme){
-    setESQTheme()
-  }
   plotList <- lapply(
     seq_along(dfPlotConfigurations$plotID),
     function(rowIndex) {
-      plotConfigurationRow <- dfPlotConfigurations[rowIndex, ]
-      if (is.null(plotConfigurationRow$DataCombinedName)) {
-        return()
-      }
+      # Plot Configuration Row as a named list
+      # All undefined variables (NA in data.frame row) are set to NULL
+      plotConfigurationRow <- sapply(
+        dfPlotConfigurations[rowIndex, ],
+        function(x){
+          if(anyNA(x)){
+            return()
+            }
+          return(x)
+        }, 
+        simplify = FALSE,
+        USE.NAMES = TRUE
+      )
+        
       .validateLogScaleAxisLimits(
-        plotConfigurationRow,
+        plotConfigurationRow, 
         plotID = plotConfigurationRow$plotID
       )
+      allowedPlotType <- isIncluded(
+        dfPlotConfigurations$plotType[rowIndex],
+        parentValues = c("individual", "population", "observedVsSimulated", "residualsVsSimulated", "residualsVsTime")
+        )
+      if(!allowedPlotType){
+        stop(messages$missingOrWrongPlotType(dfPlotConfigurations$plotType[rowIndex]), call. = FALSE)
+      }
       dataCombined <- dataCombinedList[[plotConfigurationRow$DataCombinedName]]
       switch(
         dfPlotConfigurations$plotType[rowIndex],
@@ -462,6 +470,7 @@ createPlotsFromExcel <- function(
           )
         }
       ) +
+        .excelTheme() +
         ggplot2::labs(
           title = .fieldFromExcel("title", plotConfigurationRow),
           subtitle = .fieldFromExcel("subtitle", plotConfigurationRow)
@@ -615,7 +624,8 @@ createPlotsFromExcel <- function(
 
 #' Validate that log scale axes do not have limits containing zero
 #'
-#' @param plotConfiguration A plot configuration excel row
+#' @param plotConfiguration A named list from plot configuration excel row
+#' whose undefined values are set to `NULL`
 #' @param plotID Optional plot ID for the warning message
 #'
 #' @keywords internal
@@ -640,9 +650,6 @@ createPlotsFromExcel <- function(
       if (is.null(limitsValue)) {
         next
       }
-      if (is.na(limitsValue)) {
-        next
-      }
       limitsValue <- .parseExcelMultiValueField(
         limitsValue,
         plotID = plotID,
@@ -652,10 +659,7 @@ createPlotsFromExcel <- function(
       if (is.null(scaleValue)) {
         next
       }
-      if (is.na(scaleValue)) {
-        next
-      }
-      if (all(scaleValue == "log", 0 %in% limitsValue)) {
+      if (all(scaleValue == ospsuite.plots::AxisScales$log, 0 %in% limitsValue)) {
         warning(messages$warningLogScaleWithZeroLimit(
           plotID = plotID,
           axisLimitsField = limitsField,
@@ -1107,27 +1111,11 @@ createPlotsFromExcel <- function(
 }
 
 
-#' Set ospsuite.plots defaults settings for ESQLabs workflows
+#' ggplot2 theme layer default values to add on each plot defined in Excel
 #' 
-#' @param legendPosition Default position of legends as defined in `ggplot2::theme`
-#' One of "none", "left", "right", "bottom", "top"
-#' 
-#' @param legendJustification Default alignment/justification of legends as defined in `ggplot2::theme`
-#' One of "left", "right", "center"
-#' 
-#' @param watermarkEnabled Logical allowing whether ospsuite.plots watermark is enabled
-#' 
-#' @export
-setESQTheme <- function(legendPosition = "top", 
-                        legendJustification = "left", 
-                        watermarkEnabled = FALSE) {
-  # Base settings = ospsuite.plots theme
-  # colorMapList argument does not accept functions yet,
-  # esqlabsR::esqlabsColors needs to be set at ggplot2 level
-  ospsuite.plots::setDefaults(colorMapList = list(esqlabsR::esqlabsColors(10)))
-  options(ospsuite.plots.watermarkEnabled = watermarkEnabled)
-  # Elements to update to follow ESQLabs default convention
-  ggplot2::theme_update(
+#' @keywords internal
+.excelTheme <- function() {
+  ggplot2::theme(
     # element_textbox_simple wraps and break line if title is too long
     plot.title = ggtext::element_textbox_simple(size = 10, hjust = 0),
     axis.title.x = ggplot2::element_text(
@@ -1143,20 +1131,23 @@ setESQTheme <- function(legendPosition = "top",
     axis.text.y = ggplot2::element_text(size = 8, angle = 0),
     # Legend
     legend.key.size = ggplot2::unit(6, "pt"),
-    legend.position = legendPosition,
-    legend.justification = legendJustification
+    legend.position = "top",
+    legend.justification = "left",
     # ESQLabs color palette used as default when adding scale_color_discrete()
-    # palette.colour.discrete = esqlabsR::esqlabsColors
+    palette.colour.discrete = esqlabsR::esqlabsColors
   )
-  return(invisible())
 }
 
-#' If field from PlotConfiguration is undefined (`NA`),
-#' use default of `{ospsuite.plots}` function
+#' Map field name from PlotConfiguration table with `{ospsuite.plots}` function
+#' If the field is undefined (either empty cell or undefined column), 
+#' `plotConfigurationRow[[fieldName]]` will be `NULL` and 
+#' default `{esqlabsR}` or `{ospsuite.plots}` values will be used
 #'
-#' @param fieldName Name of field to query from Excel table
-#' @param plotConfigurationRow Plot configuration table row
-#' @param defaultConfiguration Default ESQLabs values for the configuration
+#' @param fieldName Name of field to map in Excel table
+#' @param plotConfigurationRow 
+#' Named list of values defined in a row of an Excel PlotConfiguration table
+#' @param defaultConfiguration 
+#' Named list of default `{esqlabsR}` or `{ospsuite}` values for the plot configuration
 #' @importFrom stats na.exclude
 #' @keywords internal
 .fieldFromExcel <- function(
@@ -1164,74 +1155,63 @@ setESQTheme <- function(legendPosition = "top",
   plotConfigurationRow,
   defaultConfiguration = NULL
 ) {
-  # Specific properties to assess and wrap
   if (fieldName %in% "foldDistance") {
-    if (is.na(plotConfigurationRow[["foldDistance"]])) {
+    if (is.null(plotConfigurationRow[["foldDistance"]])) {
       return(defaultConfiguration[["comparisonLineVector"]])
     }
-    foldDistance <- .parseExcelMultiValueField(plotConfigurationRow[[
-      "foldDistance"
-    ]])
+    foldDistance <- .parseExcelMultiValueField(
+      plotConfigurationRow[["foldDistance"]]
+      )
     return(ospsuite.plots::getFoldDistanceList(folds = foldDistance))
   }
   if (fieldName %in% c("xAxisScale", "yAxisScale")) {
-    # Default value for a axis scale is linear
-    if (is.na(plotConfigurationRow[[fieldName]])) {
-      return("linear")
+    # Use linear as default value for an axis scale
+    if (is.null(plotConfigurationRow[[fieldName]])) {
+      return(ospsuite.plots::AxisScales$linear)
     }
     return(plotConfigurationRow[[fieldName]])
   }
-  # Default value for a axis scale is linear
+  # xyScale field only used by obs vs simulated plots
+  # Default value for xyScale is log creating log-log obs vs simulated
   if (fieldName %in% "xyScale") {
     xyScale <- c(
       plotConfigurationRow[["xAxisScale"]], 
       plotConfigurationRow[["yAxisScale"]]
       ) |>
-      na.exclude() |>
       unique()
     # Default value for xyScale is log creating log-log obs vs simulated
     if(isEmpty(xyScale)){
       return(defaultConfiguration[[fieldName]])
     }
     # Note that at this stage .validateLogScaleAxisLimits was already assessed
-    tryCatch(
-      ospsuite.utils::validateIsOfLength(xyScale, 1),
-      error = function(e) {
-        stop(
-          messages$conflictingAxesScales(plotConfigurationRow$plotID),
-          call. = FALSE
-        )
-      }
-    )
+    if (length(xyScale) > 1){
+      stop(
+        messages$conflictingAxesScales(plotConfigurationRow$plotID),
+        call. = FALSE
+      )
+    }
     return(xyScale)
   }
   # Issue #991: default value should be TRUE
   if (fieldName %in% "lloqOnBothAxes"){
-    undefinedLLOQ <- any(
-      is.null(plotConfigurationRow[["lloqOnBothAxes"]]),
-      is.na(plotConfigurationRow[["lloqOnBothAxes"]])
-    )
-    if(undefinedLLOQ){
+    if(is.null(plotConfigurationRow[["lloqOnBothAxes"]])){
       return(TRUE)
     }
     return(as.logical(plotConfigurationRow[["lloqOnBothAxes"]]))
   }
-  
+  # Default value except by ospsuite.plots for axis limits values is empty list
   if (fieldName %in% c("xValuesLimits", "yValuesLimits")) {
-    # Default value for axis limits values is empty list
-    if (is.na(plotConfigurationRow[[fieldName]])) {
+    if (is.null(plotConfigurationRow[[fieldName]])) {
       return(list())
     }
-    valuesLimits <- .parseExcelMultiValueField(plotConfigurationRow[[
-      fieldName
-    ]])
+    valuesLimits <- .parseExcelMultiValueField(
+      plotConfigurationRow[[fieldName]]
+      )
     return(list(limits = valuesLimits))
   }
-  undefinedField <- any(
-    length(plotConfigurationRow[[fieldName]]) == 0,
-    is.na(plotConfigurationRow[[fieldName]])
-  )
-  if (undefinedField) {
+  # Any other undefined field will use the default value 
+  # matching its name within ospsuite.plots function arguments
+  if (isEmpty(plotConfigurationRow[[fieldName]])) {
     if (is.language(defaultConfiguration[[fieldName]])) {
       return(eval(defaultConfiguration[[fieldName]]))
     }
@@ -1240,14 +1220,15 @@ setESQTheme <- function(legendPosition = "top",
   return(plotConfigurationRow[[fieldName]])
 }
 
-
 #' Return list of properties from a plot type
 #'
 #' @param plotType One of `"timeProfiles"`, `"spiderPlot"`, `"tornadoPlot"`
 #' @returns A list
 #' @keywords internal
 .plotConfigurationFromType <- function(plotType = NULL) {
-  if (is.null(plotType)) {
+  allowedPlotType <- isIncluded(plotType, c("timeProfiles", "spiderPlot", "tornadoPlot"))
+  if (!allowedPlotType) {
+    warning(messages$wrongPlotTypeInPlotConfiguration(plotType), call. = FALSE)
     return(NULL)
   }
   if (plotType %in% "timeProfiles") {
@@ -1261,9 +1242,9 @@ setESQTheme <- function(legendPosition = "top",
       pointsShape = ospsuite.plots::ospShapeNames,
       title = NULL,
       titleSize = 14,
-      xAxisScale = "lin",
+      xAxisScale = ospsuite.plots::AxisScales$linear,
       xLabel = NULL,
-      yAxisScale = "log",
+      yAxisScale = ospsuite.plots::AxisScales$log,
       yLabel = NULL
     )
     return(timeProfilesConfiguration)
@@ -1280,16 +1261,15 @@ setESQTheme <- function(legendPosition = "top",
       pointsSize = 2,
       title = NULL,
       titleSize = 14,
-      xAxisScale = "log",
+      xAxisScale = ospsuite.plots::AxisScales$log,
       xLabel = NULL,
-      yAxisScale = "lin",
+      yAxisScale = ospsuite.plots::AxisScales$linear,
       yAxisTicks = 10L,
       yLabel = NULL
     )
     return(spiderPlotConfiguration)
   }
-  if (plotType %in% "tornadoPlot") {
-    tornadoPlotConfiguration <- list(
+  tornadoPlotConfiguration <- list(
       legendPosition = "right",
       legendTitle = "Parameter Factor",
       subtitle = NULL,
@@ -1300,7 +1280,5 @@ setESQTheme <- function(legendPosition = "top",
       xLabel = "Change in PK parameter [% relative to baseline]",
       yLabel = "Parameter"
     )
-    return(tornadoPlotConfiguration)
-  }
-  return(NULL)
+  return(tornadoPlotConfiguration)
 }

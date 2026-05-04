@@ -2,20 +2,24 @@
 % Please edit documentation in R/utilities-figures.R
 \name{.fieldFromExcel}
 \alias{.fieldFromExcel}
-\title{If field from PlotConfiguration is undefined (\code{NA}),
-use default of \code{{ospsuite.plots}} function}
+\title{Map field name from PlotConfiguration table with \code{{ospsuite.plots}} function
+If the field is undefined (either empty cell or undefined column),
+\code{plotConfigurationRow[[fieldName]]} will be \code{NULL} and
+default \code{{esqlabsR}} or \code{{ospsuite.plots}} values will be used}
 \usage{
 .fieldFromExcel(fieldName, plotConfigurationRow, defaultConfiguration = NULL)
 }
 \arguments{
-\item{fieldName}{Name of field to query from Excel table}
+\item{fieldName}{Name of field to map in Excel table}
 
-\item{plotConfigurationRow}{Plot configuration table row}
+\item{plotConfigurationRow}{Named list of values defined in a row of an Excel PlotConfiguration table}
 
-\item{defaultConfiguration}{Default ESQLabs values for the configuration}
+\item{defaultConfiguration}{Named list of default \code{{esqlabsR}} or \code{{ospsuite}} values for the plot configuration}
 }
 \description{
-If field from PlotConfiguration is undefined (\code{NA}),
-use default of \code{{ospsuite.plots}} function
+Map field name from PlotConfiguration table with \code{{ospsuite.plots}} function
+If the field is undefined (either empty cell or undefined column),
+\code{plotConfigurationRow[[fieldName]]} will be \code{NULL} and
+default \code{{esqlabsR}} or \code{{ospsuite.plots}} values will be used
 }
 \keyword{internal}

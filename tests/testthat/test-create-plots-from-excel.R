@@ -88,7 +88,7 @@ plotGridsDf <- data.frame(list(
 }
 
 # Validation DataCombined
-test_that("It trows an error if mandatory field dataType is not filled out", {
+test_that("It throws an error if mandatory field dataType is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -122,7 +122,7 @@ test_that("It trows an error if mandatory field dataType is not filled out", {
   )
 })
 
-test_that("It trows an error if mandatory field label is not filled out", {
+test_that("It throws an error if mandatory field label is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -156,7 +156,7 @@ test_that("It trows an error if mandatory field label is not filled out", {
   )
 })
 
-test_that("It trows an error if no scenario is specified for a simulated data", {
+test_that("It throws an error if no scenario is specified for a simulated data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -190,7 +190,7 @@ test_that("It trows an error if no scenario is specified for a simulated data", 
   )
 })
 
-test_that("It trows an error if no output path is specified for a simulated data", {
+test_that("It throws an error if no output path is specified for a simulated data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -224,7 +224,7 @@ test_that("It trows an error if no output path is specified for a simulated data
   )
 })
 
-test_that("It trows an error if wrong output path is specified for a simulated data", {
+test_that("It throws an error if wrong output path is specified for a simulated data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -262,7 +262,7 @@ test_that("It trows an error if wrong output path is specified for a simulated d
   )
 })
 
-test_that("It trows an error if no data set is specified for observed data", {
+test_that("It throws an error if no data set is specified for observed data", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -296,7 +296,7 @@ test_that("It trows an error if no data set is specified for observed data", {
   )
 })
 
-test_that("It trows an error if defined scenario is missing and stopIfNotFound is TRUE", {
+test_that("It throws an error if defined scenario is missing and stopIfNotFound is TRUE", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -364,7 +364,7 @@ test_that("It shows a warning for missing scenarios if stopIfNotFound is FALSE",
   )
 })
 
-test_that("It trows an error if defined data set is missing and stopIfNotFound is TRUE", {
+test_that("It throws an error if defined data set is missing and stopIfNotFound is TRUE", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -432,7 +432,7 @@ test_that("It shows a warning for missing data set if stopIfNotFound is FALSE", 
   )
 })
 
-test_that("It trows an error if mandatory field DataCombinedName is not filled out", {
+test_that("It throws an error if mandatory field DataCombinedName is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -466,7 +466,7 @@ test_that("It trows an error if mandatory field DataCombinedName is not filled o
   )
 })
 
-test_that("It trows an error if mandatory field plotType is not filled out", {
+test_that("It throws an error if mandatory field plotType is not filled out", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -500,7 +500,7 @@ test_that("It trows an error if mandatory field plotType is not filled out", {
   )
 })
 
-test_that("It trows an error if a plot requires a DataCombined that is not defined", {
+test_that("It throws an error if a plot requires a DataCombined that is not defined", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -673,7 +673,7 @@ test_that("It creates plots only for specified plotGrids", {
   expect_equal(names(plots), c("Aciclovir"))
 })
 
-test_that("It trows an error when specified plot grid names are not defined in the sheet", {
+test_that("It throws an error when specified plot grid names are not defined in the sheet", {
   expect_error(
     createPlotsFromExcel(
       plotGridNames = c("foo", "Aciclovir", "bar"),
@@ -809,7 +809,7 @@ test_that("It throws an error if plotGrid names are not unique", {
   )
 })
 
-test_that("It trows an error if a plot grid requires a plot id that is not defined", {
+test_that("It throws an error if a plot grid requires a plot id that is not defined", {
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
@@ -1188,7 +1188,7 @@ test_that("It provides clear error when xValuesLimits uses space instead of comm
       )
 
       projectConfigurationLocal$plotsFile <- file.path(tempDir, "Plots.xlsx")
-
+      
       expect_error(
         createPlotsFromExcel(
           simulatedScenarios = simulatedScenarios,

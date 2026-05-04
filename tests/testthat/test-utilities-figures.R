@@ -122,14 +122,3 @@ test_that(".parseExcelMultiValueField numeric conversion path is covered", {
     fixed = FALSE
   )
 })
-
-test_that("setESQTheme() works with ospsuite::plotTimeProfile", {
-  setESQTheme()
-  esqlabsConfig <- createEsqlabsPlotConfiguration()
-
-  set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "time profile - esqlabsPlotConfiguration",
-    fig = ospsuite::plotTimeProfile(oneObsSimDC)
-  )
-})
