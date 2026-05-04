@@ -1,3 +1,5 @@
+withr::local_options(lifecycle_verbosity = "quiet")
+
 projectConfiguration <- testProjectConfiguration()
 
 # Define which scenarios to run

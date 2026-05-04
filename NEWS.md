@@ -11,6 +11,17 @@
   `ProjectConfiguration` and the Excel workflow. The class, parser, and
   serializer are all intentionally unexported.
 
+- The runtime starts driving off the parsed `Project`:
+  - `loadProject(path)` is exported as the JSON-first entry point, marked
+    `lifecycle::badge("experimental")`.
+  - `Scenario` (a plain-data class) is exported. The legacy R6 `Scenario`
+    is renamed `LegacyScenario` and soft-deprecated; it stays alive for the
+    Excel-driven `createScenarios()` flow until that path is removed.
+  - `runScenarios()` accepts a `Project` directly:
+    `runScenarios(project, scenarioNames = NULL, customParams = NULL, ...)`.
+    The legacy `runScenarios(scenarios = ...)` form keeps working but is
+    soft-deprecated.
+
 ## Breaking changes
 
 - Individual parameter sets in `Individuals.xlsx` must now be specified

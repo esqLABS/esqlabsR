@@ -8,25 +8,57 @@
 A new \code{Scenario} object.
 }
 \description{
-Simulation scenario
+Plain-data class holding scenario configuration fields
+parsed from a v2.0 \code{Project.json}. Does not create or hold ospsuite
+runtime objects; the runtime is built by \code{\link[=runScenarios]{runScenarios()}} at
+execution time.
 }
-\section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{scenarioConfiguration}}{\code{scenarioConfiguration} used for creation of
-this scenario. Read-only.}
+\item{\code{scenarioName}}{Character. Name of the scenario.}
 
-\item{\code{finalCustomParams}}{Custom parameters to be used for the simulation.
-Read-only.}
+\item{\code{modelFile}}{Character. Name of the \code{.pkml} model file
+(relative to the model folder).}
 
-\item{\code{simulation}}{Simulation object created from the
-\code{ScenarioConfiguration}. Read-only}
+\item{\code{applicationProtocol}}{Character or \code{NA}. Name of the
+application protocol; \code{NA} when absent in JSON.}
 
-\item{\code{population}}{Population object in case the scenario is a population
-simulation. Read-only.}
+\item{\code{individualId}}{Character. ID referencing
+\code{project$individuals}.}
 
-\item{\code{scenarioType}}{Type of the scenario - individual or population.
-Read-only}
+\item{\code{populationId}}{Character or \code{NULL}. ID referencing
+\code{project$populations}.}
+
+\item{\code{outputPaths}}{Character vector of literal output paths,
+resolved at parse time from \code{outputPathIds}.}
+
+\item{\code{simulationType}}{Character. \code{"Individual"} or
+\code{"Population"}; derived from \code{populationId} presence.}
+
+\item{\code{readPopulationFromCSV}}{Logical. If \code{TRUE}, load population
+from CSV.}
+
+\item{\code{simulateSteadyState}}{Logical. If \code{TRUE}, run steady-state
+before the main simulation.}
+
+\item{\code{simulationTime}}{List of length-3 numeric vectors
+\code{c(start, end, resolution)}, parsed from the JSON string.}
+
+\item{\code{simulationTimeUnit}}{Character. Time unit for
+\code{simulationTime}, preserved as declared in JSON.}
+
+\item{\code{steadyStateTime}}{Numeric. Steady-state time \strong{in base
+unit (minutes)}; converted from the JSON value at parse time.}
+
+\item{\code{steadyStateTimeUnit}}{Character. Original unit for
+\code{steadyStateTime}, preserved for round-trip serialization.}
+
+\item{\code{overwriteFormulasInSS}}{Logical. Overwrite formula
+parameters during steady-state.}
+
+\item{\code{modelParameters}}{Character vector. Parameter-set group
+names referencing \code{project$modelParameters}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -35,53 +67,25 @@ Read-only}
 \itemize{
 \item \href{#method-Scenario-new}{\code{Scenario$new()}}
 \item \href{#method-Scenario-print}{\code{Scenario$print()}}
+\item \href{#method-Scenario-clone}{\code{Scenario$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Scenario-new"></a>}}
 \if{latex}{\out{\hypertarget{method-Scenario-new}{}}}
 \subsection{Method \code{new()}}{
-Custom parameters to be used for the simulation. The final
-custom parameters are a combination of parametrization through the
-excel files and the custom parameters specified by the user through the
-\code{customParams} argument of the \code{Scenario} constructor.
-
-
-Simulation object. Read-only.
-
-
-Initialize a new instance of the class. Initializes the
-scenario from \code{ScenarioConfiguration} object.
+Create a new Scenario. All fields default;
+the parser populates them by direct assignment.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Scenario$new(
-  scenarioConfiguration,
-  customParams = NULL,
-  stopIfParameterNotFound = TRUE
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Scenario$new()}\if{html}{\out{</div>}}
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{scenarioConfiguration}}{An object of class \code{ScenarioConfiguration}.}
-
-\item{\code{customParams}}{Custom parameters to be used for the simulation. A
-list containing vectors 'paths' with the full paths to the parameters,
-'values' the values of the parameters, and 'units' with the units the
-values are in.}
-
-\item{\code{stopIfParameterNotFound}}{Logical. If \code{TRUE} (default), an error is
-thrown if any of the custom defined parameter does not exist. If
-\code{FALSE}, non-existent parameters are  ignored.}
-}
-\if{html}{\out{</div>}}
-}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Scenario-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Scenario-print}{}}}
 \subsection{Method \code{print()}}{
-Print the object to the console
+Print a one-line-per-field summary.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Scenario$print(...)}\if{html}{\out{</div>}}
 }
@@ -89,7 +93,24 @@ Print the object to the console
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{Rest arguments.}
+\item{\code{...}}{Unused; present for S3 method consistency.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Scenario-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Scenario-clone}{}}}
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Scenario$clone(deep = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
 }
 \if{html}{\out{</div>}}
 }

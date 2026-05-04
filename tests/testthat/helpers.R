@@ -84,6 +84,36 @@ testProjectConfiguration <- function() {
   )
 }
 
+#' Get path to the test data directory or a subdirectory.
+#'
+#' @description Used by JSON-based test fixtures. Distinct from
+#'   `getTestDataFilePath()`, which targets the legacy `tests/data/`
+#'   directory; the JSON fixtures live under `tests/testthat/data/`.
+#'
+#' @param name Optional subdirectory or file name relative to the
+#'   data directory.
+#'
+#' @returns Full path string.
+testDataDirectory <- function(name = NULL) {
+  directory <- testthat::test_path("data")
+  if (!is.null(name)) {
+    directory <- file.path(directory, name)
+  }
+  directory
+}
+
+#' Get path to the canonical test `Project.json`.
+testProjectJSONPath <- function() {
+  file.path(testDataDirectory("TestProject"), "Project.json")
+}
+
+#' Load the canonical test project.
+#'
+#' @returns A `Project` object loaded from `tests/testthat/data/TestProject/Project.json`.
+testProject <- function() {
+  loadProject(testProjectJSONPath())
+}
+
 #' Get path to test configurations directory
 #'
 #' @description

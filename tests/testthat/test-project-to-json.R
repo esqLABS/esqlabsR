@@ -227,19 +227,29 @@ test_that("round-trip preserves outputPathIds order", {
   )
 })
 
-test_that(".scenariosToJson errors when scenario outputPaths are not in project lookup", {
+test_that(".scenariosToJson errors when scenario outputPaths reference unknown ids", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
-  # Mutate the first scenario to have a literal path that the project
-  # does not declare. (Parser would have rejected this, but a Chapter
+  # Mutate the first scenario to add a named path whose id is not in
+  # project$outputPaths. (Parser would have rejected this, but a Chapter
   # 7+ programmatic mutation could land us here.)
-  # ScenarioData is R6: grab the reference and mutate the public field
-  # in place so we don't trigger the read-only `scenarios` setter on Project.
   sc <- project$scenarios[[1L]]
-  sc$outputPaths <- c(sc$outputPaths, "Organism|NotDeclared|Path")
+  sc$outputPaths <- c(sc$outputPaths, c(UnknownId = "Organism|NotDeclared|Path"))
 
   expect_error(
     esqlabsR:::.projectToJson(project),
-    "outputPaths not declared.*Organism\\|NotDeclared\\|Path"
+    "unknown outputPathIds.*UnknownId"
+  )
+})
+
+test_that(".scenariosToJson errors when outputPaths has unnamed elements", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[[1L]]
+  # Strip names to simulate a programmatic mutation that violates the invariant.
+  sc$outputPaths <- unname(sc$outputPaths)
+
+  expect_error(
+    esqlabsR:::.projectToJson(project),
+    "outputPaths.*without ids"
   )
 })
 
@@ -286,4 +296,45 @@ test_that("round-trip preserves empty outputPathIds as a JSON array", {
   ids <- raw$scenarios[[1L]]$outputPathIds
   expect_type(ids, "list")
   expect_length(ids, 0L)
+})
+
+test_that(".scenariosToJson preserves both ids when two ids map to the same literal path", {
+  jsonString <- '{
+    "schemaVersion": "2.0",
+    "esqlabsRVersion": "6.0.0",
+    "filePaths": {},
+    "observedData": [],
+    "outputPaths": {
+      "primary": "Organism|Brain|Drug",
+      "alias":   "Organism|Brain|Drug"
+    },
+    "scenarios": [{
+      "name": "S",
+      "individualId": "I",
+      "populationId": null,
+      "readPopulationFromCSV": false,
+      "modelParameters": [],
+      "applicationProtocol": null,
+      "simulationTime": null,
+      "simulationTimeUnit": null,
+      "steadyState": false,
+      "steadyStateTime": null,
+      "steadyStateTimeUnit": null,
+      "overwriteFormulasInSS": false,
+      "modelFile": "M.pkml",
+      "outputPathIds": ["primary", "alias"]
+    }],
+    "modelParameters": {},
+    "individuals": [],
+    "populations": [],
+    "applications": {},
+    "plots": null
+  }'
+  jsonPath <- withr::local_tempfile(fileext = ".json")
+  writeLines(jsonString, jsonPath)
+
+  project <- esqlabsR:::.loadProjectJson(jsonPath)
+  rebuilt <- esqlabsR:::.scenariosToJson(project)
+
+  expect_equal(rebuilt[[1]]$outputPathIds, list("primary", "alias"))
 })
