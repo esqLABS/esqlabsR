@@ -9,6 +9,10 @@ This version updates the figure creation workflow to use the new approach implem
 - Removed function `createEsqlabsExportConfiguration()`
 - Argument `outputFolder` removed from the signature of the function `createPlotsFromExcel()`
 
+## New features
+
+- By default, Predicted vs Observed plots will display LLOQ values on both axes. The default behaviour can be changed in Excel Plots.xlsx files by defining `TRUE`/`FALSE` under `lloqOnBothAxes` column (#991)
+
 # esqlabsR 5.6.0
 
 ## New features
