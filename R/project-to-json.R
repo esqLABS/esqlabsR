@@ -63,7 +63,9 @@
 #' @keywords internal
 #' @noRd
 .saveProjectJson <- function(project, path) {
-  if (!is.character(path) || length(path) != 1L || is.na(path)) {
+  if (
+    !is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)
+  ) {
     stop(messages$invalidPathArgument(), call. = FALSE)
   }
   parent <- dirname(path)

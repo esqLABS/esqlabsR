@@ -90,7 +90,7 @@ messages$fileNotFound <- function(filePath) {
 }
 
 messages$invalidPathArgument <- function() {
-  cliFormat("{.arg path} must be a single non-NA string.")
+  cliFormat("{.arg path} must be a single non-empty, non-NA string.")
 }
 
 messages$pathNotFound <- function(path) {
