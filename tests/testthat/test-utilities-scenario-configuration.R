@@ -14,6 +14,7 @@ scenariosDf <- data.frame(list(
   "SteadyState" = c(NA),
   "SteadyStateTime" = c(NA),
   "SteadyStateTimeUnit" = c(NA),
+  "OverwriteFormulasInSS" = c(NA),
   "ModelFile" = c("Aciclovir.pkml"),
   "OutputPathsIds" = c(NA)
 ))
@@ -387,6 +388,7 @@ test_that("It throws an error when reading wrong file structure for scenario con
     "SteadyState",
     "SteadyStateTime",
     "SteadyStateTimeUnit",
+    "OverwriteFormulasInSS",
     "ModelFile",
     "OutputPathsIds"
   )
@@ -507,6 +509,76 @@ test_that("It shows a meaningful error when steady-state is true but no unit is 
         ),
         regexp = messages$missingSteadyStateTimeUnit("TestScenario"),
         fixed = TRUE
+      )
+    }
+  )
+})
+
+test_that("OverwriteFormulasInSS defaults to FALSE when empty", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = "TestScenario",
+    projectConfiguration = projectConfiguration
+  )
+  expect_false(scenarioConfigurations[["TestScenario"]]$overwriteFormulasInSS)
+})
+
+test_that("OverwriteFormulasInSS is correctly read from Excel", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Scenarios.xlsx",
+    tmpdir = tempDir,
+    code = {
+      scenariosDfLocal <- scenariosDf
+      scenariosDfLocal$SteadyState <- TRUE
+      scenariosDfLocal$SteadyStateTime <- 15
+      scenariosDfLocal$SteadyStateTimeUnit <- "min"
+      scenariosDfLocal$OverwriteFormulasInSS <- TRUE
+      .writeExcel(
+        data = list(
+          "Scenarios" = scenariosDfLocal,
+          "OutputPaths" = data.frame()
+        ),
+        path = file.path(tempDir, "Scenarios.xlsx"),
+      )
+
+      scenarioConfigurations <- readScenarioConfigurationFromExcel(
+        projectConfiguration = projectConfigurationLocal
+      )
+      expect_true(
+        scenarioConfigurations[["TestScenario"]]$overwriteFormulasInSS
+      )
+    }
+  )
+})
+
+test_that("OverwriteFormulasInSS is FALSE when NA in Excel", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Scenarios.xlsx",
+    tmpdir = tempDir,
+    code = {
+      scenariosDfLocal <- scenariosDf
+      scenariosDfLocal$OverwriteFormulasInSS <- NA
+      .writeExcel(
+        data = list(
+          "Scenarios" = scenariosDfLocal,
+          "OutputPaths" = data.frame()
+        ),
+        path = file.path(tempDir, "Scenarios.xlsx"),
+      )
+
+      scenarioConfigurations <- readScenarioConfigurationFromExcel(
+        projectConfiguration = projectConfigurationLocal
+      )
+      expect_false(
+        scenarioConfigurations[["TestScenario"]]$overwriteFormulasInSS
       )
     }
   )
