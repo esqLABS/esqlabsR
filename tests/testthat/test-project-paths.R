@@ -26,7 +26,7 @@ test_that("project$configurationsFolder resolves a relative path against project
   )
 })
 
-test_that("project$populationsFolder resolves relative to configurationsFolder", {
+test_that("project$populationsFolder resolves relative to projectDirPath", {
   project <- esqlabsR:::.loadProjectJson(
     system.file(
       "extdata", "projects", "Example", "Project.json",
@@ -36,7 +36,7 @@ test_that("project$populationsFolder resolves relative to configurationsFolder",
   )
   expect_equal(
     project$populationsFolder,
-    fs::path_abs(file.path(project$configurationsFolder, "Populations"))
+    fs::path_abs(file.path(project$projectDirPath, "Populations"))
   )
 })
 

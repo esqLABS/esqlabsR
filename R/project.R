@@ -96,17 +96,16 @@ Project <- R6::R6Class(
 
     #' @field populationsFolder Read-only. Absolute path to the
     #'   `populationsFolder` slot under `filePaths`, resolved relative
-    #'   to `configurationsFolder` (per ADR-0001 -- this is runtime
-    #'   infrastructure for `runScenarios()`, not Excel-bridge metadata,
-    #'   even though it lives in the `filePaths` group of the JSON).
-    #'   `NULL` when the slot is unset.
+    #'   to `projectDirPath`. Holds population CSV files loaded by
+    #'   `runScenarios()` for scenarios with `readPopulationFromCSV =
+    #'   TRUE`. `NULL` when the slot is unset.
     populationsFolder = function(value) {
       if (!missing(value)) {
         cli::cli_abort("{.field populationsFolder} is read-only.")
       }
       private$.clean_path(
         private$.filePaths$populationsFolder,
-        parent = self$configurationsFolder
+        parent = private$.projectDirPath
       )
     },
 
