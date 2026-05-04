@@ -14,6 +14,11 @@
 ## New features
 
 - Added `overwriteFormulasInSS` property to `ScenarioConfiguration`. When set to `TRUE`, formula-defined parameters will be overwritten with their steady-state values (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`). Default is `FALSE` (formula-defined parameters are kept, i.e. `ignoreIfFormula = TRUE`). The property can be set via a new `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx` (placed after `SteadyStateTimeUnit`). Also available as a parameter in `createScenarioConfigurationsFromPKML()`.
+- Added Excel-based parameter identification (PI) workflow: `readPITaskConfigurationFromExcel()`, `createPITasks()`, and `runPI()` enable defining and running PI tasks from `ParameterIdentification.xlsx`. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See `vignette("pi-workflow")` (\#928).
+
+## Minor improvements and bug fixes
+
+- `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set) (#1007).
 
 # esqlabsR 5.6.0
 
@@ -23,12 +28,15 @@
 - Added `ignoreVersionCheck` parameter to `createProjectConfiguration()` and `createDefaultProjectConfiguration()`. When `TRUE`, the version check is skipped. This is intended for non-interactive contexts such as automated tests or scripts run from the console where user input cannot be assured. When using this option, it is the responsibility of the user to ensure that the project is compatible with the currently installed version of `esqlabsR`.
 
 ## Minor improvements and bug fixes
-- `loadObservedData()` now passes the `sheets` argument directly to `ospsuite::loadDataSetsFromExcel()`, removing the deprecated `importAllSheets` workaround. The `sheets` parameter takes precedence over any sheets defined in `importerConfiguration`: `importerConfiguration$sheets` is always set to `NULL` before loading, so the passed configuration object is mutated as a side effect (#962).
+
+- `loadObservedData()` now passes the `sheets` argument directly to `ospsuite::loadDataSetsFromExcel()`, removing the deprecated `importAllSheets` workaround. The `sheets` parameter takes precedence over any sheets defined in `importerConfiguration`: `importerConfiguration$sheets` is always set to `NULL` before loading, so the passed configuration object is mutated as a side effect (#982).
 - Refactored `exportParametersToXLS()` to eliminate code duplication by delegating to `writeParameterStructureToXLS()`. The function now extracts parameter data into a structure and passes it to `writeParameterStructureToXLS()` for writing. No changes to functionality or API.
 - Added a warning when axis limits contain zero while the corresponding axis scale is set to `log` in `Plots.xlsx`. Previously, this combination silently produced empty plots (\#967).
 - `createDataCombinedFromExcel()` now throws an error listing all DataCombined IDs that cannot be found in the Excel file (\#740).
 - `extendParameterStructure()` now supports `NULL` for `parameters` and `newParameters` arguments. When `NULL` is provided, a valid empty structure is returned or combined with the non-NULL argument (#583).
 - `sensitivityTimeProfiles()` now accepts `xUnits` and `yUnits` as plain strings (e.g., `yUnits = "nmol/l"`) in addition to lists. Single string values are automatically coerced to a list (\#822).
+- `snapshotProjectConfiguration()` no longer fails when population files are PK-Sim exported CSVs that do not have sheet names (\#980).
+- Remove false warnings whenever a `ProjectConfiguration` is created (\#964).
 
 # esqlabsR 5.5.2
 
@@ -50,7 +58,6 @@
 - Fixed variable scoping issues in validation functions
 - Simplified validation logic to check data frame structure instead of R6 objects
 - Using native operator `%||%` instead of importing from the `ospsuite.utils` package.
-- Remove false warnings whenever a ProjectConfiguration is created (\#964).
 
 # esqlabsR 5.5.1
 

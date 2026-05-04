@@ -98,7 +98,8 @@ readScenarioConfigurationFromExcel <- function(
     path = projectConfiguration$scenariosFile,
     sheet = "Scenarios",
     col_types = colTypes
-  )
+  ) |>
+    .cleanTextColumns()
 
   # Remove empty rows
   wholeData <- dplyr::filter(
@@ -112,7 +113,8 @@ readScenarioConfigurationFromExcel <- function(
   outputPathsDf <- readExcel(
     path = projectConfiguration$scenariosFile,
     sheet = "OutputPaths"
-  )
+  ) |>
+    .cleanTextColumns()
 
   scenarioNames <- scenarioNames %||% wholeData$Scenario_name
   # Create a scenario configuration for each name
@@ -139,14 +141,8 @@ readScenarioConfigurationFromExcel <- function(
     paramSheets <- data$ModelParameterSheets
 
     if (!is.na(paramSheets)) {
-      # The values can be enclosed in "" in case sheet names contain a ','.
-      # Split the input string by ',' but do not split within ""
-      paramSheets <- trimws(scan(
-        text = as.character(paramSheets),
-        what = "character",
-        sep = ",",
-        quiet = TRUE
-      ))
+      # Split comma-separated parameter sheets
+      paramSheets <- .splitCommaString(paramSheets)
       scenarioConfiguration$addParamSheets(paramSheets)
     }
 
@@ -211,11 +207,8 @@ readScenarioConfigurationFromExcel <- function(
 
     # OutputPaths
     if (!is.na(data$OutputPathsIds)) {
-      pathIds <- strsplit(x = data$OutputPathsIds, split = ",", fixed = TRUE)[[
-        1
-      ]]
-      # Remove leading/trailing whitespaces
-      pathIds <- trimws(pathIds)
+      # Split comma-separated output path IDs
+      pathIds <- .splitCommaString(data$OutputPathsIds)
       # Check if all paths IDs are defined in the OutputPaths sheet
       missingIds <- setdiff(pathIds, outputPathsDf$OutputPathId)
       if (length(missingIds) != 0) {
@@ -684,7 +677,7 @@ createScenarioConfigurationsFromPKML <- function(
         if (
           is.character(scenarioParamSheets) && length(scenarioParamSheets) == 1
         ) {
-          scenarioParamSheets <- trimws(strsplit(scenarioParamSheets, ",")[[1]])
+          scenarioParamSheets <- .splitCommaString(scenarioParamSheets)
         }
         scenarioConfiguration$addParamSheets(scenarioParamSheets)
       }
@@ -725,7 +718,7 @@ createScenarioConfigurationsFromPKML <- function(
             length(scenarioOutputPaths) == 1 &&
             is.null(names(scenarioOutputPaths))
         ) {
-          scenarioOutputPaths <- trimws(strsplit(scenarioOutputPaths, ",")[[1]])
+          scenarioOutputPaths <- .splitCommaString(scenarioOutputPaths)
         }
         # Handle named vectors: preserve names if they exist
         scenarioConfiguration$outputPaths <- scenarioOutputPaths
@@ -1669,4 +1662,36 @@ addScenarioConfigurationsToExcel <- function(
       nScenarios
     ))
   }
+}
+
+#' Split comma-separated string from Excel cells
+#'
+#' @param string Character string with comma-separated values. Can be `NA`.
+#' @details Splits comma-separated values from Excel cells. Handles Excel NA
+#'   types, respects quoted strings (e.g., `"a, b"`), and trims whitespace.
+#'   Returns `character(0)` for `NA` input.
+#'
+#' @returns Character vector with comma-separated values split and whitespace
+#'   trimmed.
+#' @keywords internal
+#' @noRd
+.splitCommaString <- function(string) {
+  if (is.na(string)) {
+    return(character(0))
+  }
+
+  # Convert to character as sometimes Excel NA values are not recognized
+  # as chr NA, but some other NA type
+  string <- as.character(string)
+
+  # Use scan() to split by comma while respecting quoted strings
+  # (e.g., "value with, comma" will be treated as a single value)
+  values <- trimws(scan(
+    text = string,
+    what = "character",
+    sep = ",",
+    quiet = TRUE
+  ))
+
+  return(values)
 }

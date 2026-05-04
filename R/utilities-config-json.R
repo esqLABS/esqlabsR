@@ -83,13 +83,14 @@ snapshotProjectConfiguration <- function(
     Populations = projectConfig$populationsFile,
     Scenarios = projectConfig$scenariosFile,
     Applications = projectConfig$applicationsFile,
-    Plots = projectConfig$plotsFile
+    Plots = projectConfig$plotsFile,
+    ParameterIdentification = projectConfig$parameterIdentificationFile
   )
 
   # Read each Excel file and store its sheets
   for (name in names(excelFiles)) {
     filePath <- excelFiles[[name]]
-    if (!is.na(filePath) && file.exists(filePath)) {
+    if (!is.null(filePath) && file.exists(filePath)) {
       # Get sheets
       sheets <- readxl::excel_sheets(filePath)
 
@@ -106,7 +107,7 @@ snapshotProjectConfiguration <- function(
 
   # Handle CSV files in populations folder if it exists
   if (
-    !is.na(projectConfig$populationsFolder) &&
+    !is.null(projectConfig$populationsFolder) &&
       dir.exists(projectConfig$populationsFolder)
   ) {
     # Find CSV files
@@ -317,7 +318,8 @@ restoreProjectConfiguration <- function(
     Populations = "Populations.xlsx",
     Scenarios = "Scenarios.xlsx",
     Applications = "Applications.xlsx",
-    Plots = "Plots.xlsx"
+    Plots = "Plots.xlsx",
+    ParameterIdentification = "ParameterIdentification.xlsx"
   )
 
   # Process each Excel file
