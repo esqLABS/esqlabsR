@@ -105,9 +105,6 @@
     if (!is.null(entry$modelParameters)) {
       sc$modelParameters <- unlist(entry$modelParameters)
     }
-    if (!is.null(entry$overwriteFormulasInSS)) {
-      sc$overwriteFormulasInSS <- entry$overwriteFormulasInSS
-    }
     if (!is.null(entry$simulationTime)) {
       sc$simulationTime <- .parseSimulationTimeIntervals(
         entry$simulationTime
@@ -134,6 +131,9 @@
         unit = entry$steadyStateTimeUnit
       )
       sc$steadyStateTimeUnit <- entry$steadyStateTimeUnit
+    }
+    if (!is.null(entry$overwriteFormulasInSS)) {
+      sc$overwriteFormulasInSS <- entry$overwriteFormulasInSS
     }
 
     if (!is.null(entry$outputPathIds)) {
