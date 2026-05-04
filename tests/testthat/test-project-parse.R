@@ -177,11 +177,15 @@ test_that(".loadProjectJson() rejects a missing file", {
 test_that(".loadProjectJson() rejects a non-string path", {
   expect_error(
     esqlabsR:::.loadProjectJson(NULL),
-    "must be a single non-NA string"
+    "must be a single non-empty, non-NA string"
   )
   expect_error(
     esqlabsR:::.loadProjectJson(c("a.json", "b.json")),
-    "must be a single non-NA string"
+    "must be a single non-empty, non-NA string"
+  )
+  expect_error(
+    esqlabsR:::.loadProjectJson(""),
+    "must be a single non-empty, non-NA string"
   )
 })
 

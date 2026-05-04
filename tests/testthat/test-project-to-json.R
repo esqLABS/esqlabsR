@@ -22,9 +22,17 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
   expect_named(
     tree,
     c(
-      "schemaVersion", "esqlabsRVersion", "filePaths", "observedData",
-      "outputPaths", "scenarios", "modelParameters", "individuals",
-      "populations", "applications", "plots"
+      "schemaVersion",
+      "esqlabsRVersion",
+      "filePaths",
+      "observedData",
+      "outputPaths",
+      "scenarios",
+      "modelParameters",
+      "individuals",
+      "populations",
+      "applications",
+      "plots"
     ),
     ignore.order = TRUE
   )
@@ -49,8 +57,18 @@ test_that(".saveProjectJson() writes a valid JSON file", {
 
 test_that(".saveProjectJson() rejects non-string paths", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
-  expect_error(esqlabsR:::.saveProjectJson(project, NULL), "must be a single non-NA string")
-  expect_error(esqlabsR:::.saveProjectJson(project, c("a", "b")), "must be a single non-NA string")
+  expect_error(
+    esqlabsR:::.saveProjectJson(project, NULL),
+    "must be a single non-empty, non-NA string"
+  )
+  expect_error(
+    esqlabsR:::.saveProjectJson(project, c("a", "b")),
+    "must be a single non-empty, non-NA string"
+  )
+  expect_error(
+    esqlabsR:::.saveProjectJson(project, ""),
+    "must be a single non-empty, non-NA string"
+  )
 })
 
 test_that(".saveProjectJson() refuses to write to a missing directory", {
