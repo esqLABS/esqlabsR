@@ -1,0 +1,195 @@
+{
+  "schemaVersion": "2.0",
+  "esqlabsRVersion": "6.0.0",
+  "filePaths": {
+    "modelFolder": "Models/Simulations/",
+    "configurationsFolder": "Configurations/",
+    "modelParamsFile": "ModelParameters.xlsx",
+    "individualsFile": "Individuals.xlsx",
+    "populationsFile": "Populations.xlsx",
+    "populationsFolder": "Populations",
+    "scenariosFile": "Scenarios.xlsx",
+    "applicationsFile": "Applications.xlsx",
+    "plotsFile": "Plots.xlsx",
+    "dataFolder": "Data/",
+    "outputFolder": "Results/"
+  },
+  "observedData": [
+    {
+      "type": "excel",
+      "file": "Aciclovir_TimeValuesData.xlsx",
+      "importerConfiguration": "esqlabs_dataImporter_configuration.xml",
+      "sheets": ["Laskin 1982.Group A"]
+    }
+  ],
+  "outputPaths": {
+    "Aciclovir_PVB": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+    "Aciclovir_fat_cell": "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+  },
+  "scenarios": [
+    {
+      "name": "Aciclovir_iv",
+      "individualId": "Adult_male",
+      "populationId": null,
+      "readPopulationFromCSV": false,
+      "modelParameters": ["Global", "Aciclovir"],
+      "applicationProtocol": "Aciclovir_iv_250mg",
+      "simulationTime": "0, 24, 60",
+      "simulationTimeUnit": "h",
+      "steadyState": false,
+      "steadyStateTime": null,
+      "steadyStateTimeUnit": null,
+      "overwriteFormulasInSS": false,
+      "modelFile": "Aciclovir.pkml",
+      "outputPathIds": ["Aciclovir_PVB"]
+    },
+    {
+      "name": "Aciclovir_iv_population",
+      "individualId": "Adult_male",
+      "populationId": "European_adults",
+      "readPopulationFromCSV": false,
+      "modelParameters": ["Global", "Aciclovir"],
+      "applicationProtocol": "Aciclovir_iv_250mg",
+      "simulationTime": "0, 24, 60",
+      "simulationTimeUnit": "h",
+      "steadyState": false,
+      "steadyStateTime": null,
+      "steadyStateTimeUnit": null,
+      "overwriteFormulasInSS": false,
+      "modelFile": "Aciclovir.pkml",
+      "outputPathIds": ["Aciclovir_PVB"]
+    }
+  ],
+  "modelParameters": {
+    "Global": [
+      {
+        "containerPath": "Organism|Liver",
+        "parameterName": "EHC continuous fraction",
+        "value": 1,
+        "units": null
+      }
+    ],
+    "Aciclovir": [
+      {
+        "containerPath": "Aciclovir",
+        "parameterName": "Lipophilicity",
+        "value": -0.1,
+        "units": "Log Units"
+      }
+    ]
+  },
+  "individuals": [
+    {
+      "individualId": "Adult_male",
+      "species": "Human",
+      "population": "European_ICRP_2002",
+      "gender": "MALE",
+      "weight": 73,
+      "height": 176,
+      "age": 30,
+      "proteinOntogenies": "CYP3A4:CYP3A4",
+      "parameters": [
+        {
+          "containerPath": "Organism|Kidney",
+          "parameterName": "GFR",
+          "value": 90,
+          "units": "ml/min"
+        }
+      ]
+    }
+  ],
+  "populations": [
+    {
+      "populationId": "European_adults",
+      "species": "Human",
+      "population": "European_ICRP_2002",
+      "numberOfIndividuals": 50,
+      "proportionOfFemales": 50,
+      "weightMin": null,
+      "weightMax": null,
+      "weightUnit": "kg",
+      "heightMin": null,
+      "heightMax": null,
+      "heightUnit": "cm",
+      "ageMin": 18,
+      "ageMax": 65,
+      "BMIMin": null,
+      "BMIMax": null,
+      "BMIUnit": "kg/m²",
+      "proteinOntogenies": "CYP3A4:CYP3A4"
+    }
+  ],
+  "applications": {
+    "Aciclovir_iv_250mg": {
+      "parameters": [
+        {
+          "containerPath": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "parameterName": "Dose",
+          "value": 250,
+          "units": "mg"
+        }
+      ]
+    }
+  },
+  "plots": {
+    "dataCombined": [
+      {
+        "name": "Aciclovir_individual",
+        "simulated": [
+          {
+            "label": "Aciclovir simulated",
+            "scenario": "Aciclovir_iv",
+            "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+            "group": "Aciclovir PVB",
+            "xOffsets": null,
+            "xOffsetsUnits": null,
+            "yOffsets": null,
+            "yOffsetsUnits": null,
+            "xScaleFactors": null,
+            "yScaleFactors": null
+          }
+        ],
+        "observed": [
+          {
+            "label": "Aciclovir observed",
+            "dataSet": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+            "group": "Aciclovir PVB",
+            "xOffsets": null,
+            "xOffsetsUnits": null,
+            "yOffsets": null,
+            "yOffsetsUnits": null,
+            "xScaleFactors": null,
+            "yScaleFactors": null
+          }
+        ]
+      }
+    ],
+    "plotConfiguration": [
+      {
+        "plotID": "P1",
+        "DataCombinedName": "Aciclovir_individual",
+        "plotType": "individual",
+        "title": "Aciclovir IV 250 mg",
+        "subtitle": "Individual time profiles",
+        "xUnit": "h",
+        "yUnit": null,
+        "xAxisScale": null,
+        "yAxisScale": null,
+        "xValuesLimits": "0, 24",
+        "yValuesLimits": null,
+        "aggregation": null,
+        "quantiles": null,
+        "nsd": null,
+        "foldDistance": null
+      }
+    ],
+    "plotGrids": [
+      {
+        "name": "Individual_diagnostics",
+        "plotIDs": "P1",
+        "title": "Aciclovir — Individual Diagnostics",
+        "subtitle": null
+      }
+    ]
+  }
+}
