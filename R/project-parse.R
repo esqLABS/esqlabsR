@@ -136,6 +136,21 @@
       sc$steadyStateTimeUnit <- entry$steadyStateTimeUnit
     }
 
+    if (!is.null(entry$outputPathIds)) {
+      pathIds <- unlist(entry$outputPathIds)
+      unknown <- setdiff(pathIds, names(outputPaths))
+      if (length(unknown) > 0) {
+        stop(
+          "Scenario '",
+          entry$name,
+          "' references unknown outputPathIds: ",
+          paste(unknown, collapse = ", "),
+          call. = FALSE
+        )
+      }
+      sc$outputPaths <- unlist(outputPaths[pathIds], use.names = FALSE)
+    }
+
     result[[entry$name]] <- sc
   }
   result

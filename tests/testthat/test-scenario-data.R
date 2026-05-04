@@ -128,3 +128,61 @@ test_that(".parseScenarios parses simulationTime to a list of length-3 numerics"
   expect_identical(sc$simulationTime[[1L]], c(0, 24, 60))
   expect_identical(sc$simulationTimeUnit, "h")
 })
+
+test_that(".parseScenarios resolves outputPathIds to literal outputPaths in declared order", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[["Aciclovir_iv_steadystate"]]
+
+  expect_type(sc$outputPaths, "character")
+  expect_length(sc$outputPaths, 2L)
+  # Order in JSON is fat_cell, PVB; the literal paths must follow that order.
+  expect_identical(
+    sc$outputPaths,
+    c(
+      "Organism|Fat|Intracellular|Aciclovir|Concentration in container",
+      "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+    )
+  )
+})
+
+test_that(".parseScenarios single outputPathId resolves to a length-1 character vector", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[["Aciclovir_iv"]]
+
+  expect_type(sc$outputPaths, "character")
+  expect_length(sc$outputPaths, 1L)
+  expect_identical(
+    sc$outputPaths,
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  )
+})
+
+test_that(".parseScenarios errors on unknown outputPathIds with the scenario name", {
+  raw <- list(
+    list(
+      name = "BadRefs",
+      individualId = "i",
+      modelFile = "m.pkml",
+      outputPathIds = list("Aciclovir_PVB", "Nope", "AlsoNope")
+    )
+  )
+  outputPaths <- list(Aciclovir_PVB = "Organism|PVB|...")
+
+  expect_error(
+    esqlabsR:::.parseScenarios(raw, outputPaths),
+    "BadRefs.*Nope.*AlsoNope"
+  )
+})
+
+test_that(".parseScenarios leaves outputPaths NULL when JSON omits outputPathIds", {
+  raw <- list(
+    list(
+      name = "NoOutputs",
+      individualId = "i",
+      modelFile = "m.pkml"
+    )
+  )
+  result <- esqlabsR:::.parseScenarios(raw, list())
+
+  expect_null(result[["NoOutputs"]]$outputPaths)
+})
