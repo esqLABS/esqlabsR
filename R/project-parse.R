@@ -46,14 +46,17 @@
   jsonPath <- normalizePath(path, winslash = "/", mustWork = FALSE)
   projectDirPath <- dirname(jsonPath)
 
+  outputPaths <- raw$outputPaths %||% list()
+  scenarios <- .parseScenarios(raw$scenarios, outputPaths)
+
   Project$new(
     schemaVersion = schemaVersion,
     esqlabsRVersion = raw$esqlabsRVersion,
     jsonPath = jsonPath,
     projectDirPath = projectDirPath,
     filePaths = raw$filePaths %||% list(),
-    outputPaths = raw$outputPaths %||% list(),
-    scenarios = raw$scenarios %||% list(),
+    outputPaths = outputPaths,
+    scenarios = scenarios,
     modelParameters = raw$modelParameters %||% list(),
     individuals = raw$individuals %||% list(),
     populations = raw$populations %||% list(),
@@ -61,4 +64,94 @@
     observedData = raw$observedData %||% list(),
     plots = raw$plots
   )
+}
+
+# Internal: parse the JSON `scenarios` array into a named list of
+# `ScenarioData` objects, keyed by scenario name.
+#
+# `scenariosData` is the raw `simplifyVector = FALSE` shape produced by
+# `jsonlite::fromJSON()`: a list of plain named lists. `outputPaths` is
+# the project-level lookup table (named list or named character vector
+# of `id -> literal path`); used to resolve `outputPathIds`.
+#
+# This helper handles only what's needed at parse time: field copies,
+# `simulationType` derivation from `populationId` presence,
+# `simulationTime` string parsing, `steadyStateTime` unit conversion,
+# `outputPathIds` -> literal `outputPaths` resolution. Validation
+# beyond a couple of must-have parse errors is deferred to Chapter 4.
+#
+# @keywords internal
+# @noRd
+.parseScenarios <- function(scenariosData, outputPaths) {
+  if (is.null(scenariosData)) {
+    return(list())
+  }
+
+  result <- list()
+  for (entry in scenariosData) {
+    sc <- ScenarioData$new()
+    sc$scenarioName <- entry$name
+    sc$modelFile <- entry$modelFile
+    sc$applicationProtocol <- entry$applicationProtocol %||% NA
+    sc$individualId <- entry$individualId
+
+    if (!is.null(entry$populationId)) {
+      sc$populationId <- entry$populationId
+      sc$simulationType <- "Population"
+    }
+    if (!is.null(entry$readPopulationFromCSV)) {
+      sc$readPopulationFromCSV <- entry$readPopulationFromCSV
+    }
+    if (!is.null(entry$modelParameters)) {
+      sc$modelParameters <- unlist(entry$modelParameters)
+    }
+    if (!is.null(entry$simulationTime)) {
+      sc$simulationTime <- .parseSimulationTimeIntervals(
+        entry$simulationTime
+      )
+      sc$simulationTimeUnit <- entry$simulationTimeUnit
+    }
+    if (isTRUE(entry$steadyState)) {
+      sc$simulateSteadyState <- TRUE
+    }
+    if (!is.null(entry$steadyStateTime)) {
+      if (is.null(entry$steadyStateTimeUnit)) {
+        stop(
+          "Scenario '",
+          entry$name,
+          "' has 'steadyStateTime' set but ",
+          "'steadyStateTimeUnit' is null. Please specify a unit ",
+          "(e.g. \"min\").",
+          call. = FALSE
+        )
+      }
+      sc$steadyStateTime <- ospsuite::toBaseUnit(
+        quantityOrDimension = ospDimensions$Time,
+        values = entry$steadyStateTime,
+        unit = entry$steadyStateTimeUnit
+      )
+      sc$steadyStateTimeUnit <- entry$steadyStateTimeUnit
+    }
+    if (!is.null(entry$overwriteFormulasInSS)) {
+      sc$overwriteFormulasInSS <- entry$overwriteFormulasInSS
+    }
+
+    if (!is.null(entry$outputPathIds)) {
+      pathIds <- unlist(entry$outputPathIds)
+      unknown <- setdiff(pathIds, names(outputPaths))
+      if (length(unknown) > 0) {
+        stop(
+          "Scenario '",
+          entry$name,
+          "' references unknown outputPathIds: ",
+          paste(unknown, collapse = ", "),
+          call. = FALSE
+        )
+      }
+      sc$outputPaths <- unlist(outputPaths[pathIds], use.names = FALSE)
+    }
+
+    result[[entry$name]] <- sc
+  }
+  result
 }

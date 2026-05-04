@@ -101,12 +101,106 @@
   .asJsonObject(project$outputPaths)
 }
 
-# JSON array of scenario objects. Will eventually rewrite the scenario's
-# literal `outputPaths` back to `outputPathIds` referencing
-# `project$outputPaths`, and convert `steadyStateTime` back to its declared
-# unit.
+# JSON array of scenario objects. Reverses the parse-time
+# transformations: literal `outputPaths` rebuilt as `outputPathIds`
+# against the project lookup, parsed `simulationTime` rejoined to
+# `"a, b, c; d, e, f"`, base-unit `steadyStateTime` converted back to
+# its declared unit. Field order matches the example fixture so
+# round-trip diffs stay zero-noise.
 .scenariosToJson <- function(project) {
-  project$scenarios
+  scenarios <- project$scenarios
+  if (is.null(scenarios) || length(scenarios) == 0L) {
+    return(list())
+  }
+
+  outputPathsLookup <- unlist(project$outputPaths, use.names = TRUE)
+
+  unname(lapply(scenarios, function(sc) {
+    # Default to `list()` so the JSON output is `[]` when the scenario
+    # has no resolved paths (whether the JSON had `outputPathIds: []`,
+    # omitted the key, or `sc$outputPaths` was set to `NULL`
+    # programmatically). Round-trip preserves array-shape symmetry with
+    # the parser, which collapses absent and empty-array to `NULL`.
+    outputPathIds <- list()
+    if (!is.null(sc$outputPaths)) {
+      idx <- match(sc$outputPaths, outputPathsLookup)
+      if (anyNA(idx)) {
+        unknown <- sc$outputPaths[is.na(idx)]
+        stop(
+          "Scenario '",
+          sc$scenarioName,
+          "' has outputPaths not declared in project$outputPaths: ",
+          paste(unknown, collapse = ", "),
+          call. = FALSE
+        )
+      }
+      outputPathIds <- as.list(names(outputPathsLookup)[idx])
+    }
+
+    simTimeStr <- NULL
+    if (!is.null(sc$simulationTime)) {
+      intervals <- vapply(
+        sc$simulationTime,
+        function(int) paste(int, collapse = ", "),
+        character(1)
+      )
+      simTimeStr <- paste(intervals, collapse = "; ")
+    }
+
+    if (sc$simulateSteadyState && is.null(sc$steadyStateTimeUnit)) {
+      stop(
+        "Scenario '",
+        sc$scenarioName,
+        "' has simulateSteadyState=TRUE but steadyStateTimeUnit is NULL. ",
+        "Set steadyStateTimeUnit (e.g. \"min\") so the value can round-trip.",
+        call. = FALSE
+      )
+    }
+
+    list(
+      name = sc$scenarioName,
+      individualId = sc$individualId,
+      populationId = if (sc$simulationType == "Population") {
+        sc$populationId
+      } else {
+        NULL
+      },
+      readPopulationFromCSV = sc$readPopulationFromCSV,
+      # `as.list(NULL)` -> `list()`; this collapses both "key absent" and
+      # "empty array" in the parsed scenario to JSON `[]`. Matches the
+      # end-state serializer in `json-as-primary-input-v2`.
+      modelParameters = as.list(sc$modelParameters),
+      applicationProtocol = if (
+        is.null(sc$applicationProtocol) || is.na(sc$applicationProtocol)
+      ) {
+        NULL
+      } else {
+        sc$applicationProtocol
+      },
+      simulationTime = simTimeStr,
+      simulationTimeUnit = sc$simulationTimeUnit,
+      steadyState = sc$simulateSteadyState,
+      steadyStateTime = if (
+        sc$simulateSteadyState && !is.null(sc$steadyStateTimeUnit)
+      ) {
+        ospsuite::toUnit(
+          quantityOrDimension = ospDimensions$Time,
+          values = sc$steadyStateTime,
+          targetUnit = sc$steadyStateTimeUnit
+        )
+      } else {
+        NULL
+      },
+      steadyStateTimeUnit = if (sc$simulateSteadyState) {
+        sc$steadyStateTimeUnit
+      } else {
+        NULL
+      },
+      overwriteFormulasInSS = sc$overwriteFormulasInSS,
+      modelFile = sc$modelFile,
+      outputPathIds = outputPathIds
+    )
+  }))
 }
 
 # JSON object (map of parameter-set name → array of parameter entries).

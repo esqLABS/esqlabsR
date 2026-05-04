@@ -58,18 +58,22 @@ test_that(".loadProjectJson() preserves outputPaths as a named list", {
   )
 })
 
-test_that(".loadProjectJson() preserves scenarios as a list of named lists", {
+test_that(".loadProjectJson() parses scenarios into ScenarioData objects keyed by name", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
   expect_type(project$scenarios, "list")
-  expect_length(project$scenarios, 2L)
+  expect_length(project$scenarios, 3L)
+  expect_named(
+    project$scenarios,
+    c("Aciclovir_iv", "Aciclovir_iv_population", "Aciclovir_iv_steadystate")
+  )
 
-  first <- project$scenarios[[1L]]
-  expect_identical(first$name, "Aciclovir_iv")
+  first <- project$scenarios[["Aciclovir_iv"]]
+  expect_s3_class(first, "ScenarioData")
+  expect_identical(first$scenarioName, "Aciclovir_iv")
   expect_identical(first$individualId, "Adult_male")
   expect_null(first$populationId)
-  expect_identical(first$modelParameters, list("Global", "Aciclovir"))
-  expect_identical(first$outputPathIds, list("Aciclovir_PVB"))
+  expect_identical(first$modelParameters, c("Global", "Aciclovir"))
 })
 
 test_that(".loadProjectJson() preserves modelParameters as a named list of sets", {
@@ -219,7 +223,7 @@ test_that("Project$print() summarises section counts", {
 
   expect_output(print(project), "<Project>")
   expect_output(print(project), "schema 2.0")
-  expect_output(print(project), "scenarios:\\s+2")
+  expect_output(print(project), "scenarios:\\s+3")
   expect_output(print(project), "individuals:\\s+1")
   expect_output(print(project), "populations:\\s+1")
 })
