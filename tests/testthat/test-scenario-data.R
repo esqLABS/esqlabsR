@@ -37,3 +37,48 @@ test_that("ScenarioData has the documented field defaults", {
   expect_false(sc$overwriteFormulasInSS)
   expect_null(sc$modelParameters)
 })
+
+test_that(".parseScenarios returns list() for NULL input", {
+  expect_identical(
+    esqlabsR:::.parseScenarios(NULL, list()),
+    list()
+  )
+})
+
+test_that(".parseScenarios copies basic fields for an individual scenario", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[["Aciclovir_iv"]]
+
+  expect_s3_class(sc, "ScenarioData")
+  expect_identical(sc$scenarioName, "Aciclovir_iv")
+  expect_identical(sc$modelFile, "Aciclovir.pkml")
+  expect_identical(sc$individualId, "Adult_male")
+  expect_identical(sc$applicationProtocol, "Aciclovir_iv_250mg")
+  expect_identical(sc$modelParameters, c("Global", "Aciclovir"))
+  expect_null(sc$populationId)
+  expect_identical(sc$simulationType, "Individual")
+  expect_false(sc$readPopulationFromCSV)
+})
+
+test_that(".parseScenarios sets simulationType=Population when populationId present", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[["Aciclovir_iv_population"]]
+
+  expect_identical(sc$populationId, "European_adults")
+  expect_identical(sc$simulationType, "Population")
+})
+
+test_that(".parseScenarios defaults applicationProtocol to NA when JSON has null", {
+  raw <- list(
+    list(
+      name = "X",
+      individualId = "i",
+      modelFile = "m.pkml",
+      applicationProtocol = NULL
+    )
+  )
+  result <- esqlabsR:::.parseScenarios(raw, list())
+
+  expect_length(result, 1L)
+  expect_true(is.na(result[["X"]]$applicationProtocol))
+})
