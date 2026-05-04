@@ -204,6 +204,19 @@
     }
   },
   "Scenarios": {
+    "OutputPaths": {
+      "column_names": ["OutputPathId", "OutputPath"],
+      "rows": [
+        {
+          "OutputPathId": "Aciclovir_PVB",
+          "OutputPath": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+        },
+        {
+          "OutputPathId": "Aciclovir_fat_cell",
+          "OutputPath": "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+        }
+      ]
+    },
     "Scenarios": {
       "column_names": ["Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "OverwriteFormulasInSS", "ModelFile", "OutputPathsIds"],
       "rows": [
@@ -299,6 +312,7 @@
           "SteadyState": null,
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         },
@@ -314,6 +328,7 @@
           "SteadyState": "FALSE",
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
         },
@@ -329,21 +344,9 @@
           "SteadyState": "FALSE",
           "SteadyStateTime": null,
           "SteadyStateTimeUnit": null,
+          "OverwriteFormulasInSS": null,
           "ModelFile": "Aciclovir.pkml",
           "OutputPathsIds": null
-        }
-      ]
-    },
-    "OutputPaths": {
-      "column_names": ["OutputPathId", "OutputPath"],
-      "rows": [
-        {
-          "OutputPathId": "Aciclovir_PVB",
-          "OutputPath": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-        },
-        {
-          "OutputPathId": "Aciclovir_fat_cell",
-          "OutputPath": "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
         }
       ]
     }

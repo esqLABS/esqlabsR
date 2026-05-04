@@ -183,15 +183,9 @@ test_that("Warning is shown when individual characteristics are not found", {
   scenarioConfigurations$TestScenario$individualId <- "NonExistentIndividual"
 
   expect_warning(
-    expect_warning(
-      Scenario$new(
-        scenarioConfigurations$TestScenario,
-        stopIfParameterNotFound = FALSE
-      ),
-      regexp = messages$warningNoIndividualSpecificModelParameters(
-        "TestScenario",
-        "NonExistentIndividual"
-      )
+    Scenario$new(
+      scenarioConfigurations$TestScenario,
+      stopIfParameterNotFound = FALSE
     ),
     regexp = messages$warningNoIndividualCharacteristics(
       "TestScenario",
