@@ -89,6 +89,10 @@ messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
 
+messages$invalidPathArgument <- function() {
+  cliFormat("{.arg path} must be a single non-NA string.")
+}
+
 messages$pathNotFound <- function(path) {
   cliFormat(
     "The specified destination folder does not exist. ({.path {path}}) "

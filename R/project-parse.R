@@ -25,7 +25,7 @@
 #' @noRd
 .loadProjectJson <- function(path) {
   if (!is.character(path) || length(path) != 1L || is.na(path)) {
-    stop("`path` must be a single non-NA string.", call. = FALSE)
+    stop(messages$invalidPathArgument(), call. = FALSE)
   }
   if (!file.exists(path)) {
     stop("Project file does not exist: ", path, call. = FALSE)

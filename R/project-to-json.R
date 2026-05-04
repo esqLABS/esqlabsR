@@ -64,7 +64,7 @@
 #' @noRd
 .saveProjectJson <- function(project, path) {
   if (!is.character(path) || length(path) != 1L || is.na(path)) {
-    stop("`path` must be a single non-NA string.", call. = FALSE)
+    stop(messages$invalidPathArgument(), call. = FALSE)
   }
   parent <- dirname(path)
   if (!dir.exists(parent)) {
