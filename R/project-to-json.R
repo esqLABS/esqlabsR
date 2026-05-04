@@ -117,11 +117,19 @@
 
   unname(lapply(scenarios, function(sc) {
     outputPathIds <- NULL
-    if (!is.null(sc$outputPaths) && length(outputPathsLookup) > 0L) {
+    if (!is.null(sc$outputPaths)) {
       idx <- match(sc$outputPaths, outputPathsLookup)
-      ids <- names(outputPathsLookup)[idx]
-      ids <- ids[!is.na(ids)]
-      if (length(ids) > 0L) outputPathIds <- as.list(ids)
+      if (anyNA(idx)) {
+        unknown <- sc$outputPaths[is.na(idx)]
+        stop(
+          "Scenario '",
+          sc$scenarioName,
+          "' has outputPaths not declared in project$outputPaths: ",
+          paste(unknown, collapse = ", "),
+          call. = FALSE
+        )
+      }
+      outputPathIds <- as.list(names(outputPathsLookup)[idx])
     }
 
     simTimeStr <- NULL

@@ -226,3 +226,19 @@ test_that("round-trip preserves outputPathIds order", {
     list("Aciclovir_fat_cell", "Aciclovir_PVB")
   )
 })
+
+test_that(".scenariosToJson errors when scenario outputPaths are not in project lookup", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  # Mutate the first scenario to have a literal path that the project
+  # does not declare. (Parser would have rejected this, but a Chapter
+  # 7+ programmatic mutation could land us here.)
+  # ScenarioData is R6: grab the reference and mutate the public field
+  # in place so we don't trigger the read-only `scenarios` setter on Project.
+  sc <- project$scenarios[[1L]]
+  sc$outputPaths <- c(sc$outputPaths, "Organism|NotDeclared|Path")
+
+  expect_error(
+    esqlabsR:::.projectToJson(project),
+    "outputPaths not declared.*Organism\\|NotDeclared\\|Path"
+  )
+})
