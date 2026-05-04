@@ -142,6 +142,16 @@
       simTimeStr <- paste(intervals, collapse = "; ")
     }
 
+    if (sc$simulateSteadyState && is.null(sc$steadyStateTimeUnit)) {
+      stop(
+        "Scenario '",
+        sc$scenarioName,
+        "' has simulateSteadyState=TRUE but steadyStateTimeUnit is NULL. ",
+        "Set steadyStateTimeUnit (e.g. \"min\") so the value can round-trip.",
+        call. = FALSE
+      )
+    }
+
     list(
       name = sc$scenarioName,
       individualId = sc$individualId,

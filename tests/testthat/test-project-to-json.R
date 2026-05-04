@@ -242,3 +242,17 @@ test_that(".scenariosToJson errors when scenario outputPaths are not in project 
     "outputPaths not declared.*Organism\\|NotDeclared\\|Path"
   )
 })
+
+test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a unit", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  # Aciclovir_iv has simulateSteadyState=FALSE and no unit.
+  # Flip the flag without setting the unit — the round-trip cannot
+  # carry the steady-state time, so the serializer must reject it.
+  sc <- project$scenarios[["Aciclovir_iv"]]
+  sc$simulateSteadyState <- TRUE
+
+  expect_error(
+    esqlabsR:::.projectToJson(project),
+    "Aciclovir_iv.*simulateSteadyState=TRUE.*steadyStateTimeUnit"
+  )
+})
