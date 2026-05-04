@@ -256,3 +256,34 @@ test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a un
     "Aciclovir_iv.*simulateSteadyState=TRUE.*steadyStateTimeUnit"
   )
 })
+
+test_that("round-trip preserves empty modelParameters as a JSON array", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[["Aciclovir_iv"]]
+  sc$modelParameters <- character(0)
+
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(project, out)
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+
+  # Empty modelParameters must serialise as `[]`, not `null`, so the
+  # JSON shape stays an array.
+  mp <- raw$scenarios[[1L]]$modelParameters
+  expect_type(mp, "list")
+  expect_length(mp, 0L)
+})
+
+test_that("round-trip preserves empty outputPathIds as a JSON array", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[["Aciclovir_iv"]]
+  sc$outputPaths <- NULL
+
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(project, out)
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+
+  # Absent / empty outputPaths must serialise as `[]`, not `null`.
+  ids <- raw$scenarios[[1L]]$outputPathIds
+  expect_type(ids, "list")
+  expect_length(ids, 0L)
+})

@@ -116,7 +116,12 @@
   outputPathsLookup <- unlist(project$outputPaths, use.names = TRUE)
 
   unname(lapply(scenarios, function(sc) {
-    outputPathIds <- NULL
+    # Default to `list()` so the JSON output is `[]` when the scenario
+    # has no resolved paths (whether the JSON had `outputPathIds: []`,
+    # omitted the key, or `sc$outputPaths` was set to `NULL`
+    # programmatically). Round-trip preserves array-shape symmetry with
+    # the parser, which collapses absent and empty-array to `NULL`.
+    outputPathIds <- list()
     if (!is.null(sc$outputPaths)) {
       idx <- match(sc$outputPaths, outputPathsLookup)
       if (anyNA(idx)) {
@@ -161,11 +166,10 @@
         NULL
       },
       readPopulationFromCSV = sc$readPopulationFromCSV,
-      modelParameters = if (is.null(sc$modelParameters)) {
-        NULL
-      } else {
-        as.list(sc$modelParameters)
-      },
+      # `as.list(NULL)` -> `list()`; this collapses both "key absent" and
+      # "empty array" in the parsed scenario to JSON `[]`. Matches the
+      # end-state serializer in `json-as-primary-input-v2`.
+      modelParameters = as.list(sc$modelParameters),
       applicationProtocol = if (
         is.null(sc$applicationProtocol) || is.na(sc$applicationProtocol)
       ) {
