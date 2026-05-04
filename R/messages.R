@@ -500,9 +500,8 @@ messages$invalidConfigurationPropertyFromExcel <- function(
   configurationType
 ) {
   cliFormat(
-    "Trying to apply property {.arg {propertyName}} that is not supported by 
-    the configuration {.var {configurationType}}! Check column names in the 
-    excel file defining plot configurations."
+    "Trying to apply property {.arg {propertyName}} that is not supported by the configuration {.var {configurationType}}!",
+    "Check column names in the excel file defining plot configurations."
   )
 }
 

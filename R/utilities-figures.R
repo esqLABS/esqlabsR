@@ -316,26 +316,37 @@ createPlotsFromExcel <- function(
       # All undefined variables (NA in data.frame row) are set to NULL
       plotConfigurationRow <- sapply(
         dfPlotConfigurations[rowIndex, ],
-        function(x){
-          if(anyNA(x)){
+        function(x) {
+          if (anyNA(x)) {
             return()
-            }
+          }
           return(x)
-        }, 
+        },
         simplify = FALSE,
         USE.NAMES = TRUE
       )
-        
+
       .validateLogScaleAxisLimits(
-        plotConfigurationRow, 
+        plotConfigurationRow,
         plotID = plotConfigurationRow$plotID
       )
       allowedPlotType <- isIncluded(
         dfPlotConfigurations$plotType[rowIndex],
-        parentValues = c("individual", "population", "observedVsSimulated", "residualsVsSimulated", "residualsVsTime")
+        parentValues = c(
+          "individual",
+          "population",
+          "observedVsSimulated",
+          "residualsVsSimulated",
+          "residualsVsTime"
         )
-      if(!allowedPlotType){
-        stop(messages$missingOrWrongPlotType(dfPlotConfigurations$plotType[rowIndex]), call. = FALSE)
+      )
+      if (!allowedPlotType) {
+        stop(
+          messages$missingOrWrongPlotType(dfPlotConfigurations$plotType[
+            rowIndex
+          ]),
+          call. = FALSE
+        )
       }
       dataCombined <- dataCombinedList[[plotConfigurationRow$DataCombinedName]]
       switch(
@@ -419,10 +430,10 @@ createPlotsFromExcel <- function(
               defaultConfiguration
             ),
             xyScale = .fieldFromExcel(
-              "xyScale", 
-              plotConfigurationRow, 
+              "xyScale",
+              plotConfigurationRow,
               defaultConfiguration
-              ),
+            ),
             comparisonLineVector = .fieldFromExcel(
               "foldDistance",
               plotConfigurationRow,
@@ -659,7 +670,9 @@ createPlotsFromExcel <- function(
       if (is.null(scaleValue)) {
         next
       }
-      if (all(scaleValue == ospsuite.plots::AxisScales$log, 0 %in% limitsValue)) {
+      if (
+        all(scaleValue == ospsuite.plots::AxisScales$log, 0 %in% limitsValue)
+      ) {
         warning(messages$warningLogScaleWithZeroLimit(
           plotID = plotID,
           axisLimitsField = limitsField,
@@ -763,6 +776,37 @@ createPlotsFromExcel <- function(
   dfPlotConfigurations,
   dataCombinedNames
 ) {
+  expectedExcelColumns <- c(
+    "plotID",
+    "DataCombinedName",
+    "plotType",
+    "title",
+    "xUnit",
+    "yUnit",
+    "xAxisScale",
+    "yAxisScale",
+    "xValuesLimits",
+    "yValuesLimits",
+    "xAxisLimits",
+    "yAxisLimits",
+    "aggregation",
+    "quantiles",
+    "nsd",
+    "foldDistance",
+    "subtitle",
+    "lloqOnBothAxes"
+  )
+  validConfigurationProperties <- isIncluded(
+    names(dfPlotConfigurations),
+    expectedExcelColumns
+  )
+  if (!validConfigurationProperties) {
+    stop(messages$invalidConfigurationPropertyFromExcel(
+      propertyName = setdiff(names(dfPlotConfigurations), expectedExcelColumns),
+      configurationType = "DefaultPlotConfiguration"
+    ))
+  }
+
   # mandatory column DataCombinedName is empty - throw error
   missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
   if (missingLabel > 0) {
@@ -1112,7 +1156,7 @@ createPlotsFromExcel <- function(
 
 
 #' ggplot2 theme layer default values to add on each plot defined in Excel
-#' 
+#'
 #' @keywords internal
 .excelTheme <- function() {
   ggplot2::theme(
@@ -1139,14 +1183,14 @@ createPlotsFromExcel <- function(
 }
 
 #' Map field name from PlotConfiguration table with `{ospsuite.plots}` function
-#' If the field is undefined (either empty cell or undefined column), 
-#' `plotConfigurationRow[[fieldName]]` will be `NULL` and 
+#' If the field is undefined (either empty cell or undefined column),
+#' `plotConfigurationRow[[fieldName]]` will be `NULL` and
 #' default `{esqlabsR}` or `{ospsuite.plots}` values will be used
 #'
 #' @param fieldName Name of field to map in Excel table
-#' @param plotConfigurationRow 
+#' @param plotConfigurationRow
 #' Named list of values defined in a row of an Excel PlotConfiguration table
-#' @param defaultConfiguration 
+#' @param defaultConfiguration
 #' Named list of default `{esqlabsR}` or `{ospsuite}` values for the plot configuration
 #' @importFrom stats na.exclude
 #' @keywords internal
@@ -1161,7 +1205,7 @@ createPlotsFromExcel <- function(
     }
     foldDistance <- .parseExcelMultiValueField(
       plotConfigurationRow[["foldDistance"]]
-      )
+    )
     return(ospsuite.plots::getFoldDistanceList(folds = foldDistance))
   }
   if (fieldName %in% c("xAxisScale", "yAxisScale")) {
@@ -1175,16 +1219,16 @@ createPlotsFromExcel <- function(
   # Default value for xyScale is log creating log-log obs vs simulated
   if (fieldName %in% "xyScale") {
     xyScale <- c(
-      plotConfigurationRow[["xAxisScale"]], 
+      plotConfigurationRow[["xAxisScale"]],
       plotConfigurationRow[["yAxisScale"]]
-      ) |>
+    ) |>
       unique()
     # Default value for xyScale is log creating log-log obs vs simulated
-    if(isEmpty(xyScale)){
+    if (isEmpty(xyScale)) {
       return(defaultConfiguration[[fieldName]])
     }
     # Note that at this stage .validateLogScaleAxisLimits was already assessed
-    if (length(xyScale) > 1){
+    if (length(xyScale) > 1) {
       stop(
         messages$conflictingAxesScales(plotConfigurationRow$plotID),
         call. = FALSE
@@ -1193,8 +1237,8 @@ createPlotsFromExcel <- function(
     return(xyScale)
   }
   # Issue #991: default value should be TRUE
-  if (fieldName %in% "lloqOnBothAxes"){
-    if(is.null(plotConfigurationRow[["lloqOnBothAxes"]])){
+  if (fieldName %in% "lloqOnBothAxes") {
+    if (is.null(plotConfigurationRow[["lloqOnBothAxes"]])) {
       return(TRUE)
     }
     return(as.logical(plotConfigurationRow[["lloqOnBothAxes"]]))
@@ -1206,10 +1250,10 @@ createPlotsFromExcel <- function(
     }
     valuesLimits <- .parseExcelMultiValueField(
       plotConfigurationRow[[fieldName]]
-      )
+    )
     return(list(limits = valuesLimits))
   }
-  # Any other undefined field will use the default value 
+  # Any other undefined field will use the default value
   # matching its name within ospsuite.plots function arguments
   if (isEmpty(plotConfigurationRow[[fieldName]])) {
     if (is.language(defaultConfiguration[[fieldName]])) {
@@ -1226,7 +1270,10 @@ createPlotsFromExcel <- function(
 #' @returns A list
 #' @keywords internal
 .plotConfigurationFromType <- function(plotType = NULL) {
-  allowedPlotType <- isIncluded(plotType, c("timeProfiles", "spiderPlot", "tornadoPlot"))
+  allowedPlotType <- isIncluded(
+    plotType,
+    c("timeProfiles", "spiderPlot", "tornadoPlot")
+  )
   if (!allowedPlotType) {
     warning(messages$wrongPlotTypeInPlotConfiguration(plotType), call. = FALSE)
     return(NULL)
@@ -1270,15 +1317,15 @@ createPlotsFromExcel <- function(
     return(spiderPlotConfiguration)
   }
   tornadoPlotConfiguration <- list(
-      legendPosition = "right",
-      legendTitle = "Parameter Factor",
-      subtitle = NULL,
-      title = NULL,
-      titleSize = 14,
-      linesColor = esqlabsEnv$colorPalette,
-      linesAlpha = 0.75,
-      xLabel = "Change in PK parameter [% relative to baseline]",
-      yLabel = "Parameter"
-    )
+    legendPosition = "right",
+    legendTitle = "Parameter Factor",
+    subtitle = NULL,
+    title = NULL,
+    titleSize = 14,
+    linesColor = esqlabsEnv$colorPalette,
+    linesAlpha = 0.75,
+    xLabel = "Change in PK parameter [% relative to baseline]",
+    yLabel = "Parameter"
+  )
   return(tornadoPlotConfiguration)
 }

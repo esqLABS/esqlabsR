@@ -64,36 +64,6 @@ test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defau
   expect_equal(myPGC$tagLevels, "a")
 })
 
-test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
-  skip("Skipping due to migration towards ospsuite.plots")
-  defaultConfig <- ospsuite::DefaultPlotConfiguration$new()
-  esqlabsConfig <- createEsqlabsPlotConfiguration()
-
-  # Check if all fields from DefaultPlotConfiguration are present in esqLabs configuration
-  defaultFields <- names(defaultConfig)
-  esqlabsFields <- names(esqlabsConfig)
-
-  missingFields <- setdiff(defaultFields, esqlabsFields)
-  expect_true(
-    length(missingFields) == 0,
-    info = paste("Missing fields:", paste(missingFields, collapse = ", "))
-  )
-
-  # Only override fields where differences are intentional
-  # and backward compatibility with `ospsuite` plotting functions was verified
-  esqlabsConfig$linesColor <- NULL
-  esqlabsConfig$legendPosition <- NULL
-
-  # Check if the types of the remaining fields are the same between both configurations
-  for (field in defaultFields) {
-    expect_equal(
-      class(esqlabsConfig[[field]]),
-      class(defaultConfig[[field]]),
-      info = paste("Field", field, "has different types")
-    )
-  }
-})
-
 # single observed and simulated datasets
 oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
 

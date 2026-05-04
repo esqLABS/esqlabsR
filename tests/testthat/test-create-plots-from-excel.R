@@ -844,7 +844,6 @@ test_that("It throws an error if a plot grid requires a plot id that is not defi
 })
 
 test_that("It throws an error when trying to set a property that is not supported by the configuration", {
-  skip("Currently properties that are not supported are simply discarded")
   tempDir <- tempdir()
   projectConfigurationLocal <- projectConfiguration$clone()
   projectConfigurationLocal$configurationsFolder <- tempDir
