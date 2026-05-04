@@ -1,0 +1,160 @@
+{
+  "schemaVersion": "2.0",
+  "esqlabsRVersion": "6.0.0",
+  "filePaths": {
+    "modelFolder": "Models/Simulations/",
+    "configurationsFolder": "Configurations/",
+    "modelParamsFile": "ModelParameters.xlsx",
+    "individualsFile": "Individuals.xlsx",
+    "populationsFile": "Populations.xlsx",
+    "populationsFolder": "Populations",
+    "scenariosFile": "Scenarios.xlsx",
+    "applicationsFile": "Applications.xlsx",
+    "plotsFile": "Plots.xlsx",
+    "dataFolder": "Data/",
+    "outputFolder": "Results/"
+  },
+  "observedData": [],
+  "outputPaths": {
+    "Aciclovir_PVB": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+    "Aciclovir_fat_cell": "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+  },
+  "scenarios": [
+    {
+      "name": "TestScenario",
+      "individualId": "Indiv1",
+      "populationId": null,
+      "readPopulationFromCSV": false,
+      "modelParameters": ["Global"],
+      "applicationProtocol": "Aciclovir_iv_250mg",
+      "simulationTime": "0, 24, 60",
+      "simulationTimeUnit": "h",
+      "steadyState": false,
+      "steadyStateTime": null,
+      "steadyStateTimeUnit": null,
+      "overwriteFormulasInSS": false,
+      "modelFile": "Aciclovir.pkml",
+      "outputPathIds": ["Aciclovir_PVB"]
+    },
+    {
+      "name": "TestScenario_steadystate",
+      "individualId": "Indiv1",
+      "populationId": null,
+      "readPopulationFromCSV": false,
+      "modelParameters": ["Global", "Aciclovir"],
+      "applicationProtocol": "Aciclovir_iv_250mg",
+      "simulationTime": "0, 24, 60",
+      "simulationTimeUnit": "h",
+      "steadyState": true,
+      "steadyStateTime": 500,
+      "steadyStateTimeUnit": "min",
+      "overwriteFormulasInSS": false,
+      "modelFile": "Aciclovir.pkml",
+      "outputPathIds": ["Aciclovir_PVB", "Aciclovir_fat_cell"]
+    },
+    {
+      "name": "PopulationScenario",
+      "individualId": "Indiv1",
+      "populationId": "TestPopulation",
+      "readPopulationFromCSV": false,
+      "modelParameters": ["Global"],
+      "applicationProtocol": "Aciclovir_iv_250mg",
+      "simulationTime": "0, 12, 20",
+      "simulationTimeUnit": "h",
+      "steadyState": false,
+      "steadyStateTime": null,
+      "steadyStateTimeUnit": null,
+      "overwriteFormulasInSS": false,
+      "modelFile": "Aciclovir.pkml",
+      "outputPathIds": ["Aciclovir_PVB"]
+    },
+    {
+      "name": "PopulationScenarioFromCSV",
+      "individualId": "Indiv1",
+      "populationId": "TestPopulation",
+      "readPopulationFromCSV": true,
+      "modelParameters": ["Global"],
+      "applicationProtocol": "Aciclovir_iv_250mg",
+      "simulationTime": "0, 12, 20",
+      "simulationTimeUnit": "h",
+      "steadyState": false,
+      "steadyStateTime": null,
+      "steadyStateTimeUnit": null,
+      "overwriteFormulasInSS": false,
+      "modelFile": "Aciclovir.pkml",
+      "outputPathIds": ["Aciclovir_PVB"]
+    }
+  ],
+  "modelParameters": {
+    "Global": [
+      {
+        "containerPath": "Organism|Liver",
+        "parameterName": "EHC continuous fraction",
+        "value": 1,
+        "units": null
+      }
+    ],
+    "Aciclovir": [
+      {
+        "containerPath": "Aciclovir",
+        "parameterName": "Lipophilicity",
+        "value": -0.1,
+        "units": "Log Units"
+      }
+    ]
+  },
+  "individuals": [
+    {
+      "individualId": "Indiv1",
+      "species": "Human",
+      "population": "European_ICRP_2002",
+      "gender": "MALE",
+      "weight": 73,
+      "height": 176,
+      "age": 30,
+      "proteinOntogenies": null,
+      "parameters": [
+        {
+          "containerPath": "Organism|Kidney",
+          "parameterName": "GFR",
+          "value": 90,
+          "units": "ml/min"
+        }
+      ]
+    }
+  ],
+  "populations": [
+    {
+      "populationId": "TestPopulation",
+      "species": "Human",
+      "population": "European_ICRP_2002",
+      "numberOfIndividuals": 2,
+      "proportionOfFemales": 0,
+      "weightMin": null,
+      "weightMax": null,
+      "weightUnit": "kg",
+      "heightMin": null,
+      "heightMax": null,
+      "heightUnit": "cm",
+      "ageMin": 18,
+      "ageMax": 65,
+      "BMIMin": null,
+      "BMIMax": null,
+      "BMIUnit": "kg/m²",
+      "proteinOntogenies": null
+    }
+  ],
+  "applications": {
+    "Aciclovir_iv_250mg": {
+      "parameters": [
+        {
+          "containerPath": "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+          "parameterName": "Dose",
+          "value": 250,
+          "units": "mg"
+        }
+      ]
+    }
+  },
+  "plots": null
+}

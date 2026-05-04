@@ -58,7 +58,7 @@ test_that(".loadProjectJson() preserves outputPaths as a named list", {
   )
 })
 
-test_that(".loadProjectJson() parses scenarios into ScenarioData objects keyed by name", {
+test_that(".loadProjectJson() parses scenarios into Scenario objects keyed by name", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
   expect_type(project$scenarios, "list")
@@ -69,7 +69,7 @@ test_that(".loadProjectJson() parses scenarios into ScenarioData objects keyed b
   )
 
   first <- project$scenarios[["Aciclovir_iv"]]
-  expect_s3_class(first, "ScenarioData")
+  expect_s3_class(first, "Scenario")
   expect_identical(first$scenarioName, "Aciclovir_iv")
   expect_identical(first$individualId, "Adult_male")
   expect_null(first$populationId)

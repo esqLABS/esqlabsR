@@ -68,6 +68,48 @@ Project <- R6::R6Class(
       private$.filePaths
     },
 
+    #' @field configurationsFolder Read-only. Absolute path to the
+    #'   `configurationsFolder` slot under `filePaths`, resolved
+    #'   relative to `projectDirPath`. `NULL` when the slot is unset.
+    configurationsFolder = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field configurationsFolder} is read-only.")
+      }
+      private$.clean_path(
+        private$.filePaths$configurationsFolder,
+        parent = private$.projectDirPath
+      )
+    },
+
+    #' @field modelFolder Read-only. Absolute path to the `modelFolder`
+    #'   slot under `filePaths`, resolved relative to `projectDirPath`.
+    #'   `NULL` when the slot is unset.
+    modelFolder = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field modelFolder} is read-only.")
+      }
+      private$.clean_path(
+        private$.filePaths$modelFolder,
+        parent = private$.projectDirPath
+      )
+    },
+
+    #' @field populationsFolder Read-only. Absolute path to the
+    #'   `populationsFolder` slot under `filePaths`, resolved relative
+    #'   to `configurationsFolder` (per ADR-0001 -- this is runtime
+    #'   infrastructure for `runScenarios()`, not Excel-bridge metadata,
+    #'   even though it lives in the `filePaths` group of the JSON).
+    #'   `NULL` when the slot is unset.
+    populationsFolder = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field populationsFolder} is read-only.")
+      }
+      private$.clean_path(
+        private$.filePaths$populationsFolder,
+        parent = self$configurationsFolder
+      )
+    },
+
     #' @field outputPaths Named list mapping output-path IDs to literal output
     #'   path strings.
     outputPaths = function(value) {
@@ -75,7 +117,7 @@ Project <- R6::R6Class(
       private$.outputPaths
     },
 
-    #' @field scenarios Named list of `ScenarioData` objects, indexed
+    #' @field scenarios Named list of `Scenario` objects, indexed
     #'   by scenario name. Built by `.parseScenarios()` from the
     #'   raw JSON `scenarios` array; round-trips back through
     #'   `.scenariosToJson()`.
@@ -138,7 +180,7 @@ Project <- R6::R6Class(
     #' @param projectDirPath Absolute path of the source directory, or `NULL`.
     #' @param filePaths Named list of file paths.
     #' @param outputPaths Named list of output-path IDs to paths.
-    #' @param scenarios Named list of `ScenarioData` objects (typically
+    #' @param scenarios Named list of `Scenario` objects (typically
     #'   produced by `.parseScenarios()`), indexed by scenario name.
     #' @param modelParameters Named list of parameter sets.
     #' @param individuals List of individual entries.
@@ -224,6 +266,56 @@ Project <- R6::R6Class(
     }
   ),
   private = list(
+    .replace_env_var = function(path) {
+      # Expand $VAR / ${VAR} references in `path`. Skip the system PATH
+      # variable because expanding it inside a filesystem path would
+      # never be useful and is the canonical "I forgot to escape" footgun.
+      if (length(path) == 0L) {
+        return(path)
+      }
+      pattern <- "\\$\\{?([A-Za-z_][A-Za-z0-9_]*)\\}?"
+      m <- gregexpr(pattern, path, perl = TRUE)
+      regmatches(path, m) <- lapply(regmatches(path, m), function(matches) {
+        vapply(matches, function(match) {
+          name <- sub(pattern, "\\1", match)
+          if (identical(name, "PATH")) {
+            return(match)
+          }
+          val <- Sys.getenv(name, unset = NA)
+          if (is.na(val)) match else val
+        }, character(1))
+      })
+      path
+    },
+
+    .clean_path = function(
+      path,
+      parent = NULL,
+      must_work = TRUE,
+      replace_env_vars = TRUE
+    ) {
+      if (
+        is.null(path) ||
+          length(path) == 0L ||
+          (length(path) == 1L && is.na(path))
+      ) {
+        return(NULL)
+      }
+      if (replace_env_vars) {
+        path <- private$.replace_env_var(path)
+      }
+      if (
+        is.null(parent) ||
+          (length(parent) == 1L && is.na(parent)) ||
+          fs::is_absolute_path(path)
+      ) {
+        abs_path <- fs::path_abs(path)
+      } else {
+        abs_path <- fs::path_abs(file.path(parent, path))
+      }
+      abs_path
+    },
+
     .schemaVersion = NULL,
     .esqlabsRVersion = NULL,
     .jsonPath = NULL,

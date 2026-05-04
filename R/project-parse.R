@@ -1,4 +1,4 @@
-# v2.0 Project.json parser (internal, work-in-progress) ----
+# v2.0 Project.json parser (internal) ----
 #
 # Reads a v2.0 `Project.json` file from disk and returns an internal `Project`
 # object. The parser is JSON-faithful: every section ends up in the `Project`
@@ -9,8 +9,7 @@
 # Distinct from the existing v6 `ProjectConfiguration` JSON snapshot loader in
 # `R/utilities-config-json.R`: that one consumes Excel-shaped snapshots
 # (`column_names` / `rows`); this one consumes the new domain-typed v2.0
-# schema. The two coexist because v2.0 is not yet wired into any runtime
-# entry point on this branch.
+# schema.
 
 #' Internal: load a v2.0 `Project.json` into a `Project` object.
 #'
@@ -67,7 +66,7 @@
 }
 
 # Internal: parse the JSON `scenarios` array into a named list of
-# `ScenarioData` objects, keyed by scenario name.
+# `Scenario` objects, keyed by scenario name.
 #
 # `scenariosData` is the raw `simplifyVector = FALSE` shape produced by
 # `jsonlite::fromJSON()`: a list of plain named lists. `outputPaths` is
@@ -89,7 +88,7 @@
 
   result <- list()
   for (entry in scenariosData) {
-    sc <- ScenarioData$new()
+    sc <- Scenario$new()
     sc$scenarioName <- entry$name
     sc$modelFile <- entry$modelFile
     sc$applicationProtocol <- entry$applicationProtocol %||% NA
@@ -148,7 +147,10 @@
           call. = FALSE
         )
       }
-      sc$outputPaths <- unlist(outputPaths[pathIds], use.names = FALSE)
+      sc$outputPaths <- setNames(
+        unlist(outputPaths[pathIds], use.names = FALSE),
+        pathIds
+      )
     }
 
     result[[entry$name]] <- sc

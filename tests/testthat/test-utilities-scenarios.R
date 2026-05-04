@@ -2,6 +2,7 @@ defaultOutputPath <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Periphera
 
 test_that("It stops with an error if the excel file defines a parameter that is
           not present", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -19,6 +20,7 @@ test_that("It stops with an error if the excel file defines a parameter that is
 })
 
 test_that("All working scenarios in testProject can be created without errors", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -42,6 +44,7 @@ test_that("All working scenarios in testProject can be created without errors", 
 })
 
 test_that("It runs one scenario without specifying output paths", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -69,6 +72,7 @@ test_that("It runs one scenario without specifying output paths", {
 })
 
 test_that("It runs one scenario with specifying output paths", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -103,6 +107,7 @@ test_that("It runs one scenario with specifying output paths", {
 })
 
 test_that("It runs two scenarios", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -143,6 +148,7 @@ test_that("It runs two scenarios", {
 })
 
 test_that("It runs population and individual scenarios", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -175,6 +181,7 @@ test_that("It runs population and individual scenarios", {
 })
 
 test_that("It saves and loads scenario results for scenario names with forbidden characters", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -229,6 +236,7 @@ test_that("It saves and loads scenario results for scenario names with forbidden
 })
 
 test_that("The hierarchy of parametrization is correct", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
@@ -279,6 +287,7 @@ test_that("loadScenarioResults throws an error when files don't exist", {
 })
 
 test_that("It correctly runs when only one scenario (not a list) is provided", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   # Create a fresh temporary project for this test
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config

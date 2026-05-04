@@ -113,8 +113,6 @@
     return(list())
   }
 
-  outputPathsLookup <- unlist(project$outputPaths, use.names = TRUE)
-
   unname(lapply(scenarios, function(sc) {
     # Default to `list()` so the JSON output is `[]` when the scenario
     # has no resolved paths (whether the JSON had `outputPathIds: []`,
@@ -123,18 +121,22 @@
     # the parser, which collapses absent and empty-array to `NULL`.
     outputPathIds <- list()
     if (!is.null(sc$outputPaths)) {
-      idx <- match(sc$outputPaths, outputPathsLookup)
-      if (anyNA(idx)) {
-        unknown <- sc$outputPaths[is.na(idx)]
-        stop(
-          "Scenario '",
-          sc$scenarioName,
-          "' has outputPaths not declared in project$outputPaths: ",
-          paste(unknown, collapse = ", "),
-          call. = FALSE
+      pathIds <- names(sc$outputPaths)
+      if (is.null(pathIds) || any(pathIds == "")) {
+        cli::cli_abort(
+          c(
+            "Scenario {.val {sc$scenarioName}} has {.field outputPaths} without ids.",
+            "i" = "Expected a named character vector: id-as-name, literal-path-as-value."
+          )
         )
       }
-      outputPathIds <- as.list(names(outputPathsLookup)[idx])
+      unknown <- setdiff(pathIds, names(project$outputPaths))
+      if (length(unknown) > 0) {
+        cli::cli_abort(
+          "Scenario {.val {sc$scenarioName}} references unknown outputPathIds: {.val {unknown}}."
+        )
+      }
+      outputPathIds <- as.list(pathIds)
     }
 
     simTimeStr <- NULL

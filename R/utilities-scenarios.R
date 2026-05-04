@@ -176,7 +176,7 @@ createScenarios <- function(
 
   scenarios <- purrr::map(
     scenarioConfigurations,
-    ~ Scenario$new(
+    ~ LegacyScenario$new(
       .x,
       customParams = customParams,
       stopIfParameterNotFound = stopIfParameterNotFound
