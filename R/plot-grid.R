@@ -1,7 +1,7 @@
 #' Convert angle into label orientation
-#' 
+#'
 #' @param angle numeric angle in degrees
-#' 
+#'
 #' @keywords internal
 .convertAngleToOrientation <- function(angle) {
   # use modulo 360 to in case minus angles were provided
@@ -17,7 +17,7 @@
 }
 
 #' List of default text sizes for plot annotations.
-#' 
+#'
 #' @keywords internal
 .PlotAnnotationTextSize <- ospsuite.utils::enum(
   c(
@@ -26,7 +26,7 @@
     "plotGridSubtitleSize" = 12,
     "plotGridCaptionSize" = 10,
     "plotGridTagSize" = 8,
-    
+
     # annotations for individual plots
     "plotTitleSize" = 12,
     "plotSubtitleSize" = 10,
@@ -84,8 +84,8 @@ plotGrid <- function(plotGridConfiguration) {
           family = plotGridConfiguration$titleFontFamily,
           halign = plotGridConfiguration$titleHorizontalJustification,
           valign = plotGridConfiguration$titleVerticalJustification,
-          hjust = plotGridConfiguration$captionHorizontalJustification,
-          vjust = plotGridConfiguration$captionVerticalJustification,
+          hjust = plotGridConfiguration$titleHorizontalJustification,
+          vjust = plotGridConfiguration$titleVerticalJustification,
           orientation = .convertAngleToOrientation(
             plotGridConfiguration$titleAngle
           ),
@@ -104,8 +104,8 @@ plotGrid <- function(plotGridConfiguration) {
           family = plotGridConfiguration$subtitleFontFamily,
           halign = plotGridConfiguration$subtitleHorizontalJustification,
           valign = plotGridConfiguration$subtitleVerticalJustification,
-          hjust = plotGridConfiguration$captionHorizontalJustification,
-          vjust = plotGridConfiguration$captionVerticalJustification,
+          hjust = plotGridConfiguration$subtitleHorizontalJustification,
+          vjust = plotGridConfiguration$subtitleVerticalJustification,
           orientation = .convertAngleToOrientation(
             plotGridConfiguration$subtitleAngle
           ),
@@ -160,7 +160,7 @@ plotGrid <- function(plotGridConfiguration) {
 #' @description
 #'
 #' An `R6` class defining the configuration for `{patchwork}` plot grid used to
-#' create a grid of plots. 
+#' create a grid of plots.
 #' It holds values for all relevant plot properties.
 #'
 #' # Customizing
