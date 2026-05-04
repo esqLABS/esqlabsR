@@ -58,6 +58,22 @@
       "overwriteFormulasInSS": false,
       "modelFile": "Aciclovir.pkml",
       "outputPathIds": ["Aciclovir_PVB"]
+    },
+    {
+      "name": "Aciclovir_iv_steadystate",
+      "individualId": "Adult_male",
+      "populationId": null,
+      "readPopulationFromCSV": false,
+      "modelParameters": ["Global", "Aciclovir"],
+      "applicationProtocol": "Aciclovir_iv_250mg",
+      "simulationTime": "0, 24, 60",
+      "simulationTimeUnit": "h",
+      "steadyState": true,
+      "steadyStateTime": 1,
+      "steadyStateTimeUnit": "h",
+      "overwriteFormulasInSS": false,
+      "modelFile": "Aciclovir.pkml",
+      "outputPathIds": ["Aciclovir_fat_cell", "Aciclovir_PVB"]
     }
   ],
   "modelParameters": {

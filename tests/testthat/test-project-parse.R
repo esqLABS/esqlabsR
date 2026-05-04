@@ -62,7 +62,7 @@ test_that(".loadProjectJson() preserves scenarios as a list of named lists", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
   expect_type(project$scenarios, "list")
-  expect_length(project$scenarios, 2L)
+  expect_length(project$scenarios, 3L)
 
   first <- project$scenarios[[1L]]
   expect_identical(first$name, "Aciclovir_iv")
@@ -219,7 +219,7 @@ test_that("Project$print() summarises section counts", {
 
   expect_output(print(project), "<Project>")
   expect_output(print(project), "schema 2.0")
-  expect_output(print(project), "scenarios:\\s+2")
+  expect_output(print(project), "scenarios:\\s+3")
   expect_output(print(project), "individuals:\\s+1")
   expect_output(print(project), "populations:\\s+1")
 })
