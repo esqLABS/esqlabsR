@@ -82,3 +82,49 @@ test_that(".parseScenarios defaults applicationProtocol to NA when JSON has null
   expect_length(result, 1L)
   expect_true(is.na(result[["X"]]$applicationProtocol))
 })
+
+test_that(".parseScenarios converts steadyStateTime to base units (minutes)", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[["Aciclovir_iv_steadystate"]]
+
+  expect_true(sc$simulateSteadyState)
+  # 1 hour -> 60 minutes
+  expect_equal(sc$steadyStateTime, 60)
+  expect_identical(sc$steadyStateTimeUnit, "h")
+})
+
+test_that(".parseScenarios leaves simulateSteadyState=FALSE when JSON omits/sets false", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[["Aciclovir_iv"]]
+
+  expect_false(sc$simulateSteadyState)
+  expect_null(sc$steadyStateTimeUnit)
+  # The class default of 1000 stays put when JSON's steadyStateTime is null.
+  expect_identical(sc$steadyStateTime, 1000)
+})
+
+test_that(".parseScenarios errors when steadyStateTime set without unit", {
+  raw <- list(
+    list(
+      name = "BadSS",
+      individualId = "i",
+      modelFile = "m.pkml",
+      steadyStateTime = 5,
+      steadyStateTimeUnit = NULL
+    )
+  )
+  expect_error(
+    esqlabsR:::.parseScenarios(raw, list()),
+    "BadSS.*steadyStateTime.*steadyStateTimeUnit"
+  )
+})
+
+test_that(".parseScenarios parses simulationTime to a list of length-3 numerics", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  sc <- project$scenarios[["Aciclovir_iv"]]
+
+  expect_type(sc$simulationTime, "list")
+  expect_length(sc$simulationTime, 1L)
+  expect_identical(sc$simulationTime[[1L]], c(0, 24, 60))
+  expect_identical(sc$simulationTimeUnit, "h")
+})

@@ -108,6 +108,33 @@
     if (!is.null(entry$overwriteFormulasInSS)) {
       sc$overwriteFormulasInSS <- entry$overwriteFormulasInSS
     }
+    if (!is.null(entry$simulationTime)) {
+      sc$simulationTime <- .parseSimulationTimeIntervals(
+        entry$simulationTime
+      )
+      sc$simulationTimeUnit <- entry$simulationTimeUnit
+    }
+    if (isTRUE(entry$steadyState)) {
+      sc$simulateSteadyState <- TRUE
+    }
+    if (!is.null(entry$steadyStateTime)) {
+      if (is.null(entry$steadyStateTimeUnit)) {
+        stop(
+          "Scenario '",
+          entry$name,
+          "' has 'steadyStateTime' set but ",
+          "'steadyStateTimeUnit' is null. Please specify a unit ",
+          "(e.g. \"min\").",
+          call. = FALSE
+        )
+      }
+      sc$steadyStateTime <- ospsuite::toBaseUnit(
+        quantityOrDimension = ospDimensions$Time,
+        values = entry$steadyStateTime,
+        unit = entry$steadyStateTimeUnit
+      )
+      sc$steadyStateTimeUnit <- entry$steadyStateTimeUnit
+    }
 
     result[[entry$name]] <- sc
   }
