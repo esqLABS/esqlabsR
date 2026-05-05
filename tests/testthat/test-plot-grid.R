@@ -2,7 +2,6 @@ test_that("plots grid produces error with wrong input type", {
   expect_error(plotGrid(DataSet$new(name = "DS")))
 })
 
-setESQTheme()
 ls_plots <- list(
   # first plot
   ospsuite.plots::plotBoxWhisker(
@@ -82,6 +81,7 @@ test_that("Plot Grid can have very long texts and contain plots with very long t
       mapping = ggplot2::aes(x = am, y = wt),
       outliers = FALSE
     ) +
+      esqlabsR:::.excelTheme() +
       ggplot2::labs(
         title = paste(
           "Title: This is a",
@@ -94,6 +94,7 @@ test_that("Plot Grid can have very long texts and contain plots with very long t
       data = ToothGrowth,
       mapping = ggplot2::aes(x = supp, y = len)
     ) +
+      esqlabsR:::.excelTheme() +
       ggplot2::labs(
         title = paste(
           "Title: This is a",
