@@ -1717,11 +1717,21 @@ test_that("It shows a warning when xAxisScale is log and xAxisLimits contain 0",
       )
 
       expect_warning(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
+        withCallingHandlers(
+          createPlotsFromExcel(
+            simulatedScenarios = simulatedScenarios,
+            observedData = observedData,
+            projectConfiguration = projectConfigurationLocal,
+            stopIfNotFound = TRUE
+          ),
+          warning = function(w) {
+            if (grepl(
+              "log-10 transformation|Position guide is perpendicular",
+              conditionMessage(w)
+            )) {
+              invokeRestart("muffleWarning")
+            }
+          }
         ),
         regexp = messages$warningLogScaleWithZeroLimit(
           plotID = "P1",
@@ -1759,11 +1769,21 @@ test_that("It shows a warning when yAxisScale is log and yAxisLimits contain 0",
       )
 
       expect_warning(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
+        withCallingHandlers(
+          createPlotsFromExcel(
+            simulatedScenarios = simulatedScenarios,
+            observedData = observedData,
+            projectConfiguration = projectConfigurationLocal,
+            stopIfNotFound = TRUE
+          ),
+          warning = function(w) {
+            if (grepl(
+              "log-10 transformation|Position guide is perpendicular",
+              conditionMessage(w)
+            )) {
+              invokeRestart("muffleWarning")
+            }
+          }
         ),
         regexp = messages$warningLogScaleWithZeroLimit(
           plotID = "P1",
@@ -1801,11 +1821,21 @@ test_that("It shows a warning when yAxisScale is log and yValuesLimits contain 0
       )
 
       expect_warning(
-        createPlotsFromExcel(
-          simulatedScenarios = simulatedScenarios,
-          observedData = observedData,
-          projectConfiguration = projectConfigurationLocal,
-          stopIfNotFound = TRUE
+        withCallingHandlers(
+          createPlotsFromExcel(
+            simulatedScenarios = simulatedScenarios,
+            observedData = observedData,
+            projectConfiguration = projectConfigurationLocal,
+            stopIfNotFound = TRUE
+          ),
+          warning = function(w) {
+            if (grepl(
+              "log-10 transformation|Position guide is perpendicular",
+              conditionMessage(w)
+            )) {
+              invokeRestart("muffleWarning")
+            }
+          }
         ),
         regexp = messages$warningLogScaleWithZeroLimit(
           plotID = "P1",
