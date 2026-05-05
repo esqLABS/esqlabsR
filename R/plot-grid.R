@@ -11,7 +11,8 @@
       "0" = "upright",
       "90" = "left-rotated",
       "180" = "right-rotated",
-      "270" = "inverted"
+      "270" = "inverted",
+      "upright"
     )
   )
 }
