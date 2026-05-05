@@ -66,6 +66,25 @@ testProjectConfigurationPath <- function() {
   file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
 }
 
+#' Get path to the v2.0 example `Project.json`
+#'
+#' @description
+#' Returns the path to the bundled v2.0 example `Project.json` shipped under
+#' `inst/extdata/projects/Example`. Shared between the parser and serializer
+#' test suites.
+#'
+#' @returns Full path to the example Project.json file.
+example_project_json_path <- function() {
+  system.file(
+    "extdata",
+    "projects",
+    "Example",
+    "Project.json",
+    package = "esqlabsR",
+    mustWork = TRUE
+  )
+}
+
 #' Create test project configuration
 #'
 #' @description

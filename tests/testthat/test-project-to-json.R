@@ -3,17 +3,6 @@
 # structurally identical project. Specific shape concerns (object vs array,
 # scalar vs length-1 array, NULL preservation) get their own focused tests.
 
-example_project_json_path <- function() {
-  system.file(
-    "extdata",
-    "projects",
-    "Example",
-    "Project.json",
-    package = "esqlabsR",
-    mustWork = TRUE
-  )
-}
-
 test_that(".projectToJson() returns a JSON-shaped list with the canonical top-level keys", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
   tree <- esqlabsR:::.projectToJson(project)
@@ -52,7 +41,11 @@ test_that(".saveProjectJson() writes a valid JSON file", {
 
   expect_identical(result, out)
   expect_true(file.exists(out))
-  expect_true(jsonlite::validate(readLines(out, warn = FALSE)))
+  expect_true(jsonlite::validate(readLines(
+    out,
+    encoding = "UTF-8",
+    warn = FALSE
+  )))
 })
 
 test_that(".saveProjectJson() rejects non-string paths", {
@@ -139,7 +132,10 @@ test_that("empty map sections serialize as JSON objects, not arrays", {
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
-  text <- paste(readLines(out, warn = FALSE), collapse = "\n")
+  text <- paste(
+    readLines(out, encoding = "UTF-8", warn = FALSE),
+    collapse = "\n"
+  )
 
   # Map-shaped sections must be `{}` even when empty; array-shaped sections
   # are `[]`. The schema is asymmetric on purpose.

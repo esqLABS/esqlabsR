@@ -3,17 +3,6 @@
 # validators, or plotting on this branch. Tests use `:::` because both are
 # intentionally unexported.
 
-example_project_json_path <- function() {
-  system.file(
-    "extdata",
-    "projects",
-    "Example",
-    "Project.json",
-    package = "esqlabsR",
-    mustWork = TRUE
-  )
-}
-
 test_that(".loadProjectJson() returns an internal Project from the bundled example", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
