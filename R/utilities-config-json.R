@@ -142,8 +142,9 @@ snapshotProjectConfiguration <- function(
     dir.create(dirPath, recursive = TRUE)
   }
 
-  # Write to file
-  writeLines(jsonData, outputPath)
+  # Write to file. `useBytes = TRUE` ensures the UTF-8 bytes produced by
+  # `jsonlite::toJSON` go to disk verbatim, regardless of the system locale.
+  writeLines(jsonData, outputPath, useBytes = TRUE)
 
   # Display message with relative path
   inputFile <- fs::path_rel(
@@ -517,9 +518,11 @@ projectConfigurationStatus <- function(
     silent = TRUE
   )
 
-  # Load both JSON files as strings first for a quick initial check
-  originalJson <- readLines(jsonPath, warn = FALSE)
-  currentJson <- readLines(tempJsonPath, warn = FALSE)
+  # Load both JSON files as strings first for a quick initial check.
+  # `encoding = "UTF-8"` matches the write side and prevents a locale-driven
+  # round-trip mismatch from flipping the in-sync verdict on Windows.
+  originalJson <- readLines(jsonPath, encoding = "UTF-8", warn = FALSE)
+  currentJson <- readLines(tempJsonPath, encoding = "UTF-8", warn = FALSE)
 
   # Simple string comparison to check if files are identical
   if (identical(originalJson, currentJson)) {
