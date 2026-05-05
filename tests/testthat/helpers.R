@@ -130,7 +130,7 @@ testProjectJSONPath <- function() {
 #'
 #' @returns A `Project` object loaded from `tests/testthat/data/TestProject/Project.json`.
 testProject <- function() {
-  esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  loadProject(testProjectJSONPath())
 }
 
 #' Get path to test configurations directory
