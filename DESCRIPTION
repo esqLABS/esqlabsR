@@ -52,6 +52,7 @@ Suggests:
     devtools,
     knitr,
     openxlsx,
+    quarto,
     reactable,
     rmarkdown,
     rlang,
@@ -61,7 +62,8 @@ Suggests:
     withr,
     emoji
 VignetteBuilder:
-    knitr
+    knitr,
+    quarto
 Config/testthat/edition: 3
 Config/rcmdcheck/ignore-inconsequential-notes: true
 Encoding: UTF-8
