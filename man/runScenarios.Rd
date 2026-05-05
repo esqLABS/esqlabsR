@@ -2,28 +2,65 @@
 % Please edit documentation in R/utilities-scenarios.R
 \name{runScenarios}
 \alias{runScenarios}
-\title{Run a set of scenarios.}
+\title{Run a set of scenarios from a \code{Project}.}
 \usage{
-runScenarios(scenarios, simulationRunOptions = NULL)
+runScenarios(
+  project,
+  scenarioNames = NULL,
+  customParams = NULL,
+  simulationRunOptions = NULL,
+  validate = TRUE,
+  scenarios = lifecycle::deprecated()
+)
 }
 \arguments{
-\item{scenarios}{List of \code{Scenario} objects to be simulated.}
+\item{project}{A \link{Project} object loaded from a \code{Project.json} file.
+In the legacy positional form, this argument also accepts a list
+of \link{LegacyScenario} objects produced by \code{\link[=createScenarios]{createScenarios()}} — see
+"Details".}
 
-\item{simulationRunOptions}{Object of type \code{SimulationRunOptions} that will
-be passed to simulation runs. If \code{NULL}, default options are used.}
+\item{scenarioNames}{Optional character vector of scenario names to
+run. \code{NULL} (default) runs all scenarios in the project.}
+
+\item{customParams}{A list with vectors \code{paths}, \code{values}, and
+\code{units} — applied to every selected scenario as the final
+parameter layer.}
+
+\item{simulationRunOptions}{Optional \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions}
+for the simulation run. \code{NULL} (default) uses the package
+defaults.}
+
+\item{validate}{Logical. Reserved for future use; currently
+accepted but ignored. Project validation is wired in a later
+chapter.}
+
+\item{scenarios}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Legacy alias
+for the first positional argument when passing a list of
+\link{LegacyScenario} objects. Use \code{project = loadProject(...)} and
+the modern signature instead.}
 }
 \value{
-A named list, where the names are scenario names, and the values are
-lists with the entries \code{simulation} being the initialized \code{Simulation}
-object with applied parameters, \code{results} being \code{SimulatioResults} object
-produced by running the simulation, \code{outputValues} the output values of the
-\code{SimulationResults}, and \code{population} the \code{Population} object if the
-scenario is a population simulation.
+A named list keyed by scenario name. Each entry is a list
+with \code{simulation} (the initialized \link[ospsuite:Simulation]{ospsuite::Simulation}),
+\code{results} (\link[ospsuite:SimulationResults]{ospsuite::SimulationResults}), \code{outputValues} (the
+computed output values, or \code{NULL} if simulation failed), and
+\code{population} (an \link[ospsuite:Population]{ospsuite::Population} for population
+scenarios, or \code{NULL} for individual scenarios).
 }
 \description{
-Run a set of scenarios.
+Loads simulations, applies parameters, runs the
+simulations, and collects results for one or more scenarios
+defined on a parsed \link{Project}. The project must already have been
+loaded with \code{\link[=loadProject]{loadProject()}}.
 }
 \details{
-If simulation of a scenario fails, a warning is produced, and the
-\code{outputValues} for this scenario is \code{NULL}.
+If a scenario's simulation fails, a warning is produced
+and \code{outputValues} for that scenario is \code{NULL}.
+
+The legacy signatures
+\code{runScenarios(scenariosList, simulationRunOptions)} (positional)
+and \code{runScenarios(scenarios = ..., simulationRunOptions = ...)}
+(named) — taking a list of \link{LegacyScenario} objects produced by
+\code{\link[=createScenarios]{createScenarios()}} — are still accepted but soft-deprecated.
+New code should use the JSON-first form shown above.
 }
