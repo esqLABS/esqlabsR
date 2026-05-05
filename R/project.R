@@ -82,12 +82,30 @@ Project <- R6::R6Class(
       private$.scenarios
     },
 
-    #' @field modelParameters Named list keyed by parameter-set name; each
+    #' @field modelParameterSets Named list keyed by parameter-set name; each
     #'   value is a list of parameter entries.
-    modelParameters = function(value) {
+    modelParameterSets = function(value) {
       if (!missing(value))
-        cli::cli_abort("{.field modelParameters} is read-only.")
-      private$.modelParameters
+        cli::cli_abort("{.field modelParameterSets} is read-only.")
+      private$.modelParameterSets
+    },
+
+    #' @field individualParameterSets Named list keyed by parameter-set name;
+    #'   each value is a list of parameter entries. Referenced by id from
+    #'   `individuals[*]$parameterSets`.
+    individualParameterSets = function(value) {
+      if (!missing(value))
+        cli::cli_abort("{.field individualParameterSets} is read-only.")
+      private$.individualParameterSets
+    },
+
+    #' @field applicationParameterSets Named list keyed by parameter-set name;
+    #'   each value is a list of parameter entries. Referenced by id from
+    #'   `applications.<name>$parameterSets`.
+    applicationParameterSets = function(value) {
+      if (!missing(value))
+        cli::cli_abort("{.field applicationParameterSets} is read-only.")
+      private$.applicationParameterSets
     },
 
     #' @field individuals List of individual entries.
@@ -137,7 +155,9 @@ Project <- R6::R6Class(
     #' @param filePaths Named list of file paths.
     #' @param outputPaths Named list of output-path IDs to paths.
     #' @param scenarios List of scenario entries.
-    #' @param modelParameters Named list of parameter sets.
+    #' @param modelParameterSets Named list of model parameter sets.
+    #' @param individualParameterSets Named list of individual parameter sets.
+    #' @param applicationParameterSets Named list of application parameter sets.
     #' @param individuals List of individual entries.
     #' @param populations List of population entries.
     #' @param applications Named list of application-protocol entries.
@@ -151,7 +171,9 @@ Project <- R6::R6Class(
       filePaths,
       outputPaths,
       scenarios,
-      modelParameters,
+      modelParameterSets,
+      individualParameterSets,
+      applicationParameterSets,
       individuals,
       populations,
       applications,
@@ -165,7 +187,9 @@ Project <- R6::R6Class(
       private$.filePaths <- filePaths
       private$.outputPaths <- outputPaths
       private$.scenarios <- scenarios
-      private$.modelParameters <- modelParameters
+      private$.modelParameterSets <- modelParameterSets
+      private$.individualParameterSets <- individualParameterSets
+      private$.applicationParameterSets <- applicationParameterSets
       private$.individuals <- individuals
       private$.populations <- populations
       private$.applications <- applications
@@ -190,8 +214,20 @@ Project <- R6::R6Class(
       cat("  individuals:     ", length(private$.individuals), "\n", sep = "")
       cat("  populations:     ", length(private$.populations), "\n", sep = "")
       cat(
-        "  modelParameters: ",
-        length(private$.modelParameters),
+        "  modelParameterSets:       ",
+        length(private$.modelParameterSets),
+        " set(s)\n",
+        sep = ""
+      )
+      cat(
+        "  individualParameterSets:  ",
+        length(private$.individualParameterSets),
+        " set(s)\n",
+        sep = ""
+      )
+      cat(
+        "  applicationParameterSets: ",
+        length(private$.applicationParameterSets),
         " set(s)\n",
         sep = ""
       )
@@ -228,7 +264,9 @@ Project <- R6::R6Class(
     .filePaths = list(),
     .outputPaths = list(),
     .scenarios = list(),
-    .modelParameters = list(),
+    .modelParameterSets = list(),
+    .individualParameterSets = list(),
+    .applicationParameterSets = list(),
     .individuals = list(),
     .populations = list(),
     .applications = list(),

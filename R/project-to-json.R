@@ -42,10 +42,12 @@
     observedData = .observedDataToJson(project),
     outputPaths = .outputPathsToJson(project),
     scenarios = .scenariosToJson(project),
-    modelParameters = .modelParametersToJson(project),
+    modelParameterSets = .modelParameterSetsToJson(project),
     individuals = .individualsToJson(project),
+    individualParameterSets = .individualParameterSetsToJson(project),
     populations = .populationsToJson(project),
     applications = .applicationsToJson(project),
+    applicationParameterSets = .applicationParameterSetsToJson(project),
     plots = .plotsToJson(project)
   )
 }
@@ -112,8 +114,18 @@
 }
 
 # JSON object (map of parameter-set name → array of parameter entries).
-.modelParametersToJson <- function(project) {
-  .asJsonObject(project$modelParameters)
+.modelParameterSetsToJson <- function(project) {
+  .asJsonObject(project$modelParameterSets)
+}
+
+# JSON object (map of parameter-set name → array of parameter entries).
+.individualParameterSetsToJson <- function(project) {
+  .asJsonObject(project$individualParameterSets)
+}
+
+# JSON object (map of parameter-set name → array of parameter entries).
+.applicationParameterSetsToJson <- function(project) {
+  .asJsonObject(project$applicationParameterSets)
 }
 
 # JSON array of individual objects.
@@ -146,8 +158,10 @@
 
 # `list()` is ambiguous in JSON: jsonlite renders an empty list as `[]`, but
 # the schema requires `{}` for the map-shaped sections (`filePaths`,
-# `outputPaths`, `applications`, `modelParameters`). Setting a zero-length
-# names attribute triggers jsonlite's named-list serialization path.
+# `outputPaths`, `applications`, `modelParameterSets`,
+# `individualParameterSets`, `applicationParameterSets`). Setting a
+# zero-length names attribute triggers jsonlite's named-list serialization
+# path.
 .asJsonObject <- function(x) {
   if (length(x) == 0L) {
     return(structure(list(), names = character(0L)))

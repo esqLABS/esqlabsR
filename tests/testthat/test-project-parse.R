@@ -57,34 +57,58 @@ test_that(".loadProjectJson() preserves scenarios as a list of named lists", {
   expect_identical(first$name, "Aciclovir_iv")
   expect_identical(first$individualId, "Adult_male")
   expect_null(first$populationId)
-  expect_identical(first$modelParameters, list("Global", "Aciclovir"))
+  expect_identical(first$modelParameterSets, list("Global", "Aciclovir"))
   expect_identical(first$outputPathIds, list("Aciclovir_PVB"))
 })
 
-test_that(".loadProjectJson() preserves modelParameters as a named list of sets", {
+test_that(".loadProjectJson() preserves modelParameterSets as a named list of sets", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
   expect_named(
-    project$modelParameters,
+    project$modelParameterSets,
     c("Global", "Aciclovir"),
     ignore.order = TRUE
   )
-  expect_length(project$modelParameters$Global, 1L)
+  expect_length(project$modelParameterSets$Global, 1L)
   expect_identical(
-    project$modelParameters$Global[[1L]]$parameterName,
+    project$modelParameterSets$Global[[1L]]$parameterName,
     "EHC continuous fraction"
   )
 })
 
-test_that(".loadProjectJson() preserves individuals with inline parameters", {
+test_that(".loadProjectJson() preserves individualParameterSets as a named list of sets", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+
+  expect_named(project$individualParameterSets, "Adult_male_default")
+  expect_length(project$individualParameterSets$Adult_male_default, 1L)
+  expect_identical(
+    project$individualParameterSets$Adult_male_default[[1L]]$parameterName,
+    "GFR"
+  )
+})
+
+test_that(".loadProjectJson() preserves applicationParameterSets as a named list of sets", {
+  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+
+  expect_named(project$applicationParameterSets, "Aciclovir_iv_250mg_default")
+  expect_length(
+    project$applicationParameterSets$Aciclovir_iv_250mg_default,
+    1L
+  )
+  expect_identical(
+    project$applicationParameterSets$Aciclovir_iv_250mg_default[[1L]]$parameterName,
+    "Dose"
+  )
+})
+
+test_that(".loadProjectJson() preserves individuals with parameterSets references", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
   expect_length(project$individuals, 1L)
   ind <- project$individuals[[1L]]
   expect_identical(ind$individualId, "Adult_male")
   expect_identical(ind$gender, "MALE")
-  expect_length(ind$parameters, 1L)
-  expect_identical(ind$parameters[[1L]]$parameterName, "GFR")
+  expect_identical(ind$parameterSets, list("Adult_male_default"))
 })
 
 test_that(".loadProjectJson() preserves populations as a list of named lists", {
@@ -100,7 +124,10 @@ test_that(".loadProjectJson() preserves applications as a named list keyed by pr
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
   expect_named(project$applications, "Aciclovir_iv_250mg")
-  expect_length(project$applications$Aciclovir_iv_250mg$parameters, 1L)
+  expect_identical(
+    project$applications$Aciclovir_iv_250mg$parameterSets,
+    list("Aciclovir_iv_250mg_default")
+  )
 })
 
 test_that(".loadProjectJson() preserves the observedData section", {
@@ -191,7 +218,9 @@ test_that(".loadProjectJson() defaults missing optional sections to empty lists"
   expect_identical(project$filePaths, list())
   expect_identical(project$outputPaths, list())
   expect_identical(project$scenarios, list())
-  expect_identical(project$modelParameters, list())
+  expect_identical(project$modelParameterSets, list())
+  expect_identical(project$individualParameterSets, list())
+  expect_identical(project$applicationParameterSets, list())
   expect_identical(project$individuals, list())
   expect_identical(project$populations, list())
   expect_identical(project$applications, list())

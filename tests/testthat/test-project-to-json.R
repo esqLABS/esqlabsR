@@ -17,10 +17,12 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
       "observedData",
       "outputPaths",
       "scenarios",
-      "modelParameters",
+      "modelParameterSets",
       "individuals",
+      "individualParameterSets",
       "populations",
       "applications",
+      "applicationParameterSets",
       "plots"
     ),
     ignore.order = TRUE
@@ -86,7 +88,18 @@ test_that("round-trip is structurally identical for the bundled example", {
   expect_identical(reloaded$filePaths, project$filePaths)
   expect_identical(reloaded$outputPaths, project$outputPaths)
   expect_identical(reloaded$scenarios, project$scenarios)
-  expect_identical(reloaded$modelParameters, project$modelParameters)
+  expect_identical(
+    reloaded$modelParameterSets,
+    project$modelParameterSets
+  )
+  expect_identical(
+    reloaded$individualParameterSets,
+    project$individualParameterSets
+  )
+  expect_identical(
+    reloaded$applicationParameterSets,
+    project$applicationParameterSets
+  )
   expect_identical(reloaded$individuals, project$individuals)
   expect_identical(reloaded$populations, project$populations)
   expect_identical(reloaded$applications, project$applications)
@@ -142,7 +155,9 @@ test_that("empty map sections serialize as JSON objects, not arrays", {
   expect_match(text, '"filePaths":\\s*\\{\\s*\\}')
   expect_match(text, '"outputPaths":\\s*\\{\\s*\\}')
   expect_match(text, '"applications":\\s*\\{\\s*\\}')
-  expect_match(text, '"modelParameters":\\s*\\{\\s*\\}')
+  expect_match(text, '"modelParameterSets":\\s*\\{\\s*\\}')
+  expect_match(text, '"individualParameterSets":\\s*\\{\\s*\\}')
+  expect_match(text, '"applicationParameterSets":\\s*\\{\\s*\\}')
   expect_match(text, '"scenarios":\\s*\\[\\s*\\]')
   expect_match(text, '"individuals":\\s*\\[\\s*\\]')
   expect_match(text, '"populations":\\s*\\[\\s*\\]')
@@ -170,7 +185,9 @@ test_that("empty map sections survive a round-trip as empty named lists", {
   expect_identical(reloaded$filePaths, empty_named)
   expect_identical(reloaded$outputPaths, empty_named)
   expect_identical(reloaded$applications, empty_named)
-  expect_identical(reloaded$modelParameters, empty_named)
+  expect_identical(reloaded$modelParameterSets, empty_named)
+  expect_identical(reloaded$individualParameterSets, empty_named)
+  expect_identical(reloaded$applicationParameterSets, empty_named)
 
   # And the round-trip is stable from there: re-saving and re-loading does
   # not drift further.
@@ -180,5 +197,16 @@ test_that("empty map sections survive a round-trip as empty named lists", {
   expect_identical(reloaded2$filePaths, reloaded$filePaths)
   expect_identical(reloaded2$outputPaths, reloaded$outputPaths)
   expect_identical(reloaded2$applications, reloaded$applications)
-  expect_identical(reloaded2$modelParameters, reloaded$modelParameters)
+  expect_identical(
+    reloaded2$modelParameterSets,
+    reloaded$modelParameterSets
+  )
+  expect_identical(
+    reloaded2$individualParameterSets,
+    reloaded$individualParameterSets
+  )
+  expect_identical(
+    reloaded2$applicationParameterSets,
+    reloaded$applicationParameterSets
+  )
 })
