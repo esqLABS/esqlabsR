@@ -224,19 +224,65 @@
   .asJsonObject(project$applicationParameterSets)
 }
 
-# JSON array of individual objects.
+# JSON array of individual objects. The in-memory shape is a named list
+# keyed by `individualId`; serialization re-attaches that key as the
+# `individualId` field on each entry.
 .individualsToJson <- function(project) {
-  project$individuals
+  individuals <- project$individuals
+  if (is.null(individuals) || length(individuals) == 0L) {
+    return(list())
+  }
+  unname(lapply(names(individuals), function(id) {
+    indiv <- individuals[[id]]
+    entry <- list(individualId = id)
+    for (field in c("species", "population", "gender", "proteinOntogenies")) {
+      if (!is.null(indiv[[field]])) entry[[field]] <- indiv[[field]]
+    }
+    for (field in c("weight", "height", "age")) {
+      val <- indiv[[field]]
+      if (length(val) > 0L && !is.na(val)) {
+        entry[[field]] <- as.double(val)
+      }
+    }
+    if (!is.null(indiv$parameterSets) && length(indiv$parameterSets) > 0L) {
+      entry$parameterSets <- as.list(indiv$parameterSets)
+    }
+    entry
+  }))
 }
 
-# JSON array of population objects.
+# JSON array of population objects. The in-memory shape is a named list
+# keyed by `populationId`; serialization re-attaches that key.
 .populationsToJson <- function(project) {
-  project$populations
+  populations <- project$populations
+  if (is.null(populations) || length(populations) == 0L) {
+    return(list())
+  }
+  unname(lapply(names(populations), function(id) {
+    pop <- populations[[id]]
+    c(list(populationId = id), unclass(pop))
+  }))
 }
 
-# JSON object (map of protocol name → application object).
+# JSON object (map of protocol name → application object). Strips the
+# `Application` class attribute and emits `{}` for entries with no
+# parameter-set references (matches the v2.0 schema "object with optional
+# parameterSets" shape).
 .applicationsToJson <- function(project) {
-  .asJsonObject(project$applications)
+  applications <- project$applications
+  if (is.null(applications) || length(applications) == 0L) {
+    return(structure(list(), names = character(0L)))
+  }
+  result <- list()
+  for (id in names(applications)) {
+    app <- applications[[id]]
+    entry <- list()
+    if (!is.null(app$parameterSets) && length(app$parameterSets) > 0L) {
+      entry$parameterSets <- as.list(app$parameterSets)
+    }
+    result[[id]] <- entry
+  }
+  result
 }
 
 # JSON array of observed-data source entries.

@@ -27,22 +27,8 @@
     return(result)
   }
 
-  ids <- .extractEntryIds(populations, "populationId")
-  result <- .check_no_duplicates(ids, "populationId", result)
-
-  for (i in seq_along(populations)) {
-    pop <- populations[[i]]
-    id <- pop$populationId %||% paste0("entry ", i)
-
-    if (is.null(pop$populationId) || identical(pop$populationId, "")) {
-      result$add_critical_error(
-        "Missing Fields",
-        paste0(
-          "Required field 'populationId' is missing or empty in entry ",
-          i
-        )
-      )
-    }
+  for (id in names(populations)) {
+    pop <- populations[[id]]
 
     result <- .check_required_fields(
       pop,

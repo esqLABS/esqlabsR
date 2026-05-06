@@ -188,33 +188,6 @@ validateProject <- function(project) {
 
 # Shared helpers used by section adapters ----
 
-#' Extract IDs from a JSON-array section (e.g. individuals, populations)
-#'
-#' These sections are stored as unnamed lists where each entry carries
-#' its own ID field (`individualId` / `populationId`). Returns a
-#' character vector of those IDs (with `NA` filtered out) for
-#' cross-reference checks. Transitional helper: drops out once the parser
-#' converts individuals/populations into named lists keyed by id (planned
-#' alongside the file reorg in Chapter 7).
-#'
-#' @keywords internal
-#' @noRd
-.extractEntryIds <- function(entries, idField) {
-  if (is.null(entries) || length(entries) == 0) {
-    return(character(0))
-  }
-  ids <- vapply(
-    entries,
-    function(e) {
-      v <- e[[idField]]
-      if (is.null(v) || length(v) == 0) NA_character_ else as.character(v)
-    },
-    character(1)
-  )
-  ids[!is.na(ids)]
-}
-
-
 #' Check for duplicate values and add a critical error when found
 #'
 #' @param ids Character vector of IDs to check.
@@ -403,8 +376,8 @@ validateProject <- function(project) {
   }
 
   scenarioList <- project$scenarios %||% list()
-  individualIds <- .extractEntryIds(project$individuals, "individualId")
-  populationIds <- .extractEntryIds(project$populations, "populationId")
+  individualIds <- names(project$individuals %||% list())
+  populationIds <- names(project$populations %||% list())
   modelParamKeys <- names(project$modelParameterSets %||% list())
   applicationKeys <- names(project$applications %||% list())
 
@@ -480,9 +453,8 @@ validateProject <- function(project) {
   }
 
   individualSetKeys <- names(project$individualParameterSets %||% list())
-  for (entry in project$individuals %||% list()) {
-    id <- entry$individualId %||% NA_character_
-    refs <- entry$parameterSets %||% character(0)
+  for (id in names(project$individuals %||% list())) {
+    refs <- project$individuals[[id]]$parameterSets %||% character(0)
     refs <- as.character(unlist(refs))
     invalid <- setdiff(refs, individualSetKeys)
     if (length(invalid) > 0) {

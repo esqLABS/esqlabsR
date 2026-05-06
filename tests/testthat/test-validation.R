@@ -1120,15 +1120,13 @@ test_that(".validateIndividuals warns on empty section", {
   expect_length(result$critical_errors, 0)
 })
 
-test_that(".validateIndividuals catches missing required fields and duplicate ids", {
+test_that(".validateIndividuals catches missing required fields", {
   individuals <- list(
-    list(individualId = "Adult", species = "Human"),
-    list(individualId = "Adult", species = "Human", gender = "MALE"),
-    list(individualId = "Bad")
+    Adult = list(species = "Human"),
+    Bad = list()
   )
   result <- esqlabsR:::.validateIndividuals(individuals)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("Duplicate individualId", msgs)))
   expect_true(any(grepl("gender", msgs)))
   expect_true(any(grepl("species", msgs)))
 })
@@ -1137,8 +1135,7 @@ test_that(".validateIndividuals catches missing required fields and duplicate id
 
 test_that(".validatePopulations warns on inverted ranges", {
   populations <- list(
-    list(
-      populationId = "P1",
+    P1 = list(
       species = "Human",
       ageMin = 60,
       ageMax = 30
@@ -1248,11 +1245,10 @@ test_that(".validateCrossReferences flags scenario referencing missing individua
 
 test_that(".validateCrossReferences flags individual referencing unknown parameter set", {
   individuals <- list(
-    list(
-      individualId = "I1",
+    I1 = list(
       species = "Human",
       gender = "MALE",
-      parameterSets = list("nope")
+      parameterSets = "nope"
     )
   )
   project <- .fakeProject(
@@ -1266,13 +1262,11 @@ test_that(".validateCrossReferences flags individual referencing unknown paramet
   expect_true(any(grepl("undefined individualParameterSets", msgs)))
 })
 
-test_that(".validateCrossReferences resolves individuals/populations stored as JSON arrays", {
-  individuals <- list(list(
-    individualId = "I1",
-    species = "Human",
-    gender = "MALE"
-  ))
-  populations <- list(list(populationId = "P1", species = "Human"))
+test_that(".validateCrossReferences resolves individuals/populations as named lists", {
+  individuals <- list(
+    I1 = list(species = "Human", gender = "MALE")
+  )
+  populations <- list(P1 = list(species = "Human"))
   sc <- esqlabsR:::Scenario$new()
   sc$modelFile <- "x.pkml"
   sc$individualId <- "I1"

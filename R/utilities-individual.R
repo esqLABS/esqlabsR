@@ -37,23 +37,9 @@
     return(result)
   }
 
-  ids <- .extractEntryIds(individuals, "individualId")
-  result <- .check_no_duplicates(ids, "individualId", result)
-
   requiredFields <- c("species", "gender")
-  for (i in seq_along(individuals)) {
-    indiv <- individuals[[i]]
-    id <- indiv$individualId %||% paste0("entry ", i)
-
-    if (is.null(indiv$individualId) || identical(indiv$individualId, "")) {
-      result$add_critical_error(
-        "Missing Fields",
-        paste0(
-          "Required field 'individualId' is missing or empty in entry ",
-          i
-        )
-      )
-    }
+  for (id in names(individuals)) {
+    indiv <- individuals[[id]]
 
     result <- .check_required_fields(
       indiv,

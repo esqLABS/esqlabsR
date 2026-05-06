@@ -25,19 +25,6 @@ test_that(".parameterSetToStructure returns NULL on empty input", {
   expect_null(esqlabsR:::.parameterSetToStructure(list()))
 })
 
-test_that(".findById returns the matching item by idField", {
-  items <- list(
-    list(populationId = "A", x = 1),
-    list(populationId = "B", x = 2)
-  )
-  expect_equal(
-    esqlabsR:::.findById(items, "populationId", "B")$x,
-    2
-  )
-  expect_null(esqlabsR:::.findById(items, "populationId", "missing"))
-  expect_null(esqlabsR:::.findById(NULL, "populationId", "A"))
-})
-
 test_that(".mergeScenarioParameters returns NULL when no layer contributes", {
   project <- .testProject()
   scenario <- project$scenarios[["TestScenario"]]
