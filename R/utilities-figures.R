@@ -406,6 +406,11 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
 #'   objects. If `NULL`, the function builds them via [createDataCombined()].
 #' @param stopIfNotFound If `TRUE`, errors when a referenced DataCombined or
 #'   simulated/observed entry cannot be resolved.
+#' @param validate Logical. If `TRUE` (default), runs the relevant
+#'   section validators via [validateProject()] before building the
+#'   plots and aborts with a formatted summary on critical errors. Set
+#'   to `FALSE` to skip the pre-flight check (e.g. when the caller has
+#'   already validated the project).
 #'
 #' @returns A named list of plot-grid objects (one per `plotGridName`), or
 #'   an empty list when the project has no plots section.
@@ -418,9 +423,17 @@ createPlots <- function(
   plotGridNames = NULL,
   simulatedScenarios = NULL,
   dataCombinedList = NULL,
-  stopIfNotFound = TRUE
+  stopIfNotFound = TRUE,
+  validate = TRUE
 ) {
   ospsuite.utils::validateIsOfType(project, "Project")
+  if (isTRUE(validate)) {
+    .ensureValid(
+      project,
+      sections = c("plots", "scenarios", "crossReferences"),
+      opName = "createPlots"
+    )
+  }
   if (is.null(project$plots)) {
     return(list())
   }

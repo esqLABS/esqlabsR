@@ -284,9 +284,11 @@
 #' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions]
 #'   for the simulation run. `NULL` (default) uses the package
 #'   defaults.
-#' @param validate Logical. Reserved for future use; currently
-#'   accepted but ignored. Project validation is wired in a later
-#'   chapter.
+#' @param validate Logical. If `TRUE` (default), runs the relevant
+#'   section validators via [validateProject()] before simulating and
+#'   aborts with a formatted summary on critical errors. Set to
+#'   `FALSE` to skip the pre-flight check (e.g. when the caller has
+#'   already validated the project).
 #' @param scenarios `r lifecycle::badge("deprecated")` Legacy alias
 #'   for the first positional argument when passing a list of
 #'   [LegacyScenario] objects. Use `project = loadProject(...)` and

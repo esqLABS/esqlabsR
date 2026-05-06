@@ -441,8 +441,23 @@
     argumentName = "customParams",
     nullAllowed = TRUE
   )
-  # `validate` arg accepted for end-state-shape parity. Chapter 4
-  # wires it to `.ensureValid()`. No-op here.
+  if (isTRUE(validate)) {
+    .ensureValid(
+      project,
+      sections = c(
+        "outputPaths",
+        "scenarios",
+        "individuals",
+        "individualParameterSets",
+        "populations",
+        "applications",
+        "applicationParameterSets",
+        "modelParameterSets",
+        "crossReferences"
+      ),
+      opName = "runScenarios"
+    )
+  }
 
   allScenarios <- project$scenarios
   if (is.null(scenarioNames)) {

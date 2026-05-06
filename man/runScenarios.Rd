@@ -30,9 +30,11 @@ parameter layer.}
 for the simulation run. \code{NULL} (default) uses the package
 defaults.}
 
-\item{validate}{Logical. Reserved for future use; currently
-accepted but ignored. Project validation is wired in a later
-chapter.}
+\item{validate}{Logical. If \code{TRUE} (default), runs the relevant
+section validators via \code{\link[=validateProject]{validateProject()}} before simulating and
+aborts with a formatted summary on critical errors. Set to
+\code{FALSE} to skip the pre-flight check (e.g. when the caller has
+already validated the project).}
 
 \item{scenarios}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Legacy alias
 for the first positional argument when passing a list of
