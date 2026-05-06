@@ -1,7 +1,7 @@
 Type: Package
 Package: esqlabsR
 Title: ESQlabs utilities package
-Version: 5.6.0.9007
+Version: 5.6.0.9008
 Authors@R: c(
     person("ESQlabs GmbH", role = c("cph", "fnd")),
     person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
@@ -53,6 +53,7 @@ Suggests:
     devtools,
     knitr,
     openxlsx,
+    quarto,
     reactable,
     rmarkdown,
     rlang,
@@ -61,7 +62,8 @@ Suggests:
     withr,
     emoji
 VignetteBuilder:
-    knitr
+    knitr,
+    quarto
 Config/testthat/edition: 3
 Config/rcmdcheck/ignore-inconsequential-notes: true
 Encoding: UTF-8
