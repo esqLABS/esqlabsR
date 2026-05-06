@@ -316,9 +316,7 @@ createPlots <- function(
   .createPlotGridsFromDataFrames(
     dfPlotConfigurations = cfgDf,
     dfPlotGrids = gridDf,
-    dfExportConfigurations = NULL,
-    dataCombinedList = dataCombinedList,
-    outputFolder = NULL
+    dataCombinedList = dataCombinedList
   )
 }
 
@@ -724,15 +722,18 @@ createPlotsFromExcel <- function(
   # The values can be enclosed in "" in case the title should contain a ','.
   # Split the input string by ',' but do not split within "" Have to do it one
   # row at a time, otherwise it returns one separate list entry for each plot it
-  # (and not lists of plot ids)
-  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId) {
-    unlist(trimws(scan(
-      text = as.character(plotId),
-      what = "character",
-      sep = ",",
-      quiet = TRUE
-    )))
-  })
+  # (and not lists of plot ids). Skipped when plotIDs is already a list-column
+  # (e.g. when this validator runs a second time inside the shared helper).
+  if (!is.list(dfPlotGrids$plotIDs)) {
+    dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId) {
+      unlist(trimws(scan(
+        text = as.character(plotId),
+        what = "character",
+        sep = ",",
+        quiet = TRUE
+      )))
+    })
+  }
 
   # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
   missingPlots <- setdiff(
@@ -1087,6 +1088,10 @@ createPlotsFromExcel <- function(
   dfPlotConfigurations <- .validatePlotConfigurationFromExcel(
     dfPlotConfigurations,
     names(dataCombinedList)
+  )
+  dfPlotGrids <- .validatePlotGridsFromExcel(
+    dfPlotGrids,
+    unique(dfPlotConfigurations$plotID)
   )
 
   defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
