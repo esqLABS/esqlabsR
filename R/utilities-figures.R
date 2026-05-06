@@ -430,7 +430,7 @@ createPlots <- function(
   if (isTRUE(validate)) {
     .ensureValid(
       project,
-      sections = c("plots", "scenarios", "crossReferences"),
+      sections = c("plots", "scenarios", "observedData", "crossReferences"),
       opName = "createPlots"
     )
   }
