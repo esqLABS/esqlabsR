@@ -4,6 +4,10 @@
 
 - Added Excel-based parameter identification (PI) workflow: `readPITaskConfigurationFromExcel()`, `createPITasks()`, and `runPI()` enable defining and running PI tasks from `ParameterIdentification.xlsx`. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See `vignette("pi-workflow")` (\#928).
 
+## Breaking changes
+
+- Bumped minimum required `ospsuite` version to 12.4.2; earlier versions fail to load data correctly (#1000).
+
 ## Minor improvements and bug fixes
 
 - `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set) (#1007).
