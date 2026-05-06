@@ -225,28 +225,48 @@ test_that("createDataCombined errors when requested name not in project", {
 })
 
 test_that("createDataCombined builds DataCombined for Example project", {
-  examplePath <- system.file(
-    "extdata/projects/Example/Project.json",
-    package = "esqlabsR"
+  project <- loadProject(example_project_json_path())
+  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
+  dcName <- names(project$plots$dataCombined)[[1]]
+
+  result <- createDataCombined(
+    project,
+    dataCombinedNames = dcName,
+    simulatedScenarios = simulated
   )
-  project <- loadProject(examplePath)
-  spec <- project$plots$dataCombined[[1]]
-  scenarioName <- spec$simulated[[1]]$scenario
-  path <- spec$simulated[[1]]$path
-  simulatedScenarios <- list()
-  simulatedScenarios[[scenarioName]] <- list(
-    results = list(allQuantityPaths = path)
+
+  expect_named(result, dcName)
+  expect_s3_class(result[[dcName]], "DataCombined")
+  df <- result[[dcName]]$toDataFrame()
+  expect_setequal(unique(df$dataType), c("simulated", "observed"))
+})
+
+test_that("createDataCombined returns empty DataCombined when spec has no entries", {
+  project <- esqlabsR:::Project$new(
+    schemaVersion = "2.0",
+    esqlabsRVersion = NULL,
+    jsonPath = NULL,
+    projectDirPath = NULL,
+    filePaths = list(),
+    outputPaths = list(),
+    scenarios = list(),
+    modelParameterSets = list(),
+    individualParameterSets = list(),
+    applicationParameterSets = list(),
+    individuals = list(),
+    populations = list(),
+    applications = list(),
+    observedData = list(),
+    plots = list(
+      dataCombined = list(
+        EmptyDC = list(name = "EmptyDC", simulated = list(), observed = list())
+      )
+    )
   )
-  result <- tryCatch(
-    createDataCombined(
-      project,
-      dataCombinedNames = names(project$plots$dataCombined)[[1]],
-      simulatedScenarios = simulatedScenarios
-    ),
-    error = function(e) e
-  )
-  # Either a list of DataCombined (success) or a downstream ospsuite error
-  # caused by the mock results having no values. Both prove the dispatch
-  # reached the project-driven path.
-  expect_true(inherits(result, "list") || inherits(result, "error"))
+
+  result <- createDataCombined(project, dataCombinedNames = "EmptyDC")
+
+  expect_named(result, "EmptyDC")
+  expect_s3_class(result$EmptyDC, "DataCombined")
+  expect_null(result$EmptyDC$toDataFrame())
 })

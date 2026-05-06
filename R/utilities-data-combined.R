@@ -55,33 +55,41 @@ createDataCombined <- function(
     stop(messages$stopDataCombinedNamesNotFound(missingNames))
   }
 
-  dfDataCombined <- .specsToDataCombinedDataFrame(
-    allSpecs[intersect(names(allSpecs), dataCombinedNames)]
+  selectedSpecs <- allSpecs[intersect(names(allSpecs), dataCombinedNames)]
+  hasEntries <- vapply(
+    selectedSpecs,
+    \(s) length(s$simulated %||% list()) + length(s$observed %||% list()) > 0,
+    logical(1)
   )
+  emptyNames <- names(selectedSpecs)[!hasEntries]
 
-  .createDataCombinedFromProcessedDF(
-    dfDataCombined = dfDataCombined,
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
-    stopIfNotFound = stopIfNotFound
-  )
+  if (any(hasEntries)) {
+    dfDataCombined <- .specsToDataCombinedDataFrame(selectedSpecs[hasEntries])
+    dataCombinedList <- .createDataCombinedFromProcessedDF(
+      dfDataCombined = dfDataCombined,
+      simulatedScenarios = simulatedScenarios,
+      observedData = observedData,
+      stopIfNotFound = stopIfNotFound
+    )
+  } else {
+    dataCombinedList <- list()
+  }
+
+  for (name in emptyNames) {
+    dataCombinedList[[name]] <- DataCombined$new()
+  }
+
+  dataCombinedList[intersect(names(selectedSpecs), names(dataCombinedList))]
 }
 
 # Convert the named-list `dataCombined` spec from project$plots into the
-# flat data.frame the legacy Excel-driven code path uses. One row per
-# entry (simulated or observed). Missing optional fields become NA.
+# flat tibble the legacy Excel-driven code path expects. One row per
+# entry (simulated or observed). Caller must pre-filter to specs that
+# actually have entries; empty DCs are handled in `createDataCombined`.
 #
 # @keywords internal
 # @noRd
 .specsToDataCombinedDataFrame <- function(specs) {
-  if (length(specs) == 0) {
-    return(data.frame(
-      DataCombinedName = character(0),
-      dataType = character(0),
-      label = character(0),
-      stringsAsFactors = FALSE
-    ))
-  }
   rows <- list()
   for (name in names(specs)) {
     spec <- specs[[name]]
@@ -92,18 +100,7 @@ createDataCombined <- function(
       rows[[length(rows) + 1L]] <- .specEntryToRow(name, "observed", entry)
     }
   }
-  if (length(rows) == 0) {
-    # All requested names declared no simulated or observed entries.
-    # Fall back to one empty row per name so downstream code creates
-    # empty DataCombined objects (matching legacy behaviour).
-    return(data.frame(
-      DataCombinedName = names(specs),
-      dataType = NA_character_,
-      label = NA_character_,
-      stringsAsFactors = FALSE
-    ))
-  }
-  do.call(rbind, lapply(rows, as.data.frame, stringsAsFactors = FALSE))
+  dplyr::bind_rows(rows)
 }
 
 .specEntryToRow <- function(dataCombinedName, dataType, entry) {
