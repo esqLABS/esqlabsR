@@ -41,10 +41,13 @@ importerConfiguration <- ospsuite::loadDataImporterConfiguration(
 
 # Load observed data
 dataSheets <- "Laskin 1982.Group A"
-observedData <- esqlabsR::loadObservedData(
-  projectConfiguration = projectConfiguration,
-  sheets = dataSheets,
-  importerConfiguration = importerConfiguration
+observedData <- withr::with_options(
+  list(lifecycle_verbosity = "quiet"),
+  esqlabsR::loadObservedDataFromExcel(
+    projectConfiguration = projectConfiguration,
+    sheets = dataSheets,
+    importerConfiguration = importerConfiguration
+  )
 )
 
 dataCombinedDf <- data.frame(list(

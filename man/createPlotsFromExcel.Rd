@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities-figures.R
 \name{createPlotsFromExcel}
 \alias{createPlotsFromExcel}
-\title{Generate plots as defined in excel file \code{projectConfiguration$plotsFile}}
+\title{Generate plots from Excel (deprecated)}
 \usage{
 createPlotsFromExcel(
   plotGridNames = NULL,
@@ -15,40 +15,26 @@ createPlotsFromExcel(
 )
 }
 \arguments{
-\item{plotGridNames}{Names of the plot grid specified in the sheet
-\code{plotGrids} for which the figures will be created. If \code{NULL} (default), all
-plot grids specified in the excel sheet will be created. If a plot grid
-with a given name does not exist, an error is thrown.}
+\item{plotGridNames}{Names of plot grids to build. \code{NULL} builds all.}
 
-\item{simulatedScenarios}{A list of simulated scenarios as returned by
-\code{runScenarios()}. Can be \code{NULL} if no simulated data is required for the
-plots.}
+\item{simulatedScenarios}{Named list of simulated scenarios.}
 
-\item{observedData}{A list of \code{DataSet} objects. Can be \code{NULL} if no observed
-data is required for the plots.}
+\item{observedData}{Named list of observed \code{DataSet} objects.}
 
-\item{dataCombinedList}{A (named) list of \code{DataCombined} objects as input to
-create plots defined in the \code{plotGridNames} argument. Missing
-\code{DataCombined} will be created from the Excel file (default behavior).
-Defaults to \code{NULL}, in which case all \code{DataCombined} are created from
-Excel.}
+\item{dataCombinedList}{Optional pre-built \code{DataCombined} objects.}
 
-\item{projectConfiguration}{Object of class \code{ProjectConfiguration} that
-contains information about the output paths and the excel file where plots
-are defined.}
+\item{projectConfiguration}{A \code{ProjectConfiguration} pointing at a
+\code{Plots.xlsx}.}
 
-\item{outputFolder}{Optional - path to the folder where the results will be
-stored. If \code{NULL} (default), \code{projectConfiguration$outputFolder} is used.
-Only relevant for plots specified for export in the \code{exportConfiguration}
-sheet.}
+\item{outputFolder}{Optional override for the export-configuration's
+output folder.}
 
-\item{stopIfNotFound}{If TRUE (default), the function stops if any of the
-simulated results or observed data are not found. If FALSE a warning is
-printed.}
+\item{stopIfNotFound}{If \code{TRUE}, errors on unresolved references.}
 }
 \value{
-A list of \code{ggplot} objects
+Named list of plot-grid objects.
 }
 \description{
-Generate plots as defined in excel file \code{projectConfiguration$plotsFile}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{\link[=createPlots]{createPlots()}} with a
+\link[=loadProject]{Project}.
 }

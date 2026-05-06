@@ -11,6 +11,20 @@
   `ProjectConfiguration` and the Excel workflow. The class, parser, and
   serializer are all intentionally unexported.
 
+- The data and plotting layers start driving off the parsed `Project`:
+  - `loadObservedData(project)` is the new public loader, dispatching across
+    `excel` / `pkml` / `script` source declarations in `project$observedData`.
+    The legacy `loadObservedData(projectConfiguration, ...)` is renamed to
+    `loadObservedDataFromExcel()`; together with `loadObservedDataFromPKML()`,
+    both are soft-deprecated.
+  - `createDataCombined(project, ...)` and `createPlots(project, ...)` accept
+    a `Project` directly. The Excel-driven `createDataCombinedFromExcel()`
+    and `createPlotsFromExcel()` are soft-deprecated.
+  - `project$plots` parses into the in-memory shape future chapters rely on:
+    `dataCombined` as a named list keyed by name, `plotConfiguration` and
+    `plotGrids` as data.frames.
+  - `project$dataFolder` is now a resolved path field on `Project`.
+
 ## Breaking changes
 
 - Individual parameter sets in `Individuals.xlsx` must now be specified
