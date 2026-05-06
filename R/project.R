@@ -38,6 +38,20 @@ Project <- R6::R6Class(
       private$.schemaVersion
     },
 
+    #' @field validatedSinceMutation Read-only logical. `TRUE` if a full
+    #'   [validateProject()] has succeeded with no critical errors since
+    #'   the project was loaded or last mutated. Cleared by any mutation
+    #'   (mutators land in a later chapter; for now the flag is set by
+    #'   [validateProject()] and remains until a fresh load). Used by
+    #'   [runScenarios()] and [createPlots()] to skip redundant
+    #'   re-validation of an unchanged project.
+    validatedSinceMutation = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field validatedSinceMutation} is read-only.")
+      }
+      private$.validatedSinceMutation
+    },
+
     #' @field esqlabsRVersion Informational version string from the JSON.
     esqlabsRVersion = function(value) {
       if (!missing(value))
@@ -256,6 +270,27 @@ Project <- R6::R6Class(
       private$.plots <- plots
     },
 
+    #' @description Internal method to record that a full project
+    #'   validation has succeeded with no critical errors. Sets the
+    #'   `validatedSinceMutation` flag. Not intended for end-user use.
+    #' @keywords internal
+    .markValidated = function() {
+      private$.validatedSinceMutation <- TRUE
+      invisible(self)
+    },
+
+    #' @description Internal method invoked by mutators after a successful
+    #'   programmatic change. Clears the `validatedSinceMutation` flag so
+    #'   that any cached validation result is invalidated. No mutators ship
+    #'   with this chapter; the hook exists so future `add*` / `remove*`
+    #'   APIs can route through a single chokepoint. Not intended for
+    #'   end-user use.
+    #' @keywords internal
+    .markModified = function() {
+      private$.invalidate()
+      invisible(self)
+    },
+
     #' @description Print a one-section-per-line summary of the project.
     #' @param ... Unused; present for S3 method consistency.
     print = function(...) {
@@ -316,6 +351,14 @@ Project <- R6::R6Class(
     }
   ),
   private = list(
+    .invalidate = function() {
+      # Chapter 6 will add a `private$.modified <- TRUE` line here once
+      # the mutation API exists; chapter 4 only needs the validation-cache
+      # half of the lifecycle.
+      private$.validatedSinceMutation <- FALSE
+      invisible(self)
+    },
+
     .replace_env_var = function(path) {
       # Expand $VAR / ${VAR} references in `path`. Skip the system PATH
       # variable because expanding it inside a filesystem path would
@@ -384,6 +427,7 @@ Project <- R6::R6Class(
     .populations = list(),
     .applications = list(),
     .observedData = list(),
-    .plots = NULL
+    .plots = NULL,
+    .validatedSinceMutation = FALSE
   )
 )
