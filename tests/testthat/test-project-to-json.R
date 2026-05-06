@@ -103,14 +103,63 @@ test_that("round-trip is structurally identical for the bundled example", {
   expect_identical(reloaded$populations, project$populations)
   expect_identical(reloaded$applications, project$applications)
   expect_identical(reloaded$observedData, project$observedData)
-  expect_identical(reloaded$plots, project$plots)
 
-  # Scenarios are R6 objects; compare via the JSON projection so that
-  # parse(serialize(parse(x))) == parse(x) at the wire-shape level.
+  # Scenarios are R6 objects; plots has a non-trivial in-memory shape
+  # (named list + data.frames with NA padding) where unset fields drop
+  # to absent in JSON and re-read as missing columns. Compare via the
+  # JSON projection so wire-level round-trip is stable.
   expect_identical(
     esqlabsR:::.projectToJson(reloaded)$scenarios,
     esqlabsR:::.projectToJson(project)$scenarios
   )
+  expect_identical(
+    esqlabsR:::.projectToJson(reloaded)$plots,
+    esqlabsR:::.projectToJson(project)$plots
+  )
+})
+
+test_that(".dataCombinedToNestedJson re-adds the name field and drops empty sublists", {
+  parsed <- list(
+    DC1 = list(simulated = list(list(label = "a")), observed = list()),
+    DC2 = list(simulated = list(), observed = list(list(label = "b")))
+  )
+  json <- esqlabsR:::.dataCombinedToNestedJson(parsed)
+  expect_length(json, 2)
+  expect_equal(json[[1]]$name, "DC1")
+  expect_equal(json[[1]]$simulated[[1]]$label, "a")
+  expect_null(json[[1]]$observed) # empty observed dropped
+  expect_equal(json[[2]]$name, "DC2")
+  expect_null(json[[2]]$simulated)
+  expect_equal(json[[2]]$observed[[1]]$label, "b")
+})
+
+test_that(".dataCombinedToNestedJson handles NULL and empty input", {
+  expect_identical(esqlabsR:::.dataCombinedToNestedJson(list()), list())
+  expect_identical(esqlabsR:::.dataCombinedToNestedJson(NULL), list())
+})
+
+test_that(".dataFrameToListOfLists drops NA cells per row", {
+  df <- data.frame(
+    plotID = c("P1", "P2"),
+    plotType = c("individual", "population"),
+    title = c("T1", NA),
+    stringsAsFactors = FALSE
+  )
+  result <- esqlabsR:::.dataFrameToListOfLists(df)
+  expect_length(result, 2)
+  expect_equal(result[[1]]$title, "T1")
+  expect_null(result[[2]]$title) # NA dropped
+})
+
+test_that(".plotsToJson returns NULL when project has no plots section", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(schemaVersion = "2.0", esqlabsRVersion = "6.0.0"),
+    tmp,
+    auto_unbox = TRUE
+  )
+  project <- esqlabsR:::.loadProjectJson(tmp)
+  expect_null(esqlabsR:::.plotsToJson(project))
 })
 
 test_that("round-trip preserves length-1 arrays as arrays, not scalars", {
@@ -261,7 +310,10 @@ test_that(".scenariosToJson errors when scenario outputPaths reference unknown i
   # project$outputPaths. (Parser would have rejected this, but a Chapter
   # 7+ programmatic mutation could land us here.)
   sc <- project$scenarios[[1L]]
-  sc$outputPaths <- c(sc$outputPaths, c(UnknownId = "Organism|NotDeclared|Path"))
+  sc$outputPaths <- c(
+    sc$outputPaths,
+    c(UnknownId = "Organism|NotDeclared|Path")
+  )
 
   expect_error(
     esqlabsR:::.projectToJson(project),
