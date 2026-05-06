@@ -203,7 +203,7 @@ test_that("Cross-reference validation detects invalid individual references", {
   )
 
   # Use ::: to access internal function for unit testing
-  result <- esqlabsR:::.validateCrossReferences(NULL, validationResults)
+  result <- esqlabsR:::.validateCrossReferencesExcel(NULL, validationResults)
   expect_true(result$has_critical_errors())
   expect_true(length(result$critical_errors) > 0)
 })
@@ -226,7 +226,7 @@ test_that("Cross-reference validation detects invalid population references", {
     populations = mock_populations
   )
 
-  result <- esqlabsR:::.validateCrossReferences(NULL, validationResults)
+  result <- esqlabsR:::.validateCrossReferencesExcel(NULL, validationResults)
   expect_true(result$has_critical_errors())
 })
 
@@ -251,7 +251,7 @@ test_that("Cross-reference validation detects invalid plot scenario references",
     plots = mock_plots
   )
 
-  result <- esqlabsR:::.validateCrossReferences(NULL, validationResults)
+  result <- esqlabsR:::.validateCrossReferencesExcel(NULL, validationResults)
   expect_true(result$has_critical_errors())
 })
 
@@ -263,7 +263,7 @@ test_that("Cross-reference validation skips when previous critical errors exist"
     scenarios = mock_result_with_error
   )
 
-  result <- esqlabsR:::.validateCrossReferences(NULL, validationResults)
+  result <- esqlabsR:::.validateCrossReferencesExcel(NULL, validationResults)
   expect_false(result$has_critical_errors())
   expect_equal(length(result$warnings), 1)
 })
@@ -301,7 +301,7 @@ test_that("Cross-reference validation passes with valid references", {
     plots = mock_plots
   )
 
-  result <- esqlabsR:::.validateCrossReferences(NULL, validationResults)
+  result <- esqlabsR:::.validateCrossReferencesExcel(NULL, validationResults)
   expect_false(result$has_critical_errors())
   expect_true(result$is_valid())
 })
