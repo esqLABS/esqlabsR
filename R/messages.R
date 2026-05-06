@@ -904,3 +904,43 @@ messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
 messages$messageRunningPITask <- function(piTaskName) {
   cliFormat("Running PI task: {.val {piTaskName}}")
 }
+
+# Observed data (Chapter 5) ####
+messages$observedDataInvalidEntryType <- function(badType, validTypes) {
+  cli::format_message(c(
+    "x" = "Invalid {.field type} {.val {badType}} in {.code observedData} entry.",
+    "i" = "Must be one of: {.val {validTypes}}."
+  ))
+}
+
+messages$observedDataMissingField <- function(entryIndex, type, field) {
+  cli::format_message(c(
+    "x" = "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing required field {.field {field}}."
+  ))
+}
+
+messages$observedDataProgrammaticNotYetAvailable <- function() {
+  cli::format_message(c(
+    "x" = "{.val programmatic} {.code observedData} entries are not yet supported.",
+    "i" = "The {.fn addObservedData} runtime API lands in a later milestone."
+  ))
+}
+
+messages$observedDataFileNotFound <- function(filePath) {
+  cli::format_message(c(
+    "x" = "Observed-data source file not found: {.path {filePath}}."
+  ))
+}
+
+messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
+  cli::format_message(c(
+    "x" = "Script {.path {filePath}} did not return a {.cls DataSet} or list of {.cls DataSet}.",
+    "i" = "Got an object of class {.cls {klass}}."
+  ))
+}
+
+messages$observedDataDataFolderNotDeclared <- function(file) {
+  cli::format_message(c(
+    "x" = "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
+  ))
+}

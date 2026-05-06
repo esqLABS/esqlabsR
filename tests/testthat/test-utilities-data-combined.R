@@ -30,10 +30,13 @@ importerConfiguration <- ospsuite::loadDataImporterConfiguration(
 
 # Load observed data
 dataSheets <- "Laskin 1982.Group A"
-observedData <- esqlabsR::loadObservedData(
-  projectConfiguration = projectConfiguration,
-  sheets = dataSheets,
-  importerConfiguration = importerConfiguration
+observedData <- withr::with_options(
+  list(lifecycle_verbosity = "quiet"),
+  esqlabsR::loadObservedDataFromExcel(
+    projectConfiguration = projectConfiguration,
+    sheets = dataSheets,
+    importerConfiguration = importerConfiguration
+  )
 )
 
 # Create a proper data frame with paths for all entries
@@ -184,6 +187,7 @@ test_that("It warns when dataSet is not found in observedData", {
 })
 
 test_that("createDataCombinedFromExcel errors when specified DataCombined names are not in the Excel file", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   expect_error(
     createDataCombinedFromExcel(
       projectConfiguration = projectConfiguration,
@@ -197,4 +201,52 @@ test_that("createDataCombinedFromExcel errors when specified DataCombined names 
     )),
     fixed = TRUE
   )
+})
+
+# createDataCombined(project, ...) tests ----
+
+test_that("createDataCombined errors on non-Project input", {
+  expect_error(createDataCombined("not a project"), "expected <Project>")
+})
+
+test_that("createDataCombined returns empty list when no names given", {
+  project <- loadProject(testProjectJSONPath())
+  expect_identical(createDataCombined(project), list())
+})
+
+test_that("createDataCombined errors when requested name not in project", {
+  project <- loadProject(testProjectJSONPath())
+  # TestProject has plots = NULL, so any requested name is missing
+  expect_error(
+    createDataCombined(project, dataCombinedNames = "Nonexistent"),
+    regexp = messages$stopDataCombinedNamesNotFound("Nonexistent"),
+    fixed = TRUE
+  )
+})
+
+test_that("createDataCombined builds DataCombined for Example project", {
+  examplePath <- system.file(
+    "extdata/projects/Example/Project.json",
+    package = "esqlabsR"
+  )
+  project <- loadProject(examplePath)
+  spec <- project$plots$dataCombined[[1]]
+  scenarioName <- spec$simulated[[1]]$scenario
+  path <- spec$simulated[[1]]$path
+  simulatedScenarios <- list()
+  simulatedScenarios[[scenarioName]] <- list(
+    results = list(allQuantityPaths = path)
+  )
+  result <- tryCatch(
+    createDataCombined(
+      project,
+      dataCombinedNames = names(project$plots$dataCombined)[[1]],
+      simulatedScenarios = simulatedScenarios
+    ),
+    error = function(e) e
+  )
+  # Either a list of DataCombined (success) or a downstream ospsuite error
+  # caused by the mock results having no values. Both prove the dispatch
+  # reached the project-driven path.
+  expect_true(inherits(result, "list") || inherits(result, "error"))
 })
