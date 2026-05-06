@@ -475,3 +475,262 @@ setParameterValuesByPathWithCondition <- function(
   paramName <- fullPathParts[[length(fullPathParts)]]
   return(list(containerPath = containerPath, parameterName = paramName))
 }
+
+# Public CRUD: modelParameterSets ----
+
+#' Create a model parameter set
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set name. Must not already exist.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addModelParameterSet <- function(project, id) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+    cli::cli_abort("{.arg id} must be a non-empty string")
+  }
+  if (id %in% names(project$modelParameterSets)) {
+    cli::cli_abort("model parameter set {.val {id}} already exists")
+  }
+  project$modelParameterSets[[id]] <- list()
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a model parameter set
+#' @inheritParams addModelParameterSet
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeModelParameterSet <- function(project, id) {
+  validateIsOfType(project, "Project")
+  if (!(id %in% names(project$modelParameterSets))) {
+    cli::cli_warn("model parameter set {.val {id}} not found; no-op.")
+    return(invisible(project))
+  }
+  .warnIfReferenced(project, "modelParameterSet", id)
+  project$modelParameterSets[[id]] <- NULL
+  project$.markModified()
+  invisible(project)
+}
+
+#' Add a parameter entry to a named model-parameter set
+#'
+#' Adds one parameter entry to the named set in
+#' `project$modelParameterSets`. The set is created on demand if it does
+#' not yet exist. Last-write-wins on duplicate `(containerPath,
+#' parameterName)` pairs.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set name. Created if not present.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @param value Numeric scalar.
+#' @param units Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addModelParameterEntry <- function(
+  project,
+  id,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+    cli::cli_abort("{.arg id} must be a non-empty string")
+  }
+  current <- project$modelParameterSets[[id]]
+  project$modelParameterSets[[id]] <- .addParameterEntry(
+    current,
+    containerPath,
+    parameterName,
+    value,
+    units
+  )
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove a parameter entry from a named model-parameter set
+#'
+#' Removes one parameter entry from the named set. If the removed entry
+#' was the last in the set, the set itself is auto-removed from
+#' `project$modelParameterSets`. Warns if the set or entry doesn't
+#' exist.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set name.
+#' @param containerPath Character scalar.
+#' @param parameterName Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeModelParameterEntry <- function(
+  project,
+  id,
+  containerPath,
+  parameterName
+) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1L) {
+    cli::cli_abort("{.arg id} must be a string scalar")
+  }
+  if (!(id %in% names(project$modelParameterSets))) {
+    cli::cli_warn("model parameter set {.val {id}} not found; no-op.")
+    return(invisible(project))
+  }
+  updated <- .removeParameterEntry(
+    project$modelParameterSets[[id]],
+    containerPath,
+    parameterName
+  )
+  if (is.null(updated)) {
+    .warnIfReferenced(project, "modelParameterSet", id)
+    project$modelParameterSets[[id]] <- NULL
+  } else {
+    project$modelParameterSets[[id]] <- updated
+  }
+  project$.markModified()
+  invisible(project)
+}
+
+# Validate scalar inputs for an `(containerPath, parameterName, value,
+# units)` parameter entry. Returns a character vector of error messages
+# (empty if validation passes).
+#
+# @keywords internal
+# @noRd
+.validateParameterEntryArgs <- function(
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  errors <- character()
+  if (
+    !is.character(containerPath) ||
+      length(containerPath) != 1L ||
+      is.na(containerPath) ||
+      nchar(containerPath) == 0
+  ) {
+    errors <- c(errors, "containerPath must be a non-empty string")
+  }
+  if (
+    !is.character(parameterName) ||
+      length(parameterName) != 1L ||
+      is.na(parameterName) ||
+      nchar(parameterName) == 0
+  ) {
+    errors <- c(errors, "parameterName must be a non-empty string")
+  }
+  if (!is.numeric(value) || length(value) != 1L || is.na(value)) {
+    errors <- c(errors, "value must be a numeric scalar")
+  }
+  if (!is.character(units) || length(units) != 1L) {
+    errors <- c(errors, "units must be a string scalar (use \"\" for none)")
+  }
+  errors
+}
+
+# Append (or replace, last-write-wins) one parameter entry to a
+# JSON-faithful array-of-records parameter set. `parameters` is a list
+# of `list(containerPath, parameterName, value, units)` entries (or
+# `NULL`); returns the updated list.
+#
+# @keywords internal
+# @noRd
+.addParameterEntry <- function(
+  parameters,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  errors <- .validateParameterEntryArgs(
+    containerPath,
+    parameterName,
+    value,
+    units
+  )
+  if (length(errors) > 0L) {
+    cli::cli_abort(c(
+      "Invalid parameter entry:",
+      stats::setNames(errors, rep("x", length(errors)))
+    ))
+  }
+
+  if (is.null(parameters)) parameters <- list()
+
+  existingIdx <- .findParameterEntryIndex(
+    parameters,
+    containerPath,
+    parameterName
+  )
+  newEntry <- list(
+    containerPath = containerPath,
+    parameterName = parameterName,
+    value = as.double(value),
+    units = if (nchar(units) == 0L) NULL else units
+  )
+  if (length(existingIdx) > 0L) {
+    parameters[[existingIdx]] <- newEntry
+  } else {
+    parameters[[length(parameters) + 1L]] <- newEntry
+  }
+  parameters
+}
+
+# Drop one parameter entry from a JSON-faithful array-of-records
+# parameter set. Returns `NULL` when the removal empties the set
+# (callers use this to auto-remove the named set).
+#
+# @keywords internal
+# @noRd
+.removeParameterEntry <- function(parameters, containerPath, parameterName) {
+  if (is.null(parameters) || length(parameters) == 0L) {
+    cli::cli_warn(
+      "parameter {.val {paste(containerPath, parameterName, sep = '|')}} not found; no-op."
+    )
+    return(parameters)
+  }
+  idx <- .findParameterEntryIndex(parameters, containerPath, parameterName)
+  if (length(idx) == 0L) {
+    cli::cli_warn(
+      "parameter {.val {paste(containerPath, parameterName, sep = '|')}} not found; no-op."
+    )
+    return(parameters)
+  }
+  parameters <- parameters[-idx]
+  if (length(parameters) == 0L) {
+    return(NULL)
+  }
+  parameters
+}
+
+# Locate a `(containerPath, parameterName)` entry in a parameter-set
+# array-of-records. Returns an integer index or `integer(0)` if absent.
+#
+# @keywords internal
+# @noRd
+.findParameterEntryIndex <- function(
+  parameters,
+  containerPath,
+  parameterName
+) {
+  if (is.null(parameters) || length(parameters) == 0L) {
+    return(integer(0))
+  }
+  hits <- vapply(
+    parameters,
+    function(e) {
+      identical(e$containerPath, containerPath) &&
+        identical(e$parameterName, parameterName)
+    },
+    logical(1)
+  )
+  which(hits)
+}

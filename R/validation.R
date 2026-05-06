@@ -188,6 +188,90 @@ validateProject <- function(project) {
 
 # Shared helpers used by section adapters ----
 
+#' Warn if a removed entity is still referenced elsewhere in the project.
+#'
+#' Walks the project to find inbound references to `id` of the given
+#' `entityType` and emits a `cli::cli_warn()` listing them. Used by the
+#' `remove*()` mutators: removal proceeds anyway, leaving the dangling
+#' reference for the next [validateProject()] call to surface.
+#'
+#' @param project A `Project` object.
+#' @param entityType One of `"individual"`, `"population"`, `"application"`,
+#'   `"modelParameterSet"`, `"individualParameterSet"`,
+#'   `"applicationParameterSet"`, `"outputPath"`.
+#' @param id Character scalar of the id being removed.
+#' @return `invisible(NULL)`.
+#' @keywords internal
+#' @noRd
+.warnIfReferenced <- function(project, entityType, id) {
+  if (entityType == "individualParameterSet") {
+    holders <- character()
+    for (indId in names(project$individuals %||% list())) {
+      ind <- project$individuals[[indId]]
+      if (id %in% (ind$parameterSets %||% character(0))) {
+        holders <- c(holders, indId)
+      }
+    }
+    if (length(holders) > 0) {
+      cli::cli_warn(c(
+        "Removed individualParameterSet {.val {id}} is still referenced by {length(holders)} individual{?s}:",
+        "*" = "{holders}",
+        "i" = "These individuals now have a dangling reference. Update or remove them."
+      ))
+    }
+    return(invisible(NULL))
+  }
+  if (entityType == "applicationParameterSet") {
+    holders <- character()
+    for (appId in names(project$applications %||% list())) {
+      app <- project$applications[[appId]]
+      if (id %in% (app$parameterSets %||% character(0))) {
+        holders <- c(holders, appId)
+      }
+    }
+    if (length(holders) > 0) {
+      cli::cli_warn(c(
+        "Removed applicationParameterSet {.val {id}} is still referenced by {length(holders)} application{?s}:",
+        "*" = "{holders}",
+        "i" = "These applications now have a dangling reference. Update or remove them."
+      ))
+    }
+    return(invisible(NULL))
+  }
+
+  scenarios <- project$scenarios %||% list()
+  if (length(scenarios) == 0) {
+    return(invisible(NULL))
+  }
+
+  refs <- character()
+  for (name in names(scenarios)) {
+    sc <- scenarios[[name]]
+    hit <- switch(
+      entityType,
+      "individual" = identical(sc$individualId, id),
+      "population" = identical(sc$populationId, id),
+      "application" = identical(sc$applicationProtocol, id),
+      "modelParameterSet" = isTRUE(id %in% sc$modelParameterSets),
+      "outputPath" = {
+        pathValue <- project$outputPaths[[id]]
+        isTRUE(pathValue %in% sc$outputPaths)
+      },
+      FALSE
+    )
+    if (isTRUE(hit)) refs <- c(refs, name)
+  }
+
+  if (length(refs) > 0) {
+    cli::cli_warn(c(
+      "Removed {entityType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
+      "*" = "{refs}",
+      "i" = "These scenarios now have a dangling reference. Update or remove them."
+    ))
+  }
+  invisible(NULL)
+}
+
 #' Check for duplicate values and add a critical error when found
 #'
 #' @param ids Character vector of IDs to check.
