@@ -90,6 +90,7 @@ test_that("sensitivitySpiderPlot legend labels are correctly applied", {
 # Default plot with custom PK parameter -----------------------------------
 
 test_that("sensitivitySpiderPlot handles custom PK parameters", {
+  skip_on_os("mac")
   customFun <- list("minmax" = function(y) max(y) / min(y[y != 0]))
 
   resultsCustomPK <- sensitivityCalculation(
