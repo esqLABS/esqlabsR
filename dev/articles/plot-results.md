@@ -29,15 +29,40 @@ defined in the plotConfiguration sheet and has many options to customize
 the layout of the plots. More information in the [Drawing
 Plots](#drawing-plots) section.
 
-plotGrids export options like size, quality, file type etc… are
-available in the **exportConfiguration** sheet. More information in the
-[Export Plot](#export-plots) section.
-
 Once all the excel sheets are setup, just call the
 [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlotsFromExcel.md)
 function to generate and export the plots.
 
-![](Figures/plot-workflow.png)
+``` mermaid
+classDiagram
+    direction LR
+    class DataCombined {
+        DataCombinedName
+        dataType
+        label
+        scenario
+        ...
+    }
+    class plotConfiguration {
+        plotID
+        DataCombinedName
+        plotType
+        title
+        ...
+    }
+    class plotGrids {
+        name
+        plotID
+        title
+        ...
+    }
+    DataCombined --> plotConfiguration
+    plotConfiguration --> plotGrids
+
+    note for DataCombined "Simulation results and observed data"
+    note for plotConfiguration "Data and type of each plot"
+    note for plotGrids "Plots to combine on one panel"
+```
 
 ### Specify a `DataCombined`
 
@@ -71,13 +96,13 @@ object.
 
 Here is a sample of the available plot settings:
 
-    #>  [1] "foldLinesLegendDiagonal" "foldLinesLegend"        
-    #>  [3] "lloqDirection"           "displayLLOQ"            
-    #>  [5] "errorbarsAlpha"          "errorbarsLinetype"      
-    #>  [7] "errorbarsCapSize"        "errorbarsSize"          
-    #>  [9] "ribbonsAlpha"            "ribbonsLinetype"        
-    #> [11] "ribbonsSize"             "ribbonsFill"            
-    #> [13] "pointsAlpha"             "pointsSize"             
+    #>  [1] "foldLinesLegendDiagonal" "foldLinesLegend"
+    #>  [3] "lloqDirection"           "displayLLOQ"
+    #>  [5] "errorbarsAlpha"          "errorbarsLinetype"
+    #>  [7] "errorbarsCapSize"        "errorbarsSize"
+    #>  [9] "ribbonsAlpha"            "ribbonsLinetype"
+    #> [11] "ribbonsSize"             "ribbonsFill"
+    #> [13] "pointsAlpha"             "pointsSize"
     #> [15] "pointsShape"
 
 You can access the full list by running `DefaultPlotConfiguration$new()`
@@ -106,25 +131,14 @@ To customize the plotGrid, the user can add all the necessary columns
 that are defined in the `PlotGridConfiguration` class. Here is a sample
 of the available:
 
-    #>  [1] "tagMargin"                  "tagLineHeight"             
-    #>  [3] "tagAngle"                   "tagVerticalJustification"  
-    #>  [5] "tagHorizontalJustification" "tagFontFamily"             
-    #>  [7] "tagFontFace"                "tagSize"                   
-    #>  [9] "tagColor"                   "tagPosition"               
-    #> [11] "tagSeparator"               "tagSuffix"                 
-    #> [13] "tagPrefix"                  "tagLevels"                 
+    #>  [1] "tagMargin"                  "tagLineHeight"
+    #>  [3] "tagAngle"                   "tagVerticalJustification"
+    #>  [5] "tagHorizontalJustification" "tagFontFamily"
+    #>  [7] "tagFontFace"                "tagSize"
+    #>  [9] "tagColor"                   "tagPosition"
+    #> [11] "tagSeparator"               "tagSuffix"
+    #> [13] "tagPrefix"                  "tagLevels"
     #> [15] "design"
-
-### Export Plots
-
-In order to export plots to image files, the user can use the
-**exportConfiguration** sheet. The plotGrids to export must be added in
-the plotGridName column. Then, the output file name must be specified in
-the outputName column. The output format can be customize using the
-properties listed in the `ExportConfiguration` class. Here is a sample
-of the available:
-
-    #> [1] "heightPerRow" "dpi"          "units"        "height"       "width"
 
 ### Plotting Workflow Example
 
@@ -165,8 +179,8 @@ observedData <- loadObservedData(
 #### Setup the `Plot.xlsx` file
 
 Then, the `Plot.xlsx` file is setup to define the `DataCombined`,
-customize plots, specify plotGrids and export options. The `Plot.xlsx`
-file used in this example can be found
+customize plots, and specify plotGrids. The `Plot.xlsx` file used in
+this example can be found
 [here](https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/examples/TestProject/Configurations/Plots.xlsx).
 
 #### Use `createPlotsFromExcel()`
@@ -207,9 +221,6 @@ plots$Aciclovir2
 ```
 
 ![](plot-results_files/figure-html/unnamed-chunk-9-1.png)
-
-Also, calling this function will export the plots as image files if the
-exportConfiguration sheet is setup correctly.
 
 By default, the function will try to create all plots defined in the
 **plotGrids** sheet. If any of the simulation results or the observed
@@ -265,7 +276,7 @@ residuals <- calculateResiduals(
 sumResiduals <- sum(residuals$residualValues)
 
 print(paste0("The sum of linear residuals for is ", sumResiduals))
-#> [1] "The sum of linear residuals for is 10.6265690847908"
+#> [1] "The sum of linear residuals for is 10.6299754309471"
 ```
 
 You can modify the created `DataCombined`, e.g., by changing the

@@ -49,7 +49,6 @@ project’s structure.
     #> ├── ProjectConfiguration.json
     #> ├── ProjectConfiguration.xlsx
     #> └── Results
-    #>     ├── All plots.png
     #>     ├── Figures
     #>     └── SimulationResults
 
