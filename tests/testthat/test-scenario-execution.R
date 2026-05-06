@@ -4,20 +4,25 @@
   esqlabsR:::.loadProjectJson(testProjectJSONPath())
 }
 
-test_that(".parameterGroupToStructure flattens record-shape into paths/values/units", {
+test_that(".parameterSetToStructure flattens record-shape into paths/values/units", {
   records <- list(
-    list(containerPath = "A|B", parameterName = "P1", value = 1.5, units = "mg"),
-    list(containerPath = "A|C", parameterName = "P2", value = 2,   units = NULL)
+    list(
+      containerPath = "A|B",
+      parameterName = "P1",
+      value = 1.5,
+      units = "mg"
+    ),
+    list(containerPath = "A|C", parameterName = "P2", value = 2, units = NULL)
   )
-  out <- esqlabsR:::.parameterGroupToStructure(records)
-  expect_equal(out$paths,  c("A|B|P1", "A|C|P2"))
+  out <- esqlabsR:::.parameterSetToStructure(records)
+  expect_equal(out$paths, c("A|B|P1", "A|C|P2"))
   expect_equal(out$values, c(1.5, 2))
-  expect_equal(out$units,  c("mg", ""))
+  expect_equal(out$units, c("mg", ""))
 })
 
-test_that(".parameterGroupToStructure returns NULL on empty input", {
-  expect_null(esqlabsR:::.parameterGroupToStructure(NULL))
-  expect_null(esqlabsR:::.parameterGroupToStructure(list()))
+test_that(".parameterSetToStructure returns NULL on empty input", {
+  expect_null(esqlabsR:::.parameterSetToStructure(NULL))
+  expect_null(esqlabsR:::.parameterSetToStructure(list()))
 })
 
 test_that(".findById returns the matching item by idField", {
@@ -66,7 +71,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
       units = NULL
     )
   )
-  proj$.applications$Aciclovir_iv_250mg$parameters <- list(
+  proj$.applicationParameterSets$Override <- list(
     list(
       containerPath = "OverlapContainer",
       parameterName = "OverlapParam",
@@ -74,6 +79,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
       units = NULL
     )
   )
+  proj$.applications$Aciclovir_iv_250mg$parameterSets <- list("Override")
   scenario$individualId <- NULL
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
   idx <- match("OverlapContainer|OverlapParam", merged$paths)
@@ -84,9 +90,9 @@ test_that(".mergeScenarioParameters layer 5 (customParams) wins over all earlier
   project <- .testProject()
   scenario <- project$scenarios[["TestScenario"]]
   customParams <- list(
-    paths  = "Organism|Liver|EHC continuous fraction",
+    paths = "Organism|Liver|EHC continuous fraction",
     values = 42,
-    units  = ""
+    units = ""
   )
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, customParams)
   idx <- match("Organism|Liver|EHC continuous fraction", merged$paths)
@@ -124,10 +130,44 @@ test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets
   expect_true("Organism|Liver|EHC continuous fraction" %in% merged$paths)
 })
 
+test_that(".mergeScenarioParameters silently skips an unknown individual parameter-set id", {
+  project <- .testProject()
+  scenario <- project$scenarios[["TestScenario"]]
+  proj <- project$.__enclos_env__$private
+  proj$.individuals[[1L]]$parameterSets <- list(
+    "Indiv1_default",
+    "DoesNotExist"
+  )
+  scenario$modelParameterSets <- NULL
+  scenario$applicationProtocol <- NA
+  merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
+  expect_true("Organism|Kidney|GFR" %in% merged$paths)
+})
+
+test_that(".mergeScenarioParameters silently skips an unknown application parameter-set id", {
+  project <- .testProject()
+  scenario <- project$scenarios[["TestScenario"]]
+  proj <- project$.__enclos_env__$private
+  proj$.applications$Aciclovir_iv_250mg$parameterSets <- list(
+    "Aciclovir_iv_250mg_default",
+    "DoesNotExist"
+  )
+  scenario$modelParameterSets <- NULL
+  scenario$individualId <- NULL
+  merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
+  expect_true(
+    "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose" %in%
+      merged$paths
+  )
+})
+
 test_that(".runScenariosFromProject returns the documented per-scenario list shape (individual)", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  out <- esqlabsR:::.runScenariosFromProject(project, scenarioNames = "TestScenario")
+  out <- esqlabsR:::.runScenariosFromProject(
+    project,
+    scenarioNames = "TestScenario"
+  )
   expect_named(out, "TestScenario")
   expect_named(
     out$TestScenario,
@@ -140,21 +180,30 @@ test_that(".runScenariosFromProject returns the documented per-scenario list sha
 test_that(".runScenariosFromProject runs a steady-state scenario without error", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  out <- esqlabsR:::.runScenariosFromProject(project, scenarioNames = "TestScenario_steadystate")
+  out <- esqlabsR:::.runScenariosFromProject(
+    project,
+    scenarioNames = "TestScenario_steadystate"
+  )
   expect_s3_class(out$TestScenario_steadystate$simulation, "Simulation")
 })
 
 test_that(".runScenariosFromProject runs a population scenario and attaches a Population", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  out <- esqlabsR:::.runScenariosFromProject(project, scenarioNames = "PopulationScenario")
+  out <- esqlabsR:::.runScenariosFromProject(
+    project,
+    scenarioNames = "PopulationScenario"
+  )
   expect_s3_class(out$PopulationScenario$population, "Population")
 })
 
 test_that(".runScenariosFromProject runs a CSV-population scenario and attaches a Population", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  out <- esqlabsR:::.runScenariosFromProject(project, scenarioNames = "PopulationScenarioFromCSV")
+  out <- esqlabsR:::.runScenariosFromProject(
+    project,
+    scenarioNames = "PopulationScenarioFromCSV"
+  )
   expect_s3_class(out$PopulationScenarioFromCSV$population, "Population")
 })
 

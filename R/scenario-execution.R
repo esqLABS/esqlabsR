@@ -2,21 +2,21 @@
 #
 # Modern (JSON-Project-driven) runtime path. Bodies match
 # `json-as-primary-input-v2:R/scenario-execution.R` line-for-line except
-# for two transitional helpers (`.parameterGroupToStructure`,
+# for two transitional helpers (`.parameterSetToStructure`,
 # `.findById`) that bridge the gap between our JSON-faithful parser and
 # end-state's pre-shaped section parsers. Those two helpers go away in
 # Chapter 6/7 when the section parsers become typed.
 
 # Transitional bridge helpers ----
 
-# Convert a record-shape parameter list (as parsed JSON-faithfully from
-# `modelParameterSets[[group]]`, `individuals[[id]]$parameters`, or
-# `applications[[name]]$parameters`) into the parallel-vector
-# `list(paths, values, units)` shape consumed by
-# `extendParameterStructure()`.
+# Convert a record-shape parameter list (one entry of any of the
+# project-level `*ParameterSets` bags: `modelParameterSets`,
+# `individualParameterSets`, or `applicationParameterSets`) into
+# the parallel-vector `list(paths, values, units)` shape consumed
+# by `extendParameterStructure()`.
 # @keywords internal
 # @noRd
-.parameterGroupToStructure <- function(entries) {
+.parameterSetToStructure <- function(entries) {
   if (is.null(entries) || length(entries) == 0L) {
     return(NULL)
   }
@@ -52,9 +52,13 @@
 
 # Pure function. Builds a `list(paths, values, units)` parameter
 # structure (or `NULL`) for one scenario. Layers, in order
-# (last-write-wins): scenario `modelParameterSets` (each group iterated
-# in listed order) -> species defaults -> individual inline `parameters`
-# -> application inline `parameters` -> caller-supplied `customParams`.
+# (last-write-wins): scenario `modelParameterSets` -> species defaults
+# -> individual `parameterSets` -> application `parameterSets` ->
+# caller-supplied `customParams`. Each `*ParameterSets` field is a
+# list of set ids, iterated in listed order; ids are looked up in
+# the matching project-level bag (`modelParameterSets`,
+# `individualParameterSets`, `applicationParameterSets`). Unknown
+# ids are silently skipped (consistent across all three layers).
 # @keywords internal
 # @noRd
 .mergeScenarioParameters <- function(scenario, project, customParams = NULL) {
@@ -63,7 +67,7 @@
   # 1. modelParameterSets
   if (!is.null(scenario$modelParameterSets)) {
     for (setId in scenario$modelParameterSets) {
-      setParams <- .parameterGroupToStructure(
+      setParams <- .parameterSetToStructure(
         project$modelParameterSets[[setId]]
       )
       if (!is.null(setParams)) {
@@ -75,7 +79,7 @@
     }
   }
 
-  # 2. + 3. species defaults + individual inline parameters
+  # 2. + 3. species defaults + individual parameterSets
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
     indivData <- .findById(
       project$individuals,
@@ -90,17 +94,21 @@
           newParameters = speciesParams
         )
       }
-      indivInline <- .parameterGroupToStructure(indivData$parameters)
-      if (!is.null(indivInline)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = indivInline
+      for (setId in unlist(indivData$parameterSets)) {
+        setParams <- .parameterSetToStructure(
+          project$individualParameterSets[[setId]]
         )
+        if (!is.null(setParams)) {
+          params <- extendParameterStructure(
+            parameters = params,
+            newParameters = setParams
+          )
+        }
       }
     }
   }
 
-  # 4. application inline parameters
+  # 4. application parameterSets
   if (
     !is.null(scenario$applicationProtocol) &&
       !is.na(scenario$applicationProtocol)
@@ -112,12 +120,16 @@
         applicationProtocol = scenario$applicationProtocol
       ))
     }
-    appInline <- .parameterGroupToStructure(appData$parameters)
-    if (!is.null(appInline)) {
-      params <- extendParameterStructure(
-        parameters = params,
-        newParameters = appInline
+    for (setId in unlist(appData$parameterSets)) {
+      setParams <- .parameterSetToStructure(
+        project$applicationParameterSets[[setId]]
       )
+      if (!is.null(setParams)) {
+        params <- extendParameterStructure(
+          parameters = params,
+          newParameters = setParams
+        )
+      }
     }
   }
 
