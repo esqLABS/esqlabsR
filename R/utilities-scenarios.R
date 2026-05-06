@@ -1,3 +1,156 @@
+# Section validation adapters ----
+#
+# These adapters are looked up by name from `R/validation.R` via
+# `.lookupSectionValidatorAdapter()`. Each pulls the right slice of the
+# project and delegates to a section-local `.validate*` helper. They
+# only run when `validateProject()` (or a targeted `.ensureValid`) is
+# called; they do not run during parsing or simulation.
+
+#' @keywords internal
+#' @noRd
+.outputPathsValidatorAdapter <- function(project) {
+  .validateOutputPaths(project$outputPaths)
+}
+
+#' @keywords internal
+#' @noRd
+.scenariosValidatorAdapter <- function(project) {
+  .validateScenarios(project$scenarios)
+}
+
+#' @keywords internal
+#' @noRd
+.applicationsValidatorAdapter <- function(project) {
+  .validateApplications(project$applications)
+}
+
+#' Validate the `outputPaths` section of a Project
+#'
+#' Checks for duplicate ids, empty literal paths, and warns when two ids
+#' map to the same literal path (the round-trip lossiness flagged in the
+#' Chapter 2 PR).
+#'
+#' @param outputPaths Named character vector / list from
+#'   `project$outputPaths`.
+#' @return validationResult.
+#' @keywords internal
+#' @noRd
+.validateOutputPaths <- function(outputPaths) {
+  result <- validationResult$new()
+
+  if (is.null(outputPaths) || length(outputPaths) == 0) {
+    result$add_warning("Data", "No output paths defined")
+    return(result)
+  }
+
+  result <- .check_no_duplicates(names(outputPaths), "outputPathId", result)
+
+  values <- unlist(outputPaths, use.names = FALSE)
+  emptyIds <- names(outputPaths)[is.na(values) | values == ""]
+  if (length(emptyIds) > 0) {
+    result$add_critical_error(
+      "Missing Fields",
+      paste0(
+        "Empty output path values for IDs: ",
+        paste(emptyIds, collapse = ", ")
+      )
+    )
+  }
+
+  dupeValues <- values[duplicated(values) & !is.na(values)]
+  if (length(dupeValues) > 0) {
+    result$add_warning(
+      "Uniqueness",
+      paste0(
+        "Multiple IDs point to the same output path: ",
+        paste(unique(dupeValues), collapse = ", ")
+      )
+    )
+  }
+
+  result
+}
+
+#' Validate the `scenarios` section of a Project
+#'
+#' Per-entry checks: `modelFile` is set and non-empty,
+#' `simulationType` is one of the supported values, and
+#' population-typed scenarios declare a `populationId`.
+#'
+#' Cross-section reference checks (individualId, modelParameterSets,
+#' applicationProtocol, …) live in `.validateCrossReferences()`.
+#'
+#' @param scenarios Named list of `Scenario` objects from
+#'   `project$scenarios`.
+#' @return validationResult.
+#' @keywords internal
+#' @noRd
+.validateScenarios <- function(scenarios) {
+  result <- validationResult$new()
+
+  if (is.null(scenarios) || length(scenarios) == 0) {
+    result$add_warning("Data", "No scenarios defined")
+    return(result)
+  }
+
+  for (name in names(scenarios)) {
+    sc <- scenarios[[name]]
+
+    if (is.null(sc$modelFile) || sc$modelFile == "") {
+      result$add_critical_error(
+        "Missing Fields",
+        paste0("Scenario '", name, "' has no modelFile")
+      )
+    }
+
+    simType <- sc$simulationType %||% ""
+    if (!simType %in% c("Individual", "Population")) {
+      result$add_critical_error(
+        "Validation",
+        paste0(
+          "Scenario '",
+          name,
+          "' has invalid simulationType '",
+          simType,
+          "'"
+        )
+      )
+    }
+
+    if (
+      simType == "Population" &&
+        (is.null(sc$populationId) || sc$populationId == "")
+    ) {
+      result$add_critical_error(
+        "Missing Fields",
+        paste0("Population scenario '", name, "' has no populationId")
+      )
+    }
+  }
+
+  result
+}
+
+#' Validate the `applications` section of a Project
+#'
+#' The applications section is currently a thin wrapper around its
+#' `parameterSets` references, all of which are checked in
+#' `.validateCrossReferences()`. This adapter exists so that the
+#' canonical section list still resolves to a working validator (and so
+#' that future shape checks have an obvious home).
+#'
+#' @param applications Named list from `project$applications`.
+#' @return validationResult.
+#' @keywords internal
+#' @noRd
+.validateApplications <- function(applications) {
+  result <- validationResult$new()
+  if (is.null(applications) || length(applications) == 0) {
+    result$add_warning("Data", "No applications defined")
+  }
+  result
+}
+
 # Legacy v6 runtime path: runs scenarios that were created via
 # `createScenarios()` from `ScenarioConfiguration` / Excel. Soft-
 # deprecated via `runScenarios()`'s dispatcher in this file. Body is
@@ -159,11 +312,11 @@
 #' @export
 runScenarios <- function(
   project,
-  scenarioNames        = NULL,
-  customParams         = NULL,
+  scenarioNames = NULL,
+  customParams = NULL,
   simulationRunOptions = NULL,
-  validate             = TRUE,
-  scenarios            = lifecycle::deprecated()
+  validate = TRUE,
+  scenarios = lifecycle::deprecated()
 ) {
   # Legacy named-arg form.
   if (lifecycle::is_present(scenarios)) {

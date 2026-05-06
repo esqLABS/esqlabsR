@@ -1,0 +1,558 @@
+# Project (JSON) validation framework.
+#
+# Implements Chapter 4 of the JSON-as-primary-input refactor (see
+# .claude/superpowers/specs/2026-05-04-json-based-project-chapters.md).
+#
+# This file is the JSON-driven counterpart to the Excel-driven
+# `validateAllConfigurations()` (R/validation-all-configurations.R).
+#
+# The dispatcher resolves each section's validator by naming convention
+# rather than hardcoding the section list. Each section file
+# (R/utilities-scenarios.R, R/utilities-individual.R, …) defines a
+# top-level `.<section>ValidatorAdapter <- function(project)` that
+# pulls the right slice of the project and calls a section-local
+# `.validate<Section>()` function. Adding a new section means dropping
+# an adapter into the section's R file and listing it in
+# `.validationSections`; this file does not need to change.
+#
+# `crossReferences` is intentionally NOT a section adapter — it runs
+# after all section validators because it inspects their partial
+# results to decide whether to skip itself (skip on prior critical
+# errors). It lives as a fixed phase in the dispatcher rather than
+# masquerading as a section.
+
+# Public API ----
+
+#' Validate a Project
+#'
+#' Runs every section validator (and a cross-reference pass) against a
+#' parsed `Project` and returns a named list of `validationResult`
+#' objects, one per section, in canonical order. Sets the project's
+#' `validatedSinceMutation` flag when no section produced critical
+#' errors so subsequent `runScenarios()` / `createPlots()` calls can
+#' skip a redundant validation pass.
+#'
+#' @param project A `Project` object (typically produced by
+#'   [loadProject()]). Path inputs are not accepted here; load the
+#'   project first.
+#' @return Named list of `validationResult` objects with class
+#'   `"ValidationResults"`. Order matches `.validationSections`.
+#' @export
+#' @seealso [validateAllConfigurations()] for the legacy Excel-driven
+#'   validator, [isAnyCriticalErrors()], [validationSummary()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' results <- validateProject(project)
+#' if (isAnyCriticalErrors(results)) {
+#'   print(validationSummary(results))
+#' }
+#' }
+validateProject <- function(project) {
+  if (!inherits(project, "Project")) {
+    cli::cli_abort(
+      "{.arg project} must be a {.cls Project} object; got {.cls {class(project)[[1]]}}."
+    )
+  }
+
+  results <- .runProjectValidation(project, sections = NULL)
+
+  if (!isAnyCriticalErrors(results)) {
+    project$.markValidated()
+  }
+
+  results
+}
+
+# Section validator dispatch ----
+
+#' Canonical ordered list of section validators
+#'
+#' Each name (other than `crossReferences`) must have a matching
+#' `.<name>ValidatorAdapter` function defined in the section's R file.
+#' The order determines the order of keys in the
+#' `validateProject()` result.
+#'
+#' @keywords internal
+#' @noRd
+.validationSections <- c(
+  "individuals",
+  "individualParameterSets",
+  "populations",
+  "scenarios",
+  "outputPaths",
+  "modelParameterSets",
+  "applications",
+  "applicationParameterSets",
+  "plots",
+  "observedData",
+  "crossReferences"
+)
+
+#' Resolve a section name to its validator adapter
+#'
+#' Looks up `.<section>ValidatorAdapter` in the package namespace.
+#' Errors with a message that names the missing adapter rather than a
+#' generic "function not found".
+#'
+#' @keywords internal
+#' @noRd
+.lookupSectionValidatorAdapter <- function(section) {
+  adapterName <- paste0(".", section, "ValidatorAdapter")
+  ns <- asNamespace("esqlabsR")
+  if (!exists(adapterName, envir = ns, mode = "function", inherits = FALSE)) {
+    cli::cli_abort(c(
+      "No validator adapter found for section {.val {section}}.",
+      "i" = "Define {.code {adapterName} <- function(project) ...} in the section's R file."
+    ))
+  }
+  get(adapterName, envir = ns, mode = "function", inherits = FALSE)
+}
+
+#' Run a (possibly targeted) project validation
+#'
+#' Internal orchestration helper. Runs the requested section validators
+#' in canonical order and returns a `ValidationResults` list.
+#' `crossReferences` is always run last when included so it sees prior
+#' section results.
+#'
+#' @param project A loaded `Project` object.
+#' @param sections Character vector of section names to validate, or
+#'   `NULL` for a full validation. Unknown names are dropped silently.
+#' @return Named list of `validationResult` objects with class
+#'   `"ValidationResults"`. Only requested sections are present.
+#' @keywords internal
+#' @noRd
+.runProjectValidation <- function(project, sections = NULL) {
+  if (is.null(sections)) {
+    sections <- .validationSections
+  } else {
+    sections <- intersect(.validationSections, sections)
+  }
+
+  results <- list()
+  for (section in sections) {
+    if (section == "crossReferences") {
+      results[[section]] <- .validateCrossReferences(project, results)
+      next
+    }
+    adapter <- .lookupSectionValidatorAdapter(section)
+    results[[section]] <- adapter(project)
+  }
+
+  class(results) <- c("ValidationResults", class(results))
+  results
+}
+
+#' Ensure a Project passes validation before an operation
+#'
+#' Runs targeted validation for the sections an operation depends on,
+#' and aborts with a formatted multi-error message if any critical
+#' errors are found. Short-circuits when the project has been fully
+#' validated since its last mutation (the `validatedSinceMutation`
+#' flag).
+#'
+#' This helper does not itself flip the cache flag, because it only
+#' runs a subset of validators. Only `validateProject()` (a full run)
+#' sets the flag.
+#'
+#' @param project A `Project` object.
+#' @param sections Non-empty character vector of section names required
+#'   by the calling operation.
+#' @param opName Short label used in the abort message (e.g.
+#'   `"runScenarios"`).
+#' @return `invisible(NULL)` on success.
+#' @keywords internal
+#' @noRd
+.ensureValid <- function(project, sections, opName) {
+  if (isTRUE(project$validatedSinceMutation)) {
+    return(invisible(NULL))
+  }
+
+  results <- .runProjectValidation(project, sections = sections)
+
+  if (isAnyCriticalErrors(results)) {
+    .abortValidationErrors(results, opName)
+  }
+
+  invisible(NULL)
+}
+
+#' Format and abort with the critical errors found in a validation run
+#'
+#' @keywords internal
+#' @noRd
+.abortValidationErrors <- function(results, opName) {
+  lines <- character()
+  for (section in names(results)) {
+    r <- results[[section]]
+    if (!inherits(r, "validationResult") || !r$has_critical_errors()) {
+      next
+    }
+    for (e in r$critical_errors) {
+      lines <- c(lines, paste0("[", section, "] ", e$message))
+    }
+  }
+  bullets <- stats::setNames(lines, rep("x", length(lines)))
+  cli::cli_abort(c(
+    "Cannot {opName}: project has {length(lines)} critical validation \\
+    error{?s}.",
+    bullets,
+    "i" = "Run {.code validateProject(project)} for a full report."
+  ))
+}
+
+# Shared helpers used by section adapters ----
+
+#' Extract IDs from a JSON-array section (e.g. individuals, populations)
+#'
+#' These sections are stored as unnamed lists where each entry carries
+#' its own ID field (`individualId` / `populationId`). Returns a
+#' character vector of those IDs (with `NA` filtered out) for
+#' cross-reference checks. Transitional helper: drops out once the parser
+#' converts individuals/populations into named lists keyed by id (planned
+#' alongside the file reorg in Chapter 7).
+#'
+#' @keywords internal
+#' @noRd
+.extractEntryIds <- function(entries, idField) {
+  if (is.null(entries) || length(entries) == 0) {
+    return(character(0))
+  }
+  ids <- vapply(
+    entries,
+    function(e) {
+      v <- e[[idField]]
+      if (is.null(v) || length(v) == 0) NA_character_ else as.character(v)
+    },
+    character(1)
+  )
+  ids[!is.na(ids)]
+}
+
+
+#' Check for duplicate values and add a critical error when found
+#'
+#' @param ids Character vector of IDs to check.
+#' @param fieldName Name of the field for the error message.
+#' @param result `validationResult` to mutate.
+#' @return The (mutated) `result`, returned for fluent chaining.
+#' @keywords internal
+#' @noRd
+.check_no_duplicates <- function(ids, fieldName, result) {
+  dupes <- ids[duplicated(ids) & !is.na(ids)]
+  if (length(dupes) > 0) {
+    result$add_critical_error(
+      "Uniqueness",
+      paste0(
+        "Duplicate ",
+        fieldName,
+        " values: ",
+        paste(unique(dupes), collapse = ", ")
+      )
+    )
+  }
+  result
+}
+
+#' Check that required fields are present and non-empty on an entry
+#'
+#' @param entry Named list / record-like value.
+#' @param requiredFields Character vector of field names to check.
+#' @param entryName Label for the entry, used in the error message.
+#' @param result `validationResult` to mutate.
+#' @return The (mutated) `result`.
+#' @keywords internal
+#' @noRd
+.check_required_fields <- function(
+  entry,
+  requiredFields,
+  entryName,
+  result
+) {
+  for (field in requiredFields) {
+    val <- entry[[field]]
+    if (is.null(val) || (length(val) == 1 && (is.na(val) || val == ""))) {
+      result$add_critical_error(
+        "Missing Fields",
+        paste0(
+          "Required field '",
+          field,
+          "' is missing or empty in ",
+          entryName
+        )
+      )
+    }
+  }
+  result
+}
+
+#' Validate a parameter-set structure
+#'
+#' Shared body used by the model / individual / application
+#' parameter-set adapters. Each parameter set is expected to be a list
+#' with `paths`, `values`, and `units` parallel vectors.
+#'
+#' @keywords internal
+#' @noRd
+.validateParameterSets <- function(parameterSets, sectionName) {
+  result <- validationResult$new()
+
+  if (is.null(parameterSets) || length(parameterSets) == 0) {
+    result$add_warning("Data", paste0("No ", sectionName, " defined"))
+    return(result)
+  }
+
+  for (setName in names(parameterSets)) {
+    set <- parameterSets[[setName]]
+    paths <- set$paths %||% character(0)
+    values <- set$values %||% numeric(0)
+
+    if (length(paths) != length(values)) {
+      result$add_critical_error(
+        "Structure",
+        paste0(
+          "Set '",
+          setName,
+          "' in ",
+          sectionName,
+          ": paths and values have different lengths"
+        )
+      )
+      next
+    }
+
+    if (length(paths) == 0) {
+      next
+    }
+
+    if (any(is.na(paths) | paths == "")) {
+      result$add_critical_error(
+        "Missing Fields",
+        paste0(
+          "Set '",
+          setName,
+          "' in ",
+          sectionName,
+          " contains empty parameter paths"
+        )
+      )
+    }
+
+    if (!is.numeric(values)) {
+      result$add_warning(
+        "Data Type",
+        paste0(
+          "Set '",
+          setName,
+          "' in ",
+          sectionName,
+          " contains non-numeric values"
+        )
+      )
+    }
+
+    dupes <- paths[duplicated(paths) & !is.na(paths)]
+    if (length(dupes) > 0) {
+      result$add_warning(
+        "Uniqueness",
+        paste0(
+          "Duplicate parameter paths in set '",
+          setName,
+          "': ",
+          paste(unique(dupes), collapse = ", ")
+        )
+      )
+    }
+  }
+
+  result
+}
+
+# Cross-reference validation (monolith) ----
+
+#' Validate cross-references between Project sections
+#'
+#' Hand-rolled monolith that checks references that span sections:
+#' `scenario.individualId/populationId` against the individuals and
+#' populations sections, `scenario.modelParameterSets` and
+#' `scenario.applicationProtocol` against their respective lookups,
+#' `individual.parameterSets` and `application.parameterSets` against
+#' the corresponding parameter-set sections, and
+#' `dataCombined.simulated.scenario` against scenarios. Skips itself
+#' when any prior section validator already flagged a critical error
+#' and surfaces a single "skipped" warning naming the checks that were
+#' not performed, since cross-references built on broken sections tend
+#' to produce noisy spurious failures.
+#'
+#' Future deepening: the end-state walks per-section `references()`
+#' declarations rather than hand-coding the FK list here. Out of scope
+#' for Chapter 4.
+#'
+#' @param project Project object.
+#' @param validationResults Already-collected per-section results.
+#' @return validationResult.
+#' @keywords internal
+#' @noRd
+.validateCrossReferences <- function(project, validationResults) {
+  result <- validationResult$new()
+
+  if (isAnyCriticalErrors(validationResults)) {
+    skipped <- c(
+      "scenario individualId / populationId references",
+      "scenario modelParameterSets references",
+      "scenario applicationProtocol references",
+      "individual parameterSets references",
+      "application parameterSets references",
+      "plot dataCombined scenario references"
+    )
+    result$add_warning(
+      "Skipped",
+      paste0(
+        "Cross-reference validation skipped due to critical errors. ",
+        "Re-run validation after fixing them to also check: ",
+        paste(skipped, collapse = "; "),
+        "."
+      )
+    )
+    return(result)
+  }
+
+  scenarioList <- project$scenarios %||% list()
+  individualIds <- .extractEntryIds(project$individuals, "individualId")
+  populationIds <- .extractEntryIds(project$populations, "populationId")
+  modelParamKeys <- names(project$modelParameterSets %||% list())
+  applicationKeys <- names(project$applications %||% list())
+
+  for (scName in names(scenarioList)) {
+    sc <- scenarioList[[scName]]
+
+    if (
+      !is.null(sc$individualId) &&
+        !is.na(sc$individualId) &&
+        !sc$individualId %in% individualIds
+    ) {
+      result$add_critical_error(
+        "Invalid Reference",
+        paste0(
+          "Scenario '",
+          scName,
+          "' references undefined individualId '",
+          sc$individualId,
+          "'"
+        )
+      )
+    }
+
+    if (
+      !is.null(sc$populationId) &&
+        !is.na(sc$populationId) &&
+        !sc$populationId %in% populationIds
+    ) {
+      result$add_critical_error(
+        "Invalid Reference",
+        paste0(
+          "Scenario '",
+          scName,
+          "' references undefined populationId '",
+          sc$populationId,
+          "'"
+        )
+      )
+    }
+
+    if (!is.null(sc$modelParameterSets) && length(sc$modelParameterSets) > 0) {
+      invalidSets <- setdiff(sc$modelParameterSets, modelParamKeys)
+      invalidSets <- invalidSets[!is.na(invalidSets) & invalidSets != ""]
+      if (length(invalidSets) > 0) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "Scenario '",
+            scName,
+            "' references undefined model parameter sets: ",
+            paste(invalidSets, collapse = ", ")
+          )
+        )
+      }
+    }
+
+    if (
+      !is.null(sc$applicationProtocol) &&
+        !is.na(sc$applicationProtocol) &&
+        !sc$applicationProtocol %in% applicationKeys
+    ) {
+      result$add_critical_error(
+        "Invalid Reference",
+        paste0(
+          "Scenario '",
+          scName,
+          "' references undefined applicationProtocol '",
+          sc$applicationProtocol,
+          "'"
+        )
+      )
+    }
+  }
+
+  individualSetKeys <- names(project$individualParameterSets %||% list())
+  for (entry in project$individuals %||% list()) {
+    id <- entry$individualId %||% NA_character_
+    refs <- entry$parameterSets %||% character(0)
+    refs <- as.character(unlist(refs))
+    invalid <- setdiff(refs, individualSetKeys)
+    if (length(invalid) > 0) {
+      result$add_critical_error(
+        "Invalid Reference",
+        paste0(
+          "Individual '",
+          id,
+          "' references undefined individualParameterSets: ",
+          paste(invalid, collapse = ", ")
+        )
+      )
+    }
+  }
+
+  applicationSetKeys <- names(project$applicationParameterSets %||% list())
+  for (id in names(project$applications %||% list())) {
+    refs <- project$applications[[id]]$parameterSets %||% character(0)
+    refs <- as.character(unlist(refs))
+    invalid <- setdiff(refs, applicationSetKeys)
+    if (length(invalid) > 0) {
+      result$add_critical_error(
+        "Invalid Reference",
+        paste0(
+          "Application '",
+          id,
+          "' references undefined applicationParameterSets: ",
+          paste(invalid, collapse = ", ")
+        )
+      )
+    }
+  }
+
+  dataCombined <- project$plots$dataCombined
+  if (!is.null(dataCombined) && length(dataCombined) > 0) {
+    referencedScenarios <- unlist(lapply(dataCombined, function(dc) {
+      vapply(
+        dc$simulated %||% list(),
+        function(e) e$scenario %||% NA_character_,
+        character(1)
+      )
+    }))
+    referencedScenarios <- referencedScenarios[!is.na(referencedScenarios)]
+    invalidScenarios <- setdiff(referencedScenarios, names(scenarioList))
+    if (length(invalidScenarios) > 0) {
+      result$add_critical_error(
+        "Invalid Reference",
+        paste0(
+          "dataCombined references undefined scenarios: ",
+          paste(invalidScenarios, collapse = ", ")
+        )
+      )
+    }
+  }
+
+  result
+}

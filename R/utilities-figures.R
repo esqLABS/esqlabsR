@@ -1,3 +1,134 @@
+# Section validation adapter ----
+#
+# Looked up by name from `R/validation.R` via
+# `.lookupSectionValidatorAdapter()`. The plots adapter covers all
+# three sub-sections (`dataCombined`, `plotConfiguration`,
+# `plotGrids`) since they are tightly coupled by inner cross-refs and
+# the data-class shape on `project$plots` is a single named list.
+
+#' @keywords internal
+#' @noRd
+.plotsValidatorAdapter <- function(project) {
+  .validatePlots(project$plots)
+}
+
+#' Validate the `plots` section of a Project
+#'
+#' Covers `dataCombined`, `plotConfiguration`, and `plotGrids`:
+#'   * dataCombined entries must declare a non-empty `scenario` on
+#'     each simulated row.
+#'   * plotConfiguration must declare `plotID`, `DataCombinedName`, and
+#'     `plotType` columns; `plotID` must be unique; `DataCombinedName`
+#'     must reference a known dataCombined entry.
+#'   * plotGrids entries reference `plotConfiguration$plotID` via a
+#'     comma-separated `plotIDs` string; unknown ids are surfaced as a
+#'     warning (not a critical error) since unknown grid ids fail
+#'     softly during plot creation.
+#'
+#' Cross-section references that escape this section (dataCombined ->
+#' scenarios) are validated in `.validateCrossReferences()`.
+#'
+#' @param plots Named list from `project$plots` (`NULL` when the JSON
+#'   omits the `plots` section).
+#' @return validationResult.
+#' @keywords internal
+#' @noRd
+.validatePlots <- function(plots) {
+  result <- validationResult$new()
+
+  if (is.null(plots)) {
+    result$add_warning("Data", "No plots defined")
+    return(result)
+  }
+
+  dataCombined <- plots$dataCombined
+  plotConfig <- plots$plotConfiguration
+
+  if (is.null(dataCombined) || length(dataCombined) == 0) {
+    result$add_warning("Data", "dataCombined is empty")
+  } else {
+    for (dcName in names(dataCombined)) {
+      dc <- dataCombined[[dcName]]
+      for (entry in dc$simulated %||% list()) {
+        if (is.null(entry$scenario) || identical(entry$scenario, "")) {
+          result$add_critical_error(
+            "Missing Fields",
+            paste0(
+              "Simulated entry in dataCombined '",
+              dcName,
+              "' is missing 'scenario'"
+            )
+          )
+        }
+      }
+    }
+  }
+
+  if (is.null(plotConfig) || nrow(plotConfig) == 0) {
+    result$add_warning("Data", "plotConfiguration is empty")
+  } else {
+    for (col in c("plotID", "DataCombinedName", "plotType")) {
+      if (!col %in% names(plotConfig)) {
+        result$add_critical_error(
+          "Missing Fields",
+          paste0("plotConfiguration is missing required column '", col, "'")
+        )
+      }
+    }
+
+    if ("plotID" %in% names(plotConfig)) {
+      result <- .check_no_duplicates(
+        plotConfig$plotID[!is.na(plotConfig$plotID)],
+        "plotID",
+        result
+      )
+    }
+
+    if ("DataCombinedName" %in% names(plotConfig)) {
+      invalidDataCombinedRefs <- setdiff(
+        plotConfig$DataCombinedName[!is.na(plotConfig$DataCombinedName)],
+        names(dataCombined %||% list())
+      )
+      if (length(invalidDataCombinedRefs) > 0) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "plotConfiguration references unknown DataCombinedName: ",
+            paste(invalidDataCombinedRefs, collapse = ", ")
+          )
+        )
+      }
+    }
+  }
+
+  plotGrids <- plots$plotGrids
+  if (
+    !is.null(plotGrids) &&
+      nrow(plotGrids) > 0 &&
+      !is.null(plotConfig) &&
+      nrow(plotConfig) > 0
+  ) {
+    if ("plotIDs" %in% names(plotGrids) && "plotID" %in% names(plotConfig)) {
+      allGridIds <- unlist(lapply(
+        plotGrids$plotIDs[!is.na(plotGrids$plotIDs)],
+        function(x) trimws(strsplit(x, ",")[[1]])
+      ))
+      invalidGridRefs <- setdiff(allGridIds, plotConfig$plotID)
+      if (length(invalidGridRefs) > 0) {
+        result$add_warning(
+          "Invalid Reference",
+          paste0(
+            "plotGrids references unknown plotIDs: ",
+            paste(invalidGridRefs, collapse = ", ")
+          )
+        )
+      }
+    }
+  }
+
+  result
+}
+
 #' esqLABS color palette
 #'
 #' Returns the list of colors extrapolated between the esqLABS colors blue, red,

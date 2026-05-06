@@ -988,3 +988,376 @@ test_that("validationResult add_warning with details works", {
   expect_equal(result$warnings[[1]]$details$column, "Age")
   expect_equal(result$warnings[[1]]$details$value, -5)
 })
+
+# Project (JSON) validator: validateProject() ----
+
+# Lightweight Project factory for adapter unit tests. Constructs a
+# Project directly with the field values needed by a single section
+# (defaults to empty everywhere else) so each test can target one
+# adapter without dragging the whole fixture in.
+.fakeProject <- function(...) {
+  args <- list(
+    schemaVersion = "2.0",
+    esqlabsRVersion = NA_character_,
+    jsonPath = NULL,
+    projectDirPath = NULL,
+    filePaths = list(),
+    outputPaths = list(),
+    scenarios = list(),
+    modelParameterSets = list(),
+    individualParameterSets = list(),
+    applicationParameterSets = list(),
+    individuals = list(),
+    populations = list(),
+    applications = list(),
+    observedData = list(),
+    plots = NULL
+  )
+  overrides <- list(...)
+  for (nm in names(overrides)) {
+    args[[nm]] <- overrides[[nm]]
+  }
+  do.call(esqlabsR:::Project$new, args)
+}
+
+test_that("validateProject() rejects non-Project inputs", {
+  expect_snapshot(error = TRUE, validateProject("not a project"))
+})
+
+test_that("validateProject() returns sections in canonical order", {
+  project <- .fakeProject()
+  results <- validateProject(project)
+
+  expect_s3_class(results, "ValidationResults")
+  expect_named(results, esqlabsR:::.validationSections)
+})
+
+test_that("validateProject() flips validatedSinceMutation when clean", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  expect_false(project$validatedSinceMutation)
+
+  results <- validateProject(project)
+
+  expect_false(isAnyCriticalErrors(results))
+  expect_true(project$validatedSinceMutation)
+})
+
+test_that("validateProject() leaves validatedSinceMutation FALSE on errors", {
+  project <- .fakeProject(
+    scenarios = list(Bad = esqlabsR:::Scenario$new())
+  )
+
+  results <- validateProject(project)
+
+  expect_true(isAnyCriticalErrors(results))
+  expect_false(project$validatedSinceMutation)
+})
+
+test_that("validatedSinceMutation is read-only", {
+  project <- .fakeProject()
+  expect_snapshot(error = TRUE, project$validatedSinceMutation <- TRUE)
+})
+
+test_that(".markValidated and .markModified flip the flag", {
+  project <- .fakeProject()
+  expect_false(project$validatedSinceMutation)
+
+  project$.markValidated()
+  expect_true(project$validatedSinceMutation)
+
+  project$.markModified()
+  expect_false(project$validatedSinceMutation)
+})
+
+# Section adapter: outputPaths ----
+
+test_that(".validateOutputPaths warns on empty section", {
+  result <- esqlabsR:::.validateOutputPaths(list())
+  expect_length(result$warnings, 1)
+  expect_length(result$critical_errors, 0)
+})
+
+test_that(".validateOutputPaths flags duplicate ids and empty values", {
+  paths <- c(a = "X|y", a = "X|y", b = "")
+  result <- esqlabsR:::.validateOutputPaths(paths)
+  expect_gte(length(result$critical_errors), 2)
+})
+
+test_that(".validateOutputPaths warns when ids collide on a path", {
+  paths <- c(a = "X|y", b = "X|y")
+  result <- esqlabsR:::.validateOutputPaths(paths)
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 1)
+})
+
+# Section adapter: scenarios ----
+
+test_that(".validateScenarios flags missing modelFile and bad simulationType", {
+  sc <- esqlabsR:::Scenario$new()
+  sc$modelFile <- ""
+  result <- esqlabsR:::.validateScenarios(list(s1 = sc))
+  expect_gte(length(result$critical_errors), 1)
+})
+
+test_that(".validateScenarios flags Population scenario without populationId", {
+  sc <- esqlabsR:::Scenario$new()
+  sc$modelFile <- "model.pkml"
+  sc$simulationType <- "Population"
+  sc$populationId <- ""
+  result <- esqlabsR:::.validateScenarios(list(s1 = sc))
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("populationId", msgs)))
+})
+
+# Section adapter: individuals ----
+
+test_that(".validateIndividuals warns on empty section", {
+  result <- esqlabsR:::.validateIndividuals(list())
+  expect_length(result$warnings, 1)
+  expect_length(result$critical_errors, 0)
+})
+
+test_that(".validateIndividuals catches missing required fields and duplicate ids", {
+  individuals <- list(
+    list(individualId = "Adult", species = "Human"),
+    list(individualId = "Adult", species = "Human", gender = "MALE"),
+    list(individualId = "Bad")
+  )
+  result <- esqlabsR:::.validateIndividuals(individuals)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("Duplicate individualId", msgs)))
+  expect_true(any(grepl("gender", msgs)))
+  expect_true(any(grepl("species", msgs)))
+})
+
+# Section adapter: populations ----
+
+test_that(".validatePopulations warns on inverted ranges", {
+  populations <- list(
+    list(
+      populationId = "P1",
+      species = "Human",
+      ageMin = 60,
+      ageMax = 30
+    )
+  )
+  result <- esqlabsR:::.validatePopulations(populations)
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_true(any(grepl("ageMin > ageMax", msgs)))
+})
+
+# Section adapter: parameter sets ----
+
+test_that(".validateParameterSets flags mismatched paths/values", {
+  sets <- list(
+    bad = list(paths = c("A|p", "B|q"), values = 1, units = c("", ""))
+  )
+  result <- esqlabsR:::.validateParameterSets(sets, "modelParameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("different lengths", msgs)))
+})
+
+# Section adapter: applications ----
+
+test_that(".validateApplications warns on empty section but emits no critical errors", {
+  result <- esqlabsR:::.validateApplications(list())
+  expect_s3_class(result, "validationResult")
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 1)
+})
+
+# Section adapter: observedData ----
+
+test_that(".validateObservedData flags unknown type and missing required fields", {
+  observedData <- list(
+    list(type = "weird", file = "x"),
+    list(type = "excel"),
+    list()
+  )
+  result <- esqlabsR:::.validateObservedData(observedData, NULL)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("invalid type 'weird'", msgs)))
+  expect_true(any(grepl("file", msgs)))
+  expect_true(any(grepl("type", msgs)))
+})
+
+test_that(".validateObservedData warns on missing files when dataFolder set", {
+  tmp <- withr::local_tempdir()
+  observedData <- list(
+    list(type = "pkml", file = "missing.pkml")
+  )
+  result <- esqlabsR:::.validateObservedData(observedData, tmp)
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_true(any(grepl("non-existent file", msgs)))
+})
+
+# Section adapter: plots ----
+
+test_that(".validatePlots warns when project has no plots section", {
+  result <- esqlabsR:::.validatePlots(NULL)
+  expect_length(result$warnings, 1)
+  expect_length(result$critical_errors, 0)
+})
+
+test_that(".validatePlots flags missing scenario in dataCombined", {
+  plots <- list(
+    dataCombined = list(
+      DC1 = list(
+        simulated = list(list(scenario = ""))
+      )
+    ),
+    plotConfiguration = data.frame(),
+    plotGrids = data.frame()
+  )
+  result <- esqlabsR:::.validatePlots(plots)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("missing 'scenario'", msgs)))
+})
+
+test_that(".validatePlots flags duplicate plotIDs and unknown DataCombinedName", {
+  plots <- list(
+    dataCombined = list(DC1 = list(simulated = list(list(scenario = "S1")))),
+    plotConfiguration = data.frame(
+      plotID = c("p1", "p1"),
+      DataCombinedName = c("DC1", "Unknown"),
+      plotType = c("individual", "individual"),
+      stringsAsFactors = FALSE
+    ),
+    plotGrids = data.frame()
+  )
+  result <- esqlabsR:::.validatePlots(plots)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("Duplicate plotID", msgs)))
+  expect_true(any(grepl("unknown DataCombinedName", msgs)))
+})
+
+# Cross-references ----
+
+test_that(".validateCrossReferences flags scenario referencing missing individualId", {
+  sc <- esqlabsR:::Scenario$new()
+  sc$modelFile <- "x.pkml"
+  sc$individualId <- "Ghost"
+  project <- .fakeProject(scenarios = list(s1 = sc))
+  result <- esqlabsR:::.validateCrossReferences(project, list())
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("undefined individualId 'Ghost'", msgs)))
+})
+
+test_that(".validateCrossReferences flags individual referencing unknown parameter set", {
+  individuals <- list(
+    list(
+      individualId = "I1",
+      species = "Human",
+      gender = "MALE",
+      parameterSets = list("nope")
+    )
+  )
+  project <- .fakeProject(
+    individuals = individuals,
+    individualParameterSets = list(
+      real = list(paths = "A|p", values = 1, units = "")
+    )
+  )
+  result <- esqlabsR:::.validateCrossReferences(project, list())
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("undefined individualParameterSets", msgs)))
+})
+
+test_that(".validateCrossReferences resolves individuals/populations stored as JSON arrays", {
+  individuals <- list(list(
+    individualId = "I1",
+    species = "Human",
+    gender = "MALE"
+  ))
+  populations <- list(list(populationId = "P1", species = "Human"))
+  sc <- esqlabsR:::Scenario$new()
+  sc$modelFile <- "x.pkml"
+  sc$individualId <- "I1"
+  sc$populationId <- "P1"
+  sc$simulationType <- "Population"
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    individuals = individuals,
+    populations = populations
+  )
+  result <- esqlabsR:::.validateCrossReferences(project, list())
+  expect_length(result$critical_errors, 0)
+})
+
+test_that(".validateCrossReferences skips and warns when prior section had critical errors", {
+  prior <- list(scenarios = validationResult$new())
+  prior$scenarios$add_critical_error("X", "broken")
+  project <- .fakeProject()
+  result <- esqlabsR:::.validateCrossReferences(project, prior)
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 1)
+  expect_match(result$warnings[[1]]$message, "skipped")
+})
+
+# Dispatcher behaviour ----
+
+test_that(".lookupSectionValidatorAdapter errors on unknown section", {
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.lookupSectionValidatorAdapter("doesNotExist")
+  )
+})
+
+test_that(".runProjectValidation honors a targeted sections vector", {
+  project <- .fakeProject()
+  results <- esqlabsR:::.runProjectValidation(
+    project,
+    sections = c("scenarios", "outputPaths", "unknownSection")
+  )
+  expect_named(results, c("scenarios", "outputPaths"))
+})
+
+# .ensureValid + runtime guards ----
+
+test_that(".ensureValid short-circuits when validatedSinceMutation is TRUE", {
+  project <- .fakeProject()
+  project$.markValidated()
+  expect_invisible(esqlabsR:::.ensureValid(
+    project,
+    sections = c("scenarios"),
+    opName = "test"
+  ))
+})
+
+test_that(".ensureValid aborts with a formatted summary on critical errors", {
+  sc <- esqlabsR:::Scenario$new()
+  sc$modelFile <- ""
+  project <- .fakeProject(scenarios = list(s1 = sc))
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.ensureValid(
+      project,
+      sections = c("scenarios"),
+      opName = "runScenarios"
+    )
+  )
+})
+
+test_that("createPlots(validate = FALSE) skips the validation guard", {
+  project <- .fakeProject()
+  expect_equal(createPlots(project, validate = FALSE), list())
+})
+
+test_that("createPlots(validate = TRUE) aborts on a clearly broken project", {
+  plots <- list(
+    dataCombined = list(),
+    plotConfiguration = data.frame(
+      plotID = "p1",
+      DataCombinedName = "Ghost",
+      plotType = "individual",
+      stringsAsFactors = FALSE
+    ),
+    plotGrids = data.frame(
+      name = "G1",
+      plotIDs = "p1",
+      stringsAsFactors = FALSE
+    )
+  )
+  project <- .fakeProject(plots = plots)
+  expect_snapshot(error = TRUE, createPlots(project))
+})

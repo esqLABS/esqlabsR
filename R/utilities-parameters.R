@@ -1,3 +1,25 @@
+# Section validation adapters ----
+#
+# Looked up by name from `R/validation.R` via
+# `.lookupSectionValidatorAdapter()`. The actual shape check lives in
+# `.validateParameterSets()` (in `R/validation.R`), which is shared by
+# all three parameter-set sections.
+
+#' @keywords internal
+#' @noRd
+.modelParameterSetsValidatorAdapter <- function(project) {
+  .validateParameterSets(project$modelParameterSets, "modelParameterSets")
+}
+
+#' @keywords internal
+#' @noRd
+.applicationParameterSetsValidatorAdapter <- function(project) {
+  .validateParameterSets(
+    project$applicationParameterSets,
+    "applicationParameterSets"
+  )
+}
+
 #' Read parameter values from a structured Excel file. Each excel sheet must
 #' consist of columns 'Container Path', 'Parameter Name', 'Value', and 'Units'
 #'
