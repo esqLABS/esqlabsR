@@ -109,6 +109,21 @@ Project <- R6::R6Class(
       )
     },
 
+    #' @field dataFolder Read-only. Absolute path to the `dataFolder`
+    #'   slot under `filePaths`, resolved relative to `projectDirPath`.
+    #'   Holds observed-data sources (Excel workbooks, PKML files,
+    #'   importer configurations, scripts) consumed by
+    #'   `loadObservedData()`. `NULL` when the slot is unset.
+    dataFolder = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field dataFolder} is read-only.")
+      }
+      private$.clean_path(
+        private$.filePaths$dataFolder,
+        parent = private$.projectDirPath
+      )
+    },
+
     #' @field outputPaths Named list mapping output-path IDs to literal output
     #'   path strings.
     outputPaths = function(value) {

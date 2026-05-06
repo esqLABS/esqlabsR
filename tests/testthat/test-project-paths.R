@@ -1,7 +1,10 @@
 test_that("project$modelFolder resolves a relative path against projectDirPath", {
   project <- esqlabsR:::.loadProjectJson(
     system.file(
-      "extdata", "projects", "Example", "Project.json",
+      "extdata",
+      "projects",
+      "Example",
+      "Project.json",
       package = "esqlabsR",
       mustWork = TRUE
     )
@@ -15,7 +18,10 @@ test_that("project$modelFolder resolves a relative path against projectDirPath",
 test_that("project$configurationsFolder resolves a relative path against projectDirPath", {
   project <- esqlabsR:::.loadProjectJson(
     system.file(
-      "extdata", "projects", "Example", "Project.json",
+      "extdata",
+      "projects",
+      "Example",
+      "Project.json",
       package = "esqlabsR",
       mustWork = TRUE
     )
@@ -29,7 +35,10 @@ test_that("project$configurationsFolder resolves a relative path against project
 test_that("project$populationsFolder resolves relative to projectDirPath", {
   project <- esqlabsR:::.loadProjectJson(
     system.file(
-      "extdata", "projects", "Example", "Project.json",
+      "extdata",
+      "projects",
+      "Example",
+      "Project.json",
       package = "esqlabsR",
       mustWork = TRUE
     )
@@ -40,10 +49,47 @@ test_that("project$populationsFolder resolves relative to projectDirPath", {
   )
 })
 
+test_that("project$dataFolder resolves relative to projectDirPath", {
+  project <- esqlabsR:::.loadProjectJson(
+    system.file(
+      "extdata",
+      "projects",
+      "Example",
+      "Project.json",
+      package = "esqlabsR",
+      mustWork = TRUE
+    )
+  )
+  expect_equal(
+    project$dataFolder,
+    fs::path_abs(file.path(project$projectDirPath, "Data"))
+  )
+})
+
+test_that("project$dataFolder is NULL when filePaths.dataFolder is unset", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = structure(list(), names = character(0)),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- esqlabsR:::.loadProjectJson(tmp)
+  expect_null(project$dataFolder)
+})
+
 test_that("project active path fields are read-only", {
   project <- esqlabsR:::.loadProjectJson(
     system.file(
-      "extdata", "projects", "Example", "Project.json",
+      "extdata",
+      "projects",
+      "Example",
+      "Project.json",
       package = "esqlabsR",
       mustWork = TRUE
     )
@@ -60,12 +106,19 @@ test_that("project active path fields are read-only", {
     project$populationsFolder <- "x",
     regexp = "populationsFolder.*read-only"
   )
+  expect_error(
+    project$dataFolder <- "x",
+    regexp = "dataFolder.*read-only"
+  )
 })
 
 test_that(".clean_path expands env vars (other than PATH) and resolves to absolute", {
   project <- esqlabsR:::.loadProjectJson(
     system.file(
-      "extdata", "projects", "Example", "Project.json",
+      "extdata",
+      "projects",
+      "Example",
+      "Project.json",
       package = "esqlabsR",
       mustWork = TRUE
     )
@@ -85,7 +138,10 @@ test_that(".clean_path expands env vars (other than PATH) and resolves to absolu
 test_that(".clean_path returns NULL on NULL/NA/zero-length input", {
   project <- esqlabsR:::.loadProjectJson(
     system.file(
-      "extdata", "projects", "Example", "Project.json",
+      "extdata",
+      "projects",
+      "Example",
+      "Project.json",
       package = "esqlabsR",
       mustWork = TRUE
     )
