@@ -40,16 +40,24 @@ Project <- R6::R6Class(
 
     #' @field validatedSinceMutation Read-only logical. `TRUE` if a full
     #'   [validateProject()] has succeeded with no critical errors since
-    #'   the project was loaded or last mutated. Cleared by any mutation
-    #'   (mutators land in a later chapter; for now the flag is set by
-    #'   [validateProject()] and remains until a fresh load). Used by
-    #'   [runScenarios()] and [createPlots()] to skip redundant
+    #'   the project was loaded or last mutated. Cleared by any mutation.
+    #'   Used by [runScenarios()] and [createPlots()] to skip redundant
     #'   re-validation of an unchanged project.
     validatedSinceMutation = function(value) {
       if (!missing(value)) {
         cli::cli_abort("{.field validatedSinceMutation} is read-only.")
       }
       private$.validatedSinceMutation
+    },
+
+    #' @field modified Read-only logical. `TRUE` if any configuration
+    #'   property has been modified since the project was loaded. Set by
+    #'   `private$.invalidate()`, which the (Chapter 6) `add*` / `remove*`
+    #'   mutators route through via `.markModified()`. Cleared by a fresh
+    #'   load.
+    modified = function(value) {
+      if (!missing(value)) cli::cli_abort("{.field modified} is read-only.")
+      private$.modified
     },
 
     #' @field esqlabsRVersion Informational version string from the JSON.
@@ -353,9 +361,7 @@ Project <- R6::R6Class(
   ),
   private = list(
     .invalidate = function() {
-      # Chapter 6 will add a `private$.modified <- TRUE` line here once
-      # the mutation API exists; chapter 4 only needs the validation-cache
-      # half of the lifecycle.
+      private$.modified <- TRUE
       private$.validatedSinceMutation <- FALSE
       invisible(self)
     },
@@ -429,6 +435,7 @@ Project <- R6::R6Class(
     .applications = list(),
     .observedData = list(),
     .plots = NULL,
-    .validatedSinceMutation = FALSE
+    .validatedSinceMutation = FALSE,
+    .modified = FALSE
   )
 )
