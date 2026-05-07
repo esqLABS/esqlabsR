@@ -319,13 +319,6 @@ removeObservedData <- function(project, name) {
       },
       logical(1)
     ))
-    if (length(matchIdx) == 0L) {
-      matchIdx <- which(vapply(
-        project$observedData,
-        function(e) identical(e$type, "programmatic"),
-        logical(1)
-      ))
-    }
     if (length(matchIdx) > 0L) {
       project$observedData <- project$observedData[-matchIdx[[1]]]
     }

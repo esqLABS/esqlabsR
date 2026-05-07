@@ -630,7 +630,7 @@ removeModelParameterEntry <- function(
   if (!is.numeric(value) || length(value) != 1L || is.na(value)) {
     errors <- c(errors, "value must be a numeric scalar")
   }
-  if (!is.character(units) || length(units) != 1L) {
+  if (!is.character(units) || length(units) != 1L || is.na(units)) {
     errors <- c(errors, "units must be a string scalar (use \"\" for none)")
   }
   errors

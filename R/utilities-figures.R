@@ -1395,15 +1395,27 @@ createPlotsFromExcel <- function(
   invisible(x)
 }
 
-# Replace NULL values in `...` with NA so that `as.data.frame()` keeps
-# the column (otherwise NULL entries are silently dropped).
+# Normalise `...` for use as a single row in `as.data.frame()`:
+# - NULL becomes NA so the column is kept (otherwise it is silently
+#   dropped).
+# - Multi-length vectors and lists are wrapped in `list(...)` so they
+#   become a 1-element list-column instead of recycling into multiple
+#   rows (e.g. `xValuesLimits = c(0, 100)` would otherwise expand to
+#   two rows).
 #
 # @keywords internal
 # @noRd
 .namedDotsAsRow <- function(...) {
   dots <- list(...)
-  dots <- lapply(dots, function(v) if (is.null(v)) NA else v)
-  dots
+  lapply(dots, function(v) {
+    if (is.null(v)) {
+      return(NA)
+    }
+    if (length(v) > 1L || is.list(v)) {
+      return(list(v))
+    }
+    v
+  })
 }
 
 .checkDataCombinedEntry <- function(entry, dataType) {
@@ -1541,7 +1553,11 @@ removePlot <- function(project, plotID) {
     }
   }
 
-  project$plots$plotConfiguration <- df[df$plotID != plotID, , drop = FALSE]
+  project$plots$plotConfiguration <- df[
+    which(df$plotID != plotID),
+    ,
+    drop = FALSE
+  ]
   project$.markModified()
   invisible(project)
 }
@@ -1633,7 +1649,7 @@ removePlotGrid <- function(project, name) {
     return(invisible(project))
   }
 
-  project$plots$plotGrids <- df[df$name != name, , drop = FALSE]
+  project$plots$plotGrids <- df[which(df$name != name), , drop = FALSE]
   project$.markModified()
   invisible(project)
 }
