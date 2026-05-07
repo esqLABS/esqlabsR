@@ -206,10 +206,11 @@ Project <- R6::R6Class(
 
     #' @field plots Named list with sub-entries `dataCombined`,
     #'   `plotConfiguration`, and `plotGrids`. `NULL` if the JSON omits the
-    #'   `plots` section. Each `plotGrids[[i]]$plotIDs` is a single
-    #'   comma-separated string (e.g. `"P1, P2"`), not a JSON array; this
-    #'   matches the v2.0 schema and the existing Excel `Plots` sheet
-    #'   convention. Splitting/normalising is deferred to the plots chapter.
+    #'   `plots` section. `plotGrids` is a data frame whose `plotIDs` column
+    #'   holds, for each row, a single comma-separated string (e.g.
+    #'   `"P1, P2"`) rather than a JSON array; this matches the v2.0 schema
+    #'   and the existing Excel `Plots` sheet convention. Splitting and
+    #'   normalising is deferred to the plots chapter.
     plots = function(value) {
       if (!missing(value)) cli::cli_abort("{.field plots} is read-only.")
       private$.plots
