@@ -6,20 +6,19 @@
 # This file is the JSON-driven counterpart to the Excel-driven
 # `validateAllConfigurations()` (R/validation-all-configurations.R).
 #
-# The dispatcher resolves each section's validator by naming convention
-# rather than hardcoding the section list. Each section file
-# (R/utilities-scenarios.R, R/utilities-individual.R, …) defines a
-# top-level `.<section>ValidatorAdapter <- function(project)` that
-# pulls the right slice of the project and calls a section-local
+# The dispatcher is a named list of adapters in `.validationAdapters`.
+# Each section file (R/utilities-scenarios.R, R/utilities-individual.R,
+# ...) defines a top-level `.<section>ValidatorAdapter <- function(project)`
+# that pulls the right slice of the project and calls a section-local
 # `.validate<Section>()` function. Adding a new section means dropping
-# an adapter into the section's R file and listing it in
-# `.validationSections`; this file does not need to change.
+# an adapter into the section's R file and registering it in
+# `.validationAdapters` below.
 #
-# `crossReferences` is intentionally NOT a section adapter — it runs
+# `crossReferences` is intentionally NOT in the adapter list, it runs
 # after all section validators because it inspects their partial
 # results to decide whether to skip itself (skip on prior critical
-# errors). It lives as a fixed phase in the dispatcher rather than
-# masquerading as a section.
+# errors). It is appended as a fixed final phase by the dispatcher
+# rather than masquerading as a section.
 
 # Public API ----
 
@@ -36,7 +35,8 @@
 #'   [loadProject()]). Path inputs are not accepted here; load the
 #'   project first.
 #' @return Named list of `validationResult` objects with class
-#'   `"ValidationResults"`. Order matches `.validationSections`.
+#'   `"ValidationResults"`. Order matches `.validationAdapters`,
+#'   with `crossReferences` last.
 #' @export
 #' @seealso [validateAllConfigurations()] for the legacy Excel-driven
 #'   validator, [isAnyCriticalErrors()], [validationSummary()].
@@ -66,48 +66,32 @@ validateProject <- function(project) {
 
 # Section validator dispatch ----
 
-#' Canonical ordered list of section validators
+#' Canonical ordered registry of section validator adapters
 #'
-#' Each name (other than `crossReferences`) must have a matching
-#' `.<name>ValidatorAdapter` function defined in the section's R file.
-#' The order determines the order of keys in the
-#' `validateProject()` result.
+#' Named list mapping each section name to the adapter that validates
+#' it. Order determines the order of keys in the `validateProject()`
+#' result. `crossReferences` is not listed here; it is appended as a
+#' fixed final phase by [.runProjectValidation()] so it can see
+#' partial section results.
+#'
+#' Building the list at package load means a missing or misspelled
+#' adapter symbol surfaces as a build-time error, rather than at
+#' runtime when a user calls [validateProject()].
 #'
 #' @keywords internal
 #' @noRd
-.validationSections <- c(
-  "individuals",
-  "individualParameterSets",
-  "populations",
-  "scenarios",
-  "outputPaths",
-  "modelParameterSets",
-  "applications",
-  "applicationParameterSets",
-  "plots",
-  "observedData",
-  "crossReferences"
+.validationAdapters <- list(
+  individuals = .individualsValidatorAdapter,
+  individualParameterSets = .individualParameterSetsValidatorAdapter,
+  populations = .populationsValidatorAdapter,
+  scenarios = .scenariosValidatorAdapter,
+  outputPaths = .outputPathsValidatorAdapter,
+  modelParameterSets = .modelParameterSetsValidatorAdapter,
+  applications = .applicationsValidatorAdapter,
+  applicationParameterSets = .applicationParameterSetsValidatorAdapter,
+  plots = .plotsValidatorAdapter,
+  observedData = .observedDataValidatorAdapter
 )
-
-#' Resolve a section name to its validator adapter
-#'
-#' Looks up `.<section>ValidatorAdapter` in the package namespace.
-#' Errors with a message that names the missing adapter rather than a
-#' generic "function not found".
-#'
-#' @keywords internal
-#' @noRd
-.lookupSectionValidatorAdapter <- function(section) {
-  adapterName <- paste0(".", section, "ValidatorAdapter")
-  ns <- asNamespace("esqlabsR")
-  if (!exists(adapterName, envir = ns, mode = "function", inherits = FALSE)) {
-    cli::cli_abort(c(
-      "No validator adapter found for section {.val {section}}.",
-      "i" = "Define {.code {adapterName} <- function(project) ...} in the section's R file."
-    ))
-  }
-  get(adapterName, envir = ns, mode = "function", inherits = FALSE)
-}
 
 #' Run a (possibly targeted) project validation
 #'
@@ -124,10 +108,11 @@ validateProject <- function(project) {
 #' @keywords internal
 #' @noRd
 .runProjectValidation <- function(project, sections = NULL) {
+  known <- c(names(.validationAdapters), "crossReferences")
   if (is.null(sections)) {
-    sections <- .validationSections
+    sections <- known
   } else {
-    sections <- intersect(.validationSections, sections)
+    sections <- intersect(known, sections)
   }
 
   results <- list()
@@ -136,8 +121,7 @@ validateProject <- function(project) {
       results[[section]] <- .validateCrossReferences(project, results)
       next
     }
-    adapter <- .lookupSectionValidatorAdapter(section)
-    results[[section]] <- adapter(project)
+    results[[section]] <- .validationAdapters[[section]](project)
   }
 
   class(results) <- c("ValidationResults", class(results))

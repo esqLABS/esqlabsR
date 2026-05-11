@@ -1,10 +1,10 @@
 # Section validation adapter ----
 #
-# Looked up by name from `R/validation.R` via
-# `.lookupSectionValidatorAdapter()`. The plots adapter covers all
-# three sub-sections (`dataCombined`, `plotConfiguration`,
-# `plotGrids`) since they are tightly coupled by inner cross-refs and
-# the data-class shape on `project$plots` is a single named list.
+# Registered in `.validationAdapters` (R/validation.R) and called by
+# `.runProjectValidation()`. The plots adapter covers all three
+# sub-sections (`dataCombined`, `plotConfiguration`, `plotGrids`)
+# since they are tightly coupled by inner cross-refs and the
+# data-class shape on `project$plots` is a single named list.
 
 #' @keywords internal
 #' @noRd

@@ -13,7 +13,8 @@ project first.}
 }
 \value{
 Named list of \code{validationResult} objects with class
-\code{"ValidationResults"}. Order matches \code{.validationSections}.
+\code{"ValidationResults"}. Order matches \code{.validationAdapters},
+with \code{crossReferences} last.
 }
 \description{
 Runs every section validator (and a cross-reference pass) against a

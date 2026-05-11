@@ -1,7 +1,7 @@
 # Section validation adapters ----
 #
-# Looked up by name from `R/validation.R` via
-# `.lookupSectionValidatorAdapter()`. The actual shape check lives in
+# Registered in `.validationAdapters` (R/validation.R) and called by
+# `.runProjectValidation()`. The actual shape check lives in
 # `.validateParameterSets()` (in `R/validation.R`), which is shared by
 # all three parameter-set sections.
 

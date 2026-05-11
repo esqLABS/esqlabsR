@@ -1,10 +1,10 @@
 # Section validation adapters ----
 #
-# These adapters are looked up by name from `R/validation.R` via
-# `.lookupSectionValidatorAdapter()`. Each pulls the right slice of the
-# project and delegates to a section-local `.validate*` helper. They
-# only run when `validateProject()` (or a targeted `.ensureValid`) is
-# called; they do not run during parsing or simulation.
+# Registered in `.validationAdapters` (R/validation.R) and called by
+# `.runProjectValidation()`. Each pulls the right slice of the project
+# and delegates to a section-local `.validate*` helper. They only run
+# when `validateProject()` (or a targeted `.ensureValid`) is called;
+# they do not run during parsing or simulation.
 
 #' @keywords internal
 #' @noRd

@@ -14,15 +14,6 @@
       Error:
       ! validatedSinceMutation is read-only.
 
-# .lookupSectionValidatorAdapter errors on unknown section
-
-    Code
-      esqlabsR:::.lookupSectionValidatorAdapter("doesNotExist")
-    Condition
-      Error in `esqlabsR:::.lookupSectionValidatorAdapter()`:
-      ! No validator adapter found for section "doesNotExist".
-      i Define `.doesNotExistValidatorAdapter <- function(project) ...` in the section's R file.
-
 # .ensureValid aborts with a formatted summary on critical errors
 
     Code

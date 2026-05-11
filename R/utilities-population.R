@@ -1,7 +1,7 @@
 # Section validation adapter ----
 #
-# Looked up by name from `R/validation.R` via
-# `.lookupSectionValidatorAdapter()`.
+# Registered in `.validationAdapters` (R/validation.R) and called by
+# `.runProjectValidation()`.
 
 #' @keywords internal
 #' @noRd

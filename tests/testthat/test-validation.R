@@ -1029,7 +1029,10 @@ test_that("validateProject() returns sections in canonical order", {
   results <- validateProject(project)
 
   expect_s3_class(results, "ValidationResults")
-  expect_named(results, esqlabsR:::.validationSections)
+  expect_named(
+    results,
+    c(names(esqlabsR:::.validationAdapters), "crossReferences")
+  )
 })
 
 test_that("validateProject() flips validatedSinceMutation when clean", {
@@ -1295,13 +1298,6 @@ test_that(".validateCrossReferences skips and warns when prior section had criti
 })
 
 # Dispatcher behaviour ----
-
-test_that(".lookupSectionValidatorAdapter errors on unknown section", {
-  expect_snapshot(
-    error = TRUE,
-    esqlabsR:::.lookupSectionValidatorAdapter("doesNotExist")
-  )
-})
 
 test_that(".runProjectValidation honors a targeted sections vector", {
   project <- .fakeProject()
