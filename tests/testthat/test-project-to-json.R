@@ -23,7 +23,8 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
       "populations",
       "applications",
       "applicationParameterSets",
-      "plots"
+      "plots",
+      "parameterIdentification"
     ),
     ignore.order = TRUE
   )

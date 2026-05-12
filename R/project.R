@@ -239,6 +239,18 @@ Project <- R6::R6Class(
         private$.plots <- value
       }
       private$.plots
+    },
+
+    #' @field parameterIdentification Named list keyed by PI task id; each
+    #'   entry is a `PITask` record. May be `NULL` or an empty list when
+    #'   the project declares no PI tasks. Read-write active binding;
+    #'   mutation discipline is enforced inside `add*` / `remove*` exports,
+    #'   not by the binding.
+    parameterIdentification = function(value) {
+      if (!missing(value)) {
+        private$.parameterIdentification <- value
+      }
+      private$.parameterIdentification
     }
   ),
   public = list(
@@ -262,6 +274,8 @@ Project <- R6::R6Class(
     #' @param applications Named list of application-protocol entries.
     #' @param observedData List of observed-data source entries.
     #' @param plots Named list of plot sub-sections, or `NULL`.
+    #' @param parameterIdentification Named list of `PITask` objects keyed
+    #'   by task id. Defaults to an empty list.
     initialize = function(
       schemaVersion,
       esqlabsRVersion,
@@ -277,7 +291,8 @@ Project <- R6::R6Class(
       populations,
       applications,
       observedData,
-      plots
+      plots,
+      parameterIdentification = list()
     ) {
       private$.schemaVersion <- schemaVersion
       private$.esqlabsRVersion <- esqlabsRVersion
@@ -294,6 +309,7 @@ Project <- R6::R6Class(
       private$.applications <- applications
       private$.observedData <- observedData
       private$.plots <- plots
+      private$.parameterIdentification <- parameterIdentification
     },
 
     #' @description Internal method to record that a full project
@@ -643,6 +659,121 @@ Project <- R6::R6Class(
       removePlotGrid(project = self, name = name)
     },
 
+    #' @description Add a PI task programmatically. Delegates to
+    #'   [addPITask()].
+    #' @param id PI task id (character scalar).
+    #' @param scenarios Character vector of scenario names.
+    #' @param parameters List of `PIParameter` records.
+    #' @param outputMappings List of `PIOutputMapping` records.
+    #' @param configuration Named list. See [addPITask()] for the shape.
+    addPITask = function(
+      id,
+      scenarios,
+      parameters,
+      outputMappings,
+      configuration = list()
+    ) {
+      addPITask(
+        project = self,
+        id = id,
+        scenarios = scenarios,
+        parameters = parameters,
+        outputMappings = outputMappings,
+        configuration = configuration
+      )
+    },
+
+    #' @description Remove a PI task programmatically. Delegates to
+    #'   [removePITask()].
+    #' @param id PI task id (character scalar).
+    removePITask = function(id) {
+      removePITask(project = self, id = id)
+    },
+
+    #' @description Add a PI parameter. Delegates to [addPIParameter()].
+    #' @param taskId PI task id (character scalar).
+    #' @param path Parameter path (character scalar).
+    #' @param scenarios Character vector of scenario names.
+    #' @param minValue,maxValue,startValue Numeric scalars.
+    #' @param units Optional character scalar.
+    #' @param id Optional character scalar.
+    addPIParameter = function(
+      taskId,
+      path,
+      scenarios,
+      minValue,
+      maxValue,
+      startValue,
+      units = NULL,
+      id = NULL
+    ) {
+      addPIParameter(
+        self,
+        taskId = taskId,
+        path = path,
+        scenarios = scenarios,
+        minValue = minValue,
+        maxValue = maxValue,
+        startValue = startValue,
+        units = units,
+        id = id
+      )
+    },
+
+    #' @description Remove a PI parameter. Delegates to
+    #'   [removePIParameter()].
+    #' @param taskId PI task id.
+    #' @param id Parameter id.
+    removePIParameter = function(taskId, id) {
+      removePIParameter(self, taskId = taskId, id = id)
+    },
+
+    #' @description Add a PI output mapping. Delegates to
+    #'   [addPIOutputMapping()].
+    #' @param taskId PI task id.
+    #' @param outputPathId Output-path id (character scalar).
+    #' @param observedDataId Observed-data id (character scalar).
+    #' @param scenarios Character vector of scenario names.
+    #' @param scaling,xOffset,yOffset,xFactor,yFactor,weight Optional
+    #'   fitting metadata.
+    #' @param id Optional character scalar.
+    addPIOutputMapping = function(
+      taskId,
+      outputPathId,
+      observedDataId,
+      scenarios,
+      scaling = NULL,
+      xOffset = 0,
+      yOffset = 0,
+      xFactor = 1,
+      yFactor = 1,
+      weight = NULL,
+      id = NULL
+    ) {
+      addPIOutputMapping(
+        self,
+        taskId = taskId,
+        outputPathId = outputPathId,
+        observedDataId = observedDataId,
+        scenarios = scenarios,
+        scaling = scaling,
+        xOffset = xOffset,
+        yOffset = yOffset,
+        xFactor = xFactor,
+        yFactor = yFactor,
+        weight = weight,
+        id = id
+      )
+    },
+
+    #' @description Remove a PI output mapping. Delegates to
+    #'   [removePIOutputMapping()].
+    #' @param taskId PI task id.
+    #' @param id Output mapping id.
+    removePIOutputMapping = function(taskId, id) {
+      removePIOutputMapping(self, taskId = taskId, id = id)
+    },
+
     #' @description Print a one-section-per-line summary of the project.
     #' @param ... Unused; present for S3 method consistency.
     print = function(...) {
@@ -778,6 +909,7 @@ Project <- R6::R6Class(
     .applications = list(),
     .observedData = list(),
     .plots = NULL,
+    .parameterIdentification = list(),
     .validatedSinceMutation = FALSE,
     .modified = FALSE,
     .programmaticDataSets = list(),

@@ -65,7 +65,8 @@
     populations = .parsePopulations(raw$populations),
     applications = .parseApplications(raw$applications),
     observedData = raw$observedData %||% list(),
-    plots = .parsePlots(raw$plots)
+    plots = .parsePlots(raw$plots),
+    parameterIdentification = .parsePITasks(raw$parameterIdentification)
   )
 }
 
@@ -318,4 +319,77 @@
     result[[entry$name]] <- sc
   }
   result
+}
+
+# Parse the `parameterIdentification` JSON array into a named list keyed
+# by task id. Each entry becomes a `PITask` containing a list of
+# `PIParameter` and a list of `PIOutputMapping` records. Returns an
+# empty list when the section is absent or empty.
+#
+# @keywords internal
+# @noRd
+.parsePITasks <- function(piData) {
+  if (is.null(piData) || length(piData) == 0L) {
+    return(list())
+  }
+  result <- list()
+  for (rawTask in piData) {
+    parameters <- .parsePIParameters(rawTask$parameters %||% list(), rawTask$id)
+    outputMappings <- .parsePIOutputMappings(
+      rawTask$outputMappings %||% list(),
+      rawTask$id
+    )
+    task <- PITask(
+      id = rawTask$id,
+      scenarios = as.character(unlist(rawTask$scenarios %||% list())),
+      parameters = parameters,
+      outputMappings = outputMappings,
+      configuration = rawTask$configuration %||% list()
+    )
+    result[[rawTask$id]] <- task
+  }
+  result
+}
+
+# @keywords internal
+# @noRd
+.parsePIParameters <- function(rawList, taskId) {
+  out <- vector("list", length(rawList))
+  for (i in seq_along(rawList)) {
+    raw <- rawList[[i]]
+    id <- raw$id %||% paste0(taskId, "_param_", i)
+    out[[i]] <- PIParameter(
+      id = id,
+      scenarios = as.character(unlist(raw$scenarios %||% list())),
+      path = raw$path,
+      units = raw$units,
+      minValue = raw$minValue,
+      maxValue = raw$maxValue,
+      startValue = raw$startValue
+    )
+  }
+  out
+}
+
+# @keywords internal
+# @noRd
+.parsePIOutputMappings <- function(rawList, taskId) {
+  out <- vector("list", length(rawList))
+  for (i in seq_along(rawList)) {
+    raw <- rawList[[i]]
+    id <- raw$id %||% paste0(taskId, "_mapping_", i)
+    out[[i]] <- PIOutputMapping(
+      id = id,
+      scenarios = as.character(unlist(raw$scenarios %||% list())),
+      outputPathId = raw$outputPathId,
+      observedDataId = raw$observedDataId,
+      scaling = raw$scaling,
+      xOffset = raw$xOffset %||% 0,
+      yOffset = raw$yOffset %||% 0,
+      xFactor = raw$xFactor %||% 1,
+      yFactor = raw$yFactor %||% 1,
+      weight = raw$weight
+    )
+  }
+  out
 }

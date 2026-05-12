@@ -58,9 +58,19 @@ reference:
       - removeApplicationParameterSetEntry
   - title: Parameter identification workflow
     contents:
-      - PITaskConfiguration
-      - createPITasks
       - runPI
+      - addPITask
+      - removePITask
+      - addPIParameter
+      - removePIParameter
+      - addPIOutputMapping
+      - removePIOutputMapping
+  - title: Deprecated parameter identification API
+    desc: |
+      Legacy entry points retained for migration only. They emit a
+      deprecation warning and abort. Use the project-driven API above.
+    contents:
+      - createPITasks
   - title: Helpers for data import, wrangling, and export
     contents:
       - matches("^read")

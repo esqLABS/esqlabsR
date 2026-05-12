@@ -7,6 +7,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+> **Note:** This vignette describes the legacy Excel-driven PI workflow.
+> The JSON-first PI API (`loadProject()` + `runPI(project)`) is the
+> recommended path going forward. A rewritten vignette will ship with
+> the JSON project documentation rework. Until then, see `?runPI` for
+> the new signature.
+
 ```{r, include = FALSE, warning = FALSE, message = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -164,7 +170,7 @@ scenario and one observed data set.
 First, load the project configuration and read the PI task definitions from
 Excel:
 
-```{r readProjectConfiguration}
+```{r readProjectConfiguration, eval = FALSE}
 projectConfiguration <- createProjectConfiguration(
   path = exampleProjectConfigurationPath(),
   ignoreVersionCheck = TRUE
@@ -179,7 +185,7 @@ piTaskConfigurations <- readPITaskConfigurationFromExcel(
 The returned object is a named list of `PITaskConfiguration` objects. You can
 inspect the configuration by printing it:
 
-```{r printPIConfig}
+```{r printPIConfig, eval = FALSE}
 piTaskConfigurations$AciclovirSimple
 ```
 
@@ -188,7 +194,7 @@ piTaskConfigurations$AciclovirSimple
 Next, create the `ParameterIdentification` objects. This step loads the
 simulations, resolves the parameter paths, and maps the observed data:
 
-```{r createPITasks}
+```{r createPITasks, eval = FALSE}
 piTasks <- createPITasks(piTaskConfigurations)
 ```
 

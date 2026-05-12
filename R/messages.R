@@ -766,24 +766,11 @@ messages$abortedByUser <- function() {
   )
 }
 
-messages$errorPIColumnRequired <- function(columnName, sheetName) {
-  cliFormat(
-    "{.field {columnName}} column is required in {.sheet {sheetName}} sheet."
-  )
-}
-
 messages$errorPIDatasetNotFound <- function(datasetName, availableDatasets) {
   cli::format_message(c(
     "x" = "Dataset {.val {datasetName}} not found",
     "i" = "Available datasets: {.val {paste(availableDatasets, collapse = ', ')}}"
   ))
-}
-
-messages$errorPIGroupBoundsMismatch <- function(group, paramPath) {
-  cliFormat(
-    "Parameter {.val {paramPath}} in group {.val {group}} has different bounds.
-    All parameters in a group must have identical bounds."
-  )
 }
 
 messages$errorPIInvalidBounds <- function(paramPath, min, start, max) {
@@ -793,59 +780,32 @@ messages$errorPIInvalidBounds <- function(paramPath, min, start, max) {
   )
 }
 
-messages$errorPIInvalidWeightString <- function(weightString) {
+messages$errorPIRequiredField <- function(field, recordType, recordId) {
   cliFormat(
-    "Weight value {.val {weightString}} cannot be parsed as numeric.
-    Expected a number or comma-separated numbers, e.g. {.code 1} or {.code 1,2,3}."
+    "Required field {.val {field}} is missing or empty on {recordType} {.val {recordId}}."
   )
 }
 
-messages$errorPIWeightMustBePositive <- function(weightString) {
+messages$errorPIEmptyList <- function(field, taskId) {
   cliFormat(
-    "Weight values must be non-negative (>= 0). Got: {.val {weightString}}."
+    "Field {.val {field}} on PITask {.val {taskId}} must contain at least one entry."
   )
 }
 
-messages$errorPIMissingPiDefinitionsKeys <- function(missingKeys) {
+messages$errorPIScenariosEmpty <- function(recordType, recordId) {
   cliFormat(
-    "{.arg piDefinitions} must contain: {.val {c('piConfiguration', 'piParameters', 'piOutputMappings')}}.
-    Missing: {.val {paste(missingKeys, collapse = ', ')}}"
+    "Field {.code scenarios} on {recordType} {.val {recordId}} must be a non-empty character vector."
   )
 }
 
-messages$errorPIMissingSheetsInFile <- function(missingSheets, filePath) {
+messages$errorPIWrongElementType <- function(
+  field,
+  index,
+  taskId,
+  expectedClass
+) {
   cliFormat(
-    "Required sheet(s) missing in {.file {filePath}}: {.val {paste(missingSheets, collapse = ', ')}}.
-    ParameterIdentification.xlsx must contain: PIOutputMappings, PIParameters"
-  )
-}
-
-messages$errorPINoOutputPathsFound <- function() {
-  cliFormat(
-    "No output paths found for PI output mapping.
-    Ensure the scenario has {.field OutputPathsIds} defined in {.file Scenarios.xlsx}."
-  )
-}
-
-messages$errorPIOutputPathIdNotFound <- function(outputPathId) {
-  cliFormat(
-    "{.val {outputPathId}} specified in {.field PIOutputMappings} is not a simulation output path and is not
-    present in the {.field OutputPaths} sheet of {.file Scenarios.xlsx}. Define it in the {.field OutputPaths}
-    sheet or use a full simulation output path."
-  )
-}
-
-messages$errorPIDuplicateOutputPathId <- function(outputPathId) {
-  cliFormat(
-    "{.field OutputPathId} {.val {outputPathId}} has multiple entries in the {.sheet OutputPaths} sheet of {.file Scenarios.xlsx}.
-    Each {.field OutputPathId} must be unique."
-  )
-}
-
-messages$errorPINoScenariosConfigured <- function() {
-  cliFormat(
-    "No scenarios configured for PI tasks.
-    PI tasks require at least one scenario defined in {.file Scenarios.xlsx}."
+    "Element {field}[[{index}]] on PITask {.val {taskId}} must be a {expectedClass}."
   )
 }
 
@@ -868,31 +828,6 @@ messages$errorPIScenarioNotFound <- function(scenarioName, availableScenarios) {
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
     "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
   ))
-}
-
-messages$errorPITaskMissingInSheet <- function(taskName, sheetName) {
-  cliFormat(
-    "PI task {.val {taskName}} not found in {.val {sheetName}} sheet"
-  )
-}
-
-messages$errorPITaskNotFound <- function(taskNames, availableTasks) {
-  cli::format_message(c(
-    "x" = "PI task(s) not found: {.val {paste(taskNames, collapse = ', ')}}",
-    "i" = "Available PI tasks: {.val {paste(availableTasks, collapse = ', ')}}"
-  ))
-}
-
-messages$errorPITooManyRowsInSheet <- function(
-  taskName,
-  sheetName,
-  maxRows,
-  nRows
-) {
-  cliFormat(
-    "Too many entries for PI task {.val {taskName}} in {.val {sheetName}} sheet.
-    Expected at most {.val {maxRows}} row(s), found {.val {nRows}}"
-  )
 }
 
 messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
