@@ -114,7 +114,8 @@ test_that("createPITasks throws error when DataSet name doesn't exist", {
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   )
-  observedData <- loadObservedData(
+  withr::local_options(lifecycle_verbosity = "quiet")
+  observedData <- loadObservedDataFromExcel(
     projectConfigurationLocal,
     sheets = "Laskin 1982.Group A"
   )
@@ -716,7 +717,8 @@ test_that("createPITasks accepts observedData parameter and uses provided datase
     projectConfiguration = projectConfiguration
   )
 
-  observedData <- loadObservedData(
+  withr::local_options(lifecycle_verbosity = "quiet")
+  observedData <- loadObservedDataFromExcel(
     projectConfiguration,
     sheets = "Laskin 1982.Group A"
   )
@@ -746,7 +748,8 @@ test_that("createPITasks with observedData errors when DataSet not in provided l
     projectConfiguration = projectConfigurationLocal
   )
 
-  observedData <- loadObservedData(
+  withr::local_options(lifecycle_verbosity = "quiet")
+  observedData <- loadObservedDataFromExcel(
     projectConfigurationLocal,
     sheets = "Laskin 1982.Group A"
   )
@@ -776,7 +779,8 @@ test_that("createPITasks with observedData allows NA ObservedDataSheet", {
     projectConfiguration = projectConfigurationLocal
   )
 
-  observedData <- loadObservedData(
+  withr::local_options(lifecycle_verbosity = "quiet")
+  observedData <- loadObservedDataFromExcel(
     projectConfigurationLocal,
     sheets = "Laskin 1982.Group A"
   )

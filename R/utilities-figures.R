@@ -258,36 +258,85 @@ createEsqlabsExportConfiguration <- function(outputFolder) {
   return(exportConfiguration)
 }
 
-#' Generate plots as defined in excel file `projectConfiguration$plotsFile`
+#' Generate plots from a Project
 #'
-#' @param simulatedScenarios A list of simulated scenarios as returned by
-#'   `runScenarios()`. Can be `NULL` if no simulated data is required for the
-#'   plots.
-#' @param observedData A list of `DataSet` objects. Can be `NULL` if no observed
-#'   data is required for the plots.
-#' @param projectConfiguration Object of class `ProjectConfiguration` that
-#'   contains information about the output paths and the excel file where plots
-#'   are defined.
-#' @param stopIfNotFound If TRUE (default), the function stops if any of the
-#'   simulated results or observed data are not found. If FALSE a warning is
-#'   printed.
+#' @description
+#' Reads `project$plots$plotConfiguration` and `project$plots$plotGrids`
+#' (both data.frames) to build the requested plot grids. DataCombined
+#' objects are resolved via [createDataCombined()] internally unless
+#' supplied via `dataCombinedList`.
 #'
-#' @param plotGridNames Names of the plot grid specified in the sheet
-#'   `plotGrids` for which the figures will be created. If `NULL` (default), all
-#'   plot grids specified in the excel sheet will be created. If a plot grid
-#'   with a given name does not exist, an error is thrown.
+#' @param project A `Project` (see [loadProject()]).
+#' @param plotGridNames Names of plot grids to build. If `NULL` (default),
+#'   all grids declared in `project$plots$plotGrids` are built.
+#' @param simulatedScenarios Named list of simulated scenarios from
+#'   [runScenarios()].
+#' @param dataCombinedList Optional pre-built named list of `DataCombined`
+#'   objects. If `NULL`, the function builds them via [createDataCombined()].
+#' @param stopIfNotFound If `TRUE`, errors when a referenced DataCombined or
+#'   simulated/observed entry cannot be resolved.
 #'
-#' @param outputFolder Optional - path to the folder where the results will be
-#'   stored. If `NULL` (default), `projectConfiguration$outputFolder` is used.
-#'   Only relevant for plots specified for export in the `exportConfiguration`
-#'   sheet.
-#' @param dataCombinedList A (named) list of `DataCombined` objects as input to
-#'   create plots defined in the `plotGridNames` argument. Missing
-#'   `DataCombined` will be created from the Excel file (default behavior).
-#'   Defaults to `NULL`, in which case all `DataCombined` are created from
-#'   Excel.
+#' @returns A named list of plot-grid objects (one per `plotGridName`), or
+#'   an empty list when the project has no plots section.
 #'
-#' @returns A list of `ggplot` objects
+#' @import tidyr
+#'
+#' @export
+createPlots <- function(
+  project,
+  plotGridNames = NULL,
+  simulatedScenarios = NULL,
+  dataCombinedList = NULL,
+  stopIfNotFound = TRUE
+) {
+  ospsuite.utils::validateIsOfType(project, "Project")
+  if (is.null(project$plots)) {
+    return(list())
+  }
+  cfgDf <- project$plots$plotConfiguration %||% data.frame()
+  gridDf <- project$plots$plotGrids %||% data.frame()
+  if (nrow(gridDf) == 0) return(list())
+  if (is.null(plotGridNames)) {
+    plotGridNames <- gridDf$name
+  }
+  # Filter to only requested grids and any plot configs they reference.
+  gridDf <- gridDf[gridDf$name %in% plotGridNames, , drop = FALSE]
+  if (nrow(gridDf) == 0) return(list())
+
+  # Build DataCombined for the configs referenced by the requested grids.
+  if (is.null(dataCombinedList)) {
+    dataCombinedList <- createDataCombined(
+      project,
+      plotGridNames = plotGridNames,
+      simulatedScenarios = simulatedScenarios,
+      stopIfNotFound = stopIfNotFound
+    )
+  }
+
+  .createPlotGridsFromDataFrames(
+    dfPlotConfigurations = cfgDf,
+    dfPlotGrids = gridDf,
+    dataCombinedList = dataCombinedList
+  )
+}
+
+#' Generate plots from Excel (deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")` Use [createPlots()] with a
+#' [Project][loadProject()].
+#'
+#' @param plotGridNames Names of plot grids to build. `NULL` builds all.
+#' @param simulatedScenarios Named list of simulated scenarios.
+#' @param observedData Named list of observed `DataSet` objects.
+#' @param dataCombinedList Optional pre-built `DataCombined` objects.
+#' @param projectConfiguration A `ProjectConfiguration` pointing at a
+#'   `Plots.xlsx`.
+#' @param outputFolder Optional override for the export-configuration's
+#'   output folder.
+#' @param stopIfNotFound If `TRUE`, errors on unresolved references.
+#'
+#' @returns Named list of plot-grid objects.
 #'
 #' @import tidyr
 #'
@@ -301,6 +350,12 @@ createPlotsFromExcel <- function(
   outputFolder = NULL,
   stopIfNotFound = TRUE
 ) {
+  lifecycle::deprecate_soft(
+    when = "5.7.0",
+    what = "createPlotsFromExcel()",
+    with = "createPlots(project)",
+    details = "Migrate the Plots.xlsx workflow to a JSON Project."
+  )
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
@@ -339,161 +394,11 @@ createPlotsFromExcel <- function(
   dataCombinedListFromExcel[names(dataCombinedList)] <- dataCombinedList
   dataCombinedList <- dataCombinedListFromExcel
 
-  dfPlotConfigurations <- .validatePlotConfigurationFromExcel(
-    dfPlotConfigurations,
-    names(dataCombinedList)
+  plotGrids <- .createPlotGridsFromDataFrames(
+    dfPlotConfigurations = dfPlotConfigurations,
+    dfPlotGrids = dfPlotGrids,
+    dataCombinedList = dataCombinedList
   )
-
-  # create a list of plotConfiguration objects as defined in sheet "plotConfiguration"
-  defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  plotConfigurationList <- apply(dfPlotConfigurations, 1, \(row) {
-    plotConfiguration <- .createConfigurationFromRow(
-      defaultConfiguration = defaultPlotConfiguration,
-      # Have to exclude all columns that should not be vectorized
-      # Excluding title and subtitle because they should not be processed,
-      # e.g., split by ","
-      row[
-        !(names(row) %in%
-          c(
-            "plotID",
-            "DataCombinedName",
-            "plotType",
-            "title",
-            "subtitle",
-            "xLabel",
-            "yLabel",
-            "aggregation",
-            "quantiles",
-            "nsd",
-            "foldDistance"
-          ))
-      ]
-    )
-    # Apply title and subtitle properties
-    if (!is.na(row[["title"]])) {
-      plotConfiguration$title <- row[["title"]]
-    }
-
-    if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
-      plotConfiguration$subtitle <- row[["subtitle"]]
-    }
-
-    # Check for log scale with zero in axis limits
-    .validateLogScaleAxisLimits(plotConfiguration, row[["plotID"]])
-
-    return(plotConfiguration)
-  })
-  names(plotConfigurationList) <- dfPlotConfigurations$plotID
-
-  # create a list of plots from dataCombinedList and plotConfigurationList
-  plotList <- lapply(dfPlotConfigurations$plotID, \(plotId) {
-    dataCombined <- dataCombinedList[[
-      dfPlotConfigurations[
-        dfPlotConfigurations$plotID == plotId,
-      ]$DataCombinedName
-    ]]
-    switch(
-      dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
-      # Individual time profile
-      individual = plotIndividualTimeProfile(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      ),
-      # Population time profile
-      population = {
-        aggregation <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$aggregation
-        quantiles <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$quantiles
-        nsd <- dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$nsd
-        args <- list()
-        args$dataCombined <- dataCombined
-        args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
-        # Is aggregation defined?
-        if (!is.null(aggregation) && !is.na(aggregation)) {
-          args$aggregation <- aggregation
-        }
-        # quantiles defined?
-        if (!is.null(quantiles) && !is.na(quantiles)) {
-          args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
-        }
-        # if nsd is defined, add it to the args
-        if (!is.null(nsd) && !is.na(nsd)) {
-          args$nsd <- as.numeric(nsd)
-        }
-        do.call(plotPopulationTimeProfile, args)
-      },
-      observedVsSimulated = {
-        foldDist <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$foldDistance
-        if (is.na(foldDist)) {
-          plotObservedVsSimulated(dataCombined, plotConfigurationList[[plotId]])
-        } else {
-          plotObservedVsSimulated(
-            dataCombined,
-            plotConfigurationList[[plotId]],
-            foldDistance = as.numeric(unlist(strsplit(foldDist, split = ",")))
-          )
-        }
-      },
-      residualsVsSimulated = plotResidualsVsSimulated(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      ),
-      residualsVsTime = plotResidualsVsTime(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      )
-    )
-  })
-  names(plotList) <- dfPlotConfigurations$plotID
-
-  # create plotGridConfiguration objects and add plots from plotList
-  defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
-  plotGrids <- apply(dfPlotGrids, 1, \(row) {
-    plotGridConfiguration <- .createConfigurationFromRow(
-      defaultConfiguration = defaultPlotGridConfig,
-      row[!(names(row) %in% c("name", "plotIDs", "title"))]
-    )
-
-    # Ignore if title is not defined or no 'title' column is present
-    if (!is.na(row$title) && !is.null(row$title)) {
-      plotGridConfiguration$title <- row$title
-    }
-
-    plotsToAdd <- plotList[intersect(
-      unlist(row$plotIDs),
-      dfPlotConfigurations$plotID
-    )]
-    # Have to remove NULL instances. NULL can be produced e.g. when trying to create
-    # a simulated vs observed plot without any groups
-    plotsToAdd <- plotsToAdd[lengths(plotsToAdd) != 0]
-    # Cannot create a plot grid if no plots are added. Skip
-    if (length(plotsToAdd) == 0) {
-      return(NULL)
-    }
-    # When only one plot is in the grid, do not show panel labels
-    if (length(plotsToAdd) == 1) {
-      plotGridConfiguration$tagLevels <- NULL
-    }
-    plotGridConfiguration$addPlots(plots = plotsToAdd)
-    if (
-      length(
-        invalidPlotIDs <- setdiff(
-          unlist(row$plotIDs),
-          dfPlotConfigurations$plotID
-        )
-      ) !=
-        0
-    ) {
-      warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
-    }
-    plotGrid(plotGridConfiguration)
-  })
-  names(plotGrids) <- dfPlotGrids$name
 
   ## Remove rows that are entirely empty
   dfExportConfigurations <- dplyr::filter(
@@ -817,15 +722,18 @@ createPlotsFromExcel <- function(
   # The values can be enclosed in "" in case the title should contain a ','.
   # Split the input string by ',' but do not split within "" Have to do it one
   # row at a time, otherwise it returns one separate list entry for each plot it
-  # (and not lists of plot ids)
-  dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId) {
-    unlist(trimws(scan(
-      text = as.character(plotId),
-      what = "character",
-      sep = ",",
-      quiet = TRUE
-    )))
-  })
+  # (and not lists of plot ids). Skipped when plotIDs is already a list-column
+  # (e.g. when this validator runs a second time inside the shared helper).
+  if (!is.list(dfPlotGrids$plotIDs)) {
+    dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId) {
+      unlist(trimws(scan(
+        text = as.character(plotId),
+        what = "character",
+        sep = ",",
+        quiet = TRUE
+      )))
+    })
+  }
 
   # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
   missingPlots <- setdiff(
@@ -1157,4 +1065,166 @@ createPlotsFromExcel <- function(
     exportConfigurations = dfExportConfigurations,
     plotConfigurations = dfPlotConfigurations
   ))
+}
+
+# Build named list of plot-grid objects from data.frame configurations.
+# Shared by createPlots(project, ...) and createPlotsFromExcel().
+#
+# - dfPlotConfigurations: data.frame with one row per plot, columns
+#   include plotID, DataCombinedName, plotType, title, subtitle, plus
+#   axis/styling fields. Rows whose DataCombinedName is not present in
+#   `dataCombinedList` are pruned by `.validatePlotConfigurationFromExcel()`.
+# - dfPlotGrids: data.frame with one row per grid, columns include name,
+#   plotIDs, title.
+# - dataCombinedList: named list of DataCombined objects keyed by name.
+#
+# @keywords internal
+# @noRd
+.createPlotGridsFromDataFrames <- function(
+  dfPlotConfigurations,
+  dfPlotGrids,
+  dataCombinedList
+) {
+  dfPlotConfigurations <- .validatePlotConfigurationFromExcel(
+    dfPlotConfigurations,
+    names(dataCombinedList)
+  )
+  dfPlotGrids <- .validatePlotGridsFromExcel(
+    dfPlotGrids,
+    unique(dfPlotConfigurations$plotID)
+  )
+
+  defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
+  plotConfigurationList <- apply(dfPlotConfigurations, 1, \(row) {
+    plotConfiguration <- .createConfigurationFromRow(
+      defaultConfiguration = defaultPlotConfiguration,
+      row[
+        !(names(row) %in%
+          c(
+            "plotID",
+            "DataCombinedName",
+            "plotType",
+            "title",
+            "subtitle",
+            "xLabel",
+            "yLabel",
+            "aggregation",
+            "quantiles",
+            "nsd",
+            "foldDistance"
+          ))
+      ]
+    )
+    if (!is.na(row[["title"]])) {
+      plotConfiguration$title <- row[["title"]]
+    }
+    if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
+      plotConfiguration$subtitle <- row[["subtitle"]]
+    }
+    .validateLogScaleAxisLimits(plotConfiguration, row[["plotID"]])
+    return(plotConfiguration)
+  })
+  names(plotConfigurationList) <- dfPlotConfigurations$plotID
+
+  plotList <- lapply(dfPlotConfigurations$plotID, \(plotId) {
+    dataCombined <- dataCombinedList[[
+      dfPlotConfigurations[
+        dfPlotConfigurations$plotID == plotId,
+      ]$DataCombinedName
+    ]]
+    switch(
+      dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
+      individual = plotIndividualTimeProfile(
+        dataCombined,
+        plotConfigurationList[[plotId]]
+      ),
+      population = {
+        aggregation <- dfPlotConfigurations[
+          dfPlotConfigurations$plotID == plotId,
+        ]$aggregation
+        quantiles <- dfPlotConfigurations[
+          dfPlotConfigurations$plotID == plotId,
+        ]$quantiles
+        nsd <- dfPlotConfigurations[
+          dfPlotConfigurations$plotID == plotId,
+        ]$nsd
+        args <- list()
+        args$dataCombined <- dataCombined
+        args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
+        if (!is.null(aggregation) && !is.na(aggregation)) {
+          args$aggregation <- aggregation
+        }
+        if (!is.null(quantiles) && !is.na(quantiles)) {
+          args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
+        }
+        if (!is.null(nsd) && !is.na(nsd)) {
+          args$nsd <- as.numeric(nsd)
+        }
+        do.call(plotPopulationTimeProfile, args)
+      },
+      observedVsSimulated = {
+        foldDist <- dfPlotConfigurations[
+          dfPlotConfigurations$plotID == plotId,
+        ]$foldDistance
+        if (is.na(foldDist)) {
+          plotObservedVsSimulated(
+            dataCombined,
+            plotConfigurationList[[plotId]]
+          )
+        } else {
+          plotObservedVsSimulated(
+            dataCombined,
+            plotConfigurationList[[plotId]],
+            foldDistance = as.numeric(unlist(strsplit(foldDist, split = ",")))
+          )
+        }
+      },
+      residualsVsSimulated = plotResidualsVsSimulated(
+        dataCombined,
+        plotConfigurationList[[plotId]]
+      ),
+      residualsVsTime = plotResidualsVsTime(
+        dataCombined,
+        plotConfigurationList[[plotId]]
+      )
+    )
+  })
+  names(plotList) <- dfPlotConfigurations$plotID
+
+  defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
+  plotGrids <- apply(dfPlotGrids, 1, \(row) {
+    plotGridConfiguration <- .createConfigurationFromRow(
+      defaultConfiguration = defaultPlotGridConfig,
+      row[!(names(row) %in% c("name", "plotIDs", "title"))]
+    )
+    if (!is.na(row$title) && !is.null(row$title)) {
+      plotGridConfiguration$title <- row$title
+    }
+    plotsToAdd <- plotList[intersect(
+      unlist(row$plotIDs),
+      dfPlotConfigurations$plotID
+    )]
+    plotsToAdd <- plotsToAdd[lengths(plotsToAdd) != 0]
+    if (length(plotsToAdd) == 0) {
+      return(NULL)
+    }
+    if (length(plotsToAdd) == 1) {
+      plotGridConfiguration$tagLevels <- NULL
+    }
+    plotGridConfiguration$addPlots(plots = plotsToAdd)
+    if (
+      length(
+        invalidPlotIDs <- setdiff(
+          unlist(row$plotIDs),
+          dfPlotConfigurations$plotID
+        )
+      ) !=
+        0
+    ) {
+      warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
+    }
+    plotGrid(plotGridConfiguration)
+  })
+  names(plotGrids) <- dfPlotGrids$name
+  plotGrids
 }

@@ -344,7 +344,7 @@ runPI <- function(piTasks) {
     observedDataSheets <- observedDataSheets[!is.na(observedDataSheets)]
 
     observedData <- if (length(observedDataSheets) > 0) {
-      loadObservedData(
+      .loadObservedDataFromExcelLegacy(
         piTaskConfiguration$projectConfiguration,
         sheets = observedDataSheets
       )

@@ -30,10 +30,13 @@ importerConfiguration <- ospsuite::loadDataImporterConfiguration(
 
 # Load observed data
 dataSheets <- "Laskin 1982.Group A"
-observedData <- esqlabsR::loadObservedData(
-  projectConfiguration = projectConfiguration,
-  sheets = dataSheets,
-  importerConfiguration = importerConfiguration
+observedData <- withr::with_options(
+  list(lifecycle_verbosity = "quiet"),
+  esqlabsR::loadObservedDataFromExcel(
+    projectConfiguration = projectConfiguration,
+    sheets = dataSheets,
+    importerConfiguration = importerConfiguration
+  )
 )
 
 # Create a proper data frame with paths for all entries
@@ -184,6 +187,7 @@ test_that("It warns when dataSet is not found in observedData", {
 })
 
 test_that("createDataCombinedFromExcel errors when specified DataCombined names are not in the Excel file", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   expect_error(
     createDataCombinedFromExcel(
       projectConfiguration = projectConfiguration,
@@ -197,4 +201,72 @@ test_that("createDataCombinedFromExcel errors when specified DataCombined names 
     )),
     fixed = TRUE
   )
+})
+
+# createDataCombined(project, ...) tests ----
+
+test_that("createDataCombined errors on non-Project input", {
+  expect_error(createDataCombined("not a project"), "expected <Project>")
+})
+
+test_that("createDataCombined returns empty list when no names given", {
+  project <- loadProject(testProjectJSONPath())
+  expect_identical(createDataCombined(project), list())
+})
+
+test_that("createDataCombined errors when requested name not in project", {
+  project <- loadProject(testProjectJSONPath())
+  # TestProject has plots = NULL, so any requested name is missing
+  expect_error(
+    createDataCombined(project, dataCombinedNames = "Nonexistent"),
+    regexp = messages$stopDataCombinedNamesNotFound("Nonexistent"),
+    fixed = TRUE
+  )
+})
+
+test_that("createDataCombined builds DataCombined for Example project", {
+  project <- loadProject(example_project_json_path())
+  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
+  dcName <- names(project$plots$dataCombined)[[1]]
+
+  result <- createDataCombined(
+    project,
+    dataCombinedNames = dcName,
+    simulatedScenarios = simulated
+  )
+
+  expect_named(result, dcName)
+  expect_s3_class(result[[dcName]], "DataCombined")
+  df <- result[[dcName]]$toDataFrame()
+  expect_setequal(unique(df$dataType), c("simulated", "observed"))
+})
+
+test_that("createDataCombined returns empty DataCombined when spec has no entries", {
+  project <- esqlabsR:::Project$new(
+    schemaVersion = "2.0",
+    esqlabsRVersion = NULL,
+    jsonPath = NULL,
+    projectDirPath = NULL,
+    filePaths = list(),
+    outputPaths = list(),
+    scenarios = list(),
+    modelParameterSets = list(),
+    individualParameterSets = list(),
+    applicationParameterSets = list(),
+    individuals = list(),
+    populations = list(),
+    applications = list(),
+    observedData = list(),
+    plots = list(
+      dataCombined = list(
+        EmptyDC = list(name = "EmptyDC", simulated = list(), observed = list())
+      )
+    )
+  )
+
+  result <- createDataCombined(project, dataCombinedNames = "EmptyDC")
+
+  expect_named(result, "EmptyDC")
+  expect_s3_class(result$EmptyDC, "DataCombined")
+  expect_null(result$EmptyDC$toDataFrame())
 })

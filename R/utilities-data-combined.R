@@ -1,27 +1,162 @@
-#' Generate DataCombined objects as defined in excel file
+#' Generate DataCombined objects from a Project
 #'
-#' @param dataCombinedNames Names of the DataCombined objects that will be
-#'   created. If a DataCombined with a given name is not defined in the Excel
-#'   file, an error is thrown. Can be used together with `plotGridNames`.
-#' @param plotGridNames Names of the plot grid specified in the sheet
-#'   `plotGrids`. Each data combined used by the specified plot grids will be
-#'   created. Can be used together with `dataCombinedNames`.
-#' @param projectConfiguration Object of class `ProjectConfiguration` that
-#'   contains information about the output paths and the excel file where plots
-#'   are defined.
-#' @param simulatedScenarios A list of simulated scenarios as returned by
-#'   `runScenarios()`
-#' @param observedData A list of `DataSet` objects
-#' @param stopIfNotFound If TRUE (default), the function stops if any of the
-#'   simulated results or observed data are not found. If FALSE a warning is
-#'   printed.
+#' @description
+#' Builds [`ospsuite::DataCombined`] objects from a JSON-driven
+#' [Project][loadProject()]. The project's `plots$dataCombined` section
+#' declares the simulated/observed entries; `loadObservedData(project)`
+#' resolves observed sources internally. Either `dataCombinedNames` or
+#' `plotGridNames` (or both) selects which DataCombined to build.
 #'
-#' @returns A list of `DataCombined` objects, or an empty list if both
-#'   `dataCombinedNames` and `plotGridNames` are `NULL` or `stopIfNotFound =
-#'   TRUE` and the specified `DataCombined` could not be created.
+#' @param project A `Project` (see [loadProject()]).
+#' @param dataCombinedNames Names of the DataCombined entries to build. If
+#'   any name is not declared in `project$plots$dataCombined`, an error is
+#'   thrown.
+#' @param plotGridNames Names of plot grids whose DataCombined dependencies
+#'   should be built. Combined with `dataCombinedNames` if both are given.
+#' @param simulatedScenarios A named list of simulated scenarios (as
+#'   returned by [runScenarios()]).
+#' @param stopIfNotFound If `TRUE` (default), the function errors when a
+#'   referenced simulated path or observed dataSet cannot be resolved. If
+#'   `FALSE`, a warning is emitted and the entry is skipped.
 #'
+#' @returns A named list of `DataCombined` objects, one per requested name.
+#'   Empty list when no names are requested.
+#'
+#' @export
+createDataCombined <- function(
+  project,
+  dataCombinedNames = NULL,
+  plotGridNames = NULL,
+  simulatedScenarios = NULL,
+  stopIfNotFound = TRUE
+) {
+  ospsuite.utils::validateIsOfType(project, "Project")
+  validateIsString(plotGridNames, nullAllowed = TRUE)
+
+  if (is.null(dataCombinedNames) && is.null(plotGridNames)) {
+    return(list())
+  }
+
+  observedData <- loadObservedData(project)
+
+  if (!is.null(plotGridNames)) {
+    dataCombinedNames <- union(
+      dataCombinedNames,
+      .extractDataCombinedNamesForPlotsFromProject(project, plotGridNames)
+    )
+  }
+
+  allSpecs <- project$plots$dataCombined %||% list()
+  missingNames <- setdiff(
+    dataCombinedNames[!is.na(dataCombinedNames)],
+    names(allSpecs)
+  )
+  if (length(missingNames) > 0) {
+    stop(messages$stopDataCombinedNamesNotFound(missingNames))
+  }
+
+  selectedSpecs <- allSpecs[intersect(names(allSpecs), dataCombinedNames)]
+  hasEntries <- vapply(
+    selectedSpecs,
+    \(s) length(s$simulated %||% list()) + length(s$observed %||% list()) > 0,
+    logical(1)
+  )
+  emptyNames <- names(selectedSpecs)[!hasEntries]
+
+  if (any(hasEntries)) {
+    dfDataCombined <- .specsToDataCombinedDataFrame(selectedSpecs[hasEntries])
+    dataCombinedList <- .createDataCombinedFromProcessedDF(
+      dfDataCombined = dfDataCombined,
+      simulatedScenarios = simulatedScenarios,
+      observedData = observedData,
+      stopIfNotFound = stopIfNotFound
+    )
+  } else {
+    dataCombinedList <- list()
+  }
+
+  for (name in emptyNames) {
+    dataCombinedList[[name]] <- DataCombined$new()
+  }
+
+  dataCombinedList[intersect(names(selectedSpecs), names(dataCombinedList))]
+}
+
+# Convert the named-list `dataCombined` spec from project$plots into the
+# flat tibble the legacy Excel-driven code path expects. One row per
+# entry (simulated or observed). Caller must pre-filter to specs that
+# actually have entries; empty DCs are handled in `createDataCombined`.
+#
+# @keywords internal
+# @noRd
+.specsToDataCombinedDataFrame <- function(specs) {
+  rows <- list()
+  for (name in names(specs)) {
+    spec <- specs[[name]]
+    for (entry in spec$simulated %||% list()) {
+      rows[[length(rows) + 1L]] <- .specEntryToRow(name, "simulated", entry)
+    }
+    for (entry in spec$observed %||% list()) {
+      rows[[length(rows) + 1L]] <- .specEntryToRow(name, "observed", entry)
+    }
+  }
+  dplyr::bind_rows(rows)
+}
+
+.specEntryToRow <- function(dataCombinedName, dataType, entry) {
+  list(
+    DataCombinedName = dataCombinedName,
+    dataType = dataType,
+    label = entry$label %||% NA_character_,
+    scenario = entry$scenario %||% NA_character_,
+    path = entry$path %||% NA_character_,
+    dataSet = entry$dataSet %||% NA_character_,
+    group = entry$group %||% NA_character_,
+    xOffsets = entry$xOffsets %||% NA_real_,
+    xOffsetsUnits = entry$xOffsetsUnits %||% NA_character_,
+    yOffsets = entry$yOffsets %||% NA_real_,
+    yOffsetsUnits = entry$yOffsetsUnits %||% NA_character_,
+    xScaleFactors = entry$xScaleFactors %||% NA_real_,
+    yScaleFactors = entry$yScaleFactors %||% NA_real_
+  )
+}
+
+# Find DataCombined names referenced by the requested plot grids.
+#
+# @keywords internal
+# @noRd
+.extractDataCombinedNamesForPlotsFromProject <- function(
+  project,
+  plotGridNames
+) {
+  gridDf <- project$plots$plotGrids %||% data.frame()
+  if (nrow(gridDf) == 0) return(character(0))
+  selectedGrids <- gridDf[gridDf$name %in% plotGridNames, , drop = FALSE]
+  if (nrow(selectedGrids) == 0) return(character(0))
+  ids <- unique(unlist(strsplit(selectedGrids$plotIDs, "\\s*,\\s*")))
+  cfgDf <- project$plots$plotConfiguration %||% data.frame()
+  if (nrow(cfgDf) == 0) return(character(0))
+  unique(cfgDf$DataCombinedName[cfgDf$plotID %in% ids])
+}
+
+#' Generate DataCombined objects from Excel (deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")` Use [createDataCombined()] with a
+#' [Project][loadProject()].
+#'
+#' @param projectConfiguration A `ProjectConfiguration` object pointing at
+#'   a `Plots.xlsx`.
+#' @param dataCombinedNames Names of DataCombined entries to build.
+#' @param plotGridNames Names of plot grids whose DataCombined dependencies
+#'   should be built.
+#' @param simulatedScenarios Named list of simulated scenarios.
+#' @param observedData Named list of observed `DataSet` objects.
+#' @param stopIfNotFound If `TRUE`, errors on unresolved references; if
+#'   `FALSE`, warns and skips.
+#'
+#' @returns Named list of `DataCombined` objects.
 #' @import tidyr
-#'
 #' @export
 createDataCombinedFromExcel <- function(
   projectConfiguration,
@@ -31,6 +166,12 @@ createDataCombinedFromExcel <- function(
   observedData = NULL,
   stopIfNotFound = TRUE
 ) {
+  lifecycle::deprecate_soft(
+    when = "5.7.0",
+    what = "createDataCombinedFromExcel()",
+    with = "createDataCombined(project)",
+    details = "Migrate the Plots.xlsx workflow to a JSON Project."
+  )
   validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
   validateIsOfType(projectConfiguration, "ProjectConfiguration")
   validateIsString(plotGridNames, nullAllowed = TRUE)
@@ -71,6 +212,26 @@ createDataCombinedFromExcel <- function(
     stop(messages$stopDataCombinedNamesNotFound(missingNames))
   }
 
+  .createDataCombinedFromProcessedDF(
+    dfDataCombined = dfDataCombined,
+    simulatedScenarios = simulatedScenarios,
+    observedData = observedData,
+    stopIfNotFound = stopIfNotFound
+  )
+}
+
+# Build named list of DataCombined objects from a flat data.frame whose
+# rows describe simulated/observed entries. Shared between the JSON-driven
+# createDataCombined() and the deprecated createDataCombinedFromExcel().
+#
+# @keywords internal
+# @noRd
+.createDataCombinedFromProcessedDF <- function(
+  dfDataCombined,
+  simulatedScenarios,
+  observedData,
+  stopIfNotFound
+) {
   dfDataCombined <- .validateDataCombinedFromExcel(
     dfDataCombined,
     simulatedScenarios,
@@ -78,11 +239,8 @@ createDataCombinedFromExcel <- function(
     stopIfNotFound
   )
 
-  # create named list of DataCombined objects
   dataCombinedList <- lapply(unique(dfDataCombined$DataCombinedName), \(name) {
     dataCombined <- DataCombined$new()
-    # add data to DataCombined object
-    # add simulated data
     simulated <- dplyr::filter(
       dfDataCombined,
       DataCombinedName == name,
@@ -90,8 +248,6 @@ createDataCombinedFromExcel <- function(
     )
     if (nrow(simulated) > 0) {
       for (j in seq_len(nrow(simulated))) {
-        # Check if the output has been simulated
-        # If yes, add it to the DataCombined
         if (
           any(
             simulatedScenarios[[
@@ -125,7 +281,6 @@ createDataCombinedFromExcel <- function(
       }
     }
 
-    # add observed data
     observed <- dplyr::filter(
       dfDataCombined,
       DataCombinedName == name,
@@ -143,7 +298,6 @@ createDataCombinedFromExcel <- function(
   })
   names(dataCombinedList) <- unique(dfDataCombined$DataCombinedName)
 
-  # apply data transformations
   dfTransform <- dplyr::filter(
     dfDataCombined,
     !is.na(xOffsets) |
@@ -151,33 +305,23 @@ createDataCombinedFromExcel <- function(
       !is.na(xScaleFactors) |
       !is.na(yScaleFactors)
   )
-  # Apply data transformations if specified in the excel file
   if (dim(dfTransform)[[1]] != 0) {
     apply(dfTransform, 1, \(row) {
-      # Get the data frame of the Data combined to retrieve units and MW
       dataCombinedDf <- dataCombinedList[[row[[
         "DataCombinedName"
       ]]]]$toDataFrame()
       singleRow <- dataCombinedDf[dataCombinedDf$name == row[["label"]], ][1, ]
 
-      # Check if x/yOffsetsUnits are defined when x/yOffsets are non empty.
       if (
         (!is.na(row[["xOffsets"]]) & is.na(row[["xOffsetsUnits"]])) |
           (!is.na(row[["yOffsets"]]) & is.na(row[["yOffsetsUnits"]]))
       ) {
-        stop(messages$offsetUnitsNotDefined(row[[
-          "DataCombinedName"
-        ]]))
+        stop(messages$offsetUnitsNotDefined(row[["DataCombinedName"]]))
       }
 
-      # If offsets are defined, convert them to the default unit of the data
-      # Extract the base unit of the data (or simulation result) and the unit
-      # defined for the offset.
-      # We don't have to check for NAs because 'toUnit()' returns NA for NA
       xDimension <- singleRow$xDimension
       xBaseUnit <- row[["xOffsetsUnits"]]
       xTargetUnit <- singleRow$xUnit
-      # Empty units should be converted to "" for the dimension "Fraction" or "Dimensionless"
       if (is.na(xTargetUnit)) {
         xTargetUnit <- ""
       }
@@ -192,7 +336,6 @@ createDataCombinedFromExcel <- function(
       yBaseUnit <- row[["yOffsetsUnits"]]
       yTargetUnit <- singleRow$yUnit
       yMW <- singleRow$molWeight
-      # Empty units should be converted to "" for the dimension "Fraction" or "Dimensionless"
       if (is.na(yTargetUnit)) {
         yTargetUnit <- ""
       }

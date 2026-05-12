@@ -170,7 +170,8 @@ calculateMeanDataSet <- function(
   switch(
     lloqMode,
     # nothing to do for LLOQ/2
-    "LLOQ/2" = {},
+    "LLOQ/2" = {
+    },
     # set all data points with lloq that are smaller than it to value of lloq
     "LLOQ" = df[ind, "yValues"] <- df[ind, "lloq"],
     # set all data points with lloq to 0
@@ -285,39 +286,11 @@ LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 #' @export
 ULOQMode <- enum(list("ULOQ", "ignore"))
 
-#' Load data from excel
-#'
-#' @description Loads data sets from excel. The excel file containing the data
-#'   must be located in the folder `projectConfiguration$dataFolder` and be
-#'   named `projectConfiguration$dataFile`. Importer configuration file must be
-#'   located in the same folder and named
-#'   `projectConfiguration$dataImporterConfigurationFile`.
-#'
-#' @param projectConfiguration Object of class `ProjectConfiguration` containing
-#'   the necessary information.
-#' @param sheets String or a list of strings defining which sheets to load. If
-#'   `NULL` (default), all sheets within the file are loaded. This parameter
-#'   takes precedence over any sheets defined in `importerConfiguration`: the
-#'   function always sets `importerConfiguration$sheets` to `NULL` before
-#'   calling `ospsuite::loadDataSetsFromExcel()`, so the passed
-#'   `importerConfiguration` object is mutated as a side effect.
-#' @param importerConfiguration `DataImporterConfiguration` object used to load
-#'   the data. If `NULL` (default), default esqlabs importer configuration as
-#'   defined in `projectConfiguration$dataImporterConfigurationFile` will be
-#'   used. Note: the `sheets` property of this object is always set to `NULL`
-#'   by this function (see the `sheets` parameter description).
-#'
-#' @returns A named list of `DataSet` objects, with names being the names of the
-#' data sets.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Create default project configuration
-#' projectConfiguration <- createProjectConfiguration()
-#' dataSets <- loadObservedData(projectConfiguration)
-#' }
-loadObservedData <- function(
+# Internal: legacy Excel-driven observed-data loader from
+# ProjectConfiguration. Kept alive behind the deprecation wrapper
+# `loadObservedDataFromExcel()` (defined below) until the Excel-bridge
+# code path retires.
+.loadObservedDataFromExcelLegacy <- function(
   projectConfiguration,
   sheets = NULL,
   importerConfiguration = NULL
@@ -340,29 +313,50 @@ loadObservedData <- function(
   return(dataSets)
 }
 
-#' Load data from pkml
+#' Load observed data from an Excel data file (deprecated)
 #'
-#' @description Loads data sets that are exported as pkml. The files must be
-#'   located in the folder `projectConfiguration$dataFolder`, subfolder `pkml`.
-#'   and be named `projectConfiguration$dataFile`.
+#' @description
+#' `r lifecycle::badge("deprecated")` Use [loadObservedData()] with a
+#' `Project` object instead. This wrapper preserves the
+#' `ProjectConfiguration`-driven workflow for the duration of the
+#' Excel-bridge transition.
 #'
-#' @param projectConfiguration Object of class `ProjectConfiguration` containing
-#'   the necessary information.
-#' @param obsDataNames String or a list of strings defining data sets to load If
-#'   `NULL` (default), all data sets located in the folder are loaded. Must not
-#'   contain the ".pkml" file extension.
+#' @param projectConfiguration Object of class `ProjectConfiguration`.
+#' @param sheets Character vector of sheet names to load. `NULL` loads
+#'   all sheets named in the importer configuration.
+#' @param importerConfiguration Optional `DataImporterConfiguration`. `NULL`
+#'   loads from `projectConfiguration$dataImporterConfigurationFile`.
 #'
-#' @returns A named list of `DataSet` objects, with names being the names of the
-#' data sets.
+#' @returns A named list of `DataSet` objects.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Create default project configuration
 #' projectConfiguration <- createProjectConfiguration()
-#' dataSets <- loadObservedData(projectConfiguration)
+#' dataSets <- loadObservedDataFromExcel(projectConfiguration)
 #' }
-loadObservedDataFromPKML <- function(
+loadObservedDataFromExcel <- function(
+  projectConfiguration,
+  sheets = NULL,
+  importerConfiguration = NULL
+) {
+  lifecycle::deprecate_soft(
+    when = "5.7.0",
+    what = "loadObservedDataFromExcel()",
+    with = "loadObservedData(project)",
+    details = "Pass a `Project` (from `loadProject()`) to the new `loadObservedData()`."
+  )
+  .loadObservedDataFromExcelLegacy(
+    projectConfiguration = projectConfiguration,
+    sheets = sheets,
+    importerConfiguration = importerConfiguration
+  )
+}
+
+# Internal: legacy PKML-driven observed-data loader from
+# ProjectConfiguration. Kept alive behind the deprecation wrapper
+# `loadObservedDataFromPKML()` (defined below).
+.loadObservedDataFromPkmlLegacy <- function(
   projectConfiguration,
   obsDataNames = NULL
 ) {
@@ -395,4 +389,38 @@ loadObservedDataFromPKML <- function(
   })
 
   return(dataSets)
+}
+
+#' Load observed data from PKML files (deprecated)
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")` Declare PKML observed-data sources
+#' in your `Project.json` and use [loadObservedData()] instead.
+#'
+#' @param projectConfiguration Object of class `ProjectConfiguration`.
+#' @param obsDataNames Character vector of dataset names to load. `NULL`
+#'   loads every `*.pkml` file under `projectConfiguration$dataFolder/pkml`.
+#'
+#' @returns A named list of `DataSet` objects.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' projectConfiguration <- createProjectConfiguration()
+#' dataSets <- loadObservedDataFromPKML(projectConfiguration)
+#' }
+loadObservedDataFromPKML <- function(
+  projectConfiguration,
+  obsDataNames = NULL
+) {
+  lifecycle::deprecate_soft(
+    when = "5.7.0",
+    what = "loadObservedDataFromPKML()",
+    with = "loadObservedData(project)",
+    details = "Declare `pkml` observed-data sources in your Project.json."
+  )
+  .loadObservedDataFromPkmlLegacy(
+    projectConfiguration = projectConfiguration,
+    obsDataNames = obsDataNames
+  )
 }

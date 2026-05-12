@@ -2,31 +2,26 @@
 % Please edit documentation in R/utilities-data.R
 \name{loadObservedDataFromPKML}
 \alias{loadObservedDataFromPKML}
-\title{Load data from pkml}
+\title{Load observed data from PKML files (deprecated)}
 \usage{
 loadObservedDataFromPKML(projectConfiguration, obsDataNames = NULL)
 }
 \arguments{
-\item{projectConfiguration}{Object of class \code{ProjectConfiguration} containing
-the necessary information.}
+\item{projectConfiguration}{Object of class \code{ProjectConfiguration}.}
 
-\item{obsDataNames}{String or a list of strings defining data sets to load If
-\code{NULL} (default), all data sets located in the folder are loaded. Must not
-contain the ".pkml" file extension.}
+\item{obsDataNames}{Character vector of dataset names to load. \code{NULL}
+loads every \verb{*.pkml} file under \code{projectConfiguration$dataFolder/pkml}.}
 }
 \value{
-A named list of \code{DataSet} objects, with names being the names of the
-data sets.
+A named list of \code{DataSet} objects.
 }
 \description{
-Loads data sets that are exported as pkml. The files must be
-located in the folder \code{projectConfiguration$dataFolder}, subfolder \code{pkml}.
-and be named \code{projectConfiguration$dataFile}.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Declare PKML observed-data sources
+in your \code{Project.json} and use \code{\link[=loadObservedData]{loadObservedData()}} instead.
 }
 \examples{
 \dontrun{
-# Create default project configuration
 projectConfiguration <- createProjectConfiguration()
-dataSets <- loadObservedData(projectConfiguration)
+dataSets <- loadObservedDataFromPKML(projectConfiguration)
 }
 }

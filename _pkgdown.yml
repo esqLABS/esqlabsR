@@ -48,6 +48,7 @@ reference:
       - LLOQMode
       - ULOQMode
       - loadObservedData
+      - loadObservedDataFromExcel
       - loadObservedDataFromPKML
   - title: Helpers for plotting
     contents:
@@ -55,7 +56,10 @@ reference:
       - matches("^col")
       - matches("[Cc]olor")
       - has_concept("create-plotting-configurations")
+      - createDataCombined
+      - createPlots
       - createDataCombinedFromExcel
+      - createPlotsFromExcel
   - title: Input validation
     contents:
       - matches("^valid")
