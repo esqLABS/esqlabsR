@@ -75,8 +75,10 @@ Project <- R6::R6Class(
       private$.outputPaths
     },
 
-    #' @field scenarios List of scenario entries. Each entry is a plain named
-    #'   list mirroring the JSON object shape.
+    #' @field scenarios Named list of `ScenarioData` objects, indexed
+    #'   by scenario name. Built by `.parseScenarios()` from the
+    #'   raw JSON `scenarios` array; round-trips back through
+    #'   `.scenariosToJson()`.
     scenarios = function(value) {
       if (!missing(value)) cli::cli_abort("{.field scenarios} is read-only.")
       private$.scenarios
@@ -154,7 +156,8 @@ Project <- R6::R6Class(
     #' @param projectDirPath Absolute path of the source directory, or `NULL`.
     #' @param filePaths Named list of file paths.
     #' @param outputPaths Named list of output-path IDs to paths.
-    #' @param scenarios List of scenario entries.
+    #' @param scenarios Named list of `ScenarioData` objects (typically
+    #'   produced by `.parseScenarios()`), indexed by scenario name.
     #' @param modelParameterSets Named list of model parameter sets.
     #' @param individualParameterSets Named list of individual parameter sets.
     #' @param applicationParameterSets Named list of application parameter sets.
