@@ -65,8 +65,69 @@
     populations = raw$populations %||% list(),
     applications = raw$applications %||% list(),
     observedData = raw$observedData %||% list(),
-    plots = raw$plots
+    plots = .parsePlots(raw$plots)
   )
+}
+
+# Parse the `plots` JSON section into the asymmetric in-memory shape:
+#   * dataCombined   : named list keyed by name (drops the redundant `name`
+#                      field on each entry).
+#   * plotConfiguration / plotGrids : data.frames, NA-padded across rows.
+# Returns NULL when the JSON omits the `plots` section.
+#
+# @keywords internal
+# @noRd
+.parsePlots <- function(plotsData) {
+  if (is.null(plotsData)) {
+    return(NULL)
+  }
+  list(
+    dataCombined = .parseNestedDataCombined(plotsData$dataCombined),
+    plotConfiguration = .listOfListsToDataFrame(plotsData$plotConfiguration),
+    plotGrids = .listOfListsToDataFrame(plotsData$plotGrids)
+  )
+}
+
+# Drop the redundant `name` field (it becomes the list key) and re-key the
+# list by name. Per-entry sub-lists (`simulated`, `observed`) pass through
+# verbatim so adding optional fields at the JSON level does not require a
+# code change here.
+#
+# @keywords internal
+# @noRd
+.parseNestedDataCombined <- function(nestedData) {
+  if (is.null(nestedData) || length(nestedData) == 0) {
+    return(list())
+  }
+  result <- list()
+  for (dc in nestedData) {
+    result[[dc$name]] <- list(
+      simulated = dc$simulated %||% list(),
+      observed = dc$observed %||% list()
+    )
+  }
+  result
+}
+
+# Convert a list of named lists (a JSON array of objects) to a data.frame,
+# padding missing fields across rows with NA.
+#
+# @keywords internal
+# @noRd
+.listOfListsToDataFrame <- function(data) {
+  if (is.null(data) || length(data) == 0) {
+    return(data.frame())
+  }
+  allCols <- unique(unlist(lapply(data, names)))
+  rows <- lapply(data, function(entry) {
+    row <- lapply(allCols, function(col) {
+      val <- entry[[col]]
+      if (is.null(val)) NA else val
+    })
+    names(row) <- allCols
+    as.data.frame(row, stringsAsFactors = FALSE)
+  })
+  as.data.frame(dplyr::bind_rows(rows))
 }
 
 # Internal: parse the JSON `scenarios` array into a named list of

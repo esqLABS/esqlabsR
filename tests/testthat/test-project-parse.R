@@ -144,7 +144,7 @@ test_that(".loadProjectJson() preserves the observedData section", {
   expect_identical(source$sheets, list("Laskin 1982.Group A"))
 })
 
-test_that(".loadProjectJson() preserves the plots section as a nested list", {
+test_that(".loadProjectJson() parses plots into the asymmetric in-memory shape", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
   expect_type(project$plots, "list")
@@ -153,14 +153,53 @@ test_that(".loadProjectJson() preserves the plots section as a nested list", {
     c("dataCombined", "plotConfiguration", "plotGrids"),
     ignore.order = TRUE
   )
-  expect_length(project$plots$dataCombined, 1L)
-  expect_length(project$plots$plotConfiguration, 1L)
-  expect_length(project$plots$plotGrids, 1L)
-
-  dc <- project$plots$dataCombined[[1L]]
-  expect_identical(dc$name, "Aciclovir_individual")
+  # dataCombined: named list keyed by name (no `name` field on entries)
+  expect_named(project$plots$dataCombined, "Aciclovir_individual")
+  dc <- project$plots$dataCombined$Aciclovir_individual
+  expect_named(dc, c("simulated", "observed"), ignore.order = TRUE)
   expect_length(dc$simulated, 1L)
   expect_length(dc$observed, 1L)
+  # plotConfiguration / plotGrids: data.frames
+  expect_s3_class(project$plots$plotConfiguration, "data.frame")
+  expect_s3_class(project$plots$plotGrids, "data.frame")
+  expect_equal(nrow(project$plots$plotConfiguration), 1L)
+  expect_equal(nrow(project$plots$plotGrids), 1L)
+  expect_true("plotID" %in% names(project$plots$plotConfiguration))
+  expect_true("name" %in% names(project$plots$plotGrids))
+})
+
+test_that(".parseNestedDataCombined re-keys by name and drops the name field", {
+  raw <- list(
+    list(name = "DC1", simulated = list(list(label = "a")), observed = list()),
+    list(name = "DC2", simulated = list(), observed = list(list(label = "b")))
+  )
+  parsed <- esqlabsR:::.parseNestedDataCombined(raw)
+  expect_named(parsed, c("DC1", "DC2"))
+  expect_named(parsed$DC1, c("simulated", "observed"))
+  expect_equal(parsed$DC1$simulated[[1]]$label, "a")
+  expect_equal(parsed$DC2$observed[[1]]$label, "b")
+})
+
+test_that(".parseNestedDataCombined returns empty list for NULL or empty input", {
+  expect_identical(esqlabsR:::.parseNestedDataCombined(NULL), list())
+  expect_identical(esqlabsR:::.parseNestedDataCombined(list()), list())
+})
+
+test_that(".listOfListsToDataFrame pads missing fields with NA", {
+  raw <- list(
+    list(plotID = "P1", plotType = "individual", title = "T1"),
+    list(plotID = "P2", plotType = "population")
+  )
+  df <- esqlabsR:::.listOfListsToDataFrame(raw)
+  expect_s3_class(df, "data.frame")
+  expect_equal(nrow(df), 2)
+  expect_setequal(names(df), c("plotID", "plotType", "title"))
+  expect_true(is.na(df$title[df$plotID == "P2"]))
+})
+
+test_that(".listOfListsToDataFrame returns empty data.frame for NULL or empty", {
+  expect_equal(nrow(esqlabsR:::.listOfListsToDataFrame(NULL)), 0L)
+  expect_equal(nrow(esqlabsR:::.listOfListsToDataFrame(list())), 0L)
 })
 
 test_that(".loadProjectJson() rejects a missing schemaVersion", {

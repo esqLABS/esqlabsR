@@ -296,7 +296,7 @@ the exact data set name within the loaded sheet. To find available data set
 names, use:
 
 ```{r loadObservedData, eval = FALSE}
-observedData <- loadObservedData(
+observedData <- loadObservedDataFromExcel(
   projectConfiguration = projectConfiguration,
   sheets = "Laskin 1982.Group A"
 )

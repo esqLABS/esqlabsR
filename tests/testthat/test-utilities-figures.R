@@ -139,3 +139,29 @@ test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualT
     fig = plotIndividualTimeProfile(oneObsSimDC, esqlabsConfig)
   )
 })
+
+# createPlots(project, ...) tests ----
+
+test_that("createPlots errors on non-Project input", {
+  expect_error(createPlots("not a project"), "expected <Project>")
+})
+
+test_that("createPlots returns empty list when project has no plots", {
+  project <- loadProject(testProjectJSONPath())
+  expect_identical(createPlots(project), list())
+})
+
+test_that("createPlots builds plot grids for Example project", {
+  project <- loadProject(example_project_json_path())
+  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
+  gridName <- project$plots$plotGrids$name[[1]]
+
+  result <- createPlots(
+    project,
+    plotGridNames = gridName,
+    simulatedScenarios = simulated
+  )
+
+  expect_named(result, gridName)
+  expect_s3_class(result[[gridName]], "patchwork")
+})

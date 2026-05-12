@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities-data-combined.R
 \name{createDataCombinedFromExcel}
 \alias{createDataCombinedFromExcel}
-\title{Generate DataCombined objects as defined in excel file}
+\title{Generate DataCombined objects from Excel (deprecated)}
 \usage{
 createDataCombinedFromExcel(
   projectConfiguration,
@@ -14,31 +14,25 @@ createDataCombinedFromExcel(
 )
 }
 \arguments{
-\item{projectConfiguration}{Object of class \code{ProjectConfiguration} that
-contains information about the output paths and the excel file where plots
-are defined.}
+\item{projectConfiguration}{A \code{ProjectConfiguration} object pointing at
+a \code{Plots.xlsx}.}
 
-\item{dataCombinedNames}{Names of the DataCombined objects that will be
-created. If a DataCombined with a given name is not defined in the Excel
-file, an error is thrown. Can be used together with \code{plotGridNames}.}
+\item{dataCombinedNames}{Names of DataCombined entries to build.}
 
-\item{plotGridNames}{Names of the plot grid specified in the sheet
-\code{plotGrids}. Each data combined used by the specified plot grids will be
-created. Can be used together with \code{dataCombinedNames}.}
+\item{plotGridNames}{Names of plot grids whose DataCombined dependencies
+should be built.}
 
-\item{simulatedScenarios}{A list of simulated scenarios as returned by
-\code{runScenarios()}}
+\item{simulatedScenarios}{Named list of simulated scenarios.}
 
-\item{observedData}{A list of \code{DataSet} objects}
+\item{observedData}{Named list of observed \code{DataSet} objects.}
 
-\item{stopIfNotFound}{If TRUE (default), the function stops if any of the
-simulated results or observed data are not found. If FALSE a warning is
-printed.}
+\item{stopIfNotFound}{If \code{TRUE}, errors on unresolved references; if
+\code{FALSE}, warns and skips.}
 }
 \value{
-A list of \code{DataCombined} objects, or an empty list if both
-\code{dataCombinedNames} and \code{plotGridNames} are \code{NULL} or \code{stopIfNotFound = TRUE} and the specified \code{DataCombined} could not be created.
+Named list of \code{DataCombined} objects.
 }
 \description{
-Generate DataCombined objects as defined in excel file
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{\link[=createDataCombined]{createDataCombined()}} with a
+\link[=loadProject]{Project}.
 }
