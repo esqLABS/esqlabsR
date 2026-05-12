@@ -70,6 +70,44 @@ test_that("removeModelParameterEntry auto-removes empty parameter sets", {
   expect_false("TempSet" %in% names(project$modelParameterSets))
 })
 
+test_that("remove*ParameterSetEntry no-op on missing entry does not mark modified", {
+  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  addModelParameterEntry(project, "MSet", "Organism|A", "K", 1.5, "1/h")
+  addApplicationParameterSetEntry(
+    project,
+    "ASet",
+    "Organism|B",
+    "K",
+    2,
+    "1/h"
+  )
+  addIndividualParameterSetEntry(
+    project,
+    "ISet",
+    "Organism|C",
+    "K",
+    3,
+    "1/h"
+  )
+  project$.markValidated()
+  expect_true(project$validatedSinceMutation)
+
+  expect_warning(
+    removeModelParameterEntry(project, "MSet", "Organism|A", "Ghost"),
+    "not found"
+  )
+  expect_warning(
+    removeApplicationParameterSetEntry(project, "ASet", "Organism|B", "Ghost"),
+    "not found"
+  )
+  expect_warning(
+    removeIndividualParameterSetEntry(project, "ISet", "Organism|C", "Ghost"),
+    "not found"
+  )
+
+  expect_true(project$validatedSinceMutation)
+})
+
 # FK validation ------------------------------------------------------
 
 test_that("addScenario aborts when a referenced individualId is unknown", {

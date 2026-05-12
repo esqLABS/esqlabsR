@@ -583,16 +583,19 @@ removeModelParameterEntry <- function(
     cli::cli_warn("model parameter set {.val {id}} not found; no-op.")
     return(invisible(project))
   }
-  updated <- .removeParameterEntry(
+  result <- .removeParameterEntry(
     project$modelParameterSets[[id]],
     containerPath,
     parameterName
   )
-  if (is.null(updated)) {
+  if (!result$removed) {
+    return(invisible(project))
+  }
+  if (is.null(result$parameters)) {
     .warnIfReferenced(project, "modelParameterSet", id)
     project$modelParameterSets[[id]] <- NULL
   } else {
-    project$modelParameterSets[[id]] <- updated
+    project$modelParameterSets[[id]] <- result$parameters
   }
   project$.markModified()
   invisible(project)
@@ -685,8 +688,12 @@ removeModelParameterEntry <- function(
 }
 
 # Drop one parameter entry from a JSON-faithful array-of-records
-# parameter set. Returns `NULL` when the removal empties the set
-# (callers use this to auto-remove the named set).
+# parameter set. Returns a list with:
+#   - `parameters`: the updated set, or `NULL` if removal emptied the set
+#     (callers use the `NULL` to auto-remove the named set).
+#   - `removed`: `TRUE` if an entry was actually removed, `FALSE` for a
+#     no-op (entry not found). Callers gate `.markModified()` on this so
+#     a no-op warn doesn't invalidate the validation cache.
 #
 # @keywords internal
 # @noRd
@@ -695,20 +702,20 @@ removeModelParameterEntry <- function(
     cli::cli_warn(
       "parameter {.val {paste(containerPath, parameterName, sep = '|')}} not found; no-op."
     )
-    return(parameters)
+    return(list(parameters = parameters, removed = FALSE))
   }
   idx <- .findParameterEntryIndex(parameters, containerPath, parameterName)
   if (length(idx) == 0L) {
     cli::cli_warn(
       "parameter {.val {paste(containerPath, parameterName, sep = '|')}} not found; no-op."
     )
-    return(parameters)
+    return(list(parameters = parameters, removed = FALSE))
   }
   parameters <- parameters[-idx]
   if (length(parameters) == 0L) {
-    return(NULL)
+    return(list(parameters = NULL, removed = TRUE))
   }
-  parameters
+  list(parameters = parameters, removed = TRUE)
 }
 
 # Locate a `(containerPath, parameterName)` entry in a parameter-set

@@ -590,16 +590,19 @@ removeIndividualParameterSetEntry <- function(
     cli::cli_warn("individual parameter set {.val {id}} not found; no-op.")
     return(invisible(project))
   }
-  updated <- .removeParameterEntry(
+  result <- .removeParameterEntry(
     project$individualParameterSets[[id]],
     containerPath,
     parameterName
   )
-  if (is.null(updated)) {
+  if (!result$removed) {
+    return(invisible(project))
+  }
+  if (is.null(result$parameters)) {
     .warnIfReferenced(project, "individualParameterSet", id)
     project$individualParameterSets[[id]] <- NULL
   } else {
-    project$individualParameterSets[[id]] <- updated
+    project$individualParameterSets[[id]] <- result$parameters
   }
   project$.markModified()
   invisible(project)

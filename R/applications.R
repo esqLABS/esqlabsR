@@ -220,16 +220,19 @@ removeApplicationParameterSetEntry <- function(
     cli::cli_warn("application parameter set {.val {id}} not found; no-op.")
     return(invisible(project))
   }
-  updated <- .removeParameterEntry(
+  result <- .removeParameterEntry(
     project$applicationParameterSets[[id]],
     containerPath,
     parameterName
   )
-  if (is.null(updated)) {
+  if (!result$removed) {
+    return(invisible(project))
+  }
+  if (is.null(result$parameters)) {
     .warnIfReferenced(project, "applicationParameterSet", id)
     project$applicationParameterSets[[id]] <- NULL
   } else {
-    project$applicationParameterSets[[id]] <- updated
+    project$applicationParameterSets[[id]] <- result$parameters
   }
   project$.markModified()
   invisible(project)
