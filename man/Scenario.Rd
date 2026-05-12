@@ -4,9 +4,6 @@
 \name{Scenario}
 \alias{Scenario}
 \title{Scenario}
-\value{
-A new \code{Scenario} object.
-}
 \description{
 Plain-data class holding scenario configuration fields
 parsed from a v2.0 \code{Project.json}. Does not create or hold ospsuite
@@ -14,105 +11,116 @@ runtime objects; the runtime is built by \code{\link[=runScenarios]{runScenarios
 execution time.
 }
 \section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{scenarioName}}{Character. Name of the scenario.}
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{scenarioName}}{Character. Name of the scenario.}
 
-\item{\code{modelFile}}{Character. Name of the \code{.pkml} model file
+    \item{\code{modelFile}}{Character. Name of the \code{.pkml} model file
 (relative to the model folder).}
 
-\item{\code{applicationProtocol}}{Character or \code{NA}. Name of the
+    \item{\code{applicationProtocol}}{Character or \code{NA}. Name of the
 application protocol; \code{NA} when absent in JSON.}
 
-\item{\code{individualId}}{Character. ID referencing
+    \item{\code{individualId}}{Character. ID referencing
 \code{project$individuals}.}
 
-\item{\code{populationId}}{Character or \code{NULL}. ID referencing
+    \item{\code{populationId}}{Character or \code{NULL}. ID referencing
 \code{project$populations}.}
 
-\item{\code{outputPaths}}{Character vector of literal output paths,
-resolved at parse time from \code{outputPathIds}.}
+    \item{\code{outputPaths}}{Named character vector of literal output paths,
+resolved at parse time from \code{outputPathIds}. Names are the
+ids referencing \code{project$outputPaths}; values are the literal
+paths. \code{NULL} when the scenario declares no \code{outputPathIds}.
+Round-trip serialization reads \code{names(outputPaths)} to rebuild
+\code{outputPathIds}; mutators must preserve the named-vector
+invariant.}
 
-\item{\code{simulationType}}{Character. \code{"Individual"} or
+    \item{\code{simulationType}}{Character. \code{"Individual"} or
 \code{"Population"}; derived from \code{populationId} presence.}
 
-\item{\code{readPopulationFromCSV}}{Logical. If \code{TRUE}, load population
+    \item{\code{readPopulationFromCSV}}{Logical. If \code{TRUE}, load population
 from CSV.}
 
-\item{\code{simulateSteadyState}}{Logical. If \code{TRUE}, run steady-state
+    \item{\code{simulateSteadyState}}{Logical. If \code{TRUE}, run steady-state
 before the main simulation.}
 
-\item{\code{simulationTime}}{List of length-3 numeric vectors
+    \item{\code{simulationTime}}{List of length-3 numeric vectors
 \code{c(start, end, resolution)}, parsed from the JSON string.}
 
-\item{\code{simulationTimeUnit}}{Character. Time unit for
+    \item{\code{simulationTimeUnit}}{Character. Time unit for
 \code{simulationTime}, preserved as declared in JSON.}
 
-\item{\code{steadyStateTime}}{Numeric. Steady-state time \strong{in base
+    \item{\code{steadyStateTime}}{Numeric. Steady-state time \strong{in base
 unit (minutes)}; converted from the JSON value at parse time.}
 
-\item{\code{steadyStateTimeUnit}}{Character. Original unit for
+    \item{\code{steadyStateTimeUnit}}{Character. Original unit for
 \code{steadyStateTime}, preserved for round-trip serialization.}
 
-\item{\code{overwriteFormulasInSS}}{Logical. Overwrite formula
+    \item{\code{overwriteFormulasInSS}}{Logical. Overwrite formula
 parameters during steady-state.}
 
-\item{\code{modelParameterSets}}{Character vector. Parameter-set group
+    \item{\code{modelParameterSets}}{Character vector. Parameter-set group
 names referencing \code{project$modelParameterSets}.}
-}
-\if{html}{\out{</div>}}
+  }
+  \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-Scenario-new}{\code{Scenario$new()}}
-\item \href{#method-Scenario-print}{\code{Scenario$print()}}
-\item \href{#method-Scenario-clone}{\code{Scenario$clone()}}
-}
+  \itemize{
+    \item \href{#method-Scenario-initialize}{\code{Scenario$new()}}
+    \item \href{#method-Scenario-print}{\code{Scenario$print()}}
+    \item \href{#method-Scenario-clone}{\code{Scenario$clone()}}
+  }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Scenario-new"></a>}}
-\if{latex}{\out{\hypertarget{method-Scenario-new}{}}}
-\subsection{Method \code{new()}}{
-Create a new Scenario. All fields default;
+\if{html}{\out{<a id="method-Scenario-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-Scenario-initialize}{}}}
+\subsection{\code{Scenario$new()}}{
+  Create a new Scenario. All fields default;
 the parser populates them by direct assignment.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Scenario$new()}\if{html}{\out{</div>}}
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Scenario$new()}
+    \if{html}{\out{</div>}}
+  }
 }
 
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Scenario-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Scenario-print}{}}}
-\subsection{Method \code{print()}}{
-Print a one-line-per-field summary.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Scenario$print(...)}\if{html}{\out{</div>}}
+\subsection{\code{Scenario$print()}}{
+  Print a one-line-per-field summary.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Scenario$print(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Unused; present for S3 method consistency.}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{...}}{Unused; present for S3 method consistency.}
-}
-\if{html}{\out{</div>}}
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Scenario-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-Scenario-clone}{}}}
-\subsection{Method \code{clone()}}{
-The objects of this class are cloneable with this method.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Scenario$clone(deep = FALSE)}\if{html}{\out{</div>}}
+\subsection{\code{Scenario$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Scenario$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{deep}}{Whether to make a deep clone.}
-}
-\if{html}{\out{</div>}}
-}
-}
 }
