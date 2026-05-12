@@ -115,9 +115,9 @@ sensitivityTornadoPlot(resultsNamed)
 
 }
 \seealso{
-Other sensitivity-calculation: 
-\code{\link{sensitivityCalculation}()},
-\code{\link{sensitivitySpiderPlot}()},
-\code{\link{sensitivityTimeProfiles}()}
+Other sensitivity-calculation:
+\code{\link[=sensitivityCalculation]{sensitivityCalculation()}},
+\code{\link[=sensitivitySpiderPlot]{sensitivitySpiderPlot()}},
+\code{\link[=sensitivityTimeProfiles]{sensitivityTimeProfiles()}}
 }
 \concept{sensitivity-calculation}

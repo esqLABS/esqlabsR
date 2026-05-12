@@ -1,9 +1,17 @@
-#' Validate cross-references between configuration files
+#' Validate cross-references between Excel configuration files (legacy)
+#'
+#' Used by [validateAllConfigurations()] to check references across Excel-
+#' driven `ProjectConfiguration` worksheets. The JSON-driven counterpart
+#' lives in `R/validation.R` under the `.validateCrossReferences` name.
+#'
 #' @param projectConfiguration ProjectConfiguration object
 #' @param validationResults Previous validation results
 #' @return validationResult object with cross-reference validation
 #' @keywords internal
-.validateCrossReferences <- function(projectConfiguration, validationResults) {
+.validateCrossReferencesExcel <- function(
+  projectConfiguration,
+  validationResults
+) {
   result <- validationResult$new()
 
   # Skip if previous validations failed

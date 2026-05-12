@@ -1,3 +1,97 @@
+# Section validation adapter ----
+#
+# Registered in `.validationAdapters` (R/validation.R) and called by
+# `.runProjectValidation()`.
+
+#' @keywords internal
+#' @noRd
+.populationsValidatorAdapter <- function(project) {
+  .validatePopulations(project$populations)
+}
+
+#' Validate the `populations` section of a Project
+#'
+#' Checks `species` is set and warns on out-of-range
+#' `proportionOfFemales` or inverted Min/Max ranges (age, weight,
+#' height, BMI).
+#'
+#' @param populations Named list from `project$populations`.
+#' @return validationResult.
+#' @keywords internal
+#' @noRd
+.validatePopulations <- function(populations) {
+  result <- validationResult$new()
+
+  if (is.null(populations) || length(populations) == 0) {
+    result$add_warning("Data", "No populations defined")
+    return(result)
+  }
+
+  ids <- .extractEntryIds(populations, "populationId")
+  result <- .check_no_duplicates(ids, "populationId", result)
+
+  for (i in seq_along(populations)) {
+    pop <- populations[[i]]
+    id <- pop$populationId %||% paste0("entry ", i)
+
+    if (is.null(pop$populationId) || identical(pop$populationId, "")) {
+      result$add_critical_error(
+        "Missing Fields",
+        paste0(
+          "Required field 'populationId' is missing or empty in entry ",
+          i
+        )
+      )
+    }
+
+    result <- .check_required_fields(
+      pop,
+      c("species"),
+      paste0("population '", id, "'"),
+      result
+    )
+
+    if (!is.null(pop$proportionOfFemales)) {
+      pof <- as.numeric(pop$proportionOfFemales)
+      if (!is.na(pof) && (pof < 0 || pof > 100)) {
+        result$add_warning(
+          "Data Range",
+          paste0(
+            "proportionOfFemales in population '",
+            id,
+            "' should be between 0 and 100"
+          )
+        )
+      }
+    }
+
+    rangePairs <- list(
+      c("ageMin", "ageMax"),
+      c("weightMin", "weightMax"),
+      c("heightMin", "heightMax"),
+      c("BMIMin", "BMIMax")
+    )
+    for (pair in rangePairs) {
+      lo <- pop[[pair[1]]]
+      hi <- pop[[pair[2]]]
+      if (
+        !is.null(lo) &&
+          !is.null(hi) &&
+          !is.na(lo) &&
+          !is.na(hi) &&
+          lo > hi
+      ) {
+        result$add_warning(
+          "Data Range",
+          paste0(pair[1], " > ", pair[2], " in population '", id, "'")
+        )
+      }
+    }
+  }
+
+  result
+}
+
 #' Read an excel file containing information about population and create a
 #' `PopulationCharacteristics` object
 #'

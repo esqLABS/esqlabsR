@@ -1,3 +1,87 @@
+# Section validation adapters ----
+#
+# Registered in `.validationAdapters` (R/validation.R) and called by
+# `.runProjectValidation()`.
+
+#' @keywords internal
+#' @noRd
+.individualsValidatorAdapter <- function(project) {
+  .validateIndividuals(project$individuals)
+}
+
+#' @keywords internal
+#' @noRd
+.individualParameterSetsValidatorAdapter <- function(project) {
+  .validateParameterSets(
+    project$individualParameterSets,
+    "individualParameterSets"
+  )
+}
+
+#' Validate the `individuals` section of a Project
+#'
+#' Checks `species` and `gender` are present and warns when numeric
+#' fields (`weight`, `height`, `age`) are non-numeric. Cross-references
+#' to `individualParameterSets` are validated in
+#' `.validateCrossReferences()`.
+#'
+#' @param individuals Named list from `project$individuals`.
+#' @return validationResult.
+#' @keywords internal
+#' @noRd
+.validateIndividuals <- function(individuals) {
+  result <- validationResult$new()
+
+  if (is.null(individuals) || length(individuals) == 0) {
+    result$add_warning("Data", "No individuals defined")
+    return(result)
+  }
+
+  ids <- .extractEntryIds(individuals, "individualId")
+  result <- .check_no_duplicates(ids, "individualId", result)
+
+  requiredFields <- c("species", "gender")
+  for (i in seq_along(individuals)) {
+    indiv <- individuals[[i]]
+    id <- indiv$individualId %||% paste0("entry ", i)
+
+    if (is.null(indiv$individualId) || identical(indiv$individualId, "")) {
+      result$add_critical_error(
+        "Missing Fields",
+        paste0(
+          "Required field 'individualId' is missing or empty in entry ",
+          i
+        )
+      )
+    }
+
+    result <- .check_required_fields(
+      indiv,
+      requiredFields,
+      paste0("individual '", id, "'"),
+      result
+    )
+
+    for (numField in c("weight", "height", "age")) {
+      val <- indiv[[numField]]
+      if (!is.null(val) && !is.na(val) && !is.numeric(val)) {
+        result$add_warning(
+          "Data Type",
+          paste0(
+            "Field '",
+            numField,
+            "' in individual '",
+            id,
+            "' should be numeric"
+          )
+        )
+      }
+    }
+  }
+
+  result
+}
+
 #' Create a parameter set describing an individual and write it to the Excel
 #' file
 #'

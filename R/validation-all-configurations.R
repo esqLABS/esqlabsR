@@ -58,8 +58,9 @@ validateAllConfigurations <- function(
     )
   }
 
-  # Add cross-reference validation
-  results$crossReferences <- .validateCrossReferences(
+  # Add cross-reference validation (Excel-driven; JSON path uses
+  # .validateCrossReferences in R/validation.R)
+  results$crossReferences <- .validateCrossReferencesExcel(
     projectConfiguration,
     results
   )

@@ -9,7 +9,8 @@ createPlots(
   plotGridNames = NULL,
   simulatedScenarios = NULL,
   dataCombinedList = NULL,
-  stopIfNotFound = TRUE
+  stopIfNotFound = TRUE,
+  validate = TRUE
 )
 }
 \arguments{
@@ -26,6 +27,12 @@ objects. If \code{NULL}, the function builds them via \code{\link[=createDataCom
 
 \item{stopIfNotFound}{If \code{TRUE}, errors when a referenced DataCombined or
 simulated/observed entry cannot be resolved.}
+
+\item{validate}{Logical. If \code{TRUE} (default), runs the relevant
+section validators via \code{\link[=validateProject]{validateProject()}} before building the
+plots and aborts with a formatted summary on critical errors. Set
+to \code{FALSE} to skip the pre-flight check (e.g. when the caller has
+already validated the project).}
 }
 \value{
 A named list of plot-grid objects (one per \code{plotGridName}), or
