@@ -1100,6 +1100,7 @@ test_that("Function has no side effects on Excel files", {
 })
 
 test_that("Created scenarios are runnable", {
+  withr::local_options(lifecycle_verbosity = "quiet")
   temp_project <- with_temp_project()
   projectConfiguration <- temp_project$config
   pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
