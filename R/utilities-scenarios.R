@@ -750,61 +750,84 @@ addScenario <- function(
     errors <- c(errors, "modelFile must be a non-empty string")
   }
 
-  if (
-    !is.null(individualId) &&
-      !(individualId %in% names(project$individuals))
-  ) {
-    errors <- c(
-      errors,
-      paste0("individualId '", individualId, "' not found in individuals")
-    )
-  }
-  if (
-    !is.null(populationId) &&
-      !(populationId %in% names(project$populations))
-  ) {
-    errors <- c(
-      errors,
-      paste0("populationId '", populationId, "' not found in populations")
-    )
-  }
-  if (
-    !is.null(applicationProtocol) &&
-      !(applicationProtocol %in% names(project$applications))
-  ) {
-    errors <- c(
-      errors,
-      paste0(
-        "applicationProtocol '",
-        applicationProtocol,
-        "' not found in applications"
-      )
-    )
-  }
-  if (!is.null(modelParameterSets)) {
-    bad <- setdiff(modelParameterSets, names(project$modelParameterSets))
-    if (length(bad) > 0L) {
-      errors <- c(
-        errors,
-        paste0(
-          "modelParameterSets not found in project$modelParameterSets: ",
-          paste(bad, collapse = ", ")
-        )
-      )
+  checkScalarFK <- function(value, argName, lookup, lookupLabel) {
+    if (is.null(value)) {
+      return(character())
     }
-  }
-  if (!is.null(outputPathIds)) {
-    bad <- setdiff(outputPathIds, names(project$outputPaths))
-    if (length(bad) > 0L) {
-      errors <- c(
-        errors,
-        paste0(
-          "outputPathIds not found in outputPaths: ",
-          paste(bad, collapse = ", ")
-        )
-      )
+    if (
+      !is.character(value) ||
+        length(value) != 1L ||
+        is.na(value) ||
+        nchar(value) == 0
+    ) {
+      return(paste0(argName, " must be a non-empty string or NULL"))
     }
+    if (!(value %in% names(lookup))) {
+      return(paste0(argName, " '", value, "' not found in ", lookupLabel))
+    }
+    character()
   }
+  checkVectorFK <- function(value, argName, lookup, lookupLabel) {
+    if (is.null(value)) {
+      return(character())
+    }
+    if (
+      !is.character(value) ||
+        length(value) == 0L ||
+        any(is.na(value)) ||
+        any(nchar(value) == 0)
+    ) {
+      return(paste0(
+        argName,
+        " must be a non-empty character vector with no NA or empty entries"
+      ))
+    }
+    bad <- setdiff(value, names(lookup))
+    if (length(bad) > 0L) {
+      return(paste0(
+        argName,
+        " not found in ",
+        lookupLabel,
+        ": ",
+        paste(bad, collapse = ", ")
+      ))
+    }
+    character()
+  }
+
+  errors <- c(
+    errors,
+    checkScalarFK(
+      individualId,
+      "individualId",
+      project$individuals,
+      "individuals"
+    ),
+    checkScalarFK(
+      populationId,
+      "populationId",
+      project$populations,
+      "populations"
+    ),
+    checkScalarFK(
+      applicationProtocol,
+      "applicationProtocol",
+      project$applications,
+      "applications"
+    ),
+    checkVectorFK(
+      modelParameterSets,
+      "modelParameterSets",
+      project$modelParameterSets,
+      "project$modelParameterSets"
+    ),
+    checkVectorFK(
+      outputPathIds,
+      "outputPathIds",
+      project$outputPaths,
+      "outputPaths"
+    )
+  )
 
   if (length(errors) > 0L) {
     cli::cli_abort(c(

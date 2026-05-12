@@ -144,6 +144,41 @@ test_that("addOutputPath aborts on a duplicate id", {
   )
 })
 
+test_that("addScenario rejects NA-valued FK args", {
+  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      scenarioName = "S",
+      modelFile = "Aciclovir.pkml",
+      individualId = NA_character_
+    )
+  )
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      scenarioName = "S",
+      modelFile = "Aciclovir.pkml",
+      outputPathIds = c("Output1", NA_character_)
+    )
+  )
+})
+
+test_that("addPlotGrid aborts when no plots are defined", {
+  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project$plots <- list(
+    dataCombined = list(),
+    plotConfiguration = data.frame(),
+    plotGrids = data.frame()
+  )
+  expect_snapshot(
+    error = TRUE,
+    addPlotGrid(project, "G1", plotIDs = "MissingPlot")
+  )
+})
+
 # .warnIfReferenced --------------------------------------------------
 
 test_that("removeOutputPath warns when the id is referenced by a scenario, removes anyway", {

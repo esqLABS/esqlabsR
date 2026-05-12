@@ -1502,13 +1502,6 @@ addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
   )
   newRowDf <- as.data.frame(newRow, stringsAsFactors = FALSE)
 
-  if (is.null(project$plots)) {
-    project$plots <- list(
-      dataCombined = list(),
-      plotConfiguration = data.frame(),
-      plotGrids = data.frame()
-    )
-  }
   project$plots$plotConfiguration <- as.data.frame(dplyr::bind_rows(
     existingPlots,
     newRowDf
@@ -1597,7 +1590,14 @@ addPlotGrid <- function(project, name, plotIDs, ...) {
     cli::cli_abort("plot grid {.val {name}} already exists")
   }
 
-  unknown <- setdiff(plotIDs, project$plots$plotConfiguration$plotID)
+  existingPlotIDs <- project$plots$plotConfiguration$plotID
+  if (is.null(existingPlotIDs)) {
+    cli::cli_abort(c(
+      "no plots are defined; add plots before creating a plot grid.",
+      "i" = "use {.fn addPlot} to add plots referenced by {.arg plotIDs}."
+    ))
+  }
+  unknown <- setdiff(plotIDs, existingPlotIDs)
   if (length(unknown) > 0L) {
     cli::cli_abort(c(
       "{.arg plotIDs} references unknown plotIDs:",
@@ -1614,13 +1614,6 @@ addPlotGrid <- function(project, name, plotIDs, ...) {
   )
   newRowDf <- as.data.frame(newRow, stringsAsFactors = FALSE)
 
-  if (is.null(project$plots)) {
-    project$plots <- list(
-      dataCombined = list(),
-      plotConfiguration = data.frame(),
-      plotGrids = data.frame()
-    )
-  }
   project$plots$plotGrids <- as.data.frame(dplyr::bind_rows(
     existingGrids,
     newRowDf
