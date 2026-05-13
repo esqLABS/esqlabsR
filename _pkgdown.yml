@@ -132,7 +132,6 @@ reference:
     contents:
       - ProjectConfiguration
       - createProjectConfiguration
-      - createDefaultProjectConfiguration
       - exampleProjectConfigurationPath
       - snapshotProjectConfiguration
       - restoreProjectConfiguration

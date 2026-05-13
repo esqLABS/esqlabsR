@@ -239,7 +239,7 @@ importProjectFromExcel <- function(
 #' @export
 snapshotProjectConfiguration <- function(...) {
   lifecycle::deprecate_warn(
-    "7.0.0",
+    "6.0.0",
     "snapshotProjectConfiguration()",
     "importProjectFromExcel()"
   )
@@ -420,7 +420,7 @@ restoreProjectConfiguration <- function(
   ...
 ) {
   lifecycle::deprecate_warn(
-    "7.0.0",
+    "6.0.0",
     "restoreProjectConfiguration()",
     "exportProjectToExcel()"
   )
@@ -593,7 +593,7 @@ projectStatus <- function(
 #' @export
 projectConfigurationStatus <- function(...) {
   lifecycle::deprecate_warn(
-    "7.0.0",
+    "6.0.0",
     "projectConfigurationStatus()",
     "projectStatus()"
   )

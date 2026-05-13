@@ -33,6 +33,7 @@
 
 ## Breaking changes
 
+- `createDefaultProjectConfiguration()` is removed. Use `loadProject()` instead. The function had been soft-deprecated since 5.3.0. (#908)
 - `Project` (R6 class) is now exported and replaces `ProjectConfiguration` as the canonical in-memory project representation. The class merges the JSON-parsed sections (scenarios, individuals, populations, applications, observed data, plots, parameter identification) with the Excel-bridge file paths previously held by `ProjectConfiguration`. (#908)
 - `ScenarioConfiguration`, `addScenarioConfigurationsToExcel()`, `createScenarioConfigurationsFromPKML()`, `readScenarioConfigurationFromExcel()`, and `setApplications()` are removed. The Excel to JSON migration path is now `importProjectFromExcel()`; the reverse is `exportProjectToExcel()`. The scenario-construction-from-PKML surface is now `createScenariosFromPKML()`. (#908)
 - `validateAllConfigurations()` is removed. Use `validateProject()` instead. (#908)
@@ -55,7 +56,7 @@
 ## Soft deprecations
 
 - `createDataCombinedFromExcel()` and `createPlotsFromExcel()` now simply forward to `createDataCombined()` / `createPlots()` after emitting a `lifecycle::deprecate_soft()` warning. Pass a `Project` from `loadProject()`. (#908)
-- `createDefaultProjectConfiguration()` and `createProjectConfiguration()` now warn and forward to `loadProject()`. The default `path` changes from `"ProjectConfiguration.xlsx"` to `"Project.json"`. (#908)
+- `createProjectConfiguration()` now warns and forwards to `loadProject()`. The default `path` changes from `"ProjectConfiguration.xlsx"` to `"Project.json"`. (#908)
 - `exampleProjectConfigurationPath()` warns and forwards to `exampleProjectPath()`. (#908)
 - `ProjectConfiguration()` warns and forwards to `Project$new()`. (#908)
 - `projectConfigurationStatus()` warns and forwards to `projectStatus()`. (#908)
