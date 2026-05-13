@@ -597,7 +597,7 @@ runPI <- function(
 #' Build Parameter Identification tasks (defunct)
 #'
 #' @description
-#' `r lifecycle::badge("deprecated")`
+#' `r lifecycle::badge("defunct")`
 #'
 #' This function is removed. Use [runPI()] with a [Project][loadProject()]
 #' instead. `runPI(project, ...)` builds and runs PI tasks in one step.

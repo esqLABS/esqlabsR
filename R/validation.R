@@ -604,6 +604,19 @@ validateProject <- function(project) {
   for (taskId in names(piTasks)) {
     task <- piTasks[[taskId]]
 
+    badTaskScenarios <- setdiff(task$scenarios, scenarioNames)
+    if (length(badTaskScenarios) > 0L) {
+      result$add_critical_error(
+        "Invalid Reference",
+        paste0(
+          "PI task '",
+          taskId,
+          "' references undefined scenarios: ",
+          paste(badTaskScenarios, collapse = ", ")
+        )
+      )
+    }
+
     for (p in task$parameters) {
       bad <- setdiff(p$scenarios, scenarioNames)
       if (length(bad) > 0L) {

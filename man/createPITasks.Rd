@@ -13,7 +13,7 @@ createPITasks(...)
 Aborts.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#defunct}{\figure{lifecycle-defunct.svg}{options: alt='[Defunct]'}}}{\strong{[Defunct]}}
 
 This function is removed. Use \code{\link[=runPI]{runPI()}} with a \link[=loadProject]{Project}
 instead. \code{runPI(project, ...)} builds and runs PI tasks in one step.

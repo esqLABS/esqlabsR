@@ -130,7 +130,8 @@
       runPI(project)
     Condition
       Error in `.abortValidationErrors()`:
-      ! Cannot runPI: project has 2 critical validation errors.
+      ! Cannot runPI: project has 3 critical validation errors.
+      x [crossReferences] PI task 'T' references undefined scenarios: DoesNotExist
       x [crossReferences] PI task 'T', parameter 'p' references undefined scenarios: DoesNotExist
       x [crossReferences] PI task 'T', outputMapping 'm' references undefined scenarios: DoesNotExist
       i Run `validateProject(project)` for a full report.
