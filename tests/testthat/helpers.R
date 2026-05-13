@@ -217,79 +217,60 @@ summarizer <- function(data, path) {
 #'
 #' @description
 #' Creates a temporary directory with an initialized esqlabsR project for testing.
-#' Uses `withr::local_tempdir()` to ensure proper cleanup after the test.
+#' Uses `withr::defer()` to ensure proper cleanup after the test.
 #'
 #' @param projectName Optional name for the project. If provided, uses this name in the temporary directory pattern.
 #' @param overwrite Whether to overwrite existing project files. Defaults to TRUE.
 #'
 #' @returns A list containing:
 #'   - `path`: Path to the temporary project directory
-#'   - `config`: ProjectConfiguration object for the project
+#'   - `project`: `Project` object loaded from the initialized `Project.json`
 #'
 #' @examples
 #' \dontrun{
-#' # Create temporary project with random name
 #' temp_project <- with_temp_project()
-#'
-#' # Create temporary project with specific name
-#' temp_project <- with_temp_project("MyTestProject")
-#'
-#' # Use the project
-#' project_path <- temp_project$path
-#' project_config <- temp_project$config
-#'
-#' # Project will be automatically cleaned up when the function exits
+#' temp_project$path
+#' temp_project$project
 #' }
 with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
-  # Generate a unique temp directory path
   if (is.null(projectName)) {
     temp_dir <- tempfile("esqlabsR_test_")
   } else {
     temp_dir <- tempfile(paste0("esqlabsR_", projectName, "_"))
   }
   dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
-  # Ensure cleanup after test
   withr::defer(unlink(temp_dir, recursive = TRUE), envir = parent.frame())
 
-  # Initialize project
-  initProject(destination = temp_dir, overwrite = overwrite)
-
-  # Load project configuration
-  project_config <- createProjectConfiguration(
-    file.path(temp_dir, "ProjectConfiguration.xlsx"),
-    ignoreVersionCheck = TRUE
+  initProject(
+    destination = temp_dir,
+    type = "example",
+    createExcel = TRUE,
+    overwrite = overwrite
   )
+  project <- loadProject(file.path(temp_dir, "Project.json"))
 
-  # Return list with path and config
   list(
     path = temp_dir,
-    config = project_config
+    project = project
   )
 }
 
-# Create a temporary test project directory with proper cleanup
-# This is a test fixture following the pattern from testthat.r-lib.org/articles/test-fixtures.html
-# Returns a list with paths to the project directory and key files
 local_test_project <- function(
   project_name = "TestProject",
   env = parent.frame()
 ) {
-  # Create temp directory for test
   temp_dir <- withr::local_tempdir("test_project", .local_envir = env)
 
-  # Copy example project to temp directory to avoid modifying the original
-  example_dir <- exampleDirectory(project_name)
+  source_dir <- testDataDirectory(project_name)
   file.copy(
-    list.files(example_dir, full.names = TRUE),
+    list.files(source_dir, full.names = TRUE),
     temp_dir,
     recursive = TRUE
   )
 
-  # Return the paths needed for testing
   list(
     dir = temp_dir,
-    project_config_path = file.path(temp_dir, "ProjectConfiguration.xlsx"),
-    snapshot_path = file.path(temp_dir, "ProjectConfiguration.json"),
+    project_path = file.path(temp_dir, "Project.json"),
     configurations_dir = file.path(temp_dir, "Configurations")
   )
 }

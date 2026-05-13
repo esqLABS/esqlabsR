@@ -2,23 +2,32 @@
 % Please edit documentation in R/project-lifecycle.R
 \name{loadProject}
 \alias{loadProject}
-\title{Load a project from a JSON configuration file.}
+\alias{createProjectConfiguration}
+\alias{createDefaultProjectConfiguration}
+\title{Load a project from a JSON configuration file}
 \usage{
 loadProject(path = "Project.json")
+
+createProjectConfiguration(path = "Project.json")
+
+createDefaultProjectConfiguration(path = "Project.json")
 }
 \arguments{
 \item{path}{Path to the \code{Project.json} file. Defaults to
 \code{Project.json} in the working directory.}
 }
 \value{
-An object of class \link{Project}.
+Object of type \code{Project}
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Load a \code{Project} from a JSON file. This is the
+primary entry point for working with esqlabsR projects.
 
-Loads a v2.0 \link{Project} from a \code{Project.json} file. Pass the
-returned \link{Project} to \code{\link[=runScenarios]{runScenarios()}} to drive the JSON-first
-workflow.
+On load the project is checked for the most common cross-reference
+problems (e.g. a scenario referring to an individual or population
+that is not defined). Any such issues are reported via \code{\link[cli:cli_warn]{cli::cli_warn()}}
+so that obvious configuration mistakes surface immediately, but loading
+still succeeds. Use \code{\link[=validateProject]{validateProject()}} for a full report.
 }
 \examples{
 \dontrun{
