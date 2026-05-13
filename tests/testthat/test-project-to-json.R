@@ -32,8 +32,8 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
 })
 
 test_that(".projectToJson() rejects non-Project input", {
-  expect_error(esqlabsR:::.projectToJson(list()), "must be a Project")
-  expect_error(esqlabsR:::.projectToJson(NULL), "must be a Project")
+  expect_error(esqlabsR:::.projectToJson(list()), "must be a")
+  expect_error(esqlabsR:::.projectToJson(NULL), "must be a")
 })
 
 test_that(".saveProjectJson() writes a valid JSON file", {

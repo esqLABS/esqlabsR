@@ -41,10 +41,7 @@ test_that("It throws an error when a sheet has wrong structure", {
   columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
   expect_error(
     readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets),
-    regexp = messages$errorWrongXLSStructure(
-      filePath = paramsXLSpath,
-      expectedColNames = columnNames
-    )
+    "Loading from XLS failed"
   )
 })
 
@@ -82,7 +79,7 @@ test_that("It trows an error if wrong structure is provideed", {
         units = ""
       )
     ),
-    regexp = messages$wrongParametersStructure(argumentName = "parameters")
+    "wrong structure"
   )
 })
 

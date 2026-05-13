@@ -24,7 +24,7 @@ importProjectFromExcel <- function(
   validateIsString(projectConfigPath)
 
   if (!file.exists(projectConfigPath)) {
-    stop(messages$fileNotFound(projectConfigPath))
+    cli::cli_abort(messages$fileNotFound(projectConfigPath))
   }
 
   # Read the Project.xlsx to get path settings
@@ -470,7 +470,7 @@ projectStatus <- function(
   }
 
   if (!file.exists(projectConfigPath)) {
-    stop(messages$fileNotFound(projectConfigPath))
+    cli::cli_abort(messages$fileNotFound(projectConfigPath))
   }
 
   # Determine JSON path if not provided
@@ -479,7 +479,7 @@ projectStatus <- function(
   }
 
   if (!file.exists(jsonPath)) {
-    stop("JSON file does not exist: ", jsonPath)
+    cli::cli_abort("JSON file does not exist: {.path {jsonPath}}")
   }
 
   # Create temporary snapshot from current Excel files
@@ -557,7 +557,7 @@ projectStatus <- function(
     )
 
     if (!silent) {
-      warning(messages$excelNotInSync())
+      cli::cli_warn(messages$excelNotInSync())
 
       cli::cli_h2("File Sync Status:")
       for (file in names(fileStatus)) {

@@ -16,7 +16,8 @@ Project <- R6::R6Class(
     #'   (see `projectDirPath`). `NULL` for an empty in-memory project; in
     #'   that case all path fields must be absolute.
     projectFilePath = function(value) {
-      if (!missing(value)) stop("projectFilePath is readonly")
+      if (!missing(value))
+        cli::cli_abort("{.field projectFilePath} is readonly")
       private$.projectFilePath
     },
 
@@ -25,7 +26,7 @@ Project <- R6::R6Class(
     #'   base for resolving relative paths. `NULL` if the project was not
     #'   loaded from a file.
     projectDirPath = function(value) {
-      if (!missing(value)) stop("projectDirPath is readonly")
+      if (!missing(value)) cli::cli_abort("{.field projectDirPath} is readonly")
       private$.projectDirPath
     },
 
@@ -33,7 +34,7 @@ Project <- R6::R6Class(
     #'   has been modified since the project was loaded or saved. Cleared
     #'   internally by [saveProject()].
     modified = function(value) {
-      if (!missing(value)) stop("modified is readonly")
+      if (!missing(value)) cli::cli_abort("{.field modified} is readonly")
       private$.modified
     },
 
@@ -43,7 +44,8 @@ Project <- R6::R6Class(
     #'   validation hooks (e.g. in [runScenarios()] and [createPlots()]) to
     #'   skip redundant re-validation of an unchanged project.
     validatedSinceMutation = function(value) {
-      if (!missing(value)) stop("validatedSinceMutation is readonly")
+      if (!missing(value))
+        cli::cli_abort("{.field validatedSinceMutation} is readonly")
       private$.validatedSinceMutation
     },
 
@@ -206,7 +208,7 @@ Project <- R6::R6Class(
     #'   (the `filePaths` JSON section). Values are returned verbatim as
     #'   strings; no resolution is performed at this stage.
     filePaths = function(value) {
-      if (!missing(value)) stop("filePaths is readonly")
+      if (!missing(value)) cli::cli_abort("{.field filePaths} is readonly")
       data <- private$.filePathsData
       if (length(data) == 0L) {
         return(structure(list(), names = character(0L)))
@@ -217,7 +219,7 @@ Project <- R6::R6Class(
     #' @field asList Returns the current project as a list matching the JSON
     #'   schema. Reflects any in-memory modifications. Read-only.
     asList = function(value) {
-      if (!missing(value)) stop("asList is readonly")
+      if (!missing(value)) cli::cli_abort("{.field asList} is readonly")
       .projectToJson(self)
     }
   ),
@@ -293,7 +295,7 @@ Project <- R6::R6Class(
           is.na(projectFilePath) ||
           !nzchar(projectFilePath)
       ) {
-        stop(messages$invalidPathArgument(), call. = FALSE)
+        cli::cli_abort(messages$invalidPathArgument())
       }
       private$.read_json(projectFilePath)
       invisible(self)
@@ -496,13 +498,12 @@ Project <- R6::R6Class(
 
     .read_json = function(jsonPath) {
       jsonPath <- fs::path_abs(jsonPath)
-      if (!fs::file_exists(jsonPath)) stop(messages$fileNotFound(jsonPath))
+      if (!fs::file_exists(jsonPath))
+        cli::cli_abort(messages$fileNotFound(jsonPath))
       jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
       if (!identical(jsonData$schemaVersion, "2.0")) {
-        stop(
-          "Unsupported schemaVersion: ",
-          format(jsonData$schemaVersion %||% "<missing>"),
-          ". Expected '2.0'."
+        cli::cli_abort(
+          "Unsupported schemaVersion: {.val {jsonData$schemaVersion %||% '<missing>'}}. Expected {.val 2.0}."
         )
       }
       self$schemaVersion <- jsonData$schemaVersion

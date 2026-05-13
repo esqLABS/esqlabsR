@@ -31,7 +31,7 @@
 #' @noRd
 .projectToJson <- function(project) {
   if (!inherits(project, "Project")) {
-    stop("`project` must be a Project R6 instance.", call. = FALSE)
+    cli::cli_abort("{.arg project} must be a {.cls Project} R6 instance.")
   }
 
   list(
@@ -68,11 +68,11 @@
   if (
     !is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)
   ) {
-    stop(messages$invalidPathArgument(), call. = FALSE)
+    cli::cli_abort(messages$invalidPathArgument())
   }
   parent <- dirname(path)
   if (!dir.exists(parent)) {
-    stop("Parent directory does not exist: ", parent, call. = FALSE)
+    cli::cli_abort("Parent directory does not exist: {.path {parent}}")
   }
 
   jsonlite::write_json(

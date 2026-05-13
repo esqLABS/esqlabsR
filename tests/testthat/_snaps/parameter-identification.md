@@ -5,8 +5,7 @@
         maxValue = 1, startValue = 3)
     Condition
       Error in `PIParameter()`:
-      ! Parameter "Organism|x|y" has invalid bounds: Min=5, Start=3, Max=1.
-          Expected: Min <= Start <= Max
+      ! Parameter "Organism|x|y" has invalid bounds: Min=5, Start=3, Max=1. Expected: Min <= Start <= Max
 
 # PIParameter() errors when start is outside [min, max]
 
@@ -15,8 +14,7 @@
         maxValue = 1, startValue = 10)
     Condition
       Error in `PIParameter()`:
-      ! Parameter "Organism|x|y" has invalid bounds: Min=0, Start=10, Max=1.
-          Expected: Min <= Start <= Max
+      ! Parameter "Organism|x|y" has invalid bounds: Min=0, Start=10, Max=1. Expected: Min <= Start <= Max
 
 # PIParameter() errors on empty scenarios
 
