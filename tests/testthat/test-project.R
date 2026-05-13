@@ -153,8 +153,7 @@ test_that(".clean_path expands env vars (other than PATH) and resolves to absolu
   withr::local_envvar(MY_TEST_ROOT = tempdir())
   resolved <- project$.__enclos_env__$private$.clean_path(
     "$MY_TEST_ROOT/sub",
-    parent = NULL,
-    must_work = FALSE
+    parent = NULL
   )
   expect_equal(
     resolved,
