@@ -44,6 +44,7 @@
 - `loadObservedDataFromExcel()` and `loadObservedDataFromPKML()` are removed (soft-deprecated since 5.7.0). Use `loadObservedData(project)` on a JSON-first `Project` instead. (#908)
 - `readPopulationCharacteristicsFromXLS()`, `readIndividualCharacteristicsFromXLS()`, `writeIndividualToXLS()`, `writeParameterStructureToXLS()`, and `exportParametersToXLS()` are removed. The supported user-facing Excel surface is now restricted to Excel <-> JSON interop: `importProjectFromExcel()` and `exportProjectToExcel()`. (#908)
 - `ExportConfiguration` (R6 class) and `createEsqlabsExportConfiguration()` are removed. The Excel-driven plot export pipeline they belonged to is no longer supported; use the plot objects returned by `createPlots()` and save them directly via `ggplot2::ggsave()`. (#908)
+- `Project` no longer exposes mutation methods (`project$addScenario()`, `project$removeScenario()`, `project$addIndividual()`, etc.). The free-function form is canonical: call `addScenario(project, ...)`, `removeScenario(project, ...)`, and the matching mutators directly. The R6 wrappers were pure delegation and have been removed to keep one mutation surface to maintain. (#908)
 
 ## New features
 
