@@ -6,19 +6,15 @@
 
 ## Internal (work in progress)
 
-- The data and plotting layers start driving off the parsed `Project`:
-  - `loadObservedData(project)` is the new public loader, dispatching across
+- The data and plotting layers drive off the parsed `Project`:
+  - `loadObservedData(project)` is the public loader, dispatching across
     `excel` / `pkml` / `script` source declarations in `project$observedData`.
-    The legacy `loadObservedData(projectConfiguration, ...)` is renamed to
-    `loadObservedDataFromExcel()`; together with `loadObservedDataFromPKML()`,
-    both are soft-deprecated.
   - `createDataCombined(project, ...)` and `createPlots(project, ...)` accept
-    a `Project` directly. The Excel-driven `createDataCombinedFromExcel()`
-    and `createPlotsFromExcel()` are soft-deprecated.
+    a `Project` directly.
   - `project$plots` parses into the in-memory shape future chapters rely on:
     `dataCombined` as a named list keyed by name, `plotConfiguration` and
     `plotGrids` as data.frames.
-  - `project$dataFolder` is now a resolved path field on `Project`.
+  - `project$dataFolder` is a resolved path field on `Project`.
 
 - Parameter identification joins the JSON-first project model. PI tasks live
   as a parsed `parameterIdentification` section on `Project`, and the runtime
@@ -41,6 +37,8 @@
 - `ScenarioConfiguration`, `addScenarioConfigurationsToExcel()`, `createScenarioConfigurationsFromPKML()`, `readScenarioConfigurationFromExcel()`, and `setApplications()` are removed. The Excel to JSON migration path is now `importProjectFromExcel()`; the reverse is `exportProjectToExcel()`. The scenario-construction-from-PKML surface is now `createScenariosFromPKML()`. (#908)
 - `validateAllConfigurations()` is removed. Use `validateProject()` instead. (#908)
 - `LegacyScenario` and `createScenarios()` (which built `LegacyScenario` objects from `ScenarioConfiguration`) are removed. `runScenarios()` now accepts only a `Project`. (#908)
+- `loadObservedDataFromExcel()` and `loadObservedDataFromPKML()` are removed (soft-deprecated since 5.7.0). Use `loadObservedData(project)` on a JSON-first `Project` instead. (#908)
+- `readPopulationCharacteristicsFromXLS()`, `readIndividualCharacteristicsFromXLS()`, `writeIndividualToXLS()`, `writeParameterStructureToXLS()`, and `exportParametersToXLS()` are removed. The supported user-facing Excel surface is now restricted to Excel <-> JSON interop: `importProjectFromExcel()` and `exportProjectToExcel()`. (#908)
 
 ## New features
 
@@ -55,6 +53,7 @@
 
 ## Soft deprecations
 
+- `createDataCombinedFromExcel()` and `createPlotsFromExcel()` now simply forward to `createDataCombined()` / `createPlots()` after emitting a `lifecycle::deprecate_soft()` warning. Pass a `Project` from `loadProject()`. (#908)
 - `createDefaultProjectConfiguration()` and `createProjectConfiguration()` now warn and forward to `loadProject()`. The default `path` changes from `"ProjectConfiguration.xlsx"` to `"Project.json"`. (#908)
 - `exampleProjectConfigurationPath()` warns and forwards to `exampleProjectPath()`. (#908)
 - `ProjectConfiguration()` warns and forwards to `Project$new()`. (#908)

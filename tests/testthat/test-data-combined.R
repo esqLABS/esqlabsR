@@ -160,23 +160,6 @@ test_that("It warns when dataSet is not found in observedData", {
   )
 })
 
-test_that("createDataCombinedFromExcel errors when specified DataCombined names are not in the Excel file", {
-  skip("createDataCombinedFromExcel re-tested via Excel-bridge tests in Act 2.")
-  withr::local_options(lifecycle_verbosity = "quiet")
-  expect_error(
-    createDataCombinedFromExcel(
-      projectConfiguration = projectConfiguration,
-      dataCombinedNames = c("AciclovirPVB", "NonExistentDC1", "NonExistentDC2"),
-      simulatedScenarios = simulatedScenarios,
-      observedData = observedData
-    ),
-    regexp = messages$stopDataCombinedNamesNotFound(c(
-      "NonExistentDC1",
-      "NonExistentDC2"
-    )),
-    fixed = TRUE
-  )
-})
 
 # createDataCombined(project, ...) tests ----
 

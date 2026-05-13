@@ -306,32 +306,3 @@ test_that("It sets the LLOQ if it is given for any of the original data sets", {
   meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2))
   expect_equal(meanDataSet$LLOQ, 1.5, tolerance = 1e-06)
 })
-
-test_that("loadObservedDataFromExcel loads data correctly from test project", {
-  skip(
-    "loadObservedDataFromExcel() requires a ProjectConfiguration; use loadObservedData(project) instead."
-  )
-  withr::local_options(lifecycle_verbosity = "quiet")
-  temp_project <- with_temp_project()
-  projectConfiguration <- temp_project$project
-
-  # Load all sheets
-  dataSets <- loadObservedDataFromExcel(projectConfiguration)
-  expect_type(dataSets, "list")
-  expect_true(length(dataSets) > 0)
-  expect_true(all(sapply(dataSets, function(ds) inherits(ds, "DataSet"))))
-
-  # Load specific sheet
-  sheetName <- "Laskin 1982.Group A"
-  singleDataSet <- loadObservedDataFromExcel(
-    projectConfiguration,
-    sheets = sheetName
-  )
-  expect_type(singleDataSet, "list")
-  expect_equal(length(singleDataSet), 1)
-  expect_true(inherits(singleDataSet[[1]], "DataSet"))
-
-  # Check that data matches between both loads for the specific sheet
-  expect_equal(singleDataSet[[1]]$xValues, dataSets[[2]]$xValues)
-  expect_equal(singleDataSet[[1]]$yValues, dataSets[[2]]$yValues)
-})

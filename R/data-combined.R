@@ -139,90 +139,19 @@ createDataCombined <- function(
   unique(cfgDf$DataCombinedName[cfgDf$plotID %in% ids])
 }
 
-#' Generate DataCombined objects from Excel (deprecated)
-#'
-#' @description
-#' `r lifecycle::badge("deprecated")` Use [createDataCombined()] with a
-#' [Project][loadProject()].
-#'
-#' @param projectConfiguration A `ProjectConfiguration` object pointing at
-#'   a `Plots.xlsx`.
-#' @param dataCombinedNames Names of DataCombined entries to build.
-#' @param plotGridNames Names of plot grids whose DataCombined dependencies
-#'   should be built.
-#' @param simulatedScenarios Named list of simulated scenarios.
-#' @param observedData Named list of observed `DataSet` objects.
-#' @param stopIfNotFound If `TRUE`, errors on unresolved references; if
-#'   `FALSE`, warns and skips.
-#'
-#' @returns Named list of `DataCombined` objects.
-#' @import tidyr
+#' @rdname createDataCombined
 #' @export
-createDataCombinedFromExcel <- function(
-  projectConfiguration,
-  dataCombinedNames = NULL,
-  plotGridNames = NULL,
-  simulatedScenarios = NULL,
-  observedData = NULL,
-  stopIfNotFound = TRUE
-) {
+createDataCombinedFromExcel <- function(...) {
   lifecycle::deprecate_soft(
-    when = "5.7.0",
     what = "createDataCombinedFromExcel()",
-    with = "createDataCombined(project)",
-    details = "Migrate the Plots.xlsx workflow to a JSON Project."
+    with = "createDataCombined()",
+    when = "6.0.0"
   )
-  validateIsOfType(observedData, "DataSet", nullAllowed = TRUE)
-  validateIsOfType(projectConfiguration, "ProjectConfiguration")
-  validateIsString(plotGridNames, nullAllowed = TRUE)
-
-  # Exit early if no data combined names or plot grid names are provided
-  if (is.null(dataCombinedNames) && is.null(plotGridNames)) {
-    return(list())
-  }
-
-  # If plotGridNames are provided, extract the names of required data combined
-  # and add them to the passed data combined names
-  if (!is.null(plotGridNames)) {
-    # Combine the passed data combined names with the names required for
-    # the passed plots
-    dataCombinedNames <- union(
-      dataCombinedNames,
-      .extractDataCombinedNamesForPlots(
-        projectConfiguration = projectConfiguration,
-        plotGridNames = plotGridNames
-      )
-    )
-  }
-
-  dfDataCombined <- readExcel(
-    path = projectConfiguration$plotsFile,
-    sheet = "DataCombined"
-  )
-  dfDataCombined <- dplyr::filter(
-    dfDataCombined,
-    DataCombinedName %in% dataCombinedNames
-  )
-
-  missingNames <- setdiff(
-    dataCombinedNames[!is.na(dataCombinedNames)],
-    dfDataCombined$DataCombinedName
-  )
-  if (length(missingNames) > 0) {
-    stop(messages$stopDataCombinedNamesNotFound(missingNames))
-  }
-
-  .createDataCombinedFromProcessedDF(
-    dfDataCombined = dfDataCombined,
-    simulatedScenarios = simulatedScenarios,
-    observedData = observedData,
-    stopIfNotFound = stopIfNotFound
-  )
+  createDataCombined(...)
 }
 
 # Build named list of DataCombined objects from a flat data.frame whose
-# rows describe simulated/observed entries. Shared between the JSON-driven
-# createDataCombined() and the deprecated createDataCombinedFromExcel().
+# rows describe simulated/observed entries. Used by createDataCombined().
 #
 # @keywords internal
 # @noRd
@@ -461,28 +390,4 @@ createDataCombinedFromExcel <- function(
   }
 
   return(dfDataCombined)
-}
-
-
-#' Extract names of DataCombined required for the creation of specified plots
-#'
-#' @param plotGridNames Names of the plot grid specified in the sheet
-#'   `plotGrids`.
-#' @param projectConfiguration Object of class `ProjectConfiguration` that
-#'   contains information about the output paths and the excel file where plots
-#'   are defined.
-#'
-#' @returns A list with the names of required DataCombined
-#' @noRd
-.extractDataCombinedNamesForPlots <- function(
-  projectConfiguration,
-  plotGridNames
-) {
-  dfPlotConfigurations <- .readPlotConfigurations(
-    projectConfiguration = projectConfiguration,
-    plotGridNames = plotGridNames
-  )$plotConfigurations
-  dataCombinedNames <- unique(dfPlotConfigurations$DataCombinedName)
-
-  return(dataCombinedNames)
 }

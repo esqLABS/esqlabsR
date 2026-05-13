@@ -2,6 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{createPlots}
 \alias{createPlots}
+\alias{createPlotsFromExcel}
 \title{Generate plots from a Project}
 \usage{
 createPlots(
@@ -12,6 +13,8 @@ createPlots(
   stopIfNotFound = TRUE,
   validate = TRUE
 )
+
+createPlotsFromExcel(...)
 }
 \arguments{
 \item{project}{A \code{Project} (see \code{\link[=loadProject]{loadProject()}}).}

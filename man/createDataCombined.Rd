@@ -2,6 +2,7 @@
 % Please edit documentation in R/data-combined.R
 \name{createDataCombined}
 \alias{createDataCombined}
+\alias{createDataCombinedFromExcel}
 \title{Generate DataCombined objects from a Project}
 \usage{
 createDataCombined(
@@ -11,6 +12,8 @@ createDataCombined(
   simulatedScenarios = NULL,
   stopIfNotFound = TRUE
 )
+
+createDataCombinedFromExcel(...)
 }
 \arguments{
 \item{project}{A \code{Project} (see \code{\link[=loadProject]{loadProject()}}).}

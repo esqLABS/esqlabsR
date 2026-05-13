@@ -24,5 +24,5 @@ file.
 }
 \details{
 The method reads the information from the specified excel sheet(s)
-and calls \code{extendPopulationByUserDefinedParams}
+and calls \code{extendPopulationByUserDefinedParams}.
 }
