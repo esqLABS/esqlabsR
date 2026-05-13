@@ -817,13 +817,17 @@ validateProject <- function(project) {
 #' @return Logical indicating if there are critical errors
 #' @export
 isAnyCriticalErrors <- function(validationResults) {
-  any(sapply(validationResults, function(r) {
-    if (inherits(r, "validationResult")) {
-      r$has_critical_errors()
-    } else {
-      FALSE
-    }
-  }))
+  any(vapply(
+    validationResults,
+    function(r) {
+      if (inherits(r, "validationResult")) {
+        r$has_critical_errors()
+      } else {
+        FALSE
+      }
+    },
+    logical(1)
+  ))
 }
 
 #' Get summary of all validation results

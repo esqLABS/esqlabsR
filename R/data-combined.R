@@ -30,7 +30,7 @@ createDataCombined <- function(
   simulatedScenarios = NULL,
   stopIfNotFound = TRUE
 ) {
-  ospsuite.utils::validateIsOfType(project, "Project")
+  validateIsOfType(project, "Project")
   validateIsString(plotGridNames, nullAllowed = TRUE)
 
   if (is.null(dataCombinedNames) && is.null(plotGridNames)) {

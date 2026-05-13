@@ -483,9 +483,10 @@ createScenariosFromPKML <- function(
     } else {
       # Extract output paths from PKML
       if (!is.null(simulation$outputSelections$allOutputs)) {
-        outputPathsFromPKML <- sapply(
+        outputPathsFromPKML <- vapply(
           simulation$outputSelections$allOutputs,
-          function(x) x$path
+          function(x) x$path,
+          character(1)
         )
         sc$outputPaths <- outputPathsFromPKML
       }
@@ -686,7 +687,11 @@ createScenariosFromPKML <- function(
 .getScenarioCount <- function(pkmlFilePaths, ...) {
   args <- list(...)
   all_args <- c(list(pkmlFilePaths = pkmlFilePaths), args)
-  lengths <- sapply(all_args, function(x) if (is.null(x)) 0 else length(x))
+  lengths <- vapply(
+    all_args,
+    function(x) if (is.null(x)) 0L else length(x),
+    integer(1)
+  )
 
   # Filter out NULL arguments (length 0)
   valid_lengths <- lengths[lengths > 0]

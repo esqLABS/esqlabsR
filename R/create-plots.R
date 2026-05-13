@@ -42,7 +42,7 @@ createPlots <- function(
   stopIfNotFound = TRUE,
   validate = TRUE
 ) {
-  ospsuite.utils::validateIsOfType(project, "Project")
+  validateIsOfType(project, "Project")
   if (isTRUE(validate)) {
     .ensureValid(
       project,

@@ -123,13 +123,15 @@ compareWithNA <- function(v1, v2) {
   if (any(unlist(simulationTimeIntervals) < 0)) {
     stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
   }
-  if (any(sapply(simulationTimeIntervals, length) != 3)) {
+  if (any(vapply(simulationTimeIntervals, length, integer(1)) != 3)) {
     stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
   }
-  if (any(sapply(simulationTimeIntervals, function(x) x[3] <= 0))) {
+  if (any(vapply(simulationTimeIntervals, function(x) x[3] <= 0, logical(1)))) {
     stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
   }
-  if (any(sapply(simulationTimeIntervals, function(x) x[1] >= x[2]))) {
+  if (
+    any(vapply(simulationTimeIntervals, function(x) x[1] >= x[2], logical(1)))
+  ) {
     stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
   }
   return(simulationTimeIntervals)

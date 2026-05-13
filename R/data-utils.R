@@ -210,7 +210,7 @@ calculateMeanDataSet <- function(
   # meanDataSet$LLOQ = arithmetic mean lloq of all data sets with lloq
   lloqMean <- suppressWarnings(mean(
     unlist(
-      sapply(c(dataSets), function(x) {
+      lapply(c(dataSets), function(x) {
         x$LLOQ
       }),
       use.names = FALSE
@@ -287,12 +287,11 @@ calculateMeanDataSet <- function(
   for (name in metaDataNames) {
     value <- Reduce(
       intersect,
-      sapply(
+      lapply(
         c(dataSets),
         function(x) {
           x$metaData[[name]]
-        },
-        simplify = FALSE
+        }
       )
     )
     if (length(value) != 0) {

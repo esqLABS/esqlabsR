@@ -948,7 +948,7 @@ Project <- R6::R6Class(
       } else {
         abs_path <- fs::path_abs(file.path(parent, path))
       }
-      if (!fs::file_exists(abs_path) && must_work == TRUE) {
+      if (!fs::file_exists(abs_path) && isTRUE(must_work)) {
         if (!(abs_path %in% private$.warned_paths)) {
           warning(messages$fileNotFound(abs_path))
           private$.warned_paths <- c(private$.warned_paths, abs_path)
