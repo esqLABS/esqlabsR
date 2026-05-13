@@ -15,13 +15,15 @@ vignette: >
 
 ```{r, include = FALSE, warning = FALSE, message = FALSE}
 knitr::opts_chunk$set(
+  eval = FALSE, # TODO(#908): re-enable when chapter 9 rewrites vignettes
   collapse = TRUE,
   comment = "#>",
   fig.showtext = TRUE
 )
 
-devtools::load_all()
-# library(esqlabsR)
+library(esqlabsR)
+# TODO(#908): chapter 9 will rewrite this vignette for the JSON-first PI
+# workflow. Until then, downstream chunks are inert (eval = FALSE).
 ```
 
 ```{css, echo = FALSE}
