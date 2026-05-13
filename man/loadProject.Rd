@@ -3,14 +3,11 @@
 \name{loadProject}
 \alias{loadProject}
 \alias{createProjectConfiguration}
-\alias{createDefaultProjectConfiguration}
 \title{Load a project from a JSON configuration file}
 \usage{
 loadProject(path = "Project.json")
 
 createProjectConfiguration(path = "Project.json")
-
-createDefaultProjectConfiguration(path = "Project.json")
 }
 \arguments{
 \item{path}{Path to the \code{Project.json} file. Defaults to

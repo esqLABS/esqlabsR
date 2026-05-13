@@ -103,20 +103,9 @@ saveProject <- function(project, path = NULL) {
 #' @export
 createProjectConfiguration <- function(path = "Project.json") {
   lifecycle::deprecate_warn(
-    when = "7.0.0",
+    when = "6.0.0",
     what = "createProjectConfiguration()",
     with = "loadProject()"
-  )
-  loadProject(path)
-}
-
-#' @rdname loadProject
-#' @export
-createDefaultProjectConfiguration <- function(path = "Project.json") {
-  lifecycle::deprecate_soft(
-    what = "createDefaultProjectConfiguration()",
-    with = "loadProject()",
-    when = "5.3.0"
   )
   loadProject(path)
 }
@@ -271,7 +260,7 @@ exampleProjectConfigurationPath <- function() {
   lifecycle::deprecate_soft(
     what = "exampleProjectConfigurationPath()",
     with = "exampleProjectPath()",
-    when = "7.0.0"
+    when = "6.0.0"
   )
   exampleProjectPath()
 }

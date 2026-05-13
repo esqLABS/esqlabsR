@@ -611,7 +611,7 @@ runPI <- function(
   # ParameterIdentification objects, not a Project).
   if (!inherits(project, "Project")) {
     lifecycle::deprecate_warn(
-      when = "6.1.0",
+      when = "6.0.0",
       what = "runPI(piTasks)",
       with = "runPI(project)",
       details = paste(
@@ -689,7 +689,7 @@ runPI <- function(
 #' @export
 createPITasks <- function(...) {
   lifecycle::deprecate_warn(
-    when = "6.1.0",
+    when = "6.0.0",
     what = "createPITasks()",
     with = "runPI(project)",
     details = paste(

@@ -1009,6 +1009,6 @@ ProjectConfiguration <- function(
   projectConfigurationFilePath = character(),
   ...
 ) {
-  lifecycle::deprecate_warn("7.0.0", "ProjectConfiguration()", "Project$new()")
+  lifecycle::deprecate_warn("6.0.0", "ProjectConfiguration()", "Project$new()")
   Project$new(projectFilePath = projectConfigurationFilePath)
 }
