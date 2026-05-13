@@ -56,8 +56,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$modelFolder$value,
-        self$projectDirPath,
-        must_work = FALSE
+        self$projectDirPath
       )
     },
 
@@ -71,8 +70,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$configurationsFolder$value,
-        self$projectDirPath,
-        must_work = FALSE
+        self$projectDirPath
       )
     },
 
@@ -86,8 +84,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$modelParamsFile$value,
-        self$configurationsFolder,
-        must_work = FALSE
+        self$configurationsFolder
       )
     },
 
@@ -101,8 +98,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$individualsFile$value,
-        self$configurationsFolder,
-        must_work = FALSE
+        self$configurationsFolder
       )
     },
 
@@ -116,8 +112,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$populationsFile$value,
-        self$configurationsFolder,
-        must_work = FALSE
+        self$configurationsFolder
       )
     },
 
@@ -131,8 +126,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$scenariosFile$value,
-        self$configurationsFolder,
-        must_work = FALSE
+        self$configurationsFolder
       )
     },
 
@@ -147,8 +141,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$applicationsFile$value,
-        self$configurationsFolder,
-        must_work = FALSE
+        self$configurationsFolder
       )
     },
 
@@ -162,8 +155,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$plotsFile$value,
-        self$configurationsFolder,
-        must_work = FALSE
+        self$configurationsFolder
       )
     },
 
@@ -178,8 +170,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$populationsFolder$value,
-        self$projectDirPath,
-        must_work = FALSE
+        self$projectDirPath
       )
     },
 
@@ -193,8 +184,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$dataFolder$value,
-        self$projectDirPath,
-        must_work = FALSE
+        self$projectDirPath
       )
     },
 
@@ -208,8 +198,7 @@ Project <- R6::R6Class(
       }
       private$.clean_path(
         private$.filePathsData$outputFolder$value,
-        self$projectDirPath,
-        must_work = FALSE
+        self$projectDirPath
       )
     },
 
@@ -892,7 +881,6 @@ Project <- R6::R6Class(
     .filePathsData = list(),
     .programmaticDataSets = list(),
     .observedDataNamesCache = NULL,
-    .warned_paths = character(),
 
     .invalidate = function() {
       private$.modified <- TRUE
@@ -926,7 +914,6 @@ Project <- R6::R6Class(
     .clean_path = function(
       path,
       parent = NULL,
-      must_work = TRUE,
       replace_env_vars = TRUE
     ) {
       if (
@@ -944,17 +931,10 @@ Project <- R6::R6Class(
           (length(parent) == 1L && is.na(parent)) ||
           fs::is_absolute_path(path)
       ) {
-        abs_path <- fs::path_abs(path)
+        fs::path_abs(path)
       } else {
-        abs_path <- fs::path_abs(file.path(parent, path))
+        fs::path_abs(file.path(parent, path))
       }
-      if (!fs::file_exists(abs_path) && isTRUE(must_work)) {
-        if (!(abs_path %in% private$.warned_paths)) {
-          warning(messages$fileNotFound(abs_path))
-          private$.warned_paths <- c(private$.warned_paths, abs_path)
-        }
-      }
-      abs_path
     },
 
     .read_json = function(jsonPath) {
