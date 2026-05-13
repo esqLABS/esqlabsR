@@ -1,3 +1,45 @@
+# Parse ----
+#
+# Parse the `populations` JSON array into a named list keyed by
+# `populationId`. Numeric fields are coerced via `as.double`. Each entry
+# is stamped with `class = c("Population", "list")` to enable S3 dispatch.
+#
+# @keywords internal
+# @noRd
+.parsePopulations <- function(populationsData) {
+  if (is.null(populationsData) || length(populationsData) == 0L) {
+    return(list())
+  }
+  numericFields <- c(
+    "numberOfIndividuals",
+    "proportionOfFemales",
+    "weightMin",
+    "weightMax",
+    "heightMin",
+    "heightMax",
+    "ageMin",
+    "ageMax",
+    "BMIMin",
+    "BMIMax"
+  )
+  result <- list()
+  for (entry in populationsData) {
+    popData <- list()
+    for (field in names(entry)) {
+      if (field == "populationId") next
+      val <- entry[[field]]
+      if (is.null(val)) next
+      if (field %in% numericFields) {
+        val <- as.double(val)
+      }
+      popData[[field]] <- val
+    }
+    class(popData) <- c("Population", "list")
+    result[[entry$populationId]] <- popData
+  }
+  result
+}
+
 # Section validation adapter ----
 #
 # Registered in `.validationAdapters` (R/validation.R) and called by

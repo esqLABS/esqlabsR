@@ -1,3 +1,37 @@
+# Parse ----
+#
+# Parse the `individuals` JSON array into a named list keyed by
+# `individualId`. Per-entry numeric fields are coerced via `as.double`.
+# Each entry is stamped with `class = c("Individual", "list")` to enable
+# S3 dispatch on individual objects.
+#
+# @keywords internal
+# @noRd
+.parseIndividuals <- function(individualsData) {
+  if (is.null(individualsData) || length(individualsData) == 0L) {
+    return(list())
+  }
+  result <- list()
+  for (entry in individualsData) {
+    indiv <- list()
+    if (!is.null(entry$species)) indiv$species <- entry$species
+    for (field in c("population", "gender", "proteinOntogenies")) {
+      if (!is.null(entry[[field]])) indiv[[field]] <- entry[[field]]
+    }
+    for (field in c("weight", "height", "age")) {
+      if (!is.null(entry[[field]])) {
+        indiv[[field]] <- as.double(entry[[field]])
+      }
+    }
+    if (!is.null(entry$parameterSets)) {
+      indiv$parameterSets <- as.character(unlist(entry$parameterSets))
+    }
+    class(indiv) <- c("Individual", "list")
+    result[[entry$individualId]] <- indiv
+  }
+  result
+}
+
 # Section validation adapters ----
 #
 # Registered in `.validationAdapters` (R/validation.R) and called by
@@ -66,49 +100,6 @@
   }
 
   result
-}
-
-#' Apply an individual to the simulation. For human species, only parameters
-#' that do not override formulas are applied. For other species, all parameters
-#' returned by `createIndividual` are applied.
-#'
-#' @param individualCharacteristics `IndividualCharacteristics` describing an
-#'   individual. Optional
-#' @param simulation `Simulation` loaded from the PKML file
-#' @import ospsuite
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' simulation <- loadSimulation(filePath = modelPath)
-#' humanIndividualCharacteristics <- createIndividualCharacteristics(
-#'   species = Species$Human, population = HumanPopulation$European_ICRP_2002,
-#'   gender = Gender$Male, weight = 70
-#' )
-#' applyIndividualParameters(humanIndividualCharacteristics, simulation)
-#' }
-applyIndividualParameters <- function(individualCharacteristics, simulation) {
-  individual <- ospsuite::createIndividual(individualCharacteristics)
-
-  # For human species, only set distributed parameters
-  allParamPaths <- individual$distributedParameters$paths
-  allParamValues <- individual$distributedParameters$values
-  allParamUnits <- individual$distributedParameters$units
-
-  # For other species, also add derived parameters
-  if (individualCharacteristics$species != ospsuite::Species$Human) {
-    allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
-    allParamValues <- c(allParamValues, individual$derivedParameters$values)
-    allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
-  }
-
-  ospsuite::setParameterValuesByPath(
-    parameterPaths = allParamPaths,
-    values = allParamValues,
-    simulation = simulation,
-    units = allParamUnits,
-    stopIfNotFound = FALSE
-  )
 }
 
 # Public CRUD: individuals ----

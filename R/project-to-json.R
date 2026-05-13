@@ -293,52 +293,9 @@
   project$observedData
 }
 
-# JSON object with `dataCombined` / `plotConfiguration` / `plotGrids` arrays;
-# `null` when the project carries no plots section.
-.plotsToJson <- function(project) {
-  plots <- project$plots
-  if (is.null(plots)) {
-    return(NULL)
-  }
-  list(
-    dataCombined = .dataCombinedToNestedJson(plots$dataCombined),
-    plotConfiguration = .dataFrameToListOfLists(plots$plotConfiguration),
-    plotGrids = .dataFrameToListOfLists(plots$plotGrids)
-  )
-}
-
-# Inverts .parseNestedDataCombined: re-adds the `name` field from the list
-# key. Empty `simulated`/`observed` lists are omitted to keep the JSON terse.
-#
-# @keywords internal
-# @noRd
-.dataCombinedToNestedJson <- function(dataCombined) {
-  if (is.null(dataCombined) || length(dataCombined) == 0) {
-    return(list())
-  }
-  unname(lapply(names(dataCombined), function(name) {
-    dc <- dataCombined[[name]]
-    entry <- list(name = name)
-    if (length(dc$simulated) > 0) entry$simulated <- dc$simulated
-    if (length(dc$observed) > 0) entry$observed <- dc$observed
-    entry
-  }))
-}
-
-# Convert a data.frame back to a list of named lists. NA cells are dropped
-# per row so they round-trip to JSON `null`/absent.
-#
-# @keywords internal
-# @noRd
-.dataFrameToListOfLists <- function(df) {
-  if (is.null(df) || nrow(df) == 0) {
-    return(list())
-  }
-  lapply(seq_len(nrow(df)), function(i) {
-    row <- as.list(df[i, , drop = FALSE])
-    Filter(function(x) !(length(x) == 1 && is.na(x)), row)
-  })
-}
+# `.plotsToJson` and its data-shape helpers (`.dataCombinedToNestedJson`,
+# `.dataFrameToListOfLists`) live in R/plots.R alongside the plots section
+# parse + validate + mutation API.
 
 # Shape-coercion helper -------------------------------------------------------
 

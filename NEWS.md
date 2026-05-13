@@ -2,7 +2,7 @@
 
 ## Internal
 
-- Internal reorganisation: per-domain R files. `R/utilities-scenarios.R` splits into `R/scenarios.R` and `R/output-paths.R`; `R/utilities-individual.R` → `R/individuals.R`; `R/utilities-population.R` → `R/populations.R`; `R/utilities-parameters.R` → `R/parameters.R`; `R/utilities-figures.R` → `R/plots.R`; `R/utilities-data-combined.R` → `R/data-combined.R`. No behaviour changes; test files renamed to mirror sources. (#908)
+- Internal reorganisation: per-domain R files. `R/utilities-scenarios.R` splits into `R/scenarios.R` and `R/output-paths.R`; `R/utilities-individual.R` → `R/individuals.R`; `R/utilities-population.R` → `R/populations.R`; `R/utilities-parameters.R` → `R/parameters.R`; `R/utilities-figures.R` → `R/plots.R`; `R/utilities-data-combined.R` → `R/data-combined.R`. Followup file renames: `utilities-data.R` → `data-utils.R`, `utilities-file.R` → `file-utils.R`, `utilities-parallel.R` → `parallel.R`, `utilities-simulation.R` → `simulation.R`, `utilities.R` → `utils.R`, `utilities-sensitivity-calculation.R` → `sensitivity-calculation-utils.R`, `sensivitity-time-profiles.R` → `sensitivity-time-profiles.R` (also fixes typo); foldings: `project-parse.R` distributes parse helpers into the relevant section files; `validation-result.R` and `validation-utils.R` fold into `validation.R`; `enum.R`, `error-checks.R`, and `utilities-quantity.R` fold into `utils.R` / `parameters.R` / `plots.R`. `R/plots.R` splits into `R/plots.R` (section parse/validate/serialize/mutation), `R/create-plots.R` (public `createPlots` plus Excel parsing/validation helpers), and `R/plots-utils.R` (palette, plot/grid configuration constructors, override and overlay helpers). `saveScenarioResults()` and `loadScenarioResults()` move from `R/scenarios.R` to `R/scenario-results.R`. `applyIndividualParameters()` moves from `R/individuals.R` to `R/simulation.R`. No behaviour changes. (#908)
 
 ## Internal (work in progress)
 
@@ -39,6 +39,7 @@
 - `LegacyScenario` and `createScenarios()` (which built `LegacyScenario` objects from `ScenarioConfiguration`) are removed. `runScenarios()` now accepts only a `Project`. (#908)
 - `loadObservedDataFromExcel()` and `loadObservedDataFromPKML()` are removed (soft-deprecated since 5.7.0). Use `loadObservedData(project)` on a JSON-first `Project` instead. (#908)
 - `readPopulationCharacteristicsFromXLS()`, `readIndividualCharacteristicsFromXLS()`, `writeIndividualToXLS()`, `writeParameterStructureToXLS()`, and `exportParametersToXLS()` are removed. The supported user-facing Excel surface is now restricted to Excel <-> JSON interop: `importProjectFromExcel()` and `exportProjectToExcel()`. (#908)
+- `ExportConfiguration` (R6 class) and `createEsqlabsExportConfiguration()` are removed. The Excel-driven plot export pipeline they belonged to is no longer supported; use the plot objects returned by `createPlots()` and save them directly via `ggplot2::ggsave()`. (#908)
 
 ## New features
 

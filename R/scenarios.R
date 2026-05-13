@@ -1,3 +1,97 @@
+# Parse ----
+#
+# Internal: parse the JSON `scenarios` array into a named list of
+# `Scenario` objects, keyed by scenario name.
+#
+# `scenariosData` is the raw `simplifyVector = FALSE` shape produced by
+# `jsonlite::fromJSON()`: a list of plain named lists. `outputPaths` is
+# the project-level lookup table (named list or named character vector
+# of `id -> literal path`); used to resolve `outputPathIds`.
+#
+# This helper handles only what's needed at parse time: field copies,
+# `simulationType` derivation from `populationId` presence,
+# `simulationTime` string parsing, `steadyStateTime` unit conversion,
+# `outputPathIds` -> literal `outputPaths` resolution.
+#
+# @keywords internal
+# @noRd
+.parseScenarios <- function(scenariosData, outputPaths) {
+  if (is.null(scenariosData)) {
+    return(list())
+  }
+
+  result <- list()
+  for (entry in scenariosData) {
+    sc <- Scenario$new()
+    sc$scenarioName <- entry$name
+    sc$modelFile <- entry$modelFile
+    sc$applicationProtocol <- entry$applicationProtocol %||% NA
+    sc$individualId <- entry$individualId
+
+    if (!is.null(entry$populationId)) {
+      sc$populationId <- entry$populationId
+      sc$simulationType <- "Population"
+    }
+    if (!is.null(entry$readPopulationFromCSV)) {
+      sc$readPopulationFromCSV <- entry$readPopulationFromCSV
+    }
+    if (!is.null(entry$modelParameterSets)) {
+      sc$modelParameterSets <- unlist(entry$modelParameterSets)
+    }
+    if (!is.null(entry$simulationTime)) {
+      sc$simulationTime <- .parseSimulationTimeIntervals(
+        entry$simulationTime
+      )
+      sc$simulationTimeUnit <- entry$simulationTimeUnit
+    }
+    if (isTRUE(entry$steadyState)) {
+      sc$simulateSteadyState <- TRUE
+    }
+    if (!is.null(entry$steadyStateTime)) {
+      if (is.null(entry$steadyStateTimeUnit)) {
+        stop(
+          "Scenario '",
+          entry$name,
+          "' has 'steadyStateTime' set but ",
+          "'steadyStateTimeUnit' is null. Please specify a unit ",
+          "(e.g. \"min\").",
+          call. = FALSE
+        )
+      }
+      sc$steadyStateTime <- ospsuite::toBaseUnit(
+        quantityOrDimension = ospDimensions$Time,
+        values = entry$steadyStateTime,
+        unit = entry$steadyStateTimeUnit
+      )
+      sc$steadyStateTimeUnit <- entry$steadyStateTimeUnit
+    }
+    if (!is.null(entry$overwriteFormulasInSS)) {
+      sc$overwriteFormulasInSS <- entry$overwriteFormulasInSS
+    }
+
+    if (!is.null(entry$outputPathIds)) {
+      pathIds <- unlist(entry$outputPathIds)
+      unknown <- setdiff(pathIds, names(outputPaths))
+      if (length(unknown) > 0) {
+        stop(
+          "Scenario '",
+          entry$name,
+          "' references unknown outputPathIds: ",
+          paste(unknown, collapse = ", "),
+          call. = FALSE
+        )
+      }
+      sc$outputPaths <- setNames(
+        unlist(outputPaths[pathIds], use.names = FALSE),
+        pathIds
+      )
+    }
+
+    result[[entry$name]] <- sc
+  }
+  result
+}
+
 # Section validation adapters ----
 #
 # Registered in `.validationAdapters` (R/validation.R) and called by
@@ -151,174 +245,6 @@ runScenarios <- function(
     simulationRunOptions,
     validate
   )
-}
-
-#' Save results of scenario simulations to csv.
-#'
-#' @param simulatedScenariosResults Named list with `simulation`, `results`, `outputValues`,
-#' and `population` as produced by `runScenarios()`.
-#' @param projectConfiguration An instance of `ProjectConfiguration`
-#' @param outputFolder Optional - path to the folder where the results will be
-#' stored. If `NULL` (default), a sub-folder in
-#' `ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>`.
-#' @param saveSimulationsToPKML If `TRUE` (default), simulations corresponding to
-#' the results are saved to PKML along with the results.
-#'
-#' @details For each scenario, a separate csv file will be created. If the scenario
-#' is a population simulation, a population is stored along with the results with
-#' the file name suffix `_population`. Results can be read with the `loadScenarioResults()` function.
-#'
-#' @export
-#'
-#' @returns `outputFolder` or the created output folder path, if no `outputFolder` was provided.
-#'
-#' @examples \dontrun{
-#' projectConfiguration <- esqlabsR::createProjectConfiguration()
-#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
-#'   projectConfiguration = projectConfiguration
-#' )
-#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-#' simulatedScenariosResults <- runScenarios(
-#'   scenarios = scenarios
-#' )
-#' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
-#' }
-saveScenarioResults <- function(
-  simulatedScenariosResults,
-  projectConfiguration,
-  outputFolder = NULL,
-  saveSimulationsToPKML = TRUE
-) {
-  validateIsLogical(saveSimulationsToPKML)
-
-  outputFolder <- outputFolder %||%
-    file.path(
-      projectConfiguration$outputFolder,
-      "SimulationResults",
-      format(Sys.time(), "%F %H-%M")
-    )
-
-  for (i in seq_along(simulatedScenariosResults)) {
-    results <- simulatedScenariosResults[[i]]$results
-    scenarioName <- names(simulatedScenariosResults)[[i]]
-
-    # Replace "\" and "/" by "_" so the file name does not result in folders
-    scenarioName <- gsub("[\\\\/]", "_", scenarioName)
-
-    outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
-    tryCatch(
-      {
-        # Create a new folder if it does not exist
-        if (!dir.exists(paths = outputFolder)) {
-          dir.create(path = outputFolder, recursive = TRUE)
-        }
-        # Save simulations
-        if (saveSimulationsToPKML) {
-          outputPathSim <- file.path(
-            outputFolder,
-            paste0(scenarioName, ".pkml")
-          )
-          ospsuite::saveSimulation(
-            simulation = simulatedScenariosResults[[i]]$simulation,
-            filePath = outputPathSim
-          )
-        }
-        # Save population
-        if (isOfType(simulatedScenariosResults[[i]]$population, "Population")) {
-          ospsuite::exportPopulationToCSV(
-            simulatedScenariosResults[[i]]$population,
-            filePath = file.path(
-              outputFolder,
-              paste0(scenarioName, "_population.csv")
-            )
-          )
-        }
-        # Save results
-        ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
-      },
-      error = function(cond) {
-        warning(paste0("Cannot save to path '", outputFolder, "'"))
-        message("Original error message:")
-        message(cond)
-      },
-      warning = function(cond) {
-        warning(cond)
-      }
-    )
-  }
-  return(outputFolder)
-}
-
-#' Load simulated scenarios from csv and pkml.
-#'
-#' @param scenarioNames Names of simulated scenarios
-#' @param resultsFolder Path to the folder where simulation results as csv and
-#' the corresponding simulations as pkml are located.
-#'
-#' @details This function requires simulation results AND the corresponding
-#' simulation files being located in the same folder (`resultsFolder`) and have
-#' the names of the scenarios.
-#'
-#' @returns A named list, where the names are scenario names, and the values are
-#' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
-#' `results` being `SimulatioResults` object produced by running the simulation,
-#' and `outputValues` the output values of the `SimulationResults`.
-#'
-#' @export
-#'
-#' @examples \dontrun{
-#' # First simulate scenarios and save the results
-#' projectConfiguration <- esqlabsR::createProjectConfiguration()
-#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
-#'   projectConfiguration = projectConfiguration
-#' )
-#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-#' simulatedScenariosResults <- runScenarios(
-#'   scenarios = scenarios
-#' )
-#' saveResults(simulatedScenariosResults, projectConfiguration)
-#'
-#' # Now load the results
-#' scnarioNames <- names(scenarios)
-#' simulatedScenariosResults <- loadScenarioResults(
-#'   scnarioNames = scnarioNames,
-#'   resultsFolder = pathToTheFolder
-#' )
-#' }
-loadScenarioResults <- function(scenarioNames, resultsFolder) {
-  simulatedScenariosResults <- list()
-  for (i in seq_along(scenarioNames)) {
-    scenarioName <- scenarioNames[[i]]
-    # Replace "\" and "/" by "_" so the file name does not result in folders.
-    # Used only for loading the results, the name of the scenario is not changed.
-    scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
-
-    simulation <- loadSimulation(paste0(
-      resultsFolder,
-      "/",
-      scenarioNameForPath,
-      ".pkml"
-    ))
-
-    results <- importResultsFromCSV(
-      simulation = simulation,
-      filePaths = paste0(resultsFolder, "/", scenarioNameForPath, ".csv")
-    )
-
-    outputValues <- getOutputValues(
-      results,
-      quantitiesOrPaths = results$allQuantityPaths,
-      addMetaData = FALSE
-    )
-    simulatedScenariosResults[[scenarioNames[[i]]]] <-
-      list(
-        simulation = simulation,
-        results = results,
-        outputValues = outputValues
-      )
-  }
-
-  return(simulatedScenariosResults)
 }
 
 # Public CRUD: scenarios ----
@@ -551,63 +477,4 @@ removeScenario <- function(project, name) {
   project$scenarios[[name]] <- NULL
   project$.markModified()
   invisible(project)
-}
-
-#' Parse simulation time intervals from string format
-#'
-#' @param simulationTimeIntervalsString Character string. A string containing simulation time intervals
-#'   in the format "start1,end1,resolution1;start2,end2,resolution2;...".
-#'   Each interval consists of start time, end time, and resolution separated by commas,
-#'   and multiple intervals are separated by semicolons.
-#'
-#' @details Parses a string representation of simulation time intervals into a list
-#' of numeric vectors. Each vector contains three elements: start_time, end_time, resolution.
-#' The function validates that all values are numeric, positive, and that start times
-#' are less than end times.
-#'
-#' @returns A list of numeric vectors, each containing three elements representing
-#' start_time, end_time, resolution for each time interval. Returns `NULL` if
-#' the input string is `NULL`.
-#'
-#' @keywords internal
-.parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
-  # Check if the simulation time intervals are defined
-  if (is.null(simulationTimeIntervalsString)) {
-    return(NULL)
-  }
-
-  # Split the string by ';'
-  simulationTimeIntervals <- strsplit(
-    x = simulationTimeIntervalsString,
-    split = ";",
-    fixed = TRUE
-  )[[1]]
-  # Split each interval by ','
-  simulationTimeIntervals <- strsplit(
-    x = simulationTimeIntervals,
-    split = ",",
-    fixed = TRUE
-  )
-  # Convert to numeric
-  simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
-  # Validate that all are numeric
-  validateIsNumeric(simulationTimeIntervals)
-  # Validate that all are positive
-  if (any(unlist(simulationTimeIntervals) < 0)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
-  }
-  # Validate all intervals are of length 3
-  if (any(sapply(simulationTimeIntervals, length) != 3)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
-  }
-  # Validate all resolution entries are greater than 0
-  if (any(sapply(simulationTimeIntervals, function(x) x[3] <= 0))) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
-  }
-  # Validate all start values are smaller than end values
-  if (any(sapply(simulationTimeIntervals, function(x) x[1] >= x[2]))) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
-  }
-
-  return(simulationTimeIntervals)
 }

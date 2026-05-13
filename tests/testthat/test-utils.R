@@ -174,3 +174,77 @@ test_that("`compareWithNA()` works as expected", {
 
   expect_equal(res, c(TRUE, FALSE, TRUE, FALSE))
 })
+simulation <- loadSimulation(system.file(
+  "extdata",
+  "Aciclovir.pkml",
+  package = "ospsuite"
+))
+simTree <- getSimulationTree(simulation)
+
+test_that("It throws an error if the quantity does not come from a molecule", {
+  path <- simTree$Organism$Weight$path
+  quantity <- getQuantity(path, simulation)
+
+  expect_error(
+    getMoleculeNameFromQuantity(quantity),
+    regexp = messages$cannotGetMoleculeFromQuantity(path),
+    fixed = TRUE
+  )
+})
+
+test_that("It returns the correct name of the molecule for molecules global parameter", {
+  path <- simTree$Aciclovir$`Fraction unbound (plasma)`
+  quantity <- getQuantity(path, simulation)
+
+  expect_equal(getMoleculeNameFromQuantity(quantity), "Aciclovir")
+})
+
+test_that("It returns the correct name of the molecule for molecules local parameter", {
+  path <- simTree$Organism$VenousBlood$Plasma$Aciclovir$Concentration
+  quantity <- getQuantity(path, simulation)
+
+  expect_equal(getMoleculeNameFromQuantity(quantity), "Aciclovir")
+})
+
+test_that("It returns the correct name of the molecule in a container", {
+  path <- simTree$Organism$VenousBlood$Plasma$Aciclovir$path
+  quantity <- getQuantity(path, simulation)
+
+  expect_equal(getMoleculeNameFromQuantity(quantity), "Aciclovir")
+})
+
+test_that("It returns the correct name for an observer", {
+  path <- simTree$Organism$PeripheralVenousBlood$Aciclovir$`Plasma (Peripheral Venous Blood)`
+  quantity <- getQuantity(path, simulation)
+
+  expect_equal(getMoleculeNameFromQuantity(quantity), "Aciclovir")
+})
+
+test_that("Check key-value mappings work", {
+  myEnum <- enum(c(a = "b"))
+
+  expect_equal(
+    enumPutList("c", "d", myEnum),
+    list(a = "b", c = "d")
+  )
+
+  expect_equal(
+    enumPutList("c", list(12, 2, "a"), myEnum),
+    list(a = "b", c = list(12, 2, "a"))
+  )
+
+  expect_equal(
+    enumPutList("a", list(12, 2, "a"), myEnum, overwrite = TRUE),
+    list(a = list(12, 2, "a"))
+  )
+
+  expect_error(enumPutList("a", list(12, 2, "a"), myEnum))
+
+  expect_error(enumPutList(
+    c("c", "d", "g"),
+    list(12, 2, "a"),
+    myEnum,
+    overwrite = TRUE
+  ))
+})
+

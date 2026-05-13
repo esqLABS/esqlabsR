@@ -186,3 +186,50 @@ test_that("It extends a structure by a new structure", {
   expect_equal(extended$values, c(1, 1, 3))
   expect_equal(extended$units, c("", "", "µmol"))
 })
+
+test_that("removeModelParameterEntry auto-removes empty parameter sets", {
+  project <- testProject()
+  addModelParameterEntry(project, "TempSet", "Organism|A", "K", 1.5, "1/h")
+  expect_true("TempSet" %in% names(project$modelParameterSets))
+
+  removeModelParameterEntry(project, "TempSet", "Organism|A", "K")
+  expect_false("TempSet" %in% names(project$modelParameterSets))
+})
+
+test_that("remove*ParameterSetEntry no-op on missing entry does not mark modified", {
+  project <- testProject()
+  addModelParameterEntry(project, "MSet", "Organism|A", "K", 1.5, "1/h")
+  addApplicationParameterSetEntry(
+    project,
+    "ASet",
+    "Organism|B",
+    "K",
+    2,
+    "1/h"
+  )
+  addIndividualParameterSetEntry(
+    project,
+    "ISet",
+    "Organism|C",
+    "K",
+    3,
+    "1/h"
+  )
+  project$.markValidated()
+  expect_true(project$validatedSinceMutation)
+
+  expect_warning(
+    removeModelParameterEntry(project, "MSet", "Organism|A", "Ghost"),
+    "not found"
+  )
+  expect_warning(
+    removeApplicationParameterSetEntry(project, "ASet", "Organism|B", "Ghost"),
+    "not found"
+  )
+  expect_warning(
+    removeIndividualParameterSetEntry(project, "ISet", "Organism|C", "Ghost"),
+    "not found"
+  )
+
+  expect_true(project$validatedSinceMutation)
+})

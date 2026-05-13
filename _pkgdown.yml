@@ -139,8 +139,6 @@ reference:
       - projectConfigurationStatus
       - createDataCombinedFromExcel
       - createPlotsFromExcel
-  - title: Inherited classes
-    contents: ExportConfiguration
 articles:
   - title: esqlabsR Workflow
     navbar: esqlabsR Workflow

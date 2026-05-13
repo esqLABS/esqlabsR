@@ -1,167 +1,46 @@
-# esqlabsColors ----------------------------------------------------------
-
-test_that("esqlabsColors input validation works as expected", {
-  expect_error(
-    esqlabsColors(-1),
-    regexp = messages$nrOfColorsShouldBePositive(-1),
-    fixed = TRUE
+test_that(".parseNestedDataCombined re-keys by name and drops the name field", {
+  raw <- list(
+    list(name = "DC1", simulated = list(list(label = "a")), observed = list()),
+    list(name = "DC2", simulated = list(), observed = list(list(label = "b")))
   )
+  parsed <- esqlabsR:::.parseNestedDataCombined(raw)
+  expect_named(parsed, c("DC1", "DC2"))
+  expect_named(parsed$DC1, c("simulated", "observed"))
+  expect_equal(parsed$DC1$simulated[[1]]$label, "a")
+  expect_equal(parsed$DC2$observed[[1]]$label, "b")
 })
 
-test_that("esqlabsColors works with empty argument vector", {
-  expect_length(esqlabsColors(0), 0)
+test_that(".parseNestedDataCombined returns empty list for NULL or empty input", {
+  expect_identical(esqlabsR:::.parseNestedDataCombined(NULL), list())
+  expect_identical(esqlabsR:::.parseNestedDataCombined(list()), list())
 })
 
-test_that("esqlabsColors returns two colors", {
-  expect_length(esqlabsColors(2), 2)
-})
-
-test_that("esqlabsColors returns three colors", {
-  expect_length(esqlabsColors(3), 3)
-})
-
-test_that("esqlabsColors returns ten colors", {
-  expect_length(esqlabsColors(10), 10)
-})
-
-test_that("esqlabsColors returns ten colors", {
-  expect_length(esqlabsColors(10), 10)
-})
-
-# col2hsv -----------------------------------------------------------------
-
-test_that("col2hsv returns expected HSV values for a given R color name", {
-  expect_equal(
-    col2hsv("yellow"),
-    structure(
-      c(0.166666666666667, 1, 1),
-      .Dim = c(3L, 1L),
-      .Dimnames = list(c("h", "s", "v"), NULL)
-    )
+test_that(".listOfListsToDataFrame pads missing fields with NA", {
+  raw <- list(
+    list(plotID = "P1", plotType = "individual", title = "T1"),
+    list(plotID = "P2", plotType = "population")
   )
-
-  expect_equal(
-    col2hsv("white"),
-    structure(
-      c(0, 0, 1),
-      .Dim = c(3L, 1L),
-      .Dimnames = list(c("h", "s", "v"), NULL)
-    )
-  )
+  df <- esqlabsR:::.listOfListsToDataFrame(raw)
+  expect_s3_class(df, "data.frame")
+  expect_equal(nrow(df), 2)
+  expect_setequal(names(df), c("plotID", "plotType", "title"))
+  expect_true(is.na(df$title[df$plotID == "P2"]))
 })
 
-# createEsqlabsPlotConfiguration ------------------------------------------
-
-test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults", {
-  myPC <- createEsqlabsPlotConfiguration()
-  expect_true(isOfType(myPC, "DefaultPlotConfiguration"))
-  expect_equal(myPC$titleSize, 10)
+test_that(".listOfListsToDataFrame returns empty data.frame for NULL or empty", {
+  expect_equal(nrow(esqlabsR:::.listOfListsToDataFrame(NULL)), 0L)
+  expect_equal(nrow(esqlabsR:::.listOfListsToDataFrame(list())), 0L)
 })
 
-test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defaults", {
-  myPGC <- createEsqlabsPlotGridConfiguration()
-  expect_true(isOfType(myPGC, "PlotGridConfiguration"))
-  expect_equal(myPGC$tagLevels, "a")
-})
-
-test_that("createEsqlabsExportConfiguration() creates object with chosen defaults", {
-  myProject <- Project$new()
-  myEC <- createEsqlabsExportConfiguration(myProject$outputFolder)
-  expect_true(isOfType(myEC, "ExportConfiguration"))
-  expect_equal(myEC$units, "cm")
-})
-
-
-test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
-  defaultConfig <- ospsuite::DefaultPlotConfiguration$new()
-  esqlabsConfig <- createEsqlabsPlotConfiguration()
-
-  # Check if all fields from DefaultPlotConfiguration are present in esqLabs configuration
-  defaultFields <- names(defaultConfig)
-  esqlabsFields <- names(esqlabsConfig)
-
-  missingFields <- setdiff(defaultFields, esqlabsFields)
-  expect_true(
-    length(missingFields) == 0,
-    info = paste("Missing fields:", paste(missingFields, collapse = ", "))
-  )
-
-  # Only override fields where differences are intentional
-  # and backward compatibility with `ospsuite` plotting functions was verified
-  esqlabsConfig$linesColor <- NULL
-  esqlabsConfig$legendPosition <- NULL
-
-  # Check if the types of the remaining fields are the same between both configurations
-  for (field in defaultFields) {
-    expect_equal(
-      class(esqlabsConfig[[field]]),
-      class(defaultConfig[[field]]),
-      info = paste("Field", field, "has different types")
-    )
-  }
-})
-
-# single observed and simulated datasets
-oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
-
-test_that(".parseExcelMultiValueField numeric conversion path is covered", {
-  # Direct test to ensure numeric conversion code path is covered
-  result <- esqlabsR:::.parseExcelMultiValueField(
-    value = "72.5, 80.5",
-    fieldName = "test",
-    plotID = "P1",
-    expectedLength = 2,
-    expectedType = "numeric"
-  )
-  expect_equal(result, c(72.5, 80.5))
-  expect_true(is.numeric(result))
-
-  # Test space-separated numeric values trigger correct error
-  expect_error(
-    esqlabsR:::.parseExcelMultiValueField(
-      value = "72 80",
-      fieldName = "test",
-      plotID = "P1",
-      expectedLength = 2,
-      expectedType = "numeric"
-    ),
-    regexp = "Invalid format.*Expected.*Values separated by commas",
-    fixed = FALSE
-  )
-})
-
-test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualTimeProfile", {
-  esqlabsConfig <- createEsqlabsPlotConfiguration()
-
-  set.seed(123)
-  vdiffr::expect_doppelganger(
-    title = "time profile - esqlabsPlotConfiguration",
-    fig = plotIndividualTimeProfile(oneObsSimDC, esqlabsConfig)
-  )
-})
-
-# createPlots(project, ...) tests ----
-
-test_that("createPlots errors on non-Project input", {
-  expect_error(createPlots("not a project"), "expected <Project>")
-})
-
-test_that("createPlots returns empty list when project has no plots", {
+test_that("addPlotGrid aborts when no plots are defined", {
   project <- testProject()
-  expect_identical(createPlots(project), list())
-})
-
-test_that("createPlots builds plot grids for Example project", {
-  project <- exampleProject()
-  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
-  gridName <- project$plots$plotGrids$name[[1]]
-
-  result <- createPlots(
-    project,
-    plotGridNames = gridName,
-    simulatedScenarios = simulated
+  project$plots <- list(
+    dataCombined = list(),
+    plotConfiguration = data.frame(),
+    plotGrids = data.frame()
   )
-
-  expect_named(result, gridName)
-  expect_s3_class(result[[gridName]], "patchwork")
+  expect_snapshot(
+    error = TRUE,
+    addPlotGrid(project, "G1", plotIDs = "MissingPlot")
+  )
 })

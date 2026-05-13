@@ -1,7 +1,7 @@
 # Scenario ----
 #
 # Plain-data scenario class produced by `.parseScenarios()` in
-# `R/project-parse.R`. Holds the typed shape of a JSON scenario entry
+# `R/scenarios.R`. Holds the typed shape of a JSON scenario entry
 # without any runtime side effects: no Simulation construction, no
 # Population loading, no parameter merging. Construction is by direct
 # field assignment.
