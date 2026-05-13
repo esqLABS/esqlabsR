@@ -49,13 +49,10 @@
     }
     if (!is.null(entry$steadyStateTime)) {
       if (is.null(entry$steadyStateTimeUnit)) {
-        stop(
-          "Scenario '",
-          entry$name,
-          "' has 'steadyStateTime' set but ",
-          "'steadyStateTimeUnit' is null. Please specify a unit ",
-          "(e.g. \"min\").",
-          call. = FALSE
+        cli::cli_abort(
+          "Scenario {.val {entry$name}} has {.field steadyStateTime} set \\
+          but {.field steadyStateTimeUnit} is null. Please specify a unit \\
+          (e.g. {.val min})."
         )
       }
       sc$steadyStateTime <- ospsuite::toBaseUnit(
@@ -73,12 +70,9 @@
       pathIds <- unlist(entry$outputPathIds)
       unknown <- setdiff(pathIds, names(outputPaths))
       if (length(unknown) > 0) {
-        stop(
-          "Scenario '",
-          entry$name,
-          "' references unknown outputPathIds: ",
-          paste(unknown, collapse = ", "),
-          call. = FALSE
+        cli::cli_abort(
+          "Scenario {.val {entry$name}} references unknown outputPathIds: \\
+          {.val {unknown}}."
         )
       }
       sc$outputPaths <- setNames(

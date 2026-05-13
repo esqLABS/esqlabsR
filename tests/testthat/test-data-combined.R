@@ -52,7 +52,7 @@ test_that("It returns correct names of data combined when a path is not specifie
 
   expect_error(
     .validateDataCombinedFromExcel(df_missing_path, list(), observedData),
-    regexp = messages$stopNoPathProvided("DC_missingPath")
+    "No output path is defined"
   )
 })
 
@@ -88,7 +88,7 @@ test_that("It errors when dataSet is missing for observed dataType", {
   df_missing_dataSet$dataSet[2] <- NA
   expect_error(
     .validateDataCombinedFromExcel(df_missing_dataSet, list(), observedData),
-    regexp = messages$stopNoDataSetProvided("AciclovirPVB")
+    "No data set is defined"
   )
 })
 
@@ -104,11 +104,7 @@ test_that("It warns when scenario is not found in simulatedScenarios", {
       observedData,
       stopIfNotFound = TRUE
     ),
-    regexp = messages$warningInvalidScenarioName(c(
-      "NonExistentScenario",
-      "TestScenario"
-    )),
-    fixed = TRUE
+    "The following scenarios are not present"
   )
 
   # Then test with stopIfNotFound = FALSE
@@ -119,11 +115,7 @@ test_that("It warns when scenario is not found in simulatedScenarios", {
       observedData,
       stopIfNotFound = FALSE
     ),
-    regexp = messages$warningInvalidScenarioName(c(
-      "NonExistentScenario",
-      "TestScenario"
-    )),
-    fixed = TRUE
+    "The following scenarios are not present"
   )
 })
 
@@ -177,8 +169,7 @@ test_that("createDataCombined errors when requested name not in project", {
   # TestProject has plots = NULL, so any requested name is missing
   expect_error(
     createDataCombined(project, dataCombinedNames = "Nonexistent"),
-    regexp = messages$stopDataCombinedNamesNotFound("Nonexistent"),
-    fixed = TRUE
+    "The following DataCombined names are not defined"
   )
 })
 

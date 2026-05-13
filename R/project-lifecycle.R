@@ -203,7 +203,7 @@ initProject <- function(
       )
 
       if (out == 0L || qs[[out]] != "Yes") {
-        stop(messages$abortedByUser())
+        cli::cli_abort(messages$abortedByUser())
       }
 
       message(messages$overwriteDestination(destination))

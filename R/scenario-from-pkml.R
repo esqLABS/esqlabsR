@@ -293,7 +293,7 @@ createScenariosFromPKML <- function(
         # Recycle single list element to all scenarios
         outputPaths <- rep(outputPaths, nScenarios)
       } else if (length(outputPaths) != nScenarios) {
-        stop(messages$invalidArgumentLength(
+        cli::cli_abort(messages$invalidArgumentLength(
           length(outputPaths),
           nScenarios
         ))
@@ -313,7 +313,7 @@ createScenariosFromPKML <- function(
           nScenarios
         )
       } else {
-        stop(messages$invalidArgumentLength(
+        cli::cli_abort(messages$invalidArgumentLength(
           length(outputPaths),
           nScenarios
         ))
@@ -368,7 +368,7 @@ createScenariosFromPKML <- function(
     pkmlPath <- pkmlFilePaths[[i]]
     # Check if PKML files exist
     if (!file.exists(pkmlPath)) {
-      stop(messages$fileNotFound(pkmlPath))
+      cli::cli_abort(messages$fileNotFound(pkmlPath))
     }
 
     # Load simulation from PKML file
@@ -392,7 +392,7 @@ createScenariosFromPKML <- function(
       existingCount <- sum(originalScenarioNames == originalScenarioName)
       scenarioName <- paste0(scenarioName, "_", existingCount + 1)
 
-      warning(messages$autocorrectDuplicateScenarioNames(
+      cli::cli_warn(messages$autocorrectDuplicateScenarioNames(
         originalScenarioName,
         scenarioName
       ))
@@ -636,7 +636,7 @@ createScenariosFromPKML <- function(
   # If empty after trimming, use default
   if (nchar(sheetName) == 0) {
     if (warn && originalName != "Sheet") {
-      warning(messages$excelSheetEmptyOrInvalid())
+      cli::cli_warn(messages$excelSheetEmptyOrInvalid())
     }
     return("Sheet")
   }
@@ -659,14 +659,14 @@ createScenariosFromPKML <- function(
   # Final check: if still empty (unlikely), use default
   if (nchar(trimws(sanitizedName)) == 0) {
     if (warn) {
-      warning(messages$excelSheetSanitized(originalName))
+      cli::cli_warn(messages$excelSheetSanitized(originalName))
     }
     return("Sheet")
   }
 
   # Warn if the name was changed
   if (warn && sanitizedName != originalName) {
-    warning(messages$excelSheetSanitizedInfo(originalName, sanitizedName))
+    cli::cli_warn(messages$excelSheetSanitizedInfo(originalName, sanitizedName))
   }
 
   return(sanitizedName)
@@ -717,7 +717,7 @@ createScenariosFromPKML <- function(
       return(vector_lengths[1])
     } else {
       # Inconsistent vector lengths
-      stop(messages$inconsistentArgumentLengths(vector_lengths))
+      cli::cli_abort(messages$inconsistentArgumentLengths(vector_lengths))
     }
   }
 }
@@ -750,7 +750,7 @@ createScenariosFromPKML <- function(
     return(arg)
   } else {
     # Invalid length
-    stop(messages$invalidArgumentLengthScenarios(
+    cli::cli_abort(messages$invalidArgumentLengthScenarios(
       argName,
       arg,
       nScenarios
