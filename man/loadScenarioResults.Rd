@@ -29,21 +29,14 @@ the names of the scenarios.
 \examples{
 \dontrun{
 # First simulate scenarios and save the results
-projectConfiguration <- esqlabsR::createProjectConfiguration()
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  projectConfiguration = projectConfiguration
-)
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-simulatedScenariosResults <- runScenarios(
-  scenarios = scenarios
-)
-saveResults(simulatedScenariosResults, projectConfiguration)
+project <- loadProject("Project.json")
+simulatedScenariosResults <- runScenarios(project)
+resultsFolder <- saveScenarioResults(simulatedScenariosResults, project)
 
 # Now load the results
-scnarioNames <- names(scenarios)
 simulatedScenariosResults <- loadScenarioResults(
-  scnarioNames = scnarioNames,
-  resultsFolder = pathToTheFolder
+  scenarioNames = names(project$scenarios),
+  resultsFolder = resultsFolder
 )
 }
 }

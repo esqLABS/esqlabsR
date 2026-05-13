@@ -15,11 +15,12 @@ saveScenarioResults(
 \item{simulatedScenariosResults}{Named list with \code{simulation}, \code{results}, \code{outputValues},
 and \code{population} as produced by \code{runScenarios()}.}
 
-\item{projectConfiguration}{An instance of \code{ProjectConfiguration}}
+\item{projectConfiguration}{A \code{Project} object providing the \code{outputFolder}
+used to derive the default destination.}
 
 \item{outputFolder}{Optional - path to the folder where the results will be
 stored. If \code{NULL} (default), a sub-folder in
-\verb{ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>}.}
+\verb{project$outputFolder/SimulationResults/<DateSuffix>}.}
 
 \item{saveSimulationsToPKML}{If \code{TRUE} (default), simulations corresponding to
 the results are saved to PKML along with the results.}
@@ -37,14 +38,8 @@ the file name suffix \verb{_population}. Results can be read with the \code{load
 }
 \examples{
 \dontrun{
-projectConfiguration <- esqlabsR::createProjectConfiguration()
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  projectConfiguration = projectConfiguration
-)
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-simulatedScenariosResults <- runScenarios(
-  scenarios = scenarios
-)
-saveScenarioResults(simulatedScenariosResults, projectConfiguration)
+project <- loadProject("Project.json")
+simulatedScenariosResults <- runScenarios(project)
+saveScenarioResults(simulatedScenariosResults, project)
 }
 }
