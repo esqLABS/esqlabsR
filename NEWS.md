@@ -1,5 +1,16 @@
 # esqlabsR (development version)
 
+## Internal (work in progress)
+
+- Groundwork for the JSON-first project format: a v2.0 `Project.json` schema
+  example (`inst/extdata/projects/Example/Project.json`), an internal `Project`
+  R6 class, and an internal parser/serializer pair (`.loadProjectJson()` and
+  `.projectToJson()` / `.saveProjectJson()`) that round-trip the schema.
+  Nothing in the package reads from this layer at runtime yet —
+  `runScenarios()`, the validators, and the plotting layer still drive off
+  `ProjectConfiguration` and the Excel workflow. The class, parser, and
+  serializer are all intentionally unexported.
+
 ## Breaking changes
 
 - Individual parameter sets in `Individuals.xlsx` must now be specified
