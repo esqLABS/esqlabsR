@@ -90,17 +90,14 @@ example_project_json_path <- function() {
 #' @description
 #' Creates a ProjectConfiguration object from the test project configuration file.
 #'
-#' @returns ProjectConfiguration object for testing.
+#' @returns Project object for testing.
 #'
 #' @examples
 #' \dontrun{
 #' config <- testProjectConfiguration()
 #' }
 testProjectConfiguration <- function() {
-  createProjectConfiguration(
-    testProjectConfigurationPath(),
-    ignoreVersionCheck = TRUE
-  )
+  loadProject(testProjectJSONPath())
 }
 
 #' Get path to the test data directory or a subdirectory.

@@ -1,315 +1,292 @@
-# Project R6 class (internal, work-in-progress) ----
-#
-# Holds an esqlabsR project parsed from a v2.0 `Project.json` file.
-#
-# This class is the seed of a larger refactor that will eventually replace the
-# Excel-driven `ProjectConfiguration` workflow with a JSON-first one. As of this
-# branch nothing in the package reads from `Project` at runtime — `runScenarios`,
-# the validators, and the plotting layer all still drive off the existing
-# `ProjectConfiguration` / `ScenarioConfiguration` classes and Excel files.
-#
-# `Project` is therefore intentionally kept internal:
-#
-#   * Not added to `NAMESPACE` (no `@export`).
-#   * No mutation API. Public fields are read-only; mutations would belong to a
-#     later milestone where the class actually owns project state.
-#   * No auto-validation, no cross-reference resolution, no path resolution
-#     beyond what's required to print sensibly.
-#
-# Construction goes through `.loadProjectJson()` (`R/project-parse.R`).
+# Project R6 class ----
 
-#' @title Project (internal, schema 2.0)
+#' @title Project
 #' @docType class
-#' @description An R6 class representing an esqlabsR project parsed from a
-#'   v2.0 `Project.json` file. Internal; not exported. Exists as the in-memory
-#'   shape future code will read from once the JSON-first workflow lands.
+#' @description An R6 class representing an esqlabsR project
 #' @format NULL
-#' @keywords internal
-#' @noRd
+#' @import fs
+#' @export
 Project <- R6::R6Class(
   "Project",
   cloneable = TRUE,
   active = list(
-    #' @field schemaVersion Schema version declared in the JSON. Always "2.0"
-    #'   for projects loaded by this parser.
-    schemaVersion = function(value) {
-      if (!missing(value))
-        cli::cli_abort("{.field schemaVersion} is read-only.")
-      private$.schemaVersion
+    #' @field projectFilePath Read-only. Absolute path to the JSON
+    #'   configuration file the project was loaded from. All other relative
+    #'   paths in the project are resolved against the file's directory
+    #'   (see `projectDirPath`). `NULL` for an empty in-memory project; in
+    #'   that case all path fields must be absolute.
+    projectFilePath = function(value) {
+      if (!missing(value)) stop("projectFilePath is readonly")
+      private$.projectFilePath
     },
 
-    #' @field validatedSinceMutation Read-only logical. `TRUE` if a full
-    #'   [validateProject()] has succeeded with no critical errors since
-    #'   the project was loaded or last mutated. Cleared by any mutation.
-    #'   Used by [runScenarios()] and [createPlots()] to skip redundant
-    #'   re-validation of an unchanged project.
-    validatedSinceMutation = function(value) {
-      if (!missing(value)) {
-        cli::cli_abort("{.field validatedSinceMutation} is read-only.")
-      }
-      private$.validatedSinceMutation
-    },
-
-    #' @field modified Read-only logical. `TRUE` if any configuration
-    #'   property has been modified since the project was loaded or
-    #'   saved. Cleared internally when the project is freshly loaded.
-    modified = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field modified} is read-only.")
-      private$.modified
-    },
-
-    #' @field esqlabsRVersion Informational version string from the JSON.
-    esqlabsRVersion = function(value) {
-      if (!missing(value))
-        cli::cli_abort("{.field esqlabsRVersion} is read-only.")
-      private$.esqlabsRVersion
-    },
-
-    #' @field jsonPath Absolute path the project was loaded from, or `NULL`.
-    jsonPath = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field jsonPath} is read-only.")
-      private$.jsonPath
-    },
-
-    #' @field projectDirPath Absolute path to the directory containing the JSON
-    #'   file, or `NULL` if the project was not loaded from disk. All relative
-    #'   paths in the JSON are interpreted relative to this directory.
+    #' @field projectDirPath Read-only. Directory containing the JSON
+    #'   configuration file (i.e. `dirname(projectFilePath)`). Used as the
+    #'   base for resolving relative paths. `NULL` if the project was not
+    #'   loaded from a file.
     projectDirPath = function(value) {
-      if (!missing(value))
-        cli::cli_abort("{.field projectDirPath} is read-only.")
+      if (!missing(value)) stop("projectDirPath is readonly")
       private$.projectDirPath
     },
 
-    #' @field filePaths Named list of declared file/folder paths (the
-    #'   `filePaths` JSON section). Values are stored verbatim as strings; no
-    #'   resolution is performed at this stage.
-    filePaths = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field filePaths} is read-only.")
-      private$.filePaths
+    #' @field modified Read-only logical. `TRUE` if any configuration property
+    #'   has been modified since the project was loaded or saved. Cleared
+    #'   internally by [saveProject()].
+    modified = function(value) {
+      if (!missing(value)) stop("modified is readonly")
+      private$.modified
     },
 
-    #' @field configurationsFolder Read-only. Absolute path to the
-    #'   `configurationsFolder` slot under `filePaths`, resolved
-    #'   relative to `projectDirPath`. `NULL` when the slot is unset.
-    configurationsFolder = function(value) {
-      if (!missing(value)) {
-        cli::cli_abort("{.field configurationsFolder} is read-only.")
-      }
-      private$.clean_path(
-        private$.filePaths$configurationsFolder,
-        parent = private$.projectDirPath
-      )
+    #' @field validatedSinceMutation Read-only logical. `TRUE` if a full
+    #'   [validateProject()] has succeeded since the last project mutation
+    #'   or load. Cleared by any mutation. Used internally by automatic
+    #'   validation hooks (e.g. in [runScenarios()] and [createPlots()]) to
+    #'   skip redundant re-validation of an unchanged project.
+    validatedSinceMutation = function(value) {
+      if (!missing(value)) stop("validatedSinceMutation is readonly")
+      private$.validatedSinceMutation
     },
 
-    #' @field modelFolder Read-only. Absolute path to the `modelFolder`
-    #'   slot under `filePaths`, resolved relative to `projectDirPath`.
-    #'   `NULL` when the slot is unset.
+    #' @field modelFolder Path to the folder containing pkml simulation files.
     modelFolder = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("{.field modelFolder} is read-only.")
+        private$.filePathsData$modelFolder$value <- value
+        private$.invalidate()
       }
       private$.clean_path(
-        private$.filePaths$modelFolder,
-        parent = private$.projectDirPath
+        private$.filePathsData$modelFolder$value,
+        self$projectDirPath
       )
     },
 
-    #' @field populationsFolder Read-only. Absolute path to the
-    #'   `populationsFolder` slot under `filePaths`, resolved relative
-    #'   to `projectDirPath`. Holds population CSV files loaded by
-    #'   `runScenarios()` for scenarios with `readPopulationFromCSV =
-    #'   TRUE`. `NULL` when the slot is unset.
+    #' @field configurationsFolder Path to the folder containing configuration
+    #'   files. Used by the Excel import/export bridge.
+    configurationsFolder = function(value) {
+      if (!missing(value)) {
+        private$.filePathsData$configurationsFolder$value <- value
+        private$.invalidate()
+      }
+      private$.clean_path(
+        private$.filePathsData$configurationsFolder$value,
+        self$projectDirPath
+      )
+    },
+
+    #' @field modelParamsFile Path to the Excel file with global model
+    #'   parameterization. Used by the Excel import/export bridge.
+    modelParamsFile = function(value) {
+      if (!missing(value)) {
+        private$.filePathsData$modelParamsFile$value <- value
+        private$.invalidate()
+      }
+      private$.clean_path(
+        private$.filePathsData$modelParamsFile$value,
+        self$configurationsFolder
+      )
+    },
+
+    #' @field individualsFile Path to the Excel file with individual-specific
+    #'   model parameterization. Used by the Excel import/export bridge.
+    individualsFile = function(value) {
+      if (!missing(value)) {
+        private$.filePathsData$individualsFile$value <- value
+        private$.invalidate()
+      }
+      private$.clean_path(
+        private$.filePathsData$individualsFile$value,
+        self$configurationsFolder
+      )
+    },
+
+    #' @field populationsFile Path to the Excel file with population
+    #'   information. Used by the Excel import/export bridge.
+    populationsFile = function(value) {
+      if (!missing(value)) {
+        private$.filePathsData$populationsFile$value <- value
+        private$.invalidate()
+      }
+      private$.clean_path(
+        private$.filePathsData$populationsFile$value,
+        self$configurationsFolder
+      )
+    },
+
+    #' @field scenariosFile Path to the Excel file with scenario definitions.
+    #'   Used by the Excel import/export bridge.
+    scenariosFile = function(value) {
+      if (!missing(value)) {
+        private$.filePathsData$scenariosFile$value <- value
+        private$.invalidate()
+      }
+      private$.clean_path(
+        private$.filePathsData$scenariosFile$value,
+        self$configurationsFolder
+      )
+    },
+
+    #' @field applicationsFile Path to the Excel file with scenario-specific
+    #'   parameters such as application protocol parameters. Used by the
+    #'   Excel import/export bridge.
+    applicationsFile = function(value) {
+      if (!missing(value)) {
+        private$.filePathsData$applicationsFile$value <- value
+        private$.invalidate()
+      }
+      private$.clean_path(
+        private$.filePathsData$applicationsFile$value,
+        self$configurationsFolder
+      )
+    },
+
+    #' @field plotsFile Path to the Excel file with plot definitions. Used by
+    #'   the Excel import/export bridge.
+    plotsFile = function(value) {
+      if (!missing(value)) {
+        private$.filePathsData$plotsFile$value <- value
+        private$.invalidate()
+      }
+      private$.clean_path(
+        private$.filePathsData$plotsFile$value,
+        self$configurationsFolder
+      )
+    },
+
+    #' @field populationsFolder Name of the folder containing population
+    #'   definitions as CSV files. Resolved relative to `projectDirPath`.
+    #'   Used by `runScenarios()` to load population CSVs at simulation time.
     populationsFolder = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("{.field populationsFolder} is read-only.")
+        private$.filePathsData$populationsFolder$value <- value
+        private$.invalidate()
       }
       private$.clean_path(
-        private$.filePaths$populationsFolder,
-        parent = private$.projectDirPath
+        private$.filePathsData$populationsFolder$value,
+        self$projectDirPath
       )
     },
 
-    #' @field dataFolder Read-only. Absolute path to the `dataFolder`
-    #'   slot under `filePaths`, resolved relative to `projectDirPath`.
-    #'   Holds observed-data sources (Excel workbooks, PKML files,
-    #'   importer configurations, scripts) consumed by
-    #'   `loadObservedData()`. `NULL` when the slot is unset.
+    #' @field dataFolder Path to the folder where experimental data files are
+    #'   located.
     dataFolder = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("{.field dataFolder} is read-only.")
+        private$.filePathsData$dataFolder$value <- value
+        private$.invalidate()
       }
       private$.clean_path(
-        private$.filePaths$dataFolder,
-        parent = private$.projectDirPath
+        private$.filePathsData$dataFolder$value,
+        self$projectDirPath
       )
     },
 
-    #' @field outputPaths Named list mapping output-path IDs to literal output
-    #'   path strings.
-    outputPaths = function(value) {
+    #' @field outputFolder Path to the folder where the results should be saved
+    #'   relative to the "Code" folder
+    outputFolder = function(value) {
       if (!missing(value)) {
-        private$.outputPaths <- value
+        private$.filePathsData$outputFolder$value <- value
+        private$.invalidate()
       }
-      private$.outputPaths
+      private$.clean_path(
+        private$.filePathsData$outputFolder$value,
+        self$projectDirPath,
+        must_work = FALSE
+      )
     },
 
-    #' @field scenarios Named list of `Scenario` objects, indexed
-    #'   by scenario name. Built by `.parseScenarios()` from the
-    #'   raw JSON `scenarios` array; round-trips back through
-    #'   `.scenariosToJson()`.
-    scenarios = function(value) {
-      if (!missing(value)) {
-        private$.scenarios <- value
+    #' @field filePaths Read-only named list of declared file/folder paths
+    #'   (the `filePaths` JSON section). Values are returned verbatim as
+    #'   strings; no resolution is performed at this stage.
+    filePaths = function(value) {
+      if (!missing(value)) stop("filePaths is readonly")
+      data <- private$.filePathsData
+      if (length(data) == 0L) {
+        return(structure(list(), names = character(0L)))
       }
-      private$.scenarios
+      lapply(data, function(entry) entry$value)
     },
 
-    #' @field modelParameterSets Named list keyed by parameter-set name; each
-    #'   value is a list of parameter entries.
-    modelParameterSets = function(value) {
-      if (!missing(value)) {
-        private$.modelParameterSets <- value
-      }
-      private$.modelParameterSets
-    },
-
-    #' @field individualParameterSets Named list keyed by parameter-set name;
-    #'   each value is a list of parameter entries. Referenced by id from
-    #'   `individuals[[id]]$parameterSets`.
-    individualParameterSets = function(value) {
-      if (!missing(value)) {
-        private$.individualParameterSets <- value
-      }
-      private$.individualParameterSets
-    },
-
-    #' @field applicationParameterSets Named list keyed by parameter-set name;
-    #'   each value is a list of parameter entries. Referenced by id from
-    #'   `applications[[name]]$parameterSets`.
-    applicationParameterSets = function(value) {
-      if (!missing(value)) {
-        private$.applicationParameterSets <- value
-      }
-      private$.applicationParameterSets
-    },
-
-    #' @field individuals Named list of individual entries, keyed by
-    #'   individualId.
-    individuals = function(value) {
-      if (!missing(value)) {
-        private$.individuals <- value
-      }
-      private$.individuals
-    },
-
-    #' @field populations Named list of population entries, keyed by
-    #'   populationId.
-    populations = function(value) {
-      if (!missing(value)) {
-        private$.populations <- value
-      }
-      private$.populations
-    },
-
-    #' @field applications Named list keyed by application-protocol name.
-    applications = function(value) {
-      if (!missing(value)) {
-        private$.applications <- value
-      }
-      private$.applications
-    },
-
-    #' @field observedData List of observed-data source entries.
-    observedData = function(value) {
-      if (!missing(value)) {
-        private$.observedData <- value
-      }
-      private$.observedData
-    },
-
-    #' @field plots Named list with sub-entries `dataCombined`,
-    #'   `plotConfiguration`, and `plotGrids`. `NULL` if the JSON omits the
-    #'   `plots` section. `plotGrids` is a data frame whose `plotIDs` column
-    #'   holds, for each row, a single comma-separated string (e.g.
-    #'   `"P1, P2"`) rather than a JSON array; this matches the v2.0 schema
-    #'   and the existing Excel `Plots` sheet convention. Splitting and
-    #'   normalising is deferred to the plots chapter.
-    plots = function(value) {
-      if (!missing(value)) {
-        private$.plots <- value
-      }
-      private$.plots
-    },
-
-    #' @field parameterIdentification Named list keyed by PI task id; each
-    #'   entry is a `PITask` record. May be `NULL` or an empty list when
-    #'   the project declares no PI tasks. Read-write active binding;
-    #'   mutation discipline is enforced inside `add*` / `remove*` exports,
-    #'   not by the binding.
-    parameterIdentification = function(value) {
-      if (!missing(value)) {
-        private$.parameterIdentification <- value
-      }
-      private$.parameterIdentification
+    #' @field asList Returns the current project as a list matching the JSON
+    #'   schema. Reflects any in-memory modifications. Read-only.
+    asList = function(value) {
+      if (!missing(value)) stop("asList is readonly")
+      .projectToJson(self)
     }
   ),
   public = list(
-    #' @description Construct a `Project` directly from already-parsed pieces.
-    #'   Direct construction is intended for use by `.loadProjectJson()` only;
-    #'   callers should go through that function.
+    #' @field schemaVersion Schema version declared in the JSON. Always "2.0"
+    #'   for projects loaded by this parser.
+    schemaVersion = NULL,
+
+    #' @field esqlabsRVersion Informational version string from the JSON.
+    esqlabsRVersion = NULL,
+
+    #' @field jsonPath Absolute path the project was loaded from, or `NULL`.
+    jsonPath = NULL,
+
+    #' @field outputPaths Named character vector. Names are IDs, values are
+    #'   output path strings.
+    outputPaths = NULL,
+
+    #' @field scenarios Named list of `Scenario` objects, keyed by scenario
+    #'   name. Populated by JSON loading.
+    scenarios = NULL,
+
+    #' @field modelParameterSets Named list of parameter structures, keyed by
+    #'   set name.
+    modelParameterSets = NULL,
+
+    #' @field individualParameterSets Named list of parameter structures,
+    #'   keyed by set name.
+    individualParameterSets = NULL,
+
+    #' @field applicationParameterSets Named list of parameter structures,
+    #'   keyed by set name.
+    applicationParameterSets = NULL,
+
+    #' @field individuals Named list of plain lists, keyed by individualId.
+    individuals = NULL,
+
+    #' @field populations Named list of plain lists, keyed by populationId.
+    populations = NULL,
+
+    #' @field applications Named list of parameter structures, keyed by
+    #'   protocol name.
+    applications = NULL,
+
+    #' @field observedData List of observed data source declarations parsed from
+    #'   JSON.
+    observedData = NULL,
+
+    #' @field plots List with 3 elements: `dataCombined`, `plotConfiguration`,
+    #'   `plotGrids`.
+    plots = NULL,
+
+    #' @field parameterIdentification Named list keyed by PI task id; each
+    #'   entry is a `PITask` record. May be `NULL` or an empty list when
+    #'   the project declares no PI tasks.
+    parameterIdentification = list(),
+
+    #' @description Construct a `Project` from a JSON file path, or create an
+    #'   empty in-memory project when called with no arguments.
     #'
-    #' @param schemaVersion Schema version string (must be "2.0").
-    #' @param esqlabsRVersion Informational version string.
-    #' @param jsonPath Absolute path of the source JSON, or `NULL`.
-    #' @param projectDirPath Absolute path of the source directory, or `NULL`.
-    #' @param filePaths Named list of file paths.
-    #' @param outputPaths Named list of output-path IDs to paths.
-    #' @param scenarios Named list of `Scenario` objects (typically
-    #'   produced by `.parseScenarios()`), indexed by scenario name.
-    #' @param modelParameterSets Named list of model parameter sets.
-    #' @param individualParameterSets Named list of individual parameter sets.
-    #' @param applicationParameterSets Named list of application parameter sets.
-    #' @param individuals List of individual entries.
-    #' @param populations List of population entries.
-    #' @param applications Named list of application-protocol entries.
-    #' @param observedData List of observed-data source entries.
-    #' @param plots Named list of plot sub-sections, or `NULL`.
-    #' @param parameterIdentification Named list of `PITask` objects keyed
-    #'   by task id. Defaults to an empty list.
-    initialize = function(
-      schemaVersion,
-      esqlabsRVersion,
-      jsonPath,
-      projectDirPath,
-      filePaths,
-      outputPaths,
-      scenarios,
-      modelParameterSets,
-      individualParameterSets,
-      applicationParameterSets,
-      individuals,
-      populations,
-      applications,
-      observedData,
-      plots,
-      parameterIdentification = list()
-    ) {
-      private$.schemaVersion <- schemaVersion
-      private$.esqlabsRVersion <- esqlabsRVersion
-      private$.jsonPath <- jsonPath
-      private$.projectDirPath <- projectDirPath
-      private$.filePaths <- filePaths
-      private$.outputPaths <- outputPaths
-      private$.scenarios <- scenarios
-      private$.modelParameterSets <- modelParameterSets
-      private$.individualParameterSets <- individualParameterSets
-      private$.applicationParameterSets <- applicationParameterSets
-      private$.individuals <- individuals
-      private$.populations <- populations
-      private$.applications <- applications
-      private$.observedData <- observedData
-      private$.plots <- plots
-      private$.parameterIdentification <- parameterIdentification
+    #' @param projectFilePath A string representing the path to the project
+    #'   JSON file.
+    initialize = function(projectFilePath = character()) {
+      private$.modified <- FALSE
+      private$.validatedSinceMutation <- FALSE
+      if (!missing(projectFilePath) && length(projectFilePath) > 0L) {
+        private$.read_json(projectFilePath)
+      } else {
+        private$.projectDirPath <- NULL
+      }
+    },
+
+    #' @description Internal method to clear the `modified` flag after saving.
+    #'   Not intended for end-user use.
+    #' @keywords internal
+    .markSaved = function() {
+      private$.modified <- FALSE
+      private$.validatedSinceMutation <- FALSE
+      invisible(self)
     },
 
     #' @description Internal method to record that a full project
@@ -323,12 +300,19 @@ Project <- R6::R6Class(
 
     #' @description Internal method invoked by mutators after a successful
     #'   programmatic change. Sets the `modified` flag and clears the
-    #'   `validatedSinceMutation` flag so that any cached validation
-    #'   result is invalidated. Not intended for end-user use.
+    #'   `validatedSinceMutation` flag. Not intended for end-user use.
     #' @keywords internal
     .markModified = function() {
       private$.invalidate()
       invisible(self)
+    },
+
+    #' @description Internal method to retrieve the raw filePaths metadata
+    #'   (a named list of `list(value, description)` entries). Not intended for
+    #'   end-user use; consumed by the Excel import/export bridge.
+    #' @keywords internal
+    .getFilePathsData = function() {
+      private$.filePathsData
     },
 
     #' @description Add a scenario programmatically. Delegates to the
@@ -774,58 +758,95 @@ Project <- R6::R6Class(
       removePIOutputMapping(self, taskId = taskId, id = id)
     },
 
-    #' @description Print a one-section-per-line summary of the project.
+    #' @description Check synchronization status of a Project.
+    #' @param silent Logical. If `TRUE`, suppresses informational messages.
+    #'   Defaults to `FALSE`.
+    sync = function(silent = FALSE) {
+      .projectSync(self, silent = silent)
+    },
+
+    #' @description Print a summary of the Project.
     #' @param ... Unused; present for S3 method consistency.
     print = function(...) {
-      cat("<Project> (schema ", private$.schemaVersion, ")\n", sep = "")
-      if (!is.null(private$.jsonPath)) {
-        cat("  jsonPath:        ", private$.jsonPath, "\n", sep = "")
+      cat(
+        "<Project> (schema ",
+        self$schemaVersion %||% "unknown",
+        ")\n",
+        sep = ""
+      )
+      if (!is.null(self$jsonPath)) {
+        cat("  jsonPath:        ", self$jsonPath, "\n", sep = "")
       }
       cat(
         "  esqlabsRVersion: ",
-        private$.esqlabsRVersion %||% "NA",
+        self$esqlabsRVersion %||% "NA",
         "\n",
         sep = ""
       )
-      cat("  scenarios:       ", length(private$.scenarios), "\n", sep = "")
-      cat("  individuals:     ", length(private$.individuals), "\n", sep = "")
-      cat("  populations:     ", length(private$.populations), "\n", sep = "")
+      cat("  files:\n")
+      cat(
+        "    modelFolder:         ",
+        self$modelFolder %||% "(unset)",
+        "\n",
+        sep = ""
+      )
+      cat(
+        "    configurationsFolder:",
+        self$configurationsFolder %||% "(unset)",
+        "\n",
+        sep = ""
+      )
+      cat(
+        "    dataFolder:          ",
+        self$dataFolder %||% "(unset)",
+        "\n",
+        sep = ""
+      )
+      cat(
+        "    outputFolder:        ",
+        self$outputFolder %||% "(unset)",
+        "\n",
+        sep = ""
+      )
+      cat("  scenarios:       ", length(self$scenarios), "\n", sep = "")
+      cat("  individuals:     ", length(self$individuals), "\n", sep = "")
+      cat("  populations:     ", length(self$populations), "\n", sep = "")
       cat(
         "  modelParameterSets:       ",
-        length(private$.modelParameterSets),
+        length(self$modelParameterSets),
         " set(s)\n",
         sep = ""
       )
       cat(
         "  individualParameterSets:  ",
-        length(private$.individualParameterSets),
+        length(self$individualParameterSets),
         " set(s)\n",
         sep = ""
       )
       cat(
         "  applicationParameterSets: ",
-        length(private$.applicationParameterSets),
+        length(self$applicationParameterSets),
         " set(s)\n",
         sep = ""
       )
-      cat("  applications:    ", length(private$.applications), "\n", sep = "")
-      cat("  outputPaths:     ", length(private$.outputPaths), "\n", sep = "")
+      cat("  applications:    ", length(self$applications), "\n", sep = "")
+      cat("  outputPaths:     ", length(self$outputPaths), "\n", sep = "")
       cat(
         "  observedData:    ",
-        length(private$.observedData),
+        length(self$observedData),
         " source(s)\n",
         sep = ""
       )
-      if (is.null(private$.plots)) {
+      if (is.null(self$plots)) {
         cat("  plots:           (none)\n")
       } else {
         cat(
           "  plots:           ",
-          length(private$.plots$dataCombined %||% list()),
+          length(self$plots$dataCombined %||% list()),
           " dataCombined / ",
-          length(private$.plots$plotConfiguration %||% list()),
+          length(self$plots$plotConfiguration %||% list()),
           " plot(s) / ",
-          length(private$.plots$plotGrids %||% list()),
+          length(self$plots$plotGrids %||% list()),
           " grid(s)\n",
           sep = ""
         )
@@ -834,6 +855,15 @@ Project <- R6::R6Class(
     }
   ),
   private = list(
+    .projectFilePath = NULL,
+    .projectDirPath = NULL,
+    .modified = FALSE,
+    .validatedSinceMutation = FALSE,
+    .filePathsData = list(),
+    .programmaticDataSets = list(),
+    .observedDataNamesCache = NULL,
+    .warned_paths = character(),
+
     .invalidate = function() {
       private$.modified <- TRUE
       private$.validatedSinceMutation <- FALSE
@@ -841,9 +871,6 @@ Project <- R6::R6Class(
     },
 
     .replace_env_var = function(path) {
-      # Expand $VAR / ${VAR} references in `path`. Skip the system PATH
-      # variable because expanding it inside a filesystem path would
-      # never be useful and is the canonical "I forgot to escape" footgun.
       if (length(path) == 0L) {
         return(path)
       }
@@ -891,28 +918,67 @@ Project <- R6::R6Class(
       } else {
         abs_path <- fs::path_abs(file.path(parent, path))
       }
+      if (!fs::file_exists(abs_path) && must_work == TRUE) {
+        if (!(abs_path %in% private$.warned_paths)) {
+          warning(messages$fileNotFound(abs_path))
+          private$.warned_paths <- c(private$.warned_paths, abs_path)
+        }
+      }
       abs_path
     },
 
-    .schemaVersion = NULL,
-    .esqlabsRVersion = NULL,
-    .jsonPath = NULL,
-    .projectDirPath = NULL,
-    .filePaths = list(),
-    .outputPaths = list(),
-    .scenarios = list(),
-    .modelParameterSets = list(),
-    .individualParameterSets = list(),
-    .applicationParameterSets = list(),
-    .individuals = list(),
-    .populations = list(),
-    .applications = list(),
-    .observedData = list(),
-    .plots = NULL,
-    .parameterIdentification = list(),
-    .validatedSinceMutation = FALSE,
-    .modified = FALSE,
-    .programmaticDataSets = list(),
-    .observedDataNamesCache = NULL
+    .read_json = function(jsonPath) {
+      jsonPath <- fs::path_abs(jsonPath)
+      if (!fs::file_exists(jsonPath)) stop(messages$fileNotFound(jsonPath))
+      jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+      if (!identical(jsonData$schemaVersion, "2.0")) {
+        stop(
+          "Unsupported schemaVersion: ",
+          format(jsonData$schemaVersion %||% "<missing>"),
+          ". Expected '2.0'."
+        )
+      }
+      self$schemaVersion <- jsonData$schemaVersion
+      self$esqlabsRVersion <- jsonData$esqlabsRVersion
+      self$jsonPath <- jsonPath
+      private$.projectFilePath <- jsonPath
+      private$.projectDirPath <- dirname(jsonPath)
+
+      fp <- jsonData$filePaths %||% list()
+      private$.filePathsData <- list()
+      for (n in names(fp)) {
+        private$.filePathsData[[n]] <- list(value = fp[[n]], description = "")
+      }
+
+      self$outputPaths <- jsonData$outputPaths %||% list()
+      self$modelParameterSets <- jsonData$modelParameterSets %||% list()
+      self$individualParameterSets <- jsonData$individualParameterSets %||%
+        list()
+      self$applicationParameterSets <- jsonData$applicationParameterSets %||%
+        list()
+      self$individuals <- .parseIndividuals(jsonData$individuals)
+      self$populations <- .parsePopulations(jsonData$populations)
+      self$applications <- .parseApplications(jsonData$applications)
+      self$scenarios <- .parseScenarios(jsonData$scenarios, self$outputPaths)
+      self$observedData <- jsonData$observedData %||% list()
+      self$plots <- .parsePlots(jsonData$plots)
+      self$parameterIdentification <- .parsePITasks(
+        jsonData$parameterIdentification
+      )
+
+      private$.modified <- FALSE
+      private$.validatedSinceMutation <- FALSE
+    }
   )
 )
+
+#' @rdname Project
+#' @usage NULL
+#' @export
+ProjectConfiguration <- function(
+  projectConfigurationFilePath = character(),
+  ...
+) {
+  lifecycle::deprecate_warn("7.0.0", "ProjectConfiguration()", "Project$new()")
+  Project$new(projectFilePath = projectConfigurationFilePath)
+}

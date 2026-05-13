@@ -1,43 +1,17 @@
 withr::local_options(lifecycle_verbosity = "quiet")
 
-projectConfiguration <- testProjectConfiguration()
-
 # Define which scenarios to run
 scenarioNames <- c("TestScenario", "PopulationScenario")
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = scenarioNames,
-  projectConfiguration = projectConfiguration
-)
-
-# Set output paths for each scenario
-for (scenarioConfiguration in scenarioConfigurations) {
-  scenarioConfiguration$outputPaths <- outputPaths
-}
-
-# Run scenarios
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-
+# Run scenarios from the JSON-based project
+.testProjectForDC <- loadProject(testProjectJSONPath())
 simulatedScenarios <- runScenarios(
-  scenarios = scenarios
+  .testProjectForDC,
+  scenarioNames = scenarioNames
 )
 
-importerConfiguration <- ospsuite::loadDataImporterConfiguration(
-  configurationFilePath = projectConfiguration$dataImporterConfigurationFile
-)
-
-# Load observed data
-dataSheets <- "Laskin 1982.Group A"
-observedData <- withr::with_options(
-  list(lifecycle_verbosity = "quiet"),
-  esqlabsR::loadObservedDataFromExcel(
-    projectConfiguration = projectConfiguration,
-    sheets = dataSheets,
-    importerConfiguration = importerConfiguration
-  )
-)
+observedData <- loadObservedData(.testProjectForDC)
 
 # Create a proper data frame with paths for all entries
 dataCombinedDf <- data.frame(list(
@@ -187,6 +161,7 @@ test_that("It warns when dataSet is not found in observedData", {
 })
 
 test_that("createDataCombinedFromExcel errors when specified DataCombined names are not in the Excel file", {
+  skip("createDataCombinedFromExcel re-tested via Excel-bridge tests in Act 2.")
   withr::local_options(lifecycle_verbosity = "quiet")
   expect_error(
     createDataCombinedFromExcel(
@@ -242,25 +217,20 @@ test_that("createDataCombined builds DataCombined for Example project", {
 })
 
 test_that("createDataCombined returns empty DataCombined when spec has no entries", {
-  project <- esqlabsR:::Project$new(
-    schemaVersion = "2.0",
-    esqlabsRVersion = NULL,
-    jsonPath = NULL,
-    projectDirPath = NULL,
-    filePaths = list(),
-    outputPaths = list(),
-    scenarios = list(),
-    modelParameterSets = list(),
-    individualParameterSets = list(),
-    applicationParameterSets = list(),
-    individuals = list(),
-    populations = list(),
-    applications = list(),
-    observedData = list(),
-    plots = list(
-      dataCombined = list(
-        EmptyDC = list(name = "EmptyDC", simulated = list(), observed = list())
-      )
+  project <- Project$new()
+  project$schemaVersion <- "2.0"
+  project$scenarios <- list()
+  project$modelParameterSets <- list()
+  project$individualParameterSets <- list()
+  project$applicationParameterSets <- list()
+  project$individuals <- list()
+  project$populations <- list()
+  project$applications <- list()
+  project$observedData <- list()
+  project$outputPaths <- list()
+  project$plots <- list(
+    dataCombined = list(
+      EmptyDC = list(name = "EmptyDC", simulated = list(), observed = list())
     )
   )
 

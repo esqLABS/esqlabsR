@@ -151,120 +151,6 @@
   result
 }
 
-# Legacy v6 runtime path: runs scenarios that were created via
-# `createScenarios()` from `ScenarioConfiguration` / Excel. Soft-
-# deprecated via `runScenarios()`'s dispatcher in this file. Body is
-# a verbatim move of the v6 `runScenarios()` logic — Chapter 8 deletes.
-# @keywords internal
-# @noRd
-.runLegacyScenarios <- function(scenarios, simulationRunOptions = NULL) {
-  scenarios <- ospsuite.utils::toList(scenarios)
-  individualSimulations <- list()
-  populationScenarios <- list()
-  steadyStateGroups <- list()
-  for (scenario in scenarios) {
-    if (scenario$scenarioType == "Individual") {
-      individualSimulations <- c(individualSimulations, scenario$simulation)
-    } else {
-      populationScenarios <- c(populationScenarios, scenario)
-    }
-    if (scenario$scenarioConfiguration$simulateSteadyState) {
-      ignoreIfFormulaKey <- as.character(
-        scenario$scenarioConfiguration$overwriteFormulasInSS
-      )
-      if (is.null(steadyStateGroups[[ignoreIfFormulaKey]])) {
-        steadyStateGroups[[ignoreIfFormulaKey]] <- list(
-          simulations = list(),
-          times = list()
-        )
-      }
-      steadyStateGroups[[ignoreIfFormulaKey]]$simulations <- c(
-        steadyStateGroups[[ignoreIfFormulaKey]]$simulations,
-        scenario$simulation
-      )
-      steadyStateGroups[[ignoreIfFormulaKey]]$times <- c(
-        steadyStateGroups[[ignoreIfFormulaKey]]$times,
-        scenario$scenarioConfiguration$steadyStateTime
-      )
-    }
-  }
-  initialValues <- list()
-  for (ignoreIfFormulaKey in names(steadyStateGroups)) {
-    group <- steadyStateGroups[[ignoreIfFormulaKey]]
-    ignoreIfFormula <- !as.logical(ignoreIfFormulaKey)
-    groupValues <- ospsuite::getSteadyState(
-      simulations = group$simulations,
-      steadyStateTime = group$times,
-      ignoreIfFormula = ignoreIfFormula,
-      simulationRunOptions = simulationRunOptions
-    )
-    initialValues <- c(initialValues, groupValues)
-  }
-  for (ignoreIfFormulaKey in names(steadyStateGroups)) {
-    for (simulation in steadyStateGroups[[ignoreIfFormulaKey]]$simulations) {
-      ospsuite::setQuantityValuesByPath(
-        quantityPaths = initialValues[[simulation$id]]$paths,
-        values = initialValues[[simulation$id]]$values,
-        simulation = simulation
-      )
-    }
-  }
-  simulationResults <- runSimulations(
-    simulations = individualSimulations,
-    simulationRunOptions = simulationRunOptions
-  )
-  for (scenario in populationScenarios) {
-    populationResults <- runSimulations(
-      simulations = scenario$simulation,
-      population = scenario$population,
-      simulationRunOptions = simulationRunOptions
-    )
-    simulationResults <- c(simulationResults, populationResults)
-  }
-  returnList <- vector("list", length(simulationResults))
-  for (idx in seq_along(scenarios)) {
-    scenario <- scenarios[[idx]]
-    scenarioName <- scenario$scenarioConfiguration$scenarioName
-    simulation <- scenario$simulation
-    id <- simulation$id
-    results <- simulationResults[[id]]
-    population <- scenario$population
-    if (
-      !is.null(population) &&
-        !isOfType(population, "Population") &&
-        is.na(population)
-    ) {
-      population <- NULL
-    }
-    outputQuantities <- NULL
-    if (!is.null(scenario$scenarioConfiguration$outputPaths)) {
-      outputQuantities <- getAllQuantitiesMatching(
-        scenario$scenarioConfiguration$outputPaths,
-        simulation
-      )
-    }
-    if (is.null(results)) {
-      warning(messages$missingResultsForScenario(scenarioName))
-      outputValues <- NULL
-    } else {
-      outputValues <- getOutputValues(
-        results,
-        quantitiesOrPaths = outputQuantities,
-        population = population,
-        addMetaData = FALSE
-      )
-    }
-    returnList[[idx]] <- list(
-      simulation = simulation,
-      results = results,
-      outputValues = outputValues,
-      population = population
-    )
-    names(returnList)[[idx]] <- scenarioName
-  }
-  returnList
-}
-
 #' Run a set of scenarios from a `Project`.
 #'
 #' @description Loads simulations, applies parameters, runs the
@@ -273,9 +159,6 @@
 #'   loaded with [loadProject()].
 #'
 #' @param project A [Project] object loaded from a `Project.json` file.
-#'   In the legacy positional form, this argument also accepts a list
-#'   of [LegacyScenario] objects produced by [createScenarios()] — see
-#'   "Details".
 #' @param scenarioNames Optional character vector of scenario names to
 #'   run. `NULL` (default) runs all scenarios in the project.
 #' @param customParams A list with vectors `paths`, `values`, and
@@ -289,10 +172,6 @@
 #'   aborts with a formatted summary on critical errors. Set to
 #'   `FALSE` to skip the pre-flight check (e.g. when the caller has
 #'   already validated the project).
-#' @param scenarios `r lifecycle::badge("deprecated")` Legacy alias
-#'   for the first positional argument when passing a list of
-#'   [LegacyScenario] objects. Use `project = loadProject(...)` and
-#'   the modern signature instead.
 #'
 #' @returns A named list keyed by scenario name. Each entry is a list
 #'   with `simulation` (the initialized [ospsuite::Simulation]),
@@ -304,109 +183,27 @@
 #' @details If a scenario's simulation fails, a warning is produced
 #'   and `outputValues` for that scenario is `NULL`.
 #'
-#'   The legacy signatures
-#'   `runScenarios(scenariosList, simulationRunOptions)` (positional)
-#'   and `runScenarios(scenarios = ..., simulationRunOptions = ...)`
-#'   (named) — taking a list of [LegacyScenario] objects produced by
-#'   [createScenarios()] — are still accepted but soft-deprecated.
-#'   New code should use the JSON-first form shown above.
-#'
 #' @export
 runScenarios <- function(
   project,
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
-  validate = TRUE,
-  scenarios = lifecycle::deprecated()
+  validate = TRUE
 ) {
-  # Legacy named-arg form.
-  if (lifecycle::is_present(scenarios)) {
-    lifecycle::deprecate_soft(
-      when = "6.0.0",
-      what = "runScenarios(scenarios = )",
-      with = "runScenarios(project = )",
-      details = paste(
-        "Pass a Project loaded via loadProject() instead of a list of",
-        "LegacyScenario objects produced by createScenarios()."
-      )
+  if (!inherits(project, "Project")) {
+    cli::cli_abort(
+      "{.arg project} must be a {.cls Project} \
+                    (see {.fn loadProject})."
     )
-    return(.runLegacyScenarios(
-      scenarios = scenarios,
-      simulationRunOptions = simulationRunOptions
-    ))
   }
-
-  # Modern path.
-  if (inherits(project, "Project")) {
-    return(.runScenariosFromProject(
-      project = project,
-      scenarioNames = scenarioNames,
-      customParams = customParams,
-      simulationRunOptions = simulationRunOptions,
-      validate = validate
-    ))
-  }
-
-  # Legacy positional form: first arg is a scenarios list, second is
-  # simulationRunOptions (so it landed in `scenarioNames` due to the
-  # modern signature's positional names).
-  lifecycle::deprecate_soft(
-    when = "6.0.0",
-    what = I("runScenarios(scenariosList)"),
-    with = "runScenarios(project)",
-    details = paste(
-      "Pass a Project loaded via loadProject() instead of a list of",
-      "LegacyScenario objects produced by createScenarios()."
-    )
+  .runScenariosFromProject(
+    project,
+    scenarioNames,
+    customParams,
+    simulationRunOptions,
+    validate
   )
-  legacySimRunOpts <- simulationRunOptions %||% scenarioNames
-  .runLegacyScenarios(
-    scenarios = project,
-    simulationRunOptions = legacySimRunOpts
-  )
-}
-
-#' Create `Scenario` objects from `ScenarioConfiguration` objects
-#'
-#' @description Load simulation. Apply parameters from global XLS. Apply
-#' individual physiology. Apply individual model parameters. Set simulation
-#' outputs. Set simulation time. initializeSimulation(). Create population
-#'
-#' @param scenarioConfigurations List of `ScenarioConfiguration` objects to be
-#'   simulated. See [createScenarios()] for details.
-#' @param customParams A list containing vectors 'paths' with the full paths to
-#'   the parameters, 'values' the values of the parameters, and 'units' with the
-#'   units the values are in. The values will be applied to all scenarios.
-#' @param stopIfParameterNotFound Boolean. If `TRUE` (default) and a custom
-#'   parameter is not found, an error is thrown. If `FALSE`, non-existing
-#'   parameters are ignored.
-#'
-#' @returns Named list of `Scenario` objects.
-#' @export
-createScenarios <- function(
-  scenarioConfigurations,
-  customParams = NULL,
-  stopIfParameterNotFound = TRUE
-) {
-  .validateScenarioConfigurations(scenarioConfigurations)
-  .validateParametersStructure(
-    parameterStructure = customParams,
-    argumentName = "customParams",
-    nullAllowed = TRUE
-  )
-
-  scenarios <- purrr::map(
-    scenarioConfigurations,
-    ~ LegacyScenario$new(
-      .x,
-      customParams = customParams,
-      stopIfParameterNotFound = stopIfParameterNotFound
-    )
-  ) |>
-    purrr::set_names(purrr::map(scenarioConfigurations, ~ .x$scenarioName))
-
-  return(scenarios)
 }
 
 #' Save results of scenario simulations to csv.
@@ -896,4 +693,63 @@ removeScenario <- function(project, name) {
   project$scenarios[[name]] <- NULL
   project$.markModified()
   invisible(project)
+}
+
+#' Parse simulation time intervals from string format
+#'
+#' @param simulationTimeIntervalsString Character string. A string containing simulation time intervals
+#'   in the format "start1,end1,resolution1;start2,end2,resolution2;...".
+#'   Each interval consists of start time, end time, and resolution separated by commas,
+#'   and multiple intervals are separated by semicolons.
+#'
+#' @details Parses a string representation of simulation time intervals into a list
+#' of numeric vectors. Each vector contains three elements: start_time, end_time, resolution.
+#' The function validates that all values are numeric, positive, and that start times
+#' are less than end times.
+#'
+#' @returns A list of numeric vectors, each containing three elements representing
+#' start_time, end_time, resolution for each time interval. Returns `NULL` if
+#' the input string is `NULL`.
+#'
+#' @keywords internal
+.parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
+  # Check if the simulation time intervals are defined
+  if (is.null(simulationTimeIntervalsString)) {
+    return(NULL)
+  }
+
+  # Split the string by ';'
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervalsString,
+    split = ";",
+    fixed = TRUE
+  )[[1]]
+  # Split each interval by ','
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervals,
+    split = ",",
+    fixed = TRUE
+  )
+  # Convert to numeric
+  simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
+  # Validate that all are numeric
+  validateIsNumeric(simulationTimeIntervals)
+  # Validate that all are positive
+  if (any(unlist(simulationTimeIntervals) < 0)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  # Validate all intervals are of length 3
+  if (any(sapply(simulationTimeIntervals, length) != 3)) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  # Validate all resolution entries are greater than 0
+  if (any(sapply(simulationTimeIntervals, function(x) x[3] <= 0))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+  # Validate all start values are smaller than end values
+  if (any(sapply(simulationTimeIntervals, function(x) x[1] >= x[2]))) {
+    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  }
+
+  return(simulationTimeIntervals)
 }

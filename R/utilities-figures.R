@@ -365,8 +365,8 @@ createEsqlabsPlotGridConfiguration <- function() {
 #' @returns An instance of `ExportConfiguration` R6 class.
 #'
 #' @examples
-#' myProjConfig <- ProjectConfiguration$new()
-#' createEsqlabsExportConfiguration(myProjConfig$outputFolder)
+#' myProject <- Project$new()
+#' createEsqlabsExportConfiguration(myProject$outputFolder)
 #'
 #' @family create-plotting-configurations
 #'

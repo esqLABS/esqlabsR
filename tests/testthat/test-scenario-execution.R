@@ -49,8 +49,7 @@ test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed
 test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on overlapping path", {
   project <- .testProject()
   scenario <- project$scenarios[["TestScenario"]]
-  proj <- project$.__enclos_env__$private
-  proj$.modelParameterSets$Global <- list(
+  project$modelParameterSets$Global <- list(
     list(
       containerPath = "OverlapContainer",
       parameterName = "OverlapParam",
@@ -58,7 +57,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
       units = NULL
     )
   )
-  proj$.applicationParameterSets$Override <- list(
+  project$applicationParameterSets$Override <- list(
     list(
       containerPath = "OverlapContainer",
       parameterName = "OverlapParam",
@@ -66,7 +65,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
       units = NULL
     )
   )
-  proj$.applications$Aciclovir_iv_250mg$parameterSets <- list("Override")
+  project$applications$Aciclovir_iv_250mg$parameterSets <- list("Override")
   scenario$individualId <- NULL
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
   idx <- match("OverlapContainer|OverlapParam", merged$paths)
@@ -120,8 +119,7 @@ test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets
 test_that(".mergeScenarioParameters silently skips an unknown individual parameter-set id", {
   project <- .testProject()
   scenario <- project$scenarios[["TestScenario"]]
-  proj <- project$.__enclos_env__$private
-  proj$.individuals[[1L]]$parameterSets <- list(
+  project$individuals[[1L]]$parameterSets <- list(
     "Indiv1_default",
     "DoesNotExist"
   )
@@ -134,8 +132,7 @@ test_that(".mergeScenarioParameters silently skips an unknown individual paramet
 test_that(".mergeScenarioParameters silently skips an unknown application parameter-set id", {
   project <- .testProject()
   scenario <- project$scenarios[["TestScenario"]]
-  proj <- project$.__enclos_env__$private
-  proj$.applications$Aciclovir_iv_250mg$parameterSets <- list(
+  project$applications$Aciclovir_iv_250mg$parameterSets <- list(
     "Aciclovir_iv_250mg_default",
     "DoesNotExist"
   )

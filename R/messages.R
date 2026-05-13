@@ -151,7 +151,7 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
 
 messages$hasUnsavedChanges <- function() {
   cli::format_message(c(
-    "!" = "The ProjectConfiguration object has been modified since loading from file.",
+    "!" = "The Project object has been modified since loading from file.",
     "i" = "The object properties don't match the original Excel file.",
     ">" = "Consider running {.run projectConfig$save()} to save changes to the Excel file."
   ))
@@ -692,7 +692,7 @@ messages$validationCrossReference <- function(source, target, missing) {
 
 messages$validationRequiredFileNotConfigured <- function(fileName) {
   cliFormat(
-    "Required configuration file {.file {fileName}} is not configured in ProjectConfiguration"
+    "Required configuration file {.file {fileName}} is not configured in Project"
   )
 }
 
@@ -756,7 +756,7 @@ messages$excelInSync <- function() {
 
 messages$projectConfigUnsavedChanges <- function() {
   cliFormat(
-    "The ProjectConfiguration object has {.strong unsaved changes} that differ from the Excel file."
+    "The Project object has {.strong unsaved changes} that differ from the Excel file."
   )
 }
 

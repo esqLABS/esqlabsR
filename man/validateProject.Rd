@@ -34,6 +34,5 @@ if (isAnyCriticalErrors(results)) {
 }
 }
 \seealso{
-\code{\link[=validateAllConfigurations]{validateAllConfigurations()}} for the legacy Excel-driven
-validator, \code{\link[=isAnyCriticalErrors]{isAnyCriticalErrors()}}, \code{\link[=validationSummary]{validationSummary()}}.
+\code{\link[=isAnyCriticalErrors]{isAnyCriticalErrors()}}, \code{\link[=validationSummary]{validationSummary()}}.
 }
