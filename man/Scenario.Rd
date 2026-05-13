@@ -64,6 +64,15 @@ names referencing \code{project$modelParameterSets}.}
   }
   \if{html}{\out{</div>}}
 }
+\section{Active bindings}{
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{asList}}{Returns the current scenario as a plain list of its
+field values. Read-only. Useful for programmatic inspection and
+for snapshot-testing the full object shape in one assertion.}
+  }
+  \if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
   \itemize{
