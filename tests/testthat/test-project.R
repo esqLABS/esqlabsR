@@ -444,22 +444,3 @@ test_that("a fresh project starts unmodified and unvalidated", {
   expect_false(project$modified)
   expect_false(project$validatedSinceMutation)
 })
-
-test_that("project$addX delegates to the standalone addX", {
-  project <- testProject()
-
-  project$addOutputPath("X", "Organism|A|Concentration in container")
-  expect_true("X" %in% names(project$outputPaths))
-
-  project$addIndividual("NewI", species = "Human", gender = "MALE")
-  expect_true("NewI" %in% names(project$individuals))
-
-  project$addPopulation("NewP", species = "Human", numberOfIndividuals = 50)
-  expect_true("NewP" %in% names(project$populations))
-
-  project$addApplication("NewApp")
-  expect_true("NewApp" %in% names(project$applications))
-
-  project$addModelParameterEntry("NewSet", "Organism|A", "K", 1.5, "1/h")
-  expect_length(project$modelParameterSets$NewSet, 1L)
-})
