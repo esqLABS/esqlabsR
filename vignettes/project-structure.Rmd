@@ -51,7 +51,9 @@ needs to be created before performing any simulations.
 By printing the `ProjectConfiguration`, we can see the locations of all files 
 used in the workflows:
 
-```{r, eval = TRUE}
+```{r, eval = FALSE}
+# TODO(#908): re-enable when chapter 9 rewrites this vignette against the
+# JSON-first workflow.
 my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath(), ignoreVersionCheck = TRUE)
 ```
 
