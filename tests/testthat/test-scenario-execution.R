@@ -1,7 +1,7 @@
 # Local test helper. Once Task 8 ships loadProject(), the production
 # helpers.R::testProject() will work directly and this can be removed.
 .testProject <- function() {
-  esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  testProject()
 }
 
 test_that(".parameterSetToStructure flattens record-shape into paths/values/units", {

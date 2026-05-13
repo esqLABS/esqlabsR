@@ -1,157 +1,67 @@
 # =============================================================================
 # Test Helper Functions
 # =============================================================================
+#
+# Test fixtures live under `tests/testthat/data/`:
+#
+#   - flat files (pkml, single xlsx sheets, csvs) for unit-level tests.
+#     Reached via getTestDataFilePath().
+#
+#   - TestProject/        canonical JSON-first test project. Reached via
+#                         testProject().
+#
+#   - TestProjectExcel/   legacy Excel-shape project kept for round-trip
+#                         tests of the Excel import / export bridge.
+#                         Reached via testProjectExcelPath() (the entry
+#                         .xlsx) and testProjectExcelConfigurationsPath()
+#                         (its Configurations/ folder).
+#
+# For a writable, throwaway project use with_temp_project(), which calls
+# initProject(type = "example", createExcel = TRUE) in a temp dir.
 
-#' Get path to test data file
-#'
-#' @description
-#' Returns the full path to a file in the test data directory.
-#'
-#' @param fileName Name of the file in the test data directory. If empty, returns the directory path.
-#'
-#' @returns Full path to the test data file or directory.
-#'
-#' @examples
-#' \dontrun{
-#' # Get path to a specific test file
-#' file_path <- getTestDataFilePath("test_data.xlsx")
-#'
-#' # Get path to test data directory
-#' data_dir <- getTestDataFilePath("")
-#' }
+#' Get path to a file in `tests/testthat/data/`.
 getTestDataFilePath <- function(fileName = "") {
-  testthat::test_path("../data", fileName)
+  testthat::test_path("data", fileName)
 }
 
-getSimulationFilePath <- function(simulationName) {
-  getTestDataFilePath(paste0(simulationName, ".pkml"))
+#' Load the canonical test `Project`.
+testProject <- function() {
+  loadProject(testthat::test_path("data", "TestProject", "Project.json"))
 }
 
-# Helper function to load a model easily. In the test environment, we do not want to load from cache by default. Instead
-# new instances should be created unless specifically specified otherwise
-loadTestSimulation <- function(
-  simulationName,
-  loadFromCache = FALSE,
-  addToCache = TRUE
-) {
-  simFile <- getSimulationFilePath(simulationName)
-  sim <- ospsuite::loadSimulation(
-    simFile,
-    loadFromCache = loadFromCache,
-    addToCache = addToCache
+#' Load the bundled example `Project`.
+exampleProject <- function() {
+  loadProject(exampleProjectPath())
+}
+
+#' Path to the legacy Excel `ProjectConfiguration.xlsx` fixture, used by
+#' Excel-bridge round-trip tests.
+testProjectExcelPath <- function() {
+  testthat::test_path(
+    "data",
+    "TestProjectExcel",
+    "ProjectConfiguration.xlsx"
   )
-  return(sim)
+}
+
+#' Path to an Excel side-car in the legacy Excel fixture's
+#' `Configurations/` folder.
+testProjectExcelConfigurationsPath <- function(...) {
+  normalizePath(
+    testthat::test_path(
+      "data",
+      "TestProjectExcel",
+      "Configurations",
+      ...
+    ),
+    mustWork = TRUE
+  )
 }
 
 executeWithTestFile <- function(actionWithFile) {
   newFile <- tempfile()
   actionWithFile(newFile)
   file.remove(newFile)
-}
-
-#' Get path to test project configuration
-#'
-#' @description
-#' Returns the path to the test project configuration file.
-#' Currently targets the TestProject as it serves both as an example and test project.
-#'
-#' @returns Full path to the test project configuration file.
-#'
-#' @examples
-#' \dontrun{
-#' config_path <- testProjectConfigurationPath()
-#' }
-testProjectConfigurationPath <- function() {
-  # for now it targets TestProject as it is both an example and a test project
-  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
-}
-
-#' Get path to the v2.0 example `Project.json`
-#'
-#' @description
-#' Returns the path to the bundled v2.0 example `Project.json` shipped under
-#' `inst/extdata/projects/Example`. Shared between the parser and serializer
-#' test suites.
-#'
-#' @returns Full path to the example Project.json file.
-example_project_json_path <- function() {
-  system.file(
-    "extdata",
-    "projects",
-    "Example",
-    "Project.json",
-    package = "esqlabsR",
-    mustWork = TRUE
-  )
-}
-
-#' Create test project configuration
-#'
-#' @description
-#' Creates a ProjectConfiguration object from the test project configuration file.
-#'
-#' @returns Project object for testing.
-#'
-#' @examples
-#' \dontrun{
-#' config <- testProjectConfiguration()
-#' }
-testProjectConfiguration <- function() {
-  loadProject(testProjectJSONPath())
-}
-
-#' Get path to the test data directory or a subdirectory.
-#'
-#' @description Used by JSON-based test fixtures. Distinct from
-#'   `getTestDataFilePath()`, which targets the legacy `tests/data/`
-#'   directory; the JSON fixtures live under `tests/testthat/data/`.
-#'
-#' @param name Optional subdirectory or file name relative to the
-#'   data directory.
-#'
-#' @returns Full path string.
-testDataDirectory <- function(name = NULL) {
-  directory <- testthat::test_path("data")
-  if (!is.null(name)) {
-    directory <- file.path(directory, name)
-  }
-  directory
-}
-
-#' Get path to the canonical test `Project.json`.
-testProjectJSONPath <- function() {
-  file.path(testDataDirectory("TestProject"), "Project.json")
-}
-
-#' Load the canonical test project.
-#'
-#' @returns A `Project` object loaded from `tests/testthat/data/TestProject/Project.json`.
-testProject <- function() {
-  loadProject(testProjectJSONPath())
-}
-
-#' Get path to test configurations directory
-#'
-#' @description
-#' Returns the normalized path to the test configurations directory with optional subdirectories.
-#'
-#' @param ... Additional path components to append to the configurations directory.
-#'
-#' @returns Full normalized path to the test configurations directory or subdirectory.
-#'
-#' @examples
-#' \dontrun{
-#' # Get path to configurations directory
-#' config_dir <- testConfigurationsPath()
-#'
-#' # Get path to specific configuration file
-#' populations_file <- testConfigurationsPath("Populations.xlsx")
-#' }
-testConfigurationsPath <- function(...) {
-  normalizePath(
-    file.path(exampleDirectory("TestProject"), "Configurations", ...),
-    mustWork = TRUE
-  )
 }
 
 #' Extract axis ranges from plots
@@ -252,26 +162,6 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
   list(
     path = temp_dir,
     project = project
-  )
-}
-
-local_test_project <- function(
-  project_name = "TestProject",
-  env = parent.frame()
-) {
-  temp_dir <- withr::local_tempdir("test_project", .local_envir = env)
-
-  source_dir <- testDataDirectory(project_name)
-  file.copy(
-    list.files(source_dir, full.names = TRUE),
-    temp_dir,
-    recursive = TRUE
-  )
-
-  list(
-    dir = temp_dir,
-    project_path = file.path(temp_dir, "Project.json"),
-    configurations_dir = file.path(temp_dir, "Configurations")
   )
 }
 

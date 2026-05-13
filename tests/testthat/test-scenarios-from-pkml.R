@@ -8,9 +8,9 @@ pkmlFixture <- test_path(
 
 test_that("createScenariosFromPKML errors on non-Project input", {
   skip_if_not(file.exists(pkmlFixture))
-  expect_snapshot(
+  expect_error(
     createScenariosFromPKML(pkmlFixture, project = "not a project"),
-    error = TRUE
+    "Project"
   )
 })
 

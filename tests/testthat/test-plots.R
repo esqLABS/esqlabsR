@@ -147,12 +147,12 @@ test_that("createPlots errors on non-Project input", {
 })
 
 test_that("createPlots returns empty list when project has no plots", {
-  project <- loadProject(testProjectJSONPath())
+  project <- testProject()
   expect_identical(createPlots(project), list())
 })
 
 test_that("createPlots builds plot grids for Example project", {
-  project <- loadProject(example_project_json_path())
+  project <- exampleProject()
   simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
   gridName <- project$plots$plotGrids$name[[1]]
 

@@ -3,8 +3,8 @@
 # validators, or plotting on this branch. Tests use `:::` because both are
 # intentionally unexported.
 
-test_that(".loadProjectJson() returns an internal Project from the bundled example", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() returns an internal Project from the bundled example", {
+  project <- exampleProject()
 
   expect_s3_class(project, "Project")
   expect_s3_class(project, "R6")
@@ -12,9 +12,9 @@ test_that(".loadProjectJson() returns an internal Project from the bundled examp
   expect_identical(project$esqlabsRVersion, "6.0.0")
 })
 
-test_that(".loadProjectJson() captures jsonPath and projectDirPath", {
-  path <- example_project_json_path()
-  project <- esqlabsR:::.loadProjectJson(path)
+test_that("loadProject() captures jsonPath and projectDirPath", {
+  path <- exampleProjectPath()
+  project <- loadProject(path)
 
   expect_identical(
     normalizePath(project$jsonPath, winslash = "/"),
@@ -23,8 +23,8 @@ test_that(".loadProjectJson() captures jsonPath and projectDirPath", {
   expect_identical(project$projectDirPath, dirname(project$jsonPath))
 })
 
-test_that(".loadProjectJson() exposes filePaths verbatim", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() exposes filePaths verbatim", {
+  project <- exampleProject()
 
   expect_type(project$filePaths, "list")
   expect_identical(project$filePaths$modelFolder, "Models/Simulations/")
@@ -32,8 +32,8 @@ test_that(".loadProjectJson() exposes filePaths verbatim", {
   expect_identical(project$filePaths$dataFolder, "Data/")
 })
 
-test_that(".loadProjectJson() preserves outputPaths as a named list", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() preserves outputPaths as a named list", {
+  project <- exampleProject()
 
   expect_type(project$outputPaths, "list")
   expect_named(
@@ -47,8 +47,8 @@ test_that(".loadProjectJson() preserves outputPaths as a named list", {
   )
 })
 
-test_that(".loadProjectJson() parses scenarios into Scenario objects keyed by name", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() parses scenarios into Scenario objects keyed by name", {
+  project <- exampleProject()
 
   expect_type(project$scenarios, "list")
   expect_length(project$scenarios, 3L)
@@ -65,8 +65,8 @@ test_that(".loadProjectJson() parses scenarios into Scenario objects keyed by na
   expect_identical(first$modelParameterSets, c("Global", "Aciclovir"))
 })
 
-test_that(".loadProjectJson() preserves modelParameterSets as a named list of sets", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() preserves modelParameterSets as a named list of sets", {
+  project <- exampleProject()
 
   expect_named(
     project$modelParameterSets,
@@ -80,8 +80,8 @@ test_that(".loadProjectJson() preserves modelParameterSets as a named list of se
   )
 })
 
-test_that(".loadProjectJson() preserves individualParameterSets as a named list of sets", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() preserves individualParameterSets as a named list of sets", {
+  project <- exampleProject()
 
   expect_named(project$individualParameterSets, "Adult_male_default")
   expect_length(project$individualParameterSets$Adult_male_default, 1L)
@@ -91,8 +91,8 @@ test_that(".loadProjectJson() preserves individualParameterSets as a named list 
   )
 })
 
-test_that(".loadProjectJson() preserves applicationParameterSets as a named list of sets", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() preserves applicationParameterSets as a named list of sets", {
+  project <- exampleProject()
 
   expect_named(project$applicationParameterSets, "Aciclovir_iv_250mg_default")
   expect_length(
@@ -107,8 +107,8 @@ test_that(".loadProjectJson() preserves applicationParameterSets as a named list
   )
 })
 
-test_that(".loadProjectJson() preserves individuals as a named list keyed by individualId", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() preserves individuals as a named list keyed by individualId", {
+  project <- exampleProject()
 
   expect_named(project$individuals, "Adult_male")
   ind <- project$individuals[["Adult_male"]]
@@ -117,8 +117,8 @@ test_that(".loadProjectJson() preserves individuals as a named list keyed by ind
   expect_identical(ind$parameterSets, "Adult_male_default")
 })
 
-test_that(".loadProjectJson() preserves populations as a named list keyed by populationId", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() preserves populations as a named list keyed by populationId", {
+  project <- exampleProject()
 
   expect_named(project$populations, "European_adults")
   pop <- project$populations[["European_adults"]]
@@ -126,8 +126,8 @@ test_that(".loadProjectJson() preserves populations as a named list keyed by pop
   expect_identical(pop$numberOfIndividuals, 50)
 })
 
-test_that(".loadProjectJson() preserves applications as a named list keyed by protocol name", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() preserves applications as a named list keyed by protocol name", {
+  project <- exampleProject()
 
   expect_named(project$applications, "Aciclovir_iv_250mg")
   app <- project$applications[["Aciclovir_iv_250mg"]]
@@ -135,8 +135,8 @@ test_that(".loadProjectJson() preserves applications as a named list keyed by pr
   expect_identical(app$parameterSets, "Aciclovir_iv_250mg_default")
 })
 
-test_that(".loadProjectJson() preserves the observedData section", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() preserves the observedData section", {
+  project <- exampleProject()
 
   expect_length(project$observedData, 1L)
   source <- project$observedData[[1L]]
@@ -145,8 +145,8 @@ test_that(".loadProjectJson() preserves the observedData section", {
   expect_identical(source$sheets, list("Laskin 1982.Group A"))
 })
 
-test_that(".loadProjectJson() parses plots into the asymmetric in-memory shape", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+test_that("loadProject() parses plots into the asymmetric in-memory shape", {
+  project <- exampleProject()
 
   expect_type(project$plots, "list")
   expect_named(
@@ -203,17 +203,17 @@ test_that(".listOfListsToDataFrame returns empty data.frame for NULL or empty", 
   expect_equal(nrow(esqlabsR:::.listOfListsToDataFrame(list())), 0L)
 })
 
-test_that(".loadProjectJson() rejects a missing schemaVersion", {
+test_that("loadProject() rejects a missing schemaVersion", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(list(esqlabsRVersion = "6.0.0"), tmp, auto_unbox = TRUE)
 
   expect_error(
-    esqlabsR:::.loadProjectJson(tmp),
+    loadProject(tmp),
     "Unsupported schemaVersion"
   )
 })
 
-test_that(".loadProjectJson() rejects a non-2.0 schemaVersion", {
+test_that("loadProject() rejects a non-2.0 schemaVersion", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
     list(schemaVersion = "1.0", esqlabsRVersion = "5.0.0"),
@@ -222,34 +222,34 @@ test_that(".loadProjectJson() rejects a non-2.0 schemaVersion", {
   )
 
   expect_error(
-    esqlabsR:::.loadProjectJson(tmp),
+    loadProject(tmp),
     "Unsupported schemaVersion"
   )
 })
 
-test_that(".loadProjectJson() rejects a missing file", {
+test_that("loadProject() rejects a missing file", {
   expect_error(
-    esqlabsR:::.loadProjectJson(tempfile(fileext = ".json")),
-    "does not exist"
+    loadProject(tempfile(fileext = ".json")),
+    "(does not exist|not found)"
   )
 })
 
-test_that(".loadProjectJson() rejects a non-string path", {
+test_that("loadProject() rejects a non-string path", {
   expect_error(
-    esqlabsR:::.loadProjectJson(NULL),
+    loadProject(NULL),
     "must be a single non-empty, non-NA string"
   )
   expect_error(
-    esqlabsR:::.loadProjectJson(c("a.json", "b.json")),
+    loadProject(c("a.json", "b.json")),
     "must be a single non-empty, non-NA string"
   )
   expect_error(
-    esqlabsR:::.loadProjectJson(""),
+    loadProject(""),
     "must be a single non-empty, non-NA string"
   )
 })
 
-test_that(".loadProjectJson() defaults missing optional sections to empty lists", {
+test_that("loadProject() defaults missing optional sections to empty lists", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
     list(schemaVersion = "2.0", esqlabsRVersion = "6.0.0"),
@@ -257,7 +257,7 @@ test_that(".loadProjectJson() defaults missing optional sections to empty lists"
     auto_unbox = TRUE
   )
 
-  project <- esqlabsR:::.loadProjectJson(tmp)
+  project <- loadProject(tmp)
 
   expect_identical(project$filePaths, structure(list(), names = character(0L)))
   expect_identical(project$outputPaths, list())
@@ -276,14 +276,14 @@ test_that(".loadProjectJson() defaults missing optional sections to empty lists"
 })
 
 test_that("Project lifecycle fields are read-only", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
 
   expect_error(project$validatedSinceMutation <- TRUE, "readonly")
   expect_error(project$modified <- TRUE, "readonly")
 })
 
 test_that("Project$print() summarises section counts", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
 
   expect_output(print(project), "<Project>")
   expect_output(print(project), "schema 2.0")

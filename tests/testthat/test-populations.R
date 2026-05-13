@@ -42,7 +42,7 @@ test_that("`sampleRandomValue()` generates needed distribution", {
 })
 
 test_that("It creates population characteristics with ontogenies from excel", {
-  excelPath <- testConfigurationsPath("Populations.xlsx")
+  excelPath <- testProjectExcelConfigurationsPath("Populations.xlsx")
 
   populationCharacteristics <- readPopulationCharacteristicsFromXLS(
     XLSpath = excelPath,
@@ -80,7 +80,7 @@ test_that("It creates population characteristics with ontogenies from excel", {
 })
 
 test_that("It creates population characteristics without ontogenies from excel", {
-  excelPath <- testConfigurationsPath("Populations.xlsx")
+  excelPath <- testProjectExcelConfigurationsPath("Populations.xlsx")
 
   populationCharachterstics <- readPopulationCharacteristicsFromXLS(
     XLSpath = excelPath,

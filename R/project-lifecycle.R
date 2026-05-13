@@ -23,7 +23,7 @@
 #' results <- runScenarios(project)
 #' }
 loadProject <- function(path = "Project.json") {
-  project <- .loadProjectJson(path)
+  project <- Project$new(projectFilePath = path)
   .warnOnCrossReferenceErrors(project)
   project
 }

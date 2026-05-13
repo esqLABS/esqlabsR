@@ -52,10 +52,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$modelFolder$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$modelFolder$value,
-        self$projectDirPath
+        self$projectDirPath,
+        must_work = FALSE
       )
     },
 
@@ -65,10 +67,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$configurationsFolder$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$configurationsFolder$value,
-        self$projectDirPath
+        self$projectDirPath,
+        must_work = FALSE
       )
     },
 
@@ -78,10 +82,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$modelParamsFile$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$modelParamsFile$value,
-        self$configurationsFolder
+        self$configurationsFolder,
+        must_work = FALSE
       )
     },
 
@@ -91,10 +97,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$individualsFile$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$individualsFile$value,
-        self$configurationsFolder
+        self$configurationsFolder,
+        must_work = FALSE
       )
     },
 
@@ -104,10 +112,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$populationsFile$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$populationsFile$value,
-        self$configurationsFolder
+        self$configurationsFolder,
+        must_work = FALSE
       )
     },
 
@@ -117,10 +127,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$scenariosFile$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$scenariosFile$value,
-        self$configurationsFolder
+        self$configurationsFolder,
+        must_work = FALSE
       )
     },
 
@@ -131,10 +143,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$applicationsFile$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$applicationsFile$value,
-        self$configurationsFolder
+        self$configurationsFolder,
+        must_work = FALSE
       )
     },
 
@@ -144,10 +158,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$plotsFile$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$plotsFile$value,
-        self$configurationsFolder
+        self$configurationsFolder,
+        must_work = FALSE
       )
     },
 
@@ -158,10 +174,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$populationsFolder$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$populationsFolder$value,
-        self$projectDirPath
+        self$projectDirPath,
+        must_work = FALSE
       )
     },
 
@@ -171,10 +189,12 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$dataFolder$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$dataFolder$value,
-        self$projectDirPath
+        self$projectDirPath,
+        must_work = FALSE
       )
     },
 
@@ -184,6 +204,7 @@ Project <- R6::R6Class(
       if (!missing(value)) {
         private$.filePathsData$outputFolder$value <- value
         private$.invalidate()
+        return(invisible(value))
       }
       private$.clean_path(
         private$.filePathsData$outputFolder$value,
@@ -273,11 +294,20 @@ Project <- R6::R6Class(
     initialize = function(projectFilePath = character()) {
       private$.modified <- FALSE
       private$.validatedSinceMutation <- FALSE
-      if (!missing(projectFilePath) && length(projectFilePath) > 0L) {
-        private$.read_json(projectFilePath)
-      } else {
+      if (is.character(projectFilePath) && length(projectFilePath) == 0L) {
         private$.projectDirPath <- NULL
+        return(invisible(self))
       }
+      if (
+        !is.character(projectFilePath) ||
+          length(projectFilePath) != 1L ||
+          is.na(projectFilePath) ||
+          !nzchar(projectFilePath)
+      ) {
+        stop(messages$invalidPathArgument(), call. = FALSE)
+      }
+      private$.read_json(projectFilePath)
+      invisible(self)
     },
 
     #' @description Internal method to clear the `modified` flag after saving.

@@ -30,7 +30,7 @@ results <- sensitivityCalculation(
 )
 
 # load observed data
-filePath <- testthat::test_path("../data/AciclovirLaskinData.xlsx")
+filePath <- getTestDataFilePath("AciclovirLaskinData.xlsx")
 dataConfiguration <- createImporterConfigurationForFile(filePath = filePath)
 dataConfiguration$sheets <- "Laskin 1982.Group A"
 dataConfiguration$namingPattern <- "{Source}.{Sheet}"

@@ -1,38 +1,10 @@
-# v2.0 Project.json parser (internal) ----
+# v2.0 Project.json per-section parsers (internal) ----
 #
-# Reads a v2.0 `Project.json` file from disk and returns an internal `Project`
-# object. The parser is JSON-faithful: every section ends up in the `Project`
-# as a plain list (or named list) shaped exactly the way `jsonlite::fromJSON`
-# produces it with `simplifyVector = FALSE`. No coercion, no validation beyond
-# the schema-version guard, no cross-reference resolution.
-#
-# Distinct from the existing v6 `ProjectConfiguration` JSON snapshot loader in
-# `R/utilities-config-json.R`: that one consumes Excel-shaped snapshots
-# (`column_names` / `rows`); this one consumes the new domain-typed v2.0
-# schema.
-
-#' Internal: load a v2.0 `Project.json` into a `Project` object.
-#'
-#' Thin shim that delegates to `Project$new()`. Validation (path checks,
-#' schema version guard) is performed inside `private$.read_json`.
-#'
-#' @param path Path to a `Project.json` file.
-#'
-#' @return A `Project` (R6) holding the parsed sections.
-#'
-#' @keywords internal
-#' @noRd
-.loadProjectJson <- function(path) {
-  if (
-    !is.character(path) || length(path) != 1L || is.na(path) || !nzchar(path)
-  ) {
-    stop(messages$invalidPathArgument(), call. = FALSE)
-  }
-  if (!file.exists(path)) {
-    stop("Project file does not exist: ", path, call. = FALSE)
-  }
-  Project$new(projectFilePath = path)
-}
+# Helpers called by `Project$.read_json()` to turn raw JSON sections into the
+# in-memory shape `Project` exposes. JSON-faithful: each section ends up as a
+# plain list (or named list) shaped the way `jsonlite::fromJSON(...,
+# simplifyVector = FALSE)` produces it. No coercion, no validation beyond the
+# schema-version guard, no cross-reference resolution.
 
 # Parse the `individuals` JSON array into a named list keyed by
 # `individualId`. Per-entry numeric fields are coerced via `as.double`.

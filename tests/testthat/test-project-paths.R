@@ -1,5 +1,5 @@
 test_that("project$modelFolder resolves a relative path against projectDirPath", {
-  project <- esqlabsR:::.loadProjectJson(
+  project <- loadProject(
     system.file(
       "extdata",
       "projects",
@@ -16,7 +16,7 @@ test_that("project$modelFolder resolves a relative path against projectDirPath",
 })
 
 test_that("project$configurationsFolder resolves a relative path against projectDirPath", {
-  project <- esqlabsR:::.loadProjectJson(
+  project <- loadProject(
     system.file(
       "extdata",
       "projects",
@@ -33,7 +33,7 @@ test_that("project$configurationsFolder resolves a relative path against project
 })
 
 test_that("project$populationsFolder resolves relative to projectDirPath", {
-  project <- esqlabsR:::.loadProjectJson(
+  project <- loadProject(
     system.file(
       "extdata",
       "projects",
@@ -50,7 +50,7 @@ test_that("project$populationsFolder resolves relative to projectDirPath", {
 })
 
 test_that("project$dataFolder resolves relative to projectDirPath", {
-  project <- esqlabsR:::.loadProjectJson(
+  project <- loadProject(
     system.file(
       "extdata",
       "projects",
@@ -79,12 +79,12 @@ test_that("project$dataFolder is NULL when filePaths.dataFolder is unset", {
     auto_unbox = TRUE,
     null = "null"
   )
-  project <- esqlabsR:::.loadProjectJson(tmp)
+  project <- loadProject(tmp)
   expect_null(project$dataFolder)
 })
 
 test_that("project path fields are writable after the merger", {
-  project <- esqlabsR:::.loadProjectJson(
+  project <- loadProject(
     system.file(
       "extdata",
       "projects",
@@ -100,7 +100,7 @@ test_that("project path fields are writable after the merger", {
 })
 
 test_that(".clean_path expands env vars (other than PATH) and resolves to absolute", {
-  project <- esqlabsR:::.loadProjectJson(
+  project <- loadProject(
     system.file(
       "extdata",
       "projects",
@@ -123,7 +123,7 @@ test_that(".clean_path expands env vars (other than PATH) and resolves to absolu
 })
 
 test_that(".clean_path returns NULL on NULL/NA/zero-length input", {
-  project <- esqlabsR:::.loadProjectJson(
+  project <- loadProject(
     system.file(
       "extdata",
       "projects",

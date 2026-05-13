@@ -5,13 +5,13 @@
 # Lifecycle: .markModified clears validatedSinceMutation -------------
 
 test_that("a fresh project starts unmodified and unvalidated", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   expect_false(project$modified)
   expect_false(project$validatedSinceMutation)
 })
 
 test_that("addOutputPath() sets modified and clears validatedSinceMutation", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   project$.markValidated()
   expect_true(project$validatedSinceMutation)
 
@@ -22,7 +22,7 @@ test_that("addOutputPath() sets modified and clears validatedSinceMutation", {
 })
 
 test_that("removeOutputPath() warns on missing key and is a no-op", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   expect_warning(removeOutputPath(project, "Ghost"), "not found")
   expect_false(project$modified)
 })
@@ -30,7 +30,7 @@ test_that("removeOutputPath() warns on missing key and is a no-op", {
 # Standalone vs R6 delegate parity -----------------------------------
 
 test_that("project$addX delegates to the standalone addX", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
 
   project$addOutputPath("X", "Organism|A|Concentration in container")
   expect_true("X" %in% names(project$outputPaths))
@@ -51,7 +51,7 @@ test_that("project$addX delegates to the standalone addX", {
 # Add then remove round-trips ----------------------------------------
 
 test_that("addIndividual + removeIndividual round-trip leaves the section unchanged", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   before <- project$individuals
 
   addIndividual(project, "NewI", species = "Human", gender = "MALE")
@@ -62,7 +62,7 @@ test_that("addIndividual + removeIndividual round-trip leaves the section unchan
 })
 
 test_that("removeModelParameterEntry auto-removes empty parameter sets", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   addModelParameterEntry(project, "TempSet", "Organism|A", "K", 1.5, "1/h")
   expect_true("TempSet" %in% names(project$modelParameterSets))
 
@@ -71,7 +71,7 @@ test_that("removeModelParameterEntry auto-removes empty parameter sets", {
 })
 
 test_that("remove*ParameterSetEntry no-op on missing entry does not mark modified", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   addModelParameterEntry(project, "MSet", "Organism|A", "K", 1.5, "1/h")
   addApplicationParameterSetEntry(
     project,
@@ -111,7 +111,7 @@ test_that("remove*ParameterSetEntry no-op on missing entry does not mark modifie
 # FK validation ------------------------------------------------------
 
 test_that("addScenario aborts when a referenced individualId is unknown", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   expect_snapshot(
     error = TRUE,
     addScenario(
@@ -124,7 +124,7 @@ test_that("addScenario aborts when a referenced individualId is unknown", {
 })
 
 test_that("addIndividual aborts when individualId already exists", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   expect_snapshot(
     error = TRUE,
     addIndividual(project, "Indiv1", species = "Human", gender = "MALE")
@@ -132,7 +132,7 @@ test_that("addIndividual aborts when individualId already exists", {
 })
 
 test_that("addOutputPath aborts on a duplicate id", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   existing <- names(project$outputPaths)[[1]]
   expect_snapshot(
     error = TRUE,
@@ -145,7 +145,7 @@ test_that("addOutputPath aborts on a duplicate id", {
 })
 
 test_that("addScenario rejects NA-valued FK args", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   expect_snapshot(
     error = TRUE,
     addScenario(
@@ -167,7 +167,7 @@ test_that("addScenario rejects NA-valued FK args", {
 })
 
 test_that("addPlotGrid aborts when no plots are defined", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   project$plots <- list(
     dataCombined = list(),
     plotConfiguration = data.frame(),
@@ -182,7 +182,7 @@ test_that("addPlotGrid aborts when no plots are defined", {
 # .warnIfReferenced --------------------------------------------------
 
 test_that("removeOutputPath warns when the id is referenced by a scenario, removes anyway", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   referenced <- intersect(
     names(project$outputPaths),
     unlist(lapply(project$scenarios, \(sc) names(sc$outputPaths)))
@@ -193,7 +193,7 @@ test_that("removeOutputPath warns when the id is referenced by a scenario, remov
 })
 
 test_that("removeIndividual warns when referenced by a scenario", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   referenced <- "Indiv1"
   expect_warning(removeIndividual(project, referenced), "referenced")
   expect_false(referenced %in% names(project$individuals))
@@ -202,7 +202,7 @@ test_that("removeIndividual warns when referenced by a scenario", {
 # Integration: validate -> mutate -> .ensureValid re-runs validation -
 
 test_that("a mutation after validateProject() forces .ensureValid to re-validate", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
   # Force the cache flag without having to run a full validation
   # (validateProject() depends on dataFolder existing in the test
   # fixture, which is a separate concern).
@@ -226,7 +226,7 @@ test_that("a mutation after validateProject() forces .ensureValid to re-validate
 # Round-trip through JSON --------------------------------------------
 
 test_that("mutated project survives a saveProject -> loadProject round-trip", {
-  project <- esqlabsR:::.loadProjectJson(testProjectJSONPath())
+  project <- testProject()
 
   addOutputPath(project, "RoundtripX", "Organism|A|Concentration in container")
   addIndividual(
@@ -242,7 +242,7 @@ test_that("mutated project survives a saveProject -> loadProject round-trip", {
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
-  reloaded <- esqlabsR:::.loadProjectJson(out)
+  reloaded <- loadProject(out)
 
   expect_identical(
     reloaded$outputPaths$RoundtripX,

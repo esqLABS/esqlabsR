@@ -1,5 +1,5 @@
 test_that("loadProject() returns a Project from a valid Project.json", {
-  project <- loadProject(testProjectJSONPath())
+  project <- testProject()
   expect_s3_class(project, "Project")
   expect_equal(project$schemaVersion, "2.0")
   expect_equal(length(project$scenarios), 4)
@@ -25,7 +25,7 @@ test_that("loadProject() errors on an unsupported schemaVersion", {
 })
 
 test_that("saveProject writes a Project to disk and clears modified flag", {
-  project <- loadProject(testProjectJSONPath())
+  project <- testProject()
   project$modelFolder <- "AnotherModels"
   expect_true(project$modified)
 
@@ -37,7 +37,7 @@ test_that("saveProject writes a Project to disk and clears modified flag", {
 
 test_that("saveProject defaults to project$jsonPath when path is NULL", {
   tmp_src <- withr::local_tempfile(fileext = ".json")
-  project <- loadProject(testProjectJSONPath())
+  project <- testProject()
   saveProject(project, tmp_src)
   reloaded <- loadProject(tmp_src)
   reloaded$modelFolder <- "Models2"
@@ -51,10 +51,10 @@ test_that("saveProject errors when project has no jsonPath and path is NULL", {
 })
 
 test_that("saveProject errors on non-Project input", {
-  expect_snapshot(saveProject("not a project"), error = TRUE)
+  expect_error(saveProject("not a project"), "Project")
 })
 
-test_that("loadProject(exampleProjectPath()) succeeds", {
+test_that("exampleProject() succeeds", {
   path <- exampleProjectPath()
   expect_true(file.exists(path))
   project <- loadProject(path)

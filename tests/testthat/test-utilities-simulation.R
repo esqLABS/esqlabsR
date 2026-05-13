@@ -51,8 +51,8 @@ test_that("`compareSimulations()` produces no differences with identical simulat
 })
 
 test_that("`compareSimulations()` lists differencies on parameter correctly", {
-  sim1 <- loadSimulation(testthat::test_path("../data/simple.pkml"))
-  sim2 <- loadSimulation(testthat::test_path("../data/simple2.pkml"))
+  sim1 <- loadSimulation(getTestDataFilePath("simple.pkml"))
+  sim2 <- loadSimulation(getTestDataFilePath("simple2.pkml"))
 
   res <- compareSimulations(sim1, sim2)
   in1notIn2Paths <- c("Organism|RHSParameter")

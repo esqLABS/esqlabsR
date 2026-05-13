@@ -5,7 +5,7 @@ scenarioNames <- c("TestScenario", "PopulationScenario")
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 # Run scenarios from the JSON-based project
-.testProjectForDC <- loadProject(testProjectJSONPath())
+.testProjectForDC <- testProject()
 simulatedScenarios <- runScenarios(
   .testProjectForDC,
   scenarioNames = scenarioNames
@@ -185,12 +185,12 @@ test_that("createDataCombined errors on non-Project input", {
 })
 
 test_that("createDataCombined returns empty list when no names given", {
-  project <- loadProject(testProjectJSONPath())
+  project <- testProject()
   expect_identical(createDataCombined(project), list())
 })
 
 test_that("createDataCombined errors when requested name not in project", {
-  project <- loadProject(testProjectJSONPath())
+  project <- testProject()
   # TestProject has plots = NULL, so any requested name is missing
   expect_error(
     createDataCombined(project, dataCombinedNames = "Nonexistent"),
@@ -200,7 +200,7 @@ test_that("createDataCombined errors when requested name not in project", {
 })
 
 test_that("createDataCombined builds DataCombined for Example project", {
-  project <- loadProject(example_project_json_path())
+  project <- exampleProject()
   simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
   dcName <- names(project$plots$dataCombined)[[1]]
 
