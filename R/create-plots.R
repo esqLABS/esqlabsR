@@ -5,7 +5,6 @@
 # dataCombined / plotConfiguration / plotGrids and returns a named list of
 # plot-grid objects.
 
-
 #' Generate plots from a Project
 #'
 #' @description
@@ -43,7 +42,7 @@ createPlots <- function(
   stopIfNotFound = TRUE,
   validate = TRUE
 ) {
-  ospsuite.utils::validateIsOfType(project, "Project")
+  validateIsOfType(project, "Project")
   if (isTRUE(validate)) {
     .ensureValid(
       project,
@@ -584,4 +583,3 @@ createPlotsFromExcel <- function(...) {
   names(plotGrids) <- dfPlotGrids$name
   plotGrids
 }
-

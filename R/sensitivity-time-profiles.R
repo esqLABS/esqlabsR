@@ -585,18 +585,13 @@ sensitivityTimeProfiles <- function(
 #' @keywords internal
 #' @noRd
 .isConvertableUnit <- function(dataCombined, xUnit = NULL, yUnit = NULL) {
-  unitsConvertable <- TRUE
-
-  tryCatch(
+  return(tryCatch(
     {
       convertUnits(dataCombined, xUnit = xUnit, yUnit = yUnit)
+      TRUE
     },
-    error = function(e) {
-      unitsConvertable <<- FALSE
-    }
-  )
-
-  return(unitsConvertable)
+    error = function(e) FALSE
+  ))
 }
 
 #' Normalize units to match the length of outputPaths

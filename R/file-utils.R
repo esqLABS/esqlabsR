@@ -131,7 +131,7 @@ readExcel <- function(path, sheet = NULL, ...) {
 #' @keywords internal
 #' @noRd
 .cleanTextColumns <- function(df) {
-  char_cols <- sapply(df, is.character)
+  char_cols <- vapply(df, is.character, logical(1))
 
   if (!any(char_cols)) {
     return(df)

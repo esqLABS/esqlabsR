@@ -189,7 +189,7 @@ compareSimulations <- function(
 
   # For parameters present in both simulations, compare parameters pair wise and
   # store them if they differ
-  paramsDiff <- sapply(
+  paramsDiff <- lapply(
     commonPaths,
     function(path) {
       param1 <- getParameter(path, simulation1)
@@ -205,11 +205,11 @@ compareSimulations <- function(
         return(list("simulation1" = param1, "simulation2" = param2))
       }
       return(NULL)
-    },
-    USE.NAMES = TRUE
+    }
   )
+  names(paramsDiff) <- commonPaths
   # Remove all NULL entries
-  paramsDiff[sapply(paramsDiff, is.null)] <- NULL
+  paramsDiff[vapply(paramsDiff, is.null, logical(1))] <- NULL
 
   return(list(
     Parameters = list(
