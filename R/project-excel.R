@@ -399,9 +399,6 @@ exportProjectToExcel <- function(
 
   if (interactive() && !silent) {
     relPath <- fs::path_rel(projConfigPath, start = getwd())
-    # TODO: verify symbol exists -- messages$restoredProject not yet in
-    # messages.R on this branch (added in the reference branch); use
-    # messages$restoredProjectConfiguration as a placeholder.
     message(messages$restoredProjectConfiguration(
       project$jsonPath %||% "Project",
       relPath

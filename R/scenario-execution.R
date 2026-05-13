@@ -387,9 +387,6 @@
 
 # .runScenariosFromProject ----
 
-# Modern runScenarios() body. Internal -- `R/utilities-scenarios.R`
-# wraps this with the type-sniff dispatcher in the exported
-# `runScenarios()` symbol (Task 7).
 # @keywords internal
 # @noRd
 .runScenariosFromProject <- function(
