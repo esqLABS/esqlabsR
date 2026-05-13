@@ -583,10 +583,12 @@ print.PITask <- function(x, ...) {
 
 #' Run Parameter Identification tasks defined in a Project
 #'
-#' Builds and runs every requested PI task in the Project. Each task is
-#' built and executed inside a `tryCatch`; a build failure or
-#' optimisation failure on one task degrades to `result = NULL,
-#' error = <message>` and the loop continues.
+#' Builds and runs every requested PI task in the Project. Build errors
+#' (typos in parameter paths, unknown outputs, missing observed data, etc.)
+#' propagate as hard errors so users can fix them immediately. Only the
+#' optimisation step is wrapped in `tryCatch`: a numerical failure inside
+#' `task$run()` degrades to `result = NULL, error = <message>` so the loop
+#' continues with the remaining tasks.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @param piTaskNames Optional character vector. When `NULL` (default),
@@ -598,8 +600,9 @@ print.PITask <- function(x, ...) {
 #'   `.prepareScenario()` for parameter merging.
 #' @returns Named list of per-task results. Each entry is a list with
 #'   `task` (the runtime `ParameterIdentification` object), `result`
-#'   (the `PIResult` from `task$run()`, or `NULL` on failure), and
-#'   optional `error` (the failure message, absent on success).
+#'   (the `PIResult` from `task$run()`, or `NULL` on optimisation
+#'   failure), and optional `error` (the optimiser's failure message,
+#'   absent on success).
 #' @export
 runPI <- function(
   project,
@@ -657,18 +660,16 @@ runPI <- function(
   for (taskName in piTaskNames) {
     message(messages$messageRunningPITask(taskName))
     piTask <- taskMap[[taskName]]
+    runtime <- .createSinglePITask(
+      project = project,
+      piTask = piTask,
+      observedData = observedData
+    )
     entry <- tryCatch(
-      {
-        runtime <- .createSinglePITask(
-          project = project,
-          piTask = piTask,
-          observedData = observedData
-        )
-        list(task = runtime, result = runtime$run())
-      },
+      list(task = runtime, result = runtime$run()),
       error = function(e) {
         warning(messages$warningPIOptimizationFailed(taskName, e$message))
-        list(task = NULL, result = NULL, error = e$message)
+        list(task = runtime, result = NULL, error = e$message)
       }
     )
     results[[taskName]] <- entry

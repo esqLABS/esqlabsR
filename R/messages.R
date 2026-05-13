@@ -788,7 +788,8 @@ messages$errorPIScenarioNotFound <- function(scenarioName, availableScenarios) {
 
 messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
   cliFormat(
-    "Parameter identification task {.val {piTaskName}} failed: {.emph {errorMessage}}"
+    "Parameter identification task {.val {piTaskName}} optimisation failed: \\
+    {.emph {errorMessage}}"
   )
 }
 
