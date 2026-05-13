@@ -142,7 +142,7 @@
       createPITasks()
     Condition
       Warning:
-      `createPITasks()` was deprecated in esqlabsR 6.1.0.
+      `createPITasks()` was deprecated in esqlabsR 6.0.0.
       i Please use the `project` argument of `runPI()` instead.
       i createPITasks() is removed. runPI(project) builds and runs PI tasks in one step.
       Error in `createPITasks()`:
@@ -154,7 +154,7 @@
       runPI(list(SomeTask = "fake"))
     Condition
       Warning:
-      The `piTasks` argument of `runPI()` is deprecated as of esqlabsR 6.1.0.
+      The `piTasks` argument of `runPI()` is deprecated as of esqlabsR 6.0.0.
       i Please use the `project` argument instead.
       i Pass a Project object loaded with loadProject() instead of a pre-built list of ParameterIdentification objects.
       Error in `runPI()`:

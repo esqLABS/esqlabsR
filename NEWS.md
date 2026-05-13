@@ -28,8 +28,11 @@
   `removePIOutputMapping()` helpers, all of which mark the project modified.
   `PITaskConfiguration` and `readPITaskConfigurationFromExcel()` are removed
   outright; `createPITasks()` is a soft-deprecation stub that errors with a
-  pointer to `runPI(project, ...)`. The Excel project to JSON migration path
-  lands in a follow-up chapter (#928).
+  pointer to `runPI(project, ...)`. `runPI()` now hard-fails on build errors
+  (typos in parameter paths, unknown outputs, missing observed data) and
+  only soft-fails on numerical optimisation failures, so user typos surface
+  immediately instead of being swallowed into a warning. The Excel project
+  to JSON migration path lands in a follow-up chapter (#928).
 
 ## Breaking changes
 
