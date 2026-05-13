@@ -1,5 +1,9 @@
 # esqlabsR (development version)
 
+## Internal
+
+- Internal reorganisation: per-domain R files. `R/utilities-scenarios.R` splits into `R/scenarios.R` and `R/output-paths.R`; `R/utilities-individual.R` → `R/individuals.R`; `R/utilities-population.R` → `R/populations.R`; `R/utilities-parameters.R` → `R/parameters.R`; `R/utilities-figures.R` → `R/plots.R`; `R/utilities-data-combined.R` → `R/data-combined.R`. No behaviour changes; test files renamed to mirror sources. (#908)
+
 ## Internal (work in progress)
 
 - The data and plotting layers start driving off the parsed `Project`:
