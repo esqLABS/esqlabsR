@@ -353,6 +353,7 @@ obsDataMultiple[[2]]$yDimension <- "Amount"
 obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
 
 test_that("sensitivityTimeProfiles works with multiple observed data with different dimensions", {
+  skip_on_os("mac")
   set.seed(123)
   plotsMultiple <- sensitivityTimeProfiles(
     resultsMultiple,

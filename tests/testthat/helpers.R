@@ -163,7 +163,7 @@ summarizer <- function(data, path) {
     "charColumnSummary" = dplyr::select(data, where(is.character)) |>
       purrr::map_dfr(unique),
     "numericColumnSummary" = dplyr::select(data, where(is.numeric)) |>
-      purrr::map_df(summary, .id = "column")
+      purrr::map_dfr(\(x) as.list(summary(x)), .id = "column")
   )
 }
 
