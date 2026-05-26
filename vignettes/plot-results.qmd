@@ -1,9 +1,8 @@
 ---
 title: "4. Plot Results"
-output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{plot-results}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -48,9 +47,39 @@ Each plot to draw is defined in a **plotGrid** which is specified in the
 the plotConfiguration sheet and has many options to customize the layout of the
 plots. More information in the [Drawing Plots](#drawing-plots) section.
 
-Once all the excel sheets are setup, just call the `createPlotsFromExcel()` function to generate the plots defined in the Excel file.
+Once all the excel sheets are setup, just call the `createPlotsFromExcel()`
+function to generate and export the plots.
 
-![](Figures/plot-workflow.png)
+```{mermaid}
+classDiagram
+    direction LR
+    class DataCombined {
+        DataCombinedName
+        dataType
+        label
+        scenario
+        ...
+    }
+    class plotConfiguration {
+        plotID
+        DataCombinedName
+        plotType
+        title
+        ...
+    }
+    class plotGrids {
+        name
+        plotID
+        title
+        ...
+    }
+    DataCombined --> plotConfiguration
+    plotConfiguration --> plotGrids
+
+    note for DataCombined "Simulation results and observed data"
+    note for plotConfiguration "Data and type of each plot"
+    note for plotGrids "Plots to combine on one panel"
+```
 
 ### Specify a `DataCombined`
 
@@ -146,7 +175,9 @@ observedData <- loadObservedData(
 
 #### Setup the `Plot.xlsx` file
 
-Then, the `Plot.xlsx` file is setup to define the `DataCombined`, customize the plots and specify the plotGrids. The `Plot.xlsx` file used in this example can be found
+Then, the `Plot.xlsx` file is setup to define the `DataCombined`, customize
+plots, and specify plotGrids. The `Plot.xlsx` file used in this
+example can be found
 [here](https://github.com/esqLABS/esqlabsR/raw/main/inst/extdata/examples/TestProject/Configurations/Plots.xlsx).
 
 #### Use `createPlotsFromExcel()`
@@ -177,9 +208,6 @@ plots$Aciclovir
 ```{r}
 plots$Aciclovir2
 ```
-
-Also, calling this function will export the plots as image files if the
-exportConfiguration sheet is setup correctly.
 
 By default, the function will try to create all plots defined in the
 **plotGrids** sheet. If any of the simulation results or the observed date

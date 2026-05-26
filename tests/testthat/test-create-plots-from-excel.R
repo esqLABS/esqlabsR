@@ -602,8 +602,6 @@ test_that("When custom DataCombined is passed, it is used instead of the one def
   )
 
   expect_no_error(plots)
-
-  skip_on_os("mac")
   vdiffr::expect_doppelganger(title = "firstPlot", plots[[1]])
   vdiffr::expect_doppelganger(title = "secondPlot", plots[[2]])
 })
@@ -1187,7 +1185,7 @@ test_that("It provides clear error when xValuesLimits uses space instead of comm
       )
 
       projectConfigurationLocal$plotsFile <- file.path(tempDir, "Plots.xlsx")
-      
+
       expect_error(
         createPlotsFromExcel(
           simulatedScenarios = simulatedScenarios,

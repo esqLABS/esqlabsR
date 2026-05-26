@@ -73,7 +73,6 @@ test_that("adding plots works with plots grid configuration", {
 })
 
 test_that("Plot Grid can have very long texts and contain plots with very long titles", {
-  skip_on_os("mac")
   ls_plots <- list(
     # first plot
     ospsuite.plots::plotBoxWhisker(

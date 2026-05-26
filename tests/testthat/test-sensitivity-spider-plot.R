@@ -90,7 +90,6 @@ test_that("sensitivitySpiderPlot legend labels are correctly applied", {
 # Default plot with custom PK parameter -----------------------------------
 
 test_that("sensitivitySpiderPlot handles custom PK parameters", {
-  skip_on_os("mac")
   customFun <- list("minmax" = function(y) max(y) / min(y[y != 0]))
 
   resultsCustomPK <- sensitivityCalculation(
@@ -125,7 +124,6 @@ test_that("sensitivitySpiderPlot applies free y-axis scaling correctly", {
 })
 
 test_that("sensitivitySpiderPlot correctly applies absolute y-axis values correctly", {
-  skip_on_os("mac")
   set.seed(123)
   p <- sensitivitySpiderPlot(results, yAxisType = "absolute")
 
@@ -259,7 +257,6 @@ resultsMultiple <- sensitivityCalculation(
 )
 
 test_that("sensitivitySpiderPlot handles multiple output paths correctly", {
-  skip_on_os("mac")
   set.seed(123)
   plotsMultiple <- sensitivitySpiderPlot(resultsMultiple)
 
