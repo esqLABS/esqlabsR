@@ -122,10 +122,10 @@ each plot type:
 | `title` | ✔️ | ✔️ | ✔️ | Main title of the plot |
 | `titleSize` | ✔️ | ✔️ | ✔️ | Font size of the title |
 | `subtitle` | ✔️ |  | ✔️ | Subtitle text below the title |
-| `xAxisScale` | ✔️ | ✔️ |  | X-axis scale type ("log", "lin") |
+| `xAxisScale` | ✔️ | ✔️ |  | X-axis scale type ("log", "linear") |
 | `xLabel` | ✔️ | ✔️ | ✔️ | Label for the x-axis |
 | `xValuesLimits` | ✔️ |  |  | Limits for x-values |
-| `yAxisScale` | ✔️ | ✔️ |  | Y-axis scale type ("log", "lin") |
+| `yAxisScale` | ✔️ | ✔️ |  | Y-axis scale type ("log", "linear") |
 | `yAxisTicks` | ✔️ |  |  | Number of ticks on y-axis |
 | `yAxisLimits` | ✔️ |  |  | Y-axis limits |
 | `yValuesLimits` | ✔️ |  |  | Limits for y-values |
@@ -179,7 +179,7 @@ the `defaultPlotConfiguration` object. This provides a convenient way to
 apply one-off changes without modifying the configuration globally.
 
 The example below demonstrates this behavior: although the configuration
-sets the y-axis to a logarithmic scale, passing `yAxisScale = "lin"`
+sets the y-axis to a logarithmic scale, passing `yAxisScale = "linear"`
 directly to the function takes precedence and applies a linear scale
 instead.
 
@@ -193,7 +193,7 @@ myConfiguration$yAxisScale <- "log"
 
 sensitivityTimeProfiles(
   sensitivityCalculation = analysis, 
-  yAxisScale = "lin", 
+  yAxisScale = "linear", 
   defaultPlotConfiguration = myConfiguration
 )
 ```

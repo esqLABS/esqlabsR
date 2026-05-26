@@ -17,6 +17,7 @@ This version updates the figure creation workflow to use the new approach implem
 
 ## Minor improvements and bug fixes
 
+- Allowed values for `xAxisScale` and `yAxisScale` in `Plots.xlsx` now follow the `ospsuite.plots` convention: use `"linear"` instead of `"lin"`.
 - `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set) (#1007).
 
 # esqlabsR 5.6.0
