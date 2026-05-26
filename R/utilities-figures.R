@@ -136,7 +136,7 @@ col2hsv <- function(color) {
 #' The default attributes of the class are chosen to reflect the corporate
 #' standards adopted by esqLABS GmbH.
 #'
-#' @param plotType Optional one of `"timeProfiles"`, `"spiderPlot"`, `"tornadoPlot` adding plot type specific settings
+#' @param plotType Optional one of `"timeProfiles"`, `"spiderPlot"`, `"tornadoPlot"` adding plot type specific settings
 #'
 #' @returns A named list
 #'
@@ -186,12 +186,10 @@ createEsqlabsPlotConfiguration <- function(plotType = NULL) {
   # Add specific default properties for spiderPlot, tornadoPlot and timeProfiles
   plotConfigurationForType <- .plotConfigurationFromType(plotType)
   ospsuite.utils::validateIsOfType(defaultPlotConfiguration, "list")
-  for (propertyName in names(plotConfigurationForType)) {
-    defaultPlotConfiguration[[propertyName]] <- defaultPlotConfiguration[[
-      propertyName
-    ]] %||%
-      plotConfigurationForType[[propertyName]]
-  }
+  defaultPlotConfiguration <- modifyList(
+    plotConfigurationForType, 
+    defaultPlotConfiguration
+  )
   return(defaultPlotConfiguration)
 }
 
@@ -400,6 +398,26 @@ createPlotsFromExcel <- function(
             ),
             yUnit = .fieldFromExcel(
               "yUnit",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            xScale = .fieldFromExcel(
+              "xAxisScale",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            xScaleArgs = .fieldFromExcel(
+              "xValuesLimits",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yScale = .fieldFromExcel(
+              "yAxisScale",
+              plotConfigurationRow,
+              defaultConfiguration
+            ),
+            yScaleArgs = .fieldFromExcel(
+              "yValuesLimits",
               plotConfigurationRow,
               defaultConfiguration
             ),
@@ -1068,7 +1086,7 @@ createPlotsFromExcel <- function(
     ),
     xAxisScale = list(
       type = "character",
-      allowedValues = c("log", "lin")
+      allowedValues = c(ospsuite.plots::AxisScales$log, ospsuite.plots::AxisScales$linear)
     ),
     xLabel = list(
       type = "character",
@@ -1080,7 +1098,7 @@ createPlotsFromExcel <- function(
     ),
     yAxisScale = list(
       type = "character",
-      allowedValues = c("log", "lin")
+      allowedValues = c(ospsuite.plots::AxisScales$log, ospsuite.plots::AxisScales$linear)
     ),
     yAxisTicks = list(
       type = "integer",
@@ -1209,7 +1227,9 @@ createPlotsFromExcel <- function(
       return(defaultConfiguration[["comparisonLineVector"]])
     }
     foldDistance <- .parseExcelMultiValueField(
-      plotConfigurationRow[["foldDistance"]]
+      plotConfigurationRow[["foldDistance"]],
+      fieldName = "foldDistance",
+      plotID = plotConfigurationRow$plotID
     )
     return(ospsuite.plots::getFoldDistanceList(folds = foldDistance))
   }
@@ -1254,7 +1274,9 @@ createPlotsFromExcel <- function(
       return(list())
     }
     valuesLimits <- .parseExcelMultiValueField(
-      plotConfigurationRow[[fieldName]]
+      plotConfigurationRow[[fieldName]],
+      fieldName = fieldName,
+      plotID = plotConfigurationRow$plotID
     )
     return(list(limits = valuesLimits))
   }

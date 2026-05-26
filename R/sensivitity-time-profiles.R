@@ -138,14 +138,30 @@ sensitivityTimeProfiles <- function(
 
   .validateCharVector(outputPaths, nullAllowed = TRUE)
   .validateCharVector(parameterPaths, nullAllowed = TRUE)
-
+  
   # Plot configuration setup -----------------------------
-  customPlotConfiguration <- defaultPlotConfiguration %||%
-    .plotConfigurationFromType("timeProfiles")
+  customPlotConfiguration <- .plotConfigurationFromType("timeProfiles")
+  if (!is.null(defaultPlotConfiguration)) {
+    customPlotConfiguration <- modifyList(
+      customPlotConfiguration,
+      defaultPlotConfiguration
+    )
+  }
   customPlotConfiguration$xAxisScale <- xAxisScale %||%
     customPlotConfiguration$xAxisScale
   customPlotConfiguration$yAxisScale <- yAxisScale %||%
     customPlotConfiguration$yAxisScale
+  
+  validateIsOption(
+    list(
+      xAxisScale = customPlotConfiguration$xAxisScale,
+      yAxisScale = customPlotConfiguration$yAxisScale
+    ),
+    .getPlotConfigurationOptions(c(
+      "xAxisScale",
+      "yAxisScale"
+    ))
+  )
 
   # Prepare data -----------------------------------------
   data <- .aggregateSimulationAndObservedData(

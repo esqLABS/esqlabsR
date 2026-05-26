@@ -610,7 +610,7 @@ messages$excelFieldFormatError <- function(
   plotID,
   expectedFormat
 ) {
-  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
+  plotInfo <- if (!is.null(plotID)) cliFormat(" in plot {.val {plotID}}") else ""
   cliFormat(
     "Excel validation error{plotInfo}: Invalid format for {.field {fieldName}}.
     Provided: {.val {value}}
@@ -626,13 +626,11 @@ messages$excelFieldLengthError <- function(
   expected,
   actual
 ) {
-  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
-  valuePlural <- if (actual != 1) "s" else ""
-  expectedPlural <- if (expected != 1) "s" else ""
+  plotInfo <- if (!is.null(plotID)) cliFormat(" in plot {.val {plotID}}") else ""
   cliFormat(
     "Excel validation error{plotInfo}: Wrong number of values for {.field {fieldName}}.
-    Provided: {.val {value}} ({actual} value{valuePlural})
-    Expected: {expected} comma-separated value{expectedPlural}
+    Provided: {.val {value}} ({actual} value{?s})
+    Expected: {expected} comma-separated value{?s}
     Example: '72, 80'"
   )
 }
@@ -643,7 +641,7 @@ messages$excelFieldTypeError <- function(
   plotID,
   expectedType
 ) {
-  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
+  plotInfo <- if (!is.null(plotID)) cliFormat(" in plot {.val {plotID}}") else ""
   cliFormat(
     "Excel validation error{plotInfo}: Invalid {.field {fieldName}} value.
     Provided: {.val {value}}

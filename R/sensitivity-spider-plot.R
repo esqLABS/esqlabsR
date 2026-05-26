@@ -143,26 +143,35 @@ sensitivitySpiderPlot <- function(
   .validateCharVector(outputPaths, nullAllowed = TRUE)
   .validateCharVector(parameterPaths, nullAllowed = TRUE)
   .validateCharVector(pkParameters, nullAllowed = TRUE)
-
+  
   # Plot configuration setup -----------------------------
-  customPlotConfiguration <- defaultPlotConfiguration %||%
-    .plotConfigurationFromType("spiderPlot")
+  customPlotConfiguration <- .plotConfigurationFromType("spiderPlot")
+  if (!is.null(defaultPlotConfiguration)) {
+    customPlotConfiguration <- modifyList(
+      customPlotConfiguration,
+      defaultPlotConfiguration
+    )
+  }
   customPlotConfiguration$xAxisScale <- xAxisScale %||%
     customPlotConfiguration$xAxisScale
   customPlotConfiguration$yAxisScale <- yAxisScale %||%
     customPlotConfiguration$yAxisScale
-
+  
   # validate separately as not supported by DefaultPlotConfiguration
   validateIsOption(
     list(
       yAxisFacetScales = yAxisFacetScales,
       xAxisType = xAxisType,
-      yAxisType = yAxisType
+      yAxisType = yAxisType,
+      xAxisScale = customPlotConfiguration$xAxisScale,
+      yAxisScale = customPlotConfiguration$yAxisScale
     ),
     .getPlotConfigurationOptions(c(
       "yAxisFacetScales",
       "xAxisType",
-      "yAxisType"
+      "yAxisType",
+      "xAxisScale",
+      "yAxisScale"
     ))
   )
 

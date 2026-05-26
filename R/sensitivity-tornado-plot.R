@@ -136,9 +136,14 @@ sensitivityTornadoPlot <- function(
   }
 
   # Plot configuration setup -----------------------------
-  customPlotConfiguration <- defaultPlotConfiguration %||%
-    .plotConfigurationFromType("tornadoPlot")
-
+  customPlotConfiguration <- .plotConfigurationFromType("tornadoPlot")
+  if (!is.null(defaultPlotConfiguration)) {
+    customPlotConfiguration <- modifyList(
+      customPlotConfiguration,
+      defaultPlotConfiguration
+    )
+  }
+  
   # Prepare data -----------------------------------------
 
   data <- .filterPlottingData(
