@@ -796,6 +796,11 @@ createPlotsFromExcel <- function(
     "subtitle",
     "lloqOnBothAxes"
   )
+  # Extend expectedExcelColumns to plot configuration fields
+  expectedExcelColumns <- union(
+    expectedExcelColumns, 
+    names(.plotConfigurationFromType(plotType = "spiderPlot"))
+    )
   validConfigurationProperties <- isIncluded(
     names(dfPlotConfigurations),
     expectedExcelColumns
