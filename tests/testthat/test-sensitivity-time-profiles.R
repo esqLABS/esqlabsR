@@ -101,7 +101,7 @@ n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
   set.seed(123)
-  p <- sensitivityTimeProfiles(results, yAxisScale = "lin")
+  p <- sensitivityTimeProfiles(results, yAxisScale = "linear")
 
   set.seed(123)
   suppressWarnings(
