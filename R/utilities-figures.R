@@ -182,10 +182,14 @@ createEsqlabsPlotConfiguration <- function(plotType = NULL) {
   defaultPlotConfiguration$pointsColor <- esqlabsEnv$colorPalette
   defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
   defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
+  
+  ospsuite.utils::validateIsOfType(defaultPlotConfiguration, "list")
 
   # Add specific default properties for spiderPlot, tornadoPlot and timeProfiles
   plotConfigurationForType <- .plotConfigurationFromType(plotType)
-  ospsuite.utils::validateIsOfType(defaultPlotConfiguration, "list")
+  if(is.null(plotConfigurationForType)){
+    return(defaultPlotConfiguration)
+  }
   defaultPlotConfiguration <- modifyList(
     plotConfigurationForType, 
     defaultPlotConfiguration
