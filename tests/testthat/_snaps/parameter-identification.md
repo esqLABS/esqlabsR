@@ -108,7 +108,7 @@
         * Scenarios: S1
         * Output Path Id: Aciclovir_PVB
         * Observed Data Id: Laskin_GroupA
-        * Scaling: Linear
+        * Scaling: lin
         * Weight: 1, 2, 3
 
 # print(PITask) renders header, scenarios, parameter count, mapping count, algorithm
@@ -122,7 +122,7 @@
         * Number of Parameters: 1
         * Number of Output Mappings: 1
         * Algorithm: Monte-Carlo
-        * CI Method: LinearApproximation
+        * CI Method: hessian
 
 # runPI(project) refuses to run when validation has critical errors
 

@@ -235,7 +235,7 @@
           "scenarios": ["Aciclovir_iv"],
           "outputPathId": "Aciclovir_PVB",
           "observedDataId": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
-          "scaling": "Linear",
+          "scaling": "lin",
           "xOffset": 0,
           "yOffset": 0,
           "xFactor": 1,
@@ -244,7 +244,7 @@
       ],
       "configuration": {
         "algorithm": "BOBYQA",
-        "ciMethod": "LinearApproximation"
+        "ciMethod": "hessian"
       }
     }
   ]

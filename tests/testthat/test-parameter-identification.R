@@ -69,7 +69,7 @@ test_that("PIOutputMapping() builds a plain-data record with the expected shape"
     scenarios = "S1",
     outputPathId = "Aciclovir_PVB",
     observedDataId = "Laskin_GroupA",
-    scaling = "Linear",
+    scaling = "lin",
     xOffset = 0,
     yOffset = 0,
     xFactor = 1,
@@ -269,7 +269,7 @@ test_that("print(PIOutputMapping) renders a compact summary", {
     scenarios = "S1",
     outputPathId = "Aciclovir_PVB",
     observedDataId = "Laskin_GroupA",
-    scaling = "Linear",
+    scaling = "lin",
     weight = c(1, 2, 3)
   )
   expect_snapshot(print(m))
@@ -299,7 +299,7 @@ test_that("print(PITask) renders header, scenarios, parameter count, mapping cou
     ),
     configuration = list(
       algorithm = "Monte-Carlo",
-      ciMethod = "LinearApproximation"
+      ciMethod = "hessian"
     )
   )
   expect_snapshot(print(t))
@@ -486,7 +486,7 @@ test_that(".parsePITasks |> .parameterIdentificationToJson |> .parsePITasks is i
           scenarios = list("S1"),
           outputPathId = "P",
           observedDataId = "D",
-          scaling = "Linear",
+          scaling = "lin",
           xOffset = 0,
           yOffset = 0,
           xFactor = 1,
@@ -696,6 +696,43 @@ test_that("runPI(project) refuses to run when validation has critical errors", {
   )
   project$parameterIdentification <- list(T = bad)
   expect_snapshot(error = TRUE, runPI(project))
+})
+
+test_that("runPI(project) runs a task end to end and returns a PIResult", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  invisible(capture.output(suppressMessages(suppressWarnings(
+    results <- runPI(project)
+  ))))
+
+  expect_named(results, "AciclovirSimple")
+  entry <- results[["AciclovirSimple"]]
+  expect_s3_class(entry$task, "ParameterIdentification")
+  expect_s3_class(entry$result, "PIResult")
+  expect_null(entry$error)
+})
+
+test_that("runPI(project) degrades to a warning and NULL result when a task fails", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+
+  failing <- structure(
+    list(run = function() stop("Simulated optimization failure")),
+    class = c("ParameterIdentification", "R6")
+  )
+  local_mocked_bindings(.createSinglePITask = function(...) failing)
+
+  expect_warning(
+    invisible(capture.output(suppressMessages(results <- runPI(project)))),
+    messages$warningPIOptimizationFailed(
+      "AciclovirSimple",
+      "Simulated optimization failure"
+    ),
+    fixed = TRUE
+  )
+
+  entry <- results[["AciclovirSimple"]]
+  expect_null(entry$task)
+  expect_null(entry$result)
+  expect_identical(entry$error, "Simulated optimization failure")
 })
 
 test_that("createPITasks() emits a soft-deprecation warning", {
