@@ -124,7 +124,6 @@ test_that("sensitivitySpiderPlot applies free y-axis scaling correctly", {
 })
 
 test_that("sensitivitySpiderPlot correctly applies absolute y-axis values correctly", {
-  skip_on_os("mac")
   set.seed(123)
   p <- sensitivitySpiderPlot(results, yAxisType = "absolute")
 
@@ -167,13 +166,13 @@ test_that("sensitivitySpiderPlot applies absolute x- and y-axis values correctly
     xAxisType = "absolute",
     yAxisType = "absolute",
     xAxisScale = "log",
-    yAxisScale = "lin"
+    yAxisScale = "linear"
   ) # default scales
   p2 <- sensitivitySpiderPlot(
     results,
     xAxisType = "absolute",
     yAxisType = "absolute",
-    xAxisScale = "lin",
+    xAxisScale = "linear",
     yAxisScale = "log"
   )
 
@@ -204,8 +203,8 @@ test_that("sensitivitySpiderPlot applies free scaling with absolute y-values", {
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
-  myPlotConfiguration <- createEsqlabsPlotConfiguration()
-  myPlotConfiguration$xAxisScale <- "lin"
+  myPlotConfiguration <- createEsqlabsPlotConfiguration("spiderPlot")
+  myPlotConfiguration$xAxisScale <- "linear"
   myPlotConfiguration$yAxisScale <- "log"
 
   p <- sensitivitySpiderPlot(
@@ -219,15 +218,15 @@ test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
 })
 
 test_that("sensitivitySpiderPlot signature overrides defaultPlotConfiguration", {
-  myPlotConfiguration <- createEsqlabsPlotConfiguration()
-  myPlotConfiguration$xAxisScale <- "lin" # to be overridden
+  myPlotConfiguration <- createEsqlabsPlotConfiguration("spiderPlot")
+  myPlotConfiguration$xAxisScale <- "linear" # to be overridden
   myPlotConfiguration$yAxisScale <- "log" # to be overridden
 
   p <- sensitivitySpiderPlot(
     results,
     defaultPlotConfiguration = myPlotConfiguration,
     xAxisScale = "log",
-    yAxisScale = "lin"
+    yAxisScale = "linear"
   )
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
@@ -258,7 +257,6 @@ resultsMultiple <- sensitivityCalculation(
 )
 
 test_that("sensitivitySpiderPlot handles multiple output paths correctly", {
-  skip_on_os("mac")
   set.seed(123)
   plotsMultiple <- sensitivitySpiderPlot(resultsMultiple)
 

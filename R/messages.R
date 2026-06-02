@@ -419,6 +419,22 @@ messages$missingPlotType <- function() {
   )
 }
 
+messages$missingOrWrongPlotType <- function(plotType) {
+  if (is.null(plotType)) {
+    return(messages$missingPlotType())
+  }
+  cliFormat(
+    "Wrong values found in mandatory column {.val plotType} of sheet {.var plotConfiguration}: {.val {plotType}}.",
+    "Allowed values are: {.val {c('individual', 'population', 'observedVsSimulated', 'residualsVsSimulated', 'residualsVsTime')}}"
+  )
+}
+
+messages$wrongPlotTypeInPlotConfiguration <- function(plotType) {
+  cliFormat(
+    "{.field plotType} ({.val {plotType}}) is not one of {.val {c('timeProfiles', 'spiderPlot', 'tornadoPlot')}}"
+  )
+}
+
 messages$missingDataType <- function() {
   cliFormat(
     "Missing values found in mandatory column {.val dataType} of sheet {.var DataCombined}. Fill in values to proceed."
@@ -484,23 +500,8 @@ messages$invalidConfigurationPropertyFromExcel <- function(
   configurationType
 ) {
   cliFormat(
-    "Trying to apply property {.arg {propertyName}} that is not supported by 
-    the configuration {.var {configurationType}}! Check column names in the 
-    excel file defining plot configurations."
-  )
-}
-
-messages$missingOutputFileName <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.arg outputName} of sheet {.var exportConfiguration}. No plots are exported to file for corresponding rows."
-  )
-}
-
-messages$missingPlotGrids <- function(missingPlotGrids) {
-  cliFormat(
-    "Invalid values in column {.arg plotGridName} of sheet {.var exportConfiguration}:
-    {.val {paste0(missingPlotGrids, collapse = ',\n')}}. Plot grids are either not defined or empty and can not be
-    exported to file."
+    "Trying to apply property {.arg {propertyName}} that is not supported by the configuration {.var {configurationType}}!",
+    "Check column names in the excel file defining plot configurations."
   )
 }
 
@@ -609,7 +610,7 @@ messages$excelFieldFormatError <- function(
   plotID,
   expectedFormat
 ) {
-  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
+  plotInfo <- if (!is.null(plotID)) cliFormat(" in plot {.val {plotID}}") else ""
   cliFormat(
     "Excel validation error{plotInfo}: Invalid format for {.field {fieldName}}.
     Provided: {.val {value}}
@@ -625,13 +626,11 @@ messages$excelFieldLengthError <- function(
   expected,
   actual
 ) {
-  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
-  valuePlural <- if (actual != 1) "s" else ""
-  expectedPlural <- if (expected != 1) "s" else ""
+  plotInfo <- if (!is.null(plotID)) cliFormat(" in plot {.val {plotID}}") else ""
   cliFormat(
     "Excel validation error{plotInfo}: Wrong number of values for {.field {fieldName}}.
-    Provided: {.val {value}} ({actual} value{valuePlural})
-    Expected: {expected} comma-separated value{expectedPlural}
+    Provided: {.val {value}} ({actual} value{?s})
+    Expected: {expected} comma-separated value{?s}
     Example: '72, 80'"
   )
 }
@@ -642,7 +641,7 @@ messages$excelFieldTypeError <- function(
   plotID,
   expectedType
 ) {
-  plotInfo <- if (!is.null(plotID)) paste0(" in plot {.val {plotID}}") else ""
+  plotInfo <- if (!is.null(plotID)) cliFormat(" in plot {.val {plotID}}") else ""
   cliFormat(
     "Excel validation error{plotInfo}: Invalid {.field {fieldName}} value.
     Provided: {.val {value}}
@@ -899,4 +898,11 @@ messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
 
 messages$messageRunningPITask <- function(piTaskName) {
   cliFormat("Running PI task: {.val {piTaskName}}")
+}
+
+messages$conflictingAxesScales <- function(plotID) {
+  cli::format_message(c(
+    "x" = "{.strong observedVsSimulated} plot with plotID {.val {plotID}} has conflicting {.field xAxisScale} and {.field yAxisScale}",
+    "i" = "Use either {.val linear} or {.val log} in both columns"
+  ))
 }

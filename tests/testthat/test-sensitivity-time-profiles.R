@@ -101,7 +101,7 @@ n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
   set.seed(123)
-  p <- sensitivityTimeProfiles(results, yAxisScale = "lin")
+  p <- sensitivityTimeProfiles(results, yAxisScale = "linear")
 
   set.seed(123)
   suppressWarnings(
@@ -353,7 +353,6 @@ obsDataMultiple[[2]]$yDimension <- "Amount"
 obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
 
 test_that("sensitivityTimeProfiles works with multiple observed data with different dimensions", {
-  skip_on_os("mac")
   set.seed(123)
   plotsMultiple <- sensitivityTimeProfiles(
     resultsMultiple,

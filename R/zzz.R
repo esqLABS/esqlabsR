@@ -3,9 +3,16 @@ esqlabsEnv$colorPalette <- .getEsqlabsColors()
 
 .onLoad <- function(libname, pkgname) {
   Sys.setenv("_R_CHECK_LENGTH_1_CONDITION_" = "true")
-
-  # Change maximal caption width in figures coming from TLF
-  tlf::setDefaultMaxCharacterWidth(75)
+  # showtext is currently installed along ospsuite package
+  # and may be enabled which can lead to inconsistent exported plots
+  # this chunk ensures that showtext is disabled
+  if (requireNamespace("showtext", quietly = TRUE)) {
+    showtext::showtext_auto(enable = FALSE)
+  }
+  options(
+    ospsuite.plots.watermarkEnabled = FALSE,
+    ggplot2.discrete.colour = NULL
+    )
 }
 
 utils::globalVariables(c(

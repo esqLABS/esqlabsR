@@ -3,13 +3,21 @@
 ## New features
 
 - Added Excel-based parameter identification (PI) workflow: `readPITaskConfigurationFromExcel()`, `createPITasks()`, and `runPI()` enable defining and running PI tasks from `ParameterIdentification.xlsx`. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See `vignette("pi-workflow")` (\#928).
+- By default, Predicted vs Observed plots will display LLOQ values on both axes. The default behaviour can be changed in Excel Plots.xlsx files by defining `TRUE`/`FALSE` under `lloqOnBothAxes` column (#991)
 
 ## Breaking changes
 
+This version updates the figure creation workflow to use the new approach implemented in `{ospsuite}` version 12.4.2. See ["Plotting with ospsuite.plots"](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/plotting-with-ospsuite-plots.html) for more details.
+
 - Bumped minimum required `ospsuite` version to 12.4.2; earlier versions fail to load data correctly (#1000).
+- Removed sheet "exportConfiguration" from the "Plots.xlsx" configuration. Automated export of figures generated from excel sheets to files is not supported any more. To export figures, use `ospsuite.plots::exportPlot()` or the standard `ggplot2` export functions
+- Removed class `ExportConfiguration` that was overriding `ExportConfiguration` from the `tlf` package.
+- Removed function `createEsqlabsExportConfiguration()`
+- Argument `outputFolder` removed from the signature of the function `createPlotsFromExcel()`
 
 ## Minor improvements and bug fixes
 
+- Allowed values for `xAxisScale` and `yAxisScale` in `Plots.xlsx` now follow the `ospsuite.plots` convention: use `"linear"` instead of `"lin"`.
 - `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set) (#1007).
 
 # esqlabsR 5.6.0
