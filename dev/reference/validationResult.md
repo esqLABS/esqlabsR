@@ -20,7 +20,7 @@ R6 class for storing validation results from Excel configuration files
 
 ### Public methods
 
-- [`validationResult$new()`](#method-validationResult-new)
+- [`validationResult$new()`](#method-validationResult-initialize)
 
 - [`validationResult$add_critical_error()`](#method-validationResult-add_critical_error)
 
@@ -40,7 +40,7 @@ R6 class for storing validation results from Excel configuration files
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `validationResult$new()`
 
 Initialize a new ValidationResult
 
@@ -50,7 +50,7 @@ Initialize a new ValidationResult
 
 ------------------------------------------------------------------------
 
-### Method `add_critical_error()`
+### `validationResult$add_critical_error()`
 
 Add a critical error
 
@@ -74,7 +74,7 @@ Add a critical error
 
 ------------------------------------------------------------------------
 
-### Method `add_warning()`
+### `validationResult$add_warning()`
 
 Add a warning
 
@@ -98,7 +98,7 @@ Add a warning
 
 ------------------------------------------------------------------------
 
-### Method `set_data()`
+### `validationResult$set_data()`
 
 Set validated data
 
@@ -114,7 +114,7 @@ Set validated data
 
 ------------------------------------------------------------------------
 
-### Method `is_valid()`
+### `validationResult$is_valid()`
 
 Check if validation passed (no critical errors)
 
@@ -124,7 +124,7 @@ Check if validation passed (no critical errors)
 
 ------------------------------------------------------------------------
 
-### Method `has_critical_errors()`
+### `validationResult$has_critical_errors()`
 
 Check if there are critical errors
 
@@ -134,7 +134,7 @@ Check if there are critical errors
 
 ------------------------------------------------------------------------
 
-### Method `get_formatted_messages()`
+### `validationResult$get_formatted_messages()`
 
 Get formatted messages for display
 
@@ -144,7 +144,7 @@ Get formatted messages for display
 
 ------------------------------------------------------------------------
 
-### Method `get_summary()`
+### `validationResult$get_summary()`
 
 Get validation summary
 
@@ -154,7 +154,7 @@ Get validation summary
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `validationResult$clone()`
 
 The objects of this class are cloneable with this method.
 

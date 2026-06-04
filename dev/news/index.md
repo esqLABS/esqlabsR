@@ -2,6 +2,8 @@
 
 ## esqlabsR (development version)
 
+## esqlabsR 5.7.0
+
 ### New features
 
 - Added Excel-based parameter identification (PI) workflow:

@@ -8,7 +8,3 @@ Names of the settings stored in esqlabsEnv Can be used with
 ``` r
 esqlabsRSettingNames
 ```
-
-## Format
-
-An object of class `list` of length 2.

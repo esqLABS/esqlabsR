@@ -4,10 +4,6 @@ R6 class extending
 [tlf::ExportConfiguration](https://rdrr.io/pkg/tlf/man/ExportConfiguration.html)
 with row-aware height.
 
-## Value
-
-The file name of the exported plot
-
 ## Details
 
 Inherits fields and behavior from
@@ -50,7 +46,7 @@ Inherited methods
 
 ------------------------------------------------------------------------
 
-### Method [`savePlot()`](https://rdrr.io/r/grDevices/savePlot.html)
+### `ExportConfiguration$savePlot()`
 
 Save/Export a plot
 
@@ -68,9 +64,13 @@ Save/Export a plot
 
   character file name of the exported plot
 
+#### Returns
+
+The file name of the exported plot
+
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `ExportConfiguration$clone()`
 
 The objects of this class are cloneable with this method.
 

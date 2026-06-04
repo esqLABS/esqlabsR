@@ -2,10 +2,6 @@
 
 An object storing configuration of a specific scenario
 
-## Value
-
-A new `ScenarioConfiguration` object.
-
 ## Public fields
 
 - `scenarioName`:
@@ -93,7 +89,7 @@ A new `ScenarioConfiguration` object.
 
 ### Public methods
 
-- [`ScenarioConfiguration$new()`](#method-ScenarioConfiguration-new)
+- [`ScenarioConfiguration$new()`](#method-ScenarioConfiguration-initialize)
 
 - [`ScenarioConfiguration$addParamSheets()`](#method-ScenarioConfiguration-addParamSheets)
 
@@ -105,7 +101,7 @@ A new `ScenarioConfiguration` object.
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `ScenarioConfiguration$new()`
 
 Initialize a new instance of the class
 
@@ -119,9 +115,13 @@ Initialize a new instance of the class
 
   An object of class `ProjectConfiguration`.
 
+#### Returns
+
+A new `ScenarioConfiguration` object.
+
 ------------------------------------------------------------------------
 
-### Method `addParamSheets()`
+### `ScenarioConfiguration$addParamSheets()`
 
 Add the names of sheets in the parameters excel-file that will be
 applied to the simulation
@@ -138,7 +138,7 @@ applied to the simulation
 
 ------------------------------------------------------------------------
 
-### Method `removeParamSheets()`
+### `ScenarioConfiguration$removeParamSheets()`
 
 Remove the names of sheets in the parameters excel-file from the list of
 sheets `paramSheets`
@@ -156,7 +156,7 @@ sheets `paramSheets`
 
 ------------------------------------------------------------------------
 
-### Method [`print()`](https://rdrr.io/r/base/print.html)
+### `ScenarioConfiguration$print()`
 
 Print the object to the console
 
@@ -177,7 +177,7 @@ Print the object to the console
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `ScenarioConfiguration$clone()`
 
 The objects of this class are cloneable with this method.
 

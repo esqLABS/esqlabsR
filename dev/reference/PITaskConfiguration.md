@@ -4,10 +4,6 @@ An object storing configuration for a parameter identification (PI)
 task. This class holds references to PI task settings defined in
 `ParameterIdentification.xlsx`.
 
-## Value
-
-A new `PITaskConfiguration` object.
-
 ## Active bindings
 
 - `projectConfiguration`:
@@ -44,7 +40,7 @@ A new `PITaskConfiguration` object.
 
 ### Public methods
 
-- [`PITaskConfiguration$new()`](#method-PITaskConfiguration-new)
+- [`PITaskConfiguration$new()`](#method-PITaskConfiguration-initialize)
 
 - [`PITaskConfiguration$print()`](#method-PITaskConfiguration-print)
 
@@ -52,7 +48,7 @@ A new `PITaskConfiguration` object.
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `PITaskConfiguration$new()`
 
 Initialize a new instance of the class
 
@@ -90,9 +86,13 @@ Initialize a new instance of the class
 
   - `piOutputMappings`: Named list of PI output mapping configurations
 
+#### Returns
+
+A new `PITaskConfiguration` object.
+
 ------------------------------------------------------------------------
 
-### Method [`print()`](https://rdrr.io/r/base/print.html)
+### `PITaskConfiguration$print()`
 
 Print the object to the console
 
@@ -121,7 +121,7 @@ Print the object to the console
 
 ------------------------------------------------------------------------
 
-### Method `clone()`
+### `PITaskConfiguration$clone()`
 
 The objects of this class are cloneable with this method.
 
