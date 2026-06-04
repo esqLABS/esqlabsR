@@ -4,94 +4,96 @@
 \name{Scenario}
 \alias{Scenario}
 \title{Scenario}
-\value{
-A new \code{Scenario} object.
-}
 \description{
 Simulation scenario
 }
 \section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{scenarioConfiguration}}{\code{scenarioConfiguration} used for creation of
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{scenarioConfiguration}}{\code{scenarioConfiguration} used for creation of
 this scenario. Read-only.}
 
-\item{\code{finalCustomParams}}{Custom parameters to be used for the simulation.
+    \item{\code{finalCustomParams}}{Custom parameters to be used for the simulation.
 Read-only.}
 
-\item{\code{simulation}}{Simulation object created from the
+    \item{\code{simulation}}{Simulation object created from the
 \code{ScenarioConfiguration}. Read-only}
 
-\item{\code{population}}{Population object in case the scenario is a population
+    \item{\code{population}}{Population object in case the scenario is a population
 simulation. Read-only.}
 
-\item{\code{scenarioType}}{Type of the scenario - individual or population.
+    \item{\code{scenarioType}}{Type of the scenario - individual or population.
 Read-only}
-}
-\if{html}{\out{</div>}}
+  }
+  \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-Scenario-new}{\code{Scenario$new()}}
-\item \href{#method-Scenario-print}{\code{Scenario$print()}}
-}
+  \itemize{
+    \item \href{#method-Scenario-initialize}{\code{Scenario$new()}}
+    \item \href{#method-Scenario-print}{\code{Scenario$print()}}
+  }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Scenario-new"></a>}}
-\if{latex}{\out{\hypertarget{method-Scenario-new}{}}}
-\subsection{Method \code{new()}}{
-Custom parameters to be used for the simulation. The final
+\if{html}{\out{<a id="method-Scenario-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-Scenario-initialize}{}}}
+\subsection{\code{Scenario$new()}}{
+  Custom parameters to be used for the simulation. The final
 custom parameters are a combination of parametrization through the
 excel files and the custom parameters specified by the user through the
 \code{customParams} argument of the \code{Scenario} constructor.
 
 
-Simulation object. Read-only.
+  Simulation object. Read-only.
 
 
-Initialize a new instance of the class. Initializes the
+  Initialize a new instance of the class. Initializes the
 scenario from \code{ScenarioConfiguration} object.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Scenario$new(
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Scenario$new(
   scenarioConfiguration,
   customParams = NULL,
   stopIfParameterNotFound = TRUE
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{scenarioConfiguration}}{An object of class \code{ScenarioConfiguration}.}
-
-\item{\code{customParams}}{Custom parameters to be used for the simulation. A
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{scenarioConfiguration}}{An object of class \code{ScenarioConfiguration}.}
+      \item{\code{customParams}}{Custom parameters to be used for the simulation. A
 list containing vectors 'paths' with the full paths to the parameters,
 'values' the values of the parameters, and 'units' with the units the
 values are in.}
-
-\item{\code{stopIfParameterNotFound}}{Logical. If \code{TRUE} (default), an error is
+      \item{\code{stopIfParameterNotFound}}{Logical. If \code{TRUE} (default), an error is
 thrown if any of the custom defined parameter does not exist. If
 \code{FALSE}, non-existent parameters are  ignored.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A new \code{Scenario} object.
+  }
 }
-\if{html}{\out{</div>}}
-}
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Scenario-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Scenario-print}{}}}
-\subsection{Method \code{print()}}{
-Print the object to the console
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Scenario$print(...)}\if{html}{\out{</div>}}
+\subsection{\code{Scenario$print()}}{
+  Print the object to the console
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Scenario$print(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Rest arguments.}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{...}}{Rest arguments.}
-}
-\if{html}{\out{</div>}}
-}
-}
 }

@@ -69,9 +69,9 @@ Config/rcmdcheck/ignore-inconsequential-notes: true
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Remotes:
     ospsuite=Open-Systems-Pharmacology/OSPSuite-R@*release,
     ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils@*release,
     tlf=Open-Systems-Pharmacology/TLF-Library@*release,
     ospsuite.parameteridentification=Open-Systems-Pharmacology/OSPSuite.ParameterIdentification@*release
+Config/roxygen2/version: 8.0.0

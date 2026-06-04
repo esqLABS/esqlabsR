@@ -34,8 +34,8 @@ folder of an esqlabsR project to a single JSON file. This allows for easier
 version control and programmatic manipulation.
 }
 \seealso{
-Other project configuration snapshots: 
-\code{\link{projectConfigurationStatus}()},
-\code{\link{restoreProjectConfiguration}()}
+Other project configuration snapshots:
+\code{\link[=projectConfigurationStatus]{projectConfigurationStatus()}},
+\code{\link[=restoreProjectConfiguration]{restoreProjectConfiguration()}}
 }
 \concept{project configuration snapshots}
