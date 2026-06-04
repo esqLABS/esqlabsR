@@ -34,6 +34,7 @@ tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
 You can install the package by running:
 
 ``` r
+
 install.packages("pak")
 pak::pak("esqLABS/esqlabsR@*release")
 ```
@@ -42,6 +43,7 @@ The latest development version of the package can also be installed
 with:
 
 ``` r
+
 pak::pak("esqLABS/esqlabsR")
 ```
 
@@ -57,6 +59,7 @@ You can start with the “Get Started” vignette:
 specific project structure. You can initialize a new project by running:
 
 ``` r
+
 esqlabsR::initProject()
 ```
 
@@ -66,6 +69,7 @@ project in the working directory from where you run the command.
 Below is a simple example of how to work with the package:
 
 ``` r
+
 # load esqlabsR
 library(esqlabsR)
 

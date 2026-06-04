@@ -1,5 +1,35 @@
 # Changelog
 
+## esqlabsR 5.7.0
+
+### New features
+
+- Added Excel-based parameter identification (PI) workflow:
+  [`readPITaskConfigurationFromExcel()`](https://esqlabs.github.io/esqlabsR/reference/readPITaskConfigurationFromExcel.md),
+  [`createPITasks()`](https://esqlabs.github.io/esqlabsR/reference/createPITasks.md),
+  and [`runPI()`](https://esqlabs.github.io/esqlabsR/reference/runPI.md)
+  enable defining and running PI tasks from
+  `ParameterIdentification.xlsx`. Supports multi-scenario fitting,
+  parameter grouping, residual scaling, and optional confidence interval
+  estimation. See
+  [`vignette("pi-workflow")`](https://esqlabs.github.io/esqlabsR/articles/pi-workflow.md)
+  ([\#928](https://github.com/esqLABS/esqlabsR/issues/928)).
+
+### Breaking changes
+
+- Bumped minimum required `ospsuite` version to 12.4.2; earlier versions
+  fail to load data correctly
+  ([\#1000](https://github.com/esqLABS/esqlabsR/issues/1000)).
+
+### Minor improvements and bug fixes
+
+- [`snapshotProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/snapshotProjectConfiguration.md)
+  and
+  [`projectConfigurationStatus()`](https://esqlabs.github.io/esqlabsR/reference/projectConfigurationStatus.md)
+  no longer fail on projects that have no PI configuration
+  (i.e. `parameterIdentificationFile` is not set)
+  ([\#1007](https://github.com/esqLABS/esqlabsR/issues/1007)).
+
 ## esqlabsR 5.6.0
 
 ### New features
@@ -33,7 +63,7 @@
   `importerConfiguration`: `importerConfiguration$sheets` is always set
   to `NULL` before loading, so the passed configuration object is
   mutated as a side effect
-  ([\#962](https://github.com/esqLABS/esqlabsR/issues/962)).
+  ([\#982](https://github.com/esqLABS/esqlabsR/issues/982)).
 - Refactored
   [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/reference/exportParametersToXLS.md)
   to eliminate code duplication by delegating to
@@ -60,6 +90,12 @@
   `yUnits = "nmol/l"`) in addition to lists. Single string values are
   automatically coerced to a list
   ([\#822](https://github.com/esqLABS/esqlabsR/issues/822)).
+- [`snapshotProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/reference/snapshotProjectConfiguration.md)
+  no longer fails when population files are PK-Sim exported CSVs that do
+  not have sheet names
+  ([\#980](https://github.com/esqLABS/esqlabsR/issues/980)).
+- Remove false warnings whenever a `ProjectConfiguration` is created
+  ([\#964](https://github.com/esqLABS/esqlabsR/issues/964)).
 
 ## esqlabsR 5.5.2
 
@@ -87,8 +123,6 @@
   R6 objects
 - Using native operator `%||%` instead of importing from the
   `ospsuite.utils` package.
-- Remove false warnings whenever a ProjectConfiguration is created
-  ([\#964](https://github.com/esqLABS/esqlabsR/issues/964)).
 
 ## esqlabsR 5.5.1
 
@@ -384,7 +418,8 @@
   - `ApplicationParameters.xslx` file is now `Applications.xlsx`
   - `PopulationParameters.xslx` file is now `Populations.xlsx`
   - Previous directory structure is still supported but deprecated.
-- `{ospsuite.parameteridentification}` is not longer a dependency of
+- [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification)
+  is not longer a dependency of
   [esqlabsR](https://github.com/esqLABS/esqlabsR).
 
 ### Minor improvements and bug fixes
@@ -816,7 +851,8 @@
 
 - Function
   [`getSteadyState()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getSteadyState.html)
-  has been moved to package `{ospsuite.parameteridentification}`.
+  has been moved to package
+  [ospsuite.parameteridentification](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification).
 
 - Function
   [`loadObservedData()`](https://esqlabs.github.io/esqlabsR/reference/loadObservedData.md)

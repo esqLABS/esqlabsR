@@ -53,12 +53,14 @@ To update your project configuration to the new format:
 1.  Load your existing configuration:
 
 ``` r
+
 projectConfig <- createProjectConfiguration("path/to/old/ProjectConfiguration.xlsx", ignoreVersionCheck = TRUE)
 ```
 
 2.  Save it in the new format:
 
 ``` r
+
 projectConfig$save("path/to/new/ProjectConfiguration.xlsx")
 ```
 
@@ -103,6 +105,7 @@ Some functions and properties have been renamed, thus project code using
 previous project structure will need to be updated.
 
 ``` r
+
 # Old code
 projectConfig <- createDefaultProjectConfiguration(...)  # Deprecated
 projectConfig$populationParamsFile  # Old property

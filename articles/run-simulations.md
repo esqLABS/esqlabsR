@@ -19,6 +19,7 @@ function. To create the configuration for the *‘TestScenario’* scenario
 defined in the `Scenarios.xlsx` file, we call:
 
 ``` r
+
 # Create `ScenarioConfiguration` objects from excel files
 scenarioConfigurations <- readScenarioConfigurationFromExcel(
   scenarioNames = "TestScenario",
@@ -70,6 +71,7 @@ argument to the
 function.
 
 ``` r
+
 # Create `Scenario` objects from `ScenarioConfiguration` objects
 scenarios <- createScenarios(scenarioConfigurations)
 ```
@@ -78,11 +80,12 @@ You can view the final parametrization that is applied to the simulation
 by calling the `finalCustomParams` property:
 
 ``` r
+
 scenarios$TestScenario$finalCustomParams
 #> $paths
-#> [1] "Organism|Liver|EHC continuous fraction"                           
-#> [2] "Organism|Kidney|GFR"                                              
-#> [3] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+#> [1] "Organism|Liver|EHC continuous fraction"                     
+#> [2] "Organism|Kidney|GFR"                                        
+#> [3] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
 #> 
 #> $values
 #> [1]   1  90 250
@@ -103,6 +106,7 @@ of the `SimulationResults`, and the population if the scenario is a
 population simulation.
 
 ``` r
+
 simulatedScenariosResults <- runScenarios(
   scenarios = scenarios
 )
@@ -132,11 +136,11 @@ head(simulatedScenariosResults$TestScenario$outputValues$metaData)
 #> 6            0    5
 #>   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
 #> 1                                                                  0.000000
-#> 2                                                                  2.713017
-#> 3                                                                  7.830247
-#> 4                                                                 13.107068
-#> 5                                                                 18.253435
-#> 6                                                                 23.233932
+#> 2                                                                  2.712879
+#> 3                                                                  7.829998
+#> 4                                                                 13.106795
+#> 5                                                                 18.253258
+#> 6                                                                 23.233751
 #> NULL
 ```
 

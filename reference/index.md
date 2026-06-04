@@ -68,6 +68,15 @@
   Generate plots as defined in excel file
   `projectConfiguration$plotsFile`
 
+## Parameter identification workflow
+
+- [`PITaskConfiguration`](https://esqlabs.github.io/esqlabsR/reference/PITaskConfiguration.md)
+  : PITaskConfiguration
+- [`createPITasks()`](https://esqlabs.github.io/esqlabsR/reference/createPITasks.md)
+  : Create Parameter Identification tasks
+- [`runPI()`](https://esqlabs.github.io/esqlabsR/reference/runPI.md) :
+  Run Parameter Identification tasks
+
 ## Helpers for data import, wrangling, and export
 
 - [`readExcel()`](https://esqlabs.github.io/esqlabsR/reference/readExcel.md)
@@ -79,6 +88,9 @@
 
 - [`readIndividualCharacteristicsFromXLS()`](https://esqlabs.github.io/esqlabsR/reference/readIndividualCharacteristicsFromXLS.md)
   : Read individual characteristics from file
+
+- [`readPITaskConfigurationFromExcel()`](https://esqlabs.github.io/esqlabsR/reference/readPITaskConfigurationFromExcel.md)
+  : Read Parameter Identification configurations from Excel
 
 - [`readParametersFromXLS()`](https://esqlabs.github.io/esqlabsR/reference/readParametersFromXLS.md)
   : Read parameter values from a structured Excel file. Each excel sheet

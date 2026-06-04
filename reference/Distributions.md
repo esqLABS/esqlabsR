@@ -7,7 +7,3 @@ Supported distributions for sampling
 ``` r
 Distributions
 ```
-
-## Format
-
-An object of class `list` of length 2.

@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Sensitivity Analysis • esqlabsR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Sensitivity Analysis">
 </head>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,9 @@
     <li><a class="dropdown-item" href="../articles/plot-results.html">4. Plot Results</a></li>
     <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
     <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Parameter Identification</h6></li>
+    <li><a class="dropdown-item" href="../articles/pi-workflow.html">Parameter Identification</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
     <li><a class="dropdown-item" href="../articles/presentations.html">Slide Decks</a></li>
@@ -123,8 +126,8 @@ rate (GFR fraction)</em> affect the pharmacokinetics of aciclovir:</p>
 <span><span class="op">)</span></span>
 <span><span class="va">parameterPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Lipophilicity"</span> <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span>,</span>
-<span>  <span class="st">"Dose"</span> <span class="op">=</span> <span class="st">"Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span>,</span>
-<span>  <span class="st">"GFR fraction"</span> <span class="op">=</span> <span class="st">"Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"</span></span>
+<span>  <span class="st">"Dose"</span> <span class="op">=</span> <span class="st">"Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span>,</span>
+<span>  <span class="st">"GFR fraction"</span> <span class="op">=</span> <span class="st">"Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivityCalculation.html">sensitivityCalculation</a></span><span class="op">(</span><span class="va">simulation</span>, <span class="va">outputPaths</span>, <span class="va">parameterPaths</span><span class="op">)</span></span>
@@ -169,7 +172,7 @@ AUC of 4072.6 µmol·min/L. Ten-fold higher (−0.0097) reduces AUC by 0.44
 %, whereas ten-fold lower (−0.97) increases it by 2.13 %. The
 sensitivity of AUC to a 10-fold increase in lipophilicity is calculated
 as:
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Sensitivity</mtext><mo>=</mo><mfrac><mrow><mi>Δ</mi><mtext mathvariant="normal">AUC</mtext></mrow><mrow><mi>Δ</mi><mtext mathvariant="normal">lipophilicity</mtext></mrow></mfrac><mo>×</mo><mfrac><mtext mathvariant="normal">lipophilicity</mtext><mtext mathvariant="normal">AUC</mtext></mfrac><mo>=</mo><mfrac><mrow><mn>4159.5</mn><mo>−</mo><mn>4072.6</mn></mrow><mrow><mo>−</mo><mn>0.97</mn><mo>−</mo><mo>−</mo><mn>0.097</mn></mrow></mfrac><mo>×</mo><mfrac><mrow><mo>−</mo><mn>0.097</mn></mrow><mn>4072.6</mn></mfrac><mo>=</mo><mn>0.0028</mn></mrow><annotation encoding="application/x-tex"> \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4159.5-4072.6}{-0.97--0.097} \times \frac{-0.097}{4072.6} = 0.0028 </annotation></semantics></math></p>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Sensitivity</mtext><mo>=</mo><mfrac><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">AUC</mtext></mrow><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">lipophilicity</mtext></mrow></mfrac><mo>×</mo><mfrac><mtext mathvariant="normal">lipophilicity</mtext><mtext mathvariant="normal">AUC</mtext></mfrac><mo>=</mo><mfrac><mrow><mn>4159.5</mn><mo>−</mo><mn>4072.6</mn></mrow><mrow><mi>−</mi><mn>0.97</mn><mo>−</mo><mi>−</mi><mn>0.097</mn></mrow></mfrac><mo>×</mo><mfrac><mrow><mi>−</mi><mn>0.097</mn></mrow><mn>4072.6</mn></mfrac><mo>=</mo><mn>0.0028</mn></mrow><annotation encoding="application/x-tex"> \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4159.5-4072.6}{-0.97--0.097} \times \frac{-0.097}{4072.6} = 0.0028 </annotation></semantics></math></p>
 </div>
 <div class="section level3">
 <h3 id="saving-and-loading-sensitivity-results">Saving and Loading Sensitivity Results<a class="anchor" aria-label="anchor" href="#saving-and-loading-sensitivity-results"></a>

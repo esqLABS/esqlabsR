@@ -16,6 +16,11 @@
 - [Sensitivity Analysis – Plot
   Customization](https://esqlabs.github.io/esqlabsR/articles/sensitivity-plots.md):
 
+### Parameter Identification
+
+- [Parameter
+  Identification](https://esqlabs.github.io/esqlabsR/articles/pi-workflow.md):
+
 ### Miscellaneous
 
 - [Slide

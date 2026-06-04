@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>3. Run Simulations • esqlabsR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="3. Run Simulations">
 </head>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">5.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,6 +43,9 @@
     <li><a class="dropdown-item" href="../articles/plot-results.html">4. Plot Results</a></li>
     <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
     <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Parameter Identification</h6></li>
+    <li><a class="dropdown-item" href="../articles/pi-workflow.html">Parameter Identification</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
     <li><a class="dropdown-item" href="../articles/presentations.html">Slide Decks</a></li>
@@ -153,9 +156,9 @@ simulation by calling the <code>finalCustomParams</code> property:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">finalCustomParams</span></span>
 <span><span class="co">#&gt; $paths</span></span>
-<span><span class="co">#&gt; [1] "Organism|Liver|EHC continuous fraction"                           </span></span>
-<span><span class="co">#&gt; [2] "Organism|Kidney|GFR"                                              </span></span>
-<span><span class="co">#&gt; [3] "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span></span>
+<span><span class="co">#&gt; [1] "Organism|Liver|EHC continuous fraction"                     </span></span>
+<span><span class="co">#&gt; [2] "Organism|Kidney|GFR"                                        </span></span>
+<span><span class="co">#&gt; [3] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $values</span></span>
 <span><span class="co">#&gt; [1]   1  90 250</span></span>
@@ -203,11 +206,11 @@ if the scenario is a population simulation.</p>
 <span><span class="co">#&gt; 6            0    5</span></span>
 <span><span class="co">#&gt;   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span></span>
 <span><span class="co">#&gt; 1                                                                  0.000000</span></span>
-<span><span class="co">#&gt; 2                                                                  2.713017</span></span>
-<span><span class="co">#&gt; 3                                                                  7.830247</span></span>
-<span><span class="co">#&gt; 4                                                                 13.107068</span></span>
-<span><span class="co">#&gt; 5                                                                 18.253435</span></span>
-<span><span class="co">#&gt; 6                                                                 23.233932</span></span>
+<span><span class="co">#&gt; 2                                                                  2.712879</span></span>
+<span><span class="co">#&gt; 3                                                                  7.829998</span></span>
+<span><span class="co">#&gt; 4                                                                 13.106795</span></span>
+<span><span class="co">#&gt; 5                                                                 18.253258</span></span>
+<span><span class="co">#&gt; 6                                                                 23.233751</span></span>
 <span><span class="co">#&gt; NULL</span></span></code></pre></div>
 <p>It is a good idea to store simulation results as <code>*.csv</code>
 along with simulations as <code>.*pkml</code> and, optionally, the

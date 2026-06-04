@@ -20,6 +20,7 @@ Project structure can be initialized by calling the function
 [`initProject()`](https://esqlabs.github.io/esqlabsR/reference/initProject.md).
 
 ``` r
+
 library(esqlabsR)
 
 initProject()
@@ -33,6 +34,7 @@ project’s structure.
     #> │   ├── Applications.xlsx
     #> │   ├── Individuals.xlsx
     #> │   ├── ModelParameters.xlsx
+    #> │   ├── ParameterIdentification.xlsx
     #> │   ├── Plots.xlsx
     #> │   ├── Populations.xlsx
     #> │   ├── PopulationsCSV
@@ -47,7 +49,6 @@ project’s structure.
     #> ├── ProjectConfiguration.json
     #> ├── ProjectConfiguration.xlsx
     #> └── Results
-    #>     ├── All plots.png
     #>     ├── Figures
     #>     └── SimulationResults
 
@@ -62,6 +63,7 @@ By printing the `ProjectConfiguration`, we can see the locations of all
 files used in the workflows:
 
 ``` r
+
 my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath(), ignoreVersionCheck = TRUE)
 ```
 
@@ -108,6 +110,7 @@ executed from the console — user input cannot be provided. Use
 situations:
 
 ``` r
+
 my_project_configuration <- createProjectConfiguration(
   path = "path/to/ProjectConfiguration.xlsx",
   ignoreVersionCheck = TRUE
@@ -158,6 +161,7 @@ Validation results are categorized into three levels:
 ### Usage Example
 
 ``` r
+
 # Validate all configuration files in a project
 validation_results <- validateAllConfigurations(my_project_configuration)
 
@@ -189,6 +193,7 @@ each configuration file validated. Each result contains:
 You can access individual file results:
 
 ``` r
+
 # Check scenarios validation
 scenarios_result <- validation_results$scenarios
 
@@ -214,6 +219,7 @@ If required, you can change the location of one of the files or folders
 using relative or absolute paths
 
 ``` r
+
 # change the location of the output folder
 projectConfiguration$outputFolder <- "../anotherOutputFolder"
 
@@ -264,6 +270,7 @@ single JSON file. This JSON format is ideal for version control as it’s:
 - **Complete**: Contains all project configuration data
 
 ``` r
+
 # Create a snapshot from a ProjectConfiguration object
 my_project_configuration <- createProjectConfiguration("ProjectConfiguration.xlsx", ignoreVersionCheck = TRUE)
 snapshotProjectConfiguration(my_project_configuration)
@@ -284,6 +291,7 @@ function recreates your entire project configuration from a JSON
 snapshot:
 
 ``` r
+
 # Restore a project from a JSON snapshot
 restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
 ```
@@ -299,6 +307,7 @@ Use
 to check if your Excel files are synchronized with your JSON snapshot:
 
 ``` r
+
 # Check if files are in sync
 status <- projectConfigurationStatus("ProjectConfiguration.xlsx", "ProjectConfiguration.json")
 print(status$in_sync) # TRUE if synchronized, FALSE otherwise
@@ -311,6 +320,7 @@ print(status$in_sync) # TRUE if synchronized, FALSE otherwise
 1.  **Initial Setup**: Create a snapshot of your project configuration
 
     ``` r
+
     snapshotProjectConfiguration("ProjectConfiguration.xlsx")
     ```
 
@@ -324,12 +334,14 @@ print(status$in_sync) # TRUE if synchronized, FALSE otherwise
 3.  **Team Sharing**: Team members can restore the project
 
     ``` r
+
     restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
     ```
 
 **Backup Strategy**: Before making significant changes to your project:
 
 ``` r
+
 # Create a backup snapshot
 snapshotProjectConfiguration("ProjectConfiguration.xlsx")
 

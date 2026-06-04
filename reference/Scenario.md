@@ -2,10 +2,6 @@
 
 Simulation scenario
 
-## Value
-
-A new `Scenario` object.
-
 ## Active bindings
 
 - `scenarioConfiguration`:
@@ -33,13 +29,13 @@ A new `Scenario` object.
 
 ### Public methods
 
-- [`Scenario$new()`](#method-Scenario-new)
+- [`Scenario$new()`](#method-Scenario-initialize)
 
 - [`Scenario$print()`](#method-Scenario-print)
 
 ------------------------------------------------------------------------
 
-### Method `new()`
+### `Scenario$new()`
 
 Custom parameters to be used for the simulation. The final custom
 parameters are a combination of parametrization through the excel files
@@ -78,9 +74,13 @@ Initialize a new instance of the class. Initializes the scenario from
   defined parameter does not exist. If `FALSE`, non-existent parameters
   are ignored.
 
+#### Returns
+
+A new `Scenario` object.
+
 ------------------------------------------------------------------------
 
-### Method [`print()`](https://rdrr.io/r/base/print.html)
+### `Scenario$print()`
 
 Print the object to the console
 
