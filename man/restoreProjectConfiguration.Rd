@@ -31,8 +31,8 @@ file. This allows for recreating the project configuration from
 version-controlled JSON.
 }
 \seealso{
-Other project configuration snapshots: 
-\code{\link{projectConfigurationStatus}()},
-\code{\link{snapshotProjectConfiguration}()}
+Other project configuration snapshots:
+\code{\link[=projectConfigurationStatus]{projectConfigurationStatus()}},
+\code{\link[=snapshotProjectConfiguration]{snapshotProjectConfiguration()}}
 }
 \concept{project configuration snapshots}
