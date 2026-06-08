@@ -40,16 +40,22 @@ Project <- R6::R6Class(
 
     #' @field validatedSinceMutation Read-only logical. `TRUE` if a full
     #'   [validateProject()] has succeeded with no critical errors since
-    #'   the project was loaded or last mutated. Cleared by any mutation
-    #'   (mutators land in a later chapter; for now the flag is set by
-    #'   [validateProject()] and remains until a fresh load). Used by
-    #'   [runScenarios()] and [createPlots()] to skip redundant
+    #'   the project was loaded or last mutated. Cleared by any mutation.
+    #'   Used by [runScenarios()] and [createPlots()] to skip redundant
     #'   re-validation of an unchanged project.
     validatedSinceMutation = function(value) {
       if (!missing(value)) {
         cli::cli_abort("{.field validatedSinceMutation} is read-only.")
       }
       private$.validatedSinceMutation
+    },
+
+    #' @field modified Read-only logical. `TRUE` if any configuration
+    #'   property has been modified since the project was loaded or
+    #'   saved. Cleared internally when the project is freshly loaded.
+    modified = function(value) {
+      if (!missing(value)) cli::cli_abort("{.field modified} is read-only.")
+      private$.modified
     },
 
     #' @field esqlabsRVersion Informational version string from the JSON.
@@ -141,7 +147,9 @@ Project <- R6::R6Class(
     #' @field outputPaths Named list mapping output-path IDs to literal output
     #'   path strings.
     outputPaths = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field outputPaths} is read-only.")
+      if (!missing(value)) {
+        private$.outputPaths <- value
+      }
       private$.outputPaths
     },
 
@@ -150,57 +158,72 @@ Project <- R6::R6Class(
     #'   raw JSON `scenarios` array; round-trips back through
     #'   `.scenariosToJson()`.
     scenarios = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field scenarios} is read-only.")
+      if (!missing(value)) {
+        private$.scenarios <- value
+      }
       private$.scenarios
     },
 
     #' @field modelParameterSets Named list keyed by parameter-set name; each
     #'   value is a list of parameter entries.
     modelParameterSets = function(value) {
-      if (!missing(value))
-        cli::cli_abort("{.field modelParameterSets} is read-only.")
+      if (!missing(value)) {
+        private$.modelParameterSets <- value
+      }
       private$.modelParameterSets
     },
 
     #' @field individualParameterSets Named list keyed by parameter-set name;
     #'   each value is a list of parameter entries. Referenced by id from
-    #'   `individuals[*]$parameterSets`.
+    #'   `individuals[[id]]$parameterSets`.
     individualParameterSets = function(value) {
-      if (!missing(value))
-        cli::cli_abort("{.field individualParameterSets} is read-only.")
+      if (!missing(value)) {
+        private$.individualParameterSets <- value
+      }
       private$.individualParameterSets
     },
 
     #' @field applicationParameterSets Named list keyed by parameter-set name;
     #'   each value is a list of parameter entries. Referenced by id from
-    #'   `applications.<name>$parameterSets`.
+    #'   `applications[[name]]$parameterSets`.
     applicationParameterSets = function(value) {
-      if (!missing(value))
-        cli::cli_abort("{.field applicationParameterSets} is read-only.")
+      if (!missing(value)) {
+        private$.applicationParameterSets <- value
+      }
       private$.applicationParameterSets
     },
 
-    #' @field individuals List of individual entries.
+    #' @field individuals Named list of individual entries, keyed by
+    #'   individualId.
     individuals = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field individuals} is read-only.")
+      if (!missing(value)) {
+        private$.individuals <- value
+      }
       private$.individuals
     },
 
-    #' @field populations List of population entries.
+    #' @field populations Named list of population entries, keyed by
+    #'   populationId.
     populations = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field populations} is read-only.")
+      if (!missing(value)) {
+        private$.populations <- value
+      }
       private$.populations
     },
 
     #' @field applications Named list keyed by application-protocol name.
     applications = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field applications} is read-only.")
+      if (!missing(value)) {
+        private$.applications <- value
+      }
       private$.applications
     },
 
     #' @field observedData List of observed-data source entries.
     observedData = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field observedData} is read-only.")
+      if (!missing(value)) {
+        private$.observedData <- value
+      }
       private$.observedData
     },
 
@@ -212,7 +235,9 @@ Project <- R6::R6Class(
     #'   and the existing Excel `Plots` sheet convention. Splitting and
     #'   normalising is deferred to the plots chapter.
     plots = function(value) {
-      if (!missing(value)) cli::cli_abort("{.field plots} is read-only.")
+      if (!missing(value)) {
+        private$.plots <- value
+      }
       private$.plots
     }
   ),
@@ -281,15 +306,341 @@ Project <- R6::R6Class(
     },
 
     #' @description Internal method invoked by mutators after a successful
-    #'   programmatic change. Clears the `validatedSinceMutation` flag so
-    #'   that any cached validation result is invalidated. No mutators ship
-    #'   with this chapter; the hook exists so future `add*` / `remove*`
-    #'   APIs can route through a single chokepoint. Not intended for
-    #'   end-user use.
+    #'   programmatic change. Sets the `modified` flag and clears the
+    #'   `validatedSinceMutation` flag so that any cached validation
+    #'   result is invalidated. Not intended for end-user use.
     #' @keywords internal
     .markModified = function() {
       private$.invalidate()
       invisible(self)
+    },
+
+    #' @description Add a scenario programmatically. Delegates to the
+    #'   standalone [addScenario()] function.
+    #' @param scenarioName Character. Name for the new scenario.
+    #' @param modelFile Character. Name of the `.pkml` model file.
+    #' @param ... Additional arguments passed to [addScenario()].
+    addScenario = function(scenarioName, modelFile, ...) {
+      addScenario(
+        project = self,
+        scenarioName = scenarioName,
+        modelFile = modelFile,
+        ...
+      )
+    },
+
+    #' @description Remove a scenario programmatically. Delegates to the
+    #'   standalone [removeScenario()] function.
+    #' @param name Character.
+    removeScenario = function(name) {
+      removeScenario(project = self, name = name)
+    },
+
+    #' @description Add an individual programmatically. Delegates to the
+    #'   standalone [addIndividual()] function.
+    #' @param individualId Character. Unique ID.
+    #' @param species Character. Species name.
+    #' @param ... Additional fields passed to [addIndividual()].
+    addIndividual = function(individualId, species, ...) {
+      addIndividual(
+        project = self,
+        individualId = individualId,
+        species = species,
+        ...
+      )
+    },
+
+    #' @description Remove an individual programmatically. Delegates to the
+    #'   standalone [removeIndividual()] function.
+    #' @param individualId Character.
+    removeIndividual = function(individualId) {
+      removeIndividual(project = self, individualId = individualId)
+    },
+
+    #' @description Replace the parameter-set references on an individual.
+    #' @param individualId Character.
+    #' @param parameterSets Character vector of set ids.
+    setIndividualParameterSets = function(individualId, parameterSets) {
+      setIndividualParameterSets(self, individualId, parameterSets)
+    },
+
+    #' @description Add a population programmatically.
+    #' @param populationId Character.
+    #' @param species Character.
+    #' @param numberOfIndividuals Integer.
+    #' @param ... Passed to [addPopulation()].
+    addPopulation = function(populationId, species, numberOfIndividuals, ...) {
+      addPopulation(
+        project = self,
+        populationId = populationId,
+        species = species,
+        numberOfIndividuals = numberOfIndividuals,
+        ...
+      )
+    },
+
+    #' @description Remove a population programmatically.
+    #' @param populationId Character.
+    removePopulation = function(populationId) {
+      removePopulation(project = self, populationId = populationId)
+    },
+
+    #' @description Add an application protocol programmatically.
+    #' @param applicationId Character.
+    #' @param parameterSets Optional character vector of set ids.
+    addApplication = function(applicationId, parameterSets = NULL) {
+      addApplication(
+        project = self,
+        applicationId = applicationId,
+        parameterSets = parameterSets
+      )
+    },
+
+    #' @description Remove an application protocol programmatically.
+    #' @param applicationId Character.
+    removeApplication = function(applicationId) {
+      removeApplication(project = self, applicationId = applicationId)
+    },
+
+    #' @description Replace the parameter-set references on an application.
+    #' @param applicationId Character.
+    #' @param parameterSets Character vector of set ids.
+    setApplicationParameterSets = function(applicationId, parameterSets) {
+      setApplicationParameterSets(self, applicationId, parameterSets)
+    },
+
+    #' @description Create a model parameter set.
+    #' @param id Character.
+    addModelParameterSet = function(id) {
+      addModelParameterSet(self, id)
+    },
+
+    #' @description Remove a model parameter set.
+    #' @param id Character.
+    removeModelParameterSet = function(id) {
+      removeModelParameterSet(self, id)
+    },
+
+    #' @description Add a parameter entry to a named model-parameter set.
+    #' @param id Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    #' @param value Numeric.
+    #' @param units Character.
+    addModelParameterEntry = function(
+      id,
+      containerPath,
+      parameterName,
+      value,
+      units
+    ) {
+      addModelParameterEntry(
+        self,
+        id,
+        containerPath,
+        parameterName,
+        value,
+        units
+      )
+    },
+
+    #' @description Remove a parameter entry from a named model-parameter set.
+    #' @param id Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    removeModelParameterEntry = function(id, containerPath, parameterName) {
+      removeModelParameterEntry(self, id, containerPath, parameterName)
+    },
+
+    #' @description Create an individual parameter set.
+    #' @param id Character.
+    addIndividualParameterSet = function(id) {
+      addIndividualParameterSet(self, id)
+    },
+
+    #' @description Remove an individual parameter set.
+    #' @param id Character.
+    removeIndividualParameterSet = function(id) {
+      removeIndividualParameterSet(self, id)
+    },
+
+    #' @description Add a parameter entry to a named individual parameter set.
+    #' @param id Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    #' @param value Numeric.
+    #' @param units Character.
+    addIndividualParameterSetEntry = function(
+      id,
+      containerPath,
+      parameterName,
+      value,
+      units
+    ) {
+      addIndividualParameterSetEntry(
+        self,
+        id,
+        containerPath,
+        parameterName,
+        value,
+        units
+      )
+    },
+
+    #' @description Remove a parameter entry from a named individual
+    #'   parameter set.
+    #' @param id Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    removeIndividualParameterSetEntry = function(
+      id,
+      containerPath,
+      parameterName
+    ) {
+      removeIndividualParameterSetEntry(
+        self,
+        id,
+        containerPath,
+        parameterName
+      )
+    },
+
+    #' @description Create an application parameter set.
+    #' @param id Character.
+    addApplicationParameterSet = function(id) {
+      addApplicationParameterSet(self, id)
+    },
+
+    #' @description Remove an application parameter set.
+    #' @param id Character.
+    removeApplicationParameterSet = function(id) {
+      removeApplicationParameterSet(self, id)
+    },
+
+    #' @description Add a parameter entry to a named application parameter set.
+    #' @param id Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    #' @param value Numeric.
+    #' @param units Character.
+    addApplicationParameterSetEntry = function(
+      id,
+      containerPath,
+      parameterName,
+      value,
+      units
+    ) {
+      addApplicationParameterSetEntry(
+        self,
+        id,
+        containerPath,
+        parameterName,
+        value,
+        units
+      )
+    },
+
+    #' @description Remove a parameter entry from a named application
+    #'   parameter set.
+    #' @param id Character.
+    #' @param containerPath Character.
+    #' @param parameterName Character.
+    removeApplicationParameterSetEntry = function(
+      id,
+      containerPath,
+      parameterName
+    ) {
+      removeApplicationParameterSetEntry(
+        self,
+        id,
+        containerPath,
+        parameterName
+      )
+    },
+
+    #' @description Add one or more output paths programmatically.
+    #' @param id Character vector.
+    #' @param path Character vector.
+    addOutputPath = function(id, path) {
+      addOutputPath(self, id, path)
+    },
+
+    #' @description Remove an output path programmatically.
+    #' @param id Character.
+    removeOutputPath = function(id) {
+      removeOutputPath(self, id)
+    },
+
+    #' @description Add observed data programmatically.
+    #' @param entry Either a `DataSet` object or a list with observedData
+    #'   config (see [addObservedData()]).
+    addObservedData = function(entry) {
+      addObservedData(project = self, entry = entry)
+    },
+
+    #' @description Remove observed data programmatically.
+    #' @param name DataSet name or config entry file basename.
+    removeObservedData = function(name) {
+      removeObservedData(project = self, name = name)
+    },
+
+    #' @description Add a DataCombined programmatically.
+    #' @param name DataCombined name.
+    #' @param simulated List of simulated entry lists.
+    #' @param observed List of observed entry lists.
+    addDataCombined = function(name, simulated = list(), observed = list()) {
+      addDataCombined(
+        project = self,
+        name = name,
+        simulated = simulated,
+        observed = observed
+      )
+    },
+
+    #' @description Remove a DataCombined programmatically.
+    #' @param name DataCombined name.
+    removeDataCombined = function(name) {
+      removeDataCombined(project = self, name = name)
+    },
+
+    #' @description Add a plot configuration programmatically.
+    #' @param plotID Unique plot identifier.
+    #' @param dataCombinedName DataCombined the plot draws from.
+    #' @param plotType One of the supported plot types.
+    #' @param ... Optional plot-configuration fields.
+    addPlot = function(plotID, dataCombinedName, plotType, ...) {
+      addPlot(
+        project = self,
+        plotID = plotID,
+        dataCombinedName = dataCombinedName,
+        plotType = plotType,
+        ...
+      )
+    },
+
+    #' @description Remove a plot configuration programmatically.
+    #' @param plotID Plot identifier.
+    removePlot = function(plotID) {
+      removePlot(project = self, plotID = plotID)
+    },
+
+    #' @description Add a plot grid programmatically.
+    #' @param name Plot-grid name.
+    #' @param plotIDs Character vector of plot IDs.
+    #' @param ... Optional plot-grid fields.
+    addPlotGrid = function(name, plotIDs, ...) {
+      addPlotGrid(
+        project = self,
+        name = name,
+        plotIDs = plotIDs,
+        ...
+      )
+    },
+
+    #' @description Remove a plot grid programmatically.
+    #' @param name Plot-grid name.
+    removePlotGrid = function(name) {
+      removePlotGrid(project = self, name = name)
     },
 
     #' @description Print a one-section-per-line summary of the project.
@@ -353,9 +704,7 @@ Project <- R6::R6Class(
   ),
   private = list(
     .invalidate = function() {
-      # Chapter 6 will add a `private$.modified <- TRUE` line here once
-      # the mutation API exists; chapter 4 only needs the validation-cache
-      # half of the lifecycle.
+      private$.modified <- TRUE
       private$.validatedSinceMutation <- FALSE
       invisible(self)
     },
@@ -429,6 +778,9 @@ Project <- R6::R6Class(
     .applications = list(),
     .observedData = list(),
     .plots = NULL,
-    .validatedSinceMutation = FALSE
+    .validatedSinceMutation = FALSE,
+    .modified = FALSE,
+    .programmaticDataSets = list(),
+    .observedDataNamesCache = NULL
   )
 )

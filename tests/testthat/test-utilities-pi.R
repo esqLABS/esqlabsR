@@ -553,7 +553,7 @@ test_that("createPITasks applies objectiveFunctionOptions from PIConfiguration c
 
   # Set individual fields
   sheets$PIConfiguration$ObjectiveFunctionType <- "m3"
-  sheets$PIConfiguration$ResidualWeightingMethod <- "std"
+  sheets$PIConfiguration$ResidualWeightingMethod <- "error"
   .writeExcel(
     data = sheets,
     path = projectConfigurationLocal$parameterIdentificationFile
@@ -563,7 +563,7 @@ test_that("createPITasks applies objectiveFunctionOptions from PIConfiguration c
   ))
   ofo <- piTasks$Task1$configuration$objectiveFunctionOptions
   expect_equal(ofo$objectiveFunctionType, "m3")
-  expect_equal(ofo$residualWeightingMethod, "std")
+  expect_equal(ofo$residualWeightingMethod, "error")
   expect_equal(ofo$robustMethod, "none")
 
   # Numeric options

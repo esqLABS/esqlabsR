@@ -1,17 +1,29 @@
-# Observed data: project-driven loader dispatch.
+# Observed data: project-driven loader dispatch + section CRUD.
 #
 # Owns Project$observedData end-to-end. Called by:
 #   - users via loadObservedData(project) — the public dispatcher.
 #   - createDataCombined() internally to resolve observed sources.
 #   - validateProject() via .observedDataValidatorAdapter()
+#   - users via the public addObservedData / removeObservedData
+#     functions.
 #
 # The four declared source types in v2.0 Project.json are:
 #   - excel  : ospsuite::loadDataSetsFromExcel via importer config
 #   - pkml   : ospsuite::loadDataSetFromPKML
 #   - script : R script sourced; must return DataSet or list of DataSets
-#   - programmatic : DataSets added at runtime via project$addObservedData()
-#                    (lands with the mutation API in a later milestone —
-#                    currently errors fast).
+#   - programmatic : DataSets added at runtime via project$addObservedData().
+#                    The DataSet itself is not JSON-serializable, so it
+#                    is held on the Project's private slot
+#                    (.programmaticDataSets) and the JSON sentinel
+#                    `{type: "programmatic", name: ...}` is what
+#                    survives a round-trip.
+
+# Reach into Project's R6 private slot. R does not enforce R6 privacy
+# at runtime; this helper stays narrow to the observed-data module so
+# the rest of the codebase does not pick up the pattern.
+.projectPrivate <- function(project) {
+  project$.__enclos_env__$private
+}
 
 # Section validation adapter ----
 
@@ -165,6 +177,7 @@ loadObservedData <- function(project) {
   if (is.null(project$observedData) || length(project$observedData) == 0) {
     return(list())
   }
+  state <- .projectPrivate(project)
   allDataSets <- list()
   for (i in seq_along(project$observedData)) {
     entry <- project$observedData[[i]]
@@ -174,13 +187,163 @@ loadObservedData <- function(project) {
       "excel" = .loadObservedExcel(entry, project$dataFolder),
       "pkml" = .loadObservedPkml(entry, project$dataFolder),
       "script" = .loadObservedScript(entry, project$dataFolder),
-      "programmatic" = cli::cli_abort(
-        messages$observedDataProgrammaticNotYetAvailable()
-      )
+      "programmatic" = NULL
     )
-    allDataSets <- c(allDataSets, dataSets)
+    if (!is.null(dataSets)) {
+      allDataSets <- c(allDataSets, dataSets)
+    }
   }
+  # Merge runtime programmatic store, then cache names.
+  allDataSets <- c(allDataSets, state$.programmaticDataSets)
+  state$.observedDataNamesCache <- names(allDataSets)
   allDataSets
+}
+
+#' Get names of all observed data in a Project
+#'
+#' Returns the names of all DataSets that would be returned by
+#' [loadObservedData()]. On first call this loads the data to discover
+#' names; subsequent calls return cached names until a mutation
+#' invalidates the cache.
+#'
+#' @param project A `Project` object (see [loadProject()]).
+#' @returns A character vector of DataSet names.
+#' @export
+#' @family observedData
+getObservedDataNames <- function(project) {
+  ospsuite.utils::validateIsOfType(project, "Project")
+  state <- .projectPrivate(project)
+  if (!is.null(state$.observedDataNamesCache)) {
+    return(state$.observedDataNamesCache)
+  }
+  loadObservedData(project)
+  state$.observedDataNamesCache %||% character(0)
+}
+
+# Public CRUD: observedData ----
+
+#' Add observed data to a Project
+#'
+#' Add an observedData entry. Accepts either a `DataSet` (creates a
+#' `type = "programmatic"` entry keyed by `dataSet$name`) or a
+#' configuration list with `type` field (`"excel"`, `"pkml"`, or
+#' `"script"`) plus source-specific fields.
+#'
+#' @param project A `Project` object.
+#' @param entry Either a `DataSet` object or a configuration list.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family observedData
+addObservedData <- function(project, entry) {
+  ospsuite.utils::validateIsOfType(project, "Project")
+  state <- .projectPrivate(project)
+
+  if (inherits(entry, "DataSet")) {
+    name <- entry$name
+    existingNames <- getObservedDataNames(project)
+    if (name %in% existingNames) {
+      cli::cli_abort(
+        "observedData entry with name {.val {name}} already exists"
+      )
+    }
+    state$.programmaticDataSets[[name]] <- entry
+    state$.observedDataNamesCache <- c(
+      state$.observedDataNamesCache,
+      name
+    )
+    sentinel <- list(type = "programmatic", name = name)
+    project$observedData <- c(project$observedData, list(sentinel))
+    project$.markModified()
+    cli::cli_inform(c(
+      "i" = paste0(
+        "For reproducibility, consider declaring this DataSet via a ",
+        "script in your Project.json using the {.field observedData} ",
+        "field with {.code type = \"script\"} and ",
+        "{.code file = \"scripts/your_script.R\"}."
+      )
+    ))
+    return(invisible(project))
+  }
+
+  if (is.list(entry)) {
+    if (is.null(entry$type)) {
+      cli::cli_abort("observedData entry must include a {.field type} field")
+    }
+    validTypes <- c("excel", "pkml", "script")
+    if (!(entry$type %in% validTypes)) {
+      cli::cli_abort(c(
+        "Invalid observedData entry type {.val {entry$type}}.",
+        "i" = "Must be one of: {.val {validTypes}}."
+      ))
+    }
+    state$.observedDataNamesCache <- NULL
+    project$observedData <- c(project$observedData, list(entry))
+    project$.markModified()
+    return(invisible(project))
+  }
+
+  cli::cli_abort(
+    "observedData entry must be a {.cls DataSet} or a configuration list"
+  )
+}
+
+#' Remove observed data from a Project
+#'
+#' Removes by DataSet name (for `type = "programmatic"` entries) or by
+#' `file` basename (for `type` `"excel"` / `"pkml"` / `"script"`
+#' entries). Warns and is a no-op if no matching entry is found.
+#'
+#' @param project A `Project` object.
+#' @param name DataSet name or config entry file basename.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family observedData
+removeObservedData <- function(project, name) {
+  ospsuite.utils::validateIsOfType(project, "Project")
+  if (
+    !is.character(name) ||
+      length(name) != 1L ||
+      is.na(name) ||
+      nchar(name) == 0
+  ) {
+    cli::cli_abort("{.arg name} must be a non-empty string")
+  }
+  state <- .projectPrivate(project)
+
+  if (name %in% names(state$.programmaticDataSets)) {
+    state$.programmaticDataSets[[name]] <- NULL
+    matchIdx <- which(vapply(
+      project$observedData,
+      function(e) {
+        identical(e$type, "programmatic") && identical(e$name, name)
+      },
+      logical(1)
+    ))
+    if (length(matchIdx) > 0L) {
+      project$observedData <- project$observedData[-matchIdx[[1]]]
+    }
+    state$.observedDataNamesCache <- NULL
+    project$.markModified()
+    return(invisible(project))
+  }
+
+  matchIdx <- which(vapply(
+    project$observedData,
+    function(e) {
+      !is.null(e$file) && identical(basename(e$file), name)
+    },
+    logical(1)
+  ))
+
+  if (length(matchIdx) == 0L) {
+    cli::cli_warn("observedData entry {.val {name}} not found; no-op.")
+    return(invisible(project))
+  }
+
+  project$observedData <- project$observedData[-matchIdx[[1]]]
+  state$.observedDataNamesCache <- NULL
+  project$.markModified()
+  invisible(project)
 }
 
 # Internal helpers ----

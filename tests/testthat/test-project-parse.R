@@ -100,38 +100,39 @@ test_that(".loadProjectJson() preserves applicationParameterSets as a named list
     1L
   )
   expect_identical(
-    project$applicationParameterSets$Aciclovir_iv_250mg_default[[1L]]$parameterName,
+    project$applicationParameterSets$Aciclovir_iv_250mg_default[[
+      1L
+    ]]$parameterName,
     "Dose"
   )
 })
 
-test_that(".loadProjectJson() preserves individuals with parameterSets references", {
+test_that(".loadProjectJson() preserves individuals as a named list keyed by individualId", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
-  expect_length(project$individuals, 1L)
-  ind <- project$individuals[[1L]]
-  expect_identical(ind$individualId, "Adult_male")
+  expect_named(project$individuals, "Adult_male")
+  ind <- project$individuals[["Adult_male"]]
+  expect_s3_class(ind, "Individual")
   expect_identical(ind$gender, "MALE")
-  expect_identical(ind$parameterSets, list("Adult_male_default"))
+  expect_identical(ind$parameterSets, "Adult_male_default")
 })
 
-test_that(".loadProjectJson() preserves populations as a list of named lists", {
+test_that(".loadProjectJson() preserves populations as a named list keyed by populationId", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
-  expect_length(project$populations, 1L)
-  pop <- project$populations[[1L]]
-  expect_identical(pop$populationId, "European_adults")
-  expect_identical(pop$numberOfIndividuals, 50L)
+  expect_named(project$populations, "European_adults")
+  pop <- project$populations[["European_adults"]]
+  expect_s3_class(pop, "Population")
+  expect_identical(pop$numberOfIndividuals, 50)
 })
 
 test_that(".loadProjectJson() preserves applications as a named list keyed by protocol name", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
   expect_named(project$applications, "Aciclovir_iv_250mg")
-  expect_identical(
-    project$applications$Aciclovir_iv_250mg$parameterSets,
-    list("Aciclovir_iv_250mg_default")
-  )
+  app <- project$applications[["Aciclovir_iv_250mg"]]
+  expect_s3_class(app, "Application")
+  expect_identical(app$parameterSets, "Aciclovir_iv_250mg_default")
 })
 
 test_that(".loadProjectJson() preserves the observedData section", {
@@ -266,17 +267,18 @@ test_that(".loadProjectJson() defaults missing optional sections to empty lists"
   expect_identical(project$applicationParameterSets, list())
   expect_identical(project$individuals, list())
   expect_identical(project$populations, list())
-  expect_identical(project$applications, list())
+  expect_identical(project$applications, structure(list(), names = character(0L)))
   expect_identical(project$observedData, list())
   expect_null(project$plots)
 })
 
-test_that("Project active fields are read-only", {
+test_that("Project metadata fields are read-only", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
   expect_error(project$schemaVersion <- "9.9", "read-only")
   expect_error(project$jsonPath <- "/tmp/elsewhere.json", "read-only")
-  expect_error(project$scenarios <- list(), "read-only")
+  expect_error(project$validatedSinceMutation <- TRUE, "read-only")
+  expect_error(project$modified <- TRUE, "read-only")
 })
 
 test_that("Project$print() summarises section counts", {

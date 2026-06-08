@@ -6,14 +6,6 @@
       Error in `.validateObservedDataEntry()`:
       ! x Invalid type "invalid_type" in `observedData` entry. i Must be one of: "excel", "pkml", "script", and "programmatic".
 
-# loadObservedData errors on programmatic type
-
-    Code
-      loadObservedData(project)
-    Condition
-      Error in `loadObservedData()`:
-      ! x "programmatic" `observedData` entries are not yet supported. i The `addObservedData()` runtime API lands in a later milestone.
-
 # loadObservedData errors when excel entry is missing required fields
 
     Code

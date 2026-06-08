@@ -61,12 +61,109 @@
     modelParameterSets = raw$modelParameterSets %||% list(),
     individualParameterSets = raw$individualParameterSets %||% list(),
     applicationParameterSets = raw$applicationParameterSets %||% list(),
-    individuals = raw$individuals %||% list(),
-    populations = raw$populations %||% list(),
-    applications = raw$applications %||% list(),
+    individuals = .parseIndividuals(raw$individuals),
+    populations = .parsePopulations(raw$populations),
+    applications = .parseApplications(raw$applications),
     observedData = raw$observedData %||% list(),
     plots = .parsePlots(raw$plots)
   )
+}
+
+# Parse the `individuals` JSON array into a named list keyed by
+# `individualId`. Per-entry numeric fields are coerced via `as.double`.
+# Each entry is stamped with `class = c("Individual", "list")` to enable
+# S3 dispatch on individual objects.
+#
+# @keywords internal
+# @noRd
+.parseIndividuals <- function(individualsData) {
+  if (is.null(individualsData) || length(individualsData) == 0L) {
+    return(list())
+  }
+  result <- list()
+  for (entry in individualsData) {
+    indiv <- list()
+    if (!is.null(entry$species)) indiv$species <- entry$species
+    for (field in c("population", "gender", "proteinOntogenies")) {
+      if (!is.null(entry[[field]])) indiv[[field]] <- entry[[field]]
+    }
+    for (field in c("weight", "height", "age")) {
+      if (!is.null(entry[[field]])) {
+        indiv[[field]] <- as.double(entry[[field]])
+      }
+    }
+    if (!is.null(entry$parameterSets)) {
+      indiv$parameterSets <- as.character(unlist(entry$parameterSets))
+    }
+    class(indiv) <- c("Individual", "list")
+    result[[entry$individualId]] <- indiv
+  }
+  result
+}
+
+# Parse the `populations` JSON array into a named list keyed by
+# `populationId`. Numeric fields are coerced via `as.double`. Each entry
+# is stamped with `class = c("Population", "list")` to enable S3 dispatch.
+#
+# @keywords internal
+# @noRd
+.parsePopulations <- function(populationsData) {
+  if (is.null(populationsData) || length(populationsData) == 0L) {
+    return(list())
+  }
+  numericFields <- c(
+    "numberOfIndividuals",
+    "proportionOfFemales",
+    "weightMin",
+    "weightMax",
+    "heightMin",
+    "heightMax",
+    "ageMin",
+    "ageMax",
+    "BMIMin",
+    "BMIMax"
+  )
+  result <- list()
+  for (entry in populationsData) {
+    popData <- list()
+    for (field in names(entry)) {
+      if (field == "populationId") next
+      val <- entry[[field]]
+      if (is.null(val)) next
+      if (field %in% numericFields) {
+        val <- as.double(val)
+      }
+      popData[[field]] <- val
+    }
+    class(popData) <- c("Population", "list")
+    result[[entry$populationId]] <- popData
+  }
+  result
+}
+
+# Parse the `applications` JSON object. Each entry is stamped with
+# `class = c("Application", "list")`. The current schema stores
+# applications as a map of name -> object containing only
+# `parameterSets`. The map is preserved verbatim except for the class
+# attribute and a coercion of `parameterSets` to character.
+#
+# @keywords internal
+# @noRd
+.parseApplications <- function(appsData) {
+  if (is.null(appsData) || length(appsData) == 0L) {
+    return(structure(list(), names = character(0L)))
+  }
+  result <- list()
+  for (id in names(appsData)) {
+    entry <- appsData[[id]]
+    app <- list()
+    if (!is.null(entry$parameterSets)) {
+      app$parameterSets <- as.character(unlist(entry$parameterSets))
+    }
+    class(app) <- c("Application", "list")
+    result[[id]] <- app
+  }
+  result
 }
 
 # Parse the `plots` JSON section into the asymmetric in-memory shape:

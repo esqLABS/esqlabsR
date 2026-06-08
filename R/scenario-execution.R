@@ -1,13 +1,6 @@
 # Internal scenario execution helpers ----
 #
-# Modern (JSON-Project-driven) runtime path. Bodies match
-# `json-as-primary-input-v2:R/scenario-execution.R` line-for-line except
-# for two transitional helpers (`.parameterSetToStructure`,
-# `.findById`) that bridge the gap between our JSON-faithful parser and
-# end-state's pre-shaped section parsers. Those two helpers go away in
-# Chapter 6/7 when the section parsers become typed.
-
-# Transitional bridge helpers ----
+# Modern (JSON-Project-driven) runtime path.
 
 # Convert a record-shape parameter list (one entry of any of the
 # project-level `*ParameterSets` bags: `modelParameterSets`,
@@ -30,22 +23,6 @@
   values <- vapply(entries, function(e) as.numeric(e$value), numeric(1))
   units <- vapply(entries, function(e) e$units %||% "", character(1))
   list(paths = paths, values = values, units = units)
-}
-
-# Find the first item in `items` whose `[[idField]]` equals `id`.
-# Returns `NULL` if no match.
-# @keywords internal
-# @noRd
-.findById <- function(items, idField, id) {
-  if (is.null(items) || length(items) == 0L || is.null(id) || is.na(id)) {
-    return(NULL)
-  }
-  for (item in items) {
-    if (identical(item[[idField]], id)) {
-      return(item)
-    }
-  }
-  NULL
 }
 
 # Five-layer merge ----
@@ -81,11 +58,7 @@
 
   # 2. + 3. species defaults + individual parameterSets
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
-    indivData <- .findById(
-      project$individuals,
-      "individualId",
-      scenario$individualId
-    )
+    indivData <- project$individuals[[scenario$individualId]]
     if (!is.null(indivData)) {
       speciesParams <- .getSpeciesParameters(indivData$species)
       if (!is.null(speciesParams)) {
@@ -196,11 +169,7 @@
   # 2b. IndividualCharacteristics
   individualCharacteristics <- NULL
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
-    indivData <- .findById(
-      project$individuals,
-      "individualId",
-      scenario$individualId
-    )
+    indivData <- project$individuals[[scenario$individualId]]
     if (is.null(indivData)) {
       cli::cli_warn(messages$warningNoIndividualCharacteristics(
         scenarioName = scenario$scenarioName,
@@ -294,11 +263,7 @@
       if (!is.null(cached)) {
         population <- cached
       } else {
-        popData <- .findById(
-          project$populations,
-          "populationId",
-          scenario$populationId
-        )
+        popData <- project$populations[[scenario$populationId]]
         if (is.null(popData)) {
           cli::cli_abort(
             "Population {.val {scenario$populationId}} referenced by scenario {.val {scenario$scenarioName}} not found in project."
@@ -307,8 +272,7 @@
         moleculeOntogenies <- .readOntogeniesFromList(
           popData$proteinOntogenies
         )
-        popArgs <- popData
-        popArgs$populationId <- NULL
+        popArgs <- unclass(popData)
         popArgs$proteinOntogenies <- NULL
         popArgs$moleculeOntogenies <- moleculeOntogenies
         # JSON integers (e.g. ageMin: 18) must be coerced to double because

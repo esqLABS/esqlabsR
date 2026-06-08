@@ -21,6 +21,41 @@ reference:
       - projectConfigurationStatus
       - createPlotsFromExcel
       - initProject
+  - title: Programmatic Project mutation
+    contents:
+      - addScenario
+      - removeScenario
+      - addIndividual
+      - removeIndividual
+      - setIndividualParameterSets
+      - addPopulation
+      - removePopulation
+      - addApplication
+      - removeApplication
+      - setApplicationParameterSets
+      - addOutputPath
+      - removeOutputPath
+      - addObservedData
+      - removeObservedData
+      - getObservedDataNames
+      - addDataCombined
+      - removeDataCombined
+      - addPlot
+      - removePlot
+      - addPlotGrid
+      - removePlotGrid
+      - addModelParameterSet
+      - removeModelParameterSet
+      - addModelParameterEntry
+      - removeModelParameterEntry
+      - addIndividualParameterSet
+      - removeIndividualParameterSet
+      - addIndividualParameterSetEntry
+      - removeIndividualParameterSetEntry
+      - addApplicationParameterSet
+      - removeApplicationParameterSet
+      - addApplicationParameterSetEntry
+      - removeApplicationParameterSetEntry
   - title: Parameter identification workflow
     contents:
       - PITaskConfiguration

@@ -576,3 +576,324 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
 
   return(simulatedScenariosResults)
 }
+
+# Public CRUD: outputPaths ----
+
+#' Add output paths to a Project
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of output path IDs (unique within the call
+#'   and not already present in `project$outputPaths`).
+#' @param path Character vector of output paths, same length as `id`.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+addOutputPath <- function(project, id, path) {
+  validateIsOfType(project, "Project")
+  errors <- character()
+
+  if (
+    !is.character(id) ||
+      length(id) < 1L ||
+      any(is.na(id)) ||
+      any(nchar(id) == 0)
+  ) {
+    errors <- c(errors, "id must be a non-empty character vector")
+  }
+  if (!is.character(path) || length(path) != length(id)) {
+    errors <- c(
+      errors,
+      "id and path must be character vectors of the same length"
+    )
+  }
+  if (is.character(id) && any(duplicated(id))) {
+    errors <- c(
+      errors,
+      paste0(
+        "duplicate ids within call: ",
+        paste(unique(id[duplicated(id)]), collapse = ", ")
+      )
+    )
+  }
+  if (is.character(id)) {
+    collisions <- intersect(id, names(project$outputPaths))
+    if (length(collisions) > 0) {
+      errors <- c(
+        errors,
+        paste0(
+          "outputPath id already exists: ",
+          paste(collisions, collapse = ", ")
+        )
+      )
+    }
+  }
+
+  if (length(errors) > 0) {
+    cli::cli_abort(c(
+      "Cannot add outputPath:",
+      stats::setNames(errors, rep("x", length(errors)))
+    ))
+  }
+
+  newPaths <- as.list(path)
+  names(newPaths) <- id
+  project$outputPaths <- c(project$outputPaths, newPaths)
+  project$.markModified()
+  invisible(project)
+}
+
+#' Remove an output path from a Project
+#' @param project A `Project` object.
+#' @param id Character scalar.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+removeOutputPath <- function(project, id) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+    cli::cli_abort("{.arg id} must be a non-empty string")
+  }
+  if (!(id %in% names(project$outputPaths))) {
+    cli::cli_warn("outputPath {.val {id}} not found; no-op.")
+    return(invisible(project))
+  }
+  .warnIfReferenced(project, "outputPath", id)
+  project$outputPaths <- project$outputPaths[setdiff(
+    names(project$outputPaths),
+    id
+  )]
+  project$.markModified()
+  invisible(project)
+}
+
+# Public CRUD: scenarios ----
+
+#' Add a scenario programmatically to a Project
+#'
+#' Creates a new `Scenario` and adds it to `project$scenarios` after
+#' validating all references.
+#'
+#' @param project A `Project` object.
+#' @param scenarioName Character. Name for the new scenario. Must not
+#'   already exist in `project$scenarios`.
+#' @param modelFile Character. Name of the `.pkml` model file (relative
+#'   to model folder).
+#' @param individualId Character or `NULL`. ID referencing
+#'   `project$individuals`.
+#' @param populationId Character or `NULL`. ID referencing
+#'   `project$populations`.
+#' @param applicationProtocol Character or `NULL`. Protocol name
+#'   referencing `project$applications`.
+#' @param modelParameterSets Character vector or `NULL`. Set names
+#'   referencing `project$modelParameterSets`.
+#' @param outputPathIds Character vector or `NULL`. IDs referencing
+#'   `project$outputPaths`.
+#' @param simulationTime Character or `NULL`. Format
+#'   `"start, end, resolution"` or
+#'   `"start, end, resolution; start, end, resolution"` for multiple
+#'   intervals.
+#' @param simulationTimeUnit Character. Time unit string. Default `"h"`.
+#' @param steadyState Logical. Whether to simulate steady state. Default
+#'   `FALSE`.
+#' @param steadyStateTime Numeric. Steady-state time in
+#'   `steadyStateTimeUnit`. Default `1000`.
+#' @param steadyStateTimeUnit Character. Unit for `steadyStateTime`.
+#'   Default `"min"`.
+#' @param overwriteFormulasInSS Logical. Overwrite formulas during
+#'   steady state. Default `FALSE`.
+#' @param readPopulationFromCSV Logical. Load population from CSV.
+#'   Default `FALSE`.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+addScenario <- function(
+  project,
+  scenarioName,
+  modelFile,
+  individualId = NULL,
+  populationId = NULL,
+  applicationProtocol = NULL,
+  modelParameterSets = NULL,
+  outputPathIds = NULL,
+  simulationTime = NULL,
+  simulationTimeUnit = "h",
+  steadyState = FALSE,
+  steadyStateTime = 1000,
+  steadyStateTimeUnit = "min",
+  overwriteFormulasInSS = FALSE,
+  readPopulationFromCSV = FALSE
+) {
+  validateIsOfType(project, "Project")
+  errors <- character()
+
+  if (
+    !is.character(scenarioName) ||
+      length(scenarioName) != 1L ||
+      is.na(scenarioName) ||
+      nchar(scenarioName) == 0
+  ) {
+    errors <- c(errors, "scenarioName must be a non-empty string")
+  } else if (scenarioName %in% names(project$scenarios)) {
+    errors <- c(
+      errors,
+      paste0("scenario '", scenarioName, "' already exists")
+    )
+  }
+
+  if (
+    !is.character(modelFile) ||
+      length(modelFile) != 1L ||
+      is.na(modelFile) ||
+      nchar(modelFile) == 0
+  ) {
+    errors <- c(errors, "modelFile must be a non-empty string")
+  }
+
+  checkScalarFK <- function(value, argName, lookup, lookupLabel) {
+    if (is.null(value)) {
+      return(character())
+    }
+    if (
+      !is.character(value) ||
+        length(value) != 1L ||
+        is.na(value) ||
+        nchar(value) == 0
+    ) {
+      return(paste0(argName, " must be a non-empty string or NULL"))
+    }
+    if (!(value %in% names(lookup))) {
+      return(paste0(argName, " '", value, "' not found in ", lookupLabel))
+    }
+    character()
+  }
+  checkVectorFK <- function(value, argName, lookup, lookupLabel) {
+    if (is.null(value)) {
+      return(character())
+    }
+    if (
+      !is.character(value) ||
+        length(value) == 0L ||
+        any(is.na(value)) ||
+        any(nchar(value) == 0)
+    ) {
+      return(paste0(
+        argName,
+        " must be a non-empty character vector with no NA or empty entries"
+      ))
+    }
+    bad <- setdiff(value, names(lookup))
+    if (length(bad) > 0L) {
+      return(paste0(
+        argName,
+        " not found in ",
+        lookupLabel,
+        ": ",
+        paste(bad, collapse = ", ")
+      ))
+    }
+    character()
+  }
+
+  errors <- c(
+    errors,
+    checkScalarFK(
+      individualId,
+      "individualId",
+      project$individuals,
+      "individuals"
+    ),
+    checkScalarFK(
+      populationId,
+      "populationId",
+      project$populations,
+      "populations"
+    ),
+    checkScalarFK(
+      applicationProtocol,
+      "applicationProtocol",
+      project$applications,
+      "applications"
+    ),
+    checkVectorFK(
+      modelParameterSets,
+      "modelParameterSets",
+      project$modelParameterSets,
+      "project$modelParameterSets"
+    ),
+    checkVectorFK(
+      outputPathIds,
+      "outputPathIds",
+      project$outputPaths,
+      "outputPaths"
+    )
+  )
+
+  if (length(errors) > 0L) {
+    cli::cli_abort(c(
+      "Cannot add scenario {.val {scenarioName}}:",
+      stats::setNames(errors, rep("x", length(errors)))
+    ))
+  }
+
+  sc <- Scenario$new()
+  sc$scenarioName <- scenarioName
+  sc$modelFile <- modelFile
+  sc$individualId <- individualId
+  sc$applicationProtocol <- applicationProtocol %||% NA
+
+  if (!is.null(populationId)) {
+    sc$populationId <- populationId
+    sc$simulationType <- "Population"
+  }
+
+  sc$modelParameterSets <- modelParameterSets
+  sc$readPopulationFromCSV <- readPopulationFromCSV
+
+  if (!is.null(outputPathIds)) {
+    sc$outputPaths <- setNames(
+      unlist(project$outputPaths[outputPathIds], use.names = FALSE),
+      outputPathIds
+    )
+  }
+
+  if (!is.null(simulationTime)) {
+    sc$simulationTime <- .parseSimulationTimeIntervals(simulationTime)
+    sc$simulationTimeUnit <- simulationTimeUnit
+  }
+
+  sc$simulateSteadyState <- steadyState
+  sc$steadyStateTime <- steadyStateTime
+  sc$steadyStateTimeUnit <- steadyStateTimeUnit
+  sc$overwriteFormulasInSS <- overwriteFormulasInSS
+
+  project$scenarios[[scenarioName]] <- sc
+  project$.markModified()
+
+  invisible(project)
+}
+
+#' Remove a scenario from a Project
+#' @param project A `Project` object.
+#' @param name Character scalar, scenario name.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family scenario
+removeScenario <- function(project, name) {
+  validateIsOfType(project, "Project")
+  if (
+    !is.character(name) ||
+      length(name) != 1L ||
+      is.na(name) ||
+      nchar(name) == 0
+  ) {
+    cli::cli_abort("{.arg name} must be a non-empty string")
+  }
+  if (!(name %in% names(project$scenarios))) {
+    cli::cli_warn("scenario {.val {name}} not found; no-op.")
+    return(invisible(project))
+  }
+  project$scenarios[[name]] <- NULL
+  project$.markModified()
+  invisible(project)
+}

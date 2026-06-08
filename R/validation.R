@@ -188,32 +188,89 @@ validateProject <- function(project) {
 
 # Shared helpers used by section adapters ----
 
-#' Extract IDs from a JSON-array section (e.g. individuals, populations)
+#' Warn if a removed entity is still referenced elsewhere in the project.
 #'
-#' These sections are stored as unnamed lists where each entry carries
-#' its own ID field (`individualId` / `populationId`). Returns a
-#' character vector of those IDs (with `NA` filtered out) for
-#' cross-reference checks. Transitional helper: drops out once the parser
-#' converts individuals/populations into named lists keyed by id (planned
-#' alongside the file reorg in Chapter 7).
+#' Walks the project to find inbound references to `id` of the given
+#' `entityType` and emits a `cli::cli_warn()` listing them. Used by the
+#' `remove*()` mutators: removal proceeds anyway, leaving the dangling
+#' reference for the next [validateProject()] call to surface.
 #'
+#' @param project A `Project` object.
+#' @param entityType One of `"individual"`, `"population"`, `"application"`,
+#'   `"modelParameterSet"`, `"individualParameterSet"`,
+#'   `"applicationParameterSet"`, `"outputPath"`.
+#' @param id Character scalar of the id being removed.
+#' @return `invisible(NULL)`.
 #' @keywords internal
 #' @noRd
-.extractEntryIds <- function(entries, idField) {
-  if (is.null(entries) || length(entries) == 0) {
-    return(character(0))
+.warnIfReferenced <- function(project, entityType, id) {
+  if (entityType == "individualParameterSet") {
+    holders <- character()
+    for (indId in names(project$individuals %||% list())) {
+      ind <- project$individuals[[indId]]
+      if (id %in% (ind$parameterSets %||% character(0))) {
+        holders <- c(holders, indId)
+      }
+    }
+    if (length(holders) > 0) {
+      cli::cli_warn(c(
+        "Removed individualParameterSet {.val {id}} is still referenced by {length(holders)} individual{?s}:",
+        "*" = "{holders}",
+        "i" = "These individuals now have a dangling reference. Update or remove them."
+      ))
+    }
+    return(invisible(NULL))
   }
-  ids <- vapply(
-    entries,
-    function(e) {
-      v <- e[[idField]]
-      if (is.null(v) || length(v) == 0) NA_character_ else as.character(v)
-    },
-    character(1)
-  )
-  ids[!is.na(ids)]
-}
+  if (entityType == "applicationParameterSet") {
+    holders <- character()
+    for (appId in names(project$applications %||% list())) {
+      app <- project$applications[[appId]]
+      if (id %in% (app$parameterSets %||% character(0))) {
+        holders <- c(holders, appId)
+      }
+    }
+    if (length(holders) > 0) {
+      cli::cli_warn(c(
+        "Removed applicationParameterSet {.val {id}} is still referenced by {length(holders)} application{?s}:",
+        "*" = "{holders}",
+        "i" = "These applications now have a dangling reference. Update or remove them."
+      ))
+    }
+    return(invisible(NULL))
+  }
 
+  scenarios <- project$scenarios %||% list()
+  if (length(scenarios) == 0) {
+    return(invisible(NULL))
+  }
+
+  refs <- character()
+  for (name in names(scenarios)) {
+    sc <- scenarios[[name]]
+    hit <- switch(
+      entityType,
+      "individual" = identical(sc$individualId, id),
+      "population" = identical(sc$populationId, id),
+      "application" = identical(sc$applicationProtocol, id),
+      "modelParameterSet" = isTRUE(id %in% sc$modelParameterSets),
+      "outputPath" = {
+        pathValue <- project$outputPaths[[id]]
+        isTRUE(pathValue %in% sc$outputPaths)
+      },
+      FALSE
+    )
+    if (isTRUE(hit)) refs <- c(refs, name)
+  }
+
+  if (length(refs) > 0) {
+    cli::cli_warn(c(
+      "Removed {entityType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
+      "*" = "{refs}",
+      "i" = "These scenarios now have a dangling reference. Update or remove them."
+    ))
+  }
+  invisible(NULL)
+}
 
 #' Check for duplicate values and add a critical error when found
 #'
@@ -403,8 +460,8 @@ validateProject <- function(project) {
   }
 
   scenarioList <- project$scenarios %||% list()
-  individualIds <- .extractEntryIds(project$individuals, "individualId")
-  populationIds <- .extractEntryIds(project$populations, "populationId")
+  individualIds <- names(project$individuals %||% list())
+  populationIds <- names(project$populations %||% list())
   modelParamKeys <- names(project$modelParameterSets %||% list())
   applicationKeys <- names(project$applications %||% list())
 
@@ -480,9 +537,8 @@ validateProject <- function(project) {
   }
 
   individualSetKeys <- names(project$individualParameterSets %||% list())
-  for (entry in project$individuals %||% list()) {
-    id <- entry$individualId %||% NA_character_
-    refs <- entry$parameterSets %||% character(0)
+  for (id in names(project$individuals %||% list())) {
+    refs <- project$individuals[[id]]$parameterSets %||% character(0)
     refs <- as.character(unlist(refs))
     invalid <- setdiff(refs, individualSetKeys)
     if (length(invalid) > 0) {
