@@ -41,13 +41,15 @@
       "missing|empty|not found",
       message,
       ignore.case = TRUE
-    ) ~ "Missing Fields",
+    ) ~
+      "Missing Fields",
     grepl("duplicate|unique", message, ignore.case = TRUE) ~ "Uniqueness",
     grepl(
       "not defined|invalid.*reference",
       message,
       ignore.case = TRUE
-    ) ~ "Invalid Reference",
+    ) ~
+      "Invalid Reference",
     grepl("format|separated|Wrong number", message) ~ "Format Error",
     grepl("sheet|column|structure", message, ignore.case = TRUE) ~ "Structure",
     .default = "Validation"
