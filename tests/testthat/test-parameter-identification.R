@@ -632,7 +632,6 @@ test_that("validateProject() flags PI outputMappings that reference unknown outp
 })
 
 test_that(".createSinglePITask builds a ParameterIdentification with the expected counts", {
-  skip_if_not_installed("ospsuite.parameteridentification")
   project <- loadProject(test_path("data", "TestProject", "Project.json"))
   task <- PITask(
     id = "T",
@@ -668,6 +667,99 @@ test_that(".createSinglePITask builds a ParameterIdentification with the expecte
   expect_s3_class(pi, "ParameterIdentification")
   expect_length(pi$parameters, 1L)
   expect_length(pi$outputMappings, 1L)
+})
+
+test_that(".createSinglePITask shares one optimisation variable across scenarios for a multi-scenario PIParameter", {
+  # Replaces the Excel "Group" column: a single PIParameter whose `scenarios`
+  # lists several scenarios is built into one PIParameters runtime holding one
+  # underlying parameter object per simulation, i.e. one estimated value fit
+  # across all listed scenarios simultaneously.
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  sharedScenarios <- c("TestScenario", "TestScenario_steadystate")
+  task <- PITask(
+    id = "Shared",
+    scenarios = sharedScenarios,
+    parameters = list(
+      PIParameter(
+        id = "EHC",
+        scenarios = sharedScenarios,
+        path = "Organism|Liver|EHC continuous fraction",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = sharedScenarios,
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  pi <- esqlabsR:::.createSinglePITask(
+    project = project,
+    piTask = task,
+    observedData = loadObservedData(project)
+  )
+
+  # One PIParameters object (one optimisation variable) spanning both
+  # simulations: its `parameters` list holds one Parameter per scenario.
+  expect_length(pi$parameters, 1L)
+  expect_length(pi$parameters[[1]]$parameters, length(sharedScenarios))
+})
+
+test_that(".createSinglePITask keeps the same path independent across scenarios when split into separate PIParameters", {
+  # The "different group, same path" Excel case: two PIParameter records over
+  # the same path, each scoped to one scenario, build two independent
+  # optimisation variables (one underlying Parameter each).
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  path <- "Organism|Liver|EHC continuous fraction"
+  task <- PITask(
+    id = "Split",
+    scenarios = c("TestScenario", "TestScenario_steadystate"),
+    parameters = list(
+      PIParameter(
+        id = "EHC_a",
+        scenarios = "TestScenario",
+        path = path,
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      ),
+      PIParameter(
+        id = "EHC_b",
+        scenarios = "TestScenario_steadystate",
+        path = path,
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = c("TestScenario", "TestScenario_steadystate"),
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  pi <- esqlabsR:::.createSinglePITask(
+    project = project,
+    piTask = task,
+    observedData = loadObservedData(project)
+  )
+
+  # Two independent optimisation variables, each over a single simulation.
+  expect_length(pi$parameters, 2L)
+  expect_length(pi$parameters[[1]]$parameters, 1L)
+  expect_length(pi$parameters[[2]]$parameters, 1L)
 })
 
 test_that("runPI(project) refuses to run when validation has critical errors", {
