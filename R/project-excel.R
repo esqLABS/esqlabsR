@@ -355,7 +355,7 @@ exportProjectToExcel <- function(
   if (!is.null(project$outputPaths) && length(project$outputPaths) > 0) {
     scenSheets[["OutputPaths"]] <- data.frame(
       OutputPathId = names(project$outputPaths),
-      OutputPath = unname(project$outputPaths),
+      OutputPath = unlist(project$outputPaths, use.names = FALSE),
       stringsAsFactors = FALSE
     )
   }
