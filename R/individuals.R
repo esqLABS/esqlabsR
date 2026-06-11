@@ -1,9 +1,11 @@
 # Parse ----
 #
 # Parse the `individuals` JSON array into a named list keyed by
-# `individualId`. Per-entry numeric fields are coerced via `as.double`.
-# Each entry is stamped with `class = c("Individual", "list")` to enable
-# S3 dispatch on individual objects.
+# `individualId`. Like `.parsePopulations()`, every field except the key
+# is passed through (unknown fields are preserved so newer-schema files
+# round-trip); the known numeric fields are coerced via `as.double` and
+# `parameterSets` to a character vector. Each entry is stamped with
+# `class = c("Individual", "list")` to enable S3 dispatch.
 #
 # @keywords internal
 # @noRd
@@ -11,20 +13,20 @@
   if (is.null(individualsData) || length(individualsData) == 0L) {
     return(list())
   }
+  numericFields <- c("weight", "height", "age")
   result <- list()
   for (entry in individualsData) {
     indiv <- list()
-    if (!is.null(entry$species)) indiv$species <- entry$species
-    for (field in c("population", "gender", "proteinOntogenies")) {
-      if (!is.null(entry[[field]])) indiv[[field]] <- entry[[field]]
-    }
-    for (field in c("weight", "height", "age")) {
-      if (!is.null(entry[[field]])) {
-        indiv[[field]] <- as.double(entry[[field]])
+    for (field in names(entry)) {
+      if (field == "individualId") next
+      val <- entry[[field]]
+      if (is.null(val)) next
+      if (field %in% numericFields) {
+        val <- as.double(val)
+      } else if (field == "parameterSets") {
+        val <- as.character(unlist(val))
       }
-    }
-    if (!is.null(entry$parameterSets)) {
-      indiv$parameterSets <- as.character(unlist(entry$parameterSets))
+      indiv[[field]] <- val
     }
     class(indiv) <- c("Individual", "list")
     result[[entry$individualId]] <- indiv
