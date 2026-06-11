@@ -660,7 +660,15 @@ Project <- R6::R6Class(
       jsonPath <- fs::path_abs(jsonPath)
       if (!fs::file_exists(jsonPath))
         cli::cli_abort(messages$fileNotFound(jsonPath))
-      jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+      jsonData <- tryCatch(
+        jsonlite::fromJSON(jsonPath, simplifyVector = FALSE),
+        error = function(e) {
+          cli::cli_abort(
+            "Failed to parse {.file {jsonPath}} as JSON.",
+            parent = e
+          )
+        }
+      )
       if (!identical(jsonData$schemaVersion, "2.0")) {
         cli::cli_abort(
           "Unsupported schemaVersion: {.val {jsonData$schemaVersion %||% '<missing>'}}. Expected {.val 2.0}."

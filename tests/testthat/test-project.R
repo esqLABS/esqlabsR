@@ -381,6 +381,18 @@ test_that("loadProject() rejects a missing file", {
   )
 })
 
+test_that("loadProject() wraps a non-JSON file with file context", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  writeLines("this is not valid json {", tmp)
+
+  # The path is environment-specific, so match the wrapping message; the
+  # underlying jsonlite lexical error is attached as the parent.
+  expect_error(
+    loadProject(tmp),
+    "Failed to parse.*as JSON"
+  )
+})
+
 test_that("loadProject() rejects a non-string path", {
   expect_error(
     loadProject(NULL),
