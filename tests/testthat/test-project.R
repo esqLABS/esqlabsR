@@ -507,3 +507,54 @@ test_that("sync() reports a direct section-field write as unsaved changes", {
   expect_false(status$json_modified)
   expect_false(status$in_sync)
 })
+
+# Clone safety ----
+
+test_that("mutating a clone's scenario leaves the source untouched", {
+  project <- testProject()
+  clone <- project$clone()
+
+  clone$scenarios[["TestScenario"]]$modelFile <- "OnlyOnClone.pkml"
+
+  expect_identical(
+    clone$scenarios[["TestScenario"]]$modelFile,
+    "OnlyOnClone.pkml"
+  )
+  expect_false(
+    identical(project$scenarios[["TestScenario"]]$modelFile, "OnlyOnClone.pkml")
+  )
+})
+
+test_that("adding a scenario to a clone leaves the source untouched", {
+  project <- testProject()
+  clone <- project$clone()
+  before <- length(project$scenarios)
+
+  clone$scenarios[["Fresh"]] <- Scenario(scenarioName = "Fresh")
+
+  expect_length(project$scenarios, before)
+  expect_false("Fresh" %in% names(project$scenarios))
+})
+
+test_that("mutating a clone's nested individual entry leaves the source untouched", {
+  project <- testProject()
+  clone <- project$clone()
+
+  clone$individuals[["Indiv1"]]$weight <- 99
+
+  expect_identical(clone$individuals[["Indiv1"]]$weight, 99)
+  expect_false(identical(project$individuals[["Indiv1"]]$weight, 99))
+})
+
+test_that("clone modified/validated flags are independent of the source", {
+  project <- testProject()
+  project$.markValidated()
+  clone <- project$clone()
+
+  clone$scenarios[["TestScenario"]]$modelFile <- "Changed.pkml"
+
+  expect_true(clone$modified)
+  expect_false(clone$validatedSinceMutation)
+  expect_false(project$modified)
+  expect_true(project$validatedSinceMutation)
+})

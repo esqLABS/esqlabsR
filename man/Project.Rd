@@ -7,6 +7,15 @@
 \title{Project}
 \description{
 An R6 class representing an esqlabsR project
+
+\code{Project} is cloneable. All section data (\code{scenarios}, \code{individuals},
+\code{populations}, \code{outputPaths}, the parameter sets, \code{plots},
+\code{parameterIdentification}, ...) consists of plain-data records with
+copy semantics, so a clone's section data is fully independent of the
+source: mutating one does not affect the other. The one exception is
+programmatic observed data added via \code{\link[=addObservedData]{addObservedData()}} with a
+\code{DataSet} object; those \code{ospsuite::DataSet} objects wrap external
+handles and are shared by reference between a project and its clone.
 }
 \keyword{internal}
 \section{Active bindings}{

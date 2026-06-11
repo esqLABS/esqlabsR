@@ -3,6 +3,15 @@
 #' @title Project
 #' @docType class
 #' @description An R6 class representing an esqlabsR project
+#'
+#'   `Project` is cloneable. All section data (`scenarios`, `individuals`,
+#'   `populations`, `outputPaths`, the parameter sets, `plots`,
+#'   `parameterIdentification`, ...) consists of plain-data records with
+#'   copy semantics, so a clone's section data is fully independent of the
+#'   source: mutating one does not affect the other. The one exception is
+#'   programmatic observed data added via [addObservedData()] with a
+#'   `DataSet` object; those `ospsuite::DataSet` objects wrap external
+#'   handles and are shared by reference between a project and its clone.
 #' @format NULL
 #' @import fs
 #' @export
