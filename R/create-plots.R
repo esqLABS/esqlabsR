@@ -5,7 +5,6 @@
 # dataCombined / plotConfiguration / plotGrids and returns a named list of
 # plot-grid objects.
 
-
 #' Generate plots from a Project
 #'
 #' @description
@@ -415,27 +414,19 @@ createPlotsFromExcel <- function(...) {
   return(dfPlotGrids)
 }
 
-#' Update Plot Configuration with Overrides
+#' Build named list of plot-grid objects from data.frame configurations.
 #'
-#' Updates a plot configuration object `plotConfiguration` with explicitly
-#' defined overrides from `plotOverrideConfig` list. It retains any custom
-#' settings in `plotConfiguration` that deviate from the defaults
+#' Used by `createPlots(project, ...)`.
 #'
-#' @param plotConfiguration A plot configuration object.
-
-# Build named list of plot-grid objects from data.frame configurations.
-# Used by createPlots(project, ...).
-#
-# - dfPlotConfigurations: data.frame with one row per plot, columns
-#   include plotID, DataCombinedName, plotType, title, subtitle, plus
-#   axis/styling fields. Rows whose DataCombinedName is not present in
-#   `dataCombinedList` are pruned by `.validatePlotConfigurationFromExcel()`.
-# - dfPlotGrids: data.frame with one row per grid, columns include name,
-#   plotIDs, title.
-# - dataCombinedList: named list of DataCombined objects keyed by name.
-#
-# @keywords internal
-# @noRd
+#' @param dfPlotConfigurations data.frame with one row per plot, columns
+#'   include plotID, DataCombinedName, plotType, title, subtitle, plus
+#'   axis/styling fields. Rows whose DataCombinedName is not present in
+#'   `dataCombinedList` are pruned by `.validatePlotConfigurationFromExcel()`.
+#' @param dfPlotGrids data.frame with one row per grid, columns include name,
+#'   plotIDs, title.
+#' @param dataCombinedList named list of DataCombined objects keyed by name.
+#'
+#' @noRd
 .createPlotGridsFromDataFrames <- function(
   dfPlotConfigurations,
   dfPlotGrids,
@@ -584,4 +575,3 @@ createPlotsFromExcel <- function(...) {
   names(plotGrids) <- dfPlotGrids$name
   plotGrids
 }
-
